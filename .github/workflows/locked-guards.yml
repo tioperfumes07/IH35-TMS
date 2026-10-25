@@ -1536,6 +1536,12 @@ jobs:
       - name: verify:bill-payment-has-spine-link
         run: node scripts/verify-steps/18821-verify-bill-payment-has-spine-link.mjs
 
+      # ENG-43 (step 18845) — open USMCA settlements with earnings lines must not have gross_pay=0
+      - name: verify:settlement-header-matches-lines --selftest
+        run: node scripts/verify-steps/18845-verify-settlement-header-matches-lines.mjs --selftest
+      - name: verify:settlement-header-matches-lines
+        run: node scripts/verify-steps/18845-verify-settlement-header-matches-lines.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards
