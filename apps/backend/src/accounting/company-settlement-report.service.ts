@@ -291,10 +291,19 @@ export async function computeCompanySettlementNetRevenueCents(
         WHERE sl.load_id IS NOT NULL AND sl.is_active = true
       ),
       revenue AS (
-        SELECT cl.cs_id, SUM(ROUND(lcl.amount_cents)::bigint) AS cents
+        -- ENG-36: fall back to mdata.loads.rate_total_cents when no dispatch.load_charge_lines
+        -- exist for a load (USMCA historical loads imported from QBO have no TMS-native charge lines).
+        SELECT cl.cs_id,
+          SUM(COALESCE(
+            (SELECT SUM(ROUND(lcl.amount_cents)::bigint)
+             FROM dispatch.load_charge_lines lcl
+             WHERE lcl.load_id = cl.load_id
+               AND lcl.operating_company_id = $1::uuid
+               AND lcl.is_active = true),
+            l.rate_total_cents
+          )) AS cents
         FROM cs_loads cl
-        JOIN dispatch.load_charge_lines lcl ON lcl.load_id = cl.load_id AND lcl.operating_company_id = $1::uuid AND lcl.is_active = true
-        JOIN mdata.loads l ON l.id = lcl.load_id
+        JOIN mdata.loads l ON l.id = cl.load_id
         GROUP BY cl.cs_id
       ),
       line_cost AS (
@@ -429,6 +438,8 @@ export async function buildCompanySettlementReport(
   const loadIds = loadIdsRes.rows.map((r) => r.load_id);
 
   // 1) CUSTOMER CHARGES
+  // ENG-36: when a load has no dispatch.load_charge_lines (USMCA historical loads), synthesize a
+  // single "LOAD_RATE" charge from mdata.loads.rate_total_cents so revenue is not silently zero.
   const chargesRes = await client.query<CompanySettlementCustomerChargeRow & { amount_cents_num: string }>(
     `
       SELECT lcl.load_id::text AS load_id, l.load_number, lcl.charge_code, lcl.description,
@@ -438,7 +449,21 @@ export async function buildCompanySettlementReport(
       WHERE lcl.operating_company_id = $1::uuid
         AND lcl.load_id = ANY($2::uuid[])
         AND lcl.is_active = true -- LEAD 443.321: a rate change deactivates the old line; never bill it twice
-      ORDER BY l.load_number, lcl.sort_order
+      UNION ALL
+      -- Fallback for loads with no TMS-native charge lines
+      SELECT l.id::text AS load_id, l.load_number, 'LOAD_RATE' AS charge_code,
+             'Linehaul Rate' AS description,
+             l.rate_total_cents::text AS amount_cents_num
+      FROM mdata.loads l
+      WHERE l.id = ANY($2::uuid[])
+        AND l.operating_company_id = $1::uuid
+        AND NOT EXISTS (
+          SELECT 1 FROM dispatch.load_charge_lines lcl2
+          WHERE lcl2.load_id = l.id
+            AND lcl2.operating_company_id = $1::uuid
+            AND lcl2.is_active = true
+        )
+      ORDER BY load_number, charge_code
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
   );

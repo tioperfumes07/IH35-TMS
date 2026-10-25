@@ -10286,7 +10286,7 @@
   },
   "18841": {
     "claimed_on": "chore/claim-reserve-18841-eng36-cc1",
-    "guard": "verify-18841-company-settlement-negative-ratchet.mjs",
+    "guard": "verify-steps/18841-verify-company-settlement-negative-ratchet.mjs",
     "lane": "CC-1",
     "pr": "PENDING",
     "step": 18841
