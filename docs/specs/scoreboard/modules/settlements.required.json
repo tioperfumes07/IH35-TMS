@@ -538,6 +538,7 @@
         "qbo_chrome"
       ]
     },
+<<<<<<< HEAD
     {
       "id": "settlements.panel.close_trip",
       "tab": "Panels",
@@ -550,6 +551,9 @@
         "settlement"
       ]
     },
+=======
+    "settlements.panel.close_trip",
+>>>>>>> b657913b93 (FINDING: ACCT-F443293-C — DrillKpiCard KPI tile + close_board leaf + matrix tag guard hygiene)
     {
       "id": "settlements.modal.add_pay_line",
       "tab": "Modals",
