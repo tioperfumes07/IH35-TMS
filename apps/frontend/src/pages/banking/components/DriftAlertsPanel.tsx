@@ -57,7 +57,7 @@ function AlertRow({ alert, companyId }: { alert: DriftAlert; companyId: string }
         <div className="min-w-0">
           <span className={`font-semibold ${severityClass}`}>{DRIFT_KIND_LABEL[alert.drift_kind]}</span>
           <span className="mx-2 text-gray-400">|</span>
-          {alert.institution_name ?? "Account"} {alert.account_mask ? `••${alert.account_mask}` : ""}
+          {alert.account_name ?? alert.institution_name ?? "Account"} {alert.account_mask ? `••${alert.account_mask}` : ""}
           <span className="mx-2 text-gray-400">|</span>
           As of {alert.as_of_date}
           <span className="mx-2 text-gray-400">|</span>

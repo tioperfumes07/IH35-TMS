@@ -826,7 +826,7 @@ export function LoadCostsBoardPage() {
     // document (source_document_ref, already what settlement_display_id carries from the backend CTE),
     // rendered through the ONE settlementLabel() helper — "Open" while unsettled, a dash when closed-
     // unnumbered, NEVER the retired S-YYYY-NNNN display_id counter. alwaysVisible, beside every load number.
-    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status }); return r.settlement_id ? <Link className="font-semibold text-[#1F2A44] underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
+    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status, is_presettlement: !!(r.settlement_id && !r.settlement_display_id) }); return r.settlement_id ? <Link className="font-semibold text-[#1F2A44] underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
     // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
     // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older
