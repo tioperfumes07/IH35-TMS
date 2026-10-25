@@ -3,21 +3,7 @@
   "measured_at": "2026-10-25",
   "overlays": [
     "components/dispatch/LoadDetailDrawer.tsx",
-    "pages/accounting/AllocationsPage.tsx",
-    "pages/accounting/DisputeQueuePage.tsx",
-    "pages/accounting/DisputesHubPage.tsx",
-    "pages/accounting/ExpenseCategoryMapPage.tsx",
-    "pages/accounting/FixedAssetsPage.tsx",
-    "pages/accounting/PrepaidExpensesPage.tsx",
-    "pages/accounting/ReclassifyTransactionsPage.tsx",
-    "pages/accounting/RevenueRecognitionPage.tsx",
-    "pages/accounting/loans/LoanApplicationWizard.tsx",
-    "pages/banking/components/BankingTransactionsDesignView.tsx",
-    "pages/banking/components/CategorizeDrawer.tsx",
-    "pages/banking/components/PrintOrientationDialog.tsx",
-    "pages/cash-advances/components/MarkDisbursedModal.tsx",
     "pages/dispatch/components/BookLoadModalV4.tsx",
-    "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx",
-    "pages/factoring/FactorAdmin.tsx"
+    "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx"
   ]
 }
