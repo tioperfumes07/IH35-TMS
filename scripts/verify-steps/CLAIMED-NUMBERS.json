@@ -10257,12 +10257,12 @@
   "18817": {
     "claimed_at": "2026-10-25",
     "claimed_by": "CC-1",
-    "purpose": "ENG-42 (443.328): verify-no-duplicate-settlement-lines \u2014 renumbered from 18813 collision with ENG-09"
+    "purpose": "ENG-46 (443.328): verify-bill-payment-has-spine-link \u2014 posted bill_payments on USMCA must have a JE posting spine entry"
   },
-  "18817": {
+  "18821": {
     "claimed_at": "2026-10-25",
     "claimed_by": "CC-1",
-    "purpose": "ENG-46 (443.328): verify-bill-payment-has-spine-link \u2014 posted bill_payments on USMCA must have a JE posting spine entry"
+    "purpose": "ENG-46 (443.328): verify-bill-payment-has-spine-link \u2014 posted bill_payments on USMCA must have a JE posting spine entry (renumbered from 18817)"
   },
   "2426": {
     "claimed_at": "2026-08-31",
@@ -17153,5 +17153,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1094
+  "total_claimed": 1095
 }
