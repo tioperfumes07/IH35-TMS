@@ -782,7 +782,8 @@
       "void_reason",
       "voided_at",
       "voided_by_user_id",
-      "wire_fee_cents"
+      "wire_fee_cents",
+      "bank_wire_gap_account_id"
     ],
     "accounting.factoring_default_interest_accruals": [
       "accrual_date",

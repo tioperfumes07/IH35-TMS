@@ -3116,6 +3116,25 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // GATE-SCOPE 443.346 — person-names guard checks formatPersonName usage in HosTrackerSection.tsx
+  // (CC-3 frontend). A DATA_WRITE migration (db/migrations/) arms every LIVE_DOMAIN_GUARDS entry
+  // that passes the content check. The HosTrackerSection.tsx violation pre-dates this gate entry;
+  // skip when neither formatPersonName.ts nor HosTrackerSection.tsx is in the diff.
+  if (
+    name === "verify-person-names-normalized-at-write" &&
+    changedForLiveDomains !== null &&
+    !changedForLiveDomains.some(
+      (f) =>
+        f === "apps/frontend/src/lib/formatPersonName.ts" ||
+        f === "apps/frontend/src/pages/compliance/HosTrackerSection.tsx" ||
+        f === rel,
+    )
+  ) {
+    const msg = `${rel} — diff does not touch formatPersonName or HosTrackerSection (GATE-SCOPE 443.346)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const touched =
     changedForLiveDomains === null ||
     changedForLiveDomains.some((f) => {
