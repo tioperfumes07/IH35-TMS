@@ -217,8 +217,15 @@ export function LoadsPlanner() {
       {!loadsQuery.isLoading && !loadsQuery.isError && viewMode === "grid" ? (
         <PlannerGrid
           days={days}
+          rowPx={44}
+          testId="loads-planner-v3"
           frozenLabel="Load"
-          frozenPx={260}
+          frozenPx={320}
+          frozenColumns={[
+            { key: "name", header: "Load #", minWidth: 90, maxWidth: 240, defaultWidth: 110 },
+            { key: "secondary", header: "Route", minWidth: 120, maxWidth: 420, defaultWidth: 210 },
+            { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+          ]}
           statusLabel="Status"
           onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
           rows={rows.map((load) => {
@@ -245,6 +252,7 @@ export function LoadsPlanner() {
                   // C1 (owner correction 2026-09-02): was `load.load_number || load.id` -- a raw
                   // uuid on the planner bar label the moment load_number is missing/blank.
                   label: entityLabel(load.load_number, load.id, "Load"),
+                  shortLabel: load.load_number || undefined,
                   startYmd: start,
                   endYmd: end,
                   kind: "nb" as const,

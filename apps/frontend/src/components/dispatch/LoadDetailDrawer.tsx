@@ -692,7 +692,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             ? WIDE_DRAWER_CLASS
             : activeTab !== "Overview"
               ? WIDE_DRAWER_CLASS
-              : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
+              : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[640px]"
         }
         data-testid={isPage ? "load-costs-load-page" : "load-detail-drawer"}
         data-surface="load-detail"
@@ -821,7 +821,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             </div>
           </div>
           {load ? (
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7" data-testid="ldt0-header-stats">
+            <div className="mt-3 grid grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-7" data-testid="ldt0-header-stats">
               {ldt0.stats.map((s) => (
                 <button
                   key={s.id}
@@ -829,12 +829,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   data-testid={`ldt0-stat-${s.id}`}
                   {...(s.id === "real" ? { "data-ldt0-real-driven": "blank" } : {})}
                   onClick={() => setStatPop(s.id)}
-                  className="flex flex-col items-center rounded-sm border border-gray-200 bg-white px-2 py-1 text-center hover:bg-gray-50"
-                  title="Click to open its source"
+                  className="flex min-w-0 items-baseline justify-between gap-1 rounded-sm border border-gray-200 bg-white px-2 py-1 hover:bg-gray-50"
+                  title={s.sub ? `${s.label}: ${s.value} — ${s.sub}` : `${s.label}: ${s.value}`}
                 >
-                  <span className="text-xs font-semibold uppercase text-[#4B5563]">{s.label}</span>
-                  <span className="text-xs font-semibold text-[#0F1219]">{s.value}</span>
-                  <span className="text-xs text-gray-400">{s.sub}</span>
+                  <span className="truncate text-xs font-semibold uppercase text-[#4B5563]">{s.label}</span>
+                  <span className="whitespace-nowrap text-xs font-semibold text-[#0F1219]">{s.value}</span>
                 </button>
               ))}
             </div>

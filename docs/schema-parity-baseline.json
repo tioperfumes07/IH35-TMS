@@ -8993,6 +8993,7 @@
       "pay_basis",
       "phone",
       "photo_url",
+      "preferred_languages",
       "prior_driver_id",
       "qbo_class_id",
       "qbo_vendor_id",

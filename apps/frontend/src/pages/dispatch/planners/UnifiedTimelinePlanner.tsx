@@ -306,7 +306,7 @@ export function UnifiedTimelinePlanner() {
   const hosViolation = drivers.filter((d) => d.hos_status === "violation");
 
   return (
-    <div data-testid="dispatch-unified-timeline-page" className="space-y-2 [&_.pg-r]:h-[34px]">
+    <div data-testid="dispatch-unified-timeline-page" className="space-y-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
         <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
       </div>
@@ -375,9 +375,18 @@ export function UnifiedTimelinePlanner() {
         <>
           <PlannerGrid
             days={days}
-            frozenLabel="Driver / Unit"
+            rowPx={44}
+            testId="timeline-planner-v3"
+            frozenLabel="Driver"
             actionLabel="Book"
             frozenPx={360}
+            frozenColumns={[
+              { key: "name", header: "Driver", minWidth: 100, maxWidth: 240, defaultWidth: 130 },
+              { key: "secondary", header: "Customer", minWidth: 90, maxWidth: 360, defaultWidth: 140 },
+              { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
+              { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+              { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
+            ]}
             rows={[...toRows(inService), ...unassignedRow]}
             onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
             empty={
@@ -391,9 +400,17 @@ export function UnifiedTimelinePlanner() {
             <div className="mt-3" data-testid="planner-hos-violation-group">
               <PlannerGrid
                 days={days}
+                rowPx={44}
                 frozenLabel="HOS violation"
                 actionLabel="Book"
                 frozenPx={360}
+                frozenColumns={[
+                  { key: "name", header: "Driver", minWidth: 100, maxWidth: 240, defaultWidth: 130 },
+                  { key: "secondary", header: "Customer", minWidth: 90, maxWidth: 360, defaultWidth: 140 },
+                  { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
+                  { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+                  { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
+                ]}
                 rows={toRows(hosViolation)}
                 onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
                 empty={null}

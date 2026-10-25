@@ -188,8 +188,16 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
     <div data-testid={testId} className="space-y-2">
       <PlannerGrid
         days={days}
+        rowPx={44}
         frozenLabel="Driver"
-        frozenPx={280}
+        frozenPx={320}
+        frozenColumns={[
+          { key: "name", header: "Driver", minWidth: 100, maxWidth: 240, defaultWidth: 130 },
+          { key: "secondary", header: "Safety", minWidth: 90, maxWidth: 360, defaultWidth: 170 },
+          { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
+          { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+          { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
+        ]}
         statusLabel="Status"
         actionLabel="Action"
         onExpandRange={onExpandRange ? (minYmd, maxYmd) => onExpandRange(widenPlannerRange(range, minYmd, maxYmd)) : undefined}
