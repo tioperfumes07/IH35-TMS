@@ -10,6 +10,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { SelectCombobox } from "../../../components/Combobox";
 import { formatDateUS } from "../../../lib/formatDate";
 
 /** Bay status words on the board (§7 palette: navy / §7 amber #854F0B / slate — no new amber/emerald classes). A finished work order still holding its bay is "Ready" (truck not rolled out). */
@@ -113,13 +114,23 @@ export function InShopBoard({ companyId }: { companyId: string }) {
                 <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span>
               </div>
               <WoLine wo={wo} />
-              <label className="text-xs text-slate-600">Move to bay{" "}
-                <select disabled={busy || openBays.length === 0} value="" aria-label={`Move ${wo.unit_number ?? "truck"} to a bay`}
-                  onChange={(e) => { const n = Number(e.target.value); if (n) assign.mutate({ woId: wo.work_order_id, bay: n }); }}
-                  className="ml-1 h-7 rounded-sm border border-slate-300 bg-white px-1 text-xs">
+              <label className="flex flex-col gap-1 text-xs text-slate-600">
+                Move to bay
+                <SelectCombobox
+                  aria-label={`Move ${wo.unit_number ?? "truck"} to a bay`}
+                  disabled={busy || openBays.length === 0}
+                  value=""
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (n) assign.mutate({ woId: wo.work_order_id, bay: n });
+                  }}
+                  className="h-7 text-xs"
+                >
                   <option value="">{openBays.length ? "Choose…" : "No open bay"}</option>
-                  {openBays.map((n) => <option key={n} value={n}>Bay {n}</option>)}
-                </select>
+                  {openBays.map((n) => (
+                    <option key={n} value={String(n)}>Bay {n}</option>
+                  ))}
+                </SelectCombobox>
               </label>
             </article>;
           })}

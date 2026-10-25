@@ -52,4 +52,28 @@ if (!ufPage.includes("undeposited_funds") || !ufPage.includes("account-register"
   fail("UndepositedFundsPage must resolve UF role and deep-link account register");
 }
 
+// ACCT-F443293-C — V3 board grammar on Receipts (Bills first-tab parity).
+if (!receiptsPage.includes("MoneyListToolbar")) {
+  fail("ReceiptsPage must use MoneyListToolbar (FILTER-MULTI-01)");
+}
+if (
+  !receiptsPage.includes("kpiStrip=") ||
+  !receiptsPage.includes('data-testid="receipts-kpi-strip"') ||
+  !receiptsPage.includes("moneyListKpiCard")
+) {
+  fail("ReceiptsPage must pass AccountingSubNavWrapper kpiStrip with receipts-kpi-strip + moneyListKpiCard");
+}
+if (receiptsPage.includes("CollapsedListFilters")) {
+  fail("ReceiptsPage must not use CollapsedListFilters");
+}
+if (!receiptsPage.includes('searchTestId="receipts-search"')) {
+  fail("ReceiptsPage search must use MoneyListToolbar searchTestId receipts-search");
+}
+if (!receiptsPage.includes("createControl=")) {
+  fail("ReceiptsPage must use AccountingSubNavWrapper createControl for + New receipt (Bills parity)");
+}
+if (!receiptsPage.includes('data-receipts-filter-toolbar="visible"')) {
+  fail("ReceiptsPage filter bar must keep data-receipts-filter-toolbar for QBO collapse guard");
+}
+
 console.log("PASS: verify-acct-receipts-leaf");

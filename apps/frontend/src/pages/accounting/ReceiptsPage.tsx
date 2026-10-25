@@ -10,8 +10,9 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SelectCombobox } from "../../components/Combobox";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { Button } from "../../components/Button";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
@@ -99,7 +100,6 @@ export function ReceiptsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [entityType, setEntityType] = useState<"" | "expense" | "bill" | "payment">("");
-  const staged = useStagedListFilters({ applied: { entityType }, empty: { entityType: "" as const }, onApply: (next) => { setEntityType(next.entityType); setOffset(0); } });
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -126,6 +126,20 @@ export function ReceiptsPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+
+  const receiptKpis = useMemo(() => {
+    let expense = 0;
+    let bill = 0;
+    let payment = 0;
+    for (const row of items) {
+      if (row.source.type === "expense") expense += 1;
+      else if (row.source.type === "bill") bill += 1;
+      else if (row.source.type === "payment") payment += 1;
+    }
+    return { expense, bill, payment };
+  }, [items]);
+
+  const pageScopeLabel = total > items.length ? "On this page" : "All matching";
 
   const columns = useMemo<ParityColumn<ReceiptItem>[]>(
     () => [
@@ -193,39 +207,41 @@ export function ReceiptsPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center" data-receipts-filter-toolbar="collapsed">
-      <CollapsedListFilters
+    <div className="w-full space-y-2" data-testid="receipts-filters" data-receipts-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={(next) => {
+          setSearch(next);
+          setOffset(0);
+        }}
+        searchPlaceholder="Search filename, notes…" // aria-label on MoneyListToolbar input matches searchPlaceholder
+        searchTestId="receipts-search"
+        onClearAll={() => {
+          setSearch("");
+          setEntityType("");
+          setOffset(0);
+        }}
         activeFilterCount={entityType ? 1 : 0}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="receipts"
-        searchSlot={
-          <input
-            type="search"
-            aria-label="Search receipts by filename or notes"
-            placeholder="Search filename, notes…"
-            value={search}
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+          Source
+          <SelectCombobox
+            aria-label="Filter receipts by source"
+            data-testid="receipts-filter-source"
+            value={entityType}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setEntityType(e.target.value as "" | "expense" | "bill" | "payment");
               setOffset(0);
             }}
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
-          />
-        }
-      >
-        <SelectCombobox
-          aria-label="Filter receipts by source"
-          value={staged.draft.entityType}
-          onChange={(e) => staged.setDraft({ entityType: e.target.value as "" | "expense" | "bill" | "payment" })}
-        >
-          <option value="">All sources</option>
-          <option value="expense">Expenses</option>
-          <option value="bill">Bills</option>
-          <option value="payment">Customer payments</option>
-        </SelectCombobox>
-      </CollapsedListFilters>
-      <span className="ml-auto self-center text-xs text-gray-500">
-        {total.toLocaleString()} receipt{total !== 1 ? "s" : ""}
-      </span>
+          >
+            <option value="">All sources</option>
+            <option value="expense">Expenses</option>
+            <option value="bill">Bills</option>
+            <option value="payment">Customer payments</option>
+          </SelectCombobox>
+        </label>
+      </MoneyListToolbar>
     </div>
   );
 
@@ -233,12 +249,35 @@ export function ReceiptsPage() {
     <AccountingSubNavWrapper
       title="Receipts"
       subtitle="Uploaded receipts for expenses, bills, and customer payment proof"
-      actions={
+      createControl={
         operatingCompanyId ? (
           <Button variant="primary" onClick={() => setNewReceiptOpen(true)} data-testid="receipts-new">
             + New receipt
           </Button>
         ) : null
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="receipts-kpi-strip">
+          {isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Expenses", "—", "Error loading")}
+              {moneyListKpiCard("Bills", "—", "Error loading")}
+              {moneyListKpiCard("Payments", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard(
+                "Total",
+                total.toLocaleString(),
+                total > items.length ? `${items.length} shown` : pageScopeLabel,
+              )}
+              {moneyListKpiCard("Expenses", String(receiptKpis.expense), pageScopeLabel)}
+              {moneyListKpiCard("Bills", String(receiptKpis.bill), pageScopeLabel)}
+              {moneyListKpiCard("Payments", String(receiptKpis.payment), pageScopeLabel)}
+            </>
+          )}
+        </div>
       }
     >
       {operatingCompanyId ? (
