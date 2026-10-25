@@ -33,8 +33,8 @@ export function staticFailures(src) {
     f.push("geofence-detector does not import appendCrudAudit");
   if (!/^\s+await appendCrudAudit\(/m.test(src))
     f.push("geofence-detector does not call appendCrudAudit after stamp");
-  if (!/UPDATE mdata\.loads SET status/.test(src))
-    f.push("geofence-detector does not update mdata.loads status after stamp");
+  if (!/walkLoadStatusFromFence\(/.test(src))
+    f.push("geofence-detector does not call walkLoadStatusFromFence for load-status transition (AJK-03)");
   return f;
 }
 
@@ -53,7 +53,7 @@ if (process.argv.includes("--selftest")) {
     ["no ping call FAILS", plant("await pingSettlementOnLoadEvent(", "removed_pingSettlementOnLoadEvent(")],
     ["no audit import FAILS", plant("import { appendCrudAudit }", "import_REMOVED { appendCrudAudit }")],
     ["no audit call FAILS", plant("await appendCrudAudit(", "removed_appendCrudAudit(")],
-    ["no load status UPDATE FAILS", plant("UPDATE mdata.loads SET status", "UPDATE mdata.loads SET x")],
+    ["no walkLoadStatusFromFence FAILS", plant("walkLoadStatusFromFence(", "walkLoadStatusFromFence_REMOVED(")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -70,4 +70,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — geofence departure path calls latchOnDeliveryEvidence, pingSettlementOnLoadEvent, appendCrudAudit, and load-status UPDATE`);
+console.log(`${LABEL}: OK — geofence departure path calls latchOnDeliveryEvidence, pingSettlementOnLoadEvent, appendCrudAudit, and walkLoadStatusFromFence`);

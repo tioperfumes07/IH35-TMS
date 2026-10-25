@@ -2,7 +2,7 @@ import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
@@ -928,13 +928,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   );
   const factoringHeaderActions = (
     <div className="flex items-center gap-2">
-      <NavLink
+      <Link
         to={FACTORING_TAB_PATH.submit_invoice}
         className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"
         data-testid="factoring-submit-to-factor-link"
       >
         Submit to Factor
-      </NavLink>
+      </Link>
       <details className="relative inline-block">
         <summary
           className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] [&::-webkit-details-marker]:hidden"

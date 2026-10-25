@@ -12,7 +12,7 @@ import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
 import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery.service.js";
-import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
+import { transitionDispatchLoadInClientTx, writeLoadStatusFromStopEventInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
@@ -437,11 +437,17 @@ export async function processGeofenceDetectionsForGpsPoint(
       const nextLoadStatus = transition === "entered"
         ? (stamped.stop_type === "pickup" ? "at_pickup" : "at_delivery")
         : (stamped.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit");
-      await client.query(
-        `UPDATE mdata.loads SET status = $2, updated_at = now()
-           WHERE id = $1::uuid AND status::text = $3 AND operating_company_id = $4::uuid`,
-        [stamped.load_id, nextLoadStatus, stamped.current_load_status, input.operating_company_id]
-      );
+      // G11 + AJK-03: at_pickup/at_delivery/in_transit/delivered_pending_docs via the one stop-event engine.
+      await writeLoadStatusFromStopEventInClientTx(client as never, {
+        actorUserId: stamped.booked_by_user_id,
+        operatingCompanyId: input.operating_company_id,
+        loadId: stamped.load_id,
+        fromMdataStatus: stamped.current_load_status,
+        toMdataStatus: nextLoadStatus,
+        stopId: stamped.stop_id,
+        event: transition === "entered" ? "arrival" : "departure",
+        source: "geofence",
+      });
       await mintProformaInvoiceOnFirstPickup(client, {
         operatingCompanyId: input.operating_company_id,
         loadId: stamped.load_id,
