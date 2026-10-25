@@ -1304,5 +1304,12 @@
     "source_file": "apps/backend/src/accounting/expense-family-align-repair.service.ts",
     "guard": "scripts/verify-expense-child-follows-parent.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443278-ROW75-COSTS-NO-DRIVER-BILLS",
+    "title": "Settlement load costs_cents must NOT include driver-pay AP bills (bill_category='driver'). Driver pay is tracked in driver_pay_cents; including it in costs_cents double-counts it.",
+    "source_file": "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+    "guard": "scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs",
+    "type": "enforced"
   }
 ]

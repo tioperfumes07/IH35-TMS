@@ -63,7 +63,10 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
          GROUP BY e.load_id
       ) ec ON ec.load_id = cl.id
       LEFT JOIN (
-        -- 443.210R: exclude accrued driver-pay AP bills (same rule as LOAD_COST_DOCUMENTS_CTE)
+        -- 443.210R: exclude accrued driver-pay AP bills (same rule as LOAD_COST_DOCUMENTS_CTE).
+        -- ROW-75 (443.278): ALSO exclude settlement-posted driver pay bills (bill_category='driver',
+        -- source='settlement_driver_bill') — these appear in driver_pay_cents (via driver_bills), so
+        -- including them in costs_cents double-counts driver pay as a company cost.
         SELECT bl.load_id, COALESCE(SUM(ROUND(bl.amount * 100)), 0)::bigint AS bill_cents
           FROM accounting.bill_lines bl
           JOIN accounting.bills b ON b.id = bl.bill_id
@@ -71,6 +74,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
            AND ${liveBill("b")}
            AND b.revoked_at IS NULL
            AND ${liveBillLine("bl")}
+           AND (b.bill_category IS NULL OR b.bill_category <> 'driver')
            AND NOT EXISTS (
              SELECT 1 FROM driver_finance.driver_bills db2
               WHERE db2.operating_company_id = b.operating_company_id
