@@ -365,7 +365,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             </Field>
             <Field label="Policy Number *" error={step1Errors.policy_number}>
               <input
-                className="h-9 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={step1.policy_number}
                 onChange={(e) => setStep1((s) => ({ ...s, policy_number: e.target.value }))}
               />
@@ -398,7 +398,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             </Field>
             <Field label="Status">
               <SelectCombobox
-                className="h-9 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={step1.status}
                 onChange={(e) => setStep1((s) => ({ ...s, status: e.target.value }))}
               >
@@ -423,14 +423,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <Field label="Insurer Email" error={step1Errors.insurer_email}>
               <input
                 type="email"
-                className="h-9 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={step1.insurer_email}
                 onChange={(e) => setStep1((s) => ({ ...s, insurer_email: e.target.value }))}
               />
             </Field>
             <Field label="Agent Contact">
               <input
-                className="h-9 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={step1.agent_contact}
                 onChange={(e) => setStep1((s) => ({ ...s, agent_contact: e.target.value }))}
               />
@@ -502,7 +502,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   type="number"
                   min="1"
                   max="120"
-                  className="h-9 w-full rounded-sm border border-gray-300 px-2"
+                  className="h-8 w-full rounded-sm border border-gray-300 px-2"
                   value={step3.term_months}
                   onChange={(e) => setStep3((s) => ({ ...s, term_months: e.target.value }))}
                 />
