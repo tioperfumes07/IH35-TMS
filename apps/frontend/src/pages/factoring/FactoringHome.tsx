@@ -1,6 +1,7 @@
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -586,7 +587,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <DatePicker
               value={filterDraft.dateFrom}
               onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
-              className="h-8"
+              className={FILTER_CONTROL_SIZE_CLASS}
               data-testid={`${testIdPrefix}-filter-date-from`}
             />
           </label>
@@ -595,7 +596,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <DatePicker
               value={filterDraft.dateTo}
               onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
-              className="h-8"
+              className={FILTER_CONTROL_SIZE_CLASS}
               data-testid={`${testIdPrefix}-filter-date-to`}
             />
           </label>
@@ -2643,7 +2644,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       <DatePicker
                         value={filterDraft.dateFrom}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
-                        className="h-8"
+                        className={FILTER_CONTROL_SIZE_CLASS}
                         data-testid="factoring-home-filter-date-from"
                       />
                     </label>
@@ -2652,7 +2653,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       <DatePicker
                         value={filterDraft.dateTo}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
-                        className="h-8"
+                        className={FILTER_CONTROL_SIZE_CLASS}
                         data-testid="factoring-home-filter-date-to"
                       />
                     </label>
@@ -2734,7 +2735,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       <DatePicker
                         value={filterDraft.dateFrom}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
-                        className="h-8"
+                        className={FILTER_CONTROL_SIZE_CLASS}
                         data-testid="factoring-home-chargebacks-filter-date-from"
                       />
                     </label>
@@ -2743,7 +2744,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       <DatePicker
                         value={filterDraft.dateTo}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
-                        className="h-8"
+                        className={FILTER_CONTROL_SIZE_CLASS}
                         data-testid="factoring-home-chargebacks-filter-date-to"
                       />
                     </label>

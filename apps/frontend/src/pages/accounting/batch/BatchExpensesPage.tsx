@@ -8,6 +8,7 @@
  * checks (payment method = check with a check number).
  */
 import { useMemo, useRef, useState, type ClipboardEvent } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../../design/tokens";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
@@ -171,7 +172,7 @@ export function BatchExpensesPage() {
         </Link>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs" data-testid="batch-expenses-toolbar" data-b5-batch-transactions="1">
-        <textarea ref={pasteRef} onPaste={onPaste} placeholder="Paste rows from a spreadsheet here: Date | Payee | Paid from | Method | Ref no. | Amount | Category | Class | Load | Memo" className="h-9 min-w-[28rem] flex-1 rounded border border-dashed border-gray-400 px-2 py-1 text-xs" data-testid="batch-expenses-paste" />
+        <textarea ref={pasteRef} onPaste={onPaste} placeholder="Paste rows from a spreadsheet here: Date | Payee | Paid from | Method | Ref no. | Amount | Category | Class | Load | Memo" className={`${FILTER_CONTROL_SIZE_CLASS} min-w-[28rem] flex-1 rounded border border-dashed border-gray-400 px-2 py-1`} data-testid="batch-expenses-paste" />
         <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => [...p, ...Array.from({ length: 5 }, () => newRow())])}>+ 5 rows</Button>
         <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => p.filter((r) => r.status === "saved" || !isRowEmpty(r)))}>Remove empty</Button>
         <span className="ml-auto font-semibold" data-testid="batch-expenses-totals">{totals.rows} row(s) · {formatCurrencyFromCents(totals.cents)} · {totals.ready} ready · {totals.errors} with errors · {totals.saved} saved</span>

@@ -1,4 +1,5 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
@@ -309,7 +310,7 @@ export function BillPaymentsListPage() {
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 min-w-[240px] flex-1">
           Unpaid bill selector
           <SelectCombobox
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+            className={`${FILTER_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
             value={selectedBillId}
             onChange={(event) => setSelectedBillId(event.target.value)}
           >
@@ -382,11 +383,11 @@ export function BillPaymentsListPage() {
           />
           <label className={FORM_LABEL_STACK_CLASS}>
             From
-            <DatePicker className="h-9" value={dateFrom} onChange={setDateFrom} />
+            <DatePicker className={FILTER_CONTROL_SIZE_CLASS} value={dateFrom} onChange={setDateFrom} />
           </label>
           <label className={FORM_LABEL_STACK_CLASS}>
             To
-            <DatePicker className="h-9" value={dateTo} onChange={setDateTo} />
+            <DatePicker className={FILTER_CONTROL_SIZE_CLASS} value={dateTo} onChange={setDateTo} />
           </label>
         </MoneyListToolbar>
       </div>

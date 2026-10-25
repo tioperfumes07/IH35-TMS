@@ -4,6 +4,7 @@
 // EDITABLE; the checks below an edited one continue from it; a number already used on the account is flagged and
 // refused; numbers the batch skips are listed and need a reason, recorded on each skipped number.
 import { useEffect, useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../../components/forms/inputClass";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
@@ -252,7 +253,7 @@ export function CheckPrintPage() {
         return (
           <div>
             <input
-              className={`h-8 w-28 rounded-sm border px-2 text-xs ${dupBy ? "border-red-500" : "border-gray-300"}`}
+              className={`${FORM_INPUT_CLASS} w-28 ${dupBy ? "border-red-500" : ""}`}
               value={shown}
               placeholder={proposed || "Type number"}
               onChange={(e) => editNumber(row.id, e.target.value)}
@@ -320,7 +321,7 @@ export function CheckPrintPage() {
             <label className="text-xs font-semibold text-gray-700">
               Bank account
               <SelectCombobox
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`${FORM_INPUT_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}
                 value={bankAccountId}
                 onChange={(e) => {
                   setBankAccountId(e.target.value);
@@ -357,7 +358,7 @@ export function CheckPrintPage() {
             <label className="text-xs font-semibold text-gray-700">
               Starting check no.
               <input
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`${FORM_INPUT_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}
                 value={startingNumber}
                 onChange={(e) => setStartingNumber(e.target.value.replace(/[^\d]/g, ""))}
                 placeholder={stockNext ?? "Type the first real number"}
@@ -374,7 +375,7 @@ export function CheckPrintPage() {
             <label className="text-xs font-semibold text-gray-700">
               Check style
               <SelectCombobox
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`${FORM_INPUT_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}
                 value={checkType}
                 onChange={(e) => setCheckType(e.target.value as "voucher" | "standard")}
               >
@@ -423,7 +424,7 @@ export function CheckPrintPage() {
                   <label className="text-xs font-semibold text-gray-700">
                     Reason skipped
                     <input
-                      className="mt-1 h-8 w-72 rounded-sm border border-gray-300 px-2 text-xs"
+                      className={`${FORM_INPUT_CLASS} mt-1 w-72 rounded-sm border border-gray-300 px-2`}
                       value={gapReason}
                       onChange={(e) => setGapReason(e.target.value)}
                       placeholder="e.g. two checks torn in the printer"
@@ -471,7 +472,7 @@ export function CheckPrintPage() {
                 <label className="text-xs font-semibold text-gray-700">
                   Reprint from #
                   <input
-                    className="mt-1 h-9 w-28 rounded-sm border border-gray-300 px-2 text-xs"
+                    className={`${FORM_INPUT_CLASS} mt-1 w-28 rounded-sm border border-gray-300 px-2`}
                     value={reprintFrom}
                     onChange={(e) => setReprintFrom(e.target.value.replace(/[^\d]/g, ""))}
                     placeholder="number"

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "../../components/Button";
@@ -161,7 +162,7 @@ export function CashForecastPage() {
               <SelectCombobox
                 value={weeks}
                 onChange={(event) => setWeeks(Number(event.target.value))}
-                className="ml-2 h-8 rounded-sm border border-gray-300 px-2 text-xs"
+                className={`${FILTER_CONTROL_SIZE_CLASS} ml-2 rounded-sm border border-gray-300 px-2`}
               >
                 <option value={13}>13</option>
                 <option value={8}>8</option>

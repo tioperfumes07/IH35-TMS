@@ -44,7 +44,7 @@ import {
 } from "../../api/reclassify";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { companyToday } from "../../lib/businessDate";
-import { colors } from "../../design/tokens";
+import { colors, FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
@@ -316,14 +316,14 @@ export function ReclassifyTransactionsPage() {
             <div className="mt-2 grid grid-cols-2 gap-1" data-b5-period-from-to="1" data-testid="reclassify-period-from-to">
               <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 From
-                <DatePicker value={fromDate} onChange={setFromDate} className="h-8" data-testid="reclassify-period-from" />
+                <DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-from" />
               </label>
               <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 To
-                <DatePicker value={toDate} onChange={setToDate} className="h-8" data-testid="reclassify-period-to" />
+                <DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-to" />
               </label>
             </div>
-            <input type="search" aria-label={t("common.search_account_tree", "Search account tree")} value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Search account tree" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
+            <input type="search" aria-label={t("common.search_account_tree", "Search account tree")} value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Search account tree" className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded border border-gray-300 px-2`} data-testid="reclassify-account-filter" />
             <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
             <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} data-testid="reclassify-include-inactive" /> Include inactive accounts</label>
             <div className="mt-1 flex justify-between text-xs font-semibold uppercase text-gray-600"><span>Account</span><span>Balance {formatDateQboList(toDate)}</span></div>
@@ -367,8 +367,8 @@ export function ReclassifyTransactionsPage() {
         {/* RIGHT PANE */}
         <section className="min-w-0 flex-1">
           <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="reclassify-filters">
-            <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
-            <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
             {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
             <MultiSelectDropdown label="Account" options={accountOptions} selected={f.accountIds} onChange={(v) => setFilter("accountIds", v)} allLabel="All accounts" searchable data-testid="reclassify-filter-account" />
             <MultiSelectDropdown label="Type" options={facetOptions("types")} selected={f.types} onChange={(v) => setFilter("types", v)} allLabel="All types" data-testid="reclassify-filter-type" />
@@ -380,7 +380,7 @@ export function ReclassifyTransactionsPage() {
             <MultiSelectDropdown label="Trailer" options={facetOptions("trailers")} selected={f.trailerIds} onChange={(v) => setFilter("trailerIds", v)} allLabel="All trailers" searchable data-testid="reclassify-filter-trailer" />
             <MultiSelectDropdown label="Vendor" options={facetOptions("vendors")} selected={f.vendorIds} onChange={(v) => setFilter("vendorIds", v)} allLabel="All vendors" searchable data-testid="reclassify-filter-vendor" />
             <label className={FORM_LABEL_STACK_CLASS}>Memo / description
-              <input value={f.search} onChange={(e) => setFilter("search", e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Dreamline" data-testid="reclassify-search" />
+              <input value={f.search} onChange={(e) => setFilter("search", e.target.value)} className={`${FILTER_CONTROL_SIZE_CLASS} rounded border border-gray-300 px-2`} placeholder="e.g. Dreamline" data-testid="reclassify-search" />
             </label>
             <MultiSelectDropdown label="Columns" options={COLUMNS.map((c) => ({ value: c.key, label: c.optional ? `${c.label} (added)` : c.label }))} selected={visibleCols} onChange={chooseColumns} allLabel="All columns" data-testid="reclassify-columns" />
             <Button type="button" onClick={() => runFind()} data-testid="reclassify-find">Find transactions</Button>
@@ -502,7 +502,7 @@ export function ReclassifyTransactionsPage() {
                     <input
                       type="text"
                       inputMode="numeric"
-                      className="h-9 w-12 rounded-sm border border-[#E5E7EB] px-1 text-center text-xs tabular-nums"
+                      className={`${FILTER_CONTROL_SIZE_CLASS} w-12 rounded-sm border border-[#E5E7EB] px-1 text-center tabular-nums`}
                       value={gotoPageDraft}
                       onChange={(e) => setGotoPageDraft(e.target.value.replace(/[^\d]/g, ""))}
                       onKeyDown={(e) => {
@@ -563,7 +563,7 @@ export function ReclassifyTransactionsPage() {
                       {b.status === "applied" && b.lines_applied > 0 ? (
                         undoTarget === b.id ? (
                           <span className="flex items-center gap-1">
-                            <input value={undoReason} onChange={(e) => setUndoReason(e.target.value)} placeholder="Undo reason" className="h-9 w-40 rounded border border-gray-300 px-1 text-xs" data-testid={`reclassify-undo-reason-${b.id}`} />
+                            <input value={undoReason} onChange={(e) => setUndoReason(e.target.value)} placeholder="Undo reason" className={`${FILTER_CONTROL_SIZE_CLASS} w-40 rounded border border-gray-300 px-1`} data-testid={`reclassify-undo-reason-${b.id}`} />
                             <Button type="button" size="sm" loading={undoMut.isPending} disabled={undoReason.trim().length < 3} onClick={() => undoMut.mutate({ batchId: b.id, reason: undoReason.trim() }, { onSuccess: () => { setUndoTarget(null); setUndoReason(""); } })} data-testid={`reclassify-undo-confirm-${b.id}`}>Confirm undo</Button>
                             <Button type="button" size="sm" variant="tertiary" onClick={() => { setUndoTarget(null); setUndoReason(""); }}>Cancel</Button>
                           </span>

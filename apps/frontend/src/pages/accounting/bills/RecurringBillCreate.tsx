@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../../design/tokens";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
@@ -222,7 +223,7 @@ export function RecurringBillCreate() {
             <SelectCombobox
               value={frequency}
               onChange={(event) => setFrequency(event.target.value as RecurringBillFrequency)}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              className={`${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`}
             >
               {FREQUENCIES.map((f) => (
                 <option key={f.value} value={f.value}>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -112,14 +113,14 @@ export function PeriodComparisonPage() {
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Report type
-          <SelectCombobox value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className={`${FORM_INPUT_CLASS} mt-1`}>
             <option value="pl">P&L</option>
             <option value="bs">Balance Sheet</option>
           </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Basis
-          <SelectCombobox value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className={`${FORM_INPUT_CLASS} mt-1`}>
             <option value="accrual">Accrual</option>
             <option value="cash">Cash</option>
           </SelectCombobox>
@@ -130,7 +131,7 @@ export function PeriodComparisonPage() {
             value={periods}
             onChange={(event) => setPeriods(event.target.value)}
             placeholder="2026-Q1,2025-Q1"
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className={`${FORM_INPUT_CLASS} mt-1`}
           />
         </label>
       </div>

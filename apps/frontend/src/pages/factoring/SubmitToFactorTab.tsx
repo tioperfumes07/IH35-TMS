@@ -41,7 +41,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { TableSearch } from "../../components/table/TableSearch";
-import { colors, FORM_FIELD_CONTROL_SIZE_CLASS, typography } from "../../design/tokens";
+import {colors, FORM_FIELD_CONTROL_SIZE_CLASS, typography, FILTER_CONTROL_SIZE_CLASS} from "../../design/tokens";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -847,11 +847,11 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
               </label>
               <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Invoice date from
-                <DatePicker value={draft.from} onChange={(v) => setDraft((d) => ({ ...d, from: v }))} className="h-8" data-testid="submit-factor-filter-from" />
+                <DatePicker value={draft.from} onChange={(v) => setDraft((d) => ({ ...d, from: v }))} className={FILTER_CONTROL_SIZE_CLASS} data-testid="submit-factor-filter-from" />
               </label>
               <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Invoice date to
-                <DatePicker value={draft.to} onChange={(v) => setDraft((d) => ({ ...d, to: v }))} className="h-8" data-testid="submit-factor-filter-to" />
+                <DatePicker value={draft.to} onChange={(v) => setDraft((d) => ({ ...d, to: v }))} className={FILTER_CONTROL_SIZE_CLASS} data-testid="submit-factor-filter-to" />
               </label>
             </div>
           </CollapsedListFilters>

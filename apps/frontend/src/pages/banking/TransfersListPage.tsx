@@ -1,4 +1,5 @@
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -481,11 +482,11 @@ export function TransfersListPage() {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <label className="text-xs text-gray-600">
             From
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="mt-1 h-8 w-full" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full`} />
           </label>
           <label className="text-xs text-gray-600">
             To
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="mt-1 h-8 w-full" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full`} />
           </label>
           <label className="text-xs text-gray-600">
             Type

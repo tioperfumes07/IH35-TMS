@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
@@ -183,11 +184,11 @@ export function FactoringListPage() {
       />
       <label className={FORM_LABEL_STACK_CLASS}>
         Date from
-        <DatePicker value={fromDate} onChange={setFromDate} className="h-9" />
+        <DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} />
       </label>
       <label className={FORM_LABEL_STACK_CLASS}>
         Date to
-        <DatePicker value={toDate} onChange={setToDate} className="h-9" />
+        <DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} />
       </label>
     </MoneyListToolbar>
   );

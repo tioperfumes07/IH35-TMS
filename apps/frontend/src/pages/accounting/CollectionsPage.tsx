@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -121,7 +123,7 @@ export function CollectionsPage() {
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">
           Aging bucket
-          <SelectCombobox value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}>
             <option value="all">All</option>
             <option value="1_30">1-30</option>
             <option value="31_60">31-60</option>
@@ -131,7 +133,7 @@ export function CollectionsPage() {
         </label>
         <label className="text-xs text-gray-600">
           Owner
-          <SelectCombobox value={owner} onChange={(event) => setOwner(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={owner} onChange={(event) => setOwner(event.target.value)} className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}>
             <option value="all">All</option>
             <option value="unassigned">Unassigned</option>
           </SelectCombobox>
@@ -248,7 +250,7 @@ export function CollectionsPage() {
               <div className="grid gap-2 border-t border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600">
                   Contact type
-                  <SelectCombobox value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+                  <SelectCombobox value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className={`${FORM_INPUT_CLASS} mt-1`}>
                     <option value="call">Call</option>
                     <option value="email">Email</option>
                     <option value="letter">Letter</option>
@@ -257,7 +259,7 @@ export function CollectionsPage() {
                 </label>
                 <label className="text-xs text-gray-600">
                   Next action date
-                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full" />
+                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className={`${FORM_INPUT_CLASS} mt-1`} />
                 </label>
                 <div className="flex items-end justify-end">
                   <Button size="sm" onClick={() => logContactMutation.mutate()} disabled={!companyId || !selectedTask || !contactNotes.trim() || logContactMutation.isPending}>
@@ -273,7 +275,7 @@ export function CollectionsPage() {
               <div className="grid gap-2 border-t border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600 md:col-span-2">
                   Resolution
-                  <SelectCombobox value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+                  <SelectCombobox value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className={`${FORM_INPUT_CLASS} mt-1`}>
                     <option value="paid">Paid</option>
                     <option value="disputed">Disputed</option>
                     <option value="written_off">Written off</option>

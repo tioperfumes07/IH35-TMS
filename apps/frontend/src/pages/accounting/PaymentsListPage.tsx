@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -298,7 +299,7 @@ export function PaymentsListPage() {
           <SelectCombobox
             value={method}
             onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+            className={`${FILTER_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
           >
             {METHOD_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>
@@ -309,11 +310,11 @@ export function PaymentsListPage() {
         </label>
         <label className={FORM_LABEL_STACK_CLASS}>
           From
-          <DatePicker value={dateFrom} onChange={setDateFrom} className="h-9" />
+          <DatePicker value={dateFrom} onChange={setDateFrom} className={FILTER_CONTROL_SIZE_CLASS} />
         </label>
         <label className={FORM_LABEL_STACK_CLASS}>
           To
-          <DatePicker value={dateTo} onChange={setDateTo} className="h-9" />
+          <DatePicker value={dateTo} onChange={setDateTo} className={FILTER_CONTROL_SIZE_CLASS} />
         </label>
       </MoneyListToolbar>
     </div>

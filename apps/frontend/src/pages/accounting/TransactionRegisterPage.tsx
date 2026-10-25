@@ -15,7 +15,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
-import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import {TOOLBAR_ICON_SIZE_CLASS, FILTER_CONTROL_SIZE_CLASS} from "../../design/tokens";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const PAGE_SIZE = 100;
@@ -303,7 +303,7 @@ export function TransactionRegisterPage() {
                 setStatus(event.target.value);
               }}
               placeholder="e.g. paid, uncategorized"
-              className="h-9 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+              className={`${FILTER_CONTROL_SIZE_CLASS} rounded-sm border border-[#E5E7EB] px-2`}
               data-testid="transaction-register-filter-status"
             />
           </label>
@@ -362,7 +362,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="h-9 rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50"
+            className={`${FILTER_CONTROL_SIZE_CLASS} rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50`}
           >
             Previous
           </button>
@@ -373,7 +373,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => (p + 1 < pageCount ? p + 1 : p))}
             disabled={page + 1 >= pageCount}
-            className="h-9 rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50"
+            className={`${FILTER_CONTROL_SIZE_CLASS} rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50`}
           >
             Next
           </button>
