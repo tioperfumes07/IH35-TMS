@@ -13,6 +13,7 @@ import {
   getBankTransactionCategorizationLinks,
   getPlaidCompanyTransactions,
   isManualBankTransaction,
+  rejectBankTransactionSuggestion,
   skipBankTransactionInvestigation,
   supersedePlaidPendingTransaction,
   undoBankTransactionCategorization,
@@ -371,6 +372,42 @@ export function categorizedRuleLabel(tx: PlaidBankTransaction): string | null {
   return null;
 }
 
+/**
+ * 443.343-C — plain-English source for the Suggested line (rule / history / payee / document).
+ * Maps banking.bank_transactions.suggested_source prefixes from CC-2 443.341 engines.
+ */
+export function suggestionSourceLabel(source: string | null | undefined): string | null {
+  const s = String(source ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (s.includes("rule") || s.startsWith("auto")) return "Rule";
+  if (s.includes("history") || s.startsWith("previous") || s.includes("accepted_history")) return "History";
+  if (s.includes("payee") || s.includes("fuzzy_vendor") || s.includes("description")) return "Payee";
+  if (s.includes("document") || s.includes("relay") || s.includes("match") || s.includes("invoice") || s.includes("bill")) {
+    return "Document";
+  }
+  return "Suggestion";
+}
+
+/** 443.343-C — High / Medium / Low from suggested_confidence. */
+export function suggestionConfidenceLabel(
+  confidence: PlaidBankTransaction["suggested_confidence"] | string | null | undefined,
+): string | null {
+  const c = String(confidence ?? "").trim().toLowerCase();
+  if (c === "high") return "High";
+  if (c === "medium") return "Medium";
+  if (c === "low") return "Low";
+  return null;
+}
+
+/** 443.343-C — who + when on an accepted (categorized) line. */
+export function categorizedWhoWhenText(tx: PlaidBankTransaction): string | null {
+  if (!tx.categorized_at) return null;
+  const when = formatBankTransactionDate(tx.categorized_at);
+  const who = String(tx.categorized_by_user_name ?? "").trim();
+  if (who) return `Accepted by ${who} · ${when}`;
+  return `Accepted · ${when}`;
+}
+
 type ViewSettings = {
   showCheckNo: boolean;
   showPayee: boolean;
@@ -681,6 +718,7 @@ export function BankingTransactionsDesignView({
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [postingTxId, setPostingTxId] = useState<string | null>(null);
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
+  const [rejectingSuggestionTxId, setRejectingSuggestionTxId] = useState<string | null>(null);
   const [supersedePendingTx, setSupersedePendingTx] = useState<PlaidBankTransaction | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RowDetailDraft>>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -1441,6 +1479,19 @@ export function BankingTransactionsDesignView({
     }
   }
 
+  async function rejectSuggestion(tx: PlaidBankTransaction) {
+    setRejectingSuggestionTxId(tx.id);
+    try {
+      await rejectBankTransactionSuggestion(tx.id, companyId);
+      pushToast("Suggestion rejected", "success");
+      onDataChanged();
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Could not reject suggestion"), "error");
+    } finally {
+      setRejectingSuggestionTxId(null);
+    }
+  }
+
   async function excludeTransaction(tx: PlaidBankTransaction) {
     setExcludingTxId(tx.id);
     try {
@@ -1703,17 +1754,80 @@ export function BankingTransactionsDesignView({
                   operator reviews + Saves there — this chip exists so a row worth expanding is
                   visible without opening every row to find out. */}
               {hasAutoSuggestion(tx) ? (
-                <p
-                  className="mt-0.5 truncate text-xs text-[#4B5563]"
-                  title={tx.suggested_reason || "Computed by the categorization rules engine — expand this row to review and accept"}
-                  data-testid="bank-txn-suggested-payee"
+                <div
+                  className="mt-0.5 space-y-1 text-xs text-[#4B5563]"
+                  data-testid="bank-txn-suggested-block"
+                  onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
                 >
-                  <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Suggested: </span>
-                  {tx.suggested_vendor_name || tx.suggested_customer_name || tx.suggested_account_name || "a category"}
-                  {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
-                  {/* 443.168 J — the reason travels with the suggestion (owner Law B: suggest WITH the reason). */}
-                  {tx.suggested_reason ? <span className="text-[#6B7280]" data-testid="bank-txn-suggested-reason"> — {tx.suggested_reason}</span> : null}
-                </p>
+                  <p
+                    className="truncate"
+                    title={tx.suggested_reason || "Computed by the categorization rules engine — Accept, Change, or Reject"}
+                    data-testid="bank-txn-suggested-payee"
+                  >
+                    <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Suggested: </span>
+                    {tx.suggested_vendor_name || tx.suggested_customer_name || tx.suggested_account_name || "a category"}
+                    {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
+                    {suggestionConfidenceLabel(tx.suggested_confidence) ? (
+                      <span className="text-[#6B7280]" data-testid="bank-txn-suggested-confidence">
+                        {" "}
+                        · {suggestionConfidenceLabel(tx.suggested_confidence)}
+                      </span>
+                    ) : null}
+                    {suggestionSourceLabel(tx.suggested_source) ? (
+                      <span className="text-[#6B7280]" data-testid="bank-txn-suggested-source">
+                        {" "}
+                        · {suggestionSourceLabel(tx.suggested_source)}
+                      </span>
+                    ) : null}
+                    {/* 443.168 J — the reason travels with the suggestion (owner Law B: suggest WITH the reason). */}
+                    {tx.suggested_reason ? (
+                      <span className="text-[#6B7280]" data-testid="bank-txn-suggested-reason">
+                        {" "}
+                        — {tx.suggested_reason}
+                      </span>
+                    ) : null}
+                  </p>
+                  {/* 443.343-C — Accept / Change / Reject per line; never auto-accept, never apply-all. */}
+                  <div className="flex flex-wrap items-center gap-1" data-testid="bank-txn-suggestion-actions">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      data-testid={`bank-txn-suggestion-accept-${tx.id}`}
+                      disabled={postingTxId === tx.id || !tx.suggested_account_id}
+                      title={
+                        tx.suggested_account_id
+                          ? "Accept this suggestion and categorize"
+                          : "No suggested account — use Change to pick one"
+                      }
+                      onClick={() => void postTransaction(tx)}
+                    >
+                      {postingTxId === tx.id ? "Posting..." : "Accept"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      data-testid={`bank-txn-suggestion-change-${tx.id}`}
+                      onClick={() => setExpandedTxId(tx.id)}
+                    >
+                      Change
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-red-700"
+                      data-testid={`bank-txn-suggestion-reject-${tx.id}`}
+                      disabled={rejectingSuggestionTxId === tx.id}
+                      onClick={() => void rejectSuggestion(tx)}
+                    >
+                      {rejectingSuggestionTxId === tx.id ? "Rejecting..." : "Reject"}
+                    </Button>
+                  </div>
+                </div>
               ) : null}
               {/* 443.168 K (E-47) — Faro contract: a payment received on a purchased invoice goes to Faro within 1 business day. */}
               {tx.misdirected_forward_by ? (
@@ -1725,23 +1839,32 @@ export function BankingTransactionsDesignView({
               {(() => {
                 const provenance = categorizedProvenanceText(tx);
                 const rule = categorizedRuleLabel(tx);
-                if (!provenance && !rule) return null;
+                const whoWhen = categorizedWhoWhenText(tx);
+                if (!provenance && !rule && !whoWhen) return null;
                 return (
-                  <p
-                    className="mt-0.5 flex flex-wrap items-center gap-1.5 text-section-header text-[#1F2A44]"
-                    data-testid="bank-txn-categorized-provenance"
-                    data-b3-categorized-provenance="1"
-                  >
-                    {provenance ? <span>{provenance}</span> : null}
-                    {rule ? (
-                      <span
-                        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-section-header font-semibold uppercase tracking-wide text-[#4B5563]"
-                        data-testid="bank-txn-categorized-rule"
+                  <div className="mt-0.5 space-y-0.5" data-b3-categorized-provenance="1">
+                    {provenance || rule ? (
+                      <p
+                        className="flex flex-wrap items-center gap-1.5 text-section-header text-[#1F2A44]"
+                        data-testid="bank-txn-categorized-provenance"
                       >
-                        {rule}
-                      </span>
+                        {provenance ? <span>{provenance}</span> : null}
+                        {rule ? (
+                          <span
+                            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-section-header font-semibold uppercase tracking-wide text-[#4B5563]"
+                            data-testid="bank-txn-categorized-rule"
+                          >
+                            {rule}
+                          </span>
+                        ) : null}
+                      </p>
                     ) : null}
-                  </p>
+                    {whoWhen ? (
+                      <p className="text-xs text-[#6B7280]" data-testid="bank-txn-categorized-who-when">
+                        {whoWhen}
+                      </p>
+                    ) : null}
+                  </div>
                 );
               })()}
               {!isRelayWalletAccount &&
@@ -2391,6 +2514,7 @@ export function BankingTransactionsDesignView({
     expandedTxId,
     isRelayWalletAccount,
     postingTxId,
+    rejectingSuggestionTxId,
     pushToast,
     runningBalanceById,
     sortBy.key,

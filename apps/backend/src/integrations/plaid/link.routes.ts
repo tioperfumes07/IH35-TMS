@@ -748,6 +748,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.source_ref,
           bt.plaid_transaction_id,
           bt.categorized_at,
+          -- 443.343-C — who accepted (identity.users); when is categorized_at above.
+          bt.categorized_by_user_id::text,
+          COALESCE(NULLIF(TRIM(CONCAT_WS(' ', cat_user.first_name, cat_user.last_name)), ''), cat_user.email)
+            AS categorized_by_user_name,
           -- LINK4-PR3 (owner ask, 2026-09-12) — AUTO-SUGGESTED filter: applyBankingRulesForTransaction
           -- / autoCategorize's dry-run / the fuzzy fallback have ALWAYS written these 4 columns
           -- (banking-rules.engine.ts), but nothing on this list ever selected them, so a computed
@@ -931,6 +935,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN catalogs.items cit
           ON cit.id = bt.categorization_item_id
          AND cit.operating_company_id = bt.operating_company_id
+        LEFT JOIN identity.users cat_user
+          ON cat_user.id = bt.categorized_by_user_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

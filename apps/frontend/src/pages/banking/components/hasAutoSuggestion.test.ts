@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { hasAutoSuggestion, matchesTransactionTypeFilter } from "./BankingTransactionsDesignView";
+import {
+  categorizedWhoWhenText,
+  hasAutoSuggestion,
+  matchesTransactionTypeFilter,
+  suggestionConfidenceLabel,
+  suggestionSourceLabel,
+} from "./BankingTransactionsDesignView";
 import type { PlaidBankTransaction } from "../../../api/banking";
 
 // LINK4-PR3 (owner ask, 2026-09-12) — "money-in excluded from auto-categorization" + the
@@ -57,5 +63,34 @@ describe('matchesTransactionTypeFilter("auto_suggested", ...)', () => {
 
   it("does not match a money-in row even with a suggestion column set", () => {
     expect(matchesTransactionTypeFilter("auto_suggested", tx({ is_credit: true, suggested_account_id: "a1" }))).toBe(false);
+  });
+});
+
+describe("443.343-C suggestion labels", () => {
+  it("maps rule / history / payee / document sources", () => {
+    expect(suggestionSourceLabel("banking_rule:abc")).toBe("Rule");
+    expect(suggestionSourceLabel("catch_all_rule")).toBe("Rule");
+    expect(suggestionSourceLabel("accepted_history")).toBe("History");
+    expect(suggestionSourceLabel("description_payee:zelle_to")).toBe("Payee");
+    expect(suggestionSourceLabel("fuzzy_vendor_match:x")).toBe("Payee");
+    expect(suggestionSourceLabel("relay_fill_load_driver")).toBe("Document");
+    expect(suggestionSourceLabel(null)).toBeNull();
+  });
+
+  it("maps confidence to High / Medium / Low", () => {
+    expect(suggestionConfidenceLabel("high")).toBe("High");
+    expect(suggestionConfidenceLabel("medium")).toBe("Medium");
+    expect(suggestionConfidenceLabel("low")).toBe("Low");
+    expect(suggestionConfidenceLabel(null)).toBeNull();
+  });
+
+  it("formats who+when on accepted lines", () => {
+    expect(
+      categorizedWhoWhenText(
+        tx({ categorized_at: "2026-10-24T15:00:00Z", categorized_by_user_name: "Jorge Munoz" }),
+      ),
+    ).toMatch(/^Accepted by Jorge Munoz · /);
+    expect(categorizedWhoWhenText(tx({ categorized_at: "2026-10-24T15:00:00Z" }))).toMatch(/^Accepted · /);
+    expect(categorizedWhoWhenText(tx({}))).toBeNull();
   });
 });
