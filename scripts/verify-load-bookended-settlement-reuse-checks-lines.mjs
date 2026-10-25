@@ -58,6 +58,19 @@ export function collectProblems(root = ROOT) {
     problems.push(`${SERVICE_FILE}: the anchor-liveness EXISTS and the settlement_lines EXISTS must be combined with OR, not AND -- either live signal alone must make a settlement reusable`);
   }
 
+  // 4. ENG-41 (443.328): the reuse query (openLoadBookendedSettlement) must hard-filter
+  // AND status = 'open' -- a cancelled or approved settlement must never be handed back as
+  // "reusable". P-0121 was cancelled but matched the widened reuse query before this check.
+  if (!/AND s\.status = 'open'/.test(src)) {
+    problems.push(`${SERVICE_FILE}: reuse query must filter AND s.status = 'open' — a cancelled or terminal-status settlement must never be reused (ENG-41)`);
+  }
+
+  // 5. ENG-41: the reuse query must also filter AND s.voided_at IS NULL -- a voided settlement
+  // is dead paperwork and must not absorb future loads.
+  if (!/AND s\.voided_at IS NULL/.test(src)) {
+    problems.push(`${SERVICE_FILE}: reuse query must filter AND s.voided_at IS NULL — a voided settlement must never be reused (ENG-41)`);
+  }
+
   return problems;
 }
 
@@ -76,6 +89,8 @@ if (process.argv.includes("--selftest")) {
   const path = await import("node:path");
 
   const GOOD_SERVICE = `
+    AND s.status = 'open'
+    AND s.voided_at IS NULL
     AND s.first_load_id IS NOT NULL
     AND (
       EXISTS (
@@ -127,6 +142,16 @@ if (process.argv.includes("--selftest")) {
     {
       name: "OR changed to AND (both signals required instead of either)",
       override: GOOD_SERVICE.replace(")\n      OR EXISTS (", ")\n      AND EXISTS ("),
+      expectProblems: 1,
+    },
+    {
+      name: "ENG-41: status=open filter removed (cancelled settlement reusable)",
+      override: GOOD_SERVICE.replace("    AND s.status = 'open'\n", ""),
+      expectProblems: 1,
+    },
+    {
+      name: "ENG-41: voided_at IS NULL filter removed (voided settlement reusable)",
+      override: GOOD_SERVICE.replace("    AND s.voided_at IS NULL\n", ""),
       expectProblems: 1,
     },
   ];
