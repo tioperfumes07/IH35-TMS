@@ -18,6 +18,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+export const ALLOW_OFFLINE_SKIP = "static half (recomputeSettlementHeader + refuse-zero-lines checks) runs without DB; live half skips when DATABASE_URL absent";
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-header-matches-lines";
 const CEILING = 0; // repaired to 0 on 2026-10-25
