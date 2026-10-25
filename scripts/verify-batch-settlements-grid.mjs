@@ -66,6 +66,22 @@ export function assertBatchSettlements(srcs) {
       !(/SettlementsSubNavWrapper/.test(srcs.shell) || /HoverDropdownNav/.test(srcs.shell) || /SETTLEMENTS_SUBNAV/.test(srcs.shell))) {
     fails.push("Settlements subnav must link Batch Settlements");
   }
+  // 443.280 — Batch page itself uses SettlementsSubNavWrapper + shared BoardSection (no layered border shell).
+  if (!/import \{ SettlementsSubNavWrapper \}/.test(srcs.page) || !/<SettlementsSubNavWrapper\b/.test(srcs.page)) {
+    fails.push("BatchSettlementsPage must mount SettlementsSubNavWrapper");
+  }
+  if (/\bimport\s*\{[^}]*NavyPageSubNav/.test(srcs.page) || /<NavyPageSubNav\b/.test(srcs.page)) {
+    fails.push("BatchSettlementsPage must not import/mount NavyPageSubNav");
+  }
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(srcs.page) || !/<BoardSection\b/.test(srcs.page)) {
+    fails.push("BatchSettlementsPage must wrap batch ParityTable in shared BoardSection");
+  }
+  if (!/batch-settlements-board-section/.test(srcs.page)) {
+    fails.push('BoardSection missing testId="batch-settlements-board-section"');
+  }
+  if (/<section className="space-y-3 rounded-sm border/.test(srcs.page)) {
+    fails.push("BatchSettlementsPage must not layer a bordered <section> around BoardSection");
+  }
   if (!/export async function postSettlementCreatorInClientTx/.test(srcs.creator)) {
     fails.push("canonical settlement creator must remain the post path");
   }
@@ -97,6 +113,18 @@ function main() {
     const unlinked = assertBatchSettlements({ ...srcs, subnav: srcs.subnav.replace('label: "Batch Settlements"', 'label: "Batch (gone)"') });
     if (unlinked === null || !unlinked.some((f) => f.includes("subnav must link Batch Settlements"))) {
       console.error(`${LABEL} FAIL: planted missing Batch Settlements subnav link not detected`);
+      process.exit(1);
+    }
+    // 443.280: drop BoardSection from the page → FAIL.
+    const noBoard = assertBatchSettlements({
+      ...srcs,
+      page: srcs.page
+        .replace(/from ["'].*components\/v3\/BoardSection["'];?\n?/, "")
+        .replace(/<BoardSection\b[\s\S]*?<\/BoardSection>/, "<ParityTable />")
+        .replace(/batch-settlements-board-section/g, "gone"),
+    });
+    if (!noBoard.some((f) => f.includes("shared BoardSection"))) {
+      console.error(`${LABEL} FAIL: planted missing BoardSection not detected`);
       process.exit(1);
     }
     console.log(`${LABEL} OK --selftest`);

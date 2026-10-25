@@ -6,18 +6,18 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Modal } from "../../components/Modal";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
+import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -286,22 +286,21 @@ export function CashAdvanceRequestsPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-      <PageHeader
-        title="Cash advance requests"
-        subtitle={
-          effectiveDriverId
-            ? "This driver's own pending requests"
-            : "Driver-submitted + office-created requests pending action"
-        }
-        actions={
-          companyId ? (
-            <Button onClick={() => setCreateOpen((v) => !v)}>{createOpen ? "Cancel" : "+ Create"}</Button>
-          ) : null
-        }
-      />
-
+    <SettlementsSubNavWrapper
+      title="Cash advance requests"
+      subtitle={
+        effectiveDriverId
+          ? "This driver's own pending requests"
+          : "Driver-submitted + office-created requests pending action"
+      }
+      crumbs={[{ label: "Cash advance requests", href: "/driver-finance/cash-advance-requests" }]}
+      createControl={
+        companyId ? (
+          <Button onClick={() => setCreateOpen((v) => !v)}>{createOpen ? "Cancel" : "+ Create"}</Button>
+        ) : null
+      }
+    >
+      <div className="space-y-4">
       {companyId ? (
         <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advance-requests-filters">
           <label className="text-xs text-[#4B5563]">
@@ -399,61 +398,62 @@ export function CashAdvanceRequestsPage() {
       ) : pendingQuery.isError ? (
         <p className="text-xs text-red-600">Could not load requests.</p>
       ) : (
-        // ACCT-F3532: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
-        <ParityTable<CashAdvanceRequestRow>
-          title="Cash advance requests — pending"
-          columns={columns}
-          rows={sorted}
-          rowKey={(row) => String(row.id ?? "")}
-          loading={pendingQuery.isLoading}
-          emptyText="No pending requests."
-          storageKey="cash-advance-requests"
-          exportFilename="cash-advance-requests"
-          rowClassName={(row) =>
-            requestIdFromUrl && String(row.id ?? "") === requestIdFromUrl
-              ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]"
-              : ""
-          }
-          rowActions={(row) => {
-            const id = String(row.id ?? "");
-            const above = Boolean(row.is_above_policy);
-            const waitingOwner =
-              Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
-            const isMaker = isMakerOfRequest(row, currentUserId);
-            return (
-              <div className="space-y-1 whitespace-nowrap">
-                <div className="flex flex-nowrap justify-end gap-2">
-                  <Button
-                    size="sm"
-                    disabled={above || isMaker || approveMut.isPending}
-                    onClick={() => approveMut.mutate(row)}
-                    className={busyId === id ? "opacity-70" : ""}
-                    title={isMaker ? "You submitted this request — a different approver is required (maker ≠ checker)." : undefined}
-                  >
-                    Approve
-                  </Button>
-                  {above && canEscalateToOwner ? (
+        // ACCT-F3532 + 443.280 — ParityTable in shared BoardSection (no PageHeader / NavyPageSubNav).
+        <BoardSection title="Cash advance requests — pending" testId="cash-advance-requests-board-section">
+          <ParityTable<CashAdvanceRequestRow>
+            columns={columns}
+            rows={sorted}
+            rowKey={(row) => String(row.id ?? "")}
+            loading={pendingQuery.isLoading}
+            emptyText="No pending requests."
+            storageKey="cash-advance-requests"
+            exportFilename="cash-advance-requests"
+            rowClassName={(row) =>
+              requestIdFromUrl && String(row.id ?? "") === requestIdFromUrl
+                ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]"
+                : ""
+            }
+            rowActions={(row) => {
+              const id = String(row.id ?? "");
+              const above = Boolean(row.is_above_policy);
+              const waitingOwner =
+                Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
+              const isMaker = isMakerOfRequest(row, currentUserId);
+              return (
+                <div className="space-y-1 whitespace-nowrap">
+                  <div className="flex flex-nowrap justify-end gap-2">
                     <Button
                       size="sm"
-                      variant="secondary"
-                      disabled={escalateMut.isPending}
-                      onClick={() => escalateMut.mutate(row)}
-                      className={escalateBusyId === id ? "opacity-70" : ""}
+                      disabled={above || isMaker || approveMut.isPending}
+                      onClick={() => approveMut.mutate(row)}
+                      className={busyId === id ? "opacity-70" : ""}
+                      title={isMaker ? "You submitted this request — a different approver is required (maker ≠ checker)." : undefined}
                     >
-                      {waitingOwner ? "Re-send Owner link" : "Escalate to Owner"}
+                      Approve
                     </Button>
+                    {above && canEscalateToOwner ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={escalateMut.isPending}
+                        onClick={() => escalateMut.mutate(row)}
+                        className={escalateBusyId === id ? "opacity-70" : ""}
+                      >
+                        {waitingOwner ? "Re-send Owner link" : "Escalate to Owner"}
+                      </Button>
+                    ) : null}
+                    <Button size="sm" variant="secondary" onClick={() => setDenyForId(id)}>
+                      Deny
+                    </Button>
+                  </div>
+                  {isMaker ? (
+                    <div className="text-right text-xs text-[#1F2A44]">You submitted this — needs a different approver.</div>
                   ) : null}
-                  <Button size="sm" variant="secondary" onClick={() => setDenyForId(id)}>
-                    Deny
-                  </Button>
                 </div>
-                {isMaker ? (
-                  <div className="text-right text-xs text-[#1F2A44]">You submitted this — needs a different approver.</div>
-                ) : null}
-              </div>
-            );
-          }}
-        />
+              );
+            }}
+          />
+        </BoardSection>
       )}
 
       {approveMut.isError ? (
@@ -462,33 +462,39 @@ export function CashAdvanceRequestsPage() {
       {denyMut.isError ? <p className="text-xs text-red-600">Deny failed.</p> : null}
       {escalateMut.isError ? <p className="text-xs text-red-600">Escalate failed.</p> : null}
 
-      {denyForId ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-lg">
-            <h2 className="text-xs font-semibold text-gray-900">Deny request</h2>
-            <p className="mt-1 text-xs text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
-            <textarea
-              className="mt-3 w-full rounded-sm border border-gray-200 p-2 text-xs"
-              rows={4}
-              value={denyReason}
-              onChange={(e) => setDenyReason(e.target.value)}
-              placeholder="Denial reason (required)"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              <Button size="sm" variant="secondary" onClick={() => setDenyForId(null)}>
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                onClick={() => void denyMut.mutate()}
-              >
-                Confirm deny
-              </Button>
-            </div>
-          </div>
+      <Modal
+        open={Boolean(denyForId)}
+        onClose={() => setDenyForId(null)}
+        title="Deny request"
+        size="sm"
+        modalKind="cash-advance-request-deny"
+      >
+        <p className="text-xs text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
+        <label className="mt-3 block text-xs font-medium text-gray-600">
+          Reason
+          <input
+            className="mt-1 h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            style={{ maxWidth: 260 }}
+            value={denyReason}
+            onChange={(e) => setDenyReason(e.target.value)}
+            placeholder="Denial reason (required)"
+            data-testid="cash-advance-request-deny-reason"
+          />
+        </label>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={() => setDenyForId(null)}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={denyReason.trim().length < 1 || denyMut.isPending}
+            onClick={() => void denyMut.mutate()}
+          >
+            Confirm deny
+          </Button>
         </div>
-      ) : null}
-    </div>
+      </Modal>
+      </div>
+    </SettlementsSubNavWrapper>
   );
 }

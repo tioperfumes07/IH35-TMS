@@ -10,6 +10,7 @@ import {
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -142,46 +143,48 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
           </button>
         </p>
       ) : (
-        <ParityTable<PresettlementSuggestionRow>
-          title="Pre-settlement suggestions"
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={listState.isLoading}
-          emptyText="No pre-settlement suggestions awaiting review."
-          storageKey="presettlement-suggestions"
-          exportFilename="presettlement-suggestions"
-          rowActions={(row) => (
-            <div className="flex flex-wrap gap-1">
-              {row.suggested_settlement_id ? (
+        // 443.280 — Needs Review tab: ParityTable in shared BoardSection.
+        <BoardSection title="Pre-settlement suggestions" testId="presettlement-suggestions-board-section">
+          <ParityTable<PresettlementSuggestionRow>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={listState.isLoading}
+            emptyText="No pre-settlement suggestions awaiting review."
+            storageKey="presettlement-suggestions"
+            exportFilename="presettlement-suggestions"
+            rowActions={(row) => (
+              <div className="flex flex-wrap gap-1">
+                {row.suggested_settlement_id ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={confirmMutation.isPending}
+                    onClick={() => confirmMutation.mutate({ id: row.id, action: "link_existing" })}
+                  >
+                    Link Suggested
+                  </Button>
+                ) : null}
                 <Button
                   size="sm"
                   variant="secondary"
                   disabled={confirmMutation.isPending}
-                  onClick={() => confirmMutation.mutate({ id: row.id, action: "link_existing" })}
+                  onClick={() => confirmMutation.mutate({ id: row.id, action: "create_new" })}
                 >
-                  Link Suggested
+                  Create New
                 </Button>
-              ) : null}
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={confirmMutation.isPending}
-                onClick={() => confirmMutation.mutate({ id: row.id, action: "create_new" })}
-              >
-                Create New
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={confirmMutation.isPending}
-                onClick={() => confirmMutation.mutate({ id: row.id, action: "reject" })}
-              >
-                Reject
-              </Button>
-            </div>
-          )}
-        />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={confirmMutation.isPending}
+                  onClick={() => confirmMutation.mutate({ id: row.id, action: "reject" })}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
+          />
+        </BoardSection>
       )}
     </div>
   );
