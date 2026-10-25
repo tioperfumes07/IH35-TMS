@@ -1,29 +1,14 @@
--- 202616270000: USMCA fuel-card-payable role bindings (443.277-B)
+-- 202616270000 — NO-OP (LEAD, 10-25-2026, LST-F443362).
 --
--- Root cause: resolveRoleAccountOptional('fuel_card_payable_dreamline') and
--- ('fuel_card_payable_wex') both return NULL for USMCA because catalogs.account_role_bindings
--- has no row for either role on operating_company_id 5c854333-…. The rolling ledger
--- (cash-flow.service.ts) skips the card-payable queries when the role is unbound, so the
--- $187,894.21 Dreamline balance and $29,156.88 WEX balance are invisible in the ledger.
+-- This file originally inserted 'fuel_card_payable_dreamline' / 'fuel_card_payable_wex' rows into the LEGACY
+-- catalogs.account_role_bindings table (443.277-B, row 79). It never applied: account_role_bindings_role_key_check
+-- does not list those keys, so Render pre-deploy failed ("violates check constraint") and every API deploy after
+-- cb731b1921 was blocked.
 --
--- Fix: insert the two missing role bindings, keyed to the accounts that already exist in
--- catalogs.accounts for USMCA (verified live 2026-10-25):
---   2510 "Dreamline Diesel Card Payable" → be1f70f8-fec4-463b-893d-dfc0acfe264d
---   2520 "England Logistics WEX Fuel Card Payable" → 807777a4-59ff-4441-981c-90e67e94e874
-
-INSERT INTO catalogs.account_role_bindings
-  (role_key, account_id, operating_company_id, description)
-VALUES
-  (
-    'fuel_card_payable_dreamline',
-    'be1f70f8-fec4-463b-893d-dfc0acfe264d',
-    '5c854333-6ea5-4faa-af31-67cb272fef80',
-    '443.277-B: USMCA Dreamline Diesel Card Payable (2510) — rolling ledger cash obligation'
-  ),
-  (
-    'fuel_card_payable_wex',
-    '807777a4-59ff-4441-981c-90e67e94e874',
-    '5c854333-6ea5-4faa-af31-67cb272fef80',
-    '443.277-B: USMCA England Logistics WEX Fuel Card Payable (2520) — rolling ledger cash obligation'
-  )
-ON CONFLICT DO NOTHING;
+-- The premise was also wrong. The resolver (accounting/coa-roles/resolver.service.ts resolveMappedRoleAccount) reads
+-- the PRIMARY table accounting.chart_of_accounts_roles first, and USMCA already binds both roles there, active, to the
+-- exact accounts this file targeted (measured live 10-25-2026):
+--   fuel_card_payable_dreamline -> be1f70f8-fec4-463b-893d-dfc0acfe264d (2510)  is_active = true
+--   fuel_card_payable_wex       -> 807777a4-59ff-4441-981c-90e67e94e874 (2520)  is_active = true
+-- Nothing to write. The number stays (claimed on main) so the migration chain has no gap.
+SELECT 1;
