@@ -297,7 +297,7 @@ export function UploadModal({
             <DatePicker
               value={documentDate}
               onChange={(next) => setDocumentDate(next)}
-              className="h-9 w-full"
+              className="h-10 w-full"
             />
           </div>
           <div className="space-y-1">
@@ -307,7 +307,7 @@ export function UploadModal({
             <DatePicker
               value={expirationDate}
               onChange={setExpirationDate}
-              className="h-9 w-full"
+              className="h-10 w-full"
             />
           </div>
         </div>

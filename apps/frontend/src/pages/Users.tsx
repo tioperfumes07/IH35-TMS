@@ -40,6 +40,7 @@ import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-p
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { formatDateTimeUS } from "../lib/formatDate";
 import { entityLabel } from "../lib/entity-label";
+import { formatPersonName } from "../lib/formatPersonName";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
@@ -766,7 +767,7 @@ export function UsersPage() {
                       }`}
                       onClick={() => setSelectedUserId(user.id)}
                     >
-                      <span className="font-semibold text-[#0F1219]">{user.name || "User"}</span>
+                      <span className="font-semibold text-[#0F1219]">{formatPersonName(user.name ?? user.email ?? "User")}</span>
                       <span className="mt-0.5 block text-center text-[#6B7280]">
                         {ROLE_LABEL[user.role as UserRole] ?? user.role} · {userStatus(user)}
                       </span>
@@ -795,7 +796,7 @@ export function UsersPage() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
                   <dt className="text-[#6B7280]">Name</dt>
                   <dd className="text-center font-medium text-[#0F1219]">
-                    <EntityLink kind="user" id={selected.id} label={selected.name || "User"} />
+                    <EntityLink kind="user" id={selected.id} label={entityLabel(selected.name ?? selected.email, selected.id, "User")} />
                   </dd>
                   <dt className="text-[#6B7280]">Email</dt>
                   <dd className="text-center text-[#0F1219]">{selected.email ?? "—"}</dd>
@@ -831,7 +832,7 @@ export function UsersPage() {
               onChange={(event) => setInviteName(event.target.value)}
               required
               type="text"
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
+              className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
             />
           </div>
           <div>
@@ -841,7 +842,7 @@ export function UsersPage() {
               onChange={(event) => setInviteEmail(event.target.value)}
               required
               type="email"
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
+              className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
             />
           </div>
           <div>
@@ -884,7 +885,7 @@ export function UsersPage() {
                 onChange={(event) => setInviteInitialPassword(event.target.value)}
                 type="password"
                 autoComplete="new-password"
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
+                className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (

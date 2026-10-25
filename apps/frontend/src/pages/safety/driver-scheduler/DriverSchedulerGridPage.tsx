@@ -472,7 +472,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-start-date"
-                  className="h-9"
+                  className="h-10"
                   value={tempCoverForm.startDate}
                   onChange={(startDate) => setTempCoverForm((f) => ({ ...f, startDate, endDate: f.endDate < startDate ? startDate : f.endDate }))}
                 />
@@ -483,7 +483,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-end-date"
-                  className="h-9"
+                  className="h-10"
                   value={tempCoverForm.endDate}
                   min={tempCoverForm.startDate}
                   onChange={(endDate) => setTempCoverForm((f) => ({ ...f, endDate }))}

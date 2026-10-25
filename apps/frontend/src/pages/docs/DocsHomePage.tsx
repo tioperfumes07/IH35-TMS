@@ -136,7 +136,7 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
                 key={`${link.entity_type}:${link.entity_id}`}
                 kind={kind}
                 id={link.entity_id}
-                label={String(rawLabel).trim()}
+                label={entityLabel(rawLabel, link.entity_id, noun)}
                 className="truncate"
                 data-testid="docs-entity-link"
               />

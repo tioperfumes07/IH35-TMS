@@ -405,6 +405,7 @@ export function SettlementStatementWorkflowPage() {
     id: string;
     lineType: string;
     description: string;
+    loadId: string | null;
     loadNumber: string;
     amountCents: number;
   };
@@ -414,6 +415,7 @@ export function SettlementStatementWorkflowPage() {
       id: String(line.id),
       lineType: String(line.line_type ?? "—").replace(/_/g, " "),
       description: String(line.description ?? "—"),
+      loadId: typeof (line as Record<string, unknown>).load_id === "string" ? String((line as Record<string, unknown>).load_id) : null,
       loadNumber: typeof line.load_number === "string" ? line.load_number : "—",
       amountCents: Math.round(Number(line.amount ?? 0) * 100),
     }));
@@ -433,7 +435,7 @@ export function SettlementStatementWorkflowPage() {
   const lineSummaryColumns = useMemo((): ParityColumn<LineSummaryRow>[] => {
     return [
       { key: "lineType", label: "Type", sortable: true, render: (row) => row.lineType },
-      { key: "loadNumber", label: "Load", sortable: true, render: (row) => row.loadNumber },
+      { key: "loadNumber", label: "Load", sortable: true, render: (row) => row.loadId ? <EntityLink kind="load" id={row.loadId} label={row.loadNumber} /> : <>{row.loadNumber}</> },
       {
         key: "description",
         label: "Description",
