@@ -1590,6 +1590,17 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs",
     ],
   ],
+  // ENG-11 G10 (row 249): one active linehaul per load. Fires on the charge-line writers.
+  [
+    "verify-one-active-linehaul-per-load",
+    [
+      "apps/backend/src/dispatch/update-load.service.ts",
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
+      "scripts/verify-one-active-linehaul-per-load.mjs",
+      "scripts/verify-steps/18799-verify-one-active-linehaul-per-load.mjs",
+    ],
+  ],
   // ENG-03 (443.322): every escrow_ledger row must carry a load_id. Fires on any writer that
   // INSERTs into driver_finance.escrow_ledger (close, unwind, separation, forfeit paths).
   [
