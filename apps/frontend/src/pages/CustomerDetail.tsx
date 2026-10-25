@@ -103,6 +103,7 @@ import { useListState } from "../components/list-state";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../components/ListErrorState";
 import { InfoPopover } from "../components/shared/InfoPopover";
+import { formatCustomerProfitabilityFlagLabel } from "../lib/formatCustomerProfitabilityFlagLabel";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -2032,7 +2033,7 @@ export function CustomerDetailPage() {
                   <div className="mt-3 flex flex-wrap gap-1">
                     {(customerPnlRow.flags ?? []).map((f) => (
                       <span key={f} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
-                        {f}
+                        {formatCustomerProfitabilityFlagLabel(f)}
                       </span>
                     ))}
                   </div>
