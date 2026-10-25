@@ -221,11 +221,31 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — planted PageHeader on BillsPage fails as required`);
 }
 
+/** Companion: Settlements home chart/deductions must not hide panel-stack chrome in a child file. */
+function assertSettlementsHomeNoPanelExtract() {
+  const rel = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) {
+    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels missing (${rel})`);
+    process.exit(1);
+  }
+  const src = fs.readFileSync(abs, "utf8");
+  // Import or JSX only — comments may mention the forbidden name.
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(src) || /<\s*V3Panel[\s/>]/.test(src)) {
+    console.error(
+      `${LABEL} FAIL — SettlementsHomeBoardPanels still mounts V3Panel (child extract theater; unwrap to bordered sections)`,
+    );
+    process.exit(1);
+  }
+}
+
 function main() {
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
   }
+
+  assertSettlementsHomeNoPanelExtract();
 
   const results = measureAll();
   const failing = results.filter((r) => !r.ok);

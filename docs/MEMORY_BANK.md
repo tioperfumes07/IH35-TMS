@@ -410,9 +410,14 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Escrow Register design N2:** first timeline row is **Opening balance (historical)** =
   `held − signed(activityNet)` so running balance ties to held. Source label locked; Type `Opening`.
 - **Settlement statement N3:** linked records already expose `${n} fills →` and `Bank line →`.
+- **Settlements home chart/deductions/week-of:** bordered `BoardSection` in
+  `SettlementsHomeBoardPanels.tsx` — **no** `V3Panel` child extract. Guard
+  `assertSettlementsHomeNoPanelExtract` in `verify-v3-board-grammar-every-surface.mjs`.
 - **VendorBillCreate:** intentional session-shell roster (orders SHELL-ONLY) — form stays in ParityDrawer.
 - **Still outside this ratchet (not half of the 23):** Fuel Cards / Integrity / Relay Unmatched /
   Relay Wallet — still 443.250 `V3Panel` chrome; other fuel guards require those wraps.
+  Fuel Planner Settings/Questions/Savings/Compliance child panels may still use `V3Panel`
+  (443.250 form chrome). Statement document body may keep section panels (document, not list board).
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

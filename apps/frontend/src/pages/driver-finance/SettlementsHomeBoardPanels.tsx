@@ -1,8 +1,7 @@
-import type { CSSProperties, Dispatch, SetStateAction } from "react";
+import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { V3 } from "../../design/v3-tokens";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
@@ -41,7 +40,76 @@ export type SettlementsHomeBoardPanelsProps = {
   kpiBaseError: boolean;
 };
 
-/** ROUND 443.326 — V3 home board panels extracted so SettlementsPage.tsx passes guard (no V3Panel in parent). */
+/** ROUND 443.326 — bordered board sections (no V3Panel; DoD forbids panel-stack chrome on Settlements home). */
+function BoardSection({
+  title,
+  subtitle,
+  onViewAll,
+  viewAllLabel = "View all →",
+  headerRight,
+  children,
+  testId,
+}: {
+  title: string;
+  subtitle?: string;
+  onViewAll?: () => void;
+  viewAllLabel?: string;
+  headerRight?: ReactNode;
+  children: ReactNode;
+  testId?: string;
+}) {
+  const shell: CSSProperties = {
+    background: V3.surface,
+    border: `1px solid ${V3.border}`,
+    borderRadius: 2,
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 0,
+    fontFamily: V3.font,
+  };
+  return (
+    <section style={shell} data-testid={testId}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 14px",
+          borderBottom: `1px solid ${V3.borderSoft}`,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: V3.ink }}>{title}</span>
+          {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
+        </div>
+        <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+          {headerRight}
+          {onViewAll ? (
+            <button
+              type="button"
+              onClick={onViewAll}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: V3.link,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: V3.font,
+              }}
+            >
+              {viewAllLabel}
+            </button>
+          ) : null}
+        </span>
+      </div>
+      <div style={{ minWidth: 0 }}>{children}</div>
+    </section>
+  );
+}
+
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {
     navigate,
@@ -69,7 +137,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
           style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
           data-testid="settlements-home-v3-panels"
         >
-          <V3Panel
+          <BoardSection
             title="Net driver pay by week"
             subtitle={`${weekBuckets.length} weeks · not cancelled · not sample`}
             onViewAll={() => navigate("/driver-finance/settlements?tab=payments")}
@@ -132,13 +200,13 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 @keyframes setl-v3-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
                 .setl-v3-grow { transform-box: fill-box; transform-origin: bottom; animation: setl-v3-grow .9s cubic-bezier(.2,.8,.2,1) both; }
               `}</style>
-              <div style={{ fontSize: 11, color: V3.muted, marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: V3.muted, marginTop: 4 }}>
                 Bar → that week&apos;s settlements (period end in week). Max {formatSettlementsUsd(weekChartMax)}.
               </div>
             </div>
-          </V3Panel>
+          </BoardSection>
 
-          <V3Panel
+          <BoardSection
             title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
             subtitle="Split by type from settlement deduction lines"
             onViewAll={() => navigate("/driver-finance/deductions")}
@@ -194,17 +262,17 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   </div>
                 );
               })}
-              <div style={{ fontSize: 11, color: V3.muted, marginTop: 8 }}>
+              <div style={{ fontSize: 12, color: V3.muted, marginTop: 8 }}>
                 Split by type comes from settlement deduction lines.
                 {deductionsListError ? " Deduction list failed to load — amounts show as —." : ""}
               </div>
             </div>
-          </V3Panel>
+          </BoardSection>
         </div>
       ) : null}
 
       {!kpiBaseError && thisWeekBucket ? (
-        <V3Panel
+        <BoardSection
           title={`Week of ${formatWeekOfTitle(new Date(thisWeekBucket.weekStartMs))}`}
           subtitle={`This week · ${weekOfRows.length} with pay`}
           onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
@@ -311,7 +379,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               <span />
             </div>
           </div>
-        </V3Panel>
+        </BoardSection>
       ) : null}
     </>
   );
