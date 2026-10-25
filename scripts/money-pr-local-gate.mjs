@@ -1034,6 +1034,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-banking-home-preview-parity",
     ["apps/frontend/src/pages/banking/", "apps/frontend/src/pages/factoring/", "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", "scripts/verify-banking-home-preview-parity.mjs"],
   ],
+  // ROUND 443.280 — Settlements Home board (shared BoardSection + Status Paid/Open + SettlementRefCell).
+  [
+    "verify-settlements-home-board",
+    ["apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx", "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "scripts/verify-settlements-home-board.mjs"],
+  ],
   // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
   [
     "verify-no-opco-filter-on-tables-without-it",

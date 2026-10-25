@@ -615,6 +615,7 @@ export function SettlementsPage() {
       {activeTab === "settlements" ? (
         <SettlementsHomeBoardPanels
           navigate={navigate}
+          companyId={companyId}
           weekBuckets={weekBuckets}
           weekChartGrain={weekChartGrain}
           setWeekChartGrain={setWeekChartGrain}

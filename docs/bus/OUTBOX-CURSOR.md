@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 44 Settlements Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-home-board` · tip after #27660 Factoring
+- **DELTA:** SettlementsHomeBoardPanels → shared BoardSection; Week-of Status ● Paid/Open (board); chart footer board grammar; SettlementRefCell beside loads; Export control; FactoringHome grammar surface chromeOnly (tip unblock after 443.280 unlayer). verify-settlements-home-board + money-pr-local-gate wired.
+- **GUARD:** verify-settlements-home-board --selftest 4/4 + live PASS · verify-v3-board-grammar-every-surface 0/44
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Open/Closed/Close/Company/Escrow + Fuel boards
+- **Files Modified:** SettlementsHomeBoardPanels.tsx · SettlementsPage.tsx · verify-settlements-home-board.mjs · verify-v3-board-grammar-every-surface.mjs · money-pr-local-gate.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 39 Factoring Home FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-factoring-home-board` · tip `2c7957a138` (= #27657 Banking Home)

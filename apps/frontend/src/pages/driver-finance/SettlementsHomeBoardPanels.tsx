@@ -1,6 +1,12 @@
-import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from "react";
+/**
+ * ROUND 443.326 / 443.280 — Settlements Home board panels (docs/design/v3/Settlements).
+ * Chart + deductions side-by-side, then Week-of roster. Shared BoardSection (not local extract).
+ */
+import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
@@ -11,7 +17,6 @@ import {
   settlementPaymentLabel,
   settlementsDerivedReimb,
   settlementsWeekLoadsLabel,
-  settlementsWeekOfStatusLabel,
   type SettlementsWeekBucket,
 } from "./settlementsHomeBoardHelpers";
 
@@ -23,6 +28,7 @@ type DeductionSplit = {
 
 export type SettlementsHomeBoardPanelsProps = {
   navigate: NavigateFunction;
+  companyId: string;
   weekBuckets: SettlementsWeekBucket[];
   weekChartGrain: "net" | "gross" | "deductions";
   setWeekChartGrain: Dispatch<SetStateAction<"net" | "gross" | "deductions">>;
@@ -40,79 +46,21 @@ export type SettlementsHomeBoardPanelsProps = {
   kpiBaseError: boolean;
 };
 
-/** ROUND 443.326 — bordered board sections (no V3Panel; DoD forbids panel-stack chrome on Settlements home). */
-function BoardSection({
-  title,
-  subtitle,
-  onViewAll,
-  viewAllLabel = "View all →",
-  headerRight,
-  children,
-  testId,
-}: {
-  title: string;
-  subtitle?: string;
-  onViewAll?: () => void;
-  viewAllLabel?: string;
-  headerRight?: ReactNode;
-  children: ReactNode;
-  testId?: string;
-}) {
-  const shell: CSSProperties = {
-    background: V3.surface,
-    border: `1px solid ${V3.border}`,
-    borderRadius: 2,
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    fontFamily: V3.font,
-  };
-  return (
-    <section style={shell} data-testid={testId}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 14px",
-          borderBottom: `1px solid ${V3.borderSoft}`,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: V3.ink }}>{title}</span>
-          {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
-        </div>
-        <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-          {headerRight}
-          {onViewAll ? (
-            <button
-              type="button"
-              onClick={onViewAll}
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: V3.link,
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                fontFamily: V3.font,
-              }}
-            >
-              {viewAllLabel}
-            </button>
-          ) : null}
-        </span>
-      </div>
-      <div style={{ minWidth: 0 }}>{children}</div>
-    </section>
-  );
+/** Board Status column: ● Paid (green) / ● Open (blue) — payment-facing, not tour Closed. */
+function boardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held"; color: string } {
+  const pay = settlementPaymentLabel(s);
+  if (pay === "Paid") return { label: "Paid", color: V3.green };
+  if (pay === "Held") return { label: "Held", color: V3.red };
+  return { label: "Open", color: V3.link };
 }
+
+const money = (n: number) =>
+  n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {
     navigate,
+    companyId,
     weekBuckets,
     weekChartGrain,
     setWeekChartGrain,
@@ -131,15 +79,15 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
   } = props;
 
   return (
-    <>
+    <div className="space-y-3" data-testid="settlements-home-board-panels">
       {weekBuckets.length > 0 ? (
         <div
-          style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
+          className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
+          style={{ alignItems: "start" }}
           data-testid="settlements-home-v3-panels"
         >
           <BoardSection
             title="Net driver pay by week"
-            subtitle={`${weekBuckets.length} weeks · not cancelled · not sample`}
             onViewAll={() => navigate("/driver-finance/settlements?tab=payments")}
             headerRight={
               <V3Segmented
@@ -153,6 +101,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 testId="settlements-home-week-grain"
               />
             }
+            footer={`${weekBuckets.length} weeks, not cancelled, not sample. Bar → that week's settlements.`}
             testId="settlements-home-week-chart-panel"
           >
             <div style={{ padding: "12px 14px 8px" }}>
@@ -177,6 +126,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
                   const x = i * 48 + 12;
                   const y = 122 - h;
+                  const isLatest = i === weekBuckets.length - 1;
                   return (
                     <g key={w.weekStartMs}>
                       <rect
@@ -186,7 +136,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                         width={24}
                         height={h}
                         rx={1}
-                        fill={value < 0 ? V3.red : V3.data}
+                        fill={value < 0 ? V3.red : isLatest ? V3.shell : V3.data}
                         style={{ transformOrigin: `${x + 12}px 122px` } as CSSProperties}
                       />
                       <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: V3.muted, fontFamily: V3.font }}>
@@ -200,16 +150,17 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 @keyframes setl-v3-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
                 .setl-v3-grow { transform-box: fill-box; transform-origin: bottom; animation: setl-v3-grow .9s cubic-bezier(.2,.8,.2,1) both; }
               `}</style>
-              <div style={{ fontSize: 12, color: V3.muted, marginTop: 4 }}>
-                Bar → that week&apos;s settlements (period end in week). Max {formatSettlementsUsd(weekChartMax)}.
-              </div>
             </div>
           </BoardSection>
 
           <BoardSection
             title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
-            subtitle="Split by type from settlement deduction lines"
             onViewAll={() => navigate("/driver-finance/deductions")}
+            footer={
+              deductionsListError
+                ? "Split by type comes from settlement deduction lines. Deduction list failed to load — amounts show as —."
+                : "Split by type comes from settlement deduction lines."
+            }
             testId="settlements-home-deductions-panel"
           >
             <div style={{ padding: "10px 14px" }} data-testid="settlements-home-deductions-body">
@@ -262,10 +213,6 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   </div>
                 );
               })}
-              <div style={{ fontSize: 12, color: V3.muted, marginTop: 8 }}>
-                Split by type comes from settlement deduction lines.
-                {deductionsListError ? " Deduction list failed to load — amounts show as —." : ""}
-              </div>
             </div>
           </BoardSection>
         </div>
@@ -274,26 +221,45 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
       {!kpiBaseError && thisWeekBucket ? (
         <BoardSection
           title={`Week of ${formatWeekOfTitle(new Date(thisWeekBucket.weekStartMs))}`}
-          subtitle={`This week · ${weekOfRows.length} with pay`}
           onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
           headerRight={
-            <V3Segmented
-              value={weekOfPill}
-              onChange={setWeekOfPill}
-              options={[
-                { id: "open", label: `Pre-Settlement (Open) ${weekOfOpenCount}` },
-                { id: "closed", label: `Settlement (Closed) ${weekOfClosedCount}` },
-              ]}
-              testId="settlements-home-week-of-pill"
-            />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <V3Segmented
+                value={weekOfPill}
+                onChange={setWeekOfPill}
+                options={[
+                  { id: "open", label: `Pre-Settlement (Open) ${weekOfOpenCount}` },
+                  { id: "closed", label: `Settlement (Closed) ${weekOfClosedCount}` },
+                ]}
+                testId="settlements-home-week-of-pill"
+              />
+              <button
+                type="button"
+                data-testid="settlements-home-week-of-export"
+                onClick={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}&export=1`)}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: V3.link,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  fontFamily: V3.font,
+                }}
+              >
+                Export
+              </button>
+            </span>
           }
+          footer={`This week · ${weekOfRows.length} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
           testId="settlements-home-week-of-panel"
         >
           <div style={{ padding: "0 0 8px" }} data-testid="settlements-home-week-of-body">
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
+                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.8fr",
                 gap: 8,
                 padding: "8px 14px",
                 borderBottom: `1px solid ${V3.borderSoft}`,
@@ -307,13 +273,12 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               }}
             >
               <span style={{ textAlign: "left" }}>Driver</span>
-              <span>Loads</span>
+              <span style={{ textAlign: "left" }}>Loads</span>
               <span>Gross</span>
               <span>Deductions</span>
               <span>Reimb.</span>
               <span>Net</span>
-              <span>Settlement</span>
-              <span>Payment</span>
+              <span>Status</span>
             </div>
             {weekOfRows.length === 0 ? (
               <div style={{ padding: "14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
@@ -321,14 +286,14 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               </div>
             ) : (
               weekOfRows.map((s) => {
-                const status = settlementsWeekOfStatusLabel(s);
+                const status = boardStatus(s);
                 return (
                   <div
                     key={s.id}
                     data-testid={`settlements-home-week-of-row-${s.id}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
+                      gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.8fr",
                       gap: 8,
                       padding: "8px 14px",
                       borderBottom: `1px solid ${V3.borderSoft}`,
@@ -343,44 +308,49 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                     <span style={{ textAlign: "left" }}>
                       <EntityLink kind="driver" id={s.driver_id} label={entityLabel(s.driver_full_name || "Driver", s.driver_id, "Driver")} />
                     </span>
-                    <span>{settlementsWeekLoadsLabel(s)}</span>
-                    <span>{Number(s.gross_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{Number(s.deductions_total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{settlementsDerivedReimb(s).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{Number(s.net_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span style={{ color: status === "Cancelled" ? V3.red : status === "Closed" ? V3.green : status === "Held" ? V3.red : V3.ink }}>{status}</span>
-                    <span style={{ color: settlementPaymentLabel(s) === "Paid" ? V3.green : settlementPaymentLabel(s) === "Held" ? V3.red : V3.ink }}>{settlementPaymentLabel(s)}</span>
+                    <span style={{ textAlign: "left", display: "inline-flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                      <span>{settlementsWeekLoadsLabel(s)}</span>
+                      {s.load_links?.[0]?.id ? (
+                        <SettlementRefCell loadId={s.load_links[0].id} operatingCompanyId={companyId} />
+                      ) : (
+                        <EntityLink kind="settlement" id={s.id} label="PENDING" />
+                      )}
+                    </span>
+                    <span>{money(Number(s.gross_pay ?? 0))}</span>
+                    <span>{money(Number(s.deductions_total ?? 0))}</span>
+                    <span>{money(settlementsDerivedReimb(s))}</span>
+                    <span style={{ fontWeight: 700 }}>{money(Number(s.net_pay ?? 0))}</span>
+                    <span
+                      data-testid={`settlements-home-week-of-status-${s.id}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        fontWeight: 600,
+                        color: status.color,
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          background: status.color,
+                          display: "inline-block",
+                          flexShrink: 0,
+                        }}
+                      />
+                      {status.label}
+                    </span>
                   </div>
                 );
               })
             )}
-            <div
-              data-testid="settlements-home-week-of-totals"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
-                gap: 8,
-                padding: "10px 14px 4px",
-                fontSize: 12,
-                fontWeight: 700,
-                color: V3.ink,
-                fontFamily: V3.font,
-                fontVariantNumeric: "tabular-nums",
-                textAlign: "center",
-              }}
-            >
-              <span style={{ textAlign: "left" }}>This week · {weekOfRows.length} with pay</span>
-              <span />
-              <span>{weekOfTotals.gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.ded.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.reimb.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span />
-              <span />
-            </div>
           </div>
         </BoardSection>
       ) : null}
-    </>
+    </div>
   );
 }

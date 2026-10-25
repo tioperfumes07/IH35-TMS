@@ -72,9 +72,11 @@ const SURFACES = /** @type {Surface[]} */ ([
     forbid: ["PageHeader", "NavyPageSubNav"],
   },
   {
+    // 443.280 — KPIs live on FactoringHomeBoard (Account summary); shell is chrome-only.
     id: "FactoringHome",
     file: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav", "KpiPanel", "CashFlowPanel", "CollapsedListFilters"],
+    forbid: ["PageHeader", "NavyPageSubNav", "CollapsedListFilters"],
+    chromeOnly: true,
   },
   {
     id: "FactoringBoardChrome",
@@ -350,6 +352,15 @@ function assertSettlementsHomeNoPanelExtract() {
     console.error(
       `${LABEL} FAIL — SettlementsHomeBoardPanels still mounts V3Panel (child extract theater; unwrap to bordered sections)`,
     );
+    process.exit(1);
+  }
+  // 443.280 — shared BoardSection only (local function BoardSection was LAYERED extract theater).
+  if (/function BoardSection\(/.test(src)) {
+    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels defines local BoardSection; import shared components/v3/BoardSection`);
+    process.exit(1);
+  }
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(src)) {
+    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels must import shared BoardSection`);
     process.exit(1);
   }
 }
