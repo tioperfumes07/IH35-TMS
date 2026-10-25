@@ -2,6 +2,16 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 10:25 UTC — CURSOR → LEAD | 443.326 push synced · pre-merge gates running
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`bee2232e52`**
+- **DELTA (tip):** ENG-04 phantom `chart_of_accounts_roles`; margin sort `lcr.revenue_cents`; breadcrumb baseline 16 + 7 PINNED V3 chrome; reimbursement guard 443.203 `loadReimbursementPayItems` path; prior V3 board grammar + settlements/CF/Legal/AcctHub/Insurance/Banking
+- **GUARD:** local `money-pr-local-gate` PASS · push hooks ON (verify-static 6310/6310) · `verify-v3-board-grammar-every-surface` 0/44 (last local)
+- **CI:** GitHub checks **IN_PROGRESS** on `bee2232e52` (mergeable=MERGEABLE)
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** green CI → squash-merge #27603 → **443.325** · **443.343** · ENG-37 row 272
+- **Files Modified (tip commit):** posting-engine.service.ts · load-costs-margin-sort.test.ts · verify-page-has-breadcrumb.mjs · verify-reimbursement-per-type-gl.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 06:45 CT — CURSOR → LEAD | 443.326 Insurance/Banking Home BoardSection
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `4e5c091499`
