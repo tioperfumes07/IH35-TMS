@@ -1951,6 +1951,26 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-final-load-close-posts.mjs",
     ],
   ],
+  // CC-2 443.288-D step 18683 — no expense child on a different load than its parent (ceiling 0).
+  [
+    "verify-expense-child-follows-parent",
+    [
+      "apps/backend/src/accounting/expense-family-align-repair.service.ts",
+      "apps/backend/src/accounting/reclassify/reclassify.service.ts",
+      "apps/backend/src/accounting/expense-load-confirmation.service.ts",
+      "scripts/verify-expense-child-follows-parent.mjs",
+    ],
+  ],
+  // CC-2 443.304 step 18687 row 77 — factored invoice with a collection payment must have amount_open_cents=0 (no open dispute).
+  [
+    "verify-factoring-collection-closes-invoice",
+    [
+      "apps/backend/src/factoring/collection-apply.service.ts",
+      "apps/backend/src/accounting/payment-writer.service.ts",
+      "apps/backend/src/accounting/payment-applications.routes.ts",
+      "scripts/verify-factoring-collection-closes-invoice.mjs",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
