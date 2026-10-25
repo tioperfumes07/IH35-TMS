@@ -23,6 +23,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCentsTable, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { V3 } from "../../design/v3-tokens";
+import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
 
 export type ExpenseLoadConfirmationsBoardProps = {
   operatingCompanyId: string;
@@ -58,7 +59,10 @@ export function ExpenseLoadConfirmationsBoard({
   const qc = useQueryClient();
   const { pushToast } = useToast();
 
-  const [status, setStatus] = useState<ExpenseLoadConfirmationStatus | "all">(defaultStatus);
+  // Multi-select law: status is a list; empty = all statuses.
+  const [status, setStatus] = useState<ExpenseLoadConfirmationStatus[]>(
+    defaultStatus === "all" ? [] : [defaultStatus],
+  );
   const [driverId, setDriverId] = useState<string | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
   const [loadId, setLoadId] = useState<string | null>(null);
@@ -228,19 +232,18 @@ export function ExpenseLoadConfirmationsBoard({
         marginBottom: 10,
       }}
     >
-      <label className="block text-xs text-[#4B5563]">
-        Status
-        <select
-          className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as ExpenseLoadConfirmationStatus | "all")}
+      <div className="block text-xs text-[#4B5563]">
+        <MultiSelectDropdown
+          label="Status"
+          options={[
+            { value: "proposed", label: "Proposed" },
+            { value: "confirmed", label: "Confirmed" },
+          ]}
+          selected={status}
+          onChange={(next) => setStatus(next as ExpenseLoadConfirmationStatus[])}
           data-testid="expense-load-confirmations-status"
-        >
-          <option value="proposed">Proposed</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="all">All</option>
-        </select>
-      </label>
+        />
+      </div>
       <label className="block text-xs text-[#4B5563]">
         Driver
         <div className="mt-1">
@@ -401,7 +404,7 @@ export function ExpenseLoadConfirmationsBoard({
       />
       <p className="text-xs text-[#6B7280]" data-testid="expense-load-confirmations-count">
         {proposedCount} proposed · {rows.length} shown
-        {status === "proposed" && rows.length === 0 && !queueQ.isLoading
+        {status.length === 1 && status[0] === "proposed" && rows.length === 0 && !queueQ.isLoading
           ? " — empty means confirmed"
           : ""}
       </p>

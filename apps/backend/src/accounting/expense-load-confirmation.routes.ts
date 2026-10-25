@@ -20,7 +20,13 @@ const uuidList = z.string().optional().transform((v, ctx) => {
 });
 const listQuery = z.object({
   operating_company_id: z.string().uuid(),
-  status: z.enum(["proposed", "confirmed", "all"]).default("proposed"),
+  // Multi-select law: status is one value or a comma list ("proposed,confirmed"); "all" or empty = no status filter.
+  status: z.string().default("proposed").transform((v, ctx) => {
+    const parts = v.split(",").map((x) => x.trim()).filter(Boolean);
+    if (parts.length === 0 || parts.includes("all")) return [] as Array<"proposed" | "confirmed">;
+    if (parts.some((x) => x !== "proposed" && x !== "confirmed")) { ctx.addIssue({ code: "custom", message: "status must be proposed, confirmed or all" }); return z.NEVER; }
+    return [...new Set(parts)] as Array<"proposed" | "confirmed">;
+  }),
   driver_ids: uuidList, unit_ids: uuidList, load_ids: uuidList, vendor_ids: uuidList, settlement_ids: uuidList,
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -44,7 +50,7 @@ export async function registerExpenseLoadConfirmationRoutes(app: FastifyInstance
       const where: string[] = ["e.operating_company_id = $1::uuid", "e.voided_at IS NULL", "e.load_id IS NOT NULL", "e.parent_expense_id IS NULL"];
       const values: unknown[] = [f.operating_company_id];
       const add = (sql: string, v: unknown) => { values.push(v); where.push(sql.replace("$?", `$${values.length}`)); };
-      if (f.status !== "all") add("e.load_confirmation = $?", f.status);
+      if (f.status.length > 0) add("e.load_confirmation = ANY($?::text[])", f.status);
       if (f.driver_ids?.length) add("COALESCE(e.driver_uuid, l.assigned_primary_driver_id) = ANY($?::uuid[])", f.driver_ids);
       if (f.unit_ids?.length) add("COALESCE(e.unit_id, l.assigned_unit_id) = ANY($?::uuid[])", f.unit_ids);
       if (f.load_ids?.length) add("e.load_id = ANY($?::uuid[])", f.load_ids);
@@ -84,7 +90,7 @@ export async function registerExpenseLoadConfirmationRoutes(app: FastifyInstance
           LIMIT $${values.length - 1} OFFSET $${values.length}`,
         values,
       )).rows;
-      return { status: f.status, total_count: total, limit: f.limit, offset: f.offset, rows };
+      return { status: f.status.length > 0 ? f.status.join(",") : "all", total_count: total, limit: f.limit, offset: f.offset, rows };
     });
   });
 

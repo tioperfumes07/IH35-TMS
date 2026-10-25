@@ -1,4 +1,5 @@
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
+import { MultiSelectDropdown } from "./forms/MultiSelectDropdown";
 import { entityLabel } from "../lib/entity-label";
 import { userFacingApiError } from "../lib/api-error-message";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -212,11 +213,11 @@ export function FleetTable({
   const [inactivateConfirmOpen, setInactivateConfirmOpen] = useState(false);
 
   // List-filter dropdowns (separate from the bulk-EDIT dropdowns of the same name).
-  const [statusFilter, setStatusFilter] = useState("");
-  const [typeListFilter, setTypeListFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [typeListFilter, setTypeListFilter] = useState<string[]>([]);
   const staged = useStagedListFilters({
     applied: { softDeleteFilter, statusFilter, typeListFilter },
-    empty: { softDeleteFilter: "active" as const, statusFilter: "", typeListFilter: "" },
+    empty: { softDeleteFilter: "active" as const, statusFilter: [] as string[], typeListFilter: [] as string[] },
     onApply: (next) => { onSoftDeleteFilterChange(next.softDeleteFilter); setStatusFilter(next.statusFilter); setTypeListFilter(next.typeListFilter); },
   });
 
@@ -232,8 +233,8 @@ export function FleetTable({
   const listFiltered = useMemo(
     () =>
       rows.filter((r) => {
-        if (statusFilter && String(r.status ?? "") !== statusFilter) return false;
-        if (typeListFilter && displayType(r) !== typeListFilter) return false;
+        if (statusFilter.length > 0 && !statusFilter.includes(String(r.status ?? ""))) return false;
+        if (typeListFilter.length > 0 && !typeListFilter.includes(displayType(r))) return false;
         return true;
       }),
     [rows, statusFilter, typeListFilter]
@@ -548,7 +549,7 @@ export function FleetTable({
         onSelectionCapExceeded={() => pushToast(`Select at most ${FLEET_SELECTION_CAP} units at a time.`, "error")}
         filterBar={
           <CollapsedListFilters
-            activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}
+            activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter.length > 0 ? 1 : 0) + (typeListFilter.length > 0 ? 1 : 0)}
             onApply={staged.apply}
             onReset={staged.reset}
             onCancel={staged.cancel}
@@ -569,28 +570,20 @@ export function FleetTable({
                   </button>
                 ))}
               </div>
-              <select
-                aria-label="Filter by status"
-                className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-                value={staged.draft.statusFilter}
-                onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
-              >
-                <option value="">All statuses</option>
-                {statusOptions.map((s) => (
-                  <option key={s} value={s}>{humanizeEnumLabel(s)}</option>
-                ))}
-              </select>
-              <select
-                aria-label="Filter by type"
-                className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-                value={staged.draft.typeListFilter}
-                onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
-              >
-                <option value="">All types</option>
-                {typeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <MultiSelectDropdown
+                label="Status"
+                options={statusOptions.map((s) => ({ value: s, label: humanizeEnumLabel(s) }))}
+                selected={staged.draft.statusFilter}
+                onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                data-testid="fleet-status-multiselect"
+              />
+              <MultiSelectDropdown
+                label="Type"
+                options={typeOptions.map((v) => ({ value: v, label: v }))}
+                selected={staged.draft.typeListFilter}
+                onChange={(next) => staged.setDraft({ ...staged.draft, typeListFilter: next })}
+                data-testid="fleet-type-multiselect"
+              />
             </div>
           </CollapsedListFilters>
         }
