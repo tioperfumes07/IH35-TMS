@@ -746,6 +746,7 @@
       "advance_rate_pct",
       "advanced_at",
       "bank_wire_cents",
+      "bank_wire_gap_account_id",
       "cash_rsv_cents",
       "collected_at",
       "created_at",
@@ -782,8 +783,7 @@
       "void_reason",
       "voided_at",
       "voided_by_user_id",
-      "wire_fee_cents",
-      "bank_wire_gap_account_id"
+      "wire_fee_cents"
     ],
     "accounting.factoring_default_interest_accruals": [
       "accrual_date",
