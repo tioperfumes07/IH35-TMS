@@ -35,9 +35,14 @@ export function auditProjected(src) {
     failures.push(`${REL}: missing formatCompactNet for 7-day outlook`);
   }
   {
-    const fn = src.match(/function formatCompactNet\([\s\S]*?\n\}/)?.[0] ?? "";
+    const fnStart = src.indexOf("function formatCompactNet");
+    const fn = fnStart >= 0 ? src.slice(fnStart, fnStart + 280) : "";
     if (/\/\s*1000/.test(fn) || /["']k["']/.test(fn) || /\+ "k"|\+ 'k'/.test(fn)) {
       failures.push(`${REL}: formatCompactNet must not abbreviate with k (D042)`);
+    }
+    // D042 residual — whole-dollar Math.round(/100) still omits cents; require shared formatUsdCents.
+    if (!/formatUsdCents\(/.test(fn) || /Math\.round\(\s*Math\.abs\(\s*cents\s*\)\s*\/\s*100\s*\)/.test(fn)) {
+      failures.push(`${REL}: formatCompactNet must use formatUsdCents (two decimals; D042)`);
     }
   }
   if (!/cents === 0\) return "—"/.test(src) && !/cents === 0\) return '—'/.test(src)) {
@@ -58,7 +63,10 @@ export function auditProjected(src) {
 if (process.argv.includes("--selftest")) {
   const good = `
 import { getRollingLedger } from "x";
-function formatCompactNet(cents) { if (cents === 0) return "—"; return "+1"; }
+function formatCompactNet(cents) {
+  if (cents === 0) return "—";
+  return "+" + formatUsdCents(Math.abs(cents));
+}
 const payeeNoun = "Driver";
 function fmtChipDate(iso) { const dow = new Date().getUTCDay(); return "Thu 10-22"; }
 getRollingLedger();

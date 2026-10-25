@@ -64,12 +64,11 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
-/** D042 — outlook nets: full dollars with thousands separators, never a `k` suffix; zero = em dash. */
+/** D042 — outlook nets: full currency with two decimals + $ (never a `k` suffix); zero = em dash. */
 function formatCompactNet(cents: number): string {
   if (cents === 0) return "—";
-  const dollars = Math.round(Math.abs(cents) / 100);
-  const sign = cents < 0 ? "−" : "+";
-  return `${sign}${dollars.toLocaleString("en-US")}`;
+  const body = formatUsdCents(Math.abs(cents));
+  return cents < 0 ? `−${body}` : `+${body}`;
 }
 
 function incomeGroupLabel(row: RollingLedgerRow): string {
