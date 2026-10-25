@@ -96,7 +96,9 @@ export type RollingLedgerDocumentKind =
   | "loan_amortization_row"
   | "invoice"
   | "factoring_advance"
-  | "load";
+  | "load"
+  | "card_payable"
+  | "relay_topup";
 
 export type RollingLedgerRow = {
   amount_known?: boolean;

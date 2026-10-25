@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7d560f6",
-  "generated_at": "2026-10-25T19:07:18.861Z",
+  "healthzSha": "7d448a1",
+  "generated_at": "2026-10-25T19:19:49.050Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7d560f6",
+    "deployedSha": "7d448a1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2124,6 +2124,51 @@
   "recentActivity": [
     {
       "number": 0,
+      "title": "Claude-1- ENG-34: ACCT-F443328-ENG34 — wire 6 exempt guards into CI step 18565 (918 < 920 baseline)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:17 PM CT",
+      "url": "",
+      "sha": "0aaa5be0d1",
+      "committedAtIso": "2026-10-25T14:17:34-05:00"
+    },
+    {
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18829 ENG-46 verify-no-dead-settlement-source-ref (CC-1)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:13 PM CT",
+      "url": "",
+      "sha": "7d448a10a7",
+      "committedAtIso": "2026-10-25T14:13:06-05:00"
+    },
+    {
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18825 ENG-46 verify-no-dead-settlement-source-ref (CC-1)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:10 PM CT",
+      "url": "",
+      "sha": "e51db57cb7",
+      "committedAtIso": "2026-10-25T14:10:49-05:00"
+    },
+    {
+      "number": 27630,
+      "title": "FINDING: LST-F443357 main red for every seat: verify-step 18813 used by two guards (verify-engine-register-closed-by-guard, verify-no-duplicate-settlement-lines)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27630",
+      "sha": "7458f5a008",
+      "committedAtIso": "2026-10-25T14:09:35-05:00"
+    },
+    {
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18821 ENG-46 verify-bill-payment-has-spine-link (CC-1)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:07 PM CT",
+      "url": "",
+      "sha": "01a3474e8f",
+      "committedAtIso": "2026-10-25T14:07:53-05:00"
+    },
+    {
+      "number": 0,
       "title": "chore: claim verify-step 18817 CC-1 (ENG-42 renumber)",
       "state": "merged",
       "mergedAtCt": "10/25/2026, 02:03 PM CT",
@@ -2166,51 +2211,6 @@
       "url": "",
       "sha": "6796544381",
       "committedAtIso": "2026-10-25T13:51:45-05:00"
-    },
-    {
-      "number": 27623,
-      "title": "FINDING: ACCT-F443328 LANE: NON-FINANCIAL — ENG-42 shrink-only duplicate settlement-lines guard",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27623",
-      "sha": "a4d761d49e",
-      "committedAtIso": "2026-10-25T13:51:13-05:00"
-    },
-    {
-      "number": 27622,
-      "title": "FINDING: ACCT-F443328 LANE: NON-FINANCIAL — ENG-41 guard + ENG-06 step merge",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27622",
-      "sha": "5e6035ac59",
-      "committedAtIso": "2026-10-25T13:49:27-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Claude-1- fix(guards): ACCT-F443322-ENG06 — delete duplicate spine guard step 12981 (superseded by 12421 with selftest)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:48 PM CT",
-      "url": "",
-      "sha": "006428c1b1",
-      "committedAtIso": "2026-10-25T13:48:24-05:00"
-    },
-    {
-      "number": 27620,
-      "title": "FINDING: N/A LANE: DOCS — LEAD FINAL-2 orders (owner 10-25 1:36 PM): measured pending rows per seat (CC-1 20, CC-2 28, CC-3 45, Cursor 46) + Cursor inbox TOP",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27620",
-      "sha": "ea0bfe93cc",
-      "committedAtIso": "2026-10-25T13:38:44-05:00"
-    },
-    {
-      "number": 27590,
-      "title": "FINDING: ACCT-F443346 LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27590",
-      "sha": "953a4f03c5",
-      "committedAtIso": "2026-10-25T13:36:59-05:00"
     }
   ]
 }

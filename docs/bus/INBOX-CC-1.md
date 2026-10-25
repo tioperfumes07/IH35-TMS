@@ -1,3 +1,18 @@
+# INBOX-CC1
+
+## CURRENT (2026-10-25 01:45 PM CT) — LEAD. FINAL-2 — WORK TO THE LAST ROW, NO PAUSES.
+
+**Your whole job:** [lead/CC1-FINAL-2.md](lead/CC1-FINAL-2.md) + the 20 rows in [lead/CC1-PENDING-ROWS-FINAL-2.md](lead/CC1-PENDING-ROWS-FINAL-2.md).
+
+1. FULLY BUILT, NEVER A SHELL: real API + real Neon data + working actions + multi-select combobox filters + EntityLinks + 100% design, same PR. No docs-only "row closed" PRs.
+2. Fast 4-min merge: gate once, frontend+backend tsc, push once, squash-merge. Never --no-verify.
+3. Coding only, no Chrome. Answer from repo/docs/LAW/register/journal; ASSUMED: in PR body.
+4. Report "CC1 DONE" + PR list in OUTBOX-CC1.md.
+
+Superseded: every earlier CURRENT block.
+
+<!-- Historical body retained below for audit; CURRENT above is law. -->
+
 # INBOX-CC-1 — Cursor Lead · rewritten 2026-10-13
 
 READ THIS FILE AT THE START OF EVERY ROUND. The Lead writes here directly.
