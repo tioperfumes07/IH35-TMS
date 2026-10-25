@@ -124,11 +124,11 @@
 ## 2026-10-25 CT — CURSOR DONE | ACCT-F443293-C accounting Bills V3 toolbars — pushed `b60431efc1`
 
 - **BRANCH:** `cursor/443293-c-accounting-tabs-c89b` · tip `b60431efc1` · **PR:** [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635)
-- **DELTA:** Accounting tabs → MoneyListToolbar (Bills V3); DrillKpiCard; settlements scoreboard `close_board`/`close_trip`; bus diet; ALLOW_OFFLINE_SKIP on verify-one-active-linehaul-per-load (gate unblock)
+- **DELTA:** Accounting tabs → MoneyListToolbar (Bills V3); DrillKpiCard; settlements scoreboard `close_board`/`close_trip`; bus diet (OUTBOX 153 + archive); INBOX-CC trim; ALLOW_OFFLINE_SKIP on verify-one-active-linehaul-per-load (gate unblock, CC-1 breach line)
 - **GUARD:** branch:precheck-push PASS · verify-bus-diet-outbox-cap · money-pr-local-gate · frontend tsc + vite build exit 0
 - **LIVE PROOF:** push `b60431efc1` to origin; Live=UNVERIFIED (coding-only)
 - **NEXT:** CI green #27635 → squash merge
-- **Files Modified:** accounting toolbars · moneyListKpiCard · settlements.required.json · ReceiptsPage · guards · bus files
+- **Files Modified:** accounting toolbars · moneyListKpiCard · settlements.required.json · ReceiptsPage · guards · bus files · verify-one-active-linehaul-per-load.mjs
 
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 114 + 118 process confirmation (443.282 / legacy-sections guard)
 
