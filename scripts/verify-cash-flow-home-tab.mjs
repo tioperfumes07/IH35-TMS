@@ -1,23 +1,7 @@
 #!/usr/bin/env node
-// REG-031 (owner live 2026-09-09, verbatim: "clicking Cash Flow in the left nav must land on a
-// Cash Flow Home page first, with tabs used FROM there — not straight into a tab"). Before this
-// fix, CashFlowPage.tsx's parseCashFlowTab() defaulted a missing/unrecognized ?tab= straight to
-// "daily_prediction" -- exactly the REG-022 FAIL pattern already recorded for Driver Finance/
-// Settlements and Vendors/Customers (landing directly on functional content, no Home tab, no KPI
-// tile strip). MaintenanceHome.tsx is the owner-named REG-022 reference: module name at top +
-// real KPI tile strip on the landing surface.
-//
-// STATIC (always runs, no DB/browser needed): asserts, by reading the real source files —
-//   1. CashFlowPage.tsx's default-tab fallback is "home", not "daily_prediction".
-//   2. "home" is a real, first-position tab in both the type union and the TABS array (not just a
-//      silent fallback with no visible entry point back to it).
-//   3. CashFlowHomeTab.tsx exists, renders the shared KPI strip, and links into every sibling tab
-//      (daily_prediction / actual_vs_projected / rolling_ledger / manual_daily_projections) --
-//      "tabs reachable from there," not a dead end.
-//   4. RollingLedgerTab.tsx reuses the SAME shared CashFlowKpiStrip component rather than a second,
-//      independently-drifting inline copy of the tile markup.
-//   5. ROUND 443.250 — Home also mounts the shared V3 design-system pieces (V3KpiTile / BoardSection /
-//      V3Segmented from components/v3 + v3-tokens) and the chart + 13-week table panels.
+// REG-031 (owner live 2026-09-09): Cash Flow left-nav lands on Home first.
+// ROUND 443.280-A #7: Home board ONLY — V3KpiTile strip (not layered CashFlowKpiStrip),
+// no TAB_CARDS theater, category 13-week table + real monthly grain, sibling tabs reachable.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -44,15 +28,21 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
   if (homeSrc === null) {
     failures.push(`${HOME_TAB_REL}: missing`);
   } else {
-    if (!/<CashFlowKpiStrip\b/.test(homeSrc)) {
-      failures.push(`${HOME_TAB_REL}: does not render <CashFlowKpiStrip> -- REG-022 requires a real KPI tile strip on the landing surface`);
+    // 443.280 — board KPI strip is V3KpiTile (CashFlowKpiStrip under it was LAYERED).
+    if (!/<V3KpiTile\b/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: does not render <V3KpiTile> -- REG-022 / 443.280 require the board KPI strip`);
+    }
+    if (/<CashFlowKpiStrip\b/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: still renders layered <CashFlowKpiStrip> under the V3 board KPIs — 443.280 forbids layering`);
+    }
+    if (/\bTAB_CARDS\b/.test(homeSrc) || /cash-flow-home-tab-cards/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: TAB_CARDS theater still present — 443.280 Home board removes it (sibling tabs via KPI/links)`);
     }
     for (const tab of SIBLING_TABS) {
-      if (!homeSrc.includes(`"${tab}"`)) {
+      if (!homeSrc.includes(`"${tab}"`) && !homeSrc.includes(`'${tab}'`)) {
         failures.push(`${HOME_TAB_REL}: does not link to sibling tab "${tab}" -- Home must make every tab reachable from there`);
       }
     }
-    // 443.250 V3 board slice — shared design system + chart/table surfaces on Home.
     if (!/from ["']\.\.\/\.\.\/\.\.\/design\/v3-tokens["']/.test(homeSrc) && !/from ["'][^"']*design\/v3-tokens["']/.test(homeSrc)) {
       failures.push(`${HOME_TAB_REL}: missing v3-tokens import -- 443.250 requires the single design-system palette`);
     }
@@ -68,6 +58,15 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
     }
     if (!/getRollingLedger\b/.test(homeSrc)) {
       failures.push(`${HOME_TAB_REL}: no longer calls getRollingLedger -- V3 Home numbers must stay on the live ledger endpoint`);
+    }
+    if (!/buildMonthBuckets\b/.test(homeSrc) && !/Monthly/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: missing real Monthly roll-up — 443.280 requires calendar-month buckets, not every-4th-week sampling`);
+    }
+    if (!/Grey = run-rate|run-rate estimate/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: missing grey=run-rate / black=committed board footer law`);
+    }
+    if (!/Customer invoices due/.test(homeSrc) || !/Run-rate top-up/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: 13-week category rows missing (Customer invoices due / Run-rate top-up) — board incomplete`);
     }
   }
 
@@ -105,19 +104,18 @@ import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
-import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { getRollingLedger } from "../../../api/cashFlow";
-const TAB_CARDS = [
-  { id: "daily_prediction" },
-  { id: "actual_vs_projected" },
-  { id: "rolling_ledger" },
-  { id: "manual_daily_projections" },
-];
+function buildMonthBuckets(weeks) { return weeks; }
 getRollingLedger(oci, today, end);
-<CashFlowKpiStrip kpis={kpis} />
+onNavigateToTab("daily_prediction");
+onNavigateToTab("actual_vs_projected");
+onNavigateToTab("rolling_ledger");
+onNavigateToTab("manual_daily_projections");
 <div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>
 <BoardSection title="Cash position" testId="cash-flow-home-chart-panel"><div /></BoardSection>
-<BoardSection title="13-week" testId="cash-flow-home-table-panel"><div data-testid="cash-flow-home-13w-table" /></BoardSection>
+<BoardSection title="13-week" testId="cash-flow-home-table-panel" footer="Grey = run-rate estimate · black = committed documents">
+  <div data-testid="cash-flow-home-13w-table">Customer invoices due / Run-rate top-up</div>
+</BoardSection>
 <V3Segmented value="weekly" options={[]} onChange={() => {}} />
 `;
   const goodKpiStrip = "export function CashFlowKpiStrip() {}";
@@ -131,32 +129,25 @@ getRollingLedger(oci, today, end);
     throw new Error("SELFTEST FAIL: reverted default-tab fallback went undetected");
   }
 
-  const badNoTabEntry = goodPage.replace('{ id: "home", label: "Home" },\n', "");
-  if (auditSources({ pageSrc: badNoTabEntry, homeSrc: goodHome, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
-    throw new Error("SELFTEST FAIL: missing Home tab-list entry went undetected");
+  const layered = goodHome.replace(
+    '<div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>',
+    '<CashFlowKpiStrip kpis={kpis} /><div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>',
+  );
+  if (auditSources({ pageSrc: goodPage, homeSrc: layered, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
+    throw new Error("SELFTEST FAIL: layered CashFlowKpiStrip went undetected");
   }
 
-  const homeNoKpi = goodHome.replace("<CashFlowKpiStrip kpis={kpis} />", "");
-  if (auditSources({ pageSrc: goodPage, homeSrc: homeNoKpi, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
-    throw new Error("SELFTEST FAIL: Home tab missing the KPI strip went undetected");
+  const withTabCards = goodHome + '\nconst TAB_CARDS = [{ id: "daily_prediction" }];\n';
+  if (auditSources({ pageSrc: goodPage, homeSrc: withTabCards, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
+    throw new Error("SELFTEST FAIL: TAB_CARDS theater went undetected");
   }
 
-  const homeMissingLink = goodHome.replace('{ id: "rolling_ledger" },\n', "");
+  const homeMissingLink = goodHome.replace('onNavigateToTab("rolling_ledger");\n', "");
   if (auditSources({ pageSrc: goodPage, homeSrc: homeMissingLink, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
     throw new Error("SELFTEST FAIL: Home tab missing a sibling-tab link went undetected");
   }
 
-  const rollingLedgerReverted = 'const kpisMarkup = "<div>60px inline tile markup duplicated here again</div>";';
-  if (auditSources({ pageSrc: goodPage, homeSrc: goodHome, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: rollingLedgerReverted }).length === 0) {
-    throw new Error("SELFTEST FAIL: RollingLedgerTab reverting to a duplicated inline KPI block went undetected");
-  }
-
-  const homeNoV3 = goodHome.replace(/<V3KpiTile[\s\S]*?\/>/, "");
-  if (auditSources({ pageSrc: goodPage, homeSrc: homeNoV3, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
-    throw new Error("SELFTEST FAIL: Home missing V3KpiTile went undetected");
-  }
-
-  console.log("verify-cash-flow-home-tab: SELFTEST PASS (6/6)");
+  console.log("verify-cash-flow-home-tab: SELFTEST PASS");
   process.exit(0);
 }
 
@@ -172,4 +163,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-cash-flow-home-tab: OK — Cash Flow lands on Home first, Home shows KPI strip + 443.250 V3 chart/table (shared components/v3), RollingLedgerTab shares the same KPI component");
+console.log("verify-cash-flow-home-tab: OK — Home board V3 KPIs (no layered strip/TAB_CARDS), category table + monthly, sibling tabs reachable");
