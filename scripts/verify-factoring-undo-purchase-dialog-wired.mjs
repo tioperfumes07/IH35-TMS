@@ -20,7 +20,7 @@ export function check(panel, routes) {
   if (!/import\s*\{[^}]*\bvoidFactoringPurchase\b[^}]*\}\s*from\s*"..\/..\/api\/factoring-purchases"/.test(panel)) out.push(`${PANEL}: does not import voidFactoringPurchase`);
   if (!/await voidFactoringPurchase\(companyId,/.test(panel)) out.push(`${PANEL}: the Undo dialog does not call voidFactoringPurchase`);
   if (!/isOwner\s*&&\s*row\.status\s*===\s*"posted"/.test(panel)) out.push(`${PANEL}: Undo is not limited to the Owner on posted purchases`);
-  if (!/\.trim\(\)\.length\s*>=\s*10/.test(panel)) out.push(`${PANEL}: the Undo reason is not required to be >= 10 characters`);
+  if (!/<VoidReasonModal/.test(panel) || !/await voidFactoringPurchase\(companyId,[\s\S]*?reason/.test(panel)) out.push(`${PANEL}: the Undo reason must be collected via VoidReasonModal with reason threaded to voidFactoringPurchase`);
   if (!/Unmatch the Faro wire in Banking first/.test(panel)) out.push(`${PANEL}: the matched-wire refusal message is missing`);
   if (!/app\.post\("\/api\/v1\/factoring\/purchases\/:id\/void"[\s\S]{0,900}voidPurchase\(/.test(routes)) out.push(`${ROUTES}: POST /purchases/:id/void does not reach voidPurchase`);
   return out;
@@ -32,7 +32,7 @@ if (process.argv.includes("--selftest")) {
   if (check(panel, routes).length) { console.error("SELFTEST FAIL: baseline not clean", check(panel, routes)); process.exit(1); }
   const plants = [
     [panel.replace(/await voidFactoringPurchase\(companyId,/g, "await noop(companyId,"), routes],
-    [panel.replace(/\.trim\(\)\.length\s*>=\s*10/, ".trim().length >= 1"), routes],
+    [panel.replace(/await voidFactoringPurchase\(companyId, target\.id, reason\)/, "await voidFactoringPurchase(companyId, target.id)"), routes],
     [panel, routes.replace(/voidPurchase\(client/g, "noop(client")],
   ];
   for (const [p, r] of plants) if (!check(p, r).length) { console.error("SELFTEST FAIL: plant not caught"); process.exit(1); }

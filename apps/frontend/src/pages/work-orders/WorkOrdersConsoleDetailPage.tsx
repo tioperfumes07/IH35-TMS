@@ -19,6 +19,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { SimpleCombobox as Combobox } from "../../components/Combobox";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -84,10 +85,10 @@ export function WorkOrdersConsoleDetailPage() {
   // captures the WHY, which the backend writes to the immutable audit trail.
   const auth = useAuth();
   const canCancelVoid = ["Owner", "Administrator"].includes(String(auth.user?.role ?? ""));
-  const [reasonModal, setReasonModal] = useState<{ kind: "cancel" | "void" } | null>(null);
+  const [reasonModal, setReasonModal] = useState<{ kind: "cancel" } | null>(null);
   const [cancelReasonCode, setCancelReasonCode] = useState<string | null>(null);
   const [cancelNotes, setCancelNotes] = useState("");
-  const [reasonText, setReasonText] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
 
   const woCancelReasonsQ = useQuery({
     queryKey: ["catalogs", "wo-cancellation-reasons"],
@@ -133,27 +134,19 @@ export function WorkOrdersConsoleDetailPage() {
     mutationFn: (reason: string) => voidWorkOrderConsole(String(id), companyId, reason),
     onSuccess: () => {
       pushToast("Work order voided", "success");
-      setReasonModal(null);
-      setReasonText("");
+      setVoidModalOpen(false);
       invalidate();
     },
     onError: (error: unknown) => pushToast(userFacingApiError(error, "Void failed"), "error"),
   });
 
   const cancelValid = Boolean(cancelReasonCode);
-  const voidValid = reasonText.trim().length >= 3;
-  const submitReason = () => {
-    if (!reasonModal) return;
-    if (reasonModal.kind === "cancel") {
-      if (!cancelValid || !cancelReasonCode) return;
-      void cancelMut.mutateAsync({
-        cancel_reason_code: cancelReasonCode,
-        cancel_notes: cancelNotes.trim() || undefined,
-      });
-      return;
-    }
-    if (!voidValid) return;
-    void voidMut.mutateAsync(reasonText.trim());
+  const submitCancel = () => {
+    if (!cancelValid || !cancelReasonCode) return;
+    void cancelMut.mutateAsync({
+      cancel_reason_code: cancelReasonCode,
+      cancel_notes: cancelNotes.trim() || undefined,
+    });
   };
 
   const pdfHref = id ? workOrderConsolePdfUrl(String(id), companyId) : "";
@@ -232,10 +225,7 @@ export function WorkOrdersConsoleDetailPage() {
             <Button
               variant="danger"
               type="button"
-              onClick={() => {
-                setReasonText("");
-                setReasonModal({ kind: "void" });
-              }}
+              onClick={() => setVoidModalOpen(true)}
               disabled={voidMut.isPending}
             >
               Void
@@ -247,59 +237,36 @@ export function WorkOrdersConsoleDetailPage() {
       {reasonModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-xs font-semibold text-[#0F1219]">
-              {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
-            </h2>
+            <h2 className="text-xs font-semibold text-[#0F1219]">{"Cancel work order"}</h2>
             <p className="mt-1 text-xs text-[#4B5563]">
-              {reasonModal.kind === "cancel"
-                ? "Pick a reason from catalogs.wo_cancellation_reasons. The work order is never deleted — it stays on record with your reason in the audit trail."
-                : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail."}
+              Select a cancellation reason. The work order is never deleted — it stays on record with your reason in the audit trail.
             </p>
-            {reasonModal.kind === "cancel" ? (
-              <>
-                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-reason">
-                  Cancellation reason (required)
-                </label>
-                <Combobox
-                  value={cancelReasonCode}
-                  onChange={setCancelReasonCode}
-                  options={woCancelReasonOptions}
-                  placeholder="Select a cancellation reason…"
-                  disabled={woCancelReasonsQ.isLoading}
-                  allowAddNew
-                  onAddNew={(typedText) => {
-                    const label = typedText.trim();
-                    if (label) createWoReasonMut.mutate(label);
-                  }}
-                />
-                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-notes">
-                  Notes (optional)
-                </label>
-                <textarea
-                  id="wo-console-cancel-notes"
-                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
-                  rows={2}
-                  value={cancelNotes}
-                  onChange={(e) => setCancelNotes(e.target.value)}
-                  placeholder="Additional context for the audit trail"
-                />
-              </>
-            ) : (
-              <>
-                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-reason">
-                  Reason (required)
-                </label>
-                <textarea
-                  id="wo-reason"
-                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
-                  rows={3}
-                  value={reasonText}
-                  onChange={(e) => setReasonText(e.target.value)}
-                  placeholder="Why is this being voided?"
-                  autoFocus
-                />
-              </>
-            )}
+            <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-reason">
+              Cancellation reason (required)
+            </label>
+            <Combobox
+              value={cancelReasonCode}
+              onChange={setCancelReasonCode}
+              options={woCancelReasonOptions}
+              placeholder="Select a cancellation reason…"
+              disabled={woCancelReasonsQ.isLoading}
+              allowAddNew
+              onAddNew={(typedText) => {
+                const label = typedText.trim();
+                if (label) createWoReasonMut.mutate(label);
+              }}
+            />
+            <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-notes">
+              Notes (optional)
+            </label>
+            <textarea
+              id="wo-console-cancel-notes"
+              className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
+              rows={2}
+              value={cancelNotes}
+              onChange={(e) => setCancelNotes(e.target.value)}
+              placeholder="Additional context for the audit trail"
+            />
             <div className="mt-3 flex justify-end gap-2">
               <Button
                 variant="secondary"
@@ -308,7 +275,6 @@ export function WorkOrdersConsoleDetailPage() {
                   setReasonModal(null);
                   setCancelReasonCode(null);
                   setCancelNotes("");
-                  setReasonText("");
                 }}
               >
                 Close
@@ -316,15 +282,21 @@ export function WorkOrdersConsoleDetailPage() {
               <Button
                 variant="danger"
                 type="button"
-                onClick={submitReason}
-                disabled={(reasonModal.kind === "cancel" ? !cancelValid : !voidValid) || cancelMut.isPending || voidMut.isPending}
+                onClick={submitCancel}
+                disabled={!cancelValid || cancelMut.isPending}
               >
-                {reasonModal.kind === "cancel" ? "Confirm cancel" : "Confirm void"}
+                Confirm cancel
               </Button>
             </div>
           </div>
         </div>
       ) : null}
+      <VoidReasonModal
+        title={"Void work order"}
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { voidMut.mutate(reasonCode); }}
+      />
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">

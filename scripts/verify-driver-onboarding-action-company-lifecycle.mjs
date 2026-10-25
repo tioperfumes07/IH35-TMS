@@ -15,7 +15,7 @@ const checks = [
   ["context transition resets mutations", /saveMut\.reset\(\);[\s\S]*?completeMut\.reset\(\);[\s\S]*?overrideMut\.reset\(\)/],
   ["save call captures immutable input", /saveMut\.mutateAsync\(\{ companyId, sessionId: sessionId!, generation: actionGenerationRef\.current, payload:/],
   ["complete call captures immutable input", /completeMut\.mutateAsync\(\{ companyId, sessionId, generation: actionGenerationRef\.current \}\)/],
-  ["override call captures immutable reason", /overrideMut\.mutateAsync\(\{ companyId, sessionId, generation: actionGenerationRef\.current, reason: overrideReason\.trim\(\) \}\)/],
+  ["override call captures immutable reason", /overrideMut\.mutateAsync\([\s\S]*?generation: actionGenerationRef\.current,[\s\S]*?reason: (?:overrideReason\.trim\(\)|reasonCode \?\? "owner-override")/],
   ["driver upload keeps canonical link", /entity_links: driverId \? \[\{ entity_type: "driver", entity_id: driverId \}\] : undefined/],
   ["driver reverse drill retained", /<EntityLinkOrTombstone[\s\S]*?kind="driver"[\s\S]*?id=\{driverId\}/],
 ];
@@ -35,7 +35,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("actionGenerationRef.current += 1", "actionGenerationRef.current += 0"),
     source.replace("saveOnboardingStep(input.sessionId, input.companyId, input.payload)", "saveOnboardingStep(sessionId!, companyId, input.payload)"),
     source.replace("completeOnboardingSession(input.sessionId, input.companyId)", "completeOnboardingSession(sessionId!, companyId)"),
-    source.replace("reason: input.reason", "reason: overrideReason.trim()"),
+    source.replace('reason: reasonCode ?? "owner-override"', "reason: null"),
     source.replaceAll("input.generation !== actionGenerationRef.current", "false").replaceAll("input.generation === actionGenerationRef.current", "true"),
   ];
   const missed = mutations.filter((text) => failures(text).length === 0).length;

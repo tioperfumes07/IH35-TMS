@@ -42,7 +42,10 @@ function audit(text) {
   need(/canCancel \? \(/.test(text), "a Cancel button must render when canCancel is true");
   need(/setCancelTaskId\(task\.id\)/.test(text), "the Cancel button's onClick must open the cancel-reason modal for this task");
   need(/title="Cancel Task"/.test(text), "a cancellation-reason Modal must exist");
-  need(/disabled=\{!cancelReason\.trim\(\)\}/.test(text), "the Cancel Task confirm button must require a non-empty reason (the backend rejects an empty cancellation_reason)");
+  need(
+    /cancelMut\.mutateAsync\(\{\s*id:\s*cancelTaskId,\s*reason\s*\}\)/.test(text),
+    "the Cancel Task flow must thread reason to cancelMut.mutateAsync (VoidReasonModal enforces non-empty)"
+  );
 
   return failures;
 }
@@ -62,7 +65,7 @@ if (process.argv.includes("--selftest")) {
     { name: "drop manager role list", mutate: (t) => t.replace('["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "")', "false") },
     { name: "drop completed/cancelled exclusion", mutate: (t) => t.replace('task.status !== "completed" &&\n            task.status !== "cancelled" &&\n            ', "") },
     { name: "remove Cancel button click wiring", mutate: (t) => t.replace("setCancelTaskId(task.id);", "") },
-    { name: "remove reason-required guard", mutate: (t) => t.replace('disabled={!cancelReason.trim()}', "") },
+    { name: "remove reason-required guard", mutate: (t) => t.replace("cancelMut.mutateAsync({ id: cancelTaskId, reason })", "cancelMut.mutateAsync({ id: cancelTaskId })") },
   ];
   let caught = 0;
   for (const { name, mutate } of mutations) {

@@ -21,6 +21,7 @@ import { OnboardingStepIdentity } from "./onboarding/OnboardingStepIdentity";
 import { OnboardingStepMedicalCard } from "./onboarding/OnboardingStepMedicalCard";
 import { OnboardingStepSignatures } from "./onboarding/OnboardingStepSignatures";
 import { OnboardingStepVehicleAssignment } from "./onboarding/OnboardingStepVehicleAssignment";
+import { OverrideButton } from "../../components/override/OverrideButton";
 
 function stepDataFor(session: OnboardingSession | undefined, key: string) {
   return (session?.step_data?.[key] as Record<string, unknown> | undefined) ?? {};
@@ -45,7 +46,6 @@ export function OnboardingWizardPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
-  const [overrideReason, setOverrideReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
   const initializedSessionRef = useRef<string | null>(null);
   const actionGenerationRef = useRef(0);
@@ -117,7 +117,6 @@ export function OnboardingWizardPage() {
     overrideMut.reset();
     setError(null);
     setUploadingKey(null);
-    setOverrideReason("");
     setShowOverride(false);
   }, [companyId, sessionId]);
 
@@ -372,24 +371,19 @@ export function OnboardingWizardPage() {
         ) : null}
 
         {showOverride && !completed ? (
-          <div className="mt-4 space-y-2 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3">
-            <label className="block text-xs">
-              <span className="font-medium">Override reason (required)</span>
-              <textarea
-                className="mt-1 w-full rounded-sm border px-2 py-1 text-xs"
-                rows={3}
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded-sm bg-[#4B5563] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-              disabled={overrideReason.trim().length < 10 || overrideMut.isPending}
-              onClick={() => void overrideMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current, reason: overrideReason.trim() })}
-            >
-              Apply admin override
-            </button>
+          <div className="mt-4 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3">
+            <OverrideButton
+              context="dispatch"
+              onConfirm={async (reasonCode) => {
+                await overrideMut.mutateAsync({
+                  companyId,
+                  sessionId,
+                  generation: actionGenerationRef.current,
+                  reason: reasonCode ?? "owner-override",
+                });
+              }}
+              label="Apply admin override"
+            />
           </div>
         ) : null}
       </div>

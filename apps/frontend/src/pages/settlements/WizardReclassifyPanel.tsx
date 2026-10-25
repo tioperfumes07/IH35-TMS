@@ -18,6 +18,7 @@ import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 /** Hard fetch cap — must surface shown-vs-total (CLS-SILENT-CAP / LST-F407-C). Keep the
  *  numeric literal on the request (`limit: 500`) so the silent-cap guard can still see the boundary. */
@@ -58,7 +59,7 @@ export function WizardReclassifyPanel({
   });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toAccount, setToAccount] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ReclassifyBatchResult | null>(null);
@@ -69,15 +70,16 @@ export function WizardReclassifyPanel({
   const totalAvailable = linesQ.data?.total_lines ?? lines.length;
   const capped = Boolean(linesQ.data && linesQ.data.total_lines > linesQ.data.limit);
 
-  async function apply() {
-    if (!toAccount || selected.size === 0 || !reason.trim()) return;
+  async function apply(reasonCode: string) {
+    if (!toAccount || selected.size === 0) return;
+    setVoidModalOpen(false);
     setBusy(true);
     setError(null);
     try {
       const res = await applyReclassify({
         operating_company_id: companyId,
         posting_ids: [...selected],
-        reason: reason.trim(),
+        reason: reasonCode,
         to_account_id: toAccount,
         filter_snapshot: { surface: "settlement_creator", document_ids: documentIds },
       });
@@ -210,18 +212,11 @@ export function WizardReclassifyPanel({
             placeholder="Move selected lines to account…"
             data-testid="sc-reclassify-to-account"
           />
-          <input
-            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason (required)"
-            aria-label="Reclassify reason"
-          />
           <Button
             type="button"
             size="sm"
-            disabled={busy || !toAccount || selected.size === 0 || !reason.trim()}
-            onClick={() => void apply()}
+            disabled={busy || !toAccount || selected.size === 0}
+            onClick={() => setVoidModalOpen(true)}
             data-testid="sc-reclassify-apply"
           >
             {busy ? "Reclassifying…" : `Reclassify ${selected.size || ""} line${selected.size === 1 ? "" : "s"}`}
@@ -234,6 +229,12 @@ export function WizardReclassifyPanel({
           Reclassified. Undo it from Accounting › Reclassify.
         </div>
       ) : null}
+      <VoidReasonModal
+        title="Reclassify"
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { await apply(reasonCode); }}
+      />
     </section>
   );
 }

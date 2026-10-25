@@ -4,6 +4,7 @@ import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Modal } from "../../../components/Modal";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
@@ -30,83 +31,64 @@ export function HoldDeductionModal({
   settlementDisplayId,
 }: Props) {
   const { pushToast } = useToast();
-  const [reason, setReason] = useState("");
   const [holdUntil, setHoldUntil] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    if (!deduction) return;
-    // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: deduction.id is this settlement LINE's own id,
-    // never a valid PATCH target (see DeductionsSection.tsx). The real driver_finance.
-    // driver_settlement_deductions id is source_deduction_id, resolved server-side; DeductionsSection
-    // only renders the Hold button when it is present, but guard here too since this modal has no
-    // other caller to rely on that gating.
-    if (!deduction.source_deduction_id) {
-      pushToast("This deduction has no linked record to hold", "error");
-      return;
-    }
-    if (reason.trim().length < 10) {
-      pushToast("Reason must be at least 10 characters", "error");
-      return;
-    }
-    setLoading(true);
-    try {
-      await holdSettlementDeduction(deduction.source_deduction_id, operatingCompanyId, {
-        hold_until_period: holdUntil || companyToday(),
-        reason: reason.trim(),
-      });
-      pushToast("Deduction held", "success");
-      onHeld();
-      onClose();
-    } catch {
-      pushToast("Failed to hold deduction", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
 
   return (
-    <Modal open={open} onClose={onClose} title="Hold Deduction">
-      {!deduction ? null : (
-        <div className="space-y-2 text-xs">
-          {settlementId ? (
-            <p className="text-xs text-gray-700" data-testid="hold-deduction-settlement-link">
-              Settlement:{" "}
-              <EntityLink
-                kind="settlement"
-                id={settlementId}
-                label={entityLabel(settlementDisplayId, settlementId, "Settlement")}
+    <>
+      <Modal open={open && !reasonModalOpen} onClose={onClose} title="Hold Deduction">
+        {!deduction ? null : (
+          <div className="space-y-2 text-xs">
+            {settlementId ? (
+              <p className="text-xs text-gray-700" data-testid="hold-deduction-settlement-link">
+                Settlement:{" "}
+                <EntityLink
+                  kind="settlement"
+                  id={settlementId}
+                  label={entityLabel(settlementDisplayId, settlementId, "Settlement")}
+                />
+              </p>
+            ) : null}
+            <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
+              <div className="font-semibold">{deduction.description}</div>
+              <div>Balance left: ${deduction.balance_left.toFixed(2)}</div>
+              <div>This period: ${deduction.this_period_amount.toFixed(2)}</div>
+            </div>
+            <div>
+              <label className="mb-1 block font-semibold">Hold until period</label>
+              <DatePicker
+                value={holdUntil}
+                onChange={setHoldUntil}
+                className="h-8 w-full"
               />
-            </p>
-          ) : null}
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            <div className="font-semibold">{deduction.description}</div>
-            <div>Balance left: ${deduction.balance_left.toFixed(2)}</div>
-            <div>This period: ${deduction.this_period_amount.toFixed(2)}</div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+              <Button size="sm" onClick={() => setReasonModalOpen(true)}>Continue</Button>
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block font-semibold">Reason (min 10 chars)</label>
-            <textarea
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={3}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block font-semibold">Hold until period</label>
-            <DatePicker
-              value={holdUntil}
-              onChange={setHoldUntil}
-              className="h-8 w-full"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
-            <Button size="sm" onClick={() => void submit()} loading={loading}>Hold Deduction</Button>
-          </div>
-        </div>
-      )}
-    </Modal>
+        )}
+      </Modal>
+      <VoidReasonModal
+        open={reasonModalOpen}
+        title="Hold Deduction — Reason"
+        onClose={() => setReasonModalOpen(false)}
+        onSubmit={async (reason) => {
+          if (!deduction?.source_deduction_id) {
+            pushToast("This deduction has no linked record to hold", "error");
+            return;
+          }
+          await holdSettlementDeduction(deduction.source_deduction_id, operatingCompanyId, {
+            hold_until_period: holdUntil || companyToday(),
+            reason,
+          });
+          pushToast("Deduction held", "success");
+          setReasonModalOpen(false);
+          onHeld();
+          onClose();
+        }}
+        submitLabel="Hold Deduction"
+      />
+    </>
   );
 }

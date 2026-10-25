@@ -30,10 +30,10 @@ function assertModalChrome(label, src) {
   if (/You are deleting/.test(code)) {
     fail(`${label}: body still says "You are deleting"`);
   }
-  if (!/title=["']Archive Document["']/.test(code)) {
-    fail(`${label}: missing Modal title="Archive Document"`);
+  if (!/title=(?:["']Archive Document["']|\{`Archive )/.test(code)) {
+    fail(`${label}: missing Archive title (static "Archive Document" or dynamic "Archive <filename>")`);
   }
-  if (!/>\s*Archive\s*</.test(code)) {
+  if (!/(?:>\s*Archive\s*<|submitLabel=["']Archive["'])/.test(code)) {
     fail(`${label}: missing Archive submit button label`);
   }
   if (!/recoverable/i.test(code)) {
@@ -83,7 +83,7 @@ function selftest() {
   assertModalChrome("selftest-ok", ok);
 
   const modal = fs.readFileSync(MODAL, "utf8");
-  const poisoned = stripComments(modal).replace(/Archive Document/g, "Soft Delete Document");
+  const poisoned = stripComments(modal).replace(/Archive Document|Archive \$\{/g, "Soft Delete ${")
   failed = false;
   process.exit = (code) => {
     failed = code === 1;

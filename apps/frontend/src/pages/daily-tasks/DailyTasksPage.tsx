@@ -29,6 +29,7 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/Combobox";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 type TaskViewId = "my" | "team" | "created";
 
@@ -109,7 +110,6 @@ export function DailyTasksPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
-  const [cancelReason, setCancelReason] = useState("");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -209,7 +209,6 @@ export function DailyTasksPage() {
     onSuccess: () => {
       pushToast("Task cancelled", "success");
       setCancelTaskId(null);
-      setCancelReason("");
       invalidateTasks();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Cancel failed"), "error"),
@@ -325,7 +324,6 @@ export function DailyTasksPage() {
                   variant="secondary"
                   type="button"
                   onClick={() => {
-                    setCancelReason("");
                     setCancelTaskId(task.id);
                   }}
                 >
@@ -504,38 +502,16 @@ export function DailyTasksPage() {
         </div>
       </Modal>
 
-      <Modal variant="drawer" open={cancelTaskId != null} onClose={() => setCancelTaskId(null)} title="Cancel Task">
-        <div className="space-y-3 text-xs">
-          <div>
-            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
-              Cancellation reason
-            </label>
-            <textarea
-              id="daily-task-cancel-reason"
-              className="min-h-[84px] w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
-              value={cancelReason}
-              onChange={(event) => setCancelReason(event.target.value)}
-              placeholder="Why is this task being cancelled?"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="secondary" onClick={() => setCancelTaskId(null)}>
-              Keep task
-            </Button>
-            <Button
-              type="button"
-              loading={cancelMut.isPending}
-              disabled={!cancelReason.trim()}
-              onClick={() => {
-                if (!cancelTaskId) return;
-                cancelMut.mutate({ id: cancelTaskId, reason: cancelReason.trim() });
-              }}
-            >
-              Cancel task
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <VoidReasonModal
+        open={cancelTaskId != null}
+        title="Cancel Task"
+        onClose={() => setCancelTaskId(null)}
+        onSubmit={async (reason) => {
+          if (!cancelTaskId) throw new Error("No task selected");
+          await cancelMut.mutateAsync({ id: cancelTaskId, reason });
+        }}
+        submitLabel="Cancel task"
+      />
 
       {detailTaskId ? (
         <TaskDetailDrawer

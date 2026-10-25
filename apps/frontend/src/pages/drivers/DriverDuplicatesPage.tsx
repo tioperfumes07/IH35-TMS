@@ -18,6 +18,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { driverMergeApi, type DuplicateCluster, type DuplicateDriver, type MergePreview } from "../../api/driverMerge";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 const nameOf = (d: { first_name: string | null; last_name: string | null }) => `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || "—";
 const STATUS_LABEL: Record<string, string> = {
@@ -32,7 +33,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
   const members: DuplicateDriver[] = [cluster.survivor, ...cluster.merged];
   const [survivorId, setSurvivorId] = useState(cluster.survivor.id);
   const [previews, setPreviews] = useState<Record<string, MergePreview>>({});
-  const [reason, setReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const others = members.filter((m) => m.id !== survivorId);
 
   const preview = useMutation({
@@ -45,8 +46,8 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
     onError: (e) => pushToast(userFacingApiError(e, "Couldn't preview the merge"), "error"),
   });
   const merge = useMutation({
-    mutationFn: async () => {
-      for (const m of others) await driverMergeApi.merge(companyId, survivorId, m.id, reason || null);
+    mutationFn: async (reasonCode?: string) => {
+      for (const m of others) await driverMergeApi.merge(companyId, survivorId, m.id, reasonCode ?? null);
     },
     onSuccess: () => {
       pushToast(`Merged ${others.length} profile(s) into ${nameOf(members.find((m) => m.id === survivorId)!)}`, "success");
@@ -136,10 +137,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
             </div>
           ) : null}
           {needsReason ? (
-            <label className="block text-xs">
-              The profile you are keeping has fewer loads. Why is this the right one to keep?
-              <input className="mt-1 h-[34px] w-full rounded border border-[#E5E7EB] px-2" value={reason} onChange={(e) => setReason(e.target.value)} />
-            </label>
+            <p className="text-xs text-[#6B7280]">The profile you are keeping has fewer loads. A reason will be required when merging.</p>
           ) : null}
         </div>
       ) : null}
@@ -150,14 +148,20 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
         </Button>
         <Button
           size="sm"
-          disabled={!previewed || blockers.length > 0 || (needsReason && reason.trim().length < 15)}
+          disabled={!previewed || blockers.length > 0}
           loading={merge.isPending}
-          onClick={() => merge.mutate()}
+          onClick={() => { if (needsReason) { setVoidModalOpen(true); } else { merge.mutate(); } }}
           data-testid={`dup-merge-${cluster.survivor.id}`}
         >
           Merge into kept profile
         </Button>
       </div>
+      <VoidReasonModal
+        title={"Merge duplicate"}
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { setVoidModalOpen(false); merge.mutate(reasonCode); }}
+      />
     </section>
   );
 }

@@ -32,6 +32,7 @@ import { formatDateQboList } from "../../lib/formatDate";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { entityLabel } from "../../lib/entity-label";
 import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { listCustomers, listVendors } from "../../api/mdata";
@@ -171,7 +172,7 @@ export function ReclassifyTransactionsPage() {
   const [itemSearch, setItemSearch] = useState("");
   const itemsTargetQ = useAccountingItemsQuery({ operatingCompanyId: companyId, kind: "all", search: itemSearch, enabled: modalOpen && !!companyId });
   const itemTargetOptions = useMemo<ReferenceOption[]>(() => (itemsTargetQ.data ?? []).map((row) => ({ value: row.id, label: row.name })), [itemsTargetQ.data]);
-  const [reason, setReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [overrideRefusals, setOverrideRefusals] = useState(false);
   const [lastResult, setLastResult] = useState<ReclassifyBatchResult | null>(null);
   const [accountFilter, setAccountFilter] = useState("");
@@ -199,8 +200,8 @@ export function ReclassifyTransactionsPage() {
 
   const applyMut = useMutation({
     meta: { loads: true },
-    mutationFn: () => applyReclassify({
-      operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason,
+    mutationFn: (reasonCode: string) => applyReclassify({
+      operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason: reasonCode,
       to_account_id: toAccount || null, to_class_id: toClass || null, to_location_id: toLocation || null,
       to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
       to_item_id: toItem || null, to_load_id: toLoad || null,
@@ -208,7 +209,7 @@ export function ReclassifyTransactionsPage() {
       override_refusals: isOwner && overrideRefusals ? true : undefined,
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setToItem(""); setToLoad(null); setReason(""); setOverrideRefusals(false);
+      setLastResult(res); setModalOpen(false); setVoidModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setToItem(""); setToLoad(null); setOverrideRefusals(false);
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -641,9 +642,6 @@ export function ReclassifyTransactionsPage() {
                 </div>
               </div>
             </div>
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Reason (required, audited on every document)
-              <input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Zelle to Dreamline belongs on Relay/Dreamline payables" data-testid="reclassify-reason" />
-            </label>
             {isOwner ? (
               <label className="mt-2 flex items-start gap-2 text-xs text-[#1F2A44]" data-testid="reclassify-owner-override">
                 <input type="checkbox" checked={overrideRefusals} onChange={(e) => setOverrideRefusals(e.target.checked)} className="mt-0.5" />
@@ -653,11 +651,17 @@ export function ReclassifyTransactionsPage() {
             {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="tertiary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toLocation && !toVendor && !toItem && !toLoad)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
+              <Button type="button" loading={applyMut.isPending} disabled={!toAccount && !toClass && !toLocation && !toVendor && !toItem && !toLoad} onClick={() => setVoidModalOpen(true)} data-testid="reclassify-apply">Apply</Button>
             </div>
           </div>
         </div>
       ) : null}
+      <VoidReasonModal
+        title="Reclassify"
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { applyMut.mutate(reasonCode); }}
+      />
     </AccountingSubNavWrapper>
   );
 }

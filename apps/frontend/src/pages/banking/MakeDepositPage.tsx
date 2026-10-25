@@ -32,6 +32,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 type Receipt = UndepositedReceipt;
 type DepositListRow = Awaited<ReturnType<typeof listBankDeposits>>["rows"][number];
@@ -89,7 +90,6 @@ export function MakeDepositPage() {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [cashBackCents, setCashBackCents] = useState(0);
   const [cashBackAccountId, setCashBackAccountId] = useState("");
-  const [voidReason, setVoidReason] = useState("");
   const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "batch">(openBatchFromQuery ? "batch" : "single");
   const [batchRows, setBatchRows] = useState<BatchRow[]>(() => [newBatchRow(today), newBatchRow(today)]);
@@ -164,7 +164,6 @@ export function MakeDepositPage() {
       voidBankDeposit(id, { operating_company_id: companyId, reason }),
     onSuccess: async () => {
       setVoidTargetId(null);
-      setVoidReason("");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["bank-deposits", "undeposited", companyId] }),
         qc.invalidateQueries({ queryKey: ["bank-deposits", "list", companyId] }),
@@ -545,29 +544,16 @@ export function MakeDepositPage() {
               },
             ]}
           />
-          {voidTargetId ? (
-            <div className="flex flex-wrap items-end gap-2 border-t border-[#E5E7EB] pt-2">
-              <label className="block">
-                <span className="mb-1 block font-bold uppercase text-[#4B5563]">Void reason</span>
-                <input
-                  className="h-7 w-72 rounded-sm border border-[#E5E7EB] px-2"
-                  value={voidReason}
-                  onChange={(e) => setVoidReason(e.target.value)}
-                />
-              </label>
-              <Button
-                type="button"
-                disabled={voidReason.trim().length < 3 || voidMut.isPending}
-                onClick={() => voidMut.mutate({ id: voidTargetId, reason: voidReason })}
-              >
-                Confirm void
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => setVoidTargetId(null)}>
-                Cancel
-              </Button>
-              {voidMut.isError ? <span className=" text-red-700">{userFacingApiError(voidMut.error, "Void failed")}</span> : null}
-            </div>
-          ) : null}
+          <VoidReasonModal
+            open={Boolean(voidTargetId)}
+            title="Void deposit"
+            onClose={() => setVoidTargetId(null)}
+            onSubmit={async (reason) => {
+              if (!voidTargetId) throw new Error("No deposit selected");
+              await voidMut.mutateAsync({ id: voidTargetId, reason });
+            }}
+            submitLabel="Confirm void"
+          />
         </section>
       </div>
     </div>

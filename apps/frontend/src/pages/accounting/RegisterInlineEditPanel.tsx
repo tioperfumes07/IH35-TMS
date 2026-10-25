@@ -25,6 +25,7 @@ import { UploadZone } from "../../components/UploadZone";
 import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 const inputCls = "h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]";
 
@@ -69,7 +70,6 @@ export function RegisterInlineEditPanel({
   const [payee, setPayee] = useState(row.payee ?? "");
   const [memo, setMemo] = useState(row.memo ?? row.description ?? "");
   const [location, setLocation] = useState(row.location ?? "");
-  const [voidReason, setVoidReason] = useState("");
   const [confirmVoid, setConfirmVoid] = useState(false);
 
   useEffect(() => {
@@ -79,7 +79,6 @@ export function RegisterInlineEditPanel({
     setMemo(row.memo ?? row.description ?? "");
     setLocation(row.location ?? "");
     setConfirmVoid(false);
-    setVoidReason("");
   }, [row.posting_id, row.entry_date, row.reference, row.payee, row.memo, row.description, row.location]);
 
   const attType = attachmentEntityType(row.source_transaction_type);
@@ -280,33 +279,13 @@ export function RegisterInlineEditPanel({
         )}
       </div>
 
-      {confirmVoid ? (
-        <div className="flex flex-wrap items-end gap-2 rounded-sm border border-red-200 bg-red-50 px-2 py-2" data-testid="b1-inline-void-confirm">
-          <label className="min-w-[220px] flex-1">
-            <span className="mb-0.5 block text-xs font-bold uppercase text-[#4B5563]">Void reason</span>
-            <input
-              className={inputCls}
-              value={voidReason}
-              onChange={(e) => setVoidReason(e.target.value)}
-              placeholder="Required — why is this voided?"
-              data-testid="b1-inline-void-reason"
-            />
-          </label>
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            disabled={voidReason.trim().length < 3 || voidMutation.isPending}
-            onClick={() => voidMutation.mutate(voidReason.trim())}
-            data-testid="b1-inline-void-confirm-btn"
-          >
-            Confirm void
-          </Button>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmVoid(false)}>
-            Keep
-          </Button>
-        </div>
-      ) : null}
+      <VoidReasonModal
+        open={confirmVoid}
+        title="Void register entry"
+        onClose={() => setConfirmVoid(false)}
+        onSubmit={async (reason) => { await voidMutation.mutateAsync(reason); }}
+        submitLabel="Confirm void"
+      />
 
       <div className="flex flex-wrap justify-end gap-2">
         <Button

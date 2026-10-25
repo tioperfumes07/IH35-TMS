@@ -17,6 +17,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useTranslation } from "../../../hooks/useTranslation";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 
 type Props = {
   open: boolean;
@@ -99,14 +100,13 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
   const [mode, setMode] = useState<"confirm" | "pick" | "keep">("confirm");
   const [pickUnitId, setPickUnitId] = useState<string>("");
   const [pickLoadId, setPickLoadId] = useState<string>("");
-  const [reason, setReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !question) return;
     setMode("confirm");
     setPickUnitId(question.proposed_unit_id ?? question.card_unit_id ?? "");
     setPickLoadId(question.proposed_load_id ?? "");
-    setReason("");
   }, [open, question?.id]);
 
   const candidates = useMemo(() => {
@@ -115,7 +115,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
   }, [question]);
 
   const answerMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (reasonCode?: string) => {
       if (!question) throw new Error("No question");
       if (mode === "confirm") {
         return answerFuelAssignmentQuestion(operatingCompanyId, question.id, {
@@ -126,14 +126,14 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
         return answerFuelAssignmentQuestion(operatingCompanyId, question.id, {
           kind: "keep_card_truck",
           load_id: pickLoadId || question.proposed_load_id,
-          reason,
+          reason: reasonCode,
         });
       }
       return answerFuelAssignmentQuestion(operatingCompanyId, question.id, {
         kind: "pick_other",
         unit_id: pickUnitId,
         load_id: pickLoadId,
-        reason,
+        reason: reasonCode,
       });
     },
     onSuccess: () => {
@@ -153,6 +153,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
     "border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-section-header font-bold uppercase text-[#4B5563]";
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -340,21 +341,6 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 />
               </div>
             </label>
-            <label className="block font-semibold text-[#4B5563] md:col-span-2">
-              Reason {mode === "keep" || mode === "pick" ? "*" : ""}
-              <textarea
-                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
-                rows={2}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                data-testid="fuel-assignment-reason"
-                placeholder={
-                  mode === "keep"
-                    ? "Why keep this fill on the card truck?"
-                    : "Why this truck and load?"
-                }
-              />
-            </label>
           </div>
         )}
 
@@ -375,7 +361,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
             style={{ height: 28 }}
             data-testid="fuel-assignment-submit"
             disabled={answerMut.isPending}
-            onClick={() => answerMut.mutate()}
+            onClick={() => { if (mode === "confirm") { answerMut.mutate(); } else { setVoidModalOpen(true); } }}
           >
             {answerMut.isPending
               ? "Saving…"
@@ -388,5 +374,12 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
         </div>
       </div>
     </Modal>
+    <VoidReasonModal
+      title="Fuel assignment reason"
+      open={voidModalOpen}
+      onClose={() => setVoidModalOpen(false)}
+      onSubmit={async (reasonCode) => { setVoidModalOpen(false); answerMut.mutate(reasonCode); }}
+    />
+    </>
   );
 }
