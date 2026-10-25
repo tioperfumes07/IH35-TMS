@@ -15079,6 +15079,11 @@
     "claimed_by": "cc-1",
     "purpose": "ENG-61 (443.336): verify-final-load-close-posts \u2014 load_bookended settlement GL posting after trip close"
   },
+  "18800": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cursor",
+    "purpose": "ACCT-F443326 (ROUND 443.326): verify-v3-board-grammar-every-surface — V3KpiTile + MoneyListToolbar + ParityTable on 23 audit surfaces; ratchet to 0"
+  },
   "18801": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-1",
