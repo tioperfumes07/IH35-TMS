@@ -524,6 +524,20 @@ const LIVE_DOMAIN_GUARDS = [
       "db/migrations/202615292200_vendor_credits_source_bill_payment_id.sql",
     ],
   ],
+  // Row 21 (18803): no USMCA bill/invoice may have paid > amount without an unapplied credit.
+  [
+    "verify-no-negative-open-balance",
+    [
+      "apps/backend/src/accounting/bills.service.ts",
+      "apps/backend/src/accounting/bills.routes.ts",
+      "apps/backend/src/accounting/vendor-credits.routes.ts",
+      "apps/backend/src/accounting/credit-memos.routes.ts",
+      "apps/backend/src/accounting/vendor-bill-payments.routes.ts",
+      "apps/backend/src/accounting/payments/apply.service.ts",
+      "scripts/verify-no-negative-open-balance.mjs",
+      "scripts/verify-steps/18803-verify-no-negative-open-balance.mjs",
+    ],
+  ],
   [
     "verify-r342-entity-code-company-scoped",
     [
