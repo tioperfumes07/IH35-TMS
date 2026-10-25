@@ -137,7 +137,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         sortable: true,
         render: (driver) => (
           <span className="font-medium text-[#0F1219]">
-            <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={driver.driver_name} noun="Driver" />
+            <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={formatPersonName(driver.driver_name)} noun="Driver" />
           </span>
         ),
       },

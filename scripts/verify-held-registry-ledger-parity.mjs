@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["migrations"],"cols":["connectivity"],"leaves":["held-migrations.registry"],"task":"LST-F443331-HELD-REGISTRY-LEDGER-PARITY","vertical":"class-sweep"} */
 // verify-held-registry-ledger-parity.mjs
 //
 // STATIC guard for the 2026-07-25 GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK split
@@ -49,9 +50,9 @@ export const EXPECTED_HELD = [
   // ih35_migrations.applied_migrations — so their held[] entries are truthful (f405e4834d/160af3ff5c, a700d5e469 ACCT-F9743,
   // 701da816f8 ACCT-F9749; the lease files' own headers say HELD). They leave this list the way the others did: applied,
   // dual-ledger backfilled, moved to applied_held.
-  "202614110000_driver_settlements_source_document_ref_unique.sql",
-  "202615210000_lease_to_own_lessee_asc842.sql",
-  "202615210100_lease_to_own_buyout_close.sql",
+  // 443.331 (LEAD, 2026-10-24): 202614110000 / 202615210000 / 202615210100 were Neon-applied on prod and are
+  // in _system._schema_migrations with checksums 88bf1d50ebfe / b79d9b241ea2 / 94c41ebfd659 (= the file bytes,
+  // db/migrations/.ledger.json) — moved to applied_held with applied_on_prod: true. They leave this list.
   // 2026-07-27 cursor-owner-neon-apply (20:15Z batch, dual-ledger proved under lucia):
   //   202608060000, 202608110000, 202609020000, 202609030000, 202609300000 → applied_held via #3670.
   //   202609290000 (DISP-01 latch) also applied on prod; file lands with #3663 as applied_held (not held).

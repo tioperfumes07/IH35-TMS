@@ -75,8 +75,8 @@
     },
     "accounting.lease_lessee_schedule_period": {
       "migration": "202615210000_lease_to_own_lessee_asc842.sql",
-      "applied_at_utc": null,
-      "applied_ledger": "NOT APPLIED - held",
+      "applied_at_utc": "2026-10-24T21:58:25.039Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
       "why_not_in_migration": "the creating migration is HELD (db/migrations/.held-migrations.json, block ROUND-321-LEASE-TO-OWN): the Lead validates CC-1's exact bytes on a Neon branch before applying, so the declaration is relocated here instead of editing the held file under review",
       "text": "-- CANONICAL-CHECK: money concept = ASC 842 LESSEE AMORTIZATION SCHEDULE (a subledger), not a second ledger. One row per lease asset line per period: payment, interest, principal, liability open/close, ROU amortization/close and straight-line cost, with the bill and the accretion journal entry each period posted through. The GL balance of the lease liability and ROU asset is accounting.journal_entries (roles lease_liability / rou_asset); those accounts pool every lease, so the per-lease carrying amount can only come from this schedule, and lease-buyout.service.ts reads it from POSTED, non-voided periods only. accounting.lease_contract remains the contract document. WORM (void-not-delete) + FORCE RLS."
     },

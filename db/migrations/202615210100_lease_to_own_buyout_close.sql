@@ -1,5 +1,7 @@
+-- RELEASED 2026-10-24 (LEAD 443.331): validated by the Lead on fresh production copies br-lingering-sky-aktlh2vt and br-dark-cell-akp4m0ee
+-- (applied in order, rerun idempotent); removed from .held-migrations.json so prod db:migrate applies it at the next deploy.
 -- 202615210100_lease_to_own_buyout_close.sql
--- HELD — DO NOT RUN ON PROD until the Lead validates it on a Neon branch and applies it (CC-1 could not validate:
+-- HELD — (was: do-not-run-on-prod) until the Lead validates it on a Neon branch and applies it (CC-1 could not validate:
 -- Neon write MCP 401 and local Postgres denied on 2026-10-02). Registered in db/migrations/.held-migrations.json
 -- (verify:hold-migrations-registered). Fresh / CI databases apply it normally.
 --

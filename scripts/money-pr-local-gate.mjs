@@ -16,6 +16,7 @@
  * Never `git commit --no-verify` / `git push --no-verify` (Rule 29).
  */
 import fs from "node:fs";
+import crypto from "node:crypto";
 import os from "node:os";
 import { resolveGateReadonlyDbUrl } from "./lib/gate-db-credential.mjs";
 import { spawnSync } from "node:child_process";
@@ -2595,6 +2596,28 @@ function isRound443235LiveMapBoardReadPath(f) {
 // db/migrations/ blanket armed tip RULE 2 stamp ambient (verify-every-load-born-posting-carries-its-load)
 // from a privilege GRANT that never posts. Exact-file domains for this migration still arm its own guard.
 // CLAIMED-MIGRATION-NUMBERS.json is the same claim reservation — also not a money writer.
+// GATE-SCOPE 443.331 (LEAD) — a db/migrations/*.sql whose bytes hash to the checksum the canonical
+// ledger already recorded (db/migrations/.ledger.json, same sha256 as scripts/db-migrate.mjs) is
+// ALREADY APPLIED in prod: shipping the file cannot write a single row. It restores main to the ledger
+// (the Render pre-deploy runner refuses a checksum drift), so it must not arm ambient live-debt guards.
+// A new or edited migration has no ledger row / a different hash and still arms exactly as before.
+let _ledgerChecksums = null;
+function isAlreadyAppliedMigrationMatchingLedger(f) {
+  if (!/^db\/migrations\/[^/]+\.sql$/.test(f)) return false;
+  try {
+    if (_ledgerChecksums === null) {
+      const j = JSON.parse(fs.readFileSync(path.join(ROOT, "db/migrations/.ledger.json"), "utf8"));
+      _ledgerChecksums = new Map((j.migrations ?? []).map((m) => [m.filename, m.checksum]));
+    }
+    const want = _ledgerChecksums.get(path.basename(f));
+    if (!want) return false;
+    const have = crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, f), "utf8"), "utf8").digest("hex");
+    return have === want;
+  } catch {
+    return false;
+  }
+}
+
 function isRound443235GuardLabelGrantOnlyMigration(f) {
   return (
     f === "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql" ||
@@ -3162,6 +3185,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         // RULE 2 load-born stamp ambient on this Live Map PR. Skip BEFORE the content check so the
         // domainPaths GATE-SCOPE below is not unreachable for these exact files.
         if (isRound443235GuardLabelGrantOnlyMigration(f)) return false;
+        if (isAlreadyAppliedMigrationMatchingLedger(f)) return false; // GATE-SCOPE 443.331
         const diff = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
           cwd: ROOT,
           encoding: "utf8",

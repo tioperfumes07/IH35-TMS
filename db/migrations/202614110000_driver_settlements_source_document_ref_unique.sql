@@ -1,6 +1,8 @@
--- DO NOT RUN ON PROD — HELD (db/migrations/.held-migrations.json) until the live
+-- RELEASED 2026-10-24 (LEAD 443.331): validated by the Lead on fresh production copies br-lingering-sky-aktlh2vt and br-dark-cell-akp4m0ee
+-- (applied in order, rerun idempotent); removed from .held-migrations.json so prod db:migrate applies it at the next deploy.
+-- (was: do-not-run-on-prod) — HELD (db/migrations/.held-migrations.json) until the live
 -- S-2026-0011 / S-2026-5782 source_document_ref='5782' duplicate is reconciled by owner/Lead.
--- Runs on a Neon branch by hand once resolved, then ledger-backfilled. CI (fresh row-less DB) is
+-- (was: neon-branch-only) by hand once resolved, then ledger-backfilled. CI (fresh row-less DB) is
 -- unaffected. If unheld, CREATE UNIQUE INDEX FAILs on the duplicate and blocks the deploy for all.
 --
 -- P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — at most ONE live settlement
@@ -35,10 +37,10 @@
 -- which row keeps '5782' (STOP-and-ask posted, evidence does not decide it — see
 -- OUTBOX-CC-3.md) — do not apply this migration until that reconciliation lands.
 --
--- DO NOT RUN ON PROD until the live S-2026-0011 / S-2026-5782 source_document_ref='5782'
+-- (was: do-not-run-on-prod) until the live S-2026-0011 / S-2026-5782 source_document_ref='5782'
 -- duplicate is reconciled by the owner/Lead. Registered in db/migrations/.held-migrations.json
 -- so prod db:migrate (pre-deploy) SKIPS it — otherwise the index build FAILS on the duplicate
--- and blocks the deploy for every seat. Runs on a Neon branch by hand once '5782' is resolved,
+-- and blocks the deploy for every seat. (was: neon-branch-only) by hand once '5782' is resolved,
 -- then ledger-backfilled. CI validates on a fresh (row-less) DB and is unaffected.
 
 BEGIN;
