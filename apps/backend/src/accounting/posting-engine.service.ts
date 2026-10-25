@@ -2521,7 +2521,7 @@ async function buildDriverAdvanceLines(
     );
     if (isClearingAccount.rows[0]?.is_clearing) {
       throw new PostingEngineError(
-        "INVALID_ACCOUNT",
+        "ADVANCE_NOT_POSTING_ELIGIBLE",
         `Driver advance credit account ${creditAccount} has role driver_payroll_clearing — advances never post to clearing; check from_bank_account_id or creditAccountId`
       );
     }
