@@ -13,6 +13,7 @@ import {
   type CashFlowAdjustmentReason,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
+import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -90,11 +91,12 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
+/** D043 — owner 10-24: MM/DD/YYYY everywhere (no month-name / year-less cells). */
 function fmtDateShort(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+  return formatDateUS(iso);
 }
 function fmtDate(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return formatDateUS(iso);
 }
 
 function mondayOf(iso: string): string {

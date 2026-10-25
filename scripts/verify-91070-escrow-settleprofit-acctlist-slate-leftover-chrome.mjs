@@ -1,28 +1,59 @@
 #!/usr/bin/env node
 // BANK leftover refuse — EscrowPage / SettlementProfitabilityCard / AccountingCatalogListPage
+// + D077: Escrow Updated column = formatDateTimeUS (zero-padded MM/DD/YYYY + Central time).
 import { readFileSync } from "node:fs";
 const TARGETS = [
   "apps/frontend/src/pages/accounting/EscrowPage.tsx",
   "apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx",
   "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx",
 ];
+const ESCROW = "apps/frontend/src/pages/accounting/EscrowPage.tsx";
 const LABEL = "verify-91070-escrow-settleprofit-acctlist-slate-leftover-chrome";
 function leftoverHits(src) {
   const hits = [];
   if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("border-l-slate-") || src.includes("border-t-slate-") || src.includes("bg-slate-") || src.includes("hover:bg-slate-") || src.includes("hover:text-slate-") || src.includes("focus:bg-slate-") || src.includes("divide-slate-") || src.includes("sm:divide-slate-") || src.includes("ring-slate-") || src.includes("decoration-slate-") || src.includes("focus:ring-slate-") || src.includes("focus-visible:ring-slate-") || src.includes("focus:border-slate-") || src.includes("outline-slate-") || src.includes("focus-visible:outline-slate-") || src.includes("accent-slate-")) hits.push("leftover slate class");
   return hits;
 }
-function audit(sources) { const fails=[]; for (const [path, src] of sources) for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`); return fails; }
+function d077Hits(path, src) {
+  if (path !== ESCROW) return [];
+  const hits = [];
+  if (!/formatDateTimeUS/.test(src) || !/from ["'][^"']*lib\/formatDate["']/.test(src)) {
+    hits.push(`${path}: D077 must import formatDateTimeUS from lib/formatDate`);
+  }
+  if (!/key:\s*"updated_at",\s*label:\s*"Updated"/.test(src)) {
+    hits.push(`${path}: D077 must keep Updated column on updated_at`);
+  }
+  if (!/formatDateTimeUS\s*\(\s*value\s*\)/.test(src) && !/dt\s*\(\s*row\.updated_at\s*\)/.test(src)) {
+    hits.push(`${path}: D077 Updated cells must render via formatDateTimeUS (dt helper)`);
+  }
+  if (/toLocaleDateString\s*\(/.test(src) && /updated_at/.test(src)) {
+    hits.push(`${path}: D077 forbids toLocaleDateString on updated_at`);
+  }
+  return hits;
+}
+function audit(sources) {
+  const fails = [];
+  for (const [path, src] of sources) {
+    for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
+    for (const e of d077Hits(path, src)) fails.push(e);
+  }
+  return fails;
+}
 function main() {
   const sources = TARGETS.map((path) => [path, readFileSync(path, "utf8")]);
   if (process.argv.includes("--selftest")) {
     const [path0, src0] = sources[0];
     const planted = `${src0}\n<span className="text-slate-700 border-slate-200 bg-slate-50">plant</span>\n`;
     if (!audit([[path0, planted], ...sources.slice(1)]).some((e) => e.includes(path0) && e.includes("leftover slate class"))) { console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`); process.exit(1); }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate class plant`); process.exit(0);
+    const d077Plant = src0.replace(/formatDateTimeUS/g, "localeFmt").replace(/dt\(row\.updated_at\)/g, "String(row.updated_at)");
+    if (!audit([[path0, d077Plant], ...sources.slice(1)]).some((e) => e.includes("D077"))) {
+      console.error(`${LABEL} SELFTEST FAIL D077 plant escaped`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + D077 plants`); process.exit(0);
   }
   const fails = audit(sources);
   if (fails.length) { console.error(`${LABEL}: FAIL`); for (const e of fails) console.error(`  - ${e}`); process.exit(1); }
-  console.log(`${LABEL}: PASS leftover slate class refuse (${TARGETS.length} files)`);
+  console.log(`${LABEL}: PASS leftover slate refuse + D077 Updated formatDateTimeUS (${TARGETS.length} files)`);
 }
 main();

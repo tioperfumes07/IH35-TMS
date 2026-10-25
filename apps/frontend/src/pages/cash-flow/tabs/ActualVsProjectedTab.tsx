@@ -8,6 +8,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../../components/
 import { SelectCombobox } from "../../../components/Combobox";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -37,10 +38,9 @@ function formatPct(pct: number | null): string {
   return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
 }
 
+/** D043 — owner 10-24: MM/DD/YYYY range labels (no month-name / year-less). */
 function shortRangeLabel(from: string, to: string): string {
-  const fmt = (iso: string) =>
-    localDateFromIso(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
-  return `${fmt(from)} – ${fmt(to)}`;
+  return `${formatDateUS(from)} – ${formatDateUS(to)}`;
 }
 
 function dayCountInclusive(from: string, to: string): number {
@@ -98,11 +98,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     className: "text-left",
     render: (g) => (
       <span className="font-medium" style={{ color: V3.ink }}>
-        {localDateFromIso(g.date).toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        })}
+        {formatDateUS(g.date)}
       </span>
     ),
   },
@@ -122,9 +118,9 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
           <span
             className="block text-xs"
             style={{ color: V3.mutedSoft }}
-            title={`Frozen snapshot captured ${new Date(g.income.projected_captured_at).toLocaleString()}`}
+            title={`Frozen snapshot captured ${formatDateTimeUS(g.income.projected_captured_at)}`}
           >
-            snapshot {new Date(g.income.projected_captured_at).toLocaleDateString()}
+            snapshot {formatDateUS(g.income.projected_captured_at)}
           </span>
         ) : null}
       </span>
@@ -408,7 +404,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
     () =>
       groups.map((g) => ({
         date: g.date,
-        label: localDateFromIso(g.date).toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
+        label: formatDateUS(g.date),
         actualIncome: g.income.actual_unavailable ? 0 : g.income.actual_cents,
         projectedIncome: g.income.projected_cents,
         actualExpenses: g.expenses.actual_unavailable ? 0 : g.expenses.actual_cents,

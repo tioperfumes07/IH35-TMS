@@ -30,6 +30,16 @@ export function collectProblems(homeSrc, tabSrc) {
   if (!tabSrc.includes('"draft"')) {
     problems.push(`${TAB}: status filter must include draft`);
   }
+  // D052 (owner 10-24) — Filed Date must be zero-padded MM/DD/YYYY via formatDateTimeUS.
+  if (!/formatDateTimeUS/.test(tabSrc) || !/from ["'][^"']*lib\/formatDate["']/.test(tabSrc)) {
+    problems.push(`${TAB}: D052 must import formatDateTimeUS from lib/formatDate`);
+  }
+  if (!/formatDateTimeUS\s*\(\s*r\.filed_at\s*\)/.test(tabSrc)) {
+    problems.push(`${TAB}: D052 Filed Date column must render formatDateTimeUS(r.filed_at)`);
+  }
+  if (/toLocaleDateString\s*\(/.test(tabSrc) && /filed_at/.test(tabSrc)) {
+    problems.push(`${TAB}: D052 forbids toLocaleDateString on filed_at (use formatDateTimeUS)`);
+  }
   return problems;
 }
 
@@ -42,7 +52,10 @@ if (process.argv.includes("--selftest")) {
     'const historyReports = (reportsQuery.data?.reports ?? []) as HistoryReportRow[];\n';
   const badHome =
     'const historyReports = ((reportsQuery.data?.reports ?? []) as HistoryReportRow[]).filter((r) => r.status === "filed");\n';
-  const tab = 'emptyText="No reports found."\nSTATUS_OPTIONS = ["", "draft", "ready_to_file", "filed"]\n';
+  const tab =
+    'import { formatDateTimeUS } from "../../../lib/formatDate";\n' +
+    'emptyText="No reports found."\nSTATUS_OPTIONS = ["", "draft", "ready_to_file", "filed"]\n' +
+    '{ key: "filed_at", label: "Filed Date", render: (r) => (r.filed_at ? formatDateTimeUS(r.filed_at) : "—") }\n';
   const good = collectProblems(goodHome, tab);
   const bad = collectProblems(badHome, tab);
   if (good.length) {
@@ -51,6 +64,11 @@ if (process.argv.includes("--selftest")) {
   }
   if (!bad.some((p) => p.includes("silently drop"))) {
     console.error(`${LABEL} --selftest FAIL: filed-only filter must fail`);
+    process.exit(1);
+  }
+  const d052Bad = tab.replace(/formatDateTimeUS/g, "localeFmt");
+  if (!collectProblems(goodHome, d052Bad).some((p) => p.includes("D052"))) {
+    console.error(`${LABEL} --selftest FAIL: D052 plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

@@ -92,6 +92,16 @@ function assertMigrated(src) {
       errors.push(`${PAGE}: must import V3 from design/v3-tokens`);
     }
   }
+  // D043 (owner 10-24) — day labels / range chips = formatDateUS MM/DD/YYYY (no month-name locale).
+  if (!/formatDateUS/.test(src) || !/from ["'][^"']*lib\/formatDate["']/.test(src)) {
+    errors.push(`${PAGE}: D043 must import formatDateUS from lib/formatDate`);
+  }
+  if (/toLocaleDateString\s*\(/.test(src)) {
+    errors.push(`${PAGE}: D043 forbids toLocaleDateString on AVP date labels (use formatDateUS)`);
+  }
+  if (/month:\s*["']short["']/.test(src)) {
+    errors.push(`${PAGE}: D043 forbids month:"short" date chips (use formatDateUS)`);
+  }
   return errors;
 }
 
@@ -100,6 +110,7 @@ function selftest() {
     import { ListErrorState } from "../../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
     import { addDaysIso, companyToday } from "../../../lib/businessDate";
+    import { formatDateUS } from "../../../lib/formatDate";
     import { formatUsdCents } from "../../../lib/money";
     import { V3 } from "../../../design/v3-tokens";
     import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -115,6 +126,7 @@ function selftest() {
       { key: "expense_variance", label: "Exp. Variance" },
       { key: "net", label: "Net" },
     ];
+    shortRangeLabel = (from, to) => formatDateUS(from) + " – " + formatDateUS(to);
     <ListErrorState status={0} onRetry={() => {}} />
     <div data-testid="cash-flow-avp-v3-kpis"><V3KpiTile label="Income accuracy" value="$1" /></div>
     <BoardSection title="Cumulative" testId="cash-flow-avp-chart-panel">
@@ -145,6 +157,14 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const d043Bad = good.replace(/formatDateUS/g, "goneFmt").replace(
+    /from ["'][^"']*lib\/formatDate["']/,
+    'from "../../../lib/gone"',
+  ) + '\nconst x = d.toLocaleDateString("en-US", { month: "short" });\n';
+  if (!assertMigrated(d043Bad).some((e) => e.includes("D043"))) {
+    console.error(`${LABEL} --selftest FAIL D043 plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

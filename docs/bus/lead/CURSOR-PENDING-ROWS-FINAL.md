@@ -39,15 +39,15 @@
 | 148 | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | 443.257-D | CLOSED tip `a9722cc9ad` — Since formatDateUS(row.since); verify-notif-parity-recon-slate-leftover-chrome D029 |
 | 149 | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | 443.257-D | CLOSED tip `a9722cc9ad` — subtitle formatDateUS(range.start/end); grid day headers stay formatPlannerDayLabel (MMM-DD) per GLB-08/PLN-03; verify-planner-bar-label-tier D030 |
 | 161 | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | 443.257-D | CODED |
-| 162 | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | 443.257-D | OPEN |
+| 162 | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | 443.257-D | CLOSED tip pending — DailyPrediction/Rolling/Manual/AVP → formatDateUS; verify-cf-rolling-proj + verify-actual-vs-projected D043 |
 | 164 | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | 443.257-D | CODED |
-| 171 | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | 443.257-D | OPEN |
+| 171 | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | 443.257-D | CLOSED tip pending — HistoryTab formatDateTimeUS(r.filed_at); verify-form425c-history-includes-drafts D052 |
 | 178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | 443.257-D | CODED |
 | 179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | 443.257-D | CODED |
 | 180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | 443.257-D | CODED-QUEUED |
 | 181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | 443.257-D | CODED-QUEUED |
 | 183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | 443.257-D | CODED |
-| 184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | 443.257-D | OPEN |
+| 184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | 443.257-D | CLOSED tip pending — ManualJEModal minmax(0,…) 5-col + [&>*]:min-w-0; verify-91105 D065 |
 | 185 | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | 443.257-D | CODED |
 | 186 | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | 443.257-D | CODED |
 | 187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | 443.257-D | CLOSED tip `a9722cc9ad` (#27608) + ratchet — PostingGrid entityLabel(entity_name) + postingPartyNameSql (#27549); verify-je-debit-credit-columns D068 |
@@ -56,9 +56,9 @@
 | 190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | 443.257-D | CODED — MatchDrawer formatPersonName(c.counterparty_name); guard D071 |
 | 191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | 443.257-D | CODED-QUEUED |
 | 192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | 443.257-D | CODED |
-| 194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | 443.257-D | OPEN |
-| 195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | 443.257-D | OPEN |
-| 196 | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | 443.257-D | OPEN |
+| 194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | 443.257-D | CLOSED tip pending — SettlementsToursRegister OriginDateCell formatDateUS; verify-resettlement-origin-load-dates D075 |
+| 195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | 443.257-D | CLOSED tip pending — escrow listEscrowAccounts join driver by id only (drop OCI equality); verify-escrow-posting-entitylink-reverse D076 |
+| 196 | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | 443.257-D | CLOSED tip pending — EscrowPage Updated formatDateTimeUS; verify-91070 D077 |
 | 199 | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | 443.281 | OPEN |
 | 206 | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | 443.288-C | CODED |
 | 209 | Guards | 107 main static reds outside baseline split by seat | 443.290 | IN PROGRESS |

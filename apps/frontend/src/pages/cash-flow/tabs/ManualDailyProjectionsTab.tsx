@@ -15,6 +15,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { toCents, computeProjectionTotals } from "./manualProjectionMath";
+import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -549,7 +550,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const openingCents = hasSavedOpening ? toCents(openingQuery.data?.amount_cents) : Math.round(bankTotalDollars * 100);
   const projectedClosing = openingCents + net;
   const netPositive = net >= 0;
-  const dateLabel = projectionDate || "—";
+  // D043 — panel titles use MM/DD/YYYY, never raw ISO.
+  const dateLabel = projectionDate ? formatDateUS(projectionDate) : "—";
 
   return (
     <div className="space-y-3" style={{ fontFamily: V3.font }} data-testid="cash-flow-mdp-v3-tab">
