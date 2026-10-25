@@ -697,6 +697,50 @@ export async function closeSettlementPayRun(
       [settlementId, opco]
     );
     if (Number(liveLineCount.rows[0]?.n ?? 0) === 0) {
+      // LEAD 443.339 — owner's closed ruling (2026-09-28): a driver on WEEKLY SALARY (Rafael, local) is not paid per load;
+      // his load-bookended settlement legitimately closes at $0.00 with zero lines and posts NO journal entry. The salaried
+      // signal is the SAME one the line check below and verify-no-empty-zero-settlement use (Lead 443.36): every load linked
+      // to the settlement carries the 0-rate "Salaried" override (isSalariedZeroRateOverride). Closed and posted together
+      // (tg_settlement_close_requires_posting), pay_method 'weekly_salary', audited. Any other empty settlement is refused.
+      const salariedOnly = (await client.query<{ ok: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = $1::uuid AND l.operating_company_id = $2::uuid)
+            AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = $1::uuid AND l.operating_company_id = $2::uuid
+                              AND NOT (l.driver_pay_rate_per_mile = 0
+                                       AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)')) AS ok`,
+        [settlementId, opco]
+      )).rows[0]?.ok === true;
+      if (salariedOnly && input.previewOnly !== true) {
+        await client.query(
+          `UPDATE driver_finance.driver_settlements
+              SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid),
+                  status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
+                  gross_pay = 0, deductions_total = 0, reimbursements_total = 0, net_pay = 0,
+                  pay_method = COALESCE(pay_method, 'weekly_salary')
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [settlementId, opco, actor.userId]
+        );
+        await appendCrudAudit(client as never, actor.userId, "driver_finance.settlement.closed_weekly_salary_zero", {
+          settlement_id: settlementId, driver_id: settlement.driver_id, operating_company_id: opco,
+        });
+        if (settlement.settlement_model === "load_bookended") {
+          await closeCompanySettlementAlongsideDriverSettlement(client, { operatingCompanyId: opco, driverSettlementId: settlementId, actorUserId: actor.userId });
+        }
+        return {
+          result: "posted" as const,
+          posting_enabled: true,
+          settlement_id: settlementId,
+          journal_entry_id: null,
+          payrun_gl_run_id: null,
+          breakdown: {
+            gross_cents: 0, reimbursements_cents: 0, detention_pay_cents: 0, deductions_cents: 0, chargebacks_cents: 0,
+            advance_recoveries_cents: 0, escrow_contribution_cents: 0, escrow_balance_before_cents: 0, net_cents: 0,
+          },
+          recovered_advance_ids: [],
+          je_preview: [],
+          disbursement: { recorded: false, payment_method_id: null, payment_method_name: "weekly_salary" },
+          trip_close_stamp: null,
+        };
+      }
       throw new SettlementPayRunError(
         "SETTLEMENT_HAS_NO_LIVE_LINES",
         `Settlement ${settlement.display_id ?? settlement.id} has no active settlement lines — void it instead of closing`
@@ -1781,6 +1825,11 @@ export async function postLoadBookendedSettlementGlAfterClose(
         settlementId: args.settlementId,
         paymentMethodId: clearingMethodId,
         previewOnly: false,
+        // LEAD 443.339 — owner ruling R12 (2026-10-11, "You do not touch banking ... I match later in banking"): the NET stays
+        // open on Accounts Payable for the driver; the payment is born when the owner matches the real bank line. Without
+        // this the clearing method wrote an ACH bill payment crediting 1000 Bank of America with no bank line behind it
+        // (P-0113/0117/0119/0120 on 10-24: $2,772.61 book-only — the bank tie-out's gl_only bill_payment bucket).
+        leaveNetOpen: true,
       },
       { userId: args.actorUserId }
     );

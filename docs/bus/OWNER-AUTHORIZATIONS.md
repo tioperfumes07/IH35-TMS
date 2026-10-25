@@ -8102,3 +8102,22 @@ action: OWNER_AUTH_ID=AUTH-466 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-2
 rehearsal: fork br-wild-mouse-ak0b4mjm — repair then ENG-01 post: JE Dr 2000 25.00 / Cr 2100-00-024 25.00 balanced
 result: COMMITTED 2026-10-24 ~21:33Z — P-0119 deductions 35.00 → 25.00, net pay 457.80 → 467.80 (the driver is owed $467.80, not $457.80); verify-voided-deduction-never-applied live 0
 status: DONE
+
+## AUTH-467
+issued_at: 2026-10-24T21:55:00Z
+issued_by: Lead 443.339 (ENG-61 + R12). Recorded by Lead
+owner_quotes: "You do not touch banking ... I match later in banking" (owner ruling R12, 2026-10-11); "efix and get it done, lets go" (owner 2026-10-24 4:36 PM CT)
+scope: USMCA ONLY — (1) close and post 13699 (P-0120, Eduardo Azael Flores Ortiz) and 13700 (P-0122, Rafael — salaried, $0 by the 2026-09-28 ruling) whose final-load close had rolled back (ENG-61); (2) void the five system "net driver pay" ACH bill payments written today with no bank line (P-0113 781.55 + 634.92, P-0117 329.51, P-0119 467.80, P-0120 558.83 = $2,772.61) so the nets sit open on A/P per R12; settlements relabelled open_ap_unpaid.
+action: npx tsx scripts/ops/2026-10-24-lead-443339-close-and-post-13699-13700.mts --apply; OWNER_AUTH_ID=AUTH-467 npx tsx scripts/ops/2026-10-24-lead-443339-void-net-pay-ach-to-open-ap.mts --apply
+rehearsal: forks br-shy-glade-ak3n4z44 (close: P-0120 net 558.83 posted, P-0122 $0 closed+posted, TB 0, 5 guards PASS) and br-plain-art-akikq511 (void: TB 0, A/P ties) — both deleted
+result: COMMITTED 2026-10-24 ~21:49Z (close) and ~21:55Z (void) — 1000 Bank of America back to -88,433.89 (the morning tie-out GL); A/P control 129,216.53 = open bills 129,216.53 (variance 0); verify-void-is-whole 0 new
+status: DONE
+
+## AUTH-468
+issued_at: 2026-10-24T18:40:00Z
+issued_by: Lead (13699 correction to the owner's AlwaysTrack Edit Load screen). Recorded by Lead
+owner_quotes: "get all those fixed now. find true root problem, the bess possible soultion" (owner 2026-10-24 1:25 PM CT, with the AlwaysTrack 13699 screenshot); "13699 ok, then it is idpatch mistake" (owner 2026-10-24)
+scope: USMCA ONLY — load 13699: customer EGRO TRANSPORT LLC (146067cf), charges $3,100.00, W/O L28591 through updateDispatchLoad; delivery stop 83a71dec → COPAMEX, 195 S Euclid Ave, Bradley, IL 60915, city-center coordinates cleared for the geofence-sync re-geocode. No invoice existed.
+action: OWNER_AUTH_ID=AUTH-468 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts --apply
+result: COMMITTED 2026-10-24 (afternoon) — recorded after the fact by Lead; the script now refuses --apply without this entry
+status: DONE
