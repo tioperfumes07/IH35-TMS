@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -18,6 +18,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
 import { V3Segmented } from "../../components/v3/V3Segmented";
+import { FuelBoardSection } from "./FuelBoardSection";
 
 type FraudSummary = {
   open_critical: number;
@@ -255,44 +256,42 @@ export function FuelHomePage() {
         activeFilterCount={search.trim() ? 1 : 0}
         testIdPrefix="fuel-home"
       >
-        <V3Segmented
-          value={period}
-          options={FUEL_BOARD_PERIOD_OPTIONS}
-          onChange={setPeriod}
-          testId="fuel-home-diesel-period"
-        />
-        <Link
-          to="/fuel/by-truck"
-          className="text-xs font-semibold"
-          style={{ color: "#1D4ED8" }}
-          data-testid="fuel-home-diesel-view-all"
-        >
-          View all →
-        </Link>
+        {null}
       </MoneyListToolbar>
 
       {dieselQuery.isError ? <ListErrorBanner onRetry={() => void dieselQuery.refetch()} /> : null}
-      <ParityTable<DieselBoardRow>
+      <FuelBoardSection
         title="Diesel by truck"
-        columns={dieselColumns}
-        rows={dieselRows}
-        rowKey={(r) => r.id}
-        loading={dieselQuery.isLoading}
-        emptyText="No diesel spend for this period."
-        suppressToolbarSearch
-        storageKey="fuel-home-diesel-by-truck"
-        tableTestId="fuel-home-diesel-table"
-      />
-
-      <div
-        className="rounded-sm border border-gray-200 bg-white p-3"
-        data-testid="fuel-home-relay-import"
+        onViewAll={() => navigate("/fuel/by-truck")}
+        testId="fuel-home-diesel-board"
+        headerRight={
+          <V3Segmented
+            value={period}
+            options={FUEL_BOARD_PERIOD_OPTIONS}
+            onChange={setPeriod}
+            testId="fuel-home-diesel-period"
+          />
+        }
+        footer="Attribution: signed settlement → its load · card truck keeps its fuel · no load → next load · not 100% sure → question with evidence."
       >
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-          Relay history import
+        <ParityTable<DieselBoardRow>
+          title="Diesel by truck"
+          columns={dieselColumns}
+          rows={dieselRows}
+          rowKey={(r) => r.id}
+          loading={dieselQuery.isLoading}
+          emptyText="No diesel spend for this period."
+          suppressToolbarSearch
+          storageKey="fuel-home-diesel-by-truck"
+          tableTestId="fuel-home-diesel-table"
+        />
+      </FuelBoardSection>
+
+      <FuelBoardSection title="Relay history import" testId="fuel-home-relay-import">
+        <div className="p-3">
+          <RelayHistoryImport operatingCompanyId={companyId} />
         </div>
-        <RelayHistoryImport operatingCompanyId={companyId} />
-      </div>
+      </FuelBoardSection>
     </div>
   );
 }

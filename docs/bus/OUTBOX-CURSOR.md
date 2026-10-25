@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 55 Fuel › Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-fuel-home-board` · tip after #27669 Escrow
+- **DELTA:** FuelHome diesel-by-truck + Relay import wrap in FuelBoardSection; Oct|Sep|YTD grain in section header; attribution footer board text. Engines unchanged (getFuelDashboard / fetchDieselByTruckAggregate).
+- **GUARD:** verify-fuel-home-dashboard-wired · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Fuel 10 sub-tabs + Settlements Company
+- **Files Modified:** FuelHome.tsx · verify-fuel-home-dashboard-wired.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 53–54 Settlements Escrow + Escrow Register FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-settlements-escrow-board` · tip after #27666 Close
