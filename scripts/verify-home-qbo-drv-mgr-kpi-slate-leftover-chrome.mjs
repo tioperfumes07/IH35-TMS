@@ -36,6 +36,15 @@ function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
+    // 443.257-D D002 — Home Overview money tiles always show cents (two decimals).
+    if (path.endsWith("QboStyleHomePage.tsx")) {
+      if (/maximumFractionDigits:\s*0/.test(src)) {
+        fails.push(`${path}: D002 money tiles must not omit cents (maximumFractionDigits: 0)`);
+      }
+      if (!/formatMoneyCents/.test(src) || !/from ["'].*lib\/formatMoney["']/.test(src)) {
+        fails.push(`${path}: D002 money tiles must format via shared formatMoneyCents`);
+      }
+    }
   }
   return fails;
 }
@@ -50,7 +59,12 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate class plant`);
+    const omitCents = src0.replace(/formatMoneyCents\(cents\)/, 'new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100)');
+    if (!audit([[path0, omitCents], ...sources.slice(1)]).some((e) => e.includes("D002") && e.includes("omit cents"))) {
+      console.error(`${LABEL} SELFTEST FAIL D002 omit-cents plant escaped`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + D002 cents plants`);
     process.exit(0);
   }
   const fails = audit(sources);

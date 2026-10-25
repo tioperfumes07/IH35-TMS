@@ -32,10 +32,11 @@ import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
+import { formatMoneyCents } from "../../lib/formatMoney";
 
-/** Money formatter — never labels transport/5xx as Unverifiable. */
+/** ROUND 443.257-D D002 — always two decimals (never omit cents on Home Overview money tiles). */
 function fmt$(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
+  return formatMoneyCents(cents);
 }
 
 /** Today-revenue display: typed schema unverifiable ≠ query isError/5xx. */
