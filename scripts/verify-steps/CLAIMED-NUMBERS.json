@@ -10229,6 +10229,11 @@
     "claimed_by": "cc-1",
     "purpose": "ENG-61 (443.336): verify-final-load-close-posts \u2014 load_bookended settlement GL posting after trip close"
   },
+  "18799": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-one-active-linehaul-per-load-eng11-row249"
+  },
   "18800": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cursor",
@@ -10291,6 +10296,7 @@
     "pr": "PENDING",
     "step": 18841
   },
+  "18845": "CC-1 ENG-43 settlement header mismatch ratchet",
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -17180,10 +17186,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1099,
-  "18799": {
-    "claimed_at": "2026-10-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-one-active-linehaul-per-load-eng11-row249"
-  }
+  "total_claimed": 1099
 }
