@@ -5,7 +5,7 @@
  *   2. Every non-Accounting manifest route resolves a stable structural crumb (delegate guard).
  *   3. Page-local <Breadcrumb> under apps/frontend/src/pages is shrink-only (PINNED allowlist).
  *
- * Measured 2026-10-24 on origin/main: 9 page files render <Breadcrumb>; all other routes rely on Shell.
+ * Measured 2026-10-25 on 443.326: 16 page files render <Breadcrumb>; V3 board chrome shells added 7 (ENG-31 shrink-only PINNED).
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -17,7 +17,7 @@ const FE_PAGES = path.join(ROOT, "apps/frontend/src/pages");
 const LABEL = "verify-page-has-breadcrumb";
 
 /** Shrink-only ceiling for page files that render their own <Breadcrumb> (not Shell structural). */
-const LOCAL_BREADCRUMB_BASELINE = 9;
+const LOCAL_BREADCRUMB_BASELINE = 16;
 
 /**
  * Each page file allowed to render <Breadcrumb> (Accounting wrapper + a few program/settlement leaves).
@@ -68,6 +68,41 @@ const PINNED_LOCAL = [
     rel: "pages/work-orders/WorkOrdersConsoleDetailPage.tsx",
     count: 1,
     reason: "WO console detail custom trail (maintenance console grammar).",
+  },
+  {
+    rel: "pages/customers/CustomersBoardChrome.tsx",
+    count: 1,
+    reason: "V3 board chrome explicit module trail (443.326 Customers home).",
+  },
+  {
+    rel: "pages/driver-finance/SettlementsSubNavWrapper.tsx",
+    count: 1,
+    reason: "Settlements module sub-nav shell; driver-finance depth trail until structural helper covers tabs.",
+  },
+  {
+    rel: "pages/factoring/FactoringBoardChrome.tsx",
+    count: 1,
+    reason: "V3 board chrome explicit module trail (443.326 Factoring home).",
+  },
+  {
+    rel: "pages/fuel/FuelPlannerBoardChrome.tsx",
+    count: 1,
+    reason: "V3 board chrome explicit module trail (443.326 Fuel planner).",
+  },
+  {
+    rel: "pages/fuel/card-overage/CardOverageQueuePage.tsx",
+    count: 1,
+    reason: "Fuel card overage queue leaf trail (operator module path).",
+  },
+  {
+    rel: "pages/fuel/fraud-alerts/FraudAlertsList.tsx",
+    count: 1,
+    reason: "Fuel fraud alerts list explicit trail.",
+  },
+  {
+    rel: "pages/vendors/VendorsBoardChrome.tsx",
+    count: 1,
+    reason: "V3 board chrome explicit module trail (443.326 Vendors home).",
   },
 ];
 
