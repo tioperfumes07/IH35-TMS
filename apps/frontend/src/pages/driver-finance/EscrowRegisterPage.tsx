@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsdCents, formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -314,28 +315,27 @@ export function EscrowRegisterPage() {
             onRetry={() => void tlQ.refetch()}
           />
         ) : (
-          <ParityTable<RegisterRow>
+          <BoardSection
             title={`Escrow register — ${driverName}`}
-            columns={columns}
-            rows={filteredRows}
-            suppressToolbarSearch
-            rowKey={(r) => r.id}
-            loading={tlQ.isLoading || balQ.isLoading}
-            emptyText="No escrow lines for this driver."
-            storageKey={`settlements-escrow-register-${driverId}`}
-            serverViewKey={`settlements-escrow-register-${driverId}`}
-            tableTestId="escrow-register-table"
-            gearButtonTestId="escrow-register-column-gear"
-            toolbar={
-              <Link to="/accounting/escrow" className="font-semibold text-xs" style={{ color: V3.link }}>
-                View all →
-              </Link>
-            }
-          />
+            onViewAll={() => navigate("/accounting/escrow")}
+            testId="escrow-register-board-section"
+            footer="Each line opens its settlement or journal entry."
+          >
+            <ParityTable<RegisterRow>
+              title={`Escrow register — ${driverName}`}
+              columns={columns}
+              rows={filteredRows}
+              suppressToolbarSearch
+              rowKey={(r) => r.id}
+              loading={tlQ.isLoading || balQ.isLoading}
+              emptyText="No escrow lines for this driver."
+              storageKey={`settlements-escrow-register-${driverId}`}
+              serverViewKey={`settlements-escrow-register-${driverId}`}
+              tableTestId="escrow-register-table"
+              gearButtonTestId="escrow-register-column-gear"
+            />
+          </BoardSection>
         )}
-        <p className="text-xs" style={{ color: V3.muted }}>
-          Each line opens its settlement or journal entry.
-        </p>
       </div>
     </SettlementsModuleShell>
   );

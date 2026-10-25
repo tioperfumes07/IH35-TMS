@@ -54,7 +54,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "EscrowRegisterPage",
     file: "apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx",
-    forbid: ["PageHeader"],
+    forbid: ["PageHeader", "V3Panel"],
   },
   {
     id: "EscrowDeductionsPendingTab",
@@ -125,7 +125,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementsEscrowBoard",
     file: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     // 443.280 — Open/Closed FULL board: V3KpiTile + MoneyListToolbar + ParityTable in this surface.

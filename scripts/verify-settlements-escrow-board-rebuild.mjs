@@ -46,6 +46,16 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
   if (board.includes("headerActions") || board.includes("footerRow")) {
     failures.push(`${BOARD}: must use ParityTable toolbar + footerCells (not headerActions/footerRow)`);
   }
+  // 443.280 FULL — shared BoardSection around the by-driver table (docs/design/v3/Settlements-Escrow).
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(board) || !/<BoardSection\b/.test(board)) {
+    failures.push(`${BOARD}: must wrap ParityTable in shared BoardSection`);
+  }
+  if (/\bV3Panel\b/.test(board)) {
+    failures.push(`${BOARD}: must not remount V3Panel`);
+  }
+  if (!/Open register →/.test(board)) {
+    failures.push(`${BOARD}: must keep Open register → action (board)`);
+  }
 
   const register = read(REGISTER);
   if (!register.includes('data-settlements-escrow-register-rebuild="1"')) {
@@ -56,6 +66,12 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
   }
   if (!register.includes("/accounting/escrow?holder_id=")) {
     failures.push(`${REGISTER}: Release escrow must deep-link Accounting Escrow for holder`);
+  }
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(register) || !/<BoardSection\b/.test(register)) {
+    failures.push(`${REGISTER}: must wrap ParityTable in shared BoardSection`);
+  }
+  if (/\bV3Panel\b/.test(register)) {
+    failures.push(`${REGISTER}: must not remount V3Panel`);
   }
 
   return failures;
@@ -74,12 +90,15 @@ if (process.argv.includes("--selftest")) {
   );
   mk(
     BOARD,
-    `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\nsettlementsEscrowRegisterHref\ntoolbar\nfooterCells\n`,
+    `import { BoardSection } from "../../components/v3/BoardSection";\n` +
+      `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\nsettlementsEscrowRegisterHref\n` +
+      `toolbar\nfooterCells\n<BoardSection\nOpen register →\n`,
   );
   mk(
     REGISTER,
-    `data-settlements-escrow-register-rebuild="1"\n` +
-      `data-testid="escrow-register-release"\n/accounting/escrow?holder_id=\n`,
+    `import { BoardSection } from "../../components/v3/BoardSection";\n` +
+      `data-settlements-escrow-register-rebuild="1"\n` +
+      `data-testid="escrow-register-release"\n/accounting/escrow?holder_id=\n<BoardSection\n`,
   );
   if (runEscrowBoardRebuildChecks(tmp).length) {
     throw new Error("PASS fail: " + runEscrowBoardRebuildChecks(tmp).join("; "));
