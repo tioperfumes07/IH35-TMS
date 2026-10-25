@@ -6,8 +6,10 @@
 // Source check only (no reachable Postgres in static CI) — proves:
 //   - GET /api/v1/accounting/company-settlements is registered
 //   - it reads accounting.company_settlements directly (no re-derived header data)
-//   - it reuses buildCompanySettlementReport() for the net-revenue figure (never a second,
-//     competing waterfall calculation)
+//   - it reads net revenue from the report engine's own computeCompanySettlementNetRevenueCents()
+//     (LEAD 443.320: one set-based query instead of a full report per row) and touches no money
+//     table itself — never a second, competing waterfall; the engine's section 6 and that function
+//     read the SAME NET_REVENUE_SALARY / NET_REVENUE_DEDUCTION line-type lists
 //   - a voided settlement never gets a fake $0.00 net revenue (dash/null, not zero — law §8)
 //
 // Run: node scripts/verify-company-settlements-list-route.mjs [--selftest]
@@ -18,9 +20,49 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-company-settlements-list-route";
 const FILE = "apps/backend/src/accounting/company-settlement-list.routes.ts";
+const ENGINE = "apps/backend/src/accounting/company-settlement-report.service.ts";
+// LEAD 443.321: readers that subtract fuel.fuel_transactions AND accounting.expenses must drop the fuel fill's own expense.
+const FUEL_AND_EXPENSE_READERS = [ENGINE, "apps/backend/src/dispatch/load-profitability.service.ts"];
 
 function loadSource(rel) {
   return readFileSync(path.join(ROOT, rel), "utf8");
+}
+
+export function collectEngineFailures(engine = loadSource(ENGINE)) {
+  const failures = [];
+  if (!/export async function computeCompanySettlementNetRevenueCents\(/.test(engine)) {
+    failures.push("report engine has no computeCompanySettlementNetRevenueCents()");
+  }
+  if (!/new Set<string>\(NET_REVENUE_DEDUCTION_LINE_TYPES\)/.test(engine) || !/new Set<string>\(NET_REVENUE_SALARY_LINE_TYPES\)/.test(engine)) {
+    failures.push("report section 6 does not read the shared NET_REVENUE_* line-type lists — the list and the report can drift");
+  }
+  const chargeReads = (engine.match(/dispatch\.load_charge_lines lcl/g) || []).length;
+  const activeReads = (engine.match(/lcl\.is_active = true/g) || []).length;
+  if (chargeReads === 0 || activeReads < chargeReads) {
+    failures.push(`report engine reads dispatch.load_charge_lines ${chargeReads}x but filters is_active only ${activeReads}x — a replaced rate is billed twice`);
+  }
+  if (!/\[\.\.\.NET_REVENUE_SALARY_LINE_TYPES, \.\.\.NET_REVENUE_DEDUCTION_LINE_TYPES\]/.test(engine)) {
+    failures.push("computeCompanySettlementNetRevenueCents does not bind the shared NET_REVENUE_* line-type lists");
+  }
+  return failures;
+}
+
+export function collectFuelDoubleCountFailures(read = loadSource) {
+  const failures = [];
+  for (const rel of FUEL_AND_EXPENSE_READERS) {
+    const src = read(rel);
+    const expenseReads = (src.match(/JOIN accounting\.expenses e|FROM accounting\.expenses e\b/g) || []).length;
+    const guarded = (src.match(/expenseIsNotCountedFuelSql\("e"/g) || []).length;
+    const fuelReads = (src.match(/fuel\.fuel_transactions ft\b/g) || []).length;
+    const liveFuel = (src.match(/ft\.voided_at IS NULL AND ft\.archived_at IS NULL/g) || []).length;
+    if (liveFuel < fuelReads) failures.push(`${rel}: ${fuelReads} fuel read(s), only ${liveFuel} exclude voided/archived fills — a voided fill is counted as cost`);
+    if (!/import \{ expenseIsNotCountedFuelSql \} from "[./a-z-]*fuel-expense-not-double-counted\.sql\.js"/.test(src)) {
+      failures.push(`${rel}: subtracts fuel transactions and expenses but does not import expenseIsNotCountedFuelSql — fuel counted twice`);
+    } else if (guarded < expenseReads) {
+      failures.push(`${rel}: ${expenseReads} expense read(s), only ${guarded} drop the fuel fill's own expense — fuel counted twice`);
+    }
+  }
+  return failures;
 }
 
 export function collectSourceFailures(source = loadSource(FILE)) {
@@ -31,10 +73,13 @@ export function collectSourceFailures(source = loadSource(FILE)) {
   if (!/FROM accounting\.company_settlements/.test(source)) {
     failures.push("does not read accounting.company_settlements directly");
   }
-  if (!/buildCompanySettlementReport/.test(source)) {
-    failures.push("does not reuse buildCompanySettlementReport() for net revenue — must never re-derive the waterfall");
+  if (!/import \{ computeCompanySettlementNetRevenueCents \} from "\.\/company-settlement-report\.service\.js"/.test(source)) {
+    failures.push("does not read net revenue from the report engine's computeCompanySettlementNetRevenueCents() — must never re-derive the waterfall");
   }
-  if (!/if \(!header\.voided_at\)/.test(source) || !/netRevenueCents: number \| null = null/.test(source)) {
+  if (/load_charge_lines|settlement_lines|fuel_transactions|accounting\.expenses/.test(source)) {
+    failures.push("queries a money table itself — net revenue must come from the report engine only");
+  }
+  if (!/header\.voided_at \? null :/.test(source) || !/filter\(\(h\) => !h\.voided_at\)/.test(source)) {
     failures.push("does not skip the waterfall / null out net revenue for a voided settlement (fake-zero risk)");
   }
   if (!/export default fp\(/.test(source)) {
@@ -45,32 +90,55 @@ export function collectSourceFailures(source = loadSource(FILE)) {
 
 function selftest() {
   const good = loadSource(FILE);
-  if (collectSourceFailures(good).length) {
+  const goodEngine = loadSource(ENGINE);
+  if (collectSourceFailures(good).length || collectEngineFailures(goodEngine).length) {
     console.error(`${LABEL} SELFTEST FAIL — good source rejected`);
     process.exit(1);
   }
   const noAutoload = good.replace("export default fp(", "const _unused = fp(");
-  const noReuse = good.replace(/buildCompanySettlementReport/g, "reinventedReport");
-  const fakeZero = good.replace("if (!header.voided_at) {", "if (true) {");
+  const noReuse = good.replace(/computeCompanySettlementNetRevenueCents/g, "reinventedNet");
+  const fakeZero = good.replace("header.voided_at ? null :", "");
+  const ownSql = good.replace("FROM accounting.company_settlements cs", "FROM accounting.company_settlements cs /* JOIN dispatch.load_charge_lines */");
   for (const [name, plant] of [
     ["no default export", noAutoload],
-    ["no report reuse", noReuse],
+    ["no engine reuse", noReuse],
     ["fake zero on voided", fakeZero],
+    ["own money SQL in the list", ownSql],
   ]) {
     if (collectSourceFailures(plant).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — ${name} was not caught`);
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST OK — 3/3 plants rejected`);
+  const driftedReport = goodEngine.replace("new Set<string>(NET_REVENUE_DEDUCTION_LINE_TYPES)", "new Set<string>([\"extra_pay\"])");
+  const inactiveBilled = goodEngine.replace(/ AND lcl\.is_active = true/, "");
+  if (collectEngineFailures(inactiveBilled).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — a revenue read without is_active was not caught`);
+    process.exit(1);
+  }
+  if (collectEngineFailures(driftedReport).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — report section 6 with its own line-type list was not caught`);
+    process.exit(1);
+  }
+  const voidedCounted = (rel) => loadSource(rel).replace(/ AND ft\.voided_at IS NULL AND ft\.archived_at IS NULL/, "");
+  if (collectFuelDoubleCountFailures(voidedCounted).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — a fuel read counting voided fills was not caught`);
+    process.exit(1);
+  }
+  const unguarded = (rel) => loadSource(rel).replace(/WHERE \$\{expenseIsNotCountedFuelSql\("e"[^\n]*\n/, "\n");
+  if (collectFuelDoubleCountFailures(unguarded).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — an expense read without the fuel predicate was not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST OK — 8/8 plants rejected`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
 
-const failures = collectSourceFailures();
+const failures = [...collectSourceFailures(), ...collectEngineFailures(), ...collectFuelDoubleCountFailures()];
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — list route reads the canonical header table and reuses the existing waterfall service`);
+console.log(`${LABEL}: OK — list route reads the canonical header table and reads net revenue from the report engine's one shared section-6 calculation`);

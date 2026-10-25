@@ -28,6 +28,8 @@
 // this function sums only real rows; whatever real deduction lines exist on the driver settlement
 // (Additional Driver Pay = 'extra_pay', included) net out here exactly as they are.
 
+import { expenseIsNotCountedFuelSql } from "./fuel-expense-not-double-counted.sql.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -241,6 +243,99 @@ function plLineLabel(lineType: string): string {
   return labels[lineType] ?? lineType;
 }
 
+/** P&L rollup line types subtracted as Driver Salary (section 6). One list, read by the report and the list. */
+export const NET_REVENUE_SALARY_LINE_TYPES = ["earnings", "team_split_primary", "team_split_secondary"] as const;
+/** Every other settlement_lines type subtracted from revenue (section 6). Escrow types are a liability, never here. */
+export const NET_REVENUE_DEDUCTION_LINE_TYPES = [
+  "extra_pay", "reimbursement", "deduction", "advance_recovery",
+  "abandonment_chargeback", "auto_deduction", "dispute_adjustment",
+  "detention_pay", "deadhead_pay",
+] as const;
+
+/**
+ * LEAD 443.320 (row 103) — net revenue (section 6 of buildCompanySettlementReport) for MANY company
+ * settlements in ONE set-based query. The list route used to build the whole 10-section report per row
+ * (14 queries each; 81 USMCA rows ~ 121 s measured 10-24) to read this one number.
+ *
+ * Same sources, same row filters, same per-row cents rounding as the report:
+ *   loads    = DISTINCT active settlement_lines.load_id of the linked driver settlements
+ *   revenue  = Σ ROUND(dispatch.load_charge_lines.amount_cents) on those loads (this company, load exists)
+ *   lines    = Σ ROUND(settlement_lines.amount × 100) for NET_REVENUE_SALARY + NET_REVENUE_DEDUCTION types
+ *   fuel     = Σ ROUND(fuel.fuel_transactions.total_cost × 100) on those loads (this company)
+ *   expenses = Σ ROUND(accounting.expenses.total_amount_cents) on those loads (this company, not voided)
+ *   net      = revenue − lines − fuel − expenses
+ * Parity with the report is proven to the cent on every live USMCA company settlement (commit evidence).
+ */
+export async function computeCompanySettlementNetRevenueCents(
+  client: DbClient,
+  input: { companySettlementIds: string[]; operatingCompanyId: string }
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (input.companySettlementIds.length === 0) return out;
+  const res = await client.query<{ company_settlement_id: string; net_revenue_cents: string }>(
+    `
+      WITH cs AS (
+        SELECT c.id
+        FROM accounting.company_settlements c
+        WHERE c.id = ANY($2::uuid[]) AND c.operating_company_id = $1::uuid
+      ),
+      links AS (
+        SELECT DISTINCT csds.company_settlement_id AS cs_id, csds.driver_settlement_id AS ds_id
+        FROM accounting.company_settlement_driver_settlements csds
+        JOIN cs ON cs.id = csds.company_settlement_id
+      ),
+      cs_loads AS (
+        SELECT DISTINCT lk.cs_id, sl.load_id
+        FROM links lk
+        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = lk.ds_id
+        WHERE sl.load_id IS NOT NULL AND sl.is_active = true
+      ),
+      revenue AS (
+        SELECT cl.cs_id, SUM(ROUND(lcl.amount_cents)::bigint) AS cents
+        FROM cs_loads cl
+        JOIN dispatch.load_charge_lines lcl ON lcl.load_id = cl.load_id AND lcl.operating_company_id = $1::uuid AND lcl.is_active = true
+        JOIN mdata.loads l ON l.id = lcl.load_id
+        GROUP BY cl.cs_id
+      ),
+      line_cost AS (
+        SELECT lk.cs_id, SUM(ROUND(sl.amount * 100)::bigint) AS cents
+        FROM links lk
+        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = lk.ds_id
+        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+        WHERE sl.is_active = true AND sl.line_type = ANY($3::text[])
+        GROUP BY lk.cs_id
+      ),
+      fuel AS (
+        SELECT cl.cs_id, SUM(ROUND(ft.total_cost * 100)::bigint) AS cents
+        FROM cs_loads cl
+        JOIN fuel.fuel_transactions ft ON ft.load_id = cl.load_id AND ft.operating_company_id = $1::uuid AND ft.voided_at IS NULL AND ft.archived_at IS NULL
+        GROUP BY cl.cs_id
+      ),
+      expense AS (
+        SELECT cl.cs_id, SUM(ROUND(e.total_amount_cents)::bigint) AS cents
+        FROM cs_loads cl
+        JOIN accounting.expenses e ON e.load_id = cl.load_id AND e.operating_company_id = $1::uuid AND e.voided_at IS NULL
+        WHERE ${expenseIsNotCountedFuelSql("e", "$1::uuid", "ARRAY(SELECT cl2.load_id FROM cs_loads cl2 WHERE cl2.cs_id = cl.cs_id)")}
+        GROUP BY cl.cs_id
+      )
+      SELECT cs.id::text AS company_settlement_id,
+             (COALESCE(r.cents, 0) - COALESCE(lc.cents, 0) - COALESCE(f.cents, 0) - COALESCE(x.cents, 0))::text AS net_revenue_cents
+      FROM cs
+      LEFT JOIN revenue r ON r.cs_id = cs.id
+      LEFT JOIN line_cost lc ON lc.cs_id = cs.id
+      LEFT JOIN fuel f ON f.cs_id = cs.id
+      LEFT JOIN expense x ON x.cs_id = cs.id
+    `,
+    [
+      input.operatingCompanyId,
+      input.companySettlementIds,
+      [...NET_REVENUE_SALARY_LINE_TYPES, ...NET_REVENUE_DEDUCTION_LINE_TYPES],
+    ]
+  );
+  for (const r of res.rows) out.set(r.company_settlement_id, Number(r.net_revenue_cents));
+  return out;
+}
+
 export async function buildCompanySettlementReport(
   client: DbClient,
   input: { companySettlementId: string; operatingCompanyId: string }
@@ -342,6 +437,7 @@ export async function buildCompanySettlementReport(
       JOIN mdata.loads l ON l.id = lcl.load_id
       WHERE lcl.operating_company_id = $1::uuid
         AND lcl.load_id = ANY($2::uuid[])
+        AND lcl.is_active = true -- LEAD 443.321: a rate change deactivates the old line; never bill it twice
       ORDER BY l.load_number, lcl.sort_order
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
@@ -441,6 +537,7 @@ export async function buildCompanySettlementReport(
       LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
       WHERE ft.operating_company_id = $1::uuid
         AND ft.load_id = ANY($2::uuid[])
+        AND ft.voided_at IS NULL AND ft.archived_at IS NULL -- LEAD 443.321: a voided fill (e.g. the gross-price copy of a discounted fill) is not a cost
       ORDER BY ft.transaction_at
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
@@ -479,6 +576,7 @@ export async function buildCompanySettlementReport(
       WHERE e.operating_company_id = $1::uuid
         AND e.load_id = ANY($2::uuid[])
         AND e.voided_at IS NULL
+        AND ${expenseIsNotCountedFuelSql("e", "$1::uuid", "$2::uuid[]")}
       ORDER BY l.load_number NULLS LAST
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
@@ -505,13 +603,10 @@ export async function buildCompanySettlementReport(
   // understating netRevenueCents by the escrowed amount (live example: CS-2026-0013 displayed
   // $2,639.85 vs the correct $2,664.85, a $25 escrow-driven distortion). This does NOT touch any
   // journal entry or posted GL amount -- reporting classification only.
-  const deductionLineTypes = new Set([
-    "extra_pay", "reimbursement", "deduction", "advance_recovery",
-    "abandonment_chargeback", "auto_deduction", "dispute_adjustment",
-    "detention_pay", "deadhead_pay",
-  ]);
+  const deductionLineTypes = new Set<string>(NET_REVENUE_DEDUCTION_LINE_TYPES);
+  const salaryLineTypes = new Set<string>(NET_REVENUE_SALARY_LINE_TYPES);
   const driverSalaryCents = allLines
-    .filter((l) => l.line_type === "earnings" || l.line_type === "team_split_primary" || l.line_type === "team_split_secondary")
+    .filter((l) => salaryLineTypes.has(l.line_type))
     .reduce((sum, l) => sum + l.amount_cents, 0);
   const otherDeductionsCents = allLines
     .filter((l) => deductionLineTypes.has(l.line_type))

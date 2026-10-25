@@ -10,6 +10,7 @@ import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visi
 // fuel_cents/maintenance_cents/insurance_alloc_cents/factoring_fee_cents/accessorial_deductions_cents
 // remain as informational operational-cost detail but no longer feed net_profit_cents/margin_pct.
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
+import { expenseIsNotCountedFuelSql } from "../accounting/fuel-expense-not-double-counted.sql.js";
 
 export type LoadProfitabilitySnapshot = {
   load_id: string;
@@ -197,7 +198,7 @@ export async function computeLoadProfitability(
   const fuelRes = await client.query<{ fuel_cents: string }>(
     `SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
      FROM fuel.fuel_transactions ft
-     WHERE ft.load_id = $1 AND ft.operating_company_id = $2::uuid`,
+     WHERE ft.load_id = $1 AND ft.operating_company_id = $2::uuid AND ft.voided_at IS NULL AND ft.archived_at IS NULL`,
     [loadId, operatingCompanyId]
   );
   const fuelCents = num(fuelRes.rows[0]?.fuel_cents);
@@ -423,6 +424,7 @@ export async function computeTripProfitabilityReport(
       JOIN fuel.fuel_transactions ft
         ON ft.load_id = sl.load_id
        AND ft.operating_company_id = $1::uuid
+       AND ft.voided_at IS NULL AND ft.archived_at IS NULL
       GROUP BY sl.settlement_id
     ),
     company_expenses AS (
@@ -436,6 +438,8 @@ export async function computeTripProfitabilityReport(
        AND e.is_active = true
        AND e.deleted_at IS NULL
        AND e.is_sample_data = false
+      -- LEAD 443.321: a fuel fill's own expense document is already in fuel_cost — never count it twice.
+      WHERE ${expenseIsNotCountedFuelSql("e", "$1::uuid", "ARRAY(SELECT sl2.load_id FROM settlement_loads sl2 WHERE sl2.settlement_id = sl.settlement_id)")}
       GROUP BY sl.settlement_id
     )
     SELECT

@@ -89,7 +89,11 @@ function run() {
     failures.push(`${path.relative(repoRoot, REPORT_SERVICE)}: missing`);
   } else {
     const src = fs.readFileSync(REPORT_SERVICE, "utf8");
-    const match = src.match(/const deductionLineTypes = new Set\(\[[\s\S]*?\]\);/);
+    // LEAD 443.320: the deduction list moved to the exported NET_REVENUE_DEDUCTION_LINE_TYPES constant (one definition
+    // shared by the report and the list route); the inline Set literal is accepted for older trees.
+    const match =
+      src.match(/export const NET_REVENUE_DEDUCTION_LINE_TYPES = \[[\s\S]*?\] as const;/) ??
+      src.match(/const deductionLineTypes = new Set\(\[[\s\S]*?\]\);/);
     if (!match) {
       failures.push(`${path.relative(repoRoot, REPORT_SERVICE)}: could not find the deductionLineTypes Set literal -- may have been restructured`);
     } else {
