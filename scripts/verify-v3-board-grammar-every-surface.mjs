@@ -206,6 +206,50 @@ const SURFACES = /** @type {Surface[]} */ ([
     file: "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx",
     forbid: ["PageHeader", "NavyPageSubNav", "CollapsedListFilters"],
   },
+  // ROUND 443.326 — Cash Flow / Legal Home / Accounting Hub: BoardSection (no V3Panel).
+  // chromeOnly: hub/dashboard/filter-locked tabs (KPI + panels; MLT not on Banking-style CF filters).
+  {
+    id: "CashFlowHomeTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/CashFlowHomeTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "ActualVsProjectedTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "RollingLedgerTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "ManualDailyProjectionsTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "DailyPredictionTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "LegalHomeBoard",
+    file: "apps/frontend/src/pages/legal/components/LegalHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "AccountingHubPage",
+    file: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
 ]);
 
 function hasKpiMount(src) {

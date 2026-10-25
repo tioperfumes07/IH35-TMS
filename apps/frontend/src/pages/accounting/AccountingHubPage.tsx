@@ -28,7 +28,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3, V3_TABLE } from "../../design/v3-tokens";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -588,7 +588,7 @@ export function AccountingHubPage() {
         style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: V3.font }}
         data-testid="accounting-hub-board"
       >
-        <V3Panel
+        <BoardSection
           title={`${year} close — ${closedPastCount} of ${Math.max(0, pastMonthsInYear)} past months closed`}
           onViewAll={() => navigate("/accounting/month-close")}
           testId="accounting-hub-close-calendar"
@@ -633,7 +633,7 @@ export function AccountingHubPage() {
               4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock.
             </p>
           </div>
-        </V3Panel>
+        </BoardSection>
 
         <div
           style={{
@@ -643,7 +643,7 @@ export function AccountingHubPage() {
             alignItems: "start",
           }}
         >
-          <V3Panel
+          <BoardSection
             title="Receivables aging"
             onViewAll={() => navigate("/reports/ar-aging")}
             testId="accounting-hub-receivables-aging"
@@ -704,9 +704,9 @@ export function AccountingHubPage() {
                 </>
               )}
             </div>
-          </V3Panel>
+          </BoardSection>
 
-          <V3Panel
+          <BoardSection
             title="Cash pulse · operating account"
             onViewAll={() => navigate("/cash-flow")}
             testId="accounting-hub-cash-pulse"
@@ -751,9 +751,9 @@ export function AccountingHubPage() {
                 </>
               )}
             </div>
-          </V3Panel>
+          </BoardSection>
 
-          <V3Panel
+          <BoardSection
             title="Settlements open"
             onViewAll={() => navigate("/driver-finance/settlements?state=open")}
             testId="accounting-hub-settlements-open"
@@ -820,7 +820,7 @@ export function AccountingHubPage() {
                 </tbody>
               </table>
             </div>
-          </V3Panel>
+          </BoardSection>
         </div>
       </div>
 

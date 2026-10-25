@@ -13,7 +13,7 @@ import { legalTemplatesApi } from "../../../api/legal-templates";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { formatDateUS } from "../../../lib/formatDate";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
@@ -287,7 +287,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
         className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]"
         data-testid="legal-home-main-grid"
       >
-        <V3Panel
+        <BoardSection
           title="Contract pipeline"
           onViewAll={() => navigate("/legal/contracts")}
           testId="legal-home-contract-pipeline"
@@ -321,9 +321,9 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel
+        <BoardSection
           title="Matters & deadlines"
           onViewAll={() => navigate("/legal/matters")}
           testId="legal-home-matters-deadlines"
@@ -377,9 +377,9 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               </table>
             </div>
           )}
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel
+        <BoardSection
           title="Quick actions"
           onViewAll={() => navigate("/legal/contracts")}
           testId="legal-home-quick-actions"
@@ -416,7 +416,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               </button>
             ))}
           </div>
-        </V3Panel>
+        </BoardSection>
       </div>
     </div>
   );

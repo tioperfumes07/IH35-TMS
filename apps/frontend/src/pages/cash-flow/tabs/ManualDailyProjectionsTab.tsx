@@ -25,10 +25,10 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getCashFlowOpeningCash, pullManualTransactions } from "../../../api/cashFlow";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 // ROUND 443.250 — Manual Daily Projections V3 board: same forecast engine + MDP field
-// contracts; chrome via v3-tokens / V3KpiTile / V3Panel; expenses by V3_EXPENSE_GROUPS.
+// contracts; chrome via v3-tokens / V3KpiTile / BoardSection; expenses by V3_EXPENSE_GROUPS.
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -660,8 +660,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
       </div>
 
-      {/* Opening editor + bank detail (V3Panel) — same APIs; projection only. */}
-      <V3Panel
+      {/* Opening editor + bank detail (BoardSection) — same APIs; projection only. */}
+      <BoardSection
         title="Opening cash & banks"
         subtitle={`projected closing ${fmtCents(projectedClosing)}`}
         testId="mdp-bank-balances"
@@ -723,7 +723,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             Use bank total as opening cash
           </button>
         </div>
-      </V3Panel>
+      </BoardSection>
 
       {/* Income (left) / Expenses (right) — equal-height stretch panels. */}
       <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2" data-mdp-panels="equal-height">

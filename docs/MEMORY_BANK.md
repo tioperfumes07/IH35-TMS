@@ -424,8 +424,17 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Statement:** document body linked-records / legacy 2×2 panels unwrap to `BoardSection`
   (document chrome, not a list-board surface). Workflow page already has KPI + MLT + ParityTable.
 - **VendorBillCreate:** intentional session-shell roster (orders SHELL-ONLY) — form stays in ParityDrawer.
-- **Still outside Settlements DoD (other modules):** Insurance/Banking/Accounting/Legal home boards
-  and some Cash Flow tabs still mount `V3Panel` — not in the 443.326 Settlements/Fuel audit set.
+- **Cash Flow / Legal Home / Accounting Hub (443.326 continue, 2026-10-25):** all five CF tabs
+  (`CashFlowHomeTab`, `ActualVsProjectedTab`, `RollingLedgerTab`, `ManualDailyProjectionsTab`,
+  `DailyPredictionTab`) + `LegalHomeBoard` + `AccountingHubPage` unwrap `V3Panel` → `BoardSection`.
+  Registered in `verify-v3-board-grammar-every-surface.mjs` as **chromeOnly** (forbid `V3Panel`):
+  hub/dashboard boards keep KPI + panels; AVP keeps locked `CollapsedListFilters` staged draft;
+  Rolling Ledger keeps Banking Combobox filter bar. CF static guards retargeted to `BoardSection`
+  (`verify-cash-flow-home-tab`, `verify-cash-flow-rolling-ledger`,
+  `verify-actual-vs-projected-tab-uses-paritytable`, `verify-mdp-panel-proportion`,
+  `verify-cashflow-predicted-customer-entitylink`).
+- **Still outside full list-board DoD:** Insurance/Banking homes (if still on `V3Panel`); CF tabs
+  are chromeOnly until MLT lands where filter law allows.
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

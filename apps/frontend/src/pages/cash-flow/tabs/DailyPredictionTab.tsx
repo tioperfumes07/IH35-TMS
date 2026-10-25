@@ -16,7 +16,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
 // ROUND 443.250 — Projected (Auto) V3 board. ONE engine: getRollingLedger (same as Home /
@@ -471,7 +471,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* Income */}
-        <V3Panel
+        <BoardSection
           title="Income"
           subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
           onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
@@ -524,10 +524,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               </table>
             </div>
           )}
-        </V3Panel>
+        </BoardSection>
 
         {/* Expenses */}
-        <V3Panel
+        <BoardSection
           title="Expenses"
           subtitle="in payment priority order"
           onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
@@ -646,7 +646,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               </div>
             </>
           )}
-        </V3Panel>
+        </BoardSection>
       </div>
 
       {/* One-engine measured note (board amber callout) */}

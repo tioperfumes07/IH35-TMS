@@ -16,7 +16,7 @@
 //      "tabs reachable from there," not a dead end.
 //   4. RollingLedgerTab.tsx reuses the SAME shared CashFlowKpiStrip component rather than a second,
 //      independently-drifting inline copy of the tile markup.
-//   5. ROUND 443.250 — Home also mounts the shared V3 design-system pieces (V3KpiTile / V3Panel /
+//   5. ROUND 443.250 — Home also mounts the shared V3 design-system pieces (V3KpiTile / BoardSection /
 //      V3Segmented from components/v3 + v3-tokens) and the chart + 13-week table panels.
 import fs from "node:fs";
 import path from "node:path";
@@ -56,7 +56,7 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
     if (!/from ["']\.\.\/\.\.\/\.\.\/design\/v3-tokens["']/.test(homeSrc) && !/from ["'][^"']*design\/v3-tokens["']/.test(homeSrc)) {
       failures.push(`${HOME_TAB_REL}: missing v3-tokens import -- 443.250 requires the single design-system palette`);
     }
-    for (const comp of ["V3KpiTile", "V3Panel", "V3Segmented"]) {
+    for (const comp of ["V3KpiTile", "BoardSection", "V3Segmented"]) {
       if (!new RegExp(`<${comp}\\b`).test(homeSrc)) {
         failures.push(`${HOME_TAB_REL}: does not render <${comp}> -- 443.250 Cash Flow Home V3 board requires shared components/v3`);
       }
@@ -103,7 +103,7 @@ const TABS = [
   const goodHome = `
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { getRollingLedger } from "../../../api/cashFlow";
@@ -116,8 +116,8 @@ const TAB_CARDS = [
 getRollingLedger(oci, today, end);
 <CashFlowKpiStrip kpis={kpis} />
 <div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>
-<V3Panel title="Cash position" testId="cash-flow-home-chart-panel"><div /></V3Panel>
-<V3Panel title="13-week" testId="cash-flow-home-table-panel"><div data-testid="cash-flow-home-13w-table" /></V3Panel>
+<BoardSection title="Cash position" testId="cash-flow-home-chart-panel"><div /></BoardSection>
+<BoardSection title="13-week" testId="cash-flow-home-table-panel"><div data-testid="cash-flow-home-13w-table" /></BoardSection>
 <V3Segmented value="weekly" options={[]} onChange={() => {}} />
 `;
   const goodKpiStrip = "export function CashFlowKpiStrip() {}";

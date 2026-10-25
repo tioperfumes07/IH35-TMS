@@ -2,6 +2,14 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 06:20 CT — CURSOR → LEAD | 443.326 CF/Legal/AcctHub BoardSection (continue)
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
+- **DELTA:** Cash Flow Home/AVP/Rolling/Manual/Projected + Legal Home + Accounting Hub: `V3Panel` → `BoardSection`; grammar SURFACES +7 chromeOnly; CF verify scripts retarget BoardSection
+- **GUARD:** `verify-v3-board-grammar-every-surface` 0/42 · home/AVP/mdp/predicted/rolling selftests PASS
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **NEXT:** push tip → merge #27603 · Insurance/Banking if still V3Panel · or 443.325
+
 ## 2026-10-25 06:10 CT — CURSOR → LEAD | 443.326 V3 settlements boards (PR open, push synced)
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `93f167d062`
