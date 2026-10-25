@@ -17,6 +17,7 @@ import {
 } from "../api/identity";
 import { listCustomers } from "../api/mdata";
 import { CappedListNotice } from "../components/CappedListNotice";
+import { VoidReasonModal } from "../components/accounting/VoidReasonModal";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
@@ -102,7 +103,7 @@ export function UserDetailPage() {
   const [addEventOpen, setAddEventOpen] = useState(false);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [voidEventId, setVoidEventId] = useState<string | null>(null);
-  const [voidReason, setVoidReason] = useState("");
+
   const [eventType, setEventType] = useState<DispatcherErrorReason["event_type"] | null>(null);
   const [eventDate, setEventDate] = useState(companyToday());
   const [errorReasonId, setErrorReasonId] = useState<string | null>(null);
@@ -236,7 +237,6 @@ export function UserDetailPage() {
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidDispatcherSafetyEvent(userId, id, reason),
     onSuccess: () => {
       setVoidEventId(null);
-      setVoidReason("");
       queryClient.invalidateQueries({ queryKey: ["dispatcher-safety-events", userId] });
       pushToast("Event voided", "info");
     },
@@ -728,32 +728,15 @@ export function UserDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={Boolean(voidEventId)} onClose={() => setVoidEventId(null)} title="Void Event">
-        <form
-          className="space-y-3"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (!voidEventId) return;
-            await voidEventMutation.mutateAsync({ id: voidEventId, reason: voidReason });
-          }}
-        >
-          <textarea
-            value={voidReason}
-            onChange={(event) => setVoidReason(event.target.value)}
-            rows={4}
-            placeholder="Void reason (min 10 chars)"
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
-          />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setVoidEventId(null)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={voidEventMutation.isPending} disabled={voidReason.trim().length < 10}>
-              Confirm Void
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <VoidReasonModal
+        open={Boolean(voidEventId)}
+        title="Void Event"
+        onClose={() => setVoidEventId(null)}
+        onSubmit={async (reason) => {
+          if (!voidEventId) throw new Error("No event selected");
+          await voidEventMutation.mutateAsync({ id: voidEventId, reason });
+        }}
+      />
 
       <Modal open={Boolean(editEventId)} onClose={() => setEditEventId(null)} title="Update Event">
         <form

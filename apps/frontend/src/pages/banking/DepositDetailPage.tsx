@@ -13,6 +13,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { BANKING_MODULE_TABS, BANKING_SUBNAV_TAB_IDS } from "./BANKING_NAV_CONFIG";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { BANKING_TAB_PATH } from "../../router/route-manifest";
 import { getBankDeposit, voidBankDeposit } from "../../api/bankDeposits";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
@@ -29,7 +30,6 @@ export function DepositDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [voidReason, setVoidReason] = useState("");
   const [voidOpen, setVoidOpen] = useState(false);
 
   const query = useQuery({
@@ -39,11 +39,10 @@ export function DepositDetailPage() {
   });
 
   const voidMut = useMutation({
-    mutationFn: () => voidBankDeposit(id, { operating_company_id: companyId, reason: voidReason.trim() }),
+    mutationFn: (reason: string) => voidBankDeposit(id, { operating_company_id: companyId, reason }),
     onSuccess: () => {
       pushToast("Deposit voided", "success");
       setVoidOpen(false);
-      setVoidReason("");
       void queryClient.invalidateQueries({ queryKey: ["bank-deposits"] });
     },
     onError: (err) => pushToast(userFacingApiError(err, "Could not void deposit"), "error"),
@@ -182,28 +181,13 @@ export function DepositDetailPage() {
               />
             </section>
 
-            {voidOpen ? (
-              <div className="flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
-                <label className="block">
-                  <span className="mb-1 block font-bold uppercase text-[#4B5563]">Void reason</span>
-                  <input
-                    className="h-7 w-72 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-                    value={voidReason}
-                    onChange={(e) => setVoidReason(e.target.value)}
-                  />
-                </label>
-                <Button
-                  type="button"
-                  disabled={voidReason.trim().length < 3 || voidMut.isPending}
-                  onClick={() => voidMut.mutate()}
-                >
-                  Confirm void
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setVoidOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            ) : null}
+            <VoidReasonModal
+              open={voidOpen}
+              title="Void deposit"
+              onClose={() => setVoidOpen(false)}
+              onSubmit={async (reason) => { await voidMut.mutateAsync(reason); }}
+              submitLabel="Confirm void"
+            />
           </div>
         )}
       </div>

@@ -15,6 +15,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
 import { SelectCombobox } from "../../components/Combobox";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 type Props = {
   operatingCompanyId: string;
@@ -46,7 +47,6 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
   const [isPrimary, setIsPrimary] = useState(false);
   const [notes, setNotes] = useState("");
   const [voidingId, setVoidingId] = useState<string | null>(null);
-  const [voidReason, setVoidReason] = useState("");
 
   const query = useQuery({
     queryKey,
@@ -102,11 +102,11 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
   });
 
   const voidMutation = useMutation({
-    mutationFn: (methodId: string) => voidVendorPaymentMethod(vendorId, methodId, operatingCompanyId, voidReason.trim()),
+    mutationFn: ({ methodId, reason }: { methodId: string; reason: string }) =>
+      voidVendorPaymentMethod(vendorId, methodId, operatingCompanyId, reason),
     onSuccess: () => {
       pushToast("Payment method voided", "success");
       setVoidingId(null);
-      setVoidReason("");
       void queryClient.invalidateQueries({ queryKey });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to void payment method"), "error"),
@@ -223,38 +223,25 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
                       Set primary
                     </Button>
                   ) : null}
-                  {voidingId === method.id ? (
-                    <>
-                      <input
-                        className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        value={voidReason}
-                        onChange={(event) => setVoidReason(event.target.value)}
-                        placeholder="Reason (required)"
-                      />
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        disabled={!voidReason.trim()}
-                        onClick={() => voidMutation.mutate(method.id)}
-                        loading={voidMutation.isPending}
-                      >
-                        Confirm void
-                      </Button>
-                      <Button size="sm" variant="secondary" onClick={() => { setVoidingId(null); setVoidReason(""); }}>
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button size="sm" variant="secondary" onClick={() => setVoidingId(method.id)}>
-                      Void
-                    </Button>
-                  )}
+                  <Button size="sm" variant="secondary" onClick={() => setVoidingId(method.id)}>
+                    Void
+                  </Button>
                 </span>
               ) : null}
             </div>
           ))}
         </div>
       )}
+      <VoidReasonModal
+        open={Boolean(voidingId)}
+        title="Void payment method"
+        onClose={() => setVoidingId(null)}
+        onSubmit={async (reason) => {
+          if (!voidingId) throw new Error("No method selected");
+          await voidMutation.mutateAsync({ methodId: voidingId, reason });
+        }}
+        submitLabel="Confirm void"
+      />
     </DataPanel>
   );
 }

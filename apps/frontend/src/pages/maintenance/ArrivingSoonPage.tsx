@@ -224,7 +224,7 @@ export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props)
         onSeverityMinChange={setSeverityMin}
         onIncludeAlreadyArrivedChange={setIncludeAlreadyArrived}
         onIncludeNonYardChange={setIncludeNonYard}
-      /> : <p className="text-xs text-slate-500">Yard arrivals with reported issues · next 48 hours. Complete arrivals and PM status are not supplied by this endpoint.</p>}
+      /> : <p className="text-xs text-[#6B7280]">Yard arrivals with reported issues · next 48 hours. Complete arrivals and PM status are not supplied by this endpoint.</p>}
 
       {query.isError ? (
         <div

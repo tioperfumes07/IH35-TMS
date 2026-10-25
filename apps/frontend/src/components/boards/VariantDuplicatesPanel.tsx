@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatUsdCentsTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../Combobox";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { ParityTable } from "../parity/ParityTable";
 
 /**
@@ -64,21 +65,21 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
   const q = useVariantCandidates(props.operatingCompanyId);
   const [open, setOpen] = useState<string | null>(null);
   const [survivor, setSurvivor] = useState<"a" | "b">("a");
-  const [reason, setReason] = useState("");
+  const [voidModalPair, setVoidModalPair] = useState<Pair | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const merge = useMutation({
-    mutationFn: (p: Pair) => {
-      const s = survivor === "a" ? p.a : p.b;
-      const d = survivor === "a" ? p.b : p.a;
+    mutationFn: ({ pair, reasonCode }: { pair: Pair; reasonCode: string }) => {
+      const s = survivor === "a" ? pair.a : pair.b;
+      const d = survivor === "a" ? pair.b : pair.a;
       return apiRequest(`/api/v1/mdata/canonical/${props.board}/merge`, {
         method: "POST",
-        body: { operating_company_id: props.operatingCompanyId, survivor_id: s.id, duplicate_id: d.id, reason, evidence: "owner_approved_variant" },
+        body: { operating_company_id: props.operatingCompanyId, survivor_id: s.id, duplicate_id: d.id, reason: reasonCode, evidence: "owner_approved_variant" },
       });
     },
     onSuccess: () => {
       setOpen(null);
-      setReason("");
+      setVoidModalPair(null);
       setError(null);
       void qc.invalidateQueries({ queryKey: ["variant-candidates", props.operatingCompanyId] });
       void qc.invalidateQueries({ queryKey: ["party-board"] });
@@ -92,6 +93,13 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
   if (!pairs.length) return <div className="pb-muted" data-testid="variant-duplicates-empty">No possible duplicates — every {props.board === "customers" ? "customer" : "vendor"} name is distinct across customers, vendors and Faro debtors.</div>;
 
   return (
+    <>
+    <VoidReasonModal
+      open={Boolean(voidModalPair)}
+      title="Merge duplicates"
+      onClose={() => setVoidModalPair(null)}
+      onSubmit={async (reasonCode) => { if (voidModalPair) merge.mutate({ pair: voidModalPair, reasonCode }); }}
+    />
     <div className="pb-card" data-testid="variant-duplicates-panel">
       <ParityTable<Pair>
         appearance="board"
@@ -130,7 +138,7 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
                 ) : !isOwner ? (
                   <span className="pb-muted2">Owner approves merges</span>
                 ) : !editing ? (
-                  <button type="button" className="pb-chip" onClick={() => { setOpen(key); setSurvivor(p.a.docs >= p.b.docs ? "a" : "b"); setReason(""); setError(null); }}>
+                  <button type="button" className="pb-chip" onClick={() => { setOpen(key); setSurvivor(p.a.docs >= p.b.docs ? "a" : "b"); setError(null); }}>
                     Review merge
                   </button>
                 ) : (
@@ -145,10 +153,9 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
                     <div className="pb-sub-sm">
                       {d.docs} {DOC_NOUN[d.kind]} ({formatUsdCentsTable(d.total_cents)}) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.
                     </div>
-                    <input className="pb-search" style={{ minWidth: 0 }} placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Merge reason" />
                     {error ? <div className="pb-sub-sm" style={{ color: "var(--ih-red)" }}>{error}</div> : null}
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button type="button" className="pb-create" disabled={reason.trim().length < 5 || merge.isPending} onClick={() => merge.mutate(p)}>
+                      <button type="button" className="pb-create" disabled={merge.isPending} onClick={() => setVoidModalPair(p)}>
                         {merge.isPending ? "Merging…" : "Save"}
                       </button>
                       <button type="button" className="pb-refresh" onClick={() => { setOpen(null); setError(null); }}>Close</button>
@@ -162,5 +169,6 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
         ]}
       />
     </div>
+    </>
   );
 }

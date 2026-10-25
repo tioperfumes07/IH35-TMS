@@ -7,7 +7,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError } from "../../api/client";
 import {
   getFactoringPurchase,
   listFactoringPurchases,
@@ -22,7 +21,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { entityLabel } from "../../lib/entity-label";
 
 function cents(v: number | string | null | undefined): number {
@@ -400,82 +399,19 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
  *  invoices). A purchase whose Faro wire is matched to a bank line is refused until that match is undone in Banking. */
 function UndoPurchaseDialog(props: { companyId: string; target: UndoTarget; onClose: () => void; onVoided: () => Promise<void> }) {
   const { companyId, target, onClose, onVoided } = props;
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ text: string; matched: boolean; bankTransactionId: string | null } | null>(null);
-  const reasonOk = reason.trim().length >= 10;
-
-  async function confirm() {
-    if (!reasonOk) {
-      setError({ text: "Enter a reason (at least 10 characters).", matched: false, bankTransactionId: null });
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await voidFactoringPurchase(companyId, target.id, reason.trim());
-      await onVoided();
-    } catch (err) {
-      const data = (err instanceof ApiError ? err.data ?? {} : {}) as { error?: string; message?: string; details?: { bank_transaction_id?: string } };
-      if (data.error === "factoring_purchase_matched_to_bank_unmatch_first") {
-        setError({ text: UNDO_PURCHASE_MATCHED_MESSAGE, matched: true, bankTransactionId: data.details?.bank_transaction_id ?? target.bank_transaction_id });
-      } else {
-        setError({ text: data.message ?? data.error ?? (err instanceof Error ? err.message : "Undo failed"), matched: false, bankTransactionId: null });
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
-    <Modal open onClose={onClose} title={`Undo purchase — ${target.display_id}`}>
-      <div className="space-y-2 text-xs" data-testid="payments-to-you-undo-dialog">
-        <p>
-          Voids this purchase: its funding journal entry is reversed and its invoices return to Submit to Factor. The purchase keeps
-          its number, marked Voided.
-        </p>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold uppercase text-[#4B5563]">Reason</span>
-          <textarea
-            className="min-h-[60px] rounded-sm border border-gray-300 p-2 text-xs"
-            value={reason}
-            maxLength={500}
-            placeholder="At least 10 characters — why this purchase is undone"
-            onChange={(e) => setReason(e.target.value)}
-            data-testid="payments-to-you-undo-reason"
-          />
-        </label>
-        {error ? (
-          <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-800" role="alert" data-testid="payments-to-you-undo-error">
-            {error.text}
-            {error.matched ? (
-              <>
-                {" — "}
-                {error.bankTransactionId ? (
-                  <EntityLink kind="bank_transaction" id={error.bankTransactionId} label="open the bank line" />
-                ) : null}
-                {error.bankTransactionId ? " · " : null}
-                <Link
-                  to={target.bank_account_id ? `/banking/accounts/${encodeURIComponent(target.bank_account_id)}` : "/banking"}
-                  className="underline"
-                  data-testid="payments-to-you-undo-banking-link"
-                >
-                  Banking
-                </Link>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={() => void confirm()} loading={busy} disabled={!reasonOk || busy} data-testid="payments-to-you-undo-confirm">
-            Undo purchase
-          </Button>
-        </div>
-      </div>
-    </Modal>
+    <VoidReasonModal
+      open
+      title={`Undo purchase — ${target.display_id}`}
+      entityRef="Voids this purchase: its funding JE is reversed and its invoices return to Submit to Factor. The purchase keeps its number, marked Voided. If matched to a bank line, undo the match in Banking first."
+      onClose={onClose}
+      onSubmit={async (reason) => {
+        await voidFactoringPurchase(companyId, target.id, reason);
+        await onVoided();
+      }}
+      submitLabel="Undo purchase"
+    />
   );
 }
 

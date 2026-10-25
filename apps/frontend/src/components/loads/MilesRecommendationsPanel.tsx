@@ -15,6 +15,7 @@ import {
   useLoadMilesRecommendations,
 } from "../../api/milesRecommendations";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 
 const HEADER = "text-section-header font-bold uppercase tracking-[0.4px] text-gray-600";
 const SOURCE_LABEL: Record<MilesSource, string> = { historical: "Historical", google: "Google", manual: "Manual", document: "Document" };
@@ -90,7 +91,7 @@ function MilesFieldRow({
 }) {
   const [manualOpen, setManualOpen] = useState(false);
   const [manualValue, setManualValue] = useState("");
-  const [reason, setReason] = useState("");
+  const [voidManualOpen, setVoidManualOpen] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
   if (!rec) return null;
 
@@ -98,12 +99,16 @@ function MilesFieldRow({
   const h = rec.historical;
   const g = rec.google;
 
-  const submitManual = async () => {
+  const openManualVoidModal = () => {
     const v = Number(manualValue);
-    if (!manualValue.trim() || !Number.isFinite(v) || v < 0) return setManualError("Enter the miles");
-    if (!reason.trim()) return setManualError("A reason is required for a manual value");
+    if (!manualValue.trim() || !Number.isFinite(v) || v < 0) { setManualError("Enter the miles"); return; }
     setManualError(null);
-    await onChoose?.({ field, source: "manual", manual_value: v, reason: reason.trim() });
+    setVoidManualOpen(true);
+  };
+  const submitManual = async (reasonCode: string) => {
+    const v = Number(manualValue);
+    setVoidManualOpen(false);
+    await onChoose?.({ field, source: "manual", manual_value: v, reason: reasonCode });
     setManualOpen(false);
   };
 
@@ -174,20 +179,13 @@ function MilesFieldRow({
                     placeholder="Miles"
                     className="w-full rounded-[4px] border border-gray-200 px-2 py-1 text-xs"
                   />
-                  <input
-                    aria-label={`${label} manual reason`}
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="Reason (required)"
-                    className="w-full rounded-[4px] border border-gray-200 px-2 py-1 text-xs"
-                  />
                 </div>
                 {manualError ? <div role="alert" className="text-red-700">{manualError}</div> : null}
                 <button
                   type="button"
                   data-testid={`miles-manual-save-${field}`}
                   disabled={saving}
-                  onClick={() => void submitManual()}
+                  onClick={openManualVoidModal}
                   className="self-start rounded-[4px] border border-[#16A34A] px-2 py-1 text-xs font-semibold text-[#16A34A]"
                 >
                   Use manual value
@@ -211,6 +209,12 @@ function MilesFieldRow({
         )}
       </div>
       </div>
+      <VoidReasonModal
+        title="Record miles"
+        open={voidManualOpen}
+        onClose={() => setVoidManualOpen(false)}
+        onSubmit={(reasonCode) => submitManual(reasonCode)}
+      />
     </div>
   );
 }

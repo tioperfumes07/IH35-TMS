@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
@@ -31,8 +32,8 @@ type Props = {
 
 export function StatusChangeModal({ open, trailerId, companyId, currentStatus, onClose, onSaved }: Props) {
   const [targetStatus, setTargetStatus] = useState<TrailerStatus>("OutOfService");
-  const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [effectiveDate, setEffectiveDate] = useState(todayIso());
   const [soldDate, setSoldDate] = useState("");
   const [soldTo, setSoldTo] = useState("");
@@ -52,51 +53,47 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
     setError("");
   }, [open]);
 
-  const submit = async () => {
-    setError("");
-    if (!reason.trim()) {
-      setError("Reason is required.");
-      return;
-    }
+  const validateForm = (): Parameters<typeof putTrailerStatus>[2] | null => {
     const body: Parameters<typeof putTrailerStatus>[2] = {
       status: targetStatus,
-      reason: reason.trim(),
+      reason: "",
       note: note.trim() || undefined,
       effective_date: effectiveDate || undefined,
     };
     if (targetStatus === "Sold") {
-      if (!soldDate) {
-        setError("Sold requires sold date.");
-        return;
-      }
+      if (!soldDate) { setError("Sold requires sold date."); return null; }
       body.sold_date = soldDate;
       body.sold_to = soldTo || undefined;
       body.sold_price = soldPrice ? Number(soldPrice) : undefined;
     }
     if (targetStatus === "Transferred") {
-      if (!transferredDate) {
-        setError("Transferred requires transfer date.");
-        return;
-      }
+      if (!transferredDate) { setError("Transferred requires transfer date."); return null; }
       body.transferred_date = transferredDate;
       body.transferred_to_entity = transferredTo;
     }
     if (targetStatus === "Damaged") {
-      if (!damageDate || !damageDescription.trim()) {
-        setError("Damaged requires damage date and description.");
-        return;
-      }
+      if (!damageDate || !damageDescription.trim()) { setError("Damaged requires damage date and description."); return null; }
       body.damage_date = damageDate;
       body.damage_description = damageDescription.trim();
     }
     if (targetStatus === "OutOfService") {
-      if (!oosDate || !oosReason.trim()) {
-        setError("OOS requires date and reason.");
-        return;
-      }
+      if (!oosDate || !oosReason.trim()) { setError("OOS requires date and reason."); return null; }
       body.oos_date = oosDate;
       body.oos_reason = oosReason.trim();
     }
+    return body;
+  };
+
+  const openVoidModal = () => {
+    setError("");
+    if (!validateForm()) return;
+    setVoidModalOpen(true);
+  };
+
+  const handleVoidSubmit = async (reasonCode: string) => {
+    const body = validateForm();
+    if (!body) return;
+    body.reason = reasonCode;
     setPending(true);
     try {
       await putTrailerStatus(trailerId, companyId, body);
@@ -110,106 +107,110 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
   };
 
   return (
-    <Modal open={open} title="Change trailer status" onClose={onClose}>
-      <div className="space-y-2 text-xs" data-testid="tp-status-change-modal">
-        <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
-        <label className="block">
-          New status *
-          <SelectCombobox
-            className="mt-1 w-full rounded-sm border px-2 py-1"
-            value={targetStatus}
-            onChange={(e) => setTargetStatus(e.target.value as TrailerStatus)}
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
-        <label className="block">
-          Reason *
-          <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)} />
-        </label>
-        <label className="block">
-          Note
-          <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={note} onChange={(e) => setNote(e.target.value)} />
-        </label>
-        <div>
-          <span className="block">Effective date</span>
-          <DatePicker
-            className="mt-1 w-full"
-            value={effectiveDate}
-            onChange={(next) => setEffectiveDate(next)}
-          />
+    <>
+      <Modal open={open} title="Change trailer status" onClose={onClose}>
+        <div className="space-y-2 text-xs" data-testid="tp-status-change-modal">
+          <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
+          <label className="block">
+            New status *
+            <SelectCombobox
+              className="mt-1 w-full rounded-sm border px-2 py-1"
+              value={targetStatus}
+              onChange={(e) => setTargetStatus(e.target.value as TrailerStatus)}
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="block">
+            Note
+            <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+          <div>
+            <span className="block">Effective date</span>
+            <DatePicker
+              className="mt-1 w-full"
+              value={effectiveDate}
+              onChange={(next) => setEffectiveDate(next)}
+            />
+          </div>
+          {targetStatus === "Sold" ? (
+            <>
+              <div>
+                <span className="block">Sold date *</span>
+                <DatePicker className="mt-1 w-full" value={soldDate} onChange={(next) => setSoldDate(next)} />
+              </div>
+              <label className="block">
+                Sold to
+                <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
+              </label>
+              <label className="block">
+                Sold price
+                {/* M-1: dollars-mode; sold_price = numeric(12,2) DOLLARS, submit Number(soldPrice) byte-for-byte. */}
+                <MoneyInput valueDollars={soldPrice ? Number(soldPrice) : null} onChangeDollars={(d) => setSoldPrice(d == null ? "" : String(d))} ariaLabel="Sold price (USD)" className="mt-1 w-full" />
+              </label>
+            </>
+          ) : null}
+          {targetStatus === "Transferred" ? (
+            <>
+              <div>
+                <span className="block">Transferred date *</span>
+                <DatePicker className="mt-1 w-full" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
+              </div>
+              <label className="block">
+                Entity *
+                <SelectCombobox className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
+                  <option value="TRK">TRK</option>
+                  <option value="TRANSP">TRANSP</option>
+                  <option value="USMCA">USMCA</option>
+                </SelectCombobox>
+              </label>
+            </>
+          ) : null}
+          {targetStatus === "Damaged" ? (
+            <>
+              <div>
+                <span className="block">Damage date *</span>
+                <DatePicker className="mt-1 w-full" value={damageDate} onChange={(next) => setDamageDate(next)} />
+              </div>
+              <label className="block">
+                Description *
+                <textarea className="mt-1 w-full border px-2 py-1" value={damageDescription} onChange={(e) => setDamageDescription(e.target.value)} />
+              </label>
+            </>
+          ) : null}
+          {targetStatus === "OutOfService" ? (
+            <>
+              <div>
+                <span className="block">OOS date *</span>
+                <DatePicker className="mt-1 w-full" value={oosDate} onChange={(next) => setOosDate(next)} />
+              </div>
+              <label className="block">
+                OOS reason *
+                <input className="mt-1 w-full border px-2 py-1" value={oosReason} onChange={(e) => setOosReason(e.target.value)} />
+              </label>
+            </>
+          ) : null}
+          {error ? <p className="text-red-600">{error}</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button size="sm" loading={pending} onClick={openVoidModal}>
+              Confirm
+            </Button>
+          </div>
         </div>
-        {targetStatus === "Sold" ? (
-          <>
-            <div>
-              <span className="block">Sold date *</span>
-              <DatePicker className="mt-1 w-full" value={soldDate} onChange={(next) => setSoldDate(next)} />
-            </div>
-            <label className="block">
-              Sold to
-              <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
-            </label>
-            <label className="block">
-              Sold price
-              {/* M-1: dollars-mode; sold_price = numeric(12,2) DOLLARS, submit Number(soldPrice) byte-for-byte. */}
-              <MoneyInput valueDollars={soldPrice ? Number(soldPrice) : null} onChangeDollars={(d) => setSoldPrice(d == null ? "" : String(d))} ariaLabel="Sold price (USD)" className="mt-1 w-full" />
-            </label>
-          </>
-        ) : null}
-        {targetStatus === "Transferred" ? (
-          <>
-            <div>
-              <span className="block">Transferred date *</span>
-              <DatePicker className="mt-1 w-full" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
-            </div>
-            <label className="block">
-              Entity *
-              <SelectCombobox className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
-                <option value="TRK">TRK</option>
-                <option value="TRANSP">TRANSP</option>
-                <option value="USMCA">USMCA</option>
-              </SelectCombobox>
-            </label>
-          </>
-        ) : null}
-        {targetStatus === "Damaged" ? (
-          <>
-            <div>
-              <span className="block">Damage date *</span>
-              <DatePicker className="mt-1 w-full" value={damageDate} onChange={(next) => setDamageDate(next)} />
-            </div>
-            <label className="block">
-              Description *
-              <textarea className="mt-1 w-full border px-2 py-1" value={damageDescription} onChange={(e) => setDamageDescription(e.target.value)} />
-            </label>
-          </>
-        ) : null}
-        {targetStatus === "OutOfService" ? (
-          <>
-            <div>
-              <span className="block">OOS date *</span>
-              <DatePicker className="mt-1 w-full" value={oosDate} onChange={(next) => setOosDate(next)} />
-            </div>
-            <label className="block">
-              OOS reason *
-              <input className="mt-1 w-full border px-2 py-1" value={oosReason} onChange={(e) => setOosReason(e.target.value)} />
-            </label>
-          </>
-        ) : null}
-        {error ? <p className="text-red-600">{error}</p> : null}
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button size="sm" loading={pending} onClick={() => void submit()}>
-            Confirm
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      </Modal>
+      <VoidReasonModal
+        title="Confirm reason"
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={(reasonCode) => handleVoidSubmit(reasonCode)}
+      />
+    </>
   );
 }

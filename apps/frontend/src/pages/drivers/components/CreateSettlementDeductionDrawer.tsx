@@ -6,6 +6,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/Combobox";
 import { ReceiptAttach } from "../../../components/documents/ReceiptAttach";
 import { createSettlementDeduction, type CreateSettlementDeductionTypedType } from "../../../api/driverFinance";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
@@ -41,7 +42,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
   const [deductionType, setDeductionType] = useState<CreateSettlementDeductionTypedType | "">("");
   const [amountUsd, setAmountUsd] = useState<number | null>(null);
   const [loadId, setLoadId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +57,6 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
     setDeductionType("");
     setAmountUsd(null);
     setLoadId(null);
-    setReason("");
     setError(null);
   };
 
@@ -66,11 +66,11 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
   };
 
   const amountCents = Math.round(Number(amountUsd ?? 0) * 100);
-  const reasonTooShort = reason.trim().length < 10;
-  const submitDisabled = submitting || !driverId || !deductionType || amountCents <= 0 || reasonTooShort;
+  const submitDisabled = submitting || !driverId || !deductionType || amountCents <= 0;
 
-  const submit = async () => {
+  const submit = async (reasonCode: string) => {
     if (!driverId || !deductionType) return;
+    setVoidModalOpen(false);
     setSubmitting(true);
     setError(null);
     try {
@@ -79,7 +79,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         driver_id: driverId,
         deduction_type: deductionType,
         amount_cents: amountCents,
-        reason: reason.trim(),
+        reason: reasonCode,
         load_id: loadId ?? undefined,
         attachment_draft_id: attachmentCount > 0 ? draftId : undefined,
       });
@@ -163,21 +163,6 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-[#4B5563]">Reason *</span>
-          <textarea
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Why this deduction — at least 10 characters (cited source, if any)"
-            data-testid="create-settlement-deduction-reason"
-          />
-          {reason.length > 0 && reasonTooShort ? (
-            <span className="mt-1 block text-xs text-red-600">Reason needs at least 10 characters.</span>
-          ) : null}
-        </label>
-
-        <label className="block text-xs">
           <span className="text-[#4B5563]">Source doc (optional)</span>
           <div className="mt-1">
             <ReceiptAttach
@@ -200,11 +185,17 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
           <Button variant="secondary" onClick={handleClose} disabled={submitting}>
             Cancel
           </Button>
-          <Button data-testid="create-settlement-deduction-submit" loading={submitting} disabled={submitDisabled} onClick={() => void submit()}>
+          <Button data-testid="create-settlement-deduction-submit" loading={submitting} disabled={submitDisabled} onClick={() => setVoidModalOpen(true)}>
             Create deduction
           </Button>
         </div>
       </div>
+      <VoidReasonModal
+        title="Create deduction"
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { await submit(reasonCode); }}
+      />
     </ParityDrawer>
   );
 }

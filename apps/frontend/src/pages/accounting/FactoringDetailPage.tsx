@@ -30,6 +30,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -71,8 +72,7 @@ export function FactoringDetailPage() {
   const [releasedAt, setReleasedAt] = useState("");
   const [releaseAmount, setReleaseAmount] = useState("0");
   const [feeAmount, setFeeAmount] = useState("0");
-  const [recourseReason, setRecourseReason] = useState("");
-  const [voidReason, setVoidReason] = useState("");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["accounting", "factoring-advance", selectedCompanyId, id],
@@ -90,7 +90,7 @@ export function FactoringDetailPage() {
 
   const mutation = useMutation({
     meta: { loads: true },
-    mutationFn: async () => {
+    mutationFn: async (reasonCode?: string) => {
       if (!selectedCompanyId || !action) return;
       if (action === "advance") {
         await markAdvanced(id, selectedCompanyId, { advanced_at: advancedAt ? new Date(advancedAt).toISOString() : undefined, notes: notes || undefined });
@@ -105,15 +105,16 @@ export function FactoringDetailPage() {
         });
       } else if (action === "recourse") {
         await recourseReturn(id, selectedCompanyId, {
-          recourse_reason: recourseReason,
+          recourse_reason: reasonCode ?? "",
         });
       } else if (action === "void") {
-        await voidFactoring(id, selectedCompanyId, voidReason || undefined);
+        await voidFactoring(id, selectedCompanyId, reasonCode || undefined);
       }
     },
     onSuccess: () => {
       setAction(null);
       setNotes("");
+      setVoidModalOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advance", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advances"] });
     },
@@ -434,7 +435,7 @@ export function FactoringDetailPage() {
             <Button variant="secondary" onClick={() => setAction(null)}>
               Cancel
             </Button>
-            <Button loading={mutation.isPending} onClick={() => mutation.mutate()}>
+            <Button loading={mutation.isPending} onClick={() => { if (action === "recourse" || action === "void") { setVoidModalOpen(true); } else { mutation.mutate(); } }}>
               Confirm
             </Button>
           </div>
@@ -471,19 +472,6 @@ export function FactoringDetailPage() {
               </label>
             </>
           ) : null}
-          {action === "recourse" ? (
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-600">Recourse reason</span>
-              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-xs" value={recourseReason} onChange={(event) => setRecourseReason(event.target.value)} />
-            </label>
-          ) : null}
-          {action === "void" ? (
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-600">Void reason</span>
-              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-xs" value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
-            </label>
-          ) : null}
-
           {action && action !== "recourse" && action !== "void" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Notes</span>
@@ -492,6 +480,12 @@ export function FactoringDetailPage() {
           ) : null}
         </div>
       </ParityDrawer>
+      <VoidReasonModal
+        title="Void factoring"
+        open={voidModalOpen}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reasonCode) => { mutation.mutate(reasonCode); }}
+      />
     </AccountingSubNavWrapper>
   );
 }

@@ -31,6 +31,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { SegmentedControl } from "../../components/SegmentedControl";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 function money(cents: number | null | undefined) {
   if (cents == null || !Number.isFinite(Number(cents))) return TABLE_MISSING;
@@ -73,16 +74,16 @@ function DecideFaultModal({
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [faultParty, setFaultParty] = useState<FaultParty>(dispute.fault_party === "unassigned" ? "driver" : dispute.fault_party);
-  const [reason, setReason] = useState(dispute.fault_reason ?? "");
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [driverId, setDriverId] = useState<string | null>(dispute.driver_id);
 
   const mutation = useMutation({
     meta: { loads: true },
-    mutationFn: () =>
+    mutationFn: (faultReason: string) =>
       decideDisputeFault(dispute.id, {
         operating_company_id: companyId,
         fault_party: faultParty,
-        fault_reason: reason.trim(),
+        fault_reason: faultReason,
         driver_id: faultParty === "driver" ? driverId : null,
         load_id: faultParty === "driver" ? undefined : null,
       }),
@@ -94,7 +95,7 @@ function DecideFaultModal({
     onError: (error) => pushToast(userFacingApiError(error, "Failed to record fault decision"), "error"),
   });
 
-  const canSubmit = reason.trim().length >= 10 && (faultParty !== "driver" || Boolean(driverId));
+  const canSubmit = faultParty !== "driver" || Boolean(driverId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" data-testid="decide-fault-modal">
@@ -140,16 +141,6 @@ function DecideFaultModal({
             />
           </label>
         ) : null}
-        <label className="mt-3 block text-xs">
-          <div className="mb-1 text-gray-500">Reason (required — at least 10 characters)</div>
-          <textarea
-            className="w-full rounded-sm border border-gray-300 p-2 text-xs"
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            data-testid="fault-reason-input"
-          />
-        </label>
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs" onClick={onClose}>
             Cancel
@@ -159,12 +150,19 @@ function DecideFaultModal({
             className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
             disabled={!canSubmit || mutation.isPending}
             data-testid="fault-decision-confirm"
-            onClick={() => mutation.mutate()}
+            onClick={() => setVoidModalOpen(true)}
           >
             Record decision
           </button>
         </div>
       </div>
+      <VoidReasonModal
+        open={voidModalOpen}
+        title="Fault decision reason"
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reason) => { await mutation.mutateAsync(reason); }}
+        submitLabel="Record decision"
+      />
     </div>
   );
 }

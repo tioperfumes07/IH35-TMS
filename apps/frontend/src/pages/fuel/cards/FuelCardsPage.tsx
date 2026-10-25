@@ -32,6 +32,7 @@ import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyWallClockToIso, companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 
 const LINK = "text-[#1F2A44] hover:underline";
 
@@ -145,69 +146,20 @@ function VoidCardDrawer({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-
-  const open = Boolean(assignment);
-  const valid = reason.trim().length >= 3;
-  const close = () => {
-    if (saving) return;
-    setReason("");
-    setSubmitError("");
-    onClose();
-  };
-
-  const submit = async () => {
-    if (!assignment || !valid) return;
-    setSaving(true);
-    setSubmitError("");
-    try {
-      await voidFuelCardAssignment(operatingCompanyId, assignment.id, reason.trim());
-      onDone();
-      close();
-    } catch (err) {
-      setSubmitError(userFacingApiError(err, "Failed to void card assignment"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
-    <ParityDrawer
-      open={open}
-      onClose={close}
+    <VoidReasonModal
+      open={Boolean(assignment)}
       title={`Void card …${assignment?.card_last_digits ?? ""}`}
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={close} disabled={saving}>
-            Cancel
-          </Button>
-          <Button type="button" variant="danger" loading={saving} disabled={!valid} onClick={() => void submit()} data-testid="fuel-cards-void-submit">
-            Void
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-3 text-xs" data-testid="fuel-cards-void-drawer">
-        <p className="text-gray-600">This entry stays on record, marked voided — nothing is deletable.</p>
-        <label className="block font-semibold text-gray-700">
-          Reason * (min 3 characters)
-          <textarea
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            data-testid="fuel-cards-void-reason"
-          />
-        </label>
-        {submitError ? (
-          <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800" role="alert" data-testid="fuel-cards-void-error">
-            {submitError}
-          </div>
-        ) : null}
-      </div>
-    </ParityDrawer>
+      postsReversingEntry={false}
+      onClose={onClose}
+      onSubmit={async (reason) => {
+        if (!assignment) return;
+        await voidFuelCardAssignment(operatingCompanyId, assignment.id, reason);
+        onDone();
+        onClose();
+      }}
+      submitLabel="Void"
+    />
   );
 }
 

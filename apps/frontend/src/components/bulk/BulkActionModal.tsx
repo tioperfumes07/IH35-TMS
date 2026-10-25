@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../Modal";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 
 export const BULK_REASON_MIN_LENGTH = 10;
 
@@ -31,99 +32,88 @@ export function BulkActionModal({
   confirming = false,
 }: BulkActionModalProps) {
   const needsReason = requiresReason ?? reasonRequired ?? false;
-  const [reason, setReason] = useState("");
   const [typedConfirm, setTypedConfirm] = useState("");
-  const [reasonError, setReasonError] = useState<string | null>(null);
   const [typedError, setTypedError] = useState<string | null>(null);
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setReason("");
       setTypedConfirm("");
-      setReasonError(null);
       setTypedError(null);
     }
   }, [open]);
 
-  const validateAndConfirm = () => {
-    if (needsReason && reason.trim().length < BULK_REASON_MIN_LENGTH) {
-      setReasonError(`Reason must be at least ${BULK_REASON_MIN_LENGTH} characters.`);
-      return;
-    }
+  const handleConfirmClick = () => {
     if (requiresTypedConfirm && typedConfirm.trim() !== requiresTypedConfirm) {
       setTypedError(`Type ${requiresTypedConfirm} to confirm.`);
       return;
     }
-    onConfirm({ reason: needsReason ? reason.trim() : undefined });
+    if (needsReason) {
+      setVoidModalOpen(true);
+    } else {
+      onConfirm({});
+    }
+  };
+
+  const handleVoidSubmit = async (reasonCode: string) => {
+    setVoidModalOpen(false);
+    onConfirm({ reason: reasonCode });
   };
 
   return (
-    <Modal open={open} onClose={onCancel} title={`Bulk ${actionLabel}`}>
-      <div className="space-y-4 text-xs">
-        <p>
-          You are about to <strong>{actionLabel.toLowerCase()}</strong> on{" "}
-          <strong>{affectedCount}</strong> {affectedCount === 1 ? "item" : "items"}.
-        </p>
-        {description ? <p className="text-gray-600">{description}</p> : null}
-        {payloadFields}
-        {needsReason ? (
-          <label className="block space-y-1">
-            <span className="font-medium text-gray-800">Reason (required)</span>
-            <textarea
-              className="w-full rounded-sm border border-gray-300 p-2 text-xs"
-              rows={3}
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (reasonError) setReasonError(null);
-              }}
-              aria-invalid={Boolean(reasonError)}
-              aria-describedby={reasonError ? "bulk-reason-error" : undefined}
-            />
-            {reasonError ? (
-              <span id="bulk-reason-error" className="text-xs text-red-600">
-                {reasonError}
-              </span>
-            ) : (
-              <span className="text-xs text-gray-500">Minimum {BULK_REASON_MIN_LENGTH} characters.</span>
-            )}
-          </label>
-        ) : null}
-        {requiresTypedConfirm ? (
-          <label className="block space-y-1">
-            <span className="font-medium text-gray-800">Type {requiresTypedConfirm} to confirm</span>
-            <input
-              type="text"
-              className="w-full rounded-sm border border-gray-300 p-2 text-xs"
-              value={typedConfirm}
-              onChange={(e) => {
-                setTypedConfirm(e.target.value);
-                if (typedError) setTypedError(null);
-              }}
-              aria-invalid={Boolean(typedError)}
-            />
-            {typedError ? <span className="text-xs text-red-600">{typedError}</span> : null}
-          </label>
-        ) : null}
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
-            onClick={onCancel}
-            disabled={confirming}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-            onClick={validateAndConfirm}
-            disabled={confirming}
-          >
-            {confirming ? "Applying…" : "Confirm"}
-          </button>
+    <>
+      <Modal open={open} onClose={onCancel} title={`Bulk ${actionLabel}`}>
+        <div className="space-y-4 text-xs">
+          <p>
+            You are about to <strong>{actionLabel.toLowerCase()}</strong> on{" "}
+            <strong>{affectedCount}</strong> {affectedCount === 1 ? "item" : "items"}.
+          </p>
+          {description ? <p className="text-gray-600">{description}</p> : null}
+          {payloadFields}
+          {requiresTypedConfirm ? (
+            <label className="block space-y-1">
+              <span className="font-medium text-gray-800">Type {requiresTypedConfirm} to confirm</span>
+              <input
+                type="text"
+                className="w-full rounded-sm border border-gray-300 p-2 text-xs"
+                value={typedConfirm}
+                onChange={(e) => {
+                  setTypedConfirm(e.target.value);
+                  if (typedError) setTypedError(null);
+                }}
+                aria-invalid={Boolean(typedError)}
+              />
+              {typedError ? <span className="text-xs text-red-600">{typedError}</span> : null}
+            </label>
+          ) : null}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
+              onClick={onCancel}
+              disabled={confirming}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              onClick={handleConfirmClick}
+              disabled={confirming}
+            >
+              {confirming ? "Applying…" : "Confirm"}
+            </button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      {needsReason ? (
+        <VoidReasonModal
+          title={`Bulk ${actionLabel}`}
+          open={voidModalOpen}
+          onClose={() => setVoidModalOpen(false)}
+          onSubmit={handleVoidSubmit}
+        />
+      ) : null}
+    </>
   );
 }
