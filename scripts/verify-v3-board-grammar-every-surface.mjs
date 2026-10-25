@@ -338,31 +338,66 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — planted PageHeader on BillsPage fails as required`);
 }
 
-/** Companion: Settlements home chart/deductions must not hide panel-stack chrome in a child file. */
+/**
+ * Companion: Settlements › Home board vs docs/design/v3/Settlements (443.280).
+ * Folded here (step 18800 already CLAIMED) — do NOT add a sibling verify-settlements-home-board
+ * / new verify-steps claim; TOOL-F03 forbids CLAIMED-NUMBERS edits in feature PRs.
+ */
 function assertSettlementsHomeNoPanelExtract() {
-  const rel = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
-  const abs = path.join(ROOT, rel);
-  if (!fs.existsSync(abs)) {
-    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels missing (${rel})`);
+  const panelsRel = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
+  const pageRel = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+  const panelsAbs = path.join(ROOT, panelsRel);
+  const pageAbs = path.join(ROOT, pageRel);
+  if (!fs.existsSync(panelsAbs)) {
+    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels missing (${panelsRel})`);
     process.exit(1);
   }
-  const src = fs.readFileSync(abs, "utf8");
-  // Import or JSX only — comments may mention the forbidden name.
-  if (/import\s*\{[^}]*\bV3Panel\b/.test(src) || /<\s*V3Panel[\s/>]/.test(src)) {
-    console.error(
-      `${LABEL} FAIL — SettlementsHomeBoardPanels still mounts V3Panel (child extract theater; unwrap to bordered sections)`,
-    );
+  if (!fs.existsSync(pageAbs)) {
+    console.error(`${LABEL} FAIL — SettlementsPage missing (${pageRel})`);
     process.exit(1);
+  }
+  const panels = fs.readFileSync(panelsAbs, "utf8");
+  const page = fs.readFileSync(pageAbs, "utf8");
+  const fail = (msg) => {
+    console.error(`${LABEL} FAIL — Settlements Home board: ${msg}`);
+    process.exit(1);
+  };
+  // Import or JSX only — comments may mention the forbidden name.
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(panels) || /<\s*V3Panel[\s/>]/.test(panels)) {
+    fail("SettlementsHomeBoardPanels still mounts V3Panel (unwrap to shared BoardSection)");
   }
   // 443.280 — shared BoardSection only (local function BoardSection was LAYERED extract theater).
-  if (/function BoardSection\(/.test(src)) {
-    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels defines local BoardSection; import shared components/v3/BoardSection`);
-    process.exit(1);
+  if (/function BoardSection\(/.test(panels)) {
+    fail("SettlementsHomeBoardPanels defines local BoardSection; import shared components/v3/BoardSection");
   }
-  if (!/from ["'].*components\/v3\/BoardSection["']/.test(src)) {
-    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels must import shared BoardSection`);
-    process.exit(1);
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(panels)) {
+    fail("SettlementsHomeBoardPanels must import shared BoardSection");
   }
+  if (!/Net driver pay by week/.test(panels)) fail('missing "Net driver pay by week" panel');
+  if (!/Deductions this week/.test(panels)) fail('missing "Deductions this week" panel');
+  if (!/11 weeks, not cancelled, not sample|weeks, not cancelled, not sample/.test(panels)) {
+    fail('chart footer must use board "weeks, not cancelled, not sample" grammar');
+  }
+  if (!/>Status</.test(panels) && !/Status<\/span>/.test(panels)) {
+    fail("Week-of table must have Status column (board ● Paid/Open)");
+  }
+  if (!/function boardStatus/.test(panels) || !/label: "Paid"/.test(panels) || !/label: "Open"/.test(panels)) {
+    fail("Status must paint Paid/Open (board ● Paid / ● Open)");
+  }
+  if (!/<SettlementRefCell\b/.test(panels)) {
+    fail("Loads column must mount SettlementRefCell (ALL-SEATS beside load)");
+  }
+  if (!/settlements-home-week-of-export/.test(panels)) {
+    fail("Week-of header must expose Export (board)");
+  }
+  if (!/<SettlementsHomeBoardPanels\b/.test(page)) {
+    fail("SettlementsPage must mount SettlementsHomeBoardPanels on settlements tab");
+  }
+  if (!/companyId=\{companyId\}/.test(page) || !/<SettlementsHomeBoardPanels[\s\S]{0,400}companyId=\{companyId\}/.test(page)) {
+    fail("SettlementsHomeBoardPanels must receive companyId (SettlementRefCell)");
+  }
+  if (!/data-testid="settlements-home-kpi-strip"/.test(page)) fail("Home KPI strip missing");
+  if (!/<V3KpiTile\b/.test(page)) fail("Home must mount V3KpiTile strip");
 }
 
 function main() {
