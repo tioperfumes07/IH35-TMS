@@ -892,7 +892,8 @@
     "202616240300",
     "202616240400",
     "202616251000",
-    "202616261600"
+    "202616261600",
+    "202616261700"
   ],
   "202616142000": {
     "claimed_by": "claude",
@@ -993,5 +994,10 @@
     "claimed_at": "2026-10-25",
     "claimed_by": "Cursor",
     "purpose": "LEAD 443.326 CI unblock — follow-up entity walls on telematics.vehicle_latest_position_cache (opco FK → org.companies, unit_id FK → mdata.units, FORCE RLS + FOR ALL policy). CREATE-only; does not edit 202616200100 (already on main)."
+  },
+  "202616261700": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "LEAD",
+    "purpose": "LEAD 443.301 register row 59 (re-claim): maintenance.work_orders shop-bay columns + one occupied bay per company per bay number + maintenance_settings.shop_bay_count — 202616240100 was taken on main by ACCT-443346 factoring_advance_bank_wire_cents (c9f9cb2b3d) before row 59 landed"
   }
 }
