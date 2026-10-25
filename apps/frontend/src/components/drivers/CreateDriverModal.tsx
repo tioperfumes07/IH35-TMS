@@ -1779,7 +1779,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           id="new_license_class_code"
           value={newLicenseClassCode}
           onChange={(event) => setNewLicenseClassCode(event.target.value)}
-          className="rounded-sm border h-8 px-2 text-xs"
+          className="rounded-sm border h-9 px-2 text-xs"
           placeholder="e.g. AM"
         />
       </div>
@@ -1789,7 +1789,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           id="new_license_class_label"
           value={newLicenseClassLabel}
           onChange={(event) => setNewLicenseClassLabel(event.target.value)}
-          className="rounded-sm border h-8 px-2 text-xs"
+          className="rounded-sm border h-9 px-2 text-xs"
           placeholder="e.g. Class AM — Motorcycle"
         />
       </div>

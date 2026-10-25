@@ -301,7 +301,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             </label>
             <SelectCombobox
               id="hos-vio-source"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
               value={form.source}
               onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as Source }))}
             >

@@ -411,7 +411,7 @@ function TextField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-required={required || undefined}
-        className="h-8 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
       />
     </label>
   );
@@ -676,7 +676,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               value={values.billing_state}
               onChange={(e) => onPatch({ billing_state: e.target.value })}
               placeholder="TX"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             />
           </div>
           <div className="block text-xs">
@@ -687,7 +687,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               value={values.billing_zip}
               onChange={(e) => onPatch({ billing_zip: e.target.value })}
               placeholder="78040"
-              className="h-8 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className="h-9 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs"
             />
           </div>
         </div>

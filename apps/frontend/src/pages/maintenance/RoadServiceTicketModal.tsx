@@ -148,7 +148,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         <label className="block text-xs font-medium text-gray-700">
           Service type
           <SelectCombobox
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={serviceType}
             onChange={(e) => setServiceType(e.target.value as RoadServiceType)}
           >

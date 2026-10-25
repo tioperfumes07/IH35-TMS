@@ -18,6 +18,10 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 // Live-only guard: no DATABASE_URL → skip is intentional (requires Neon neondb_owner role).
 export const ALLOW_OFFLINE_SKIP = "shrink-only ceiling on USMCA duplicate settlement lines; live Neon required";
 
+// ALLOW_OFFLINE_SKIP: selftest exercises the threshold logic without a DB;
+// the live run requires DATABASE_URL to query USMCA settlement_lines.
+export const ALLOW_OFFLINE_SKIP = "selftest covers threshold logic; live query skipped offline";
+
 const LABEL = "verify-no-duplicate-settlement-lines";
 
 // shrink-only ceiling — lower this after a clean-up script voids the remaining groups

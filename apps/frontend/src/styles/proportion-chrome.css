@@ -1,12 +1,13 @@
 /* CLS-PROPORTION-CHROME — modal / side-panel density vs QBO approved chrome (2026-08-12)
  *
- * Approved density: compact fields (~36–40px), header/body padding px-4 py-3,
+ * Approved density: compact fields (36px), header/body padding px-4 py-3,
  * no balloon padding (p-8 / py-8) on shared shells.
- * FIELD-SIZE-32: input height pinned to --ih35-field-height (32px) across all modal/drawer shells.
+ * FIELD-SIZE-36: input height pinned to --ih35-field-height (36px/h-9) across all modal/drawer shells.
+ * IH35-347-A 2026-10-24: raised from 32px (h-8) to 36px (h-9).
  */
 
 [data-proportion-chrome="qbo-compact"] {
-  --ih35-field-height: 32px;
+  --ih35-field-height: 36px;
   --ih35-chrome-pad-x: 1rem; /* px-4 */
   --ih35-chrome-pad-y: 0.75rem; /* py-3 */
 }
@@ -19,7 +20,7 @@
 
 /* ONE shared single-line field size (register rows 153/156/158/159/160/197, Lead order "one shared
  * size, not per page"): every single-line input / select inside a modal or drawer is exactly
- * 32px (GLOBAL-TYPE-SIZE-BASELINE, h-8). Overrides per-page py-2 / h-9 / min-h-12 drift; textareas,
+ * 36px (IH35-347-A 2026-10-24, h-9). Overrides per-page py-2 / min-h-12 drift; textareas,
  * multi-selects and non-text controls are excluded. */
 [data-proportion-chrome="qbo-compact"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="image"]),
 [data-proportion-chrome="qbo-compact"] select:not([multiple]) {
