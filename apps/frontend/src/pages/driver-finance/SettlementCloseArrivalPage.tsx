@@ -24,9 +24,10 @@ import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { V3Panel } from "../../components/v3/V3Panel";
 import { useToast } from "../../components/Toast";
@@ -37,7 +38,6 @@ import { V3 } from "../../design/v3-tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 /** Board Miles (doc) — driver-bill miles_basis when present, else practical; never invent. */
 function milesDocForLeg(
@@ -833,17 +833,43 @@ export function SettlementCloseArrivalPage() {
     );
   })();
 
+  const boardGrossDisplay = settlement ? gross || earnings || boardGrossPay : 0;
+  const deductionsDisplay =
+    otherDeductionsTotal + escrowContributionThisSettlement + advanceRecoveryTotal;
+
   return (
-    <div className="space-y-3" data-settlement-close-v3="1">
-      <PageHeader
-        title="Settlement Close — Driver Arrival"
-        subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net"
-      />
+    <SettlementsSubNavWrapper
+      title="Settlement Close — Driver Arrival"
+      subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net"
+      kpiStrip={
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          data-testid="settlement-close-v3-kpis"
+          data-kpiStrip="1"
+        >
+          <V3KpiTile label="Gross pay" value={formatUsd(boardGrossDisplay)} testId="settlement-close-kpi-gross" />
+          <V3KpiTile
+            label="Deductions"
+            value={formatUsd(deductionsDisplay)}
+            testId="settlement-close-kpi-deductions"
+          />
+          <V3KpiTile label="Net pay" value={formatUsd(netPay)} tone="green" testId="settlement-close-kpi-net" />
+        </div>
+      }
+    >
+      <MoneyListToolbar
+        search=""
+        onSearchChange={() => {}}
+        searchPlaceholder="Filter close wizard…"
+        searchTestId="settlement-close-toolbar-search"
+        activeFilterCount={0}
+        onClearAll={() => {}}
+        testIdPrefix="settlement-close"
+      >
+        <span />
+      </MoneyListToolbar>
 
-      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-
-      {/* ROUND 443.280-A — board has no 6-tile KPI strip; Result panel carries the live totals. */}
-
+      <div className="space-y-3" data-settlement-close-v3="1">
       <div
         data-testid="settlement-close-v3-steps"
         data-settlement-close-v3-steps="1"
@@ -1027,7 +1053,8 @@ export function SettlementCloseArrivalPage() {
           setDriverCreateOpen(false);
         }}
       />
-    </div>
+      </div>
+    </SettlementsSubNavWrapper>
   );
 }
 

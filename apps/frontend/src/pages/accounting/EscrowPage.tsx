@@ -17,6 +17,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 
 type EscrowViewTab = "accounts" | "pending";
 
@@ -109,6 +110,7 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
   // abandonment deductions awaiting Owner decision) — distinct from the accounts/postings ledger
   // below (EscrowPage's original content, kept byte-for-byte under the "Accounts" tab).
   const [viewTab, setViewTab] = useState<EscrowViewTab>("accounts");
+  const [accountSearch, setAccountSearch] = useState("");
   // BANK-SORT-ROLLOUT-ACCT — accounts + postings tables persist sort in URL via useUrlSort.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const {
@@ -134,6 +136,15 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
     () => (accountsQuery.data?.rows ?? []) as EscrowAccount[],
     [accountsQuery.data?.rows]
   );
+
+  const filteredAccountRows = useMemo(() => {
+    const q = accountSearch.trim().toLowerCase();
+    if (!q) return accountRows;
+    return accountRows.filter((row) => {
+      const label = entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type));
+      return formatDisplayName(label).toLowerCase().includes(q) || label.toLowerCase().includes(q);
+    });
+  }, [accountRows, accountSearch]);
 
   // ROUND 443.250 Settlements Escrow V3 — same listEscrowAccounts rows already loaded for the table.
   // Drivers holding = unique active driver holders with balance > 0; Total held = sum of active
@@ -323,11 +334,24 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
               />
             </div>
           ) : (
-            <ParityTable title="Escrow accounts"
+            <>
+              <MoneyListToolbar
+                search={accountSearch}
+                onSearchChange={setAccountSearch}
+                searchPlaceholder="Search holder…"
+                searchTestId="escrow-accounts-search"
+                activeFilterCount={0}
+                onClearAll={() => setAccountSearch("")}
+                testIdPrefix="escrow-accounts"
+              >
+                <span />
+              </MoneyListToolbar>
+              <ParityTable title="Escrow accounts"
               columns={accountColumns}
-              rows={accountRows}
+              rows={filteredAccountRows}
               rowKey={(row) => row.id}
               loading={accountsQuery.isPending || (accountsQuery.isFetching && accountRows.length === 0)}
+              suppressToolbarSearch
               onRowClick={(row) => {
                 setSelectedAccountId(row.id);
                 postingsQuery.mutate(row.id);
@@ -339,6 +363,7 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
               onSortChange={onSortChange}
               emptyText="No escrow accounts found."
             />
+            </>
           )}
 
           {selectedAccountId ? (

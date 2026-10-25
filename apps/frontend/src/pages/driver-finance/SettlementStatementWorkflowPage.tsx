@@ -27,12 +27,15 @@ import {
   type OpenDriverBill,
 } from "../../api/driverFinance";
 import { formatUsd, formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -104,6 +107,7 @@ export function SettlementStatementWorkflowPage() {
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [reverseReasonOpen, setReverseReasonOpen] = useState(false);
   const [unlockReasonOpen, setUnlockReasonOpen] = useState(false);
+  const [lineSearch, setLineSearch] = useState("");
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
@@ -397,10 +401,59 @@ export function SettlementStatementWorkflowPage() {
     return { loadedMiles, loadedRate, emptyMiles, emptyRate, deductionBreakdown, netPayCents };
   }, [earnings, deadhead, deductionsWithSeq, summary]);
 
+  type LineSummaryRow = {
+    id: string;
+    lineType: string;
+    description: string;
+    loadNumber: string;
+    amountCents: number;
+  };
+
+  const lineSummaryRows = useMemo((): LineSummaryRow[] => {
+    return activeLines.map((line) => ({
+      id: String(line.id),
+      lineType: String(line.line_type ?? "—").replace(/_/g, " "),
+      description: String(line.description ?? "—"),
+      loadNumber: typeof line.load_number === "string" ? line.load_number : "—",
+      amountCents: Math.round(Number(line.amount ?? 0) * 100),
+    }));
+  }, [activeLines]);
+
+  const filteredLineSummaryRows = useMemo(() => {
+    const q = lineSearch.trim().toLowerCase();
+    if (!q) return lineSummaryRows;
+    return lineSummaryRows.filter(
+      (row) =>
+        row.lineType.toLowerCase().includes(q) ||
+        row.description.toLowerCase().includes(q) ||
+        row.loadNumber.toLowerCase().includes(q)
+    );
+  }, [lineSearch, lineSummaryRows]);
+
+  const lineSummaryColumns = useMemo((): ParityColumn<LineSummaryRow>[] => {
+    return [
+      { key: "lineType", label: "Type", sortable: true, render: (row) => row.lineType },
+      { key: "loadNumber", label: "Load", sortable: true, render: (row) => row.loadNumber },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        render: (row) => row.description,
+      },
+      {
+        key: "amountCents",
+        label: "Amount",
+        sortable: true,
+        cellClass: "text-right",
+        render: (row) => formatUsdCents(row.amountCents),
+      },
+    ];
+  }, []);
+
   if (!settlementId) {
     return (
       <div className="space-y-3">
-        <PageHeader title="Settlement Detail" subtitle="Select a settlement from list view" />
+        <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Select a settlement from list view" />
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">No settlement selected.</div>
       </div>
     );
@@ -418,7 +471,7 @@ export function SettlementStatementWorkflowPage() {
     return (
       <div className="space-y-3">
         <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
-        <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
+        <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Could not load settlement" />
         <ListErrorState
           title="Couldn't load this settlement"
           {...formatQueryErrorDetail(detailQuery.error)}
@@ -441,7 +494,7 @@ export function SettlementStatementWorkflowPage() {
     return (
       <div className="space-y-3">
         <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
-        <PageHeader title="Settlement Detail" subtitle="Loading…" />
+        <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Loading…" />
       </div>
     );
   }
@@ -486,11 +539,11 @@ export function SettlementStatementWorkflowPage() {
           invalidateKeys={[["driver-finance", "settlement-detail", settlementId, companyId]]}
         />
       ) : null}
-      <PageHeader
+      <SettlementsSurfaceHeader
         title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement workflow"}
         subtitle="Finalize, payment, deductions, and fuel fills — board statement is the Statement tab"
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button
               variant="secondary"
               size="sm"
@@ -563,7 +616,7 @@ export function SettlementStatementWorkflowPage() {
                 </Button>
               )
             ) : null}
-          </div>
+          </>
         }
       />
       {/* R-102-B (owner, ROUND 102.2) — "above the fold, unmissable." This replaces the bespoke
@@ -580,6 +633,54 @@ export function SettlementStatementWorkflowPage() {
         voidReason={settlement.void_reason as string | null | undefined}
         voidedByUserId={settlement.voided_by_user_id as string | null | undefined}
         documentLabel="Settlement"
+      />
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="settlements-workflow-v3-kpis"
+      >
+        <V3KpiTile
+          label="Gross pay"
+          value={formatUsdCents(
+            readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)
+          )}
+          sub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
+          testId="settlement-workflow-kpi-gross"
+        />
+        <V3KpiTile
+          label="Deductions"
+          value={formatUsdCents(Math.round(summary.deductionTotal * 100))}
+          sub={kpi.deductionBreakdown || "—"}
+          testId="settlement-workflow-kpi-deductions"
+        />
+        <V3KpiTile
+          label="Net pay"
+          value={formatUsdCents(kpi.netPayCents)}
+          sub={String(settlement.status ?? "—")}
+          testId="settlement-workflow-kpi-net"
+        />
+      </div>
+      <MoneyListToolbar
+        search={lineSearch}
+        onSearchChange={setLineSearch}
+        searchPlaceholder="Search settlement lines…"
+        searchTestId="settlement-workflow-lines-search"
+        activeFilterCount={lineSearch.trim() ? 1 : 0}
+        onClearAll={() => setLineSearch("")}
+        testIdPrefix="settlement-workflow-lines"
+      >
+        <span />
+      </MoneyListToolbar>
+      <ParityTable
+        title="Settlement lines"
+        columns={lineSummaryColumns}
+        rows={filteredLineSummaryRows}
+        rowKey={(row) => row.id}
+        loading={detailQuery.isPending}
+        suppressToolbarSearch
+        storageKey="settlement-workflow-lines"
+        emptyText={
+          lineSearch.trim() ? "No lines match your search." : "No active lines on this settlement."
+        }
       />
       {/* 443.280-A — TourSettlementTab two-card readout lives on Workflow (moved off Statement board).
           Same Load-costs Settlement tab readout. Finalize / pay / deductions follow below. */}

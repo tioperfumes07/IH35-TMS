@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -12,6 +13,9 @@ import { FuelKpiRow } from "./components/FuelKpiRow";
 import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
 import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import type { FuelDashboard } from "../../api/fuelPlanner";
 
 type FraudSummary = {
   open_critical: number;
@@ -106,6 +110,32 @@ export function FuelCardOverageKpiCard() {
   );
 }
 
+type FuelMetricRow = { id: string; metric: string; value: string };
+
+function fuelMetricValue(raw: number | null | undefined, formatter: (n: number) => string): string {
+  if (raw === null || raw === undefined) return "—";
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return "—";
+  return formatter(n);
+}
+
+function buildFuelMetricRows(dashboard: FuelDashboard | undefined): FuelMetricRow[] {
+  if (!dashboard) return [];
+  return [
+    { id: "mtd_spend", metric: "MTD Spend", value: fuelMetricValue(dashboard.mtd_spend, (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`) },
+    { id: "fleet_mpg", metric: "Fleet MPG", value: fuelMetricValue(dashboard.fleet_mpg, (n) => n.toFixed(1)) },
+    { id: "avg_price", metric: "Avg $/gal", value: fuelMetricValue(dashboard.avg_price_per_gallon, (n) => `$${n.toFixed(2)}`) },
+    { id: "mtd_savings", metric: "MTD Savings", value: fuelMetricValue(dashboard.mtd_savings, (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`) },
+    { id: "compliance", metric: "Compliance %", value: fuelMetricValue(dashboard.compliance_pct, (n) => `${n.toFixed(1)}%`) },
+    { id: "active_plans", metric: "Active plans", value: fuelMetricValue(dashboard.active_plans, (n) => String(Math.round(n))) },
+  ];
+}
+
+const FUEL_METRIC_COLUMNS: ParityColumn<FuelMetricRow>[] = [
+  { key: "metric", label: "Metric", sortable: true, sortValue: (row) => row.metric, render: (row) => row.metric },
+  { key: "value", label: "Value", sortable: true, sortValue: (row) => row.value, render: (row) => row.value },
+];
+
 /**
  * Fuel Home tab — wires live planner dashboard KPIs (f-01-fuel-home-stub).
  * Backend GET /api/v1/fuel/planner/dashboard already computes mtd_spend / fleet_mpg / etc.
@@ -114,6 +144,7 @@ export function FuelCardOverageKpiCard() {
 export function FuelHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [metricSearch, setMetricSearch] = useState("");
 
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
@@ -126,6 +157,13 @@ export function FuelHomePage() {
     enabled: Boolean(companyId),
     refetchInterval: 60_000,
   });
+
+  const metricRows = useMemo(() => buildFuelMetricRows(dashboardQuery.data), [dashboardQuery.data]);
+  const filteredMetricRows = useMemo(() => {
+    const q = metricSearch.trim().toLowerCase();
+    if (!q) return metricRows;
+    return metricRows.filter((row) => row.metric.toLowerCase().includes(q) || row.value.toLowerCase().includes(q));
+  }, [metricRows, metricSearch]);
 
   if (!companyId) {
     return (
@@ -142,6 +180,27 @@ export function FuelHomePage() {
   return (
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
       <FuelBoardKpiStrip companyId={companyId} />
+      <MoneyListToolbar
+        search={metricSearch}
+        onSearchChange={setMetricSearch}
+        searchPlaceholder="Search dashboard metrics"
+        onClearAll={() => setMetricSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-home-metrics"
+      >
+        <span className="text-xs text-gray-500">Planner dashboard</span>
+      </MoneyListToolbar>
+      <ParityTable<FuelMetricRow>
+        title="Dashboard metrics"
+        columns={FUEL_METRIC_COLUMNS}
+        rows={dashboardQuery.isError ? [] : filteredMetricRows}
+        rowKey={(row) => row.id}
+        loading={dashboardQuery.isLoading}
+        emptyText={dashboardQuery.isError ? "Unable to load fuel dashboard metrics." : "No metrics yet."}
+        suppressToolbarSearch
+        storageKey="fuel-home-dashboard-metrics"
+        tableTestId="fuel-home-metrics-table"
+      />
       <FuelDieselByTruckPanel companyId={companyId} maxRows={5} viewAllHref="/fuel/by-truck" />
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (

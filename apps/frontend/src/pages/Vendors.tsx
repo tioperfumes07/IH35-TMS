@@ -16,9 +16,11 @@ import { SelectCombobox } from "../components/Combobox";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
 import { MASTER_DETAIL } from "../design/master-detail";
-import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
-import { PageHeader } from "../components/layout/PageHeader";
-import { CollapsedListFilters, useStagedListFilters } from "../components/table";
+import { MoneyListToolbar } from "../components/table/MoneyListToolbar";
+import { StagedListFilterShell } from "../components/table/StagedListFilterShell";
+import { useStagedListFilters } from "../components/table/useStagedListFilters";
+import { VendorsBoardChrome } from "./vendors/VendorsBoardChrome";
+import { VendorsDetailTabNav } from "./vendors/VendorsDetailTabNav";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
 import { VendorsListView } from "./vendors/VendorsListView";
@@ -191,7 +193,7 @@ export function VendorsPage() {
   const [dateTo, setDateTo] = useState("");
   // transaction-list filter box (selected vendor bills) — not the roster By Category control
   const [txnCategoryFilter, setTxnCategoryFilter] = useState("");
-  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category stage until Apply (same CollapsedListFilters law as roster).
+  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category stage until Apply (same staged-filter shell law as roster).
   const txnFilters = useStagedListFilters({
     applied: { typeFilter, statusFilter, dateFrom, dateTo, txnCategoryFilter },
     empty: { typeFilter: "", statusFilter: "", dateFrom: "", dateTo: "", txnCategoryFilter: "" },
@@ -723,9 +725,22 @@ export function VendorsPage() {
           </button>
         </div>
       ) : null}
-      <PageHeader
+      <VendorsBoardChrome
         title="Vendors"
         subtitle="Vendor list and transactions"
+        listTab={listStatus}
+        onListTabChange={(id) => {
+          if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setListStatus(id as VendorListTabId);
+        }}
+        tabItems={[
+          { label: `With transactions (${vendorTabCounts.with_transactions})`, to: "#with_transactions" },
+          { label: `All (${vendorTabCounts.all})`, to: "#all" },
+          { label: `Active (${vendorTabCounts.active})`, to: "#active" },
+          { label: `Inactive (${vendorTabCounts.inactive})`, to: "#inactive" },
+          { label: `By Category (${vendorTabCounts.byCategory})`, to: "#by-category" },
+        ]}
+        tabIds={["with_transactions", "all", "active", "inactive", "by-category"]}
+        afterHeader={companyId && qboAvailable ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedControl
@@ -737,7 +752,6 @@ export function VendorsPage() {
                 { value: "master-detail", label: "Master-detail", testId: "vendors-view-master-detail" },
               ]}
             />
-            {/* C-01 — Active/Inactive soft-delete filter (not the default list tab). */}
             <div data-list-status-filter="vendors" data-vendors-roster-filter-toolbar="inline">
               <SegmentedControl
                 value={listStatus === "by-category" || listStatus === "with_transactions" ? "active" : (listStatus as "active" | "inactive" | "all")}
@@ -750,7 +764,6 @@ export function VendorsPage() {
                 ]}
               />
             </div>
-            {/* C-31 — With transactions is the DEFAULT NAVY TAB below (A-21). */}
             {categoryOptions.length > 0 ? (
               <SelectCombobox
                 value={rosterCategory}
@@ -766,8 +779,6 @@ export function VendorsPage() {
                 ))}
               </SelectCombobox>
             ) : null}
-            {/* K.9 — roster Vendor Type filter (inline, visible on first load, 0 clicks).
-                Options sourced from the same vendors.vendor_types catalog as VendorCreateModal. */}
             {vendorTypes.length > 0 ? (
               <SelectCombobox
                 value={rosterVendorType}
@@ -789,24 +800,6 @@ export function VendorsPage() {
           </div>
         }
       />
-      {companyId && qboAvailable ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
-      {/* C-31 — default tab = With transactions (A-21). */}
-      <div data-c31-list-default="vendors">
-      <NavyPageSubNav
-        activeId={listStatus}
-        onTabChange={(id) => {
-          if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setListStatus(id as VendorListTabId);
-        }}
-        items={[
-          { label: `With transactions (${vendorTabCounts.with_transactions})`, to: "#with_transactions" },
-          { label: `All (${vendorTabCounts.all})`, to: "#all" },
-          { label: `Active (${vendorTabCounts.active})`, to: "#active" },
-          { label: `Inactive (${vendorTabCounts.inactive})`, to: "#inactive" },
-          { label: `By Category (${vendorTabCounts.byCategory})`, to: "#by-category" },
-        ]}
-        itemIds={["with_transactions", "all", "active", "inactive", "by-category"]}
-      />
-      </div>
       {listStatus === "by-category" ? (
         <div className="space-y-2">
           {vendorTypesQuery.isError ? (
@@ -879,6 +872,21 @@ export function VendorsPage() {
           onClick={() => setListStatus("with_transactions")}
         />
       </div>
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search vendors"
+        searchTestId="vendors-page-search-input"
+        activeFilterCount={(rosterCategory ? 1 : 0) + (rosterVendorType ? 1 : 0)}
+        testIdPrefix="vendors-roster"
+        onClearAll={() => {
+          setSearch("");
+          setRosterCategory("");
+          setRosterVendorType("");
+        }}
+      >
+        {null}
+      </MoneyListToolbar>
       {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12) -- same defect as Customers.tsx's identical pattern: "List view" also mounted
@@ -1030,9 +1038,9 @@ export function VendorsPage() {
                 </section>
               </div>
 
-              <NavyPageSubNav
+              <VendorsDetailTabNav
                 items={VENDOR_TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
-                activeId={activeTab}
+                activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as VendorTabId)}
                 itemIds={VENDOR_TABS.map((t) => t.id)}
               />
@@ -1074,7 +1082,7 @@ export function VendorsPage() {
                       <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                         {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                       </span>
-                      <CollapsedListFilters
+                      <StagedListFilterShell
                         activeFilterCount={
                           (typeFilter ? 1 : 0) +
                           (statusFilter ? 1 : 0) +
@@ -1130,7 +1138,7 @@ export function VendorsPage() {
                           className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                           placeholder="Category text"
                         />
-                      </CollapsedListFilters>
+                      </StagedListFilterShell>
                     </div>
                   }
                 />

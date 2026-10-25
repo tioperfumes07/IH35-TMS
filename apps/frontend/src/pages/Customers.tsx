@@ -34,9 +34,11 @@ import { SegmentedControl } from "../components/SegmentedControl";
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
 import { MASTER_DETAIL } from "../design/master-detail";
 import { SelectCombobox } from "../components/Combobox";
-import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
-import { PageHeader } from "../components/layout/PageHeader";
-import { CollapsedListFilters, useStagedListFilters } from "../components/table";
+import { MoneyListToolbar } from "../components/table/MoneyListToolbar";
+import { StagedListFilterShell } from "../components/table/StagedListFilterShell";
+import { useStagedListFilters } from "../components/table/useStagedListFilters";
+import { CustomersBoardChrome } from "./customers/CustomersBoardChrome";
+import { CustomersDetailTabNav } from "./customers/CustomersDetailTabNav";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -605,7 +607,7 @@ export function CustomersPage() {
   // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   // Direct state setters apply immediately, matching the pre-CHROME-04 design.
   // AUDIT 2610 / CLS-FILTER-GEAR-APPLY — Transaction List Filter panel must stage Status/Date/Category
-  // behind Apply/Cancel/Reset (same CollapsedListFilters law as roster Filters). Do not mutate the
+  // behind Apply/Cancel/Reset (same staged-filter shell law as roster Filters). Do not mutate the
   // live invoice query until Apply.
   const txFilters = useStagedListFilters({
     applied: { statusFilter, dateFrom, dateTo, categoryFilter, typeFilter },
@@ -1361,9 +1363,20 @@ export function CustomersPage() {
           </button>
         </div>
       ) : null}
-      <PageHeader
+      <CustomersBoardChrome
         title="Customers"
         subtitle="Customer list and transactions"
+        listTab={listTab}
+        onListTabChange={setListTab}
+        tabItems={[
+          { label: `With transactions ${customerTabCounts.with_transactions}`, to: "#with_transactions" },
+          { label: `Open balance ${customerTabCounts.open_balance}`, to: "#open_balance" },
+          { label: `Factored ${customerTabCounts.factored}`, to: "#factored" },
+          { label: `All ${customerTabCounts.all}`, to: "#all" },
+          { label: `Possible duplicates ${customerTabCounts.possible_duplicates}`, to: "#possible_duplicates" },
+        ]}
+        tabIds={["with_transactions", "open_balance", "factored", "all", "possible_duplicates"]}
+        afterHeader={companyId && qboAvailable ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <ToolbarSegmentControl
@@ -1375,20 +1388,18 @@ export function CustomersPage() {
                 { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
               ]}
             />
-            {/* C-01 — Active/Inactive soft-delete filter (not the default list tab). */}
             <div data-list-status-filter="customers" data-customers-roster-filter-toolbar="inline">
               <SegmentedControl
                 value={listTab === "with_transactions" ? "active" : listStatus}
                 onChange={(value) => setListTab(value === "active" ? "active" : value)}
                 dataAttributes={{ "data-list-status-filter": "customers", "data-customers-roster-filter-toolbar": "inline" }}
                 options={[
-                { value: "active", label: "Active", testId: "customers-roster-status-active" },
-                { value: "inactive", label: "Inactive", testId: "customers-roster-status-inactive" },
-                { value: "all", label: "All", testId: "customers-roster-status-all" },
-              ]}
+                  { value: "active", label: "Active", testId: "customers-roster-status-active" },
+                  { value: "inactive", label: "Inactive", testId: "customers-roster-status-inactive" },
+                  { value: "all", label: "All", testId: "customers-roster-status-all" },
+                ]}
               />
             </div>
-            {/* C-31 — With transactions is the DEFAULT NAVY TAB below (A-21), not a buried header control. */}
             <SelectCombobox
               value={rosterType}
               onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
@@ -1419,22 +1430,6 @@ export function CustomersPage() {
           </div>
         }
       />
-      {companyId && qboAvailable ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
-      {/* C-31 — default tab = With transactions (A-21). All / quality / Active stay one click away. */}
-      <div data-c31-list-default="customers">
-      <NavyPageSubNav
-        activeId={listTab}
-        onTabChange={(id) => setListTab(id)}
-        items={[
-          { label: `With transactions ${customerTabCounts.with_transactions}`, to: "#with_transactions" },
-          { label: `Open balance ${customerTabCounts.open_balance}`, to: "#open_balance" },
-          { label: `Factored ${customerTabCounts.factored}`, to: "#factored" },
-          { label: `All ${customerTabCounts.all}`, to: "#all" },
-          { label: `Possible duplicates ${customerTabCounts.possible_duplicates}`, to: "#possible_duplicates" },
-        ]}
-        itemIds={["with_transactions", "open_balance", "factored", "all", "possible_duplicates"]}
-      />
-      </div>
       {allInvoicesQuery.isError ? (
         <ListErrorState
           title="Couldn't load customer open balances"
@@ -1500,6 +1495,21 @@ export function CustomersPage() {
           onClick={() => navigate("/accounting/invoices?has_balance=true")}
         />
       </div>
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search customers"
+        searchTestId="customers-page-search-input"
+        activeFilterCount={(rosterType ? 1 : 0) + (rosterCreditStatus ? 1 : 0)}
+        testIdPrefix="customers-roster"
+        onClearAll={() => {
+          setSearch("");
+          setRosterType("");
+          setRosterCreditStatus("");
+        }}
+      >
+        {null}
+      </MoneyListToolbar>
       {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12): "List view" used to ALSO mount the master-detail rolodex sidebar's own
@@ -1649,9 +1659,9 @@ export function CustomersPage() {
                 </section>
               </div>
 
-              <NavyPageSubNav
+              <CustomersDetailTabNav
                 items={CUSTOMER_TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
-                activeId={activeTab}
+                activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as CustomerTabId)}
                 itemIds={CUSTOMER_TABS.map((t) => t.id)}
               />
@@ -1701,7 +1711,7 @@ export function CustomersPage() {
                       <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                         {typeFilter ? `Type: ${typeFilter}` : "Type: All"}
                       </span>
-                      <CollapsedListFilters
+                      <StagedListFilterShell
                         activeFilterCount={(statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (categoryFilter ? 1 : 0) + (typeFilter ? 1 : 0)}
                         onApply={txFilters.apply}
                         onReset={txFilters.reset}
@@ -1770,7 +1780,7 @@ export function CustomersPage() {
                           className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                           placeholder="Category text"
                         />
-                      </CollapsedListFilters>
+                      </StagedListFilterShell>
                     </div>
                   }
                 />

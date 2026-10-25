@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createVendorBill } from "../../api/accounting";
 import { generateIdempotencyKey } from "../../api/client";
@@ -13,6 +13,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { entityLabel } from "../../lib/entity-label";
 
 function vendorCreateKpiCard(label: string, value: string, sublabel: string) {
   return (
@@ -47,6 +50,36 @@ export function VendorBillCreatePage() {
   // One key for this drawer session so GAP-IDEMP-KEYS middleware returns the cached bill.
   const idempotencyKeyRef = useRef(generateIdempotencyKey());
   const navKpis = useAccountingNavKpis(companyId);
+  const [toolbarSearch, setToolbarSearch] = useState("");
+
+  type SessionBillRow = { id: string; status: string };
+  const sessionRows = useMemo((): SessionBillRow[] => {
+    if (!lastBillId) return [];
+    const label = entityLabel(null, lastBillId, "Bill");
+    const q = toolbarSearch.trim().toLowerCase();
+    if (q && !label.toLowerCase().includes(q) && !"created".includes(q)) return [];
+    return [{ id: lastBillId, status: "Created" }];
+  }, [lastBillId, toolbarSearch]);
+
+  const sessionColumns = useMemo<ParityColumn<SessionBillRow>[]>(
+    () => [
+      {
+        key: "bill",
+        label: "Bill",
+        render: (row) => (
+          <EntityLink kind="bill" id={row.id} label={entityLabel(null, row.id, "Bill")} className="text-xs font-semibold text-[#1F2A44] underline" />
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => row.status,
+        render: (row) => row.status,
+      },
+    ],
+    [],
+  );
 
   return (
     <AccountingSubNavWrapper
@@ -84,6 +117,26 @@ export function VendorBillCreatePage() {
       }
     >
       {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
+      <MoneyListToolbar
+        search={toolbarSearch}
+        onSearchChange={setToolbarSearch}
+        searchPlaceholder="Search session bill"
+        onClearAll={() => setToolbarSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="vendor-bill-create"
+      >
+        <span className="text-xs text-gray-500">Bills saved this session</span>
+      </MoneyListToolbar>
+      <ParityTable<SessionBillRow>
+        title="Session bills"
+        columns={sessionColumns}
+        rows={sessionRows}
+        rowKey={(row) => row.id}
+        emptyText="No bill saved this session yet."
+        suppressToolbarSearch
+        storageKey="vendor-bill-create-session"
+        tableTestId="vendor-bill-create-session-table"
+      />
       <ParityDrawer
         open
         title="Create vendor bill"

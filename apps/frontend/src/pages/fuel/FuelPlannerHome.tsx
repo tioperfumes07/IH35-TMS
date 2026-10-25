@@ -14,14 +14,13 @@ import {
   updateFuelPlannerSettings,
   type FuelPlannerSettings,
 } from "../../api/fuelPlanner";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { FuelPlannerBoardChrome } from "./FuelPlannerBoardChrome";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMultiSelect";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useToast } from "../../components/Toast";
@@ -60,6 +59,7 @@ import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
 import { RelayWalletRollForwardPage } from "./relay-wallet/RelayWalletRollForwardPage";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
+// V3 board grammar: fuel history roster is FuelTransactionsTable (ParityTable-backed).
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -363,10 +363,57 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
     return { label: meta?.label ?? id, to: FUEL_TAB_PATH[id] };
   });
 
+  const fuelBoardSubnav = FUEL_BOARD_SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }));
+  const fuelHeaderActions = (
+    <div className="flex items-center gap-2">
+      {companyId ? <FuelQuestionsBadge operatingCompanyId={companyId} /> : null}
+      <ActionButton data-testid="fuel-board-header-import-fills" onClick={() => setImportOpen(true)}>
+        Import fills
+      </ActionButton>
+      <ActionButton data-testid="fuel-board-header-add-fill" onClick={() => setCreateOpen(true)}>
+        + Add fill
+      </ActionButton>
+      {tab === "planner" ? (
+        <>
+          <span title="Trip planning is generated from active dispatch loads — there is no manual trip-create here">
+            <ActionButton disabled>+ Plan trip</ActionButton>
+          </span>
+          <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
+          <span
+            title={
+              activeRoute
+                ? undefined
+                : "There is no active dispatch route to send — trip planning is generated from active dispatch loads"
+            }
+          >
+            <ActionButton
+              disabled={!activeRoute || !companyId || sendRecommendationMutation.isPending}
+              onClick={() => {
+                if (!activeRoute || !companyId) return;
+                sendRecommendationMutation.mutate({
+                  routeId: activeRoute.id,
+                  companyId,
+                  generation: actionGenerationRef.current,
+                });
+              }}
+            >
+              Send to driver app
+            </ActionButton>
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+
   if (!companyId) {
     return (
       <div className="space-y-3 p-4">
-        <PageHeader title="Fuel" subtitle="Overview" backHref="/fuel" />
+        <FuelPlannerBoardChrome
+          title="Fuel"
+          subtitle="Overview"
+          backHref="/fuel"
+          subnavItems={fuelBoardSubnav}
+        />
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view fuel.
         </div>
@@ -376,62 +423,12 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <FuelPlannerBoardChrome
         title="Fuel"
         subtitle={FUEL_BOARD_SUBTITLE}
         backHref="/fuel"
-        actions={
-          <div className="flex items-center gap-2">
-            {companyId ? <FuelQuestionsBadge operatingCompanyId={companyId} /> : null}
-            <ActionButton
-              data-testid="fuel-board-header-import-fills"
-              onClick={() => setImportOpen(true)}
-            >
-              Import fills
-            </ActionButton>
-            <ActionButton
-              data-testid="fuel-board-header-add-fill"
-              onClick={() => setCreateOpen(true)}
-            >
-              + Add fill
-            </ActionButton>
-            {tab === "planner" ? (
-              <>
-                {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).
-                    Honest disabled affordance instead of a silent no-op button (QA-sweep). */}
-                <span title="Trip planning is generated from active dispatch loads — there is no manual trip-create here">
-                  <ActionButton disabled>+ Plan trip</ActionButton>
-                </span>
-                <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
-                {/* SILENT-NO-OP (leftover leaf, sibling of the +Plan trip fix in #1663): the handler
-                    below silently returned when there was no active route, so a click produced zero
-                    DOM change, toast, or network call — indistinguishable from a dead button. Same
-                    honest-disabled-affordance treatment as "+ Plan trip" above. */}
-                <span
-                  title={
-                    activeRoute
-                      ? undefined
-                      : "There is no active dispatch route to send — trip planning is generated from active dispatch loads"
-                  }
-                >
-                  <ActionButton
-                    disabled={!activeRoute || !companyId || sendRecommendationMutation.isPending}
-                    onClick={() => {
-                      if (!activeRoute || !companyId) return;
-                      sendRecommendationMutation.mutate({
-                        routeId: activeRoute.id,
-                        companyId,
-                        generation: actionGenerationRef.current,
-                      });
-                    }}
-                  >
-                    Send to driver app
-                  </ActionButton>
-                </span>
-              </>
-            ) : null}
-          </div>
-        }
+        actions={fuelHeaderActions}
+        subnavItems={fuelBoardSubnav}
       />
       {effectiveDriverId ? (
         <p className="text-xs">
@@ -444,10 +441,6 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           />)}
         </p>
       ) : null}
-
-      <NavyPageSubNav
-        items={FUEL_BOARD_SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }))}
-      />
 
       <RelatedModuleLinks testId="fuel-related-module-links" links={offBoardLinks} />
 
@@ -470,7 +463,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
       {tab === "settings" ? (
         <div className="space-y-3" data-testid="fuel-planner-settings-tab">
-          {/* Locked named section (verify-architectural-design — PageHeader|h3 patterns only). */}
+          {/* Locked named section (verify-architectural-design — module header|h3 patterns only). */}
           <h3 className="text-xs font-semibold text-gray-900">Planner settings</h3>
           {settingsQuery.isLoading ? (
             <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
@@ -488,7 +481,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
       {tab === "expense_mapping" ? (
         <div className="space-y-3" data-testid="fuel-expense-mapping-tab">
-          {/* Locked named section (verify-architectural-design — PageHeader|h3 patterns only). */}
+          {/* Locked named section (verify-architectural-design — module header|h3 patterns only). */}
           <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />

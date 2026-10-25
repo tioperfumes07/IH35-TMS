@@ -5,13 +5,13 @@
  * ROUND 443.250 — V3 KPI strip (Driver / Held / Target / Release) via V3KpiTile.
  * Engine unchanged: getEscrowDriverBalances + getEscrowDriverTimeline.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom"; // Link: register source → settlement/JE
 import { useQuery } from "@tanstack/react-query";
 import { getEscrowDriverBalances, getEscrowDriverTimeline } from "../../api/banking";
 import { getDriverEscrowTarget } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -49,6 +49,7 @@ function labelType(raw: string | null): string {
 }
 
 export function EscrowRegisterPage() {
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { driverId = "" } = useParams<{ driverId: string }>();
   const { selectedCompanyId } = useCompanyContext();
@@ -150,6 +151,17 @@ export function EscrowRegisterPage() {
     return built.reverse();
   }, [tlQ.data?.timeline]);
 
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.source.toLowerCase().includes(q) ||
+        r.type.toLowerCase().includes(q) ||
+        (formatDateUS(r.date) ?? "").toLowerCase().includes(q),
+    );
+  }, [rows, search]);
+
   const columns = useMemo<ParityColumn<RegisterRow>[]>(
     () => [
       {
@@ -212,28 +224,20 @@ export function EscrowRegisterPage() {
         data-testid="escrow-register-page"
         data-settlements-escrow-register-rebuild="1"
       >
-        <PageHeader
-          title="Driver Settlements"
-          subtitle="List + detail settlement workflow"
-          breadcrumb={["Driver Finance", "Escrow", driverName]}
-          actions={
-            <Button
-              size="sm"
-              data-testid="settlements-escrow-register-creator"
-              onClick={() => navigate("/driver-finance/settlements?creator=1")}
-            >
-              + Settlement Creator
-            </Button>
-          }
-        />
-
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <Link to="/driver-finance/escrow" className="font-semibold" style={{ color: V3.link }}>
-            ← Escrow
-          </Link>
-          <span className="flex-1" />
-          <Button size="sm" variant="secondary" type="button">
-            Filters ▾
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search source · type · date…"
+          searchTestId="escrow-register-search"
+          onClearAll={() => setSearch("")}
+          activeFilterCount={search.trim() ? 1 : 0}
+        >
+          <Button
+            size="sm"
+            data-testid="settlements-escrow-register-creator"
+            onClick={() => navigate("/driver-finance/settlements?creator=1")}
+          >
+            + Settlement Creator
           </Button>
           <Button size="sm" variant="secondary" type="button" data-testid="escrow-register-export">
             Export
@@ -246,7 +250,7 @@ export function EscrowRegisterPage() {
           >
             Release escrow
           </Button>
-        </div>
+        </MoneyListToolbar>
 
         {/* ROUND 443.282 — Target from getDriverEscrowTarget; Release = last settlement + window. */}
         <div
@@ -290,7 +294,8 @@ export function EscrowRegisterPage() {
           <ParityTable<RegisterRow>
             title={`Escrow register — ${driverName}`}
             columns={columns}
-            rows={rows}
+            rows={filteredRows}
+            suppressToolbarSearch
             rowKey={(r) => r.id}
             loading={tlQ.isLoading || balQ.isLoading}
             emptyText="No escrow lines for this driver."
