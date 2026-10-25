@@ -70,7 +70,28 @@
     "reason": "Reason: {{value}}",
     "errors": "Errors: {{value}}",
     "pending": "Pending: {{value}}",
-    "last_failed": "Last failed: {{value}}"
+    "last_failed": "Last failed: {{value}}",
+    "driftAlert": {
+      "title_one": "1 item needs attention",
+      "title_other": "{{count}} items need attention",
+      "checked": "Checked {{date}} at {{time}}. This message comes back every 30 minutes until each item is fixed.",
+      "colLoad": "Load",
+      "colProblem": "Problem",
+      "colFix": "What to fix",
+      "openList": "Open the full list",
+      "remind": "Remind me in 30 minutes",
+      "field": {
+        "truck_cannot_make_next_stop": "Wrong place",
+        "stop_no_date": "No stop date",
+        "stop_no_street_address": "No street address",
+        "load_no_amount": "No rate",
+        "unit": "No truck",
+        "trailer": "No trailer",
+        "driver": "No driver",
+        "customer_reference": "No W.O. / PO",
+        "invoice": "Not invoiced"
+      }
+    }
   },
   "dashboard": {
     "title": "Dashboard"

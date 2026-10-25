@@ -70,7 +70,28 @@
     "reason": "Motivo: {{value}}",
     "errors": "Errores: {{value}}",
     "pending": "Pendientes: {{value}}",
-    "last_failed": "Ultimo fallo: {{value}}"
+    "last_failed": "Ultimo fallo: {{value}}",
+    "driftAlert": {
+      "title_one": "1 asunto requiere atención",
+      "title_other": "{{count}} asuntos requieren atención",
+      "checked": "Revisado el {{date}} a las {{time}}. Este mensaje vuelve cada 30 minutos hasta que cada asunto se corrija.",
+      "colLoad": "Carga",
+      "colProblem": "Problema",
+      "colFix": "Qué corregir",
+      "openList": "Abrir la lista completa",
+      "remind": "Recordarme en 30 minutos",
+      "field": {
+        "truck_cannot_make_next_stop": "Lugar equivocado",
+        "stop_no_date": "Parada sin fecha",
+        "stop_no_street_address": "Sin dirección de calle",
+        "load_no_amount": "Sin tarifa",
+        "unit": "Sin camión",
+        "trailer": "Sin remolque",
+        "driver": "Sin chofer",
+        "customer_reference": "Sin W.O. / PO",
+        "invoice": "Sin factura"
+      }
+    }
   },
   "dashboard": {
     "title": "Panel"

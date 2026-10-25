@@ -13,6 +13,7 @@ import { selectedCompanyLegalBadgeLabel } from "../lib/selected-company-label";
 import type { AuthMeResponse } from "../types/api";
 import { CarrierSwitcher } from "./layout/CarrierSwitcher";
 import { TopStatusBar } from "./layout/TopStatusBar";
+import { DriftAlertPopup } from "./drift/DriftAlertPopup";
 import { NotificationBell } from "./notifications/NotificationBell";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
@@ -229,6 +230,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         </div>
       </div>
 
+      <DriftAlertPopup />
       <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
         <TopStatusBar
           qboAvailable={qboAvailable}
