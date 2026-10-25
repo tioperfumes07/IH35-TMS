@@ -76,8 +76,26 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
 
   if (rollingLedgerSrc === null) {
     failures.push(`${ROLLING_LEDGER_REL}: missing`);
-  } else if (!/<CashFlowKpiStrip\b/.test(rollingLedgerSrc)) {
-    failures.push(`${ROLLING_LEDGER_REL}: no longer renders the shared <CashFlowKpiStrip> -- a second, independently-drifting KPI tile copy may have been reintroduced`);
+  } else {
+    // 443.280-A #10 — Rolling Ledger board KPIs are V3KpiTile (CashFlowKpiStrip was LAYERED).
+    if (!/<V3KpiTile\b/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: does not render <V3KpiTile> — 443.280 Rolling Ledger board requires board KPIs`);
+    }
+    if (/<CashFlowKpiStrip\b/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: still renders layered <CashFlowKpiStrip> — 443.280 rebuild-not-layer removes it`);
+    }
+    if (!/rolling-ledger-v3-kpis/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: missing data-testid rolling-ledger-v3-kpis`);
+    }
+    if (!/label="Opening cash"/.test(rollingLedgerSrc) || !/label="Due next 10 days"/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: board KPI labels Opening cash / Due next 10 days missing`);
+    }
+    if (!/label: "Party"/.test(rollingLedgerSrc) || !/label: "Doc \/ load"/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: board columns Party / Doc / load missing`);
+    }
+    if (!/<SettlementRefCell\b/.test(rollingLedgerSrc)) {
+      failures.push(`${ROLLING_LEDGER_REL}: SettlementRefCell missing beside load (ALL-SEATS law)`);
+    }
   }
 
   return failures;
@@ -119,7 +137,16 @@ onNavigateToTab("manual_daily_projections");
 <V3Segmented value="weekly" options={[]} onChange={() => {}} />
 `;
   const goodKpiStrip = "export function CashFlowKpiStrip() {}";
-  const goodRollingLedger = 'import { CashFlowKpiStrip } from "./CashFlowKpiStrip";\n<CashFlowKpiStrip kpis={kpis} />';
+  const goodRollingLedger = `
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
+<div data-testid="rolling-ledger-v3-kpis">
+  <V3KpiTile label="Opening cash" value="$1" />
+  <V3KpiTile label="Due next 10 days" value="$2" />
+</div>
+const incomeColumns = [{ key: "party", label: "Party" }, { key: "load", label: "Doc / load" }];
+<SettlementRefCell loadId={id} operatingCompanyId={oci} />
+`;
 
   const pass = auditSources({ pageSrc: goodPage, homeSrc: goodHome, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger });
   if (pass.length) throw new Error("SELFTEST FAIL (should be clean): " + JSON.stringify(pass));
@@ -145,6 +172,11 @@ onNavigateToTab("manual_daily_projections");
   const homeMissingLink = goodHome.replace('onNavigateToTab("rolling_ledger");\n', "");
   if (auditSources({ pageSrc: goodPage, homeSrc: homeMissingLink, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
     throw new Error("SELFTEST FAIL: Home tab missing a sibling-tab link went undetected");
+  }
+
+  const layeredRl = goodRollingLedger + '\n<CashFlowKpiStrip kpis={kpis} />\n';
+  if (auditSources({ pageSrc: goodPage, homeSrc: goodHome, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: layeredRl }).length === 0) {
+    throw new Error("SELFTEST FAIL: layered CashFlowKpiStrip on Rolling Ledger went undetected");
   }
 
   console.log("verify-cash-flow-home-tab: SELFTEST PASS");

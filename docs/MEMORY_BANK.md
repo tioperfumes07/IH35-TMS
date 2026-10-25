@@ -254,8 +254,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 ### Active Architectural Decisions — Cash Flow Home board (Cursor, ROUND 443.267, 2026-10-23)
 
 - **Board-faithful Home (not chrome-only):** V3 KPI row only on Home — Opening cash / This week
-  income / This week expenses / 4-week net / Weekly run-rate / Lowest week. `<CashFlowKpiStrip>`
-  stays on Rolling Ledger (REG-031 shared component); Home does not remount it.
+  income / This week expenses / 4-week net / Weekly run-rate / Lowest week. Home and Rolling Ledger both use board `V3KpiTile` strips after 443.280; `CashFlowKpiStrip`
+  is no longer mounted on either tab (helper file kept for `formatCashFlowCents`).
 - **Chart:** title "Cash position — 4 weeks actual · 13 weeks forecast"; ACTUAL/FORECAST bands;
   Base|Conservative `V3Segmented`. Conservative = committed-doc filter (invoices + finance/lease +
   driver pay + vendor bills) on the same `getRollingLedger` rows — no invented GL math.
@@ -278,8 +278,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Shared components:** `apps/frontend/src/components/v3/{V3KpiTile,V3Panel,V3Segmented,index}.ts(x)`.
   Square edges = **2px** (house law), not the board’s 6px mock radius.
 - **Home data (superseded by 443.267 board entry above):** sibling tab links + V3 KPI row +
-  chart/13-week table from `getRollingLedger`. `<CashFlowKpiStrip>` is Rolling Ledger only as of
-  443.267 — do not remount it on Home.
+  chart/13-week table from `getRollingLedger`. `CashFlowKpiStrip.tsx` keeps `formatCashFlowCents` for Home; neither Home nor Rolling Ledger
+  mounts `<CashFlowKpiStrip>` after 443.280 (board KPIs are `V3KpiTile` only).
 - **Guard:** extended `scripts/verify-cash-flow-home-tab.mjs` (piggyback; no new EVEN claim). Asserts
   V3 imports/components/testids + `getRollingLedger`. `verify-cash-flow-rolling-ledger.mjs` KPI-strip
   markers updated Load-Costs `#F4F7FA`/`#C7D2DC` → `V3.headerBg`/`V3.border` (same shared strip).
@@ -307,21 +307,35 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
   Cash Flow five tabs + Settlements home V3 shipped (Settlements sub-boards / Fuel still open).
 
-### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23)
+### Active Architectural Decisions — Cash Flow Rolling Ledger board 443.280 (Cursor, 2026-10-25)
+
+- **Rebuild-not-layer:** `RollingLedgerTab` body = `docs/design/v3/CashFlow-RollingLedger` only.
+  Layered `<CashFlowKpiStrip>` removed — six board KPIs via `V3KpiTile` (Opening cash · Income due
+  today · Expenses due today · Net today · Projected closing · Due next 10 days).
+- **One engine unchanged:** still only `getRollingLedger` + adjustment routes. Banking filter
+  contracts (Combobox "Filter by description", SegmentedControl All|Income|Expenses + By day|By type,
+  PRESET_OPTIONS, TypeFilterDropdown, DayNavigatorCard, AdjustPopover income-only, ExpenseRolloverMenu /
+  StopTracking, ParityTable) stay — expanded under board **Filters ▾** chrome.
+- **Registers:** Income Party / Doc·load / Due / Amount (always type-grouped); Expenses Payee /
+  Doc·load / Due / Amount + Action, payment-priority `V3_EXPENSE_GROUPS` with empty-group hints;
+  Carried panels are Group / Items / Amount aggregates; Day grid Date / Income / Expenses / Net /
+  Running cash (Day|Week `V3Segmented`), click day switches both sides.
+- **Guards:** `verify-cash-flow-rolling-ledger.mjs` + `verify-cash-flow-home-tab.mjs` ratcheted —
+  forbid layered CashFlowKpiStrip on RL; require board KPI labels + Party/Doc·load columns.
+
+### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23) — SUPERSEDED by 443.280 board rebuild above
 
 - **One engine unchanged:** `RollingLedgerTab` still calls only `getRollingLedger` + adjustment
   routes. ParityTable registers, AdjustPopover (income-only), ExpenseRolloverMenu / StopTracking,
   PRESET_OPTIONS, TypeFilterDropdown, Combobox "Filter by description", SegmentedControl
   All|Income|Expenses + By day|By type stay — `verify-cash-flow-rolling-ledger.mjs` contracts.
-- **V3 board chrome:** filter bar + DayNavigatorCard painted with `V3.*` tokens; Income / Expenses /
-  Carried income / Carried expenses / Day grid wrapped in `V3Panel`. Expenses + carried expenses
-  group by `V3_EXPENSE_GROUPS` (payment priority). Day grid Day|Week via `V3Segmented`
-  (`rolling-ledger-day-grain`); week rows aggregate Mon-start. Activity-only day filter.
+- **V3 board chrome (superseded):** prior pass painted filter bar + wrapped panels; 443.280 removes
+  CashFlowKpiStrip layering and aligns columns/carried/day-grid to the board PNG.
 - **Split due vs carried:** income/expense due = `due_date === selectedDate`; carried =
   `due_date < selectedDate` (not rollover echo). Matches board panels; prior mixed
   `due_date <= day` expense list retired for display.
-- **Guard piggyback:** same `verify-cash-flow-rolling-ledger.mjs` — added V3Panel / V3Segmented /
-  V3_EXPENSE_GROUPS / panel testIds + selftest plant. No new EVEN claim.
+- **Guard piggyback:** same `verify-cash-flow-rolling-ledger.mjs` — BoardSection / V3Segmented /
+  V3_EXPENSE_GROUPS / panel testIds + 443.280 V3KpiTile board markers. No new EVEN claim.
 
 ### Active Architectural Decisions — Cash Flow Actual vs Projected V3 (Cursor, ROUND 443.250, 2026-10-23)
 

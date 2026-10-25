@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 34 Cash Flow Rolling Ledger FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-cf-rolling-ledger-board` · base tip `a62b2df01c` (= #27641 AVP)
+- **DELTA:** RollingLedgerTab rebuilt to docs/design/v3/CashFlow-RollingLedger — V3KpiTile 6 board KPIs (remove layered CashFlowKpiStrip); Filters ▾ + Date + By day|By type + day nav + Export; Income Party/Doc·load/Due/Amount; Expenses Payee/Doc·load/Due/Amount + priority groups w/ empty hints; Carried Group/Items/Amount; Day grid Date/Income/Expenses/Net/Running cash + click-day footer. Banking filter contracts retained under Filters. Guards ratcheted.
+- **GUARD:** verify-cash-flow-rolling-ledger --selftest 27/27 + LIVE OK · verify-cash-flow-home-tab --selftest + live (RL no longer requires CashFlowKpiStrip)
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** row 35 Cash Flow › Manual LAYERED board rebuild
+- **Files Modified:** RollingLedgerTab.tsx · verify-cash-flow-rolling-ledger.mjs · verify-cash-flow-home-tab.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 2:20 PM CT — CURSOR → LEAD | FINAL-2 row 31 Cash Flow Home FULL BOARD MERGED #27634
 
 MERGED `f8ea8f01c4` — CashFlowHomeTab rebuilt to docs/design/v3/CashFlow-Home (V3 KPIs only, 4w actual+13w forecast, Base|Conservative, category grey/black 13w, real monthly). Guard ratcheted. Seat INBOX CURRENT→FINAL-2. ENG-42 silent-skip tip-unblock fail-closed.

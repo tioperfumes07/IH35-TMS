@@ -19,7 +19,7 @@ import { EntityLink, resolveEntityRoute, type EntityKind } from "../../../compon
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { SelectCombobox } from "../../../components/Combobox";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
@@ -54,6 +54,10 @@ function ledgerEntityKind(kind: RollingLedgerRow["document_kind"]): EntityKind |
 // ROUND 443.250 — Rolling Ledger V3 board: same engine (getRollingLedger), V3 tokens + BoardSection
 // chrome, carried past-due panels, Day/Week day-grid grain. ParityTable / adjust / filter
 // contracts unchanged (verify-cash-flow-rolling-ledger.mjs).
+//
+// ROUND 443.280-A #10 — rebuild-not-layer: board KPIs via V3KpiTile (remove layered CashFlowKpiStrip),
+// Party/Doc·load/Due/Amount registers, carried Group/Items/Amount, day grid Date/Income/Expenses/Net/
+// Running cash. Banking filter contracts stay behind Filters ▾ (verify-cash-flow-rolling-ledger.mjs).
 
 const TYPE_OPTIONS = [
   { value: "Bill", label: "Bills" },
@@ -97,13 +101,87 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
-/** D043 — owner 10-24: MM/DD/YYYY everywhere (no month-name / year-less cells). */
+/** D043 — owner 10-24: MM/DD/YYYY on Due cells. */
 function fmtDateShort(iso: string): string {
   return formatDateUS(iso);
 }
-function fmtDate(iso: string): string {
-  return formatDateUS(iso);
+
+/** Board day-grid / navigator: "Thu 10-22" (weekday + MM-DD). */
+function fmtChipDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return formatDateUS(iso);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dow] ?? "";
+  return `${wd} ${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
+
+/** Board day navigator center: "Thu, Oct 22 · Today" (board chrome; Due cells stay MM/DD/YYYY). */
+function fmtNavDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return formatDateUS(iso);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getUTCDay()] ?? "";
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1] ?? "";
+  return `${wd}, ${mon} ${d}`;
+}
+
+function emptyExpenseHint(key: (typeof V3_EXPENSE_GROUPS)[number]): string {
+  const hints: Record<(typeof V3_EXPENSE_GROUPS)[number], string> = {
+    "finance & lease": "No loan or lease schedules entered for USMCA",
+    "driver bills": "No driver bills due this day.",
+    diesel: "No card payment due today (Dreamline · WEX · Relay)",
+    maintenance: "Nothing due",
+    insurance: "Installments not loaded",
+    other: "Nothing due",
+  };
+  return hints[key];
+}
+
+function incomeGroupLabel(type: string): string {
+  if (type === "Invoice") return "Invoices";
+  if (type === "Load (not invoiced)") return "Loads delivered / in motion — not invoiced yet";
+  if (type === "Factor advance") return "Factor advances";
+  if (type === "Factor reserve") return "Factor reserves";
+  return type;
+}
+
+const EMPTY_EXPENSE_TYPE: Record<(typeof V3_EXPENSE_GROUPS)[number], string> = {
+  "finance & lease": "Loan payment",
+  "driver bills": "Driver bill",
+  diesel: "Diesel card payment",
+  maintenance: "Maintenance bill",
+  insurance: "Insurance installment",
+  other: "Other operating",
+};
+
+function isBoardEmptyRow(row: RollingLedgerRow): boolean {
+  return row.document_id.startsWith("__board_empty__");
+}
+
+function ensureExpenseGroupRows(rows: RollingLedgerRow[], dueDate: string): RollingLedgerRow[] {
+  const present = new Set(rows.map(expenseGroupKey));
+  const extras: RollingLedgerRow[] = [];
+  for (const key of V3_EXPENSE_GROUPS) {
+    if (present.has(key)) continue;
+    extras.push({
+      row_kind: "expense",
+      type: EMPTY_EXPENSE_TYPE[key],
+      document_kind: key === "driver bills" ? "driver_bill" : key === "finance & lease" ? "loan_amortization_row" : "bill",
+      document_id: `__board_empty__${key.replace(/\W+/g, "_")}`,
+      document_label: emptyExpenseHint(key),
+      counterparty: emptyExpenseHint(key),
+      origin_date: dueDate,
+      due_date: dueDate,
+      amount_cents: 0,
+      days_overdue: 0,
+      status: "due_today",
+      amount_known: true,
+    });
+  }
+  return [...rows, ...extras];
+}
+
+type CarriedAgg = { key: string; group: string; items: number; amount_cents: number };
 
 function mondayOf(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -140,40 +218,6 @@ function expenseGroupLabel(key: (typeof V3_EXPENSE_GROUPS)[number], index: numbe
 
 type DayGrain = "day" | "week";
 
-const STATUS_LABEL: Record<RollingLedgerRow["status"], string> = {
-  overdue: "Overdue",
-  due_today: "Due today",
-  upcoming: "Open",
-};
-
-// §7 palette law — financial UI never uses amber/warning colors, even for an overdue signal.
-const STATUS_CLASS: Record<RollingLedgerRow["status"], string> = {
-  overdue: "border-[#E5E7EB] bg-[#E5E7EB] text-[#1F2A44] font-semibold",
-  due_today: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
-  upcoming: "border-[#E5E7EB] bg-white text-[#6B7280]",
-};
-
-// CASH-FLOW-ROLLING-LEDGER-4-FIXES fix 4 (owner 2026-09-07) — Factor advance/reserve rows already
-// say what they are in the Type column; Status re-deriving the literal word "Factored" from that
-// same type field stated the same fact twice. Collapse Status to a neutral dash for those two row
-// types only (every other row type keeps its real current/overdue Status, unchanged).
-function isFactoringRow(type: string): boolean {
-  return type === "Factor advance" || type === "Factor reserve";
-}
-
-function StatusPill({ row }: { row: RollingLedgerRow }) {
-  if (isFactoringRow(row.type)) {
-    return <span className="inline-flex rounded-full border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-xs text-[#6B7280]">—</span>;
-  }
-  return (
-    <>
-      <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#6B7280]" : STATUS_CLASS[row.status]}`}>
-        {row.is_rollover_echo ? "Rolled" : STATUS_LABEL[row.status]}
-      </span>
-      {row.reason_label && <div className="mt-0.5 text-xs text-[#6B7280]">rolled — {row.reason_label}</div>}
-    </>
-  );
-}
 
 // Banking's exact 28px (h-7) segmented-button pattern (BankingTransactionsDesignView.tsx's
 // All/Spent/Received and By month/Money in/out/All dates toggles) — reused verbatim here for
@@ -307,7 +351,7 @@ function DayNavigatorCard({ date, today, onChange }: { date: string; today: stri
         <ChevronLeft className="h-4 w-4" />
       </button>
       <span style={{ fontSize: 12, fontWeight: 700, color: V3.ink }}>
-        {fmtDate(date)}
+        {fmtNavDate(date)}
         {date === today && <span style={{ marginLeft: 6, fontWeight: 400, color: V3.muted }}>· Today</span>}
       </span>
       <button type="button" onClick={() => onChange(addDaysIso(date, 1))} style={navBtn} aria-label="Next day">
@@ -593,6 +637,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   );
 }
 
+
 type Props = {
   operatingCompanyId: string;
 };
@@ -605,6 +650,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
 
   const [preset, setPreset] = useState<DatePreset>("14d");
   const [presetMenuOpen, setPresetMenuOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [from, setFrom] = useState(searchParams.get("rl_from") || today);
   const [to, setTo] = useState(searchParams.get("rl_to") || addDaysIso(today, 13));
 
@@ -614,21 +660,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   }, [searchParams]);
   const search = searchParams.get("rl_q") || "";
   const showRolledOver = searchParams.get("rl_rolled") !== "hide";
-  // ROUND 16.7 CORRECTION — segmented [All | Income | Expenses] (Banking's amountFilter pattern):
-  // "all" keeps the split screen; "income"/"expenses" widen that side to full width.
   const rowKindFilter = (searchParams.get("rl_kind") as "all" | "income" | "expenses") || "all";
-  // ROUND 16.7 CORRECTION — segmented [By day | By type]: "day" is the existing flat
-  // chronological sort; "type" groups each register by row.type via ParityTable's native groupBy.
   const groupMode = (searchParams.get("rl_group") as "day" | "type") || "day";
-  // CASH-FLOW-ROLLING-LEDGER-4-FIXES fix 3 (owner 2026-09-07) — this page's own header comment
-  // ("A daily snapshot with roll-over") means the default view must show only TODAY's projected
-  // income/expenses; starting selectedDate at null made the row filter below (`!selectedDate ||
-  // r.due_date === selectedDate`) pass every row unconditionally until the owner clicked a day in
-  // the grid, so a load due in a future week showed up on first load. Default to today; clicking a
-  // day in DayNavigatorCard still overrides it exactly as before.
   const [selectedDate, setSelectedDate] = useState<string | null>(today);
   const [adjustingRowKey, setAdjustingRowKey] = useState<string | null>(null);
-  // ROUND 443.250 V3 board — Day grid Day|Week grain (same control as Projected).
   const [dayGrain, setDayGrain] = useState<DayGrain>("day");
 
   const updateParams = (updates: Record<string, string | null>) => {
@@ -699,8 +734,6 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     return rows;
   }, [data, showRolledOver, selectedTypes, search]);
 
-  // Banking's exact descriptionFilterOptions pattern (BankingTransactionsDesignView.tsx) — a
-  // Combobox seeded from real, currently-live counterparty/document labels, never free text.
   const descriptionFilterOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: { value: string; label: string }[] = [];
@@ -714,7 +747,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     return options.slice(0, 200);
   }, [data]);
 
-  // V3 board: Income due on selected day vs Carried income (past due, not received).
+  const focusDate = selectedDate ?? today;
+
   const incomeRows = useMemo(
     () =>
       allRows
@@ -723,24 +757,65 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     [allRows, selectedDate]
   );
   const incomeCarriedRows = useMemo(() => {
-    const targetDate = selectedDate ?? today;
     return allRows
-      .filter((r) => r.row_kind === "income" && r.due_date < targetDate && !r.is_rollover_echo)
+      .filter((r) => r.row_kind === "income" && r.due_date < focusDate && !r.is_rollover_echo)
       .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
-  }, [allRows, selectedDate, today]);
-  // V3 board: Expenses due that day vs Carried (past due) — split for board panels.
+  }, [allRows, focusDate]);
   const expenseRowsDue = useMemo(() => {
-    const targetDate = selectedDate ?? today;
     return allRows
-      .filter((r) => r.row_kind === "expense" && r.due_date === targetDate)
+      .filter((r) => r.row_kind === "expense" && r.due_date === focusDate)
       .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
-  }, [allRows, selectedDate, today]);
+  }, [allRows, focusDate]);
+  const expenseRowsForTable = useMemo(
+    () => ensureExpenseGroupRows(expenseRowsDue, focusDate),
+    [expenseRowsDue, focusDate]
+  );
   const expenseCarriedRows = useMemo(() => {
-    const targetDate = selectedDate ?? today;
     return allRows
-      .filter((r) => r.row_kind === "expense" && r.due_date < targetDate && !r.is_rollover_echo)
+      .filter((r) => r.row_kind === "expense" && r.due_date < focusDate && !r.is_rollover_echo)
       .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
-  }, [allRows, selectedDate, today]);
+  }, [allRows, focusDate]);
+
+  const incomeCarriedAgg = useMemo((): CarriedAgg[] => {
+    const buckets = new Map<string, CarriedAgg>();
+    for (const r of incomeCarriedRows) {
+      const group =
+        r.type === "Invoice"
+          ? "Invoices past due"
+          : r.type === "Load (not invoiced)"
+            ? "Loads past delivery — not invoiced"
+            : r.type === "Factor advance"
+              ? "Factor advances past due"
+              : `${r.type} past due`;
+      const cur = buckets.get(group) ?? { key: group, group, items: 0, amount_cents: 0 };
+      cur.items += 1;
+      cur.amount_cents += r.amount_cents;
+      buckets.set(group, cur);
+    }
+    return [...buckets.values()].sort((a, b) => b.amount_cents - a.amount_cents);
+  }, [incomeCarriedRows]);
+
+  const expenseCarriedAgg = useMemo((): CarriedAgg[] => {
+    const buckets = new Map<string, CarriedAgg>();
+    for (const r of expenseCarriedRows) {
+      const gkey = expenseGroupKey(r);
+      const group =
+        gkey === "driver bills"
+          ? "Driver bills past delivery date"
+          : gkey === "finance & lease"
+            ? "Finance & lease past due"
+            : gkey === "diesel"
+              ? "Diesel card payments past due"
+              : r.type === "Bill" || r.document_kind === "bill"
+                ? "Vendor bills (no due date)"
+                : `${incomeGroupLabel(r.type)} past due`;
+      const cur = buckets.get(group) ?? { key: group, group, items: 0, amount_cents: 0 };
+      cur.items += 1;
+      cur.amount_cents += r.amount_cents;
+      buckets.set(group, cur);
+    }
+    return [...buckets.values()].sort((a, b) => b.amount_cents - a.amount_cents);
+  }, [expenseCarriedRows]);
 
   const dayGridRows = useMemo(() => {
     if (!data) return [] as RollingLedgerDay[];
@@ -768,7 +843,6 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         income_carry_over_cents: cur.income_carry_over_cents + day.income_carry_over_cents,
         expenses_carry_over_cents: cur.expenses_carry_over_cents + day.expenses_carry_over_cents,
         net_cents: cur.net_cents + day.net_cents,
-        // Keep the latest day's running cash as the week closing position.
         running_cash_cents: day.running_cash_cents ?? cur.running_cash_cents,
       });
     }
@@ -781,55 +855,69 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   }, [allRows, adjustingRowKey]);
   const adjustingRowIsIncome = adjustingRow?.row_kind === "income";
 
-  const kpis = useMemo(() => {
+  const boardKpis = useMemo(() => {
     if (!data) return null;
-    const todayDay = data.days.find((d) => d.date === today) ?? data.days[0];
-    const incomeNotFactored = allRows
-      .filter((r) => r.type === "Invoice")
-      .reduce((s, r) => s + r.amount_cents, 0);
+    const day = data.days.find((d) => d.date === focusDate) ?? data.days[0];
+    const incomeDue = incomeRows.reduce((s, r) => s + r.amount_cents, 0);
+    const expensesDue = expenseRowsDue.reduce((s, r) => s + r.amount_cents, 0);
+    const net = incomeDue - expensesDue;
     const dueNext10 = allRows
       .filter((r) => r.row_kind === "income" && r.due_date >= today && r.due_date <= addDaysIso(today, 10))
       .reduce((s, r) => s + r.amount_cents, 0);
+    const driverBillCount = expenseRowsDue.filter((r) => expenseGroupKey(r) === "driver bills").length;
     return {
       opening: data.opening_cash_cents,
-      incomeToday: todayDay?.income_due_cents ?? 0,
-      expensesToday: todayDay?.expenses_due_cents ?? 0,
-      carriedOver: (todayDay?.income_carry_over_cents ?? 0) + (todayDay?.expenses_carry_over_cents ?? 0),
-      netToday: todayDay?.net_cents ?? 0,
-      projectedClosing: todayDay?.running_cash_cents ?? null,
-      incomeNotFactored,
+      incomeDue,
+      incomeCount: incomeRows.length,
+      expensesDue,
+      expenseSub:
+        driverBillCount > 0
+          ? `${driverBillCount} driver bill${driverBillCount === 1 ? "" : "s"}`
+          : `${expenseRowsDue.length} item${expenseRowsDue.length === 1 ? "" : "s"}`,
+      net,
+      projectedClosing: day?.running_cash_cents ?? null,
       dueNext10,
     };
-  }, [data, allRows, today]);
+  }, [data, focusDate, incomeRows, expenseRowsDue, allRows, today]);
 
   const incomeColumns: ParityColumn<RollingLedgerRow>[] = [
-    { key: "type", label: "Type", sortable: true, render: (row) => row.type },
     {
-      key: "counterparty",
-      label: "Customer · No.",
-      render: (row) => (
-        <>
-          {ledgerEntityKind(row.document_kind) ? (
-            <EntityLink kind={ledgerEntityKind(row.document_kind)!} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
-          ) : (
-            <span>{row.document_label}</span>
-          )}{" "}
-          <span className="text-[#6B7280]">{row.counterparty}</span>
-        </>
-      ),
+      key: "party",
+      label: "Party",
+      sortable: true,
+      render: (row) => {
+        if (row.customer_id) {
+          return <EntityLink kind="customer" id={row.customer_id} label={row.customer_name || row.counterparty} onClick={(e) => e.stopPropagation()} />;
+        }
+        return <span>{row.counterparty || "—"}</span>;
+      },
+      sortValue: (row) => row.counterparty,
     },
     {
+      // key "load" kept for verify-settlement-ref-beside-load (ALL-SEATS law); board label is Doc / load.
       key: "load",
-      label: "Load",
-      render: (row) =>
-        row.load_id ? (
-          <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
+      label: "Doc / load",
+      render: (row) => {
+        const kind = ledgerEntityKind(row.document_kind);
+        const doc = kind ? (
+          <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span className="text-[#6B7280]">—</span>
-        ),
+          <span>{row.document_label}</span>
+        );
+        const load = row.load_id ? (
+          <>
+            {" · "}
+            <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
+          </>
+        ) : null;
+        return (
+          <span>
+            {doc}
+            {load}
+          </span>
+        );
+      },
     },
-    // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
-    // column beside it. No load on this row → nothing to attach a settlement to.
     {
       key: "settlement_reference",
       label: "Settlement / Presettlement",
@@ -838,90 +926,130 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         row.load_id ? (
           <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
         ) : (
-          <span className="text-[#6B7280]">—</span>
+          <span style={{ color: V3.muted }}>—</span>
         ),
-    },
-    {
-      key: "invoice_date",
-      label: "Invoice date", sortable: true,
-      render: (row) => fmtDateShort(row.origin_date),
-      sortValue: (row) => row.origin_date,
     },
     { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
     {
-      key: "in",
-      label: "In",
-      sortable: false,
-      // CASH-FLOW-ROLLING-LEDGER-4-FIXES fix 2 (owner 2026-09-07) — the old "+Nd"/"Nd" pair read
-      // backwards (a reader decodes "+Nd" as "in N days" when it actually meant N days OVERDUE, and
-      // a bare "Nd" read as overdue when it meant due IN N days). Say what it means, not a sign.
-      render: (row) => (row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`),
-    },
-    {
       key: "amount_cents",
-      label: "Expected",
+      label: "Amount",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)}</span>,
+      kind: "money",
+      render: (row) =>
+        row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents),
     },
-    { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
   ];
 
   const expenseColumns: ParityColumn<RollingLedgerRow>[] = [
-    { key: "type", label: "Type", sortable: true, render: (row) => row.type },
-    { key: "no", label: "No.", render: (row) => ledgerEntityKind(row.document_kind) ? (
-            <EntityLink kind={ledgerEntityKind(row.document_kind)!} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
-          ) : (
-            <span>{row.document_label}</span>
-          ) },
-    { key: "counterparty", label: "Name", sortable: true, render: (row) => row.counterparty },
-    { key: "period", label: "Period", sortable: false, render: (row) => `${fmtDateShort(row.origin_date)} → ${fmtDateShort(row.due_date)}` },
-    { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
     {
-      key: "days_overdue",
-      label: "Days",
-      // CASH-FLOW-ROLLING-LEDGER-4-FIXES fix 2 (owner 2026-09-07) — same backwards-sign class as the
-      // income table's "In" column: a bare number gave no cue which direction it meant. Label it.
-      render: (row) => (row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`),
+      key: "payee",
+      label: "Payee",
+      sortable: true,
+      render: (row) => {
+        if (isBoardEmptyRow(row)) {
+          return <span style={{ color: V3.slate }}>{row.counterparty}</span>;
+        }
+        return <span>{row.counterparty || "—"}</span>;
+      },
+      sortValue: (row) => row.counterparty,
+    },
+    {
+      key: "load",
+      label: "Doc / load",
+      render: (row) => {
+        if (isBoardEmptyRow(row)) return null;
+        const kind = ledgerEntityKind(row.document_kind);
+        const doc = kind ? (
+          <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
+        ) : (
+          <span>{row.document_label}</span>
+        );
+        const load = row.load_id ? (
+          <>
+            {" · "}
+            <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
+          </>
+        ) : null;
+        return (
+          <span>
+            {doc}
+            {load}
+          </span>
+        );
+      },
+    },
+    {
+      key: "settlement_reference",
+      label: "Settlement / Presettlement",
+      testId: "settlement-reference-column",
+      render: (row) =>
+        isBoardEmptyRow(row) ? null : row.load_id ? (
+          <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
+        ) : (
+          <span style={{ color: V3.muted }}>—</span>
+        ),
+    },
+    {
+      key: "due_date",
+      label: "Due",
+      sortable: true,
+      render: (row) => (isBoardEmptyRow(row) ? null : fmtDateShort(row.due_date)),
+      sortValue: (row) => row.due_date,
     },
     {
       key: "amount_cents",
       label: "Amount",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)}</span>,
-    },
-    { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
-    {
-      key: "reason",
-      label: "Reason / source",
-      sortable: false,
-      render: (row) => (row.reason_label ? `${row.reason_label}${row.reason_note ? " — " + row.reason_note : ""}` : "—"),
+      kind: "money",
+      render: (row) => (isBoardEmptyRow(row) ? null : row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)),
     },
     {
       key: "action",
       label: "Action",
       sortable: false,
-      // ROUND 16.7 CORRECTION — expense rows never open the multi-field AdjustPopover: a plain
-      // reason menu + a separate "Stop" action, no popup.
-      render: (row) => (
-        <div className="flex items-center gap-1">
-          <ExpenseRolloverMenu
-            reasons={reasons}
-            pending={adjustMutation.isPending}
-            onRollover={(reasonCode) =>
-              adjustMutation.mutate({ row, projectedDate: addDaysIso(row.due_date, 1), reasonCode, note: "", hiddenReason: "" })
-            }
-          />
-          <StopTrackingButton
-            reasons={reasons}
-            pending={adjustMutation.isPending}
-            onStop={(reasonCode, hiddenReason) =>
-              adjustMutation.mutate({ row, projectedDate: null, reasonCode, note: "", hiddenReason })
-            }
-          />
-        </div>
-      ),
+      render: (row) => {
+        if (isBoardEmptyRow(row)) return null;
+        return (
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <ExpenseRolloverMenu
+              reasons={reasons}
+              pending={adjustMutation.isPending}
+              onRollover={(reasonCode) =>
+                adjustMutation.mutate({ row, projectedDate: addDaysIso(row.due_date, 1), reasonCode, note: "", hiddenReason: "" })
+              }
+            />
+            <StopTrackingButton
+              reasons={reasons}
+              pending={adjustMutation.isPending}
+              onStop={(reasonCode, hiddenReason) =>
+                adjustMutation.mutate({ row, projectedDate: null, reasonCode, note: "", hiddenReason })
+              }
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
+  const carriedColumns: ParityColumn<CarriedAgg>[] = [
+    { key: "group", label: "Group", render: (row) => row.group },
+    {
+      key: "items",
+      label: "Items",
+      className: "text-right",
+      cellClass: "text-right",
+      kind: "number",
+      render: (row) => String(row.items),
+    },
+    {
+      key: "amount_cents",
+      label: "Amount",
+      className: "text-right",
+      cellClass: "text-right font-mono font-medium",
+      kind: "money",
+      render: (row) => formatCents(row.amount_cents),
     },
   ];
 
@@ -931,57 +1059,87 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Date",
       render: (day) => (
         <>
-          {fmtDate(day.date)}
-          {day.date === today && <span className="ml-1 text-xs text-[#6B7280]">(today)</span>}
+          {dayGrain === "week" ? `Week of ${fmtChipDate(day.date)}` : fmtChipDate(day.date)}
+          {day.date === today && dayGrain === "day" && (
+            <span className="ml-1 text-xs" style={{ color: V3.muted }}>
+              (today)
+            </span>
+          )}
         </>
       ),
     },
-    { key: "income_due_cents", label: "Income due", sortable: true, className: "text-right", cellClass: "text-right", render: (day) => (day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)) },
-    { key: "expenses_due_cents", label: "Expenses due", sortable: true, className: "text-right", cellClass: "text-right", render: (day) => (day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)) },
     {
-      key: "income_carry_over_cents",
-      label: "Income carried", sortable: true,
+      key: "income_due_cents",
+      label: "Income",
+      sortable: true,
       className: "text-right",
-      cellClass: "text-right text-[#6B7280]",
-      render: (day) => (day.income_carry_over_cents === 0 ? "—" : formatCents(day.income_carry_over_cents)),
+      cellClass: "text-right",
+      kind: "money",
+      render: (day) => (day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)),
     },
     {
-      key: "expenses_carry_over_cents",
-      label: "Expenses carried", sortable: true,
+      key: "expenses_due_cents",
+      label: "Expenses",
+      sortable: true,
       className: "text-right",
-      cellClass: "text-right text-[#6B7280]",
-      render: (day) => (day.expenses_carry_over_cents === 0 ? "—" : formatCents(day.expenses_carry_over_cents)),
+      cellClass: "text-right",
+      kind: "money",
+      render: (day) => (day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)),
     },
     {
       key: "net_cents",
       label: "Net",
       className: "text-right",
       cellClass: "text-right",
-      render: (day) => <span className={day.net_cents < 0 ? "text-[#1F2A44]" : "text-[#6B7280]"}>{day.net_cents === 0 ? "—" : formatCents(day.net_cents, { sign: true })}</span>,
+      kind: "money",
+      render: (day) =>
+        day.net_cents === 0 ? (
+          "—"
+        ) : (
+          <span style={{ color: day.net_cents > 0 ? V3.green : V3.ink, fontWeight: 600 }}>
+            {formatCents(day.net_cents, { sign: true })}
+          </span>
+        ),
     },
     {
       key: "running_cash_cents",
       label: "Running cash",
       className: "text-right",
-      cellClass: "text-right font-medium text-[#1F2A44]",
-      render: (day) => (day.running_cash_cents === null ? "—" : formatCents(day.running_cash_cents, { sign: true })),
+      cellClass: "text-right font-medium",
+      kind: "money",
+      render: (day) => (day.running_cash_cents === null ? "—" : <b>{formatCents(day.running_cash_cents)}</b>),
     },
   ];
 
-  const unknownAmountCount = data?.rows.filter(row => { return row.amount_known === false; }).length ?? 0;
-  const selectedLabel = fmtDate(selectedDate ?? today);
+  const unknownAmountCount = data?.rows.filter((row) => row.amount_known === false).length ?? 0;
+  const selectedLabel = fmtNavDate(focusDate);
   const expensePriorityGroupBy = {
     getKey: (row: RollingLedgerRow) => expenseGroupKey(row),
     renderHeader: (key: string, rows: RollingLedgerRow[]) => {
       const idx = (V3_EXPENSE_GROUPS as readonly string[]).indexOf(key);
       const label = idx >= 0 ? expenseGroupLabel(V3_EXPENSE_GROUPS[idx], idx) : key;
+      const realRows = rows.filter((r) => !isBoardEmptyRow(r));
+      const total = realRows.reduce((s, r) => s + r.amount_cents, 0);
       return (
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.muted }}>
-          {label} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+          {label}
+          <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>{formatCents(total)}</span>
         </span>
       );
     },
     orderedKeys: [...V3_EXPENSE_GROUPS],
+  };
+  const incomeTypeGroupBy = {
+    getKey: (row: RollingLedgerRow) => row.type,
+    renderHeader: (key: string, rows: RollingLedgerRow[]) => (
+      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+        {incomeGroupLabel(key)}
+        <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>
+          {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
+        </span>
+      </span>
+    ),
+    orderedKeys: ["Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)"],
   };
   const toolbarBtn: CSSProperties = {
     display: "flex",
@@ -991,84 +1149,31 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     borderRadius: 2,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
-    padding: "0 8px",
+    padding: "0 12px",
     fontSize: 12,
-    color: V3.muted,
+    fontWeight: 600,
+    color: V3.ink,
     fontFamily: V3.font,
     cursor: "pointer",
   };
+  const dateRangeLabel = `${fmtNavDate(from).replace(/^\w+, /, "")} – ${fmtNavDate(to).replace(/^\w+, /, "")}`;
 
   return (
     <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab" style={{ fontFamily: V3.font }}>
       {unknownAmountCount > 0 && (
         <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
       )}
-      {/* ROUND 16.7 CORRECTION — Banking's QBO-style filter bar (SegmentedControl / Combobox /
-      TypeFilterDropdown / PRESET_OPTIONS). ROUND 443.250 paints it with V3 tokens. */}
+
+      {/* Board chrome: Filters ▾ · Date · By day|By type · day nav · Export. Banking contracts expand under Filters. */}
       <div
-        className="flex flex-wrap items-center gap-2 rounded-sm p-2"
-        style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+        className="flex flex-wrap items-center gap-2"
+        style={{ fontFamily: V3.font }}
         data-testid="rolling-ledger-v3-filters"
       >
-        <div className="h-7 w-[242px]">
-          <Combobox
-            options={descriptionFilterOptions}
-            value={search || null}
-            onChange={(next) => updateParams({ rl_q: next || null })}
-            onSearch={(q) => updateParams({ rl_q: q || null })}
-            allowClear
-            placeholder="Filter by description"
-            dataTestId="rolling-ledger-description-filter"
-          />
-        </div>
-        <SegmentedControl
-          options={[
-            { value: "all" as const, label: "All" },
-            { value: "income" as const, label: "Income" },
-            { value: "expenses" as const, label: "Expenses" },
-          ]}
-          value={rowKindFilter}
-          onChange={(next) => updateParams({ rl_kind: next === "all" ? null : next })}
-          dataTestId="rolling-ledger-kind-filter"
-        />
-        <div className="flex h-7 items-center gap-1">
-          <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
-            From
-          </label>
-          <DatePicker id="rolling-ledger-from" value={from} onChange={(v) => { setFrom(v); updateParams({ rl_from: v }); }} max={to} className="h-7 w-[128px]" data-testid="rolling-ledger-from" />
-          <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
-            To
-          </label>
-          <DatePicker id="rolling-ledger-to" value={to} onChange={(v) => { setTo(v); updateParams({ rl_to: v }); }} min={from} className="h-7 w-[128px]" data-testid="rolling-ledger-to" />
-          <div className="relative">
-            <button type="button" onClick={() => setPresetMenuOpen((o) => !o)} style={toolbarBtn} data-testid="rolling-ledger-presets">
-              Presets <ChevronDown className="h-3 w-3" />
-            </button>
-            {presetMenuOpen && (
-              <div
-                className="absolute left-0 top-full z-10 mt-1 w-40 p-1 shadow-md"
-                style={{ background: V3.surface, border: `1px solid ${V3.border}`, borderRadius: 2 }}
-              >
-                {PRESET_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => applyPreset(opt.value)}
-                    className="block w-full rounded-sm px-2 py-1 text-left text-xs"
-                    style={{
-                      background: preset === opt.value ? V3.headerBg : "transparent",
-                      color: preset === opt.value ? V3.ink : V3.muted,
-                      fontWeight: preset === opt.value ? 600 : 400,
-                      fontFamily: V3.font,
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <button type="button" onClick={() => setFiltersOpen((o) => !o)} style={toolbarBtn} data-testid="rolling-ledger-filters-toggle">
+          Filters <ChevronDown className="h-3 w-3" />
+        </button>
+        <span style={{ fontSize: 11, color: V3.muted }}>Date: {dateRangeLabel}</span>
         <SegmentedControl
           options={[
             { value: "day" as const, label: "By day" },
@@ -1078,33 +1183,121 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           onChange={(next) => updateParams({ rl_group: next === "day" ? null : next })}
           dataTestId="rolling-ledger-group-mode"
         />
-        <TypeFilterDropdown
-          options={TYPE_OPTIONS}
-          selected={selectedTypes}
-          onChange={(next) => updateParams({ rl_types: next.length > 0 ? next.join(",") : null })}
-        />
-        <button
-          type="button"
-          onClick={() => updateParams({ rl_rolled: showRolledOver ? "hide" : null })}
-          style={toolbarBtn}
-          data-testid="rolling-ledger-rolled-toggle"
-        >
-          Rolled over: <b>{showRolledOver ? "show" : "hide"}</b>
-          <ChevronDown className="h-3 w-3" />
-        </button>
+        <span className="flex-1" />
+        <DayNavigatorCard date={focusDate} today={today} onChange={(next) => setSelectedDate(next)} />
         <span className="flex-1" />
         <button
           type="button"
           onClick={() => exportRowsCsv(allRows)}
           disabled={allRows.length === 0}
-          style={{ ...toolbarBtn, fontWeight: 600, opacity: allRows.length === 0 ? 0.5 : 1 }}
+          style={{ ...toolbarBtn, opacity: allRows.length === 0 ? 0.5 : 1 }}
           data-testid="rolling-ledger-export"
         >
           Export
         </button>
       </div>
 
-      <DayNavigatorCard date={selectedDate ?? today} today={today} onChange={(next) => setSelectedDate(next)} />
+      {filtersOpen && (
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-sm p-2"
+          style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+          data-testid="rolling-ledger-filters-panel"
+        >
+          <div className="h-7 w-[242px]">
+            <Combobox
+              options={descriptionFilterOptions}
+              value={search || null}
+              onChange={(next) => updateParams({ rl_q: next || null })}
+              onSearch={(q) => updateParams({ rl_q: q || null })}
+              allowClear
+              placeholder="Filter by description"
+              dataTestId="rolling-ledger-description-filter"
+            />
+          </div>
+          <SegmentedControl
+            options={[
+              { value: "all" as const, label: "All" },
+              { value: "income" as const, label: "Income" },
+              { value: "expenses" as const, label: "Expenses" },
+            ]}
+            value={rowKindFilter}
+            onChange={(next) => updateParams({ rl_kind: next === "all" ? null : next })}
+            dataTestId="rolling-ledger-kind-filter"
+          />
+          <div className="flex h-7 items-center gap-1">
+            <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
+              From
+            </label>
+            <DatePicker
+              id="rolling-ledger-from"
+              value={from}
+              onChange={(v) => {
+                setFrom(v);
+                updateParams({ rl_from: v });
+              }}
+              max={to}
+              className="h-7 w-[128px]"
+              data-testid="rolling-ledger-from"
+            />
+            <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
+              To
+            </label>
+            <DatePicker
+              id="rolling-ledger-to"
+              value={to}
+              onChange={(v) => {
+                setTo(v);
+                updateParams({ rl_to: v });
+              }}
+              min={from}
+              className="h-7 w-[128px]"
+              data-testid="rolling-ledger-to"
+            />
+            <div className="relative">
+              <button type="button" onClick={() => setPresetMenuOpen((o) => !o)} style={{ ...toolbarBtn, fontWeight: 500, color: V3.muted }} data-testid="rolling-ledger-presets">
+                Presets <ChevronDown className="h-3 w-3" />
+              </button>
+              {presetMenuOpen && (
+                <div
+                  className="absolute left-0 top-full z-10 mt-1 w-40 p-1 shadow-md"
+                  style={{ background: V3.surface, border: `1px solid ${V3.border}`, borderRadius: 2 }}
+                >
+                  {PRESET_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => applyPreset(opt.value)}
+                      className="block w-full rounded-sm px-2 py-1 text-left text-xs"
+                      style={{
+                        background: preset === opt.value ? V3.headerBg : "transparent",
+                        color: preset === opt.value ? V3.ink : V3.muted,
+                        fontWeight: preset === opt.value ? 600 : 400,
+                        fontFamily: V3.font,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <TypeFilterDropdown
+            options={TYPE_OPTIONS}
+            selected={selectedTypes}
+            onChange={(next) => updateParams({ rl_types: next.length > 0 ? next.join(",") : null })}
+          />
+          <button
+            type="button"
+            onClick={() => updateParams({ rl_rolled: showRolledOver ? "hide" : null })}
+            style={{ ...toolbarBtn, fontWeight: 500, color: V3.muted }}
+            data-testid="rolling-ledger-rolled-toggle"
+          >
+            Rolled over: <b>{showRolledOver ? "show" : "hide"}</b>
+            <ChevronDown className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {isLoading && (
         <div className="rounded-sm p-6 text-center text-xs" style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.muted }}>
@@ -1117,41 +1310,68 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {data && kpis && (
+      {data && boardKpis && (
         <>
-          <CashFlowKpiStrip kpis={kpis} testId="rolling-ledger-kpi-strip" />
+          <div
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8 }}
+            data-testid="rolling-ledger-v3-kpis"
+          >
+            <V3KpiTile
+              label="Opening cash"
+              value={boardKpis.opening === null ? "—" : formatUsdCents(boardKpis.opening)}
+              testId="rolling-ledger-v3-kpi-opening"
+            />
+            <V3KpiTile
+              label="Income due today"
+              value={formatUsdCents(boardKpis.incomeDue)}
+              sub={`${boardKpis.incomeCount} item${boardKpis.incomeCount === 1 ? "" : "s"}`}
+              testId="rolling-ledger-v3-kpi-income"
+            />
+            <V3KpiTile
+              label="Expenses due today"
+              value={formatUsdCents(boardKpis.expensesDue)}
+              sub={boardKpis.expenseSub}
+              testId="rolling-ledger-v3-kpi-expenses"
+            />
+            <V3KpiTile
+              label="Net today"
+              value={formatCents(boardKpis.net, { sign: true })}
+              tone={boardKpis.net > 0 ? "green" : boardKpis.net < 0 ? "red" : "ink"}
+              sub="None"
+              testId="rolling-ledger-v3-kpi-net"
+            />
+            <V3KpiTile
+              label="Projected closing"
+              value={boardKpis.projectedClosing === null ? "—" : formatUsdCents(boardKpis.projectedClosing)}
+              testId="rolling-ledger-v3-kpi-closing"
+            />
+            <V3KpiTile
+              label="Due next 10 days"
+              value={formatUsdCents(boardKpis.dueNext10)}
+              testId="rolling-ledger-v3-kpi-due10"
+            />
+          </div>
 
           <div
             className={`grid grid-cols-1 gap-3 ${
-              rowKindFilter === "all" ? "xl:grid-cols-[38fr_62fr]" : "xl:grid-cols-1"
+              rowKindFilter === "all" ? "xl:grid-cols-2" : "xl:grid-cols-1"
             }`}
           >
             {rowKindFilter !== "expenses" && (
               <BoardSection
                 title={`Income · ${selectedLabel}`}
                 subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
+                onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-income-panel"
               >
                 <ParityTable
                   rows={incomeRows}
                   columns={incomeColumns}
                   rowKey={rowKeyOf}
-                  storageKey="cash-flow-income"
+                  storageKey="cash-flow-income-v3"
                   emptyText="No expected income for this day."
                   onRowClick={(row) => setAdjustingRowKey(adjustingRowKey === rowKeyOf(row) ? null : rowKeyOf(row))}
-                  groupBy={
-                    groupMode === "type"
-                      ? {
-                          getKey: (row) => row.type,
-                          renderHeader: (key, rows) => (
-                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: V3.muted }}>
-                              {key} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
-                            </span>
-                          ),
-                          orderedKeys: ["Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)"],
-                        }
-                      : undefined
-                  }
+                  groupBy={incomeTypeGroupBy}
                   data-testid="rolling-ledger-income-table"
                 />
                 {adjustingRow && adjustingRowIsIncome && (
@@ -1175,13 +1395,14 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               <BoardSection
                 title={`Expenses · ${selectedLabel}`}
                 subtitle="payment priority order"
+                onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-expense-panel"
               >
                 <ParityTable
-                  rows={expenseRowsDue}
+                  rows={expenseRowsForTable}
                   columns={expenseColumns}
                   rowKey={rowKeyOf}
-                  storageKey="cash-flow-expenses"
+                  storageKey="cash-flow-expenses-v3"
                   emptyText="No expected expenses due this day."
                   groupBy={expensePriorityGroupBy}
                   data-testid="rolling-ledger-expense-table"
@@ -1190,45 +1411,51 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             )}
           </div>
 
-          {(rowKindFilter === "all" || rowKindFilter === "income") && (
-            <BoardSection
-              title="Carried income — past due, not received"
-              subtitle={`${incomeCarriedRows.length} item${incomeCarriedRows.length === 1 ? "" : "s"}`}
-              testId="rolling-ledger-carried-income-panel"
-            >
-              <ParityTable
-                rows={incomeCarriedRows}
-                columns={incomeColumns}
-                rowKey={rowKeyOf}
-                storageKey="cash-flow-income-carried"
-                emptyText="No carried income."
-                data-testid="rolling-ledger-carried-income-table"
-              />
-            </BoardSection>
-          )}
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            {(rowKindFilter === "all" || rowKindFilter === "income") && (
+              <BoardSection
+                title="Carried income — past due, not received"
+                onViewAll={() => {
+                  setSelectedDate(null);
+                  updateParams({ rl_kind: "income" });
+                }}
+                testId="rolling-ledger-carried-income-panel"
+              >
+                <ParityTable
+                  rows={incomeCarriedAgg}
+                  columns={carriedColumns}
+                  rowKey={(r) => r.key}
+                  storageKey="cash-flow-income-carried-v3"
+                  emptyText="No carried income."
+                  data-testid="rolling-ledger-carried-income-table"
+                />
+              </BoardSection>
+            )}
 
-          {(rowKindFilter === "all" || rowKindFilter === "expenses") && (
-            <BoardSection
-              title="Carried expenses — past due, not paid"
-              subtitle={`${expenseCarriedRows.length} item${expenseCarriedRows.length === 1 ? "" : "s"}`}
-              footer="Card fuel fills are not carried — the card payment is."
-              testId="rolling-ledger-carried-expense-panel"
-            >
-              <ParityTable
-                rows={expenseCarriedRows}
-                columns={expenseColumns}
-                rowKey={rowKeyOf}
-                storageKey="cash-flow-expenses-carried"
-                emptyText="No carried expenses."
-                groupBy={expensePriorityGroupBy}
-                data-testid="rolling-ledger-carried-expense-table"
-              />
-            </BoardSection>
-          )}
+            {(rowKindFilter === "all" || rowKindFilter === "expenses") && (
+              <BoardSection
+                title="Carried expenses — past due, not paid"
+                footer="Card fuel fills are not carried — the card payment is."
+                onViewAll={() => {
+                  setSelectedDate(null);
+                  updateParams({ rl_kind: "expenses" });
+                }}
+                testId="rolling-ledger-carried-expense-panel"
+              >
+                <ParityTable
+                  rows={expenseCarriedAgg}
+                  columns={carriedColumns}
+                  rowKey={(r) => r.key}
+                  storageKey="cash-flow-expenses-carried-v3"
+                  emptyText="No carried expenses."
+                  data-testid="rolling-ledger-carried-expense-table"
+                />
+              </BoardSection>
+            )}
+          </div>
 
           <BoardSection
-            title={`Day grid · ${fmtDateShort(from)} → ${fmtDateShort(to)}`}
-            subtitle={dayGrain === "day" ? "days with activity" : "weeks with activity"}
+            title={`Day grid · ${fmtChipDate(from)} → ${fmtChipDate(to)} (days with activity)`}
             headerRight={
               <V3Segmented
                 value={dayGrain}
@@ -1240,18 +1467,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 testId="rolling-ledger-day-grain"
               />
             }
+            footer="Click a day → both sides above switch to that day."
             testId="rolling-ledger-day-grid-panel"
           >
             <ParityTable
               rows={dayGridRows}
               columns={dayGridColumns}
               rowKey={(day) => day.date}
-              storageKey="cash-flow-day-grid"
+              storageKey="cash-flow-day-grid-v3"
               emptyText="No days with activity in this range."
               rowClassName={(day) =>
                 `${day.date === today ? "font-medium" : ""} ${day.date === selectedDate ? "" : ""} ${day.date < today ? "opacity-80" : ""}`
               }
-              onRowClick={(day) => setSelectedDate(day.date === selectedDate ? null : day.date)}
+              onRowClick={(day) => setSelectedDate(day.date === selectedDate ? today : day.date)}
               data-testid="rolling-ledger-day-grid"
             />
           </BoardSection>
