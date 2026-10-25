@@ -29,6 +29,35 @@ export async function unmatchBankTransactionOnClient(
     reason: "bank_line_unmatched",
     actorUserId: input.actor_user_uuid,
   });
+  // LEAD 443.305 — a loan DOCUMENT this match created (the rest of a multi-document match as a related-party loan) is
+  // reversed with the match; its GL leg is the match's variance JE, which the release above already reverses. A loan that
+  // only LINKS to this line (categorization, the related-party pair confirm) is never touched: it is identified solely by
+  // the match writer's own audit event naming THIS bank line and THIS loan. The pointer is cleared first because
+  // banking.bank_line_classify counts matched_related_party_loan_id as linked (the line would stay 'matched').
+  const matchLoan = await client.query<{ loan_id: string }>(
+    `SELECT bt.matched_related_party_loan_id::text AS loan_id
+       FROM banking.bank_transactions bt
+      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid AND bt.matched_related_party_loan_id IS NOT NULL
+        AND EXISTS (SELECT 1 FROM audit.audit_events ae
+                     WHERE ae.event_class = 'bank_match.multi_difference_as_loan'
+                       AND ae.payload->>'bank_transaction_id' = $1::text
+                       AND ae.payload->>'loan_entry_id' = bt.matched_related_party_loan_id::text)`,
+    [input.bank_transaction_id, input.operating_company_id]
+  );
+  const matchLoanId = matchLoan.rows[0]?.loan_id ?? null;
+  if (matchLoanId) {
+    await client.query(
+      `UPDATE banking.bank_transactions SET matched_related_party_loan_id = NULL, updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND matched_related_party_loan_id = $3::uuid`,
+      [input.bank_transaction_id, input.operating_company_id, matchLoanId]
+    );
+    await client.query(
+      `UPDATE accounting.related_party_loan_entries
+          SET status = 'reversed', reversed_at = now(), updated_at = now(), updated_by_user_id = $3::uuid
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND reversed_at IS NULL`,
+      [matchLoanId, input.operating_company_id, input.actor_user_uuid]
+    );
+  }
   // Same CTE-captures-pre-update-values shape reconciliation.routes.ts's session-scoped unmatch
   // already uses — Postgres UPDATE...RETURNING reflects the NEW row, so the ids to reverse/reject
   // have to come from a snapshot taken before the UPDATE, not the UPDATE's own output.

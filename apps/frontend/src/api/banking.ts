@@ -1811,6 +1811,8 @@ export function acceptBankReconMultiMatch(input: {
     ledger_entry_id: string;
   }>;
   difference_account_id?: string | null;
+  /** LEAD 443.305 — the rest of the bank line is a loan document from / repayment to this related party ("Due to / from" account). */
+  difference_as_loan?: { party_account_id: string } | null;
 }) {
   return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-multi-match`, {
     method: "POST",

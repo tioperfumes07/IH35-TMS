@@ -68,6 +68,7 @@ import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-
 // 443.100: LedgerEntryKind lives in the type-only leaf ledger-entry-kind.type.ts so the one unmatch writer can name it
 // without importing this engine (verify-no-circular-dependencies).
 import type { LedgerEntryKind } from "./ledger-entry-kind.type.js";
+import { createRelatedPartyLoanEntry } from "../related-party-loan-posting/create-entry.service.js";
 export type { LedgerEntryKind };
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
@@ -1489,6 +1490,8 @@ async function postDifferenceJournalEntry(
     is_credit: boolean;
     /** 443.84 #3 card discount: one pair per receipt, sourced to the receipt (its load), linked to this bank line as the variance. */
     split?: Array<{ source_expense_id: string; cents: number; class_id: string | null; label: string }>;
+    /** LEAD 443.305 — the party on the offset leg (a "Due to / from <party>" line must name its party — posting-line writer). */
+    difference_entity?: { entity_uuid: string; entity_type: "vendor" } | null;
   }
 ) {
   if (input.variance_cents === 0) return null;
@@ -1646,6 +1649,9 @@ async function postDifferenceJournalEntry(
       source_transaction_type: "bank_transaction",
       source_transaction_id: input.bank_transaction_id,
       relationship_role: "bank_reconciliation_variance",
+      ...(leg.seq === 2 && input.difference_entity
+        ? { entity_uuid: input.difference_entity.entity_uuid, entity_type: input.difference_entity.entity_type }
+        : {}),
     });
   }
 
@@ -2507,6 +2513,14 @@ export async function acceptExactMultiDocumentMatch(input: {
    * Omitted → a non-zero variance is still refused (multi_match_nonzero_variance), as before.
    */
   difference_account_id?: string | null;
+  /**
+   * LEAD 443.305 — owner 10-24: one bank line can be "a purchase and a loan". The rest of the line (bank − documents) is a
+   * LOAN DOCUMENT from / repayment to a related party (owner rule: every loan creates a loan document), not a bare JE:
+   * GL Dr bank / Cr "Due to / from <party>" (money in) or the reverse (money out) through the one variance poster with the
+   * party named on its line, plus the document (bank_funding / bank_repayment) through createRelatedPartyLoanEntry
+   * (document only — the same split the related-party pair confirm uses). The bank must exceed the documents.
+   */
+  difference_as_loan?: { party_account_id: string } | null;
 }): Promise<{
   variance_cents: number;
   match_ids: string[];
@@ -2566,6 +2580,10 @@ export async function acceptExactMultiDocumentMatch(input: {
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const varianceCents = txnAmountAbs - ledgerSum;
     let cardDiscountJournalEntryId: string | null = null;
+    // LEAD 443.305 — the loan DOCUMENT is created only AFTER this match clears the bank line: stamping
+    // matched_related_party_loan_id fires banking.bank_line_classify (review_state := 'matched'), which would make the
+    // match's own compare-and-swap clear (WHERE review_state <> 'matched') find 0 rows and refuse. Same transaction.
+    let createLoanDocumentAfterClear: (() => Promise<void>) | null = null;
     if (varianceCents !== 0 && input.card_discount) {
       const split = await cardDiscountShares(client, {
         operating_company_id: input.operating_company_id, bank_account_id: txn.bank_account_id, is_credit: Boolean(txn.is_credit),
@@ -2583,6 +2601,51 @@ export async function acceptExactMultiDocumentMatch(input: {
         bank_transaction_id: input.bank_transaction_id, journal_entry_id: cardDiscountJournalEntryId, discount_cents: split.discount_cents,
         item: FUEL_CARD_DISCOUNT_ITEM, item_id: split.item_id, legs: split.legs,
       }, "info", "443.84-CARD-DISCOUNT");
+    } else if (varianceCents !== 0 && input.difference_as_loan?.party_account_id) {
+      if (varianceCents < 0) throw new Error(`difference_as_loan_requires_bank_above_documents:${varianceCents}`);
+      const party = (await client.query<{ party_vendor_id: string; account_id: string; vendor_name: string | null; relationship: string | null }>(
+        `SELECT r.party_vendor_id::text, r.account_id::text, v.vendor_name,
+                (SELECT e.relationship FROM accounting.related_party_loan_entries e
+                  WHERE e.operating_company_id = r.operating_company_id AND e.account_id = r.account_id
+                  ORDER BY e.created_at DESC LIMIT 1) AS relationship
+           FROM accounting.related_party_accounts r
+           LEFT JOIN mdata.vendors v ON v.id = r.party_vendor_id AND v.operating_company_id = r.operating_company_id
+          WHERE r.operating_company_id = $1::uuid AND r.account_id = $2::uuid
+          LIMIT 1`,
+        [input.operating_company_id, input.difference_as_loan.party_account_id]
+      )).rows[0];
+      if (!party) throw new Error("difference_as_loan_party_account_not_found");
+      const loanJournalEntryId = await postDifferenceJournalEntry(client, {
+        operating_company_id: input.operating_company_id, bank_transaction_id: input.bank_transaction_id, bank_account_id: txn.bank_account_id,
+        difference_account_id: party.account_id, actor_user_uuid: input.actor_user_uuid, transaction_date: txn.transaction_date,
+        variance_cents: varianceCents, is_credit: Boolean(txn.is_credit),
+        difference_entity: { entity_uuid: party.party_vendor_id, entity_type: "vendor" },
+      });
+      createLoanDocumentAfterClear = async () => {
+        const RELATIONSHIPS = ["owner", "spouse", "friend", "employee", "related_company", "other"] as const;
+        const relationship = (RELATIONSHIPS as readonly string[]).includes(String(party.relationship))
+          ? (party.relationship as (typeof RELATIONSHIPS)[number]) : "other";
+        const loan = await createRelatedPartyLoanEntry(client as never, {
+          operating_company_id: input.operating_company_id,
+          direction: txn.is_credit ? "in" : "out",
+          relationship,
+          counterparty_kind: "vendor",
+          counterparty_id: party.party_vendor_id,
+          counterparty_name: party.vendor_name ?? undefined,
+          account_id: party.account_id,
+          target_type: txn.is_credit ? "bank_funding" : "bank_repayment",
+          principal_cents: Math.abs(varianceCents),
+          entry_date: String(txn.transaction_date).slice(0, 10),
+          bank_transaction_id: input.bank_transaction_id,
+          funding_source_note: `LEAD 443.305: rest of bank line ${input.bank_transaction_id} after ${input.entries.length} matched document(s); GL ${loanJournalEntryId}`,
+        }, input.actor_user_uuid);
+        if ("error" in loan) throw new Error(`difference_as_loan_document_refused:${loan.error}`);
+        await appendCrudAudit(client, input.actor_user_uuid, "bank_match.multi_difference_as_loan", {
+          bank_transaction_id: input.bank_transaction_id, journal_entry_id: loanJournalEntryId, loan_entry_id: loan.id, loan_display_id: loan.display_id,
+          principal_cents: Math.abs(varianceCents), party_vendor_id: party.party_vendor_id, party_account_id: party.account_id,
+          members: input.entries.map((e, i) => ({ kind: e.ledger_entry_kind, id: e.ledger_entry_id, amount_cents: amounts[i]! })),
+        }, "info", "443.305-MULTI-DIFFERENCE-AS-LOAN");
+      };
     } else if (varianceCents !== 0 && input.difference_account_id) {
       const differenceJournalEntryId = await postDifferenceJournalEntry(client, {
         operating_company_id: input.operating_company_id, bank_transaction_id: input.bank_transaction_id, bank_account_id: txn.bank_account_id,
@@ -2720,6 +2783,7 @@ export async function acceptExactMultiDocumentMatch(input: {
       );
       if (cleared.rowCount === 0) throw new Error("bank_transaction_already_matched");
     }
+    if (createLoanDocumentAfterClear) await createLoanDocumentAfterClear();
 
     return {
       variance_cents: 0,

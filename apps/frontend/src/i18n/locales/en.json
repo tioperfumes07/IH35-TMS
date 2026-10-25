@@ -94,7 +94,14 @@
     "title": "Accounting"
   },
   "banking": {
-    "title": "Banking"
+    "title": "Banking",
+    "matchDrawer": {
+      "restLoan": {
+        "tip": "Money in = loan from the party; money out = repayment to the party (the bank line decides).",
+        "label": "Rest {{amount}} as a related-party loan with",
+        "none": "— not a loan (use the difference account) —"
+      }
+    }
   },
   "factoring": {
     "title": "Factoring"

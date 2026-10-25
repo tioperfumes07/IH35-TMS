@@ -94,7 +94,14 @@
     "title": "Contabilidad"
   },
   "banking": {
-    "title": "Banca"
+    "title": "Banca",
+    "matchDrawer": {
+      "restLoan": {
+        "tip": "Dinero que entra = préstamo de la parte; dinero que sale = pago a la parte (lo decide la línea del banco).",
+        "label": "Resto {{amount}} como préstamo de parte relacionada con",
+        "none": "— no es préstamo (usar la cuenta de diferencia) —"
+      }
+    }
   },
   "factoring": {
     "title": "Factoraje"
