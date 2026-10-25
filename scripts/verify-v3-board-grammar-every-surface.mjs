@@ -21,9 +21,10 @@ const LABEL = "verify-v3-board-grammar-every-surface";
  */
 const FAILING_SURFACE_BASELINE = 0;
 
-/** @typedef {{ id: string, file: string, forbid?: string[], note?: string }} Surface */
+/** @typedef {{ id: string, file: string, forbid?: string[], note?: string, chromeOnly?: boolean }} Surface */
 
-/** The 23 surfaces from CURSOR-ORDERS-443325-443326.md (+ Bills/Recurring keep-done). */
+/** The 23 surfaces from CURSOR-ORDERS-443325-443326.md (+ Bills/Recurring keep-done).
+ * chromeOnly = forbid-only check (BoardChrome / shell extracts — no kpi/MLT/ParityTable required). */
 const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementsPage",
@@ -43,7 +44,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementCloseArrivalPage",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     id: "CashAdvancesHome",
@@ -74,6 +75,61 @@ const SURFACES = /** @type {Surface[]} */ ([
     id: "FactoringHome",
     file: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
     forbid: ["PageHeader", "NavyPageSubNav", "KpiPanel", "CashFlowPanel", "CollapsedListFilters"],
+  },
+  {
+    id: "FactoringBoardChrome",
+    file: "apps/frontend/src/pages/factoring/FactoringBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "CustomersBoardChrome",
+    file: "apps/frontend/src/pages/customers/CustomersBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "VendorsBoardChrome",
+    file: "apps/frontend/src/pages/vendors/VendorsBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "CompanySettlementsPage",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+  },
+  {
+    id: "SettlementsModuleShell",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsModuleShell.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "SettlementsPreSettlementsBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsPreSettlementsBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+  },
+  {
+    id: "SettlementsDeductionsBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+  },
+  {
+    id: "SettlementsCashAdvancesBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+  },
+  {
+    id: "SettlementsEscrowBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+  },
+  {
+    id: "SettlementsToursRegister",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
   },
   {
     id: "FactoringListPage",
@@ -138,7 +194,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "FuelHome",
     file: "apps/frontend/src/pages/fuel/FuelHome.tsx",
-    forbid: ["PageHeader"],
+    forbid: ["PageHeader", "V3Panel"],
   },
   {
     id: "BillsPage",
@@ -149,6 +205,63 @@ const SURFACES = /** @type {Surface[]} */ ([
     id: "RecurringBillList",
     file: "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx",
     forbid: ["PageHeader", "NavyPageSubNav", "CollapsedListFilters"],
+  },
+  // ROUND 443.326 — Cash Flow / Legal Home / Accounting Hub: BoardSection (no V3Panel).
+  // chromeOnly: hub/dashboard/filter-locked tabs (KPI + panels; MLT not on Banking-style CF filters).
+  {
+    id: "CashFlowHomeTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/CashFlowHomeTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "ActualVsProjectedTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "RollingLedgerTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "ManualDailyProjectionsTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "DailyPredictionTab",
+    file: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "LegalHomeBoard",
+    file: "apps/frontend/src/pages/legal/components/LegalHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "AccountingHubPage",
+    file: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  // ROUND 443.326 — Insurance / Banking Home: BoardSection hubs (KPI + panels; not list boards).
+  {
+    id: "InsuranceHomeBoard",
+    file: "apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "BankingHomeBoard",
+    file: "apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
   },
 ]);
 
@@ -165,8 +278,12 @@ function hasMoneyListToolbar(src) {
   return /\bMoneyListToolbar\b/.test(src);
 }
 
-function hasParityTable(src) {
-  return /\bParityTable\b/.test(src);
+function hasParityTable(src, surfaceId) {
+  // JSX mount only — import/comment "ParityTable" alone is theater (ROUND 443.326).
+  if (/<ParityTable[\s/<]/.test(src) || /ParityTable\s*</.test(src)) return true;
+  // Fuel history roster: FuelTransactionsTable is the ParityTable wrapper for that surface.
+  if (surfaceId === "FuelPlannerHome" && /\bFuelTransactionsTable\b/.test(src)) return true;
+  return false;
 }
 
 function legacyHits(src, forbid) {
@@ -186,9 +303,11 @@ function evaluateSurface(surface, srcOverride) {
   }
   const src = srcOverride ?? fs.readFileSync(abs, "utf8");
   const reasons = [];
-  if (!hasKpiMount(src)) reasons.push("missing kpiStrip/V3KpiTile/moneyListKpiCard");
-  if (!hasMoneyListToolbar(src)) reasons.push("missing MoneyListToolbar");
-  if (!hasParityTable(src)) reasons.push("missing ParityTable");
+  if (!surface.chromeOnly) {
+    if (!hasKpiMount(src)) reasons.push("missing kpiStrip/V3KpiTile/moneyListKpiCard");
+    if (!hasMoneyListToolbar(src)) reasons.push("missing MoneyListToolbar");
+    if (!hasParityTable(src, surface.id)) reasons.push("missing ParityTable JSX mount");
+  }
   const legacy = legacyHits(src, surface.forbid);
   if (legacy.length) reasons.push(`legacy still mounted: ${legacy.join(",")}`);
   return { id: surface.id, file: surface.file, ok: reasons.length === 0, reasons };
@@ -217,11 +336,31 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — planted PageHeader on BillsPage fails as required`);
 }
 
+/** Companion: Settlements home chart/deductions must not hide panel-stack chrome in a child file. */
+function assertSettlementsHomeNoPanelExtract() {
+  const rel = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) {
+    console.error(`${LABEL} FAIL — SettlementsHomeBoardPanels missing (${rel})`);
+    process.exit(1);
+  }
+  const src = fs.readFileSync(abs, "utf8");
+  // Import or JSX only — comments may mention the forbidden name.
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(src) || /<\s*V3Panel[\s/>]/.test(src)) {
+    console.error(
+      `${LABEL} FAIL — SettlementsHomeBoardPanels still mounts V3Panel (child extract theater; unwrap to bordered sections)`,
+    );
+    process.exit(1);
+  }
+}
+
 function main() {
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
   }
+
+  assertSettlementsHomeNoPanelExtract();
 
   const results = measureAll();
   const failing = results.filter((r) => !r.ok);

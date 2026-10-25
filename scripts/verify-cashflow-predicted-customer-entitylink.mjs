@@ -64,7 +64,7 @@ function audit({ svc = read(SVC), fe = read(FE), api = read(API), receipts = rea
   if (!/from ["'][^"']*design\/v3-tokens["']/.test(fe)) {
     failures.push(`${FE}: missing v3-tokens import — 443.250 Projected V3 board`);
   }
-  for (const comp of ["V3Panel", "V3Segmented"]) {
+  for (const comp of ["BoardSection", "V3Segmented"]) {
     if (!new RegExp(`<${comp}\\b`).test(fe)) {
       failures.push(`${FE}: does not render <${comp}> — 443.250 Projected V3`);
     }

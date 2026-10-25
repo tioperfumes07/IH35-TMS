@@ -56,6 +56,10 @@ function hasXCloseContract(source) {
   if (/<ParityDrawer[\s/>]/.test(source) && /from\s+["'][^"']*parity\/ParityDrawer["']/.test(source)) {
     return true;
   }
+  // Thin wrappers that only host VoidReasonModal inherit its ParityDrawer ✕ close.
+  if (/<VoidReasonModal[\s/>]/.test(source) && /from\s+["'][^"']*VoidReasonModal["']/.test(source)) {
+    return true;
+  }
   if (/ModalCloseButton/.test(source)) {
     return true;
   }

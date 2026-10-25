@@ -11,7 +11,7 @@ import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
@@ -268,7 +268,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
         data-testid="settlements-deductions-board-body"
         data-settlements-deductions-board-2col="1"
       >
-        <V3Panel
+        <BoardSection
           title="By type · this week"
           testId="settlements-deductions-by-type-panel"
           onViewAll={() => navigate("/driver-finance/settlements")}
@@ -357,9 +357,9 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel
+        <BoardSection
           title="Schedule"
           testId="settlements-deductions-schedule-panel"
           onViewAll={() => navigate(root)}
@@ -446,7 +446,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
       </div>
 
       {companyId ? (

@@ -15,7 +15,7 @@
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
 | **TOTAL POST endpoints** | 975 | |
-| UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
+| UI files with `+ Create`/`+ Book` | 199 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
 report a lie, so every endpoint lands in exactly one bucket and nothing is silently dropped.
@@ -298,14 +298,14 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/plaid/exchange-public-token` | `apps/backend/src/integrations/plaid/link.routes.ts:208` | — | — | — |
 | nested | `/api/v1/banking/plaid/items/:itemId/disconnect` | `apps/backend/src/banking/plaid-items.routes.ts:116` | — | — | — |
 | create | `/api/v1/banking/plaid/items/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:553` | — | — | — |
-| create | `/api/v1/banking/reconciliation-sessions` | `apps/backend/src/banking/p7-wave2.routes.ts:726` | — | — | — |
-| nested | `/api/v1/banking/reconciliation-sessions/:id/finalize` | `apps/backend/src/banking/p7-wave2.routes.ts:820` | — | — | — |
+| create | `/api/v1/banking/reconciliation-sessions` | `apps/backend/src/banking/p7-wave2.routes.ts:745` | — | — | — |
+| nested | `/api/v1/banking/reconciliation-sessions/:id/finalize` | `apps/backend/src/banking/p7-wave2.routes.ts:839` | — | — | — |
 | nested | `/api/v1/banking/reconciliation/:sessionId/clear` | `apps/backend/src/banking/reconciliation.routes.ts:1000` | — | — | — |
-| create | `/api/v1/banking/related-party-pairs/confirm` | `apps/backend/src/banking/p7-wave2.routes.ts:328` | — | — | — |
-| create | `/api/v1/banking/rules` | `apps/backend/src/banking/p7-wave2.routes.ts:513` | — | — | — |
-| create | `/api/v1/banking/rules/bulk-apply` | `apps/backend/src/banking/p7-wave2.routes.ts:704` | — | — | — |
+| create | `/api/v1/banking/related-party-pairs/confirm` | `apps/backend/src/banking/p7-wave2.routes.ts:331` | — | — | — |
+| create | `/api/v1/banking/rules` | `apps/backend/src/banking/p7-wave2.routes.ts:516` | — | — | — |
+| create | `/api/v1/banking/rules/bulk-apply` | `apps/backend/src/banking/p7-wave2.routes.ts:723` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/investigate` | `apps/backend/src/banking/categorization.routes.ts:1143` | — | — | — |
-| nested | `/api/v1/banking/transactions/:id/refresh-suggestion` | `apps/backend/src/banking/p7-wave2.routes.ts:635` | — | — | — |
+| nested | `/api/v1/banking/transactions/:id/refresh-suggestion` | `apps/backend/src/banking/p7-wave2.routes.ts:651` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/skip` | `apps/backend/src/banking/categorization.routes.ts:1074` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/supersede-plaid-pending` | `apps/backend/src/banking/p7-wave2.routes.ts:42` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/transfer` | `apps/backend/src/banking/categorization.routes.ts:983` | — | — | — |
@@ -314,7 +314,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/transactions/bulk-post-as-bills` | `apps/backend/src/banking/categorization.routes.ts:1328` | — | — | — |
 | create | `/api/v1/banking/transactions/categorize-bulk` | `apps/backend/src/banking/categorization.routes.ts:823` | — | — | — |
 | create | `/api/v1/banking/transactions/post-categorized-backlog` | `apps/backend/src/banking/categorization.routes.ts:1270` | — | — | — |
-| create | `/api/v1/banking/transactions/suggest` | `apps/backend/src/banking/p7-wave2.routes.ts:371` | — | — | — |
+| create | `/api/v1/banking/transactions/suggest` | `apps/backend/src/banking/p7-wave2.routes.ts:374` | — | — | — |
 | create | `/api/v1/banking/transactions/undo-categorization` | `apps/backend/src/banking/categorization.routes.ts:1512` | — | — | — |
 | create | `/api/v1/banking/transfers` | `apps/backend/src/banking/transfers.routes.ts:101` | — | — | — |
 | create | `/api/v1/banking/transfers/intercompany` | `apps/backend/src/banking/transfers.routes.ts:216` | — | — | — |

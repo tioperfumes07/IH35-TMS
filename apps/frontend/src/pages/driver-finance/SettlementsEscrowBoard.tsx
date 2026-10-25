@@ -4,11 +4,9 @@
  * Engine: listEscrowAccounts (same rows as Accounting › Escrow KPI source).
  */
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
-import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
@@ -97,8 +95,8 @@ function ActiveStatusPill() {
   );
 }
 
+/** Board body only — chrome is SettlementsModuleShell / SettlementsSubNavWrapper (443.326). */
 export function SettlementsEscrowBoard() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -214,21 +212,6 @@ export function SettlementsEscrowBoard() {
 
   return (
     <div className="space-y-3" data-testid="settlements-escrow-board" data-settlements-escrow-rebuild="1">
-      <PageHeader
-        title="Driver Settlements"
-        subtitle="List + detail settlement workflow"
-        breadcrumb={["Driver Finance", "Escrow"]}
-        actions={
-          <Button
-            size="sm"
-            data-testid="settlements-escrow-creator"
-            onClick={() => navigate("/driver-finance/settlements?creator=1")}
-          >
-            + Settlement Creator
-          </Button>
-        }
-      />
-
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="escrow-home-kpi-strip"

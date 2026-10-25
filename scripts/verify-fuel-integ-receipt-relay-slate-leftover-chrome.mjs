@@ -40,12 +40,18 @@ export function computeIntegrityV3Failures(source) {
     errors.push("FuelIntegrityPage must render V3KpiTile strip with data-fuel-integrity-v3-kpis");
   }
   if (
-    !/V3Panel/.test(source) ||
+    !/FuelBoardSection/.test(source) ||
     !/fuel-integrity-card-v3-panel/.test(source) ||
     !/fuel-integrity-relay-v3-panel/.test(source) ||
     !/fuel-integrity-derived-v3-panel/.test(source)
   ) {
-    errors.push("FuelIntegrityPage must wrap Card purchases / Relay fills / Derived pump time in V3Panel");
+    errors.push("FuelIntegrityPage must wrap Card purchases / Relay fills / Derived pump time in FuelBoardSection");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("FuelIntegrityPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("FuelIntegrityPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
     errors.push("FuelIntegrityPage must not keep DataPanel after V3 restyle");

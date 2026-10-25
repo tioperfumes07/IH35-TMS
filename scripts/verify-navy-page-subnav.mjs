@@ -71,9 +71,16 @@ else pass("NavLink used for items");
 if (!component.includes('aria-label="Section navigation"')) fail('NavyPageSubNav missing aria-label="Section navigation"');
 else pass('aria-label="Section navigation" present');
 
-// SettlementsPage uses the component
-if (!settlements.includes("NavyPageSubNav")) fail("SettlementsPage.tsx does not import/use NavyPageSubNav");
-else pass("SettlementsPage uses NavyPageSubNav");
+// ROUND 443.326 — SettlementsPage retired NavyPageSubNav for SettlementsSubNavWrapper
+// (breadcrumb + HoverDropdownNav; same pattern as AccountingSubNavWrapper). Component
+// tokens above still lock NavyPageSubNav for modules that use it.
+if (!/SettlementsSubNavWrapper|NavyPageSubNav/.test(settlements)) {
+  fail("SettlementsPage.tsx must use SettlementsSubNavWrapper (443.326) or NavyPageSubNav");
+} else if (settlements.includes("SettlementsSubNavWrapper")) {
+  pass("SettlementsPage uses SettlementsSubNavWrapper (443.326)");
+} else {
+  pass("SettlementsPage uses NavyPageSubNav");
+}
 
 // SettlementsPage no longer has the inline hardcoded nav
 if (settlements.includes('"Settlements" ? "border-b')) fail("SettlementsPage still has hardcoded inline active check — swap not complete");

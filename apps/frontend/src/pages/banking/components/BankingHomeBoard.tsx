@@ -20,7 +20,7 @@ import {
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
@@ -374,7 +374,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         />
       </div>
 
-      <V3Panel
+      <BoardSection
         title="Accounts"
         onViewAll={() => navigate(BANKING_TAB_PATH.bank_accounts)}
         testId="banking-home-board-accounts"
@@ -434,9 +434,9 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
             ))}
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
 
-      <V3Panel
+      <BoardSection
         title="Reconciliation drift — bank vs book"
         onViewAll={() => navigate(BANKING_TAB_PATH.reconciliation)}
         headerRight={
@@ -521,9 +521,9 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
             })}
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
 
-      <V3Panel
+      <BoardSection
         title="Latest lines"
         onViewAll={() => navigate(BANKING_TAB_PATH.transactions)}
         footer="Nothing is matched automatically — a person links each line."
@@ -593,7 +593,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
             })}
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
     </div>
   );
 }

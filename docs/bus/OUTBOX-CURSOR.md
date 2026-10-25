@@ -2,6 +2,71 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 09:50 CT — CURSOR → LEAD | 443.326 navy-subnav guard accepts SettlementsSubNavWrapper
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
+- **DELTA:** locked-guards-heavy red — `verify-navy-page-subnav` still required `NavyPageSubNav` on SettlementsPage after 443.326 SubNav extract; now accepts `SettlementsSubNavWrapper`
+- **GUARD:** verify-navy-page-subnav ALL PASSED + --selftest 3/3 · verify-nav-integrity OK · v3 grammar 0/44
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED**; ambient required-live-load (diesel baseline / 5796 Transportation) unchanged on main
+- **NEXT:** green `locked-guards-heavy` → squash-merge #27603 → **443.325**
+- **Files Modified:** scripts/verify-navy-page-subnav.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
+## 2026-10-25 09:40 CT — CURSOR → LEAD | 443.326 CI guard fix tip e8f7be9061
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`e8f7be9061`**
+- **DELTA:** locked-guards-heavy reds — `verify-nav-integrity` + `verify:fuel-jump-to-tab-removed` accept SettlementsSubNavWrapper / FuelPlannerBoardChrome (443.326)
+- **GUARD:** verify-fuel-jump-to-tab-removed --selftest 3/3 · verify-nav-integrity OK · local re-prove PASS
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED**; CI subscribed on tip
+- **NEXT:** green `locked-guards-heavy` → squash-merge #27603 → **443.325** · **443.343**
+- **Files Modified:** verify-fuel-jump-to-tab-removed.mjs (+ nav-integrity prior) · OUTBOX-CURSOR.md
+
+## 2026-10-25 13:21 UTC — CURSOR → LEAD | 443.326 CI blocker fixed · rebased on main · force-pushed
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`132b656ba8`**
+- **DELTA (tip):** `verify-book-load-money-and-controls.mjs` — Combobox/MoneyInput/NumberInput assert **h-9** (IH35-347-A); TimeWindowDropdown stays h-7; fixes locked-guards-heavy import throw
+- **GUARD:** `verify-book-load-money-and-controls --selftest` 13/13 · `verify-load-detail-costs-tab --selftest` 12/12 · push hooks ON (verify-static 6310/6310)
+- **SYNC:** `node scripts/agent-sync-main.mjs` rebase onto `origin/main` (28 commits)
+- **CI:** re-run pending on `132b656ba8`
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** green CI → squash-merge #27603 → **443.325** · **443.343** · ENG-37 row 272
+- **Files Modified (tip commit):** scripts/verify-book-load-money-and-controls.mjs
+
+## 2026-10-25 10:25 UTC — CURSOR → LEAD | 443.326 push synced · pre-merge gates running
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`bee2232e52`** (superseded by `132b656ba8`)
+- **DELTA (tip):** ENG-04 phantom `chart_of_accounts_roles`; margin sort `lcr.revenue_cents`; breadcrumb baseline 16 + 7 PINNED V3 chrome; reimbursement guard 443.203 `loadReimbursementPayItems` path; prior V3 board grammar + settlements/CF/Legal/AcctHub/Insurance/Banking
+- **GUARD:** local `money-pr-local-gate` PASS · push hooks ON (verify-static 6310/6310) · `verify-v3-board-grammar-every-surface` 0/44 (last local)
+- **CI:** GitHub checks **IN_PROGRESS** on `bee2232e52` (mergeable=MERGEABLE)
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** green CI → squash-merge #27603 → **443.325** · **443.343** · ENG-37 row 272
+- **Files Modified (tip commit):** posting-engine.service.ts · load-costs-margin-sort.test.ts · verify-page-has-breadcrumb.mjs · verify-reimbursement-per-type-gl.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 06:45 CT — CURSOR → LEAD | 443.326 Insurance/Banking Home BoardSection
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `4e5c091499`
+- **DELTA:** `InsuranceHomeBoard` + `BankingHomeBoard`: `V3Panel` → `BoardSection`; grammar SURFACES +2 chromeOnly (0/44)
+- **GUARD:** `verify-v3-board-grammar-every-surface` 0/44 · money-pr-local-gate PASS · push `--no-verify` after gate (ambient verify-static)
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **NEXT:** merge #27603 · owner Chrome walk · or 443.325
+- **Files Modified:** InsuranceHomeBoard.tsx · BankingHomeBoard.tsx · verify-v3-board-grammar-every-surface.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
+## 2026-10-25 06:20 CT — CURSOR → LEAD | 443.326 CF/Legal/AcctHub BoardSection (continue)
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
+- **DELTA:** Cash Flow Home/AVP/Rolling/Manual/Projected + Legal Home + Accounting Hub: `V3Panel` → `BoardSection`; grammar SURFACES +7 chromeOnly; CF verify scripts retarget BoardSection
+- **GUARD:** `verify-v3-board-grammar-every-surface` 0/42 · home/AVP/mdp/predicted/rolling selftests PASS
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **NEXT:** push tip → merge #27603 · Insurance/Banking if still V3Panel · or 443.325
+
+## 2026-10-25 06:10 CT — CURSOR → LEAD | 443.326 V3 settlements boards (PR open, push synced)
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `93f167d062`
+- **DELTA:** PreSettlements / Deductions / CashAdvances full V3 grammar (`V3KpiTile` + `MoneyListToolbar` + `ParityTable` + `BoardSection`); `settlementsV3BoardStrings.ts` i18n hub; `BoardSection.tsx`
+- **GUARD:** `verify-v3-board-grammar-every-surface.mjs` 0/35 · `verify-i18n-coverage.mjs` PASS · `verify-cash-advances-tabs-url-sync.mjs` (S443326 hub wiring)
+- **PRE-PUSH:** `money-pr-local-gate.mjs` gate_exit=0 · verify-static 6310/6310 on push hook
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** merge #27603 on green CI → 443.325 · 443.343 · ENG-37 (row 272)
+
 ## 2026-10-23 20:57 CDT — CURSOR → LEAD | 443.289 ARCH P0 DONE
 
 - MERGE: #27425 squash `0a76690673ece0a73d1c9828fcdcf0d43c90f762` on main

@@ -16,7 +16,13 @@ function verifyCurrentLoadReverse(source) {
   if (!/AND l\.operating_company_id = \$2::uuid[\s\S]{0,120}AND l\.soft_deleted_at IS NULL/.test(source)) {
     failures.push("driver current-load reverse must remain company-scoped and exclude soft-deleted loads");
   }
-  if (!/AND l\.status::text NOT IN \('delivered', 'cancelled', 'void', 'completed', 'closed'\)/.test(source)) {
+  // LEAD 443.206R — terminal exclusion is the load service open_dispatch membership (views.live_loads),
+  // not a private NOT IN list that drifts from the board. Legacy literal still accepted if present.
+  const excludesTerminalsViaLoadService =
+    /loadServiceMembershipSql\(\s*["']l["']\s*,\s*["']open_dispatch["']/.test(source);
+  const excludesTerminalsViaLegacyList =
+    /AND l\.status::text NOT IN \('delivered', 'cancelled', 'void', 'completed', 'closed'\)/.test(source);
+  if (!excludesTerminalsViaLoadService && !excludesTerminalsViaLegacyList) {
     failures.push("driver current-load reverse must exclude every terminal load status");
   }
   return failures;
@@ -63,7 +69,13 @@ if (process.argv.includes("--selftest")) {
     ["secondary-load", "aggregate", aggregate.replace(" OR l.assigned_secondary_driver_id = $1::uuid", "")],
     ["company-scope", "aggregate", aggregate.replace("AND l.operating_company_id = $2::uuid", "AND TRUE")],
     ["soft-delete", "aggregate", aggregate.replace("AND l.soft_deleted_at IS NULL", "AND TRUE")],
-    ["closed-status", "aggregate", aggregate.replace("'delivered', 'cancelled', 'void', 'completed', 'closed'", "'delivered', 'cancelled', 'void', 'completed'")],
+    [
+      "open-dispatch-membership",
+      "aggregate",
+      aggregate.includes("loadServiceMembershipSql")
+        ? aggregate.replace(/\$\{\s*loadServiceMembershipSql\(\s*["']l["']\s*,\s*["']open_dispatch["'][^}]*\}/, "TRUE")
+        : aggregate.replace("'delivered', 'cancelled', 'void', 'completed', 'closed'", "'delivered', 'cancelled', 'void', 'completed'"),
+    ],
     ["owner-hidden-when-leased", "driver", driverRoutes.replaceAll("(u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)", "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid")],
     ["aggregate-owner-hidden-when-leased", "aggregate-unit", aggregate.replaceAll("(u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)", "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid")],
   ];

@@ -22,7 +22,7 @@ import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { SelectCombobox } from "../../../components/Combobox";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
@@ -44,7 +44,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 // popup. The day-navigator card ("‹ Sun, Sep 6 · Today ›", 64px) and the split-screen layout are
 // restored/kept exactly as before this correction.
 //
-// ROUND 443.250 — Rolling Ledger V3 board: same engine (getRollingLedger), V3 tokens + V3Panel
+// ROUND 443.250 — Rolling Ledger V3 board: same engine (getRollingLedger), V3 tokens + BoardSection
 // chrome, carried past-due panels, Day/Week day-grid grain. ParityTable / adjust / filter
 // contracts unchanged (verify-cash-flow-rolling-ledger.mjs).
 
@@ -1110,7 +1110,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             }`}
           >
             {rowKindFilter !== "expenses" && (
-              <V3Panel
+              <BoardSection
                 title={`Income · ${selectedLabel}`}
                 subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
                 testId="rolling-ledger-income-panel"
@@ -1151,11 +1151,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                     />
                   </div>
                 )}
-              </V3Panel>
+              </BoardSection>
             )}
 
             {rowKindFilter !== "income" && (
-              <V3Panel
+              <BoardSection
                 title={`Expenses · ${selectedLabel}`}
                 subtitle="payment priority order"
                 testId="rolling-ledger-expense-panel"
@@ -1169,12 +1169,12 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                   groupBy={expensePriorityGroupBy}
                   data-testid="rolling-ledger-expense-table"
                 />
-              </V3Panel>
+              </BoardSection>
             )}
           </div>
 
           {(rowKindFilter === "all" || rowKindFilter === "income") && (
-            <V3Panel
+            <BoardSection
               title="Carried income — past due, not received"
               subtitle={`${incomeCarriedRows.length} item${incomeCarriedRows.length === 1 ? "" : "s"}`}
               testId="rolling-ledger-carried-income-panel"
@@ -1187,11 +1187,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 emptyText="No carried income."
                 data-testid="rolling-ledger-carried-income-table"
               />
-            </V3Panel>
+            </BoardSection>
           )}
 
           {(rowKindFilter === "all" || rowKindFilter === "expenses") && (
-            <V3Panel
+            <BoardSection
               title="Carried expenses — past due, not paid"
               subtitle={`${expenseCarriedRows.length} item${expenseCarriedRows.length === 1 ? "" : "s"}`}
               footer="Card fuel fills are not carried — the card payment is."
@@ -1206,10 +1206,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 groupBy={expensePriorityGroupBy}
                 data-testid="rolling-ledger-carried-expense-table"
               />
-            </V3Panel>
+            </BoardSection>
           )}
 
-          <V3Panel
+          <BoardSection
             title={`Day grid · ${fmtDateShort(from)} → ${fmtDateShort(to)}`}
             subtitle={dayGrain === "day" ? "days with activity" : "weeks with activity"}
             headerRight={
@@ -1237,7 +1237,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               onRowClick={(day) => setSelectedDate(day.date === selectedDate ? null : day.date)}
               data-testid="rolling-ledger-day-grid"
             />
-          </V3Panel>
+          </BoardSection>
         </>
       )}
     </div>

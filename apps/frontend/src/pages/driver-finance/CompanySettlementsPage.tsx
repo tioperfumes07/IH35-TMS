@@ -6,16 +6,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import {
   listCompanySettlements,
   getCompanySettlementReport,
@@ -28,7 +27,6 @@ import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { settlementNumber } from "../../lib/settlementNumber";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
-import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 import {
   companySettlementsBoardRowKey,
   dedupeCompanySettlementsTourBoardRows,
@@ -91,6 +89,7 @@ export function CompanySettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
+  const [search, setSearch] = useState("");
   const [searchParams] = useSearchParams();
   const deepLinkId = searchParams.get("id");
 
@@ -108,16 +107,26 @@ export function CompanySettlementsPage() {
     enabled: Boolean(companyId),
   });
 
-  const tourRows = useMemo(
+  const allTourRows = useMemo(
     () => dedupeCompanySettlementsTourBoardRows(toursQuery.data?.rows ?? []),
     [toursQuery.data?.rows]
   );
+  const tourRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allTourRows;
+    return allTourRows.filter((r) => {
+      const driver = formatDisplayName(r.driver_name ?? "").toLowerCase();
+      const companyLabel = (r.company_settlement_display_id ?? "").toLowerCase();
+      const driverSetl = driverSettlementLabel(r).toLowerCase();
+      return driver.includes(q) || companyLabel.includes(q) || driverSetl.includes(q);
+    });
+  }, [allTourRows, search]);
   const periodRows = periodsQuery.data?.company_settlements ?? [];
 
-  const withCompany = tourRows.filter((r) => Boolean(r.company_settlement_id)).length;
-  const notOpened = tourRows.length - withCompany;
-  const totalMargin = tourRows.reduce((sum, r) => sum + r.margin_cents, 0);
-  const netRevenue = tourRows.reduce((sum, r) => sum + r.revenue_cents, 0);
+  const withCompany = allTourRows.filter((r) => Boolean(r.company_settlement_id)).length;
+  const notOpened = allTourRows.length - withCompany;
+  const totalMargin = allTourRows.reduce((sum, r) => sum + r.margin_cents, 0);
+  const netRevenue = allTourRows.reduce((sum, r) => sum + r.revenue_cents, 0);
 
   useEffect(() => {
     if (!deepLinkId || selected) return;
@@ -269,52 +278,48 @@ export function CompanySettlementsPage() {
   );
 
   return (
-    <div className="space-y-3">
-      <PageHeader
-        title="Company Settlements"
-        subtitle="Revenue · costs · driver pay · margin per tour"
-      />
-
-      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-
-      {/* ROUND 443.274-C — KPI strip from listTours(closed); board table is the tour grain. */}
-      <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
-        data-testid="company-settlements-kpi-strip"
-        data-company-settlements-v3-kpis="1"
-      >
-        <V3KpiTile
-          label="Closed tours"
-          value={toursQuery.isError ? "—" : String(tourRows.length)}
-          sub="listTours closed"
-          testId="company-settlements-kpi-total"
-        />
-        <V3KpiTile
-          label="With company settlement"
-          value={toursQuery.isError ? "—" : String(withCompany)}
-          sub="company_settlement_id set"
-          testId="company-settlements-kpi-with-company"
-        />
-        <V3KpiTile
-          label="Not opened"
-          value={toursQuery.isError ? "—" : String(notOpened)}
-          sub="amber · no company settlement yet"
-          testId="company-settlements-kpi-not-opened"
-        />
-        <V3KpiTile
-          label="Total margin"
-          value={toursQuery.isError ? "—" : formatUsdCents(totalMargin)}
-          sub="sum of tour margin"
-          testId="company-settlements-kpi-margin"
-        />
-        <V3KpiTile
-          label="Net Revenue"
-          value={toursQuery.isError ? "—" : formatUsdCents(netRevenue)}
-          sub="sum of tour revenue"
-          testId="company-settlements-kpi-net-revenue"
-        />
-      </div>
-
+    <SettlementsSubNavWrapper
+      title="Company Settlements"
+      subtitle="Revenue · costs · driver pay · margin per tour"
+      kpiStrip={
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          data-testid="company-settlements-kpi-strip"
+          data-company-settlements-v3-kpis="1"
+        >
+          <V3KpiTile
+            label="Closed tours"
+            value={toursQuery.isError ? "—" : String(allTourRows.length)}
+            sub="listTours closed"
+            testId="company-settlements-kpi-total"
+          />
+          <V3KpiTile
+            label="With company settlement"
+            value={toursQuery.isError ? "—" : String(withCompany)}
+            sub="company_settlement_id set"
+            testId="company-settlements-kpi-with-company"
+          />
+          <V3KpiTile
+            label="Not opened"
+            value={toursQuery.isError ? "—" : String(notOpened)}
+            sub="amber · no company settlement yet"
+            testId="company-settlements-kpi-not-opened"
+          />
+          <V3KpiTile
+            label="Total margin"
+            value={toursQuery.isError ? "—" : formatUsdCents(totalMargin)}
+            sub="sum of tour margin"
+            testId="company-settlements-kpi-margin"
+          />
+          <V3KpiTile
+            label="Net Revenue"
+            value={toursQuery.isError ? "—" : formatUsdCents(netRevenue)}
+            sub="sum of tour revenue"
+            testId="company-settlements-kpi-net-revenue"
+          />
+        </div>
+      }
+    >
       {toursQuery.isError ? (
         <ListErrorBanner
           message="Failed to load company settlements."
@@ -322,45 +327,54 @@ export function CompanySettlementsPage() {
         />
       ) : null}
 
-      <div data-company-settlements-v3-panel="1">
-        <V3Panel
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search driver · company settlement · driver settlement…"
+        searchTestId="company-settlements-search-input"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="company-settlements"
+      >
+        {null}
+      </MoneyListToolbar>
+
+      <div data-company-settlements-v3-panel="1" data-testid="company-settlements-list-panel">
+        <ParityTable
           title="Company settlements"
-          subtitle="Revenue · costs · driver pay · margin per tour"
-          testId="company-settlements-list-panel"
-        >
-          <ParityTable
-            title="Company settlements"
-            columns={columns}
-            rows={tourRows}
-            rowKey={(r) => companySettlementsBoardRowKey(r)}
-            loading={toursQuery.isPending && Boolean(companyId)}
-            onRowClick={(r) => openWaterfallForTour(r)}
-            rowClassName={(r) =>
-              selected?.id && r.company_settlement_id === selected.id ? "bg-[#F7F8FA]" : ""
-            }
-            emptyText={
-              companyId
-                ? "No closed tours yet."
-                : "Select a company to view its company settlements."
-            }
-            storageKey="company-settlements-tour-board"
-            exportFilename="company-settlements-tours"
-            footerCells={{
-              company_settlement: (v) => (
-                <span
-                  className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
-                  data-testid="company-settlements-tour-totals-label"
-                >
-                  Totals ({v.length})
-                </span>
-              ),
-              revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),
-              costs: (v) => formatUsdCents(v.reduce((n, r) => n + r.costs_cents, 0)),
-              driver_pay: (v) => formatUsdCents(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
-              margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
-            }}
-          />
-        </V3Panel>
+          columns={columns}
+          rows={tourRows}
+          rowKey={(r) => companySettlementsBoardRowKey(r)}
+          loading={toursQuery.isPending && Boolean(companyId)}
+          onRowClick={(r) => openWaterfallForTour(r)}
+          rowClassName={(r) =>
+            selected?.id && r.company_settlement_id === selected.id ? "bg-[#F7F8FA]" : ""
+          }
+          emptyText={
+            companyId
+              ? search.trim()
+                ? "No closed tours match this search."
+                : "No closed tours yet."
+              : "Select a company to view its company settlements."
+          }
+          storageKey="company-settlements-tour-board"
+          exportFilename="company-settlements-tours"
+          suppressToolbarSearch
+          footerCells={{
+            company_settlement: (v) => (
+              <span
+                className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
+                data-testid="company-settlements-tour-totals-label"
+              >
+                Totals ({v.length})
+              </span>
+            ),
+            revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),
+            costs: (v) => formatUsdCents(v.reduce((n, r) => n + r.costs_cents, 0)),
+            driver_pay: (v) => formatUsdCents(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
+            margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
+          }}
+        />
       </div>
 
       {selected ? (
@@ -370,7 +384,7 @@ export function CompanySettlementsPage() {
           onClose={() => setSelected(null)}
         />
       ) : null}
-    </div>
+    </SettlementsSubNavWrapper>
   );
 }
 

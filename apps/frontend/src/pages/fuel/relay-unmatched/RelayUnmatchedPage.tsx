@@ -4,7 +4,7 @@
  * GET /api/v1/fuel/relay-fills?unmatched=true, the risk window of Relay fills no truck or driver has
  * been matched to yet, with Relay's own free-text driver/unit so a person can match them by hand.
  *
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). listRelayFills engine unchanged.
+ * ROUND 443.326 — KPI + MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel). listRelayFills unchanged.
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { FuelBoardSection } from "../FuelBoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
@@ -31,6 +32,7 @@ export function RelayUnmatchedPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["fuel", "relay-fills", "unmatched", companyId, page],
@@ -38,7 +40,25 @@ export function RelayUnmatchedPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const q = search.trim().toLowerCase();
+  const rows = q
+    ? allRows.filter((row) =>
+        [
+          row.merchant_name,
+          row.location_city,
+          row.location_state,
+          row.relay_unit_number,
+          row.relay_driver_name,
+          row.unit_number,
+          row.driver_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+    : allRows;
   const totalCount = query.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -116,7 +136,17 @@ export function RelayUnmatchedPage() {
         />
         <V3KpiTile label="Page size" value={String(PAGE_SIZE)} sub="rows per request" testId="relay-unmatched-kpi-page-size" />
       </div>
-      <V3Panel
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search merchant, unit, driver…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="relay-unmatched"
+      >
+        <span />
+      </MoneyListToolbar>
+      <FuelBoardSection
         title="Relay fills — unmatched"
         subtitle="Relay fuel fills this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver to match by hand"
         testId="relay-unmatched-v3-panel"
@@ -131,6 +161,7 @@ export function RelayUnmatchedPage() {
             storageKey="fuel-relay-unmatched"
             emptyText="No unmatched Relay fills."
             rowKey={(row) => row.id}
+            suppressToolbarSearch
           />
         )}
         {totalCount > PAGE_SIZE ? (
@@ -158,7 +189,7 @@ export function RelayUnmatchedPage() {
             </div>
           </div>
         ) : null}
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

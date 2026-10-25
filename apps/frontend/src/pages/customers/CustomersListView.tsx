@@ -488,7 +488,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           {
             key: "aging_bar",
             label: "Aging",
-            sortable: false,
+            // GLOBAL-SORT-RULE / verify-custvend-sortable-headers — every data column is sortable.
+            // Sort by 31+ bucket first (worst aged), then 1–30, then current.
+            sortable: true,
+            sortValue: (row) =>
+              (row.aging_31_plus_cents ?? 0) * 1_000_000 +
+              (row.aging_1_30_cents ?? 0) * 1_000 +
+              (row.aging_current_cents ?? 0),
             render: (row) => {
               if (row.aging_current_cents == null) return <span className="text-gray-400">—</span>;
               const total = (row.aging_current_cents ?? 0) + (row.aging_1_30_cents ?? 0) + (row.aging_31_plus_cents ?? 0);

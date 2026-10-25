@@ -5,7 +5,7 @@ import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { CashFlowKpiStrip, formatCashFlowCents, type CashFlowKpis } from "./CashFlowKpiStrip";
 import type { CashFlowTabId } from "../CashFlowPage";
@@ -558,7 +558,7 @@ export function CashFlowHomeTab({
       )}
 
       {weeks.length > 0 && (
-        <V3Panel
+        <BoardSection
           title="Cash position — forecast weeks"
           subtitle="from live rolling ledger"
           onViewAll={() => onNavigateToTab("rolling_ledger")}
@@ -579,11 +579,11 @@ export function CashFlowHomeTab({
             weeks={chartGrain === "weekly" ? weeks : weeks.filter((_, i) => i % 4 === 0)}
             openingCents={data?.opening_cash_cents ?? null}
           />
-        </V3Panel>
+        </BoardSection>
       )}
 
       {weeks.length > 0 && (
-        <V3Panel
+        <BoardSection
           title="13-week cash flow"
           onViewAll={() => onNavigateToTab("rolling_ledger")}
           headerRight={
@@ -601,7 +601,7 @@ export function CashFlowHomeTab({
           testId="cash-flow-home-table-panel"
         >
           <ThirteenWeekTable weeks={weeks} unit={tableUnit} />
-        </V3Panel>
+        </BoardSection>
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="cash-flow-home-tab-cards">

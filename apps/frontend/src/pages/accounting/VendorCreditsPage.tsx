@@ -56,7 +56,8 @@ export function VendorCreditsPage() {
   const companyId = selectedCompanyId ?? "";
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
-  // LST-F5202 — visible vendor filter; CLS-ADJACENT — stages with status, URL only on Apply.
+  // LST-F5202 — visible vendor filter. FILTER-MULTI-01 — MoneyListToolbar live apply
+  // (no collapsed Filters popover). Matches CreditMemosPage / origin/main.
   const vendorFilter = searchParams.get("vendor_id") ?? "";
   function setVendorFilter(next: string) {
     setSearchParams(
@@ -66,7 +67,7 @@ export function VendorCreditsPage() {
         else params.delete("vendor_id");
         return params;
       },
-      { replace: true }
+      { replace: true },
     );
   }
   const deepLinkCreditId = searchParams.get("credit_id");
@@ -74,7 +75,6 @@ export function VendorCreditsPage() {
   // voided' off on fresh load"). Same fix as the sibling CreditMemosPage — this page had NO
   // default-hide at all before this.
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
-  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<Array<VendorCreditStatus | "active">>(["active"]);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);

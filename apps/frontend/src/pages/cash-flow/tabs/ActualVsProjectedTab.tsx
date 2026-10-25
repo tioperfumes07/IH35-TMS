@@ -11,7 +11,7 @@ import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
 // CASHFLOW-1: range must end on the company business date (Central), not the UTC date — otherwise the
@@ -582,7 +582,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       )}
 
       {!isLoading && chartPoints.length > 0 && (
-        <V3Panel
+        <BoardSection
           title="Cumulative — projected vs actual"
           headerRight={
             <V3Segmented
@@ -598,7 +598,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           testId="cash-flow-avp-chart-panel"
         >
           <AvpCompareChart points={chartPoints} grain={chartGrain} />
-        </V3Panel>
+        </BoardSection>
       )}
 
       {/* Per-line table */}

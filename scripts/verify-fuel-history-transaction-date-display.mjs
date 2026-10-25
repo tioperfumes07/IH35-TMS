@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * LV-FUEL-HISTORY-RAW-ISO-DATETIME — Fuel History Date column must use formatDateUS.
- * ROUND 443.250 — also asserts History & savings V3 KPI strip + V3Panel (chrome only).
+ * ROUND 443.250 — History & savings V3 KPI strips.
+ * ROUND 443.326 — History roster = board grammar (MoneyListToolbar + FuelTransactionsTable),
+ * not a V3Panel wrap around the table.
  * @matrix-built {"modules":["fuel"],"cols":["qbo_chrome"],"leafRe":"^history\\.list$","task":"LV-FUEL-HISTORY-RAW-ISO-DATETIME"}
  */
 import fs from "node:fs";
@@ -38,8 +40,18 @@ function assertFuelHistoryV3(homeSrc, savingsSrc) {
   if (!/data-fuel-history-v3-kpis/.test(homeSrc) || !/V3KpiTile/.test(homeSrc)) {
     problems.push(`${HISTORY_HOME}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-history-v3-kpis)`);
   }
-  if (!/fuel-history-v3-panel/.test(homeSrc) || !/V3Panel/.test(homeSrc)) {
-    problems.push(`${HISTORY_HOME}: ROUND 443.250 must wrap transactions in V3Panel (fuel-history-v3-panel)`);
+  // 443.326 — full board, not panel-wrapped roster theater.
+  if (!/fuel-history-v3-board/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: ROUND 443.326 must mount History board (fuel-history-v3-board)`);
+  }
+  if (!/\bMoneyListToolbar\b/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: ROUND 443.326 History board must mount MoneyListToolbar`);
+  }
+  if (!/\bFuelTransactionsTable\b/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: ROUND 443.326 History roster must mount FuelTransactionsTable`);
+  }
+  if (/fuel-history-v3-panel/.test(homeSrc) && /<V3Panel[\s>]/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: ROUND 443.326 must not wrap History roster in V3Panel`);
   }
   if (!/Transactions/.test(homeSrc) || !/Voided/.test(homeSrc)) {
     problems.push(`${HISTORY_HOME}: History V3 KPI strip must include Transactions + Voided`);
@@ -47,8 +59,11 @@ function assertFuelHistoryV3(homeSrc, savingsSrc) {
   if (!/data-fuel-savings-v3-kpis/.test(savingsSrc) || !/V3KpiTile/.test(savingsSrc)) {
     problems.push(`${SAVINGS}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-savings-v3-kpis)`);
   }
-  if (!/fuel-savings-v3-panel/.test(savingsSrc) || !/V3Panel/.test(savingsSrc)) {
-    problems.push(`${SAVINGS}: ROUND 443.250 must wrap detail in V3Panel (fuel-savings-v3-panel)`);
+  if (!/fuel-savings-v3-panel/.test(savingsSrc) || !/FuelBoardSection/.test(savingsSrc)) {
+    problems.push(`${SAVINGS}: ROUND 443.326 must wrap detail in FuelBoardSection (fuel-savings-v3-panel)`);
+  }
+  if (/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(savingsSrc)) {
+    problems.push(`${SAVINGS}: ROUND 443.326 must not import/use V3Panel`);
   }
   return problems;
 }
@@ -78,8 +93,13 @@ if (SELFTEST) {
       savings: savingsReal,
     },
     {
-      name: "drops History V3Panel",
-      home: homeReal.replace(/fuel-history-v3-panel/g, "fuel-history-gone-panel"),
+      name: "drops History board marker",
+      home: homeReal.replace(/fuel-history-v3-board/g, "fuel-history-gone-board"),
+      savings: savingsReal,
+    },
+    {
+      name: "drops History MoneyListToolbar",
+      home: homeReal.replace(/\bMoneyListToolbar\b/g, "GoneToolbar"),
       savings: savingsReal,
     },
     {
@@ -88,7 +108,7 @@ if (SELFTEST) {
       savings: savingsReal.replace(/data-fuel-savings-v3-kpis/g, "data-fuel-savings-gone"),
     },
     {
-      name: "drops Savings V3Panel",
+      name: "drops Savings FuelBoardSection",
       home: homeReal,
       savings: savingsReal.replace(/fuel-savings-v3-panel/g, "fuel-savings-gone-panel"),
     },
@@ -116,4 +136,4 @@ if (problems.length) {
   for (const p of problems) console.error(" -", p);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — Fuel History Date uses formatDateUS; History & savings V3 chrome present`);
+console.log(`${LABEL} PASS — Fuel History Date uses formatDateUS; History board + savings V3 chrome present`);

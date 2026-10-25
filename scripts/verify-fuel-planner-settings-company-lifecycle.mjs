@@ -29,9 +29,10 @@ function inspect(text, backend = backendSource) {
     "PlannerSettingsForm: ROUND 443.250 must ship V3KpiTile strip (data-fuel-settings-v3-kpis)",
   );
   need(
-    settingsBlock.includes("fuel-settings-v3-panel") && settingsBlock.includes("V3Panel"),
-    "PlannerSettingsForm: ROUND 443.250 must wrap form in V3Panel (fuel-settings-v3-panel)",
+    settingsBlock.includes("fuel-settings-v3-panel") && settingsBlock.includes("FuelBoardSection"),
+    "PlannerSettingsForm: ROUND 443.326 must wrap form in FuelBoardSection (fuel-settings-v3-panel)",
   );
+  need(!/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(settingsBlock), "PlannerSettingsForm: ROUND 443.326 must not use V3Panel");
   need(
     settingsBlock.includes("Max miles / shift") && settingsBlock.includes("Overfill %"),
     "PlannerSettingsForm: V3 KPI strip must include Max miles / shift + Overfill %",

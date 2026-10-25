@@ -3,7 +3,7 @@ import type { CompanySettlementReport } from "../../../api/accounting";
 import type { TourReadout } from "../../../api/tourReadout";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { entityLabel } from "../../../lib/entity-label";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
@@ -80,7 +80,7 @@ export function SettlementStatementLinkedRecordsPanel({
   const legs = readout?.legs ?? [];
 
   return (
-    <V3Panel
+    <BoardSection
       title={L.panelTitle}
       testId="settlement-statement-panel-linked"
       footer={L.panelFooter}
@@ -225,6 +225,6 @@ export function SettlementStatementLinkedRecordsPanel({
           </tr>
         </tbody>
       </table>
-    </V3Panel>
+    </BoardSection>
   );
 }

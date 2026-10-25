@@ -104,15 +104,21 @@ function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc, dedupeLibSr
     failures.push("tour-readout.routes listTours must project tour_id onto TourListRow");
   }
 
-  // 5b. ROUND 443.250 V3 board chrome — V3KpiTile strip + V3Panel (no DrillKpiCard)
+  // 5b. ROUND 443.326 board grammar — V3KpiTile strip + MoneyListToolbar + list panel (no V3Panel / DrillKpiCard)
   if (!/\bV3KpiTile\b/.test(pageSrc)) {
     failures.push("page does not render V3KpiTile (ROUND 443.250 Company V3 KPI strip)");
   }
   if (!/data-company-settlements-v3-kpis="1"/.test(pageSrc)) {
     failures.push('page missing data-company-settlements-v3-kpis="1" marker');
   }
-  if (!/\bV3Panel\b/.test(pageSrc)) {
-    failures.push("page does not wrap the list in V3Panel (ROUND 443.250 Company V3)");
+  if (!/\bMoneyListToolbar\b/.test(pageSrc)) {
+    failures.push("page does not wrap the list in MoneyListToolbar (ROUND 443.326 Company board grammar)");
+  }
+  if (!/data-company-settlements-v3-panel="1"/.test(pageSrc) && !/data-testid="company-settlements-list-panel"/.test(pageSrc)) {
+    failures.push("page missing company-settlements list panel marker (443.326)");
+  }
+  if (/\bV3Panel\b/.test(pageSrc)) {
+    failures.push("page still uses V3Panel — Company board grammar forbids V3Panel (443.326)");
   }
   if (/\bDrillKpiCard\b/.test(pageSrc)) {
     failures.push("page still uses DrillKpiCard — Company V3 requires V3KpiTile");
@@ -206,8 +212,8 @@ function selftest() {
       }),
     },
     {
-      name: "V3Panel removed from page",
-      apply: (s) => ({ ...s, pageSrc: s.pageSrc.replace(/V3Panel/g, "PlainPanel") }),
+      name: "MoneyListToolbar removed from page",
+      apply: (s) => ({ ...s, pageSrc: s.pageSrc.replace(/MoneyListToolbar/g, "PlainToolbar") }),
     },
     {
       name: "tour dedupe removed from page",

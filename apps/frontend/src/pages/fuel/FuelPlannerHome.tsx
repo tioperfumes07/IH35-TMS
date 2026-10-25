@@ -58,8 +58,8 @@ import { FuelCardsPage } from "./cards/FuelCardsPage";
 import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
 import { RelayWalletRollForwardPage } from "./relay-wallet/RelayWalletRollForwardPage";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
-// V3 board grammar: fuel history roster is FuelTransactionsTable (ParityTable-backed).
+import { FuelBoardSection } from "./FuelBoardSection";
+// Board grammar: history roster is FuelTransactionsTable (ParityTable wrapper — same engine rows).
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -485,12 +485,17 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />
-          {/* ROUND 443.250 Expense mapping V3 — same Accounting expense-category-map deep link. */}
-          <V3Panel
-            title="Expense mapping"
-            subtitle="Map fuel card spend to GL expense categories for posting"
-            testId="fuel-expense-map-open-v3-panel"
+          {/* ROUND 443.326 — bordered section (no panel-stack chrome); same Accounting deep link. */}
+          <section
+            className="rounded-sm border border-gray-200 bg-white"
+            data-testid="fuel-expense-map-open-v3-panel"
           >
+            <div className="flex items-baseline gap-2 border-b border-gray-100 px-3.5 py-2.5">
+              <span className="text-xs font-bold text-[#0F1219]">Expense mapping</span>
+              <span className="text-xs text-[#6B7280]">
+                Map fuel card spend to GL expense categories for posting
+              </span>
+            </div>
             <div className="px-3 py-3 text-xs text-gray-700">
               <p className="text-xs text-gray-600">
                 Coverage above is read-only. Create or edit fuel category → account rows in Accounting.
@@ -503,7 +508,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 Open expense category map →
               </Link>
             </div>
-          </V3Panel>
+          </section>
         </div>
       ) : null}
 
@@ -566,18 +571,9 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
               testId="fuel-history-kpi-voided"
             />
           </div>
-          <V3Panel
-            title="Fuel transactions"
-            subtitle="Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load)"
-            testId="fuel-history-v3-panel"
-            headerRight={
-              <span className="flex items-center gap-2">
-                <ActionButton onClick={() => setCreateOpen(true)}>+ Create</ActionButton>
-                <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
-              </span>
-            }
-          >
-            <div className="p-3" data-testid="fuel-history-filters">
+          {/* ROUND 443.326 — board grammar: KPI + MoneyListToolbar + ParityTable (no V3Panel wrap). */}
+          <div data-testid="fuel-history-v3-board">
+            <div data-testid="fuel-history-filters">
               <MoneyListToolbar
                 search={historySearch}
                 onSearchChange={setHistorySearch}
@@ -590,6 +586,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 }
                 testIdPrefix="fuel-history"
               >
+                <ActionButton onClick={() => setCreateOpen(true)}>+ Create</ActionButton>
+                <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
                 <MultiSelectDropdown
                   label="Show"
                   options={[...FUEL_SHOW_OPTIONS]}
@@ -650,10 +648,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </label>
               </MoneyListToolbar>
             </div>
-            <div className="px-3 pb-3">
-            {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides
-                is the same class of defect as a badge that never renders"). Voided fuel purchases
-                hide by default; Show MultiSelect "Include voided" turns them on. */}
+            {/* R-102-B item 5 — voided fuel purchases hide by default; Show MultiSelect turns them on. */}
             <div className="mt-2 flex items-center gap-2">
               {!includeVoidedFuel && fuelHistoryVoidedCount > 0 ? (
                 <span className="text-xs text-gray-500" data-testid="fuel-history-voided-count">
@@ -662,39 +657,36 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
               ) : null}
             </div>
             <div className="mt-3">
-              {fuelTransactionsQuery.isLoading ? (
-                <p className="text-xs text-gray-500">Loading fuel transactions…</p>
-              ) : fuelTransactionsQuery.isError ? (
+              {fuelTransactionsQuery.isError ? (
                 <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
-              ) : (fuelTransactionsQuery.data?.transactions ?? []).length === 0 ? (
-                <p className="text-xs text-gray-600">
-                  No fuel transactions yet — use + Create for a manual office purchase, or Import Fuel Transactions
-                  for fleet-card history (Love&apos;s / WEX / EFS / Comdata). Historical import rows may be load-null
-                  (pre-dispatch / G18 exempt); new creates must link a trip or state an exemption.
-                </p>
               ) : (
                 <>
+                  {/* Always mount ParityTable (via FuelTransactionsTable) — empty/loading stay on the board. */}
                   <FuelTransactionsTable
                     suppressToolbarSearch
-                    rows={(fuelTransactionsQuery.data?.transactions ?? []).filter((row) => {
-                      if (showFilter.includes("with_expense") && !row.expense_id) return false;
-                      if (showFilter.includes("with_je") && !row.journal_entry_id) return false;
-                      const q = historySearch.trim().toLowerCase();
-                      if (!q) return true;
-                      const hay = [
-                        row.driver_name,
-                        row.unit_number,
-                        row.load_number,
-                        row.trailer_number,
-                        row.station,
-                        row.vendor_name,
-                        row.expense_number,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")
-                        .toLowerCase();
-                      return hay.includes(q);
-                    })}
+                    rows={
+                      fuelTransactionsQuery.isLoading
+                        ? []
+                        : (fuelTransactionsQuery.data?.transactions ?? []).filter((row) => {
+                            if (showFilter.includes("with_expense") && !row.expense_id) return false;
+                            if (showFilter.includes("with_je") && !row.journal_entry_id) return false;
+                            const q = historySearch.trim().toLowerCase();
+                            if (!q) return true;
+                            const hay = [
+                              row.driver_name,
+                              row.unit_number,
+                              row.load_number,
+                              row.trailer_number,
+                              row.station,
+                              row.vendor_name,
+                              row.expense_number,
+                            ]
+                              .filter(Boolean)
+                              .join(" ")
+                              .toLowerCase();
+                            return hay.includes(q);
+                          })
+                    }
                     operatingCompanyId={companyId}
                   />
                   <div className="mt-2 flex items-center justify-end gap-2 text-xs text-[#4B5563]" data-testid="fuel-history-server-pager">
@@ -715,8 +707,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </>
               )}
             </div>
-            </div>
-          </V3Panel>
+          </div>
         </div>
       ) : null}
 
@@ -997,7 +988,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
         />
       </div>
 
-      <V3Panel
+      <FuelBoardSection
         title="Planner settings"
         subtitle="Routing limits used when generating fuel-stop recommendations"
         testId="fuel-settings-v3-panel"
@@ -1043,7 +1034,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
             {invalid ? <span className="text-xs text-red-700">All limits must be &gt; 0; overfill % ≤ 100.</span> : null}
           </div>
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

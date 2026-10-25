@@ -63,7 +63,12 @@ export function assertHonestMapView(sources) {
   if (!/searchParams\.get\(["']load_id["']\)/.test(mapView)) {
     failures.push(`${MAP_VIEW}: must consume ?load_id= query for deep-link focus`);
   }
-  if (!/p\.driver_uuid === focusDriverId/.test(mapView)) {
+  // LEAD 443.235 — API may emit driver_uuid or driver_id; live MapView matches via
+  // positionDriverId(p). Accept the helper form or the legacy direct uuid compare.
+  const mapMatchesDriver =
+    /p\.driver_uuid === focusDriverId/.test(mapView) ||
+    /positionDriverId\(p\) === focusDriverId/.test(mapView);
+  if (!mapMatchesDriver) {
     failures.push(`${MAP_VIEW}: must match positions to focused driver`);
   }
 
@@ -110,7 +115,7 @@ export function run() {
 }
 
 function selftest() {
-  const good = {
+  const goodLegacy = {
     mapView: `
       const focusDriverId = searchParams.get("driver");
       const focusLoadId = searchParams.get("load_id");
@@ -124,14 +129,35 @@ function selftest() {
     `,
     mapProvider: "export const DISPATCH_MAP_PROVIDER_WIRED = false;",
   };
-  const goodFailures = assertHonestMapView(good);
-  if (goodFailures.length) {
-    console.error(`[${LABEL}] --selftest FAIL: good fixture rejected`, goodFailures);
+  const goodLegacyFailures = assertHonestMapView(goodLegacy);
+  if (goodLegacyFailures.length) {
+    console.error(`[${LABEL}] --selftest FAIL: good legacy fixture rejected`, goodLegacyFailures);
+    process.exit(1);
+  }
+
+  const goodHelper = {
+    mapView: `
+      const focusDriverId = searchParams.get("driver");
+      const focusLoadId = searchParams.get("load_id");
+      function positionDriverId(p) { return p.driver_uuid ?? p.driver_id ?? null; }
+      const mapConfigured = isDispatchMapProviderConfigured();
+      positions.filter((p) => positionDriverId(p) === focusDriverId);
+      {!mapConfigured ? (
+        <section data-testid="dispatch-map-not-configured" data-dispatch-map-honest-empty="true">
+          <h2>Map provider not configured</h2>
+        </section>
+      ) : null}
+    `,
+    mapProvider: "export const DISPATCH_MAP_PROVIDER_WIRED = false;",
+  };
+  const goodHelperFailures = assertHonestMapView(goodHelper);
+  if (goodHelperFailures.length) {
+    console.error(`[${LABEL}] --selftest FAIL: good positionDriverId fixture rejected`, goodHelperFailures);
     process.exit(1);
   }
 
   const bad = {
-    ...good,
+    ...goodLegacy,
     mapView: `
       function pinColor() {}
       positions.map((p) => <button>{p.lat.toFixed(4)}, {p.lng.toFixed(4)}</button>)

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Fuel planner active-driver compliance binding.
- * ROUND 443.250 — also asserts Compliance V3 KPI strip + V3Panel (chrome only).
+ * ROUND 443.250 — also asserts Compliance V3 KPI strip + FuelBoardSection (chrome only).
  */
+/** @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["compliance"],"task":"FUEL-PLANNER-ACTIVE-DRIVER-COMPLIANCE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const files = {
@@ -29,8 +30,11 @@ function verify(source) {
   if (!source.panel.includes("data-fuel-compliance-v3-kpis") || !source.panel.includes("V3KpiTile")) {
     failures.push("CompliancePanel: ROUND 443.250 must ship V3KpiTile strip (data-fuel-compliance-v3-kpis)");
   }
-  if (!source.panel.includes("fuel-compliance-v3-panel") || !source.panel.includes("V3Panel")) {
-    failures.push("CompliancePanel: ROUND 443.250 must wrap detail in V3Panel (fuel-compliance-v3-panel)");
+  if (!source.panel.includes("fuel-compliance-v3-panel") || !source.panel.includes("FuelBoardSection")) {
+    failures.push("CompliancePanel: ROUND 443.326 must wrap detail in FuelBoardSection (fuel-compliance-v3-panel)");
+  }
+  if (/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(source.panel)) {
+    failures.push("CompliancePanel: ROUND 443.326 must not use V3Panel");
   }
   if (!source.panel.includes("Fleet followed YTD") || !source.panel.includes("Driver followed YTD")) {
     failures.push("CompliancePanel: V3 KPI strip must include Fleet followed YTD + Driver followed YTD");

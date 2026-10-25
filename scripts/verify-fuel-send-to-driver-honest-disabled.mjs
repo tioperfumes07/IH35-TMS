@@ -85,15 +85,15 @@ if (process.argv.includes("--selftest")) {
     { from: " || sendRecommendationMutation.isPending", to: "" },
     {
       from: `<span
-                  title={
-                    activeRoute
-                      ? undefined
-                      : "There is no active dispatch route to send — trip planning is generated from active dispatch loads"
-                  }
-                >`,
+            title={
+              activeRoute
+                ? undefined
+                : "There is no active dispatch route to send — trip planning is generated from active dispatch loads"
+            }
+          >`,
       to: "<>",
     },
-    { from: "activeRoute\n                      ? undefined\n                      :", to: '"static text"; //' },
+    { from: "activeRoute\n                ? undefined\n                :", to: '"static text"; //' },
   ];
   let detected = 0;
   for (const m of mutations) {

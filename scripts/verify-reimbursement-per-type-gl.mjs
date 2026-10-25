@@ -83,7 +83,10 @@ export function auditSources({ resolverSrc, postingEngineSrc, materializeSrc, pa
       if (!/GROUP BY dr\.reimbursement_type/.test(fnBody)) {
         failures.push(`${MATERIALIZE_REL}: backfillExistingSettlementLineAccounts no longer groups stuck reimbursement lines by reimbursement_type -- back to one blind bulk UPDATE into a single account`);
       }
-      if (!/resolveReimbursementExpenseAccount\(client,\s*input\.operatingCompanyId,\s*group\.reimbursement_type\)/.test(fnBody)) {
+      const resolvesPerTypeInBackfill =
+        /resolveReimbursementExpenseAccount\(client,\s*input\.operatingCompanyId,\s*group\.reimbursement_type\)/.test(fnBody) ||
+        /\(t\)\s*=>\s*resolveReimbursementExpenseAccount\(client,\s*input\.operatingCompanyId,\s*t\)/.test(fnBody);
+      if (!resolvesPerTypeInBackfill) {
         failures.push(`${MATERIALIZE_REL}: backfillExistingSettlementLineAccounts does not resolve the per-type account for each group`);
       }
     }
@@ -95,16 +98,28 @@ export function auditSources({ resolverSrc, postingEngineSrc, materializeSrc, pa
     if (!/GROUP BY dr\.reimbursement_type/.test(payrunCloseSrc)) {
       failures.push(`${PAYRUN_CLOSE_REL}: no query grouping reimbursement lines by the real reimbursement_type -- the settlement-close JE would still be summing everything into one figure`);
     }
-    if (!/for \(const \[reimbType, cents\] of reimbursementsByType\)/.test(payrunCloseSrc)) {
-      failures.push(`${PAYRUN_CLOSE_REL}: no per-type loop resolving + fanning out JE legs -- still a single lump reimbursement leg`);
-    }
-    if (!/resolveReimbursementExpenseAccount\(client,\s*opco,\s*reimbType\)/.test(payrunCloseSrc)) {
-      failures.push(`${PAYRUN_CLOSE_REL}: does not resolve the per-type account inside the loop -- reverted to a single flat role resolution`);
+    const legacyPerTypeLoop =
+      /for \(const \[reimbType, cents\] of reimbursementsByType\)/.test(payrunCloseSrc) &&
+      /resolveReimbursementExpenseAccount\(client,\s*opco,\s*reimbType\)/.test(payrunCloseSrc);
+    const itemAwareReimbPath =
+      /loadReimbursementPayItems/.test(payrunCloseSrc) &&
+      /resolveReimbursementExpenseAccount\(client,\s*opco,\s*t\)/.test(payrunCloseSrc) &&
+      /for \(const \[accountId, cents\] of reimbursementsByAccount\)/.test(payrunCloseSrc);
+    if (!legacyPerTypeLoop && !itemAwareReimbPath) {
+      failures.push(
+        `${PAYRUN_CLOSE_REL}: no per-type reimbursement resolution + multi-leg JE fan-out (legacy reimbursementsByType loop or loadReimbursementPayItems item-aware path)`
+      );
     }
     const loopStart = payrunCloseSrc.indexOf("for (const [reimbType, cents] of reimbursementsByType)");
     const loopBody = loopStart === -1 ? "" : payrunCloseSrc.slice(loopStart, loopStart + 700);
-    if (!/if \(!acctId\)/.test(loopBody) || !/throw new SettlementPayRunError/.test(loopBody)) {
-      failures.push(`${PAYRUN_CLOSE_REL}: no fail-closed check inside the per-type loop -- a type whose account (including the fallback) can't resolve could silently vanish from the JE instead of blocking the close`);
+    const legacyFailClosed = /if \(!acctId\)/.test(loopBody) && /throw new SettlementPayRunError/.test(loopBody);
+    const itemAwareFailClosed =
+      /throw new SettlementPayRunError\(\s*"REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING"/.test(payrunCloseSrc) &&
+      /loadReimbursementPayItems/.test(payrunCloseSrc);
+    if (!legacyFailClosed && !itemAwareFailClosed) {
+      failures.push(
+        `${PAYRUN_CLOSE_REL}: no fail-closed check inside the per-type loop -- a type whose account (including the fallback) can't resolve could silently vanish from the JE instead of blocking the close`
+      );
     }
   }
 

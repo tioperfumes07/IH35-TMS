@@ -1,6 +1,6 @@
 /**
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getRelayDeposits engine unchanged.
- * DISPLAY only — separates money funded INTO Relay by its funding card.
+ * ROUND 443.326 — KPI + MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel).
+ * getRelayDeposits engine unchanged. DISPLAY only — separates money funded INTO Relay by its funding card.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,8 +16,9 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -109,6 +110,15 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
   }, [companyId]); // Mutation reset functions are stable; company transitions own a fresh review draft.
 
   const unclassifiedCards = byCard.filter((c) => c.classification === "unclassified");
+  const [depositSearch, setDepositSearch] = useState("");
+  const depositQ = depositSearch.trim().toLowerCase();
+  const filteredDeposits = useMemo(() => {
+    if (!depositQ) return deposits;
+    return deposits.filter((d) => {
+      const hay = [d.status, d.funding_card_last4, CLASS_LABEL[d.classification]].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(depositQ);
+    });
+  }, [deposits, depositQ]);
 
   const unclassifiedColumns = useMemo<ParityColumn<RelayDepositByCardRow>[]>(
     () => [
@@ -207,8 +217,8 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-3" data-testid="fuel-relay-inbox-panel">
-      {/* ROUND 443.250 Relay inbox V3 — same getRelayDeposits summary classifications. */}
-      <V3Panel
+      {/* ROUND 443.326 Relay inbox — same getRelayDeposits summary; FuelBoardSection not V3Panel. */}
+      <FuelBoardSection
         title="Relay deposit funding"
         subtitle="Money funded INTO the Relay wallet (separate from fuel pumped and from bank payments to Relay)"
         testId="fuel-relay-inbox-intro-v3-panel"
@@ -221,7 +231,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
             need you to identify them.
           </InfoPopover>
         </div>
-      </V3Panel>
+      </FuelBoardSection>
 
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
@@ -240,8 +250,19 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         ))}
       </div>
 
+      <MoneyListToolbar
+        search={depositSearch}
+        onSearchChange={setDepositSearch}
+        searchPlaceholder="Search deposits…"
+        onClearAll={() => setDepositSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-relay-inbox"
+      >
+        <span />
+      </MoneyListToolbar>
+
       {/* FUEL-F3550: always mount ParityTable (Search+Range+gear) for owner review queue. */}
-      <V3Panel
+      <FuelBoardSection
         title="Owner review — unidentified funding cards"
         subtitle="Cards that funded Relay but are not in the company-card set"
         testId="fuel-relay-inbox-unclassified-v3-panel"
@@ -264,11 +285,12 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
             storageKey="relay-deposit-unclassified-cards"
             exportFilename="relay-deposit-unclassified-cards"
             tableTestId="relay-deposit-unclassified-table"
+            suppressToolbarSearch
           />
         </div>
-      </V3Panel>
+      </FuelBoardSection>
 
-      <V3Panel
+      <FuelBoardSection
         title="Company card set"
         subtitle="Cards confirmed to belong to the operating company. Deposits funded by these reconcile to the bank."
         testId="fuel-relay-inbox-cards-v3-panel"
@@ -332,23 +354,24 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
             </button>
           </div>
         </div>
-      </V3Panel>
+      </FuelBoardSection>
 
       {/* FUEL-F3550: always mount ParityTable for full deposit list. */}
-      <V3Panel title="All deposits" testId="fuel-relay-inbox-all-v3-panel">
+      <FuelBoardSection title="All deposits" testId="fuel-relay-inbox-all-v3-panel">
         <div className="px-3 py-2">
           <ParityTable<RelayDepositRow>
             columns={depositColumns}
-            rows={deposits}
+            rows={filteredDeposits}
             rowKey={(d) => d.id}
             loading={depositsQuery.isLoading}
             emptyText="No Relay deposits imported yet."
             storageKey="relay-deposit-all"
             exportFilename="relay-deposits"
             tableTestId="relay-deposit-all-table"
+            suppressToolbarSearch
           />
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

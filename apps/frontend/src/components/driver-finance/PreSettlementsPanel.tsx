@@ -5,7 +5,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
-import { V3Panel } from "../v3/V3Panel";
+import { BoardSection } from "../v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
 import { formatUsdCents } from "../../lib/money";
 import { MoneyCell } from "../shared/MoneyCell";
@@ -122,7 +122,8 @@ function waitingOnReason(r: TourListRow): string {
  * Unit / Ready / Waiting on read listTours — never hardcoded "—".
  * Period Begin/End / Liabilities / Status are OFF the board (layout replace, not Rule-07 layer).
  */
-const preSettlementColumns: ParityColumn<TourListRow>[] = [
+/** Exported for SettlementsPreSettlementsBoard ParityTable mount (443.326). */
+export const preSettlementColumns: ParityColumn<TourListRow>[] = [
   {
     key: "number",
     label: "Number",
@@ -238,7 +239,7 @@ export function PreSettlementsPanel({
   const totalCents = rows.reduce((sum, row) => sum + Number(row.driver_pay_cents ?? 0), 0);
   const countLabel = loading || isError ? "—" : String(rows.length);
   return (
-    <V3Panel
+    <BoardSection
       title={`${title} · ${countLabel}`}
       subtitle="open tours · not closed · not paid"
       testId="pre-settlements-v3-panel"
@@ -318,6 +319,6 @@ export function PreSettlementsPanel({
           A booked-ahead load joins the driver&apos;s open pre-settlement (443.244).
         </p>
       </div>
-    </V3Panel>
+    </BoardSection>
   );
 }

@@ -25,10 +25,8 @@ const TARGETS = [
     file: "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
     entityKeys: ["driverId", "unitId"],
   },
-  {
-    file: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
-    entityKeys: ["vendorId"],
-  },
+  // VendorCreditsPage is a MoneyListToolbar registered surface (FILTER-MULTI-01) —
+  // CollapsedListFilters is forbidden there. Live EntityMultiSelect matches CreditMemosPage.
   {
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     entityKeys: ["driverId", "loadId"],

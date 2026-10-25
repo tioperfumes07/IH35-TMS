@@ -66,11 +66,21 @@ export function computeFailures(source) {
   if (!/FuelFraudAlertsKpiCard/.test(source) || !/RelayHistoryImport/.test(source)) {
     errors.push("FuelHome.tsx must keep FuelFraudAlertsKpiCard + RelayHistoryImport (additive-only)");
   }
-  if (!/FuelBoardKpiStrip/.test(source) || !/FuelDieselByTruckPanel/.test(source)) {
-    errors.push("FuelHome.tsx must render FuelBoardKpiStrip + FuelDieselByTruckPanel (443.282 board home)");
+  // ROUND 443.326 — full board: FuelKpiRow + diesel ParityTable (not metric-as-rows / V3Panel stack).
+  if (!/ParityTable/.test(source) || !/MoneyListToolbar/.test(source)) {
+    errors.push("FuelHome.tsx must mount MoneyListToolbar + ParityTable (443.326 board grammar)");
   }
-  if (!/viewAllHref="\/fuel\/by-truck"/.test(source)) {
-    errors.push("FuelHome.tsx must link diesel preview View all to /fuel/by-truck");
+  if (!/Diesel by truck/.test(source) && !/fetchDieselByTruckAggregate/.test(source)) {
+    errors.push("FuelHome.tsx must roster diesel-by-truck from the same aggregate engine");
+  }
+  if (/FuelMetricRow|Dashboard metrics/.test(source)) {
+    errors.push("FuelHome.tsx must not keep metric-as-rows ParityTable theater");
+  }
+  if (/<V3Panel\b/.test(source)) {
+    errors.push("FuelHome.tsx must not wrap the board in V3Panel (443.326 unwrap)");
+  }
+  if (!/to="\/fuel\/by-truck"/.test(source) && !/viewAllHref="\/fuel\/by-truck"/.test(source)) {
+    errors.push("FuelHome.tsx must link diesel View all to /fuel/by-truck");
   }
   if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
     errors.push("FuelHome.tsx must disclose Love's sync-status failure and retry the exact query");
@@ -129,8 +139,14 @@ export function computeCardsFailures(source) {
   if (!/V3KpiTile/.test(source) || !/data-fuel-cards-v3-kpis/.test(source)) {
     errors.push("FuelCardsPage must render V3KpiTile strip with data-fuel-cards-v3-kpis");
   }
-  if (!/V3Panel/.test(source) || !/fuel-cards-registry-v3-panel/.test(source) || !/fuel-cards-issuers-v3-panel/.test(source)) {
-    errors.push("FuelCardsPage must wrap Card issuers + Fuel card -> truck registry in V3Panel");
+  if (!/FuelBoardSection/.test(source) || !/fuel-cards-registry-v3-panel/.test(source) || !/fuel-cards-issuers-v3-panel/.test(source)) {
+    errors.push("FuelCardsPage must wrap Card issuers + Fuel card -> truck registry in FuelBoardSection");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("FuelCardsPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("FuelCardsPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/DataPanel/.test(source)) {
     errors.push("FuelCardsPage must not keep DataPanel after V3 restyle");
@@ -152,8 +168,14 @@ export function computeUnmatchedFailures(source) {
   if (!/V3KpiTile/.test(source) || !/data-relay-unmatched-v3-kpis/.test(source)) {
     errors.push("RelayUnmatchedPage must render V3KpiTile strip with data-relay-unmatched-v3-kpis");
   }
-  if (!/V3Panel/.test(source) || !/relay-unmatched-v3-panel/.test(source)) {
-    errors.push("RelayUnmatchedPage must wrap the unmatched table in V3Panel (relay-unmatched-v3-panel)");
+  if (!/FuelBoardSection/.test(source) || !/relay-unmatched-v3-panel/.test(source)) {
+    errors.push("RelayUnmatchedPage must wrap the unmatched table in FuelBoardSection (relay-unmatched-v3-panel)");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("RelayUnmatchedPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("RelayUnmatchedPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
     errors.push("RelayUnmatchedPage must not keep DataPanel after V3 restyle");
@@ -176,11 +198,17 @@ export function computeWalletFailures(source) {
     errors.push("RelayWalletRollForwardPage must render V3KpiTile strip with data-relay-wallet-v3-kpis");
   }
   if (
-    !/V3Panel/.test(source) ||
+    !/FuelBoardSection/.test(source) ||
     !/relay-wallet-roll-forward-v3-panel/.test(source) ||
     !/relay-wallet-docs-v3-panel/.test(source)
   ) {
-    errors.push("RelayWalletRollForwardPage must wrap roll-forward + docs drill in V3Panel");
+    errors.push("RelayWalletRollForwardPage must wrap roll-forward + docs drill in FuelBoardSection");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
     errors.push("RelayWalletRollForwardPage must not keep DataPanel after V3 restyle");
@@ -340,13 +368,15 @@ function selftest() {
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
-    import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
-    import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
+    import { ParityTable } from "../../components/parity/ParityTable";
+    import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
     import { RelayHistoryImport } from "./components/RelayHistoryImport";
+    import { fetchDieselByTruckAggregate } from "./fuelDieselByTruck";
     export function FuelFraudAlertsKpiCard() {}
     export function FuelHomePage() {
       getFuelDashboard(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip /><FuelDieselByTruckPanel viewAllHref="/fuel/by-truck" /><FuelKpiRow /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      fetchDieselByTruckAggregate(id);
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><MoneyListToolbar /><ParityTable title="Diesel by truck" /><Link to="/fuel/by-truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
@@ -374,7 +404,7 @@ function selftest() {
   }
   if (!ok) process.exit(1);
   const leftover = computeFailures(
-    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar ParityTable Diesel by truck fetchDieselByTruckAggregate to="/fuel/by-truck" lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
   );
   if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
     console.error("SELFTEST FAIL — leftover plant escaped", leftover);

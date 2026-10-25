@@ -58,7 +58,7 @@ if (!/data-mdp-footer-total=\{direction\}[\s\S]{0,60}panelTotalCents/.test(tab))
 // ROUND 443.250 — Manual Daily Projections V3 chrome (piggyback EVEN 4124; no new claim).
 // Board: 4 KPIs + Income/Expenses panels + expense payment-priority groups. No V3Segmented
 // (no Day|Week grain on this surface). Forecast math + MDP field contracts stay.
-for (const comp of ["V3KpiTile", "V3Panel", "V3_EXPENSE_GROUPS"]) {
+for (const comp of ["V3KpiTile", "BoardSection", "V3_EXPENSE_GROUPS"]) {
   if (!tab.includes(comp)) fail(`ROUND 443.250 must mount ${comp}`);
 }
 if (!/from ["'].*design\/v3-tokens/.test(tab) && !tab.includes("v3-tokens")) {

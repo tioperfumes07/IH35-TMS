@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting","driver_finance"],"cols":["connectivity","reverse_link"],"leafRe":"^(accounting\\.factoring|accounting\\.escrow|driver_finance\\.settlements)$","task":"ACCT-SURF-09-CROSSLINKS"}
  * ACCT-SURF-09 — Factoring / Escrow / Settlements cross-link deep structural DoD.
  *
  * Frozen surface map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md
@@ -34,6 +35,8 @@ const FILES = {
   factoringList: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
   escrowPage: "apps/frontend/src/pages/accounting/EscrowPage.tsx",
   settlementsPage: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+  settlementsSubnav: "apps/frontend/src/pages/driver-finance/settlementsSubnav.ts",
+  settlementsEscrowBoard: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
   hubPage: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
   accountRegister: "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
   factoringApi: "apps/frontend/src/api/accounting.ts",
@@ -150,8 +153,12 @@ function contractErrors(src) {
     errors.push("443.293-C: FactoringListPage must not put Submit to Factor on actions=");
   }
 
-  if (!src.settlementsPage.includes("/accounting/escrow")) {
-    errors.push("VERIFY-4: SettlementsPage subnav must cross-link to /accounting/escrow");
+  // ROUND 443.254 — Escrow tab stays on /driver-finance/escrow; GL register cross-link on escrow board.
+  if (!src.settlementsSubnav.includes("/driver-finance/escrow")) {
+    errors.push("VERIFY-4: settlementsSubnav must include Escrow tab at /driver-finance/escrow");
+  }
+  if (!src.settlementsEscrowBoard.includes("/accounting/escrow")) {
+    errors.push("VERIFY-4: Settlements escrow board must cross-link to /accounting/escrow");
   }
   if (!src.settlementsPage.includes("listAllSettlements(companyId,") ||
       !src.settlementsApi.includes("await listSettlements(companyId, { ...options, limit: 200, offset: 0 })") ||
@@ -244,8 +251,10 @@ function selftest() {
     // Includes the unfiltered kpiBaseQuery/kpiSettlements pipeline (FAIL-SETL-KPI-PERIOD) and the
     // manual_paid payment-state filter (VERIFY-1) — both checked below but missing from this fixture
     // until now, so the selftest's own "good" baseline always failed regardless of real code.
+    settlementsSubnav: 'label: "Escrow", to: "/driver-finance/escrow"',
+    settlementsEscrowBoard: 'to="/accounting/escrow"',
     settlementsPage:
-      'to: "/accounting/escrow"\nlistAllSettlements(companyId, {})\n"settlements-kpi-base"\nkpiSettlements\nmanual_paid\nytdYear\ngetFullYear\nthis_period: kpiSettlements.filter(isInThisPeriod).length\nytd_settlements: kpiSettlements.filter(isYtd).length',
+      'listAllSettlements(companyId, {})\n"settlements-kpi-base"\nkpiSettlements\nmanual_paid\nytdYear\ngetFullYear\nthis_period: kpiSettlements.filter(isInThisPeriod).length\nytd_settlements: kpiSettlements.filter(isYtd).length',
     hubPage: '/accounting/factoring\n/driver-finance/settlements',
     accountRegister: "/driver-finance/settlements",
     factoringApi: "listFactoringAdvances /api/v1/accounting/factoring-advances\nlistEscrowAccounts /api/v1/accounting/escrow/accounts",
@@ -271,8 +280,10 @@ function selftest() {
   }
   const kpiTheater = {
     ...good,
+    settlementsSubnav: "",
+    settlementsEscrowBoard: "",
     settlementsPage:
-      'to: "/accounting/escrow"\nlistSettlements\nthis_period: settlements.length\nytd_settlements: settlements.length',
+      "listSettlements\nthis_period: settlements.length\nytd_settlements: settlements.length",
   };
   if (!contractErrors(kpiTheater).some((e) => e.includes("This Period") || e.includes("YTD"))) {
     console.error(`${LABEL} --selftest FAIL KPI period theater not caught`);

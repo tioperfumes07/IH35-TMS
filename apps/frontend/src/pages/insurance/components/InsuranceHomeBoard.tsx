@@ -17,7 +17,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -246,7 +246,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
         className="grid grid-cols-1 gap-3 lg:grid-cols-[1.4fr_1fr] lg:items-start"
         data-testid="insurance-home-main-grid"
       >
-        <V3Panel
+        <BoardSection
           title="Policy year"
           onViewAll={() => navigate("/insurance/policies")}
           testId="insurance-home-policy-year"
@@ -343,9 +343,9 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
               {loading ? "Loading policies…" : "No active policies on file."}
             </div>
           )}
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel
+        <BoardSection
           title="Premium by coverage"
           onViewAll={() => navigate("/insurance/policies")}
           testId="insurance-home-premium-by-coverage"
@@ -429,7 +429,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
       </div>
 
       <p style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, margin: 0 }}>

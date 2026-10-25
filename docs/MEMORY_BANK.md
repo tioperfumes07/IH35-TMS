@@ -392,6 +392,56 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   V3KpiTile + data-fuel-v3-kpis + no DrillKpiCard. No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Customers/Vendors
   boards · design-system sweep · Chrome proof. Full DONE not claimed.
+- **SUPERSEDED for Fuel Home board shape by ROUND 443.326** (below) — Home is now KPI + MLT +
+  diesel-by-truck ParityTable, not metric-as-rows / panel-stack.
+
+### Active Architectural Decisions — V3 board grammar + Escrow N2 (Cursor, ROUND 443.326, 2026-10-24)
+
+- **DoD (23 audit surfaces):** each mounts kpiStrip (`V3KpiTile` / `moneyListKpiCard` / `kpiStrip=`)
+  + `MoneyListToolbar` + `ParityTable` JSX (or Fuel History `FuelTransactionsTable`), and must not
+  remount the legacy chrome listed per surface. Guard:
+  `scripts/verify-v3-board-grammar-every-surface.mjs` (step **18800**), ratchet `FAILING_SURFACE_BASELINE = 0`.
+  JSX mount required — import/comment-only `ParityTable` is theater.
+- **Fuel Home rebuild:** `FuelKpiRow` + fraud/overage KPIs + MLT + diesel-by-truck `ParityTable`
+  (`fetchDieselByTruckAggregate`). No `V3Panel` on Home. Relay import stays a bordered section.
+- **Fuel Planner History:** board = KPI strip + MLT + `FuelTransactionsTable` (`fuel-history-v3-board`);
+  not panel-wrapped. Settings / Questions / Savings / Compliance child panels may still use `V3Panel`
+  (443.250 form/detail chrome; separate fuel guards).
+- **Escrow Register design N2:** first timeline row is **Opening balance (historical)** =
+  `held − signed(activityNet)` so running balance ties to held. Source label locked; Type `Opening`.
+- **Settlement statement N3:** linked records already expose `${n} fills →` and `Bank line →`.
+- **Settlements home chart/deductions/week-of:** bordered `BoardSection` in
+  `SettlementsHomeBoardPanels.tsx` — **no** `V3Panel` child extract. Guard
+  `assertSettlementsHomeNoPanelExtract` in `verify-v3-board-grammar-every-surface.mjs`.
+- **Shared `BoardSection`:** `apps/frontend/src/components/v3/BoardSection.tsx` — bordered title
+  section that replaces `V3Panel` on Settlements (and Fuel via `FuelBoardSection`). Same visual
+  (1px border, 2px radius); DoD forbids remounting `V3Panel` on list boards.
+- **Settlements list boards (full DoD, not chromeOnly):** PreSettlements / Deductions /
+  CashAdvances / Escrow / Company / Close — each surface file mounts `V3KpiTile` +
+  `MoneyListToolbar` + `<ParityTable` and forbids `V3Panel`. CashAdvances Requests|Advances use
+  `BoardSection` + 1fr|2fr; guard `verify-cash-advances-tabs-url-sync.mjs` retargeted to
+  BoardSection + board-file ParityTable (not CashAdvancesKpiRow extract).
+- **Statement:** document body linked-records / legacy 2×2 panels unwrap to `BoardSection`
+  (document chrome, not a list-board surface). Workflow page already has KPI + MLT + ParityTable.
+- **VendorBillCreate:** intentional session-shell roster (orders SHELL-ONLY) — form stays in ParityDrawer.
+- **Cash Flow / Legal Home / Accounting Hub (443.326 continue, 2026-10-25):** all five CF tabs
+  (`CashFlowHomeTab`, `ActualVsProjectedTab`, `RollingLedgerTab`, `ManualDailyProjectionsTab`,
+  `DailyPredictionTab`) + `LegalHomeBoard` + `AccountingHubPage` unwrap `V3Panel` → `BoardSection`.
+  Registered in `verify-v3-board-grammar-every-surface.mjs` as **chromeOnly** (forbid `V3Panel`):
+  hub/dashboard boards keep KPI + panels; AVP keeps locked `CollapsedListFilters` staged draft;
+  Rolling Ledger keeps Banking Combobox filter bar. CF static guards retargeted to `BoardSection`
+  (`verify-cash-flow-home-tab`, `verify-cash-flow-rolling-ledger`,
+  `verify-actual-vs-projected-tab-uses-paritytable`, `verify-mdp-panel-proportion`,
+  `verify-cashflow-predicted-customer-entitylink`).
+- **Insurance / Banking Home (443.326 continue, 2026-10-25):** `InsuranceHomeBoard` +
+  `BankingHomeBoard` unwrap `V3Panel` → `BoardSection`; grammar SURFACES chromeOnly (KPI + panels;
+  not list boards — no MLT required). Grammar ratchet 0/44.
+- **CI guard (443.326, 2026-10-25):** `verify-navy-page-subnav.mjs` accepts
+  `SettlementsSubNavWrapper` on SettlementsPage (NavyPageSubNav component tokens still locked for
+  other modules). Same class as nav-integrity / fuel-jump after SubNav extract.
+- **Still outside full list-board DoD:** CF/Insurance/Banking/Legal/AcctHub homes stay chromeOnly
+  until MLT lands where filter law allows; other V3Panel form/detail chrome (Reports/Fuel panels/etc.)
+  out of this order.
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

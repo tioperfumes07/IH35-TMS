@@ -6,7 +6,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
@@ -181,7 +181,7 @@ export function SettlementStatementBoardPanels({
       data-settlements-statement-v3-panel="1"
       style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10, marginBottom: 12 }}
     >
-      <V3Panel title="Earnings — by load" testId="settlement-statement-panel-earnings">
+      <BoardSection title="Earnings — by load" testId="settlement-statement-panel-earnings">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
@@ -238,9 +238,9 @@ export function SettlementStatementBoardPanels({
             </tr>
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
 
-      <V3Panel title="Deductions · reimbursements · net" testId="settlement-statement-panel-deductions">
+      <BoardSection title="Deductions · reimbursements · net" testId="settlement-statement-panel-deductions">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
@@ -271,9 +271,9 @@ export function SettlementStatementBoardPanels({
             </tr>
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
 
-      <V3Panel
+      <BoardSection
         title={companyPanelTitle}
         testId="settlement-statement-panel-company"
         footer="Revenue − costs − driver pay = margin. Same tour, same loads."
@@ -312,9 +312,9 @@ export function SettlementStatementBoardPanels({
             </tr>
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
 
-      <V3Panel
+      <BoardSection
         title="Linked records"
         testId="settlement-statement-panel-linked"
         footer="Every link opens its record and comes back here (two-way)."
@@ -458,7 +458,7 @@ export function SettlementStatementBoardPanels({
             </tr>
           </tbody>
         </table>
-      </V3Panel>
+      </BoardSection>
     </div>
   );
 }

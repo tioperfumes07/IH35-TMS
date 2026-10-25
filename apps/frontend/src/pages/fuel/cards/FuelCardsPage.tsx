@@ -28,7 +28,8 @@ import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { AssignFuelCardDrawer } from "../../../components/fuel/AssignFuelCardDrawer";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyWallClockToIso, companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -220,7 +221,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
     { key: "active_card_count", label: "Cards", sortable: true, render: (row) => String(row.active_card_count) },
   ];
   return (
-    <V3Panel
+    <FuelBoardSection
       title="Card issuers"
       subtitle="The vendor that issues each fuel card type — shown on every card below"
       testId="fuel-cards-issuers-v3-panel"
@@ -242,7 +243,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
           rowKey={(row) => row.id}
         />
       )}
-    </V3Panel>
+    </FuelBoardSection>
   );
 }
 
@@ -257,6 +258,7 @@ export function FuelCardsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const vendorFilter = searchParams.get("vendor_id") ?? undefined;
   const [assignOpen, setAssignOpen] = useState(false);
+  const [cardSearch, setCardSearch] = useState("");
   const [endTarget, setEndTarget] = useState<FuelCardAssignment | null>(null);
   const [voidTarget, setVoidTarget] = useState<FuelCardAssignment | null>(null);
 
@@ -345,13 +347,30 @@ export function FuelCardsPage() {
     );
   }
 
-  const rows = query.data?.rows ?? [];
-  const kpis = assignmentKpis(rows);
+  const allRows = query.data?.rows ?? [];
+  const q = cardSearch.trim().toLowerCase();
+  const rows = q
+    ? allRows.filter((row) =>
+        [
+          row.card_last_digits,
+          row.fuel_card_type_name,
+          row.issuer_vendor_name,
+          row.unit_number,
+          row.driver_name,
+          row.notes,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+    : allRows;
+  const kpis = assignmentKpis(allRows);
   const kpiValue = (n: number) => (query.isPending ? "…" : query.isError ? "—" : String(n));
 
   return (
     <div className="space-y-3" data-testid="fuel-cards-page">
-      {/* ROUND 443.250 Fuel Cards V3 — Active / Ended / Voided / Assignments from listFuelCardAssignments. */}
+      {/* ROUND 443.326 Fuel Cards — FuelBoardSection + MoneyListToolbar — Active / Ended / Voided / Assignments from listFuelCardAssignments. */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-cards-v3-kpi-strip"
@@ -362,8 +381,21 @@ export function FuelCardsPage() {
         <V3KpiTile label="Voided" value={kpiValue(kpis.voided)} sub={includeVoided ? "in this list" : "show voided to count"} testId="fuel-cards-kpi-voided" />
         <V3KpiTile label="Assignments" value={kpiValue(kpis.total)} sub="rows in filter" testId="fuel-cards-kpi-assignments" />
       </div>
+      <MoneyListToolbar
+        search={cardSearch}
+        onSearchChange={setCardSearch}
+        searchPlaceholder="Search card, truck, driver…"
+        onClearAll={() => setCardSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-cards"
+      >
+        <label className="flex h-9 items-center gap-1 text-xs text-gray-600" data-testid="fuel-cards-show-voided">
+          <input type="checkbox" checked={includeVoided} onChange={(e) => setIncludeVoided(e.target.checked)} />
+          Show voided
+        </label>
+      </MoneyListToolbar>
       <CardIssuersPanel companyId={companyId} canWrite={canWrite} onChanged={invalidate} />
-      <V3Panel
+      <FuelBoardSection
         title="Fuel card -> truck registry"
         subtitle="Every fuel card and the truck (and optional driver) it currently fuels, over effective dates"
         testId="fuel-cards-registry-v3-panel"
@@ -375,13 +407,8 @@ export function FuelCardsPage() {
           ) : undefined
         }
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-cards-show-voided">
-              <input type="checkbox" checked={includeVoided} onChange={(e) => setIncludeVoided(e.target.checked)} />
-              Show voided
-            </label>
-            {vendorFilter ? (
+        <div className="mb-2 flex items-center gap-3 px-3 pt-2">
+          {vendorFilter ? (
               <span className="flex items-center gap-1 text-xs text-gray-700" data-testid="fuel-cards-vendor-filter">
                 Issued by <EntityLinkOrTombstone kind="vendor" id={vendorFilter} name={query.data?.rows?.[0]?.issuer_vendor_name ?? null} noun="Vendor" className={LINK} />
                 <button
@@ -394,7 +421,6 @@ export function FuelCardsPage() {
                 </button>
               </span>
             ) : null}
-          </div>
         </div>
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="Fuel card assignments could not be loaded." />
@@ -407,9 +433,10 @@ export function FuelCardsPage() {
             storageKey="fuel-card-assignments"
             emptyText="No fuel cards assigned yet"
             rowKey={(row) => row.id}
+            suppressToolbarSearch
           />
         )}
-      </V3Panel>
+      </FuelBoardSection>
 
       <AssignFuelCardDrawer
         open={assignOpen}

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet","fuel","tasks","compliance"],"cols":["connectivity","qbo_chrome"],"leafRe":"^(home|history|card_overage|create_task|property_tax|current_load)$","task":"INBOX-DEVIN-A-9-23-FE-WIRING","vertical":"class-sweep"} */
 /** INBOX-DEVIN-A 9–23 FE wiring ratchet — static only, USMCA fleet/fuel/tasks/compliance chrome. */
 import fs from "node:fs";
 import path from "node:path";
@@ -24,9 +25,17 @@ const CHECKS = [
     file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
     tests: [
       (s) => /Import Fuel Transactions/.test(s) || "fuel import CTA",
-      // Repointed (ROUND 443.187): d5dd898df8 "FUEL-OFFICE-CREATE-MODAL (#6330)" reworded the empty
-      // state (no hardcoded entity name; + Create added). Same rule: an honest empty fuel history.
-      (s) => /No fuel transactions yet — use \+ Create for a manual office purchase, or Import Fuel Transactions/.test(s) || "honest empty fuel history",
+      // ROUND 443.326 — History board mounts FuelTransactionsTable (ParityTable empty lives there).
+      (s) => /FuelTransactionsTable/.test(s) || "history board mounts FuelTransactionsTable",
+    ],
+  },
+  {
+    file: "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
+    tests: [
+      // Repointed (ROUND 443.187 / 443.326): honest empty fuel history on the ParityTable board.
+      (s) =>
+        /No fuel transactions yet — use \+ Create for a manual office purchase, or Import Fuel Transactions/.test(s) ||
+        "honest empty fuel history",
     ],
   },
   {

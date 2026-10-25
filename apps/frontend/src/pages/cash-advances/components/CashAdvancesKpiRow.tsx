@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatUsdTable } from "../../../lib/money";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
@@ -173,7 +173,7 @@ export function CashAdvancesKpiRow({
         data-testid="settlements-cash-advances-board-body"
         data-settlements-cash-advances-board-1fr-2fr="1"
       >
-        <V3Panel
+        <BoardSection
           title="Requests"
           testId="settlements-cash-advances-requests-panel"
           onViewAll={() => navigate(REQUESTS_PATH)}
@@ -258,9 +258,9 @@ export function CashAdvancesKpiRow({
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel
+        <BoardSection
           title="Advances"
           testId="settlements-cash-advances-advances-panel"
           onViewAll={() => navigate(root)}
@@ -371,7 +371,7 @@ export function CashAdvancesKpiRow({
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </BoardSection>
       </div>
     </div>
   );

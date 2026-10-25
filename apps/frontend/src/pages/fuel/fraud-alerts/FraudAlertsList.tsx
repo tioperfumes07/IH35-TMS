@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
-import { PageHeader } from "../../../components/layout/PageHeader";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { ActionButton } from "../../../components/shared/ActionButton";
@@ -14,6 +13,10 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatUsdCents } from "../../../lib/money";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { Breadcrumb } from "../../../components/shared/Breadcrumb";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 type FraudAlertRow = {
   uuid: string;
@@ -125,6 +128,7 @@ export function FraudAlertsListPage() {
   const scope = scopeKey ? { key: scopeKey, value: searchParams.get(scopeKey)! } : null;
   // A drilled view opens on ALL statuses — the set the reverse section counted.
   const [statusFilter, setStatusFilter] = useState(scope ? "all" : "open");
+  const [listSearch, setListSearch] = useState("");
   const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
   const [dismissReason, setDismissReason] = useState("");
   const [attemptDismissClose, setAttemptDismissClose] = useState<() => void>(() => () => {});
@@ -331,8 +335,8 @@ export function FraudAlertsListPage() {
 
   if (!companyId) {
     return (
-      <div className="space-y-3 p-4">
-        <PageHeader title="Fuel fraud alerts" subtitle="CAP-11 real-time fuel card fraud monitoring" />
+      <div className="space-y-3 p-4" data-testid="fuel-fraud-alerts-need-company">
+        <h1 className="text-page-title font-semibold text-gray-900">{"Fuel fraud alerts"}</h1>
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view fraud alerts.
         </div>
@@ -340,54 +344,102 @@ export function FraudAlertsListPage() {
     );
   }
 
-  return (
-    <div className="space-y-3">
-      <PageHeader
-        title="Fuel fraud alerts"
-        subtitle="CAP-11 real-time fuel card fraud monitoring"
-        actions={
-          <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
-            Back to Fuel Home
-          </Link>
-        }
-      />
+  const q = listSearch.trim().toLowerCase();
+  const visibleRows = q
+    ? rows.filter((row) =>
+        [row.rule_id, row.status, row.severity, row.location_city, row.location_state, row.recovery_status]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+    : rows;
+  const openCount = rows.filter((row) => row.status === "open").length;
+  const criticalCount = rows.filter((row) => row.severity === "critical").length;
+  const confirmedCount = rows.filter((row) => row.status === "confirmed_fraud").length;
+  const kpiValue = (n: number) => (alertsQuery.isPending ? "…" : alertsQuery.isError ? "—" : String(n));
 
-      <div className="flex flex-wrap items-center gap-2">
-        {scope ? (
-          <button
-            type="button"
-            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs"
-            data-testid="fraud-alerts-scope-chip"
-            onClick={() => setSearchParams((prev) => { const next = new URLSearchParams(prev); next.delete(scope.key); return next; })}
-          >
-            {scope.key.replace("_id", "")} only · clear ×
-          </button>
-        ) : null}
-        {["all", "open", "investigating", "dismissed", "confirmed_fraud"].map((status) => (
-          <button
-            key={status}
-            type="button"
-            className={`rounded-sm border px-2 py-1 text-xs ${statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"}`}
-            onClick={() => setStatusFilter(status)}
-          >
-            {status.replace("_", " ")}
-          </button>
-        ))}
+  return (
+    <div className="space-y-3" data-testid="fuel-fraud-alerts-page">
+      {/* ROUND 443.326 — KPI + MoneyListToolbar + FuelBoardSection (no PageHeader). */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Fraud alerts" }]} />
+          <h1 className="text-page-title font-semibold text-gray-900">{"Fuel fraud alerts"}</h1>
+          <p className="text-xs text-gray-600">{"Real-time fuel card fraud monitoring"}</p>
+        </div>
+        <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+          Back to Fuel Home
+        </Link>
       </div>
+
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-fraud-alerts-v3-kpi-strip"
+      >
+        <V3KpiTile label={"In view"} value={kpiValue(visibleRows.length)} sub="this filter" testId="fuel-fraud-alerts-kpi-in-view" />
+        <V3KpiTile label={"Open"} value={kpiValue(openCount)} sub="needs action" testId="fuel-fraud-alerts-kpi-open" />
+        <V3KpiTile label={"Critical"} value={kpiValue(criticalCount)} sub="severity" testId="fuel-fraud-alerts-kpi-critical" />
+        <V3KpiTile label={"Confirmed"} value={kpiValue(confirmedCount)} sub="fraud" testId="fuel-fraud-alerts-kpi-confirmed" />
+      </div>
+
+      <MoneyListToolbar
+        search={listSearch}
+        onSearchChange={setListSearch}
+        searchPlaceholder={"Search rule, status, location…"}
+        onClearAll={() => {
+          setListSearch("");
+          setStatusFilter(scope ? "all" : "open");
+        }}
+        activeFilterCount={(statusFilter !== (scope ? "all" : "open") ? 1 : 0) + (scope ? 1 : 0)}
+        testIdPrefix="fuel-fraud-alerts"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {scope ? (
+            <button
+              type="button"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs"
+              data-testid="fraud-alerts-scope-chip"
+              onClick={() =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.delete(scope.key);
+                  return next;
+                })
+              }
+            >
+              {scope.key.replace("_id", "")} only · clear ×
+            </button>
+          ) : null}
+          {["all", "open", "investigating", "dismissed", "confirmed_fraud"].map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`rounded-sm border px-2 py-1 text-xs ${statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"}`}
+              onClick={() => setStatusFilter(status)}
+            >
+              {status.replace("_", " ")}
+            </button>
+          ))}
+        </div>
+      </MoneyListToolbar>
 
       {alertsQuery.isError ? (
         <ListErrorBanner onRetry={() => void alertsQuery.refetch()} />
       ) : (
-        <ParityTable
-          title="Fuel fraud alerts"
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => row.uuid}
-          loading={alertsQuery.isLoading}
-          storageKey="fuel-fraud-alerts"
-          emptyText="No fraud alerts for this filter."
-          exportFilename="fuel-fraud-alerts"
-        />
+        <FuelBoardSection title="Fuel fraud alerts" subtitle="Investigate, confirm, or dismiss" testId="fuel-fraud-alerts-v3-panel">
+          <ParityTable
+            title="Fuel fraud alerts"
+            rows={visibleRows}
+            columns={columns}
+            rowKey={(row) => row.uuid}
+            loading={alertsQuery.isLoading}
+            storageKey="fuel-fraud-alerts"
+            emptyText="No fraud alerts for this filter."
+            exportFilename="fuel-fraud-alerts"
+            suppressToolbarSearch
+          />
+        </FuelBoardSection>
       )}
       <Modal
         open={Boolean(dismissTarget)}

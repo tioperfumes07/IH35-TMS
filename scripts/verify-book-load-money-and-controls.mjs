@@ -4,10 +4,9 @@
  *
  * CC-2-INSTRUCTIONS-09-02-2026.txt tasks 1-5 + guard spec ("after task 5"), tasks 6/19/20.
  * Extended 2026-09-03 (owner layout restore): Section A freight fields, no Equipment/load type,
- * MoneyInput leading-minus, accessorial amounts column total, Time window + driver pay rate h-7.
+ * MoneyInput leading-minus, accessorial amounts column total, Time window h-7 cap.
  *
- * Combobox itself may use FILTER_CONTROL_SIZE_CLASS (h-9) for toolbar filters (#20059); Book Load
- * form controls must still pass h-7 via their own className (TimeWindowDropdown / pay rate).
+ * IH35-347-A: MoneyInput / NumberInput / Combobox size=sm use h-9; TimeWindowDropdown stays h-7.
  */
 import fs from "node:fs";
 
@@ -48,14 +47,14 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!/form\.setError\(\s*["']linehaul_cents["']/.test(wizard) || !/form\.setError\(\s*["']fuel_surcharge_cents["']/.test(wizard)) {
     errors.push("linehaul/fuel surcharge negative error is not surfaced via form.setError");
   }
-  if (!/<input[\s\S]*?className="[^"]*\bh-7\b[^"]*"/.test(moneyInput)) {
-    errors.push("MoneyInput <input> is not h-7");
+  if (!/<input[\s\S]*?className="[^"]*\bh-9\b[^"]*"/.test(moneyInput)) {
+    errors.push("MoneyInput <input> is not h-9 (IH35-347-A)");
   }
   if (!/<input[\s\S]*?className="[^"]*\btabular-nums\b[^"]*"/.test(moneyInput)) {
     errors.push("MoneyInput <input> is missing tabular-nums");
   }
-  if (!/<input[\s\S]*?className=\{[^}]*\bh-7\b/.test(numberInput)) {
-    errors.push("NumberInput <input> is not h-7");
+  if (!/<input[\s\S]*?className=\{[^}]*\bh-9\b/.test(numberInput)) {
+    errors.push("NumberInput <input> is not h-9 (IH35-347-A)");
   }
   if (!/<input[\s\S]*?className=\{[^}]*\btabular-nums\b/.test(numberInput)) {
     errors.push("NumberInput <input> is missing tabular-nums");
@@ -145,8 +144,8 @@ const timeWindow = fs.readFileSync(TIME_WINDOW, "utf8");
 const moneyInput = fs.readFileSync(MONEY_INPUT, "utf8");
 const numberInput = fs.readFileSync(NUMBER_INPUT, "utf8");
 const combo = fs.readFileSync("apps/frontend/src/components/Combobox.tsx", "utf8");
-if (!combo.includes("formFieldChrome") || !combo.includes("h-7 w-full min-w-0 rounded-sm border")) {
-  throw new Error("Combobox size=sm must paint the 28px bordered input itself (WIZ-34)");
+if (!combo.includes("formFieldChrome") || !combo.includes("h-9 w-full min-w-0 rounded-sm border")) {
+  throw new Error("Combobox size=sm must paint the h-9 bordered input itself (IH35-347-A / WIZ-34)");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -158,7 +157,7 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard.replace("inline-flex h-7 overflow-hidden", "flex h-[46px] overflow-hidden"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('linehaulFuelError("linehaul"', 'linehaulFuelErrorDISABLED("linehaul"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('form.setError("linehaul_cents"', 'form.setErrorDISABLED("linehaul_cents"'), equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums", "w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
+    [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("h-9 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums", "w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput, numberInput.replace("tabular-nums", "")],
     [lib, editor, wizard.replace("Broker / Direct", "Customer kind"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("Incomplete typed states", "TYPED"), numberInput],

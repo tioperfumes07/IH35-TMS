@@ -73,7 +73,7 @@ function assertMigrated(src) {
     errors.push(`${PAGE}: read-only report surface — must not add mutations`);
   }
   // ROUND 443.250 — V3 board chrome (piggyback; no new EVEN claim).
-  for (const comp of ["V3KpiTile", "V3Panel", "V3Segmented"]) {
+  for (const comp of ["V3KpiTile", "BoardSection", "V3Segmented"]) {
     if (!src.includes(comp)) {
       errors.push(`${PAGE}: ROUND 443.250 must mount ${comp}`);
     }
@@ -103,7 +103,7 @@ function selftest() {
     import { formatUsdCents } from "../../../lib/money";
     import { V3 } from "../../../design/v3-tokens";
     import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-    import { V3Panel } from "../../../components/v3/V3Panel";
+    import { BoardSection } from "../../../components/v3/BoardSection";
     import { V3Segmented } from "../../../components/v3/V3Segmented";
     const COLUMNS = [
       { key: "date", label: "Date" },
@@ -117,9 +117,9 @@ function selftest() {
     ];
     <ListErrorState status={0} onRetry={() => {}} />
     <div data-testid="cash-flow-avp-v3-kpis"><V3KpiTile label="Income accuracy" value="$1" /></div>
-    <V3Panel title="Cumulative" testId="cash-flow-avp-chart-panel">
+    <BoardSection title="Cumulative" testId="cash-flow-avp-chart-panel">
       <V3Segmented value="cumulative" onChange={() => {}} options={[]} testId="cash-flow-avp-chart-grain" />
-    </V3Panel>
+    </BoardSection>
     <ParityTable
       storageKey="cash-flow-avp"
       tableTestId="cash-flow-avp-table"
@@ -163,7 +163,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} uses ParityTable + ROUND 443.250 V3KpiTile/V3Panel/V3Segmented; columns/formatting/business-date/error surface preserved; read-only.`,
+    `OK ${LABEL}: ${PAGE} uses ParityTable + ROUND 443.250 V3KpiTile/BoardSection/V3Segmented; columns/formatting/business-date/error surface preserved; read-only.`,
   );
 }
 

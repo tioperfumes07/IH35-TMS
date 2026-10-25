@@ -1,8 +1,9 @@
 /**
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getFuelSavingsSummary values unchanged.
+ * ROUND 443.326 — KPI strip + bordered FuelBoardSection (no V3Panel).
+ * getFuelSavingsSummary values unchanged.
  */
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
   sourceAvailable: boolean;
@@ -70,7 +71,11 @@ export function SavingsPanel({
           testId="fuel-savings-kpi-highest"
         />
       </div>
-      <V3Panel title="Savings tracker" subtitle="YTD from the fuel planner savings summary" testId="fuel-savings-v3-panel">
+      <FuelBoardSection
+        title="Savings tracker"
+        subtitle="YTD from the fuel planner savings summary"
+        testId="fuel-savings-v3-panel"
+      >
         <div className="px-3 py-2 text-xs text-[#4B5563]" data-testid="fuel-savings-detail">
           <Row label="Savings YTD (driver)" value={sourceAvailable ? money(driverSavings) : "Not available"} />
           <Row label="Savings YTD (fleet)" value={sourceAvailable ? money(fleetSavings) : "Not available"} />
@@ -90,7 +95,7 @@ export function SavingsPanel({
           <Row label="Q4 fuel-purchase bonus pool" value="Not available" />
           <Row label="Driver-of-quarter note" value="Not available" />
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

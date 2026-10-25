@@ -5,7 +5,7 @@
  * fuel-gps-verdict.service.ts, fuel-time-derivation.service.ts) — this screen is the first UI for
  * engines E-19..E-22, which previously had live endpoints and no screen.
  */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFuelIntegrityVerdicts,
@@ -26,7 +26,8 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
 
@@ -48,6 +49,7 @@ function verdictBadgeVariant(value: GpsVerdict): "crit" | "positive" | "neutral"
 export function FuelIntegrityPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [search, setSearch] = useState("");
 
   const cardSectionRef = useRef<HTMLDivElement | null>(null);
   const relaySectionRef = useRef<HTMLDivElement | null>(null);
@@ -191,6 +193,31 @@ export function FuelIntegrityPage() {
   const verdicts = verdictsQuery.data;
   const derivations = derivationsQuery.data;
   const summaryEntries = verdicts ? Object.entries(verdicts.summary) : [];
+  const q = search.trim().toLowerCase();
+  const cardRows = (verdicts?.card_rows ?? []).filter((row) => {
+    if (!q) return true;
+    return [row.unit_number, row.fuel_type, row.fraud_classification, row.why, ...(row.rules_matched ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+  const relayRows = (verdicts?.relay_fills ?? []).filter((row) => {
+    if (!q) return true;
+    return [row.station, row.card_unit_number, row.verdict, row.why]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+  const derivedRows = (derivations?.rows ?? []).filter((row) => {
+    if (!q) return true;
+    return [row.unit_number, row.vendor_name, row.state_derived, row.reason, row.confidence]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
 
   if (!companyId) {
     return (
@@ -225,42 +252,55 @@ export function FuelIntegrityPage() {
         </div>
       )}
 
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search unit, fuel type…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-integrity"
+      >
+        <span />
+      </MoneyListToolbar>
+
       <div ref={cardSectionRef}>
-        <V3Panel title="Card purchases" testId="fuel-integrity-card-v3-panel">
+        <FuelBoardSection title="Card purchases" testId="fuel-integrity-card-v3-panel">
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
             <ParityTable
-              rows={verdicts?.card_rows ?? []}
+              rows={cardRows}
               columns={cardCols}
               loading={verdictsQuery.isPending}
               storageKey="fuel-integrity-card-purchases"
               emptyText="No card purchases in this window"
               rowKey={(row) => row.fuel_transaction_id}
+              suppressToolbarSearch
             />
           )}
-        </V3Panel>
+        </FuelBoardSection>
       </div>
 
       <div ref={relaySectionRef}>
-        <V3Panel title="Relay fills — was the truck at the pump?" testId="fuel-integrity-relay-v3-panel">
+        <FuelBoardSection title="Relay fills — was the truck at the pump?" testId="fuel-integrity-relay-v3-panel">
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
             <ParityTable
-              rows={verdicts?.relay_fills ?? []}
+              rows={relayRows}
               columns={relayCols}
               loading={verdictsQuery.isPending}
               storageKey="fuel-integrity-relay-fills"
               emptyText="No Relay fills in this window"
               rowKey={(row) => row.relay_fuel_transaction_id}
+              suppressToolbarSearch
             />
           )}
-        </V3Panel>
+        </FuelBoardSection>
       </div>
 
       <div ref={derivedSectionRef}>
-        <V3Panel
+        <FuelBoardSection
           title="Derived pump time & state"
           subtitle="Computed on read from GPS fuel-stop geofences — writes nothing"
           testId="fuel-integrity-derived-v3-panel"
@@ -279,16 +319,17 @@ export function FuelIntegrityPage() {
                     : "Summary unavailable."}
               </p>
               <ParityTable
-                rows={derivations?.rows ?? []}
+                rows={derivedRows}
                 columns={derivedCols}
                 loading={derivationsQuery.isPending}
                 storageKey="fuel-integrity-derived-time-state"
                 emptyText="No date-only rows needed pump-time/state derivation in this window"
                 rowKey={(row) => row.fuel_transaction_id}
+                suppressToolbarSearch
               />
             </>
           )}
-        </V3Panel>
+        </FuelBoardSection>
       </div>
     </div>
   );

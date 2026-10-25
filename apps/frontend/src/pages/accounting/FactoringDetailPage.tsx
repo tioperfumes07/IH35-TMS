@@ -435,7 +435,7 @@ export function FactoringDetailPage() {
             <Button variant="secondary" onClick={() => setAction(null)}>
               Cancel
             </Button>
-            <Button loading={mutation.isPending} onClick={() => { if (action === "recourse" || action === "void") { setVoidModalOpen(true); } else { mutation.mutate(); } }}>
+            <Button loading={mutation.isPending} onClick={() => { if (action === "recourse" || action === "void") { setVoidModalOpen(true); } else { mutation.mutate(undefined); } }}>
               Confirm
             </Button>
           </div>

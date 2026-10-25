@@ -17,7 +17,6 @@ import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { V3Panel } from "../../components/v3/V3Panel";
 
 // ROUND 443.252 / 443.274-C Settlements-Open board: Settlement column shows the number as a
 // statement link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115)
@@ -285,9 +284,10 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   useEffect(() => { if (openQ.data) setOpenCount(openQ.data.count); }, [openQ.data]);
   useEffect(() => { if (closedQ.data) setClosedCount(closedQ.data.count); }, [closedQ.data]);
 
-  // ROUND 443.250 — Open / Closed boards share Settlements home KPIs; this register is the board
-  // delta (V3Panel title + Pre-Settlement (Open) / Settlement (Closed) pills). Engines unchanged
-  // (listTours open|closed). Keep .ldt-btn pills (verify-settlements-list-button-height-uniform).
+  // ROUND 443.250 / 443.326 — Open / Closed boards share Settlements home KPIs; this register is
+  // the board delta (section title + Pre-Settlement (Open) / Settlement (Closed) pills). Engines
+  // unchanged (listTours open|closed). Keep .ldt-btn pills (verify-settlements-list-button-height-uniform).
+  // Panel unwrap — ParityTable is the board surface.
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
   const panelSubtitle =
     typeof activeQ.data?.voided_count === "number"
@@ -321,14 +321,18 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
           same class of defect as a badge that never renders"). This register permanently excludes
           cancelled/reversed/voided settlements (SETL-REVERSED-HIDE, an owner ruling this PR does
-          not change) with no toggle to see them — the honest disclosure this ruling still owes.
-          Voided count also surfaces on the V3Panel subtitle when known. */}
-      {typeof activeQ.data?.voided_count === "number" ? (
-        <p className="text-xs text-gray-500" data-testid="settlements-tours-voided-count">
-          {rows.length} live, {activeQ.data.voided_count} voided/cancelled (not shown)
-        </p>
-      ) : null}
-      <V3Panel title={panelTitle} subtitle={panelSubtitle} testId="settlements-tours-v3-panel">
+          not change) with no toggle to see them — the honest disclosure this ruling still owes. */}
+      <div data-testid="settlements-tours-v3-panel">
+        <div className="mb-2">
+          <h2 className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+            {panelTitle}
+          </h2>
+          {panelSubtitle ? (
+            <p className="text-xs text-gray-500" data-testid="settlements-tours-voided-count">
+              {panelSubtitle}
+            </p>
+          ) : null}
+        </div>
         {activeQ.isError ? (
           <div className="p-3">
             <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
@@ -362,7 +366,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             }}
           />
         )}
-      </V3Panel>
+      </div>
       {state === "open" ? (
         <p className="text-xs text-[#6B7280]" data-testid="settlements-open-board-footnote">
           The Settlement column shows the P-number; click it to open the tour statement. Ready = 6 checks

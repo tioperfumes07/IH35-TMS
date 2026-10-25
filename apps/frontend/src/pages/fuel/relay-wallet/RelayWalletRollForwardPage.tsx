@@ -4,7 +4,7 @@
  * shown beside it: it is charged to the funding card, never the wallet. Every number opens the documents behind it.
  * Read-only: GET /api/integrations/relay/wallet-roll-forward.
  *
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getRelayWalletRollForward engine unchanged.
+ * ROUND 443.326 — KPI + MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel). getRelayWalletRollForward unchanged.
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
 
@@ -31,6 +32,7 @@ export function RelayWalletRollForwardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [open, setOpen] = useState<{ day: string; bucket: Bucket } | null>(null);
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["fuel", "relay-wallet-roll-forward", companyId],
@@ -38,7 +40,9 @@ export function RelayWalletRollForwardPage() {
     enabled: Boolean(companyId),
   });
 
-  const days = query.data?.days ?? [];
+  const allDays = query.data?.days ?? [];
+  const q = search.trim().toLowerCase();
+  const days = q ? allDays.filter((d) => d.day.toLowerCase().includes(q) || formatDateUS(d.day).toLowerCase().includes(q)) : allDays;
   const totals = query.data?.totals;
 
   const drill = (row: RelayRollForwardDay, bucket: Bucket, cents: number) =>
@@ -126,7 +130,17 @@ export function RelayWalletRollForwardPage() {
           testId="relay-wallet-kpi-deposit-fees"
         />
       </div>
-      <V3Panel
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search day…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="relay-wallet"
+      >
+        <span />
+      </MoneyListToolbar>
+      <FuelBoardSection
         title="Relay wallet — roll-forward"
         subtitle="Deposits − fuel fills − fill fees − lumper = balance, by Relay day. The 3.25% deposit fee is charged to the funding card, not the wallet."
         testId="relay-wallet-roll-forward-v3-panel"
@@ -141,11 +155,12 @@ export function RelayWalletRollForwardPage() {
             storageKey="fuel-relay-wallet-roll-forward"
             emptyText="No Relay deposits or fills yet."
             rowKey={(row) => row.day}
+            suppressToolbarSearch
           />
         )}
-      </V3Panel>
+      </FuelBoardSection>
       {open && openDay ? (
-        <V3Panel
+        <FuelBoardSection
           title={`${BUCKET_LABEL[open.bucket]} — ${formatDateUS(open.day)}`}
           subtitle="The documents behind this number"
           testId="relay-wallet-docs-v3-panel"
@@ -163,7 +178,7 @@ export function RelayWalletRollForwardPage() {
             emptyText="No documents."
             rowKey={(d) => d.id}
           />
-        </V3Panel>
+        </FuelBoardSection>
       ) : null}
     </div>
   );
