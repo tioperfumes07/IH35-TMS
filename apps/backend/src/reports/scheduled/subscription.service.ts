@@ -304,6 +304,44 @@ export async function listDueSubscriptions(now: Date = new Date()): Promise<Sche
   });
 }
 
+/**
+ * LST-F443368 (owner 10-25-2026: "check all the outgoing mails") — every daily report reached the owner TWICE, 63-70 ms
+ * apart (email.email_queue 10-19..10-25: 14 per report per 7 days): IH35-TMS runs 2 instances, both run the every-15-minute tick,
+ * both listDueSubscriptions() the same rows and both deliver before either marks it sent.
+ * Compare-and-set claim: an instance delivers only if it moves next_scheduled_at from the exact value it read. The
+ * loser's UPDATE matches 0 rows and it skips. On a failed delivery the claim is released so the next tick retries.
+ */
+export async function claimSubscriptionRun(
+  sub: Pick<ScheduledSubscription, "uuid" | "operating_company_id" | "next_scheduled_at">,
+  claimUntil: Date,
+): Promise<boolean> {
+  if (!sub.next_scheduled_at) return false;
+  return withLuciaBypass(async (client) => {
+    const res = await client.query(
+      `UPDATE reports.scheduled_subscriptions
+          SET next_scheduled_at = $4::timestamptz, updated_at = now()
+        WHERE uuid = $1::uuid AND operating_company_id = $2::uuid AND next_scheduled_at = $3::timestamptz
+        RETURNING uuid`,
+      [sub.uuid, sub.operating_company_id, sub.next_scheduled_at, claimUntil.toISOString()],
+    );
+    return (res.rowCount ?? 0) === 1;
+  });
+}
+
+/** Give a claimed run back (delivery failed) so the next tick retries it at its original due time. */
+export async function releaseSubscriptionRun(
+  sub: Pick<ScheduledSubscription, "uuid" | "operating_company_id" | "next_scheduled_at">,
+  claimUntil: Date,
+): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    await client.query(
+      `UPDATE reports.scheduled_subscriptions SET next_scheduled_at = $3::timestamptz, updated_at = now()
+        WHERE uuid = $1::uuid AND operating_company_id = $2::uuid AND next_scheduled_at = $4::timestamptz`,
+      [sub.uuid, sub.operating_company_id, sub.next_scheduled_at, claimUntil.toISOString()],
+    );
+  });
+}
+
 export async function markSubscriptionSent(
   uuid: string,
   operatingCompanyId: string,

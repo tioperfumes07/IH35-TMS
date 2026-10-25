@@ -69,7 +69,10 @@ vi.mock("../../../auth/db.js", async (importOriginal) => {
   return {
     ...actual,
     withLuciaBypass: vi.fn(async (fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) => {
-      const query = vi.fn(async () => ({ rows: [], rowCount: 0 }));
+      // LST-F443368: the run claim (UPDATE ... RETURNING uuid) wins unless a test says another instance took it.
+      const query = vi.fn(async (sql: string) =>
+        /RETURNING uuid/.test(String(sql)) ? { rows: [{ uuid: "x" }], rowCount: (globalThis as { __claimLost?: boolean }).__claimLost ? 0 : 1 } : { rows: [], rowCount: 0 },
+      );
       return fn({ query });
     }),
     withCurrentUser: vi.fn(async (_userId: string, fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) => {
@@ -171,6 +174,16 @@ describe("GAP-43 scheduled reports runner", () => {
       toAddresses: ["owner@example.com"],
       templateKey: "report-cadence",
     });
+  });
+
+  it("LST-F443368: a run another instance already claimed sends NOTHING (no double report)", async () => {
+    (globalThis as { __claimLost?: boolean }).__claimLost = true;
+    try {
+      await deliverSubscription(baseSub());
+      expect(enqueueEmail).not.toHaveBeenCalled();
+    } finally {
+      (globalThis as { __claimLost?: boolean }).__claimLost = false;
+    }
   });
 
   it("logs failed delivery when recipients are empty", async () => {
