@@ -14,6 +14,7 @@ import { settlementLabel } from "../../lib/settlementNumber";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TourLegsCell, tourLoadColumns } from "../../components/dispatch/TourLegsCell";
@@ -145,17 +146,18 @@ export function CompanySettlementsRegisterTab({
   return (
     <div className="space-y-2" data-testid="company-settlements-register">
       {q.isError ? <ListErrorBanner message="Failed to load company settlements." onRetry={() => void q.refetch()} /> : null}
-      <ParityTable
-        title="Company settlements"
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={q.isPending && Boolean(companyId)}
-        onRowClick={(r) => onOpen(r.id)}
-        emptyText={companyId ? "No company settlements yet." : "Select a company."}
-        storageKey="settlements-company-register"
-        exportFilename="company-settlements"
-      />
+      <BoardSection title="Company settlements" testId="company-settlements-register-board-section">
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          loading={q.isPending && Boolean(companyId)}
+          onRowClick={(r) => onOpen(r.id)}
+          emptyText={companyId ? "No company settlements yet." : "Select a company."}
+          storageKey="settlements-company-register"
+          exportFilename="company-settlements"
+        />
+      </BoardSection>
     </div>
   );
 }
@@ -193,17 +195,18 @@ function CompanyDriverPicker({
       {q.isError ? (
         <ListErrorBanner message="Failed to load tours." onRetry={() => void q.refetch()} />
       ) : null}
-      <ParityTable
-        title="Closed tours — driver vs company"
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.settlement_id}
-        loading={q.isLoading && Boolean(companyId)}
-        onRowClick={(r) => onSelectSettlement(r.settlement_id)}
-        emptyText={companyId ? "No closed tours yet." : "Select a company."}
-        storageKey="company-driver-picker"
-        exportFilename="company-driver-picker"
-      />
+      <BoardSection title="Closed tours — driver vs company" testId="company-driver-picker-board-section">
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.settlement_id}
+          loading={q.isLoading && Boolean(companyId)}
+          onRowClick={(r) => onSelectSettlement(r.settlement_id)}
+          emptyText={companyId ? "No closed tours yet." : "Select a company."}
+          storageKey="company-driver-picker"
+          exportFilename="company-driver-picker"
+        />
+      </BoardSection>
     </div>
   );
 }
@@ -317,15 +320,16 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
         </div>
       </div>
 
-      <ParityTable
-        title="Loads on this tour"
-        columns={columns}
-        rows={legs}
-        rowKey={(l) => l.load_id}
-        emptyText="No loads on this settlement."
-        storageKey="company-driver-driver-loads"
-        exportFilename="driver-settlement-loads"
-      />
+      <BoardSection title="Loads on this tour" testId="company-driver-driver-loads-board-section">
+        <ParityTable
+          columns={columns}
+          rows={legs}
+          rowKey={(l) => l.load_id}
+          emptyText="No loads on this settlement."
+          storageKey="company-driver-driver-loads"
+          exportFilename="driver-settlement-loads"
+        />
+      </BoardSection>
 
       <div className="ldt-rows" style={{ marginTop: 8 }}>
         <div className="ldt-row"><span>Earnings (gross)</span><span className="ldt-m">{money(ds?.gross_cents)}</span></div>

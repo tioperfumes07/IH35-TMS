@@ -22,6 +22,7 @@ import { SettlementReferenceCell } from "../../components/settlements/Settlement
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { moneyListKpiCard } from "../accounting/moneyListKpiCard";
 
 function formatMoney(cents: number) {
@@ -228,8 +229,8 @@ export function EscrowDeductionsPendingTab() {
           >
             <span />
           </MoneyListToolbar>
+          <BoardSection title="Escrow deductions — pending" testId="escrow-deductions-pending-board-section">
           <ParityTable<EscrowPendingDeduction>
-            title="Escrow deductions — pending"
             columns={columns}
             rows={filteredRows}
             rowKey={(row) => row.id}
@@ -253,6 +254,7 @@ export function EscrowDeductionsPendingTab() {
               </Button>
             )}
           />
+          </BoardSection>
         </>
       ) : null}
 
@@ -265,6 +267,8 @@ export function EscrowDeductionsPendingTab() {
           setReviewNotes("");
         }}
         title="Review Escrow Deduction"
+        sizePreset="md"
+        modalKind="escrow-deduction-review"
       >
         {selected ? (
           <div className="grid gap-4 md:grid-cols-2">

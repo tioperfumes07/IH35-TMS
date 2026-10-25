@@ -13,7 +13,7 @@ import { SettlementsTable } from "./components/SettlementsTable";
 import { SettlementsToursRegister } from "./SettlementsToursRegister";
 import { SettlementsCompanyDriverTab, CompanySettlementsRegisterTab } from "./SettlementsCompanyDriverTab";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
@@ -700,9 +700,8 @@ export function SettlementsPage() {
           onClick={() => setFocus(focusFilter === "held" ? null : "held")}
         />
       </div>
-      <div className="rounded-sm border border-gray-200 bg-white p-2">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
-        <div className="flex flex-wrap gap-2">
+      <BoardSection title="Payment Pipeline" testId="settlements-payment-pipeline-board-section">
+        <div className="flex flex-wrap gap-2 px-3 py-2">
           <Button
             size="sm"
             variant={paymentStates.length === 0 ? "primary" : "secondary"}
@@ -753,7 +752,7 @@ export function SettlementsPage() {
             Manual Paid ({paymentPipeline.manual_paid})
           </Button>
         </div>
-      </div>
+      </BoardSection>
 
       {listQuery.isError || kpiBaseQuery.isError || openBillsQuery.isError ? (
         <ListErrorBanner
@@ -957,17 +956,15 @@ function OpenDriverBillsPanel({
   const settlementReferences = useSettlementReferences(companyId, items.map((bill) => bill.load_id));
   const columns = useMemo(() => buildOpenDriverBillColumns(settlementReferences), [settlementReferences]);
 
-  if (loading) {
-    return (
-      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#4B5563">
-        <p className="text-xs text-gray-500">Loading open driver bills…</p>
-      </DataPanel>
-    );
-  }
+  const title = loading
+    ? "Open Driver Bills · loading…"
+    : `Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}${unknownAmountCount ? ` known · ${unknownAmountCount} awaiting short miles` : ""}`;
   return (
-    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}${unknownAmountCount ? ` known · ${unknownAmountCount} awaiting short miles` : ""}`} accentColor="#4B5563">
-      {items.length === 0 ? (
-        <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
+    <BoardSection title={title} testId="settlements-open-driver-bills-board-section">
+      {loading ? (
+        <p className="px-3 py-2 text-xs text-gray-500">Loading open driver bills…</p>
+      ) : items.length === 0 ? (
+        <p className="px-3 py-2 text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
         <ParityTable
           storageKey="settlements-open-driver-bills"
@@ -978,7 +975,7 @@ function OpenDriverBillsPanel({
           pageSize={Math.max(1, items.length)}
         />
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }
 

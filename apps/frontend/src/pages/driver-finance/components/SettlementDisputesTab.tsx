@@ -17,6 +17,7 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useStagedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -292,22 +293,23 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           </button>
         </p>
       ) : (
-        // ACCT-F3536: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
-        <ParityTable<SettlementDisputeRow>
-          title="Settlement disputes"
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={listState.isLoading}
-          emptyText="No disputes found for current filter."
-          storageKey="settlement-disputes"
-          exportFilename="settlement-disputes"
-          rowActions={(row) => (
-            <Button size="sm" variant="secondary" onClick={() => openDispute(row)}>
-              Open
-            </Button>
-          )}
-        />
+        // ACCT-F3536 + 443.280 — ParityTable in shared BoardSection.
+        <BoardSection title="Settlement disputes" testId="settlement-disputes-board-section">
+          <ParityTable<SettlementDisputeRow>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={listState.isLoading}
+            emptyText="No disputes found for current filter."
+            storageKey="settlement-disputes"
+            exportFilename="settlement-disputes"
+            rowActions={(row) => (
+              <Button size="sm" variant="secondary" onClick={() => openDispute(row)}>
+                Open
+              </Button>
+            )}
+          />
+        </BoardSection>
       )}
 
       {detail ? (

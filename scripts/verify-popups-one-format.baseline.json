@@ -25,7 +25,6 @@
     "pages/dispatch/NeedsDeliveryAuthorizationPage.tsx",
     "pages/dispatch/components/BookLoadModalV4.tsx",
     "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx",
-    "pages/driver-finance/CashAdvanceRequestsPage.tsx",
     "pages/driver/ArrivalPrompt.tsx",
     "pages/driver/StatusSuggestionPrompt.tsx",
     "pages/factoring/FactorAdmin.tsx",

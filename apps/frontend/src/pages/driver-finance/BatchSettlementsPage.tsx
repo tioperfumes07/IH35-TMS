@@ -14,8 +14,9 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import {
   listBatchSettlementEligibleLoads,
   postBatchSettlements,
@@ -25,8 +26,6 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
-
 type BatchRow = {
   key: string;
   driver_id: string;
@@ -210,34 +209,35 @@ export function BatchSettlementsPage() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#F7F8FA]" data-page="batch-settlements" data-b5-batch-settlements="1">
-      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-      <div className="mx-auto w-full max-w-[1400px] space-y-4 p-4">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h1 className="flex items-center gap-1 text-page-title font-semibold text-[#0F1219]">
-              Batch Settlements
-              <InfoPopover label="About batch settlements">
-                <span className="block">
-                  §23 grid — driver + period auto-pulls SET-01 loads; Save all posts each row through the Settlement Creator
-                  engine (driver_finance.* only). One JE per settlement.
-                </span>
-              </InfoPopover>
-            </h1>
-          </div>
+    <SettlementsSubNavWrapper
+      title="Batch Settlements"
+      subtitle="Driver + period grid — Save all posts through Settlement Creator"
+      crumbs={[{ label: "Batch Settlements", href: "/driver-finance/settlements/batch" }]}
+      actions={
+        <span className="inline-flex items-center gap-2">
+          <InfoPopover label="About batch settlements">
+            <span className="block">
+              §23 grid — driver + period auto-pulls SET-01 loads; Save all posts each row through the Settlement Creator
+              engine (driver_finance.* only). One JE per settlement.
+            </span>
+          </InfoPopover>
           <Link
             className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]"
             to="/driver-finance/settlements?creator=1"
           >
             Single Settlement Creator
           </Link>
-        </div>
+        </span>
+      }
+    >
+      <div className="space-y-4" data-page="batch-settlements" data-b5-batch-settlements="1">
 
         {saveMut.isError && (
           <ListErrorBanner message={userFacingApiError(saveMut.error, "Batch save failed")} />
         )}
 
-        <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="batch-settlements-grid">
+        {/* 443.280 — toolbar outside BoardSection; no legacy bordered <section> wrap (rebuild, not layer). */}
+        <div className="space-y-3" data-section="batch-settlements-grid">
           <p className="text-column-header font-bold uppercase text-[#4B5563]">Paste / fill-down / duplicate</p>
           <textarea
             ref={pasteRef}
@@ -296,10 +296,9 @@ export function BatchSettlementsPage() {
             )}
           </div>
 
-          {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). Rows are edited in place, so each cell
-              resolves its row's position by key (sorting the view never re-targets an edit to another row). */}
+          {/* 443.99 + 443.280 — ParityTable in shared BoardSection (no NavyPageSubNav / PageHeader). */}
+          <BoardSection title="Settlements — batch entry" testId="batch-settlements-board-section">
           <ParityTable<BatchRow>
-            title="Settlements — batch entry"
             embedded
             rows={rows}
             rowKey={(row) => row.key}
@@ -560,8 +559,9 @@ export function BatchSettlementsPage() {
               },
             ]}
           />
-        </section>
+          </BoardSection>
+        </div>
       </div>
-    </div>
+    </SettlementsSubNavWrapper>
   );
 }

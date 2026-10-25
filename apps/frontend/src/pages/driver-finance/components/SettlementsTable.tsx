@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -235,24 +236,26 @@ export function SettlementsTable({
   );
 
   return (
-    <ParityTable<SettlementListRow>
-      title="Driver settlements"
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => row.id}
-      storageKey="driver-finance-settlements-list"
-      tableTestId="driver-finance-settlements-table"
-      loading={loading}
-      emptyText="No settlements found."
-      sortKey={sortKey}
-      sortDirection={sortDirection}
-      onSortChange={onSortChange}
-      enableColumnResize
-      selectable={selectable}
-      batchActions={batchActions}
-      maxSelectable={maxSelectable}
-      onSelectionCapExceeded={onSelectionCapExceeded}
-      suppressToolbarSearch={suppressToolbarSearch}
-    />
+    // 443.280 — Payments list uses shared BoardSection (not ParityTable title chrome alone).
+    <BoardSection title="Driver settlements" testId="settlements-payments-list-board-section">
+      <ParityTable<SettlementListRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        storageKey="driver-finance-settlements-list"
+        tableTestId="driver-finance-settlements-table"
+        loading={loading}
+        emptyText="No settlements found."
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
+        enableColumnResize
+        selectable={selectable}
+        batchActions={batchActions}
+        maxSelectable={maxSelectable}
+        onSelectionCapExceeded={onSelectionCapExceeded}
+        suppressToolbarSearch={suppressToolbarSearch}
+      />
+    </BoardSection>
   );
 }
