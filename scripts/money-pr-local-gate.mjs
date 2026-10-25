@@ -1034,6 +1034,15 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-banking-home-preview-parity",
     ["apps/frontend/src/pages/banking/", "apps/frontend/src/pages/factoring/", "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", "scripts/verify-banking-home-preview-parity.mjs"],
   ],
+  // FINAL-2 D059 — Scenario tracker certification timestamps are MM/DD/YYYY h:mm AM/PM CT (never raw +00).
+  [
+    "verify-homepage-scenario-tracker-staleness",
+    [
+      "apps/backend/src/home/scenario-tracker.service.ts",
+      "apps/frontend/src/pages/program/scenario-tracker/",
+      "scripts/verify-homepage-scenario-tracker-staleness.mjs",
+    ],
+  ],
   // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
   [
     "verify-no-opco-filter-on-tables-without-it",

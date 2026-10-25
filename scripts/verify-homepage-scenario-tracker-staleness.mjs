@@ -15,6 +15,7 @@ const HOME = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHo
 const STALE = "apps/frontend/src/pages/program/scenario-tracker/staleness.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const SPEC = "docs/specs/HOMEPAGE-LIVE-SCENARIO-TRACKER-BUILD-SPEC-2026-08-04.md";
+const SVC = "apps/backend/src/home/scenario-tracker.service.ts";
 
 export function collectProblems(root = ROOT) {
   const problems = [];
@@ -107,6 +108,28 @@ export function collectProblems(root = ROOT) {
     }
   }
 
+  // D059 — certification timestamps in evidence notes are MM/DD/YYYY h:mm AM/PM CT (never raw +00).
+  const svc = readRel(SVC);
+  if (!svc) {
+    problems.push(`missing ${SVC}`);
+  } else {
+    if (!/export function formatCertVerifiedAt\b/.test(svc)) {
+      problems.push(`${SVC}: D059 must export formatCertVerifiedAt`);
+    }
+    if (!/formatCertVerifiedAt\(cert\.verified_at\)/.test(svc)) {
+      problems.push(`${SVC}: D059 evidence notes must use formatCertVerifiedAt(cert.verified_at)`);
+    }
+    if (/@ \$\{cert\.verified_at\}/.test(svc)) {
+      problems.push(`${SVC}: D059 forbids raw \${cert.verified_at} in evidence notes`);
+    }
+    if (!/timeZone:\s*["']America\/Chicago["']/.test(svc)) {
+      problems.push(`${SVC}: D059 formatCertVerifiedAt must render America/Chicago`);
+    }
+    if (!/month:\s*["']2-digit["']/.test(svc) || !/day:\s*["']2-digit["']/.test(svc)) {
+      problems.push(`${SVC}: D059 formatCertVerifiedAt must zero-pad MM/DD`);
+    }
+  }
+
   return problems;
 }
 
@@ -133,11 +156,24 @@ if (SELFTEST) {
       "apps/backend/src/home/home.routes.ts",
       "/* LV-115 */ let entity: string | null = isUuid ? rawEntity : null; unknown_entity; WHERE upper(code) = upper($1)\n",
     );
+    mk(
+      SVC,
+      `export function formatCertVerifiedAt(raw) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago", month: "2-digit", day: "2-digit", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }).format(new Date(raw));
+}
+notes.push(\`cert by \${cert.verified_by} @ \${formatCertVerifiedAt(cert.verified_at)}\`);
+`,
+    );
     const good = collectProblems(tmp);
     mk(HOME, "const POLL_MS = 60_000; refetchIntervalInBackground: true; no banner\n");
     const bad = collectProblems(tmp);
-    if (good.length !== 0 || bad.length < 2) {
-      console.error(`${LABEL} SELFTEST FAIL`, { good, bad });
+    mk(SVC, "notes.push(`cert by ${cert.verified_by} @ ${cert.verified_at}`);\n");
+    const d059Bad = collectProblems(tmp);
+    if (good.length !== 0 || bad.length < 2 || !d059Bad.some((p) => p.includes("D059"))) {
+      console.error(`${LABEL} SELFTEST FAIL`, { good, bad, d059Bad });
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST OK`);
