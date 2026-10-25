@@ -518,7 +518,7 @@ export function DriverSchedulerGridPage() {
         </div>
       </Modal>
 
-      <Modal
+      <Modal size="sm"
         open={Boolean(cancelTarget)}
         onClose={closeCancel}
         title="Cancel temp cover assignment"

@@ -111,7 +111,7 @@ export function TerminateConfirmModal({
     })) ?? [];
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Terminate — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(terminationReasonId || summary || eventDate !== companyToday())} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
+    <Modal size="sm" open={open} onClose={handleClose} title={`Terminate — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(terminationReasonId || summary || eventDate !== companyToday())} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
         <p className="text-xs text-gray-600">
           Creates a termination safety event and updates driver status to Terminated.

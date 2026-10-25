@@ -2283,7 +2283,7 @@ export function DriverDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={Boolean(voidTargetEventId)} onClose={() => setVoidTargetEventId(null)} title="Void this safety event?">
+      <Modal size="sm" open={Boolean(voidTargetEventId)} onClose={() => setVoidTargetEventId(null)} title="Void this safety event?">
         <form
           className="space-y-3"
           onSubmit={(event) => {

@@ -60,7 +60,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Suspend — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(reason)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
+    <Modal size="sm" open={open} onClose={handleClose} title={`Suspend — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(reason)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
         <p className="text-xs text-gray-600">
           Sets driver status to Inactive and records a safety incident for audit.
