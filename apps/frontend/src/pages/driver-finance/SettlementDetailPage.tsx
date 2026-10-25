@@ -438,9 +438,14 @@ export function SettlementDetailPage() {
         <V3KpiTile
           label="Tour"
           value={
-            settlement.period_start || settlement.period_end
-              ? `${formatDateUS(String(settlement.period_start ?? "")) || "—"} → ${formatDateUS(String(settlement.period_end ?? "")) || "—"}`
-              : "—"
+            // 443.292-B: prefer trip_started_at/trip_closed_at (actual trip window set at dispatch)
+            // over period_start/period_end (set at settlement-creation time, not updated on tour close).
+            (() => {
+              const tStart = settlement.trip_started_at ? String(settlement.trip_started_at) : String(settlement.period_start ?? "");
+              const tEnd = settlement.trip_closed_at ? String(settlement.trip_closed_at) : null;
+              if (!tStart) return "—";
+              return `${formatDateUS(tStart) || "—"} → ${tEnd ? formatDateUS(tEnd) || "—" : "Open"}`;
+            })()
           }
           sub={
             readout && readout.legs.length > 0
