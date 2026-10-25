@@ -279,7 +279,9 @@ export function SettlementsCashAdvancesBoard() {
         onClearAll={() => setSearch("")}
         activeFilterCount={0}
         testIdPrefix="settlements-cash-advances"
-      />
+      >
+        {null}
+      </MoneyListToolbar>
 
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, alignItems: "start" }}
