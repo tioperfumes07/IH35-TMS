@@ -4,8 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../../components/Button";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -60,19 +59,10 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
     },
   });
 
-  useEscapeKey(onClose, open);
-
-  if (!open || !card) return null;
+  if (!card) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold">Convert Issue to WO</h3>
-          <ModalCloseButton title="Convert Issue to WO" onClose={onClose} />
-        </div>
-
+    <Modal open={open} onClose={onClose} title="Convert Issue to WO" size="sm">
         <div className="space-y-2">
           <div className="border-t border-gray-200 bg-gray-50 p-2">
             <EntityLinkOrTombstone kind="unit" id={card.unit_id} name={card.unit_number} noun="Unit" /> ·{" "}
@@ -125,7 +115,6 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
             + Create Work Order
           </Button>
         </div>
-      </div>
-    </>
+    </Modal>
   );
 }

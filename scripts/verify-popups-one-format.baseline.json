@@ -3,23 +3,7 @@
   "measured_at": "2026-10-25",
   "overlays": [
     "components/dispatch/LoadDetailDrawer.tsx",
-    "components/dispatch/LoadStopsRecordTab.tsx",
-    "components/dispatch/tabs/FactoringTab.tsx",
-    "components/driver-inbox/DriverInbox.tsx",
-    "components/reports/SubscriptionEditor.tsx",
-    "pages/compliance/HosTrackerSection.tsx",
-    "pages/dispatch/NeedsDeliveryAuthorizationPage.tsx",
     "pages/dispatch/components/BookLoadModalV4.tsx",
-    "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx",
-    "pages/driver/ArrivalPrompt.tsx",
-    "pages/driver/StatusSuggestionPrompt.tsx",
-    "pages/inventory/PartCreateDrawer.tsx",
-    "pages/inventory/PartEditDrawer.tsx",
-    "pages/maintenance/FaultDraftsPage.tsx",
-    "pages/maintenance/WorkOrderDetailPage.tsx",
-    "pages/maintenance/components/ConvertIssueToWOModal.tsx",
-    "pages/safety/PermitsPage.tsx",
-    "pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
-    "pages/work-orders/WorkOrdersConsoleDetailPage.tsx"
+    "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx"
   ]
 }
