@@ -215,7 +215,9 @@ export const FILTER_CONTROL_SIZE_CLASS = "h-8.5 min-w-[10rem] text-xs";
  * unified to h-9 so every form field shares one height regardless of whether the element is a
  * plain <input> or a picker. `Combobox`'s optional `size="sm"` prop opts into this scale;
  * the default stays `size="md"` (FILTER_CONTROL_SIZE_CLASS) for toolbar filters. */
-export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-9 text-xs";
+/** Owner design law rule 2 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md): a field being edited in a form is
+ * 40px — was h-9 (36px), off the law; owner 10-25-2026 4:05 PM "the creators are wrong not correctly formatted". */
+export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-10 text-xs";
 
 /** CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured, supersedes the 2026-09-01
  * UI-CONTROL-LAW-SPEC h-9/h-8 scale below) — the app's ONE button scale is now the banner

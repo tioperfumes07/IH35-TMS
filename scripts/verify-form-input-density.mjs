@@ -38,7 +38,7 @@ for (const file of walk(ROOT)) {
 if (failures.length) {
   console.error("verify:form-input-density — FAIL");
   console.error(`  Found ${failures.length} occurrence(s) of the oversized form-input signature "${SIGNATURE}".`);
-  console.error("  Use QuickBooks density instead: inputs/selects -> `h-9 px-2 text-[13px]` (or FORM_INPUT_CLASS); textareas -> `px-2 py-1.5 text-[13px]`.");
+  console.error("  Use QuickBooks density instead: inputs/selects -> FORM_INPUT_CLASS (h-10 / 40px, text-xs 12px); textareas -> FORM_TEXTAREA_CLASS.");
   for (const f of failures) console.error("  - " + f);
   process.exit(1);
 }

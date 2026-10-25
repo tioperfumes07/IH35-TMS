@@ -11,7 +11,8 @@
 //
 // h-9 (36px) fixed height keeps every input the same height and is an adequate
 // tap target; text-xs is the locked 12px body size.
-export const FORM_INPUT_CLASS = "h-9 w-full rounded-sm border border-gray-300 px-2 text-xs";
+// Owner design law rule 2: 40px for a field being edited in a form (was h-9 / 36px — off the law, 10-25-2026).
+export const FORM_INPUT_CLASS = "h-10 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 export const FORM_SELECT_CLASS = FORM_INPUT_CLASS;
 

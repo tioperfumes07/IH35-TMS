@@ -91,6 +91,7 @@ export function MoneyInput({
           display token. Previously text-right + pl-5 floated the value to the far edge, reading "$   0.00". */}
       <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span>
       <input
+        data-control-kind="money"
         id={id}
         name={name}
         aria-label={ariaLabel}

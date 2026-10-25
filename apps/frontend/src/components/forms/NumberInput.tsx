@@ -60,6 +60,7 @@ export function NumberInput({
   return (
     <div className={`relative ${layoutClassName ?? ""}`}>
       <input
+        data-control-kind="number"
         id={id}
         name={name}
         aria-label={ariaLabel}
