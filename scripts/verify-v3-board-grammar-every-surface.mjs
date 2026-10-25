@@ -128,10 +128,10 @@ const SURFACES = /** @type {Surface[]} */ ([
     forbid: ["PageHeader", "NavyPageSubNav"],
   },
   {
+    // 443.280 — Open/Closed FULL board: V3KpiTile + MoneyListToolbar + ParityTable in this surface.
     id: "SettlementsToursRegister",
     file: "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx",
     forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
-    chromeOnly: true,
   },
   {
     id: "FactoringListPage",

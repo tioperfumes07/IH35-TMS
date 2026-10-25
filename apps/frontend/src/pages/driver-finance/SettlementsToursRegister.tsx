@@ -1,14 +1,18 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { settlementNumber } from "../../lib/settlementNumber";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatDateUS } from "../../lib/formatDate";
+import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { closeTour, getTourReadout, listTours, type TourListRow } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
@@ -17,6 +21,32 @@ import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { V3 } from "../../design/v3-tokens";
+import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
+
+function startOfWeekSunday(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - x.getDay());
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function isInThisPeriod(s: SettlementListRow, periodStart: Date): boolean {
+  const end = new Date(s.period_end);
+  if (Number.isNaN(end.getTime())) return false;
+  return end.getTime() >= periodStart.getTime();
+}
+
+function isYtd(s: SettlementListRow, year: number): boolean {
+  const end = new Date(s.period_end);
+  return !Number.isNaN(end.getTime()) && end.getFullYear() === year;
+}
+
+function formatUsd(dollars: number): string {
+  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
 
 // ROUND 443.252 / 443.274-C Settlements-Open board: Settlement column shows the number as a
 // statement link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115)
@@ -261,8 +291,15 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
   );
 }
 
+/**
+ * ROUND 443.280 — Settlements › Open / Closed FULL board (docs/design/v3/Settlements-Open|Closed).
+ * Surface mounts V3KpiTile + MoneyListToolbar + BoardSection + ParityTable (not chromeOnly).
+ * Engines unchanged: listTours(open|closed). Keep .ldt-btn pills (height-uniform guard).
+ */
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState("");
   // 443.280-A — Open / Closed are own Settlements tabs (?tab=open|closed). Prefer tab over legacy tour_state.
   const tabHint =
     searchParams.get("tab") === "open" || searchParams.get("tab") === "closed"
@@ -284,73 +321,220 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   useEffect(() => { if (openQ.data) setOpenCount(openQ.data.count); }, [openQ.data]);
   useEffect(() => { if (closedQ.data) setClosedCount(closedQ.data.count); }, [closedQ.data]);
 
-  // ROUND 443.250 / 443.326 — Open / Closed boards share Settlements home KPIs; this register is
-  // the board delta (section title + Pre-Settlement (Open) / Settlement (Closed) pills). Engines
-  // unchanged (listTours open|closed). Keep .ldt-btn pills (verify-settlements-list-button-height-uniform).
-  // Panel unwrap — ParityTable is the board surface.
+  const kpiBaseQuery = useQuery({
+    queryKey: ["driver-finance", "settlements-kpi-base", companyId, "tours-v3"],
+    queryFn: () => listSettlements(companyId),
+    enabled: Boolean(companyId),
+  });
+  const openBillsQuery = useQuery({
+    queryKey: ["driver-finance", "open-driver-bills", companyId, "tours-v3"],
+    queryFn: () => getOpenDriverBills(companyId),
+    enabled: Boolean(companyId),
+  });
+
+  const periodStart = useMemo(() => startOfWeekSunday(new Date()), []);
+  const ytdYear = new Date().getFullYear();
+  const serverKpi = kpiBaseQuery.data?.kpi;
+  const kpiSettlements = kpiBaseQuery.data?.settlements ?? [];
+  const c = S443326.preSettlements;
+
+  const totalUnpaid = kpiBaseQuery.isError
+    ? null
+    : (serverKpi?.total_unpaid ?? kpiSettlements.filter((s) => s.status !== "paid").length);
+  const thisPeriod = kpiBaseQuery.isError
+    ? null
+    : (serverKpi?.this_period ?? kpiSettlements.filter((s) => isInThisPeriod(s, periodStart)).length);
+  const driverPayThisPeriod = kpiBaseQuery.isError
+    ? null
+    : serverKpi != null
+      ? formatUsd(Number(serverKpi.driver_pay_this_period ?? 0))
+      : formatUsd(
+          kpiSettlements
+            .filter((s) => isInThisPeriod(s, periodStart) && s.status !== "cancelled")
+            .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0),
+        );
+  const driversWithDebt = kpiBaseQuery.isError
+    ? null
+    : (serverKpi?.drivers_with_debt ??
+      kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length);
+  const ytdSettlements = kpiBaseQuery.isError
+    ? null
+    : (serverKpi?.ytd_settlements ?? kpiSettlements.filter((s) => isYtd(s, ytdYear)).length);
+  const openBills = openBillsQuery.isError
+    ? null
+    : (openBillsQuery.data?.open_driver_bills?.total_count ?? null);
+
+  const driverPaySub = useMemo(() => {
+    if (kpiBaseQuery.isError) return c.kpiDriverPaySubSum;
+    const thisWeekStart = periodStart.getTime();
+    const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
+    let thisNet = 0;
+    let lastNet = 0;
+    for (const s of kpiSettlements) {
+      if (s.status === "cancelled") continue;
+      const end = new Date(s.period_end).getTime();
+      if (Number.isNaN(end)) continue;
+      if (end >= thisWeekStart) thisNet += Number(s.net_pay ?? 0);
+      else if (end >= lastWeekStart && end < thisWeekStart) lastNet += Number(s.net_pay ?? 0);
+    }
+    const delta = thisNet - lastNet;
+    if (delta === 0) return c.kpiDriverPaySubFlat;
+    if (delta > 0) {
+      return (
+        <span style={{ fontWeight: 600, color: V3.green }} data-testid="settlements-tours-kpi-pay-trend">
+          {c.kpiDriverPaySubUp}
+        </span>
+      );
+    }
+    return (
+      <span style={{ fontWeight: 600, color: V3.red }} data-testid="settlements-tours-kpi-pay-trend">
+        {c.kpiDriverPaySubDown}
+      </span>
+    );
+  }, [c.kpiDriverPaySubDown, c.kpiDriverPaySubFlat, c.kpiDriverPaySubSum, c.kpiDriverPaySubUp, kpiBaseQuery.isError, kpiSettlements, periodStart]);
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const hay = [
+        r.driver_name,
+        r.unit_number,
+        r.display_id,
+        r.settlement_id,
+        tourLabel(r),
+        waitingOnReason(r),
+        ...(r.legs ?? []).map((l) => l.load_number),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rows, search]);
+
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
   const panelSubtitle =
     typeof activeQ.data?.voided_count === "number"
-      ? `${rows.length} live · ${activeQ.data.voided_count} voided/cancelled (not shown)`
+      ? `${filteredRows.length} live · ${activeQ.data.voided_count} voided/cancelled (not shown)`
       : undefined;
 
   return (
     <div
-      className="space-y-2"
+      className="space-y-3"
       data-testid="settlements-tours-view"
       data-surface="load-detail"
       data-settlements-tours-v3="1"
     >
-      <div className="flex flex-wrap items-center gap-1" data-testid="settlements-tours-pills">
-        {(["open", "closed"] as const).map(s => (
-          <button
-            key={s}
-            type="button"
-            data-testid={`settlements-tours-pill-${s}`}
-            aria-pressed={state === s}
-            onClick={() => setState(s)}
-            className={`ldt-btn ${state === s ? "p" : "g"}`}
-          >
-            {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
-            <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
-              {(s === "open" ? openCount : closedCount) ?? "\u2014"}
-            </span>
-          </button>
-        ))}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+          gap: 8,
+          fontFamily: V3.font,
+        }}
+        data-testid="settlements-tours-kpi-strip"
+        data-settlements-tours-v3-kpis="1"
+      >
+        <V3KpiTile
+          label={c.kpiTotalUnpaid}
+          value={display(totalUnpaid === null ? null : Math.round(Number(totalUnpaid)))}
+          sub={c.kpiTotalUnpaidSub}
+          testId="settlements-tours-kpi-total-unpaid"
+          onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
+        />
+        <V3KpiTile
+          label={c.kpiThisPeriod}
+          value={display(thisPeriod === null ? null : Math.round(Number(thisPeriod)))}
+          sub={c.kpiThisPeriodSub}
+          testId="settlements-tours-kpi-this-period"
+          onClick={() => navigate("/driver-finance/settlements")}
+        />
+        <V3KpiTile
+          label={c.kpiDriverPay}
+          value={display(driverPayThisPeriod)}
+          sub={driverPaySub}
+          testId="settlements-tours-kpi-driver-pay"
+          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+        />
+        <V3KpiTile
+          label={c.kpiDriversDebt}
+          value={display(driversWithDebt === null ? null : Math.round(Number(driversWithDebt)))}
+          sub={c.kpiDriversDebtSub}
+          tone={typeof driversWithDebt === "number" && driversWithDebt > 0 ? "red" : "ink"}
+          testId="settlements-tours-kpi-debt"
+          onClick={() => navigate("/driver-finance/settlements?tab=payments&focus=debt")}
+        />
+        <V3KpiTile
+          label={c.kpiYtd}
+          value={display(ytdSettlements === null ? null : Math.round(Number(ytdSettlements)))}
+          sub={preSettlementsYtdSub(ytdYear)}
+          testId="settlements-tours-kpi-ytd"
+          onClick={() => navigate("/driver-finance/settlements")}
+        />
+        <V3KpiTile
+          label={c.kpiOpenBills}
+          value={display(openBills === null ? null : Math.round(openBills))}
+          sub={c.kpiOpenBillsSub}
+          testId="settlements-tours-kpi-open-bills"
+          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+        />
       </div>
-      {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
-          same class of defect as a badge that never renders"). This register permanently excludes
-          cancelled/reversed/voided settlements (SETL-REVERSED-HIDE, an owner ruling this PR does
-          not change) with no toggle to see them — the honest disclosure this ruling still owes. */}
-      <div data-testid="settlements-tours-v3-panel">
-        <div className="mb-2">
-          <h2 className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
-            {panelTitle}
-          </h2>
-          {panelSubtitle ? (
-            <p className="text-xs text-gray-500" data-testid="settlements-tours-voided-count">
-              {panelSubtitle}
-            </p>
-          ) : null}
+
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search settlement, driver, unit, load…"
+        searchTestId="settlements-tours-search-input"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="settlements-tours"
+      >
+        <div className="flex flex-wrap items-center gap-1" data-testid="settlements-tours-pills">
+          {(["open", "closed"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              data-testid={`settlements-tours-pill-${s}`}
+              aria-pressed={state === s}
+              onClick={() => setState(s)}
+              className={`ldt-btn ${state === s ? "p" : "g"}`}
+            >
+              {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
+              <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
+                {(s === "open" ? openCount : closedCount) ?? "\u2014"}
+              </span>
+            </button>
+          ))}
         </div>
+      </MoneyListToolbar>
+
+      {/* R-102-B item 5 — cancelled/reversed permanently excluded (SETL-REVERSED-HIDE); subtitle discloses. */}
+      <BoardSection
+        title={panelTitle}
+        subtitle={panelSubtitle}
+        testId="settlements-tours-v3-panel"
+        onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
+      >
         {activeQ.isError ? (
           <div className="p-3">
             <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
           </div>
         ) : (
           <ParityTable
-            columns={TOUR_COLUMNS(state, companyId, rows)}
-            rows={rows}
-            rowKey={r => r.settlement_id}
+            columns={TOUR_COLUMNS(state, companyId, filteredRows)}
+            rows={filteredRows}
+            rowKey={(r) => r.settlement_id}
             loading={activeQ.isLoading}
             emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
             storageKey={`settlements-module-tours-${state}-v3`}
             exportFilename={`settlements-tours-${state}`}
             tableTestId={`settlements-tours-table-${state}`}
+            suppressToolbarSearch
             enableColumnReorder
             enableColumnResize
             expandMode="single"
-            renderExpanded={r => (
+            renderExpanded={(r) => (
               <div className="p-3" data-testid={`settlements-tour-expand-${state}`}>
                 {state === "open"
                   ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
@@ -366,7 +550,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             }}
           />
         )}
-      </div>
+      </BoardSection>
       {state === "open" ? (
         <p className="text-xs text-[#6B7280]" data-testid="settlements-open-board-footnote">
           The Settlement column shows the P-number; click it to open the tour statement. Ready = 6 checks
