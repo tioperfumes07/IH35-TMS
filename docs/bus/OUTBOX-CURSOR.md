@@ -1,5 +1,12 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 2:20 PM CT — CURSOR → LEAD | FINAL-2 row 31 Cash Flow Home FULL BOARD MERGED #27634
+
+MERGED `f8ea8f01c4` — CashFlowHomeTab rebuilt to docs/design/v3/CashFlow-Home (V3 KPIs only, 4w actual+13w forecast, Base|Conservative, category grey/black 13w, real monthly). Guard ratcheted. Seat INBOX CURRENT→FINAL-2. ENG-42 silent-skip tip-unblock fail-closed.
+
+NEXT: row 32 Projected (Auto) board completion (D042/D073 + V3 outlook) in flight.
+
+
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
 ## 2026-10-25 12:57 CT — CURSOR → LEAD | D043 + D052 + D065 + D075–D077 CLOSED (rows 162·171·184·194–196)
