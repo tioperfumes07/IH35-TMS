@@ -49,16 +49,19 @@ for (const check of PAGE_CHECKS) {
   }
   const navMarkerOk = check.navMarkers.every((marker) => {
     if (marker === "NavLink") {
-      if (source.includes("NavLink") || source.includes("NavyPageSubNav")) return true;
+      if (source.includes("NavLink") || source.includes("NavyPageSubNav") || source.includes("HoverDropdownNav")) return true;
       // 443.326 board grammar moved the sub-nav into a local board-chrome component (e.g. FactoringBoardChrome
-      // renders <NavyPageSubNav items={subnavItems} />). Follow the page's relative imports one level: a
-      // sibling component that renders NavyPageSubNav/NavLink and receives the page's route-manifest items counts.
+      // renders <HoverDropdownNav items={…} /> from route-manifest subnavItems). Follow relative imports one level.
       for (const m of source.matchAll(/from\s+"(\.\/[A-Za-z0-9_-]+)"/g)) {
         const sib = path.join(path.dirname(abs), `${m[1]}.tsx`);
         if (!fs.existsSync(sib)) continue;
         const sibSrc = fs.readFileSync(sib, "utf8");
         const name = path.basename(m[1]);
-        if ((sibSrc.includes("NavyPageSubNav") || sibSrc.includes("NavLink")) && source.includes(`<${name}`) && source.includes("subnavItems")) return true;
+        if (
+          (sibSrc.includes("NavyPageSubNav") || sibSrc.includes("NavLink") || sibSrc.includes("HoverDropdownNav")) &&
+          source.includes(`<${name}`) &&
+          source.includes("subnavItems")
+        ) return true;
       }
       return false;
     }

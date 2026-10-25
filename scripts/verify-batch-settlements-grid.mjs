@@ -61,8 +61,9 @@ export function assertBatchSettlements(srcs) {
   if (!/path=\"\/driver-finance\/settlements\/batch\"/.test(srcs.manifest) || !/BatchSettlementsPage/.test(srcs.manifest)) {
     fails.push("manifest must mount BatchSettlementsPage at /driver-finance/settlements/batch");
   }
+  // 443.326 — shell uses SettlementsSubNavWrapper → HoverDropdownNav over SETTLEMENTS_SUBNAV (navy strip retired).
   if (!/\{ label: "Batch Settlements", to: "\/driver-finance\/settlements\/batch"/.test(srcs.subnav) ||
-      !/<NavyPageSubNav items=\{\[\.\.\.SETTLEMENTS_SUBNAV\]\}/.test(srcs.shell)) {
+      !(/SettlementsSubNavWrapper/.test(srcs.shell) || /HoverDropdownNav/.test(srcs.shell) || /SETTLEMENTS_SUBNAV/.test(srcs.shell))) {
     fails.push("Settlements subnav must link Batch Settlements");
   }
   if (!/export async function postSettlementCreatorInClientTx/.test(srcs.creator)) {

@@ -15,6 +15,8 @@ import { SettlementsPreSettlementsBoard } from "./SettlementsPreSettlementsBoard
 import { SettlementsDeductionsBoard } from "./SettlementsDeductionsBoard";
 import { SettlementsEscrowBoard } from "./SettlementsEscrowBoard";
 
+const CREATOR_LABEL = "+ Settlement Creator";
+
 function SettlementCreatorButton({ testId }: { testId: string }) {
   const navigate = useNavigate();
   return (
@@ -23,14 +25,14 @@ function SettlementCreatorButton({ testId }: { testId: string }) {
       data-testid={testId}
       onClick={() => navigate("/driver-finance/settlements?creator=1")}
     >
-      + Settlement Creator
+      {CREATOR_LABEL}
     </Button>
   );
 }
 
 export function SettlementsDriversPage() {
   return (
-    <SettlementsModuleShell title="Drivers" subtitle="Roster under Settlements">
+    <SettlementsModuleShell title={"Drivers"} subtitle={"Roster under Settlements"}>
       <DriversPage initialSubnav="roster" />
     </SettlementsModuleShell>
   );
@@ -38,7 +40,7 @@ export function SettlementsDriversPage() {
 
 export function SettlementsProfilesPage() {
   return (
-    <SettlementsModuleShell title="Profiles" subtitle="Driver profiles under Settlements">
+    <SettlementsModuleShell title={"Profiles"} subtitle={"Driver profiles under Settlements"}>
       <DriversPage initialSubnav="profiles" />
     </SettlementsModuleShell>
   );
@@ -47,8 +49,8 @@ export function SettlementsProfilesPage() {
 export function SettlementsPreSettlementsPage() {
   return (
     <SettlementsModuleShell
-      title="Pre-Settlements"
-      subtitle="Open tours ready to close"
+      title={"Pre-Settlements"}
+      subtitle={"Open tours ready to close"}
       createControl={<SettlementCreatorButton testId="settlements-presettle-creator" />}
     >
       <SettlementsPreSettlementsBoard />
@@ -58,7 +60,7 @@ export function SettlementsPreSettlementsPage() {
 
 export function SettlementsFeedGatePage() {
   return (
-    <SettlementsModuleShell title="Feed gate" subtitle="Purchase-day feed control">
+    <SettlementsModuleShell title={"Feed gate"} subtitle={"Purchase-day feed control"}>
       <FeedGatePage />
     </SettlementsModuleShell>
   );
@@ -67,8 +69,8 @@ export function SettlementsFeedGatePage() {
 export function SettlementsCashAdvancesPage() {
   return (
     <SettlementsModuleShell
-      title="Cash Advances"
-      subtitle="Requests and advances on open tours"
+      title={"Cash Advances"}
+      subtitle={"Requests and advances on open tours"}
       createControl={<SettlementCreatorButton testId="settlements-cash-advances-creator" />}
     >
       <SettlementsCashAdvancesBoard />
@@ -78,7 +80,7 @@ export function SettlementsCashAdvancesPage() {
 
 export function SettlementsLiabilitiesPage() {
   return (
-    <SettlementsModuleShell title="Liabilities" subtitle="Driver liabilities under Settlements">
+    <SettlementsModuleShell title={"Liabilities"} subtitle={"Driver liabilities under Settlements"}>
       <LiabilitiesHomePage />
     </SettlementsModuleShell>
   );
@@ -87,8 +89,8 @@ export function SettlementsLiabilitiesPage() {
 export function SettlementsEscrowPage() {
   return (
     <SettlementsModuleShell
-      title="Escrow"
-      subtitle="Held balances by driver"
+      title={"Escrow"}
+      subtitle={"Held balances by driver"}
       createControl={<SettlementCreatorButton testId="settlements-escrow-creator" />}
     >
       <SettlementsEscrowBoard />
@@ -98,7 +100,7 @@ export function SettlementsEscrowPage() {
 
 export function SettlementsPayRateTemplatesPage() {
   return (
-    <SettlementsModuleShell title="Pay rate templates" subtitle="Templates under Settlements">
+    <SettlementsModuleShell title={"Pay rate templates"} subtitle={"Templates under Settlements"}>
       <DriversPage initialSubnav="pay_rate_templates" />
     </SettlementsModuleShell>
   );
@@ -107,8 +109,8 @@ export function SettlementsPayRateTemplatesPage() {
 export function SettlementsDeductionsPage() {
   return (
     <SettlementsModuleShell
-      title="Deductions"
-      subtitle="Escrow, advances, fines, damages"
+      title={"Deductions"}
+      subtitle={"Escrow, advances, fines, damages"}
       createControl={<SettlementCreatorButton testId="settlements-deductions-creator" />}
     >
       <SettlementsDeductionsBoard />

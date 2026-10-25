@@ -25,9 +25,8 @@ function failures(source) {
   if (source.includes('useState<(typeof SUBNAV)[number][1]>("all")')) {
     errors.push("local tab useState still present");
   }
+  // Standalone CashAdvancesHome — list + detail errors (KPI totals live on SettlementsCashAdvancesBoard under Settlements shell).
   for (const needle of [
-    'title="Couldn\'t load cash advance totals"',
-    "onRetry={() => void kpisQuery.refetch()}",
     'title="Couldn\'t load cash advances"',
     "onRetry={() => void listQuery.refetch()}",
     'title="Couldn\'t load cash advance details"',
@@ -109,6 +108,13 @@ function settlementsBoardFailures(mountedSource, boardSource) {
   if (boardSource.includes("NavyPageSubNav") || boardSource.includes("CashAdvancesTable")) {
     errors.push("SettlementsCashAdvancesBoard must not include legacy subnav or ParityTable roster");
   }
+  // ROUND 443.282 / 443.326 — KPI totals error + retry live on Settlements board body (not CashAdvancesHome).
+  for (const needle of [
+    'title="Couldn\'t load cash advance totals"',
+    "onRetry={() => void kpisQuery.refetch()}",
+  ]) {
+    if (!boardSource.includes(needle)) errors.push(`SettlementsCashAdvancesBoard missing ${JSON.stringify(needle)}`);
+  }
   return errors;
 }
 
@@ -128,14 +134,11 @@ function run() {
 
 if (process.argv.includes("--selftest")) {
   const good = `useSearchParams searchParams.get("tab") parseCashAdvancesTab params.set("tab", next)
-    title="Couldn't load cash advance totals" onRetry={() => void kpisQuery.refetch()}
     title="Couldn't load cash advances" onRetry={() => void listQuery.refetch()} listQuery.isError ? (
     title="Couldn't load cash advance details" onRetry={() => void detailQuery.refetch()}`;
   if (failures(good).length) throw new Error(`${LABEL}: good fixture failed: ${failures(good).join("; ")}`);
   const mutations = [
     "useSearchParams",
-    'title="Couldn\'t load cash advance totals"',
-    "onRetry={() => void kpisQuery.refetch()}",
     'title="Couldn\'t load cash advances"',
     "onRetry={() => void listQuery.refetch()}",
     'title="Couldn\'t load cash advance details"',

@@ -80,18 +80,18 @@ function analyze(reg, page, board, helpers) {
     errors.push("SettlementsPage leftover slate class");
   }
 
-  // ROUND 443.250 — Open / Closed V3 board chrome on SettlementsToursRegister (piggyback EVEN 3348).
+  // ROUND 443.326 — Open / Closed board body on SettlementsToursRegister (no V3Panel; panel is a marked div).
   // KPIs already live on Settlements home (data-settlements-v3-kpis); this register is the board delta.
-  if (!/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["']/.test(reg))
-    errors.push("SettlementsToursRegister must import V3Panel (ROUND 443.250 Open/Closed V3)");
+  if (/\bV3Panel\b/.test(reg))
+    errors.push("SettlementsToursRegister must not import V3Panel (ROUND 443.326 board grammar)");
   if (!/data-settlements-tours-v3=["']1["']/.test(reg))
     errors.push("SettlementsToursRegister must mark data-settlements-tours-v3 for the V3 Open/Closed boards");
   if (!/Closed settlements/.test(reg) || !/Open tours · pre-settlements/.test(reg))
-    errors.push("SettlementsToursRegister V3Panel titles must match Closed / Open board labels");
+    errors.push("SettlementsToursRegister panel titles must match Closed / Open board labels");
   if (!/Pre-Settlement \(Open\)/.test(reg) || !/Settlement \(Closed\)/.test(reg))
     errors.push("tour pills must use board labels Pre-Settlement (Open) / Settlement (Closed)");
-  if (!/testId=["']settlements-tours-v3-panel["']/.test(reg) && !/testId=\{?"settlements-tours-v3-panel"?\}/.test(reg))
-    errors.push("SettlementsToursRegister must set testId=settlements-tours-v3-panel on V3Panel");
+  if (!/data-testid=["']settlements-tours-v3-panel["']/.test(reg))
+    errors.push("SettlementsToursRegister must set data-testid=settlements-tours-v3-panel on the board panel");
 
 
   // ROUND 443.267 — Settlements home board polish (Week-of table · deduction split · Deductions grain).
@@ -180,10 +180,11 @@ if (process.argv.includes("--selftest")) {
     ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page, board, helpers]],
     ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n', board, helpers]],
     ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n', board, helpers]],
-    ["drop V3Panel import", [reg.replace(/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["'];?/, ""), page, board, helpers]],
+    ["restore forbidden V3Panel", [reg.replace(/data-testid="settlements-tours-v3-panel"/, 'data-testid="settlements-tours-v3-panel"\nimport { V3Panel } from "../../components/v3/V3Panel"'), page, board, helpers]],
     ["drop tours-v3 marker", [reg.replace(/data-settlements-tours-v3=["']1["']/, 'data-settlements-tours-legacy="1"'), page, board, helpers]],
     ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page, board, helpers]],
     ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page, board, helpers]],
+    ["drop board panel testid", [reg.replace(/data-testid=["']settlements-tours-v3-panel["']/, 'data-testid="settlements-tours-legacy"'), page, board, helpers]],
     ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page, board, helpers]],
     ["drop week-of panel", [reg, page, board.replace(/settlements-home-week-of-panel/g, "settlements-home-week-legacy"), helpers]],
     ["drop deductions grain", [reg, page, board.replace(/id:\s*"deductions"/g, 'id: "net_x"'), helpers]],

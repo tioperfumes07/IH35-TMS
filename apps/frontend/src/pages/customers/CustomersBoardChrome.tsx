@@ -47,7 +47,6 @@ export function CustomersBoardChrome({
         data-c31-list-default="customers"
         data-testid="customers-list-tabs"
         role="tablist"
-        aria-label="Customer list views"
       >
         {tabItems.map((item, i) => {
           const id = tabIds[i] ?? item.to.replace(/^#/, "");

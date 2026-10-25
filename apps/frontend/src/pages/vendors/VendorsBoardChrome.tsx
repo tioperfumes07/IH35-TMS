@@ -47,7 +47,6 @@ export function VendorsBoardChrome({
         data-c31-list-default="vendors"
         data-testid="vendors-list-tabs"
         role="tablist"
-        aria-label="Vendor list views"
       >
         {tabItems.map((item, i) => {
           const id = tabIds[i] ?? item.to.replace(/^#/, "");
