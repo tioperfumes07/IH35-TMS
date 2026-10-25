@@ -366,7 +366,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         </div>
       </section>
 
-      <Modal
+      <Modal size="sm"
         open={Boolean(selectedPending)}
         onClose={() => {
           setSelectedPending(null);

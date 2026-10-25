@@ -93,7 +93,7 @@ export function IftaPreparerCard({ status }: Props) {
         </Link>
       </div>
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirm IFTA Filing">
+      <Modal size="sm" open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirm IFTA Filing">
         <div className="space-y-3 text-xs">
           <p>Are you sure? This finalizes the IFTA filing for {status.currentQuarter} {currentYear}. Owner-only action.</p>
           <label className="block">

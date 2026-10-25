@@ -489,7 +489,7 @@ export function FraudAlertsListPage() {
         </form>
       </Modal>
 
-      <Modal open={Boolean(confirmFraudTarget)} onClose={closeConfirmFraud} title="Confirm fuel fraud">
+      <Modal size="sm" open={Boolean(confirmFraudTarget)} onClose={closeConfirmFraud} title="Confirm fuel fraud">
         {confirmFraudResult ? (
           <div className="space-y-3" data-testid="fraud-confirm-recovery-result">
             <p

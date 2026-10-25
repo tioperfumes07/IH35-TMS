@@ -2869,7 +2869,7 @@ export function CustomerDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={Boolean(voidingQualityEvent)} onClose={() => setVoidingQualityEvent(null)} title="Void Quality Event">
+      <Modal size="sm" open={Boolean(voidingQualityEvent)} onClose={() => setVoidingQualityEvent(null)} title="Void Quality Event">
         <div className="space-y-3">
           <p className="text-xs text-gray-700">Voiding keeps the historical record but marks this event as inactive.</p>
           <div>
@@ -2930,7 +2930,7 @@ export function CustomerDetailPage() {
         </div>
       </Modal>
 
-      <Modal open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} title="Confirm Status Change">
+      <Modal size="sm" open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} title="Confirm Status Change">
         <div className="space-y-3">
           <p className="text-xs text-gray-700">
             Changing this customer to <strong>{statusLabel((hydratedForm.status as Customer["status"]) ?? customer.status)}</strong> can block dispatch unless overridden.
