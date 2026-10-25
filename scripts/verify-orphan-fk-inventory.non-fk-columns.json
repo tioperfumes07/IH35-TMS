@@ -158,6 +158,14 @@
       "kind": "polymorphic",
       "reason": "E-47 alert: the matched document the bank line holds — a payment, deposit or invoice per ledger_entry_kind (CHECK-constrained), the same polymorphic pair banking.reconciliation_matches uses, so no single FK can hold. The invoice itself is FK'd on invoice_id.",
       "type_column": "ledger_entry_kind"
+    },
+    "202616200100_vehicle_latest_position_cache.sql::raw_samsara_event_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics event id (text) copied from the source GPS event — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202616200100_vehicle_latest_position_cache.sql::samsara_vehicle_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
     }
   }
 }
