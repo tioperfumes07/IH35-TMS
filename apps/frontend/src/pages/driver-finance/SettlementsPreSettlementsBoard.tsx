@@ -6,8 +6,6 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listTours } from "../../api/tourReadout";
-import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { PreSettlementsPanel } from "../../components/driver-finance/PreSettlementsPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -15,6 +13,7 @@ import {
   SettlementsPreSettlementsKpiRow,
 } from "../drivers/SettlementsPreSettlementsKpiRow";
 
+/** Board body only — chrome is SettlementsModuleShell / SettlementsSubNavWrapper (443.326). */
 export function SettlementsPreSettlementsBoard() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -30,21 +29,6 @@ export function SettlementsPreSettlementsBoard() {
 
   return (
     <div className="space-y-3" data-testid="settlements-presettle-board" data-settlements-presettle-rebuild="1">
-      <PageHeader
-        title="Driver Settlements"
-        subtitle="List + detail settlement workflow"
-        breadcrumb={["Driver Finance", "Pre-Settlements"]}
-        actions={
-          <Button
-            size="sm"
-            data-testid="settlements-presettle-creator"
-            onClick={() => navigate("/driver-finance/settlements?creator=1")}
-          >
-            + Settlement Creator
-          </Button>
-        }
-      />
-
       <SettlementsPreSettlementsKpiRow basePath="/driver-finance/pre-settlements" />
 
       <div

@@ -21,9 +21,10 @@ const LABEL = "verify-v3-board-grammar-every-surface";
  */
 const FAILING_SURFACE_BASELINE = 0;
 
-/** @typedef {{ id: string, file: string, forbid?: string[], note?: string }} Surface */
+/** @typedef {{ id: string, file: string, forbid?: string[], note?: string, chromeOnly?: boolean }} Surface */
 
-/** The 23 surfaces from CURSOR-ORDERS-443325-443326.md (+ Bills/Recurring keep-done). */
+/** The 23 surfaces from CURSOR-ORDERS-443325-443326.md (+ Bills/Recurring keep-done).
+ * chromeOnly = forbid-only check (BoardChrome / shell extracts — no kpi/MLT/ParityTable required). */
 const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementsPage",
@@ -74,6 +75,64 @@ const SURFACES = /** @type {Surface[]} */ ([
     id: "FactoringHome",
     file: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
     forbid: ["PageHeader", "NavyPageSubNav", "KpiPanel", "CashFlowPanel", "CollapsedListFilters"],
+  },
+  {
+    id: "FactoringBoardChrome",
+    file: "apps/frontend/src/pages/factoring/FactoringBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "CustomersBoardChrome",
+    file: "apps/frontend/src/pages/customers/CustomersBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "VendorsBoardChrome",
+    file: "apps/frontend/src/pages/vendors/VendorsBoardChrome.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "CompanySettlementsPage",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+  },
+  {
+    id: "SettlementsModuleShell",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsModuleShell.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "SettlementsPreSettlementsBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsPreSettlementsBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "SettlementsDeductionsBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "SettlementsCashAdvancesBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+    chromeOnly: true,
+  },
+  {
+    id: "SettlementsEscrowBoard",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav"],
+  },
+  {
+    id: "SettlementsToursRegister",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
   },
   {
     id: "FactoringListPage",
@@ -190,9 +249,11 @@ function evaluateSurface(surface, srcOverride) {
   }
   const src = srcOverride ?? fs.readFileSync(abs, "utf8");
   const reasons = [];
-  if (!hasKpiMount(src)) reasons.push("missing kpiStrip/V3KpiTile/moneyListKpiCard");
-  if (!hasMoneyListToolbar(src)) reasons.push("missing MoneyListToolbar");
-  if (!hasParityTable(src, surface.id)) reasons.push("missing ParityTable JSX mount");
+  if (!surface.chromeOnly) {
+    if (!hasKpiMount(src)) reasons.push("missing kpiStrip/V3KpiTile/moneyListKpiCard");
+    if (!hasMoneyListToolbar(src)) reasons.push("missing MoneyListToolbar");
+    if (!hasParityTable(src, surface.id)) reasons.push("missing ParityTable JSX mount");
+  }
   const legacy = legacyHits(src, surface.forbid);
   if (legacy.length) reasons.push(`legacy still mounted: ${legacy.join(",")}`);
   return { id: surface.id, file: surface.file, ok: reasons.length === 0, reasons };
