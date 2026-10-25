@@ -9,6 +9,7 @@ import {
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -110,10 +111,9 @@ function DecideModal({
   });
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg space-y-3 rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-        <h2 className="text-xs font-semibold text-gray-900">Decide dispute</h2>
-        <p className="text-xs text-gray-600">
+    <Modal open onClose={onClose} title="Decide dispute" size="sm" modalKind="dispute-queue-decide">
+      <div className="space-y-3 text-xs">
+        <p className="text-gray-600">
           <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> ·{" "}
           <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} /> · claimed{" "}
           {money(row.claimed_adjustment_cents)}
@@ -159,7 +159,7 @@ function DecideModal({
           </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

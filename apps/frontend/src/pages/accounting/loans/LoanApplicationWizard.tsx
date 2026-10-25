@@ -28,10 +28,9 @@ import {
   type LoanTargetType,
 } from "../../../api/related-party-loans";
 import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../../../components/forms/inputClass";
-import { colors, typography } from "../../../design/tokens";
+import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
 import { companyToday } from "../../../lib/businessDate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -353,28 +352,15 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
     }
   };
 
+  const wizardTitle = isRepayment
+    ? "Apply loan repayment"
+    : isPaidDirect
+      ? "Paid directly to a vendor"
+      : "Loan / Advance application";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-6">
-      <div className={`${PARITY_MODAL_WIDTH} rounded-sm border border-[#E5E7EB] bg-white shadow-lg`}>
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
-          {/* GLOBAL-TYPE-SIZE-BASELINE.md (locked): column/section headers are 11px/700/UPPERCASE/
-              #4B5563 -- same locked-header treatment already applied to ParityDrawer.tsx's title,
-              transcribed here, not invented. */}
-          <h2
-            className="uppercase"
-            style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
-            data-testid="loan-wizard-title"
-          >
-            {isRepayment
-              ? "Apply loan repayment"
-              : isPaidDirect
-                ? "Paid directly to a vendor"
-                : "Loan / Advance application"}
-          </h2>
-          <button type="button" onClick={onClose} className="text-xs text-[#6B7280] hover:text-[#0F1219]">
-            Close
-          </button>
-        </div>
+    <Modal open={open} onClose={onClose} title={wizardTitle} size="md" modalKind="loan-application-wizard" wide>
+      <div className="space-y-0 text-xs" data-testid="loan-wizard-title">
         {bankTransactionId && !isPaidDirect ? (
           <div
             className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs text-[#1F2A44]"
@@ -760,6 +746,6 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

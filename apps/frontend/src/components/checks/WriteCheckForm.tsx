@@ -1901,52 +1901,49 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         }}
       />
       {/* BANK-F91055 — ORDERS §B-4 Make recurring cadence picker before creating the expense template. */}
-      {recurringOpen ? (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30"
-          role="dialog"
-          aria-modal="true"
-          data-testid="b4-make-recurring-modal"
-          data-b4-make-recurring-modal="1"
-        >
-          <div className="w-full max-w-sm rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-lg">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Make recurring</h2>
-            <p className="mt-1 text-xs text-[#6B7280]">
-              Creates an expense template ({formatMoneyCents(totalCents)}) the recurring worker will mint on cadence.
-            </p>
-            <label className="mt-3 flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
-              Cadence
-              <SelectCombobox
-                className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-                value={recurringCadence}
-                onChange={(e) => setRecurringCadence(e.target.value as typeof recurringCadence)}
-                data-testid="b4-make-recurring-cadence"
-              >
-                <option value="weekly">Weekly</option>
-                <option value="biweekly">Every two weeks</option>
-                <option value="monthly">Monthly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="annually">Annually</option>
-              </SelectCombobox>
-            </label>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button type="button" variant="tertiary" size="sm" onClick={() => setRecurringOpen(false)} disabled={recurringSaving}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => void handleMakeRecurring()}
-                disabled={recurringSaving}
-                data-testid="b4-make-recurring-confirm"
-              >
-                {recurringSaving ? "Saving…" : "Create template"}
-              </Button>
-            </div>
+      <Modal
+        open={recurringOpen}
+        onClose={() => setRecurringOpen(false)}
+        title="Make recurring"
+        size="sm"
+        modalKind="write-check-make-recurring"
+      >
+        <div className="space-y-3 text-xs" data-testid="b4-make-recurring-modal" data-b4-make-recurring-modal="1">
+          <p className="text-[#6B7280]">
+            Creates an expense template ({formatMoneyCents(totalCents)}) the recurring worker will mint on cadence.
+          </p>
+          <label className="flex flex-col gap-1 font-semibold text-[#1F2A44]">
+            Cadence
+            <SelectCombobox
+              className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+              value={recurringCadence}
+              onChange={(e) => setRecurringCadence(e.target.value as typeof recurringCadence)}
+              data-testid="b4-make-recurring-cadence"
+            >
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every two weeks</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+            </SelectCombobox>
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="tertiary" size="sm" onClick={() => setRecurringOpen(false)} disabled={recurringSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => void handleMakeRecurring()}
+              disabled={recurringSaving}
+              data-testid="b4-make-recurring-confirm"
+            >
+              {recurringSaving ? "Saving…" : "Create template"}
+            </Button>
           </div>
         </div>
-      ) : null}
+      </Modal>
     </>
   );
 }

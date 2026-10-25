@@ -33,6 +33,7 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { Modal } from "../../components/Modal";
 import { entityLabel } from "../../lib/entity-label";
 import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { listCustomers, listVendors } from "../../api/mdata";
@@ -580,11 +581,15 @@ export function ReclassifyTransactionsPage() {
         </section>
       </div>
 
-      {modalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" data-testid="reclassify-modal" data-b5-reclassify-modal="1">
-          <div className="w-[32rem] rounded border border-gray-300 bg-white p-4 shadow-lg">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={`Reclassify ${selected.size} transaction line${selected.size === 1 ? "" : "s"} · ${formatCurrencyFromCents(selectedSum)}`}
+        size="md"
+        modalKind="reclassify-transactions"
+      >
+          <div className="space-y-2 text-xs" data-testid="reclassify-modal" data-b5-reclassify-modal="1">
             <div className="flex items-center gap-1">
-              <h2 className="text-xs font-bold uppercase tracking-wide">Reclassify {selected.size} transaction line{selected.size === 1 ? "" : "s"} · {formatCurrencyFromCents(selectedSum)}</h2>
               <InfoPopover label="About reclassifying" align="right">
                 <p>You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
               </InfoPopover>
@@ -655,8 +660,7 @@ export function ReclassifyTransactionsPage() {
               <Button type="button" loading={applyMut.isPending} disabled={!toAccount && !toClass && !toLocation && !toVendor && !toItem && !toLoad} onClick={() => setVoidModalOpen(true)} data-testid="reclassify-apply">Apply</Button>
             </div>
           </div>
-        </div>
-      ) : null}
+      </Modal>
       <VoidReasonModal
         title="Reclassify"
         open={voidModalOpen}

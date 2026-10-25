@@ -32,6 +32,7 @@ import { SegmentedControl } from "../../components/SegmentedControl";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { Modal } from "../../components/Modal";
 
 function money(cents: number | null | undefined) {
   if (cents == null || !Number.isFinite(Number(cents))) return TABLE_MISSING;
@@ -98,17 +99,18 @@ function DecideFaultModal({
   const canSubmit = faultParty !== "driver" || Boolean(driverId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" data-testid="decide-fault-modal">
-      <div className="w-[420px] rounded-sm border border-gray-300 bg-white p-4 shadow-lg">
-        <h3 className="text-xs font-semibold text-[#0F1219]">
-          Decide fault — invoice{" "}
+    <>
+    <Modal open onClose={onClose} title="Decide fault" size="sm" modalKind="disputes-hub-decide-fault">
+      <div className="space-y-3 text-xs" data-testid="decide-fault-modal">
+        <h3 className="font-semibold text-[#0F1219]">
+          Invoice{" "}
           <EntityLink
             kind="invoice"
             id={dispute.invoice_id}
             label={entityLabel(dispute.invoice_display_id, dispute.invoice_id, "Invoice")}
           />
         </h3>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-gray-500">
           Only a driver-fault decision may produce a driver deduction. The database refuses recovering more than
           the {money(dispute.disputed_amount_cents)} withheld.
         </p>
@@ -141,7 +143,7 @@ function DecideFaultModal({
             />
           </label>
         ) : null}
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="flex justify-end gap-2">
           <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs" onClick={onClose}>
             Cancel
           </button>
@@ -156,6 +158,7 @@ function DecideFaultModal({
           </button>
         </div>
       </div>
+    </Modal>
       <VoidReasonModal
         open={voidModalOpen}
         title="Fault decision reason"
@@ -163,7 +166,7 @@ function DecideFaultModal({
         onSubmit={async (reason) => { await mutation.mutateAsync(reason); }}
         submitLabel="Record decision"
       />
-    </div>
+    </>
   );
 }
 
@@ -232,13 +235,9 @@ function OpenDisputeModal({
     disputedCents > 0;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-      data-testid="open-dispute-modal"
-    >
-      <div className="w-[460px] rounded-sm border border-gray-300 bg-white p-4 shadow-lg">
-        <h3 className="text-xs font-semibold text-[#0F1219]">Open invoice dispute</h3>
-        <p className="mt-1 text-xs text-gray-500">
+    <Modal open onClose={onClose} title="Open invoice dispute" size="sm" modalKind="disputes-hub-open">
+      <div className="space-y-3 text-xs" data-testid="open-dispute-modal">
+        <p className="text-gray-500">
           Select an invoiced invoice, enter the expected amount, and the difference becomes the disputed amount.
         </p>
 
@@ -335,7 +334,7 @@ function OpenDisputeModal({
           />
         </label>
 
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="flex justify-end gap-2">
           <button
             type="button"
             className="rounded-sm border border-[#E5E7EB] px-3 py-1 text-xs"
@@ -355,7 +354,7 @@ function OpenDisputeModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

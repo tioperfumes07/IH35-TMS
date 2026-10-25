@@ -12,6 +12,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BillAllocationPanel } from "../../components/allocation/BillAllocationPanel";
+import { Modal } from "../../components/Modal";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -35,24 +36,15 @@ function ReallocatePanel({
   onSaved: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
-      <div
-        className="my-auto max-h-[min(90vh,720px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 shadow-xl"
-        onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-start justify-between">
-          <h2 className="text-xs font-semibold text-gray-900">Re-allocate bill</h2>
-          <button onClick={onClose} className="text-page-title leading-none text-gray-400 hover:text-gray-600">
-            ×
-          </button>
-        </div>
+    <Modal open onClose={onClose} title="Re-allocate bill" size="md" modalKind="allocations-reallocate">
+      <div className="space-y-3 text-xs">
         <BillAllocationPanel
           companyId={companyId}
           billId={row.bill_id}
           billLabel={visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")}
           billAmountCents={row.bill_amount_cents}
         />
-        <div className="mt-3 flex justify-end">
+        <div className="flex justify-end">
           <button
             onClick={() => {
               onSaved();
@@ -64,7 +56,7 @@ function ReallocatePanel({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

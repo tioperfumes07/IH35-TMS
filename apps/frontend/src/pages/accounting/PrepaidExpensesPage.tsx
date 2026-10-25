@@ -4,6 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -83,17 +84,11 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
     ? Math.round((detail.amortized_cents / detail.total_amount_cents) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="text-xs font-semibold text-gray-900">{detail.description}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {detail.asset_number ? `#${detail.asset_number} · ` : ""}{fmtCents(detail.total_amount_cents)} over {detail.periods} months
-            </p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
-        </div>
+    <Modal open onClose={onClose} title={detail.description} size="md" modalKind="prepaid-expense-schedule">
+      <div className="space-y-3 text-xs">
+        <p className="text-gray-500">
+          {detail.asset_number ? `#${detail.asset_number} · ` : ""}{fmtCents(detail.total_amount_cents)} over {detail.periods} months
+        </p>
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -172,7 +167,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -227,14 +222,10 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
     && form.asset_account_id && form.payment_account_id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-xs font-semibold text-gray-900">New Prepaid Expense</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none">×</button>
-        </div>
-        {error && <p className="text-xs text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
-        <div className="space-y-3 text-xs">
+    <Modal open onClose={onClose} title="New Prepaid Expense" size="md" modalKind="prepaid-expense-create">
+      <div className="space-y-3 text-xs">
+        {error && <p className="text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
+        <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Description *</label>
             <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
@@ -333,7 +324,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

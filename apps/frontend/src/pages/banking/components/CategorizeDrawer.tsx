@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { categorizeTransaction, getBankingSuggestions, splitTransaction } from "../../../api/banking";
 import { Button } from "../../../components/Button";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { ApplyToBillForm } from "./forms/ApplyToBillForm";
 import { BillPaymentForm } from "./forms/BillPaymentForm";
@@ -63,17 +64,35 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
     );
   }, [action, form, operatingCompanyId]);
 
-  if (!open || !transaction) return null;
+  if (!transaction) return null;
+
+  const footer = (
+    <div className="flex gap-2">
+      <Button size="sm" variant="secondary" onClick={onClose}>Save Draft</Button>
+      <Button
+        size="sm"
+        onClick={() => {
+          void categorizeTransaction(txId, operatingCompanyId, {
+            action_type: action,
+            linked_entity_id: typeof form.linked_entity_id === "string" ? form.linked_entity_id : undefined,
+            payload: form,
+          })
+            .then(() => {
+              pushToast("Transaction categorized", "success");
+              onSaved();
+              onClose();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"));
+        }}
+      >
+        Save & Post to QBO
+      </Button>
+    </div>
+  );
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold">Categorize Transaction</h3>
-          <button type="button" className="text-xs text-gray-500 underline" onClick={onClose}>Close</button>
-        </div>
-
+      <ParityDrawer open={open} onClose={onClose} title="Categorize Transaction" footer={footer} size="regular">
         <section className="mb-3 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
           <div className="font-semibold">Transaction Detail</div>
           <div className="mt-1">Date: {String(transaction.txn_date ?? "")}</div>
@@ -129,29 +148,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
         <section className="mb-3 rounded-sm border border-gray-200 bg-white p-2">
           {formNode}
         </section>
-
-        <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>Save Draft</Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              void categorizeTransaction(txId, operatingCompanyId, {
-                action_type: action,
-                linked_entity_id: typeof form.linked_entity_id === "string" ? form.linked_entity_id : undefined,
-                payload: form,
-              })
-                .then(() => {
-                  pushToast("Transaction categorized", "success");
-                  onSaved();
-                  onClose();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"));
-            }}
-          >
-            Save & Post to QBO
-          </Button>
-        </div>
-      </aside>
+      </ParityDrawer>
 
       <SplitTransactionModal
         open={splitOpen}
