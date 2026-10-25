@@ -159,15 +159,48 @@ try {
   fail("ExpenseCreatePage.tsx not found");
 }
 
-// ─── Check 9: ROUND 443.267 — Unexpected top-row leaf after More ─────────────
-// Board: 10-22-2026-LEAD-MOD-DESIGN-V3-Accounting-Unexpected — UNEXPECTED after MORE.
+// ─── Check 9: ROUND 443.267 / 443.280 — Unexpected board after More ──────────
+// Board: docs/design/v3/Accounting-Unexpected — UNEXPECTED after MORE.
 {
   const unexpectedPage = join(ACCOUNTING_DIR, "UnexpectedExpensesPage.tsx");
+  let unexpectedSrc = "";
   try {
-    readFileSync(unexpectedPage, "utf8");
+    unexpectedSrc = readFileSync(unexpectedPage, "utf8");
     pass("UnexpectedExpensesPage.tsx exists");
   } catch {
     fail("UnexpectedExpensesPage.tsx missing — board Accounting-Unexpected requires the page");
+  }
+
+  // 443.280 — board grammar: BoardSection (not layered V3Panel), KPI labels, duplicate sub hyphen.
+  if (unexpectedSrc) {
+    if (!/<BoardSection\b/.test(unexpectedSrc)) {
+      fail("Unexpected must wrap Candidates/By kind in <BoardSection> (443.280 board grammar)");
+    } else {
+      pass("Unexpected uses BoardSection");
+    }
+    if (/<V3Panel\b/.test(unexpectedSrc)) {
+      fail("Unexpected still mounts layered <V3Panel> — 443.280 rebuild-not-layer forbids it");
+    } else {
+      pass("Unexpected has no V3Panel");
+    }
+    if (!/<V3KpiTile\b/.test(unexpectedSrc)) {
+      fail("Unexpected missing V3KpiTile KPI strip");
+    } else {
+      pass("Unexpected mounts V3KpiTile");
+    }
+    for (const label of ['"Possible duplicates"', '"Linked to a truck"', '"Tows · fines"']) {
+      if (!unexpectedSrc.includes(label)) fail(`Unexpected KPI label ${label} missing`);
+    }
+    if (!unexpectedSrc.includes('join(" - ")') && !unexpectedSrc.includes("join(' - ')")) {
+      fail('Unexpected duplicate KPI sub must join amounts with " - " (board grammar)');
+    } else {
+      pass("Unexpected duplicate KPI sub uses board hyphen");
+    }
+    if (!unexpectedSrc.includes("Candidates from the bank") || !unexpectedSrc.includes("By kind")) {
+      fail("Unexpected missing Candidates / By kind board panels");
+    } else {
+      pass("Unexpected Candidates + By kind panels present");
+    }
   }
 
   if (!manifestContent.includes('path: "/accounting/unexpected"')) {

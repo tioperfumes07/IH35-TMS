@@ -1,5 +1,16 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 37 Accounting Unexpected board complete (shipping)
+
+- **BRANCH:** `cursor/443280-acct-unexpected-board` · tip `5f05b804bc` (= #27650 Manual)
+- **DELTA:** UnexpectedExpensesPage V3Panel→BoardSection; duplicate KPI sub hyphen; verify-accounting-nav Check 9 ratcheted to board grammar
+- **GUARD:** verify-accounting-nav PASSED
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **REMAINING:** CC-2 rows 99/113 (duplicate count / Plaid PENDING double-count) are data/engine — not this board chrome PR
+- **NEXT:** Banking Home / Factoring / Settlements / Fuel boards
+- **Files Modified:** UnexpectedExpensesPage.tsx · verify-accounting-nav.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 35 Cash Flow Manual FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-cf-manual-board` · base tip `99ae6b0ab2` (= #27647 Rolling Ledger)
