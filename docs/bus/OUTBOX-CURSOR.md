@@ -4,7 +4,7 @@
 
 - **STATUS:** SHIPPING — [#27721](https://github.com/tioperfumes07/IH35-TMS/pull/27721) squash auto-merge armed
 - **DELTA:** `recovered_this_period` now sums live `settlement_lines` `advance_recovery` (ABS amount) for Sunday-week settlements — includes partial takes (prior stamp via `recovered_in_settlement_id` missed partials). FE sub copy updated.
-- **VERIFY:** (pending) backend tsc
+- **VERIFY:** `cd apps/backend && npx tsc --noEmit -p .` EXIT 0 · `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-cash-advances-tabs-url-sync PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell
 - **Files Modified:** cash-advances.routes.ts · CashAdvancesKpiRow · settlementsV3BoardStrings · MEMORY_BANK · OUTBOX-CURSOR.md
