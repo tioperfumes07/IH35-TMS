@@ -279,6 +279,10 @@ export type EntityKind =
   // (route verified present in routes/manifest.tsx: <Route path="/driver-finance/company-settlements">)
   // is the only company-settlement surface; it has no per-id sub-route, so this resolves with a
   // query param the page now honors (auto-opens that row's detail panel on load).
+  // CASH-FLOW-ROLLING-LEDGER: Relay card payable and topup entries appear on the rolling ledger
+  // but have no dedicated drill-through route yet — resolveEntityRoute returns null (plain text).
+  | "card_payable"
+  | "relay_topup"
   | "company_settlement";
 
 export interface EntityLinkProps {
@@ -749,6 +753,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/factoring/factors?factor_id=${id}`;
     case "company_settlement":
       return `/driver-finance/company-settlements?id=${id}`;
+    case "card_payable":
+    case "relay_topup":
+      return null;
     default:
       return null;
   }

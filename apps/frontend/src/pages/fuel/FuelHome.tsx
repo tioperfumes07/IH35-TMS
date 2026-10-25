@@ -121,6 +121,7 @@ type DieselBoardRow = DieselByTruckRow & { id: string };
  * (same aggregate as the old panel). No metric-as-rows theater, no panel-stack chrome.
  */
 export function FuelHomePage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");

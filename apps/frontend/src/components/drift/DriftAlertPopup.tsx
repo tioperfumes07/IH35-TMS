@@ -74,7 +74,7 @@ export function DriftAlertPopup() {
     staleTime: DRIFT_CHECK_INTERVAL_MS - 60_000,
   });
 
-  const rows = useMemo(() => driftRows(q.data?.results.flatMap((r) => r.exceptions) ?? []), [q.data]);
+  const rows = useMemo(() => driftRows(q.data?.results?.flatMap((r) => r.exceptions) ?? []), [q.data]);
 
   useEffect(() => {
     if (!companyId || rows.length === 0) {

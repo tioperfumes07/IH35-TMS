@@ -19,7 +19,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     failures(customer.replace('kind="payment" id={p.id}', 'kind="customer" id={p.id}'), vendor, unit).includes("customer payment detail drill"),
     failures(customer, vendor.replace('kind="vendor_credit"', 'kind="vendor"'), unit).includes("vendor credit exact drill"),
-    failures(customer, vendor, unit.replace('kind="fixed_asset"', 'kind="unit"')).includes("fixed asset exact drill"),
+    failures(customer, vendor, unit.replace(/kind="fixed_asset"/g, 'kind="unit"')).includes("fixed asset exact drill"),
   ];
   if (mutations.some((ok) => !ok)) process.exit(1);
   console.log("verify-accounting-existing-query-reverse-drills selftest PASS — 3/3 target mutations red");

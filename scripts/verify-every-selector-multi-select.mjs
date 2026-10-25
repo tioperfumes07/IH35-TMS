@@ -23,7 +23,7 @@ const PRIMITIVE_PATHS = new Set([
  * Measured 2026-10-24 on main (443.325 box). Shrink-only: lowering BASELINE requires removing
  * a pinned row or converting that control; raising is forbidden.
  */
-const BASELINE = 10; // 443.349 (LEAD, ENG-30): FleetTable status+type and expense-load-confirmation status converted to MultiSelectDropdown
+const BASELINE = 11; // 443.341 CC-2: InShopBoard bay-assignment <select> (PR #27658, row 59) registered as PINNED; missed at PR time
 
 /** Every allowed raw <select> outside date primitives. count = occurrences in file today. */
 const PINNED = [
@@ -35,6 +35,7 @@ const PINNED = [
   { rel: "pages/fuel/components/ImportFuelTransactionsModal.tsx", count: 1, reason: "Import file column mapping (scalar source column)." },
   { rel: "pages/settlements/CreatorMilesChoicePanel.tsx", count: 1, reason: "Miles source choice (single enum for creator step)." },
   { rel: "pages/settlements/SettlementCreatorDrawer.tsx", count: 1, reason: "Settlement line UOM when not on multi dropdown path (single unit of measure)." },
+  { rel: "pages/maintenance/components/InShopBoard.tsx", count: 1, reason: "Bay assignment — move one truck to one bay (scalar single-select action, not an entity roster filter); PR #27658." },
 ];
 
 function stripComments(src) {

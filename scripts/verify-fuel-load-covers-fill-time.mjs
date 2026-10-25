@@ -11,6 +11,7 @@
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB = "live counts: GPS-resolved fill/load window and Relay fill time; no offline mode";
 const LABEL = "verify-fuel-load-covers-fill-time";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 export const VIOLATIONS_SQL = `

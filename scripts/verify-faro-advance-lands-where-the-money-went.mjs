@@ -11,6 +11,7 @@
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB = "live count: Faro advances with no bank deposit or matching ledger entry";
 const LABEL = "verify-faro-advance-lands-where-the-money-went";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 

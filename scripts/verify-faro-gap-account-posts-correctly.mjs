@@ -12,6 +12,8 @@
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB = "live count: Faro gap-account balances that don't reconcile to zero";
+
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const { pool } = await requireLiveDbOrExit();

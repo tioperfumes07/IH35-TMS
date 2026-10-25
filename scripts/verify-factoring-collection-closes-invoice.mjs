@@ -16,6 +16,7 @@
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB = "live count: advanced invoices with a factoring_collection payment but amount_open_cents > 0";
 const LABEL = "verify-factoring-collection-closes-invoice";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 

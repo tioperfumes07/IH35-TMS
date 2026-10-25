@@ -257,9 +257,14 @@ export function check(files) {
       problems.push(`${DREAMLINE}: a Dreamline line with no covering load is written (fuel row / scale expense with load_id NULL) instead of held — linkage law TIER 1`);
     if (/load_exemption_reason: `Dreamline scale|fuelNoLoadReason\(line\.transaction_at/.test(dl))
       problems.push(`${DREAMLINE}: the statement import still writes a no-load exemption reason (a load-less live row) — linkage law TIER 1`);
+    // Idempotency: either the old raw-INSERT path (prior guard + INSERT) or the helper path (dup check after createExpenseInClientTx).
     const prior = dl.indexOf("if (prior.rows[0]) return null;");
     const je = dl.indexOf("INSERT INTO accounting.journal_entries");
-    if (prior < 0 || je < 0 || prior > je) problems.push(`${DREAMLINE}: the card-discount pair writes a journal entry without asking whether it already posted — a re-run would post the discount twice`);
+    const dupCheck = dl.indexOf("if (dup.duplicateVendorDocumentNumber || dup.duplicateSubmission) return null;");
+    const helperCreate = dl.indexOf("createExpenseInClientTx(client,");
+    const oldPathOk = prior >= 0 && je >= 0 && prior < je;
+    const newPathOk = dupCheck >= 0 && helperCreate >= 0 && dupCheck > helperCreate;
+    if (!oldPathOk && !newPathOk) problems.push(`${DREAMLINE}: the card-discount pair writes a journal entry without asking whether it already posted — a re-run would post the discount twice`);
     // 11 (LEAD 443.195) — a receipt is consumed only when adopted (stamped), never by a cross-rail / mismatch line.
     const adoptedAt = adopt < 0 ? -1 : dl.indexOf('record(line, "adopted"', adopt);
     const block = adopt < 0 || adoptedAt < 0 ? "" : dl.slice(adopt, adoptedAt);

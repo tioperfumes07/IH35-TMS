@@ -1,13 +1,14 @@
 /**
  * Backfill matched_driver_id on staging Relay fuel rows + driver_id on canonical
- * fuel.fuel_transactions when ingest left them NULL (drivers.integration_id empty at the time).
+ * fuel.fuel_transactions when ingest left them NULL.
  *
- * Same rule as ingest: Relay driver.integration_id = mdata.drivers.integration_id and nothing else
- * (relay-fuel-driver-match.ts). Re-run after integration_ids are filled in on driver profiles.
+ * Resolution order (RC6 443.341):
+ *   1. integration_id match (relay-fuel-driver-match.ts)
+ *   2. load-based fallback: find the load running on the fill's unit at fill time → assigned_primary_driver_id
  * Fills NULL only — never overwrites an existing driver link.
  */
 import type { DbClient } from "./db-client.type.js";
-import { resolveRelayDriverMatch } from "./relay-fuel-driver-match.js";
+import { resolveRelayDriverMatch, resolveRelayDriverFromLoad } from "./relay-fuel-driver-match.js";
 import {
   rematchRelayFuelLoads,
   type RelayFuelLoadRematchResult,
@@ -29,6 +30,8 @@ type UnmatchedRelayRow = {
   operating_company_id: string;
   transaction_id: string;
   relay_driver_integration_id: string | null;
+  matched_unit_id: string | null;
+  relay_created_at: string | null;
 };
 
 export async function rematchRelayFuelDrivers(
@@ -50,7 +53,9 @@ export async function rematchRelayFuelDrivers(
         id::text AS id,
         operating_company_id::text AS operating_company_id,
         transaction_id,
-        relay_driver_integration_id
+        relay_driver_integration_id,
+        matched_unit_id::text AS matched_unit_id,
+        relay_created_at::text AS relay_created_at
       FROM integrations.relay_fuel_transactions
       WHERE matched_driver_id IS NULL
         ${opcoClause}
@@ -67,13 +72,40 @@ export async function rematchRelayFuelDrivers(
   const unresolvedReasons: Record<string, number> = {};
 
   for (const row of res.rows) {
-    const match = await resolveRelayDriverMatch(client, row.operating_company_id, row.relay_driver_integration_id);
-    if (match.driver_id === null) {
+    // 0. Cheapest path: canonical fuel row may already carry driver_id (set by other means).
+    let driverId: string | null = null;
+    const fuelRow = await client.query<{ driver_id: string }>(
+      `SELECT ft.driver_id::text AS driver_id
+         FROM fuel.fuel_transactions ft
+        WHERE ft.operating_company_id = $1::uuid
+          AND ft.transaction_reference = $2
+          AND ft.driver_id IS NOT NULL
+          AND ft.voided_at IS NULL
+          AND ft.archived_at IS NULL
+        LIMIT 1`,
+      [row.operating_company_id, row.transaction_id],
+    );
+    if (fuelRow.rows.length > 0) {
+      driverId = fuelRow.rows[0].driver_id;
+    }
+
+    let unresolvedReason = "no_load_driver_match";
+    if (driverId === null) {
+      // 1. Try integration_id match.
+      const intMatch = await resolveRelayDriverMatch(client, row.operating_company_id, row.relay_driver_integration_id);
+      if (intMatch.driver_id !== null) {
+        driverId = intMatch.driver_id;
+      } else {
+        unresolvedReason = intMatch.unresolved_reason ?? "no_load_driver_match";
+        // 2. RC6 fallback: load-based driver from the unit's active load at fill time.
+        driverId = await resolveRelayDriverFromLoad(client, row.operating_company_id, row.matched_unit_id, row.relay_created_at);
+      }
+    }
+    if (driverId === null) {
       skipped += 1;
-      unresolvedReasons[match.unresolved_reason] = (unresolvedReasons[match.unresolved_reason] ?? 0) + 1;
+      unresolvedReasons[unresolvedReason] = (unresolvedReasons[unresolvedReason] ?? 0) + 1;
       continue;
     }
-    const driverId = match.driver_id;
     matched += 1;
 
     const relayUp = await client.query(

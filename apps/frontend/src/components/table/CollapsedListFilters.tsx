@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { singleFrameLayoutClassName } from "../../lib/single-frame-classname";
 import { Button } from "../Button";
@@ -26,6 +26,7 @@ type BaseProps = {
   applyTestId?: string;
   cancelTestId?: string;
   resetTestId?: string;
+  style?: CSSProperties;
 };
 
 type Props = BaseProps & (
@@ -45,6 +46,7 @@ export function CollapsedListFilters({
   className = "",
   defaultOpen = false,
   dataAttributes,
+  style,
   onApply = () => {},
   onReset = () => {},
   onCancel = () => {},
@@ -103,7 +105,7 @@ export function CollapsedListFilters({
   }, [cancelAndClose, filtersOpen]);
 
   return (
-    <div ref={ref} className={`relative ${layoutClassName ?? ""}`} {...dataAttributes}>
+    <div ref={ref} className={`relative ${layoutClassName ?? ""}`} style={style} {...dataAttributes}>
       <div className="flex flex-wrap items-center gap-2">
         {searchSlot}
         <Button

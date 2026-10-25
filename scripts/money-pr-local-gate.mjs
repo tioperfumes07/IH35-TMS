@@ -1976,6 +1976,15 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-factoring-collection-closes-invoice.mjs",
     ],
   ],
+  [
+    "verify-relay-fill-driver-equals-load-driver",
+    [
+      "apps/backend/src/integrations/relay-payments/relay-fuel-driver-match.ts",
+      "apps/backend/src/integrations/relay-payments/relay-fuel-driver-rematch.service.ts",
+      "apps/backend/src/fuel/relay-fills.routes.ts",
+      "scripts/verify-relay-fill-driver-equals-load-driver.mjs",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

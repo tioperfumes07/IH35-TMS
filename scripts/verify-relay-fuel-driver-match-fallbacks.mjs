@@ -97,7 +97,7 @@ function selftest() {
     ["name fallback re-added", { ...real, match: real.match + "\nconst q = `AND lower(trim(first_name)) = $2`;\n" }],
     ["ingest passes phone hint", { ...real, ingest: real.ingest + "\nconst h = { phone: tx.driver?.phone ?? null };\n" }],
     ["CSV borrows driver id", { ...real, csvRoute: real.csvRoute.replace("integration_id: null", "integration_id: relayDriverId") }],
-    ["rematch reads name", { ...real, rematch: real.rematch.replace("relay_driver_integration_id\n      FROM", "relay_driver_integration_id, relay_driver_first_name\n      FROM") }],
+    ["rematch reads name", { ...real, rematch: real.rematch.replace("relay_driver_integration_id,\n        matched_unit_id", "relay_driver_integration_id,\n        relay_driver_first_name,\n        matched_unit_id") }],
   ];
   for (const [name, planted] of plants) {
     if (check(planted).length === 0) throw new Error(`planted regression not caught: ${name}`);

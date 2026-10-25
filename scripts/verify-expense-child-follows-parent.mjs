@@ -15,6 +15,7 @@
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB = "live count: expense children sharing parent load; ceiling = 0 post AUTH-457";
 const LABEL = "verify-expense-child-follows-parent";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
