@@ -373,14 +373,15 @@ export function SettlementsPage() {
   }, [kpiBaseQuery.isError, thisWeekBucket, kpiSettlements]);
 
   // REG-102: Week-of pills follow tour close (trip_closed_at), same as listTours — not payment_state.
-  // 443.292-C: exclude empty closed tours ($0 gross + $0 net) from the closed pill list.
-  const weekOfOpenCount = thisWeekSettlements.filter((s) => !settlementsRowTourClosed(s)).length;
-  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowTourClosed(s)).length;
+  // 443.292-C: exclude empty tours ($0 gross + $0 net) from both pills — closed pill only had this
+  // before; 443.292-C-2 extends it to the open pill to remove presettlement stubs with no data.
+  const isEmptyRow = (s: SettlementListRow) => Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0;
+  const weekOfOpenCount = thisWeekSettlements.filter((s) => !settlementsRowTourClosed(s) && !isEmptyRow(s)).length;
+  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowTourClosed(s) && !isEmptyRow(s)).length;
   const weekOfRows = thisWeekSettlements.filter((s) => {
+    if (isEmptyRow(s)) return false;
     if (weekOfPill === "open") return !settlementsRowTourClosed(s);
-    if (!settlementsRowTourClosed(s)) return false;
-    if (Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0) return false;
-    return true;
+    return settlementsRowTourClosed(s);
   });
   const weekOfTotals = weekOfRows.reduce(
     (acc, s) => {
@@ -560,7 +561,7 @@ export function SettlementsPage() {
               <div className="space-y-0.5">
                 <div className="font-semibold">
                   Settlement{" "}
-                  <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : row.display_id, row.settlement_id, "Settlement")} />
+                  <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : "—", row.settlement_id, "Settlement")} />
                   {" "}— posted {Number(row.net_pay).toFixed(2)}
                   {row.new_total_due_cents != null ? `, new TOTAL DUE ${(row.new_total_due_cents / 100).toFixed(2)}` : ""}
                 </div>
