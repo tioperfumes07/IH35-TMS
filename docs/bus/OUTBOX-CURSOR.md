@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 45–46 Settlements Open/Closed FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-open-board` · tip after #27661 Settlements Home
+- **DELTA:** SettlementsToursRegister rebuilt to docs/design/v3/Settlements-Open|Closed — V3KpiTile strip + MoneyListToolbar (search + Open/Closed pills) + shared BoardSection + ParityTable. Grammar surface promoted off chromeOnly. Engines unchanged (listTours).
+- **GUARD:** verify-settlements-module-one-readout + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Close/Company/Escrow + Fuel boards
+- **Files Modified:** SettlementsToursRegister.tsx · verify-settlements-module-one-readout.mjs · verify-v3-board-grammar-every-surface.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 44 Settlements Home FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-settlements-home-board` · tip after #27660 Factoring
