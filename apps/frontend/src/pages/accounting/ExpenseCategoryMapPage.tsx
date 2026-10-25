@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -238,7 +239,7 @@ export function ExpenseCategoryMapPage() {
               <label className="text-xs font-semibold text-gray-600">
                 Category kind
                 <SelectCombobox
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                  className={`${FORM_INPUT_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}
                   value={form.category_kind}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, category_kind: event.target.value as ExpenseCategoryMapKind }))
@@ -255,7 +256,7 @@ export function ExpenseCategoryMapPage() {
               <label className="text-xs font-semibold text-gray-600">
                 Category code
                 <input
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                  className={`${FORM_INPUT_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}
                   value={form.category_code}
                   onChange={(event) => setForm((prev) => ({ ...prev, category_code: event.target.value }))}
                   placeholder="ex: DIESEL"

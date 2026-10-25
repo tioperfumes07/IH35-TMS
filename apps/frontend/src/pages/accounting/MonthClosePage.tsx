@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeMonthCloseChecklist, closeMonth, getMonthCloseStatus } from "../../api/accounting";
@@ -230,7 +231,7 @@ export function MonthClosePage() {
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Period
-          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className={`${FORM_INPUT_CLASS} mt-1`} />
         </label>
         <label className="text-xs text-gray-600 md:col-span-2">
           Closing notes (optional)
@@ -238,7 +239,7 @@ export function MonthClosePage() {
             value={closingNotes}
             onChange={(event) => setClosingNotes(event.target.value)}
             placeholder="e.g. month-end review complete, CFO sign-off"
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className={`${FORM_INPUT_CLASS} mt-1`}
           />
         </label>
       </div>

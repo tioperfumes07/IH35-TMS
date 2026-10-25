@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { useMemo, useState, type ReactNode } from "react";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
@@ -291,7 +292,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-[#4B5563]">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className={`${FORM_INPUT_CLASS} mt-1 block`}
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="e.g. customer_payment, bill, invoice"
@@ -306,7 +307,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-[#4B5563]">
           Source transaction id
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className={`${FORM_INPUT_CLASS} mt-1 block`}
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="source_transaction_id"

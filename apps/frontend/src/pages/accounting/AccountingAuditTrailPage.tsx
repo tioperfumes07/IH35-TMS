@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
@@ -391,7 +392,7 @@ export function AccountingAuditTrailPage() {
         <label className="flex flex-col gap-0.5 text-xs text-[#4B5563]">
           <span className="text-section-header font-semibold uppercase text-gray-500">Source type</span>
           <input
-            className="block h-9 w-44 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className={`${FILTER_CONTROL_SIZE_CLASS} block w-44 rounded-sm border border-[#E5E7EB] px-2`}
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="e.g. bill, invoice"
@@ -406,7 +407,7 @@ export function AccountingAuditTrailPage() {
         <label className="flex flex-col gap-0.5 text-xs text-[#4B5563]">
           <span className="text-section-header font-semibold uppercase text-gray-500">Source id</span>
           <input
-            className="block h-9 w-44 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className={`${FILTER_CONTROL_SIZE_CLASS} block w-44 rounded-sm border border-[#E5E7EB] px-2`}
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="uuid or display id"

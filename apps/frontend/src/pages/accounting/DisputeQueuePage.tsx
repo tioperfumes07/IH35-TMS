@@ -23,7 +23,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { statusPill } from "../../components/shared/statusPill";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
-import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
+import { FORM_LABEL_STACK_CLASS, FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -123,7 +123,7 @@ function DecideModal({
           <SelectCombobox
             value={decision}
             onChange={(e) => setDecision(e.target.value as "approved" | "denied")}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+            className={`${FORM_INPUT_CLASS} rounded-sm border border-gray-300 px-2`}
           >
             <option value="approved">Approve</option>
             <option value="denied">Deny</option>
@@ -136,7 +136,7 @@ function DecideModal({
               valueCents={adjustmentCents}
               onChangeCents={setAdjustmentCents}
               ariaLabel="Adjustment amount (USD)"
-              className="h-9 w-full rounded-sm border border-gray-300 text-xs"
+              className={`${FORM_INPUT_CLASS} w-full rounded-sm border border-gray-300`}
             />
           </label>
         ) : null}

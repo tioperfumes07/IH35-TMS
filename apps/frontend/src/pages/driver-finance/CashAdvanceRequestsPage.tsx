@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
@@ -473,7 +474,7 @@ export function CashAdvanceRequestsPage() {
         <label className="mt-3 block text-xs font-medium text-gray-600">
           Reason
           <input
-            className="mt-1 h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded-sm border border-gray-200 px-2`}
             style={{ maxWidth: 260 }}
             value={denyReason}
             onChange={(e) => setDenyReason(e.target.value)}

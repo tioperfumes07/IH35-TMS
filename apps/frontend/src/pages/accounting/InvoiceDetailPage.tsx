@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { FactoringPurchaseLinksPanel } from "../../components/factoring/FactoringPurchaseLinksPanel";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -660,7 +661,7 @@ export function InvoiceDetailPage() {
                   value={newLineDesc}
                   onChange={(e) => setNewLineDesc(e.target.value)}
                   placeholder="Line description"
-                  className="mt-1 h-9 w-48 rounded-sm border border-gray-300 px-2 text-xs"
+                  className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-48 rounded-sm border border-gray-300 px-2`}
                 />
               </label>
               <div className="w-56 space-y-1">

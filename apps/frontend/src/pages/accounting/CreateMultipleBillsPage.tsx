@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { entityLabel } from "../../lib/entity-label";
 import { useLocation } from "react-router-dom";
@@ -463,7 +464,7 @@ export function CreateMultipleBillsPage() {
             label: "Terms",
             render: (row) => (
               <SelectCombobox
-                className="h-8 w-24 rounded-sm border border-gray-300 bg-white px-1 text-xs"
+                className={`${FORM_INPUT_CLASS} w-24 px-1`}
                 value={row.terms}
                 onChange={(event) => updateRow(row.id, { terms: event.target.value })}
                 aria-label="Terms"
@@ -572,7 +573,7 @@ export function CreateMultipleBillsPage() {
             label: "Memo",
             render: (row) => (
               <input
-                className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2"
+                className={`${FORM_INPUT_CLASS} min-w-[180px]`}
                 value={row.memo}
                 onChange={(event) => updateRow(row.id, { memo: event.target.value })}
               />
@@ -586,7 +587,7 @@ export function CreateMultipleBillsPage() {
             render: (row) => (
               <input
                 aria-label="Bill no."
-                className="ml-auto h-8 w-36 rounded-sm border border-gray-300 px-2 text-right text-xs"
+                className={`${FORM_INPUT_CLASS} ml-auto w-36 text-right`}
                 value={row.bill_number}
                 placeholder=""
                 autoComplete="off"
