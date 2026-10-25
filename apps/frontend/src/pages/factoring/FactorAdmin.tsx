@@ -19,6 +19,7 @@ import {
 import { listCustomers } from "../../api/mdata";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -564,10 +565,7 @@ export function FactorAdmin() {
         </div>
       ) : null}
 
-      {showAddFactorModal ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-xs font-semibold text-gray-900">Add Factor</div>
+      <Modal open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm" modalKind="factor-admin-add">
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Name</div>
@@ -628,14 +626,9 @@ export function FactorAdmin() {
                 Save
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
-      {showAssignCustomerModal ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-xs font-semibold text-gray-900">Assign Customer to Factor</div>
+      <Modal open={showAssignCustomerModal} onClose={() => setShowAssignCustomerModal(false)} title="Assign Customer to Factor" size="sm" modalKind="factor-admin-assign">
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Customer</div>
@@ -700,14 +693,9 @@ export function FactorAdmin() {
                 Assign
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
-      {showNoaModal && selectedFactor ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-xs font-semibold text-gray-900">NOA Config — {selectedFactor.name}</div>
+      <Modal open={Boolean(showNoaModal && selectedFactor)} onClose={() => setShowNoaModal(false)} title={selectedFactor ? `NOA Config — ${selectedFactor.name}` : "NOA Config"} size="md" modalKind="factor-admin-noa">
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1 font-medium">NOA Stamp Text (printed on invoice)</div>
@@ -759,14 +747,9 @@ export function FactorAdmin() {
                 Save NOA Config
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
-      {showLorModal && selectedFactor ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-1 text-xs font-semibold text-gray-900">Letter of Release — {selectedFactor.name}</div>
+      <Modal open={Boolean(showLorModal && selectedFactor)} onClose={() => setShowLorModal(false)} title={selectedFactor ? `Letter of Release — ${selectedFactor.name}` : "Letter of Release"} size="sm" modalKind="factor-admin-lor">
             <div className="mb-3 text-xs text-gray-600">Records that this factor has released its security interest. Required before deactivating a factor with active customer assignments.</div>
             <div className="space-y-2 text-xs">
               <label className="block">
@@ -813,9 +796,7 @@ export function FactorAdmin() {
                 Record LOR
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
       <DeactivateFactorConfirmModal
         open={showDeactivateFactorModal}
         loading={deactivateFactorMutation.isPending}

@@ -3,8 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { markCashAdvanceDisbursed, type CashAdvanceMethod } from "../../../api/cashAdvances";
 import { getPlaidCompanyTransactions } from "../../../api/banking";
 import { Button } from "../../../components/Button";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
 import { SimpleCombobox as Combobox } from "../../../components/Combobox";
@@ -63,7 +62,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
           tx.merchant_name ?? tx.description ?? "(no description)"
         }`,
       })),
-    [bankTxQuery.data]
+    [bankTxQuery.data],
   );
 
   const mutation = useMutation({
@@ -83,21 +82,13 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
     onError: (error) => pushToast(userFacingApiError(error, "Failed"), "error"),
   });
 
-  useEscapeKey(onClose, open);
-
-  if (!open || !advanceId) return null;
+  if (!advanceId) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold">Mark Disbursed</h3>
-          <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
-        </div>
-
+    <Modal open={open} onClose={onClose} title="Mark Disbursed" size="sm" modalKind="cash-advance-mark-disbursed">
+      <div className="space-y-2 text-xs" data-testid="mark-disbursed-modal">
         {/* UI-01 PART 2 — flat inside the single modal frame, not a nested card (QBO/NetSuite style). */}
-        <div className="mb-2 border-t border-gray-200 pt-2">
+        <div className="border-t border-gray-200 pt-2">
           <span className="font-semibold">Linked Load: </span>
           {advance?.load_id ? (
             <EntityLink
@@ -113,7 +104,11 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
         <div className="grid gap-2">
           <label className="space-y-1">
             <span>Disbursement Method</span>
-            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
+            <SelectCombobox
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={method}
+              onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}
+            >
               <option value="direct_bank_transfer">Direct bank transfer</option>
               <option value="wire">Wire</option>
               <option value="comdata">Comdata / EFS</option>
@@ -151,19 +146,31 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
           {method === "comdata" ? (
             <label className="space-y-1">
               <span>Comdata transaction ID</span>
-              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={comdataTxnId} onChange={(e) => setComdataTxnId(e.target.value)} />
+              <input
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                value={comdataTxnId}
+                onChange={(e) => setComdataTxnId(e.target.value)}
+              />
             </label>
           ) : null}
           {method === "comchek" ? (
             <label className="space-y-1">
               <span>Comchek transaction ID</span>
-              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={comchekTxnId} onChange={(e) => setComchekTxnId(e.target.value)} />
+              <input
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                value={comchekTxnId}
+                onChange={(e) => setComchekTxnId(e.target.value)}
+              />
             </label>
           ) : null}
           {method === "in_person_check" ? (
             <label className="space-y-1">
               <span>Check number</span>
-              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} />
+              <input
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                value={checkNumber}
+                onChange={(e) => setCheckNumber(e.target.value)}
+              />
             </label>
           ) : null}
         </div>
@@ -177,6 +184,6 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
           </Button>
         </div>
       </div>
-    </>
+    </Modal>
   );
 }

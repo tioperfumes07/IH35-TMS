@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
@@ -90,19 +91,13 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
     ? Math.round((detail.recognized_to_date_cents / detail.transaction_price_cents) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="text-xs font-semibold text-gray-900">{detail.description}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {detail.contract_number ? `#${detail.contract_number} · ` : ""}{titleize(detail.source_type)} · {fmtDate(detail.contract_date)}
-            </p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
-        </div>
+    <Modal open onClose={onClose} title={detail.description} size="md" modalKind="revenue-recognition-detail" wide>
+      <div className="space-y-3 text-xs">
+        <p className="text-gray-500">
+          {detail.contract_number ? `#${detail.contract_number} · ` : ""}{titleize(detail.source_type)} · {fmtDate(detail.contract_date)}
+        </p>
 
-        <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
+        <div className="grid grid-cols-3 gap-3 mb-3">
           <div><div className="text-xs text-gray-500">Transaction price</div><div className="tabular-nums">{fmtCents(detail.transaction_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-[#1F2A44]">{fmtCents(detail.recognized_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
@@ -150,11 +145,11 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="overflow-y-auto flex-1 space-y-3">
           {detail.obligations.length === 0 ? (
-            <p className="py-4 text-center text-xs text-gray-400">No performance obligations on this contract.</p>
+            <p className="py-4 text-center text-gray-400">No performance obligations on this contract.</p>
           ) : detail.obligations.map((ob) => <ObligationBlock key={ob.id} ob={ob} />)}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

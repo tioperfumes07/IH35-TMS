@@ -4203,29 +4203,15 @@ export function BankingTransactionsDesignView({
         onAccepted={() => onDataChanged()}
       />
       {/* BANK-FEED-BULK-QBO — one vendor + one Category OR Product/Service for every selected row. */}
-      {bulkCategorizeOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Bulk categorize transactions"
-          data-testid="banking-bulk-categorize-modal"
-        >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xl">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-[#0F1219]">
-                Categorize {bulkSelection.selectedIds.size} transaction(s)
-              </h2>
-              <button
-                type="button"
-                aria-label="Close"
-                className="rounded-sm px-2 py-1 text-[#6B7280] hover:bg-[#F7F8FA]"
-                onClick={() => setBulkCategorizeOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <label className="block text-xs text-[#4B5563]">
+      <Modal
+        open={bulkCategorizeOpen}
+        onClose={() => setBulkCategorizeOpen(false)}
+        title={`Categorize ${bulkSelection.selectedIds.size} transaction(s)`}
+        size="sm"
+        modalKind="banking-bulk-categorize"
+      >
+          <div className="space-y-3 text-xs" data-testid="banking-bulk-categorize-modal">
+            <label className="block text-[#4B5563]">
               Vendor (payee) — applies to all selected
               <div className="mt-1" data-testid="banking-bulk-categorize-vendor">
                 <ReferenceSelect
@@ -4243,7 +4229,7 @@ export function BankingTransactionsDesignView({
                 />
               </div>
             </label>
-            <div className="mt-3 flex gap-1" role="group" aria-label="Categorize by">
+            <div className="flex gap-1" role="group" aria-label="Categorize by">
               {(["category", "item"] as const).map((option) => (
                 <button
                   key={option}
@@ -4261,7 +4247,7 @@ export function BankingTransactionsDesignView({
               ))}
             </div>
             {bulkCategorizeBy === "category" ? (
-              <label className="mt-3 block text-xs text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 Category (Chart of Accounts) — applies to all selected
                 <div className="mt-1" data-testid="banking-bulk-categorize-category">
                   <ReferenceSelect
@@ -4280,7 +4266,7 @@ export function BankingTransactionsDesignView({
                 </div>
               </label>
             ) : (
-              <label className="mt-3 block text-xs text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 Product/Service — applies to all selected
                 <div className="mt-1" data-testid="banking-bulk-categorize-item">
                   <ReferenceSelect
@@ -4298,10 +4284,10 @@ export function BankingTransactionsDesignView({
                 </div>
               </label>
             )}
-            <p className="mt-2 text-xs text-[#6B7280]">
+            <p className="text-[#6B7280]">
               Applies to for-review transactions only. Same vendor and category/item on every selected row.
             </p>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setBulkCategorizeOpen(false)} disabled={bulkCategorizeBusy}>
                 Cancel
               </Button>
@@ -4318,8 +4304,7 @@ export function BankingTransactionsDesignView({
               </Button>
             </div>
           </div>
-        </div>
-      ) : null}
+      </Modal>
       {/* HELD financial-actions wiring — the fully-built RecordTransferModal (createTransfer, gated),
       pre-seeded from the row's amount/date + this account as one leg. */}
       <RecordTransferModal

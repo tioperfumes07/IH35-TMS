@@ -5,6 +5,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -144,23 +145,13 @@ function TrkBulkRegisterPanel({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div
-        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto"
-        onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-        data-testid="fa-trk-bulk-register-panel"
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="text-xs font-semibold text-gray-900">Register TRK-owned units</h2>
-            <p className="text-xs text-gray-500 mt-1">
-              Bulk register fixed assets on TRK books. Purchase prices are owner-provided only — units without an explicit cents value are skipped (missing_price).
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4" aria-label="Close">×</button>
-        </div>
+    <Modal open onClose={onClose} title="Register TRK-owned units" size="md" modalKind="fixed-assets-trk-register">
+      <div className="space-y-3 text-xs" data-testid="fa-trk-bulk-register-panel">
+        <p className="text-gray-500">
+          Bulk register fixed assets on TRK books. Purchase prices are owner-provided only — units without an explicit cents value are skipped (missing_price).
+        </p>
 
-        <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="fa-prices-json">
+        <label className="block font-medium text-gray-700 mb-1" htmlFor="fa-prices-json">
           Unit prices (JSON map: unit_number → cents)
         </label>
         <textarea
@@ -189,7 +180,7 @@ function TrkBulkRegisterPanel({
 
         {lastResult ? <RegisterResultSummary result={lastResult} /> : null}
 
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50">
             Close
           </button>
@@ -204,7 +195,7 @@ function TrkBulkRegisterPanel({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -213,27 +204,23 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
   const pct = cost > 0 ? Math.round((detail.depreciation_to_date_cents / Math.max(1, cost - detail.salvage_value_cents)) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="text-xs font-semibold text-gray-900">{detail.name}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+    <Modal open onClose={onClose} title={detail.name} size="md" modalKind="fixed-assets-detail" wide>
+      <div className="space-y-3 text-xs">
+        <div>
+            <p className="text-gray-500">
               {detail.asset_number ? `#${detail.asset_number} · ` : ""}{detail.class_name ?? "—"} · {titleize(detail.method)} · {detail.useful_life_months} mo · {titleize(detail.convention)}
             </p>
             {!detail.is_owner_operated && detail.owner_company_name && (
-              <p className="text-xs text-[#4B5563] mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
+              <p className="text-[#4B5563] mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
             )}
             {detail.unit_uuid ? (
-              <p className="text-xs text-[#4B5563] mt-0.5">
+              <p className="text-[#4B5563] mt-0.5">
                 Unit: <EntityLink kind="unit" id={detail.unit_uuid} label={entityLabel(detail.vin_serial, detail.unit_uuid, "Unit")} />
               </p>
             ) : null}
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div><div className="text-xs text-gray-500">Cost</div><div className="tabular-nums">{fmtCents(detail.purchase_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Salvage</div><div className="tabular-nums">{fmtCents(detail.salvage_value_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-[#1F2A44]">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
@@ -332,7 +319,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
           />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

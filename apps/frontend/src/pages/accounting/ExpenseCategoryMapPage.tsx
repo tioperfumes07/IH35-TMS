@@ -13,6 +13,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
+import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -215,10 +216,16 @@ export function ExpenseCategoryMapPage() {
         />
       )}
 
-      {showAddModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-            <h2 className="text-xs font-semibold text-gray-900">Add Expense Category Mapping</h2>
+      <Modal
+        open={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          setForm(DEFAULT_FORM);
+        }}
+        title="Add Expense Category Mapping"
+        size="md"
+        modalKind="expense-category-map-add"
+      >
             {accountsQuery.isError ? (
               <div className="mt-3">
                 <ListErrorBanner
@@ -316,9 +323,7 @@ export function ExpenseCategoryMapPage() {
                 Save mapping
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
       <ConfirmModal
         open={Boolean(deactivateTarget)}
         title="Deactivate mapping"

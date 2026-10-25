@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
+import { Modal } from "../../../components/Modal";
 
 type Props = {
   open: boolean;
@@ -11,9 +12,9 @@ type Props = {
 /**
  * QBO-parity print gate: ask Portrait vs Landscape, inject @page size + scale-to-fit,
  * then print. Restores prior print stylesheet on afterprint.
+ * FINAL-3 443.365-A — shared <Modal size="sm"> (decision), not a hand-built overlay shell.
  */
 export function PrintOrientationDialog({ open, title = "Print", onCancel, onConfirm }: Props) {
-  const titleId = useId();
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("landscape");
 
   useEffect(() => {
@@ -21,21 +22,11 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
     setOrientation("landscape");
   }, [open]);
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/30 p-4" data-testid="print-orientation-dialog">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-lg"
-      >
-        <h2 id={titleId} className="text-xs font-semibold text-gray-900">
-          {title}
-        </h2>
-        <p className="mt-1 text-xs text-gray-600">Choose page orientation. The table will auto-adjust to fit the page.</p>
-        <div className="mt-3 flex gap-2">
+    <Modal open={open} onClose={onCancel} title={title} size="sm" modalKind="print-orientation">
+      <div className="space-y-3 text-xs" data-testid="print-orientation-dialog">
+        <p className="text-gray-600">Choose page orientation. The table will auto-adjust to fit the page.</p>
+        <div className="flex gap-2">
           <button
             type="button"
             className={`flex-1 rounded-sm border px-3 py-2 text-xs ${
@@ -57,12 +48,8 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
             Landscape
           </button>
         </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700"
-            onClick={onCancel}
-          >
+        <div className="flex justify-end gap-2">
+          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700" onClick={onCancel}>
             Cancel
           </button>
           <button
@@ -75,7 +62,7 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
