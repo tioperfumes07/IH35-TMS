@@ -1350,7 +1350,9 @@ const LIVE_DOMAIN_GUARDS = [
   // USMCA's Samsara integration was disabled this entire time (see the guard's own header).
   [
     "verify-dispatched-load-has-stop-stamps",
-    ["apps/backend/src/dispatch/stop-stamp.service.ts", "apps/backend/src/telematics/geofence-detector.service.ts", "apps/backend/src/cron/samsara-positions-cron.ts"],
+    ["apps/backend/src/dispatch/stop-stamp.service.ts", "apps/backend/src/telematics/geofence-detector.service.ts", "apps/backend/src/cron/samsara-positions-cron.ts",
+     // LEAD 443.335 — the booked-after-trip engine (and its cron) is the other writer of these stamps.
+     "apps/backend/src/telematics/stop-arrival-from-fence-history.service.ts", "apps/backend/src/cron/load-stop-geofence-sync.cron.ts"],
   ],
   // LEAD 443.281-E — person names normalized at write (drivers trigger + live no-ALL-CAPS check).
   [

@@ -3,6 +3,7 @@
  * SCHEDULE: 4,19,34,49 * * * *
  * WRITES: geo.geofences, geo.geofence_events, mdata.load_stops actual_arrival_at / geocode, mdata.locations;
  *         LEAD 443.279: final-delivery actual_departure_at of a delivered* load from its stored fence-exit fix (stop engine)
+ *         LEAD 443.335: stops of a load booked after its trip, from the unit's replayed visits to the load's own stop fences (stop engine)
  * IDEMPOTENCY: ADVISORY LOCK per (load, stop) on fence binding (load-geofence-binding.service.ts) and per location on location + location-fence create (stops-geocode-backfill.service.ts); UNIQUE(operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) ON CONFLICT on event replay; SAME-STATEMENT WHERE actual_arrival_at IS NULL on the stop stamp; geocode columns are a DETERMINISTIC OVERWRITE
  * OVERLAP: second run binds no twin fence, replays 0 new events, stamps 0 stops (proven ROUND 329 on a throwaway branch: run 1 stamped 1, run 2 stamped 0)
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
@@ -24,6 +25,11 @@ import {
   listDeliveredWithoutFinalDeparture,
   type FenceDepartureOutcome,
 } from "../telematics/fence-departure-from-history.service.js";
+import {
+  completeStopsFromFenceHistory,
+  listLoadsBookedAfterTrip,
+  type BookedAfterTripOutcome,
+} from "../telematics/stop-arrival-from-fence-history.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 import { USMCA_COMPANY_ID } from "../org/company-ids.js";
@@ -47,8 +53,11 @@ export function initializeLoadStopGeofenceSyncCron(app: FastifyInstance) {
       // LEAD 443.279 — delivered* loads whose final stop never got its departure: complete it from the stored fence-exit fix
       // through the stop engine, ONE transaction per load (its revenue latch runs after its own COMMIT; one refusal never
       // blocks the rest). No fix outside the fence = nothing written.
+      // LEAD 443.335 — loads booked after their trip: stamp their stops from the truck's replayed visits to the load's own stop
+      // fences (before the 443.279 pass, so a load proven delivered here also gets its final departure checked).
+      const bookedAfterTrip = await completeLoadsBookedAfterTrip();
       const departures = await completeDeliveredFinalDepartures();
-      app.log.info({ operating_company_id: USMCA_COMPANY_ID, ...result, final_departures: departures }, `${CRON_NAME} complete`);
+      app.log.info({ operating_company_id: USMCA_COMPANY_ID, ...result, booked_after_trip: bookedAfterTrip, final_departures: departures }, `${CRON_NAME} complete`);
     }, app.log);
   }, { timezone: "America/Chicago", maxRandomDelay: 20_000 });
   app.log.info(`${CRON_NAME} scheduled (4,19,34,49 * * * * America/Chicago)`);
@@ -71,6 +80,29 @@ export async function completeDeliveredFinalDepartures(operatingCompanyId = USMC
     } catch (err) {
       console.error({ load_number: row.load_number, err }, "geofence-sync: final departure failed");
       out.push({ load_number: row.load_number, outcome: "refused", detail: String((err as Error)?.message ?? err) });
+    }
+  }
+  return out;
+}
+
+/** LEAD 443.335 — one transaction per load; one refusal never blocks the rest. No qualifying visit = nothing written. */
+export async function completeLoadsBookedAfterTrip(operatingCompanyId = USMCA_COMPANY_ID): Promise<BookedAfterTripOutcome[]> {
+  const loads = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return listLoadsBookedAfterTrip(client as never, operatingCompanyId);
+  });
+  const out: BookedAfterTripOutcome[] = [];
+  for (const load of loads) {
+    try {
+      out.push(
+        await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+          return completeStopsFromFenceHistory(client as never, operatingCompanyId, load);
+        })
+      );
+    } catch (err) {
+      console.error({ load_number: load.load_number, err }, "geofence-sync: booked-after-trip stamp failed");
+      out.push({ load_number: load.load_number, outcome: "refused", detail: String((err as Error)?.message ?? err), stamped_before_refusal: 0 });
     }
   }
   return out;

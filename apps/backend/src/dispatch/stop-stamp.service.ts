@@ -39,7 +39,15 @@ export type StampResult<T extends Record<string, unknown> = Record<string, never
 export async function stampStopArrival(
   client: DbClient,
   stop: LockedStopRow,
-  ctx: { loadId: string; actorUserId: string; source: StopArrivalSource; auditEvent: string }
+  ctx: {
+    loadId: string;
+    actorUserId: string;
+    source: StopArrivalSource;
+    auditEvent: string;
+    /** LEAD 443.335 — the evidence time of the arrival (a replayed fence entry of a load booked after its trip). Absent =
+     *  now() (a live tap / live fence). Never a guessed time: callers pass only an observed telematics timestamp. */
+    at?: string | null;
+  }
 ): Promise<StampResult<{ proforma_invoice: unknown }>> {
   const nextLoadStatus = stop.stop_type === "pickup" ? "at_pickup" : "at_delivery";
   const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
@@ -48,7 +56,7 @@ export async function stampStopArrival(
   const arrivalUpdate = await client.query<{ id: string }>(
     `
       UPDATE mdata.load_stops
-      SET actual_arrival_at = now(),
+      SET actual_arrival_at = COALESCE($4::timestamptz, now()),
           actual_arrival_source = $3,
           status = 'arrived'
       WHERE id = $1
@@ -56,7 +64,7 @@ export async function stampStopArrival(
         AND actual_arrival_at IS NULL
       RETURNING id
     `,
-    [stop.id, ctx.loadId, ctx.source]
+    [stop.id, ctx.loadId, ctx.source, ctx.at ?? null]
   );
   if (!arrivalUpdate.rows[0]?.id) return { ok: false, error: "arrival_already_recorded" };
 
