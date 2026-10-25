@@ -49,6 +49,8 @@ scripts/verify-steps/18445-verify-cash-flow-projections-8b.mjs
 # ROUND 443.139 8c (CC-1, 2026-10-12) — basis (accrual/cash) on all 7 money reports
 scripts/verify-steps/18441-verify-all-money-reports-take-basis.mjs
 apps/backend/src/accounting/__tests__/8c-money-reports-basis.db.test.ts
+# ROUND 443.322 ENG-04 (CC-1, 2026-10-24) — advance resolver never credits driver_payroll_clearing
+apps/backend/src/cash-advances/cash-advance-create.ts
 # ROUND 443.113 BCF-01 (CC-1, 2026-10-12) — cash-advance disburse + atomic GL post
 apps/backend/src/cash-advances/cash-advance-disburse.ts
 apps/backend/src/cash-advances/__tests__/bcf01-atomic-disburse.test.ts

@@ -2413,6 +2413,7 @@ async function buildDriverAdvanceLines(
     amount: string;
     driver_id: string;
     disbursement_status: string;
+    disbursement_method: string | null;
     posting_date: string | null;
     disbursed_at: string | null;
     created_at: string;
@@ -2425,6 +2426,7 @@ async function buildDriverAdvanceLines(
         amount::text,
         driver_id::text,
         disbursement_status::text,
+        disbursement_method::text,
         posting_date::text,
         disbursed_at::text,
         created_at::text,
@@ -2453,6 +2455,14 @@ async function buildDriverAdvanceLines(
   // shared cash_advance category account. An unbound driver fails closed.
   const debitAccountId = await resolveDriverAdvanceDebitAccount(client, operatingCompanyId, advance.driver_id);
 
+  // ENG-04 (2026-10-24): the advance resolver NEVER credits driver_payroll_clearing (2170).
+  // Method routing — what goes where:
+  //   wire / direct_bank_transfer / in_person_check / comdata / comchek (EFS) →
+  //     from_bank_account_id REQUIRED (refuse null); the GL account comes from the bank→GL bridge.
+  //     For EFS (comdata/comchek) the bank account FK maps to the EFS payable vendor account in the GL.
+  //   historical_backfill / efectivo / unrecognised →
+  //     same bank bridge if from_bank_account_id is set; else operating_bank role fallback.
+  //     Driver_payroll_clearing is NEVER the fallback regardless of caller-supplied override.
   // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK — this used to
   // be `creditAccountId ?? resolveDisbursementCashAccountForCompany(...)`, so an advance that named its
   // own from_bank_account_id (stamped at create time) was IGNORED at post time; the credit landed on a
@@ -2463,6 +2473,12 @@ async function buildDriverAdvanceLines(
   // bridge (banking.bank_accounts.ledger_account_id) every other bank-facing poster uses — fail LOUD if
   // that bank has no bridge, never silently fall through to a clearing account. Only when the advance
   // names no bank at all does the existing ACCT-F345 fail-closed company fallback apply.
+  const isExternalInstrumentMethod =
+    advance.disbursement_method === "wire" ||
+    advance.disbursement_method === "direct_bank_transfer" ||
+    advance.disbursement_method === "in_person_check" ||
+    advance.disbursement_method === "comdata" ||
+    advance.disbursement_method === "comchek";
   let creditAccount: string | null;
   if (creditAccountId) {
     // ACCT-F5653 — validate the caller-supplied credit_account_id belongs to THIS company's chart of
@@ -2476,10 +2492,38 @@ async function buildDriverAdvanceLines(
         `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${advance.from_bank_account_id}`
       );
     }
+  } else if (isExternalInstrumentMethod) {
+    // ENG-04: wire/ACH/EFS disbursement with no from_bank_account_id — cannot post without knowing
+    // which account the cash left from. from_bank_account_id is required for these methods.
+    throw new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      `Driver advance disbursement_method=${advance.disbursement_method} requires from_bank_account_id — cannot resolve credit account without a bank account reference`
+    );
   } else {
     creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
     if (!creditAccount) {
       throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
+    }
+  }
+  // ENG-04 hard guard: driver_payroll_clearing (2170) is NEVER a valid credit for an advance posting.
+  // This role belongs on bill payments only (§1990–2008). If a caller supplied it via creditAccountId
+  // or if the bank→GL bridge somehow mapped to it, reject loudly rather than post silently wrong.
+  if (creditAccount) {
+    const isClearingAccount = await client.query<{ is_clearing: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM catalogs.account_role_assignments r
+          WHERE r.account_id = $1::uuid
+            AND r.operating_company_id = $2::uuid
+            AND r.role = 'driver_payroll_clearing'
+            AND r.is_active
+       ) AS is_clearing`,
+      [creditAccount, operatingCompanyId]
+    );
+    if (isClearingAccount.rows[0]?.is_clearing) {
+      throw new PostingEngineError(
+        "INVALID_ACCOUNT",
+        `Driver advance credit account ${creditAccount} has role driver_payroll_clearing — advances never post to clearing; check from_bank_account_id or creditAccountId`
+      );
     }
   }
 
