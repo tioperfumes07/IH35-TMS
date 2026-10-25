@@ -47,7 +47,10 @@ export type DispatchLoad = {
   // `l.*`); it just wasn't declared here, so callers had no typed way to link driver_short_name back
   // to the canonical driver record. Live-verified present on GET /dispatch/loads?view=home.
   assigned_primary_driver_id: string | null;
+  /** "J. Smith" compact label — boards/overview must prefer driver_full_name (D021). */
   driver_short_name: string | null;
+  /** ROUND 443.257-D D021 — full proper-case name from loadServiceDriverNameSql. */
+  driver_full_name?: string | null;
   has_open_pm_due_wo?: boolean;
   is_dispatch_blocked?: boolean;
   dispatch_block_reason?: string | null;

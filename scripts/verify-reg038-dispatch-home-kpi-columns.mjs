@@ -124,6 +124,25 @@ const contracts = [
     }),
   ],
   [
+    // 443.257-D D021 — Round-trip exposure shows full proper-case names, never driver_short_name alone.
+    "Round-trip exposure Driver column uses driver_full_name (D021; never short/initials-only)",
+    (files) => {
+      const block = panelBlock(files.frontend, "dispatch-round-trip-exposure-panel");
+      return (
+        block.length > 0 &&
+        /driver_full_name\s*\?\?\s*load\.driver_short_name/.test(block) &&
+        !/name=\{load\.driver_short_name\}/.test(block)
+      );
+    },
+    (files) => ({
+      ...files,
+      frontend: files.frontend.replace(
+        /name=\{load\.driver_full_name \?\? load\.driver_short_name\}/g,
+        "name={load.driver_short_name}",
+      ),
+    }),
+  ],
+  [
     "backend units-without-load selects a real last-delivered load id + number (the Load-column data source)",
     (files) =>
       /last_delivery\.load_id AS last_delivered_load_id/.test(files.backend) &&

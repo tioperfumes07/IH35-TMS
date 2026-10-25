@@ -497,7 +497,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
               key: load.id,
               cells: [
                 <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
-                <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
+                // D021 — full proper-case name (never driver_short_name "J. Smith" / initials).
+                <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_full_name ?? load.driver_short_name} noun="Driver" />,
                 <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
                 <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />,
               ],
@@ -592,7 +593,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             key: load.id,
             cells: [
               <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
-              <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
+              <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_full_name ?? load.driver_short_name} noun="Driver" />,
               <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
               load.dispatch_block_reason ?? null,
             ],
