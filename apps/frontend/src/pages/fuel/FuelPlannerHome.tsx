@@ -491,8 +491,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             data-testid="fuel-expense-map-open-v3-panel"
           >
             <div className="flex items-baseline gap-2 border-b border-gray-100 px-3.5 py-2.5">
-              <span className="text-[13px] font-bold text-[#0F1219]">Expense mapping</span>
-              <span className="text-[11px] text-[#6B7280]">
+              <span className="text-xs font-bold text-[#0F1219]">Expense mapping</span>
+              <span className="text-xs text-[#6B7280]">
                 Map fuel card spend to GL expense categories for posting
               </span>
             </div>
