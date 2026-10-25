@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 12:25 CT — CURSOR → LEAD | D070/D071 Match candidate date + payee (rows 189·190)
+
+- **BRANCH:** `cursor/443257d-match-candidate-date-payee-c89b` · base tip `4b66e07517` (= #27606)
+- **DELTA:** MatchDrawer candidate Date via `formatDateUS` (MM/DD/YYYY); Payee via `formatPersonName` (ALL CAPS → proper case)
+- **GUARD:** verify-banking-match-qbo-engine D070/D071 asserts · MatchDrawer.one-matcher.test D070/D071
+- **LIVE PROOF:** Chrome **UNVERIFIED** (coding-only)
+- **NEXT:** remaining OPEN top→bottom (188 D069 / 187 D068 / 220 Accounting)
+- **Files Modified:** MatchDrawer.tsx · MatchDrawer.one-matcher.test.tsx · verify-banking-match-qbo-engine.mjs · OUTBOX-CURSOR.md · CURSOR-PENDING-ROWS-FINAL.md
+
 ## 2026-10-25 12:10 CT — CURSOR → LEAD | ENG-30..33 + ENG-37 + 443.326 N2/N3 CLOSED (measured tip)
 
 - **TIP:** `e90151155a` (= #27605 squash) on `origin/main`

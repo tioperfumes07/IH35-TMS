@@ -52,8 +52,8 @@
 | 186 | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | 443.257-D | CODED |
 | 187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | 443.257-D | OPEN |
 | 188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | 443.257-D | OPEN |
-| 189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | 443.257-D | OPEN |
-| 190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | 443.257-D | OPEN |
+| 189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | 443.257-D | CODED — MatchDrawer formatDateUS(c.event_date); guard D070 |
+| 190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | 443.257-D | CODED — MatchDrawer formatPersonName(c.counterparty_name); guard D071 |
 | 191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | 443.257-D | CODED-QUEUED |
 | 192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | 443.257-D | CODED |
 | 194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | 443.257-D | OPEN |

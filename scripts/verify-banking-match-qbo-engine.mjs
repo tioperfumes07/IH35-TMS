@@ -296,8 +296,19 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
   }
   if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin \?\? undefined/.test(drawer) || !/amountMax: amountMax \?\? undefined/.test(drawer))
     p.push("drawer: Payee / Amount from / Amount to are not sent to getMatchCandidates (register M5)");
-  for (const id of ["match-candidate-payee", "match-candidate-difference", "match-candidate-days-off"]) {
+  for (const id of ["match-candidate-payee", "match-candidate-difference", "match-candidate-days-off", "match-candidate-date"]) {
     if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: candidate rows do not show ${id}`);
+  }
+  // D070 / row 189 — candidate list dates must be formatDateUS (MM/DD/YYYY), never ISO slice display.
+  if (!/formatDateUS\(\s*c\.event_date\s*\)/.test(drawer)) {
+    p.push("drawer: match-candidate-date must use formatDateUS(c.event_date) (D070 MM/DD/YYYY)");
+  }
+  if (/match-candidate-date">Date: \{String\(c\.event_date/.test(drawer) || /event_date \?\? ""\)\.slice\(0,\s*10\)/.test(drawer)) {
+    p.push("drawer: match-candidate-date must not render raw YYYY-MM-DD via String(...).slice(0,10) (D070)");
+  }
+  // D071 / row 190 — candidate payee labels proper-cased (ALL CAPS → Title Case; mixed case kept).
+  if (!/formatPersonName\(\s*c\.counterparty_name\s*\)/.test(drawer)) {
+    p.push("drawer: match-candidate-payee must use formatPersonName(c.counterparty_name) (D071)");
   }
   if (/Gap \(\$/.test(drawer) || />Gap</.test(drawer) || /Amount gap:/.test(drawer)) {
     p.push('drawer: "Gap" text is back — it must read Difference and Days off');
