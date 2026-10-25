@@ -37,9 +37,9 @@ const FACTORING_RESERVES_ACCOUNT_ID = "165cc317-5c8b-4296-8aab-f5101f4a6815";
 // Baseline measured 2026-09-30. These are NOT "correct" values -- they are today's actual,
 // imperfect state, ratcheted so nothing gets silently worse.
 const BASELINE = {
-  escrowSubledgerDriverCount: 12, // re-measured 2026-10-03 from the GL-derived v_escrow_balances (was 14 on the stored copy)
-  escrowSubledgerTotalCents: 132500, // = -escrowGlTotalCents: the summary IS the GL now (was 237500 on the stored copy)
-  escrowGlTotalCents: -132500, // liability, credit-normal; stored here as the signed net we measure
+  escrowSubledgerDriverCount: 12, // re-measured 2026-10-25 from the GL-derived v_escrow_balances: 12 drivers / $3,200.00
+  escrowSubledgerTotalCents: 320000, // = -escrowGlTotalCents: the summary IS the GL now (was 132500 on 2026-10-03)
+  escrowGlTotalCents: -320000, // liability, credit-normal; stored here as the signed net we measure
   factoringReserveGlCents: 514440,
   factoringReserveFaroCents: 520819,
 };

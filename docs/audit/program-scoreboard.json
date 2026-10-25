@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f8ea8f0",
-  "generated_at": "2026-10-25T19:27:11.827Z",
+  "healthzSha": "2718bfd",
+  "generated_at": "2026-10-25T19:29:18.967Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f8ea8f0",
+    "deployedSha": "2718bfd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 27637,
+      "title": "FINDING: ACCT-F443280-A#8 Cash Flow › Projected (Auto) board still PARTIAL — outlook leftover gray chrome, D073 driver payees not proper-cased, chip dates not board weekday+MM-DD",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27637",
+      "sha": "a74daa6b0a",
+      "committedAtIso": "2026-10-25T14:27:33-05:00"
+    },
+    {
       "number": 27636,
       "title": "FINDING: LST-F443359 web build_failed again (Cursor f8ea8f01c4: RollingLedgerDocumentKind gained card_payable / relay_topup, not EntityKinds) + Record expense opened UNDER the load side panel",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27627",
       "sha": "55de2a6e9b",
       "committedAtIso": "2026-10-25T14:01:04-05:00"
-    },
-    {
-      "number": 27626,
-      "title": "FINDING: LST-F443354 override / confirm / void-reason popups render PAGE-WIDE on a 1920px screen (owner screenshot 10-25 1:46 PM: Override \"Confirm this override?\" spans the whole page)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27626",
-      "sha": "7d560f6e64",
-      "committedAtIso": "2026-10-25T13:59:20-05:00"
     }
   ]
 }
