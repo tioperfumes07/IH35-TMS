@@ -46,7 +46,7 @@ describe("MatchDrawer — the one matcher (443.163 M3 + M5)", () => {
       candidates: [
         {
           ledger_entry_kind: "factoring_advance", ledger_entry_id: "a1", amount_cents: 532500, event_date: "2026-08-10",
-          memo: "Faro purchase FP-2026-00009", reference: "FP-2026-00009", counterparty_name: "Faro Factoring",
+          memo: "Faro purchase FP-2026-00009", reference: "FP-2026-00009", counterparty_name: "LOVES TRAVEL STOP",
           amount_gap_cents: 0, date_gap_days: 0, memo_similarity: 0.6, match_score: 0.99, auto_match: false, open_balance_cents: null,
         },
       ],
@@ -60,7 +60,11 @@ describe("MatchDrawer — the one matcher (443.163 M3 + M5)", () => {
       <MatchDrawer embedded open bankTransactionId="bt-1" bankTransactionDate="2026-08-10" operatingCompanyId="co-1" onClose={() => {}} />
     ));
     expect(await screen.findByTestId("match-drawer")).toHaveAttribute("data-embedded", "1");
-    expect(await screen.findByTestId("match-candidate-payee")).toHaveTextContent("Faro Factoring");
+    // D070 — MM/DD/YYYY, never YYYY-MM-DD
+    expect(await screen.findByTestId("match-candidate-date")).toHaveTextContent("Date: 08/10/2026");
+    expect(screen.getByTestId("match-candidate-date")).not.toHaveTextContent("2026-08-10");
+    // D071 — ALL CAPS payee → proper case
+    expect(screen.getByTestId("match-candidate-payee")).toHaveTextContent("Loves Travel Stop");
     expect(screen.getByTestId("match-candidate-difference")).toHaveTextContent("Difference");
     expect(screen.getByTestId("match-candidate-days-off")).toHaveTextContent("Days off: 0");
   });

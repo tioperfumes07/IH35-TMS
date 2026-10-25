@@ -30,6 +30,8 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
+import { formatDateUS } from "../../../utils/qboFormat";
+import { formatPersonName } from "../../../lib/formatPersonName";
 import { humanMemo } from "../../accounting/ManualJEListPage";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
@@ -1188,8 +1190,15 @@ export function MatchDrawer({
                 ) : null}
 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
-                  <span data-testid="match-candidate-date">Date: {String(c.event_date ?? "").slice(0, 10) || "—"}</span>
-                  <span data-testid="match-candidate-payee">Payee: {c.counterparty_name?.trim() ? c.counterparty_name : "—"}</span>
+                  {/* D070 — MM/DD/YYYY like the transaction header; never raw YYYY-MM-DD */}
+                  <span data-testid="match-candidate-date">
+                    Date: {formatDateUS(c.event_date) || "—"}
+                  </span>
+                  {/* D071 — proper case when feed/source is ALL CAPS; mixed-case org names kept */}
+                  <span data-testid="match-candidate-payee">
+                    Payee:{" "}
+                    {c.counterparty_name?.trim() ? formatPersonName(c.counterparty_name) : "—"}
+                  </span>
                   <span data-testid="match-candidate-difference">Difference: {formatMoneyCents(c.amount_gap_cents)}</span>
                   <span data-testid="match-candidate-days-off">Days off: {c.date_gap_days}</span>
                   <span data-testid="match-candidate-open-balance">
