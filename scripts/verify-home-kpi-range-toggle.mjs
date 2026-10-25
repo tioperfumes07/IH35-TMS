@@ -131,6 +131,23 @@ export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes
     f.push(`${WEEKLY_CHART}: leftover slate class`);
   }
 
+  // D004 (443.257-D row 123) — Weekly revenue axis/tooltip MM/DD/YYYY via formatDate (= formatDateUS).
+  // Owner 10-24: "09/14/2026 everywhere" (was DD/MM without year / locale-shaped ticks).
+  if (weeklyChart) {
+    if (!/import\s*\{\s*formatDate\s*\}\s*from\s*["'][^"']*formatDate["']/.test(weeklyChart)) {
+      f.push(`${WEEKLY_CHART}: D004 must import formatDate from lib/formatDate`);
+    }
+    if (!/label:\s*formatDate\(\s*row\.date\s*\)/.test(weeklyChart)) {
+      f.push(`${WEEKLY_CHART}: D004 axis label must use formatDate(row.date) (MM/DD/YYYY)`);
+    }
+    if (!/labelFull:\s*formatDate\(\s*row\.date\s*\)/.test(weeklyChart)) {
+      f.push(`${WEEKLY_CHART}: D004 tooltip labelFull must use formatDate(row.date) (MM/DD/YYYY)`);
+    }
+    if (/toLocaleDateString|day:\s*["']2-digit["']|month:\s*["']2-digit["']/.test(weeklyChart)) {
+      f.push(`${WEEKLY_CHART}: D004 must not format axis/tooltip via toLocaleDateString (DD/MM risk)`);
+    }
+  }
+
   return f;
 }
 
@@ -274,6 +291,28 @@ if (process.argv.includes("--selftest")) {
   };
   if (!check(weeklySlatePlant).some((x) => x.includes("WeeklyRevenueChart") && x.includes("leftover slate class"))) {
     console.error(`${LABEL} --selftest FAIL — WeeklyRevenueChart leftover slate class plant escaped`);
+    process.exit(1);
+  }
+
+  // D004 plant — axis/tooltip must stay on formatDate (MM/DD/YYYY)
+  const d004GoodChart = `
+    import { formatDate } from "../../../lib/formatDate";
+    label: formatDate(row.date) || row.date,
+    labelFull: formatDate(row.date) || row.date,
+  `;
+  const d004Good = { ...good, weeklyChart: d004GoodChart };
+  if (check(d004Good).some((x) => x.includes("D004"))) {
+    console.error(`${LABEL} --selftest FAIL — D004 healthy chart should pass`);
+    process.exit(1);
+  }
+  const d004Bad = {
+    ...good,
+    weeklyChart: d004GoodChart
+      .replace("label: formatDate(row.date)", 'label: row.date.slice(8,10)+"/"+row.date.slice(5,7)')
+      .replace("labelFull: formatDate(row.date)", "labelFull: new Date(row.date).toLocaleDateString()"),
+  };
+  if (!check(d004Bad).some((x) => x.includes("D004") && x.includes("formatDate(row.date)"))) {
+    console.error(`${LABEL} --selftest FAIL — D004 axis/tooltip plant escaped`);
     process.exit(1);
   }
 

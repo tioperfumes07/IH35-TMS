@@ -43,6 +43,20 @@ function violations(board) {
   if (marginMatch && !marginMatch[0].includes("defaultHidden: true")) {
     errors.push("margin column exists but is not defaultHidden -- it must never be a default-visible column");
   }
+  // D025 (443.257-D row 144) — PU / Del cells MM/DD/YYYY via formatDateQboList (= formatDateUS).
+  // Owner 10-24: "09/14/2026 everywhere" (was M/D/YY two-digit year).
+  if (!/import\s*\{\s*formatDateQboList\s*\}\s*from\s*["'][^"']*formatDate["']/.test(board)) {
+    errors.push("D025: must import formatDateQboList from lib/formatDate");
+  }
+  if (!/render:\s*r\s*=>\s*r\.pickup_date\s*\?\s*formatDateQboList\(\s*r\.pickup_date\s*\)/.test(board)) {
+    errors.push("D025: PU Date column must render formatDateQboList(r.pickup_date)");
+  }
+  if (!/render:\s*r\s*=>\s*r\.actual_delivery_at\s*\?\s*formatDateQboList\(\s*r\.actual_delivery_at\s*\)/.test(board)) {
+    errors.push("D025: Del Date column must render formatDateQboList(r.actual_delivery_at)");
+  }
+  if (/year:\s*["']2-digit["']|toLocaleDateString\(/.test(board)) {
+    errors.push("D025: board must not format dates with two-digit year / toLocaleDateString");
+  }
   return errors;
 }
 
@@ -69,6 +83,8 @@ if (process.argv.includes("--selftest")) {
       '{ key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM,',
     ),
     board.replace('testId: "col-line-haul"', 'testId: "col-line-haul-GONE"'),
+    // D025 — PU Date leaves formatDateQboList
+    board.replace(/formatDateQboList\(\s*r\.pickup_date\s*\)/g, "r.pickup_date"),
   ];
   for (const mutated of mutations) {
     try { check(mutated); }

@@ -2,9 +2,21 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 CT — CURSOR → LEAD | D004 + D025 + D029 + D030 CLOSED measured (rows 123·144·148·149)
+
+- **TIP base:** `a9722cc9ad` (= #27608) on `origin/main`
+- **D004:** WeeklyRevenueChart already `label`/`labelFull` via `formatDate` (= `formatDateUS` MM/DD/YYYY). Ratchet in `verify-home-kpi-range-toggle`.
+- **D025:** Load Costs PU/Del already `formatDateQboList` (= MM/DD/YYYY). Ratchet in `verify-load-costs-board-column-contract`.
+- **D029:** Exceptions Since already `formatDateUS(row.since)`. Ratchet in `verify-notif-parity-recon-slate-leftover-chrome`.
+- **D030:** Subtitle already `formatDateUS(range.start/end)`; grid day headers stay `formatPlannerDayLabel` (MMM-DD) per GLB-08/PLN-03. Ratchet in `verify-planner-bar-label-tier`.
+- **LIVE PROOF:** `UNVERIFIED: owner Chrome walk on Weekly revenue / Load Costs PU-Del / Exceptions Since / Driver Scheduler range`
+- **GUARD:** four extended verifiers above — selftest + live PASS
+- **Files Modified:** verify-home-kpi-range-toggle.mjs · verify-load-costs-board-column-contract.mjs · verify-notif-parity-recon-slate-leftover-chrome.mjs · verify-planner-bar-label-tier.mjs · CURSOR-PENDING-ROWS-FINAL.md · OUTBOX-CURSOR.md
+- **NEXT:** remaining OPEN top→bottom (162 D043 / 171 D052 / 184 D065 / 194–196 / 220 Accounting)
+
 ## 2026-10-25 12:35 CT — CURSOR → LEAD | D068 + D069 CLOSED measured (rows 187·188)
 
-- **TIP base:** `c3df064330` (= #27607) on `origin/main`
+- **TIP base:** `c3df064330` (= #27607) on `origin/main` (merged tip now `a9722cc9ad` #27608)
 - **D069:** Reclassify Balance heading already `formatDateQboList(toDate)` (= `formatDateUS` MM/DD/YYYY); DatePicker same. Ratchet in `verify-b5-reclassify-batch`.
 - **D068:** Already shipped #27549 (`postingPartyNameSql` + PostingGrid `entityLabel(entity_name,…)`). Ratchet in `verify-je-debit-credit-columns`.
 - **LIVE PROOF:** Chrome **UNVERIFIED** (coding-only)
