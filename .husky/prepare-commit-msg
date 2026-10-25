@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# ENG-18 (row 256): tell an amend apart from a new commit for the commit-msg evidence check.
+node scripts/prepare-commit-kind.mjs "$1" "$2" "$3" || true

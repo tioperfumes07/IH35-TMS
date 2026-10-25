@@ -105,6 +105,14 @@ export function assertMoneyPrLocalGate(sources) {
       `${COMMIT_MSG}: must fall back to HEAD files when staged is empty (amend hole — Rule 25).`
     );
   }
+  // ENG-18 (row 256): the commit KIND comes from prepare-commit-msg, not from "nothing staged".
+  const prepHook = get(".husky/prepare-commit-msg");
+  if (!/prepare-commit-kind\.mjs/.test(prepHook)) {
+    problems.push(".husky/prepare-commit-msg must run scripts/prepare-commit-kind.mjs (amend vs new commit — ENG-18).");
+  }
+  if (!/readCommitKind/.test(commitLib)) {
+    problems.push("scripts/lib/commit-msg-files.mjs must read the commit kind recorded by prepare-commit-msg (ENG-18).");
+  }
   if (!/diff-tree|headTree|HEAD/.test(commitMsg + commitLib)) {
     problems.push(`${COMMIT_MSG}: amend fallback to HEAD tree missing.`);
   }
