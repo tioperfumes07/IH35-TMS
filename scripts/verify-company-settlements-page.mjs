@@ -123,6 +123,20 @@ function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc, dedupeLibSr
   if (/\bDrillKpiCard\b/.test(pageSrc)) {
     failures.push("page still uses DrillKpiCard — Company V3 requires V3KpiTile");
   }
+  // 443.280 FULL — shared BoardSection around the closed-tours table (docs/design/v3/Settlements-Company).
+  // Design chrome: title + subtitle + View all → (same BoardSection contract as Open/Closed/Escrow).
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(pageSrc) || !/<BoardSection\b/.test(pageSrc)) {
+    failures.push("page must wrap Company settlements ParityTable in shared BoardSection");
+  }
+  if (!/testId=["']company-settlements-board-section["']/.test(pageSrc)) {
+    failures.push('BoardSection missing testId="company-settlements-board-section"');
+  }
+  if (!/onViewAll=\{/.test(pageSrc)) {
+    failures.push("BoardSection missing onViewAll (Settlements-Company.dc.html View all →)");
+  }
+  if (!/subtitle=["']revenue · costs · driver pay · margin per tour["']/.test(pageSrc)) {
+    failures.push("BoardSection missing design subtitle (revenue · costs · driver pay · margin per tour)");
+  }
 
   // 6. .ldt-* palette
   if (!/ldt-/.test(pageSrc)) {

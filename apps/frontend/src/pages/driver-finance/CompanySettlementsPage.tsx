@@ -5,12 +5,13 @@
 // Deep link ?id=<company_settlement_id> still opens the 8-section waterfall (unchanged engine).
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -88,6 +89,7 @@ function CompanySettlementCell({ row }: { row: TourListRow }) {
 export function CompanySettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
   const [search, setSearch] = useState("");
   const [searchParams] = useSearchParams();
@@ -340,41 +342,52 @@ export function CompanySettlementsPage() {
       </MoneyListToolbar>
 
       <div data-company-settlements-v3-panel="1" data-testid="company-settlements-list-panel">
-        <ParityTable
+        <BoardSection
           title="Company settlements"
-          columns={columns}
-          rows={tourRows}
-          rowKey={(r) => companySettlementsBoardRowKey(r)}
-          loading={toursQuery.isPending && Boolean(companyId)}
-          onRowClick={(r) => openWaterfallForTour(r)}
-          rowClassName={(r) =>
-            selected?.id && r.company_settlement_id === selected.id ? "bg-[#F7F8FA]" : ""
-          }
-          emptyText={
-            companyId
-              ? search.trim()
-                ? "No closed tours match this search."
-                : "No closed tours yet."
-              : "Select a company to view its company settlements."
-          }
-          storageKey="company-settlements-tour-board"
-          exportFilename="company-settlements-tours"
-          suppressToolbarSearch
-          footerCells={{
-            company_settlement: (v) => (
-              <span
-                className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
-                data-testid="company-settlements-tour-totals-label"
-              >
-                Totals ({v.length})
-              </span>
-            ),
-            revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),
-            costs: (v) => formatUsdCents(v.reduce((n, r) => n + r.costs_cents, 0)),
-            driver_pay: (v) => formatUsdCents(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
-            margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
+          subtitle="revenue · costs · driver pay · margin per tour"
+          onViewAll={() => {
+            setSearch("");
+            setSelected(null);
+            navigate("/driver-finance/company-settlements");
           }}
-        />
+          testId="company-settlements-board-section"
+        >
+          <ParityTable
+            columns={columns}
+            rows={tourRows}
+            rowKey={(r) => companySettlementsBoardRowKey(r)}
+            loading={toursQuery.isPending && Boolean(companyId)}
+            onRowClick={(r) => openWaterfallForTour(r)}
+            rowClassName={(r) =>
+              selected?.id && r.company_settlement_id === selected.id ? "bg-[#F7F8FA]" : ""
+            }
+            emptyText={
+              companyId
+                ? search.trim()
+                  ? "No closed tours match this search."
+                  : "No closed tours yet."
+                : "Select a company to view its company settlements."
+            }
+            storageKey="company-settlements-tour-board"
+            exportFilename="company-settlements-tours"
+            tableTestId="company-settlements-tour-table"
+            suppressToolbarSearch
+            footerCells={{
+              company_settlement: (v) => (
+                <span
+                  className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
+                  data-testid="company-settlements-tour-totals-label"
+                >
+                  Totals ({v.length})
+                </span>
+              ),
+              revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),
+              costs: (v) => formatUsdCents(v.reduce((n, r) => n + r.costs_cents, 0)),
+              driver_pay: (v) => formatUsdCents(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
+              margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
+            }}
+          />
+        </BoardSection>
       </div>
 
       {selected ? (
