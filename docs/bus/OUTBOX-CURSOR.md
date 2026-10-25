@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 38 Banking Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-banking-home-board` · tip `6c57206410` (= #27651 Unexpected)
+- **DELTA:** BankingHomeBoard closed REBUILT/PARTIAL vs docs/design/v3/Banking — Accounts|Drift `lg:grid-cols-2`; Feed green/gray dots; Drift KPI tone red; Latest Date MM-DD; Latest Amount signed without $; institution middot labels. Engines unchanged (getMoneyMap/getDriftAlerts/getPlaidCompanyTransactions). Factoring/Escrow cards stay on Accounts tab (Rule 07). verify-banking-home-preview-parity ratcheted.
+- **GUARD:** verify-banking-home-preview-parity --selftest 11/11 + live PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Factoring Home / Settlements / Fuel boards
+- **Files Modified:** BankingHomeBoard.tsx · verify-banking-home-preview-parity.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 37 Accounting Unexpected board complete (shipping)
 
 - **BRANCH:** `cursor/443280-acct-unexpected-board` · tip `5f05b804bc` (= #27650 Manual)
