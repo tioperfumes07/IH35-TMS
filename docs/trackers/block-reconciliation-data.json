@@ -1,6 +1,6 @@
 {
  "date": "2026-10-25",
- "generated_at_iso": "2026-10-25T12:38:01.951Z",
+ "generated_at_iso": "2026-10-25T18:33:54.373Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,78 @@
  ],
  "merged_prs": [
   {
+   "number": 27616,
+   "title": "Claude-1-ENG44: CC-1 443.329 ENG-44: 4 guard fixes",
+   "mergedAt": "2026-10-25T18:32:16Z",
+   "branch": "cc1/443329-eng44-guard-fixes"
+  },
+  {
+   "number": 27615,
+   "title": "Claude-1-443292: SETL-443.292-F — add P-0125 to void ops script; TB 0 before/after",
+   "mergedAt": "2026-10-25T18:32:13Z",
+   "branch": "cc1/443292-p0-empty-settlements-void"
+  },
+  {
+   "number": 27612,
+   "title": "FINDING: LST-F443353 web (ih35-tms-web) build_failed since d7334765d4 (#27610): SettlementsToursRegister calls mmmDd(), which #27610 removed",
+   "mergedAt": "2026-10-25T18:29:36Z",
+   "branch": "claude/lead-web-build-fix-1330"
+  },
+  {
+   "number": 27611,
+   "title": "Cursor- BANK-F443257 tip-stamp D043–D077 CLOSED @ d7334765d4",
+   "mergedAt": "2026-10-25T18:09:25Z",
+   "branch": "cursor/443257-d043-tip-stamp-c89b"
+  },
+  {
+   "number": 27610,
+   "title": "Cursor- BANK-F443257 D043/D052/D065/D075–D077 CF dates + escrow holder + ratchets",
+   "mergedAt": "2026-10-25T18:06:02Z",
+   "branch": "cursor/443257-d043-next-c89b"
+  },
+  {
+   "number": 27609,
+   "title": "Cursor-443257-D D004/D025/D029/D030 date ratchets — close four OPEN register rows",
+   "mergedAt": "2026-10-25T17:48:47Z",
+   "branch": "cursor/443257-next-open-c89b"
+  },
+  {
+   "number": 27608,
+   "title": "Cursor- fix(accounting): BANK-F443257-D068-D069 — close Entity names + Reclassify Balance MM/DD/YYYY ratchets",
+   "mergedAt": "2026-10-25T17:38:19Z",
+   "branch": "cursor/443257d-d069-reclassify-date-c89b"
+  },
+  {
+   "number": 27607,
+   "title": "Cursor-BANK-F443257-D070 — Match candidate dates MM/DD/YYYY + payee proper case",
+   "mergedAt": "2026-10-25T17:18:59Z",
+   "branch": "cursor/443257d-match-candidate-date-payee-c89b"
+  },
+  {
+   "number": 27606,
+   "title": "Cursor-BUS-ENG-CLOSE — ENG-30..37 + N2/N3 measured tip e90151155a",
+   "mergedAt": "2026-10-25T17:11:00Z",
+   "branch": "cursor/eng37-natural-sign-c89b"
+  },
+  {
+   "number": 27605,
+   "title": "Cursor-443.343-C Banking Categorize/Match suggestion reason UI",
+   "mergedAt": "2026-10-25T17:02:57Z",
+   "branch": "cursor/443343-suggestion-reason-c89b"
+  },
+  {
+   "number": 27604,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-25T12:38:46Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 27603,
+   "title": "Cursor-443326 V3 honest audit — Settlements Pre/Deductions/CashAdvances full boards + BoardSection",
+   "mergedAt": "2026-10-25T16:23:25Z",
+   "branch": "cursor/443326-v3-honest-audit-c89b"
+  },
+  {
    "number": 27602,
    "title": "CC-2- LEAD 443.288-D+443.304 step 18683+18687: expense-child-follows-parent guard (ADVISORY) + factoring-collection-closes-invoice guard (LIVE PASS)",
    "mergedAt": "2026-10-25T08:11:52Z",
@@ -17264,78 +17336,6 @@
    "title": "CC-2- heavy red 12399: payment engine moved out of the payments route module (apply service imported a route)",
    "mergedAt": "2026-10-17T10:34:46Z",
    "branch": "cc-2/peel-12399"
-  },
-  {
-   "number": 26981,
-   "title": "FINDING: ACCT-F4431938 LANE: FINANCIAL — Claude-3- 443.193 a driver-settlement void never voids (forgives) a deduction: with nothing to reverse, both void paths",
-   "mergedAt": "2026-10-17T09:27:28Z",
-   "branch": "claude/cc3-443-193-reverse-releases-deductions"
-  },
-  {
-   "number": 26980,
-   "title": "CC-2- insurance policy wizard: bill GL post under a savepoint (failed post rolls back alone)",
-   "mergedAt": "2026-10-17T10:24:12Z",
-   "branch": "cc-2/policy-create-post-savepoint"
-  },
-  {
-   "number": 26979,
-   "title": "FINDING: ACCT-F4431937 LANE: FINANCIAL — Claude-3- 443.193 heavy peel group A: steps 18369 18515 3033 3045 84 909 2648 2869 3429 8920 9782 green (6 real defects",
-   "mergedAt": "2026-10-17T09:22:51Z",
-   "branch": "claude/cc3-443-193-heavy-peel-a"
-  },
-  {
-   "number": 26978,
-   "title": "FINDING: ACCT-F4431936 LANE: FINANCIAL — Claude-3- 443.193 Settlement Creator drawer: Short (pay) miles never auto-filled from Google / Historical; preview + sa",
-   "mergedAt": "2026-10-17T09:20:04Z",
-   "branch": "claude/cc3-443-193-drawer-short-miles"
-  },
-  {
-   "number": 26977,
-   "title": "CC-2- lane-ownership accepts SURFACE-BREACH-AUTHORIZED lines (one cross-lane system)",
-   "mergedAt": "2026-10-17T10:24:20Z",
-   "branch": "cc-2/lane-guard-surface-lines"
-  },
-  {
-   "number": 26976,
-   "title": "CC-2- heavy red 118: customers/vendors list helpers single-sourced (mdata-list.ts) after the catalog consolidation",
-   "mergedAt": "2026-10-17T10:03:51Z",
-   "branch": "cc-2/peel-118"
-  },
-  {
-   "number": 26975,
-   "title": "CC-2- truck-planner roster --selftest: live plant + wired into its step",
-   "mergedAt": "2026-10-17T10:04:01Z",
-   "branch": "cc-2/truck-planner-selftest"
-  },
-  {
-   "number": 26974,
-   "title": "CC-2- heavy red 12327: Purchase Report real chargeback / Other Ref / Sch Fee restored on the purchase-engine lines",
-   "mergedAt": "2026-10-17T10:34:59Z",
-   "branch": "cc-2/peel-12327"
-  },
-  {
-   "number": 26973,
-   "title": "FINDING: LST-F4431932 LANE: NON-FINANCIAL — Claude-3- 443.193 heavy peel group B: 13 steps green (1875 1910 2013 2232 2416 2552 2978 3378 3398 3406 3689 960 995",
-   "mergedAt": "2026-10-17T09:12:21Z",
-   "branch": "claude/cc3-443-193-heavy-peel-b"
-  },
-  {
-   "number": 26972,
-   "title": "CC-2- heavy red 15625: complete-roster guards read the catalog-* scanners 443.182-A moved",
-   "mergedAt": "2026-10-17T10:04:25Z",
-   "branch": "cc-2/peel-15625"
-  },
-  {
-   "number": 26971,
-   "title": "CC-2- heavy red 11731: cancel presettlement-link selftest plant matched by shape (05c031c602 re-indent)",
-   "mergedAt": "2026-10-17T10:04:36Z",
-   "branch": "cc-2/peel-11731"
-  },
-  {
-   "number": 26970,
-   "title": "CC-2- heavy red 10931: board-scope guard follows listLoads to its hub (52699c6c2f moved it to catalog-loads.ts)",
-   "mergedAt": "2026-10-17T10:04:46Z",
-   "branch": "cc-2/peel-10931-board-scope"
   }
  ],
  "merged_pr_total": 3000,
