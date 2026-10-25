@@ -21,12 +21,22 @@
  *   node scripts/ops/repair-settlement-header-eng43.mjs --apply    # apply
  */
 import { createRequire } from "module";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const { Pool } = require("pg");
 const pgOpts = require("../lib/pg-connection-options.cjs");
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const APPLY = process.argv.includes("--apply");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+if (APPLY) {
+  const auth = process.env.OWNER_AUTH_ID ?? "";
+  if (!auth) { console.error("--apply requires OWNER_AUTH_ID env var (AUTH-NNN)"); process.exit(1); }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit" });
+}
 
 const pool = new Pool(pgOpts);
 const client = await pool.connect();

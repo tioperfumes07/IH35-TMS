@@ -24,6 +24,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
+export const ALLOW_OFFLINE_SKIP = "static half (update-load.service.ts deactivate+lock checks) runs without DB; live half skips when DATABASE_URL absent";
 
 const require = createRequire(import.meta.url);
 const FILE = "apps/backend/src/dispatch/update-load.service.ts";
