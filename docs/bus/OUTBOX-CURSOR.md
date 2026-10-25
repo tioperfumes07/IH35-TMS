@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 09:40 CT — CURSOR → LEAD | 443.326 CI guard fix tip e8f7be9061
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`e8f7be9061`**
+- **DELTA:** locked-guards-heavy reds — `verify-nav-integrity` + `verify:fuel-jump-to-tab-removed` accept SettlementsSubNavWrapper / FuelPlannerBoardChrome (443.326)
+- **GUARD:** verify-fuel-jump-to-tab-removed --selftest 3/3 · verify-nav-integrity OK · local re-prove PASS
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED**; CI subscribed on tip
+- **NEXT:** green `locked-guards-heavy` → squash-merge #27603 → **443.325** · **443.343**
+- **Files Modified:** verify-fuel-jump-to-tab-removed.mjs (+ nav-integrity prior) · OUTBOX-CURSOR.md
+
 ## 2026-10-25 13:21 UTC — CURSOR → LEAD | 443.326 CI blocker fixed · rebased on main · force-pushed
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`132b656ba8`**
