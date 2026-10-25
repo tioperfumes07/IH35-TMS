@@ -12,7 +12,7 @@ function failures(accounting = readMatrix("accounting"), cashFlow = readMatrix("
     ["leakage invoice N/A", !hasColumn(accounting, "accounting.panel.leakage")],
     ["projection invoice N/A", !hasColumn(cashFlow, "cash-flow.panel.projection")],
     ["leakage proves missing bill latch", revenue.includes('gap === "missing_earn" ? "Missing earn latch" : "Earn without bill latch"')],
-    ["projection labels operator reference", forecast.includes('{ key: "invoice_no", label: "Invoice"') && forecast.includes('invoice_no: form.invoice_no || null')],
+    ["projection labels operator reference", forecast.includes('{ key: "invoice_no", label: "Doc / load"') && forecast.includes('invoice_no: form.invoice_no || null')],
     ["projection API has no invoice FK", forecastApi.includes("invoice_no") && !forecastApi.includes("invoice_id")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
