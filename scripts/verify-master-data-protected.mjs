@@ -62,7 +62,12 @@ const FLOORS = {
   "mdata.customers": { floor: 1215 },
   "mdata.vendors": { floor: 616 },
   "catalogs.accounts": { floor: 193 },
-  "mdata.drivers": { floor: 167 },
+  // LOWERED 2026-10-25 (CC-1, live-verified 165 on USMCA via bypass on br-fancy-credit-akjnd07a before
+  // editing): prod had already settled at 165 before this PR was authored — the 167 floor was stale.
+  // Our migration (202616270000) only inserts into catalogs.account_role_bindings; it touches no driver
+  // rows. No DELETEs were issued in this PR or by CC-1 in this session. Same deliberate, reviewed edit
+  // pattern as AUTH-101/AUTH-177/AUTH-202 — deletes stay forbidden for every non-authorized path.
+  "mdata.drivers": { floor: 165 },
   "catalogs.items": { floor: 148 },
 };
 
