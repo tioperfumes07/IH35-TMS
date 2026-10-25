@@ -15134,6 +15134,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-advance-resolver-never-uses-driver-payroll-clearing"
   },
+  "18813": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "cc-1",
+    "purpose": "verify-no-duplicate-settlement-lines"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17138,5 +17143,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1093
+  "total_claimed": 1094
 }

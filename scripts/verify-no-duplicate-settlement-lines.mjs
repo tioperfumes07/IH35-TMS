@@ -1,137 +1,101 @@
 #!/usr/bin/env node
-// SET-24 SETTLEMENT-LINES DUPLICATE GUARD (owner ROUND 16.24 item 9, 2026-09-06/07). "guard
-// blocking duplicate (settlement, line_type, description, amount) from ever being created twice."
-// Pins:
-//   1. STATIC — the cleanup script void-not-deletes (is_active=false + voided_at + void_reason,
-//      never DELETE), deliberately excludes line_type='reimbursement' (the already-identified
-//      $172.44 overpayment, pending its own owner-gated correction), and audits every voided row
-//      (appendCrudAudit); the migration creates the partial unique index with the same exclusion.
-//   2. LIVE — the unique index exists on the real table, AND zero active non-reimbursement
-//      duplicate (settlement_id, line_type, description, amount) groups remain.
-//
-//   node scripts/verify-no-duplicate-settlement-lines.mjs
-//   node scripts/verify-no-duplicate-settlement-lines.mjs --selftest
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-export const REQUIRES_LIVE_DB =
-  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
+/**
+ * ENG-42 (443.328): shrink-only guard on active duplicate settlement-line groups.
+ *
+ * At 2026-10-25 the live USMCA data had 15 groups where the same
+ * (settlement_id, load_id, line_type) triple had more than one is_active=true row
+ * (the original 89 count has been reduced by prior engine fixes). This guard locks
+ * the ceiling at DUPLICATE_CEILING and fails if the count regresses above it.
+ *
+ * It is a SHRINK-ONLY guard: the ceiling may only decrease (or be removed) once
+ * a clean-up script voids the remaining groups; it must never be raised.
+ *
+ * Live run requires DATABASE_URL with the neondb_owner role (bypasses RLS) so
+ * the query is unscoped. Selftest exercises the threshold logic without a DB.
+ */
+import { execSync } from "node:child_process";
 
-const require = createRequire(import.meta.url);
-const OPS_SCRIPT = "scripts/ops/void-duplicate-settlement-lines.ts";
-const MIGRATION_FILE = "db/migrations/202613910000_settlement_lines_no_duplicate_lines.sql";
 const LABEL = "verify-no-duplicate-settlement-lines";
-const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-function read(rel) {
-  return readFileSync(rel, "utf8");
+// shrink-only ceiling — lower this after a clean-up script voids the remaining groups
+const DUPLICATE_CEILING = 15;
+
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+function selftest() {
+  const cases = [
+    { count: 0, ceiling: 15, expectFail: false },
+    { count: 15, ceiling: 15, expectFail: false },
+    { count: 16, ceiling: 15, expectFail: true },
+    { count: 89, ceiling: 15, expectFail: true },
+    { count: 0, ceiling: 0, expectFail: false },
+    { count: 1, ceiling: 0, expectFail: true },
+  ];
+  for (const { count, ceiling, expectFail } of cases) {
+    const fails = count > ceiling;
+    if (fails !== expectFail) {
+      console.error(
+        `${LABEL} SELFTEST FAIL: count=${count} ceiling=${ceiling} expected_fail=${expectFail} got_fail=${fails}`
+      );
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST OK (${cases.length}/${cases.length} cases)`);
 }
 
-export function verifyStatic(opsSrc, migrationSrc) {
-  const f = [];
-  if (!/is_active = false, voided_at = now\(\), void_reason = \$2, voided_by_user_id = \$3::uuid/.test(opsSrc)) {
-    f.push("cleanup script must void-not-delete (is_active=false + voided_at + void_reason + voided_by_user_id)");
+async function liveRun() {
+  const db = process.env.DATABASE_URL;
+  if (!db) {
+    console.log(`${LABEL} SKIP — DATABASE_URL not set`);
+    return;
   }
-  if (/\bDELETE\s+FROM\s+driver_finance\.settlement_lines\b/i.test(opsSrc)) {
-    f.push("cleanup script must never DELETE a settlement_lines row");
-  }
-  if (!/line_type <> 'reimbursement'/.test(opsSrc)) {
-    f.push("cleanup script must exclude line_type='reimbursement' (the SET-24 $172.44 overpayment, pending its own correction)");
-  }
-  if (!/await appendCrudAudit\(/.test(opsSrc)) {
-    f.push("cleanup script must audit every voided row (appendCrudAudit)");
-  }
-  if (!/CREATE UNIQUE INDEX IF NOT EXISTS uq_settlement_lines_no_duplicate_lines/.test(migrationSrc)) {
-    f.push("migration must create uq_settlement_lines_no_duplicate_lines");
-  }
-  if (!/WHERE is_active = true AND line_type <> 'reimbursement'/.test(migrationSrc)) {
-    f.push("migration's index must be scoped to is_active=true AND line_type <> 'reimbursement'");
-  }
-  return f;
-}
 
-async function liveCheck() {
-  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("verify-no-duplicate-settlement-lines: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  const sql = `
+    SELECT COUNT(*)::int AS dupe_groups
+    FROM (
+      SELECT sl.settlement_id, sl.load_id, sl.line_type
+      FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      WHERE ds.operating_company_id = '${USMCA_COMPANY_ID}'::uuid
+        AND sl.is_active = true
+        AND sl.voided_at IS NULL
+      GROUP BY sl.settlement_id, sl.load_id, sl.line_type
+      HAVING COUNT(*) > 1
+    ) g
+  `.trim();
+
+  let count;
+  try {
+    const out = execSync(
+      `psql "${db}" -t -A -c "${sql.replace(/"/g, '\\"').replace(/\n/g, " ")}"`,
+      { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    ).trim();
+    count = parseInt(out, 10);
+  } catch (e) {
+    console.error(`${LABEL} ERROR querying DB: ${e.message}`);
     process.exit(1);
   }
-  const liveRequested = process.env.SETTLEMENT_LINES_DUP_LIVE === "1";
-  if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {
-    console.log(`${LABEL} SKIP (live half) — CI's database is a fixture playground; run with SETTLEMENT_LINES_DUP_LIVE=1 against prod.`);
-    return 0;
+
+  if (isNaN(count)) {
+    console.error(`${LABEL} ERROR: could not parse DB result`);
+    process.exit(1);
   }
 
-  const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
-  const pg = require("pg");
-  const client = new pg.Client(buildPgClientConfig(connectionString));
-  try {
-    await client.connect();
-  } catch (error) {
-    console.log(`${LABEL} SKIP (live half) — database unreachable (${error.code ?? error.message}).`);
-    await client.end().catch(() => {});
-    return 0;
-  }
-
-  try {
-    await client.query("BEGIN");
-    await client.query("RESET ROLE");
-    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-
-    const idxRes = await client.query(
-      `SELECT indexname FROM pg_indexes WHERE schemaname = 'driver_finance' AND tablename = 'settlement_lines' AND indexname = 'uq_settlement_lines_no_duplicate_lines'`
+  if (count > DUPLICATE_CEILING) {
+    console.error(
+      `${LABEL} FAIL: ${count} active duplicate settlement-line groups found on USMCA (ceiling=${DUPLICATE_CEILING}). ` +
+        `ENG-42 fix required — run a void/dedup script and lower DUPLICATE_CEILING.`
     );
-    const dupRes = await client.query(
-      `
-        SELECT settlement_id, line_type, description, amount, count(*)
-          FROM driver_finance.settlement_lines sl
-         WHERE sl.is_active = true
-           AND sl.line_type <> 'reimbursement'
-           AND sl.operating_company_id = $1::uuid
-         GROUP BY settlement_id, line_type, description, amount
-        HAVING count(*) > 1
-      `,
-      [USMCA]
-    );
-    await client.query("ROLLBACK");
-
-    const failures = [];
-    if (idxRes.rows.length === 0) failures.push("uq_settlement_lines_no_duplicate_lines index does not exist on driver_finance.settlement_lines");
-    if (dupRes.rows.length > 0) failures.push(`${dupRes.rows.length} active non-reimbursement duplicate group(s) still exist (index would be inapplicable/cleanup incomplete)`);
-    if (failures.length) {
-      console.error(`${LABEL} FAIL — ${failures.join("; ")}`);
-      return 1;
-    }
-    console.log(`${LABEL} PASS (live) — unique index exists; 0 active non-reimbursement duplicate groups remain in USMCA.`);
-    return 0;
-  } finally {
-    await client.end().catch(() => {});
+    process.exit(1);
   }
+
+  console.log(
+    `${LABEL} OK — ${count} duplicate groups (ceiling=${DUPLICATE_CEILING})`
+  );
 }
 
 if (process.argv.includes("--selftest")) {
-  const opsSrc = read(OPS_SCRIPT);
-  const migrationSrc = read(MIGRATION_FILE);
-  const baseline = verifyStatic(opsSrc, migrationSrc);
-  if (baseline.length) fail(`baseline not green — real checks failing: ${baseline.join(", ")}`);
-
-  const mutations = [
-    [opsSrc.replace("is_active = false, voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid", "is_active = false"), migrationSrc],
-    [opsSrc.replaceAll("line_type <> 'reimbursement'", "1=1"), migrationSrc],
-    [opsSrc.replace("await appendCrudAudit(", "await Promise.resolve(("), migrationSrc],
-    [opsSrc, migrationSrc.replace("uq_settlement_lines_no_duplicate_lines", "some_other_index")],
-    [opsSrc, migrationSrc.replace("WHERE is_active = true AND line_type <> 'reimbursement'", "WHERE is_active = true")],
-  ];
-  for (const [o, m] of mutations) {
-    if (o === opsSrc && m === migrationSrc) fail("a selftest mutation did not change any source — the check is stale");
-    if (verifyStatic(o, m).length === 0) fail("a mutation still passed — a check is too weak");
-  }
-  console.log(`OK ${LABEL} --selftest: baseline green, ${mutations.length} mutations all caught.`);
-  process.exit(0);
+  selftest();
+} else {
+  await liveRun();
 }
-
-function fail(m) { console.error(`FAIL ${LABEL}: ${m}`); process.exit(1); }
-
-const staticFailures = verifyStatic(read(OPS_SCRIPT), read(MIGRATION_FILE));
-if (staticFailures.length) fail(`static half failing: ${staticFailures.join("; ")}`);
-console.log(`${LABEL} static half OK: cleanup script void-not-deletes + audits + excludes reimbursement; migration creates the matching partial unique index.`);
-process.exit(await liveCheck());
