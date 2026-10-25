@@ -132,6 +132,7 @@ const MONEY_LIST_TOOLBAR_PREFIX = new Map([
   ["apps/frontend/src/pages/accounting/FactoringListPage.tsx", "factoring"],
   ["apps/frontend/src/pages/accounting/PaymentsListPage.tsx", "payments"],
   ["apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", "prepaid"],
+  ["apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", "fixed-assets"],
   ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "receipts"],
   ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "settlements"],
   ["apps/frontend/src/pages/customers/CustomersListView.tsx", "customers"],

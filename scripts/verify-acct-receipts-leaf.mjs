@@ -76,4 +76,12 @@ if (!receiptsPage.includes('data-receipts-filter-toolbar="visible"')) {
   fail("ReceiptsPage filter bar must keep data-receipts-filter-toolbar for QBO collapse guard");
 }
 
+const fixedAssetsPage = read("apps/frontend/src/pages/accounting/FixedAssetsPage.tsx");
+if (fixedAssetsPage.includes("CollapsedListFilters")) {
+  fail("FixedAssetsPage must not use CollapsedListFilters (443.293-C V3)");
+}
+if (!fixedAssetsPage.includes('data-fixed-assets-filter-toolbar="visible"')) {
+  fail("FixedAssetsPage filter bar must use data-fixed-assets-filter-toolbar=visible");
+}
+
 console.log("PASS: verify-acct-receipts-leaf");

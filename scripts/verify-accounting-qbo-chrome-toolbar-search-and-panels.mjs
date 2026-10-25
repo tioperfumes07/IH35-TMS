@@ -53,7 +53,11 @@ const CHECKS = [
   },
   { name: "accounting.modal.bill_payment: BillPaymentModal real ParityDrawer + MoneyInput", file: "apps/frontend/src/components/ap/BillPaymentModal.tsx", pattern: /ParityDrawer[\s\S]*MoneyInput|MoneyInput[\s\S]*ParityDrawer/ },
   { name: "accounting.panel.reallocate: AllocationsPage real ParityTable", file: "apps/frontend/src/pages/accounting/AllocationsPage.tsx", pattern: /<ParityTable\b/ },
-  { name: "accounting.panel.trk_bulk_register: FixedAssetsPage real ParityTable + CollapsedListFilters", file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", pattern: /ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*ParityTable/ },
+  {
+    name: "accounting.panel.trk_bulk_register: FixedAssetsPage real ParityTable + MoneyListToolbar",
+    file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx",
+    pattern: /ParityTable[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*ParityTable/,
+  },
   { name: "accounting.panel.detail: FixedAssetsPage real ParityTable", file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", pattern: /<ParityTable\b/ },
   { name: "accounting.panel.period_status: MyAccountantPage real ParityTable", file: "apps/frontend/src/pages/accounting/MyAccountantPage.tsx", pattern: /<ParityTable\b/ },
   { name: "accounting.panel.class_cost_center_variance: PeriodComparisonPage real ParityTable", file: "apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx", pattern: /<ParityTable\b/ },
