@@ -1536,11 +1536,23 @@ jobs:
       - name: verify:bill-payment-has-spine-link
         run: node scripts/verify-steps/18821-verify-bill-payment-has-spine-link.mjs
 
+      # ENG-46 (step 18829) — USMCA settlements source_document_ref must resolve to a real USMCA load
+      - name: verify:no-dead-settlement-source-ref --selftest
+        run: node scripts/verify-steps/18829-verify-no-dead-settlement-source-ref.mjs --selftest
+      - name: verify:no-dead-settlement-source-ref
+        run: node scripts/verify-steps/18829-verify-no-dead-settlement-source-ref.mjs
+
       # ENG-43 (step 18845) — open USMCA settlements with earnings lines must not have gross_pay=0
       - name: verify:settlement-header-matches-lines --selftest
         run: node scripts/verify-steps/18845-verify-settlement-header-matches-lines.mjs --selftest
       - name: verify:settlement-header-matches-lines
         run: node scripts/verify-steps/18845-verify-settlement-header-matches-lines.mjs
+
+      # ENG-46 (step 18849) — non-salaried closed USMCA settlements must have GL bill entries
+      - name: verify:settlement-gl-bills-exist --selftest
+        run: node scripts/verify-steps/18849-verify-settlement-gl-bills-exist.mjs --selftest
+      - name: verify:settlement-gl-bills-exist
+        run: node scripts/verify-steps/18849-verify-settlement-gl-bills-exist.mjs
 
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
