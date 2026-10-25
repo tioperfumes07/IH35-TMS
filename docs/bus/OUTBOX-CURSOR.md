@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 49 Settlements Close FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-close-board` · tip after #27663 Open/Closed
+- **DELTA:** SettlementCloseArrivalPage step body + Result unwrap to shared BoardSection (CloseBoardPanel); SubNav KPI strip = Open drivers · Gross · Deductions · Escrow · Advances recovered · Net to driver (outside wizard board per 443.280-A). Engines unchanged.
+- **GUARD:** verify-settlements-qbo-chrome-surfaces + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Company/Escrow + Fuel boards
+- **Files Modified:** SettlementCloseArrivalPage.tsx · verify-settlements-qbo-chrome-surfaces.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 45–46 Settlements Open/Closed FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-settlements-open-board` · tip after #27661 Settlements Home
