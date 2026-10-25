@@ -8101,6 +8101,7 @@ scope: USMCA ONLY — P-0119 (Angel Alfonso Sosa Perez; closed, unposted, unpaid
 action: OWNER_AUTH_ID=AUTH-466 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-443338-p0119-drop-voided-duplicate-fee.mts --apply
 rehearsal: fork br-wild-mouse-ak0b4mjm — repair then ENG-01 post: JE Dr 2000 25.00 / Cr 2100-00-024 25.00 balanced
 result: COMMITTED 2026-10-24 ~21:33Z — P-0119 deductions 35.00 → 25.00, net pay 457.80 → 467.80 (the driver is owed $467.80, not $457.80); verify-voided-deduction-never-applied live 0
+follow-up: 2026-10-24 ~00:08Z verify-purge-window-state found line 2b56ad02 voided (voided_at set when the line was created from the already-voided deduction) with void_reason NULL; Lead completed void_reason on that same row only ("AUTH-466: duplicate Admin fee - GAS on P-0119 (source deduction 68041143 voided); never applied"). verify-purge-window-state live 0. Script now sets void_reason too.
 status: DONE
 
 ## AUTH-467

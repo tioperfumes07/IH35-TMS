@@ -11,6 +11,7 @@
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-voided-deduction-never-applied";
+export const ALLOW_OFFLINE_SKIP = "static half (pending query filters voided_at, selftest) always runs; only the live count needs DATABASE_URL and CI runs it live";
 const CAP = "apps/backend/src/driver-finance/settlement-deduction-cap.service.ts";
 
 export function staticProblems(src) {

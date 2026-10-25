@@ -38,7 +38,7 @@ try {
     if (paid) throw new Error("P-0119 already has a bank payment — refusing");
     const d = (await c.query(`SELECT voided_at, applied_to_settlement_id::text FROM driver_finance.driver_settlement_deductions WHERE id = $1::uuid FOR UPDATE`, [DEDUCTION])).rows[0];
     if (!d?.voided_at || d.applied_to_settlement_id !== SETTLEMENT) throw new Error("deduction not voided-and-applied-to-P-0119 — refusing");
-    const line = await c.query(`UPDATE driver_finance.settlement_lines SET is_active = false, updated_at = now()
+    const line = await c.query(`UPDATE driver_finance.settlement_lines SET is_active = false, voided_at = COALESCE(voided_at, now()), void_reason = COALESCE(void_reason, 'AUTH-466: duplicate Admin fee - GAS on P-0119 (source deduction 68041143 voided); never applied'), updated_at = now()
                                  WHERE id = $1::uuid AND settlement_id = $2::uuid AND source_reference_id = $3::uuid AND is_active RETURNING id`, [LINE, SETTLEMENT, DEDUCTION]);
     if (line.rowCount !== 1) throw new Error("line not deactivated — refusing");
     await c.query(`UPDATE driver_finance.driver_settlement_deductions SET applied_to_settlement_id = NULL, updated_at = now() WHERE id = $1::uuid`, [DEDUCTION]);
