@@ -35,17 +35,17 @@
     "dispatcher-board/role-views/dispatcher.service.ts": {
       "count": 2
     },
-    "driver/loads.routes.ts": {
-      "count": 2
-    },
-    "driver/pwa-live.routes.ts": {
-      "count": 1
-    },
     "driver-finance/settlements-load-bookended.service.ts": {
       "count": 2
     },
     "driver-finance/settlements.routes.ts": {
       "count": 2
+    },
+    "driver/loads.routes.ts": {
+      "count": 2
+    },
+    "driver/pwa-live.routes.ts": {
+      "count": 1
     },
     "integrations/samsara/cap-14-cargo-sensors/ingester.service.ts": {
       "count": 1
@@ -66,6 +66,9 @@
       "count": 1
     },
     "telematics/fleet-location-hos.service.ts": {
+      "count": 1
+    },
+    "telematics/stop-arrival-from-fence-history.service.ts": {
       "count": 1
     }
   },
