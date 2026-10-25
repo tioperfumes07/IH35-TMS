@@ -4,17 +4,48 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
+
+const PHOTO_URL_PREFIX = "file:";
+const SIGNED_TTL_SECONDS = 3600;
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const unitParamsSchema = z.object({ id: z.string().uuid() });
 const photoParamsSchema = z.object({ id: z.string().uuid(), photo_id: z.string().uuid() });
 
-const createPhotoSchema = z.object({
-  photo_url: z.string().url(),
-  photo_type: z.enum(["damage", "cleanliness", "mod", "interior", "exterior", "other"]),
-  caption: z.string().trim().max(2000).optional(),
-  taken_at: z.string().datetime().optional(),
-});
+const createPhotoSchema = z.union([
+  z.object({
+    docs_file_id: z.string().uuid(),
+    photo_type: z.enum(["damage", "cleanliness", "mod", "interior", "exterior", "other"]),
+    caption: z.string().trim().max(2000).optional(),
+    taken_at: z.string().datetime().optional(),
+    is_primary: z.boolean().optional(),
+  }),
+  z.object({
+    photo_url: z.string().url(),
+    photo_type: z.enum(["damage", "cleanliness", "mod", "interior", "exterior", "other"]),
+    caption: z.string().trim().max(2000).optional(),
+    taken_at: z.string().datetime().optional(),
+    is_primary: z.boolean().optional(),
+  }),
+]);
+
+async function resolvePhotoRow(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: { r2_key: string }[] }> },
+  photoUrl: string
+): Promise<string | null> {
+  if (photoUrl.startsWith(PHOTO_URL_PREFIX)) {
+    const fileId = photoUrl.slice(PHOTO_URL_PREFIX.length);
+    const res = await client.query(
+      `SELECT r2_key FROM docs.files WHERE id = $1::uuid AND deleted_at IS NULL AND upload_completed_at IS NOT NULL LIMIT 1`,
+      [fileId]
+    );
+    const r2Key = res.rows[0]?.r2_key;
+    if (!r2Key || !isR2Configured()) return null;
+    return (await generatePresignedDownloadUrl(r2Key, SIGNED_TTL_SECONDS)).url;
+  }
+  return photoUrl;
+}
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -42,16 +73,22 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
         [params.data.id, query.data.operating_company_id]
       );
       if (unit.rowCount === 0) return null;
-      const res = await client.query(
+      const res = await client.query<{ id: string; photo_url: string; photo_type: string; caption: string | null; taken_at: string | null; created_at: string; is_primary: boolean }>(
         `
-          SELECT id::text, photo_url, photo_type, caption, taken_at::text, created_at::text
+          SELECT id::text, photo_url, photo_type, caption, taken_at::text, created_at::text,
+                 (row_number() OVER (ORDER BY taken_at ASC NULLS LAST, created_at ASC)) = 1 AS is_primary
           FROM mdata.unit_photos
           WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid AND archived_at IS NULL
           ORDER BY taken_at DESC NULLS LAST, created_at DESC
         `,
         [params.data.id, query.data.operating_company_id]
       );
-      return res.rows;
+      const rows = [];
+      for (const row of res.rows) {
+        const signed_url = await resolvePhotoRow(client as Parameters<typeof resolvePhotoRow>[0], row.photo_url);
+        rows.push({ ...row, signed_url });
+      }
+      return rows;
     });
     if (rows === null) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return { photos: rows };
@@ -67,6 +104,18 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      // Resolve photo_url: prefer docs_file_id (stored as "file:<uuid>"), fallback to raw URL
+      let resolvedPhotoUrl: string;
+      if ("docs_file_id" in body.data) {
+        const fileCheck = await client.query(
+          `SELECT 1 FROM docs.files WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deleted_at IS NULL AND upload_completed_at IS NOT NULL LIMIT 1`,
+          [body.data.docs_file_id, query.data.operating_company_id]
+        );
+        if ((fileCheck.rowCount ?? 0) === 0) return null;
+        resolvedPhotoUrl = `${PHOTO_URL_PREFIX}${body.data.docs_file_id}`;
+      } else {
+        resolvedPhotoUrl = body.data.photo_url;
+      }
       const res = await client.query<{ id: string; photo_url: string; photo_type: string; caption: string | null; taken_at: string }>(
         `
           INSERT INTO mdata.unit_photos (
@@ -82,7 +131,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
           query.data.operating_company_id,
           params.data.id,
           authUser.uuid,
-          body.data.photo_url,
+          resolvedPhotoUrl,
           body.data.photo_type,
           body.data.caption ?? null,
           body.data.taken_at ?? null,

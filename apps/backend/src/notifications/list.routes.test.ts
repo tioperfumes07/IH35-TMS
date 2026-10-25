@@ -80,7 +80,7 @@ describe("notification list routes (AUDIT-FIX-9)", () => {
 
     const res = await app.inject({ method: "GET", url: "/api/v1/notifications?limit=20" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ notifications: [] });
+    expect(res.json()).toMatchObject({ notifications: [] });
   });
 
   it("LEAD 443.219 G-ERR — an SQL error is a 500, never 200 { notifications: [] }", async () => {

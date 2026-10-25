@@ -168,7 +168,8 @@ const NAMED_SECTION_SOURCES: NamedSectionSource[] = [
     // LEAD 443.289: ROUND 443.250 rebuilt "Planner settings" and "Expense mapping" as <V3Panel title="…"> — a named
     // section on the V3 board is its panel title, so the panel title counts like an <h3>.
     // FuelPlannerBoardChrome title="Fuel" is the page-level title (replaces PageHeader after 443.326).
-    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<FuelPlannerBoardChrome[^>]*\btitle="([^"]+)"/g, /<h3[^>]*>\s*([^<]+?)\s*<\/h3>/g, /<V3Panel\b[^>]*?\btitle="([^"]+)"/g],
+    // FuelBoardSection title="…" is used for board-level named sections (e.g. "Loves daily prices").
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<FuelPlannerBoardChrome[^>]*\btitle="([^"]+)"/g, /<h3[^>]*>\s*([^<]+?)\s*<\/h3>/g, /<V3Panel\b[^>]*?\btitle="([^"]+)"/g, /<FuelBoardSection[^>]*\btitle="([^"]+)"/g],
   },
   {
     module: "drivers",

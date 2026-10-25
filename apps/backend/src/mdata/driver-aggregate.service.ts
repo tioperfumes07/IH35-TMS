@@ -5,6 +5,9 @@ import { getCurrentClocks, type HosDutyStatus } from "../telematics/hos-clocks.s
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { loadDriverReferenceFkEnrichment } from "./driver-reference-fk.service.js";
+import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
+
+const DRIVER_PHOTO_FILE_PREFIX = "file:";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -75,6 +78,23 @@ export async function buildDriverAggregate(
   );
   const driver = driverRes.rows[0];
   if (!driver) return null;
+
+  // Resolve file: references to signed download URLs so the frontend can render directly
+  const rawPhotoUrl = driver.photo_url as string | null | undefined;
+  if (rawPhotoUrl && rawPhotoUrl.startsWith(DRIVER_PHOTO_FILE_PREFIX) && isR2Configured()) {
+    const fileId = rawPhotoUrl.slice(DRIVER_PHOTO_FILE_PREFIX.length);
+    const fileRes = await client.query<{ r2_key: string }>(
+      `SELECT r2_key FROM docs.files WHERE id = $1::uuid AND deleted_at IS NULL AND upload_completed_at IS NOT NULL LIMIT 1`,
+      [fileId]
+    );
+    const r2Key = fileRes.rows[0]?.r2_key;
+    if (r2Key) {
+      const signed = await generatePresignedDownloadUrl(r2Key, 3600);
+      (driver as Record<string, unknown>).photo_url = signed.url;
+    } else {
+      (driver as Record<string, unknown>).photo_url = null;
+    }
+  }
 
   const referenceFk = await loadDriverReferenceFkEnrichment(client, driverId, operatingCompanyId);
   const cdlExpiration = driver.cdl_expires_at as string | null;

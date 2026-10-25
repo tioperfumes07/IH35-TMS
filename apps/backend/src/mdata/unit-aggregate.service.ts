@@ -5,6 +5,9 @@ import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { excludeInsuranceFixtureSql } from "../insurance/insurance-visibility.js";
 import { form2290DueDateForFirstUse } from "../compliance/form-2290-generator.js";
+import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
+
+const UNIT_PHOTO_FILE_PREFIX = "file:";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -906,6 +909,21 @@ export async function buildUnitAggregate(
     `,
     [unitId, operatingCompanyId]
   );
+  // Resolve file: references in photo rows to signed R2 download URLs
+  if (isR2Configured()) {
+    for (const row of photosRes.rows as Array<Record<string, unknown>>) {
+      const rawUrl = row.url as string | null;
+      if (rawUrl && rawUrl.startsWith(UNIT_PHOTO_FILE_PREFIX)) {
+        const fileId = rawUrl.slice(UNIT_PHOTO_FILE_PREFIX.length);
+        const fileRes = await client.query<{ r2_key: string }>(
+          `SELECT r2_key FROM docs.files WHERE id = $1::uuid AND deleted_at IS NULL AND upload_completed_at IS NOT NULL LIMIT 1`,
+          [fileId]
+        );
+        const r2Key = fileRes.rows[0]?.r2_key;
+        row.url = r2Key ? (await generatePresignedDownloadUrl(r2Key, 3600)).url : null;
+      }
+    }
+  }
 
   const documentsRes = await client.query(
     `
