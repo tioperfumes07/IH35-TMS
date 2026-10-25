@@ -65,6 +65,22 @@ export function analyseGeneratorContract(source) {
 }
 
 /**
+ * LEAD ENG-58 (row 304): the stamp's limit is COMMITS behind live, so its regenerator must run on a clock,
+ * not only when the ledger changes, and its push must survive losing the race with main.
+ */
+export function analyseSyncWorkflow(yml) {
+  const text = String(yml || "");
+  const problems = [];
+  if (!/^\s*schedule:\s*$/m.test(text) || !/cron:\s*"[^"]+"/.test(text)) {
+    problems.push("program-scoreboard-sync.yml must run on a schedule — a path-only trigger lets the stamp drift past maxDeploysBehind on quiet-ledger days");
+  }
+  if (!/for attempt in/.test(text) || !/git reset --quiet --hard origin\/main/.test(text)) {
+    problems.push("program-scoreboard-sync.yml must retry the push from a fresh origin/main — a single push loses the race with main");
+  }
+  return problems;
+}
+
+/**
  * Pure decision core — no git, no network, unit-testable.
  * @returns {{problems:string[], warnings:string[], stats:object}}
  */
@@ -188,6 +204,12 @@ function selftest() {
   t("scoreboard generator regeneration-time contract PASSES", () => {
     eq(analyseGeneratorContract("out.generated_at = regenerationTimestamp();").length, 0, "expected 0");
   });
+  t("sync workflow with schedule + fresh-main retry PASSES", () => {
+    eq(analyseSyncWorkflow('on:\n  schedule:\n    - cron: "17 */2 * * *"\nrun: |\n  for attempt in 1 2; do\n  git reset --quiet --hard origin/main').length, 0, "expected 0");
+  });
+  t("sync workflow with path-only trigger and single push FAILS twice", () => {
+    eq(analyseSyncWorkflow("on:\n  push:\n    paths: [x]\nrun: git push").length, 2, "expected 2");
+  });
   t("planted ledger-time regression FAILS", () => {
     const r = analyseGeneratorContract("out.generated_at = out.meta.generatedAt;");
     if (r.length < 1) throw new Error("planted regression escaped");
@@ -304,6 +326,12 @@ function main() {
   const generatorProblems = analyseGeneratorContract(fs.readFileSync(generatorPath, "utf8"));
   if (generatorProblems.length) {
     console.error(`${LABEL} FAIL — generator contract:\n  - ${generatorProblems.join("\n  - ")}`);
+    process.exit(1);
+  }
+
+  const syncProblems = analyseSyncWorkflow(fs.readFileSync(path.join(ROOT, ".github/workflows/program-scoreboard-sync.yml"), "utf8"));
+  if (syncProblems.length) {
+    console.error(`${LABEL} FAIL — scoreboard sync:\n  - ${syncProblems.join("\n  - ")}`);
     process.exit(1);
   }
 
