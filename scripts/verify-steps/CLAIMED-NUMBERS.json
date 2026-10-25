@@ -17168,5 +17168,10 @@
     "claimed_at": "2026-10-25",
     "claimed_by": "LEAD",
     "purpose": "verify-popups-one-format — one popup format app-wide (owner 10-25 4:02 PM): decision popups size=sm, no new hand-built overlays (shrink-only baseline)"
+  },
+  "18837": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "CC-1",
+    "purpose": "verify-settlement-costs-exclude-driver-bills — settlement load costs_cents must not include driver-pay AP bills (bill_category=driver); only company expenses + vendor bills count as costs"
   }
 }
