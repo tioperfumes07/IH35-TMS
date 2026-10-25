@@ -48,7 +48,20 @@ for (const check of PAGE_CHECKS) {
     failures.push(`${check.file} (still uses ?subtab= query navigation)`);
   }
   const navMarkerOk = check.navMarkers.every((marker) => {
-    if (marker === "NavLink") return source.includes("NavLink") || source.includes("NavyPageSubNav");
+    if (marker === "NavLink") {
+      if (source.includes("NavLink") || source.includes("NavyPageSubNav")) return true;
+      // 443.326 board grammar moved the sub-nav into a local board-chrome component (e.g. FactoringBoardChrome
+      // renders <NavyPageSubNav items={subnavItems} />). Follow the page's relative imports one level: a
+      // sibling component that renders NavyPageSubNav/NavLink and receives the page's route-manifest items counts.
+      for (const m of source.matchAll(/from\s+"(\.\/[A-Za-z0-9_-]+)"/g)) {
+        const sib = path.join(path.dirname(abs), `${m[1]}.tsx`);
+        if (!fs.existsSync(sib)) continue;
+        const sibSrc = fs.readFileSync(sib, "utf8");
+        const name = path.basename(m[1]);
+        if ((sibSrc.includes("NavyPageSubNav") || sibSrc.includes("NavLink")) && source.includes(`<${name}`) && source.includes("subnavItems")) return true;
+      }
+      return false;
+    }
     return source.includes(marker);
   });
   if (!navMarkerOk) {
