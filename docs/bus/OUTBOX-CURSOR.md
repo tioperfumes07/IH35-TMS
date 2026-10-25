@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Escrow Register + Settlements Home Export
+
+- **STATUS:** SHIPPING
+- **DELTA:** Wire dead Export buttons to real client CSV — Escrow Register (`filteredRows`) + Settlements Home Week-of roster (`weekOfRows`). Guards reject dead export-flag navigate / unwired Export.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlements-escrow-board-rebuild PASS · verify-v3-board-grammar-every-surface PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell on remaining dead actions / KPI gaps
+- **Files Modified:** EscrowRegisterPage · SettlementsHomeBoardPanels · verify-settlements-escrow-board-rebuild · verify-v3-board-grammar-every-surface · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Cash Advances Recovered + Escrow Scheduled
 
-- **STATUS:** SHIPPING — fill page work (not chrome shells)
+- **STATUS:** MERGED [#27714](https://github.com/tioperfumes07/IH35-TMS/pull/27714)
 - **DELTA:** `GET /cash-advances/dashboard/kpis` adds `recovered_this_period` (sum amount−outstanding via `recovered_in_settlement_id` × Sunday-week `period_end`); SettlementsCashAdvancesBoard + CashAdvancesKpiRow wire the figure; Escrow Scheduled releases drops fake `"0"` → honest `"—"` + `no schedule feed` (matches EscrowPage). Guards ratcheted.
 - **VERIFY:** `cd apps/backend && npx tsc --noEmit -p .` EXIT 0 · `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-cash-advances-tabs-url-sync PASS · verify-settlements-escrow-board-rebuild PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
