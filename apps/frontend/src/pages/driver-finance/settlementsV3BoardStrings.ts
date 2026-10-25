@@ -7,7 +7,7 @@ export const S443326 = {
     kpiAwaiting: "Requests awaiting owner",
     kpiOutstanding: "Outstanding to recover",
     kpiRecovered: "Recovered this period",
-    kpiRecoveredSub: "Sunday week via settlement recovery",
+    kpiRecoveredSub: "Sunday week advance_recovery lines",
     searchPlaceholder: "Search advance, driver, load…",
     colDriver: "Driver",
     colAsked: "Asked",

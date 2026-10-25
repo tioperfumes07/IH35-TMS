@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Recovered KPI from advance_recovery lines
+
+- **STATUS:** SHIPPING
+- **DELTA:** `recovered_this_period` now sums live `settlement_lines` `advance_recovery` (ABS amount) for Sunday-week settlements — includes partial takes (prior stamp via `recovered_in_settlement_id` missed partials). FE sub copy updated.
+- **VERIFY:** (pending) backend tsc
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** cash-advances.routes.ts · CashAdvancesKpiRow · settlementsV3BoardStrings · MEMORY_BANK · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting Escrow Scheduled honesty
 
 - **STATUS:** MERGED [#27717](https://github.com/tioperfumes07/IH35-TMS/pull/27717)

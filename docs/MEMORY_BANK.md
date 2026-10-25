@@ -529,9 +529,9 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **V3 board chrome:** four KPIs via `V3KpiTile` + `data-cash-advances-v3-kpis` on
   `CashAdvancesKpiRow.tsx` (Settlements mount `/driver-finance/cash-advances` + `/cash-advances`) —
   Advances on file (count) · Requests awaiting owner (`pending_approval`) · Outstanding to recover
-  (`total_outstanding`) · Recovered this period = `recovered_this_period` (sum amount−outstanding
-  for advances with `recovered_in_settlement_id` whose settlement `period_end` ≥ Sunday week start;
-  paid_off tab click-through). "—" when a figure is absent.
+  (`total_outstanding`) · Recovered this period = `recovered_this_period` (sum ABS of live
+  `settlement_lines` `advance_recovery` on settlements with `period_end` ≥ Sunday week start —
+  includes partial takes; paid_off tab click-through). "—" when a figure is absent.
 - **Guard piggyback:** `verify-cash-advances-tabs-url-sync.mjs` (step 990 ≡2 EVEN Cursor) asserts
   V3KpiTile + data-cash-advances-v3-kpis + board labels + total_outstanding / pending_approval /
   advances_on_file. No new EVEN claim.
