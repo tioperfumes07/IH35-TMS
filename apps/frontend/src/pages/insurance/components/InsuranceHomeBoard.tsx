@@ -14,6 +14,7 @@ import {
   type InsurancePolicy,
 } from "../../../api/insurance";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
@@ -22,7 +23,6 @@ import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { formatUsdCents } from "../../../utils/qboFormat";
 
 const thStyle: CSSProperties = {
@@ -384,10 +384,19 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                           row.carrier
                         )}
                       </td>
-                      <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
-                        {formatUsdCents(row.premiumCents)}
+                      <td style={{ ...tdStyle, textAlign: "right" }} className="text-right tabular-nums">
+                        {row.policyId ? (
+                          <MoneyCell
+                            cents={row.premiumCents}
+                            drill={{ entity: { kind: "insurance_policy", id: row.policyId } }}
+                          />
+                        ) : (
+                          <Link className="underline" to="/insurance" style={{ color: "inherit" }}>
+                            {formatUsdCents(row.premiumCents)}
+                          </Link>
+                        )}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
+                      <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums" data-quantity="share-pct">
                         {row.share.toFixed(1)}%
                       </td>
                     </tr>
@@ -398,10 +407,16 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                     <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
                     <td style={{ ...tdStyle, borderBottom: "none" }}>{""}</td>
                     <td
-                      className={QBO_MONEY_CELL_CLASS}
                       style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}
+                      className="text-right tabular-nums"
                     >
-                      {formatUsdCents(annualPremiumCents)}
+                      <Link
+                        className="underline"
+                        to="/insurance"
+                        style={{ color: "inherit", fontWeight: 700 }}
+                      >
+                        {formatUsdCents(annualPremiumCents)}
+                      </Link>
                     </td>
                     <td
                       style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}

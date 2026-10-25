@@ -6,7 +6,7 @@
  */
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
@@ -34,7 +34,6 @@ import { V3, V3_TABLE } from "../../design/v3-tokens";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
 import { entityLabel } from "../../lib/entity-label";
-import { QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { formatUsdCents } from "../../utils/qboFormat";
 
 type TabId =
@@ -802,8 +801,18 @@ export function AccountingHubPage() {
                             <span>{row.name}</span>
                           )}
                         </td>
-                        <td className={QBO_MONEY_CELL_CLASS} style={tdStyle}>
-                          {formatUsdCents(row.cents)}
+                        <td style={tdStyle} className="text-right tabular-nums">
+                          <Link
+                            className="underline"
+                            style={{ color: V3.ink }}
+                            to={
+                              row.driverId
+                                ? `/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driverId)}`
+                                : "/driver-finance/settlements?state=open"
+                            }
+                          >
+                            {formatUsdCents(row.cents)}
+                          </Link>
                         </td>
                       </tr>
                     ))

@@ -8,7 +8,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { V3Panel } from "../v3/V3Panel";
 import { V3 } from "../../design/v3-tokens";
 import { formatUsdCents } from "../../lib/money";
-import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
+import { MoneyCell } from "../shared/MoneyCell";
 
 type TourRowWithLoadLinks = TourListRow & {
   /** Optional; when absent, projected from legs for SETL-F5831 reverse drill. */
@@ -170,9 +170,12 @@ const preSettlementColumns: ParityColumn<TourListRow>[] = [
     label: "Pay so far",
     sortable: true,
     sortValue: (row) => row.driver_pay_cents,
-    className: QBO_MONEY_CELL_CLASS,
+    className: "text-right",
     render: (row) => (
-      <span className={QBO_MONEY_CELL_CLASS}>{formatUsdCents(row.driver_pay_cents)}</span>
+      <MoneyCell
+        cents={row.driver_pay_cents}
+        drill={{ entity: { kind: "settlement", id: row.settlement_id } }}
+      />
     ),
   },
   {
@@ -262,8 +265,13 @@ export function PreSettlementsPanel({
                 ? {
                     loads_so_far: <span className="font-semibold">Total</span>,
                     amount: (
-                      <span className={`font-semibold ${QBO_MONEY_CELL_CLASS}`}>
-                        {formatUsdCents(totalCents)}
+                      <span className="font-semibold text-right tabular-nums">
+                        <Link
+                          className="underline"
+                          to="/driver-finance/settlements?state=open"
+                        >
+                          {formatUsdCents(totalCents)}
+                        </Link>
                       </span>
                     ),
                   }
@@ -292,7 +300,14 @@ export function PreSettlementsPanel({
             }}
           >
             <span className="font-semibold">Total payout this batch</span>
-            <span className={`font-semibold ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(totalCents)}</span>
+            <span className="font-semibold text-right tabular-nums">
+              <Link
+                className="underline"
+                to="/driver-finance/settlements?state=open"
+              >
+                {formatUsdCents(totalCents)}
+              </Link>
+            </span>
           </div>
         ) : null}
         <p
