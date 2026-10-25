@@ -1,5 +1,5 @@
-// ROUND 443.292-F void — P-0123 (Carlos Pena) and P-0124 (Jose Antonio Vicente) closed 10-23
-// with 0 lines, $0.00. The close engine now refuses empty shells; these two must be voided.
+// ROUND 443.292-F void — P-0123 (Carlos Pena), P-0124 (Jose Antonio Vicente), P-0125 (Angel Sosa)
+// all closed with 0 lines, $0.00. The close engine now refuses empty shells; these three must be voided.
 // Uses THE engine: reverseSettlementForVoid (void-document-callees.service.ts) — same function
 // POST /settlements/:id/reverse calls. Owns unlinking loads / driver bills / GL reversal.
 // Guard: verify-no-empty-zero-settlement. TB must be 0 before and after (no GL postings exist).
@@ -15,8 +15,8 @@ import { reverseSettlementForVoid } from "../../apps/backend/src/driver-finance/
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
-const DISPLAY_IDS = ["P-0123", "P-0124"];
-const VOID_REASON = "443.292-F: closed 10-23-2026 with 0 settlement lines and $0.00 — empty shell voided per engine enforcement (443.294 override-reason)";
+const DISPLAY_IDS = ["P-0123", "P-0124", "P-0125"];
+const VOID_REASON = "443.292-F: closed with 0 settlement lines and $0.00 — empty shell voided per engine enforcement (443.294 override-reason)";
 const APPLY = process.argv.includes("--apply");
 const FORK = process.argv.includes("--fork-commit");
 
