@@ -1,6 +1,6 @@
 {
  "date": "2026-10-25",
- "generated_at_iso": "2026-10-25T01:05:54.550Z",
+ "generated_at_iso": "2026-10-25T01:29:28.336Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,18 @@
  ],
  "merged_prs": [
   {
+   "number": 27577,
+   "title": "FINDING: BANK-F443331 escrow register load_date reads a column mdata.loads does not have; lease schedule declaration still says held",
+   "mergedAt": "2026-10-25T01:28:10Z",
+   "branch": "claude/lead-443-331-held-migrations-validated"
+  },
+  {
+   "number": 27575,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-25T01:06:43Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27574,
    "title": "Claude-3- FINDING: UI-F443347-B — customer + vendor names normalized at write (triggers + backfill, ratchet 0); D079 flag labels",
    "mergedAt": "2026-10-25T01:03:23Z",
@@ -17324,18 +17336,6 @@
    "title": "CC-2- heavy red 11587: purge closure 19 must not fail closed on an empty DB (my #26931 regression)",
    "mergedAt": "2026-10-17T09:02:51Z",
    "branch": "cc-2/443-193-purge19-empty-db"
-  },
-  {
-   "number": 26945,
-   "title": "CC-2- heavy red: 2 backend import cycles broken (Book Load <-> mileage engine; Relay bank match <-> match service)",
-   "mergedAt": "2026-10-17T09:03:06Z",
-   "branch": "cc-2/443-193-mileage-cycle"
-  },
-  {
-   "number": 26944,
-   "title": "FINDING: ACCT-F4431934 LANE: FINANCIAL — Claude-3- 443.192 Settlement Creator books + pays SHORT miles only (signed document miles = short; practical never a co",
-   "mergedAt": "2026-10-17T08:39:55Z",
-   "branch": "claude/cc3-443-192-creator-short-miles"
   }
  ],
  "merged_pr_total": 3000,
