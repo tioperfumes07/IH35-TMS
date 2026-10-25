@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["migrations"],"cols":["connectivity"],"leaves":["held-migrations.registry"],"task":"LST-F443331-HELD-REGISTRY-LEDGER-PARITY","vertical":"class-sweep"} */
 // verify-held-registry-ledger-parity.mjs
 //
 // STATIC guard for the 2026-07-25 GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK split

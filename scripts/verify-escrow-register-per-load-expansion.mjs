@@ -33,7 +33,7 @@ const CHECKS = [
   {
     name: "backend: selects load_id, load_number, load_date",
     file: ROUTE,
-    pattern: /sl_expand\.load_id::text AS load_id[\s\S]{0,100}l\.load_number AS load_number[\s\S]{0,100}l\.pickup_date::text AS load_date/,
+    pattern: /sl_expand\.load_id::text AS load_id[\s\S]{0,100}l\.load_number AS load_number[\s\S]{0,400}FROM mdata\.load_stops st[\s\S]{0,200}stop_type = 'pickup'[\s\S]{0,200}\) AS load_date/, // 443.331: mdata.loads has no pickup_date column — load_date is the first pickup stop
   },
   {
     name: "frontend type: EscrowDriverTimelineRow has load_id, load_number, load_date",
@@ -74,7 +74,10 @@ if (process.argv.includes("--selftest")) {
       LEFT JOIN mdata.loads l ON l.id = sl_expand.load_id AND l.operating_company_id = ep.operating_company_id
       sl_expand.load_id::text AS load_id,
       l.load_number AS load_number,
-      l.pickup_date::text AS load_date
+      (SELECT (COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at) AT TIME ZONE 'America/Chicago')::date::text
+         FROM mdata.load_stops st
+        WHERE st.load_id = l.id AND st.stop_type = 'pickup' AND st.soft_deleted_at IS NULL
+        ORDER BY st.sequence_number ASC LIMIT 1) AS load_date
     `,
     [TYPE_FILE]: `
       export type EscrowDriverTimelineRow = {
