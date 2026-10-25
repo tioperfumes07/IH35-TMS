@@ -210,26 +210,23 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
   const catchAll = rules.filter((r) => isCatchAllRule(r));
 
   async function applyMatchedRule(rule: BankingRuleRow & { then_account_number?: string | null }, confidence: "high" | "low") {
+    const reason = confidence === "low"
+      ? `catch-all rule${rule.name ? ` "${rule.name}"` : ""} matched — needs a decision`
+      : `banking rule${rule.name ? ` "${rule.name}"` : ""} matched the bank description`;
     await client.query(
       `
         UPDATE banking.bank_transactions
         SET
           suggested_vendor_id = $2,
           suggested_account_id = $3::uuid,
-          suggested_confidence = $4,
-          suggested_source = $5,
-          suggested_reason = $6,
+          suggested_confidence = '${confidence}',
+          suggested_source = $4,
+          suggested_reason = $5,
           suggested_at = now(),
           updated_at = now()
         WHERE id = $1::uuid
       `,
-      [
-        txnId, rule.then_vendor_id, rule.then_account_id, confidence,
-        `rule_id:${rule.id}`,
-        confidence === "low"
-          ? `catch-all rule${rule.name ? ` "${rule.name}"` : ""} matched — needs a decision`
-          : `banking rule${rule.name ? ` "${rule.name}"` : ""} matched the bank description`,
-      ]
+      [txnId, rule.then_vendor_id, rule.then_account_id, `rule_id:${rule.id}`, reason]
     );
     await client.query(
       `UPDATE accounting.banking_rules SET last_matched_at = now(), match_count = match_count + 1, updated_at = now() WHERE id = $1::uuid`,

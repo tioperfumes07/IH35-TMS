@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // RC5 443.341: re-suggest sweep — after rules change, unmatched lines get a fresh suggestion.
 // Static check: bulk re-suggest endpoint must exist and trigger on rule changes.
+// ALLOW_OFFLINE_SKIP: the live check is WARN-only (never exits non-zero on DB data); the static
+// wiring check above is the hard gate. Skipping the warn check offline is safe.
+export const ALLOW_OFFLINE_SKIP = "live check is WARN-only; static wiring check is the hard gate";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { requireLiveDbOrExit } from './lib/require-live-db.mjs';
@@ -16,7 +19,7 @@ assert(
 );
 
 // --- live check: no uncategorized debit transaction older than 7 days should have null suggested_account_id ---
-const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL, allowOfflineSkip: ALLOW_OFFLINE_SKIP });
 try {
   const { rows } = await client.query(
     `SELECT COUNT(*)::int AS stale_count

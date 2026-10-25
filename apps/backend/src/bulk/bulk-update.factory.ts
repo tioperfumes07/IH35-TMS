@@ -363,7 +363,7 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
         if (options.onAfterBatchCommit) {
           try {
             options.onAfterBatchCommit({ ids, action, operatingCompanyId, actorUserId: authUser.uuid });
-          } catch (_) { /* hook must never crash the route */ }
+          } catch (err) { req.log.error(err, "onAfterBatchCommit hook threw"); /* hook must never crash the route */ }
         }
         const body: BulkUpdateResponse = {
           requested: ids.length,
