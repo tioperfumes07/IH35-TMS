@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   listSettlementDeductions,
   listSettlements,
@@ -9,13 +9,14 @@ import {
 import { getActiveLiabilities, getLiabilitiesKpis } from "../../api/liabilities";
 import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents, formatUsdTable, QBO_MONEY_CELL_CLASS } from "../../lib/money";
+import { formatUsdTable } from "../../lib/money";
 import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
 
 /**
@@ -294,9 +295,15 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                       </td>
                       <td
                         style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}
-                        className={loaded ? QBO_MONEY_CELL_CLASS : undefined}
+                        className="text-right tabular-nums"
                       >
-                        {loaded ? formatUsdTable(bucket.amount) : "—"}
+                        {loaded ? (
+                          <Link className="underline" to={root} style={{ color: "inherit" }}>
+                            {formatUsdTable(bucket.amount)}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                     </tr>
                   );
@@ -332,9 +339,19 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                       background: V3.page,
                       borderBottom: "none",
                     }}
-                    className={weekMoney ? QBO_MONEY_CELL_CLASS : undefined}
+                    className="text-right tabular-nums"
                   >
-                    {display(weekMoney)}
+                    {weekMoney != null ? (
+                      <Link
+                        className="underline"
+                        to={root}
+                        style={{ color: "inherit", fontWeight: 700 }}
+                      >
+                        {display(weekMoney)}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               </tbody>
@@ -409,11 +426,17 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                           />
                         </td>
                         <td style={tdStyle}>{typeLabel}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }} className={QBO_MONEY_CELL_CLASS}>
-                          {formatUsdCents(row.max_per_settlement_cents ?? 0)}
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <MoneyCell
+                            cents={row.max_per_settlement_cents ?? 0}
+                            drill={{ entity: { kind: "driver", id: row.driver_id } }}
+                          />
                         </td>
-                        <td style={{ ...tdStyle, textAlign: "right" }} className={QBO_MONEY_CELL_CLASS}>
-                          {formatUsdCents(remaining)}
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <MoneyCell
+                            cents={remaining}
+                            drill={{ entity: { kind: "driver", id: row.driver_id } }}
+                          />
                         </td>
                         <td style={tdStyle}>{remaining > 0 ? "Next settlement" : "—"}</td>
                       </tr>

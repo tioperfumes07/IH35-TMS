@@ -324,8 +324,13 @@ export function SettlementsEscrowBoard() {
                     </span>
                   ),
                   heldCents: () => (
-                    <span className="font-bold tabular-nums text-right block" style={{ fontSize: 12 }}>
-                      {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
+                    <span
+                      className="font-bold tabular-nums text-right block"
+                      style={{ fontSize: 12, color: V3.ink }}
+                    >
+                      <Link className="underline" style={{ color: V3.ink }} to="/accounting/escrow">
+                        {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
+                      </Link>
                     </span>
                   ),
                 }
