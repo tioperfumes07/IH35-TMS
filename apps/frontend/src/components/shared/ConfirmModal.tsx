@@ -23,7 +23,7 @@ export function ConfirmModal({ open, title, message, confirmLabel = "Confirm", d
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const closeUnlessBusy = () => closeUnlessPending(busy, onClose);
   return (
-    <Modal open={open} onClose={closeUnlessBusy} title={title}>
+    <Modal open={open} onClose={closeUnlessBusy} title={title} size="sm">
       <div className="space-y-4">
         <p className="text-xs text-gray-700">{message}</p>
         {confirmError ? (
