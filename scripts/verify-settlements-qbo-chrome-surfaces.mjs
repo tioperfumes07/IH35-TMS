@@ -53,9 +53,16 @@ const CHECKS = [
     },
   },
   {
-    name: "SettlementCloseArrivalPage V3 step strip + V3Panel board",
+    // ROUND 443.326 — Close uses board grammar (kpiStrip + MoneyListToolbar + steps); V3Panel unwrap.
+    name: "SettlementCloseArrivalPage V3 step strip + MoneyListToolbar board (no V3Panel)",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
-    pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
+    pattern:
+      /data-settlement-close-v3-steps="1"[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*data-settlement-close-v3-steps="1"/,
+    forbiddenNear: {
+      pattern: /data-settlement-close-v3="1"[\s\S]{0,20000}/,
+      forbid: /<\s*V3Panel[\s/>]|import\s*\{[^}]*\bV3Panel\b/,
+      message: "443.326: Close board must not remount V3Panel (board grammar only)",
+    },
   },
   // ROUND 443.274-C Settlements-Close.dc.html — 2fr|1fr Driver on arrival | Result (getTourReadout legs).
   {

@@ -24,9 +24,17 @@ const CHECKS = [
     file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
     tests: [
       (s) => /Import Fuel Transactions/.test(s) || "fuel import CTA",
-      // Repointed (ROUND 443.187): d5dd898df8 "FUEL-OFFICE-CREATE-MODAL (#6330)" reworded the empty
-      // state (no hardcoded entity name; + Create added). Same rule: an honest empty fuel history.
-      (s) => /No fuel transactions yet — use \+ Create for a manual office purchase, or Import Fuel Transactions/.test(s) || "honest empty fuel history",
+      // ROUND 443.326 — History board mounts FuelTransactionsTable (ParityTable empty lives there).
+      (s) => /FuelTransactionsTable/.test(s) || "history board mounts FuelTransactionsTable",
+    ],
+  },
+  {
+    file: "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
+    tests: [
+      // Repointed (ROUND 443.187 / 443.326): honest empty fuel history on the ParityTable board.
+      (s) =>
+        /No fuel transactions yet — use \+ Create for a manual office purchase, or Import Fuel Transactions/.test(s) ||
+        "honest empty fuel history",
     ],
   },
   {

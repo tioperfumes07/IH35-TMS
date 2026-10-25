@@ -103,7 +103,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
       rowKey={(row) => row.id}
       rowClassName={(row) => voidedRowClassName(row.voided_at)}
       storageKey="fuel-transactions"
-      emptyText="No fuel transactions."
+      emptyText="No fuel transactions yet — use + Create for a manual office purchase, or Import Fuel Transactions"
       suppressToolbarSearch={suppressToolbarSearch}
       selectable={bulkPermission.canUseBulkOps}
       batchActions={() => (

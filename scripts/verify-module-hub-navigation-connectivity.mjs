@@ -8,6 +8,7 @@ const FILES = {
   statements: "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx",
   fuelConfig: "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
   fuel: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+  fuelChrome: "apps/frontend/src/pages/fuel/FuelPlannerBoardChrome.tsx",
   sidebar: "apps/frontend/src/components/layout/sidebar-config.ts",
   helpCenter: "apps/frontend/src/pages/help/HelpCenterPage.tsx",
   helpOverview: "apps/frontend/src/pages/help/HelpPage.tsx",
@@ -49,7 +50,10 @@ export function verify(source) {
   need("finance", "to: tab.to", "finance tabs must navigate to their mounted route");
 
   for (const id of ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"]) need("fuelConfig", `id: "${id}"`, `fuel nav ${id} must remain canonical`);
-  need("fuel", "<NavyPageSubNav", "fuel subnav must navigate through the canonical path registry");
+  // ROUND 443.326 — NavyPageSubNav lives in FuelPlannerBoardChrome; home still wires FUEL_TAB_PATH.
+  need("fuelChrome", "<NavyPageSubNav", "fuel subnav must navigate through the canonical path registry");
+  need("fuel", "FUEL_TAB_PATH", "fuel board must route tabs through the canonical path registry");
+  need("fuel", "subnavItems={fuelBoardSubnav}", "fuel board must pass canonical subnav to chrome");
   for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/relay-inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
   need("routes", 'path="/fuel/relay-inbox"', "LV-FUEL-RELAY-INBOX-REDIRECT alias must stay mounted");
   const routeManifest = fs.readFileSync("apps/frontend/src/router/route-manifest.ts", "utf8");
@@ -104,7 +108,8 @@ if (process.argv.includes("--self-test")) {
   const mutations = [
     ["finance", 'id: "overview"', 'id: "broken-overview"'], ["finance", "onClick={() => navigate(tab.to)}", "onClick={() => undefined}"],
     ["statements", 'id: "pl"', 'id: "broken-pl"'], ["fuelConfig", 'id: "home"', 'id: "broken-home"'],
-    ["fuel", "onChange={(next) => goToTab(next as FuelTabId)}", "onChange={() => undefined}"],
+    ["fuel", "subnavItems={fuelBoardSubnav}", "subnavItems={[]}"],
+    ["fuelChrome", "<NavyPageSubNav items={subnavItems} />", "<div />"],
     ["sidebar", 'to: "/help/overview"', 'to: "/broken-help"'], ["helpCenter", 'id="help-search"', 'id="broken-help-search"'],
     ["helpCenter", '"Getting Started"', '"Broken category"'], ["helpCenter", 'kind="help_article"', 'kind="broken_help"'],
     ["helpOverview", 'to: "/help/runbooks"', 'to: "/help"'], ["homeJumps", 'to: "/maintenance"', 'to: "/broken-maintenance"'],
