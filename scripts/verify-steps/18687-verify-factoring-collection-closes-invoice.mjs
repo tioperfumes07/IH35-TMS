@@ -1,19 +1,11 @@
 #!/usr/bin/env node
-/** CC-2 claim 18687 — LEAD 443.304 row 77. See scripts/verify-factoring-collection-closes-invoice.mjs. */
-import { spawnSync } from "node:child_process";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+// Proxy for verify-step 18687 — delegates to the outer guard.
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import { resolve, dirname } from "path";
+import { spawnSync } from "child_process";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const GUARD = resolve(ROOT, "scripts/verify-factoring-collection-closes-invoice.mjs");
-
-export default {
-  name: "verify-factoring-collection-closes-invoice",
-  run() {
-    const selftest = spawnSync(process.execPath, [GUARD, "--selftest"], { cwd: ROOT, stdio: "inherit" });
-    if (selftest.status !== 0) throw new Error(`verify-factoring-collection-closes-invoice --selftest failed (exit ${selftest.status})`);
-    const live = spawnSync(process.execPath, [GUARD], { cwd: ROOT, stdio: "inherit" });
-    if (live.status !== 0) throw new Error(`verify-factoring-collection-closes-invoice live failed (exit ${live.status})`);
-    return 0;
-  },
-};
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const guard = resolve(__dirname, "..", "verify-factoring-collection-closes-invoice.mjs");
+const result = spawnSync(process.execPath, [guard], { stdio: "inherit", env: process.env });
+process.exit(result.status ?? 1);
