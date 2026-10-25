@@ -67,6 +67,12 @@ export function check({ card, escrow, home, board, files }) {
     }
     if (/<V3Panel\b/.test(board)) f.push(`${BOARD}: must not layer V3Panel (443.280 BoardSection only)`);
     if (!/<BoardSection\b/.test(board)) f.push(`${BOARD}: must wrap panels in BoardSection`);
+    // D045 — DriftAlertsPanel as-of uses formatDateUS (never raw ISO with T/Z).
+    const driftPanel = "apps/frontend/src/pages/banking/components/DriftAlertsPanel.tsx";
+    const driftSrc = fs.readFileSync(path.join(ROOT, driftPanel), "utf8");
+    if (!/formatDateUS\(alert\.as_of_date\)/.test(driftSrc) || /As of \{alert\.as_of_date\}/.test(driftSrc)) {
+      f.push(`${driftPanel}: D045 as-of must use formatDateUS(alert.as_of_date)`);
+    }
     if (!/<V3KpiTile\b/.test(board)) f.push(`${BOARD}: must mount V3KpiTile KPI strip`);
   }
   if (!/<BankingHomeBoard/.test(home)) f.push(`${HOME}: must mount BankingHomeBoard on the Home (accounts) tab`);
