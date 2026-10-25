@@ -123,11 +123,11 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
           <div className="grid grid-cols-2 gap-1.5">
             <label className="block text-xs font-semibold text-gray-600">
               City
-              <input value={newCity} onChange={(e) => setNewCity(e.target.value)} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+              <input value={newCity} onChange={(e) => setNewCity(e.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             </label>
             <label className="block text-xs font-semibold text-gray-600">
               State
-              <input value={newState} onChange={(e) => setNewState(e.target.value)} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+              <input value={newState} onChange={(e) => setNewState(e.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             </label>
           </div>
           <div className="flex gap-1">

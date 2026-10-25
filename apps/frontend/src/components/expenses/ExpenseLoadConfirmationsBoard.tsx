@@ -231,7 +231,7 @@ export function ExpenseLoadConfirmationsBoard({
       <label className="block text-xs text-[#4B5563]">
         Status
         <select
-          className="mt-1 h-7 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]"
+          className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]"
           value={status}
           onChange={(e) => setStatus(e.target.value as ExpenseLoadConfirmationStatus | "all")}
           data-testid="expense-load-confirmations-status"

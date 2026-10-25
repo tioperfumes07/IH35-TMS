@@ -214,7 +214,7 @@ export function ValidationPanel({
                       value={reason}
                       onChange={(e) => onRowReasonChange?.(item.rule_id, e.target.value)}
                       placeholder="Reason (min 10 chars)"
-                      className="h-7 w-full rounded-sm border border-red-300 px-1 text-xs"
+                      className="h-9 w-full rounded-sm border border-red-300 px-1 text-xs"
                     />
                     <button
                       type="button"

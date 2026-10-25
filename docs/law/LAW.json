@@ -1275,5 +1275,12 @@
     "source_file": "apps/backend/src/accounting/auto-invoice-on-bol.service.ts",
     "guard": "scripts/verify-delivery-evidence-raises-the-receivable.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "IH35-347-A-INPUT-HEIGHT-STANDARD",
+    "title": "All form input primitives (MoneyInput, NumberInput, TimePicker, DatePicker, QboDocumentNumberField, Combobox sm) must use h-9 (36px). No screen file may set h-7 or h-[30px] on a raw <input> or <select> element.",
+    "source_file": "apps/frontend/src/components/forms/inputClass.ts",
+    "guard": "scripts/verify-input-height-standard.mjs",
+    "type": "enforced"
   }
 ]
