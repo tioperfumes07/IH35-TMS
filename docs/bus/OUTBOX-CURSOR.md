@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 50 Settlements Company FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-company-board` · tip after #27671 Fuel Home
+- **DELTA:** CompanySettlementsPage closed-tours board is FULL BoardSection (title + design subtitle + View all →) wrapping ParityTable; no duplicate ParityTable title; engines unchanged (listTours closed).
+- **GUARD:** verify-company-settlements-page (--selftest) · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Fuel 10 sub-tabs
+- **Files Modified:** CompanySettlementsPage.tsx · verify-company-settlements-page.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 55 Fuel › Home FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-fuel-home-board` · tip after #27669 Escrow
