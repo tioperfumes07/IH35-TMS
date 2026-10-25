@@ -2,7 +2,7 @@
 
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting Escrow Scheduled honesty
 
-- **STATUS:** SHIPPING
+- **STATUS:** MERGED [#27717](https://github.com/tioperfumes07/IH35-TMS/pull/27717)
 - **DELTA:** EscrowPage Scheduled releases → always `"—"` + `no schedule feed` (drop dead `scheduledAvailable?"0"`); ratchet verify-escrow-posting-entitylink-reverse.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-escrow-posting-entitylink-reverse PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
