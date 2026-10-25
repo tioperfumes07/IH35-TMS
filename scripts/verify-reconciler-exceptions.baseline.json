@@ -26,7 +26,7 @@
       "driver_fault_unrecovered": 0
     },
     "I9": {
-      "truck_cannot_make_next_stop": 7,
+      "truck_cannot_make_next_stop": 6,
       "stop_no_date": 0,
       "stop_no_street_address": 0,
       "load_no_amount": 0
