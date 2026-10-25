@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { categorizeBankTransaction } from "../../../api/banking";
+import { categorizeBankTransaction, rejectBankTransactionSuggestion } from "../../../api/banking";
 import { useToast } from "../../../components/Toast";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd } from "../../../lib/money";
@@ -33,8 +33,8 @@ function missing(v: string | null | undefined) {
 
 /**
  * C-64 — Needs categorizing queue on Banking Home.
- * Date 132px · Description · Suggested account · Unit · Amount · Accept / Change.
- * Accept-all in the footer. Never auto-match — human accepts or changes.
+ * Date 132px · Description · Suggested account · Unit · Amount · Accept / Change / Reject.
+ * 443.343-C: per-line only — never auto-accept, never bulk-accept.
  */
 export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }: Props) {
   const { pushToast } = useToast();
@@ -57,31 +57,13 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
     },
   });
 
-  const acceptable = useMemo(
-    () => rows.filter((r) => Boolean(r.suggestedAccountId)),
-    [rows],
-  );
-
-  const acceptAll = async () => {
-    if (acceptable.length === 0) {
-      pushToast("No rows have a suggested account to accept.", "info");
-      return;
-    }
-    let ok = 0;
-    let fail = 0;
-    for (const row of acceptable) {
-      setBusyId(row.id);
-      try {
-        await acceptOne.mutateAsync(row);
-        ok += 1;
-      } catch {
-        fail += 1;
-      }
-    }
-    setBusyId(null);
-    if (ok) pushToast(`Accepted ${ok} suggestion${ok === 1 ? "" : "s"}.`, "success");
-    if (fail) pushToast(`${fail} row(s) could not be accepted.`, "error");
-  };
+  const rejectOne = useMutation({
+    mutationFn: async (row: NeedsCategorizingRow) => rejectBankTransactionSuggestion(row.id, companyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["banking"] });
+      onAccepted?.();
+    },
+  });
 
   const columns: Array<ParityColumn<NeedsCategorizingRow>> = [
     {
@@ -145,7 +127,8 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
             <button
               type="button"
               disabled={!row.suggestedAccountId || busyId === row.id}
-              className="inline-flex h-[34px] items-center rounded-sm bg-[#14314F] px-2 text-xs font-bold text-white disabled:opacity-40"
+              className="inline-flex h-[28px] items-center rounded-sm bg-[#14314F] px-2 text-xs font-bold text-white disabled:opacity-40"
+              data-testid={`needs-cat-accept-${row.id}`}
               onClick={() => {
                 setBusyId(row.id);
                 acceptOne
@@ -159,27 +142,35 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
             </button>
             <button
               type="button"
-              className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              className="inline-flex h-[28px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid={`needs-cat-change-${row.id}`}
               onClick={() => onChange(row)}
             >
               Change
+            </button>
+            <button
+              type="button"
+              disabled={busyId === row.id}
+              className="inline-flex h-[28px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-red-700 hover:bg-[#F7F8FA] disabled:opacity-40"
+              data-testid={`needs-cat-reject-${row.id}`}
+              onClick={() => {
+                setBusyId(row.id);
+                rejectOne
+                  .mutateAsync(row)
+                  .then(() => pushToast("Suggestion rejected.", "success"))
+                  .catch((err) => pushToast(userFacingApiError(err, "Could not reject suggestion"), "error"))
+                  .finally(() => setBusyId(null));
+              }}
+            >
+              Reject
             </button>
           </div>
         )}
       />
       <div className="flex items-center justify-between border-t border-[#E5E7EB] px-3 py-2">
         <p className="text-xs text-[#6B7280]">
-          {rows.length} row{rows.length === 1 ? "" : "s"} · suggestions only — never auto-matched
+          {rows.length} row{rows.length === 1 ? "" : "s"} · suggestions only — never auto-matched · no apply all
         </p>
-        <button
-          type="button"
-          className="inline-flex h-[34px] items-center rounded-sm border border-[#14314F] px-3 text-xs font-bold text-[#14314F] hover:bg-[#F7F8FA] disabled:opacity-40"
-          disabled={acceptable.length === 0}
-          data-testid="needs-categorizing-accept-all"
-          onClick={() => void acceptAll()}
-        >
-          Accept all
-        </button>
       </div>
     </section>
   );

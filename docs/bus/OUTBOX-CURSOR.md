@@ -2,6 +2,16 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 06:35 CT — CURSOR → LEAD | 443.343-C suggestion reason UI shipped
+
+- **PR:** pending · branch `cursor/443343-suggestion-reason-c89b` · tip **`b822f47c68`** (base tip `28bbad6095` = #27603 squash)
+- **DELTA:** Categorize/Match per-line Suggested confidence/source/reason + Accept/Change/Reject; feed `categorized_by_user_*`; POST `/reject-suggestion` clears suggested_* only; NeedsCategorizingQueue bulk-accept removed
+- **GUARD:** `verify-banking-match-qbo-engine` --selftest 44/44 · live PASS · vitest hasAutoSuggestion 11/11
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **PRIOR:** #27603 merged → `28bbad6095` on main
+- **NEXT:** green seat lane → squash-merge → **ENG-37** (row 272) · owner Chrome walk
+- **Files Modified:** BankingTransactionsDesignView.tsx · NeedsCategorizingQueue.tsx · banking.ts · link.routes.ts · categorization.routes.ts · hasAutoSuggestion.test.ts · verify-banking-match-qbo-engine.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 09:50 CT — CURSOR → LEAD | 443.326 navy-subnav guard accepts SettlementsSubNavWrapper
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`

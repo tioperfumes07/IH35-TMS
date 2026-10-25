@@ -33,6 +33,9 @@ const FILES = {
   // LEAD 443.168 K — E-47 misdirected-payment alert.
   e47: "apps/backend/src/factoring/misdirected-payment-alert.service.ts",
   e47sql: "db/migrations/202615980910_factoring_misdirected_payment_alerts.sql",
+  // 443.343-C — per-line Accept / Change / Reject + who/when; no apply-all.
+  categorize: "apps/backend/src/banking/categorization.routes.ts",
+  queue: "apps/frontend/src/pages/banking/components/NeedsCategorizingQueue.tsx",
 };
 const LABEL = "verify-banking-match-qbo-engine";
 const read = (rel) => (fs.existsSync(path.join(ROOT, rel)) ? fs.readFileSync(path.join(ROOT, rel), "utf8") : "");
@@ -158,12 +161,57 @@ export function misdirectedAlertProblems({ service, e47, e47sql, feed, view }) {
   return p;
 }
 
-export function problemsFor({ service, predicate, route, api, view, drawer, feed, engine, payee, plaid, recon, relay, e47, e47sql }) {
+/**
+ * 443.343-C — Categorize / Match shows per line what the engine suggests and WHY (payee, vendor,
+ * account, confidence, source, reason); Accept / Change / Reject on each line; who+when on accepted;
+ * no auto-accept; no "apply all".
+ */
+export function suggestionReasonUiProblems({ view, api, feed, categorize, queue }) {
+  const p = [];
+  if (!/export function suggestionSourceLabel/.test(view)) p.push("view: suggestionSourceLabel missing (443.343-C)");
+  if (!/export function suggestionConfidenceLabel/.test(view)) p.push("view: suggestionConfidenceLabel missing (443.343-C)");
+  if (!/export function categorizedWhoWhenText/.test(view)) p.push("view: categorizedWhoWhenText missing (443.343-C)");
+  if (!/data-testid="bank-txn-suggested-confidence"/.test(view)) p.push("view: Suggested line hides confidence (443.343-C)");
+  if (!/data-testid="bank-txn-suggested-source"/.test(view)) p.push("view: Suggested line hides source (443.343-C)");
+  if (!/data-testid="bank-txn-suggestion-actions"/.test(view)) p.push("view: Accept/Change/Reject actions missing (443.343-C)");
+  if (!/bank-txn-suggestion-accept-/.test(view)) p.push("view: Accept button missing (443.343-C)");
+  if (!/bank-txn-suggestion-change-/.test(view)) p.push("view: Change button missing (443.343-C)");
+  if (!/bank-txn-suggestion-reject-/.test(view)) p.push("view: Reject button missing (443.343-C)");
+  if (!/data-testid="bank-txn-categorized-who-when"/.test(view)) p.push("view: who+when on accepted lines missing (443.343-C)");
+  if (!/rejectBankTransactionSuggestion/.test(api)) p.push("api: rejectBankTransactionSuggestion missing (443.343-C)");
+  if (!/categorized_by_user_id\?:/.test(api) || !/categorized_by_user_name\?:/.test(api)) {
+    p.push("api: categorized_by_user_* not on PlaidBankTransaction (443.343-C)");
+  }
+  if (!/bt\.categorized_by_user_id::text/.test(feed) || !/AS categorized_by_user_name/.test(feed)) {
+    p.push("feed: categorized_by_user not served (443.343-C)");
+  }
+  if (!/LEFT JOIN identity\.users cat_user/.test(feed)) p.push("feed: identity.users join for who missing (443.343-C)");
+  if (!/\/reject-suggestion/.test(categorize)) p.push("categorize: reject-suggestion route missing (443.343-C)");
+  const rejectUpd = categorize.match(/reject-suggestion[\s\S]*?RETURNING id/)?.[0] ?? "";
+  if (!rejectUpd || !/suggested_vendor_id = NULL/.test(rejectUpd) || !/suggested_reason = NULL/.test(rejectUpd)) {
+    p.push("categorize: reject-suggestion must clear suggested_* only (443.343-C)");
+  }
+  if (/categorized_at\s*=/.test(rejectUpd)) {
+    p.push("categorize: reject-suggestion must not categorize the line (443.343-C)");
+  }
+  // Flag UI only (testid / button label) — comments may say "bulk-accept".
+  if (/needs-categorizing-accept-all|Accept all</.test(queue)) {
+    p.push("queue: Accept all forbidden (443.343-C — per-line only)");
+  }
+  if (!/needs-cat-reject-/.test(queue)) p.push("queue: Reject per line missing (443.343-C)");
+  if (/auto.?accept|autoAccept|auto_accept/i.test(view) && /Accept all/i.test(view)) {
+    p.push("view: auto-accept / apply-all present (443.343-C)");
+  }
+  return p;
+}
+
+export function problemsFor({ service, predicate, route, api, view, drawer, feed, engine, payee, plaid, recon, relay, e47, e47sql, categorize, queue }) {
   const p = [
     ...misdirectedAlertProblems({ service, e47, e47sql, feed, view }),
     ...candidateScopeProblems(service),
     ...faroSuggestionProblems({ route, feed }),
     ...describedPayeeProblems({ engine, payee, plaid, recon, relay, feed, view, api }),
+    ...suggestionReasonUiProblems({ view, api, feed, categorize, queue }),
   ];
   for (const f of ["counterparty_kind", "counterparty_name", "counterparty_id", "reference", "description", "open_balance_cents", "payee_similarity"]) {
     if (!new RegExp(`^\\s*${f}\\??:`, "m").test(service)) p.push(`service: MatchCandidate lacks ${f}`);
@@ -314,6 +362,13 @@ function selftest() {
     ["E-47 calendar day", { ...base, e47: base.e47.replace("return nextBusinessDay(next)", "return (next)") }],
     ["E-47 deadline hidden", { ...base, view: base.view.replace('data-testid="bank-txn-misdirected-alert"', 'data-testid="x"') }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("settlement")) {}\n    if (onOperatingBank && wants("invoice"))') }],
+    // 443.343-C
+    ["suggestion actions gone", { ...base, view: base.view.replace('data-testid="bank-txn-suggestion-actions"', 'data-testid="x"') }],
+    ["confidence hidden", { ...base, view: base.view.replace('data-testid="bank-txn-suggested-confidence"', 'data-testid="x"') }],
+    ["source hidden", { ...base, view: base.view.replace('data-testid="bank-txn-suggested-source"', 'data-testid="x"') }],
+    ["who-when hidden", { ...base, view: base.view.replace('data-testid="bank-txn-categorized-who-when"', 'data-testid="x"') }],
+    ["reject route gone", { ...base, categorize: base.categorize.replace("/reject-suggestion", "/reject-x") }],
+    ["accept-all resurrected", { ...base, queue: base.queue + '\n<button data-testid="needs-categorizing-accept-all">Accept all</button>\n' }],
   ];
   for (const [name, mutant] of mutants) {
     const hits = problemsFor(mutant);

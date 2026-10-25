@@ -155,6 +155,9 @@ export type PlaidBankTransaction = {
   /** Stamped when a human categorizes this transaction (any path); a suggestion below is still
    *  pending review exactly while this is null. */
   categorized_at?: string | null;
+  /** 443.343-C — who accepted/categorized (identity.users); null for pre-column / engine-only rows. */
+  categorized_by_user_id?: string | null;
+  categorized_by_user_name?: string | null;
   /**
    * LINK4-PR3 (owner ask, 2026-09-12) — AUTO-SUGGESTED filter. These 4 columns have always been
    * written by applyBankingRulesForTransaction / autoCategorize's dry-run / the pg_trgm fuzzy
@@ -1150,6 +1153,17 @@ export function skipBankTransactionInvestigation(transactionId: string, companyI
     method: "POST",
     body: { reason: body.note },
   });
+}
+
+/**
+ * 443.343-C — Reject a pending categorization suggestion without categorizing or excluding the line.
+ * Clears suggested_* only; status stays pending for a human to Categorize / Match.
+ */
+export function rejectBankTransactionSuggestion(transactionId: string, companyId: string) {
+  return apiRequest<{ ok: boolean }>(
+    `/api/v1/banking/transactions/${transactionId}/reject-suggestion?${q(companyId)}`,
+    { method: "POST", body: {} },
+  );
 }
 
 export function supersedePlaidPendingTransaction(transactionId: string, companyId: string) {

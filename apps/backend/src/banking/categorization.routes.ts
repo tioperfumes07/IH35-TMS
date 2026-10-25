@@ -1071,6 +1071,70 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     };
   });
 
+  // 443.343-C — Reject a pending engine suggestion without categorizing or excluding the line.
+  // Clears suggested_* only; status stays pending so the operator can Categorize / Match by hand.
+  app.post(
+    "/api/v1/banking/transactions/:id/reject-suggestion",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+
+      const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+
+      const companyId = query.data.operating_company_id;
+      const res = await withCompanyScope(user.uuid, companyId, async (client) => {
+        try {
+          await assertBankTxnNotInReconciledSession(client, params.data.id, companyId);
+        } catch (err) {
+          if (err instanceof ReconciledSessionLockedError) {
+            return { ok: false as const, locked: true as const };
+          }
+          throw err;
+        }
+        const upd = await client.query(
+          `
+            UPDATE banking.bank_transactions
+            SET
+              suggested_vendor_id = NULL,
+              suggested_account_id = NULL,
+              suggested_customer_id = NULL,
+              suggested_confidence = NULL,
+              suggested_source = NULL,
+              suggested_reason = NULL,
+              updated_at = now()
+            WHERE id = $1
+              AND operating_company_id = $2::uuid
+              AND categorized_at IS NULL
+              AND (
+                suggested_vendor_id IS NOT NULL
+                OR suggested_account_id IS NOT NULL
+                OR suggested_customer_id IS NOT NULL
+              )
+            RETURNING id
+          `,
+          [params.data.id, companyId],
+        );
+        if (!upd.rows[0]) return { ok: false as const };
+        await appendCrudAudit(client, user.uuid, "banking.transaction.suggestion_rejected.443343c", {
+          resource_type: "banking.bank_transactions",
+          resource_id: params.data.id,
+          operating_company_id: companyId,
+        });
+        return { ok: true as const };
+      });
+
+      if ("locked" in res && res.locked) {
+        return reply.code(409).send({ error: "reconciled_session_locked" });
+      }
+      if (!res.ok) return reply.code(404).send({ error: "suggestion_not_found" });
+      return { ok: true };
+    },
+  );
+
   app.post("/api/v1/banking/transactions/:id/skip", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
