@@ -34,7 +34,8 @@ export const PERSON_SURFACES = [
   [FILE("pages/Customers.tsx"), /formatPersonName\(customer\.main_contact_name\)/, "customer main contact"],
   [FILE("pages/tasks/TasksChatPage.tsx"), /formatPersonName\(c\.author_name\)/, "task comment author"],
   [FILE("components/dispatch/LoadDetailDrawer.tsx"), /formatPersonName\(load\.assigned_primary_driver_name\)/, "load drawer driver"],
-  [FILE("pages/compliance/HosTrackerSection.tsx"), /name=\{formatPersonName\(driver\.driver_name\)\}/, "HOS tracker roster driver"],
+  // PR #27551: EntityLinkOrTombstone kind="driver" calls entityLabel→formatPersonName internally; no double-wrap.
+  [FILE("pages/compliance/HosTrackerSection.tsx"), /EntityLinkOrTombstone kind="driver" id=\{driver\.driver_id\} name=\{driver\.driver_name\}/, "HOS tracker roster driver"],
   [FILE("pages/compliance/HosTrackerSection.tsx"), /name=\{formatPersonName\(selectedDriver\.driver_name\)\}/, "HOS tracker detail drawer driver"],
   [FILE("pages/compliance/FleetHosBoardSection.tsx"), /label=\{entityLabel\(formatPersonName\(row\.driver_name\)/, "fleet HOS board driver"],
 ];
@@ -92,7 +93,7 @@ if (process.argv.includes("--selftest")) {
     ["display: raw portal user name FAILS", displayFailures({ ...displayFiles, [FILE("pages/customers/components/PortalUsersTab.tsx")]: displayFiles[FILE("pages/customers/components/PortalUsersTab.tsx")].replace("formatPersonName(row.full_name)", "row.full_name") }).length > 0],
     ["display: customer name proper-cased FAILS", displayFailures({ ...displayFiles, [FILE("components/customers/CustomerProfileForm.tsx")]: displayFiles[FILE("components/customers/CustomerProfileForm.tsx")].replace("const name = v.name.trim();", "const name = properPersonOrPlaceName(v.name.trim());") }).length > 0],
     ["display: vendor name proper-cased FAILS", displayFailures({ ...displayFiles, [FILE("components/vendors/VendorCreateModal.tsx")]: displayFiles[FILE("components/vendors/VendorCreateModal.tsx")].replace("const displayName = name.trim();", "const displayName = properPersonOrPlaceName(name.trim());") }).length > 0],
-    ["display: HOS tracker roster driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/HosTrackerSection.tsx")]: displayFiles[FILE("pages/compliance/HosTrackerSection.tsx")].replace("name={formatPersonName(driver.driver_name)}", "name={driver.driver_name}") }).length > 0],
+    ["display: HOS tracker roster driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/HosTrackerSection.tsx")]: displayFiles[FILE("pages/compliance/HosTrackerSection.tsx")].replace('EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={driver.driver_name}', 'EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={formatPersonName(driver.driver_name)}') }).length > 0],
     ["display: HOS tracker detail driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/HosTrackerSection.tsx")]: displayFiles[FILE("pages/compliance/HosTrackerSection.tsx")].replace("name={formatPersonName(selectedDriver.driver_name)}", "name={selectedDriver.driver_name}") }).length > 0],
     ["display: fleet HOS board driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/FleetHosBoardSection.tsx")]: displayFiles[FILE("pages/compliance/FleetHosBoardSection.tsx")].replace("label={entityLabel(formatPersonName(row.driver_name)", "label={entityLabel(row.driver_name") }).length > 0],
     ["frontend rule drift FAILS", plant("fe", 'KEEP_UPPER = new Set(["II", "III", "IV", "JR", "SR"])', 'KEEP_UPPER = new Set(["II"])')],

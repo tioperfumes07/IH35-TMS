@@ -1282,5 +1282,12 @@
     "source_file": "apps/frontend/src/components/forms/inputClass.ts",
     "guard": "scripts/verify-input-height-standard.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "IH35-347-B-NO-UPPERCASE-NAMES",
+    "title": "Customer and vendor names are normalized to proper case at write via DB triggers (202616250000), matching driver normalization (202616210300). USMCA stored names must have 0 ALL-CAPS rows.",
+    "source_file": "db/migrations/202616250000_customer_vendor_names_normalized_at_write.sql",
+    "guard": "scripts/verify-no-uppercase-names-rendered.mjs",
+    "type": "enforced"
   }
 ]
