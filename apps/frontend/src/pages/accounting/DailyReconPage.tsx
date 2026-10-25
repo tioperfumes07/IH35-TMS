@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { entityLabel as formatEntityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
@@ -10,7 +10,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SelectCombobox } from "../../components/Combobox";
 import { companyToday, addDaysIso } from "../../lib/businessDate";
 
@@ -104,7 +104,10 @@ export function DailyReconPage() {
   const [toDate, setToDate] = useState(today);
   const [entityType, setEntityType] = useState("");
   const [matchStatus, setMatchStatus] = useState<DailyReconMatchStatus | "all">("all");
-  const staged = useStagedListFilters({ applied: { fromDate, toDate, entityType, matchStatus }, empty: { fromDate: thirtyDaysAgo, toDate: today, entityType: "", matchStatus: "all" as const }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setEntityType(next.entityType); setMatchStatus(next.matchStatus); } });
+  const [search, setSearch] = useState("");
+
+  const dailyReconActiveFilterCount =
+    (fromDate !== thirtyDaysAgo || toDate !== today ? 1 : 0) + (entityType ? 1 : 0) + (matchStatus !== "all" ? 1 : 0);
 
   const query = useQuery({
     queryKey: ["daily-recon", companyId, fromDate, toDate, entityType, matchStatus],
@@ -121,7 +124,21 @@ export function DailyReconPage() {
   });
 
   const data = query.data;
-  const listState = useListState(query, (data?.days.length ?? 0) === 0);
+  const searchNeedle = search.trim().toLowerCase();
+  const filteredDays = useMemo(() => {
+    if (!data?.days) return [];
+    if (!searchNeedle) return data.days;
+    return data.days
+      .map((day) => ({
+        ...day,
+        rows: day.rows.filter((row) => {
+          const hay = [row.tms_memo, row.entity_id, row.qbo_id, row.qbo_error].filter(Boolean).join(" ").toLowerCase();
+          return hay.includes(searchNeedle);
+        }),
+      }))
+      .filter((day) => day.rows.length > 0);
+  }, [data?.days, searchNeedle]);
+  const listState = useListState(query, filteredDays.length === 0);
 
   const kpiStrip = data?.gl_posting_active ? (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -167,36 +184,33 @@ export function DailyReconPage() {
         </div>
       ) : (
         <>
-          {/* Filters */}
-          <CollapsedListFilters
-            activeFilterCount={(fromDate || toDate ? 1 : 0) + (entityType ? 1 : 0) + (matchStatus !== "all" ? 1 : 0)}
-            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-            testIdPrefix="daily-recon"
-            dataAttributes={{ "data-daily-recon-filter-toolbar": "collapsed" }}
-          >
-            <div className="flex flex-wrap gap-2 items-end">
+          <div className="mb-3" data-daily-recon-filter-toolbar="visible">
+            <MoneyListToolbar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search memo, entity id…"
+              searchTestId="daily-recon-search-input"
+              onClearAll={() => {
+                setSearch("");
+                setFromDate(thirtyDaysAgo);
+                setToDate(today);
+                setEntityType("");
+                setMatchStatus("all");
+              }}
+              activeFilterCount={dailyReconActiveFilterCount}
+              testIdPrefix="daily-recon"
+            >
               <div className="flex flex-col gap-0.5">
                 <label className="text-section-header font-semibold uppercase text-gray-500">From</label>
-                <DatePicker
-                  value={staged.draft.fromDate}
-                  onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })}
-                  className="h-10"
-                />
+                <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-10" />
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-section-header font-semibold uppercase text-gray-500">To</label>
-                <DatePicker
-                  value={staged.draft.toDate}
-                  onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })}
-                  className="h-10"
-                />
+                <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-10" />
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-section-header font-semibold uppercase text-gray-500">Type</label>
-                <SelectCombobox
-                  value={staged.draft.entityType}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, entityType: e.target.value })}
-                >
+                <SelectCombobox value={entityType} onChange={(e) => setEntityType(e.target.value)}>
                   {ENTITY_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -205,16 +219,16 @@ export function DailyReconPage() {
               <div className="flex flex-col gap-0.5">
                 <label className="text-section-header font-semibold uppercase text-gray-500">Status</label>
                 <SelectCombobox
-                  value={staged.draft.matchStatus}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, matchStatus: e.target.value as DailyReconMatchStatus | "all" })}
+                  value={matchStatus}
+                  onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
                 >
                   {MATCH_STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </SelectCombobox>
               </div>
-            </div>
-          </CollapsedListFilters>
+            </MoneyListToolbar>
+          </div>
 
           {/* Days */}
           {listState.isEmpty ? (
@@ -223,7 +237,7 @@ export function DailyReconPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {data.days.map((day) => (
+              {filteredDays.map((day) => (
                 <div key={day.date} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
                   {/* Day header */}
                   <div className={`flex items-center justify-between px-4 py-2 ${

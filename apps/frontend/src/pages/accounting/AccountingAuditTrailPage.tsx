@@ -16,10 +16,12 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES } from "../../lib/accounting-source-transaction-types";
 import { formatUsdCents } from "../../lib/money";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 function fmtMoneyCents(value: number) {
@@ -172,19 +174,12 @@ export function AccountingAuditTrailPage() {
   const [sourceType, setSourceType] = useState(() => sourceTypeParam ?? "");
   const [sourceId, setSourceId] = useState(() => sourceIdParam ?? "");
   const [accountIds, setAccountIds] = useState<string[]>([]);
-  const staged = useStagedListFilters({
-    applied: { sourceType, sourceId, accountIds },
-    empty: { sourceType: "", sourceId: "", accountIds: [] as string[] },
-    onApply: (next) => {
-      setSourceType(next.sourceType);
-      setSourceId(next.sourceId);
-      setAccountIds(next.accountIds);
-    },
-  });
+  const [search, setSearch] = useState("");
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);
   // BANK-SORT-ROLLOUT-ACCT — audit event list sort persists in ?sort=&dir= via useUrlSort.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+  const [showAccountNumbers] = useShowAccountNumbers();
 
   const accountsQuery = useInfiniteQuery({
     queryKey: ["accounting-audit-trail-accounts", companyId],
@@ -224,20 +219,39 @@ export function AccountingAuditTrailPage() {
 
   const events = useMemo(() => {
     const rows = eventQuery.data?.pages?.flatMap((p) => p.events ?? []) ?? [];
-    if (accountIds.length <= 1) return rows;
-    const allow = new Set(accountIds);
-    return rows.filter((row) => allow.has(row.account_id));
-  }, [eventQuery.data?.pages, accountIds]);
+    let filtered = rows;
+    if (accountIds.length > 1) {
+      const allow = new Set(accountIds);
+      filtered = filtered.filter((row) => allow.has(row.account_id));
+    }
+    const needle = search.trim().toLowerCase();
+    if (!needle) return filtered;
+    return filtered.filter((row) => {
+      const hay = [
+        row.event_class,
+        row.source_transaction_type,
+        row.source_transaction_id,
+        row.source_transaction_display_id,
+        row.account_name,
+        ...(showAccountNumbers ? [row.account_number] : []),
+        row.memo,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [eventQuery.data?.pages, accountIds, search, showAccountNumbers]);
 
   const accountOptions = useMemo(
     () =>
       ((accountsQuery.data?.pages[0] as { accounts?: Array<{ id: string; account_number: string; account_name: string }> } | undefined)?.accounts ?? []).map(
         (account) => ({
           value: account.id,
-          label: `${account.account_number} - ${account.account_name}`,
+          label: formatAccountDisplayLabel(account, { showNumber: showAccountNumbers }),
         }),
       ),
-    [accountsQuery.data?.pages],
+    [accountsQuery.data?.pages, showAccountNumbers],
   );
 
   const columns = useMemo<ParityColumn<AccountingAuditTrailEvent>[]>(
@@ -355,21 +369,32 @@ export function AccountingAuditTrailPage() {
     [],
   );
 
+  const auditTrailActiveFilterCount =
+    (sourceType.trim() ? 1 : 0) + (sourceId.trim() ? 1 : 0) + (accountIds.length ? 1 : 0);
+
   const filterBar = (
-    <CollapsedListFilters
-      activeFilterCount={(sourceType ? 1 : 0) + (sourceId ? 1 : 0) + (accountIds.length ? 1 : 0)}
-      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-      testIdPrefix="audit-trail"
-      dataAttributes={{ "data-audit-trail-filter-toolbar": "collapsed" }}
-    >
-      <div className="grid gap-3 w-full md:grid-cols-4">
-        <label className="text-xs text-[#4B5563]">
-          Source type
+    <div className="w-full" data-audit-trail-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search event, source, account…"
+        searchTestId="audit-trail-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setSourceType("");
+          setSourceId("");
+          setAccountIds([]);
+        }}
+        activeFilterCount={auditTrailActiveFilterCount}
+        testIdPrefix="audit-trail"
+      >
+        <label className="flex flex-col gap-0.5 text-xs text-[#4B5563]">
+          <span className="text-section-header font-semibold uppercase text-gray-500">Source type</span>
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={staged.draft.sourceType}
-            onChange={(e) => staged.setDraft({ ...staged.draft, sourceType: e.target.value })}
-            placeholder="e.g. customer_payment, bill, invoice"
+            className="block h-9 w-44 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value)}
+            placeholder="e.g. bill, invoice"
             list="audit-trail-source-types"
           />
           <datalist id="audit-trail-source-types">
@@ -378,29 +403,26 @@ export function AccountingAuditTrailPage() {
             ))}
           </datalist>
         </label>
-        <label className="text-xs text-[#4B5563]">
-          Source id
+        <label className="flex flex-col gap-0.5 text-xs text-[#4B5563]">
+          <span className="text-section-header font-semibold uppercase text-gray-500">Source id</span>
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={staged.draft.sourceId}
-            onChange={(e) => staged.setDraft({ ...staged.draft, sourceId: e.target.value })}
+            className="block h-9 w-44 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            value={sourceId}
+            onChange={(e) => setSourceId(e.target.value)}
             placeholder="uuid or display id"
           />
         </label>
-        <label className="text-xs text-[#4B5563]">
-          Account
-          <MultiSelectDropdown
-            label="Account"
-            options={accountOptions}
-            selected={staged.draft.accountIds}
-            onChange={(next) => staged.setDraft({ ...staged.draft, accountIds: next })}
-            allLabel="All accounts"
-            searchable
-            data-testid="audit-trail-filter-account"
-          />
-        </label>
-      </div>
-    </CollapsedListFilters>
+        <MultiSelectDropdown
+          label="Account"
+          options={accountOptions}
+          selected={accountIds}
+          onChange={setAccountIds}
+          allLabel="All accounts"
+          searchable
+          data-testid="audit-trail-filter-account"
+        />
+      </MoneyListToolbar>
+    </div>
   );
 
   return (
@@ -415,6 +437,7 @@ export function AccountingAuditTrailPage() {
         rowKey={(row) => row.id}
         loading={eventQuery.isPending || (eventQuery.isFetching && events.length === 0)}
         filterBar={filterBar}
+        suppressToolbarSearch
         storageKey="accounting-audit-trail"
         sortKey={sortKey}
         sortDirection={sortDirection}

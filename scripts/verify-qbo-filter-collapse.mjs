@@ -139,6 +139,12 @@ const MONEY_LIST_TOOLBAR_PREFIX = new Map([
   ["apps/frontend/src/pages/customers/CustomersListView.tsx", "customers"],
   ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "vendors"],
   ["apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", "transaction-register"],
+  ["apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx", "abandonment"],
+  ["apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx", "ap-aging"],
+  ["apps/frontend/src/pages/accounting/DailyReconPage.tsx", "daily-recon"],
+  ["apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx", "integration-tx"],
+  ["apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", "revrec"],
+  ["apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx", "audit-trail"],
 ]);
 
 function hasFilterToolbarGoldPattern(src, rel, marker) {

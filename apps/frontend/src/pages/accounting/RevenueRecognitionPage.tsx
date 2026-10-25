@@ -12,7 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import {
   getRevenueContracts, getRevenueContractDetail, getRevenueLeakage,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
@@ -280,7 +280,7 @@ export function RevenueRecognitionPage() {
   const { enabled, loading: flagLoading } = useFeatureFlag("REVENUE_RECOGNITION_ENABLED", operatingCompanyId || undefined);
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
@@ -299,7 +299,15 @@ export function RevenueRecognitionPage() {
   });
 
   const total = data?.total ?? 0;
-  const items = data?.items ?? [];
+  const items = useMemo(() => {
+    const rows = data?.items ?? [];
+    const needle = search.trim().toLowerCase();
+    if (!needle) return rows;
+    return rows.filter((row) => {
+      const hay = [row.contract_number, row.description, row.source_type, row.status].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [data?.items, search]);
 
   const columns = useMemo<ParityColumn<RevenueContractListItem>[]>(
     () => [
@@ -381,20 +389,38 @@ export function RevenueRecognitionPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center" data-revrec-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="revrec" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <MultiSelectDropdown
-          label="Status"
-          options={statusOptions({ "draft": "Draft", "active": "Active", "fully_recognized": "Fully Recognized", "voided": "Voided" })}
-          selected={staged.draft.statusFilter}
-          onChange={(next) => staged.setDraft({ statusFilter: next })}
-          allLabel="All statuses"
-          data-testid="revrec-status-filter"
-        />
-      </CollapsedListFilters>
-      <span className="text-xs text-gray-500">
-        {total.toLocaleString()} contract{total !== 1 ? "s" : ""}
-      </span>
+    <div className="w-full space-y-2" data-revrec-filter-toolbar="visible">
+      <div className="flex flex-wrap items-end gap-2">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search contract #, description…"
+          searchTestId="revrec-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter([]);
+            setOffset(0);
+          }}
+          activeFilterCount={statusFilter.length ? 1 : 0}
+          testIdPrefix="revrec"
+          className="flex-1 min-w-[280px]"
+        >
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ draft: "Draft", active: "Active", fully_recognized: "Fully Recognized", voided: "Voided" })}
+            selected={statusFilter}
+            onChange={(next) => {
+              setStatusFilter(next);
+              setOffset(0);
+            }}
+            allLabel="All statuses"
+            data-testid="revrec-status-filter"
+          />
+        </MoneyListToolbar>
+        <span className="self-center text-xs text-gray-500">
+          {total.toLocaleString()} contract{total !== 1 ? "s" : ""}
+        </span>
+      </div>
     </div>
   );
 
@@ -433,6 +459,7 @@ export function RevenueRecognitionPage() {
           rowKey={(row) => row.id}
           loading={flagLoading || isLoading}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="revenue-recognition-contracts"
           tableTestId="revenue-recognition-contracts-table"
           initialPageSize={limit}
