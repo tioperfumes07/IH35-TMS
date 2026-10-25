@@ -122,7 +122,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">Name *</label>
               <input
                 required
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -130,7 +130,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             <div>
               <label className="block text-xs font-medium">SKU</label>
               <input
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
               />
@@ -181,7 +181,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">On-hand qty</label>
               <input
                 type="number"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={formData.on_hand_qty}
                 onChange={(e) => setFormData({ ...formData, on_hand_qty: e.target.value })}
               />
@@ -190,7 +190,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">Reorder point</label>
               <input
                 type="number"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={formData.reorder_point}
                 onChange={(e) => setFormData({ ...formData, reorder_point: e.target.value })}
               />

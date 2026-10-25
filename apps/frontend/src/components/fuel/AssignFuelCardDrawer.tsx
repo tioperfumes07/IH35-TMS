@@ -100,7 +100,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
         <label className="block font-semibold text-gray-700">
           Card last digits (4-6) *
           <input
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={cardDigits}
             onChange={(e) => setCardDigits(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
             placeholder="1234"
@@ -144,7 +144,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
             Card type (optional)
             <div className="mt-1">
               <SelectCombobox
-                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={cardTypeId}
                 onChange={(e) => setCardTypeId(e.target.value)}
                 data-testid="fuel-cards-assign-card-type"
@@ -170,7 +170,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
         <label className="block font-semibold text-gray-700">
           Notes
           <input
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             data-testid="fuel-cards-assign-notes"

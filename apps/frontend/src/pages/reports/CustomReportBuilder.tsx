@@ -135,7 +135,7 @@ export function CustomReportBuilder() {
         >
           <h3 className="text-xs font-semibold text-[#0F1219]">Report layout</h3>
           <input
-            className="mt-2 h-9 max-w-sm rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className="mt-2 h-10 max-w-sm rounded-sm border border-[#E5E7EB] px-2 text-xs"
             placeholder="Report name"
             value={name}
             onChange={(e) => setName(e.target.value)}

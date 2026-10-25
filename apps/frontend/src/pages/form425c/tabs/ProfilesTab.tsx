@@ -66,7 +66,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
             {label}
             <input
-              className="mt-1 h-9 w-full rounded-sm border px-2 text-xs font-normal normal-case"
+              className="mt-1 h-10 w-full rounded-sm border px-2 text-xs font-normal normal-case"
               value={String((profile as Record<string, unknown>)[key] ?? "")}
               onChange={(e) => onChange(activeCompany, (draft) => ({ ...draft, [key]: e.target.value }))}
             />
@@ -94,7 +94,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           {profile.bankAccounts.map((account, idx) => (
             <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_2fr_1fr_auto]">
               <input
-                className="h-9 rounded-sm border px-2 text-xs"
+                className="h-10 rounded-sm border px-2 text-xs"
                 value={account.id}
                 placeholder="Account code"
                 onChange={(e) =>
@@ -106,7 +106,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 }
               />
               <input
-                className="h-9 rounded-sm border px-2 text-xs"
+                className="h-10 rounded-sm border px-2 text-xs"
                 value={account.label}
                 placeholder="Label"
                 onChange={(e) =>
@@ -118,7 +118,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 }
               />
               <input
-                className="h-9 rounded-sm border px-2 text-xs"
+                className="h-10 rounded-sm border px-2 text-xs"
                 value={account.number}
                 placeholder="Last digits"
                 onChange={(e) =>

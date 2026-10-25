@@ -666,7 +666,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           />
         </label>
         <TextField label="Billing city" value={values.billing_city} onChange={(billing_city) => onPatch({ billing_city })} />
-        {/* Billing state + ZIP row (ROUND 443.257: State 64px · ZIP 88px · h-8) */}
+        {/* Billing state + ZIP row */}
         <div className="md:col-span-2 grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-[minmax(0,1fr)_64px_88px]">
           <div className="block text-xs">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Billing state</span>
@@ -676,7 +676,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               value={values.billing_state}
               onChange={(e) => onPatch({ billing_state: e.target.value })}
               placeholder="TX"
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              className="h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
             />
           </div>
           <div className="block text-xs">
@@ -687,7 +687,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               value={values.billing_zip}
               onChange={(e) => onPatch({ billing_zip: e.target.value })}
               placeholder="78040"
-              className="h-9 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs"
+              className="h-10 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs"
             />
           </div>
         </div>
