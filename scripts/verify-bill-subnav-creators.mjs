@@ -65,11 +65,11 @@ export function check({ billsPage, createModal, vendorForm, manifest }) {
   } else {
     for (const { slug, category } of TYPED_SUBNAV) {
       const pattern = new RegExp(
-        `path\\s*=\\s*["']/accounting/bills/${slug}["'][\\s\\S]*?Navigate to="/accounting/bills\\?category=${category}&create=1"`,
+        `path\\s*=\\s*["']/accounting/bills/${slug}["'][\\s\\S]*?Navigate to="/accounting/bills\\?category=${category}"`,
       );
       if (!pattern.test(manifest)) {
         f.push(
-          `${MANIFEST}: /accounting/bills/${slug} must redirect to filtered list AND creator (?category=${category}&create=1)`,
+          `${MANIFEST}: /accounting/bills/${slug} must redirect to the filtered LIST only (?category=${category}, no create=1 — owner 10-25 2:05 PM: sub-tabs never open the creator by default)`,
         );
       }
     }
@@ -105,7 +105,7 @@ if (process.argv.includes("--selftest")) {
   const goodForm = `initialBillType?: string; initialBillType`;
   const goodManifest = TYPED_SUBNAV.map(
     ({ slug, category }) =>
-      `path="/accounting/bills/${slug}" element={<Navigate to="/accounting/bills?category=${category}&create=1" replace />}`,
+      `path="/accounting/bills/${slug}" element={<Navigate to="/accounting/bills?category=${category}" replace />}`,
   ).join("\n");
 
   const checks = [
@@ -117,13 +117,13 @@ if (process.argv.includes("--selftest")) {
       ),
     ],
     [
-      "filter-only redirect caught",
+      "auto-open creator redirect caught (owner 10-25)",
       check({
         billsPage: goodBills,
         createModal: goodModal,
         vendorForm: goodForm,
-        manifest: goodManifest.replace("&create=1", ""),
-      }).some((x) => x.includes("create=1")),
+        manifest: goodManifest.replace(/\?category=(\w+)" replace/, "?category=$1&create=1\" replace"),
+      }).some((x) => x.includes("LIST only")),
     ],
   ];
 
