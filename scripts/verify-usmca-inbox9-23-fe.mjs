@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet","fuel","tasks","compliance"],"cols":["connectivity","qbo_chrome"],"leafRe":"^(home|history|card_overage|create_task|property_tax|current_load)$","task":"INBOX-DEVIN-A-9-23-FE-WIRING","vertical":"class-sweep"} */
 /** INBOX-DEVIN-A 9–23 FE wiring ratchet — static only, USMCA fleet/fuel/tasks/compliance chrome. */
 import fs from "node:fs";
 import path from "node:path";
