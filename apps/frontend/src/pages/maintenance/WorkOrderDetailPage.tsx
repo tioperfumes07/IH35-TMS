@@ -179,7 +179,7 @@ const LINKED_BILL_PAYMENT_COLUMNS: Array<ParityColumn<LinkedBillPaymentRow>> = [
     key: "id",
     label: "Bill payment",
     sortable: true,
-    render: (row) => <EntityLink kind="bill_payment" id={row.id} label={`Payment · ${formatDateUS(row.payment_date) || row.id.slice(0, 8)}`} />,
+    render: (row) => <EntityLink kind="bill_payment" id={row.id} label={`Payment · ${formatDateUS(row.payment_date) || "—"}`} />,
   },
   {
     key: "bill_id",

@@ -13,6 +13,7 @@ import {
   listInsuranceTypeCatalog,
   type InsurancePolicy,
 } from "../../../api/insurance";
+import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -285,7 +286,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                             p.insurer_name || "—"
                           )}
                           {" · "}
-                          <EntityLink kind="insurance_policy" id={p.id} label={p.policy_number || p.id.slice(0, 8)} />
+                          <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} />
                         </div>
                       </div>
                       <div

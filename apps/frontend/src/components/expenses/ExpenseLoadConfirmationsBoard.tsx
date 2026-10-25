@@ -2,6 +2,7 @@
  * 443.288-C — shared "Expense load confirmations" V3 board (Dispatch + Settlements Close).
  * Empty queue = all confirmed. Engine 404/501 = fail-closed (never pretend empty/confirmed).
  */
+import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -197,7 +198,7 @@ export function ExpenseLoadConfirmationsBoard({
           <EntityLinkOrTombstone
             kind="expense"
             id={row.id}
-            name={row.expense_number ?? row.id.slice(0, 8)}
+            name={entityLabel(row.expense_number, row.id, "Expense")}
             noun="Expense"
           />
         ),

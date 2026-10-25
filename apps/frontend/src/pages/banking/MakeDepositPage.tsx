@@ -6,6 +6,7 @@
 import { useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -310,9 +311,9 @@ export function MakeDepositPage() {
                     key: "display_id", label: "Ref",
                     render: (r) =>
                       r.kind === "customer_payment" ? (
-                        <EntityLink kind="payment" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
+                        <EntityLink kind="payment" id={r.id} label={entityLabel(r.display_id, r.id, "Payment")} />
                       ) : (
-                        <EntityLink kind="factoring_advance" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
+                        <EntityLink kind="factoring_advance" id={r.id} label={entityLabel(r.display_id, r.id, "Advance")} />
                       ),
                   },
                   { key: "payee_name", label: "Payee", sortable: true, render: (r) => r.payee_name ?? "—" },

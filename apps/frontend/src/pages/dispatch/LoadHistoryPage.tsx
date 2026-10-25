@@ -168,7 +168,7 @@ export default function LoadHistoryPage() {
           expense: "expense",
           work_order: "work_order",
         };
-        return <EntityLink kind={kindMap[row.kind]} id={row.id} label={row.display_id ?? row.id.slice(0, 8)} />;
+        return <EntityLink kind={kindMap[row.kind]} id={row.id} label={entityLabel(row.display_id, row.id, "Load")} />;
       },
     },
     {
