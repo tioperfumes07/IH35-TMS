@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 09:50 CT — CURSOR → LEAD | 443.326 navy-subnav guard accepts SettlementsSubNavWrapper
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
+- **DELTA:** locked-guards-heavy red — `verify-navy-page-subnav` still required `NavyPageSubNav` on SettlementsPage after 443.326 SubNav extract; now accepts `SettlementsSubNavWrapper`
+- **GUARD:** verify-navy-page-subnav ALL PASSED + --selftest 3/3 · verify-nav-integrity OK · v3 grammar 0/44
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED**; ambient required-live-load (diesel baseline / 5796 Transportation) unchanged on main
+- **NEXT:** green `locked-guards-heavy` → squash-merge #27603 → **443.325**
+- **Files Modified:** scripts/verify-navy-page-subnav.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
 ## 2026-10-25 09:40 CT — CURSOR → LEAD | 443.326 CI guard fix tip e8f7be9061
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`e8f7be9061`**

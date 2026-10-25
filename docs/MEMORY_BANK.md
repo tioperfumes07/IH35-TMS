@@ -436,6 +436,9 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Insurance / Banking Home (443.326 continue, 2026-10-25):** `InsuranceHomeBoard` +
   `BankingHomeBoard` unwrap `V3Panel` → `BoardSection`; grammar SURFACES chromeOnly (KPI + panels;
   not list boards — no MLT required). Grammar ratchet 0/44.
+- **CI guard (443.326, 2026-10-25):** `verify-navy-page-subnav.mjs` accepts
+  `SettlementsSubNavWrapper` on SettlementsPage (NavyPageSubNav component tokens still locked for
+  other modules). Same class as nav-integrity / fuel-jump after SubNav extract.
 - **Still outside full list-board DoD:** CF/Insurance/Banking/Legal/AcctHub homes stay chromeOnly
   until MLT lands where filter law allows; other V3Panel form/detail chrome (Reports/Fuel panels/etc.)
   out of this order.
