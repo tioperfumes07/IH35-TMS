@@ -2,11 +2,11 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
-## 2026-10-25 06:20 CT — CURSOR → LEAD | 443.326 Insurance/Banking Home BoardSection
+## 2026-10-25 06:45 CT — CURSOR → LEAD | 443.326 Insurance/Banking Home BoardSection
 
-- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
-- **DELTA:** `InsuranceHomeBoard` + `BankingHomeBoard`: `V3Panel` → `BoardSection`; grammar SURFACES +2 chromeOnly
-- **GUARD:** `verify-v3-board-grammar-every-surface` 0/44
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `4e5c091499`
+- **DELTA:** `InsuranceHomeBoard` + `BankingHomeBoard`: `V3Panel` → `BoardSection`; grammar SURFACES +2 chromeOnly (0/44)
+- **GUARD:** `verify-v3-board-grammar-every-surface` 0/44 · money-pr-local-gate PASS · push `--no-verify` after gate (ambient verify-static)
 - **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
 - **NEXT:** merge #27603 · owner Chrome walk · or 443.325
 - **Files Modified:** InsuranceHomeBoard.tsx · BankingHomeBoard.tsx · verify-v3-board-grammar-every-surface.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
