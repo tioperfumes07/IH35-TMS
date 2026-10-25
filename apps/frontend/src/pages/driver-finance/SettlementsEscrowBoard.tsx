@@ -4,12 +4,13 @@
  * Engine: listEscrowAccounts (same rows as Accounting › Escrow KPI source).
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
@@ -97,6 +98,7 @@ function ActiveStatusPill() {
 
 /** Board body only — chrome is SettlementsModuleShell / SettlementsSubNavWrapper (443.326). */
 export function SettlementsEscrowBoard() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -281,49 +283,47 @@ export function SettlementsEscrowBoard() {
           onRetry={() => void accountsQuery.refetch()}
         />
       ) : (
-        <ParityTable<DriverEscrowRow>
+        <BoardSection
           title="Escrow by driver — click a driver to open his register"
-          columns={columns}
-          rows={driverRows}
-          rowKey={(r) => r.holderId}
-          loading={accountsQuery.isPending || (accountsQuery.isFetching && driverRows.length === 0)}
-          emptyText="No drivers with escrow balance."
-          storageKey="settlements-escrow-by-driver"
-          serverViewKey="settlements-escrow-by-driver"
-          tableTestId="settlements-escrow-driver-table"
-          gearButtonTestId="settlements-escrow-column-gear"
-          footerCells={
-            driverRows.length > 0
-              ? {
-                  driverName: () => (
-                    <span className="font-bold" style={{ fontSize: 12 }}>
-                      Total
-                    </span>
-                  ),
-                  heldCents: () => (
-                    <span
-                      className="font-bold tabular-nums text-right block"
-                      style={{ fontSize: 12, color: V3.ink }}
-                    >
-                      <Link className="underline" style={{ color: V3.ink }} to="/accounting/escrow">
-                        {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
-                      </Link>
-                    </span>
-                  ),
-                }
-              : undefined
-          }
-          toolbar={
-            <Link to="/accounting/escrow" className="font-semibold text-xs" style={{ color: V3.link }}>
-              View all →
-            </Link>
-          }
-        />
+          onViewAll={() => navigate("/accounting/escrow")}
+          testId="settlements-escrow-board-section"
+          footer="Live balances from Accounting › Escrow. Click a driver name to open that driver's escrow register."
+        >
+          <ParityTable<DriverEscrowRow>
+            title="Escrow by driver — click a driver to open his register"
+            columns={columns}
+            rows={driverRows}
+            rowKey={(r) => r.holderId}
+            loading={accountsQuery.isPending || (accountsQuery.isFetching && driverRows.length === 0)}
+            emptyText="No drivers with escrow balance."
+            storageKey="settlements-escrow-by-driver"
+            serverViewKey="settlements-escrow-by-driver"
+            tableTestId="settlements-escrow-driver-table"
+            gearButtonTestId="settlements-escrow-column-gear"
+            footerCells={
+              driverRows.length > 0
+                ? {
+                    driverName: () => (
+                      <span className="font-bold" style={{ fontSize: 12 }}>
+                        Total
+                      </span>
+                    ),
+                    heldCents: () => (
+                      <span
+                        className="font-bold tabular-nums text-right block"
+                        style={{ fontSize: 12, color: V3.ink }}
+                      >
+                        <Link className="underline" style={{ color: V3.ink }} to="/accounting/escrow">
+                          {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
+                        </Link>
+                      </span>
+                    ),
+                  }
+                : undefined
+            }
+          />
+        </BoardSection>
       )}
-
-      <p className="text-xs" style={{ color: V3.muted }}>
-        Live balances from Accounting › Escrow. Click a driver name to open that driver&apos;s escrow register.
-      </p>
 
       <div
         className="flex gap-2 items-start rounded-sm border px-3 py-2 text-xs"

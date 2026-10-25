@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 53–54 Settlements Escrow + Escrow Register FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-escrow-board` · tip after #27666 Close
+- **DELTA:** SettlementsEscrowBoard + EscrowRegisterPage wrap ParityTable in shared BoardSection (View all + board footers). Open register → retained. Grammar forbids V3Panel. Engines unchanged.
+- **GUARD:** verify-settlements-escrow-board-rebuild + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Company + Fuel boards
+- **Files Modified:** SettlementsEscrowBoard.tsx · EscrowRegisterPage.tsx · verify-settlements-escrow-board-rebuild.mjs · verify-v3-board-grammar-every-surface.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 49 Settlements Close FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-settlements-close-board` · tip after #27663 Open/Closed
