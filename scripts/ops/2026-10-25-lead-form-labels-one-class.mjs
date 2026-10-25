@@ -9,14 +9,19 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SRC = path.join(ROOT, "apps/frontend/src");
-const DIR = path.join(SRC, "pages/lists");
+const DIR = process.argv.includes("--all") ? SRC : path.join(SRC, "pages/lists");
 const INPUT_CLASS = path.join(SRC, "components/forms/inputClass");
+const SKIP = (f) => f.startsWith(path.join(SRC, "components/forms/"));
 
-export const MAP = [
+const V = [];
+for (const lead of ["block", "flex flex-col gap-1"]) for (const w of ["semibold", "medium"]) for (const c of ["gray-600", "gray-700", "[#4B5563]"]) {
+  V.push([`<label className="${lead} text-xs font-${w} text-${c}"`, lead === "block" ? "<label className={FORM_LABEL_CLASS}" : "<label className={FORM_LABEL_STACK_CLASS}", lead === "block" ? "FORM_LABEL_CLASS" : "FORM_LABEL_STACK_CLASS"]);
+}
+export const MAP = [...V, ...[
   ['<label className="block text-xs font-semibold text-gray-600"', "<label className={FORM_LABEL_CLASS}", "FORM_LABEL_CLASS"],
   ['<label className="block text-xs font-semibold text-[#4B5563]"', "<label className={FORM_LABEL_CLASS}", "FORM_LABEL_CLASS"],
   ['<label className="flex flex-col gap-1 text-xs font-semibold text-gray-600"', "<label className={FORM_LABEL_STACK_CLASS}", "FORM_LABEL_STACK_CLASS"],
-];
+].filter(([from]) => !V.some(([v]) => v === from))];
 
 function walk(d, a = []) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
@@ -49,7 +54,7 @@ function addImport(src, file, names) {
 
 const apply = process.argv.includes("--apply");
 const counts = { before: 0, after: 0, files: 0 };
-for (const f of walk(DIR)) {
+for (const f of walk(DIR).filter((f) => !SKIP(f))) {
   let src = fs.readFileSync(f, "utf8");
   const used = new Set();
   for (const [from, to, name] of MAP) {

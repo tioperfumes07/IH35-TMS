@@ -3,6 +3,7 @@ import { Button } from "../../Button";
 import { Modal } from "../../Modal";
 import type { IftaFiling } from "../../../api/reports-ifta";
 import { formatUsd } from "../../../lib/money";
+import { FORM_LABEL_CLASS } from "../../forms/inputClass"
 
 type Props = {
   filing: IftaFiling;
@@ -139,7 +140,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
             Two-step confirmation: type APPROVE and hold the confirm button for 5 seconds. This records owner approval
             before external IFTA submission.
           </p>
-          <label className="block text-xs font-semibold text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Type APPROVE to confirm
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"

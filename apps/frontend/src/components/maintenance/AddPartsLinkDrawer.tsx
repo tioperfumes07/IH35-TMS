@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../EntityPicker";
+import { FORM_LABEL_CLASS } from "../forms/inputClass"
 
 type Props = {
   open: boolean;
@@ -98,7 +99,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
           </p>
         ) : null}
         <div>
-          <label className="block text-xs font-medium text-gray-700">Vendor *</label>
+          <label className={FORM_LABEL_CLASS}>Vendor *</label>
           <div className="mt-1" data-testid="parts-link-vendor-picker">
             {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
             <EntityPicker
@@ -114,7 +115,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700">Part description *</label>
+          <label className={FORM_LABEL_CLASS}>Part description *</label>
           <input
             required
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
@@ -124,7 +125,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700">Vendor invoice # *</label>
+            <label className={FORM_LABEL_CLASS}>Vendor invoice # *</label>
             <input
               required
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
@@ -133,7 +134,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700">Qty used</label>
+            <label className={FORM_LABEL_CLASS}>Qty used</label>
             <input
               type="number"
               min={1}
@@ -144,7 +145,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700">Invoice amount *</label>
+          <label className={FORM_LABEL_CLASS}>Invoice amount *</label>
           <MoneyInput valueDollars={amountDollars} onChangeDollars={setAmountDollars} ariaLabel="Invoice amount" className="mt-1 w-full" />
         </div>
         <div className="flex justify-end gap-2 pt-2">

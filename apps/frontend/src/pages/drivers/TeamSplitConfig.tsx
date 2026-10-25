@@ -10,6 +10,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 import { Link, useSearchParams } from "react-router-dom";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 type Props = {
   operatingCompanyId: string;
@@ -254,7 +255,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         isDirty={Boolean(primaryDriverId || secondaryDriverId || memo || primaryRatio !== 0.6 || secondaryRatio !== 0.4)}
       >
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Primary driver
             <div className="mt-1">
               <DriverPickerWithCreate
@@ -267,7 +268,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
               />
             </div>
           </label>
-          <label className="block text-xs font-medium text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Secondary driver
             <div className="mt-1">
               <DriverPickerWithCreate
@@ -295,7 +296,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
               </Button>
             ))}
           </div>
-          <label className="block text-xs font-medium text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Memo
             <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>

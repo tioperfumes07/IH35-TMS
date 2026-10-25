@@ -29,6 +29,7 @@ import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -343,7 +344,7 @@ export function BillPaymentsListPage() {
           activeFilterCount={billPayActiveFilterCount}
           testIdPrefix="bill-payments"
         >
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Vendor
             {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
                 inline create already lives on ReferenceSelect (createKind="vendor") for the forms
@@ -379,11 +380,11 @@ export function BillPaymentsListPage() {
             allLabel="All (include voided)"
             data-testid="bill-payments-hide-voided"
           />
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             From
             <DatePicker className="h-9" value={dateFrom} onChange={setDateFrom} />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             To
             <DatePicker className="h-9" value={dateTo} onChange={setDateTo} />
           </label>

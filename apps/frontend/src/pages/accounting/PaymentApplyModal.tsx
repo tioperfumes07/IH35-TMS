@@ -17,6 +17,7 @@ type Props = {
 };
 
 import { formatUsdCents } from "../../lib/money";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -49,12 +50,12 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
           onSubmit({ invoice_id: selectedInvoiceId, amount_cents: cents });
         }}
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Search
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
 
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Invoice
           <SelectCombobox
             value={selectedInvoiceId}
@@ -77,7 +78,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
           </SelectCombobox>
         </label>
 
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Apply amount (USD)
           {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
           <MoneyInput valueDollars={applyAmountDollars} onChangeDollars={setApplyAmountDollars} ariaLabel="Apply amount (USD)" />

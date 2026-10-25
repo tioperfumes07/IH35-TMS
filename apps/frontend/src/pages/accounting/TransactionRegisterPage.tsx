@@ -16,6 +16,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const PAGE_SIZE = 100;
 
@@ -293,7 +294,7 @@ export function TransactionRegisterPage() {
             allLabel="All directions"
             data-testid="transaction-register-filter-direction"
           />
-          <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Status
             <input
               value={status}

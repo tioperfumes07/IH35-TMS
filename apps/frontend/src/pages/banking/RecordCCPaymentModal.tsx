@@ -15,6 +15,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -212,7 +213,7 @@ export function RecordCCPaymentModal({
             />
           </p>
         ) : null}
-        <label className="block text-xs font-semibold text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Credit card vendor
           <div className="mt-1 font-normal">
             <ReferenceSelect
@@ -234,7 +235,7 @@ export function RecordCCPaymentModal({
             />
           </div>
         </label>
-        <label className="block text-xs font-semibold text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Card liability account (COA)
           <div className="mt-1 font-normal">
             <ReferenceSelect

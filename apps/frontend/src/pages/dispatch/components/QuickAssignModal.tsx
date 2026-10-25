@@ -11,6 +11,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { listDispatchCancellationReasons } from "../../../api/dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -102,7 +103,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
           Load:{" "}
           <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber, loadId, "Load")} />
         </div>
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Driver <span className="text-red-500">*</span>
           <div className="mt-0.5">
             <DriverPickerWithCreate
@@ -124,7 +125,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
         </label>
         {isVehicleSwap ? (
           <div className="space-y-1" data-testid="vehicle-swap-reason">
-            <label className="block text-xs font-semibold text-gray-600">Vehicle swap reason</label>
+            <label className={FORM_LABEL_CLASS}>Vehicle swap reason</label>
             <ReferenceSelect
               value={reasonCode}
               onChange={setReasonCode}
@@ -144,7 +145,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             ) : null}
           </div>
         ) : null}
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Unit
           <div className="mt-0.5" data-testid="quick-assign-unit">
             <EntityPicker
@@ -162,7 +163,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             />
           </div>
         </label>
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Trailer
           <div className="mt-0.5" data-testid="quick-assign-trailer">
             <EntityPicker

@@ -13,6 +13,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { moneyListKpiCard } from "../moneyListKpiCard";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 /**
  * Check list (`/accounting/checks`). U6 (owner, 2026-10-03): "Checks list must show all checks with full filters".
@@ -126,11 +127,11 @@ export function CheckListPage() {
         activeFilterCount={activeFilterCount}
         testIdPrefix="checks"
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_STACK_CLASS}>
           From
           <DatePicker value={dateFrom} onChange={setDateFrom} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_STACK_CLASS}>
           To
           <DatePicker value={dateTo} onChange={setDateTo} />
         </label>

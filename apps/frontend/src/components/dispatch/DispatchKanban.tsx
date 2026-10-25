@@ -39,6 +39,7 @@ import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
 import { InlineStatusPicker } from "./InlineStatusPicker";
 import { BACKLOG_STATUSES, TERMINAL_EXIT_STATUSES } from "../../lib/load-status";
+import { FORM_LABEL_CLASS } from "../forms/inputClass"
 
 function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
   return (node: T | null) => {
@@ -1398,7 +1399,7 @@ function KanbanUnitAvailabilityModal({
       title={pending?.action === "return_to_service" ? `Return ${pending.unitNumber} to service` : `Mark ${pending?.unitNumber ?? ""} out of service`}
     >
       <div className="space-y-3" data-testid="kanban-unit-availability-modal">
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           {pending?.action === "return_to_service" ? "Review notes" : "Reason"} (at least {min} characters)
           <textarea
             className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"

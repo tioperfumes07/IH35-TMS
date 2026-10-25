@@ -59,6 +59,7 @@ function centsToDollars(value: number): number | null {
 }
 
 import { formatUsdCents } from "../../lib/money";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -377,12 +378,12 @@ export function RecordPaymentModal({
             ) : null}
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Payment date
             <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9" />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Payment method
             <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {PAYMENT_METHODS.map((method) => (
@@ -393,12 +394,12 @@ export function RecordPaymentModal({
             </SelectCombobox>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Reference
             <input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Check # / ACH ref" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Amount (USD)
             {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
             <MoneyInput valueDollars={amountDollars} onChangeDollars={setAmountDollars} ariaLabel="Amount (USD)" />

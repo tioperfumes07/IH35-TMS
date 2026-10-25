@@ -10,6 +10,7 @@ import { ApiError } from "../../../api/client";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 export function DriverSchedulerRequestDetailPage() {
   const { id = "" } = useParams();
@@ -121,7 +122,7 @@ export function DriverSchedulerRequestDetailPage() {
                   Approve
                 </Button>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600">Deny reason</label>
+                  <label className={FORM_LABEL_CLASS}>Deny reason</label>
                   <textarea
                     className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     rows={2}

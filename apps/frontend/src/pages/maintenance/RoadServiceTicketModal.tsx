@@ -7,6 +7,7 @@ import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoad
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -82,11 +83,11 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   return (
     <Modal open={open} onClose={handleClose} title="Road service ticket">
       <div className="space-y-3" data-testid="road-service-ticket-modal">
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Ticket #
           <input className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={ticketNumber} onChange={(e) => setTicketNumber(e.target.value)} />
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Vendor
           {/*
             LST-PICKER-01 (guard 1866): free-text vendor_name alone cannot satisfy POST
@@ -117,7 +118,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
             ) : null}
           </div>
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Unit
           <div className="mt-1">
             <EntityPicker
@@ -131,7 +132,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
             />
           </div>
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Driver
           <div className="mt-1">
             <EntityPicker
@@ -145,7 +146,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
             />
           </div>
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Service type
           <SelectCombobox
             className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -159,11 +160,11 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
             ))}
           </SelectCombobox>
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Location
           <input className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Initial complaint
           <textarea className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={initialComplaint} onChange={(e) => setInitialComplaint(e.target.value)} />
         </label>

@@ -17,6 +17,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { DatePicker } from "../forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
 import { formatUsdCents } from "../../lib/money";
+import { FORM_LABEL_STACK_CLASS } from "../forms/inputClass"
 
 export type BillPaymentRow = {
   bill_id: string;
@@ -280,15 +281,15 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
         {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Vendor
             <input readOnly value={vendorName} className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Payment date
             <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9" />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Method
             <SelectCombobox value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {METHOD_OPTIONS.map((opt) => (
@@ -298,7 +299,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
               ))}
             </SelectCombobox>
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Total payment (USD)
             {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → *_cents byte-for-byte. */}
             <MoneyInput valueDollars={totalAmount} onChangeDollars={setTotalAmount} ariaLabel="Total payment amount (USD)" />
@@ -322,7 +323,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
             </label>
           ) : null}
           {paymentMethod === "check" ? (
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Check #
               <input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
             </label>
@@ -405,7 +406,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           {totalCents > appliedSum ? ` · ${money(totalCents - appliedSum)} unapplied credit` : null}
         </div>
 
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Memo
           <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
         </label>

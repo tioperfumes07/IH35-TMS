@@ -45,6 +45,7 @@ import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { companyToday } from "../../lib/businessDate";
 import { colors } from "../../design/tokens";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const PAGE = 100;
 
@@ -365,8 +366,8 @@ export function ReclassifyTransactionsPage() {
         {/* RIGHT PANE */}
         <section className="min-w-0 flex-1">
           <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="reclassify-filters">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
             {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
             <MultiSelectDropdown label="Account" options={accountOptions} selected={f.accountIds} onChange={(v) => setFilter("accountIds", v)} allLabel="All accounts" searchable data-testid="reclassify-filter-account" />
             <MultiSelectDropdown label="Type" options={facetOptions("types")} selected={f.types} onChange={(v) => setFilter("types", v)} allLabel="All types" data-testid="reclassify-filter-type" />
@@ -377,7 +378,7 @@ export function ReclassifyTransactionsPage() {
             <MultiSelectDropdown label="Driver" options={facetOptions("drivers")} selected={f.driverIds} onChange={(v) => setFilter("driverIds", v)} allLabel="All drivers" searchable data-testid="reclassify-filter-driver" />
             <MultiSelectDropdown label="Trailer" options={facetOptions("trailers")} selected={f.trailerIds} onChange={(v) => setFilter("trailerIds", v)} allLabel="All trailers" searchable data-testid="reclassify-filter-trailer" />
             <MultiSelectDropdown label="Vendor" options={facetOptions("vendors")} selected={f.vendorIds} onChange={(v) => setFilter("vendorIds", v)} allLabel="All vendors" searchable data-testid="reclassify-filter-vendor" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Memo / description
+            <label className={FORM_LABEL_STACK_CLASS}>Memo / description
               <input value={f.search} onChange={(e) => setFilter("search", e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Dreamline" data-testid="reclassify-search" />
             </label>
             <MultiSelectDropdown label="Columns" options={COLUMNS.map((c) => ({ value: c.key, label: c.optional ? `${c.label} (added)` : c.label }))} selected={visibleCols} onChange={chooseColumns} allLabel="All columns" data-testid="reclassify-columns" />

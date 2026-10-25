@@ -12,6 +12,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 function auditActorLabel(row: TemplateAuditEvent): string {
   if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
@@ -354,7 +355,7 @@ export function LegalTemplateDetailPage() {
 
             <div className="space-y-2 pt-3">
               <div className="text-xs font-semibold uppercase text-[#6B7280]">Attorney approval input</div>
-              <label className="block text-xs font-semibold text-[#4B5563]">
+              <label className={FORM_LABEL_CLASS}>
                 Attorney Name
                 <input
                   value={attorneyName}
@@ -362,7 +363,7 @@ export function LegalTemplateDetailPage() {
                   className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="block text-xs font-semibold text-[#4B5563]">
+              <label className={FORM_LABEL_CLASS}>
                 Bar Number
                 <input
                   value={attorneyBarNumber}
@@ -370,7 +371,7 @@ export function LegalTemplateDetailPage() {
                   className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="block text-xs font-semibold text-[#4B5563]">
+              <label className={FORM_LABEL_CLASS}>
                 Notes
                 <textarea
                   value={attorneyNotes}
@@ -423,7 +424,7 @@ export function LegalTemplateDetailPage() {
         </div>
         <div className="grid grid-cols-1 divide-y divide-[#E5E7EB] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
           <div className="px-3 py-3">
-            <label className="block text-xs font-semibold text-[#4B5563]">
+            <label className={FORM_LABEL_CLASS}>
               English HTML
               <textarea
                 rows={12}
@@ -435,7 +436,7 @@ export function LegalTemplateDetailPage() {
             </label>
           </div>
           <div className="px-3 py-3">
-            <label className="block text-xs font-semibold text-[#4B5563]">
+            <label className={FORM_LABEL_CLASS}>
               Spanish HTML
               <textarea
                 rows={12}

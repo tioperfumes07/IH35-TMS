@@ -22,6 +22,7 @@ import { useStagedListFilters } from "../../components/table";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
 import { formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/Combobox";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -319,7 +320,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: driverFilt
           }}
         >
           {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Driver
             <div className="mt-1">
               <DriverPickerWithCreate
@@ -337,7 +338,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: driverFilt
               <span className="text-xs font-normal text-gray-500">Locked from driver profile.</span>
             ) : null}
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Type
             {/*
               LST-PICKER-01: bare SelectCombobox forced Lists-only create. ReferenceSelect
@@ -373,7 +374,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: driverFilt
             SETL-LINK-01: catalog default_recovery_rail pre-selects the mandatory ask (DoD §8).
             Options exclude escrow/split when may_draw_escrow=false (coherence CHECK).
           */}
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600" data-testid="auto-deduction-recovery-rail-field">
+          <label className={FORM_LABEL_STACK_CLASS} data-testid="auto-deduction-recovery-rail-field">
             Recovery rail (always ask)
             <SelectCombobox
               className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
@@ -400,17 +401,17 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: driverFilt
             )}
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Total owed (USD)
               {/* M-1: dollars-mode; Math.round(totalOwed*100)=total_owed_cents byte-for-byte. */}
               <MoneyInput valueDollars={totalOwed ? Number(totalOwed) : null} onChangeDollars={(d) => setTotalOwed(d == null ? "" : String(d))} ariaLabel="Total owed (USD)" />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Max / settlement (USD)
               <MoneyInput valueDollars={maxPerSettlement ? Number(maxPerSettlement) : null} onChangeDollars={(d) => setMaxPerSettlement(d == null ? "" : String(d))} ariaLabel="Max / settlement (USD)" />
             </label>
           </div>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Memo
             <textarea rows={2} className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>

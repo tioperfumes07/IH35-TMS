@@ -19,6 +19,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { formatUsdCents } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status"]; label: string }> = [
   { value: "active", label: "Active (hide voided)" },
@@ -180,11 +181,11 @@ export function FactoringListPage() {
         allLabel="All (include voided)"
         data-testid="factoring-status-filter"
       />
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+      <label className={FORM_LABEL_STACK_CLASS}>
         Date from
         <DatePicker value={fromDate} onChange={setFromDate} className="h-9" />
       </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+      <label className={FORM_LABEL_STACK_CLASS}>
         Date to
         <DatePicker value={toDate} onChange={setToDate} className="h-9" />
       </label>

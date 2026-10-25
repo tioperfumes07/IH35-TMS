@@ -40,6 +40,7 @@ const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"])
 import { formatUsdCents } from "../../lib/money";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -302,7 +303,7 @@ export function VendorCreditsPage() {
         activeFilterCount={vendorCreditsActiveFilterCount}
         testIdPrefix="vendor-credits"
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Vendor
           <EntityMultiSelect
             kind="vendor"
