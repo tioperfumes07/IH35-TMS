@@ -35,7 +35,7 @@ function audit(s) {
   if (/\.filter\(\(lawsuit\) => lawsuit\.claim_id/.test(s.policy)) failures.push("policy detail must not browser-filter company-wide lawsuits");
   if (!/Couldn't load this policy's lawsuits/.test(s.policy) || !/lawsuitsQuery\.refetch/.test(s.policy)) failures.push("reverse surface must expose retryable errors");
   if (!/kind="lawsuit"[\s\S]{0,80}row\.id/.test(s.policy)) failures.push("reverse row must drill to canonical lawsuit");
-  if (!/case "lawsuit":[\s\S]{0,100}lawsuits\?lawsuit_id=/.test(s.link)) failures.push("lawsuit drill must target highlighted canonical list");
+  if (!/case "lawsuit":[\s\S]{0,100}lawsuits\?insurance_lawsuit_id=/.test(s.link)) failures.push("lawsuit drill must target highlighted canonical list");
   return failures;
 }
 

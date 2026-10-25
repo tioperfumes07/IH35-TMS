@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDriftAlerts, resolveDriftAlert, type DriftAlert } from "../../../api/banking";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
@@ -57,7 +58,7 @@ function AlertRow({ alert, companyId }: { alert: DriftAlert; companyId: string }
         <div className="min-w-0">
           <span className={`font-semibold ${severityClass}`}>{DRIFT_KIND_LABEL[alert.drift_kind]}</span>
           <span className="mx-2 text-gray-400">|</span>
-          {alert.account_name ?? alert.institution_name ?? "Account"} {alert.account_mask ? `••${alert.account_mask}` : ""}
+          <EntityLink kind="bank_account" id={alert.bank_account_id} label={alert.account_name ?? alert.institution_name ?? "Account"} />{alert.account_mask ? ` ••${alert.account_mask}` : ""}
           <span className="mx-2 text-gray-400">|</span>
           As of {alert.as_of_date}
           <span className="mx-2 text-gray-400">|</span>

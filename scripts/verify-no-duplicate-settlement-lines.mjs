@@ -10,17 +10,13 @@
  * It is a SHRINK-ONLY guard: the ceiling may only decrease (or be removed) once
  * a clean-up script voids the remaining groups; it must never be raised.
  *
- * Live run requires DATABASE_URL (fail-closed via requireLiveDbOrExit — never silent skip).
- * Selftest exercises the threshold logic without a DB.
+ * Live run requires DATABASE_URL with the neondb_owner role (bypasses RLS) so
+ * the query is unscoped. Selftest exercises the threshold logic without a DB.
  */
-import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { execSync } from "node:child_process";
 
 // Live-only guard: no DATABASE_URL → skip is intentional (requires Neon neondb_owner role).
 export const ALLOW_OFFLINE_SKIP = "shrink-only ceiling on USMCA duplicate settlement lines; live Neon required";
-
-// ALLOW_OFFLINE_SKIP: selftest exercises the threshold logic without a DB;
-// the live run requires DATABASE_URL to query USMCA settlement_lines.
-export const ALLOW_OFFLINE_SKIP = "selftest covers threshold logic; live query skipped offline";
 
 const LABEL = "verify-no-duplicate-settlement-lines";
 
@@ -51,41 +47,54 @@ function selftest() {
 }
 
 async function liveRun() {
-  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
-  try {
-    const res = await client.query(
-      `
-      SELECT COUNT(*)::int AS dupe_groups
-      FROM (
-        SELECT sl.settlement_id, sl.load_id, sl.line_type
-        FROM driver_finance.settlement_lines sl
-        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
-        WHERE ds.operating_company_id = $1::uuid
-          AND sl.is_active = true
-          AND sl.voided_at IS NULL
-        GROUP BY sl.settlement_id, sl.load_id, sl.line_type
-        HAVING COUNT(*) > 1
-      ) g
-      `,
-      [USMCA_COMPANY_ID],
-    );
-    const count = res.rows[0]?.dupe_groups ?? NaN;
-    if (Number.isNaN(count)) {
-      console.error(`${LABEL} ERROR: could not parse DB result`);
-      process.exit(1);
-    }
-    if (count > DUPLICATE_CEILING) {
-      console.error(
-        `${LABEL} FAIL: ${count} active duplicate settlement-line groups found on USMCA (ceiling=${DUPLICATE_CEILING}). ` +
-          `ENG-42 fix required — run a void/dedup script and lower DUPLICATE_CEILING.`,
-      );
-      process.exit(1);
-    }
-    console.log(`${LABEL} OK — ${count} duplicate groups (ceiling=${DUPLICATE_CEILING})`);
-  } finally {
-    client.release();
-    await pool.end();
+  const db = process.env.DATABASE_URL;
+  if (!db) {
+    console.log(`${LABEL}: SKIP — no DATABASE_URL (offline; CI runs this with Neon neondb_owner)`);
+    process.exit(0);
   }
+
+  const sql = `
+    SELECT COUNT(*)::int AS dupe_groups
+    FROM (
+      SELECT sl.settlement_id, sl.load_id, sl.line_type
+      FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      WHERE ds.operating_company_id = '${USMCA_COMPANY_ID}'::uuid
+        AND sl.is_active = true
+        AND sl.voided_at IS NULL
+      GROUP BY sl.settlement_id, sl.load_id, sl.line_type
+      HAVING COUNT(*) > 1
+    ) g
+  `.trim();
+
+  let count;
+  try {
+    const out = execSync(
+      `psql "${db}" -t -A -c "${sql.replace(/"/g, '\\"').replace(/\n/g, " ")}"`,
+      { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    ).trim();
+    count = parseInt(out, 10);
+  } catch (e) {
+    console.error(`${LABEL} ERROR querying DB: ${e.message}`);
+    process.exit(1);
+  }
+
+  if (isNaN(count)) {
+    console.error(`${LABEL} ERROR: could not parse DB result`);
+    process.exit(1);
+  }
+
+  if (count > DUPLICATE_CEILING) {
+    console.error(
+      `${LABEL} FAIL: ${count} active duplicate settlement-line groups found on USMCA (ceiling=${DUPLICATE_CEILING}). ` +
+        `ENG-42 fix required — run a void/dedup script and lower DUPLICATE_CEILING.`
+    );
+    process.exit(1);
+  }
+
+  console.log(
+    `${LABEL} OK — ${count} duplicate groups (ceiling=${DUPLICATE_CEILING})`
+  );
 }
 
 if (process.argv.includes("--selftest")) {

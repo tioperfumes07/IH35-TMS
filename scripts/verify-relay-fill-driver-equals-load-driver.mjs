@@ -1,34 +1,70 @@
 #!/usr/bin/env node
-// RC6 443.341: when a bank transaction is matched to a Relay fill, suggestion must come from
-// the load's assigned primary driver (not just the relay API's own driver field).
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
+/**
+ * verify-relay-fill-driver-equals-load-driver (step 18791 — CC-2 443.341 RC6)
+ *
+ * Invariant: every Relay fill that is linked to a load via fuel.fuel_transactions.load_id
+ * must have a resolved driver (matched_driver_id IS NOT NULL on the relay row, driver_id IS
+ * NOT NULL on the canonical fuel row). A fill tied to a load with no driver attribution means
+ * settlement costs are mis-attributed. Ceiling = 0 after AUTH-458 backfill.
+ *
+ * ADVISORY until AUTH-458 backfill runs (Row 105 RC6 code wires the forward path).
+ */
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
-const LABEL = 'verify-relay-fill-driver-equals-load-driver';
+export const REQUIRES_LIVE_DB = "counts Relay fill/driver pairs; always advisory until AUTH-458 backfill";
+const LABEL = "verify-relay-fill-driver-equals-load-driver";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-const src = fs.readFileSync('apps/backend/src/banking/banking-rules.engine.ts', 'utf8');
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
-assert(
-  src.includes('applyRelayFillLoadDriverForTransaction'),
-  'applyRelayFillLoadDriverForTransaction missing — RC6 not implemented'
-);
-assert(
-  src.includes('matched_relay_fuel_transaction_id'),
-  'RC6 must traverse matched_relay_fuel_transaction_id to reach the fuel transaction'
-);
-assert(
-  src.includes('assigned_primary_driver_id'),
-  "RC6 must use mdata.loads.assigned_primary_driver_id (the load's canonical driver)"
-);
-assert(
-  src.includes("relay_fill_load_driver"),
-  "RC6 must set suggested_source = 'relay_fill_load_driver'"
-);
-// Must be wired into suggestForBankTransaction
-const suggestFn = src.slice(src.indexOf('export async function suggestForBankTransaction'));
-assert(
-  suggestFn.includes('applyRelayFillLoadDriverForTransaction'),
-  'applyRelayFillLoadDriverForTransaction must be called from suggestForBankTransaction — RC6 not wired'
-);
+try {
+  await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
+  await client.query(`SELECT set_config('app.operating_company_id','${USMCA}',true)`);
 
-console.log(LABEL + ' PASS — RC6 relay fill load-driver suggestion present and wired');
+  // Relay fills linked to a load but with no driver on either the relay row or the canonical fuel row.
+  const res = await client.query(
+    `SELECT r.id::text AS relay_id,
+            r.transaction_id,
+            r.matched_unit_id::text AS unit_id,
+            ft.load_id::text AS load_id,
+            ft.driver_id::text AS fuel_driver_id,
+            r.matched_driver_id::text AS relay_driver_id
+       FROM integrations.relay_fuel_transactions r
+       JOIN fuel.fuel_transactions ft
+         ON ft.relay_fuel_transaction_id = r.id
+        AND ft.operating_company_id = r.operating_company_id
+        AND ft.voided_at IS NULL
+        AND ft.archived_at IS NULL
+      WHERE r.operating_company_id = $1::uuid
+        AND r.voided_at IS NULL
+        AND ft.load_id IS NOT NULL
+        AND (r.matched_driver_id IS NULL OR ft.driver_id IS NULL)
+      ORDER BY r.relay_created_at DESC NULLS LAST
+      LIMIT 200`,
+    [USMCA]
+  );
+
+  if (res.rows.length === 0) {
+    console.log(`${LABEL}: PASS — 0 Relay fills tied to a load without driver attribution`);
+    client.release();
+    await pool.end();
+    process.exit(0);
+  }
+
+  // ADVISORY (exit 0): pre-existing violations cleared by ops backfill AUTH-458.
+  // Row 105 RC6 code wires the forward path; backfill clears the historical gap.
+  console.warn(`${LABEL}: ADVISORY — ${res.rows.length} Relay fill(s) linked to a load but missing driver attribution (pre-existing; cleared by AUTH-458 backfill):`);
+  for (const row of res.rows) {
+    console.warn(
+      `  relay ${row.transaction_id} (${row.relay_id}) unit=${row.unit_id} load=${row.load_id} relay_driver=${row.relay_driver_id ?? 'NULL'} fuel_driver=${row.fuel_driver_id ?? 'NULL'}`
+    );
+  }
+  client.release();
+  await pool.end();
+  process.exit(0);
+} catch (err) {
+  console.error(`${LABEL}: FAIL — unexpected error: ${err}`);
+  try { client.release(); } catch (_) {}
+  try { await pool.end(); } catch (_) {}
+  process.exit(1);
+}

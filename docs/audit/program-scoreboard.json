@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2c7957a",
-  "generated_at": "2026-10-25T20:30:05.797Z",
+  "healthzSha": "0aaa5be",
+  "generated_at": "2026-10-25T19:21:42.696Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2c7957a",
+    "deployedSha": "0aaa5be",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27660,
-      "title": "FINDING: FACT-F443280-A#14 Factoring › Home board still LAYERED — always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow panels above every Faro tab instead of Account-summary board only",
+      "number": 27634,
+      "title": "FINDING: ACCT-F443280-A#7 Cash Flow Home board still PARTIAL (layered KPI strip + tab-card theater + flat totals table; missing category grey/black rows, 4w actual band, Base|Conservative, real monthly)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27660",
-      "sha": "5d59ab2fa1",
-      "committedAtIso": "2026-10-25T15:30:00-05:00"
-    },
-    {
-      "number": 27657,
-      "title": "FINDING: BANK-F443280-A#13 Banking › Home board still REBUILT/PARTIAL — Accounts|Drift stacked (not 1fr 1fr), Feed column missing status dots, Drift KPI amber not red, Latest Date MM/DD/YYYY not board MM-DD, Latest Amount painted with $ glyph",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27657",
-      "sha": "2c7957a138",
-      "committedAtIso": "2026-10-25T20:22:15Z"
-    },
-    {
-      "number": 27658,
-      "title": "feat(maint): row 59 Maintenance › In Shop bay board (bays + yard + Ready/Working/Waiting parts)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27658",
-      "sha": "5fd2548f20",
-      "committedAtIso": "2026-10-25T15:19:04-05:00"
-    },
-    {
-      "number": 27656,
-      "title": "chore(claim): reserve migration 202616261700 LEAD row 59 In Shop bays (202616240100 taken by ACCT-443346)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27656",
-      "sha": "9fce0c6256",
-      "committedAtIso": "2026-10-25T15:16:58-05:00"
+      "mergedAtCt": "10/25/2026, 02:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27634",
+      "sha": "f8ea8f01c4",
+      "committedAtIso": "2026-10-25T14:20:14-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "Claude-1- ENG-34: ACCT-F443328-ENG34 — wire 6 exempt guards into CI step 18565 (918 < 920 baseline)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:15 PM CT",
+      "mergedAtCt": "10/25/2026, 02:17 PM CT",
       "url": "",
-      "sha": "f842fd49fa",
-      "committedAtIso": "2026-10-25T20:15:27Z"
+      "sha": "0aaa5be0d1",
+      "committedAtIso": "2026-10-25T14:17:34-05:00"
     },
     {
-      "number": 27655,
-      "title": "feat(dispatch): 443.327 app-wide drift alert — reconciler I9 (row 300)",
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18829 ENG-46 verify-no-dead-settlement-source-ref (CC-1)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27655",
-      "sha": "f1d306eb99",
-      "committedAtIso": "2026-10-25T15:15:07-05:00"
+      "mergedAtCt": "10/25/2026, 02:13 PM CT",
+      "url": "",
+      "sha": "7d448a10a7",
+      "committedAtIso": "2026-10-25T14:13:06-05:00"
     },
     {
-      "number": 27654,
-      "title": "FINDING: LST-F443361 ENG-58 program-scoreboard.json drifts past 80 commits behind live and fails every seat's pre-push step 1 (row 304)",
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18825 ENG-46 verify-no-dead-settlement-source-ref (CC-1)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27654",
-      "sha": "58bcea1910",
-      "committedAtIso": "2026-10-25T15:12:31-05:00"
+      "mergedAtCt": "10/25/2026, 02:10 PM CT",
+      "url": "",
+      "sha": "e51db57cb7",
+      "committedAtIso": "2026-10-25T14:10:49-05:00"
     },
     {
-      "number": 27653,
-      "title": "FINDING: ACCT-F443328-ENG45 LANE: NON-FINANCIAL",
+      "number": 27630,
+      "title": "FINDING: LST-F443357 main red for every seat: verify-step 18813 used by two guards (verify-engine-register-closed-by-guard, verify-no-duplicate-settlement-lines)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27653",
-      "sha": "fcdc24e506",
-      "committedAtIso": "2026-10-25T15:10:43-05:00"
+      "mergedAtCt": "10/25/2026, 02:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27630",
+      "sha": "7458f5a008",
+      "committedAtIso": "2026-10-25T14:09:35-05:00"
     },
     {
-      "number": 27652,
-      "title": "FINDING: ACCT-D020 LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "chore(claim): reserve verify-step 18821 ENG-46 verify-bill-payment-has-spine-link (CC-1)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27652",
-      "sha": "197f3190b5",
-      "committedAtIso": "2026-10-25T15:09:53-05:00"
+      "mergedAtCt": "10/25/2026, 02:07 PM CT",
+      "url": "",
+      "sha": "01a3474e8f",
+      "committedAtIso": "2026-10-25T14:07:53-05:00"
     },
     {
-      "number": 27651,
-      "title": "FINDING: ACCT-F443280-A#12 Cash Flow done — Accounting › Unexpected board still REBUILT/PARTIAL — V3Panel layering + duplicate KPI sub not board hyphen",
+      "number": 0,
+      "title": "chore: claim verify-step 18817 CC-1 (ENG-42 renumber)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27651",
-      "sha": "6c57206410",
-      "committedAtIso": "2026-10-25T20:04:17Z"
+      "mergedAtCt": "10/25/2026, 02:03 PM CT",
+      "url": "",
+      "sha": "70107038ce",
+      "committedAtIso": "2026-10-25T14:03:27-05:00"
+    },
+    {
+      "number": 27627,
+      "title": "FINDING: 443.338 follow-up LANE: LEAD / DATA-REPAIR — P-0119 voided line 2b56ad02 had no void_reason (verify-purge-window-state) ROOT CAUSE: AUTH-466 script deactivated the line but did not write void_reason FIX: void_reason completed on th",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27627",
+      "sha": "55de2a6e9b",
+      "committedAtIso": "2026-10-25T14:01:04-05:00"
+    },
+    {
+      "number": 27626,
+      "title": "FINDING: LST-F443354 override / confirm / void-reason popups render PAGE-WIDE on a 1920px screen (owner screenshot 10-25 1:46 PM: Override \"Confirm this override?\" spans the whole page)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 01:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27626",
+      "sha": "7d560f6e64",
+      "committedAtIso": "2026-10-25T13:59:20-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Claude-1- feat(guards): ACCT-F443322-ENG09 — THE GUARANTEE verify-engine-register-closed-by-guard (step 18813)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 01:55 PM CT",
+      "url": "",
+      "sha": "0d2d40beee",
+      "committedAtIso": "2026-10-25T13:55:00-05:00"
     }
   ]
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built modules=insurance,fleet cols=connectivity,reverse_link */
 import fs from "node:fs";
 
 const LABEL = "verify-insurance-policy-unit-double-route";
@@ -21,7 +22,7 @@ function audit(s) {
   if (!/kind="unit"[\s\S]{0,120}entityLabel\(unit\.unit_number/.test(s.policy)) failures.push("policy detail must render resolved canonical unit drill");
   if (!/kind="insurance_policy"[\s\S]{0,120}policy\.policy_id/.test(s.unit)) failures.push("unit summary must render canonical policy drill");
   if (!/case "unit":[\s\S]{0,60}`\/fleet\/units\/\$\{id\}`/.test(s.link)) failures.push("unit route must be canonical");
-  if (!/case "insurance_policy":[\s\S]{0,80}`\/safety\/insurance\/policies\/\$\{id\}`/.test(s.link)) failures.push("policy route must be canonical");
+  if (!/case "insurance_policy":[\s\S]{0,80}`\/insurance\/policies\/\$\{id\}`/.test(s.link)) failures.push("policy route must be canonical");
   return failures;
 }
 
