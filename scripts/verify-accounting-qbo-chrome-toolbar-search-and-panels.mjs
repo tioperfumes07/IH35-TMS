@@ -69,7 +69,11 @@ const CHECKS = [
       /CollapsedListFilters[\s\S]*MoneyInput|MoneyInput[\s\S]*CollapsedListFilters|MoneyListToolbar[\s\S]*MoneyInput|MoneyInput[\s\S]*MoneyListToolbar/,
   },
   { name: "accounting.panel.receipt_detail: ReceiptsPage real ParityDrawer + ParityTable", file: "apps/frontend/src/pages/accounting/ReceiptsPage.tsx", pattern: /ParityDrawer[\s\S]*ParityTable|ParityTable[\s\S]*ParityDrawer/ },
-  { name: "accounting.panel.leakage: RevenueRecognitionPage real ParityTable + CollapsedListFilters", file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", pattern: /ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*ParityTable/ },
+  {
+    name: "accounting.panel.leakage: RevenueRecognitionPage real ParityTable + MoneyListToolbar",
+    file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    pattern: /ParityTable[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*ParityTable/,
+  },
 ];
 
 function runChecks(root = ROOT) {

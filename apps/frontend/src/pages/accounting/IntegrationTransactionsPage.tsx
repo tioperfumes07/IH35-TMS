@@ -227,7 +227,7 @@ export function IntegrationTransactionsPage() {
         <MoneyListToolbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search description, QBO ID…"
+          searchPlaceholder="Search description, QBO ID…" // aria-label on MoneyListToolbar input matches searchPlaceholder
           searchTestId="integration-tx-search-input"
           onClearAll={() => {
             setSearch("");
