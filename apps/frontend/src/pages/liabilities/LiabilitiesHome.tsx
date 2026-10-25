@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { getActiveLiabilities, getLiabilitiesByDriver, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -25,6 +25,9 @@ export function LiabilitiesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  // 443.280 — under SettlementsModuleShell the page title is already chrome; skip PageHeader layer.
+  const underSettlements = pathname.startsWith("/driver-finance/");
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkLiabilityId = searchParams.get("liability_id");
   // LAW OF THE LAND §9 (2026-07-22): driver-profile reverse-link — "View all liabilities" from
@@ -100,7 +103,9 @@ export function LiabilitiesHomePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Liabilities" subtitle="Driver debt with acknowledgment + forfeiture status" />
+      {underSettlements ? null : (
+        <PageHeader title="Liabilities" subtitle="Driver debt with acknowledgment + forfeiture status" />
+      )}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="liabilities-filters">
         <label className="text-xs text-[#4B5563]">

@@ -177,6 +177,9 @@ const SettlementsPreSettlementsPage = React.lazy(() =>
 const SettlementsFeedGatePage = React.lazy(() =>
   import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsFeedGatePage })),
 );
+const SettlementsFeedGateIntakePage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsFeedGateIntakePage })),
+);
 const SettlementsCashAdvancesPage = React.lazy(() =>
   import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsCashAdvancesPage })),
 );
@@ -2922,6 +2925,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/driver-finance/profiles" element={<ProtectedRoute><SettlementsProfilesPage /></ProtectedRoute>} />
         <Route path="/driver-finance/pre-settlements" element={<ProtectedRoute><SettlementsPreSettlementsPage /></ProtectedRoute>} />
         <Route path="/driver-finance/feed-gate" element={<ProtectedRoute><SettlementsFeedGatePage /></ProtectedRoute>} />
+        <Route path="/driver-finance/feed-gate/:intakeId" element={<ProtectedRoute><SettlementsFeedGateIntakePage /></ProtectedRoute>} />
         <Route path="/driver-finance/cash-advances" element={<ProtectedRoute><SettlementsCashAdvancesPage /></ProtectedRoute>} />
         <Route path="/driver-finance/liabilities" element={<ProtectedRoute><SettlementsLiabilitiesPage /></ProtectedRoute>} />
         <Route path="/driver-finance/escrow" element={<ProtectedRoute><SettlementsEscrowPage /></ProtectedRoute>} />
