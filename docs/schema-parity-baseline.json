@@ -7944,9 +7944,9 @@
       "notification_email_enabled",
       "operating_company_id",
       "pm_interval_days_default",
+      "shop_bay_count",
       "updated_at",
-      "updated_by_user_id",
-      "shop_bay_count"
+      "updated_by_user_id"
     ],
     "maintenance.parts_inventory": [
       "category",
@@ -8390,6 +8390,11 @@
       "approved_by_user_id",
       "authorization_number",
       "authorized_by_user_id",
+      "bay_assigned_at",
+      "bay_assigned_by_user_id",
+      "bay_number",
+      "bay_released_at",
+      "bay_released_by_user_id",
       "bucket",
       "cancel_notes",
       "cancel_reason_code",
@@ -8474,12 +8479,7 @@
       "wo_title",
       "wo_type",
       "work_completed_at",
-      "work_started_at",
-      "bay_assigned_at",
-      "bay_assigned_by_user_id",
-      "bay_number",
-      "bay_released_at",
-      "bay_released_by_user_id"
+      "work_started_at"
     ],
     "master_data.customer_relationship_scores": [
       "complaint_subscore",

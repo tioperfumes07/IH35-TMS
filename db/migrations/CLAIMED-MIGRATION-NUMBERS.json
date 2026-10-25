@@ -87,12 +87,12 @@
   "202615201200": {
     "claimed_at": "2026-10-01",
     "claimed_by": "cursor",
-    "purpose": "B-1b Account Register ✓ blank↔C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
+    "purpose": "B-1b Account Register \u2713 blank\u2194C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
   },
   "202615230100": {
     "claimed_at": "2026-10-02",
     "claimed_by": "CC-1",
-    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date — the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
+    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date \u2014 the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
   },
   "202615230200": {
     "claimed_at": "2026-10-02",
@@ -102,12 +102,12 @@
   "202615400850": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-2",
-    "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) — live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
+    "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) \u2014 live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
   },
   "202615410930": {
     "claimed_at": "2026-10-04",
     "claimed_by": "CC-3",
-    "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) — the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
+    "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) \u2014 the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
   },
   "202615410940": {
     "claimed_at": "2026-10-04",
@@ -117,7 +117,7 @@
   "202615410950": {
     "claimed_at": "2026-10-04",
     "claimed_by": "CC-3",
-    "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel — fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
+    "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel \u2014 fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
   },
   "202615420900": {
     "claimed_at": "2026-10-05",
@@ -132,12 +132,12 @@
   "202615430900": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-3",
-    "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files — docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
+    "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files \u2014 docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
   },
   "202615431000": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-2",
-    "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation — one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
+    "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation \u2014 one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
   },
   "202615440700": {
     "claimed_at": "2026-10-06",
@@ -147,7 +147,7 @@
   "202615440900": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-3",
-    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version — an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
+    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version \u2014 an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
   },
   "202615451400": {
     "claimed_by": "cursor",
@@ -157,7 +157,7 @@
   "202615480900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-10",
-    "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) — additive, no data written"
+    "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) \u2014 additive, no data written"
   },
   "202615490300": {
     "claimed_by": "CC-2",
@@ -222,7 +222,7 @@
   "202615600900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
-    "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer — bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
+    "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer \u2014 bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
   },
   "202615610900": {
     "claimed_by": "CC-3",
@@ -247,7 +247,7 @@
   "202615650900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "RULING 443.90 #4: printed trailer decision — mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
+    "purpose": "RULING 443.90 #4: printed trailer decision \u2014 mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
   },
   "202615660900": {
     "claimed_by": "CC-3",
@@ -257,7 +257,7 @@
   "202615670900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it — RLS bypass on prod; live-defects F3)"
+    "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it \u2014 RLS bypass on prod; live-defects F3)"
   },
   "202615680900": {
     "claimed_by": "CC-3",
@@ -292,7 +292,7 @@
   "202615730917": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) — present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
+    "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) \u2014 present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
   },
   "202615740913": {
     "claimed_by": "CC-3",
@@ -312,12 +312,12 @@
   "202615781200": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
-    "purpose": "443.106: refuse_driver_bill_without_links (vendor/driver/load/unit on live driver bills); bill_payments.vendor_id NOT NULL; expense_lines refuse driver/unit attribution that differs from a load-bearing header — trailer clause deferred (prod still has 4 bills without trailer); expense load/exemption already 202615770700 (CC-2; 5 EXP rows still open)"
+    "purpose": "443.106: refuse_driver_bill_without_links (vendor/driver/load/unit on live driver bills); bill_payments.vendor_id NOT NULL; expense_lines refuse driver/unit attribution that differs from a load-bearing header \u2014 trailer clause deferred (prod still has 4 bills without trailer); expense load/exemption already 202615770700 (CC-2; 5 EXP rows still open)"
   },
   "202615790700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.108: trailer choice required on Book / Edit Load — mdata.loads.trailer_source allows 'none' (bobtail / power only); the expense trailer fill carries a customer (non-owned) trailer from its load"
+    "purpose": "443.108: trailer choice required on Book / Edit Load \u2014 mdata.loads.trailer_source allows 'none' (bobtail / power only); the expense trailer fill carries a customer (non-owned) trailer from its load"
   },
   "202615800700": {
     "claimed_by": "CC-2",
@@ -332,27 +332,27 @@
   "202615890700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.128 C: team driver bills recognized at delivery — driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
+    "purpose": "443.128 C: team driver bills recognized at delivery \u2014 driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
   },
   "202615910700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.134 AJK-13: reports.ifta_filings versions — a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
+    "purpose": "443.134 AJK-13: reports.ifta_filings versions \u2014 a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
   },
   "202616040700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.204 (owner 10-21 15:27 CT): driver DQ gate — mdata.drivers.dq_file_on_paper_since set for every driver existing at migration time (files held in person); the gate never blocks a flagged driver; new drivers need the full file at create"
+    "purpose": "443.204 (owner 10-21 15:27 CT): driver DQ gate \u2014 mdata.drivers.dq_file_on_paper_since set for every driver existing at migration time (files held in person); the gate never blocks a flagged driver; new drivers need the full file at create"
   },
   "202616050700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap — same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
+    "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap \u2014 same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
   },
   "202616060700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.208R (Lead 22:58Z): one load-change signal — AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
+    "purpose": "443.208R (Lead 22:58Z): one load-change signal \u2014 AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
   },
   "202616070100": {
     "claimed_by": "CC-3",
@@ -362,22 +362,22 @@
   "202616070700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump — fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
+    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump \u2014 fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
   },
   "202616090100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb — the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
+    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb \u2014 the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
   },
   "202616100100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) — the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
+    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) \u2014 the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
   },
   "202616110700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles — a booked load always has its driver bill (priced when short miles land)"
+    "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles \u2014 a booked load always has its driver bill (priced when short miles land)"
   },
   "202616120700": {
     "claimed_by": "CC-2",
@@ -387,7 +387,7 @@
   "202616130100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.238 (owner 11:23 AM CT): dispatch.load_shuttle_legs — the local yard-shuttle leg of a load (shuttle unit / driver, pickup stop -> yard), evidence + precision; RLS + audit; CREATE only"
+    "purpose": "443.238 (owner 11:23 AM CT): dispatch.load_shuttle_legs \u2014 the local yard-shuttle leg of a load (shuttle unit / driver, pickup stop -> yard), evidence + precision; RLS + audit; CREATE only"
   },
   "202616131600": {
     "claimed_by": "Cursor",
@@ -395,13 +395,13 @@
     "purpose": "443.235: GRANT EXECUTE on mdata.resolve_{driver,customer,vendor}_label_same_company to ih35_guard_reader + ih35_ci_readonly so LIVE board-agree / post-deploy guards can call the label resolvers (pg_read_all_data does not cover function EXECUTE)"
   },
   "_band": {
-    "claude": "HH 00–11 (morning)",
-    "cursor": "HH 12–23 (afternoon)",
+    "claude": "HH 00\u201311 (morning)",
+    "cursor": "HH 12\u201323 (afternoon)",
     "locked": "2026-08-10",
     "note": "Mirrors scripts/verify-steps/CLAIMED-NUMBERS.json for migration timestamps. Claim-before-author required."
   },
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
-  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
+  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": [
     "202608120900",
     "202608121800",
@@ -898,12 +898,12 @@
   "202616142000": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.244 (owner 2:10 PM CT): a truck holds ONE load in motion plus advance bookings — the unit backstop triggers refuse only a second load in motion"
+    "purpose": "CC-3 LEAD 443.244 (owner 2:10 PM CT): a truck holds ONE load in motion plus advance bookings \u2014 the unit backstop triggers refuse only a second load in motion"
   },
   "202616150100": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.244 (replaces 202616142000 — lane band HH 00-05): a truck holds ONE load in motion plus advance bookings — the unit backstop triggers refuse only a second load in motion"
+    "purpose": "CC-3 LEAD 443.244 (replaces 202616142000 \u2014 lane band HH 00-05): a truck holds ONE load in motion plus advance bookings \u2014 the unit backstop triggers refuse only a second load in motion"
   },
   "202616160100": {
     "claimed_by": "claude",
@@ -913,17 +913,17 @@
   "202616160200": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address — 13536 / 13573 / 13660)"
+    "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address \u2014 13536 / 13573 / 13660)"
   },
   "202616150700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.243: fuel attribution — fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
+    "purpose": "CC-2 Lead 443.243: fuel attribution \u2014 fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
   },
   "202616160700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.241: ONE lane store — catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
+    "purpose": "CC-2 Lead 443.241: ONE lane store \u2014 catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
   },
   "202616170700": {
     "claimed_by": "CC-2",
@@ -938,17 +938,17 @@
   "202616190700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
+    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit \u2014 a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
   },
   "202616210300": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-3 Lead 443.281-E: person names normalized at write — mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
+    "purpose": "CC-3 Lead 443.281-E: person names normalized at write \u2014 mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
   },
   "202616220700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of — a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
+    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of \u2014 a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
   },
   "202616230300": {
     "claimed_by": "CC-3",
@@ -963,12 +963,12 @@
   "202616240100": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
-    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) — Maintenance In Shop bay board"
+    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) \u2014 Maintenance In Shop bay board"
   },
   "202616230800": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-24",
-    "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger — driver_finance.tg_settlement_non_bookended_close_requires_posting"
+    "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger \u2014 driver_finance.tg_settlement_non_bookended_close_requires_posting"
   },
   "202616240200": {
     "claimed_by": "LEAD",
@@ -978,7 +978,7 @@
   "202616240300": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
-    "purpose": "LEAD 443.339: uq_driver_settlements_one_open_per_driver counts only settlements open FOR NEW LOADS (status 'open' AND trip_closed_at IS NULL) — a trip-closed settlement waiting on its after-commit post no longer blocks the driver's next settlement"
+    "purpose": "LEAD 443.339: uq_driver_settlements_one_open_per_driver counts only settlements open FOR NEW LOADS (status 'open' AND trip_closed_at IS NULL) \u2014 a trip-closed settlement waiting on its after-commit post no longer blocks the driver's next settlement"
   },
   "202616240400": {
     "claimed_by": "LEAD",
@@ -988,16 +988,21 @@
   "202616251000": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-1",
-    "purpose": "443.346b — adds bank_wire_gap_account_id uuid NULL FK on accounting.factoring_advances; routes Faro gap to configurable account instead of always 1230 (renumbered from 202616240400: collision with LEAD #27579 bank_line_check_number)"
+    "purpose": "443.346b \u2014 adds bank_wire_gap_account_id uuid NULL FK on accounting.factoring_advances; routes Faro gap to configurable account instead of always 1230 (renumbered from 202616240400: collision with LEAD #27579 bank_line_check_number)"
   },
   "202616261600": {
     "claimed_at": "2026-10-25",
     "claimed_by": "Cursor",
-    "purpose": "LEAD 443.326 CI unblock — follow-up entity walls on telematics.vehicle_latest_position_cache (opco FK → org.companies, unit_id FK → mdata.units, FORCE RLS + FOR ALL policy). CREATE-only; does not edit 202616200100 (already on main)."
+    "purpose": "LEAD 443.326 CI unblock \u2014 follow-up entity walls on telematics.vehicle_latest_position_cache (opco FK \u2192 org.companies, unit_id FK \u2192 mdata.units, FORCE RLS + FOR ALL policy). CREATE-only; does not edit 202616200100 (already on main)."
   },
   "202616261700": {
     "claimed_at": "2026-10-25",
     "claimed_by": "LEAD",
-    "purpose": "LEAD 443.301 register row 59 (re-claim): maintenance.work_orders shop-bay columns + one occupied bay per company per bay number + maintenance_settings.shop_bay_count — 202616240100 was taken on main by ACCT-443346 factoring_advance_bank_wire_cents (c9f9cb2b3d) before row 59 landed"
+    "purpose": "LEAD 443.301 register row 59 (re-claim): maintenance.work_orders shop-bay columns + one occupied bay per company per bay number + maintenance_settings.shop_bay_count \u2014 202616240100 was taken on main by ACCT-443346 factoring_advance_bank_wire_cents (c9f9cb2b3d) before row 59 landed"
+  },
+  "202616270000": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-25",
+    "purpose": "443.277-B: USMCA fuel_card_payable_dreamline (2510) + fuel_card_payable_wex (2520) role bindings \u2014 rolling ledger shows card payable balances"
   }
 }
