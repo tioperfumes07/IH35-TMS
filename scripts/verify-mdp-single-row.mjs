@@ -20,18 +20,17 @@ if (!mdp.includes('data-mdp-single-date="true"')) fail("MDP must have the single
 if (!mdp.includes("projectionDate")) fail("MDP must use a single projectionDate");
 if (/const \[from, setFrom\]|const \[to, setTo\]/.test(mdp)) fail("MDP must NOT keep the From/To range state");
 
-// 2. Income row (MDP-FIX-2 / defect 4) = Unit no. · Invoice · Customer · Total. Invoice and Customer
-//    are now SEPARATE columns (was the merged "Invoice customer"). Authoritative column-order check lives
-//    in verify-mdp-fields; here we keep the label lock aligned to the new Jorge-confirmed structure.
-for (const label of ['"Unit no."', '"Invoice"', '"Customer"']) {
-  if (!mdp.includes(label)) fail(`income row must label ${label}`);
+// 2. ROUND 443.280 board columns (CashFlow-Manual): Party · Doc / load · Due · Amount.
+for (const label of ['"Party"', '"Doc / load"', '"Payee"']) {
+  if (!mdp.includes(label)) fail(`board row must label ${label}`);
 }
-if (/"Invoice customer"/.test(mdp)) fail('income must NOT use the merged "Invoice customer" field (split into Invoice + Customer)');
-// 3. Expense row (defect 5) = Bill/Exp No. · Vendor/Driver · Expense · Total — Bill/Exp No. leads.
-for (const label of ['"Bill/Exp No."', '"Vendor/Driver"', '"Expense"']) {
-  if (!mdp.includes(label)) fail(`expense row must label ${label}`);
+if (!mdp.includes('"Due"') && !mdp.includes(">Due<")) fail("board Due column missing");
+if (!mdp.includes('"Amount"') && !mdp.includes(">Amount<")) fail("board Amount column missing");
+if (/"Invoice customer"/.test(mdp)) fail('income must NOT use the merged "Invoice customer" field');
+// Amount MoneyInput keeps ariaLabel="Total" for the create row (engine field).
+if (!mdp.includes('ariaLabel="Total"') && !mdp.includes('"Total"') && !mdp.includes('"Amount"')) {
+  fail("rows must have an Amount/Total field");
 }
-if (!mdp.includes('ariaLabel="Total"') && !mdp.includes('"Total"')) fail("rows must have a Total field");
 
 // 4. Totals math (#1084) untouched — still computed via the shared helper.
 if (!mdp.includes("computeProjectionTotals")) fail("MDP must keep computeProjectionTotals (#1084 summing)");

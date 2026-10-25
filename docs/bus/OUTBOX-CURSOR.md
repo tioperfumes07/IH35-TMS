@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 35 Cash Flow Manual FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-cf-manual-board` · base tip `99ae6b0ab2` (= #27647 Rolling Ledger)
+- **DELTA:** ManualDailyProjectionsTab rebuilt to docs/design/v3/CashFlow-Manual — Filters/day-nav/History/Save projection chrome; Party/Payee · Doc/load · Due · Amount; Opening-cash editor off board (under Filters); Measured BoardSection; MDP guards ratcheted.
+- **GUARD:** verify-mdp-fields / verify-mdp-single-row / verify-mdp-panel-proportion PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements/Fuel LAYERED|CHROME-ONLY boards + D-series
+- **Files Modified:** ManualDailyProjectionsTab.tsx · verify-mdp-fields.mjs · verify-mdp-single-row.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 34 Cash Flow Rolling Ledger FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-cf-rolling-ledger-board` · base tip `a62b2df01c` (= #27641 AVP)

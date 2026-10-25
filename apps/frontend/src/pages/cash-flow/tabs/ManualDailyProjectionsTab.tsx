@@ -1,6 +1,6 @@
-import { companyToday } from "../../../lib/businessDate";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   listForecastEntries,
   createForecastEntry,
@@ -15,6 +15,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { toCents, computeProjectionTotals } from "./manualProjectionMath";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -30,6 +31,10 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 
 // ROUND 443.250 — Manual Daily Projections V3 board: same forecast engine + MDP field
 // contracts; chrome via v3-tokens / V3KpiTile / BoardSection; expenses by V3_EXPENSE_GROUPS.
+//
+// ROUND 443.280-A #11 — rebuild-not-layer: board KPIs + Filters/day-nav/History/Save chrome;
+// Party/Doc·load/Due/Amount registers; Opening-cash editor off the board (lives under Filters);
+// Measured callout retained. Field keys/engine unchanged (verify-mdp-* contracts).
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -82,16 +87,16 @@ const emptyRow = (): RowForm => ({
 // (ADDITIVE-ONLY). entry_date comes from the tab's single Projection date.
 type MdpColKey = "ref_label" | "invoice_no" | "party_name" | "category";
 type MdpCol = { key: MdpColKey; label: string; w: string };
+// 443.280 board: Party/Payee · Doc / load · Due · Amount.
+// Editable keys party_name + invoice_no; ref_label/category stay in "+ more" (engine intact).
 const MDP_COLUMNS: Record<Direction, MdpCol[]> = {
   income: [
-    { key: "ref_label", label: "Unit no.", w: "w-24" },
-    { key: "invoice_no", label: "Invoice", w: "w-28" },
-    { key: "party_name", label: "Customer", w: "flex-1 min-w-0" },
+    { key: "party_name", label: "Party", w: "flex-1 min-w-0" },
+    { key: "invoice_no", label: "Doc / load", w: "w-36" },
   ],
   expense: [
-    { key: "invoice_no", label: "Bill/Exp No.", w: "w-28" },
-    { key: "party_name", label: "Vendor/Driver", w: "w-32" },
-    { key: "category", label: "Expense", w: "flex-1 min-w-0" },
+    { key: "party_name", label: "Payee", w: "flex-1 min-w-0" },
+    { key: "invoice_no", label: "Doc / load", w: "w-36" },
   ],
 };
 /** LV-CASH-FLOW-MANUAL-PROJECTION-PICKER-CLIPPING — create fields wrap; never a single non-wrapping shrink-0 strip. */
@@ -262,6 +267,9 @@ function ProjectionPanel({
           ) : cellValue(e, c.key)}
         </span>
       ))}
+      <span className="w-24 shrink-0 truncate" style={{ color: V3.muted }} title={formatDateUS(String(e.entry_date).slice(0, 10))}>
+        {formatDateUS(String(e.entry_date).slice(0, 10))}
+      </span>
       <span className="w-24 shrink-0 text-right font-semibold tabular-nums" style={{ color: accentColor }}><AmountLink filter={{ target: "cash_flow_manual", date: String(e.entry_date).slice(0, 10), direction: e.direction, entryId: e.id }}>{fmtCents(toCents(e.amount_cents))}</AmountLink></span>
       <span className="flex w-16 shrink-0 justify-end gap-2">
         <button type="button" className="hover:underline" style={{ color: V3.muted }} onClick={() => editRow(e)}>Edit</button>
@@ -285,6 +293,15 @@ function ProjectionPanel({
       >
         <div className="flex min-w-0 items-baseline gap-2">
           <h3 className="truncate font-bold" style={{ color: V3.ink, fontSize: 13 }}>{title}</h3>
+          <button
+            type="button"
+            className="shrink-0 font-bold"
+            style={{ color: V3.link, fontSize: V3_TABLE.headerPx, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+            onClick={() => { setForm(emptyRow()); setShowMore(false); setError(null); }}
+            data-testid={`cash-flow-mdp-add-line-${direction}`}
+          >
+            + Add line
+          </button>
           {subtitle ? <span className="truncate" style={{ color: V3.muted, fontSize: V3_TABLE.headerPx }}>{subtitle}</span> : null}
         </div>
         <span className="shrink-0 text-xs font-semibold tabular-nums" style={{ color: accentColor }} data-mdp-header-total={direction}>{fmtCents(panelTotalCents)}</span>
@@ -300,7 +317,8 @@ function ProjectionPanel({
             {columns.map((c) => (
               <span key={c.key} className={`${c.w} shrink-0 truncate`}>{c.label}</span>
             ))}
-            <span className="w-24 shrink-0 text-right">Total</span>
+            <span className="w-24 shrink-0 truncate">Due</span>
+            <span className="w-24 shrink-0 text-right">Amount</span>
             <span className="w-16 shrink-0" />
           </div>
           {expenseGroups
@@ -472,6 +490,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   }, [drillDate]);
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
   const [pullError, setPullError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const entriesQuery = useQuery({
     queryKey: ["forecast", "entries", operatingCompanyId, reverseFilter],
@@ -550,8 +570,32 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const openingCents = hasSavedOpening ? toCents(openingQuery.data?.amount_cents) : Math.round(bankTotalDollars * 100);
   const projectedClosing = openingCents + net;
   const netPositive = net >= 0;
-  // D043 — panel titles use MM/DD/YYYY, never raw ISO.
+  // D043 — panel titles use MM/DD/YYYY; day-nav uses board weekday chrome.
   const dateLabel = projectionDate ? formatDateUS(projectionDate) : "—";
+  const navLabel = (() => {
+    if (!projectionDate) return "—";
+    const [y, m, d] = projectionDate.split("-").map(Number);
+    if (!y || !m || !d) return formatDateUS(projectionDate);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getUTCDay()] ?? "";
+    const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1] ?? "";
+    return `${wd}, ${mon} ${d}`;
+  })();
+  const toolbarBtn: CSSProperties = {
+    display: "flex",
+    height: 28,
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 2,
+    border: `1px solid ${V3.border}`,
+    background: V3.surface,
+    padding: "0 12px",
+    fontSize: 12,
+    fontWeight: 600,
+    color: V3.ink,
+    fontFamily: V3.font,
+    cursor: "pointer",
+  };
 
   return (
     <div className="space-y-3" style={{ fontFamily: V3.font }} data-testid="cash-flow-mdp-v3-tab">
@@ -575,44 +619,145 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
       )}
 
-      {/* SINGLE projection date (board toolbar) — still one day, not From/To. */}
+      {/* Board toolbar: Filters ▾ · day nav · History · Save projection. Single projectionDate retained. */}
       <div
-        className="flex flex-wrap items-center gap-2 rounded-sm px-3 py-2 text-xs"
-        style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+        className="flex flex-wrap items-center gap-2"
         data-mdp-single-date="true"
         data-testid="cash-flow-mdp-v3-toolbar"
       >
-        <label className="font-semibold" style={{ color: V3.muted }}>Projection date</label>
-        <DatePicker value={projectionDate} onChange={setProjectionDate} className="w-40" placeholder="Pick a day" />
-        <label className="font-semibold" style={{ color: V3.muted }}>History</label>
-        <SelectCombobox
-          className="h-7 rounded-sm border px-2"
-          value={historyDates.includes(projectionDate) ? projectionDate : ""}
-          onChange={(e) => { if (e.target.value) setProjectionDate(e.target.value); }}
-          aria-label="Saved projection dates"
-        >
-          <option value="">Saved days…</option>
-          {historyDates.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </SelectCombobox>
-        <span style={{ color: V3.mutedSoft }}>— one day per entry; lines save to that date.</span>
+        <button type="button" onClick={() => setFiltersOpen((o) => !o)} style={toolbarBtn} data-testid="cash-flow-mdp-filters-toggle">
+          Filters <ChevronDown className="h-3 w-3" />
+        </button>
+        <span className="flex-1" />
+        <div className="inline-flex items-center gap-2" data-testid="cash-flow-mdp-day-nav">
+          <button
+            type="button"
+            aria-label="Previous day"
+            onClick={() => projectionDate && setProjectionDate(addDaysIso(projectionDate, -1))}
+            style={{ ...toolbarBtn, padding: "0 6px" }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{navLabel}</span>
+          <button
+            type="button"
+            aria-label="Next day"
+            onClick={() => projectionDate && setProjectionDate(addDaysIso(projectionDate, 1))}
+            style={{ ...toolbarBtn, padding: "0 6px" }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+        <span className="flex-1" />
+        <div className="relative">
+          <button type="button" onClick={() => setHistoryOpen((o) => !o)} style={toolbarBtn} data-testid="cash-flow-mdp-history">
+            History
+          </button>
+          {historyOpen ? (
+            <div
+              className="absolute right-0 z-20 mt-1 w-48 p-1 shadow-md"
+              style={{ background: V3.surface, border: `1px solid ${V3.border}`, borderRadius: 2 }}
+            >
+              <SelectCombobox
+                className="h-7 w-full rounded-sm border px-2"
+                value={historyDates.includes(projectionDate) ? projectionDate : ""}
+                onChange={(e) => {
+                  if (e.target.value) setProjectionDate(e.target.value);
+                  setHistoryOpen(false);
+                }}
+                aria-label="Saved projection dates"
+              >
+                <option value="">Saved days…</option>
+                {historyDates.map((d) => (
+                  <option key={d} value={d}>
+                    {formatDateUS(d)}
+                  </option>
+                ))}
+              </SelectCombobox>
+            </div>
+          ) : null}
+        </div>
         <button
           type="button"
-          className="ml-auto h-7 rounded-sm px-3 font-semibold disabled:opacity-50"
+          className="h-7 rounded-sm px-3 font-semibold disabled:opacity-50"
           style={{ background: V3.shell, color: V3.onShell }}
-          // GO-0042: also gate on entriesQuery.isFetching -- after a failed pull, onError now
-          // invalidates the cache, but the refetch is async. Without this, a user who retries
-          // before that refetch lands would still hand pullMutation a stale existingKeys set via
-          // the closure over `allEntries`, reopening the exact duplicate-creation window the
-          // onError invalidation above is meant to close.
-          disabled={pullMutation.isPending || entriesQuery.isFetching || !projectionDate}
-          onClick={() => pullMutation.mutate()}
+          disabled={openingMutation.isPending || !projectionDate}
+          onClick={() => {
+            setOpeningError(null);
+            openingMutation.mutate(openingDraft ?? openingCents);
+          }}
+          data-testid="cash-flow-mdp-save-projection"
         >
-          Pull bills / expenses / payments
+          Save projection
         </button>
       </div>
-      {pullError ? <p className="text-xs" style={{ color: V3.red }} role="alert">{pullError}</p> : null}
+
+      {filtersOpen ? (
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-sm px-3 py-2 text-xs"
+          style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+          data-testid="cash-flow-mdp-filters-panel"
+        >
+          <label className="font-semibold" style={{ color: V3.muted }}>
+            Projection date
+          </label>
+          <DatePicker value={projectionDate} onChange={setProjectionDate} className="w-40" placeholder="Pick a day" />
+          <span style={{ color: V3.mutedSoft }}>— one day per entry; lines save to that date.</span>
+          <button
+            type="button"
+            className="ml-auto h-7 rounded-sm px-3 font-semibold disabled:opacity-50"
+            style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.ink }}
+            // GO-0042: also gate on entriesQuery.isFetching -- after a failed pull, onError now
+            // invalidates the cache, but the refetch is async. Without this, a user who retries
+            // before that refetch lands would still hand pullMutation a stale existingKeys set via
+            // the closure over `allEntries`, reopening the exact duplicate-creation window the
+            // onError invalidation above is meant to close.
+            disabled={pullMutation.isPending || entriesQuery.isFetching || !projectionDate}
+            onClick={() => pullMutation.mutate()}
+          >
+            Pull bills / expenses / payments
+          </button>
+          <span className="inline-flex items-center gap-1">
+            <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
+            <button
+              type="button"
+              className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
+              style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
+              disabled={openingMutation.isPending || openingDraft === null}
+              onClick={() => {
+                setOpeningError(null);
+                openingMutation.mutate(openingDraft ?? 0);
+              }}
+            >
+              Save opening
+            </button>
+            <button
+              type="button"
+              className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
+              style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
+              disabled={realBanks.length === 0 || openingMutation.isPending}
+              onClick={() => {
+                const cents = Math.round(bankTotalDollars * 100);
+                setOpeningDraft(cents);
+                setOpeningError(null);
+                openingMutation.mutate(cents);
+              }}
+            >
+              Use bank total
+            </button>
+          </span>
+        </div>
+      ) : null}
+      {openingError ? (
+        <span className="text-xs" style={{ color: V3.red }} data-testid="cash-flow-opening-error" role="alert">
+          {openingError}
+        </span>
+      ) : null}
+      {pullError ? (
+        <p className="text-xs" style={{ color: V3.red }} role="alert">
+          {pullError}
+        </p>
+      ) : null}
 
       {/* KPI cards — board order: Bank · Income · Expenses · Net; MDP markers + min-h preserved. */}
       <div
@@ -621,7 +766,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         data-mdp-kpi-row="true"
         data-testid="cash-flow-mdp-v3-kpis"
       >
-        <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="bank">
+        <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="bank" data-testid="mdp-bank-balances">
           <V3KpiTile
             label="Bank balances (live TMS)"
             value={banksQuery.isError ? "—" : formatUsd(bankTotalDollars)}
@@ -638,7 +783,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             tone="ink"
             testId="cash-flow-mdp-v3-kpi-income"
           />
-          <span className="sr-only" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</span>
+          <span className="sr-only" data-mdp-kpi-total="income">
+            {fmtCents(totalIncome)}
+          </span>
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="expense">
           <V3KpiTile
@@ -648,7 +795,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             tone="ink"
             testId="cash-flow-mdp-v3-kpi-expense"
           />
-          <span className="sr-only" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</span>
+          <span className="sr-only" data-mdp-kpi-total="expense">
+            {fmtCents(totalExpense)}
+          </span>
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="net">
           <V3KpiTile
@@ -658,76 +807,13 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             sub={`closing ${fmtCents(projectedClosing)}`}
             testId="cash-flow-mdp-v3-kpi-net"
           />
-          <span className="sr-only" data-mdp-kpi-total="net">{fmtCents(net)}</span>
+          <span className="sr-only" data-mdp-kpi-total="net">
+            {fmtCents(net)}
+          </span>
         </div>
       </div>
 
-      {/* Opening editor + bank detail (BoardSection) — same APIs; projection only. */}
-      <BoardSection
-        title="Opening cash & banks"
-        subtitle={`projected closing ${fmtCents(projectedClosing)}`}
-        testId="mdp-bank-balances"
-        headerRight={
-          <span className="inline-flex items-center gap-1 text-xs">
-            <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
-            <button
-              type="button"
-              className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
-              style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
-              disabled={openingMutation.isPending || openingDraft === null}
-              onClick={() => { setOpeningError(null); openingMutation.mutate(openingDraft ?? 0); }}
-            >
-              Save
-            </button>
-          </span>
-        }
-      >
-        <div className="space-y-2 px-3.5 py-3 text-xs" style={{ color: V3.ink }}>
-          <p>
-            Opening cash: <strong className="tabular-nums">{fmtCents(openingCents)}</strong>
-            {" · "}
-            Projected closing:{" "}
-            <strong className="tabular-nums" style={{ color: projectedClosing < 0 ? V3.red : V3.ink }}>{fmtCents(projectedClosing)}</strong>
-          </p>
-          {openingError ? <span className="text-xs" style={{ color: V3.red }} data-testid="cash-flow-opening-error" role="alert">{openingError}</span> : null}
-          {banksQuery.isError ? (
-            <p style={{ color: V3.red }}>Could not load banks.</p>
-          ) : realBanks.length === 0 ? (
-            <p style={{ color: V3.muted }}>No real bank tiles for this company yet.</p>
-          ) : (
-            <ul className="space-y-1">
-              {realBanks.map((bank) => (
-                <li key={bank.id} className="flex justify-between gap-4">
-                  <span>{bank.display_name}</span>
-                  <span className="tabular-nums font-semibold">{formatUsdCents(bank.cents)}</span>
-                </li>
-              ))}
-              {realBanks.length > 1 ? (
-                <li className="flex justify-between gap-4 pt-1 font-semibold" style={{ borderTop: `1px solid ${V3.borderSoft}` }}>
-                  <span>Total cash</span>
-                  <span className="tabular-nums">{formatUsd(bankTotalDollars)}</span>
-                </li>
-              ) : null}
-            </ul>
-          )}
-          <button
-            type="button"
-            className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
-            style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
-            disabled={realBanks.length === 0 || openingMutation.isPending}
-            onClick={() => {
-              const cents = Math.round(bankTotalDollars * 100);
-              setOpeningDraft(cents);
-              setOpeningError(null);
-              openingMutation.mutate(cents);
-            }}
-          >
-            Use bank total as opening cash
-          </button>
-        </div>
-      </BoardSection>
-
-      {/* Income (left) / Expenses (right) — equal-height stretch panels. */}
+      {/* Income (left) / Expenses (right) — equal-height stretch panels. Board has no Opening-cash editor. */}
       <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2" data-mdp-panels="equal-height">
         <ProjectionPanel
           direction="income"
@@ -751,14 +837,18 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         />
       </div>
 
-      <div
-        className="flex items-start gap-2 rounded-sm px-3 py-2 text-xs"
-        style={{ background: V3.surface, border: `1px solid ${V3.border}`, borderLeft: `3px solid ${V3.amber}`, color: V3.ink }}
-        data-testid="cash-flow-mdp-v3-measured"
-      >
-        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
-        <span>Each manual line is audited (who · when · reason) and links to its customer, vendor, driver, unit, invoice or bill. Projection only — nothing posts to the books.</span>
-      </div>
+      <BoardSection title="Measured" testId="cash-flow-mdp-v3-measured">
+        <div
+          className="flex items-start gap-2 px-3.5 py-2 text-xs"
+          style={{ borderLeft: `3px solid ${V3.amber}`, color: V3.ink }}
+        >
+          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+          <span>
+            Each manual line is audited (who · when · reason) and links to its customer, vendor, driver, unit, invoice or
+            bill. Projection only — nothing posts to the books.
+          </span>
+        </div>
+      </BoardSection>
     </div>
   );
 }

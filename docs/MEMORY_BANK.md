@@ -351,22 +351,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
   Manual Daily Projections V3 shipped (below). Full DONE not claimed.
 
-### Active Architectural Decisions — Cash Flow Manual Daily Projections V3 (Cursor, ROUND 443.250, 2026-10-23)
+### Active Architectural Decisions — Cash Flow Manual board 443.280 (Cursor, 2026-10-25)
+
+- **Rebuild-not-layer:** `ManualDailyProjectionsTab` body = `docs/design/v3/CashFlow-Manual`.
+  Opening-cash editor removed from the board (lives under Filters ▾ with Pull + DatePicker).
+  Board toolbar: Filters · day nav · History · Save projection. Registers Party/Payee ·
+  Doc / load · Due · Amount (+ Add line). Four `V3KpiTile` KPIs; Measured `BoardSection`.
+- **Engine unchanged:** still forecast entries + opening balance + `pullManualTransactions` +
+  `computeProjectionTotals`. Single `projectionDate`. `mdp-bank-balances` marker on the bank KPI.
+- **Guards:** `verify-mdp-fields` / `verify-mdp-single-row` / `verify-mdp-panel-proportion` ratcheted
+  to board labels; forbid Opening cash & banks editor on the board body.
+
+### Active Architectural Decisions — Cash Flow Manual Daily Projections V3 (Cursor, ROUND 443.250, 2026-10-23) — SUPERSEDED by 443.280 board rebuild above
 
 - **Engine unchanged:** still `listForecastEntries` / create/update/delete + opening balance +
-  `pullManualTransactions` + `computeProjectionTotals`. Single `projectionDate`, MDP column
-  contracts, `data-mdp-*` markers, `min-h-[5.5rem]` KPIs, `h-full min-h-[24rem]` panels,
-  pull invalidate onSuccess+onError — all retained (`verify-mdp-panel-proportion` /
-  `verify-mdp-fields` / `verify-mdp-single-row` / `verify-manual-projection-sum`).
-- **V3 board chrome:** toolbar + 4 KPIs (Bank balances · Expected income · Expected expenses ·
-  Predicted net) via `V3KpiTile` wrappers that keep MDP height/markers; Opening cash & banks
-  `V3Panel` (`mdp-bank-balances`); Income/Expenses equal-height panels painted with `V3.*`;
-  expenses banded by `V3_EXPENSE_GROUPS` payment priority (`data-mdp-expense-group`). No
-  `V3Segmented` (no Day|Week grain on this surface). Measured callout uses `V3.amber` border
-  token (not Tailwind amber classes — proportion guard forbids those).
-- **Guard piggyback:** `verify-mdp-panel-proportion.mjs` (EVEN 4124) asserts V3KpiTile / V3Panel /
-  V3_EXPENSE_GROUPS + V3 testIds + expense-group bands; selftest plant ≥5. No new EVEN claim.
-- **Still open under 443.250 (after Manual):** Settlements sub-boards / Fuel, design-system sweep, Chrome proof.
+  `pullManualTransactions` + `computeProjectionTotals`. Single `projectionDate`, MDP markers,
+  pull invalidate onSuccess+onError retained.
+- **V3 board chrome (superseded):** prior Opening cash & banks editor panel retired from the board
+  body under 443.280; columns relabeled to Party/Doc·load/Due/Amount.
+- **Guard piggyback:** `verify-mdp-panel-proportion.mjs` (EVEN 4124) + updated fields/single-row
+  guards. No new EVEN claim.
   Settlements home V3 shipped (below). Full DONE not claimed.
 
 ### Active Architectural Decisions — Settlements home V3 (Cursor, ROUND 443.250, 2026-10-23)

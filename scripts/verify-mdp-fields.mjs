@@ -1,9 +1,7 @@
 #!/usr/bin/env node
-// MDP-FIX-2 guard: Manual Daily Projections field structure + summed totals (Jorge-confirmed).
-//  - income row: Unit no.(ref_label) · Invoice(invoice_no) · Customer(party_name) — Invoice & Customer
-//    are SEPARATE columns (defect 4), not one merged "Invoice customer" field.
-//  - expense row: Bill/Exp No.(invoice_no) FIRST · Vendor/Driver(party_name) · Expense(category) (defect 5).
-//  - BOTH panels render a summed Total (header + footer) via sumCents (defect 1).
+// MDP-FIX-2 guard: Manual Daily Projections field structure + summed totals.
+// ROUND 443.280-A #11 — board labels Party/Payee · Doc / load · Due · Amount (CashFlow-Manual);
+// underlying keys stay party_name + invoice_no (ref_label/category behind "+ more").
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -11,16 +9,18 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-mdp-fields: ${m}`); process.exit(1); };
 const tab = readFileSync(join(root, "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx"), "utf8");
 
-// Income columns in order: ref_label (Unit no.), invoice_no (Invoice), party_name (Customer).
-if (!/income:\s*\[\s*\{\s*key:\s*"ref_label"[\s\S]*?\{\s*key:\s*"invoice_no",\s*label:\s*"Invoice"[\s\S]*?\{\s*key:\s*"party_name",\s*label:\s*"Customer"/.test(tab)) {
-  fail("income must have SEPARATE columns: Unit no. -> Invoice(invoice_no) -> Customer(party_name)");
+// 443.280 board columns — income Party + Doc / load; expense Payee + Doc / load.
+if (!/income:\s*\[\s*\{\s*key:\s*"party_name",\s*label:\s*"Party"[\s\S]*?\{\s*key:\s*"invoice_no",\s*label:\s*"Doc \/ load"/.test(tab)) {
+  fail("income must have board columns: Party(party_name) -> Doc / load(invoice_no)");
 }
-if (/"Invoice customer"/.test(tab)) fail("income must NOT use the merged 'Invoice customer' field (split into Invoice + Customer)");
+if (!/expense:\s*\[\s*\{\s*key:\s*"party_name",\s*label:\s*"Payee"[\s\S]*?\{\s*key:\s*"invoice_no",\s*label:\s*"Doc \/ load"/.test(tab)) {
+  fail("expense must have board columns: Payee(party_name) -> Doc / load(invoice_no)");
+}
+if (/"Invoice customer"/.test(tab)) fail("income must NOT use the merged 'Invoice customer' field");
 
-// Expense columns in order: invoice_no (Bill/Exp No.) FIRST, party_name (Vendor/Driver), category (Expense).
-if (!/expense:\s*\[\s*\{\s*key:\s*"invoice_no",\s*label:\s*"Bill\/Exp No\."[\s\S]*?\{\s*key:\s*"party_name",\s*label:\s*"Vendor\/Driver"[\s\S]*?\{\s*key:\s*"category",\s*label:\s*"Expense"/.test(tab)) {
-  fail("expense must lead with Bill/Exp No.(invoice_no), then Vendor/Driver(party_name), then Expense(category)");
-}
+// Due + Amount board columns (Due = projection/entry date display; Amount = Total MoneyInput).
+if (!/>Due</.test(tab) && !/"Due"/.test(tab)) fail("board Due column missing");
+if (!/"Amount"/.test(tab) && !/>Amount</.test(tab)) fail("board Amount column missing");
 
 // Both panels sum a Total (footer) — defect 1; totals flow from parent computeProjectionTotals via panelTotalCents.
 if (!/data-mdp-footer-total=\{direction\}/.test(tab)) fail("each panel must render a summed Total footer (data-mdp-footer-total)");
@@ -33,6 +33,11 @@ if (!/data-mdp-header-total=\{direction\}[\s\S]{0,60}panelTotalCents/.test(tab))
 
 // Net + KPI totals use computeProjectionTotals (income/expense/net all recompute).
 if (!/computeProjectionTotals\(entries\)/.test(tab)) fail("tab must compute income/expense/net via computeProjectionTotals");
+
+// 443.280 — Opening-cash editor must not sit on the board body (Filters only).
+if (/title="Opening cash & banks"/.test(tab)) {
+  fail("443.280 forbids Opening cash & banks editor on the Manual board body — move under Filters");
+}
 
 function mdpSilentMutationErrors(src) {
   const problems = [];
