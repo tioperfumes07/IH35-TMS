@@ -22,6 +22,11 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { formatUsdCents } from "../../lib/money";
 import { SettlementsPreSettlementsClosesPanel } from "../drivers/SettlementsPreSettlementsKpiRow";
+import {
+  preSettlementsOpenTitle,
+  preSettlementsYtdSub,
+  S443326,
+} from "./settlementsV3BoardStrings";
 
 function startOfWeekSunday(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -103,7 +108,7 @@ export function SettlementsPreSettlementsBoard() {
     : (openBillsQuery.data?.open_driver_bills?.total_count ?? null);
 
   const driverPaySub = useMemo(() => {
-    if (kpiBaseQuery.isError) return "sum of net pay this period";
+    if (kpiBaseQuery.isError) return S443326.preSettlements.kpiDriverPaySubSum;
     const thisWeekStart = periodStart.getTime();
     const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
     let thisNet = 0;
@@ -116,17 +121,18 @@ export function SettlementsPreSettlementsBoard() {
       else if (end >= lastWeekStart && end < thisWeekStart) lastNet += Number(s.net_pay ?? 0);
     }
     const delta = thisNet - lastNet;
-    if (delta === 0) return "flat vs last wk";
+    const c = S443326.preSettlements;
+    if (delta === 0) return c.kpiDriverPaySubFlat;
     if (delta > 0) {
       return (
         <span style={{ fontWeight: 600, color: V3.green }} data-testid="settlements-presettle-kpi-pay-trend">
-          ▲ vs last wk
+          {c.kpiDriverPaySubUp}
         </span>
       );
     }
     return (
       <span style={{ fontWeight: 600, color: V3.red }} data-testid="settlements-presettle-kpi-pay-trend">
-        ▼ vs last wk
+        {c.kpiDriverPaySubDown}
       </span>
     );
   }, [kpiBaseQuery.isError, kpiSettlements, periodStart]);
@@ -166,45 +172,45 @@ export function SettlementsPreSettlementsBoard() {
         data-settlements-presettle-v3-kpis="1"
       >
         <V3KpiTile
-          label="Total unpaid"
+          label={S443326.preSettlements.kpiTotalUnpaid}
           value={display(totalUnpaid === null ? null : Math.round(Number(totalUnpaid)))}
-          sub="settlements not yet paid"
+          sub={S443326.preSettlements.kpiTotalUnpaidSub}
           testId="settlements-presettle-kpi-total-unpaid"
           onClick={() => navigate("/driver-finance/settlements?view=payments&payment_state=unpaid")}
         />
         <V3KpiTile
-          label="This period"
+          label={S443326.preSettlements.kpiThisPeriod}
           value={display(thisPeriod === null ? null : Math.round(Number(thisPeriod)))}
-          sub="period end this week"
+          sub={S443326.preSettlements.kpiThisPeriodSub}
           testId="settlements-presettle-kpi-this-period"
           onClick={() => navigate("/driver-finance/settlements")}
         />
         <V3KpiTile
-          label="Driver pay (period)"
+          label={S443326.preSettlements.kpiDriverPay}
           value={display(driverPayThisPeriod)}
           sub={driverPaySub}
           testId="settlements-presettle-kpi-driver-pay"
           onClick={() => navigate("/driver-finance/settlements?view=payments")}
         />
         <V3KpiTile
-          label="Drivers w/ debt"
+          label={S443326.preSettlements.kpiDriversDebt}
           value={display(driversWithDebt === null ? null : Math.round(Number(driversWithDebt)))}
-          sub="live debt balance"
+          sub={S443326.preSettlements.kpiDriversDebtSub}
           tone={typeof driversWithDebt === "number" && driversWithDebt > 0 ? "red" : "ink"}
           testId="settlements-presettle-kpi-debt"
           onClick={() => navigate("/driver-finance/settlements?view=payments&focus=debt")}
         />
         <V3KpiTile
-          label="YTD settlements"
+          label={S443326.preSettlements.kpiYtd}
           value={display(ytdSettlements === null ? null : Math.round(Number(ytdSettlements)))}
-          sub={`${ytdYear} calendar year`}
+          sub={preSettlementsYtdSub(ytdYear)}
           testId="settlements-presettle-kpi-ytd"
           onClick={() => navigate("/driver-finance/settlements")}
         />
         <V3KpiTile
-          label="Open driver bills"
+          label={S443326.preSettlements.kpiOpenBills}
           value={display(openBills === null ? null : Math.round(openBills))}
-          sub="unsettled driver pay"
+          sub={S443326.preSettlements.kpiOpenBillsSub}
           testId="settlements-presettle-kpi-open-bills"
           onClick={() => navigate("/driver-finance/settlements?view=payments")}
         />
@@ -213,7 +219,7 @@ export function SettlementsPreSettlementsBoard() {
       <MoneyListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search driver, unit, load…"
+        searchPlaceholder={S443326.preSettlements.searchPlaceholder}
         searchTestId="settlements-presettle-search-input"
         onClearAll={() => setSearch("")}
         activeFilterCount={0}
@@ -222,7 +228,9 @@ export function SettlementsPreSettlementsBoard() {
         {null}
       </MoneyListToolbar>
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <p className="text-xs text-red-600">{S443326.preSettlements.selectCompany}</p>
+      ) : null}
 
       <div
         style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
@@ -230,36 +238,38 @@ export function SettlementsPreSettlementsBoard() {
         data-settlements-presettle-v3-layout="1"
       >
         <BoardSection
-          title={`Open pre-settlements · ${countLabel}`}
-          subtitle="open tours · not closed · not paid"
+          title={preSettlementsOpenTitle(countLabel)}
+          subtitle={S443326.preSettlements.openPanelSubtitle}
           testId="pre-settlements-v3-panel"
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div data-settlements-presettle-v3-panel="1">
             {openToursQuery.isError ? (
               <ListErrorState
-                title="Couldn't load pre-settlements"
+                title={S443326.preSettlements.errLoadTitle}
                 status={0}
                 message={(openToursQuery.error as Error | undefined)?.message}
                 onRetry={() => void openToursQuery.refetch()}
               />
             ) : (
               <ParityTable
-                title="Open pre-settlements"
+                title={S443326.preSettlements.tableTitle}
                 storageKey="pre-settlements-panel-v3-board-tours"
                 columns={preSettlementColumns}
                 rows={filteredRows}
                 rowKey={(row) => row.settlement_id}
                 rowTestId={() => "pre-settlement-row-reverse"}
                 loading={openToursQuery.isLoading}
-                emptyText="No open pre-settlements for this company."
+                emptyText={S443326.preSettlements.emptyOpen}
                 tableTestId="settlements-presettle-open-table"
                 hidePager
                 pageSize={Math.max(1, filteredRows.length || 1)}
                 footerCells={
                   filteredRows.length > 0
                     ? {
-                        loads_so_far: <span className="font-semibold">Total</span>,
+                        loads_so_far: (
+                          <span className="font-semibold">{S443326.preSettlements.footerTotal}</span>
+                        ),
                         amount: (
                           <span className="font-semibold text-right tabular-nums">
                             <Link className="underline" to="/driver-finance/settlements?state=open">
@@ -277,7 +287,7 @@ export function SettlementsPreSettlementsBoard() {
               data-testid="pre-settlements-booked-ahead-note"
               style={{ fontFamily: V3.font, borderTop: `1px solid ${V3.borderSoft}` }}
             >
-              A booked-ahead load joins the driver&apos;s open pre-settlement (443.244).
+              {S443326.preSettlements.bookedAheadNote}
             </p>
           </div>
         </BoardSection>

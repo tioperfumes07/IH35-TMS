@@ -23,6 +23,7 @@ import { formatUsdTable } from "../../lib/money";
 import { AdvanceDetailDrawer } from "../cash-advances/components/AdvanceDetailDrawer";
 import { useCashAdvancesParityColumns } from "../cash-advances/components/CashAdvancesTable";
 import { MarkDisbursedModal } from "../cash-advances/components/MarkDisbursedModal";
+import { S443326 } from "./settlementsV3BoardStrings";
 
 const BASE_PATH = "/driver-finance/cash-advances";
 const REQUESTS_PATH = "/driver-finance/cash-advance-requests";
@@ -47,11 +48,12 @@ function formatAsked(raw: unknown): string {
 }
 
 function policyLabel(row: Record<string, unknown>): string {
+  const c = S443326.cashAdvances;
   if (Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at)) {
-    return "Pending owner";
+    return c.policyPendingOwner;
   }
-  if (Boolean(row.is_above_policy)) return "Above policy";
-  return "Within policy";
+  if (Boolean(row.is_above_policy)) return c.policyAbove;
+  return c.policyWithin;
 }
 
 type RequestRow = Record<string, unknown>;
@@ -142,10 +144,12 @@ export function SettlementsCashAdvancesBoard() {
   });
 
   const requestColumns = useMemo<ParityColumn<RequestRow>[]>(
-    () => [
+    () => {
+      const c = S443326.cashAdvances;
+      return [
       {
         key: "driver",
-        label: "Driver",
+        label: c.colDriver,
         sortable: true,
         sortValue: (row) => formatDisplayName(row.driver_name ? String(row.driver_name) : null),
         render: (row) => {
@@ -154,21 +158,21 @@ export function SettlementsCashAdvancesBoard() {
             <EntityLink
               kind="driver"
               id={row.driver_id ? String(row.driver_id) : null}
-              label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
+              label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, c.entityDriver)}
             />
           );
         },
       },
       {
         key: "asked",
-        label: "Asked",
+        label: c.colAsked,
         sortable: true,
         sortValue: (row) => String(row.submitted_at ?? ""),
         render: (row) => formatAsked(row.submitted_at),
       },
       {
         key: "amount",
-        label: "Amount",
+        label: c.colAmount,
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
@@ -186,14 +190,14 @@ export function SettlementsCashAdvancesBoard() {
       },
       {
         key: "policy",
-        label: "Policy",
+        label: c.colPolicy,
         sortable: true,
         sortValue: (row) => policyLabel(row),
         render: (row) => policyLabel(row),
       },
       {
         key: "action",
-        label: "Action",
+        label: c.colAction,
         sortable: false,
         render: () => (
           <button
@@ -211,11 +215,12 @@ export function SettlementsCashAdvancesBoard() {
               textDecoration: "underline",
             }}
           >
-            Review
+            {c.review}
           </button>
         ),
       },
-    ],
+    ];
+    },
     [navigate],
   );
 
@@ -227,7 +232,7 @@ export function SettlementsCashAdvancesBoard() {
     >
       {kpisQuery.isError ? (
         <ListErrorState
-          title="Couldn't load cash advance totals"
+          title={S443326.cashAdvances.errKpiTitle}
           status={0}
           message={(kpisQuery.error as Error)?.message}
           onRetry={() => void kpisQuery.refetch()}
@@ -244,27 +249,27 @@ export function SettlementsCashAdvancesBoard() {
           data-cash-advances-v3-kpis="1"
         >
           <V3KpiTile
-            label="Advances on file"
+            label={S443326.cashAdvances.kpiOnFile}
             value={display(onFile === null ? null : Math.round(onFile))}
             testId="cash-advances-kpi-on-file"
             onClick={() => navigate(BASE_PATH)}
           />
           <V3KpiTile
-            label="Requests awaiting owner"
+            label={S443326.cashAdvances.kpiAwaiting}
             value={display(awaiting === null ? null : Math.round(awaiting))}
             testId="cash-advances-kpi-awaiting"
             onClick={() => navigate(`${BASE_PATH}?tab=pending_approval`)}
           />
           <V3KpiTile
-            label="Outstanding to recover"
+            label={S443326.cashAdvances.kpiOutstanding}
             value={display(outstanding)}
             testId="cash-advances-kpi-outstanding"
             onClick={() => navigate(`${BASE_PATH}?tab=outstanding`)}
           />
           <V3KpiTile
-            label="Recovered this period"
+            label={S443326.cashAdvances.kpiRecovered}
             value="—"
-            sub="no period total on KPI feed"
+            sub={S443326.cashAdvances.kpiRecoveredSub}
             testId="cash-advances-kpi-recovered"
             onClick={() => navigate(`${BASE_PATH}?tab=paid_off`)}
           />
@@ -274,7 +279,7 @@ export function SettlementsCashAdvancesBoard() {
       <MoneyListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search advance, driver, load…"
+        searchPlaceholder={S443326.cashAdvances.searchPlaceholder}
         searchTestId="settlements-cash-advances-search-input"
         onClearAll={() => setSearch("")}
         activeFilterCount={0}
@@ -289,25 +294,25 @@ export function SettlementsCashAdvancesBoard() {
         data-settlements-cash-advances-board-1fr-2fr="1"
       >
         <BoardSection
-          title="Requests"
+          title={S443326.cashAdvances.sectionRequests}
           testId="settlements-cash-advances-requests-panel"
           onViewAll={() => navigate(REQUESTS_PATH)}
         >
           <div data-testid="settlements-cash-advances-requests-body">
             {requestsQuery.isError ? (
               <p className="px-3.5 py-2 text-xs" style={{ color: V3.muted, fontFamily: V3.font }}>
-                Requests failed to load — open View all to retry.
+                {S443326.cashAdvances.requestsLoadFailed}
               </p>
             ) : (
               <ParityTable
-                title="Requests"
+                title={S443326.cashAdvances.sectionRequests}
                 storageKey="settlements-cash-advances-requests-v3"
                 columns={requestColumns}
                 rows={previewRequests}
                 rowKey={(row) => String(row.id ?? row.display_id ?? "")}
                 rowTestId={(row) => `settlements-cash-advances-request-${String(row.id ?? "")}`}
                 loading={requestsQuery.isLoading}
-                emptyText="No requests waiting"
+                emptyText={S443326.cashAdvances.emptyRequests}
                 tableTestId="settlements-cash-advances-requests-table"
                 hidePager
                 pageSize={Math.max(1, previewRequests.length || 1)}
@@ -317,29 +322,29 @@ export function SettlementsCashAdvancesBoard() {
         </BoardSection>
 
         <BoardSection
-          title="Advances"
+          title={S443326.cashAdvances.sectionAdvances}
           testId="settlements-cash-advances-advances-panel"
           onViewAll={() => navigate(BASE_PATH)}
-          footer="Each advance links to its bank line (Zelle) and to the tour that recovers it."
+          footer={S443326.cashAdvances.advancesFooter}
         >
           <div data-testid="settlements-cash-advances-advances-body">
             {listQuery.isError ? (
               <ListErrorState
-                title="Couldn't load cash advances"
+                title={S443326.cashAdvances.errAdvancesTitle}
                 status={0}
                 message={(listQuery.error as Error)?.message}
                 onRetry={() => void listQuery.refetch()}
               />
             ) : (
               <ParityTable
-                title="Advances"
+                title={S443326.cashAdvances.sectionAdvances}
                 storageKey="settlements-cash-advances-roster-v3"
                 columns={advanceColumns}
                 rows={filteredAdvances}
                 rowKey={(row) => String(row.id)}
                 rowTestId={(row) => `settlements-cash-advances-advance-${String(row.id)}`}
                 loading={listQuery.isLoading}
-                emptyText="No cash advances on file for this company."
+                emptyText={S443326.cashAdvances.emptyAdvances}
                 tableTestId="settlements-cash-advances-advances-table"
                 onRowClick={(row) => openAdvance(row)}
               />
@@ -350,7 +355,7 @@ export function SettlementsCashAdvancesBoard() {
 
       {detailOpen && detailQuery.isError ? (
         <ListErrorState
-          title="Couldn't load cash advance details"
+          title={S443326.cashAdvances.errDetailTitle}
           status={0}
           message={(detailQuery.error as Error)?.message}
           onRetry={() => void detailQuery.refetch()}

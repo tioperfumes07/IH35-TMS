@@ -26,6 +26,7 @@ import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../hooks
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdTable } from "../../lib/money";
 import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
+import { deductionsWeekSub, S443326 } from "./settlementsV3BoardStrings";
 
 function startOfWeekSunday(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -78,10 +79,10 @@ function amount(raw: unknown): number | null {
 const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
 
 const TYPE_ROWS = [
-  { id: "escrow" as const, label: "Escrow" },
-  { id: "advances" as const, label: "Advances" },
-  { id: "fines" as const, label: "Fines" },
-  { id: "damages" as const, label: "Damages" },
+  { id: "escrow" as const, label: S443326.deductions.typeEscrow },
+  { id: "advances" as const, label: S443326.deductions.typeAdvances },
+  { id: "fines" as const, label: S443326.deductions.typeFines },
+  { id: "damages" as const, label: S443326.deductions.typeDamages },
 ] as const;
 
 type ScheduleRow = AutoDeductionPolicy & { remaining_cents: number };
@@ -215,30 +216,32 @@ export function SettlementsDeductionsBoard() {
   const byTypeFailed = deductionsListQuery.isError;
 
   const scheduleColumns = useMemo<ParityColumn<ScheduleRow>[]>(
-    () => [
+    () => {
+      const c = S443326.deductions;
+      return [
       {
         key: "driver",
-        label: "Driver",
+        label: c.colDriver,
         sortable: true,
         sortValue: (r) => r.driver_name || r.driver_id,
         render: (r) => (
           <EntityLink
             kind="driver"
             id={r.driver_id}
-            label={entityLabel(r.driver_name, r.driver_id, "Driver")}
+            label={entityLabel(r.driver_name, r.driver_id, c.entityDriver)}
           />
         ),
       },
       {
         key: "type",
-        label: "Type",
+        label: c.colType,
         sortable: true,
         sortValue: (r) => r.deduction_type_display_name?.trim() || r.deduction_type,
         render: (r) => r.deduction_type_display_name?.trim() || r.deduction_type,
       },
       {
         key: "per",
-        label: "Per settlement",
+        label: c.colPerSettlement,
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
@@ -252,7 +255,7 @@ export function SettlementsDeductionsBoard() {
       },
       {
         key: "remaining",
-        label: "Remaining",
+        label: c.colRemaining,
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
@@ -266,12 +269,13 @@ export function SettlementsDeductionsBoard() {
       },
       {
         key: "next",
-        label: "Next",
+        label: c.colNext,
         sortable: true,
         sortValue: (r) => (r.remaining_cents > 0 ? 1 : 0),
-        render: (r) => (r.remaining_cents > 0 ? "Next settlement" : "—"),
+        render: (r) => (r.remaining_cents > 0 ? c.nextSettlement : "—"),
       },
-    ],
+    ];
+    },
     [],
   );
 
@@ -314,30 +318,30 @@ export function SettlementsDeductionsBoard() {
         data-settlements-deductions-v3-kpis="1"
       >
         <V3KpiTile
-          label="Deductions this week"
+          label={S443326.deductions.kpiWeek}
           value={display(weekMoney)}
           sub={
             week.settlementCount === null
               ? undefined
-              : `${week.settlementCount} settlement${week.settlementCount === 1 ? "" : "s"}`
+              : deductionsWeekSub(week.settlementCount)
           }
           testId="settlements-deductions-kpi-week"
           onClick={() => navigate("/driver-finance/settlements")}
         />
         <V3KpiTile
-          label="Open liabilities"
+          label={S443326.deductions.kpiOpenLiab}
           value={display(openLiabilities === null ? null : Math.round(openLiabilities))}
           testId="settlements-deductions-kpi-open-liab"
           onClick={() => navigate("/driver-finance/liabilities")}
         />
         <V3KpiTile
-          label="Drivers w/ debt"
+          label={S443326.deductions.kpiDriversDebt}
           value={display(driversWithDebt === null ? null : Math.round(driversWithDebt))}
           testId="settlements-deductions-kpi-drivers-debt"
           onClick={() => navigate("/driver-finance/liabilities")}
         />
         <V3KpiTile
-          label="Scheduled deductions"
+          label={S443326.deductions.kpiScheduled}
           value={display(scheduled === null ? null : Math.round(scheduled))}
           testId="settlements-deductions-kpi-scheduled"
           onClick={() => navigate(root)}
@@ -347,7 +351,7 @@ export function SettlementsDeductionsBoard() {
       <MoneyListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search driver or deduction type…"
+        searchPlaceholder={S443326.deductions.searchPlaceholder}
         searchTestId="settlements-deductions-search-input"
         onClearAll={() => setSearch("")}
         activeFilterCount={0}
@@ -368,11 +372,13 @@ export function SettlementsDeductionsBoard() {
             borderRadius: 2,
           }}
         >
-          + New deduction
+          {S443326.deductions.newDeduction}
         </Button>
       </MoneyListToolbar>
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <p className="text-xs text-red-600">{S443326.deductions.selectCompany}</p>
+      ) : null}
 
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}
@@ -380,7 +386,7 @@ export function SettlementsDeductionsBoard() {
         data-settlements-deductions-board-2col="1"
       >
         <BoardSection
-          title="By type · this week"
+          title={S443326.deductions.sectionByType}
           testId="settlements-deductions-by-type-panel"
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
@@ -388,9 +394,9 @@ export function SettlementsDeductionsBoard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Type</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Drivers</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
+                  <th style={thStyle}>{S443326.deductions.thType}</th>
+                  <th style={{ ...thStyle, textAlign: "right" }}>{S443326.deductions.thDrivers}</th>
+                  <th style={{ ...thStyle, textAlign: "right" }}>{S443326.deductions.thAmount}</th>
                 </tr>
               </thead>
               <tbody>
@@ -428,7 +434,7 @@ export function SettlementsDeductionsBoard() {
                       borderBottom: "none",
                     }}
                   >
-                    Total
+                    {S443326.deductions.rowTotal}
                   </td>
                   <td
                     style={{
@@ -466,17 +472,17 @@ export function SettlementsDeductionsBoard() {
         </BoardSection>
 
         <BoardSection
-          title="Schedule"
+          title={S443326.deductions.sectionSchedule}
           testId="settlements-deductions-schedule-panel"
           onViewAll={() => navigate(root)}
-          footer="Every deduction links to its liability, settlement line and journal entry."
+          footer={S443326.deductions.scheduleFooter}
         >
           <ParityTable<ScheduleRow>
             columns={scheduleColumns}
             rows={filteredSchedule}
             rowKey={(r) => r.id}
             loading={policiesQuery.isLoading}
-            emptyText="No active scheduled deductions."
+            emptyText={S443326.deductions.emptySchedule}
             storageKey="settlements-deductions-schedule"
             tableTestId="settlements-deductions-schedule-table"
             hidePager
