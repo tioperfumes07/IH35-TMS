@@ -16,6 +16,7 @@ import { moneyListKpiCard } from "./moneyListKpiCard";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { Button } from "../../components/Button";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -224,7 +225,7 @@ export function ReceiptsPage() {
         activeFilterCount={entityType ? 1 : 0}
         testIdPrefix="receipts"
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Source
           <SelectCombobox
             aria-label="Filter receipts by source"
