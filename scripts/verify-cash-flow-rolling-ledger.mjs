@@ -116,11 +116,24 @@ const REQUIRED_FRONTEND_MARKERS = [
   ['testId="rolling-ledger-carried-income-panel"', "443.250 carried-income BoardSection testId missing"],
   ['testId="rolling-ledger-day-grid-panel"', "443.250 day-grid BoardSection testId missing"],
   ['testId="rolling-ledger-day-grain"', "443.250 Day|Week grain testId missing"],
+  // ROUND 443.280-A #10 — board-faithful Rolling Ledger (rebuild-not-layer).
+  ["V3KpiTile", "443.280 Rolling Ledger board KPIs must use shared V3KpiTile"],
+  ["rolling-ledger-v3-kpis", "443.280 Rolling Ledger V3 KPI strip testId missing"],
+  ['label="Opening cash"', "443.280 board KPI Opening cash missing"],
+  ['label="Income due today"', "443.280 board KPI Income due today missing"],
+  ['label="Expenses due today"', "443.280 board KPI Expenses due today missing"],
+  ['label="Net today"', "443.280 board KPI Net today missing"],
+  ['label="Projected closing"', "443.280 board KPI Projected closing missing"],
+  ['label="Due next 10 days"', "443.280 board KPI Due next 10 days missing"],
+  ['label: "Party"', "443.280 income board column Party missing"],
+  ['label: "Doc / load"', "443.280 board column Doc / load missing"],
+  ['label: "Payee"', "443.280 expense board column Payee missing"],
+  ["Carried income — past due, not received", "443.280 carried-income panel title missing"],
+  ["Click a day → both sides above switch to that day.", "443.280 day-grid board footer missing"],
 ];
 
-// KPI tile spec — ROUND 443.250 supersedes the Load-Costs #F4F7FA/#C7D2DC hex with the single
-// V3 design-system palette (v3-tokens). Height 60px and inline styles stay (never Tailwind
-// bracket-notation — same ratchet reason as STATE-AFTER-#21082). Checked against KPI_STRIP_FILE.
+// Legacy CashFlowKpiStrip.tsx still ships formatCashFlowCents for Home — keep its V3 paint
+// markers so the helper file cannot regress to rejected Load-Costs hex / short tiles.
 const REQUIRED_KPI_STRIP_MARKERS = [
   ["height: 60,", "KPI tile must be 60px tall (the Load-Costs / V3 reference height), not the rejected v2 44-48px tile"],
   ["V3.headerBg", "KPI tile must use V3.headerBg (443.250 design system), not a per-page hex"],
@@ -131,6 +144,10 @@ const FORBIDDEN_FRONTEND_MARKERS = [
   [
     /adjustingRow && !adjustingRowIsIncome[\s\S]{0,80}<AdjustPopover/,
     "AdjustPopover must never render for expense rows (income-only per the ROUND 16.7 CORRECTION)",
+  ],
+  [
+    /<CashFlowKpiStrip\b/,
+    "443.280 forbids layered <CashFlowKpiStrip> on Rolling Ledger — board KPIs are V3KpiTile only",
   ],
 ];
 
@@ -376,9 +393,26 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replace(
-          'data-testid="rolling-ledger-expense-table"\n                />',
-          'data-testid="rolling-ledger-expense-table"\n                />\n                {adjustingRow && !adjustingRowIsIncome && (<AdjustPopover row={adjustingRow} reasons={reasons} applies="expense" onClose={() => setAdjustingRowKey(null)} pending={adjustMutation.isPending} onSubmit={() => {}} />)}'
+          'data-testid="rolling-ledger-expense-table"',
+          'data-testid="rolling-ledger-expense-table"\n                {adjustingRow && !adjustingRowIsIncome && (<AdjustPopover row={adjustingRow} reasons={reasons} applies="expense" onClose={() => setAdjustingRowKey(null)} pending={adjustMutation.isPending} onSubmit={() => {}} />)}'
         ),
+      }),
+    },
+    {
+      name: "layered CashFlowKpiStrip reintroduced (443.280 rebuild-not-layer)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace(
+          'data-testid="rolling-ledger-v3-kpis"',
+          'data-testid="rolling-ledger-v3-kpis"\n          <CashFlowKpiStrip kpis={kpis} />'
+        ),
+      }),
+    },
+    {
+      name: "V3KpiTile board KPIs stripped",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("V3KpiTile", "StrippedKpi"),
       }),
     },
   ];
