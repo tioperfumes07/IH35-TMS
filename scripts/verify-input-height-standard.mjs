@@ -2,13 +2,12 @@
 /**
  * IH35-347-A: Input height standard guard.
  *
- * Every form input primitive (MoneyInput, NumberInput, TimePicker, DatePicker,
- * QboDocumentNumberField, FORM_INPUT_CLASS) must use h-9 (36px). No screen file may
- * override input/select element height to a non-standard value.
- *
- * Standard heights allowed on raw <input> and <select> elements:
- *   h-9   — form inputs (FORM_INPUT_CLASS)
- *   h-8.5 — filter-bar search inputs (FILTER_CONTROL_SIZE_CLASS)
+ * OWNER DESIGN LAW rule 2 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md; owner 10-25-2026 4:05 PM):
+ *   40px (h-10) — a field being edited in a form (FORM_INPUT_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS)
+ *   34px (h-8.5) — every filter / select / search box (FILTER_CONTROL_SIZE_CLASS)
+ * (This guard said h-9 / 36px until 10-25-2026 — off the law.) Inside every popup/drawer the 40px height, the 132px date
+ * box and the 120px money box are enforced ONCE by styles/control-sizing-law.css; this guard fails if that file loses
+ * its import or its values.
  *
  * Allowlist exceptions (compact UI utilities, not form fields):
  *   table/Paginator.tsx   — page-jump input
@@ -88,12 +87,29 @@ try {
   }
 }
 
+// CONTROL SIZING LAW — the one place the popup/drawer field sizes are set must stay wired and on the law's values.
+{
+  const law = readFileSync(path.join(SRC, "styles/control-sizing-law.css"), "utf8");
+  const idx = readFileSync(path.join(SRC, "index.css"), "utf8");
+  const tokens = readFileSync(path.join(SRC, "design/tokens.ts"), "utf8");
+  const inputCls = readFileSync(path.join(SRC, "components/forms/inputClass.ts"), "utf8");
+  const need = [
+    [/@import ['"]\.\/styles\/control-sizing-law\.css['"]/.test(idx), "index.css must @import ./styles/control-sizing-law.css"],
+    [/height:\s*40px/.test(law), "control-sizing-law.css must set form fields to height: 40px"],
+    [/width:\s*132px/.test(law), "control-sizing-law.css must set date boxes to width: 132px"],
+    [/width:\s*120px/.test(law), "control-sizing-law.css must set money boxes to width: 120px"],
+    [/FORM_FIELD_CONTROL_SIZE_CLASS = "h-10 /.test(tokens), "design/tokens.ts FORM_FIELD_CONTROL_SIZE_CLASS must be h-10 (40px)"],
+    [/FORM_INPUT_CLASS = "h-10 /.test(inputCls), "components/forms/inputClass.ts FORM_INPUT_CLASS must be h-10 (40px)"],
+  ];
+  for (const [ok, msg] of need) if (!ok) violations.push({ file: "control-sizing-law", line: "-", content: msg });
+}
+
 if (violations.length > 0) {
   console.error(`verify-input-height-standard: FAIL — ${violations.length} input element(s) with non-standard height:`);
   for (const v of violations) {
     console.error(`  ${v.file}:${v.line}  ${v.content.slice(0, 120)}`);
   }
-  console.error("Standard heights: h-9 (form inputs) · h-8.5 (filter-bar search). Fix at the primitive, not at the screen.");
+  console.error("Standard heights: h-10 / 40px (form fields) · h-8.5 / 34px (filters, search). Fix at the primitive, not at the screen.");
   process.exit(1);
 }
 

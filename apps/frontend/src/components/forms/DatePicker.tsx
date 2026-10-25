@@ -266,6 +266,7 @@ export function DatePicker({
         style={boxStyle}
       >
         <input
+          data-control-kind="date"
           id={id}
           ref={dateInputRef}
           type="text"

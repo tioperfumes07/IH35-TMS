@@ -9,7 +9,7 @@ describe("StateSelect — Combobox filter chrome (SETL-F441)", () => {
     render(<StateSelect value="" onChange={onChange} />);
     const input = screen.getByRole("combobox", { name: "State" });
     expect(input).toBeInTheDocument();
-    expect(input.className).toMatch(/h-7/);
+    expect(input.className).toMatch(/h-10/); // owner design law rule 2: a form field is 40px
     expect(screen.queryByText("▾")).not.toBeInTheDocument();
   });
 

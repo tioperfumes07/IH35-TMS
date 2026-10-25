@@ -1,0 +1,44 @@
+/*
+ * CONTROL SIZING LAW — owner design law rules 2-5 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md).
+ * Owner 10-25-2026 4:05 PM CT: "the boxes height width headers text size boxes proportionate etc all catalogs and items
+ * lists etc the creators are wrong not correctly formatted".
+ *
+ * Measured the same hour: 152 files hand-type their own field classes (h-7 / h-8 / h-9 = 28 / 32 / 36px), and the shared
+ * form token itself said 36px. The law is 40px for a field being edited and 34px for a filter. Fixing 152 files one by
+ * one is how the drift happened; this file sets the law ONCE for every field inside a popup or drawer (role="dialog" —
+ * the shared <Modal> and <ParityDrawer> both carry it), exactly as the 2px radius law is set once in index.css.
+ *
+ * Unlayered on purpose: unlayered rules win over Tailwind's @layer utilities, so a stray h-8 on a creator field can no
+ * longer make it a different height. :where() keeps specificity at zero so an inline style still wins where a component
+ * genuinely needs it. Not touched: checkboxes/radios/ranges/files, inline cell editors inside table cells, controls that
+ * already own their box ([data-control]) and their inner parts, listboxes, and anything marked data-control-size="free".
+ */
+:where([role="dialog"])
+  :where(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="image"], [type="submit"], [type="button"], [type="reset"]),
+    select,
+    [data-control="field"]
+  ):not(:where(td, th, [data-control], [role="listbox"], [data-control-size="free"]) *):not([data-control-size="free"]) {
+  height: 40px;
+  min-height: 40px;
+  font-size: 12px;
+}
+
+/* Rule 3 — ONE DATE BOX WIDTH, 132px, never full-width. */
+:where([role="dialog"]) :where(input[type="date"], [data-control-kind="date"]):not(:where(td, th) *) {
+  width: 132px;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rule 4 — MONEY BOX 120px, right-aligned, tabular figures. Short code / number 104px. */
+:where([role="dialog"]) [data-control-kind="money"]:not(:where(td, th) *) {
+  width: 120px;
+  max-width: 100%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+:where([role="dialog"]) :where([data-control-kind="code"], [data-control-kind="number"]):not(:where(td, th) *) {
+  width: 104px;
+  max-width: 100%;
+}
