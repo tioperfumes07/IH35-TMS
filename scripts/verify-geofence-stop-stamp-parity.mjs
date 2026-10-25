@@ -43,7 +43,7 @@ const src = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
 if (process.argv.includes("--selftest")) {
   const plant = (from, to) => {
     if (!src.includes(from)) return null;
-    return staticFailures(src.replace(from, to)).length > 0;
+    return staticFailures(src.replaceAll(from, to)).length > 0;
   };
   const cases = [
     ["clean sources pass", staticFailures(src).length === 0],

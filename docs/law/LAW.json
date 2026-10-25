@@ -1289,5 +1289,12 @@
     "source_file": "db/migrations/202616250000_customer_vendor_names_normalized_at_write.sql",
     "guard": "scripts/verify-no-uppercase-names-rendered.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-24-GEOFENCE-STOP-STAMP-PARITY",
+    "description": "geofence-detector.service.ts must import + call latchOnDeliveryEvidence, pingSettlementOnLoadEvent, and appendCrudAudit on departure events to match the canonical stop-stamp path in dispatch/stop-stamp.service.ts",
+    "source_file": "apps/backend/src/telematics/geofence-detector.service.ts",
+    "guard": "scripts/verify-geofence-stop-stamp-parity.mjs",
+    "type": "enforced"
   }
 ]
