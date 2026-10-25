@@ -115,7 +115,7 @@ export function SubscriptionEditor({
             <span className="font-medium text-[#1F2A44]">Report</span>
             <SelectCombobox
               aria-label="Report"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={reportSlug}
               onChange={(e) => setReportSlug(e.target.value)}
               disabled={mode === "edit"}
@@ -131,7 +131,7 @@ export function SubscriptionEditor({
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Cadence</span>
             <SelectCombobox
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={cadence}
               onChange={(e) =>
                 setCadence(e.target.value as SubscriptionFormValues["cadence"])
@@ -149,7 +149,7 @@ export function SubscriptionEditor({
             <label className="block">
               <span className="font-medium text-[#1F2A44]">Day of week</span>
               <SelectCombobox
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={dayOfWeek ?? 1}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
               >
@@ -169,7 +169,7 @@ export function SubscriptionEditor({
                 type="number"
                 min={1}
                 max={31}
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={dayOfMonth ?? 1}
                 onChange={(e) => setDayOfMonth(Number(e.target.value))}
               />
@@ -189,7 +189,7 @@ export function SubscriptionEditor({
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Timezone</span>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />
@@ -198,7 +198,7 @@ export function SubscriptionEditor({
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Recipients</span>
             <textarea
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               rows={2}
               value={recipientsText}
               onChange={(e) => setRecipientsText(e.target.value)}
@@ -209,7 +209,7 @@ export function SubscriptionEditor({
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Delivery format</span>
             <SelectCombobox
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={deliveryFormat}
               onChange={(e) =>
                 setDeliveryFormat(

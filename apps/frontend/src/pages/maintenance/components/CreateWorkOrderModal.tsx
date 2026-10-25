@@ -51,7 +51,7 @@ import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-8 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1F2A44]";
+const FLD = "h-9 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1F2A44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   // D27 — section headers dark navy with light letters (NAVY-NOT-BLACK #14314F), not light grey bars.
