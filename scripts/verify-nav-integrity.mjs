@@ -225,16 +225,24 @@ const subnavPaths = new Set([
   ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx"), ["to"]),
 ]);
 
-// ACCT-F2026100620 — the Settlements module's own tab strip (SettlementsPage.tsx <NavyPageSubNav items={[...]}>) is module
-// navigation: Batch Settlements (B-3 #23771) and Feed Gate (ACCT-F9602) are tabs in it and were read as orphans because this
-// guard never read that strip. Read ONLY that items block (not every `to:` in the file), so its paths are also held to the
-// SUBNAV→ROUTE check below.
-function extractNavyPageSubNavItemPaths(source) {
-  const block = source.match(/<NavyPageSubNav\s+items=\{\[([\s\S]*?)\]\}/)?.[1] ?? "";
-  if (!block) fail("Settlements tab strip (<NavyPageSubNav items={[...]}>) not found in SettlementsPage.tsx — nav source drifted");
-  return extractQuotedPaths(block, ["to"]);
+// ACCT-F2026100620 — Settlements module tab paths for SUBNAV→ROUTE. Legacy: inline NavyPageSubNav on SettlementsPage.
+// ROUND 443.326 — canonical strip is SETTLEMENTS_SUBNAV (settlementsSubnav.ts) rendered via SettlementsSubNavWrapper.
+function extractSettlementsModuleSubnavPaths() {
+  const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const navyBlock = page.match(/<NavyPageSubNav\s+items=\{\[([\s\S]*?)\]\}/)?.[1] ?? "";
+  if (navyBlock) return extractQuotedPaths(navyBlock, ["to"]);
+  const subnavSrc = read("apps/frontend/src/pages/driver-finance/settlementsSubnav.ts");
+  if (!/export const SETTLEMENTS_SUBNAV/.test(subnavSrc)) {
+    fail("settlementsSubnav.ts missing SETTLEMENTS_SUBNAV export");
+  }
+  if (!/SettlementsSubNavWrapper/.test(page)) {
+    fail(
+      "SettlementsPage.tsx must render SettlementsSubNavWrapper or inline <NavyPageSubNav items={[...]}> — nav source drifted",
+    );
+  }
+  return extractQuotedPaths(subnavSrc, ["to"]);
 }
-for (const p of extractNavyPageSubNavItemPaths(read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx"))) subnavPaths.add(p);
+for (const p of extractSettlementsModuleSubnavPaths()) subnavPaths.add(p);
 
 const driversNavMatch = read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts").match(
   /export const DRIVERS_MODULE_NAV_PATHS = (\[[^\]]+\])/
@@ -282,6 +290,16 @@ function modulePrefixReachable(routePath, navReachable) {
 
 function isRouteReachable(routePath, navReachable, routes, allowEntries) {
   if (routePath === "*" || routePath === "/") return true;
+  if (routePath.endsWith("/*")) {
+    const parent = routePath.slice(0, -2) || "/";
+    if (navReachable.has(parent) || isAllowlisted(parent, allowEntries)) return true;
+  }
+  if (
+    (routePath === "/feed-gate" || routePath.startsWith("/feed-gate/")) &&
+    navReachable.has("/driver-finance/feed-gate")
+  ) {
+    return true;
+  }
   if (isAllowlisted(routePath, allowEntries)) return true;
   if (navReachable.has(routePath)) return true;
   if (modulePrefixReachable(routePath, navReachable)) return true;

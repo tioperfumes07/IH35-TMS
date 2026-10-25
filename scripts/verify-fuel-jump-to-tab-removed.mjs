@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Forbid redundant "Jump to tab" dropdown that duplicates FuelPlannerHome SUBNAV tabs.
- * Standard module pattern: SecondaryNavTabs row only (matches MaintenanceHome fix).
+ * Standard module pattern: NavyPageSubNav (legacy) or FuelPlannerBoardChrome + HoverDropdownNav (ROUND 443.326).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -22,7 +22,13 @@ function fuelNavigationFailures(source) {
   const failures = [];
   if (/jump to tab/i.test(source)) failures.push("FuelPlannerHome.tsx still contains a 'Jump to tab' trigger label.");
   if (source.includes('data-testid="fuel-jump-to-tab"')) failures.push("FuelPlannerHome.tsx still has data-testid fuel-jump-to-tab.");
-  if (!source.includes("<NavyPageSubNav")) failures.push("FuelPlannerHome.tsx must render NavyPageSubNav for standard Fuel tab navigation.");
+  const hasStandardFuelNav =
+    source.includes("<NavyPageSubNav") || source.includes("<FuelPlannerBoardChrome");
+  if (!hasStandardFuelNav) {
+    failures.push(
+      "FuelPlannerHome.tsx must render NavyPageSubNav or FuelPlannerBoardChrome for standard Fuel tab navigation.",
+    );
+  }
   if (source.includes("text-[11px]")) failures.push("leftover text-[11px]");
   if (source.includes("#8A92AB") || source.includes("#334155")) failures.push("leftover off-scale muted");
 
@@ -45,9 +51,15 @@ if (failures.length) fail(failures.join("\n"));
 console.log("verify:fuel-jump-to-tab-removed: ok");
 
 if (process.argv.includes("--selftest")) {
-  const wrongNav = source.replaceAll("NavyPageSubNav", "SecondaryNavTabs");
+  const wrongNav = source
+    .replaceAll("NavyPageSubNav", "SecondaryNavTabs")
+    .replaceAll("FuelPlannerBoardChrome", "BrokenFuelBoardChrome");
   const duplicateJump = `${source}\nconst plantedLabel = "Jump to tab";`;
-  if (!fuelNavigationFailures(wrongNav).some((message) => message.includes("NavyPageSubNav"))) {
+  if (
+    !fuelNavigationFailures(wrongNav).some(
+      (message) => message.includes("NavyPageSubNav") || message.includes("FuelPlannerBoardChrome"),
+    )
+  ) {
     fail("selftest wrong navigation primitive mutation escaped");
   }
   if (!fuelNavigationFailures(duplicateJump).some((message) => message.includes("Jump to tab"))) {
