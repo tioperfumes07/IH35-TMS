@@ -75,20 +75,6 @@ function accountingMutationRole(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
 }
 
-async function hasCompanyAccess(client: DbClient, userId: string, operatingCompanyId: string) {
-  const access = await client.query(
-    `
-      SELECT 1
-      FROM org.user_company_access uca
-      WHERE uca.user_id = $1::uuid
-        AND uca.company_id = $2::uuid
-      LIMIT 1
-    `,
-    [userId, operatingCompanyId]
-  );
-  return (access.rowCount ?? 0) > 0;
-}
-
 async function appendExpenseCategoryMapAudit(
   client: DbClient,
   params: {
@@ -139,9 +125,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
-      if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
-        return { status: "forbidden" as const };
-      }
       const values: unknown[] = [parsed.data.operating_company_id];
       const where: string[] = ["m.operating_company_id = $1::uuid"];
       if (!parsed.data.include_inactive) where.push("m.is_active = true");
@@ -175,7 +158,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
       return { status: "ok" as const, rows: rows.rows };
     });
 
-    if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     return { rows: result.rows };
   });
 
@@ -188,9 +170,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client: DbClient) => {
-      if (!(await hasCompanyAccess(client, user.uuid, query.data.operating_company_id))) {
-        return { status: "forbidden" as const };
-      }
       const row = await client.query(
         `
           SELECT
@@ -218,7 +197,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
       return { status: "ok" as const, row: row.rows[0] ?? null };
     });
 
-    if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     if (!result.row) return reply.code(404).send({ error: "expense_category_map_not_found" });
     return result.row;
   });
@@ -232,9 +210,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
 
     try {
       const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
-        if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
-          return { status: "forbidden" as const };
-        }
         const inserted = await client.query(
           `
             INSERT INTO accounting.expense_category_account_map (
@@ -287,7 +262,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
         });
         return { status: "ok" as const, row };
       });
-      if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
       return reply.code(201).send(result.row);
     } catch (error) {
       const code = (error as { code?: string }).code;
@@ -309,9 +283,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
 
     try {
       const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
-        if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
-          return { status: "forbidden" as const };
-        }
         const current = await client.query<{
           id: string;
           account_id: string;
@@ -390,7 +361,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
         return { status: "ok" as const, row };
       });
 
-      if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
       if (result.status === "not_found") return reply.code(404).send({ error: "expense_category_map_not_found" });
       if (result.status === "account_immutable") {
         return reply.code(409).send({
@@ -417,10 +387,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
-      if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
-        return { status: "forbidden" as const };
-      }
-
       const updated = await client.query<{ id: string }>(
         `
           UPDATE accounting.expense_category_account_map
@@ -445,7 +411,6 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
       return { status: "ok" as const, id: row.id };
     });
 
-    if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     if (result.status === "not_found") return reply.code(404).send({ error: "expense_category_map_not_found" });
     return { ok: true, id: result.id };
   });
