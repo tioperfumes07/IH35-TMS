@@ -80,6 +80,46 @@ async function loadRecipients(client: {
  * Raise a reliability alarm across the channels appropriate to its severity. Best-effort per channel,
  * fail-loud (logged + returned), never throws — a monitor must never crash because an alarm channel did.
  */
+/**
+ * LST-F443367 (owner 10-25-2026 5:49 PM: "who authorized all these emails") — the evidence-presence cron raises this
+ * alarm on EVERY tick (~every 2-5 min, both API instances). Once #27665 fixed the recipient query, that became 42
+ * "[IH35 CRITICAL] Evidence objects MISSING in R2" emails in 96 minutes to 8 addresses, 3 of them test / fake logins.
+ * A condition that is still true is not news: email / SMS / on-screen go out ONCE per company + alarm source per 24h.
+ * The durable audit record still logs every occurrence.
+ */
+export const ALARM_REPEAT_WINDOW_HOURS = 24;
+
+/** Undeliverable / test domains are never emailed, even if a test login is left active. */
+export function isDeliverableAlarmAddress(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return false;
+  const domain = e.split("@")[1];
+  return !(/\.(invalid|local|localhost|test|example)$/.test(domain) || /^example\./.test(domain) || domain === "ih35dispatch.com" || domain === "ih35.local");
+}
+
+/** Title without its trailing live count, e.g. "Evidence objects MISSING in R2 (3)" -> "Evidence objects MISSING in R2". */
+export function alarmTitleStem(title: string): string {
+  return title.replace(/\s*\(\d+\)\s*$/, "").trim();
+}
+
+async function alreadyAlarmedRecently(
+  client: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<{ n: number }> }> },
+  operatingCompanyId: string,
+  source: string,
+  title: string,
+): Promise<boolean> {
+  const res = await client.query(
+    `SELECT count(*)::int AS n
+       FROM email.email_queue q
+      WHERE q.operating_company_id = $1::uuid
+        AND q.template_key = 'notification-dispatch'
+        AND q.created_at > now() - make_interval(hours => $4::int)
+        AND (q.template_vars->>'alarmSource' = $2 OR q.subject LIKE '[IH35 %] ' || $3 || '%')`,
+    [operatingCompanyId, source, alarmTitleStem(title), ALARM_REPEAT_WINDOW_HOURS],
+  );
+  return (res.rows[0]?.n ?? 0) > 0;
+}
+
 export async function dispatchReliabilityAlarm(
   input: ReliabilityAlarmInput,
   logger: Logger = consoleLogger,
@@ -94,7 +134,13 @@ export async function dispatchReliabilityAlarm(
     audit: { ok: false },
   };
 
+  let repeat = false;
   await withLuciaBypass(async (client) => {
+    try {
+      repeat = await alreadyAlarmedRecently(client as never, operatingCompanyId, source, title);
+    } catch (e) {
+      logger.error({ err: e, source }, "[reliability-alarm] repeat check failed — sending (fail loud, not silent)");
+    }
     let recipients: Array<{ id: string; email: string | null }> = [];
     try {
       recipients = await loadRecipients(client as never, operatingCompanyId);
@@ -102,8 +148,10 @@ export async function dispatchReliabilityAlarm(
       logger.error({ err: e, source }, "[reliability-alarm] failed to load recipients");
     }
 
-    // 1) ON-SCREEN — always, every recipient. createNotification(type='system').
-    try {
+    // 1) ON-SCREEN — every recipient, once per source per window (repeats only reach the audit log).
+    if (repeat) {
+      result.onScreen = { ok: true, recipients: 0, error: "repeat within window — suppressed" };
+    } else try {
       for (const r of recipients) {
         await createNotification(
           {
@@ -137,8 +185,10 @@ export async function dispatchReliabilityAlarm(
     }
 
     // 2) EMAIL — critical+warning. notification-dispatch template (vars: title, bodyText).
-    if (wantEmail) {
-      const to = recipients.map((r) => r.email).filter((e): e is string => Boolean(e && e.trim()));
+    if (wantEmail && repeat) {
+      result.email = { ok: true, recipients: 0, skipped: true, error: "repeat within window — suppressed" };
+    } else if (wantEmail) {
+      const to = recipients.map((r) => r.email).filter((e): e is string => Boolean(e && e.trim()) && isDeliverableAlarmAddress(e as string));
       if (to.length === 0) {
         result.email = { ok: false, recipients: 0, skipped: true, error: "no recipient emails" };
         logger.warn({ source }, "[reliability-alarm] email skipped — no recipient emails");
@@ -149,7 +199,7 @@ export async function dispatchReliabilityAlarm(
             toAddresses: to,
             subject: `[IH35 ${severity.toUpperCase()}] ${title}`,
             templateKey: "notification-dispatch",
-            templateVars: { title, bodyText: body },
+            templateVars: { title, bodyText: body, alarmSource: source },
           });
           result.email = { ok: true, recipients: to.length };
         } catch (e) {
@@ -166,7 +216,9 @@ export async function dispatchReliabilityAlarm(
 
   // 3) SMS — CRITICAL only; bypasses quiet-hours + per-user prefs by design. Target from env
   //    (identity.users has no phone column — gated users.phone is the cleaner future source).
-  if (wantSms) {
+  if (wantSms && repeat) {
+    result.sms = { ok: true, skipped: true, error: "repeat within window — suppressed" };
+  } else if (wantSms) {
     const to = (process.env.RELIABILITY_ALARM_SMS_TO ?? "").trim();
     if (!to) {
       result.sms = { ok: false, skipped: true, error: "RELIABILITY_ALARM_SMS_TO not set" };
