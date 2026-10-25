@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 56 Fuel › 10 sub-tabs FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-fuel-subtabs-no-pagination` · tip after #27672 Company
+- **DELTA:** Remove pagination KPI tiles (This page / Page size / In view) from Questions, Fills, Relay unmatched, Card overage, Fraud; History = one KPI row + FuelBoardSection fills table; Expense mapping + Loves prices use FuelBoardSection.
+- **GUARD:** verify-fuel-home-dashboard-wired · verify-fuel-history-transaction-date-display · verify-fuel-assignment-popup · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** FINAL-2 D-series / remaining process rows
+- **Files Modified:** FuelPlannerHome · FuelQuestionsPanel · RelayUnmatchedPage · CardOverageQueuePage · FraudAlertsList · verify-fuel-* · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 50 Settlements Company FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-settlements-company-board` · tip after #27671 Fuel Home

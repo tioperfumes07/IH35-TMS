@@ -129,6 +129,10 @@ export function collectProblems(sources) {
   if (!/Open questions/.test(sources.panel)) {
     problems.push(`${FILES.panel}: V3 KPI strip must include Open questions`);
   }
+  // ROUND 443.280 — pagination KPI theater forbidden on Fuel Questions.
+  if (/label=["']This page["']/.test(sources.panel) || /label=["']Page size["']/.test(sources.panel)) {
+    problems.push(`${FILES.panel}: must not render pagination KPIs This page / Page size (443.280)`);
+  }
 
   // LEAD 443.266-B — connectivity: id-bearing cells are EntityLinks (text only when the id is absent).
   for (const [re, what] of [

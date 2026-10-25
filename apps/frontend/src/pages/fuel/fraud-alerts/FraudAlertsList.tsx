@@ -377,7 +377,6 @@ export function FraudAlertsListPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-fraud-alerts-v3-kpi-strip"
       >
-        <V3KpiTile label={"In view"} value={kpiValue(visibleRows.length)} sub="this filter" testId="fuel-fraud-alerts-kpi-in-view" />
         <V3KpiTile label={"Open"} value={kpiValue(openCount)} sub="needs action" testId="fuel-fraud-alerts-kpi-open" />
         <V3KpiTile label={"Critical"} value={kpiValue(criticalCount)} sub="severity" testId="fuel-fraud-alerts-kpi-critical" />
         <V3KpiTile label={"Confirmed"} value={kpiValue(confirmedCount)} sub="fraud" testId="fuel-fraud-alerts-kpi-confirmed" />

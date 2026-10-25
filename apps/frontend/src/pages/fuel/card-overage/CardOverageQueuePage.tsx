@@ -363,7 +363,6 @@ export function CardOverageQueuePage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-card-overage-v3-kpi-strip"
       >
-        <V3KpiTile label={"In view"} value={kpiValue(visibleRows.length)} sub="this page" testId="fuel-card-overage-kpi-in-view" />
         <V3KpiTile label={"Matching"} value={kpiValue(totalMatching)} sub="filter total" testId="fuel-card-overage-kpi-matching" />
         <V3KpiTile
           label={"Overage $"}

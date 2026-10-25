@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFuelActiveRoutes,
@@ -73,6 +73,7 @@ type Props = {
 
 export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
@@ -485,17 +486,14 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />
-          {/* ROUND 443.326 — bordered section (no panel-stack chrome); same Accounting deep link. */}
-          <section
-            className="rounded-sm border border-gray-200 bg-white"
-            data-testid="fuel-expense-map-open-v3-panel"
+          {/* ROUND 443.280/326 — FuelBoardSection (no hand-rolled panel chrome); Accounting deep link. */}
+          <FuelBoardSection
+            title="Expense mapping"
+            subtitle="Map fuel card spend to GL expense categories for posting"
+            testId="fuel-expense-map-open-v3-panel"
+            onViewAll={() => navigate("/accounting/settings/expense-category-map")}
+            viewAllLabel="Open expense category map →"
           >
-            <div className="flex items-baseline gap-2 border-b border-gray-100 px-3.5 py-2.5">
-              <span className="text-xs font-bold text-[#0F1219]">Expense mapping</span>
-              <span className="text-xs text-[#6B7280]">
-                Map fuel card spend to GL expense categories for posting
-              </span>
-            </div>
             <div className="px-3 py-3 text-xs text-gray-700">
               <p className="text-xs text-gray-600">
                 Coverage above is read-only. Create or edit fuel category → account rows in Accounting.
@@ -508,7 +506,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 Open expense category map →
               </Link>
             </div>
-          </section>
+          </FuelBoardSection>
         </div>
       ) : null}
 
@@ -525,17 +523,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             <div data-testid="fuel-history-savings-error">
               <ListErrorBanner onRetry={() => void savingsQuery.refetch()} />
             </div>
-          ) : (
-            <SavingsPanel
-              sourceAvailable={Boolean(savingsQuery.data?.source_available)}
-              driverSavings={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
-              fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}
-              lostSavings={savingsQuery.data?.fleet_lost_savings_ytd ?? null}
-              topDriverName={(savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? null}
-              topDriverAmount={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
-            />
-          )}
-          {/* ROUND 443.250 History & savings V3 — Transactions / This page / Page size / Voided from getFuelTransactions. */}
+          ) : null}
+          {/* ROUND 443.280 — one KPI row (Transactions + Voided + savings); no pagination tiles; SavingsPanel stays on Planner. */}
           <div
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
             data-testid="fuel-history-v3-kpi-strip"
@@ -548,27 +537,42 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
               testId="fuel-history-kpi-total"
             />
             <V3KpiTile
-              label="This page"
-              value={
-                fuelTransactionsQuery.isPending
-                  ? "…"
-                  : String((fuelTransactionsQuery.data?.transactions ?? []).length)
-              }
-              sub={`page ${fuelHistoryPage} of ${fuelHistoryPageCount}`}
-              testId="fuel-history-kpi-page"
-            />
-            <V3KpiTile
-              label="Page size"
-              value={String(fuelHistoryPageSize)}
-              sub="rows per request"
-              testId="fuel-history-kpi-page-size"
-            />
-            <V3KpiTile
               label="Voided"
               value={fuelTransactionsQuery.isPending ? "…" : String(fuelHistoryVoidedCount)}
               sub={includeVoidedFuel ? "included in list" : "hidden by default"}
               tone={fuelHistoryVoidedCount > 0 ? "muted" : "ink"}
               testId="fuel-history-kpi-voided"
+            />
+            <V3KpiTile
+              label="Fleet savings YTD"
+              value={
+                savingsQuery.isPending
+                  ? "…"
+                  : savingsQuery.data?.source_available && savingsQuery.data.fleet_savings_ytd != null
+                    ? `$${Number(savingsQuery.data.fleet_savings_ytd).toFixed(2)}`
+                    : "—"
+              }
+              sub="planner compliance savings"
+              testId="fuel-history-kpi-fleet-savings"
+            />
+            <V3KpiTile
+              label="Lost savings YTD"
+              value={
+                savingsQuery.isPending
+                  ? "…"
+                  : savingsQuery.data?.source_available && savingsQuery.data.fleet_lost_savings_ytd != null
+                    ? `$${Number(savingsQuery.data.fleet_lost_savings_ytd).toFixed(2)}`
+                    : "—"
+              }
+              sub="from non-compliance"
+              tone={
+                Boolean(savingsQuery.data?.source_available) &&
+                savingsQuery.data?.fleet_lost_savings_ytd != null &&
+                Number(savingsQuery.data.fleet_lost_savings_ytd) > 0
+                  ? "red"
+                  : "ink"
+              }
+              testId="fuel-history-kpi-lost-savings"
             />
           </div>
           {/* ROUND 443.326 — board grammar: KPI + MoneyListToolbar + ParityTable (no V3Panel wrap). */}
@@ -657,55 +661,61 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
               ) : null}
             </div>
             <div className="mt-3">
-              {fuelTransactionsQuery.isError ? (
-                <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
-              ) : (
-                <>
-                  {/* Always mount ParityTable (via FuelTransactionsTable) — empty/loading stay on the board. */}
-                  <FuelTransactionsTable
-                    suppressToolbarSearch
-                    rows={
-                      fuelTransactionsQuery.isLoading
-                        ? []
-                        : (fuelTransactionsQuery.data?.transactions ?? []).filter((row) => {
-                            if (showFilter.includes("with_expense") && !row.expense_id) return false;
-                            if (showFilter.includes("with_je") && !row.journal_entry_id) return false;
-                            const q = historySearch.trim().toLowerCase();
-                            if (!q) return true;
-                            const hay = [
-                              row.driver_name,
-                              row.unit_number,
-                              row.load_number,
-                              row.trailer_number,
-                              row.station,
-                              row.vendor_name,
-                              row.expense_number,
-                            ]
-                              .filter(Boolean)
-                              .join(" ")
-                              .toLowerCase();
-                            return hay.includes(q);
-                          })
-                    }
-                    operatingCompanyId={companyId}
-                  />
-                  <div className="mt-2 flex items-center justify-end gap-2 text-xs text-[#4B5563]" data-testid="fuel-history-server-pager">
-                    <ActionButton
-                      disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
-                      onClick={() => setFuelHistoryPage((page) => Math.max(1, page - 1))}
-                    >
-                      Previous transactions
-                    </ActionButton>
-                    <span>Page {fuelHistoryPage} of {fuelHistoryPageCount} · {fuelHistoryTotal} transactions</span>
-                    <ActionButton
-                      disabled={fuelHistoryPage >= fuelHistoryPageCount || fuelTransactionsQuery.isFetching}
-                      onClick={() => setFuelHistoryPage((page) => Math.min(fuelHistoryPageCount, page + 1))}
-                    >
-                      Next transactions
-                    </ActionButton>
-                  </div>
-                </>
-              )}
+              <FuelBoardSection
+                title="Fills"
+                subtitle="Fuel card and Relay fills with load attribution"
+                testId="fuel-history-fills-board-section"
+              >
+                {fuelTransactionsQuery.isError ? (
+                  <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
+                ) : (
+                  <>
+                    {/* Always mount ParityTable (via FuelTransactionsTable) — empty/loading stay on the board. */}
+                    <FuelTransactionsTable
+                      suppressToolbarSearch
+                      rows={
+                        fuelTransactionsQuery.isLoading
+                          ? []
+                          : (fuelTransactionsQuery.data?.transactions ?? []).filter((row) => {
+                              if (showFilter.includes("with_expense") && !row.expense_id) return false;
+                              if (showFilter.includes("with_je") && !row.journal_entry_id) return false;
+                              const q = historySearch.trim().toLowerCase();
+                              if (!q) return true;
+                              const hay = [
+                                row.driver_name,
+                                row.unit_number,
+                                row.load_number,
+                                row.trailer_number,
+                                row.station,
+                                row.vendor_name,
+                                row.expense_number,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")
+                                .toLowerCase();
+                              return hay.includes(q);
+                            })
+                      }
+                      operatingCompanyId={companyId}
+                    />
+                    <div className="mt-2 flex items-center justify-end gap-2 px-3 pb-2 text-xs text-[#4B5563]" data-testid="fuel-history-server-pager">
+                      <ActionButton
+                        disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
+                        onClick={() => setFuelHistoryPage((page) => Math.max(1, page - 1))}
+                      >
+                        Previous transactions
+                      </ActionButton>
+                      <span>Page {fuelHistoryPage} of {fuelHistoryPageCount} · {fuelHistoryTotal} transactions</span>
+                      <ActionButton
+                        disabled={fuelHistoryPage >= fuelHistoryPageCount || fuelTransactionsQuery.isFetching}
+                        onClick={() => setFuelHistoryPage((page) => Math.min(fuelHistoryPageCount, page + 1))}
+                      >
+                        Next transactions
+                      </ActionButton>
+                    </div>
+                  </>
+                )}
+              </FuelBoardSection>
             </div>
           </div>
         </div>
@@ -715,15 +725,16 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         lovesSyncQuery.isError ? (
           <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} />
         ) : (
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
-            <h3 className="text-xs font-semibold text-gray-900">Loves daily prices</h3>
-            <p className="mt-2 text-xs text-gray-600">
-              Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
-            </p>
-            <ActionButton className="mt-3" onClick={() => setUploadOpen(true)}>
-              Upload Loves prices
-            </ActionButton>
-          </section>
+          <FuelBoardSection title="Loves daily prices" subtitle="Station rack prices used by the planner" testId="fuel-loves-prices-board-section">
+            <div className="px-3 py-3 text-xs text-gray-700">
+              <p className="text-xs text-gray-600">
+                Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
+              </p>
+              <ActionButton className="mt-3" onClick={() => setUploadOpen(true)}>
+                Upload Loves prices
+              </ActionButton>
+            </div>
+          </FuelBoardSection>
         )
       ) : null}
 
