@@ -132,6 +132,9 @@ export function SettlementsCashAdvancesBoard() {
   const outstanding = money(
     amount(kpisQuery.data as Record<string, unknown> | undefined, "total_outstanding"),
   );
+  const recovered = money(
+    amount(kpisQuery.data as Record<string, unknown> | undefined, "recovered_this_period"),
+  );
 
   const openAdvance = (row: Record<string, unknown>) => {
     setSelectedId(String(row.id));
@@ -268,7 +271,7 @@ export function SettlementsCashAdvancesBoard() {
           />
           <V3KpiTile
             label={S443326.cashAdvances.kpiRecovered}
-            value="—"
+            value={display(recovered)}
             sub={S443326.cashAdvances.kpiRecoveredSub}
             testId="cash-advances-kpi-recovered"
             onClick={() => navigate(`${BASE_PATH}?tab=paid_off`)}

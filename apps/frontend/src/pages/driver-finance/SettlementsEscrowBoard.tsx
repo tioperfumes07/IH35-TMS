@@ -140,16 +140,13 @@ export function SettlementsEscrowBoard() {
       return {
         driversHolding: null as number | null,
         totalHeldCents: null as number | null,
-        scheduledLoaded: false,
       };
     }
-    const loaded = !accountsQuery.isPending || allDriverRows.length > 0;
     return {
       driversHolding: allDriverRows.length,
       totalHeldCents: allDriverRows.reduce((s, r) => s + r.heldCents, 0),
-      scheduledLoaded: loaded,
     };
-  }, [accountsQuery.isError, accountsQuery.isPending, allDriverRows]);
+  }, [accountsQuery.isError, allDriverRows]);
 
   const columns = useMemo<ParityColumn<DriverEscrowRow>[]>(
     () => [
@@ -244,7 +241,8 @@ export function SettlementsEscrowBoard() {
         />
         <V3KpiTile
           label="Scheduled releases"
-          value={escrowHomeKpis.scheduledLoaded ? "0" : "—"}
+          value="—"
+          sub="no schedule feed"
           testId="escrow-kpi-scheduled-releases"
         />
       </div>

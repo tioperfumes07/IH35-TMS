@@ -56,6 +56,13 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
   if (!/Open register →/.test(board)) {
     failures.push(`${BOARD}: must keep Open register → action (board)`);
   }
+  // Fill-not-shell — Scheduled releases has no feed; never invent "0" when accounts load.
+  if (!board.includes('testId="escrow-kpi-scheduled-releases"') || !board.includes("no schedule feed")) {
+    failures.push(`${BOARD}: Scheduled releases KPI must be honest — with sub "no schedule feed"`);
+  }
+  if (/scheduledLoaded\s*\?\s*["']0["']/.test(board) || /Scheduled releases[\s\S]{0,200}scheduledLoaded\s*\?\s*["']0["']/.test(board)) {
+    failures.push(`${BOARD}: Scheduled releases must not show fake "0" when accounts load`);
+  }
 
   const register = read(REGISTER);
   if (!register.includes('data-settlements-escrow-register-rebuild="1"')) {
@@ -92,7 +99,8 @@ if (process.argv.includes("--selftest")) {
     BOARD,
     `import { BoardSection } from "../../components/v3/BoardSection";\n` +
       `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\nsettlementsEscrowRegisterHref\n` +
-      `toolbar\nfooterCells\n<BoardSection\nOpen register →\n`,
+      `toolbar\nfooterCells\n<BoardSection\nOpen register →\n` +
+      `testId="escrow-kpi-scheduled-releases"\nno schedule feed\nvalue="—"\n`,
   );
   mk(
     REGISTER,

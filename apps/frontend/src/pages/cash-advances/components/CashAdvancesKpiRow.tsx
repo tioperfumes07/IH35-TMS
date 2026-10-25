@@ -126,6 +126,7 @@ export function CashAdvancesKpiRow({
   const onFile = amount(kpis, "advances_on_file");
   const awaiting = amount(kpis, "pending_approval");
   const outstanding = money(amount(kpis, "total_outstanding"));
+  const recovered = money(amount(kpis, "recovered_this_period"));
   const previewRequests = requestRows.slice(0, PREVIEW);
   const previewAdvances = advanceRows.slice(0, PREVIEW);
 
@@ -161,8 +162,8 @@ export function CashAdvancesKpiRow({
         />
         <V3KpiTile
           label="Recovered this period"
-          value="—"
-          sub="no period total on KPI feed"
+          value={display(recovered)}
+          sub="Sunday week via settlement recovery"
           testId="cash-advances-kpi-recovered"
           onClick={() => navigate(`${root}?tab=paid_off`)}
         />

@@ -141,8 +141,37 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     // ROUND 443.250 — board "Advances on file" is COUNT(*) on the same context view (read-only;
-    // not a new GL feed). Recovered-this-period stays FE "—" until a period total lands on the view.
+    // not a new GL feed). Recovered-this-period = sum(amount − outstanding) for advances whose
+    // recovered_in_settlement_id points at a settlement with period_end ≥ this Sunday week start
+    // (same Sunday-week bucket as settlements.routes dashboard KPIs).
     const row = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const sundayWeekStartSql =
+        `(CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day')`;
+      const recoveredParams: unknown[] = [companyId];
+      let recoveredDriverClause = "";
+      if (query.data.driver_id) {
+        recoveredParams.push(entityIdFilterValues(query.data.driver_id));
+        recoveredDriverClause = `AND a.driver_id = ANY($${recoveredParams.length}::uuid[])`;
+      }
+      const recoveredRes = await client.query<{ recovered_this_period: string }>(
+        `
+          SELECT COALESCE(
+            SUM(GREATEST(COALESCE(a.amount, 0) - COALESCE(a.outstanding_balance, 0), 0)),
+            0
+          ) AS recovered_this_period
+          FROM driver_finance.driver_advances a
+          INNER JOIN driver_finance.driver_settlements s
+            ON s.id = a.recovered_in_settlement_id
+           AND s.operating_company_id = a.operating_company_id
+          WHERE a.operating_company_id = $1::uuid
+            AND a.recovered_in_settlement_id IS NOT NULL
+            AND s.period_end >= ${sundayWeekStartSql}
+            ${recoveredDriverClause}
+        `,
+        recoveredParams,
+      );
+      const recovered_this_period = Number(recoveredRes.rows[0]?.recovered_this_period ?? 0);
+
       if (query.data.driver_id) {
         // Same aggregates as views.cash_advances_dashboard_kpis, over the selected full cohort.
         const selected = await client.query(`SELECT $1::uuid AS operating_company_id,
@@ -155,7 +184,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           FROM views.cash_advances_with_context
           WHERE operating_company_id = $1::uuid AND driver_id = ANY($2::uuid[])`,
         [companyId, entityIdFilterValues(query.data.driver_id)]);
-        return selected.rows[0];
+        return { ...selected.rows[0], recovered_this_period };
       }
       const res = await client
         .query(
@@ -178,7 +207,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           `,
           [companyId]
         );
-      if (res.rows[0]) return res.rows[0];
+      if (res.rows[0]) return { ...res.rows[0], recovered_this_period };
       const countRes = await client.query(
         `
           SELECT COUNT(*)::int AS advances_on_file
@@ -195,6 +224,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         avg_per_advance: 0,
         drivers_with_active: 0,
         advances_on_file: Number(countRes.rows[0]?.advances_on_file ?? 0),
+        recovered_this_period,
       };
     });
     return (
@@ -206,6 +236,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         avg_per_advance: 0,
         drivers_with_active: 0,
         advances_on_file: 0,
+        recovered_this_period: 0,
       }
     );
   });
