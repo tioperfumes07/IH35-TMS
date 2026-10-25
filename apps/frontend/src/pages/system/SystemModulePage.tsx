@@ -24,6 +24,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
+import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { formatGlLedgerPre } from "./txHealthLedgerText";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -37,6 +38,12 @@ import { InfoPopover } from "../../components/shared/InfoPopover";
  *
  * NON-FINANCIAL: reads financial data (AP aging, QBO recon/sync health), posts nothing.
  */
+
+/** D060 — Transaction Health Generated/document dates: MM/DD/YYYY, h:mm AM/PM CT (never month-name ctDateTime). */
+function txHealthDateTime(iso: string | null | undefined): string {
+  const s = formatDateTimeUS(iso);
+  return s ? `${s} CT` : "—";
+}
 
 // Canonical tab set — the guard (scripts/verify-system-module.mjs) asserts all eight labels are
 // present. TXH-01 (2026-08-28) added "Transactions": every TMS-native document, computed-at-read-time
@@ -686,7 +693,7 @@ function TransactionHealthTab() {
         <Row label="Loaded rows">
           <span className="tabular-nums">{rows.length}</span>
         </Row>
-        <Row label="Generated">{ctDateTime(generatedAt)}</Row>
+        <Row label="Generated">{txHealthDateTime(generatedAt)}</Row>
       </Card>
 
       <Card title="Filters" sub="Default is every active company and every status. Uncheck an entity to hide it. Yesterday-morning dates usually mean TRANSPORTATION is the only chip still on — USMCA has today's TEST docs.">
@@ -720,7 +727,7 @@ function TransactionHealthTab() {
         <Card
           title={selected ? selected.display_label : "Document"}
           pill={selected ? <Pill tone={selected.status === "OK" ? "ok" : selected.status === "WARN" ? "warn" : "off"}>{selected.status}</Pill> : undefined}
-          sub={selected ? `${selected.doc_type.replace(/_/g, " ")} · ${selected.entity_code} · ${ctDateTime(selected.event_at)}` : "Select a document from the list."}
+          sub={selected ? `${selected.doc_type.replace(/_/g, " ")} · ${selected.entity_code} · ${txHealthDateTime(selected.event_at)}` : "Select a document from the list."}
         >
           {query.isError ? (
             <p className="text-xs font-semibold text-red-700" role="alert">
@@ -783,7 +790,7 @@ function TransactionHealthTab() {
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-[#1F2A44]">{row.display_label}</span>
                       <span className="block truncate text-xs text-[#4B5563]">
-                        {row.doc_type.replace(/_/g, " ")} · {row.entity_code} · {ctDateTime(row.event_at)}
+                        {row.doc_type.replace(/_/g, " ")} · {row.entity_code} · {txHealthDateTime(row.event_at)}
                       </span>
                     </span>
                     <Pill tone={row.status === "OK" ? "ok" : row.status === "WARN" ? "warn" : "off"}>{row.status}</Pill>

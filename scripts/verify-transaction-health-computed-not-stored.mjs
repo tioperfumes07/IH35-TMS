@@ -156,6 +156,22 @@ export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migr
     failures.push(`${PAGE_FILE}: wiring map must render blocked_by_constraint as its own state, not a silent default`);
   }
 
+  // D060 — Generated + document event_at in TransactionHealthTab use MM/DD/YYYY CT (never month-name ctDateTime).
+  if (tab) {
+    if (!/function txHealthDateTime\b/.test(pageSrc) || !/formatDateTimeUS/.test(pageSrc)) {
+      failures.push(`${PAGE_FILE}: D060 must define txHealthDateTime via formatDateTimeUS`);
+    }
+    if (!/txHealthDateTime\(generatedAt\)/.test(tab)) {
+      failures.push(`${PAGE_FILE}: D060 Generated row must use txHealthDateTime(generatedAt)`);
+    }
+    if (!/txHealthDateTime\(selected\.event_at\)/.test(tab) || !/txHealthDateTime\(row\.event_at\)/.test(tab)) {
+      failures.push(`${PAGE_FILE}: D060 document dates must use txHealthDateTime(event_at)`);
+    }
+    if (/ctDateTime\(generatedAt\)/.test(tab) || /ctDateTime\(selected\.event_at\)/.test(tab) || /ctDateTime\(row\.event_at\)/.test(tab)) {
+      failures.push(`${PAGE_FILE}: D060 forbids ctDateTime (month-name) on Transaction Health Generated/document dates`);
+    }
+  }
+
   return failures;
 }
 
@@ -261,6 +277,20 @@ function selftest() {
   const offenderG = check({ ...baseline, pageSrc: plantedG });
   if (!offenderG.some((f) => f.includes("blocked_by_constraint"))) {
     console.error("FAIL(selftest): planted offender G (blocked_by_constraint removed) was NOT caught");
+    process.exit(1);
+  }
+
+  // Offender H (D060): plant month-name ctDateTime back onto Generated.
+  const plantD060From = "txHealthDateTime(generatedAt)";
+  const plantD060To = "ctDateTime(generatedAt)";
+  if (!baseline.pageSrc.includes(plantD060From)) {
+    console.error("FAIL(selftest): D060 plant target txHealthDateTime(generatedAt) missing — selftest out of sync");
+    process.exit(1);
+  }
+  const plantedH = baseline.pageSrc.replace(plantD060From, plantD060To);
+  const offenderH = check({ ...baseline, pageSrc: plantedH });
+  if (!offenderH.some((f) => f.includes("D060"))) {
+    console.error("FAIL(selftest): planted offender H (D060 ctDateTime regression) was NOT caught");
     process.exit(1);
   }
 
