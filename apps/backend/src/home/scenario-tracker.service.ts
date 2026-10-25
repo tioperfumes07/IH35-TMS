@@ -46,6 +46,27 @@ export function centralTimeSql(): string {
   return `to_char(now() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') || ' America/Chicago'`;
 }
 
+/**
+ * D059 — certification stamps shown in scenario-tracker evidence must be MM/DD/YYYY h:mm AM/PM CT.
+ * Never interpolate raw `timestamptz::text` (fractional seconds + `+00` timezone).
+ */
+export function formatCertVerifiedAt(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return String(raw);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}/${get("day")}/${get("year")} ${get("hour")}:${get("minute")} ${get("dayPeriod")} CT`;
+}
+
 /** A relation exists on prod right now. Used for Merged and for source_health. */
 async function relationPresent(client: QueryClient, rel: string): Promise<boolean> {
   const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [rel]);
@@ -197,7 +218,9 @@ export async function probeScenario(
 
   if (cert && cert.is_test_data) {
     // A test/fixture certification is recorded for traceability but may not move a dot.
-    notes.push(`test cert ignored (${cert.verified_by} @ ${cert.verified_at}): ${cert.evidence}`);
+    notes.push(
+      `test cert ignored (${cert.verified_by} @ ${formatCertVerifiedAt(cert.verified_at)}): ${cert.evidence}`,
+    );
   } else if (cert) {
     state = cert.state;
     if (def.je_contract && cert.state === "done") {
@@ -235,7 +258,7 @@ export async function probeScenario(
       state = "fix";
     }
     notes.push(
-      `cert by ${cert.verified_by} @ ${cert.verified_at}${cert.superseded ? " (superseded)" : ""}: ${cert.evidence}`
+      `cert by ${cert.verified_by} @ ${formatCertVerifiedAt(cert.verified_at)}${cert.superseded ? " (superseded)" : ""}: ${cert.evidence}`,
     );
   }
 
