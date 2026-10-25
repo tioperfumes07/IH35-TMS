@@ -27,21 +27,10 @@ export function run() {
   const subs = read(SUBS);
   const panel = read(PANEL);
 
-  if (!/kpiReady/.test(home) && !/kpiQuery\.isSuccess/.test(home)) {
-    failures.push(`${HOME}: must gate Scheduled / Run-last-7d KPIs on KPI success (no fake 0 while loading)`);
-  }
-  if (/scheduled \?\? 0/.test(home) || /run_last_7d \?\? 0/.test(home)) {
-    // allowed only inside kpiReady ternary value:
-    const bad = home.match(/value:\s*String\(kpiQuery\.data\?\.(scheduled|run_last_7d)\s*\?\?\s*0\)/g);
-    if (bad && !/kpiReady \? String\(kpiQuery\.data\?\.(scheduled|run_last_7d)/.test(home)) {
-      failures.push(`${HOME}: must not render scheduled/run_last_7d as 0 before KPI success`);
-    }
-  }
-  if (!/kpiReady \? String\(kpiQuery\.data\?\.scheduled/.test(home)) {
-    failures.push(`${HOME}: Scheduled KPI must use kpiReady ? real count : "—"`);
-  }
-  if (!/kpiReady \? String\(kpiQuery\.data\?\.run_last_7d/.test(home)) {
-    failures.push(`${HOME}: Run last 7 days KPI must use kpiReady ? real count : "—"`);
+  // ReportsHome was redesigned (443.267): KPI count tiles for scheduled/run_last_7d moved to
+  // ScheduledReportsPanel. Guard only fires if HOME still renders those counts ungated.
+  if (/kpiQuery\.data\?\.(scheduled|run_last_7d)\s*\?\?\s*0/.test(home) && !/kpiReady/.test(home)) {
+    failures.push(`${HOME}: must not render scheduled/run_last_7d as 0 before KPI success (gate on kpiReady)`);
   }
   // LEAD 443.181: the table is ParityTable now (emptyText=); MobileOptimizedTable used emptyMessage=.
   if (!/(?:emptyMessage|emptyText)=/.test(subs) || !/No subscriptions found/.test(subs)) {
@@ -57,9 +46,16 @@ export function run() {
 
 function main() {
   if (process.argv.includes("--selftest")) {
+    // Verify clean sources pass first.
+    const clean = run();
+    if (clean.length) {
+      console.error("SELFTEST FAIL: clean sources should pass:", clean);
+      process.exit(1);
+    }
+    // Plant: HOME renders scheduled count as 0 without kpiReady gating → must fail.
     const orig = read(HOME);
-    const broken = orig.replace(/kpiReady \? String\(kpiQuery\.data\?\.scheduled/g, "String(kpiQuery.data?.scheduled");
-    fs.writeFileSync(path.join(ROOT, HOME), broken);
+    const planted = orig + "\nconst _x = kpiQuery.data?.scheduled ?? 0;\n";
+    fs.writeFileSync(path.join(ROOT, HOME), planted);
     let fail;
     try {
       fail = run();
@@ -67,7 +63,7 @@ function main() {
       fs.writeFileSync(path.join(ROOT, HOME), orig);
     }
     if (!fail.length) {
-      console.error("SELFTEST FAIL: expected failures");
+      console.error("SELFTEST FAIL: ungated scheduled ?? 0 in HOME should fail");
       process.exit(1);
     }
     console.log("SELFTEST OK");

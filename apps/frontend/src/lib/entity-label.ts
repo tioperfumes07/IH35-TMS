@@ -40,9 +40,9 @@ const UUID_SHAPE_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Nouns whose resolved labels are run through formatPersonName (title-case, never ALL CAPS). */
-// LEAD 443.266-A / 443.257-D: drivers and users (ALL CAPS from Samsara/payroll) + customers (ALL CAPS from
-// freight/ELD imports). formatPersonName only converts ALL-CAPS strings — already-mixed names are kept as typed.
-const PERSON_NOUNS = new Set(["driver", "user", "customer"]);
+// LEAD 443.266-A / 443.257-D: drivers and users only — organisation names (customers, vendors, etc.)
+// keep their exact casing. verify-person-names-normalized-at-write enforces this set.
+const PERSON_NOUNS = new Set(["driver", "user"]);
 
 /**
  * ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name.

@@ -1518,6 +1518,24 @@ jobs:
       - name: verify:company-settlement-negative-ratchet
         run: node scripts/verify-steps/18841-verify-company-settlement-negative-ratchet.mjs
 
+      # ENG-34 (step 18565) — previously-unwired guards now run + shrink-only ratchet on .guard-exempt.json
+      - name: verify:unwired-guards-shrink-only --selftest
+        run: node scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs --selftest
+      - name: verify:unwired-guards-shrink-only
+        run: node scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs
+
+      # ENG-40 (step 18793) — no closed driver settlement without its company settlement (USMCA)
+      - name: verify:close-creates-company-settlement --selftest
+        run: node scripts/verify-steps/18793-verify-close-creates-company-settlement.mjs --selftest
+      - name: verify:close-creates-company-settlement
+        run: node scripts/verify-steps/18793-verify-close-creates-company-settlement.mjs
+
+      # ENG-46 (step 18821) — posted bill_payments on USMCA must have spine JE link
+      - name: verify:bill-payment-has-spine-link --selftest
+        run: node scripts/verify-steps/18821-verify-bill-payment-has-spine-link.mjs --selftest
+      - name: verify:bill-payment-has-spine-link
+        run: node scripts/verify-steps/18821-verify-bill-payment-has-spine-link.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards
