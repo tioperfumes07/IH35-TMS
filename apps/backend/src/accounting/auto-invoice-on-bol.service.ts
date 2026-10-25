@@ -101,25 +101,12 @@ export async function autoInvoiceOnBol(
     if (!pipelineOn) return { ok: false, reason: "pipeline_off" };
   }
 
+  // ACCT-F443344 (2026-10-24): BOL check moved to AFTER invoice creation so that the receivable
+  // (draft invoice) always exists at delivery, regardless of BOL upload status. Revenue recognition
+  // and raising the receivable are one event (ACCT-F351); sending is the second step that requires
+  // a BOL. Without this change: delivered loads with no BOL had no invoice at all, posting $29,050
+  // of earned A/R with no corresponding receivable.
   const { hasBol, fileId: bolFileId } = await loadHasBolDocument(client, input.loadId);
-  if (!hasBol || !bolFileId) {
-    await appendCrudAudit(
-      client,
-      input.userId,
-      "accounting.invoice.awaiting_bol",
-      {
-        resource_type: "mdata.loads",
-        resource_id: input.loadId,
-        operating_company_id: input.operatingCompanyId,
-        load_id: input.loadId,
-        waiting_for: "BOL",
-        message: "Invoice auto-generation waiting for a saved BOL on this load.",
-      },
-      "info",
-      "AUTO-INVOICE-ON-BOL"
-    );
-    return { ok: false, reason: "awaiting_bol" };
-  }
 
   let created = false;
   let converted = false;
@@ -165,6 +152,27 @@ export async function autoInvoiceOnBol(
     invoiceId = conv.invoiceId || invoiceId;
     converted = Boolean(conv.converted);
     status = "draft";
+  }
+
+  // BOL gate for SENDING — draft receivable already exists above; only the send requires a BOL.
+  if (!hasBol || !bolFileId) {
+    await appendCrudAudit(
+      client,
+      input.userId,
+      "accounting.invoice.awaiting_bol",
+      {
+        resource_type: "mdata.loads",
+        resource_id: input.loadId,
+        operating_company_id: input.operatingCompanyId,
+        load_id: input.loadId,
+        invoice_id: invoiceId,
+        waiting_for: "BOL",
+        message: "Draft invoice raised; send deferred until a saved BOL exists on this load.",
+      },
+      "info",
+      "AUTO-INVOICE-ON-BOL"
+    );
+    return { ok: false, reason: "awaiting_bol" };
   }
 
   let sent = false;

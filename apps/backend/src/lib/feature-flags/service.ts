@@ -377,7 +377,18 @@ export async function isEnabled(
         await setScopedCompanyContext(client, actingUser, context.operating_company_id);
       }
     } catch {
-      // Not a member (or no user context) — leave the scope unset and resolve as before.
+      // Not a member (or no user context) — set just the operating_company_id GUC directly so the
+      // feature_flag_overrides RLS policy can still match the company-scoped override row.
+      // LV-FLAG-SCOPE-FALLBACK (2026-10-24): driver/geofence actors are not office members but the
+      // company_id is trusted (sourced from the load record, not user input).
+      try {
+        await (client as { query: (sql: string, vals?: unknown[]) => Promise<unknown> }).query(
+          `SELECT set_config('app.operating_company_id', $1, true)`,
+          [context.operating_company_id]
+        );
+      } catch {
+        /* GUC fallback also failed — resolve unscoped (safe: falls to default_enabled). */
+      }
     }
   }
 
