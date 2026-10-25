@@ -8,6 +8,7 @@ import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
+import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { JournalEntryTypePicker } from "./JournalEntryTypePicker";
@@ -225,7 +226,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
         ) : (
           <>
             <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700">
-              <span className="font-semibold">Date:</span> {date}
+              {/* D064 — Step 2 header summary matches Step 1 DatePicker (MM/DD/YYYY), never raw YYYY-MM-DD. */}
+              <span className="font-semibold">Date:</span> {formatDateUS(date)}
               {referenceNumber.trim() ? (
                 <>
                   {" · "}

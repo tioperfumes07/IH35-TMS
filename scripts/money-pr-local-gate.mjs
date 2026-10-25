@@ -1053,6 +1053,14 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-transaction-health-computed-not-stored.mjs",
     ],
   ],
+  // FINAL-2 D064 — Manual JE Step 2 header summary Date is MM/DD/YYYY (never raw YYYY-MM-DD).
+  [
+    "verify-91105-cashfcst-manualje-legalcost-slate-leftover-chrome",
+    [
+      "apps/frontend/src/components/accounting/ManualJEModal.tsx",
+      "scripts/verify-91105-cashfcst-manualje-legalcost-slate-leftover-chrome.mjs",
+    ],
+  ],
   // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
   [
     "verify-no-opco-filter-on-tables-without-it",

@@ -43,7 +43,7 @@ export function PhotoGallery({ photos, onArchive }: { photos: Photo[]; onArchive
             <div className="mt-1 flex items-center gap-1">
               <span className="flex-1 truncate text-xs uppercase text-gray-500">{label}</span>
               {p.is_primary && (
-                <span className="rounded-sm bg-[#16A34A] px-1 text-[10px] font-semibold text-white">Primary</span>
+                <span className="rounded-sm bg-[#16A34A] px-1 text-xs font-semibold text-white">Primary</span>
               )}
             </div>
             <div className="truncate text-xs text-gray-700">{p.caption ?? "—"}</div>
