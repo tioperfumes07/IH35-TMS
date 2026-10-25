@@ -39,13 +39,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export async function markExpenseLoadConfirmedBy(client: Db, userId: string): Promise<void> {
   if (!UUID.test(userId)) return;
-  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1, true)", [userId]);
+  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1::text, true)", [userId]);
 }
 
 /** Run `fn` with this person as the confirming actor (transaction-local); the actor is cleared afterwards. */
 export async function withExpenseLoadConfirmedBy<T>(client: Db, userId: string, fn: () => Promise<T>): Promise<T> {
   if (!UUID.test(userId)) throw new ExpenseLoadConfirmRefused("CONFIRMING_USER_INVALID", "A load is confirmed by a signed-in person.");
-  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1, true)", [userId]);
+  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1::text, true)", [userId]);
   try {
     return await fn();
   } finally {

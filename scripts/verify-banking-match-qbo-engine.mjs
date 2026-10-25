@@ -298,8 +298,8 @@ function selftest() {
     ["no relevance floor", { ...base, service: base.service.replace(".filter((c) => explicitSearch || passesRelevanceFloor(c))", "") }],
     ["floor ignores similarity", { ...base, service: base.service.replace("input.amountGapCents <= input.toleranceCents || input.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN", "input.amountGapCents <= input.toleranceCents") }],
     // 443.168 J
-    ["described payee writes a categorization", { ...base, engine: base.engine.replace("suggested_reason = $6,", "suggested_reason = $6, categorized_at = now(),") }],
-    ["described payee without reason", { ...base, engine: base.engine.replace("suggested_reason = $6,", "") }],
+    ["described payee writes a categorization", { ...base, engine: base.engine.replace("suggested_customer_id = $3::uuid,", "suggested_customer_id = $3::uuid,\n        categorized_at = now(),") }],
+    ["described payee without reason", { ...base, engine: base.engine.replace("suggested_confidence = 'medium',\n        suggested_source = $5,\n        suggested_reason = $6,", "suggested_confidence = 'medium',\n        suggested_source = $5,") }],
     ["described payee overwrites a rule", { ...base, engine: base.engine.replace("AND (suggested_source IS NULL OR suggested_source LIKE 'description_payee:%' OR suggested_source LIKE 'fuzzy_vendor_match:%')", "") }],
     ["money-in pass dropped", { ...base, engine: base.engine.replace("AND categorized_at IS NULL AND is_credit = true", "AND false") }],
     ["plaid ingest skips suggestion", { ...base, plaid: base.plaid.replace("await suggestForBankTransaction(", "await applyBankingRulesForTransaction(") }],

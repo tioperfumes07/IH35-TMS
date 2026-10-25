@@ -1045,7 +1045,7 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     if (target.to_load_id && input.confirm_load_by_user_id) {
       // same transaction-local actor the confirm engine sets (trigger accounting.expense_load_confirmation_rule)
-      await client.query(`SELECT set_config('app.expense_load_confirm_actor', $1, true)`, [input.confirm_load_by_user_id]);
+      await client.query(`SELECT set_config('app.expense_load_confirm_actor', $1::text, true)`, [input.confirm_load_by_user_id]);
     }
 
     // U24 — an item move carries the item's own expense account (unless the account is given explicitly), so the ledger

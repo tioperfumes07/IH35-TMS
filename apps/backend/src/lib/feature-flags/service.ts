@@ -383,7 +383,7 @@ export async function isEnabled(
       // company_id is trusted (sourced from the load record, not user input).
       try {
         await (client as { query: (sql: string, vals?: unknown[]) => Promise<unknown> }).query(
-          `SELECT set_config('app.operating_company_id', $1, true)`,
+          `SELECT set_config('app.operating_company_id', $1::text, true)`,
           [context.operating_company_id]
         );
       } catch {

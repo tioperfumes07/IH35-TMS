@@ -52,7 +52,7 @@ export function check(srcRaw) {
   }
 
   // All 3 UPDATE sites this finding touched must carry RETURNING id.
-  const updateReturningCount = (src.match(/UPDATE (banking\.reconciliation_sessions|accounting\.banking_rules)[\s\S]{0,300}?RETURNING id/g) ?? []).length;
+  const updateReturningCount = (src.match(/UPDATE (banking\.reconciliation_sessions|accounting\.banking_rules)[\s\S]{0,600}?RETURNING id/g) ?? []).length;
   if (updateReturningCount < 3) {
     failures.push(`${P7_WAVE2_FILE}: only ${updateReturningCount} of the 3 expected UPDATE...RETURNING id sites found — a fix site may have been reverted`);
   }
@@ -99,8 +99,8 @@ function selftest() {
 
   // Offender B: strip RETURNING from the rules PATCH update.
   const offenderB = src.replace(
-    "WHERE id = $1 AND operating_company_id = $2::uuid\n          RETURNING id\n        `,\n        [params.data.id, body.data.operating_company_id, body.data.priority ?? null, body.data.is_active ?? null]",
-    "WHERE id = $1 AND operating_company_id = $2::uuid\n        `,\n        [params.data.id, body.data.operating_company_id, body.data.priority ?? null, body.data.is_active ?? null]"
+    "WHERE id = $1 AND operating_company_id = $2::uuid\n          RETURNING id\n        `,\n        [\n          params.data.id,\n          body.data.operating_company_id,\n          body.data.priority ?? null,\n          body.data.is_active ?? null,\n          body.data.then_account_id ?? null,\n          body.data.then_vendor_id !== undefined,\n          body.data.then_vendor_id ?? null,\n        ]",
+    "WHERE id = $1 AND operating_company_id = $2::uuid\n        `,\n        [\n          params.data.id,\n          body.data.operating_company_id,\n          body.data.priority ?? null,\n          body.data.is_active ?? null,\n          body.data.then_account_id ?? null,\n          body.data.then_vendor_id !== undefined,\n          body.data.then_vendor_id ?? null,\n        ]"
   );
   if (offenderB === src) {
     console.error("FAIL(selftest): offender B mutation did not change the file — pattern out of sync");

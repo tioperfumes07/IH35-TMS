@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { loadPayeeParties, parseBankDescription, resolveDescribedPayee } from "./bank-description-payee.js";
+import { isCatchAllRule } from "./suggestion-engine.js";
 
 export type BankingRuleRow = {
   id: string;
@@ -12,6 +13,8 @@ export type BankingRuleRow = {
   bank_account_filter_id: string | null;
   then_vendor_id: string | null;
   then_account_id: string;
+  // RC1 443.341: enriched by enrichRulesWithAccountNumbers after loading.
+  then_account_number?: string | null;
 };
 
 export type BankTxnProbe = {
@@ -180,7 +183,7 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
   // callers are covered too.
   if (txn.is_credit) return false;
 
-  const rules = await client.query<BankingRuleRow>(
+  const rulesRaw = await client.query<BankingRuleRow>(
     `
       SELECT *
       FROM accounting.banking_rules
@@ -190,41 +193,62 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
     [operatingCompanyId]
   );
 
-  for (const rule of rules.rows) {
-    if (!bankingRuleMatches(rule, txn)) continue;
+  // RC1 443.341: enrich rules with account numbers for catch-all detection.
+  const acctIds = [...new Set(rulesRaw.rows.map((r) => r.then_account_id))];
+  let acctMap = new Map<string, string>();
+  if (acctIds.length) {
+    const acctRes = await client.query<{ id: string; account_number: string }>(
+      `SELECT id::text, account_number FROM catalogs.accounts WHERE id = ANY($1::uuid[])`,
+      [acctIds]
+    );
+    acctMap = new Map(acctRes.rows.map((a) => [a.id, a.account_number]));
+  }
+  const rules = rulesRaw.rows.map((r) => ({ ...r, then_account_number: acctMap.get(r.then_account_id) ?? null }));
 
+  // RC1: two-pass — specific rules first (named vendor, non-9000), catch-all fallbacks second.
+  const specific = rules.filter((r) => !isCatchAllRule(r));
+  const catchAll = rules.filter((r) => isCatchAllRule(r));
+
+  async function applyMatchedRule(rule: BankingRuleRow & { then_account_number?: string | null }, confidence: "high" | "low") {
+    const reason = confidence === "low"
+      ? `catch-all rule${rule.name ? ` "${rule.name}"` : ""} matched — needs a decision`
+      : `banking rule${rule.name ? ` "${rule.name}"` : ""} matched the bank description`;
     await client.query(
       `
         UPDATE banking.bank_transactions
         SET
           suggested_vendor_id = $2,
           suggested_account_id = $3::uuid,
-          suggested_confidence = 'high',
+          suggested_confidence = '${confidence}',
           suggested_source = $4,
           suggested_reason = $5,
           suggested_at = now(),
           updated_at = now()
         WHERE id = $1::uuid
       `,
-      [txnId, rule.then_vendor_id, rule.then_account_id, `rule_id:${rule.id}`, `banking rule${rule.name ? ` "${rule.name}"` : ""} matched the bank description`]
+      [txnId, rule.then_vendor_id, rule.then_account_id, `rule_id:${rule.id}`, reason]
     );
-
     await client.query(
-      `
-        UPDATE accounting.banking_rules
-        SET last_matched_at = now(), match_count = match_count + 1, updated_at = now()
-        WHERE id = $1::uuid
-      `,
+      `UPDATE accounting.banking_rules SET last_matched_at = now(), match_count = match_count + 1, updated_at = now() WHERE id = $1::uuid`,
       [rule.id]
     );
-
     await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
       "banking.rule_engine.match",
-      "info",
-      JSON.stringify({ transaction_id: txnId, rule_id: rule.id }),
+      confidence === "low" ? "warning" : "info",
+      JSON.stringify({ transaction_id: txnId, rule_id: rule.id, catch_all: confidence === "low" }),
       "P7-W2-BANK-RULES",
     ]);
+  }
 
+  for (const rule of specific) {
+    if (!bankingRuleMatches(rule, txn)) continue;
+    await applyMatchedRule(rule, "high");
+    return true;
+  }
+
+  for (const rule of catchAll) {
+    if (!bankingRuleMatches(rule, txn)) continue;
+    await applyMatchedRule(rule, "low");
     return true;
   }
 
@@ -247,7 +271,7 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
 export async function applyBankingRulesForCompany(
   client: PoolClient,
   operatingCompanyId: string
-): Promise<{ scanned: number; matched: number; fuzzyMatched: number; describedMatched: number }> {
+): Promise<{ scanned: number; matched: number; historyMatched: number; fuzzyMatched: number; describedMatched: number }> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   // LINK4-PR3 — is_credit = false at the SQL level (not just relying on the per-row guards below):
@@ -267,14 +291,18 @@ export async function applyBankingRulesForCompany(
 
   const parties = await loadPayeeParties(client, operatingCompanyId);
   let matched = 0;
+  let historyMatched = 0;
   let fuzzyMatched = 0;
   let describedMatched = 0;
   for (const row of txnsRes.rows) {
-    const did = await applyBankingRulesForTransaction(client, row.id, operatingCompanyId);
-    if (did) {
-      matched += 1;
-      continue;
+    const ruleMatched = await applyBankingRulesForTransaction(client, row.id, operatingCompanyId);
+    if (ruleMatched) matched += 1;
+    // RC3 443.341: history can upgrade a catch-all suggestion or fill a gap after rules fail.
+    if (await applyHistoryLearningForTransaction(client, row.id, operatingCompanyId)) {
+      historyMatched += 1;
+      if (!ruleMatched) continue;
     }
+    if (ruleMatched) continue;
     // 443.168 J — the payee the bank text NAMES (Zelle to / card merchant / wire BNF …) before the trigram guess.
     if (await applyDescribedPayeeForTransaction(client, row.id, operatingCompanyId, parties)) {
       describedMatched += 1;
@@ -296,15 +324,169 @@ export async function applyBankingRulesForCompany(
   for (const row of creditsRes.rows) {
     if (await applyDescribedPayeeForTransaction(client, row.id, operatingCompanyId, parties)) describedMatched += 1;
   }
-  return { scanned: txnsRes.rows.length + creditsRes.rows.length, matched, fuzzyMatched, describedMatched };
+  return { scanned: txnsRes.rows.length + creditsRes.rows.length, matched, historyMatched, fuzzyMatched, describedMatched };
+}
+
+/**
+ * RC3 443.341 — learn from HUMAN-accepted categorizations: if the same normalized description was
+ * previously categorized by a user (categorized_by_user_id NOT NULL), suggest the account + vendor
+ * they chose, with confidence keyed to count (1→low, 2→medium, 3+→high). Runs only when the line
+ * has no suggestion OR the current suggestion is a catch-all (source='catch_all_rule').
+ * Suggest-only: never writes categorized_* columns.
+ */
+export async function applyHistoryLearningForTransaction(
+  client: PoolClient,
+  txnId: string,
+  operatingCompanyId: string
+): Promise<boolean> {
+  const txnRes = await client.query<{
+    description: string | null;
+    description_normalized: string | null;
+    normalized_description: string | null;
+    categorized_at: string | null;
+    suggested_source: string | null;
+  }>(
+    `SELECT description, description_normalized, normalized_description, categorized_at::text, suggested_source
+     FROM banking.bank_transactions
+     WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [txnId, operatingCompanyId]
+  );
+  const txn = txnRes.rows[0];
+  if (!txn || txn.categorized_at) return false;
+  if (txn.suggested_source && !txn.suggested_source.startsWith("catch_all_rule")) return false;
+
+  const key = (txn.description_normalized ?? txn.normalized_description ?? txn.description ?? "").toLowerCase().trim();
+  if (!key) return false;
+
+  const histRes = await client.query<{ account_id: string | null; vendor_id: string | null; n: string }>(
+    `SELECT categorization_gl_account_id::text AS account_id, categorization_vendor_id::text AS vendor_id, COUNT(*) AS n
+     FROM banking.bank_transactions
+     WHERE operating_company_id = $1::uuid
+       AND categorized_at IS NOT NULL
+       AND categorized_by_user_id IS NOT NULL
+       AND categorization_gl_account_id IS NOT NULL
+       AND LOWER(COALESCE(description_normalized, normalized_description, description, '')) = $2
+     GROUP BY categorization_gl_account_id, categorization_vendor_id
+     ORDER BY COUNT(*) DESC, categorization_gl_account_id
+     LIMIT 1`,
+    [operatingCompanyId, key]
+  );
+  const h = histRes.rows[0];
+  if (!h?.account_id) return false;
+
+  const n = parseInt(h.n, 10);
+  const confidence = n >= 3 ? "high" : n === 2 ? "medium" : "low";
+  await client.query(
+    `UPDATE banking.bank_transactions
+     SET suggested_vendor_id = $2::uuid, suggested_account_id = $3::uuid,
+         suggested_confidence = $4, suggested_source = $5, suggested_reason = $6,
+         suggested_at = now(), updated_at = now()
+     WHERE id = $1::uuid AND categorized_at IS NULL`,
+    [txnId, h.vendor_id, h.account_id, confidence, `history:count=${n}`,
+     `accepted ${n} time${n === 1 ? "" : "s"} for this payee`]
+  );
+  await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
+    "banking.rule_engine.history_match", "info",
+    JSON.stringify({ transaction_id: txnId, count: n }),
+    "443-341-RC3",
+  ]);
+  return true;
+}
+
+/**
+ * RC6 443.341 — Relay fill suggestion: when a bank transaction is matched to a Relay fuel fill,
+ * suggest the driver assigned to the load on that fill (not the relay API's own driver field).
+ * Chain: bank_transaction.matched_relay_fuel_transaction_id
+ *        → fuel.fuel_transactions.relay_fuel_transaction_id → fuel.fuel_transactions.load_id
+ *        → mdata.loads.assigned_primary_driver_id
+ *        → mdata.vendors.driver_id → vendor uuid
+ * Account: always 5000 (Fuel & Diesel). Confidence: high. Source: relay_fill_load_driver.
+ */
+export async function applyRelayFillLoadDriverForTransaction(
+  client: PoolClient,
+  txnId: string,
+  operatingCompanyId: string
+): Promise<boolean> {
+  const txnRes = await client.query<{
+    matched_relay_fuel_transaction_id: string | null;
+    categorized_at: string | null;
+    suggested_source: string | null;
+  }>(
+    `SELECT matched_relay_fuel_transaction_id, categorized_at, suggested_source
+     FROM banking.bank_transactions
+     WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [txnId, operatingCompanyId]
+  );
+  const txn = txnRes.rows[0];
+  if (!txn || txn.categorized_at || !txn.matched_relay_fuel_transaction_id) return false;
+  // Don't overwrite a specific human-authored rule suggestion; only fill in gaps or upgrade catch-alls.
+  if (txn.suggested_source && !txn.suggested_source.startsWith("catch_all_rule") && !txn.suggested_source.startsWith("description_payee") && !txn.suggested_source.startsWith("fuzzy")) return false;
+
+  const linkRes = await client.query<{ load_id: string | null }>(
+    `SELECT ft.load_id
+     FROM fuel.fuel_transactions ft
+     WHERE ft.relay_fuel_transaction_id = $1::uuid
+       AND ft.operating_company_id = $2::uuid
+     LIMIT 1`,
+    [txn.matched_relay_fuel_transaction_id, operatingCompanyId]
+  );
+  const loadId = linkRes.rows[0]?.load_id;
+  if (!loadId) return false;
+
+  const driverRes = await client.query<{ assigned_primary_driver_id: string | null }>(
+    `SELECT assigned_primary_driver_id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [loadId, operatingCompanyId]
+  );
+  const driverId = driverRes.rows[0]?.assigned_primary_driver_id;
+  if (!driverId) return false;
+
+  const vendorRes = await client.query<{ id: string; default_expense_account_id: string | null }>(
+    `SELECT v.id, v.default_expense_account_id
+     FROM mdata.vendors v
+     WHERE v.driver_id = $1::uuid AND v.operating_company_id = $2::uuid AND v.deactivated_at IS NULL
+     LIMIT 1`,
+    [driverId, operatingCompanyId]
+  );
+  const vendor = vendorRes.rows[0];
+  if (!vendor) return false;
+
+  // Account: prefer vendor's default expense account, fall back to 5000 Fuel & Diesel.
+  const FUEL_ACCOUNT_ID = "353fbd5b-d39c-4709-ac19-60cae52018f7";
+  const accountId = vendor.default_expense_account_id ?? FUEL_ACCOUNT_ID;
+
+  const res = await client.query(
+    `UPDATE banking.bank_transactions
+     SET suggested_vendor_id = $2::uuid, suggested_account_id = $3::uuid,
+         suggested_confidence = 'high', suggested_source = 'relay_fill_load_driver',
+         suggested_at = now(), updated_at = now()
+     WHERE id = $1::uuid AND categorized_at IS NULL`,
+    [txnId, vendor.id, accountId]
+  );
+  if (!res.rowCount) return false;
+
+  await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
+    "banking.rule_engine.relay_fill_load_driver",
+    "info",
+    JSON.stringify({ transaction_id: txnId, driver_id: driverId, vendor_id: vendor.id, load_id: loadId }),
+    "443.341-RC6",
+  ]);
+  return true;
 }
 
 /**
  * 443.168 J — the ONE per-line suggestion entry for a newly-ingested line (Plaid sync, CSV import): authored rule →
- * the payee the description names → trigram fallback. Every step writes suggested_* only (owner Law B).
+ * RC6 Relay fill load-driver → history learning → the payee the description names → trigram fallback.
+ * Every step writes suggested_* only (owner Law B).
  */
 export async function suggestForBankTransaction(client: PoolClient, txnId: string, operatingCompanyId: string): Promise<boolean> {
-  if (await applyBankingRulesForTransaction(client, txnId, operatingCompanyId)) return true;
+  if (await applyBankingRulesForTransaction(client, txnId, operatingCompanyId)) {
+    // History can upgrade a catch-all suggestion to the human-validated choice.
+    await applyHistoryLearningForTransaction(client, txnId, operatingCompanyId);
+    return true;
+  }
+  // RC6: Relay fill matched to a load → use the load's driver as vendor.
+  if (await applyRelayFillLoadDriverForTransaction(client, txnId, operatingCompanyId)) return true;
+  if (await applyHistoryLearningForTransaction(client, txnId, operatingCompanyId)) return true;
   if (await applyDescribedPayeeForTransaction(client, txnId, operatingCompanyId)) return true;
   return (await applyFuzzyVendorMatchForTransaction(client, txnId, operatingCompanyId)) != null;
 }
