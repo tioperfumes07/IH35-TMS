@@ -31,8 +31,8 @@ function verify(sources) {
     "matchedCount !== requestedCount",
   ), "shared exact-count comparison missing");
   require(sources.factory.includes(
-    "reply.code(409)",
-  ), "shared HTTP 409 response missing");
+    "reply.code(409).send({\n    error: error.code,",
+  ), "shared HTTP 409 response missing in sendFleetBulkTargetMismatch");
 
   for (const [key, idField] of [
     ["units", "unit_ids"],
@@ -76,7 +76,7 @@ if (process.argv.includes("--selftest")) {
       "matchedCount !== requestedCount",
       "false",
     ],
-    ["factory 409", "factory", "reply.code(409)", "reply.code(200)"],
+    ["factory 409", "factory", "reply.code(409).send({\n    error: error.code,", "reply.code(200).send({\n    error: error.code,"],
     [
       "unit duplicate validation",
       "units",

@@ -116,7 +116,7 @@ if (process.argv.includes("--selftest")) {
   // MUTATION — strip the exclusion from one real file's real function and confirm this guard
   // catches it, using an in-memory override of readFile rather than touching the real file on disk.
   const real = readFile("apps/backend/src/banking/banking-rules.engine.ts");
-  const mutated = real.replace(/if \(txn\.is_credit\) return false;\n\n  const rules = await client\.query/, "const rules = await client.query");
+  const mutated = real.replace(/if \(txn\.is_credit\) return false;\n\n  const rulesRaw = await client\.query/, "const rulesRaw = await client.query");
   assert.notEqual(mutated, real, "selftest setup bug: the exclusion text to strip was not found in the real file — update this mutation to match current source");
   const failures = auditAll((file) => (file === "apps/backend/src/banking/banking-rules.engine.ts" ? mutated : readFile(file)));
   assert.ok(
