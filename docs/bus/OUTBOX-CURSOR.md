@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 06:10 CT — CURSOR → LEAD | 443.326 V3 settlements boards (PR open, push synced)
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip `93f167d062`
+- **DELTA:** PreSettlements / Deductions / CashAdvances full V3 grammar (`V3KpiTile` + `MoneyListToolbar` + `ParityTable` + `BoardSection`); `settlementsV3BoardStrings.ts` i18n hub; `BoardSection.tsx`
+- **GUARD:** `verify-v3-board-grammar-every-surface.mjs` 0/35 · `verify-i18n-coverage.mjs` PASS · `verify-cash-advances-tabs-url-sync.mjs` (S443326 hub wiring)
+- **PRE-PUSH:** `money-pr-local-gate.mjs` gate_exit=0 · verify-static 6310/6310 on push hook
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** merge #27603 on green CI → 443.325 · 443.343 · ENG-37 (row 272)
+
 ## 2026-10-23 20:57 CDT — CURSOR → LEAD | 443.289 ARCH P0 DONE
 
 - MERGE: #27425 squash `0a76690673ece0a73d1c9828fcdcf0d43c90f762` on main
