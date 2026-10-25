@@ -16,6 +16,7 @@ const PAGE = "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx";
 const KPI_ROW = "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx";
 const MOUNTED = "apps/frontend/src/pages/driver-finance/SettlementsMountedPages.tsx";
 const SETTLEMENTS_BOARD = "apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx";
+const SETTLEMENTS_BOARD_STRINGS = "apps/frontend/src/pages/driver-finance/settlementsV3BoardStrings.ts";
 
 function failures(source) {
   const errors = [];
@@ -93,9 +94,49 @@ function kpiV3Failures(source) {
   return errors;
 }
 
-/** ROUND 443.326 — Settlements board is full V3 grammar in the surface file. */
-function settlementsBoardFailures(mountedSource, boardSource) {
+/** 443.326 i18n hub — copy lives in settlementsV3BoardStrings.ts; board wires S443326.cashAdvances.* */
+function settlementsBoardStringHubFailures(boardSource, stringsSource) {
   const errors = [];
+  if (!boardSource.includes('from "./settlementsV3BoardStrings"')) {
+    errors.push("SettlementsCashAdvancesBoard must import settlementsV3BoardStrings (443.326 i18n hub)");
+  }
+  if (!boardSource.includes("S443326.cashAdvances")) {
+    errors.push("SettlementsCashAdvancesBoard must wire S443326.cashAdvances copy keys");
+  }
+  const keyToLiteral = {
+    errKpiTitle: "Couldn't load cash advance totals",
+    kpiOnFile: "Advances on file",
+    kpiAwaiting: "Requests awaiting owner",
+    kpiOutstanding: "Outstanding to recover",
+    kpiRecovered: "Recovered this period",
+    emptyRequests: "No requests waiting",
+    advancesFooter:
+      "Each advance links to its bank line (Zelle) and to the tour that recovers it.",
+  };
+  for (const [key, literal] of Object.entries(keyToLiteral)) {
+    if (!stringsSource.includes(`${key}: ${JSON.stringify(literal).slice(1, -1)}`) &&
+        !stringsSource.includes(`${key}: "${literal}"`) &&
+        !stringsSource.includes(`${key}:\n      "${literal}"`)) {
+      // multiline advancesFooter uses template on two lines
+      if (key === "advancesFooter") {
+        if (!stringsSource.includes("Each advance links to its bank line (Zelle)")) {
+          errors.push(`settlementsV3BoardStrings missing cashAdvances.${key}`);
+        }
+      } else if (!stringsSource.includes(literal)) {
+        errors.push(`settlementsV3BoardStrings missing literal for cashAdvances.${key}`);
+      }
+    }
+    if (!boardSource.includes(`S443326.cashAdvances.${key}`)) {
+      errors.push(`SettlementsCashAdvancesBoard must reference S443326.cashAdvances.${key}`);
+    }
+  }
+  return errors;
+}
+
+/** ROUND 443.326 — Settlements board is full V3 grammar in the surface file. */
+function settlementsBoardFailures(mountedSource, boardSource, stringsSource) {
+  const errors = [];
+  errors.push(...settlementsBoardStringHubFailures(boardSource, stringsSource));
   if (!mountedSource.includes("SettlementsCashAdvancesBoard")) {
     errors.push("SettlementsMountedPages must mount SettlementsCashAdvancesBoard");
   }
@@ -129,27 +170,14 @@ function settlementsBoardFailures(mountedSource, boardSource) {
   if (!boardSource.includes('gridTemplateColumns: "1fr 2fr"')) {
     errors.push('SettlementsCashAdvancesBoard board body must use gridTemplateColumns "1fr 2fr"');
   }
-  for (const needle of [
-    'title="Couldn\'t load cash advance totals"',
-    "onRetry={() => void kpisQuery.refetch()}",
-  ]) {
-    if (!boardSource.includes(needle)) errors.push(`SettlementsCashAdvancesBoard missing ${JSON.stringify(needle)}`);
+  if (!boardSource.includes("onRetry={() => void kpisQuery.refetch()}")) {
+    errors.push("SettlementsCashAdvancesBoard missing KPI onRetry refetch");
   }
-  for (const label of [
-    "Advances on file",
-    "Requests awaiting owner",
-    "Outstanding to recover",
-    "Recovered this period",
-  ]) {
-    if (!new RegExp(`label=["']${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`).test(boardSource)) {
-      errors.push(`SettlementsCashAdvancesBoard V3 strip must include board label "${label}"`);
-    }
+  if (!boardSource.includes('amount(kpisQuery.data') && !boardSource.includes("advances_on_file")) {
+    errors.push("SettlementsCashAdvancesBoard must read advances_on_file from KPI feed");
   }
-  if (!boardSource.includes("Each advance links to its bank line (Zelle) and to the tour that recovers it.")) {
-    errors.push("SettlementsCashAdvancesBoard must keep the Advances footnote");
-  }
-  if (!boardSource.includes("No requests waiting")) {
-    errors.push("SettlementsCashAdvancesBoard Requests empty must say No requests waiting");
+  if (!boardSource.includes("pending_approval") || !boardSource.includes("total_outstanding")) {
+    errors.push("SettlementsCashAdvancesBoard must wire pending_approval and total_outstanding KPI keys");
   }
   return errors;
 }
@@ -163,7 +191,8 @@ function run() {
   if (kpiErrors.length) throw new Error(`${LABEL}: ${kpiErrors.join("; ")} in ${KPI_ROW}`);
   const mountedSource = fs.readFileSync(path.join(ROOT, MOUNTED), "utf8");
   const boardSource = fs.readFileSync(path.join(ROOT, SETTLEMENTS_BOARD), "utf8");
-  const boardErrors = settlementsBoardFailures(mountedSource, boardSource);
+  const stringsSource = fs.readFileSync(path.join(ROOT, SETTLEMENTS_BOARD_STRINGS), "utf8");
+  const boardErrors = settlementsBoardFailures(mountedSource, boardSource, stringsSource);
   if (boardErrors.length) throw new Error(`${LABEL}: ${boardErrors.join("; ")} (443.326)`);
   console.log(`${LABEL}: PASS`);
 }
