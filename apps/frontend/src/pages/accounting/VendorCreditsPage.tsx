@@ -25,7 +25,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/Combobox";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { CollapsedListFilters, MoneyListToolbar, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
@@ -56,26 +56,33 @@ export function VendorCreditsPage() {
   const companyId = selectedCompanyId ?? "";
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
-  // LST-F5202 — visible vendor filter; CLS-ADJACENT — stages with status, URL only on Apply.
+  // LST-F5202 — visible vendor filter; CLS-ADJACENT — vendorId stages with status; URL only on Apply.
   const vendorFilter = searchParams.get("vendor_id") ?? "";
-  function setVendorFilter(next: string) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set("vendor_id", next);
-        else params.delete("vendor_id");
-        return params;
-      },
-      { replace: true }
-    );
-  }
   const deepLinkCreditId = searchParams.get("credit_id");
   // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
   // voided' off on fresh load"). Same fix as the sibling CreditMemosPage — this page had NO
   // default-hide at all before this.
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
-  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<Array<VendorCreditStatus | "active">>(["active"]);
+  const staged = useStagedListFilters({
+    applied: {
+      statusFilter,
+      vendorId: vendorFilter || "",
+    },
+    empty: { statusFilter: ["active"] as Array<VendorCreditStatus | "active">, vendorId: "" },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.vendorId) params.set("vendor_id", next.vendorId);
+          else params.delete("vendor_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
+  });
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedCreditId, setSelectedCreditId] = useState<string | null>(deepLinkCreditId);
@@ -296,31 +303,43 @@ export function VendorCreditsPage() {
         searchTestId="vendor-credits-search-input"
         onClearAll={() => {
           setSearch("");
-          setStatusFilter(["active"]);
-          setVendorFilter("");
+          staged.reset();
+          staged.apply();
         }}
         activeFilterCount={vendorCreditsActiveFilterCount}
         testIdPrefix="vendor-credits"
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Vendor
-          <EntityMultiSelect
-            kind="vendor"
-            operatingCompanyId={companyId}
-            value={vendorFilter || null}
-            onChange={(next) => setVendorFilter(next ?? "")}
-            placeholder="All vendors"
-            dataTestId="vendor-credits-filter-vendor"
+        <CollapsedListFilters
+          activeFilterCount={vendorCreditsActiveFilterCount}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
+          testIdPrefix="vendor-credits"
+          dataAttributes={{ "data-vendor-credits-filter-toolbar": "collapsed" }}
+        >
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Vendor
+            <EntityMultiSelect
+              kind="vendor"
+              operatingCompanyId={companyId}
+              value={staged.draft.vendorId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
+              placeholder="All vendors"
+              dataTestId="vendor-credits-filter-vendor"
+            />
+          </label>
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ active: "Active (hide voided)", open: "Open", applied: "Applied", voided: "Voided" })}
+            selected={staged.draft.statusFilter}
+            onChange={(next) =>
+              staged.setDraft({ ...staged.draft, statusFilter: next as Array<VendorCreditStatus | "active"> })
+            }
+            allLabel="All statuses (include voided)"
+            data-testid="vendor-credits-status-filter"
           />
-        </label>
-        <MultiSelectDropdown
-          label="Status"
-          options={statusOptions({ active: "Active (hide voided)", open: "Open", applied: "Applied", voided: "Voided" })}
-          selected={statusFilter}
-          onChange={(next) => setStatusFilter(next as Array<VendorCreditStatus | "active">)}
-          allLabel="All statuses (include voided)"
-          data-testid="vendor-credits-status-filter"
-        />
+        </CollapsedListFilters>
       </MoneyListToolbar>
       {vendorFilter && !vendorFilter.includes(",") ? (
         <span className="text-xs text-gray-600">
