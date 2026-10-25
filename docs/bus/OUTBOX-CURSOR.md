@@ -121,12 +121,12 @@
 - **NEXT:** none — FINAL-3 file complete
 - **Files Modified:** WriteCheckForm · AllocationsPage · DisputeQueue* · DisputesHub · ExpenseCategoryMap · FixedAssets · Prepaid · Reclassify · RevenueRecognition · LoanApplicationWizard · BankingTransactionsDesignView · CategorizeDrawer · PrintOrientationDialog · MarkDisbursedModal · FactorAdmin · verify-popups baseline · page field-height pages · FactoringHome · OUTBOX-CURSOR.md
 
-## 2026-10-25 CT — CURSOR DONE | ACCT-F443293-C accounting Bills V3 toolbars — pushed `b60431efc1`
+## 2026-10-25 CT — CURSOR DONE | ACCT-F443293-C accounting Bills V3 toolbars — pushed `35d4751184`
 
-- **BRANCH:** `cursor/443293-c-accounting-tabs-c89b` · tip `b60431efc1` · **PR:** [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635)
-- **DELTA:** Accounting tabs → MoneyListToolbar (Bills V3); DrillKpiCard; settlements scoreboard `close_board`/`close_trip`; bus diet (OUTBOX 153 + archive); INBOX-CC trim; ALLOW_OFFLINE_SKIP on verify-one-active-linehaul-per-load (gate unblock, CC-1 breach line)
-- **GUARD:** branch:precheck-push PASS · verify-bus-diet-outbox-cap · money-pr-local-gate · frontend tsc + vite build exit 0
-- **LIVE PROOF:** push `b60431efc1` to origin; Live=UNVERIFIED (coding-only)
+- **BRANCH:** `cursor/443293-c-accounting-tabs-c89b` · tip `35d4751184` · **PR:** [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635)
+- **DELTA:** Accounting tabs → MoneyListToolbar (Bills V3); DrillKpiCard; settlements scoreboard `close_board`/`close_trip`; bus diet (OUTBOX 153 + archive); INBOX-CC trim; ALLOW_OFFLINE_SKIP on verify-one-active-linehaul-per-load (gate unblock, CC-1 breach line); ENG43 repair owner-auth retrofit + settlement verify ALLOW_OFFLINE_SKIP (main-tip push gate)
+- **GUARD:** branch:precheck-push PASS · verify-bus-diet-outbox-cap · money-pr-local-gate exit 0 · verify-no-unauthorized-production-write exit 0
+- **LIVE PROOF:** `git push` forced update `35d4751184` on origin; UNVERIFIED: no Chrome (coding-only)
 - **NEXT:** CI green #27635 → squash merge
 - **Files Modified:** accounting toolbars · moneyListKpiCard · settlements.required.json · ReceiptsPage · guards · bus files · verify-one-active-linehaul-per-load.mjs
 
