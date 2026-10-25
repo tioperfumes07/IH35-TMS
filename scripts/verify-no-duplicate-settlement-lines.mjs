@@ -15,6 +15,9 @@
  */
 import { execSync } from "node:child_process";
 
+// Live-only guard: no DATABASE_URL → skip is intentional (requires Neon neondb_owner role).
+export const ALLOW_OFFLINE_SKIP = "shrink-only ceiling on USMCA duplicate settlement lines; live Neon required";
+
 const LABEL = "verify-no-duplicate-settlement-lines";
 
 // shrink-only ceiling — lower this after a clean-up script voids the remaining groups

@@ -8,15 +8,12 @@
   "verify-accounting-audit-trail-lineage.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-accounting-audit-trail-tenant-scope.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-accounting-hub-find-transactions-vendor-name.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
-  "verify-accounting-hub-honest-labels.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-accounting-nav.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-accounting-periods-contract.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-accounting-spine-event-emitted-in-transaction.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-acct-direct-creators-company-keyed-remount.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-acct-f9408-cash-forecast-proforma-eta-bucket.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
-  "verify-acct-list-uuid-human-labels.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-active-dispatch-load-complete-range.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
-  "verify-admin-audit-log-viewer-chrome.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-advance-detail-settlement-label.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-advance-recovery-load-id.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-af1-coa-role-binding-heal.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
@@ -920,8 +917,5 @@
   "verify-wo-time-tracking-rate-modal-scope-snapshot.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-work-order-create-clears-stale-entity-fks.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-stops-gps-verified.mjs": "added 2026-10-12 (GPS stop engine PR #26432, FINANCIAL lane) — static guard not yet wired into verify-steps; CI locked-guards does not run on direct main push so orphan reached main. Wire via CC-1 claim-reserve once a FINANCIAL-lane slot is available; exempt until then.",
-  "verify-delivery-evidence-raises-the-receivable.mjs": "ACCT-F443344 — REQUIRES_LIVE_DB; CC-3 branch cannot author verify-steps (lane-band 2026-08-29); wiring pending CC-1 verify-step claim",
-  "verify-input-height-standard.mjs": "IH35-347-A — static guard; CC-3 branch cannot author verify-steps (lane-band 2026-08-29); wiring pending CC-1 verify-step claim",
-  "verify-no-uppercase-names-rendered.mjs": "IH35-347-B — mixed static+LIVE guard (REQUIRES_LIVE_DB for live arm); CC-3 branch cannot author verify-steps (lane-band 2026-08-29); wiring pending CC-1 verify-step claim",
-  "verify-geofence-stop-stamp-parity.mjs": "added 2026-10-24 CC-3 — ENG-443348 geofence departure latch/ping/audit parity. CC-3 lane-band constraint: cannot author verify-steps (2026-08-29); wire into a claimed verify-step once CC-1 claim PR lands on main. Runs via verify:static glob auto-discovery on push."
+  "verify-delivery-evidence-raises-the-receivable.mjs": "ACCT-F443344 — REQUIRES_LIVE_DB; CC-3 branch cannot author verify-steps (lane-band 2026-08-29); wiring pending CC-1 verify-step claim"
 }
