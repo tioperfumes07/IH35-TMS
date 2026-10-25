@@ -144,6 +144,7 @@ const DRIVER_DEFAULTS: Driver = {
   referral_reward_paid_at: null,
   referral_reward_settlement_id: null,
   preferred_language: "en",
+  preferred_languages: ["en"],
   qbo_vendor_id: null,
   qbo_vendor_linked_at: null,
   qbo_vendor_linked_by_user_id: null,

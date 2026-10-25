@@ -127,6 +127,7 @@ export type Driver = {
   referral_reward_paid_at: string | null;
   referral_reward_settlement_id: string | null;
   preferred_language: PreferredLanguage;
+  preferred_languages: string[] | null;
   qbo_vendor_id: string | null;
   /** Canonical local vendor resolved company-safely through mdata.vendors.qbo_vendor_id. */
   qbo_vendor_local_id?: string | null;
@@ -199,6 +200,7 @@ export type CreateDriverInput = {
   referred_by_driver_id?: string;
   referral_source?: string;
   preferred_language?: PreferredLanguage;
+  preferred_languages?: string[];
   status?: DriverStatus;
   notes?: string;
   override_returning_warning?: boolean;
@@ -261,6 +263,7 @@ export type UpdateDriverInput = Partial<
     | "referred_by_driver_id"
     | "referral_source"
     | "preferred_language"
+    | "preferred_languages"
     | "status"
     | "notes"
     | "deactivated_at"

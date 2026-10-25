@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { DriverSamsaraDuplicateBanner } from "../../components/driver-profile/DriverSamsaraDuplicateBanner";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
@@ -116,6 +117,7 @@ export function DriverEditForm({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
+  const [preferredLanguages, setPreferredLanguages] = useState<string[]>(["en"]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -150,6 +152,8 @@ export function DriverEditForm({
       hire_date: dateInput(driver.hire_date),
       status: str(driver.status),
       preferred_language: str(driver.preferred_language) || "en",
+      // preferred_languages handled separately (array state)
+
       phone: str(driver.phone),
       email: str(driver.email),
       emergency_contact_name: str(driver.emergency_contact_name),
@@ -182,6 +186,11 @@ export function DriverEditForm({
       pay_basis: str(driver.pay_basis),
       notes: str(driver.notes),
     });
+    setPreferredLanguages(
+      Array.isArray(driver.preferred_languages) && driver.preferred_languages.length > 0
+        ? driver.preferred_languages
+        : [str(driver.preferred_language) || "en"]
+    );
   }, [driver]);
 
   const set = (key: string, value: string) => {
@@ -204,7 +213,8 @@ export function DriverEditForm({
         status: form.status as Driver["status"],
         phone: form.phone,
         email: form.email || null,
-        preferred_language: form.preferred_language as Driver["preferred_language"],
+        preferred_language: (preferredLanguages[0] ?? "en") as Driver["preferred_language"],
+        preferred_languages: preferredLanguages.length > 0 ? preferredLanguages : ["en"],
         emergency_contact_name: form.emergency_contact_name || null,
         emergency_contact_relationship: form.emergency_contact_relationship || null,
         emergency_contact_phone_primary: form.emergency_contact_phone_primary || null,
@@ -332,15 +342,15 @@ export function DriverEditForm({
             <DatePicker id="driver-edit-hire-date" box="filter" className="wd" value={form.hire_date ?? ""} onChange={(v) => set("hire_date", v)} />
           </Field>
           <Field label="Status" width="ws">
-            <Combobox className={`${CTRL} ws`} options={DRIVER_STATUS.map((v) => ({ value: v, label: v }))} value={form.status || null} onChange={(v) => set("status", v ?? "Active")} />
+            <Combobox size="sm" options={DRIVER_STATUS.map((v) => ({ value: v, label: v }))} value={form.status || null} onChange={(v) => set("status", v ?? "Active")} />
           </Field>
-          <Field label="Language" width="ws">
-            <Combobox
-              className={`${CTRL} ws`}
+          <Field label="Language" width="wmd">
+            <MultiSelectDropdown
+              label="Languages"
               options={PREFERRED}
-              value={form.preferred_language || null}
-              onChange={(v) => set("preferred_language", v ?? "en")}
-              dataTestId="driver-edit-language"
+              selected={preferredLanguages}
+              onChange={setPreferredLanguages}
+              data-testid="driver-edit-language"
             />
           </Field>
         </Group>

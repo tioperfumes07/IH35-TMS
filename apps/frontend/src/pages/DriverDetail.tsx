@@ -65,6 +65,7 @@ import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombston
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
@@ -257,6 +258,7 @@ export function DriverDetailPage() {
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Record<string, string>>({});
+  const [preferredLanguages, setPreferredLanguages] = useState<string[]>(["en"]);
   const [newQualificationForm, setNewQualificationForm] = useState<Record<string, string>>({
     equipment_type_id: "",
     qualified_at: companyToday(),
@@ -376,6 +378,15 @@ export function DriverDetailPage() {
     if (!driver) return;
     setEndorsementH(driver.endorsement_h ?? false);
   }, [driver?.id, driver?.endorsement_h]);
+
+  useEffect(() => {
+    if (!driver) return;
+    setPreferredLanguages(
+      Array.isArray(driver.preferred_languages) && driver.preferred_languages.length > 0
+        ? driver.preferred_languages
+        : [driver.preferred_language ?? "en"]
+    );
+  }, [driver?.id, driver?.preferred_languages, driver?.preferred_language]);
 
   const saveDriverQboMutation = useMutation({
     mutationFn: async () => {
@@ -542,7 +553,8 @@ export function DriverDetailPage() {
         emergency_contact_notes: hydratedForm.emergency_contact_notes || null,
         referred_by_driver_id: hydratedForm.referred_by_driver_id || null,
         referral_source: hydratedForm.referral_source || null,
-        preferred_language: (hydratedForm.preferred_language as "en" | "es") || "en",
+        preferred_language: ((preferredLanguages[0] ?? hydratedForm.preferred_language) as "en" | "es") || "en",
+        preferred_languages: preferredLanguages.length > 0 ? preferredLanguages : ["en"],
       }),
     onSuccess: (updated) => {
       // LV-DRIVER-EDIT-SAVE-DISPLAY-STALE: same root cause as saveDriverQboMutation above — the
@@ -1181,16 +1193,17 @@ export function DriverDetailPage() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Preferred Language</label>
-            <Combobox
+            <label className="text-xs font-semibold text-gray-600">Languages</label>
+            <MultiSelectDropdown
+              label="Languages"
               options={[
                 { value: "en", label: "English" },
                 { value: "es", label: "Spanish" },
               ]}
+              selected={preferredLanguages}
+              onChange={setPreferredLanguages}
               disabled={!editMode}
-              value={hydratedForm.preferred_language ?? "en"}
-              onChange={(nextValue) => setForm((current) => ({ ...current, preferred_language: nextValue ?? "en" }))}
-              placeholder="Select language"
+              data-testid="driver-detail-preferred-languages"
             />
           </div>
           <div className="flex flex-col gap-1">

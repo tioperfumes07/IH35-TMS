@@ -282,6 +282,7 @@ const createDriverBodySchema = z.object({
   referred_by_driver_id: z.string().uuid().optional(),
   referral_source: z.string().trim().max(160).optional(),
   preferred_language: preferredLanguageSchema.optional(),
+  preferred_languages: z.array(preferredLanguageSchema).min(1).optional(),
   // DRIVER-DEFAULT-PARITY (owner ruling 2026-08-02): a newly created driver defaults to Probation,
   // NOT Active. A brand-new driver must not be instantly dispatchable — the dispatch picker requires
   // status='Active' (driver-optimizer.service.ts, dispatch-refinements.service.ts) and that gate is
@@ -359,6 +360,7 @@ const updateDriverBodySchema = z
     referred_by_driver_id: z.string().uuid().nullable().optional(),
     referral_source: z.string().trim().max(160).nullable().optional(),
     preferred_language: preferredLanguageSchema.optional(),
+    preferred_languages: z.array(preferredLanguageSchema).min(1).optional(),
     status: driverStatusSchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: isoDateSchema.nullable().optional(),
@@ -960,6 +962,8 @@ export async function createDriverCanonical(
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
+              COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
               status, notes, prior_driver_id, rehire_count, is_rehire,
             operating_company_id, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
@@ -1561,6 +1565,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             qbo_class_id,
             samsara_driver_id,
@@ -1603,6 +1608,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT
             id, identity_user_id, first_name, last_name, phone, email,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
             status, created_at, updated_at
           FROM mdata.drivers
           WHERE identity_user_id = $1
@@ -1705,6 +1711,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             (SELECT NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '')
              FROM mdata.drivers prior
@@ -2532,6 +2539,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("emergency_contact_notes" in b) add("emergency_contact_notes", b.emergency_contact_notes ?? null);
     if ("referred_by_driver_id" in b) add("referred_by_driver_id", b.referred_by_driver_id ?? null);
     if ("referral_source" in b) add("referral_source", b.referral_source ?? null);
+    if ("preferred_languages" in b) add("preferred_languages", b.preferred_languages ?? null);
     if ("status" in b) add("status", b.status);
     // DRV-F-STATUS-REACTIVATE-500 — chk_drivers_status_deactivated_consistent (0016_...) requires
     // deactivated_at IS NULL whenever status is NOT Inactive/Terminated. The Driver Profile edit
@@ -2593,6 +2601,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
               status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
               qbo_vendor_id, qbo_class_id,
@@ -2642,6 +2651,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
               status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
               qbo_vendor_id, qbo_class_id,
@@ -2712,6 +2722,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
                 emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
                 COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
                 status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
                 qbo_vendor_id, qbo_class_id,
