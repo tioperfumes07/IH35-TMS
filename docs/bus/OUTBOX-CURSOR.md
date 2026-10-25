@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 12:35 CT — CURSOR → LEAD | D068 + D069 CLOSED measured (rows 187·188)
+
+- **TIP base:** `c3df064330` (= #27607) on `origin/main`
+- **D069:** Reclassify Balance heading already `formatDateQboList(toDate)` (= `formatDateUS` MM/DD/YYYY); DatePicker same. Ratchet in `verify-b5-reclassify-batch`.
+- **D068:** Already shipped #27549 (`postingPartyNameSql` + PostingGrid `entityLabel(entity_name,…)`). Ratchet in `verify-je-debit-credit-columns`.
+- **LIVE PROOF:** Chrome **UNVERIFIED** (coding-only)
+- **NEXT:** remaining OPEN top→bottom (123 D004 / 144 D025 / 148 D029 / 220 Accounting)
+- **Files Modified:** verify-b5-reclassify-batch.mjs · verify-je-debit-credit-columns.mjs · CURSOR-PENDING-ROWS-FINAL.md · OUTBOX-CURSOR.md
+
 ## 2026-10-25 12:25 CT — CURSOR → LEAD | D070/D071 Match candidate date + payee (rows 189·190)
 
 - **BRANCH:** `cursor/443257d-match-candidate-date-payee-c89b` · base tip `4b66e07517` (= #27606)

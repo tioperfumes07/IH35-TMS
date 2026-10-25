@@ -46,6 +46,12 @@ function main() {
   assertIncludes(reclassify, 'data-testid="reclassify-period-from"', RECLASSIFY);
   assertIncludes(reclassify, 'data-testid="reclassify-period-to"', RECLASSIFY);
   assertIncludes(reclassify, "Accounts · period balances", RECLASSIFY);
+  // D069 (443.257-D row 188) — Balance heading date must share the DatePicker format (MM/DD/YYYY),
+  // not the retired D47 two-digit-year list style that showed `10/23/26` beside filters `10/23/2026`.
+  assertIncludes(reclassify, "Balance {formatDateQboList(toDate)}", RECLASSIFY);
+  if (/Balance \{[^}]*toLocaleDateString|Balance \{[^}]*slice\(-2\)|Balance \{[^}]*year:\s*["']2-digit/.test(reclassify)) {
+    throw new Error(`${RECLASSIFY}: Balance heading must not render a two-digit year`);
+  }
   assertIncludes(reclassify, 'data-b5-selection-bar="1"', RECLASSIFY);
   assertIncludes(reclassify, "transaction line", RECLASSIFY);
   assertIncludes(reclassify, "selected:", RECLASSIFY);
