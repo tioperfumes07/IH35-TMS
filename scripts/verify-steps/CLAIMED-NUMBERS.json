@@ -17124,6 +17124,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-relay-fill-driver-equals-load-driver-443341"
   },
+  "18795": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-void-bypass-reason-is-catalog-button-443348"
+  },
   "18805": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-1",
