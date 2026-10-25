@@ -163,7 +163,7 @@ export function CashAdvancesKpiRow({
         <V3KpiTile
           label="Recovered this period"
           value={display(recovered)}
-          sub="Sunday week via settlement recovery"
+          sub="Sunday week advance_recovery lines"
           testId="cash-advances-kpi-recovered"
           onClick={() => navigate(`${root}?tab=paid_off`)}
         />

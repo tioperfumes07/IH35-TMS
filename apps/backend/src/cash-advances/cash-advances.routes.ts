@@ -141,9 +141,9 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     // ROUND 443.250 — board "Advances on file" is COUNT(*) on the same context view (read-only;
-    // not a new GL feed). Recovered-this-period = sum(amount − outstanding) for advances whose
-    // recovered_in_settlement_id points at a settlement with period_end ≥ this Sunday week start
-    // (same Sunday-week bucket as settlements.routes dashboard KPIs).
+    // not a new GL feed). Recovered-this-period = sum of live settlement_lines advance_recovery
+    // amounts on settlements with period_end ≥ this Sunday week start (includes partial takes;
+    // same Sunday-week bucket as settlements.routes dashboard KPIs).
     const row = await withCompanyScope(user.uuid, companyId, async (client) => {
       const sundayWeekStartSql =
         `(CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day')`;
@@ -151,20 +151,20 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       let recoveredDriverClause = "";
       if (query.data.driver_id) {
         recoveredParams.push(entityIdFilterValues(query.data.driver_id));
-        recoveredDriverClause = `AND a.driver_id = ANY($${recoveredParams.length}::uuid[])`;
+        recoveredDriverClause = `AND s.driver_id = ANY($${recoveredParams.length}::uuid[])`;
       }
       const recoveredRes = await client.query<{ recovered_this_period: string }>(
         `
-          SELECT COALESCE(
-            SUM(GREATEST(COALESCE(a.amount, 0) - COALESCE(a.outstanding_balance, 0), 0)),
-            0
-          ) AS recovered_this_period
-          FROM driver_finance.driver_advances a
+          SELECT COALESCE(SUM(ABS(COALESCE(sl.amount, 0))), 0) AS recovered_this_period
+          FROM driver_finance.settlement_lines sl
           INNER JOIN driver_finance.driver_settlements s
-            ON s.id = a.recovered_in_settlement_id
-           AND s.operating_company_id = a.operating_company_id
-          WHERE a.operating_company_id = $1::uuid
-            AND a.recovered_in_settlement_id IS NOT NULL
+            ON s.id = sl.settlement_id
+           AND s.operating_company_id = sl.operating_company_id
+          WHERE sl.operating_company_id = $1::uuid
+            AND sl.line_type = 'advance_recovery'
+            AND sl.is_active = true
+            AND sl.voided_at IS NULL
+            AND s.voided_at IS NULL
             AND s.period_end >= ${sundayWeekStartSql}
             ${recoveredDriverClause}
         `,
