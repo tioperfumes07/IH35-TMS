@@ -2,6 +2,20 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 12:57 CT — CURSOR → LEAD | D043 + D052 + D065 + D075–D077 CLOSED (rows 162·171·184·194–196)
+
+- **BRANCH:** `cursor/443257-d043-next-c89b` · base tip `8fed34d3aa` (= #27609)
+- **D043:** DailyPrediction / Rolling / Manual / AVP day+range labels → `formatDateUS` (MM/DD/YYYY). Guards: `verify-cf-rolling-proj-slate-leftover-chrome` + `verify-actual-vs-projected-tab-uses-paritytable`.
+- **D052:** tip-fixed HistoryTab `formatDateTimeUS(r.filed_at)`. Ratchet: `verify-form425c-history-includes-drafts`.
+- **D065:** tip-fixed ManualJEModal minmax(0,…) 5-col + `[&>*]:min-w-0`. Ratchet: `verify-91105` (g-flag match count).
+- **D075:** Open Tours OriginDateCell `mmmDd` → `formatDateUS`. Guard: `verify-resettlement-origin-load-dates`.
+- **D076:** `listEscrowAccounts` join driver by id only (drop OCI equality that hid cross-tagged holders). Guard: `verify-escrow-posting-entitylink-reverse`.
+- **D077:** tip-fixed Escrow Updated `formatDateTimeUS`. Ratchet: `verify-91070`.
+- **LIVE PROOF:** `UNVERIFIED: owner Chrome walk on CF dates / 425C History / Manual JE lines / Open Tours PU-DEL / Escrow holder+Updated`
+- **GUARD:** seven extended verifiers — selftest + live PASS
+- **Files Modified:** DailyPredictionTab · RollingLedgerTab · ManualDailyProjectionsTab · ActualVsProjectedTab · SettlementsToursRegister · escrow/service.ts · seven verify-*.mjs · CURSOR-PENDING-ROWS-FINAL.md · OUTBOX-CURSOR.md
+- **NEXT:** remaining OPEN top→bottom (220 Accounting / Settlements+Fuel LAYERED|CHROME-ONLY boards)
+
 ## 2026-10-25 CT — CURSOR → LEAD | D004 + D025 + D029 + D030 CLOSED measured (rows 123·144·148·149)
 
 - **TIP base:** `a9722cc9ad` (= #27608) on `origin/main`

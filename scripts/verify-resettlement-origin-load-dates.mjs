@@ -19,7 +19,7 @@
  *   4. The frontend TourListRow type declares those three origin_* fields.
  *   5. The settlements register renders BOTH the "Date started" and "Delivery date" columns
  *      (testIds setl-tour-col-origin-started / setl-tour-col-origin-delivered) off origin_pickup_date
- *      / origin_delivery_date via the compact mmmDd formatter.
+ *      / origin_delivery_date via formatDateUS (MM/DD/YYYY — D075 / owner 10-24).
  *
  * --selftest mutates each load-bearing fact and requires each mutation to FAIL; clean sources pass.
  */
@@ -61,8 +61,8 @@ function analyze(src) {
 
   // 5. the register renders BOTH columns off the ORIGINAL load's dates, and each date drills to that load.
   // Lead 443.278 (1): the owner-approved board labels win — "PU date" / "DEL date" (0512ef14cd), with the
-  // header tooltip naming the ORIGINAL load so they never read as the tour-level "Date started". The meaning
-  // is pinned, not the wording: origin dates shown via mmmDd, and the cell is an EntityLink to the origin load.
+  // header tooltip naming the ORIGINAL load so they never read as the tour-level "Date started".
+  // D075 (owner 10-24): origin dates = formatDateUS MM/DD/YYYY (not mmmDd OCT-21), EntityLink to origin load.
   if (!/setl-tour-col-origin-started/.test(setl)) errors.push('register must render the origin pickup column (testId setl-tour-col-origin-started)');
   if (!/setl-tour-col-origin-delivered/.test(setl)) errors.push('register must render the origin delivery column (testId setl-tour-col-origin-delivered)');
   if (!/key:\s*"origin_started",\s*label:\s*"PU date"[^\n]*headerTitle:\s*"Pickup date of the ORIGINAL load/.test(setl)) errors.push('origin pickup column must carry the board label "PU date" with the ORIGINAL-load header title');
@@ -71,7 +71,18 @@ function analyze(src) {
   if (!/render:\s*r\s*=>\s*<OriginDateCell row=\{r\} date=\{r\.origin_delivery_date\} \/>/.test(setl)) errors.push("origin delivery cell must render OriginDateCell(origin_delivery_date)");
   const cell = setl.slice(setl.indexOf("function OriginDateCell("), setl.indexOf("function SettlementCell("));
   if (!/l\.load_number === row\.origin_load_number\)\?\.load_id/.test(cell)) errors.push("OriginDateCell must resolve the ORIGINAL load id from the leg whose load_number is the origin");
-  if (!/<EntityLink\s+kind="load"\s+id=\{originId\}\s+label=\{mmmDd\(date\)\}/.test(cell)) errors.push("OriginDateCell must drill to the ORIGINAL load (EntityLink kind=load, label mmmDd(date))");
+  if (!/formatDateUS/.test(setl) || !/from ["'][^"']*lib\/formatDate["']/.test(setl)) {
+    errors.push("SettlementsToursRegister D075 must import formatDateUS from lib/formatDate");
+  }
+  if (/\bmmmDd\s*\(\s*date\s*\)/.test(cell)) {
+    errors.push("OriginDateCell D075 must not use mmmDd (use formatDateUS MM/DD/YYYY)");
+  }
+  if (!/<EntityLink\s+kind="load"\s+id=\{originId\}\s+label=\{formatDateUS\(date\)\}/.test(cell)) {
+    errors.push("OriginDateCell must drill to the ORIGINAL load (EntityLink kind=load, label formatDateUS(date))");
+  }
+  if (!/\{formatDateUS\(date\)\}/.test(cell)) {
+    errors.push("OriginDateCell fallback (no origin load id) must also render formatDateUS(date)");
+  }
 
   return errors;
 }
@@ -110,7 +121,8 @@ if (process.argv.includes("--selftest")) {
     ["delivery cell stops rendering the origin date", withField("setl", (s) => s.replace(/date=\{r\.origin_delivery_date\}/g, "date={r.trip_closed_at}"))],
     ["origin date no longer drills to the origin load", withField("setl", (s) => s.replace(/<EntityLink\s+kind="load"\s+id=\{originId\}/g, '<span data-kind="load" data-id={originId}'))],
     ["origin id resolved from the wrong leg", withField("setl", (s) => s.replace(/l\.load_number === row\.origin_load_number\)\?\.load_id/g, "true)?.load_id"))],
-    ["register drops mmmDd date label", withField("setl", (s) => s.replace(/label=\{mmmDd\(date\)\}/g, "label={date}"))],
+    ["register drops formatDateUS date label", withField("setl", (s) => s.replace(/label=\{formatDateUS\(date\)\}/g, "label={date}"))],
+    ["register reverts to mmmDd OCT chrome", withField("setl", (s) => s.replace(/formatDateUS\(date\)/g, "mmmDd(date)"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

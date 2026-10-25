@@ -162,10 +162,12 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
             ELSE NULL
           END AS holder_label
         FROM accounting.escrow_accounts ea
+        -- D076: join driver by id only. Escrow rows are already OCI-scoped; requiring
+        -- d.operating_company_id = ea.operating_company_id left 1 USMCA holder as
+        -- "Driver — not visible" when the driver row lives under another company tag.
         LEFT JOIN mdata.drivers d
           ON ea.holder_type = 'driver'
          AND d.id = ea.holder_id
-         AND d.operating_company_id = ea.operating_company_id
         LEFT JOIN mdata.vendors v
           ON ea.holder_type IN ('vendor', 'factor')
          AND v.id = ea.holder_id

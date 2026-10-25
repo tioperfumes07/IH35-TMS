@@ -11,7 +11,8 @@ import {
   type RollingLedgerDay,
   type RollingLedgerResult,
 } from "../../../api/cashFlow";
-import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -41,19 +42,13 @@ function mondayOf(iso: string): string {
   return addDaysIso(iso, delta);
 }
 
+/** D043 — owner 10-24: MM/DD/YYYY everywhere (no month names, no year-less chips). */
 function fmtLongDate(iso: string): string {
-  return localDateFromIso(iso).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  return formatDateUS(iso);
 }
 
 function fmtChipDate(iso: string): string {
-  const d = localDateFromIso(iso);
-  const wd = d.toLocaleDateString("en-US", { weekday: "short" });
-  const md = d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" }).replace("/", "-");
-  return `${wd} ${md}`;
+  return formatDateUS(iso);
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {

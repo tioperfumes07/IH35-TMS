@@ -57,6 +57,17 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!/holder_label/.test(service) || !/LEFT JOIN mdata\.drivers/.test(service)) {
     errors.push("escrow/service listEscrowAccounts must JOIN drivers/vendors for holder_label");
   }
+  // D076 — join driver by id only. Escrow rows are already OCI-scoped; requiring
+  // d.operating_company_id = ea.operating_company_id left USMCA holders as "Driver — not visible"
+  // when the driver row lives under another company tag.
+  const drvJoinMatch = service.match(
+    /LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id([\s\S]{0,160})LEFT JOIN mdata\.vendors/,
+  );
+  if (!drvJoinMatch) {
+    errors.push("escrow/service D076: listEscrowAccounts must LEFT JOIN mdata.drivers d ON holder_type=driver AND d.id = ea.holder_id");
+  } else if (/d\.operating_company_id\s*=\s*ea\.operating_company_id/.test(drvJoinMatch[1])) {
+    errors.push("escrow/service D076: driver holder join must NOT require d.operating_company_id = ea.operating_company_id");
+  }
   if (!/source_label/.test(service) || !/driver_finance\.driver_settlements/.test(service)) {
     errors.push("escrow/service listEscrowPostings must JOIN settlements/bills/advances for source_label");
   }

@@ -8,7 +8,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
-import { mmmDd } from "../../lib/formatDate";
+import { formatDateUS } from "../../lib/formatDate";
 import { closeTour, getTourReadout, listTours, type TourListRow } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
@@ -77,12 +77,12 @@ const DASH = "\u2014";
 function OriginDateCell({ row, date }: { row: TourListRow; date: string | null }) {
   if (!date) return <>{DASH}</>;
   const originId = row.origin_load_number ? row.legs.find((l) => l.load_number === row.origin_load_number)?.load_id ?? null : null;
-  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{mmmDd(date)}</span>;
+  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{formatDateUS(date)}</span>;
   return (
     <EntityLink
       kind="load"
       id={originId}
-      label={mmmDd(date)}
+      label={formatDateUS(date)}
       className="ldt-link"
       title={`Original load ${row.origin_load_number}`}
       data-testid="setl-tour-origin-load-link"
