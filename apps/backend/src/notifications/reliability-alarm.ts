@@ -69,7 +69,7 @@ async function loadRecipients(client: {
        FROM identity.users u
        LEFT JOIN org.user_company_access uca ON uca.user_id = u.id
       WHERE u.deactivated_at IS NULL
-        AND u.role = ANY($2::text[])
+        AND u.role::text = ANY($2::text[])  -- identity.role_enum has no = text operator (prod: "operator does not exist", every run since the cron shipped)
         AND (u.default_company_id = $1::uuid OR uca.company_id = $1::uuid)`,
     [operatingCompanyId, ["Owner", "Administrator", "Manager"]],
   );
