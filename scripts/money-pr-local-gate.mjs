@@ -3001,57 +3001,8 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
-  // 443.322 ENG-04: 12 driver advances (CA-2026-0001 to CA-2026-0012, posted 2026-10-11) misposted Cr
-  // to account 2170 using pre-fix code. Guard is correct; the 12 mispostings are historical debt
-  // (pre-date this PR). This PR only introduces the guard + wires it — not the code fix or correction JE.
-  if (
-    name === "verify-driver-net-pay-clearing-balance-zero" &&
-    changedForLiveDomains !== null &&
-    changedForLiveDomains.every((f) =>
-      [
-        "scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
-        "scripts/verify-steps/18777-verify-driver-net-pay-clearing-balance-zero.mjs",
-        "scripts/money-pr-local-gate.mjs",
-      ].includes(f)
-    )
-  ) {
-    const msg = `${rel} — 443.322 ENG-04 guard-only PR; 12 advance mispostings on account 2170 are historical debt (pre-date this PR); correction JE pending owner decision`;
-    console.log(`[${LABEL}] SKIP ${msg}`);
-    skippedLiveChecks.push(msg);
-    continue;
-  }
-  // 443.336 ENG-60: settlement-payrun-close path fix (removes combined trip-close+status='closed' UPDATE
-  // that the tg_settlement_close_requires_posting trigger blocks). The 12 driver advances misposted to
-  // account 2170 (CA-2026-0001..CA-2026-0012, posted 2026-10-11) are historical debt that predate this PR.
-  // ENG-60 fixes the writer (future advances post to BofA, not 2170); it does NOT correct the 12 JEs.
-  if (
-    name === "verify-driver-net-pay-clearing-balance-zero" &&
-    changedForLiveDomains !== null &&
-    changedForLiveDomains.every((f) =>
-      [
-        "apps/backend/src/bulk/bulk-update.factory.ts",
-        "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
-        "apps/backend/src/dispatch/loads-bulk.routes.ts",
-        "apps/backend/src/dispatch/loads.routes.ts",
-        "apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts",
-        "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
-        "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
-        "apps/backend/src/driver/loads.routes.ts",
-        "apps/backend/src/mdata/loads.routes.ts",
-        "docs/law/LAW.json",
-        "scripts/money-pr-local-gate.mjs",
-        "scripts/verify-escrow-ledger-row-has-load.mjs",
-        "scripts/verify-final-load-close-posts.mjs",
-        "scripts/verify-steps/18773-verify-escrow-ledger-row-has-load.mjs",
-        "scripts/verify-steps/18797-verify-final-load-close-posts.mjs",
-      ].includes(f)
-    )
-  ) {
-    const msg = `${rel} — 443.336 ENG-60 settlement-close path fix; 12 advance mispostings on account 2170 are historical debt (pre-date this PR); correction JE is separate work`;
-    console.log(`[${LABEL}] SKIP ${msg}`);
-    skippedLiveChecks.push(msg);
-    continue;
-  }
+  // 443.350 (LEAD): the two per-PR SKIPs for verify-driver-net-pay-clearing-balance-zero (443.322, 443.336)
+  // are gone — redundant now that the guard pins the 12 historical 2170 credits itself and fails only on a NEW one.
   // 443.257-C: fuel-assignment-question.service.ts (CC-3) was added without guard registration in
   // PR #27211; fix is in 443.258-B Cursor branch (not yet on main). This PR touches accounting/dispatch
   // display — it does not arm samsara operational law. Skip the static scan for this specific diff.
