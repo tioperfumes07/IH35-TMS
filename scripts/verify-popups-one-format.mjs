@@ -107,6 +107,17 @@ export function analyse(files, baseline) {
     const n = (src.match(HAND_LABEL) || []).length;
     if (n) problems.push(`${rel}: ${n} hand-typed field label(s) — use FORM_LABEL_CLASS / FORM_LABEL_STACK_CLASS (one creator label style)`);
   }
+  // RULE 5 — (443.365-D) pages/lists must use <ParityTable>, never hand-typed <table>/<thead>/<tbody>/<th>.
+  // Measured 2026-10-25: 0 hand-typed HTML table elements. Shrink-only — zero is the floor.
+  const RAW_TABLE = /<(?:table|thead|tbody|th)[\s>\/]/;
+  for (const [rel, src] of files) {
+    if (!rel.startsWith("pages/lists/") || /\.test\.|__tests__/.test(rel)) continue;
+    if (RAW_TABLE.test(src)) {
+      const m = src.match(RAW_TABLE);
+      const line = src.slice(0, src.indexOf(m[0])).split("\n").length;
+      problems.push(`${rel}:${line} hand-typed HTML table element — use <ParityTable> (owner 10-25: catalog lists must render through the shared table component)`);
+    }
+  }
   const base = new Set(baseline);
   for (const f of overlays) if (!base.has(f)) problems.push(`${f}: paints its own \`fixed inset-0\` overlay — use <Modal> (size="sm" for decisions) or <ParityDrawer>; new popup shells are refused`);
   for (const f of base) if (!overlays.includes(f)) problems.push(`${f}: no longer paints its own overlay — remove it from scripts/verify-popups-one-format.baseline.json (shrink-only)`);
@@ -159,6 +170,10 @@ function selftest() {
   });
   t("exempt media viewer PASSES", () => {
     if (analyse([["components/Sidebar.tsx", '<div className="fixed inset-0">']], []).problems.length) throw new Error("exempt failed");
+  });
+  t("hand-typed <table> in pages/lists FAILS; outside pages/lists PASSES", () => {
+    if (!analyse([["pages/lists/x/A.tsx", '<table><tbody><tr><td>x</td></tr></tbody></table>']], []).problems.some((p) => p.includes("hand-typed HTML table"))) throw new Error("raw table escaped");
+    if (analyse([["pages/dispatch/x/A.tsx", '<table><tbody><tr><td>x</td></tr></tbody></table>']], []).problems.some((p) => p.includes("hand-typed HTML table"))) throw new Error("outside pages/lists incorrectly flagged");
   });
   const bad = T.filter((x) => !x[1]);
   for (const [n, ok, e] of T) console.log(`  ${ok ? "PASS" : "FAIL"}  ${n}${e ? " — " + e : ""}`);
