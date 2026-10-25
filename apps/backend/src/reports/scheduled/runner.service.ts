@@ -15,11 +15,13 @@ import { iftaQuarterlyQuery } from "../queries/ifta-quarterly.js";
 import { buildScheduledReportFile } from "../../scheduled-reports/report-file-builder.js";
 import { companyBusinessDate, addBusinessDateDays } from "../../lib/company-business-date.js";
 import type { ScheduledReportId } from "../scheduled-report-runner.js";
-import { Q8_REPORT_LABELS, type CadenceInput } from "./cadence.js";
+import { Q8_REPORT_LABELS, computeNextScheduledAt, type CadenceInput } from "./cadence.js";
 import {
   appendDeliveryLog,
   listDueSubscriptions,
   markSubscriptionSent,
+  claimSubscriptionRun,
+  releaseSubscriptionRun,
   type ScheduledSubscription,
 } from "./subscription.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../../lib/system-actor.js";
@@ -318,6 +320,10 @@ export async function deliverSubscription(sub: ScheduledSubscription): Promise<v
     timezone: sub.timezone,
   };
 
+  // LST-F443368 — exactly one instance delivers a due run (compare-and-set on next_scheduled_at).
+  const claimUntil = computeNextScheduledAt(cadence, new Date());
+  if (!(await claimSubscriptionRun(sub, claimUntil))) return;
+
   try {
     const bundle = await generateReportBundle(sub);
     await enqueueEmail({
@@ -343,6 +349,7 @@ export async function deliverSubscription(sub: ScheduledSubscription): Promise<v
       recipients,
     });
   } catch (error) {
+    await releaseSubscriptionRun(sub, claimUntil).catch(() => undefined);
     await appendDeliveryLog({
       subscriptionUuid: sub.uuid,
       operatingCompanyId: sub.operating_company_id,
