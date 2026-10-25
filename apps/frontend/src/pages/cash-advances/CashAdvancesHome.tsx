@@ -195,7 +195,9 @@ export function CashAdvancesHomePage() {
             key={value}
             type="button"
             className={`h-7 rounded-sm border px-2 text-xs font-medium ${
-              tab === value ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 bg-white text-gray-700"
+              tab === value
+                ? "border-[#14314F] bg-[#14314F] text-white"
+                : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
             }`}
             onClick={() => setTab(value)}
             data-testid={`cash-advances-tab-${value}`}
