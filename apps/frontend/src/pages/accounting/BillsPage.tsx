@@ -521,7 +521,7 @@ export function BillsPage() {
     () => [
       { key: "bill_type", label: "Type", sortable: true, render: () => "Driver bill" },
       { key: "bill_number", label: "Bill #", sortable: true, render: (b) => b.bill_number ?? "—" },
-      { key: "driver_name", label: "Driver", sortable: true, render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (b) => <EntityLink kind="driver" id={b.driver_id} label={entityLabel(b.driver_name, b.driver_id, "Driver")} /> },
       { key: "load_number", label: "Load Number", alwaysVisible: true, sortable: true, render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
       { key: "miles_basis", label: "Loaded mi", sortable: true, render: (b) => (b.miles_basis != null ? Number(b.miles_basis).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
       { key: "rate_per_mile_cents", label: "Rate", sortable: true, render: (b) => (b.rate_per_mile_cents != null ? `$${(b.rate_per_mile_cents / 100).toFixed(4)}` : "—") },

@@ -16,7 +16,6 @@ import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
 import {
   getFrequentlyRun,
   getIftaStatus,
-  getKpiSummary,
   type FrequentlyRunReport,
   type ReportCategory,
 } from "../../api/reports";
@@ -59,12 +58,6 @@ export function ReportsHomePage() {
   const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
 
-  const kpiQuery = useQuery({
-    queryKey: ["reports", "kpi-summary", companyId],
-    queryFn: () => getKpiSummary(companyId),
-    enabled: Boolean(companyId),
-  });
-  const kpiReady = kpiQuery.isSuccess;
   const frequentQuery = useQuery({
     queryKey: ["reports", "frequently-run", companyId],
     queryFn: () => getFrequentlyRun(companyId),
@@ -131,19 +124,6 @@ export function ReportsHomePage() {
         activeCategory={category}
         onCategoryChange={setCategory}
       />
-
-      {companyId && (
-        <div className="flex gap-3">
-          <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs">
-            <span className="text-[#6B7280]">{"Scheduled "}</span>
-            <span className="font-semibold tabular-nums">{kpiReady ? String(kpiQuery.data?.scheduled) : "—"}</span>
-          </div>
-          <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs">
-            <span className="text-[#6B7280]">{"Run last 7d "}</span>
-            <span className="font-semibold tabular-nums">{kpiReady ? String(kpiQuery.data?.run_last_7d) : "—"}</span>
-          </div>
-        </div>
-      )}
 
       {companyId ? (
         <ReportsHomeBoard companyId={companyId} />

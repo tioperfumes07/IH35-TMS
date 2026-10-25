@@ -389,7 +389,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
         const res = await listDriverBills(companyId, { limit: REGISTER_LIMIT });
         return (res.driver_bills ?? []).filter(d => d.voided_at == null).map(d => ({
           id: d.id, number: d.bill_number ?? d.load_number ?? "—", date: d.created_at,
-          party: d.driver_name ?? "Driver", loadNumber: d.load_number, loadId: d.load_id,
+          party: formatPersonName(d.driver_name ?? "Driver"), loadNumber: d.load_number, loadId: d.load_id,
           // ACCT-F26140 (CC-2, 2026-09-11): settled_in_settlement_id is the dead column (0/many
           // populated company-wide, same root cause the rest of the sweep fixed) -- the backend's
           // driver-bills-list.routes.ts already resolves the real, settlement_lines-backed
@@ -410,12 +410,12 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
           listAllExpenses(companyId),
         ]);
         const expensesRes = { rows: expenseRowsAll };
-        const cashRows: RegisterRow[] = (advancesRes.advances ?? []).filter(a => a.purpose === "fuel_deposit").map(a => ({ id: String(a.id), number: String(a.display_id ?? a.reference ?? "—"), date: (a.disbursed_at ?? a.created_at ?? null) as string | null, party: String(a.driver_name ?? a.recipient_name ?? "Driver"), loadNumber: (a.load_number ?? null) as string | null, loadId: (a.load_id ?? null) as string | null, detail: "Fuel cash advance", amountCents: Number(a.amount_cents ?? a.amount ?? 0), status: String(a.status ?? "—") }));
+        const cashRows: RegisterRow[] = (advancesRes.advances ?? []).filter(a => a.purpose === "fuel_deposit").map(a => ({ id: String(a.id), number: String(a.display_id ?? a.reference ?? "—"), date: (a.disbursed_at ?? a.created_at ?? null) as string | null, party: formatPersonName(String(a.driver_name ?? a.recipient_name ?? "Driver")), loadNumber: (a.load_number ?? null) as string | null, loadId: (a.load_id ?? null) as string | null, detail: "Fuel cash advance", amountCents: Number(a.amount_cents ?? a.amount ?? 0), status: String(a.status ?? "—") }));
         const fuelRole = (coaRoles.data?.rows ?? []).find(role => role.role === "company_fuel_advance_expense" && role.is_active && role.account_number);
         const expenseRows: RegisterRow[] = fuelRole
           ? (expensesRes.rows ?? [])
               .filter(x => x.status !== "void" && x.driver_uuid != null && x.category_account_number === fuelRole.account_number)
-              .map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: [x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Driver", loadNumber: x.load_number, loadId: x.load_id, detail: "Company fuel expense", amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }))
+              .map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: formatPersonName([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Driver"), loadNumber: x.load_number, loadId: x.load_id, detail: "Company fuel expense", amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }))
           : [];
         return [...cashRows, ...expenseRows];
       }
@@ -460,7 +460,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
         // non-seed expense that never had a composite memo to begin with).
         const structured = x.merchant_address != null || x.source_settlement_ref != null;
         const parsed = structured ? null : parseExpenseMemo(x.line_description ?? x.memo, x.vendor_document_number ?? null);
-        return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id,
+        return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? (formatPersonName([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set")), loadNumber: x.load_number, loadId: x.load_id,
           detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (structured ? (x.line_description ?? "Expense") : (parsed!.description ?? x.line_description ?? x.memo ?? "Expense")),
           address: structured ? (x.merchant_address ?? null) : parsed!.address,
           receiptNumber: structured ? (x.vendor_document_number ?? null) : parsed!.receiptNumber,
