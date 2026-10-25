@@ -1710,7 +1710,7 @@ export async function findCandidates(input: {
 
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
-    const pack = (candidates: MatchCandidate[], window: MatchWindowInfo): FindCandidatesResult => {
+    const pack = async (candidates: MatchCandidate[], window: MatchWindowInfo): Promise<FindCandidatesResult> => {
       // LEAD 443.304 — combinations over the full pool; members the floor hid are appended so the drawer can select them.
       const combinations = findAmountCombinations(
         txnAmountAbs,
@@ -1726,7 +1726,16 @@ export async function findCandidates(input: {
         const hit = lastPool.find((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}` === key);
         if (hit) { extra.push({ ...hit, in_combination: true }); shown.add(key); }
       }
-      return { candidates: [...candidates, ...extra], window, bank_amount_cents: txnAmountAbs, combinations };
+      // LEAD 443.345 — a money-out line that pays ONE driver settlement's net (R12: the net sits open on A/P as that
+      // settlement's bills until the owner matches the check / Zelle) is offered as that settlement, labeled and FIRST — not as
+      // one of several anonymous sums. Only when every open bill of the settlement is in this line's pool (the locked 3/7-day
+      // cascade still decides the pool — owner decision 2026-09-23) and the open total equals the bank amount within tolerance.
+      const settlementNet = Number(txn.amount_cents) < 0
+        ? await settlementNetCombinations(client, input.operating_company_id, txnAmountAbs, toleranceCents, lastPool)
+        : [];
+      const namedKeys = new Set(settlementNet.map((c) => c.members.map((m) => m.ledger_entry_id).sort().join(",")));
+      const merged = [...settlementNet, ...combinations.filter((c) => !namedKeys.has(c.members.map((m) => m.ledger_entry_id).sort().join(",")))];
+      return { candidates: [...candidates, ...extra], window, bank_amount_cents: txnAmountAbs, combinations: merged };
     };
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
     const txnDate = txn.transaction_date;
@@ -1823,7 +1832,7 @@ export async function findCandidates(input: {
       const from = shiftDate(txnDate, -days);
       const to = shiftDate(txnDate, days);
       const candidates = rank(await fetchAt(from, to, { windowDays: days }));
-      return pack(candidates, { step: "custom", from, to, auto_widened: false });
+      return await pack(candidates, { step: "custom", from, to, auto_widened: false });
     }
 
     // ANY explicit filter overrides the cascade. From/To exact; other filters use Step 2 bounds.
@@ -1841,32 +1850,32 @@ export async function findCandidates(input: {
         ({ from, to } = boundsForStep(txnDate, 2));
       }
       const candidates = rank(await fetchAt(from, to));
-      return pack(candidates, { step: "custom", from, to, auto_widened: false });
+      return await pack(candidates, { step: "custom", from, to, auto_widened: false });
     }
 
     // Forced Step 2 (FE "Search 7 days") — no further auto-widen.
     if (input.window_step === 2) {
       const { from, to } = boundsForStep(txnDate, 2);
       const candidates = rank(await fetchAt(from, to));
-      return pack(candidates, { step: 2, from, to, auto_widened: false });
+      return await pack(candidates, { step: 2, from, to, auto_widened: false });
     }
 
     // Forced Step 1 only (no auto-widen) when window_step === 1.
     if (input.window_step === 1) {
       const { from, to } = boundsForStep(txnDate, 1);
       const candidates = rank(await fetchAt(from, to));
-      return pack(candidates, { step: 1, from, to, auto_widened: false });
+      return await pack(candidates, { step: 1, from, to, auto_widened: false });
     }
 
     // DEFAULT cascade: Step 1 → if ZERO, Step 2 with auto_widened. Never auto-advance past Step 2.
     const step1 = boundsForStep(txnDate, 1);
     const step1Ranked = rank(await fetchAt(step1.from, step1.to));
     if (step1Ranked.length > 0) {
-      return pack(step1Ranked, { step: 1, from: step1.from, to: step1.to, auto_widened: false });
+      return await pack(step1Ranked, { step: 1, from: step1.from, to: step1.to, auto_widened: false });
     }
     const step2 = boundsForStep(txnDate, 2);
     const step2Ranked = rank(await fetchAt(step2.from, step2.to));
-    return pack(step2Ranked, { step: 2, from: step2.from, to: step2.to, auto_widened: true });
+    return await pack(step2Ranked, { step: 2, from: step2.from, to: step2.to, auto_widened: true });
   });
 }
 
@@ -3019,4 +3028,60 @@ export async function suggestBankMatches(input: {
     }
   }
   return { lines: lines.length, suggested: outcomes.filter((o) => o.result === "suggested").length, outcomes };
+}
+
+
+/**
+ * LEAD 443.345 — the open A/P bills of ONE driver settlement (driver_finance.driver_settlement_gl_bills → accounting.bills),
+ * offered as a named set when (a) every one of that settlement's open bills is in the line's candidate pool and (b) their open
+ * total equals the bank amount within the Q11 tolerance. Read-only; suggests, never matches (owner law 2026-09-12).
+ */
+export async function settlementNetCombinations(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string,
+  bankCents: number,
+  toleranceCents: number,
+  pool: MatchCandidate[]
+): Promise<AmountCombination[]> {
+  const poolBills = pool.filter((c) => c.ledger_entry_kind === "bill");
+  if (poolBills.length === 0) return [];
+  const rows = (await client.query<{ settlement_id: string; display_id: string | null; driver: string | null; bill_id: string; open_cents: string }>(
+    `SELECT s.id::text AS settlement_id, s.display_id,
+            NULLIF(trim(coalesce(d.first_name, '') || ' ' || coalesce(d.last_name, '')), '') AS driver,
+            b.id::text AS bill_id, (b.amount_cents - coalesce(b.paid_cents, 0))::text AS open_cents
+       FROM driver_finance.driver_settlement_gl_bills g
+       JOIN driver_finance.driver_settlements s ON s.id = g.settlement_id AND s.operating_company_id = g.operating_company_id
+       JOIN accounting.bills b ON b.id = g.accounting_bill_id AND b.operating_company_id = g.operating_company_id
+       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+      WHERE g.operating_company_id = $1::uuid
+        AND s.voided_at IS NULL
+        AND b.status::text NOT IN ('void', 'voided', 'paid')
+        AND (b.amount_cents - coalesce(b.paid_cents, 0)) > 0
+        AND g.settlement_id IN (SELECT g2.settlement_id FROM driver_finance.driver_settlement_gl_bills g2
+                                 WHERE g2.operating_company_id = $1::uuid AND g2.accounting_bill_id = ANY($2::uuid[]))`,
+    [operatingCompanyId, poolBills.map((c) => c.ledger_entry_id)]
+  )).rows;
+  const bySettlement = new Map<string, typeof rows>();
+  for (const r of rows) bySettlement.set(r.settlement_id, [...(bySettlement.get(r.settlement_id) ?? []), r]);
+  const inPool = new Map(poolBills.map((c) => [c.ledger_entry_id, c]));
+  const out: AmountCombination[] = [];
+  for (const [, bills] of bySettlement) {
+    if (!bills.every((b) => inPool.has(b.bill_id))) continue;
+    const sum = bills.reduce((t, b) => t + Number(b.open_cents), 0);
+    const variance = bankCents - sum;
+    if (Math.abs(variance) > toleranceCents) continue;
+    const first = bills[0]!;
+    out.push({
+      members: bills.map((b) => ({ ledger_entry_kind: "bill", ledger_entry_id: b.bill_id, amount_cents: Number(b.open_cents),
+        reference: inPool.get(b.bill_id)?.reference ?? null })),
+      sum_cents: sum,
+      variance_cents: variance,
+      exact: true,
+      max_date_gap_days: Math.max(...bills.map((b) => inPool.get(b.bill_id)?.date_gap_days ?? 0)),
+      same_counterparty: true,
+      source: "settlement_net",
+      label: `Settlement ${first.display_id ?? first.settlement_id} — ${first.driver ?? "driver"} — net pay (${bills.length} bill${bills.length === 1 ? "" : "s"})`,
+    });
+  }
+  return out.sort((a, b) => Math.abs(a.variance_cents) - Math.abs(b.variance_cents));
 }
