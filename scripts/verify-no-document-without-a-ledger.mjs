@@ -145,7 +145,10 @@ const DOCUMENT_CLASSES = [
     // LEAD 10-24: a PROFORMA is the preview the Edit Load engine keeps current until the invoice is issued (QBO: an
     // estimate) — it never posts. Measured 10-24: proforma 2 / 0 posted (13690, 13699 — both loads in_transit); sent 183,
     // 164 posted + 19 at $0.00. The old "ratchet 1" was the 13690 proforma, not a missing posting.
-    pendingSql: "d.status::text = 'proforma'",
+    // ACCT-F443344 (2026-10-24): a 'draft' invoice is also pre-issuance (prepared but not yet sent to customer);
+    // its Event-2 JE (DR A/R / CR Unbilled, source_transaction_type='invoice') fires when the owner issues it.
+    // Going forward, the engine fix means newly-delivered loads also produce draft invoices pending owner action.
+    pendingSql: "d.status::text IN ('proforma', 'draft')",
   },
   { table: "accounting.factoring_advances", voidCol: "voided_at", sourceType: "factoring_advance", expectedToPost: true },
   { table: "banking.transfers", voidCol: "revoked_at", sourceType: "transfer", expectedToPost: true },
