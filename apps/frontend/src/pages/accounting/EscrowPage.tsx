@@ -160,7 +160,6 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
       return {
         driversHolding: null as number | null,
         totalHeldCents: null as number | null,
-        scheduledAvailable: false,
       };
     }
     // OWNER 10-24 12:16 PM CT: every non-zero escrow counts and shows (negative, closed, inactive driver included).
@@ -172,7 +171,6 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
     return {
       driversHolding: holdingDriverIds.size,
       totalHeldCents,
-      scheduledAvailable: false,
     };
   }, [accountRows, accountsQuery.isError]);
 
@@ -301,8 +299,8 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
         />
         <V3KpiTile
           label="Scheduled releases"
-          value={escrowHomeKpis.scheduledAvailable ? "0" : "—"}
-          sub="no release schedule on this list"
+          value="—"
+          sub="no schedule feed"
           testId="escrow-kpi-scheduled-releases"
           onClick={() => setViewTab("pending")}
         />

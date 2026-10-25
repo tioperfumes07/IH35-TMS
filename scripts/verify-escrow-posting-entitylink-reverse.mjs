@@ -92,6 +92,10 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!escrow.includes("ESCROW_RELEASE_WINDOW_DAYS") && !escrow.includes("60 days")) {
     errors.push(`${ESCROW_PAGE}: Release window must show the board 60-day policy chrome`);
   }
+  // Fill-not-shell — Scheduled releases has no feed; never invent "0".
+  if (!escrow.includes("no schedule feed") || /scheduledAvailable\s*\?\s*["']0["']/.test(escrow)) {
+    errors.push(`${ESCROW_PAGE}: Scheduled releases must be honest — with sub "no schedule feed"`);
+  }
   return errors;
 }
 
