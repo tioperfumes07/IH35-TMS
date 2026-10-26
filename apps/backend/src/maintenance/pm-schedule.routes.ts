@@ -258,7 +258,10 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
   const setLastPmBody = z.object({
     operating_company_id: realUuid,
     last_service_odometer: z.number().int().min(0),
-    last_performed_at: z.string().datetime().optional(),
+    // maintenance.pm_schedules stores the service DATE (last_service_date, date) — there is no
+    // last_performed_at / notes / updated_at column on prod (verify-sql-write-targets, live schema).
+    last_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    // Notes have no column on the schedule; they are kept on the audit row so nothing typed is lost.
     notes: z.string().trim().max(2000).optional(),
   });
 
@@ -289,17 +292,14 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
           `UPDATE maintenance.pm_schedules
               SET last_service_odometer = $1,
                   next_due_odometer = $2,
-                  last_performed_at = COALESCE($3::timestamptz, last_performed_at),
-                  notes = COALESCE($4, notes),
-                  updated_at = now()
-            WHERE id = $5::uuid AND operating_company_id = $6::uuid
+                  last_service_date = COALESCE($3::date, last_service_date)
+            WHERE id = $4::uuid AND operating_company_id = $5::uuid
             RETURNING id::text, unit_id::text, label AS pm_type, interval_kind, interval_value,
-                      last_service_odometer, next_due_odometer, last_performed_at::text`,
+                      last_service_odometer, next_due_odometer, last_service_date::text`,
           [
             body.data.last_service_odometer,
             nextDue,
-            body.data.last_performed_at ?? null,
-            body.data.notes ?? null,
+            body.data.last_service_date ?? null,
             params.data.id,
             body.data.operating_company_id,
           ]
@@ -311,6 +311,8 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
           operating_company_id: body.data.operating_company_id,
           last_service_odometer: body.data.last_service_odometer,
           next_due_odometer: nextDue,
+          last_service_date: body.data.last_service_date ?? null,
+          notes: body.data.notes ?? null,
         });
         return updated.rows[0];
       });
