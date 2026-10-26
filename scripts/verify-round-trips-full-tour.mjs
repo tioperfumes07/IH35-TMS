@@ -233,8 +233,10 @@ if (process.argv.includes("--selftest")) {
 
   // MUTATION 4 — the "closed tour never renders" scope: widen the open-settlement subquery to
   // match ANY settlement regardless of trip_closed_at/status (a closed tour's legs would leak in).
-  const scopeNeedle = "AND s.trip_closed_at IS NULL\n                AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')";
-  assert.ok(backendSrc.includes(scopeNeedle), "selftest fixture out of sync with the real open-settlement scope");
+  // Whitespace-agnostic: #27750 re-indented this subquery when it added the entity predicate.
+  const scopeMatch = backendSrc.match(/AND s\.trip_closed_at IS NULL\s*\n\s*AND s\.status NOT IN \('approved', 'paid', 'cancelled', 'closed', 'final'\)/);
+  assert.ok(scopeMatch, "selftest fixture out of sync with the real open-settlement scope");
+  const scopeNeedle = scopeMatch[0];
   const mutatedBackend4 = backendSrc.replace(scopeNeedle, "");
   assert.notEqual(mutatedBackend4, backendSrc, "mutation 4 did not change the source");
   assert.ok(auditBackend(mutatedBackend4).length > 0, "MUTATION 4 (open-settlement scope widened) escaped detection");

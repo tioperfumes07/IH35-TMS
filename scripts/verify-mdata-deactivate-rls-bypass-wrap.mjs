@@ -149,12 +149,11 @@ function selftest() {
   const customersText = fs.readFileSync(path.join(root, CUSTOMERS_FILE), "utf8");
   const vendorsText = fs.readFileSync(path.join(root, VENDORS_FILE), "utf8");
 
+  // Re-anchored after LST-F10160 (#20164) added the status sync to the SET list: match ANY SET list, keep the
+  // planted defect identical — the deactivate UPDATE moved off withLuciaBypass onto the RLS-bound client.
   const offenderCustomers = customersText.replace(
-    /const res = await withLuciaBypass\(\s*\(bypassClient\) =>\s*bypassClient\.query\(\s*`UPDATE mdata\.customers SET deactivated_at = now\(\), updated_by_user_id = \$2 WHERE id = \$1 AND operating_company_id = \$3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,\s*\[parsedParams\.data\.id, authUser\.uuid, scopedCompanyId\]\s*\),\s*\{ actorUserId: authUser\.uuid \}\s*\);/,
-    `const res = await client.query(
-          \`UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at\`,
-          [parsedParams.data.id, authUser.uuid, scopedCompanyId]
-        );`,
+    /const res = await withLuciaBypass\(\s*\(bypassClient\) =>\s*bypassClient\.query\(\s*(`UPDATE mdata\.customers SET deactivated_at = now\(\)[^`]*`),\s*(\[parsedParams\.data\.id, authUser\.uuid, scopedCompanyId\])\s*\),\s*\{ actorUserId: authUser\.uuid \}\s*\);/,
+    (_m, sql, params) => `const res = await client.query(\n          ${sql},\n          ${params}\n        );`,
   );
   if (offenderCustomers === customersText) {
     console.error("FAIL(selftest): offender mutation did not change customers.routes.ts — pattern out of sync");

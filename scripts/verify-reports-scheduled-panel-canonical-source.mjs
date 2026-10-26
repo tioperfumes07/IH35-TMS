@@ -27,6 +27,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   panel: "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx",
   home: "apps/frontend/src/pages/reports/ReportsHome.tsx",
+  // #27715 (FINAL-3 row 40, owner-approved V3 rebuild) moved the panel mount into the Reports Home board.
+  board: "apps/frontend/src/pages/reports/components/ReportsHomeBoard.tsx",
 };
 const LABEL = "verify-reports-scheduled-panel-canonical-source";
 
@@ -68,8 +70,16 @@ export function audit(src) {
   if (src.home.includes("getScheduledReports")) {
     failures.push(`${FILES.home}: must not import/call the legacy getScheduledReports — it fed the now-removed rows prop.`);
   }
-  if (/<ScheduledReportsPanel\s+rows=/.test(src.home)) {
-    failures.push(`${FILES.home}: must not pass a rows prop to ScheduledReportsPanel — it self-fetches from the canonical API.`);
+  for (const key of ["home", "board"]) {
+    if (key === "board" && src.board.includes("getScheduledReports")) {
+      failures.push(`${FILES.board}: must not import/call the legacy getScheduledReports — it fed the now-removed rows prop.`);
+    }
+    if (/<ScheduledReportsPanel\s+rows=/.test(src[key])) {
+      failures.push(`${FILES[key]}: must not pass a rows prop to ScheduledReportsPanel — it self-fetches from the canonical API.`);
+    }
+  }
+  if (!/<ScheduledReportsPanel\s*\/>/.test(src.board) && !/<ScheduledReportsPanel\s*\/>/.test(src.home)) {
+    failures.push(`${FILES.board}: ScheduledReportsPanel is no longer mounted on Reports Home.`);
   }
 
   return failures;
@@ -93,7 +103,8 @@ if (process.argv.includes("--selftest")) {
     { key: "panel", from: '["scheduled-reports-v2", companyId]', to: '["reports-scheduled-panel", companyId]' },
     { key: "panel", from: "resumeMut.mutate(row.id)", to: "pauseMut.mutate(row.id)" },
     { key: "panel", from: "deleteScheduledReport(id, companyId)", to: "Promise.resolve({ ok: true })" },
-    { key: "home", from: '        <ScheduledReportsPanel />', to: '        <ScheduledReportsPanel rows={[]} />' },
+    { key: "board", from: "<ScheduledReportsPanel />", to: "<ScheduledReportsPanel rows={[]} />" },
+    { key: "board", from: 'from "../ScheduledReportsPanel";', to: 'from "../ScheduledReportsPanel";\nimport { getScheduledReports } from "../../../api/reports";' },
   ];
   let detected = 0;
   for (const m of mutations) {
