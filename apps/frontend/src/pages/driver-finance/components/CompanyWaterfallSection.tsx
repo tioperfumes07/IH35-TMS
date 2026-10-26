@@ -1,3 +1,4 @@
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { formatUsdCents } from "../../../lib/money";
 import type { TourReadout } from "../../../api/tourReadout";
 import type { CompanySettlementReport } from "../../../api/accounting";
@@ -47,12 +48,12 @@ export function CompanyWaterfallSection({
     const netCents = report.sections.pl_rollup.net_revenue_cents;
     const marginPct = invoicedCents ? (netCents / invoicedCents) * 100 : null;
     return (
-      <section className="ldt-card" data-testid="settlement-company-waterfall-section">
-        <div className="ldt-ch">
-          <span>Company waterfall</span>
-          <span className="ldt-open">{report.display_id}{report.status ? ` · ${report.status}` : ""}</span>
-        </div>
-        <div className="ldt-rows">
+      <BoardSection
+        title="Company waterfall"
+        subtitle={`${report.display_id}${report.status ? ` · ${report.status}` : ""}`}
+        testId="settlement-company-waterfall-section"
+      >
+        <div className="ldt-rows px-2 py-1">
           <div className="ldt-row">
             <span>Invoiced</span>
             <span className="ldt-m" data-testid="waterfall-invoiced">{money(invoicedCents)}</span>
@@ -88,17 +89,17 @@ export function CompanyWaterfallSection({
             <span className="ldt-m" data-testid="waterfall-net">{money(netCents)}</span>
           </div>
         </div>
-      </section>
+      </BoardSection>
     );
   }
 
   return (
-    <section className="ldt-card" data-testid="settlement-company-waterfall-section">
-      <div className="ldt-ch">
-        <span>Company waterfall</span>
-        <span className="ldt-open">{cs.display_id ?? "not opened yet"}{cs.status ? ` · ${cs.status}` : ""}</span>
-      </div>
-      <div className="ldt-rows">
+    <BoardSection
+      title="Company waterfall"
+      subtitle={`${cs.display_id ?? "not opened yet"}${cs.status ? ` · ${cs.status}` : ""}`}
+      testId="settlement-company-waterfall-section"
+    >
+      <div className="ldt-rows px-2 py-1">
         <div className="ldt-row">
           <span>Invoiced</span>
           <span className="ldt-m" data-testid="waterfall-invoiced">{money(cs.revenue_cents)}</span>
@@ -128,6 +129,6 @@ export function CompanyWaterfallSection({
           <span className="ldt-m" data-testid="waterfall-net">{money(cs.margin_cents)}</span>
         </div>
       </div>
-    </section>
+    </BoardSection>
   );
 }

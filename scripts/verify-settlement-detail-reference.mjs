@@ -63,7 +63,7 @@ function verify(files) {
   // BoardSection testId= renders data-testid at runtime (fill-not-shell 443.293-C).
   if (!/(?:data-testid|testId)="settlement-loads-section"/.test(loadsSection)) f.push("loads-section-testid-missing");
   if (!/<SettlementLoadsSection/.test(page)) f.push("loads-section-not-mounted");
-  if (!/data-testid="settlement-company-waterfall-section"/.test(waterfallSection)) f.push("waterfall-section-testid-missing");
+  if (!/(?:data-testid|testId)="settlement-company-waterfall-section"/.test(waterfallSection)) f.push("waterfall-section-testid-missing");
   if (!/<CompanyWaterfallSection/.test(page)) f.push("waterfall-section-not-mounted");
 
   // 6 — every new section drills to its source via EntityLink.
@@ -109,7 +109,7 @@ if (process.argv.includes("--selftest")) {
     { ...base, page: base.page.replace("<SettlementNumberBox", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace(/(?:data-testid|testId)="settlement-loads-section"/, 'testId="oops"') },
     { ...base, page: base.page.replace("<SettlementLoadsSection", "<Nope") },
-    { ...base, waterfallSection: base.waterfallSection.replaceAll('data-testid="settlement-company-waterfall-section"', 'data-testid="oops"') },
+    { ...base, waterfallSection: base.waterfallSection.replace(/(?:data-testid|testId)="settlement-company-waterfall-section"/g, 'testId="oops"') },
     { ...base, page: base.page.replaceAll("<CompanyWaterfallSection", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace(/EntityLink/g, "NotALink") },
     { ...base, page: `${base.page} text-[11px] #8A92AB` },

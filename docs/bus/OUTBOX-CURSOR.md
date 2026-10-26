@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements detail + Accounting remaining boards (horizontal)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Collections/VendorBalances/Waterfall/ImportFuel (batch 2)
 
 - **STATUS:** SHIPPING
+- **DELTA:** Collections filters/queue/detail · Vendor balances vendors/bills/payments · Company waterfall · Import Fuel selected+WEX plan → BoardSection. Pay/sync/import engines kept. Guard verify-fill-batch2-boards via 1747. Prior #27867 MERGED.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fill-batch2-boards PASS · verify-settlement-detail-reference PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** QboReconcile/MultiEntity if still bare; Chrome close PARTIAL rows when authorized
+- **Files Modified:** CollectionsPage · VendorBalancesPage · CompanyWaterfallSection · ImportFuelTransactionsModal · verify-fill-batch2-boards.mjs · verify-settlement-detail-reference.mjs · 1747 · OUTBOX
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements detail + Accounting remaining boards (horizontal)
+
+- **STATUS:** MERGED [#27867](https://github.com/tioperfumes07/IH35-TMS/pull/27867) @ `d9ccaea90c`
 - **DELTA:** Settlement detail sections (Earnings · Deadhead · Extra pay · Reimbursements · Deductions · Fuel · Loads) → BoardSection (Add buttons kept as headerRight). Accounting Month close · Sales tax · Opening balances · Create multiple bills · Daily recon · Account register → BoardSection. Engines unchanged. Guard verify-fill-remaining-boards-batch via 1747; settlement-detail-reference accepts BoardSection testId.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fill-remaining-boards-batch PASS · verify-settlement-detail-sections PASS · verify-settlement-detail-reference PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
@@ -187,13 +196,4 @@
 - **NEXT:** continue fill-not-shell
 - **Files Modified:** RelayFillsReverseSection · FuelCardsReverseSection · FuelCardOverageReverseSection · FuelFraudAlertsReverseSection · FuelTransactionsReverseSection · verify-fuel-reverse-board-sections.mjs · OUTBOX-CURSOR.md
 
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FactoringProfile + FactorAdmin → BoardSection
-
-- **STATUS:** SHIPPING [#27757](https://github.com/tioperfumes07/IH35-TMS/pull/27757) (squash auto-merge armed)
-- **DELTA:** FactoringProfilePanel full/compact → `BoardSection` (FAC-07 ≤220px wrap kept); FactorAdmin selected detail + customer history → `BoardSection`; modal inputs → `FORM_INPUT_CLASS`. Engines unchanged. New guard verify-factoring-profile-admin-board.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-profile-admin-board PASS (+ --selftest) · canonical-factor-profile · ft5 · no-nested-box · factor-admin parity/create-vocab
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell (remaining Factoring bare cards / Settlements / Fuel)
-- **Files Modified:** FactoringProfilePanel.tsx · FactorAdmin.tsx · verify-factoring-profile-admin-board.mjs · OUTBOX-CURSOR.md
 
