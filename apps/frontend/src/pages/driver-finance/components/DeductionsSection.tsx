@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { mmmDd } from "../../../lib/formatDate";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 export type DeductionRow = {
   id: string;
@@ -199,23 +200,23 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
   });
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white">
-      <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Deductions</h2>
-        <span className="ml-2 text-xs text-[#6B7280]">escrow $25.00 per load only where printed · admin fee GAS · advances</span>
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={!isOpen || !onAdd}
-            title={!isOpen ? "Settlement locked" : undefined}
-            onClick={onAdd}
-            data-testid="deductions-section-add"
-          >
-            + Add deduction
-          </Button>
-        </div>
-      </header>
+    <BoardSection
+      title="Deductions"
+      subtitle="escrow $25.00 per load only where printed · admin fee GAS · advances"
+      testId="settlement-deductions-board"
+      headerRight={
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={!isOpen || !onAdd}
+          title={!isOpen ? "Settlement locked" : undefined}
+          onClick={onAdd}
+          data-testid="deductions-section-add"
+        >
+          + Add deduction
+        </Button>
+      }
+    >
       <ParityTable
         columns={columns}
         rows={rows}
@@ -227,6 +228,6 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
         hidePager
       />
       <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Applied deductions this period: −${subtotal.toFixed(2)}</div>
-    </section>
+    </BoardSection>
   );
 }

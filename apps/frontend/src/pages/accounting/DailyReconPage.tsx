@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
@@ -232,31 +233,29 @@ export function DailyReconPage() {
 
           {/* Days */}
           {listState.isEmpty ? (
-            <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-xs text-gray-500">
-              No transactions found for the selected filters.
-            </div>
+            <BoardSection title="Daily reconciliation" testId="daily-recon-empty-board">
+              <div className="px-4 py-6 text-center text-xs text-gray-500">
+                No transactions found for the selected filters.
+              </div>
+            </BoardSection>
           ) : (
             <div className="space-y-4">
               {filteredDays.map((day) => (
-                <div key={day.date} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-                  {/* Day header */}
-                  <div className={`flex items-center justify-between px-4 py-2 ${
-                    day.all_reconciled
-                      ? "bg-[#F7F8FA] border-b border-[#E5E7EB]"
-                      : "bg-gray-50 border-b border-gray-200"
-                  }`}>
-                    <span className="font-semibold text-xs text-gray-900">{formatDateUS(day.date)}</span>
-                    {day.all_reconciled ? (
+                <BoardSection
+                  key={day.date}
+                  title={formatDateUS(day.date)}
+                  testId={`daily-recon-day-${day.date}`}
+                  headerRight={
+                    day.all_reconciled ? (
                       <span className="text-xs font-semibold text-[#4B5563]">All reconciled</span>
                     ) : (
                       <span className="text-xs text-[#4B5563]">
                         {day.rows.filter((r) => r.match_status !== "matched").length} item(s) need attention
                       </span>
-                    )}
-                  </div>
-
-                  {/* Rows table */}
-                  <ParityTable title="Reconciliation items"
+                    )
+                  }
+                >
+                  <ParityTable
                     columns={RECON_COLUMNS}
                     rows={day.rows}
                     rowKey={(row) => `${row.entity_type}-${row.entity_id}`}
@@ -265,7 +264,7 @@ export function DailyReconPage() {
                     storageKey="daily-recon-rows"
                     stickyHeader={false}
                   />
-                </div>
+                </BoardSection>
               ))}
             </div>
           )}

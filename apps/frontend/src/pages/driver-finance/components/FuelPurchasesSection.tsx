@@ -20,6 +20,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { mmmDd } from "../../../lib/formatDate";
 import type { CompanySettlementFuelRow } from "../../../api/accounting";
 import { QBO_MONEY_CELL_CLASS, formatQuantityTable, formatUsdCentsTable, formatUsdRateTable } from "../../../lib/money";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 const DASH = "—";
 
@@ -115,11 +116,11 @@ export function FuelPurchasesSection({ rows }: Props) {
   const subtotalCents = rows.reduce((sum, r) => sum + Number(r.amount_cents || 0), 0);
   const totalGallons = rows.reduce((sum, r) => sum + Number(r.gallons || 0), 0);
   return (
-    <section className="rounded-sm border border-gray-200 bg-white" data-testid="fuel-purchases-section">
-      <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Fuel purchases</h2>
-        <span className="ml-2 text-xs text-[#6B7280]">one line per purchase · qty x rate = amount · diesel and DEF are separate items</span>
-      </header>
+    <BoardSection
+      title="Fuel purchases"
+      subtitle="one line per purchase · qty x rate = amount · diesel and DEF are separate items"
+      testId="settlement-fuel-purchases-board"
+    >
       <ParityTable
         columns={COLUMNS}
         rows={withIds}
@@ -132,6 +133,6 @@ export function FuelPurchasesSection({ rows }: Props) {
       <div className="mt-1 px-2.5 py-1 text-xs font-semibold">
         Subtotal: {formatUsdCentsTable(subtotalCents)} · Gallons: {formatQuantityTable(totalGallons, 1)}
       </div>
-    </section>
+    </BoardSection>
   );
 }

@@ -27,6 +27,7 @@ import { SettlementRefCell } from "../../../components/shared/SettlementRefCell"
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { mmmDd } from "../../../lib/formatDate";
 import { QBO_MONEY_CELL_CLASS, formatUsdTable, formatUsdRateTable, formatQuantityTable } from "../../../lib/money";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Line = {
   id: string;
@@ -161,11 +162,11 @@ export function DeadheadPaySection({ lines, isOpen: _isOpen, operatingCompanyId 
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const totalMiles = lines.reduce((sum, line) => sum + Number(line.miles || 0), 0);
   return (
-    <section className="rounded-sm border border-gray-200 bg-white" data-testid="deadhead-pay-section">
-      <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Empty miles</h2>
-        <span className="ml-2 text-xs text-[#6B7280]">deadhead to the pickup · same rate today, never hardcoded</span>
-      </header>
+    <BoardSection
+      title="Empty miles"
+      subtitle="deadhead to the pickup · same rate today, never hardcoded"
+      testId="settlement-deadhead-pay-board"
+    >
       <ParityTable
         columns={COLUMNS}
         rows={lines}
@@ -176,6 +177,6 @@ export function DeadheadPaySection({ lines, isOpen: _isOpen, operatingCompanyId 
         hidePager
       />
       <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: {formatUsdTable(subtotal)} · Miles: {formatQuantityTable(totalMiles, 1)}</div>
-    </section>
+    </BoardSection>
   );
 }

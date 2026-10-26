@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
@@ -228,48 +229,56 @@ export function MonthClosePage() {
         <span className="text-gray-600">Overdue A/R or A/P may remain open — accountant marks review before lock (G11-10).</span>
       </div>
 
-      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <label className="text-xs text-gray-600">
-          Period
-          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className={`${FORM_INPUT_CLASS} mt-1`} />
-        </label>
-        <label className="text-xs text-gray-600 md:col-span-2">
-          Closing notes (optional)
-          <input
-            value={closingNotes}
-            onChange={(event) => setClosingNotes(event.target.value)}
-            placeholder="e.g. month-end review complete, CFO sign-off"
-            className={`${FORM_INPUT_CLASS} mt-1`}
-          />
-        </label>
-      </div>
+      <BoardSection title="Close period" testId="month-close-period-board">
+        <div className="grid gap-3 p-3 md:grid-cols-3">
+          <label className="text-xs text-gray-600">
+            Period
+            <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className={`${FORM_INPUT_CLASS} mt-1`} />
+          </label>
+          <label className="text-xs text-gray-600 md:col-span-2">
+            Closing notes (optional)
+            <input
+              value={closingNotes}
+              onChange={(event) => setClosingNotes(event.target.value)}
+              placeholder="e.g. month-end review complete, CFO sign-off"
+              className={`${FORM_INPUT_CLASS} mt-1`}
+            />
+          </label>
+        </div>
+      </BoardSection>
 
       {statusQuery.isError ? (
-        <p className="rounded-sm border border-gray-200 bg-white px-3 py-4 text-xs text-red-600">Failed to load month-close checklist.</p>
+        <BoardSection title="Month-close checklist" testId="month-close-checklist-board">
+          <p className="px-3 py-4 text-xs text-red-600">Failed to load month-close checklist.</p>
+        </BoardSection>
       ) : (
-        <ParityTable title="Month-close checklist"
-          columns={columns}
-          rows={checklistRows}
-          rowKey={(row) => row.id}
-          loading={statusQuery.isLoading}
-          storageKey="month-close-checklist"
-          emptyText="No checklist items."
-        />
+        <BoardSection title="Month-close checklist" testId="month-close-checklist-board">
+          <ParityTable
+            columns={columns}
+            rows={checklistRows}
+            rowKey={(row) => row.id}
+            loading={statusQuery.isLoading}
+            storageKey="month-close-checklist"
+            emptyText="No checklist items."
+          />
+        </BoardSection>
       )}
 
       {companyId ? <FactoringInterestAccrualPanel companyId={companyId} period={period} /> : null}
       {companyId ? <FaroCashReserveReclassPanel companyId={companyId} period={period} /> : null}
 
-      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
-        <div className="text-xs text-gray-700">
-          {statusQuery.data?.period_status
-            ? `Period status: ${statusQuery.data.period_status}`
-            : "No accounting period found for this month. Create/open the period before locking."}
+      <BoardSection title="Lock period" testId="month-close-lock-board">
+        <div className="flex items-center justify-between px-3 py-3">
+          <div className="text-xs text-gray-700">
+            {statusQuery.data?.period_status
+              ? `Period status: ${statusQuery.data.period_status}`
+              : "No accounting period found for this month. Create/open the period before locking."}
+          </div>
+          <Button disabled={!companyId || !canLock} loading={closeMutation.isPending} onClick={() => closeMutation.mutate()}>
+            Close month
+          </Button>
         </div>
-        <Button disabled={!companyId || !canLock} loading={closeMutation.isPending} onClick={() => closeMutation.mutate()}>
-          Close month
-        </Button>
-      </div>
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

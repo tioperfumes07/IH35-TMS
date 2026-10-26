@@ -10,6 +10,7 @@ import { getDriver, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -418,7 +419,8 @@ export function CreateMultipleBillsPage() {
         />
       ) : null}
       {/* ACCT-F3580 + FILTER-MULTI-01: MoneyListToolbar owns search; ParityTable keeps gear/export only. */}
-      <ParityTable<BillDraftRow> title="Bill drafts"
+      <BoardSection title="Bill drafts" testId="create-multiple-bills-board">
+      <ParityTable<BillDraftRow>
         rows={filteredRows}
         rowKey={(row) => row.id}
         storageKey="create-multiple-bills-draft"
@@ -621,6 +623,7 @@ export function CreateMultipleBillsPage() {
           },
         ]}
       />
+      </BoardSection>
 
       {lastResult ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">

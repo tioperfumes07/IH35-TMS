@@ -1,3 +1,4 @@
+import { BoardSection } from "../../../components/v3/BoardSection";
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -73,15 +74,16 @@ export function SettlementLoadsSection({
   const totalPractical = legs.reduce((s, l) => s + (l.miles_practical ?? 0), 0);
 
   return (
-    <section className="ldt-card" data-testid="settlement-loads-section">
-      <div className="ldt-ch">
-        <span>Loads</span>
-        <span className="ldt-open">
+    <BoardSection
+      title="Loads"
+      testId="settlement-loads-section"
+      headerRight={
+        <span className="text-xs text-[#6B7280]">
           {legs.length} leg{legs.length === 1 ? "" : "s"}
         </span>
-      </div>
+      }
+    >
       <ParityTable
-        title="Loads on this settlement"
         rows={legs}
         columns={columns}
         rowKey={(l) => l.load_id}
@@ -93,6 +95,6 @@ export function SettlementLoadsSection({
           revenue_cents: formatUsdCents(totalLinehaul),
         }}
       />
-    </section>
+    </BoardSection>
   );
 }

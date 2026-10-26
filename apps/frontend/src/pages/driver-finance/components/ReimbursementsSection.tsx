@@ -12,6 +12,7 @@ import { SettlementRefCell } from "../../../components/shared/SettlementRefCell"
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { mmmDd } from "../../../lib/formatDate";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Line = {
   id: string;
@@ -122,16 +123,16 @@ export function ReimbursementsSection({ lines, isOpen, operatingCompanyId }: Pro
   const COLUMNS = buildColumns(operatingCompanyId);
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   return (
-    <section className="rounded-sm border border-gray-200 bg-white">
-      <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Reimbursements</h2>
-        <span className="ml-2 text-xs text-[#6B7280]">driver paid out of pocket · receipt required</span>
-        <div className="ml-auto">
-          <Button size="sm" variant="secondary" disabled={!isOpen} title={!isOpen ? "Settlement locked" : undefined}>
+    <BoardSection
+      title="Reimbursements"
+      subtitle="driver paid out of pocket · receipt required"
+      testId="settlement-reimbursements-board"
+      headerRight={
+        <Button size="sm" variant="secondary" disabled={!isOpen} title={!isOpen ? "Settlement locked" : undefined}>
             + Add reimbursement
           </Button>
-        </div>
-      </header>
+      }
+    >
       <ParityTable<Line>
         columns={COLUMNS}
         rows={lines}
@@ -143,6 +144,6 @@ export function ReimbursementsSection({ lines, isOpen, operatingCompanyId }: Pro
         hidePager
       />
       <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: ${subtotal.toFixed(2)}</div>
-    </section>
+    </BoardSection>
   );
 }
