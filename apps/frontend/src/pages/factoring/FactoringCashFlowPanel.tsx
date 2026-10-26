@@ -217,7 +217,8 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
   const error = purchasesQuery.isError || candidatesQuery.isError;
 
   return (
-    <div className={`rounded-sm border border-gray-200 bg-white ${open ? "p-3" : "px-3 py-2"}`} data-testid="factoring-home-cash-flow">
+    // Fill-not-shell: parent FactoringHome BoardSection owns the border — keep collapse chrome, no nested card.
+    <div className="px-3.5 py-2" data-testid="factoring-home-cash-flow">
       <div className={`${open ? "mb-2 " : ""}flex flex-wrap items-center justify-between gap-2`}>
         <div>
           <button
