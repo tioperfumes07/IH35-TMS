@@ -447,13 +447,56 @@ export async function resolveFactoringVendorId(
   return rows.rows[0]?.id ?? null;
 }
 
-// P44 (202612511200): load_trailer_equipment_id is NOT NULL on mdata.loads. Book-load must always
-// persist a canonical catalogs.load_trailer_equipment row for the operating company — default DRY_VAN
-// when the wizard omits an explicit pick (same default the migration backfill used).
+// P44 (202612511200): load_trailer_equipment_id is NOT NULL on mdata.loads.
+// ENG-22 / row 257 (LEAD 10-25-2026): this used to fall back SILENTLY to DRY_VAN whenever the wizard sent no pick —
+// measured on USMCA: 191 loads "Dry Van", of which the trailer that actually rode them was a Reefer on 100 and a
+// Flatbed on 51. A booked fact is never a guess. Resolution order, each from evidence the booking already carries:
+//   1. the explicit catalog pick  2. the trailer-type field  3. the company trailer's own equipment_type
+//   4. trailer choice "none" -> Power-only · no trailer   5. "customer" -> Power-only · customer trailer
+//   6. "interchange" -> the non-owned trailer's recorded type.
+// Nothing resolvable: a LIVE booking is refused (load_trailer_type_required); only a draft keeps the DRY_VAN placeholder
+// (the column is NOT NULL and a draft is not yet a load — it re-resolves when it is booked).
+export type LoadTrailerEquipmentHints = {
+  trailerType?: string | null;
+  companyTrailerId?: string | null;
+  choiceKind?: "company" | "customer" | "interchange" | "none" | null;
+  nonOwnedTrailerId?: string | null;
+  isDraft?: boolean;
+};
+
+/** mdata.equipment.equipment_type / dispatch.non_owned_trailers.trailer_type -> catalogs.load_trailer_equipment.code */
+export function equipmentTypeToLoadTrailerCode(raw: string | null | undefined): string | null {
+  const t = String(raw ?? "").toLowerCase().replace(/[^a-z]/g, "");
+  if (!t) return null;
+  if (t === "reefer" || t === "refrigeratedvan" || t === "refrigerated") return "REFRIGERATED_VAN";
+  if (t === "flatbed") return "FLATBED";
+  if (t === "dryvan" || t === "van") return "DRY_VAN";
+  if (t === "lowboy") return "LOWBOY";
+  if (t === "poweronlynotrailer") return "POWER_ONLY_NO_TRAILER";
+  if (t === "poweronlycustomertrailer") return "POWER_ONLY_CUSTOMER_TRAILER";
+  return null;
+}
+
+function trailerEquipmentHints(
+  input: BookLoadInput,
+  resolvedChoice: ResolvedTrailerChoice | null,
+  companyTrailerId: string | null
+): LoadTrailerEquipmentHints {
+  const choice = resolvedChoice ?? input.trailer_choice ?? null;
+  return {
+    trailerType: input.trailer_type ?? null,
+    companyTrailerId: choice?.kind === "company" ? choice.equipment_id : companyTrailerId,
+    choiceKind: choice?.kind ?? null,
+    nonOwnedTrailerId: choice?.kind === "interchange" ? choice.non_owned_trailer_id : null,
+    isDraft: input.save_mode === "draft",
+  };
+}
+
 export async function resolveLoadTrailerEquipmentIdForInsert(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
-  explicitId?: string | null
+  explicitId?: string | null,
+  hints: LoadTrailerEquipmentHints = {}
 ): Promise<string> {
   if (explicitId) {
     const scoped = await client.query<{ id: string }>(
@@ -470,20 +513,40 @@ export async function resolveLoadTrailerEquipmentIdForInsert(
     if (scoped.rows[0]?.id) return scoped.rows[0].id;
     throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
   }
-  const defaultRows = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM catalogs.load_trailer_equipment
-      WHERE operating_company_id = $1::uuid
-        AND code = 'DRY_VAN'
-        AND is_active = true
-      LIMIT 1
-    `,
-    [operatingCompanyId]
-  );
-  const defaultId = defaultRows.rows[0]?.id;
-  if (defaultId) return defaultId;
-  throw Object.assign(new Error("load_trailer_equipment_catalog_missing"), { code: "23503" });
+  const byCode = async (code: string | null): Promise<string | null> => {
+    if (!code) return null;
+    const r = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM catalogs.load_trailer_equipment
+        WHERE operating_company_id = $1::uuid AND code = $2 AND is_active = true LIMIT 1`,
+      [operatingCompanyId, code]
+    );
+    return r.rows[0]?.id ?? null;
+  };
+  let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
+  if (!code && hints.companyTrailerId) {
+    const eq = await client.query<{ equipment_type: string | null }>(
+      `SELECT equipment_type::text AS equipment_type FROM mdata.equipment WHERE id = $1::uuid LIMIT 1`,
+      [hints.companyTrailerId]
+    );
+    code = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
+  }
+  if (!code && hints.choiceKind === "none") code = "POWER_ONLY_NO_TRAILER";
+  if (!code && hints.choiceKind === "customer") code = "POWER_ONLY_CUSTOMER_TRAILER";
+  if (!code && hints.choiceKind === "interchange" && hints.nonOwnedTrailerId) {
+    const nt = await client.query<{ trailer_type: string | null }>(
+      `SELECT trailer_type::text AS trailer_type FROM dispatch.non_owned_trailers WHERE id = $1::uuid LIMIT 1`,
+      [hints.nonOwnedTrailerId]
+    );
+    code = equipmentTypeToLoadTrailerCode(nt.rows[0]?.trailer_type);
+  }
+  const resolved = await byCode(code);
+  if (resolved) return resolved;
+  if (hints.isDraft) {
+    const placeholder = await byCode("DRY_VAN");
+    if (placeholder) return placeholder;
+  }
+  if (code) throw Object.assign(new Error("load_trailer_equipment_catalog_missing"), { code: "23503" });
+  throw Object.assign(new Error("load_trailer_type_required"), { code: "23502", statusCode: 422 });
 }
 
 // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod as of this write): persists
@@ -504,8 +567,15 @@ async function writeC9HoldFieldsIfPresent(
   const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
     client,
     input.operating_company_id,
-    input.load_trailer_equipment_id
-  );
+    input.load_trailer_equipment_id,
+    trailerEquipmentHints(input, null, input.assigned_trailer_unit_id ?? null)
+  ).catch(async (err: Error) => {
+    // ENG-22: nothing new to resolve from — keep what the load already carries instead of re-defaulting it.
+    if (err.message !== "load_trailer_type_required") throw err;
+    const cur = await client.query<{ id: string }>(`SELECT load_trailer_equipment_id::text AS id FROM mdata.loads WHERE id = $1::uuid`, [loadId]);
+    if (cur.rows[0]?.id) return cur.rows[0].id;
+    throw err;
+  });
   await optionalQuery(
     client,
     `
@@ -3352,7 +3422,8 @@ export async function createLoadWithFullSideEffects(
     const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
       client,
       input.operating_company_id,
-      input.load_trailer_equipment_id
+      input.load_trailer_equipment_id,
+      trailerEquipmentHints(input, resolvedTrailerChoice ?? null, trailerIdForInsert)
     );
 
     // GO-10 REV-B / F4 — the assertLoadNumberAvailable() pre-check above is a fast path only; it
