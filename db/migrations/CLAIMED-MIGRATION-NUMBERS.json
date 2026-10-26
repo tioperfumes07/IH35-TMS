@@ -1004,5 +1004,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-25",
     "purpose": "443.277-B: USMCA fuel_card_payable_dreamline (2510) + fuel_card_payable_wex (2520) role bindings \u2014 rolling ledger shows card payable balances"
+  },
+  "202616280000": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-25",
+    "purpose": "LEAD: sms.queue / whatsapp.queue prod drift \u2014 0166 CREATE TABLE IF NOT EXISTS skipped pre-existing prod tables, so prod lacks operating_company_id (+ sms to_phone), RLS and the company policy; every SMS/WhatsApp dispatch insert fails (verify-sql-write-targets live)"
   }
 }
