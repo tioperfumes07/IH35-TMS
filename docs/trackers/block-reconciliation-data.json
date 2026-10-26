@@ -1,6 +1,6 @@
 {
  "date": "2026-10-26",
- "generated_at_iso": "2026-10-26T07:01:14.514Z",
+ "generated_at_iso": "2026-10-26T14:09:31.352Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,30 @@
  ],
  "merged_prs": [
   {
+   "number": 27897,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18802 — ENG-07 book stop street/place)",
+   "mergedAt": "2026-10-26T12:38:24Z",
+   "branch": "chore/claim-reserve-18802"
+  },
+  {
+   "number": 27896,
+   "title": "FINDING: Lead — Codex ENGINE WAVE ASAP + WAVE 0 closes ENG-01/02/03/05/09/10",
+   "mergedAt": "2026-10-26T12:32:44Z",
+   "branch": "cursor/lead-codex-engine-wave"
+  },
+  {
+   "number": 27895,
+   "title": "FINDING: Codex C2 dependency-inverted load-transition hooks",
+   "mergedAt": "2026-10-26T12:25:45Z",
+   "branch": "codex/1026-c2-load-transition-hooks"
+  },
+  {
+   "number": 27890,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-26T07:02:01Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27889,
    "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
    "mergedAt": "2026-10-26T06:57:26Z",
@@ -17312,30 +17336,6 @@
    "title": "Cursor- 443.250 Settlements Deductions V3 KPI strip (piggyback 1012)",
    "mergedAt": "2026-10-23T08:59:28Z",
    "branch": "cursor/443250-deductions-v3-c89b"
-  },
-  {
-   "number": 27274,
-   "title": "Cursor- 443.250 Settlements CashAdvances V3 KPI strip (NON-FINANCIAL)",
-   "mergedAt": "2026-10-23T08:47:51Z",
-   "branch": "cursor/443250-cash-advances-v3-c89b"
-  },
-  {
-   "number": 27273,
-   "title": "Cursor- 443.250 Settlements EscrowRegister V3 board chrome (V3KpiTile strip)",
-   "mergedAt": "2026-10-23T08:36:06Z",
-   "branch": "cursor/443250-escrow-register-v3-c89b"
-  },
-  {
-   "number": 27272,
-   "title": "CC-2-443.264 regenerate canonical-relations.json (prod gained telematics.vehicle_latest_position_cache)",
-   "mergedAt": "2026-10-23T08:34:28Z",
-   "branch": "cc-2/443-264-regen-canonical-relations"
-  },
-  {
-   "number": 27271,
-   "title": "Cursor- 443.250 Settlements Escrow V3 KPI strip (V3KpiTile + 60-day release window)",
-   "mergedAt": "2026-10-23T08:27:06Z",
-   "branch": "cursor/443250-settlements-escrow-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
