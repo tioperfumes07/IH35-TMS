@@ -418,9 +418,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           backHref="/fuel"
           subnavItems={fuelBoardSubnav}
         />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view fuel.
-        </div>
+        <FuelBoardSection title="Fuel" testId="fuel-planner-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view fuel.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

@@ -19,7 +19,7 @@
 | 53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | 443.280 | PARTIAL |
 | 54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | 443.280 | PARTIAL |
 | 55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | 443.280 | CODED |
-| 56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | 443.280 | PARTIAL |
+| 56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | 443.280 | CODED |
 | 98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | 443.281 | CODED |
 | 102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | 443.281 | CODED |
 | 103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | 443.281 | CODED-QUEUED |
