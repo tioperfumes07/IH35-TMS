@@ -8141,5 +8141,27 @@ scope: USMCA rows + global catalogs/units/equipment carrying a coder test marker
 action: OWNER_AUTH_ID=AUTH-469 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-purge-all-test-sample-demo.mts --apply
 rehearsal: Neon fork br-patient-credit-akhgoe56 (from br-fancy-credit-akjnd07a, deleted after) — 243 targets purged (246 deletion-log rows incl. children), 31 kept and reported; books identical (13 counts + posting sum), TB 66 accounts identical, A/R 1100 621,076.72 and A/P 2000 -129,216.53 unchanged; detail docs/bus/lead/2026-10-25-purge-test-sample-demo-fork-rehearsal.json
 expires_at: 2026-10-27T00:00:00Z
-result: PENDING (rehearsed on fork only; not applied to prod)
+result: APPLIED on prod 2026-10-25 — round 1 (243 records) and round 2 (23 remaining test rows + their write-once history, AUTH-469 deletion log 3,943 + 263 authorizations removed), books identical, triggers re-enabled (#27648). Recorded by Lead 10-25 8:05 PM CT (this line said PENDING until now).
+status: CLOSED
+
+## AUTH-470
+issued_at: 2026-10-26T01:05:00Z
+issued_by: Lead rows 257 (ENG-22) + 251 (ENG-13). Recorded by Lead
+owner_quotes: "Finish the rest of the pending" (owner 2026-10-25 5:35 PM CT); "Stop pausing, pause when all are complete and done" (7:28 PM CT); register row 251 "129 loads (10-11) with no trailer choice — back-fill from documents"; standing law claude/00-LAW-UPDATE-2026-09-28-FAST-DIRECT-INSERTS-AUTHORIZED.md
+scope: USMCA mdata.loads only — load_trailer_equipment_id on loads still on the DRY_VAN booking default whose assigned company trailer (dispatch.load_assignment_history) is a different type; trailer_type text re-synced from the catalog; trailer_source NULL -> 'company' where a company trailer is on the assignment history. No money table touched.
+action: OWNER_AUTH_ID=AUTH-470 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts --apply
+rehearsal: dry run on prod rolled back — 151 equipment corrections (100 Reefer, 51 Flatbed), 176 text syncs, 128 trailer_source, books identical
+result: APPLIED 2026-10-26T00:44Z — BEFORE this entry was recorded (Lead process miss: the script did not call verify-owner-authorization; caught by verify-no-unauthorized-production-write the same hour and fixed). Prod after: REFRIGERATED_VAN 103, FLATBED 51, DRY_VAN 40; trailer_source NULL 1 (13595). Each change has an audit event dispatch.load_trailer_equipment_corrected naming the trailer.
+expires_at: 2026-10-27T00:00:00Z
+status: CLOSED
+
+## AUTH-471
+issued_at: 2026-10-26T01:05:00Z
+issued_by: Lead row 264 (ENG-29 real driven miles). Recorded by Lead
+owner_quotes: "Finish the rest of the pending" (owner 2026-10-25 5:35 PM CT); register row 264 "real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events"; standing law claude/00-LAW-UPDATE-2026-09-28-FAST-DIRECT-INSERTS-AUTHORIZED.md
+scope: USMCA completed loads with miles_driven_actual NULL — mint stop fences (bindLoadToGeofences), replay the assigned unit's STORED GPS fixes through the canonical detector with suppressOperationalSideEffects (immutable geo.geofence_events only), odometer captures (real OBD or absent), and the driven-miles engine's own persist. No stop stamp, status walk, settlement or money write.
+action: OWNER_AUTH_ID=AUTH-471 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-row264-driven-miles-backfill.mts --apply
+rehearsal: per-load dry run on prod (each load rolled back)
+result: PENDING
+expires_at: 2026-10-27T00:00:00Z
 status: OPEN

@@ -14,6 +14,11 @@ import pg from "pg";
 
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
+// Owner authorization (verify-no-unauthorized-production-write): an --apply refuses unless AUTH-470 is open on main.
+if (APPLY) {
+  const { execFileSync } = await import("node:child_process");
+  try { execFileSync("node", ["scripts/verify-owner-authorization.mjs", process.env.OWNER_AUTH_ID ?? "AUTH-470"], { stdio: "inherit" }); } catch { process.exit(1); }
+}
 
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();
