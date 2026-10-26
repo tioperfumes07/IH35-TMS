@@ -77,7 +77,7 @@ export async function findReceivedCardFillByShape(
                                        AND ct.code = upper($2)
        LEFT JOIN accounting.expenses e ON e.source_fuel_transaction_id = f.id AND e.operating_company_id = f.operating_company_id
                                       AND e.voided_at IS NULL
-       LEFT JOIN mdata.loads l ON l.id = f.load_id
+       LEFT JOIN mdata.loads l ON l.id = f.load_id AND l.operating_company_id = f.operating_company_id
       WHERE f.operating_company_id = $1::uuid AND f.voided_at IS NULL AND f.source <> 'manual'
         AND f.fuel_type::text = $3
         -- the truck it fueled (or the line's load); with no truck named (the preflight), the shape alone, company-wide

@@ -110,7 +110,8 @@ export async function getLatestHosClocksByDriver(
           ORDER BY h.polled_at DESC
           LIMIT 1
        ) s
-      WHERE ($2::uuid[] IS NULL OR d.id = ANY($2::uuid[]))`,
+      WHERE d.operating_company_id = $1::uuid
+        AND ($2::uuid[] IS NULL OR d.id = ANY($2::uuid[]))`,
     [operatingCompanyId, driverIds && driverIds.length ? driverIds : null]
   );
   const out = new Map<string, LatestHosClocks>();

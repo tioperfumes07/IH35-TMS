@@ -61,7 +61,6 @@ export async function getDriversSettlementsReport(
 
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `s.operating_company_id = $1::uuid`,
     `s.period_start >= $2::date`,
     `s.period_end <= $3::date`,
     `s.voided_at IS NULL`,
@@ -110,8 +109,9 @@ export async function getDriversSettlementsReport(
         ), 0)::int AS load_count,
         COUNT(*) OVER () AS _total_count
       FROM driver_finance.driver_settlements s
-      LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-      WHERE ${filters.join("\n        AND ")}
+      LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
+      WHERE s.operating_company_id = $1::uuid
+        AND ${filters.join("\n        AND ")}
       ORDER BY s.period_end DESC, s.created_at DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}
     `,

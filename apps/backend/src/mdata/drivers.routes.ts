@@ -1519,6 +1519,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             (SELECT u.unit_number
                FROM mdata.loads l
                JOIN mdata.units u ON u.id = l.assigned_unit_id
+                AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
               WHERE l.assigned_primary_driver_id = mdata.drivers.id
                 AND l.operating_company_id = $${ociIdx}::uuid
                 AND l.soft_deleted_at IS NULL

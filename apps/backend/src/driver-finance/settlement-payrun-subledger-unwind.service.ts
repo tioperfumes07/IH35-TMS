@@ -128,8 +128,8 @@ export async function unwindPayRunSubledgersInClientTx(
     const balanceRow = { id: await ensureEscrowBalanceRow(client as never, opco, settlement.driver_id) };
     // ENG-03: stamp load_id on the unwind release row so it mirrors the original hold's linkage.
     const loadRow = await client.query<{ first_load_id: string | null }>(
-      `SELECT first_load_id::text FROM driver_finance.driver_settlements WHERE id = $1::uuid LIMIT 1`,
-      [settlementId]
+      `SELECT first_load_id::text FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [settlementId, opco]
     );
     const unwindLoadId = loadRow.rows[0]?.first_load_id ?? null;
     if (balanceRow) {
