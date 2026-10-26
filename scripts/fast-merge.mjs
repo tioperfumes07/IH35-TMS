@@ -89,6 +89,13 @@ if (problems.length) {
 // broke is a regression: owner law "there should be no regressions" — the merge does not happen.
 {
   const r = checkNoRegressions(process.cwd());
+  const allowed = new Set(process.argv.flatMap((a, i) => (a === "--allow-delete" ? [process.argv[i + 1]] : [])));
+  const undeclared = r.deleted.filter((f) => !allowed.has(f));
+  if (undeclared.length) {
+    console.error(`${LABEL}: NOT MERGED — this branch deletes ${undeclared.length} file(s) (additive-only law). If intended, pass --allow-delete <path> for each:`);
+    for (const f of undeclared) console.error(`  - ${f}`);
+    process.exit(1);
+  }
   if (r.regressions.length) {
     console.error(`${LABEL}: NOT MERGED — ${r.regressions.length} regression(s): guard(s) that pass on main fail on this branch:`);
     for (const x of r.regressions) console.error(`  - ${x}`);

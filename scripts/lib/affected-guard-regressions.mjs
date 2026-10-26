@@ -27,6 +27,8 @@ export function affectedGuards(root, changed) {
   const dir = path.join(root, "scripts");
   const tokens = changed.flatMap(fileTokens);
   const guards = new Set(changed.filter((f) => /^scripts\/verify-[^/]+\.mjs$/.test(f)).map((f) => path.join(root, f)));
+  // A changed/removed verify-step changes WHAT CI RUNS — the wiring guard always judges that.
+  if (changed.some((f) => f.startsWith("scripts/verify-steps/"))) guards.add(path.join(dir, "verify-guard-wired.mjs"));
   for (const f of fs.readdirSync(dir)) {
     if (!/^verify-.+\.mjs$/.test(f)) continue;
     const src = fs.readFileSync(path.join(dir, f), "utf8");
@@ -58,6 +60,9 @@ function classifyIn(worktree, guardRel) {
 export function checkNoRegressions(root, { log = console.log } = {}) {
   git(root, ["fetch", "-q", "origin", "main"]);
   const changed = git(root, ["diff", "--name-only", "origin/main...HEAD"]).split("\n").filter(Boolean);
+  // ADDITIVE-ONLY: a branch whose squash would DELETE files (e.g. a soft reset onto a newer main that keeps an
+  // older index — #27828 silently removed four verify-steps that way) is refused unless each deletion is declared.
+  const deleted = git(root, ["diff", "--name-only", "--diff-filter=D", "origin/main...HEAD"]).split("\n").filter(Boolean);
   const guards = affectedGuards(root, changed);
   log(`no-regression: ${changed.length} changed file(s) → ${guards.length} guard(s) that read them`);
   const regressions = [], preExisting = [];
@@ -72,5 +77,5 @@ export function checkNoRegressions(root, { log = console.log } = {}) {
     else regressions.push(`${rel} — ${here.detail} (main: ${onMain.kind})`);
   }
   for (const p of preExisting) log(`  pre-existing red (also fails on main): ${p}`);
-  return { changed, guards, regressions, preExisting };
+  return { changed, deleted, guards, regressions, preExisting };
 }
