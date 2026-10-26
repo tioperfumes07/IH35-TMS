@@ -20,6 +20,7 @@ import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
@@ -301,10 +302,12 @@ export function ReclassifyTransactionsPage() {
     <AccountingSubNavWrapper title="Reclassify transactions" subtitle="Change the account, class or vendor on many GL lines at once. Every document is re-posted through a linked RECLASSIFICATION journal entry; undo per batch.">
       <div className="flex min-h-[70vh] gap-3" data-testid="reclassify-page" data-b5-reclassify="1">
         {/* LEFT PANE — THE WHOLE CHART OF ACCOUNTS (LAW 363.8): every account, 0.00 included, balances derived from the GL. */}
-        <aside className="min-h-0 shrink-0 overflow-y-auto rounded border border-gray-200 bg-white" style={{ width: `${paneWidthCh}ch` }} data-testid="reclassify-account-tree" data-b5-period-balances="1" data-r368-whole-chart="1">
+        <div style={{ width: `${paneWidthCh}ch` }} className="min-h-0 shrink-0">
+        <BoardSection title="Accounts · period balances" testId="reclassify-account-tree-board">
+        <aside className="min-h-0 overflow-y-auto" data-testid="reclassify-account-tree" data-b5-period-balances="1" data-r368-whole-chart="1">
           <div className="border-b border-gray-200 p-2">
-            {/* BANK-F91430 — ORDERS §B-5 left pane PERIOD BALANCES label (ops verify-b5-reclassify-batch). */}
-            <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · period balances</div>
+            {/* BANK-F91430 — ORDERS §B-5 left pane PERIOD BALANCES label lives on BoardSection title
+                (single literal for verify-b5-change-location-wired / verify-b5-reclassify-batch). */}
             <div className="mt-2 inline-flex rounded border border-gray-300 text-xs" role="tablist" aria-label="Statement" data-testid="reclassify-side">
               {([["profit_and_loss", "Profit & Loss"], ["balance_sheet", "Balance Sheet"], ["statistical", "Statistical"]] as const).map(([k, label]) => (
                 <button key={k} type="button" role="tab" aria-selected={side === k} onClick={() => setSide(k)} className={`px-2 py-1 ${side === k ? "bg-[#F7F8FA] font-semibold" : ""}`} data-testid={`reclassify-side-${k}`}>
@@ -363,10 +366,13 @@ export function ReclassifyTransactionsPage() {
             ))}
           </ul>
         </aside>
+        </BoardSection>
+        </div>
 
         {/* RIGHT PANE */}
-        <section className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="reclassify-filters">
+        <section className="min-w-0 flex-1 space-y-2">
+          <BoardSection title="Find transactions" testId="reclassify-filters-board">
+          <div className="flex flex-wrap items-end gap-2 p-2" data-testid="reclassify-filters">
             <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
             <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
             {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
@@ -385,6 +391,7 @@ export function ReclassifyTransactionsPage() {
             <MultiSelectDropdown label="Columns" options={COLUMNS.map((c) => ({ value: c.key, label: c.optional ? `${c.label} (added)` : c.label }))} selected={visibleCols} onChange={chooseColumns} allLabel="All columns" data-testid="reclassify-columns" />
             <Button type="button" onClick={() => runFind()} data-testid="reclassify-find">Find transactions</Button>
           </div>
+          </BoardSection>
 
           {chips.length ? (
             <div className="mt-2 flex flex-wrap gap-1" data-testid="reclassify-chips">
@@ -397,12 +404,14 @@ export function ReclassifyTransactionsPage() {
           ) : null}
 
           {!applied ? (
-            <div className="mt-3 rounded border border-dashed border-gray-300 p-6 text-center text-xs text-[#4B5563]" data-testid="reclassify-empty">
+            <BoardSection title="Transactions to reclassify" testId="reclassify-empty-board">
+            <div className="p-6 text-center text-xs text-[#4B5563]" data-testid="reclassify-empty">
               Click any account on the left to open every transaction behind its balance — or set filters and Find. Then select lines and reclassify the account, class or vendor at once.
             </div>
+            </BoardSection>
           ) : (
-            <>
-              <div className="mt-2 flex items-center justify-between rounded border border-gray-200 bg-white px-2 py-1 text-xs" data-testid="reclassify-selection-bar" data-b5-selection-bar="1">
+            <BoardSection title="Transactions to reclassify" testId="reclassify-grid-board">
+              <div className="flex items-center justify-between px-2 py-1 text-xs" data-testid="reclassify-selection-bar" data-b5-selection-bar="1">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={pageAllSelected} onChange={togglePage} aria-label="Select all on this page" />
                   <Button type="button" size="sm" disabled={selected.size === 0} onClick={() => setModalOpen(true)} data-testid="reclassify-open-modal">Reclassify</Button>
@@ -442,13 +451,13 @@ export function ReclassifyTransactionsPage() {
                 })()
               ) : null}
               {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
-              <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">
+              <div className="mt-1 overflow-x-auto">
                 {/* LAW 368.3 — "could not read" and "nothing here" are different sentences. */}
                 {linesQ.error ? <div className="p-3 text-xs font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</div> : null}
                 {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <div className="p-3 text-xs text-[#4B5563]" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</div> : null}
                 {!linesQ.error && (linesQ.isLoading || lines.length > 0) ? (
                   <div data-b5-account-no-col="1">
-                    <ParityTable<ReclassifyLine> title="Transactions to reclassify"
+                    <ParityTable<ReclassifyLine>
                       storageKey="reclassify-grid"
                       tableTestId="reclassify-grid"
                       rows={lines}
@@ -520,11 +529,12 @@ export function ReclassifyTransactionsPage() {
                   <Button type="button" size="sm" variant="tertiary" disabled={!linesQ.data || offset + PAGE >= linesQ.data.total_lines} onClick={() => { const next = offset + PAGE; setOffset(next); setGotoPageDraft(String(Math.floor(next / PAGE) + 1)); }}>Next</Button>
                 </span>
               </div>
-            </>
+            </BoardSection>
           )}
 
           {lastResult ? (
-            <div className="mt-3 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="reclassify-result">
+            <BoardSection title="Reclassify result" testId="reclassify-result-board">
+            <div className="p-2 text-xs" data-testid="reclassify-result">
               <div className="font-semibold">
                 Reclassify complete: {lastResult.lines_applied} line(s) reclassified ({formatCurrencyFromCents(lastResult.amount_cents_moved)} moved), {lastResult.lines_refused} refused.
               </div>
@@ -536,10 +546,12 @@ export function ReclassifyTransactionsPage() {
                 ))}
               </ul>
             </div>
+            </BoardSection>
           ) : null}
 
-          <div className="mt-3 rounded border border-gray-200 bg-white" data-testid="reclassify-batches">
-            <ParityTable<BatchRow> title="Reclassify batches"
+          <BoardSection title="Reclassify batches" testId="reclassify-batches-board">
+          <div data-testid="reclassify-batches">
+            <ParityTable<BatchRow>
               storageKey="reclassify-batches"
               tableTestId="reclassify-batches"
               rows={batchesQ.data?.batches ?? []}
@@ -578,6 +590,7 @@ export function ReclassifyTransactionsPage() {
             />
             {undoMut.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(undoMut.error)} onRetry={() => undoMut.reset()} /></div> : null}
           </div>
+          </BoardSection>
         </section>
       </div>
 

@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlement Creator BoardSection (real code)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting tools BoardSection + Factoring FORM_INPUT (real code)
 
 - **STATUS:** SHIPPING
+- **DELTA:** Reclassify (account tree · filters · grid · batches) · Batch Expenses (type · toolbar · grid) · Accounting Escrow (accounts · postings) → shared `BoardSection`. Factoring Home profile edit inputs → `FORM_INPUT_CLASS`. Engines (applyReclassify / createExpense / escrow list) unchanged. New verify-acct-220-tools-boards (wired via step 1747). Pending 220 PARTIAL; Factoring Home stays CODED.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-220-tools-boards PASS · verify-b5-reclassify-batch PASS · verify-v3-board-grammar-every-surface PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Settlements Open/Closed/Escrow Register PARTIAL depth; Banking Home bare panels; popup 222 remaining
+- **Files Modified:** ReclassifyTransactionsPage · BatchExpensesPage · EscrowPage · FactoringHome · verify-acct-220-tools-boards.mjs · 1747-verify-acct-surf-02-expenses.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlement Creator BoardSection (real code)
+
+- **STATUS:** MERGED [#27838](https://github.com/tioperfumes07/IH35-TMS/pull/27838) @ `ffc1ad4478`
 - **DELTA:** SettlementCreatorDrawer `Section()` + Post result + Settlement totals + JE Preview → shared `BoardSection`. Money engines / Preview / Post / subtotals / PDF tie-out unchanged. New verify-settlement-creator-board-sections (wired via step 3424). Pending Open/Closed stay PARTIAL (tabs already BoardSection+engines; creator was the bare-card gap).
 - **VERIFY:** tsc -b EXIT 0 · verify-settlement-creator-board-sections PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
@@ -188,11 +197,3 @@
 - **NEXT:** continue fill-not-shell
 - **Files Modified:** FinalizeBlock.tsx · verify-settlement-fe-honesty.mjs · OUTBOX-CURSOR.md
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL batch tip (BoardSection unlayer)
-
-- **STATUS:** MERGED — #27723 · #27727 · #27728 · #27729 · #27731 · #27733 · #27735 · #27737 · #27738 · #27740
-- **DELTA:** Factoring Faro tabs + Escrow/Cash/Aging/Fees/Purchase/Account Summary/internal tabs; Settlements Disputes/Statement/Header/DriverBill/Detail empty; Fuel Planner + Relay deposit empty/error → BoardSection/FuelBoardSection; FORM_INPUT heights where page inputs touched. Engines unchanged.
-- **VERIFY:** each PR: `tsc -b` EXIT 0 · `vite build` EXIT 0 · surface guards PASS
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell (FinalizeBlock Save Draft still honest stub — no draft API; remaining bare cards elsewhere)
-- **Files Modified:** OUTBOX-CURSOR.md

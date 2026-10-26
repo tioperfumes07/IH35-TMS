@@ -8,5 +8,7 @@ export default {
     await ctx.run("node", ["scripts/verify-acct-surf-02-expenses.mjs"]);
     // 443.293-C — money-list BoardSection ratchet (Expenses sibling; no new CLAIMED number on feature PR).
     await ctx.run("node", ["scripts/verify-acct-220-money-list-boards.mjs"]);
+    // 443.293-C — Accounting tools tabs (Reclassify/Batch/Escrow) BoardSection + Factoring FORM_INPUT
+    await ctx.run("node", ["scripts/verify-acct-220-tools-boards.mjs"]);
   },
 };

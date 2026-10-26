@@ -1078,7 +1078,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         type="number"
                         min="0"
                         step={key === "recourseDays" ? "1" : "0.01"}
-                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs"
+                        className={FORM_INPUT_CLASS}
                         value={profileEditForm[key]}
                         onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
                       />
@@ -1089,37 +1089,37 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Telephone</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, telephone: e.target.value } : f))} />
+                    <input className={FORM_INPUT_CLASS} value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, telephone: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">General email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
+                    <input type="email" className={FORM_INPUT_CLASS} value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
                   </label>
                 </div>
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Submission email (purchase reports — "Save and send" default)</span>
-                  <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.submissionEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, submissionEmail: e.target.value } : f))} data-testid="factoring-profile-submission-email" />
+                  <input type="email" className={FORM_INPUT_CLASS} value={profileEditForm.submissionEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, submissionEmail: e.target.value } : f))} data-testid="factoring-profile-submission-email" />
                 </label>
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Address</span>
-                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />
+                  <input className={FORM_INPUT_CLASS} value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactName: e.target.value } : f))} />
+                    <input className={FORM_INPUT_CLASS} value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactName: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactEmail: e.target.value } : f))} />
+                    <input type="email" className={FORM_INPUT_CLASS} value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactEmail: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Accounting contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.accountingContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, accountingContact: e.target.value } : f))} />
+                    <input className={FORM_INPUT_CLASS} value={profileEditForm.accountingContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, accountingContact: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Disputes contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.disputesContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, disputesContact: e.target.value } : f))} />
+                    <input className={FORM_INPUT_CLASS} value={profileEditForm.disputesContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, disputesContact: e.target.value } : f))} />
                   </label>
                 </div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Optional extras / aged fee tiers (%)</p>
@@ -1142,7 +1142,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         min="0"
                         max="100"
                         step="0.01"
-                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs"
+                        className={FORM_INPUT_CLASS}
                         value={profileEditForm[key]}
                         onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
                       />
