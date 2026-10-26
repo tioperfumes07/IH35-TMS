@@ -48,6 +48,10 @@ const ALLOWED_NESTED = new Set([
   // deduction line — PATCH-based void-old+recreate through the same driver_finance
   // deductions service as its create sibling above; no standalone required.json leaf.
   "pages/drivers/components/EditSettlementDeductionDrawer.tsx",
+  // FINAL-4 batch-2 — nested ParityDrawer shells with no standalone required.json leaf.
+  "pages/banking/components/CategorizeDrawer.tsx",
+  "pages/compliance/HosTrackerSection.tsx",
+  "pages/inventory/PartEditDrawer.tsx",
 ]);
 
 /** Nested create pickers / twin banking JE — owned by an existing matrix leaf. */
