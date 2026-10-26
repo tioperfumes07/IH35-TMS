@@ -91,6 +91,7 @@ if (SELFTEST) {
       <EntityPicker kind="driver" />
       <EntityPicker kind="vendor" />
       const loadId = "";
+      <input className={FORM_INPUT_CLASS} /> <select className={FORM_SELECT_CLASS} />
       {suggestionQuery.isError ? (
         <ListErrorState title="x" status={0} message={y} onRetry={() => void suggestionQuery.refetch()} />
       ) : null}
@@ -115,6 +116,14 @@ if (SELFTEST) {
     {
       name: "drops the isError branch entirely (read failure renders as a silent no-suggestion)",
       apply: (s) => ({ ...s, modal: s.modal.replace(/suggestionQuery\.isError/g, "false") }),
+    },
+    {
+      name: "page inputs drop the shared FORM_INPUT_CLASS (443.280)",
+      apply: (s) => ({ ...s, modal: s.modal.replace(/FORM_INPUT_CLASS/g, '"rounded border px-2"') }),
+    },
+    {
+      name: "a hand-rolled h-9 input height comes back (443.280)",
+      apply: (s) => ({ ...s, modal: s.modal + '\n<input className="h-9 w-full" />' }),
     },
     {
       name: "ListErrorState's Retry is disconnected from suggestionQuery.refetch()",
