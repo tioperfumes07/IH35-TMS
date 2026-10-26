@@ -102,6 +102,18 @@ export function run(overrides = {}) {
     errors
   );
 
+  const finalize = read("apps/frontend/src/pages/driver-finance/components/FinalizeBlock.tsx");
+  assert(
+    finalize.includes("<BoardSection") && finalize.includes('testId="settlement-finalize-block"'),
+    "FinalizeBlock must wrap in BoardSection (testId=settlement-finalize-block)",
+    errors
+  );
+  assert(
+    finalize.includes("Draft persistence not yet available") && /disabled/.test(finalize),
+    "FinalizeBlock Save Draft must stay honestly disabled (no draft API)",
+    errors
+  );
+
   assert(
     vendor.includes("vendor_type_name ?? row.vendor_type_code ?? row.code ?? \"\""),
     "VendorCreateModal must fallback through vendor_type_name / vendor_type_code / code when display_name is empty",

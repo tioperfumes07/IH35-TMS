@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FinalizeBlock → BoardSection
+
+- **STATUS:** SHIPPING
+- **DELTA:** FinalizeBlock → `BoardSection`; Save Draft stays honestly disabled (no draft API). Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** FinalizeBlock.tsx · verify-settlement-fe-honesty.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL batch tip (BoardSection unlayer)
 
 - **STATUS:** MERGED — #27723 · #27727 · #27728 · #27729 · #27731 · #27733 · #27735 · #27737 · #27738 · #27740
