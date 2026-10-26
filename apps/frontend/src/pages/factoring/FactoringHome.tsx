@@ -88,7 +88,8 @@ import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVend
 import { apiRequest } from "../../api/client";
 import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFromPath } from "../../router/route-manifest";
 import { FactoringBoardChrome } from "./FactoringBoardChrome";
-import { FactoringStagedFilters } from "./FactoringStagedFilters";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
@@ -568,7 +569,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // each other or with the Recourse Pipeline tab's own fuller filterBar above.
   function dateRangeOnlyFilterBar(testIdPrefix: string) {
     return (
-      <FactoringStagedFilters
+      <CollapsedListFilters
         activeFilterCount={[applied.dateFrom, applied.dateTo].filter(Boolean).length}
         onApply={staged.apply}
         onCancel={staged.cancel}
@@ -603,7 +604,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             />
           </label>
         </div>
-      </FactoringStagedFilters>
+      </CollapsedListFilters>
     );
   }
 
@@ -922,10 +923,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   );
   const canDeactivate = user?.role === "Owner";
 
-  const factoringSubnavItems = useMemo(
-    () => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
-    [],
-  );
   const factoringHeaderActions = (
     <div className="flex items-center gap-2">
       <Link
@@ -995,7 +992,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           <FactoringBoardChrome
             title="Factoring"
             subtitle={factoringChromeSubtitle}
-            subnavItems={factoringSubnavItems}
+            nav={<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />}
           />
           <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600" data-testid="factoring-home-loading">
             Loading…
@@ -1008,7 +1005,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <FactoringBoardChrome
           title="Factoring"
           subtitle={factoringChromeSubtitle}
-          subnavItems={factoringSubnavItems}
+          nav={<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />}
         />
         <div
           className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
@@ -1026,7 +1023,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         title={`Factoring (${summary?.active_factor_name || "No active factor"})`}
         subtitle={factoringChromeSubtitle}
         actions={factoringHeaderActions}
-        subnavItems={factoringSubnavItems}
+        nav={<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />}
       />
 
       {summaryQuery.isError ? (
@@ -1995,6 +1992,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   No factor configured. Activate a factor to manage its profile.
                 </div>
               ) : null}
+              <div data-testid="factoring-account-summary">
               {summaryQuery.isError ? (
                 <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
               ) : (
@@ -2137,6 +2135,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   </div>
                 </BoardSection>
               )}
+              </div>
             </div>
           );
         })()
@@ -2590,7 +2589,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             </span>
           }
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-testid="factoring-home-recourse-filters">
             <RecoursePipelineTable
               rows={invoices}
               fmtCurrency={fmtCurrency}
@@ -2604,7 +2603,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 // JE) — a slim "Filters" toggle sits in the table's own filterBar row (next to
                 // search/range/gear, in the one bordered shell) instead of two full-width
                 // EntityPicker boxes floating in a separate outer div above it.
-                <FactoringStagedFilters
+                <CollapsedListFilters
                   activeFilterCount={[applied.customerId, applied.loadId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                   onApply={staged.apply}
                   onCancel={staged.cancel}
@@ -2667,7 +2666,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       />
                     </label>
                   </div>
-                </FactoringStagedFilters>
+                </CollapsedListFilters>
               }
             />
           </div>
@@ -2710,7 +2709,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 filterBar={
                   // NEW-20 — see the identical Recourse Pipeline filterBar above for the full
                   // rationale (FactoringStagedFilters, the shared Accounting-module chrome).
-                  <FactoringStagedFilters
+                  <CollapsedListFilters
                     activeFilterCount={[applied.customerId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
@@ -2755,7 +2754,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         data-testid="factoring-home-chargebacks-filter-date-to"
                       />
                     </label>
-                  </FactoringStagedFilters>
+                  </CollapsedListFilters>
                 }
               />
             </div>
@@ -3159,7 +3158,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   search/range/gear row to fold into via filterBar — FactoringStagedFilters is used
                   standalone here instead, still compacting the always-open filter grid into a
                   toggle. */
-              <FactoringStagedFilters
+              <CollapsedListFilters
                 activeFilterCount={applied.vendorId ? 1 : 0}
                 onApply={staged.apply}
                 onCancel={staged.cancel}
@@ -3186,7 +3185,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     dataTestId="factoring-home-filter-vendor"
                   />
                 </label>
-              </FactoringStagedFilters>
+              </CollapsedListFilters>
             }
           >
             <div className="space-y-2 px-3.5 py-2">
@@ -3360,7 +3359,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   // missing across ALL Factoring tabs." Same FactoringStagedFilters chrome as
                   // NEW-20's Recourse Pipeline / Chargebacks & Fees fix, extended to this tab's
                   // own Driver/Vendor filter grid.
-                  <FactoringStagedFilters
+                  <CollapsedListFilters
                     activeFilterCount={[applied.driverId, applied.vendorId].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
@@ -3401,7 +3400,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         />
                       </label>
                     </div>
-                  </FactoringStagedFilters>
+                  </CollapsedListFilters>
                 }
               />
             )}
