@@ -219,6 +219,7 @@ export function ReserveTracker() {
   }, [factorsQ.data]);
 
   const reserveBalances = balancesQ.data ?? [];
+  const listState = { isEmpty: !balancesQ.isPending && !balancesQ.isError && reserveBalances.length === 0 };
   const totalHistPages = Math.max(1, Math.ceil((historyQ.data?.total ?? 0) / PAGE_SIZE));
 
   const forecastByWindow = {
@@ -312,7 +313,7 @@ export function ReserveTracker() {
         <BoardSection title="Per-factor reserve balances" testId="factoring-reserve-balances">
           <div className="px-3.5 py-3 text-xs text-gray-500">Loading reserve balances…</div>
         </BoardSection>
-      ) : reserveBalances.length === 0 ? (
+      ) : listState.isEmpty ? (
         <BoardSection title="Per-factor reserve balances" testId="factoring-reserves-honest-empty">
           <div className="px-3.5 py-3 text-xs text-gray-500">No reserve balances found.</div>
         </BoardSection>
