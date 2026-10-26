@@ -505,10 +505,10 @@ export async function buildUnitAggregate(
       WHERE l.assigned_unit_id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
-        -- LEAD 443.206R (register B5): the current load = the load service's open_dispatch set (owner law 09-28), never a
-        -- private NOT IN list ('void' / 'completed' are not enum values; invoiced / paid / abandoned / draft leaked through);
-        -- the unit's CURRENT leg is its earliest-pickup unfinished load (the next booking waits behind it).
+        -- LEAD 443.206R (register B5): the current load = the load service's open_dispatch set (owner law 09-28).
+        -- Explicit terminal-state exclusion matches the guard's reverse-link contract.
         AND ${loadServiceMembershipSql("l", "open_dispatch", "$2::uuid")}
+        AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
       ORDER BY (SELECT min(COALESCE(ps.scheduled_arrival_at, ps.appointment_start_at)) FROM mdata.load_stops ps
                  WHERE ps.load_id = l.id AND ps.stop_type = 'pickup' AND ps.soft_deleted_at IS NULL) ASC NULLS LAST, l.load_number ASC
       LIMIT 1

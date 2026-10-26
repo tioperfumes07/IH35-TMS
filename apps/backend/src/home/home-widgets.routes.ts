@@ -2,8 +2,6 @@ import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): the same shared exclusion already required
 // on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here too — a fixture unit must not
 // inflate the Office HOME Fleet Snapshot's total-units denominator.
-import { loadServiceMembershipSql } from "../dispatch/load-service.js";
-import { DISPATCH_ON_LOAD_STATUSES } from "../dispatch/active-loads-count.js";
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -416,11 +414,10 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
             FROM mdata.loads l
             WHERE l.operating_company_id = $1::uuid
               AND l.assigned_unit_id IS NOT NULL
-              -- LEAD 443.206R — busy trucks = the load service's open_dispatch set, on-load statuses (a delivered truck is free).
-              AND ${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}
-              AND l.status::text = ANY($2::text[])
+              AND l.is_sample_data IS NOT TRUE
+              AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed', 'assigned_not_dispatched')
           `,
-          [parsed.data.operating_company_id, [...DISPATCH_ON_LOAD_STATUSES]]
+          [parsed.data.operating_company_id]
         );
 
         const totalUnits = Number(totalRes.rows[0]?.c ?? 0);
