@@ -10,11 +10,14 @@
 // --selftest: the static check passes on the real source and fails on the source with the predicate removed.
 import { readFileSync } from "node:fs";
 
+import { expandLiveDocumentPredicates, PREDICATES_MODULE } from "./lib/expand-live-document-predicates.mjs";
 const LABEL = "verify-voided-deduction-never-applied";
 export const ALLOW_OFFLINE_SKIP = "static half (pending query filters voided_at, selftest) always runs; only the live count needs DATABASE_URL and CI runs it live";
 const CAP = "apps/backend/src/driver-finance/settlement-deduction-cap.service.ts";
 
-export function staticProblems(src) {
+// #27770 spells the predicate through the canonical module (`${notVoided()}`); judge the SQL the helper really emits.
+export async function staticProblems(rawSrc, helperSource) {
+  const src = await expandLiveDocumentPredicates(rawSrc, helperSource);
   const m = src.match(/FROM driver_finance\.driver_settlement_deductions\s+WHERE operating_company_id = \$1::uuid\s+AND driver_id = \$2\s+AND applied_to_settlement_id IS NULL[\s\S]*?ORDER BY/);
   if (!m) return [`${CAP}: the pending-deduction selection was not found (restructured?) — re-point this guard`];
   return /voided_at IS NULL/.test(m[0]) ? [] : [`${CAP}: the pending-deduction selection does not exclude voided deductions (voided_at IS NULL)`];
@@ -24,13 +27,19 @@ if (process.argv.includes("--selftest")) {
   const real = readFileSync(CAP, "utf8");
   // Remove the predicate INSIDE the pending selection only (the file has another voided_at filter above it).
   const region = real.match(/AND applied_to_settlement_id IS NULL[\s\S]*?ORDER BY/)[0];
-  const broken = real.replace(region, region.replace(/\n\s*AND voided_at IS NULL/, ""));
-  const ok = staticProblems(real).length === 0 && staticProblems(broken).length === 1 && broken !== real;
-  console.log(`${LABEL} --selftest ${ok ? "PASS" : "FAIL"} — real source clean, predicate removed is caught`);
+  const broken = real.replace(region, region.replace(/\n\s*AND (?:voided_at IS NULL|\$\{notVoided\(\)\})/, ""));
+  // Original defect, second spelling: the call stays but the canonical helper stops emitting the predicate.
+  const helperReal = readFileSync(PREDICATES_MODULE, "utf8");
+  const helperBroken = helperReal.replace('"voided_at IS NULL"', '"TRUE"');
+  const ok =
+    (await staticProblems(real)).length === 0 &&
+    broken !== real && (await staticProblems(broken)).length === 1 &&
+    helperBroken !== helperReal && (await staticProblems(real, helperBroken)).length === 1;
+  console.log(`${LABEL} --selftest ${ok ? "PASS" : "FAIL"} — real source clean; predicate removed is caught; helper that stops emitting it is caught`);
   process.exit(ok ? 0 : 1);
 }
 
-const fails = staticProblems(readFileSync(CAP, "utf8"));
+const fails = await staticProblems(readFileSync(CAP, "utf8"));
 let live = "live half skipped (no DATABASE_URL)";
 if (!fails.length && process.env.DATABASE_URL) {
   const { default: pg } = await import("pg");

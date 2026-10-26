@@ -59,7 +59,9 @@ export function problems(src) {
     const owed = s.slice(s.indexOf('if (card === "owed") {'), s.indexOf('const preference = card === "dreamline"'));
     // 443.110 G4: the owed bill is written (and GL-posted) through writeCreatorOwedBill -> createBillInClientTx
     // (settlement-creator-owed-bill.ts; verify-settlement-creator-owed-bill-posted pins that module).
-    if (!/await writeCreatorOwedBill\(/.test(owed) || !/continue;/.test(owed)) p.push("owed must become an A/P bill (writeCreatorOwedBill -> createBillInClientTx) and never fall through to a card credit");
+    // ENG-24 (#27755): the owed branch may go through amendOrWriteCreatorOwedBill, which keeps an identical posted prior
+    // bill or falls through to writeCreatorOwedBill (that wrapper's soundness is pinned by verify-settlement-creator-owed-bill-posted).
+    if (!/await (?:writeCreatorOwedBill|amendOrWriteCreatorOwedBill)\(/.test(owed) || !/continue;/.test(owed)) p.push("owed must become an A/P bill (writeCreatorOwedBill -> createBillInClientTx) and never fall through to a card credit");
     else if (!/vendorDocumentNumber:/.test(owed) || !/\bloadId,/.test(owed) || !/driverId: expLoad\.driverId,/.test(owed) || !/unitId: expLoad\.unitId,/.test(owed) || !/trailerId:/.test(owed) || !/quantity: qty/.test(owed)) p.push("the owed bill must carry vendor document number, load, driver, unit, trailer and the source quantity");
   }
   if (!/card: null,\s*\n\s*vendor_name: ""/.test(src.drawer) || !/value: "owed", label: "Owed to vendor \(bill\)"/.test(src.drawer)) p.push("the drawer must have no default payment source and offer Owed to vendor");
@@ -79,9 +81,10 @@ function selftest() {
   if (!problems(m("svc", "await createExpenseInClientTx(", "await legacyExpenseInsert(")).some((x) => /carry vendor/.test(x))) bad.push("a company expense bypassing the shared writer passed");
   if (!problems(m("svc", "const baseMemo =", "await client.query(`INSERT INTO accounting.expenses (id) VALUES (gen_random_uuid())`);\n    const baseMemo =")).some((x) => /writes an expense row directly/.test(x))) bad.push("a direct expense INSERT in the Creator passed");
   if (!problems(m("drawer", 'card: null,\n    vendor_name: ""', 'card: "relay",\n    vendor_name: ""')).some((x) => /drawer/.test(x))) bad.push("a drawer default passed");
-  if (!problems(m("svc", "        driverId: expLoad.driverId,\n        unitId: expLoad.unitId,\n        trailerId: draft.trailer_id ?? null,\n        billDate", "        unitId: expLoad.unitId,\n        trailerId: draft.trailer_id ?? null,\n        billDate")).some((x) => /owed bill must carry/.test(x))) bad.push("an unstamped owed bill passed");
+  if (!problems(m("svc", /\n\s*driverId: expLoad\.driverId,(\n\s*unitId: expLoad\.unitId,\n\s*trailerId: draft\.trailer_id \?\? null,\n\s*billDate)/, "$1")).some((x) => /owed bill must carry/.test(x))) bad.push("an unstamped owed bill passed");
+  if (!problems(m("svc", "await amendOrWriteCreatorOwedBill(", "await creditCompanyCard(")).some((x) => /owed must become an A\/P bill/.test(x))) bad.push("an owed expense bypassing the bill writer passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 8/8 (real tree passes; relay default, unstamped expense, writer bypass, direct expense INSERT, swallowed posting refusal, drawer default, unstamped owed bill each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 9/9 (real tree passes; relay default, unstamped expense, writer bypass, direct expense INSERT, swallowed posting refusal, drawer default, unstamped owed bill, owed branch bypassing the bill writer each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();

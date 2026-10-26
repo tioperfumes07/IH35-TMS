@@ -1210,7 +1210,7 @@ export async function postSettlementCreatorInClientTx(
       );
       priorFuelIds = priorEdit.fuelIds;
       priorOwedBillIds = priorEdit.priorOwedBillIds;
-      priorOwedBillKeys = await fetchPriorOwedBillKeys(client, priorOwedBillIds);
+      priorOwedBillKeys = await fetchPriorOwedBillKeys(client, draft.operating_company_id, priorOwedBillIds);
     }
     const ins = await client.query<{ id: string }>(
       `
@@ -1278,7 +1278,7 @@ export async function postSettlementCreatorInClientTx(
         );
         priorFuelIds = priorEdit2.fuelIds;
         priorOwedBillIds = priorEdit2.priorOwedBillIds;
-        priorOwedBillKeys = await fetchPriorOwedBillKeys(client, priorOwedBillIds);
+        priorOwedBillKeys = await fetchPriorOwedBillKeys(client, draft.operating_company_id, priorOwedBillIds);
       }
       atRef = typedNo;
     } else if (!typedNo) {

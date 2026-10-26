@@ -488,8 +488,9 @@ async function writeLine(
       `UPDATE accounting.journal_entry_postings
           SET reversed_by_line_id = $2::uuid, updated_at = now()
         WHERE id = $1::uuid AND (reversed_by_line_id IS NULL OR reversed_by_line_id = $2::uuid)
+          AND operating_company_id = $3::uuid
         RETURNING id::text`,
-      [line.reversal_of_line_id, postingId]
+      [line.reversal_of_line_id, postingId, line.operating_company_id]
     );
     if (!back.rows[0]) throw new PostingLineAlreadyReversedError(line.reversal_of_line_id);
   }

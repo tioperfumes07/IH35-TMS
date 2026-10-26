@@ -3,7 +3,6 @@
   "debt": [
     "apps/backend/src/accounting/payments/apply.service.ts: b.customer_id — column \"customer_id\" does not exist on accounting.bills",
     "apps/backend/src/accounting/role-home/accounting-home.service.ts: b.payment_terms_id — column \"payment_terms_id\" does not exist on accounting.bills",
-    "apps/backend/src/admin/sync-health.routes.ts: c.display_name — column \"display_name\" does not exist on org.companies",
     "apps/backend/src/banking/integrity/account-company-audit.service.ts: ba.bank_name — column \"bank_name\" does not exist on banking.bank_accounts",
     "apps/backend/src/fuel/planner.routes.ts: FROM/JOIN fuel.recommended_stops — TABLE not in migrated schema",
     "apps/backend/src/fuel/planner.routes.ts: FROM/JOIN fuel.route_recommendations — TABLE not in migrated schema",
