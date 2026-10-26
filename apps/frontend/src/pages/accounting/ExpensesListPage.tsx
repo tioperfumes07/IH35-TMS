@@ -51,6 +51,7 @@ const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = 
 import { formatUsdCents } from "../../lib/money";
 import { companyToday } from "../../lib/businessDate";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -752,8 +753,9 @@ export function ExpensesListPage() {
           </p>
         ) : null}
 
-      <ParityTable
-          title="Expenses"
+      {/* 443.293-C — register in shared BoardSection (Bills-grammar board chrome; kpiStrip stays on wrapper). */}
+      <BoardSection title="Expenses" testId="expenses-list-board">
+        <ParityTable
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}
@@ -774,29 +776,30 @@ export function ExpensesListPage() {
           sortDirection={sortDirection}
           onSortChange={onSortChange}
           selectable
-        maxSelectable={200}
-        batchActions={(selected) => (
-          <>
-          {/* U17 (owner): "Expenses is read-only; reclassify must work from it" — the one reclassify engine, in place. */}
-          <Button size="sm" variant="secondary" type="button" data-testid="expenses-reclassify-selected" onClick={() => setReclassifyIds(selected.map((row) => row.id))}>
-            {`Reclassify ${selected.length} selected`}
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            type="button"
-            onClick={() => {
-              setPendingVoidIds(selected.map((row) => row.id));
-              setPendingVoidLabels(bulkRowLabelsFromRows(selected, expenseBulkRowLabel));
-              setBatchVoidOpen(true);
-            }}
-          >
-            {`Void ${selected.length} selected`}
-          </Button>
-          </>
-        )}
-        emptyText="No expenses found for the selected filters."
+          maxSelectable={200}
+          batchActions={(selected) => (
+            <>
+              {/* U17 (owner): "Expenses is read-only; reclassify must work from it" — the one reclassify engine, in place. */}
+              <Button size="sm" variant="secondary" type="button" data-testid="expenses-reclassify-selected" onClick={() => setReclassifyIds(selected.map((row) => row.id))}>
+                {`Reclassify ${selected.length} selected`}
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                type="button"
+                onClick={() => {
+                  setPendingVoidIds(selected.map((row) => row.id));
+                  setPendingVoidLabels(bulkRowLabelsFromRows(selected, expenseBulkRowLabel));
+                  setBatchVoidOpen(true);
+                }}
+              >
+                {`Void ${selected.length} selected`}
+              </Button>
+            </>
+          )}
+          emptyText="No expenses found for the selected filters."
         />
+      </BoardSection>
       </div>
       <ParityDrawer open={Boolean(reclassifyIds)} onClose={() => setReclassifyIds(null)} size="half" title="Reclassify expenses" subtitle="The same engine as Accounting › Reclassify — one batch, one audit record, undo from there.">
         {reclassifyIds ? (

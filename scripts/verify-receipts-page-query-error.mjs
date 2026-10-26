@@ -36,7 +36,8 @@ function checkSources({ page, test }) {
   if (!/onRetry=\{\(\)\s*=>\s*void listQuery\.refetch\(\)\}/.test(page)) {
     failures.push("list query error must retry via listQuery.refetch()");
   }
-  if (!/\{!isError\s*\?\s*\(\s*<ParityTable/.test(page)) {
+  // 443.293-C — register may sit inside BoardSection; ParityTable still must not mount on isError.
+  if (!/\{!isError\s*\?\s*\(\s*<(?:BoardSection[\s\S]{0,220})?ParityTable/.test(page)) {
     failures.push("ParityTable must not render while listQuery isError (false empty state)");
   }
   if (/isError\s*\?\s*<p className="text-sm text-red-600/.test(page)) {

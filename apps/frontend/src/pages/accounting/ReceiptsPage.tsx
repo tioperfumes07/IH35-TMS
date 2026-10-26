@@ -17,6 +17,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { Button } from "../../components/Button";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -303,32 +304,48 @@ export function ReceiptsPage() {
         />
       ) : null}
 
+      {/* 443.293-C — register in shared BoardSection (Bills-grammar; kpiStrip on wrapper). */}
       {!isError ? (
-        <ParityTable title="Receipts"
-          columns={columns}
-          rows={items}
-          rowKey={(row) => row.id}
-          loading={isPending || (isFetching && items.length === 0)}
-          filterBar={filterBar}
-          suppressToolbarSearch
-          storageKey="receipts-list"
-          initialPageSize={limit}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSortChange={onSortChange}
-          emptyText="No receipts found."
-        />
+        <BoardSection title="Receipts" testId="receipts-list-board">
+          <ParityTable
+            columns={columns}
+            rows={items}
+            rowKey={(row) => row.id}
+            loading={isPending || (isFetching && items.length === 0)}
+            filterBar={filterBar}
+            suppressToolbarSearch
+            storageKey="receipts-list"
+            initialPageSize={limit}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
+            emptyText="No receipts found."
+          />
+          {total > limit ? (
+            <div className="flex items-center justify-between px-3.5 py-2 text-xs text-gray-600">
+              <button
+                type="button"
+                onClick={() => setOffset(Math.max(0, offset - limit))}
+                disabled={offset === 0}
+                className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+              >
+                ← Prev
+              </button>
+              <span>
+                {offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}
+              </span>
+              <button
+                type="button"
+                onClick={() => setOffset(offset + limit)}
+                disabled={offset + limit >= total}
+                className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+              >
+                Next →
+              </button>
+            </div>
+          ) : null}
+        </BoardSection>
       ) : null}
-
-      {!isError && total > limit && (
-        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
-          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-          <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
-          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
-        </div>
-      )}
     </AccountingSubNavWrapper>
   );
 }

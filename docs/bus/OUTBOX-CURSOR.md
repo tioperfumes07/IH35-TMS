@@ -1,13 +1,18 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Expenses list BoardSection (443.293-C)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting 220 money-list BoardSection (real code)
 
 - **STATUS:** SHIPPING
-- **DELTA:** ExpensesListPage register → `BoardSection` (expenses-list-board). moneyListKpiCard strip + void engines unchanged. Guard ratcheted. Pending 220 PARTIAL.
-- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-surf-02-expenses
+- **DELTA:** Real `BoardSection` register wraps on 12 Accounting money-list tabs (Expenses · Receipts · Checks · Invoices · Payments · Bill payments · Vendor credits · Credit memos · Manual JE · Factoring advances · Prepaid · Fixed assets). kpiStrip + moneyListKpiCard + void/create engines unchanged. Prior Expenses tip was guard-only — this ships the page code. New guard verify-acct-220-money-list-boards; receipts/checks/expenses guards ratcheted. Pending 220 PARTIAL.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-surf-02-expenses PASS · verify-acct-receipts-leaf PASS · verify-checks-list-shows-every-check PASS · verify-acct-220-money-list-boards PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue Accounting 220 other tabs to Bills grammar
-- **Files Modified:** ExpensesListPage.tsx · verify-acct-surf-02-expenses.mjs · OUTBOX-CURSOR.md · CURSOR-PENDING-ROWS-FINAL.md
+- **NEXT:** Settlements Open/Closed PARTIAL depth; remaining Accounting tabs (Escrow/Unexpected already BoardSection; Reclassify/Batch/Hub)
+- **Files Modified:** ExpensesListPage · ReceiptsPage · CheckListPage · InvoicesListPage · PaymentsListPage · BillPaymentsListPage · VendorCreditsPage · CreditMemosPage · ManualJEListPage · FactoringListPage · PrepaidExpensesPage · FixedAssetsPage · verify-acct-220-money-list-boards.mjs · verify-acct-surf-02 · verify-acct-receipts-leaf · verify-checks-list · OUTBOX-CURSOR.md
+
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Expenses list BoardSection (443.293-C) — SUPERSEDED
+
+- **STATUS:** SUPERSEDED — tip claimed BoardSection but page code was absent (guard-only); replaced by FILL-ACCT-220-MONEY-LIST-BOARDS
 
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FuelAssignmentPopup ModalSection → BoardSection
 

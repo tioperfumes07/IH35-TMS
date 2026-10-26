@@ -6,5 +6,7 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-acct-surf-02-expenses.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-acct-surf-02-expenses.mjs"]);
+    // 443.293-C — money-list BoardSection ratchet (Expenses sibling; no new CLAIMED number on feature PR).
+    await ctx.run("node", ["scripts/verify-acct-220-money-list-boards.mjs"]);
   },
 };

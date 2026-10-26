@@ -75,6 +75,10 @@ if (!receiptsPage.includes("createControl=")) {
 if (!receiptsPage.includes('data-receipts-filter-toolbar="visible"')) {
   fail("ReceiptsPage filter bar must keep data-receipts-filter-toolbar for QBO collapse guard");
 }
+// 443.293-C — register in shared BoardSection (Bills-grammar board chrome).
+if (!/<BoardSection[\s\S]{0,220}testId=["']receipts-list-board["']/.test(receiptsPage)) {
+  fail("ReceiptsPage must wrap the register in BoardSection (receipts-list-board)");
+}
 
 const fixedAssetsPage = read("apps/frontend/src/pages/accounting/FixedAssetsPage.tsx");
 if (fixedAssetsPage.includes("CollapsedListFilters")) {

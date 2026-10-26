@@ -20,6 +20,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { formatUsdCents } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status"]; label: string }> = [
@@ -248,23 +249,24 @@ export function FactoringListPage() {
       ) : null}
 
       {!query.isError ? (
-        <ParityTable
-          title="Factoring advances"
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={query.isPending || (query.isFetching && rows.length === 0)}
-          onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
-          suppressToolbarSearch
-          exportFilename="factoring-advances"
-          storageKey="factoring-list"
-          initialPageSize={50}
-          pageSizeOptions={[50, 75, 100, 200, 300]}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSortChange={onSortChange}
-          emptyText="No factoring batches for selected filters."
-        />
+        <BoardSection title="Factoring advances" testId="factoring-list-board">
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
+            suppressToolbarSearch
+            exportFilename="factoring-advances"
+            storageKey="factoring-list"
+            initialPageSize={50}
+            pageSizeOptions={[50, 75, 100, 200, 300]}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
+            emptyText="No factoring batches for selected filters."
+          />
+        </BoardSection>
       ) : null}
 
       {selectedCompanyId ? (

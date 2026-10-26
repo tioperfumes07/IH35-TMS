@@ -34,6 +34,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -395,19 +396,20 @@ export function VendorCreditsPage() {
           onRetry={() => void creditsQuery.refetch()}
         />
       ) : (
-        <ParityTable
-          title="Vendor credits"
-          rows={creditRows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          loading={creditsQuery.isLoading}
-          filterBar={filterBar}
-          suppressToolbarSearch
-          storageKey="accounting-vendor-credits"
-          tableTestId="vendor-credits-table"
-          emptyText="No vendor credits found."
-          onRowClick={(row) => setSelectedCreditId(row.id)}
-        />
+        <BoardSection title="Vendor credits" testId="vendor-credits-list-board">
+          <ParityTable
+            rows={creditRows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={creditsQuery.isLoading}
+            filterBar={filterBar}
+            suppressToolbarSearch
+            storageKey="accounting-vendor-credits"
+            tableTestId="vendor-credits-table"
+            emptyText="No vendor credits found."
+            onRowClick={(row) => setSelectedCreditId(row.id)}
+          />
+        </BoardSection>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal). A centered
