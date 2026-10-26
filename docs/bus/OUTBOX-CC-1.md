@@ -1,3 +1,40 @@
+## 2026-10-25 ~23:59Z — CC1 DONE — ALL 20 FINAL-2 ROWS MERGED
+
+verify-static: exit 0. All 20 rows from CC1-PENDING-ROWS-FINAL-2.md are on origin/main.
+
+| Row | Area | Fix | SHA | PR |
+|-----|------|-----|-----|----|
+| 75 | Settlements | Load-cost rollup bc subquery (exclude driver-pay AP bills) + GPS odometer 200mph filter + guard 18837 | `70004b0550` | squash |
+| 79 | Cash Flow | USMCA fuel-card-payable role bindings (account_role_bindings) + migration 202616270000 | `c46e7df4b3` | #27673 |
+| 139 | Fuel | ACCT-D020 — removed redundant hasCompanyAccess() inside withCompanyScope on expense-category-map | `197f3190b5` | #27652 |
+| 146+165 | Dispatch / Banking | Settlement/Tour destination em-dash; Banking Home drift alert display_name | `83b8272f1b` | squash |
+| 212/213/214 | Settlements | isEmptyRow filter; entityLabel "—" fallback; tour dates trip_started_at/trip_closed_at | `480aab6223` | #27642 |
+| 215 | Settlements | Escrow register per-load LEFT JOIN LATERAL on settlement_lines | `22dfcaadd7` | #27472 |
+| 216 | Accounting | Bill Payments list excludes settlement deductions | `0a9c1af11d` | squash |
+| 227 | Settlements | 443.310 tour-close re-fire duplicate $0 settlement engine root fix + guard 18761 | `80b006b68a` | #27487 |
+| 269 (ENG-34) | Engine | Wire 6 exempt guards into CI step 18565; remove from .guard-exempt.json (920→918) | `0aaa5be0d1` | squash |
+| 271 (ENG-36) | Reports | ENG-36 company settlements negative — revenue fallback to rate_total_cents + guard 18841 | `60b4818652` | squash |
+| 284 (ENG-39) | Accounting | Guard 4th COALESCE case source_transaction_type='bill_payment'; 0 GL mismatches | `bc5b56dac8` | #27535 |
+| 285 (ENG-40) | Settlements | P-0067/P-0119 closed driver settlements backfill + guard step 18793 | `5a9f8303e9` | #27541 |
+| 286 (ENG-41) | Settlements | Reuse query filter AND s.status='open' AND s.voided_at IS NULL | `5e6035ac59` | #27622 |
+| 287 (ENG-42) | Settlements | Shrink-only duplicate settlement-lines guard | `a4d761d49e` | #27623 |
+| 288 (ENG-43) | Settlements | Settlement header recompute + guard 18845 | `6f541ecf24` | #27706 |
+| 290 (ENG-45) | Drivers | Ops: backfill driver vendor for Carvallo + Noguez | `fcdc24e506` | #27653 |
+| 291 (ENG-46) | Accounting | Wire guards 18829+18849 (dead source_document_ref + GL bills exist) | `d314d6d58a` | #27712 |
+
+**FINAL-4 static guard batches (3 PRs):**
+- FINAL-4 batch-1 (7 guards: cash-flow-void, bills-revoked-at, cashflow-entitylink, deadhead-pay, insurance): `95133164f7` → #27782
+- FINAL-4 batch-2 (6 guards: moneyinput h-7, surface-bar modal/paritydrawer, money-kpi strip, expense-category-map, load-costs-legs-columns): `8d9abfca04` → #27783
+- FINAL-4 batch-3 (3 guards: void-cascade, settlement-fallback, decide-modal): `6037ce154b` → #27781
+
+**Additional CC-1 guard PRs this session:**
+- #27836: bills-settlement static literals; cash-flow predicate consumer; cash-advances staged filters; proforma-timing needle
+- #27837: verify-creator-advance for ENG-04 posting-engine contract
+- #27845: verify-settled-load-stops scoped to source_document_ref IS NOT NULL
+- #27852: verify-surface-bar-create-drawer-inventory + 4 unmapped pages (FactoringTab, PermitsPage, etc.)
+
+---
+
 ## 2026-10-24 ~17:10Z — CC-1 443.310 SHIPPED
 
 **PR #27487 MERGED** → squash `80b006b68a` — 443.310 duplicate settlement engine fix on main.
