@@ -9,13 +9,16 @@ function storageKey(scope: string, cardId: string) {
  * DRV-F422 — every card header has a chevron, open by default, remembered per viewer
  * per tab. A collapsed card still shows its count. Collapsing hides rows, never the fact
  * that rows exist.
+ *
+ * The count is a `badge` node rendered by the CALLER (verify-every-graphic-number-clicks-through): the caller
+ * knows which tab or list the count opens, so the number and its link are written — and checked — together.
  */
 export function CollapsibleProfileCard({
   scope,
   cardId,
   title,
   subtitle,
-  count,
+  badge,
   action,
   defaultOpen = true,
   children,
@@ -24,7 +27,8 @@ export function CollapsibleProfileCard({
   cardId: string;
   title: string;
   subtitle?: string;
-  count?: number | string | null;
+  /** The count shown in the header, usually a link to the list it counts. */
+  badge?: ReactNode;
   action?: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
@@ -61,9 +65,9 @@ export function CollapsibleProfileCard({
           {subtitle ? <div className="dd-card-sub">{subtitle}</div> : null}
         </div>
         <div className="flex items-center gap-2">
-          {count != null ? (
+          {badge != null ? (
             <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-[11px] font-semibold tabular-nums text-[#1F2A44]" data-testid={`collapsible-card-count-${cardId}`}>
-              {count}
+              {badge}
             </span>
           ) : null}
           {action}

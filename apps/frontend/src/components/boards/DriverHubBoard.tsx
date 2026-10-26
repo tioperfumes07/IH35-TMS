@@ -7,7 +7,9 @@
 import { MoneyCell } from "../shared/MoneyCell";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
+import { NumLink } from "./partyBoardKit";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
@@ -109,10 +111,11 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
       </div>
       <div className="pb-panel-body">
         <div className="pb-figs">
-          <div><div className="ih-hd">Settlement due</div><div className="pb-fig">{money(p.figures.settlement_due_cents)}</div></div>
-          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : usd(p.figures.escrow_held_cents)}</div></div>
-          <div><div className="ih-hd">Advances open</div><div className="pb-fig">{money(p.figures.advances_open_cents)}</div></div>
-          <div><div className="ih-hd">Miles, 30 days</div><div className="pb-fig">{p.figures.miles_30d == null ? "—" : int(p.figures.miles_30d)}</div></div>
+          {/* Each figure opens the driver's tab that lists what it sums. */}
+          <div><div className="ih-hd">Settlement due</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Settlements")}>{money(p.figures.settlement_due_cents)}</NumLink></div></div>
+          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Pay & escrow")}>{usd(p.figures.escrow_held_cents)}</NumLink>}</div></div>
+          <div><div className="ih-hd">Advances open</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Cash advances")}>{money(p.figures.advances_open_cents)}</NumLink></div></div>
+          <div><div className="ih-hd">Miles, 30 days</div><div className="pb-fig">{p.figures.miles_30d == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Loads")}>{int(p.figures.miles_30d)}</NumLink>}</div></div>
           <div className={`pb-integrity${flag ? " pb-integrity--flag" : ""}`}>
             <div className="ih-hd">Integrity</div>
             <div className="pb-fig">{flag ? "Flagged" : "Clear"}</div>
@@ -154,7 +157,18 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
 export function DriverHubBoard(props: { operatingCompanyId: string; onList: () => void }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<keyof Hub["chips"]>("Active");
+  // Status lives in the URL (?status=) so the header counts link to the exact drivers they count.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get("status");
+  const status: keyof Hub["chips"] = (["Active", "Probation", "OnLeave", "Inactive", "All"] as const).find((s) => s === statusParam) ?? "Active";
+  const setStatus = (next: keyof Hub["chips"]) =>
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("view", "board");
+      if (next === "Active") params.delete("status");
+      else params.set("status", next);
+      return params;
+    }, { replace: true });
   const [units, setUnits] = useState<string[]>([]);
   const [basis, setBasis] = useState("all");
   const [search, setSearch] = useState("");
@@ -202,7 +216,14 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
         <div className="pb-head-row">
           <div>
             <div className="pb-title">Driver Hub Home</div>
-            <div className="pb-sub">{h ? `${int(h.kpis.total)} drivers · ${int(h.kpis.active)} active · ${h.company_name ?? ""}` : "Loading drivers…"}</div>
+            <div className="pb-sub">
+              {h ? (
+                <>
+                  <NumLink to="/drivers?view=board&status=All">{int(h.kpis.total)} drivers</NumLink> ·{" "}
+                  <NumLink to="/drivers?view=board&status=Active">{int(h.kpis.active)} active</NumLink> · {h.company_name ?? ""}
+                </>
+              ) : "Loading drivers…"}
+            </div>
           </div>
           <div className="pb-head-actions">
             <button type="button" className="pb-refresh" onClick={() => void qc.invalidateQueries({ queryKey: ["driver-hub"] }).then(() => qc.invalidateQueries({ queryKey: ["driver-hub-panel"] }))}>Refresh</button>

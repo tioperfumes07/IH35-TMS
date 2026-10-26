@@ -8,6 +8,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../Combobox";
 import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { ParityTable } from "../parity/ParityTable";
+import { MoneyCell } from "../shared/MoneyCell";
 
 /**
  * ROUND 297 — possible duplicates the name-equality engine cannot see (variants: "S E Mares ..." / "Semares ...",
@@ -46,13 +47,21 @@ export function useVariantCandidates(operatingCompanyId: string) {
   });
 }
 
+/** A party's figure opens that party's record — the documents it totals. Faro debtors have no record page. */
+function PartyMoney({ p, cents }: { p: Party; cents: number }) {
+  if (p.kind === "customer") return <MoneyCell cents={cents} format={formatUsdCentsTable} drill={{ entity: { kind: "customer", id: p.id } }} />;
+  if (p.kind === "vendor") return <MoneyCell cents={cents} format={formatUsdCentsTable} drill={{ entity: { kind: "vendor", id: p.id } }} />;
+  // Faro debtors have no record page yet — the figure stays plain and verify-every-graphic-number-clicks-through names it.
+  return <span>{formatUsdCentsTable(cents)}</span>;
+}
+
 function PartyCell({ p }: { p: Party }) {
   return (
     <div>
       <div className="pb-strong">{p.name}</div>
       <div className="pb-sub-sm">
-        {KIND_LABEL[p.kind]} · {p.docs ? `${p.docs} ${DOC_NOUN[p.kind]}` : `no ${DOC_NOUN[p.kind]}`} · {formatUsdCentsTable(p.total_cents)}
-        {p.kind !== "factoring_debtor" ? <> · open {formatUsdCentsTable(p.open_cents)}</> : null}
+        {KIND_LABEL[p.kind]} · {p.docs ? `${p.docs} ${DOC_NOUN[p.kind]}` : `no ${DOC_NOUN[p.kind]}`} · <PartyMoney p={p} cents={p.total_cents} />
+        {p.kind !== "factoring_debtor" ? <> · open <PartyMoney p={p} cents={p.open_cents} /></> : null}
       </div>
     </div>
   );
@@ -151,7 +160,7 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
                       </SelectCombobox>
                     </label>
                     <div className="pb-sub-sm">
-                      {d.docs} {DOC_NOUN[d.kind]} ({formatUsdCentsTable(d.total_cents)}) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.
+                      {d.docs} {DOC_NOUN[d.kind]} (<PartyMoney p={d} cents={d.total_cents} />) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.
                     </div>
                     {error ? <div className="pb-sub-sm" style={{ color: "var(--ih-red)" }}>{error}</div> : null}
                     <div style={{ display: "flex", gap: 6 }}>
