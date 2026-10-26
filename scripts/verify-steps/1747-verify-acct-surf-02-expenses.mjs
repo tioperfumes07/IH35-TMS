@@ -14,5 +14,6 @@ export default {
     await ctx.run("node", ["scripts/verify-fill-remaining-boards-batch.mjs"]);
     // Batch 2 — Collections / Vendor balances / Company waterfall / Import fuel
     await ctx.run("node", ["scripts/verify-fill-batch2-boards.mjs"]);
+    await ctx.run("node", ["scripts/verify-fill-batch3-boards.mjs"]);
   },
 };

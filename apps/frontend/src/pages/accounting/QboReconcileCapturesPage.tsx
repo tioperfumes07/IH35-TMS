@@ -12,6 +12,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import {
   getQboReconcileOverview,
@@ -193,14 +194,14 @@ function OverviewTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <ParityTable title="QuickBooks sync health — by entity"
+      <BoardSection title="QuickBooks sync health — by entity" testId="qbo-recon-health-board"><ParityTable
         rows={data.health}
         columns={HEALTH_COLUMNS}
         rowKey={(row) => row.entity}
         emptyText="No sync health rows."
         storageKey="qbo-reconcile-sync-health"
         tableTestId="qbo-reconcile-sync-health-table"
-      />
+      /></BoardSection>
     </div>
   );
 }
@@ -316,7 +317,7 @@ function CapturesTab({ companyId }: { companyId: string }) {
           onRetry={() => void refetch()}
         />
       ) : (
-        <ParityTable title="QuickBooks modify captures"
+        <BoardSection title="QuickBooks modify captures" testId="qbo-recon-captures-board"><ParityTable
           rows={items}
           columns={CAPTURE_COLUMNS}
           rowKey={(row) => row.id}
@@ -326,7 +327,7 @@ function CapturesTab({ companyId }: { companyId: string }) {
           pageSizeOptions={[limit, 100, 300]}
           storageKey="qbo-reconcile-captures"
           tableTestId="qbo-reconcile-captures-table"
-        />
+        /></BoardSection>
       )}
 
       {total > limit && (
@@ -479,13 +480,13 @@ function ConflictsTab({ companyId }: { companyId: string }) {
                     <span className="text-xs text-gray-500">{conflict.resolved_at ? `Resolved ${fmtDt(conflict.resolved_at)}` : `Detected ${fmtDt(conflict.detected_at)}`}</span>
                   </div>
                 </div>
-                <ParityTable title="Conflicting fields — app vs QuickBooks"
+                <BoardSection title="Conflicting fields — app vs QuickBooks" testId="qbo-recon-conflict-fields-board"><ParityTable
                   rows={snapshotPairs(conflict)}
                   columns={CONFLICT_FIELD_COLUMNS}
                   rowKey={(pair) => pair.field}
                   emptyText="No conflicting fields."
                   storageKey="qbo-reconcile-conflict-fields"
-                />
+                /></BoardSection>
               </div>
             ))}
           </div>
@@ -591,14 +592,14 @@ function ReconRunsTab({ companyId }: { companyId: string }) {
   }
   const runs: ReconRun[] = data?.runs ?? [];
   return (
-    <ParityTable title="Reconciliation runs"
+    <BoardSection title="Reconciliation runs" testId="qbo-recon-runs-board"><ParityTable
       rows={runs}
       columns={RUN_COLUMNS}
       rowKey={(r) => r.id}
       emptyText="No reconciliation runs yet."
       storageKey="qbo-reconcile-recon-runs"
       tableTestId="qbo-reconcile-recon-runs-table"
-    />
+    /></BoardSection>
   );
 }
 
