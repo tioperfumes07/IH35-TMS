@@ -138,7 +138,11 @@ export type PriorOwedBillKey = {
 };
 
 /** Load the key fields of prior Creator owed bills so the Edit path can amend instead of void+repost. */
-export async function fetchPriorOwedBillKeys(client: Queryable, billIds: string[]): Promise<PriorOwedBillKey[]> {
+export async function fetchPriorOwedBillKeys(
+  client: Queryable,
+  operatingCompanyId: string,
+  billIds: string[],
+): Promise<PriorOwedBillKey[]> {
   if (!billIds.length) return [];
   const { rows } = await client.query<PriorOwedBillKey>(`
     SELECT b.id::text AS bill_id, b.vendor_id::text AS vendor_id, bl.load_id::text AS load_id,
@@ -146,9 +150,10 @@ export async function fetchPriorOwedBillKeys(client: Queryable, billIds: string[
       FROM accounting.bills b
       JOIN accounting.bill_lines bl ON bl.bill_id = b.id
      WHERE b.id = ANY($1::uuid[])
+       AND b.operating_company_id = $2::uuid
        AND b.source = 'settlement_creator_owed'
        AND ${notVoided("b")}
-  `, [billIds]);
+  `, [billIds, operatingCompanyId]);
   return rows;
 }
 

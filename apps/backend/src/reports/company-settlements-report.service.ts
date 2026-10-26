@@ -94,7 +94,7 @@ export async function getCompanySettlementsReport(
               AND l.operating_company_id = $1::uuid
             LEFT JOIN LATERAL (
               SELECT
-                COALESCE(SUM(il.amount_cents), 0)::bigint AS revenue_cents
+                COALESCE(SUM(il.line_total_cents), 0)::bigint AS revenue_cents -- invoice_lines has no amount_cents (#27395 threw 42703)
               FROM accounting.invoices inv
               JOIN accounting.invoice_lines il ON il.invoice_id = inv.id
               WHERE inv.source_load_id = l.id

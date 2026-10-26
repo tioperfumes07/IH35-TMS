@@ -422,7 +422,8 @@ describe("posting engine service", () => {
         return { rows: [{ id: `bbbbbbbb-bbbb-4bbb-8bbb-${String(insertedLines.length).padStart(12, "0")}` }] };
       }
       // AUTH-400: the back-link claim (UPDATE ... reversed_by_line_id IS NULL) must claim exactly one live line.
-      if (sql.includes("SET reversed_by_line_id")) return { rows: [], rowCount: 1 };
+      // ENG-28 (#27741): the single posting door's back-link UPDATE is ... RETURNING id — one claimed row.
+      if (sql.includes("SET reversed_by_line_id")) return { rows: [{ id: String(values?.[0]) }], rowCount: 1 };
       return { rows: [] };
     });
 
@@ -441,9 +442,11 @@ describe("posting engine service", () => {
     expect(result.result).toBe("reversed");
     expect(reversalEntryDate).toBe("2026-07-18");
     expect(insertedLines).toHaveLength(2);
-    expect(insertedLines[0]?.[4]).toBe("55555555-5555-4555-8555-555555555555");
-    expect(insertedLines[0]?.[5]).toBe("66666666-6666-4666-8666-666666666666");
-    expect(insertedLines[0]?.[6]).toBe("credit");
+    // ENG-28 (#27741): reversal lines are written by insertPostingLineWithSpine (posting-line-writer.ts parameter order).
+    expect(insertedLines[0]?.[12]).toBe("55555555-5555-4555-8555-555555555555"); // class_id
+    expect(insertedLines[0]?.[13]).toBe("66666666-6666-4666-8666-666666666666"); // entity_uuid
+    expect(insertedLines[0]?.[4]).toBe("credit"); // debit_or_credit flipped
+    expect(insertedLines[0]?.[14]).toBe("22222222-2222-4222-8222-222222222222"); // reversal_of_line_id
   });
 
   it("uses the same deterministic reversal key for lookup and insert, so retry returns the existing reversal", async () => {

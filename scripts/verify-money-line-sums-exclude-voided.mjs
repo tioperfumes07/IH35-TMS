@@ -37,8 +37,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { loadPredicates, expandWith, PREDICATES_MODULE } from "./lib/expand-live-document-predicates.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-money-line-sums-exclude-voided";
+// #27770 spells void exclusions through the canonical predicate module (`${notVoided("sl")}`). A statement is judged on
+// the SQL the REAL helper emits (bundled + executed), so a removed call or a helper that stops emitting it still fails.
+const PREDICATES = await loadPredicates();
 const SRC = path.join(ROOT, "apps", "backend", "src");
 
 /**
@@ -102,7 +106,7 @@ function walk(dir, out = []) {
   return out;
 }
 
-export function findUnfilteredSums(root = SRC) {
+export function findUnfilteredSums(root = SRC, predicates = PREDICATES) {
   const offenders = [];
   for (const file of walk(root)) {
     const raw = fs.readFileSync(file, "utf8");
@@ -114,7 +118,7 @@ export function findUnfilteredSums(root = SRC) {
       if (!seg) continue; // not inside a SQL template literal
       for (const [table, filter] of Object.entries(LINE_TABLE_SOFT_DELETE)) {
         if (!new RegExp(`\\b${table}\\b`, "i").test(seg)) continue;
-        if (filter.test(seg)) break;          // correctly filtered for THIS table
+        if (filter.test(seg) || filter.test(expandWith(predicates, seg))) break; // correctly filtered for THIS table
         offenders.push({
           file: path.relative(ROOT, file).replace(/\\/g, "/"),
           line: src.slice(0, m.index).split("\n").length,
@@ -169,6 +173,12 @@ async function selftest() {
   fs.writeFileSync(f, "const q = `SELECT SUM(sl.amount) FROM driver_finance.settlement_lines sl WHERE sl.is_active = true AND sl.voided_at IS NULL`;");
   if (findUnfilteredSums(tmp).length !== 0) failures.push("case6 FAIL — settlement_lines with the void stamp must be GREEN.");
 
+  // #27770 spelling: the canonical helper call is a filter only because the helper really emits voided_at IS NULL.
+  fs.writeFileSync(f, "const q = `SELECT SUM(sl.amount) FROM driver_finance.settlement_lines sl WHERE sl.is_active = true AND ${notVoided(\"sl\")}`;");
+  if (findUnfilteredSums(tmp).length !== 0) failures.push("case7 FAIL — canonical notVoided(\"sl\") must be GREEN.");
+  const helperBroken = fs.readFileSync(path.join(ROOT, PREDICATES_MODULE), "utf8").replace("`${sqlAlias(alias)}.voided_at IS NULL`", "`TRUE`");
+  if (findUnfilteredSums(tmp, await loadPredicates(helperBroken)).length !== 1) failures.push("case8 FAIL — a notVoided() helper that stops emitting voided_at IS NULL must go RED.");
+
   fs.writeFileSync(f, filtered);
   if (findUnfilteredSums(tmp).length !== 0) failures.push("case4 FAIL — restore must return GREEN.");
 
@@ -177,7 +187,7 @@ async function selftest() {
     for (const x of failures) console.error(`${LABEL} ${x}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — filtered GREEN, unfiltered RED, non-line-table ignored, settlement_lines is_active-only RED, restore GREEN`);
+  console.log(`${LABEL} SELFTEST PASS — filtered GREEN, unfiltered RED, non-line-table ignored, settlement_lines is_active-only RED, canonical helper GREEN, broken helper RED, restore GREEN`);
   return 0;
 }
 

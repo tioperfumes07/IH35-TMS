@@ -27,10 +27,17 @@ export function problems(writer, engine, mig, jes = read(JES)) {
   const p = [];
   if (!/if \(l\.o_id && l\.o_reversed_by !== l\.id\) \{/.test(jes) || !/restore_original_not_cancelled_by_this_entry/.test(jes)) p.push("restore must refuse an original this entry did not cancel (it would duplicate a live line)");
   if (!/SET reversed_by_line_id = \$2::uuid, updated_at = now\(\)\s*\n\s*WHERE id = \$1::uuid AND \(reversed_by_line_id IS NULL OR reversed_by_line_id = \$2::uuid\)/.test(writer)) p.push("writer must stamp the original's reversed_by_line_id, only when unreversed");
+  if (!/OR reversed_by_line_id = \$2::uuid\)\s*\n\s*AND operating_company_id = \$3::uuid/.test(writer)) p.push("writer must stamp the back-link only on the SAME company's original");
   if (!/if \(!back\.rows\[0\]\) throw new PostingLineAlreadyReversedError\(line\.reversal_of_line_id\)/.test(writer)) p.push("writer must refuse an original already reversed by another line");
   if (!/AND reversed_by_line_id IS NULL\s*\n\s*AND reversal_of_line_id IS NULL\s*\n\s*AND \(posting_batch_id = \$2::uuid OR \(source_transaction_type = \$3 AND source_transaction_id = \$4\)\)/.test(engine)) p.push("posting-engine reversal must select only LIVE lines naming the document");
   if (!/"REVERSAL_NOT_BALANCED"/.test(engine.slice(engine.indexOf("async function executeSourceReversalOnClient(")))) p.push("posting-engine reversal must refuse an unbalanced live set");
-  if (!/WHERE id = \$1::uuid AND operating_company_id = \$3::uuid AND reversed_by_line_id IS NULL/.test(engine) || !/"POSTING_LINE_ALREADY_REVERSED"/.test(engine)) p.push("posting-engine must never overwrite a reversal back-link");
+  // ENG-28 (#27741): the engine no longer stamps the back-link itself — every reversal line goes through the single
+  // posting door (insertPostingLineWithSpine), whose guarded UPDATE + PostingLineAlreadyReversedError (checked above)
+  // is the no-overwrite rule. The engine must route reversals through that door and must not regrow its own UPDATE.
+  const rev = engine.slice(engine.indexOf("async function executeSourceReversalOnClient("));
+  const viaDoor = /await insertPostingLineWithSpine\([\s\S]{0,1200}?reversal_of_line_id: row\.id/.test(rev);
+  const ownUnguardedUpdate = /SET reversed_by_line_id\s*=(?![\s\S]{0,200}reversed_by_line_id IS NULL)/.test(engine);
+  if (!viaDoor || ownUnguardedUpdate) p.push("posting-engine must never overwrite a reversal back-link (reverse only through insertPostingLineWithSpine; no unguarded back-link UPDATE)");
   if (!/CREATE UNIQUE INDEX IF NOT EXISTS uq_jep_one_reversal_per_line\s*\n\s*ON accounting\.journal_entry_postings \(reversal_of_line_id\)\s*\n\s*WHERE reversal_of_line_id IS NOT NULL;/.test(mig)) p.push("migration must create uq_jep_one_reversal_per_line");
   return p;
 }
@@ -41,7 +48,9 @@ const plants = [
   ["writer stamps nothing", w.replace("SET reversed_by_line_id = $2::uuid, updated_at = now()", "SET updated_at = now()"), e, m],
   ["writer overwrites", w.replace("AND (reversed_by_line_id IS NULL OR reversed_by_line_id = $2::uuid)", ""), e, m],
   ["engine reverses the whole batch", w, e.replace(/AND reversed_by_line_id IS NULL\s*\n\s*AND reversal_of_line_id IS NULL\s*\n\s*AND \(posting_batch_id = \$2::uuid OR \(source_transaction_type = \$3 AND source_transaction_id = \$4\)\)/, "AND posting_batch_id = $2::uuid"), m],
-  ["engine overwrites the back-link", w, e.replace("AND operating_company_id = $3::uuid AND reversed_by_line_id IS NULL", "AND operating_company_id = $3::uuid"), m],
+  ["engine overwrites the back-link", w, e.replace("reversal_of_line_id: row.id,", "reversal_of_line_id: null,\n      /* */ }); await client.query(`UPDATE accounting.journal_entry_postings SET reversed_by_line_id = $2::uuid WHERE id = $1::uuid`, [row.id, reversalLineId]); ({"), m],
+  ["engine bypasses the posting door", w, e.replace("const reversalLineId = await insertPostingLineWithSpine(", "const reversalLineId = await insertRawPostingLine("), m],
+  ["writer stamps another company's original", w.replace("\n          AND operating_company_id = $3::uuid\n        RETURNING id::text`,\n      [line.reversal_of_line_id, postingId, line.operating_company_id]", "\n        RETURNING id::text`,\n      [line.reversal_of_line_id, postingId]"), e, m],
   ["no index", w, e, m.replace("CREATE UNIQUE INDEX", "CREATE INDEX")],
   ["restore duplicates a live original", w, e, m, read(JES).replace("if (l.o_id && l.o_reversed_by !== l.id) {", "if (false) {")],
 ];
