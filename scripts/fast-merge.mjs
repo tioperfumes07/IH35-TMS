@@ -17,6 +17,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { assertClaudeGreenEvidenceShape } from "./verify-claude-green-evidence-shape.mjs";
+import { checkNoRegressions } from "./lib/affected-guard-regressions.mjs";
 
 const LABEL = "fast-merge";
 
@@ -83,6 +84,18 @@ const problems = bodyProblems(body, title);
 if (problems.length) {
   console.error(`${LABEL}: WARNING — title+body is not Claude-green (Rule 30); merging anyway (owner fast-merge law):`);
   for (const p of problems) console.error(`  - ${p}`);
+}
+// TESTED = every guard that reads a changed file passes (or was already red on main). A guard this branch
+// broke is a regression: owner law "there should be no regressions" — the merge does not happen.
+{
+  const r = checkNoRegressions(process.cwd());
+  if (r.regressions.length) {
+    console.error(`${LABEL}: NOT MERGED — ${r.regressions.length} regression(s): guard(s) that pass on main fail on this branch:`);
+    for (const x of r.regressions) console.error(`  - ${x}`);
+    console.error(`${LABEL}: fix the code (or a guard made stale by a correct refactor, with its selftest), then re-run.`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: no regressions (${r.guards.length} affected guard(s) checked).`);
 }
 const repo = gh(["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"]);
 const number = gh(["api", `repos/${repo}/pulls`, "-X", "POST", "-f", `head=${branch}`, "-f", "base=main", "-f", `title=${title}`, "-f", `body=${body}`, "-q", ".number"]);
