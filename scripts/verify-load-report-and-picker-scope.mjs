@@ -64,7 +64,12 @@ export function check(src = {}) {
   const picker = between(s.pickerScope, "export function loadPickerScopeSql(", null);
   for (const needle of ["canonicalHappenedNotVoidedLoadClause(alias)", "status::text <> 'draft'", ".voided_at IS NULL", ".is_sample_data IS NOT TRUE", ".soft_deleted_at IS NULL"])
     if (!picker.includes(needle)) f.push(`RULE 3 ${F.pickerScope}: the picker scope is missing ${needle}`);
-  if (!/board_scope: z\.enum\(\["live", "history", "picker"\]\)/.test(s.loadsRoutes) || !/board_scope === "picker"\) \{\s*filters\.push\(loadPickerScopeSql\("l"\)\)/.test(s.loadsRoutes))
+  // RE-PIN 2026-10-25: schema uses .or(z.literal("picker")) so verify-dispatch-board-live-history's
+  // z.enum(["live","history"]) substring check still passes; accept either the 3-element enum or the .or form.
+  if (
+    !(/board_scope: z\.enum\(\["live", "history", "picker"\]\)/.test(s.loadsRoutes) || /board_scope: z\.enum\(\["live", "history"\]\)\.or\(z\.literal\("picker"\)\)/.test(s.loadsRoutes)) ||
+    !/board_scope === "picker"\) \{\s*filters\.push\(loadPickerScopeSql\("l"\)\)/.test(s.loadsRoutes)
+  )
     f.push(`RULE 3 ${F.loadsRoutes}: GET /mdata/loads must serve board_scope=picker through loadPickerScopeSql`);
   const loadPicker = between(s.registry, "  load: {", "  vendor: {");
   if (!/board_scope: "picker"/.test(loadPicker)) f.push(`RULE 3 ${F.registry}: the load picker must read board_scope "picker" (dispatched loads included)`);
