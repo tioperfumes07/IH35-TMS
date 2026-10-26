@@ -16,6 +16,12 @@ const files = {
   self: "scripts/verify-quick-assign-unit-linkage.mjs",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+// LEAD 443.206R: the unit's current load = the load service's open_dispatch set (views.live_loads, owner law 09-28), never a
+// private NOT IN list. The terminal-state exclusion therefore lives in THE latest migration that defines views.live_loads —
+// read it there (the view is the contract), not as an inline list in the aggregate.
+const LIVE_VIEW_FILE = fs.readdirSync("db/migrations").filter((f) => f.endsWith(".sql")).sort()
+  .filter((f) => /CREATE OR REPLACE VIEW views\.live_loads\b/.test(fs.readFileSync(`db/migrations/${f}`, "utf8"))).pop();
+source.liveView = LIVE_VIEW_FILE ? fs.readFileSync(`db/migrations/${LIVE_VIEW_FILE}`, "utf8") : "";
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.current_load"],"task":"FLEET-F5907-CURRENT-LOAD-TASKS-REVERSE-EXACT","vertical":"class-sweep"} */';
 const mutateCurrentLoadLeaf = (text, mutate) => {
   const parsed = JSON.parse(text);
@@ -33,7 +39,13 @@ function audit(s) {
   if (!/const assignmentUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,650}AND operating_company_id = \$6::uuid[\s\S]{0,120}RETURNING id[\s\S]{0,500}input\.operating_company_id[\s\S]{0,180}if \(!assignmentUpdate\.rows\[0\]\?\.id\) throw new Error\("E_LOAD_NOT_FOUND"\)/.test(s.service)) failures.push("combined driver/unit quick-assign write must bind company and prove the row changed");
   if (!/code === "E_UNIT_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("unit rejection route mapping missing");
   if (!/l\.assigned_unit_id = \$1::uuid/.test(s.aggregate) || !/l\.operating_company_id = \$2::uuid/.test(s.aggregate)) failures.push("exact entity-scoped unit reverse query missing");
-  if (!/l\.status::text NOT IN \('delivered', 'cancelled', 'void', 'completed', 'closed'\)/.test(s.aggregate)) failures.push("unit current-load reverse must exclude every terminal load state, including closed");
+  if (!/\$\{loadServiceMembershipSql\("l", "open_dispatch", "\$2::uuid"\)\}/.test(s.aggregate)) failures.push("unit current-load reverse must read the canonical open_dispatch load-service set");
+  if (/l\.status::text NOT IN \(/.test(s.aggregate)) failures.push("unit current-load reverse carries a private inline NOT IN status list — use the canonical set");
+  const viewWhere = (s.liveView ?? "").match(/FROM mdata\.loads l\s+WHERE[\s\S]*?status::text <> ALL \(ARRAY\[([^\]]*)\]\)/)?.[1] ?? "";
+  for (const st of ["draft", "invoiced", "paid", "closed", "cancelled"]) {
+    if (!new RegExp(`'${st}'::text`).test(viewWhere)) failures.push(`views.live_loads must exclude every terminal load state — '${st}' is missing`);
+  }
+  if (!/WHEN status::text = ANY \(ARRAY\['delivered'::text[\s\S]{0,120}THEN 'pre_settlement'/.test(s.liveView ?? "")) failures.push("views.live_loads must classify delivered loads as pre_settlement (never open_dispatch)");
   // Independently converged fix — kept this already-integrated version (also strengthened the
   // load-drill check to require EntityLinkOrTombstone explicitly, which CC-2's narrower re-anchor
   // did not touch).
@@ -64,7 +76,9 @@ if (process.argv.includes("--selftest")) {
     ["write-result", "service", /if \(!assignmentUpdate\.rows\[0\]\?\.id\)/, "if (false)"],
     ["route", "routes", /code === "E_UNIT_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /l\.assigned_unit_id = \$1::uuid/g, "TRUE"],
-    ["closed-terminal", "aggregate", /, 'closed'\)/, ")"],
+    ["closed-terminal", "liveView", /(status::text <> ALL \(ARRAY\[[^\]]*)'closed'::text, /, "$1"],
+    ["private-list", "aggregate", /AND \$\{loadServiceMembershipSql\("l", "open_dispatch", "\$2::uuid"\)\}/, "AND l.status::text NOT IN ('delivered', 'cancelled')"],
+    ["delivered-open", "liveView", /THEN 'pre_settlement'/, "THEN 'open_dispatch'"],
     ["drill", "reverse", /EntityLinkOrTombstone kind="load"/, 'EntityLinkOrTombstone kind="unit"'],
     ["label-contract", "reverse", /unitNumber:\s*string/, "unitNumber?: string"],
     ["label-consumer", "reverse", /name=\{unitNumber\}/, "name={null}"],

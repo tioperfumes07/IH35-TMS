@@ -2274,8 +2274,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
           -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/
           -- "No driver on file") — never drop it from one list and keep it on the other.
-          WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-            AND ${UNIT_IN_SERVICE_SQL}
+          WHERE ${UNIT_IN_SERVICE_SQL}
+            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
             AND l.id IS NULL
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             last_delivery.last_drop_at, last_delivery.load_id, last_delivery.load_number,

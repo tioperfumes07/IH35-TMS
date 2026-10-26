@@ -22,7 +22,7 @@
  * dispatched loads / 33 geocoded stops / 1 stamped. See load-stop-geofence-geometry.ts.
  */
 import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding.service.js";
-import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+import { canonicalDispatchWorkStatusClause, canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { processGeofenceDetectionsForGpsPoint } from "./geofence-detector.service.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
@@ -221,7 +221,7 @@ export async function backfillCompletedLoadFenceEvidence(
             min(coalesce(ls.actual_arrival_at, ls.scheduled_arrival_at, ls.appointment_start_at))::text AS first_at,
             max(coalesce(ls.actual_departure_at, ls.actual_arrival_at, ls.scheduled_arrival_at, ls.appointment_end_at, ls.appointment_start_at))::text AS last_at
        FROM mdata.loads l JOIN mdata.load_stops ls ON ls.load_id = l.id AND ls.soft_deleted_at IS NULL
-      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled'
+      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
         AND l.assigned_unit_id IS NOT NULL AND l.miles_driven_actual IS NULL
         AND NOT (${canonicalDispatchWorkStatusClause("l")})
         AND ($3::uuid[] IS NULL OR l.id = ANY($3::uuid[]))

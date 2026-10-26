@@ -167,6 +167,42 @@ function refIsScoped(block, alias, columns) {
   });
 }
 
+/**
+ * CANONICAL SCOPE HELPERS. A board query that mounts the canonical helper is entity-scoped INSIDE the helper, which a text
+ * scan of the caller cannot see — so callers grew redundant inline predicates (#27749) that broke the helper-shape guards
+ * (verify-truck-planner-complete-unit-roster, verify-awaiting-truck-driver-hos). A mount counts as scoped ONLY while the
+ * helper's own source still emits the predicate — re-read from the helper file on every run, never trusted by name:
+ *   ${canonicalDispatchWorkWhereClause("X", p)}  → emits `X.operating_company_id = p`        (OPCO tables)
+ *   ${canonicalBoardUnitGateSql("X", p)}         → emits `COALESCE(X.currently_leased_to_company_id, X.owner_company_id) = p`
+ *   ${UNIT_IN_SERVICE_SQL}                       → mounts canonicalBoardUnitGateSql("u", "$1::uuid")  (alias u only)
+ */
+export function helperContracts(canonSrc, inServiceSrc) {
+  const body = (name) => (canonSrc.match(new RegExp(`export function ${name}\\([\\s\\S]*?\\n}`)) ?? [""])[0];
+  const dispatchWork = /\$\{alias\}\.operating_company_id = \$\{operatingCompanyIdParam\}/.test(body("canonicalDispatchWorkWhereClause"));
+  const boardGate = /COALESCE\(\$\{unitAlias\}\.currently_leased_to_company_id, \$\{unitAlias\}\.owner_company_id\) = \$\{operatingCompanyIdParam\}/.test(body("canonicalBoardUnitGateSql"));
+  const unitInService = boardGate && /\$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/.test(inServiceSrc);
+  return { dispatchWork, boardGate, unitInService };
+}
+function readOrEmpty(rel) {
+  try { return readFileSync(join(ROOT, rel), "utf8"); } catch { return ""; }
+}
+let HELPERS = helperContracts(
+  readOrEmpty("apps/backend/src/dispatch/canonical-active-load-set.ts"),
+  readOrEmpty("apps/backend/src/dispatch/unit-in-service.ts")
+);
+function helperScopes(block, alias, columns, helpers = HELPERS) {
+  if (!alias) return false;
+  const a = alias.replace(/[$]/g, "\\$&");
+  if (columns === OPCO) {
+    return helpers.dispatchWork && new RegExp(`\\$\\{canonicalDispatchWorkWhereClause\\("${a}",`).test(block);
+  }
+  if (columns === LEASE_PAIR) {
+    if (helpers.boardGate && new RegExp(`\\$\\{canonicalBoardUnitGateSql\\("${a}",`).test(block)) return true;
+    return alias === "u" && helpers.unitInService && /\$\{UNIT_IN_SERVICE_SQL\}/.test(block);
+  }
+  return false;
+}
+
 export function auditSql(src, file = "<mem>") {
   const problems = [];
   for (const blockMatch of extractTemplateLiterals(src)) {
@@ -187,7 +223,7 @@ export function auditSql(src, file = "<mem>") {
     for (const { table, alias, kind } of refs) {
       const columns = TARGETS.get(table);
       if (!columns) continue;
-      if (refIsScoped(block, alias, columns)) continue;
+      if (refIsScoped(block, alias, columns) || helperScopes(block, alias, columns)) continue;
       const line = src.slice(0, blockMatch.index).split("\n").length;
       const q = alias ? `${alias}.` : "";
       const want =
@@ -332,6 +368,28 @@ function selftest({ skipTree = false } = {}) {
     'const q = `SELECT e.created_at::text FROM safety.da_program_enrollments e LEFT JOIN mdata.drivers d ON d.id = e.driver_uuid WHERE e.operating_company_id::text = $1::uuid::text`;';
   if (auditSql(castUnscoped).length === 0)
     failures.push("case12 FAIL — an unscoped JOIN with an unrelated cast nearby escaped detection");
+
+  // Canonical helper mounts: scoped while the helper emits the predicate; NOT scoped the moment it stops.
+  const helperMount =
+    'const q = `SELECT u.id FROM mdata.units u WHERE ${UNIT_IN_SERVICE_SQL} AND NOT EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})`;';
+  const savedHelpers = HELPERS;
+  HELPERS = { dispatchWork: true, boardGate: true, unitInService: true };
+  if (auditSql(helperMount).length !== 0) failures.push(`case13 FAIL — a verified canonical helper mount was flagged: ${auditSql(helperMount).join(" | ")}`);
+  const canonReal = readOrEmpty("apps/backend/src/dispatch/canonical-active-load-set.ts");
+  const inSvcReal = readOrEmpty("apps/backend/src/dispatch/unit-in-service.ts");
+  const real = helperContracts(canonReal, inSvcReal);
+  if (!real.dispatchWork || !real.boardGate || !real.unitInService) failures.push(`case14 FAIL — the real canonical helpers no longer emit their scope: ${JSON.stringify(real)}`);
+  // Planted: the dispatch-work helper loses its company predicate → its mounts are unscoped again.
+  const canonNoOpco = canonReal.replace("AND ${alias}.operating_company_id = ${operatingCompanyIdParam}", "");
+  if (canonNoOpco === canonReal) failures.push("case15 FAIL — dispatch-work plant did not change the helper source");
+  HELPERS = helperContracts(canonNoOpco, inSvcReal);
+  if (auditSql(helperMount).length === 0) failures.push("case15 FAIL — a dispatch-work helper without its company predicate still scoped its mount");
+  // Planted: the board unit gate loses the lease-pair predicate → UNIT_IN_SERVICE_SQL no longer scopes u.
+  const canonNoLease = canonReal.replace("AND COALESCE(${unitAlias}.currently_leased_to_company_id, ${unitAlias}.owner_company_id) = ${operatingCompanyIdParam}", "");
+  if (canonNoLease === canonReal) failures.push("case16 FAIL — board-gate plant did not change the helper source");
+  HELPERS = helperContracts(canonNoLease, inSvcReal);
+  if (auditSql(helperMount).length === 0) failures.push("case16 FAIL — a board unit gate without its lease-pair predicate still scoped UNIT_IN_SERVICE_SQL");
+  HELPERS = savedHelpers;
 
   if (!skipTree) {
     const tree = auditTree();

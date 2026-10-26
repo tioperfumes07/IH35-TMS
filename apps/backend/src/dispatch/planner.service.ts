@@ -218,8 +218,7 @@ export async function loadPlannerWeekOnClient(
             -- planner's loads are the whole board set, so its roster must cover every driver of it.
             EXISTS (
               SELECT 1 FROM mdata.loads cl
-              WHERE cl.operating_company_id = $1::uuid
-                AND ${canonicalDispatchWorkWhereClause("cl", "$1::uuid")}
+              WHERE ${canonicalDispatchWorkWhereClause("cl", "$1::uuid")}
                 AND (cl.assigned_primary_driver_id = d.id OR cl.assigned_secondary_driver_id = d.id)
             )
             -- otherwise: an Active driver with recent dispatch activity (the planner's idle roster, unchanged).
