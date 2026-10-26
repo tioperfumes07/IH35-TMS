@@ -13,6 +13,38 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+/**
+ * Does listBillsQuerySchema accept `value` for status? Either the original inline `status: z.enum([...])`, or the
+ * #27807 multi-status form: `status: <schema>` where <schema> is built from `z.enum(<CONST>)` and <CONST> is a
+ * literal array containing the value. Read from source — a value dropped from the constant fails.
+ */
+export function billsStatusAccepts(src, value) {
+  const q = JSON.stringify(value);
+  if (new RegExp(`status: z\\.enum\\(\\[[^\\]]*${q}[^\\]]*\\]\\)`).test(src)) return true;
+  const statusSchema = src.match(/listBillsQuerySchema[\s\S]{0,1500}?\bstatus:\s*([A-Za-z_$][\w$]*)\s*,/);
+  if (!statusSchema) return false;
+  const decl = src.match(new RegExp(`const ${statusSchema[1]}\\s*=\\s*z[\\s\\S]{0,600}?z\\.enum\\(([A-Z_][A-Z0-9_]*)\\)`));
+  if (!decl) return false;
+  const values = src.match(new RegExp(`const ${decl[1]}\\s*=\\s*\\[([^\\]]*)\\]\\s*as const`));
+  return Boolean(values) && values[1].split(",").map((x) => x.trim()).includes(q);
+}
+
+if (process.argv.includes("--selftest")) {
+  const real = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/bills.routes.ts"), "utf8");
+  const cases = [
+    ["real source accepts active", billsStatusAccepts(real, "active")],
+    ["real source accepts posted", billsStatusAccepts(real, "posted")],
+    ["legacy inline enum still recognized", billsStatusAccepts('listBillsQuerySchema = z.object({ status: z.enum(["open", "posted", "active"]) })', "posted")],
+    ["posted dropped from the constant is caught", !billsStatusAccepts(real.replace(/, "posted"\] as const/, "] as const"), "posted")],
+    ["active dropped from the constant is caught", !billsStatusAccepts(real.replace(/"active", /, ""), "active")],
+    ["schema no longer built from the constant is caught", !billsStatusAccepts(real.replace(/z\.enum\(BILL_LIST_STATUS_VALUES\)/g, "z.string()"), "posted")],
+  ];
+  let ok = 0;
+  for (const [name, pass] of cases) { console.log(`  ${pass ? "PASS" : "FAIL"}  ${name}`); if (pass) ok += 1; }
+  console.log(`${LABEL} SELFTEST ${ok === cases.length ? "PASS" : "FAIL"} (${ok}/${cases.length})`);
+  process.exit(ok === cases.length ? 0 : 1);
+}
+
 const failures = [];
 
 const setl = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
@@ -91,7 +123,7 @@ if (!/value="active">Active \(hide voided\)/.test(billsPage) && !/value: "active
 }
 
 const billsRoutes = read("apps/backend/src/accounting/bills.routes.ts");
-if (!/status: z\.enum\(\[[^\]]*"active"[^\]]*\]\)/.test(billsRoutes)) {
+if (!billsStatusAccepts(billsRoutes, "active")) {
   failures.push("FLT-03: listBillsQuerySchema must accept status=active");
 }
 
@@ -137,7 +169,7 @@ if (!/value="posted">Posted \(GL\)/.test(billsPage) && !/value: "posted", label:
 if (!/status === "posted"[\s\S]{0,200}BILL_POSTED_GL_EXISTS_SQL/.test(billsSvc)) {
   failures.push("FLT-02: listBills must map status=posted → GL-posted bills EXISTS");
 }
-if (!/status: z\.enum\(\[[^\]]*"posted"[^\]]*\]\)/.test(billsRoutes)) {
+if (!billsStatusAccepts(billsRoutes, "posted")) {
   failures.push("FLT-02: listBillsQuerySchema must accept status=posted");
 }
 if (!/value: "posted", label: "Posted"/.test(expenses)) {
