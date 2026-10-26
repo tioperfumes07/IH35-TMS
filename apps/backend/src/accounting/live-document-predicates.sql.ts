@@ -57,6 +57,12 @@ export function openBill(alias: string, balanceSql: string): string {
   return `(${liveBill(a)} AND ${a}.status IN ('open','unpaid','partial','partially_paid') AND (${balanceSql}) > 0)`;
 }
 
+/** A/P document status that has posted to the books: not void, not a draft (the fin20-aging / vendor-report status test).
+ *  Status-only by design — pair it with notVoided(alias) for the void stamp, as the vendor report does. */
+export function postedBillStatus(alias: string): string {
+  return `${sqlAlias(alias)}.status NOT IN ('void', 'voided', 'draft')`;
+}
+
 export function liveBillPayment(alias: string): string {
   const a = sqlAlias(alias);
   return `(${a}.revoked_at IS NULL AND ${a}.voided_at IS NULL AND COALESCE(${a}.status,'') NOT IN ('void','voided'))`;

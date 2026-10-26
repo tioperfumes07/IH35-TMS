@@ -11,6 +11,7 @@ import {
   type LoadsReportDateField,
   type LoadsReportRow,
 } from "./loads-report.service.js";
+import { liveInvoice, notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B: paged loads history, reuses the loads-report filter + row shape.
@@ -92,7 +93,7 @@ function buildFilters(query: LoadsHistoryQuery): { filters: string[]; values: un
       SELECT 1 FROM accounting.factoring_advances fa2
       WHERE fa2.source_load_id = l.id
         AND fa2.operating_company_id = $1::uuid
-        AND fa2.voided_at IS NULL
+        AND ${notVoided("fa2")}
         AND fa2.status::text = $${values.length}
     )`);
   }
@@ -153,8 +154,8 @@ export async function getLoadsHistoryPage(
         FROM accounting.invoices i
         WHERE i.operating_company_id = $1::uuid
           AND i.source_load_id IS NOT NULL
-          AND i.status <> 'void'
-          AND i.voided_at IS NULL
+          AND ${liveInvoice("i")}
+          -- (void stamp is inside liveInvoice)
         ORDER BY i.source_load_id, i.created_at DESC
       ),
       factoring_by_load AS (
@@ -165,7 +166,7 @@ export async function getLoadsHistoryPage(
           fa.status::text AS factoring_status
         FROM accounting.factoring_advances fa
         WHERE fa.operating_company_id = $1::uuid
-          AND fa.voided_at IS NULL
+          AND ${notVoided("fa")}
           AND fa.source_load_id IS NOT NULL
         ORDER BY fa.source_load_id, COALESCE(fa.advanced_at, fa.created_at) DESC
       ),
@@ -176,7 +177,7 @@ export async function getLoadsHistoryPage(
           fa.status::text AS factoring_status
         FROM accounting.factoring_advances fa
         WHERE fa.operating_company_id = $1::uuid
-          AND fa.voided_at IS NULL
+          AND ${notVoided("fa")}
       ),
       base AS (
         SELECT
@@ -288,8 +289,8 @@ export async function getLoadsHistoryPage(
       LEFT JOIN accounting.invoices inv
         ON inv.source_load_id = l.id
         AND inv.operating_company_id = $1::uuid
-        AND inv.status <> 'void'
-        AND inv.voided_at IS NULL
+        AND ${liveInvoice("inv")}
+        -- (void stamp is inside liveInvoice)
       WHERE l.operating_company_id = $1::uuid
         AND ${totalsFilters.join("\n        AND ")}
     `,

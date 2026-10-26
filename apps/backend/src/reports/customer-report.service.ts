@@ -6,6 +6,7 @@ import {
   effectiveDateField,
   type LoadsReportDateField,
 } from "./loads-report.service.js";
+import { issuedInvoice } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B endpoint 5: customer report.
@@ -94,9 +95,9 @@ export async function getCustomerReport(
         -- outstanding AR = issued invoices not yet paid; proforma/void/draft/factored excluded
         -- to match GL 1100 ($621,076.72 per 443.286 tie-out)
         COALESCE(SUM(
-          CASE WHEN inv.id IS NOT NULL AND inv.voided_at IS NULL
+          CASE WHEN inv.id IS NOT NULL AND ${issuedInvoice("inv")}
             AND COALESCE(inv.amount_open_cents, 0) > 0
-            AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
+            AND inv.status <> 'factored'
             THEN COALESCE(inv.amount_open_cents, 0)
           ELSE 0 END
         ), 0)::bigint AS outstanding_ar_cents,
@@ -105,8 +106,8 @@ export async function getCustomerReport(
       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
       LEFT JOIN accounting.invoices inv ON inv.source_load_id = l.id
         AND inv.operating_company_id = $1::uuid
-        AND inv.voided_at IS NULL
-        AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
+        AND ${issuedInvoice("inv")}
+        AND inv.status <> 'factored'
       ${loadCostRollupLateral("l.id", "$1::uuid")}
       WHERE l.operating_company_id = $1::uuid
         AND ${filters.join("\n        AND ")}

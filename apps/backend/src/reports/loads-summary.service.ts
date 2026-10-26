@@ -6,6 +6,7 @@ import {
   effectiveDateField,
   type LoadsReportDateField,
 } from "./loads-report.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B endpoint 2: group-by aggregation over the same loads filter.
@@ -90,7 +91,7 @@ function buildFilters(query: LoadsSummaryQuery): { filters: string[]; values: un
       SELECT 1 FROM accounting.factoring_advances fa2
       WHERE fa2.source_load_id = l.id
         AND fa2.operating_company_id = $1::uuid
-        AND fa2.voided_at IS NULL
+        AND ${notVoided("fa2")}
         AND fa2.status::text = $${values.length}
     )`);
   }

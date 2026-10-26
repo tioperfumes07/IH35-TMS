@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { notVoided, postedBillStatus } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B endpoint 6: vendor report.
@@ -52,9 +53,9 @@ export async function getVendorReport(
 
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `b.voided_at IS NULL`,
+    notVoided("b"),
     // status exclusion matches fin20-aging canonical pattern — ties to GL 2000 $126,443.92
-    `b.status NOT IN ('void', 'voided', 'draft')`,
+    postedBillStatus("b"),
     `b.bill_date BETWEEN $2::date AND $3::date`,
   ];
 
@@ -82,9 +83,9 @@ export async function getVendorReport(
           WHERE b2.vendor_id = b.vendor_id
             AND b2.operating_company_id = $1::uuid
             AND b2.bill_date BETWEEN $2::date AND $3::date
-            AND b2.voided_at IS NULL
+            AND ${notVoided("b2")}
             AND bp.operating_company_id = $1::uuid
-            AND bp.voided_at IS NULL
+            AND ${notVoided("bp")}
         ), 0)::bigint AS total_paid_cents,
         -- outstanding AP = each bill's remaining balance (amount_cents - paid_cents; accounting.bills has no paid_at /
         -- total_amount_cents — 443.290: those names raised 42703 and the report 500ed)

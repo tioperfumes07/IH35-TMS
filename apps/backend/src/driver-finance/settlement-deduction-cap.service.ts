@@ -3,6 +3,7 @@
 // finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6).
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 export type Queryable = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(
@@ -215,7 +216,7 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
         -- this SUM overstates GROSS, which raises the deduction cap the 5% net-pay floor exists to
         -- enforce -- i.e. it lets a driver be over-deducted. Table is empty today; latent until pay-runs start.
         AND is_active = true
-        AND voided_at IS NULL
+        AND ${notVoided()}
     `,
     [input.settlementId]
   );
@@ -253,7 +254,7 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
         AND applied_to_settlement_id IS NULL
         -- LEAD 443.338 — a VOIDED deduction is never applied. 68041143 ("Admin fee - GAS" $10.00, voided 10-12 as the
         -- duplicate of ee43793c already taken on 5769) kept status 'pending' and was charged again on P-0119 at its 10-23 close.
-        AND voided_at IS NULL
+        AND ${notVoided()}
       -- PAY-FIRST-THEN-ESCROW (owner-locked 2026-07-04): recover advances/debts BEFORE withholding
       -- escrow, so a floor-limited settlement pays down what the driver owes first and only defers
       -- escrow. Escrow-type deductions (driver_bond / abandonment) sort LAST; ties broken by age.

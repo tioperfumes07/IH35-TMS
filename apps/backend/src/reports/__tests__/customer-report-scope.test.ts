@@ -132,12 +132,13 @@ describe("GET /api/v1/reports/customer-report", () => {
 // GL 1100 target = $621,076.72 (issued invoices only; proforma INV-169/13690 $3,000 excluded)
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
+import { expandLivePredicates } from "./expand-live-predicates.js";
 describe("TIEOUT: customer-report outstanding AR excludes proforma", () => {
   it("service SQL has proforma and status NOT IN exclusion on invoices", () => {
-    const src = readFileSync(
+    const src = expandLivePredicates(readFileSync(
       fileURLToPath(new URL("../customer-report.service.ts", import.meta.url)),
       "utf-8"
-    );
+    ));
     expect(src).toContain("proforma");
     expect(src).toContain("status NOT IN");
     // Canonical set mirrors ar-aging.service.ts

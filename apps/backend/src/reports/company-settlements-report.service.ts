@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B endpoint 4: paged company settlements report.
@@ -85,7 +86,7 @@ export async function getCompanySettlementsReport(
         ), 0)::bigint AS gross_driver_pay_cents,
         -- net_revenue_cents: sum of load revenue from loads whose presettlement_link_id points at
         -- this company settlement's driver settlements. NULL for voided settlements.
-        CASE WHEN cs.voided_at IS NOT NULL THEN NULL
+        CASE WHEN NOT ${notVoided("cs")} THEN NULL
           ELSE COALESCE((
             SELECT SUM(lcr.revenue_cents)
             FROM accounting.company_settlement_driver_settlements csds2
@@ -98,7 +99,7 @@ export async function getCompanySettlementsReport(
               JOIN accounting.invoice_lines il ON il.invoice_id = inv.id
               WHERE inv.source_load_id = l.id
                 AND inv.operating_company_id = $1::uuid
-                AND inv.voided_at IS NULL
+                AND ${notVoided("inv")}
                 AND il.soft_deleted_at IS NULL
             ) lcr ON true
             WHERE csds2.company_settlement_id = cs.id

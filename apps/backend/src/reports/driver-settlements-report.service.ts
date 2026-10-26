@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * 443.281-B endpoint 3: paged driver settlements report.
@@ -63,7 +64,7 @@ export async function getDriversSettlementsReport(
   const filters: string[] = [
     `s.period_start >= $2::date`,
     `s.period_end <= $3::date`,
-    `s.voided_at IS NULL`,
+    notVoided("s"),
   ];
 
   if (query.driverId) {
