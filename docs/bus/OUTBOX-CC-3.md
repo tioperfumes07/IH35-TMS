@@ -21,3 +21,21 @@ Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17
 - **GATE:** tsc -b exit 0 · vite build exit 0 · verify-lane-ownership PASS (9 files in lane) · verify-entity-link-adoption PASS (123 stable keys) · verify-popups-one-format PASS (3)
 - **GATE NOTE:** verify-no-silent-db-skip failed on pre-existing CC-1 defect (verify-settlement-gl-bills-exist.mjs missing ALLOW_OFFLINE_SKIP, not in my diff); CI does not run this check; pushed under owner weekend --no-verify exception
 - **REMAINING:** Live=UNVERIFIED · LegalHomeBoard.tsx matterLabel still uses id.slice(0,8) — CC-1 to fix
+
+## 2026-10-25 — FINAL-4 batches 4–6 (LST-F23/F24/F25) DONE
+
+### Batch 4 — PR [#27784](https://github.com/tioperfumes07/IH35-TMS/pull/27784) · squash `67aecbfe`
+- **FINDING:** LST-F23 — ceiling restore + driver payment methods parity
+- **FIX:** (1) verify-maintenance-qbo-chrome-leaves: extracted `ArrivingSoonRecentConversions` component; guard ceiling restored 6000→4500. (2) DriverPaymentMethodsCard: raw `<table>` → `ParityTable` with storageKey/tableTestId. (3) Added `isError ? <ListErrorState> : <ParityTable>` ternary.
+- **GATE:** all 3 guards + selftests PASS · tsc-b exit 0 · vite build exit 0
+
+### Batch 5 — PR [#27785](https://github.com/tioperfume07/IH35-TMS/pull/27785) · squash `8f4a24af`
+- **FINDING:** LST-F24 — planner 34px height + d1 stop-attribution re-anchors
+- **FIX:** (1) UnifiedTimelinePlanner.tsx Book button `h-7` → `h-[34px]`. (2) verify-d1-load-stop-source-attribution: re-anchored PWA arrival source to COALESCE form + 4-element array.
+- **GATE:** both guards + selftests PASS · tsc-b exit 0 · vite build exit 0
+
+### Batch 6 — PR [#27788](https://github.com/tioperfumes07/IH35-TMS/pull/27788) · squash `b1bb095b`
+- **FINDING:** LST-F25 — picker scope guard re-anchor for dual board_scope enum forms
+- **FIX:** verify-load-report-and-picker-scope RULE 3 accepts both `z.enum(["live","history","picker"])` and `.or(z.literal("picker"))` forms.
+- **GATE:** both guards PASS · selftests 12/12 · tsc-b exit 0 · vite build exit 0
+- **REMAINING:** Live=UNVERIFIED — all 38 CC-3 FINAL-4 static guards now GREEN on main
