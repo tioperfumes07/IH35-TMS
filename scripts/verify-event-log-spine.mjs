@@ -22,6 +22,8 @@
  *
  * Read-only. Needs DATABASE_URL (CI's migrated test database, or prod via the read-only guard reader). No DB = FAIL.
  *   --selftest  plants each static regression and asserts the guard catches it (no DB needed).
+ *   --live      also runs the catalog half (required DATABASE_URL; no DB = FAIL). Without --live only the static half runs —
+ *               listed in scripts/lib/e7-batch2-live-guards.json live_flag_guards, so money-pr-local-gate.mjs runs --live.
  */
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -129,6 +131,15 @@ if (process.argv.includes("--selftest")) {
 }
 
 const errors = staticFindings(loadStatic());
+if (!process.argv.includes("--live")) {
+  if (errors.length) {
+    console.error("[verify-event-log-spine] FAIL:");
+    for (const err of errors) console.error(`  - ${err}`);
+    process.exit(1);
+  }
+  console.log("[verify-event-log-spine] OK (static) — spine migrations: hash chain, append-only trigger, UPDATE/DELETE revoked, no financial writes; no direct event_log inserts. Catalog half: run with --live.");
+  process.exit(0);
+}
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.error("[verify-event-log-spine] FAIL: DATABASE_URL not set — the live half cannot run (a guard that cannot connect fails, never passes)");

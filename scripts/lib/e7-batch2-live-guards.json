@@ -81,7 +81,8 @@
     "verify-vendor-customer-merge.mjs",
     "verify-vendor-statements-activity-tabs.mjs",
     "verify-wave-h1-catalog-coa-completeness.mjs",
-    "verify-yard-location-and-fence.mjs"
+    "verify-yard-location-and-fence.mjs",
+    "verify-no-negative-open-balance.mjs"
   ],
   "live_flag_guards": [
     "verify-bill-display-id-stamped.mjs",
@@ -100,7 +101,10 @@
     "verify-samsara-driver-mirror-complete.mjs",
     "verify-seed-script-usmca-cutover-floor.mjs",
     "verify-settlement-gl-bills-link-their-entries.mjs",
-    "verify-stops-geocoded.mjs"
+    "verify-stops-geocoded.mjs",
+    "verify-event-log-spine.mjs",
+    "verify-legal-contracts-filed-as-pdf.mjs",
+    "verify-no-orphan-of-purged-documents.mjs"
   ],
   "converted_red_not_wired": {
     "_comment": "E7 batch 2b (2026-09-23): converted to fail closed, red live today for their own pre-existing reason (same exit code before and after the edit). Not run by the gate until green; move to guards once green. Round 86: no seat works transaction rows to turn these green.",
