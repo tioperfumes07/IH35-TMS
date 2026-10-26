@@ -67,6 +67,7 @@ const LIVE_FLAG_FILES = new Map([
   ["verify-event-log-spine.mjs", "--live"],
   ["verify-legal-contracts-filed-as-pdf.mjs", "--live"],
   ["verify-no-orphan-of-purged-documents.mjs", "--live"],
+  ["verify-no-hos-query-ignores-merged-shells.mjs", "--live"],
 ]);
 
 // Not a lightweight money/data guard despite the verify- prefix and a DATABASE_URL mention — it

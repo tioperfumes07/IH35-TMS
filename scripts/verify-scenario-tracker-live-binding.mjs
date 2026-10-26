@@ -25,10 +25,20 @@
  * METHOD: static. Comments are stripped before structural assertions so this header cannot satisfy or
  * trip anything. --selftest mutates the REAL sources and requires every assertion to fail.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 const LABEL = "verify-scenario-tracker-live-binding";
 const BACKEND = "apps/backend/src/home/scenario-registry.ts";
+// LEAD 443.206R (owner law 09-28, ONE LOAD SERVICE): scenario probes read load membership through views.live_loads.
+// The terminal-state exclusion lives in THE latest migration defining that view — read there, never trusted by name.
+const LIVE_VIEW = "<views.live_loads latest migration>";
+function latestLiveViewSql() {
+  try {
+    const f = readdirSync("db/migrations").filter((x) => x.endsWith(".sql")).sort()
+      .filter((x) => /CREATE OR REPLACE VIEW views\.live_loads\b/.test(readFileSync(`db/migrations/${x}`, "utf8"))).pop();
+    return f ? readFileSync(`db/migrations/${f}`, "utf8") : "";
+  } catch { return ""; }
+}
 const FE = "apps/frontend/src/pages/program/scenario-tracker/registry.ts";
 const CERTIFIER = "scripts/scenario-certify.mjs";
 const SCOREBOARD = "scripts/scoreboard-from-live.mjs";
@@ -229,10 +239,13 @@ const CHAIN_REQUIRED = [
       "u.is_dispatch_blocked IS NOT TRUE",
       "h.load_id = l.id",
       "h.operating_company_id = l.operating_company_id",
-      "h.new_driver_id = l.assigned_primary_driver_id",
+      "LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id AND hd.operating_company_id = h.operating_company_id",
+      "COALESCE(hd.merged_into_driver_id, h.new_driver_id) = l.assigned_primary_driver_id",
       "h.new_unit_id = l.assigned_unit_id",
       "dispatch.load_assignment_history later",
-      "later.new_driver_id IS DISTINCT FROM h.new_driver_id OR later.new_unit_id IS DISTINCT FROM h.new_unit_id",
+      "LEFT JOIN mdata.drivers ld ON ld.id = later.new_driver_id AND ld.operating_company_id = later.operating_company_id",
+      "COALESCE(ld.merged_into_driver_id, later.new_driver_id) IS DISTINCT FROM COALESCE(hd.merged_into_driver_id, h.new_driver_id)",
+      "OR later.new_unit_id IS DISTINCT FROM h.new_unit_id",
       "(later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)",
     ],
   },
@@ -244,7 +257,7 @@ const CHAIN_REQUIRED = [
       "l.id = h.load_id",
       "l.operating_company_id = h.operating_company_id",
       "l.soft_deleted_at IS NULL",
-      "l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')",
+      "${loadServiceMembershipSql(\"l\", \"live\")}",
       "mdata.equipment",
       "old_trailer.id = h.previous_trailer_id",
       "old_trailer.owner_company_id = h.operating_company_id",
@@ -516,6 +529,12 @@ function check(sources) {
   const backendRaw = sources[BACKEND];
   const feRaw = sources[FE];
   const backend = stripComments(backendRaw ?? "");
+  // The live set the probes mount must still exclude every terminal load state (443.206R moved the trailer-swap probe
+  // off its private NOT IN list onto this view).
+  const viewExcl = (sources[LIVE_VIEW] ?? "").match(/FROM mdata\.loads l\s+WHERE[\s\S]*?status::text <> ALL \(ARRAY\[([^\]]*)\]\)/)?.[1] ?? "";
+  for (const st of ["draft", "invoiced", "paid", "closed", "cancelled"]) {
+    if (!new RegExp(`'${st}'::text`).test(viewExcl)) errors.push(`views.live_loads (latest migration) no longer excludes '${st}' — every live-set scenario probe would count it`);
+  }
 
   // 1 + 2 — every FE key is bound in the backend registry.
   const beKeys = keysIn(backend);
@@ -655,6 +674,7 @@ function loadAll() {
       out[f] = "";
     }
   }
+  out[LIVE_VIEW] = latestLiveViewSql();
   return out;
 }
 
@@ -676,7 +696,7 @@ function selftest() {
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
     ["assignment probe accepts a bill for another driver", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.driver_id = l.assigned_primary_driver_id", "") })],
     ["assignment probe loses current unit history", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND h.new_unit_id = l.assigned_unit_id", "") })],
-    ["assignment probe ignores a later reassignment", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND (later.new_driver_id IS DISTINCT FROM h.new_driver_id OR later.new_unit_id IS DISTINCT FROM h.new_unit_id)", "") })],
+    ["assignment probe ignores a later reassignment", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("OR later.new_unit_id IS DISTINCT FROM h.new_unit_id", "") })],
     ["dispatch probe accepts status without its spine event", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.event_type = 'load.status_changed'", "") })],
     ["dispatch probe accepts a non-transit transition", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.payload->>'to_status' = 'in_transit'", "") })],
     ["dispatch probe loses same-company event scope", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.operating_company_id = l.operating_company_id", "") })],
@@ -689,7 +709,10 @@ function selftest() {
     ["roadside AP probe loses issue-to-WO backlink", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.promoted_to_wo_id = w.id", "") })],
     ["roadside AP probe loses its reverse bill source", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND tsl.linked_object_id = b.id::text", "") })],
     ["roadside AP probe loses bill-to-unit identity", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.unit_id = i.unit_id", "") })],
-    ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')", "") })],
+    ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace('AND ${loadServiceMembershipSql("l", "live")}', "") })],
+    ["live set admits closed loads", (s) => ({ ...s, [LIVE_VIEW]: s[LIVE_VIEW].replace(/(status::text <> ALL \(ARRAY\[[^\]]*)'closed'::text, /, "$1") })],
+    ["assignment probe drops the merge survivor", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("COALESCE(hd.merged_into_driver_id, h.new_driver_id) = l.assigned_primary_driver_id", "h.new_unit_id = l.assigned_unit_id") })],
+    ["assignment probe joins another entity's driver", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("ON hd.id = h.new_driver_id AND hd.operating_company_id = h.operating_company_id", "ON hd.id = h.new_driver_id") })],
     ["trailer swap ignores a later replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.new_trailer_id <> h.new_trailer_id", "") })],
     ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
     ["breakdown relay accepts a blocked replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND live_unit.is_dispatch_blocked IS NOT TRUE", "") })],

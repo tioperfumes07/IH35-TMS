@@ -85,6 +85,7 @@
     "verify-no-negative-open-balance.mjs"
   ],
   "live_flag_guards": [
+    "verify-no-hos-query-ignores-merged-shells.mjs",
     "verify-bill-display-id-stamped.mjs",
     "verify-acct-link-03-bill-unit-density.mjs",
     "verify-double-entry-balance-trigger.mjs",
