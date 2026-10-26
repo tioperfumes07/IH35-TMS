@@ -27,21 +27,50 @@ const SURFACES = [
   ["FixedAssetsPage", "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", "fixed-assets-list-board"],
 ];
 
-const fails = [];
-for (const [id, rel, testId] of SURFACES) {
-  const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
-  if (!src.includes('from "../../components/v3/BoardSection"') && !src.includes('from "../../../components/v3/BoardSection"')) {
-    fails.push(`${id}: must import BoardSection from components/v3/BoardSection`);
+export function check(readSrc = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8")) {
+  const fails = [];
+  for (const [id, rel, testId] of SURFACES) {
+    const src = readSrc(rel);
+    if (!src.includes('from "../../components/v3/BoardSection"') && !src.includes('from "../../../components/v3/BoardSection"')) {
+      fails.push(`${id}: must import BoardSection from components/v3/BoardSection`);
+    }
+    const re = new RegExp(`<BoardSection[\\s\\S]{0,220}testId=["']${testId}["']`);
+    if (!re.test(src)) {
+      fails.push(`${id}: must wrap register in <BoardSection … testId="${testId}">`);
+    }
+    if (!src.includes("kpiStrip") || !src.includes("moneyListKpiCard")) {
+      fails.push(`${id}: must keep AccountingSubNavWrapper kpiStrip + moneyListKpiCard (Bills grammar)`);
+    }
   }
-  const re = new RegExp(`<BoardSection[\\s\\S]{0,220}testId=["']${testId}["']`);
-  if (!re.test(src)) {
-    fails.push(`${id}: must wrap register in <BoardSection … testId="${testId}">`);
-  }
-  if (!src.includes("kpiStrip") || !src.includes("moneyListKpiCard")) {
-    fails.push(`${id}: must keep AccountingSubNavWrapper kpiStrip + moneyListKpiCard (Bills grammar)`);
-  }
+  return fails;
 }
 
+if (process.argv.includes("--selftest")) {
+  // Plants in memory on each real surface: the register testId dropped, the BoardSection import dropped, the
+  // kpiStrip dropped. Each must fail that surface; the clean tree must pass.
+  const real = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+  const problems = [];
+  if (check().length) problems.push(`clean tree red: ${check().join("; ")}`);
+  for (const [id, rel, testId] of SURFACES) {
+    const plants = [
+      ["register testId", (s) => s.split(testId).join(`${testId}-gone`)],
+      ["BoardSection import", (s) => s.replace(/from "(\.\.\/)+components\/v3\/BoardSection"/g, 'from "./elsewhere"')],
+      ["kpiStrip", (s) => s.split("kpiStrip").join("noStrip")],
+    ];
+    for (const [name, mutate] of plants) {
+      const out = check((r) => (r === rel ? mutate(real(r)) : real(r)));
+      if (!out.some((f) => f.startsWith(`${id}:`))) problems.push(`${id}: planted "${name}" escaped`);
+    }
+  }
+  if (problems.length) {
+    console.error(`${LABEL} SELFTEST FAIL\n  - ${problems.join("\n  - ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — clean tree passes; ${SURFACES.length * 3} planted defects caught`);
+  process.exit(0);
+}
+
+const fails = check();
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
   process.exit(1);

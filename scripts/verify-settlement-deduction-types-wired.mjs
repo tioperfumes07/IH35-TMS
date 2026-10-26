@@ -59,18 +59,24 @@ const CHECKS = [
 
 const args = process.argv.slice(2);
 
-if (args.includes("--selftest")) {
-  const results = CHECKS.map((c) => {
+if (process.argv.includes("--selftest")) {
+  // REAL selftest: the clean tree must pass, and for EACH check a copy of its source with the matched code removed
+  // (in memory — the tracked file is never written) must make that check fail. The old arm only re-ran the check
+  // on the real file, so it could never fail.
+  const problems = [];
+  CHECKS.forEach((c, i) => {
     const src = read(c.file);
-    return c.pattern.test(src);
+    if (!c.pattern.test(src)) problems.push(`clean tree: check ${i + 1} (${c.name}) does not match`);
+    const g = new RegExp(c.pattern.source, c.pattern.flags.includes("g") ? c.pattern.flags : c.pattern.flags + "g");
+    const planted = src.replace(g, "/* planted: removed */");
+    if (planted === src) problems.push(`plant ${i + 1} changed nothing`);
+    else if (c.pattern.test(planted)) problems.push(`plant ${i + 1} (${c.name}) escaped`);
   });
-  const pass = results.every(Boolean);
-  const failed = results.map((ok, i) => ok ? null : i + 1).filter(Boolean);
-  if (!pass) {
-    console.error(`${LABEL} selftest FAIL — checks ${failed.join(",")} did not match`);
+  if (problems.length) {
+    console.error(`${LABEL} selftest FAIL:\n  - ${problems.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] selftest PASS — all ${CHECKS.length} checks match`);
+  console.log(`[${LABEL}] selftest PASS — clean tree passes; ${CHECKS.length}/${CHECKS.length} planted removals caught`);
   process.exit(0);
 }
 
