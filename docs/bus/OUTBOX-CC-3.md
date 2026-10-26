@@ -39,3 +39,22 @@ Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17
 - **FIX:** verify-load-report-and-picker-scope RULE 3 accepts both `z.enum(["live","history","picker"])` and `.or(z.literal("picker"))` forms.
 - **GATE:** both guards PASS · selftests 12/12 · tsc-b exit 0 · vite build exit 0
 - **REMAINING:** Live=UNVERIFIED — all 38 CC-3 FINAL-4 static guards now GREEN on main
+
+## 2026-10-25 — FINAL-2 input heights + driver name (D031/D032/D034/D037/D040/D041/D048/D050/D056/D063/D078) DONE
+
+### PR [#27819](https://github.com/tioperfumes07/IH35-TMS/pull/27819) · squash `6461abdd`
+- **FINDING:** FINAL-2 input heights h-7/h-8/h-9→h-10 + scheduler driver name proper-case
+- **FIX:** 11 files — h-10 on: CreateWorkOrderModal (D034), CreateTrailerModal (D040), HosViolationCreateModal (D037), SubscriptionEditor (D063), MoneyInput (D050), CustomerProfileForm (D048), DocsHomePage (D056), RoadServiceTicketModal (D078), PolicyCreateWizard (D041), CreateMaintPartModal (D050 inventory); SafetyDriverSchedulerGrid (D031) driverName → formatPersonName
+- **GATE:** tsc -b exit 0 · vite build exit 0
+
+### PR [#27831](https://github.com/tioperfumes07/IH35-TMS/pull/27831) · squash `e9a0fbd2`
+- **FINDING:** FINAL-2 D032 Assign Temp Cover pickers size=sm (h-10 form height)
+- **FIX:** DriverSchedulerGridPage.tsx — 3 pickers (unit EntityPicker + 2 DriverPickerWithCreate) → size="sm"
+- **GATE:** tsc -b exit 0 · vite build exit 0
+
+## 2026-10-25 — FINAL-2 row 41 Trial balance DONE
+
+- **SHA:** `d2f372c3bd` (bare commit on main — pushed directly, no PR branch)
+- **FINDING:** FINAL-2 row 41 — Trial balance viewer board-faithful (443.280)
+- **FIX:** TrialBalancePage — cell() for plain 2-dp table cells; arSubledgerQuery; measuredArNote→live ReactNode; footerCells removed; onTotalsDrill prop; space-y-3. TrialBalanceBoard — ReactNode measuredArNote; onTotalsDrill → onClick on debit/credit KPI tiles
+- **GATE:** tsc -b exit 0 · vite build exit 0
