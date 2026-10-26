@@ -1,10 +1,10 @@
 {
-  "healthzSha": "00443df",
-  "generated_at": "2026-10-25T22:27:21.658Z",
+  "healthzSha": "c26916d",
+  "generated_at": "2026-10-26T01:07:58.998Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "00443df",
+    "deployedSha": "c26916d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Claude-1- FINDING: ACCT-F443278-ROW75 — Settlement costs double-count driver pay (fix + guard 18837)",
+      "number": 27749,
+      "title": "fix(scope): entity-scope 19 unscoped load/unit/equipment/driver reads in dispatch, realtime, telematics, safety",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:25 PM CT",
-      "url": "",
-      "sha": "70004b0550",
-      "committedAtIso": "2026-10-25T17:25:54-05:00"
+      "mergedAtCt": "10/25/2026, 08:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27749",
+      "sha": "978249b430",
+      "committedAtIso": "2026-10-25T20:07:13-05:00"
     },
     {
-      "number": 27686,
-      "title": "FINDING: DISP-F443257-D#28 D021 Dispatch › Home › Round-trip exposure still shows driver_short_name (J. Smith / initials) instead of full proper-case names",
+      "number": 27748,
+      "title": "fix(scope): entity-scope 22 unscoped JOIN/FROM sites in accounting, banking, fuel (verify-join-entity-scoped)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27686",
-      "sha": "00443dff3a",
-      "committedAtIso": "2026-10-25T17:22:21-05:00"
+      "mergedAtCt": "10/25/2026, 08:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27748",
+      "sha": "5a3a3c42a4",
+      "committedAtIso": "2026-10-25T20:07:01-05:00"
     },
     {
-      "number": 27685,
-      "title": "FINDING: LST-F443365-C2 every creator outside the catalogs — 110 hand-typed field labels in 36 files (owner 10-25 4:05 PM)",
+      "number": 27743,
+      "title": "FINDING: SETTLEMENTS-FILL-FINALIZE — FinalizeBlock → BoardSection LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27685",
-      "sha": "2ae6bb827c",
-      "committedAtIso": "2026-10-25T17:18:57-05:00"
+      "mergedAtCt": "10/25/2026, 08:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27743",
+      "sha": "4671315006",
+      "committedAtIso": "2026-10-26T01:02:29Z"
     },
     {
-      "number": 27684,
-      "title": "FINDING: HOME-F443257-D#27 D002 Home › Overview money tiles still omit cents — QboStyleHomePage fmt$ used maximumFractionDigits: 0",
+      "number": 27747,
+      "title": "fix(guard): disp-wire-10 accepts canonical stampDriverBillVoidedInClientTx void path (verified against helper source)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27684",
-      "sha": "6a3c99f259",
-      "committedAtIso": "2026-10-25T22:18:36Z"
+      "mergedAtCt": "10/25/2026, 08:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27747",
+      "sha": "aa46c0bc94",
+      "committedAtIso": "2026-10-25T20:01:59-05:00"
     },
     {
-      "number": 0,
-      "title": "Claude-1- chore: claim verify-step 18837 ROW-75",
+      "number": 27746,
+      "title": "FINDING: HOS-F81 LANE: NON-FINANCIAL — Row 81 443.260: HOS duty-event queries now follow merged_into_driver_id chain (step 18811)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:17 PM CT",
-      "url": "",
-      "sha": "ca43e3c81c",
-      "committedAtIso": "2026-10-25T17:17:06-05:00"
+      "mergedAtCt": "10/25/2026, 08:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27746",
+      "sha": "c26916d6c5",
+      "committedAtIso": "2026-10-25T20:00:33-05:00"
     },
     {
-      "number": 27682,
-      "title": "FINDING: PROC-F443280-A#26 Tip CI red — Combobox size=sm guard still requires h-9 after form fields moved to h-10; expense-category-map tenant guard still requires removed hasCompanyAccess",
+      "number": 27745,
+      "title": "FINDING: LST-F443371 trailer-type data script applied without the owner-authorization check (Lead process miss) — AUTH-470 recorded, AUTH-471 opened, AUTH-469 result corrected",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27682",
-      "sha": "1f9ae0f25c",
-      "committedAtIso": "2026-10-25T22:13:39Z"
+      "mergedAtCt": "10/25/2026, 07:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27745",
+      "sha": "6384a5d9fd",
+      "committedAtIso": "2026-10-25T19:59:03-05:00"
     },
     {
-      "number": 27681,
-      "title": "FINDING: SETL-F443280-A#25 Settlements › Feed Gate + Liabilities still half-done — ParityTable without BoardSection; Liabilities PageHeader layered under SettlementsModuleShell",
+      "number": 27742,
+      "title": "FINDING: N/A LANE: DOCS — OUTBOX tip: fill-not-shell BoardSection batch MERGED",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27681",
-      "sha": "142a238980",
-      "committedAtIso": "2026-10-25T22:08:57Z"
+      "mergedAtCt": "10/25/2026, 07:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27742",
+      "sha": "4278842115",
+      "committedAtIso": "2026-10-25T19:57:27-05:00"
     },
     {
-      "number": 27680,
-      "title": "FINDING: ACCT-F443257 — Claude-3- 443.266-A/443.280/443.257-D: customer proper-case + board fix + raw driver names",
+      "number": 27744,
+      "title": "FINDING: N/A LANE: DOCS — LEAD FINAL-4: main has 149 red static guards (+22 unwired) hidden by --no-verify fast merges; split by lane + Cursor inbox",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27680",
-      "sha": "69a65a117d",
-      "committedAtIso": "2026-10-25T17:05:28-05:00"
+      "mergedAtCt": "10/25/2026, 07:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27744",
+      "sha": "92f6975402",
+      "committedAtIso": "2026-10-25T19:56:45-05:00"
     },
     {
-      "number": 27679,
-      "title": "FINDING: LST-F443365-BC catalog creators — code fields full width, 136 hand-typed field labels in 3 styles (owner 10-25 4:05 PM)",
+      "number": 27740,
+      "title": "FINDING: SETTLEMENTS-FILL-DETAIL-EMPTY — SettlementDetail empty → BoardSection LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27679",
-      "sha": "d1db460c8d",
-      "committedAtIso": "2026-10-25T17:03:21-05:00"
+      "mergedAtCt": "10/25/2026, 07:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27740",
+      "sha": "cad0822521",
+      "committedAtIso": "2026-10-26T00:53:54Z"
     },
     {
-      "number": 27678,
-      "title": "FINDING: SETL-F443280-A#24 Settlements remaining sub-tabs still half-done — ParityTable without shared BoardSection + legacy NavyPageSubNav/PageHeader/DataPanel chrome",
+      "number": 27741,
+      "title": "Claude-3- FINDING: ACCT-F443810 ENG-28 posting single door — fold reversal into insertPostingLineWithSpine",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 05:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27678",
-      "sha": "c9e0a137f7",
-      "committedAtIso": "2026-10-25T22:02:03Z"
+      "mergedAtCt": "10/25/2026, 07:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27741",
+      "sha": "517a3e7647",
+      "committedAtIso": "2026-10-25T19:53:00-05:00"
     }
   ]
 }
