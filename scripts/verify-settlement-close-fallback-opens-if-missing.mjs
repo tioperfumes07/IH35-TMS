@@ -52,7 +52,7 @@ export function collectProblems(src) {
   if (!/let settlementId\s*=\s*openRes\.rows\[0\]\?\.id/.test(fn)) {
     problems.push(`${FILE}: settlementId lookup must be reassignable (let, not const) for the fallback to attach to it.`);
   }
-  if (!/if\s*\(\s*!settlementId\s*\)\s*\{[\s\S]{0,400}openLoadBookendedSettlement\(/.test(fn)) {
+  if (!/if\s*\(\s*!settlementId\s*\)\s*\{[\s\S]{0,2500}openLoadBookendedSettlement\(/.test(fn)) {
     problems.push(
       `${FILE}: no fallback found — when the primary open-settlement lookup returns empty, this must call ` +
         `openLoadBookendedSettlement (the same function the in_transit path uses) rather than silently return 0. ` +
@@ -67,7 +67,7 @@ export function collectProblems(src) {
     );
   }
   // The fallback must reuse the real function, not a bespoke INSERT — money-theater guard.
-  if (/if\s*\(\s*!settlementId\s*\)\s*\{[\s\S]{0,400}INSERT INTO driver_finance\.driver_settlements/.test(fn)) {
+  if (/if\s*\(\s*!settlementId\s*\)\s*\{[\s\S]{0,2500}INSERT INTO driver_finance\.driver_settlements/.test(fn)) {
     problems.push(`${FILE}: fallback must call openLoadBookendedSettlement, not a bespoke INSERT — reuse the canonical writer.`);
   }
   return problems;

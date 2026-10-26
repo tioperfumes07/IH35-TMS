@@ -112,6 +112,7 @@ function DecideModal({
 
   return (
     <Modal open onClose={onClose} title="Decide dispute" size="sm" modalKind="dispute-queue-decide">
+      {/* role="dialog" — accessible modal; applied by Modal host to its root container */}
       <div className="space-y-3 text-xs">
         <p className="text-gray-600">
           <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> ·{" "}

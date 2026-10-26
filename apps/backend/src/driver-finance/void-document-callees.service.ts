@@ -129,6 +129,9 @@ export async function reverseSettlementForVoid(
 
   // R-102-B (2026-09-23) — mirror both void-marker sets (same fix as governance/void-cancel-
   // executors.ts's identical path); see that file's comment for the live-measured root cause.
+  // stampSettlementVoidedInClientTx runs the canonical 7-column dead-state writer — equivalent to:
+  //   SET status = 'cancelled', reversed_at = now(), reversed_by_user_id = actor.userId,
+  //       reversal_reason = reason, voided_at = COALESCE(...), ... (settlement-void-state.service.ts)
   const flipped = await stampSettlementVoidedInClientTx(client, {
     settlementId, operatingCompanyId, userId: actor.userId, reason,
   });
