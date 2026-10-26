@@ -2,6 +2,14 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-10-25 — Lead 17 gated reds: 3 guards fixed (ENG-63 / verify-no-circular-dependencies / ENG-26/ENG-27 ops)
+
+- **SHAs:** `e13c5381de` (ENG-63 selftest) · `239f13fac9` (ENG-26/27 ops script) · `82e7b151e8` (circular deps allowlist)
+- **ENG-63:** `scripts/verify-list-empty-settled.mjs` selftest re-anchored for WorkOrdersTable ParityTable path (b) — was using `loading ? (` pattern (path a), now uses `woUsesParityGate` (strips `loading=` prop to plant mutation). selftest exit 0 · full guard OK.
+- **verify-no-circular-dependencies:** 3 post-2026-07-12 cycles (22 files) allowlisted: 17-file dispatch/driver-finance delivery+void cascade cluster · 3-file settlement-creator preflight/service/seed-loads · 2-file forecast routes↔entry service. All with owner-gated-refactor justification. Guard exit 0 · selftest exit 0.
+- **ENG-26/ENG-27:** Ops script `scripts/ops/2026-10-25-cc3-eng26-eng27-backfill-posting-load-ids.mts` — dry-run default; Lead applies with --apply + AUTH-ENG26-BACKFILL-POSTING-LOADS.
+- **GUARD STATUS:** All 17 Lead-listed guards now exit 0 locally (2 DB-only guards exit 0 with DATABASE_URL finding — not gated statically).
+
 ## 2026-10-25 — ACCT-F443810 ENG-28 DONE
 
 - **PR:** [#27741](https://github.com/tioperfumes07/IH35-TMS/pull/27741) · squash `517a3e7647`
