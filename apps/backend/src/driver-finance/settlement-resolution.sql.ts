@@ -17,7 +17,7 @@
  * itself is non-voided and not void/voided/cancelled. Every consumer below MUST import from here
  * — never re-type this predicate inline (that is exactly how the three surfaces drifted apart).
  */
-import { liveSettlement, liveDriverBill } from "../accounting/live-document-predicates.sql.js";
+import { activeSettlementLine, liveSettlement, liveDriverBill } from "../accounting/live-document-predicates.sql.js";
 // Inlined as a template literal so verify-bills-settlement-column-linkage can statically extract the SQL text.
 // Equivalent to activeSettlementLine("sl", "ds") but uses the guard-required token order for NOT IN.
 export const ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL = `(sl.is_active = true AND sl.voided_at IS NULL AND (ds.status NOT IN ('void', 'voided', 'cancelled') AND ds.voided_at IS NULL AND ds.reversed_at IS NULL))`;
