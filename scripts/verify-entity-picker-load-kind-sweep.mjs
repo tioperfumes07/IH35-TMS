@@ -109,6 +109,11 @@ export function collectProblems(root = ROOT) {
     }
   }
 
+  // A load FILTER (many loads) is the canonical EntityMultiSelect kind="load" (entity-filters multi-select law); it is
+  // the same server-search roster as EntityPicker ONLY while EntityMultiSelect reads the entity-picker registry — checked
+  // against its own source, never trusted by name. A single-value load FIELD stays EntityPicker kind=load.
+  const multi = readRel(root, "apps/frontend/src/components/EntityMultiSelect.tsx") ?? "";
+  const multiIsRegistry = /getEntityPickerConfig\(kind\)/.test(multi) && /config\.list\(operatingCompanyId/.test(multi) && /from "\.\/parity\/entityPickerRegistry"/.test(multi);
   for (const rel of SURFACES) {
     const src = readRel(root, rel);
     if (!src) {
@@ -116,8 +121,10 @@ export function collectProblems(root = ROOT) {
       continue;
     }
     const code = stripComments(src);
-    if (!/EntityPicker[\s\S]*?kind=["']load["']/.test(code)) {
-      problems.push(`${rel}: load field must use EntityPicker kind=load`);
+    const pickerLoad = /<EntityPicker\b[^>]{0,400}?kind=["']load["']/.test(code);
+    const filterLoad = multiIsRegistry && /<EntityMultiSelect\b[^>]{0,400}?kind=["']load["']/.test(code);
+    if (!pickerLoad && !filterLoad) {
+      problems.push(`${rel}: load field must use EntityPicker kind=load (or, for a load filter, EntityMultiSelect kind="load" over the entity-picker registry)`);
     }
     if (/LoadAutocomplete/.test(src)) {
       problems.push(`${rel}: must not import LoadAutocomplete`);
@@ -232,6 +239,16 @@ listLoads({ limit: 200 })
       path.join(tmpStubRoot, "apps/frontend/src/components/driver-profile/LoadsSection.tsx"),
       `listDispatchLoads({ operating_company_id: operatingCompanyId, driver: driverId })\n<EntityLink kind="load" id={row.id} />`
     );
+    // A load filter on a multi-select that does NOT read the registry is not the canonical roster.
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/components/EntityMultiSelect.tsx"), "export function EntityMultiSelect() { return listLoads({}); }");
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/pages/factoring/FactoringHome.tsx"), `<EntityMultiSelect kind="load" operatingCompanyId={x} value={[]} onChange={() => {}} />`);
+    const plantedMulti = collectProblems(tmpStubRoot);
+    if (!plantedMulti.some((p) => p.includes("FactoringHome.tsx: load field must use EntityPicker"))) {
+      console.error(`${LABEL} SELFTEST FAIL: EntityMultiSelect without the registry was accepted as a load picker`, plantedMulti);
+      process.exit(1);
+    }
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/pages/factoring/FactoringHome.tsx"), `listLoads({ limit: 200 })\n<Combobox options={[]} />`);
     const planted = collectProblems(tmpStubRoot);
     if (
       planted.length < 5 ||

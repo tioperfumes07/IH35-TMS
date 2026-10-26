@@ -150,10 +150,12 @@ const CHECKS = [
     pattern: /<Modal open=\{open\} onClose=\{onClose\} title="In-Transit Issue Triage">[\s\S]{0,1500}Convert to Damage Report/,
   },
   {
-    name: "driver_reports.queue: DriverReportsQueuePage real ParityTable + real visible EntityPicker filter",
+    name: "driver_reports.queue: DriverReportsQueuePage real ParityTable + real visible entity filter (EntityMultiSelect)",
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
-    // RE-PIN 2026-10-25: EntityPicker is inside the filterBar prop on <ParityTable>; distance ~1200 chars.
-    pattern: /<ParityTable[\s\S]{0,1400}<EntityPicker/,
+    // The queue's driver/load controls are FILTERS — the entity-filters multi-select law makes them EntityMultiSelect
+    // (same entity-picker registry roster). #27777 swapped them to single-value EntityPicker to satisfy this pin, which
+    // broke verify-entity-filters-multi-select + both driver-report reverse guards; the pin now names the filter law.
+    pattern: /<ParityTable[\s\S]{0,1400}<EntityMultiSelect\b[\s\S]{0,300}?kind="driver"/,
   },
   {
     name: "severe_repairs.convert_to_wo: SevereRepairOosTab real EntityLink WO drill-through inside a real ParityTable",
