@@ -4,13 +4,11 @@
     "database": "ci / build-typecheck",
     "dependencies": "ci / build-typecheck",
     "pass8-artifact": "pass-8-smoke-verify / pass-8",
-    "backend-dist": "ci / build-typecheck",
-    "pull-request-metadata": "hold-merge-gate / hold-merge-gate"
+    "backend-dist": "ci / build-typecheck"
   },
   "server_required_ci_contexts": [
     "ci / build-typecheck",
-    "pass-8-smoke-verify / pass-8",
-    "hold-merge-gate / hold-merge-gate"
+    "pass-8-smoke-verify / pass-8"
   ],
   "non_protection_ci_contexts": [
     "pass-8-smoke-verify / pass-8"
@@ -23,18 +21,11 @@
     "pass-8-smoke-verify / pass-8": {
       "workflow": ".github/workflows/pass-8-smoke-verify.yml",
       "job": "pass-8"
-    },
-    "hold-merge-gate / hold-merge-gate": {
-      "workflow": ".github/workflows/hold-merge-gate.yml",
-      "job": "hold-merge-gate"
     }
   },
   "server_required_guard_capabilities": {
     "verify:pass-8-clean-baseline": [
       "pass8-artifact"
-    ],
-    "verify:hold-merge-gate": [
-      "pull-request-metadata"
     ],
     "verify:no-boot-throwing-env-checks": [
       "backend-dist"
@@ -43,13 +34,7 @@
       "backend-dist"
     ]
   },
-  "server_required_live_status_checks": {
-    "pull-request-metadata": {
-      "context": "hold-merge-gate / hold-merge-gate",
-      "check_context": "hold-merge-gate",
-      "integration_id": 15368
-    }
-  },
+  "server_required_live_status_checks": {},
   "db_gated_verify_scripts": [
     "verify:a17-deprecation-comments",
     "verify:aggregate-schema-grants",
@@ -92,5 +77,6 @@
   "block_ready_c5_skip_orchestrators": [
     "verify:local-ci",
     "verify:static"
-  ]
+  ],
+  "_owner_ruling_no_hold": "Owner 2026-10-25 9:37 PM CT: \"there is no hold\" (law §2: no JORGE-APPROVED label, no HOLD gate, never re-introduce). GitHub ruleset 17935054 is disabled by the owner (fast-merge law). hold-merge-gate is not a server-required check; verify:hold-merge-gate runs locally (its held-migration firewall check stays)."
 }

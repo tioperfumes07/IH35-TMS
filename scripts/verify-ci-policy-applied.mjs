@@ -19,7 +19,8 @@ export const REQUIRED_GATE_CONTEXTS = [
   "required-checks / required-checks-gate",
   "ci / build-typecheck",
   STRICT_FRESHNESS_CONTEXT,
-  "hold-merge-gate / hold-merge-gate",
+  // Owner 2026-10-25 9:37 PM CT: 'there is no hold' (law §2: no JORGE-APPROVED label, no HOLD gate, never re-introduce). GitHub ruleset 17935054 is disabled by the owner (fast-merge law).
+  // hold-merge-gate is therefore NOT a required gate; re-adding it is drift (see FORBIDDEN_GATE_CONTEXTS).
   "locked-guards / locked-guards",
   // Owner decision 2026-07-18: security-audit is KEPT as a required merge gate
   // (security must never be advisory). Only perf-audit / pass-8 / pr-preview-smoke
@@ -38,6 +39,8 @@ export const REQUIRED_GATE_CONTEXTS = [
   "go26-consolidation-ratchet / go26-consolidation-ratchet",
 ];
 export const MANDATORY_CHECKS = REQUIRED_GATE_CONTEXTS;
+/** Owner-ruled never-required contexts (no HOLD gate, 2026-10-25). Present in the config = FAIL. */
+export const FORBIDDEN_GATE_CONTEXTS = Object.freeze(["hold-merge-gate / hold-merge-gate"]);
 export const BASELINE_ONLY_MESSAGE =
   "BASELINE PASS — LIVE UNVERIFIED, owner handoff required";
 
@@ -103,6 +106,11 @@ export function assertConfigBaseline() {
   const reviews = cfg.protection?.required_pull_request_reviews;
   if (cfg.protection?.required_status_checks?.strict !== true) {
     console.error(`[${LABEL}] FAIL — required_status_checks.strict must be true`);
+    process.exit(1);
+  }
+  const forbidden = contexts.filter((context) => FORBIDDEN_GATE_CONTEXTS.includes(context));
+  if (forbidden.length) {
+    console.error(`[${LABEL}] FAIL — owner-ruled no-HOLD gate re-introduced as a required context: ${forbidden.join(", ")}`);
     process.exit(1);
   }
   if (
