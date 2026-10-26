@@ -258,7 +258,12 @@ export async function getCurrentClocks(client: DbClient, operatingCompanyId: str
         e.duty_status
       FROM hos.duty_status_events e
       WHERE e.operating_company_id = $1::uuid
-        AND e.driver_id = $2::uuid
+        AND (e.driver_id = $2::uuid
+          OR e.driver_id IN (
+            SELECT id FROM mdata.drivers
+            WHERE operating_company_id = $1::uuid
+              AND merged_into_driver_id = $2::uuid
+          ))
       ORDER BY e.started_at ASC
     `,
     [operatingCompanyId, driverId]
@@ -279,25 +284,40 @@ export async function getCurrentClocksForDrivers(
 ): Promise<Map<string, HosClocks>> {
   const result = new Map<string, HosClocks>();
   if (driverIds.length === 0) return result;
-  const res = await client.query<HosDutyStatusEvent & { driver_id: string }>(
+  // Expand each queried driver ID to also include any shells merged into it, grouping
+  // results back under the canonical (queried) driver ID.
+  const res = await client.query<HosDutyStatusEvent & { canonical_driver_id: string }>(
     `
+      WITH canonical AS (
+        SELECT d.id AS canonical_id,
+               UNNEST(ARRAY[d.id] || COALESCE(
+                 ARRAY(SELECT id FROM mdata.drivers
+                       WHERE operating_company_id = $1::uuid
+                         AND merged_into_driver_id = d.id),
+                 ARRAY[]::uuid[]
+               )) AS shell_id
+        FROM mdata.drivers d
+        WHERE d.operating_company_id = $1::uuid
+          AND d.id = ANY($2::uuid[])
+      )
       SELECT
-        e.driver_id::text AS driver_id,
+        c.canonical_id::text AS canonical_driver_id,
         e.started_at::text,
         e.ended_at::text,
         e.duty_status
-      FROM hos.duty_status_events e
-      WHERE e.operating_company_id = $1::uuid
-        AND e.driver_id = ANY($2::uuid[])
-      ORDER BY e.driver_id, e.started_at ASC
+      FROM canonical c
+      JOIN hos.duty_status_events e
+        ON e.driver_id = c.shell_id
+        AND e.operating_company_id = $1::uuid
+      ORDER BY c.canonical_id, e.started_at ASC
     `,
     [operatingCompanyId, driverIds]
   );
   const byDriver = new Map<string, HosDutyStatusEvent[]>();
   for (const row of res.rows) {
-    const arr = byDriver.get(row.driver_id) ?? [];
+    const arr = byDriver.get(row.canonical_driver_id) ?? [];
     arr.push({ started_at: row.started_at, ended_at: row.ended_at, duty_status: row.duty_status });
-    byDriver.set(row.driver_id, arr);
+    byDriver.set(row.canonical_driver_id, arr);
   }
   for (const driverId of driverIds) {
     result.set(driverId, computeHosClocks(byDriver.get(driverId) ?? [], asOf));

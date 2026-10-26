@@ -109,7 +109,12 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
             ON u.id = e.unit_id
             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid
-            AND e.driver_id = $2::uuid
+            AND (e.driver_id = $2::uuid
+              OR e.driver_id IN (
+                SELECT id FROM mdata.drivers
+                WHERE operating_company_id = $1::uuid
+                  AND merged_into_driver_id = $2::uuid
+              ))
             AND e.started_at >= now() - interval '24 hours'
           ORDER BY e.started_at DESC
         `,
@@ -127,7 +132,12 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
           SELECT started_at::text, ended_at::text, duty_status
           FROM hos.duty_status_events
           WHERE operating_company_id = $1::uuid
-            AND driver_id = $2::uuid
+            AND (driver_id = $2::uuid
+              OR driver_id IN (
+                SELECT id FROM mdata.drivers
+                WHERE operating_company_id = $1::uuid
+                  AND merged_into_driver_id = $2::uuid
+              ))
             AND COALESCE(ended_at, now()) > now() - interval '10 days'
           ORDER BY started_at ASC
         `,
@@ -143,7 +153,12 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
           SELECT id::text, started_at::text, duty_status
           FROM hos.duty_status_events
           WHERE operating_company_id = $1::uuid
-            AND driver_id = $2::uuid
+            AND (driver_id = $2::uuid
+              OR driver_id IN (
+                SELECT id FROM mdata.drivers
+                WHERE operating_company_id = $1::uuid
+                  AND merged_into_driver_id = $2::uuid
+              ))
             AND source = 'manual_edit'
           ORDER BY started_at DESC, id DESC
         `,
