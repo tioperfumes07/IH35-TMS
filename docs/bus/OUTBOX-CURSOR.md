@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SubmissionQueue → BoardSection
+
+- **STATUS:** SHIPPING [#27769](https://github.com/tioperfumes07/IH35-TMS/pull/27769)
+- **DELTA:** SubmissionQueue need-company + filters + queue table → `BoardSection`. Submit/reserve engines unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-submission-queue-parity-surface-bar PASS · wave-c-liability
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** SubmissionQueue.tsx · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Home/Wizard/Planner empty states → BoardSection
 
-- **STATUS:** SHIPPING [#27765](https://github.com/tioperfumes07/IH35-TMS/pull/27765) (squash auto-merge armed)
+- **STATUS:** MERGED [#27765](https://github.com/tioperfumes07/IH35-TMS/pull/27765)
 - **DELTA:** FactoringHome loading/need-company → `BoardSection`; BatchWizard need-company + body → `BoardSection`; Fuel planner settings loading/unavailable → `FuelBoardSection`. Engines unchanged.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fill-shell-empty-states PASS · layout-tabs-first · fuel-planner-active-routes · wave-c-liability · settings-lifecycle
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
