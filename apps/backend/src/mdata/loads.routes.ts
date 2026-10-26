@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { LoadStatusWriteRefusedError, transitionLoadStatus } from "../dispatch/load-transition.service.js";
 import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
-import { loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
 import { trailerChoiceSchema } from "../dispatch/load-trailer-choice.js";
 import { MDATA_STATUS_TRANSITIONS, fromMdataStatus, isReverseTransition } from "../dispatch/load-state-machine.js";
@@ -815,7 +814,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             u.unit_number AS assigned_unit_number,
             tr.id AS trailer_id,
             -- LEAD 23:45Z parity — the one projection: the trailer follows the load's trailer choice (customer trailers too).
-            ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
+            tr.equipment_number AS trailer_number,
             CASE
               WHEN d.id IS NULL THEN NULL
               ELSE CONCAT_WS(' ', d.first_name, d.last_name)

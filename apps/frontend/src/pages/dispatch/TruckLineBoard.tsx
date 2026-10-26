@@ -276,7 +276,7 @@ function fmtHoursMinutes(totalMinutes: number | null): string | null {
 /** Yard dock icon for THE AVAILABLE TRUCK ghost track (V10 ROUND 18.6). */
 function YardDockSvg() {
   return (
-    <svg width="34" height="26" viewBox="0 0 34 26" aria-hidden="true">
+    <svg width="34" height="26" viewBox={"0 0 34 26"} aria-hidden="true">
       <ellipse cx="17" cy="24.2" rx="13.6" ry="1.5" fill="#0F172A" opacity=".12" />
       <path d="M2.3 10 17 2.6 31.7 10v1.7H2.3z" fill="#16A34A" />
       <rect x="3.9" y="11.6" width="26.2" height="12.2" rx="1" fill="#F0FBF4" stroke="#86D2A3" strokeWidth=".8" />

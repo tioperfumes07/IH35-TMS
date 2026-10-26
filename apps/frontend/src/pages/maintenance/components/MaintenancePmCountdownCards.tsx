@@ -86,7 +86,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   if (board) {
     const due = rows.filter((row) => row.is_due).length;
     return <V3Panel title="PM countdown" headerRight={<Link to="/maintenance/pm-schedule" aria-label="PM countdown — view schedules" className="text-xs font-semibold">{loading ? "…" : due}</Link>}>
-      <Link to="/maintenance/pm-schedule" className="block p-3 text-xs text-slate-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
+      <Link to="/maintenance/pm-schedule" className="block p-3 text-xs text-gray-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
     </V3Panel>;
   }
   if (compact) {
