@@ -93,7 +93,11 @@ export function collectBoardProblems(boardSrc) {
   if (!body.includes("Open in viewer")) {
     problems.push(`${BOARD}: accounting table must include Open in viewer column`);
   }
-  if (!/data-testid="reports-accounting-financial-table"/.test(body)) {
+  // ParityTable takes tableTestId=… (renders data-testid on the <table>); hand-rolled tables used data-testid=.
+  if (
+    !/data-testid="reports-accounting-financial-table"/.test(body) &&
+    !/tableTestId="reports-accounting-financial-table"/.test(body)
+  ) {
     problems.push(`${BOARD}: must render reports-accounting-financial-table`);
   }
   if (!/getKpiSummary\s*\(/.test(body)) {
@@ -145,6 +149,18 @@ function selftest() {
         <div>
           <V3KpiTile label="Available reports" />
           <div>Accounting + financial reports</div>
+          <ParityTable tableTestId="reports-accounting-financial-table" columns={[{ label: "What it shows" }, { label: "Open in viewer" }]} />
+        </div>
+      );
+    }
+  `;
+  const goodBoardLegacyTable = `
+    export function ReportsHomeBoard() {
+      getKpiSummary(companyId);
+      return (
+        <div>
+          <V3KpiTile label="Available reports" />
+          <div>Accounting + financial reports</div>
           <table data-testid="reports-accounting-financial-table">
             <th>What it shows</th>
             <th>Open in viewer</th>
@@ -162,6 +178,7 @@ function selftest() {
       );
     }
   `;
+  const badBoardNoTableId = goodBoard.replace('tableTestId="reports-accounting-financial-table"', 'tableTestId="other"');
   const goodV3Mgmt = `
     <V3Panel title="Management reports" subtitle="Branded financial compilations">
       <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]">
@@ -183,8 +200,13 @@ function selftest() {
   if (badP.length < 2) throw new Error(`selftest bad mgmt not flagged enough: ${badP.join("; ")}`);
   const goodBP = collectBoardProblems(goodBoard);
   if (goodBP.length) throw new Error(`selftest good board failed: ${goodBP.join("; ")}`);
+  const goodLegacyBP = collectBoardProblems(goodBoardLegacyTable);
+  if (goodLegacyBP.length) throw new Error(`selftest good legacy board failed: ${goodLegacyBP.join("; ")}`);
   const badBP = collectBoardProblems(badBoard);
   if (badBP.length < 2) throw new Error(`selftest bad board not flagged enough: ${badBP.join("; ")}`);
+  if (!collectBoardProblems(badBoardNoTableId).some((p) => /reports-accounting-financial-table/.test(p))) {
+    throw new Error("selftest: missing accounting table testid was not flagged");
+  }
   console.log(`${LABEL} --selftest OK`);
 }
 
