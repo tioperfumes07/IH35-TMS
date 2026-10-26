@@ -17244,5 +17244,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-26",
     "purpose": "verify-stop-dwell-boundary"
+  },
+  "18802": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-26",
+    "purpose": "verify-book-stop-street-or-place-required"
   }
 }
