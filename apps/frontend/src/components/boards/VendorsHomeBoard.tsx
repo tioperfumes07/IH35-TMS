@@ -26,10 +26,14 @@ type VendorRow = {
 export type VendorBoard = {
   kpis: {
     with_transactions: number; in_the_book: number; spend_cents: number; fuel_share_pct: number | null; open_bills_cents: number | null;
+    /** Fuel-account line total (the share's numerator) and the accounts it counts. */
+    fuel_cents: number; fuel_lines_total_cents: number; fuel_account_ids: string[];
     unposted_fuel_cents: number; unposted_fuel_count: number; unposted_fuel_since: string | null; transactions: number;
   };
   chips: { with_transactions: number; open_bills: number; all: number };
-  by_category: Array<{ category: string; spend_cents: number }>;
+  /** The board's first counted day (server), so drills filter from the same date. */
+  range_from: string;
+  by_category: Array<{ account_id: string | null; category: string; spend_cents: number }>;
   pays_through: Array<{ account_id: string | null; account_name: string; vendors: number; spend_cents: number }>;
   open_bills_check: { remainder_count: number; remainder_cents: number; status_open_count: number; status_open_cents: number };
   rows: VendorRow[];
@@ -76,7 +80,15 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
   const catTotal = b ? b.by_category.reduce((s, c) => s + c.spend_cents, 0) : 0;
   const topCats = b ? b.by_category.slice(0, TOP_CATEGORIES) : [];
   const otherCents = b ? b.by_category.slice(TOP_CATEGORIES).reduce((s, c) => s + c.spend_cents, 0) : 0;
-  const catLines = [...topCats, ...(b && b.by_category.length > TOP_CATEGORIES ? [{ category: "Other", spend_cents: otherCents }] : [])];
+  // Each line carries the GL account(s) it sums ("none" = no account), so it drills to exactly those expense lines.
+  const acctId = (c: { account_id: string | null }) => c.account_id ?? "none";
+  const catLines = [
+    ...topCats.map((c) => ({ category: c.category, spend_cents: c.spend_cents, ids: acctId(c) })),
+    ...(b && b.by_category.length > TOP_CATEGORIES
+      ? [{ category: "Other", spend_cents: otherCents, ids: b.by_category.slice(TOP_CATEGORIES).map(acctId).join(",") }]
+      : []),
+  ];
+  const from = b?.range_from ?? "";
   const pct = (cents: number) => (catTotal > 0 ? (cents / catTotal) * 100 : 0);
 
   const cols: Array<PartyCol<VendorRow>> = [
@@ -102,7 +114,11 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
     { key: "vendors", label: "Vendors", num: true, width: 90, sort: (r) => r.vendors, cell: (r) => <span>{int(r.vendors)}</span> },
     {
       key: "spend", label: "Spend", num: true, width: 130, sort: (r) => r.spend_cents,
-      cell: (r) => (r.account_id ? <NumLink to={`/accounting/chart-of-accounts/register/${r.account_id}`}>{usd(r.spend_cents)}</NumLink> : <span>{usd(r.spend_cents)}</span>),
+            // The vendor expenses paid through this account (or with none recorded) since the board's first day — that list's
+      // total is this figure (LEAD 10-25 FINAL-4: payment_account_id filter on the expenses list).
+      cell: (r) => (
+        <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>{usd(r.spend_cents)}</NumLink>
+      ),
     },
   ];
 
@@ -127,12 +143,16 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
           <V3KpiTile label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} href="/vendors?chip=with_transactions" />
           <V3KpiTile label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} href="/vendors?chip=all" />
           <V3KpiTile label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} href="/vendors?chip=with_transactions" />
+          {/* Opens the fuel-account expense lines (the share's numerator; the list's "Total on these accounts" is it). */}
           <V3KpiTile label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"}
-            noDrill="share of vendor-expense GL lines on fuel accounts YTD — no list filters expense lines by fuel account yet" onClick={() => navigate("/fuel/history")} />
+            sub={b && b.kpis.fuel_share_pct != null ? `${usd(b.kpis.fuel_cents)} of ${usd(b.kpis.fuel_lines_total_cents)} lines` : undefined}
+            href={b && b.kpis.fuel_account_ids?.length
+              ? `/accounting/expenses?expense_account_id=${b.kpis.fuel_account_ids.join(",")}&has_vendor=true&date_from=${from}`
+              : "/vendors?chip=with_transactions"} />
           <V3KpiTile label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} href="/vendors?chip=open_bills" />
           <V3KpiTile label={"Unposted fuel"} value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
             sub={b ? (b.kpis.unposted_fuel_count > 0 ? `${int(b.kpis.unposted_fuel_count)} since ${day(b.kpis.unposted_fuel_since)}` : "None") : undefined}
-            noDrill="Relay fuel not yet posted to the GL — the Relay inbox lists it but has no unposted-only filter yet" onClick={() => navigate("/fuel/relay-inbox")} />
+            href="/fuel/relay-unmatched?unposted=true" />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 12, alignItems: "start" }}>
@@ -144,7 +164,9 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
                   <div key={c.category} style={{ display: "grid", gridTemplateColumns: "130px 1fr 90px 50px", gap: 10, alignItems: "center", fontSize: 12 }}>
                     <span>{c.category}</span>
                     <SpendBar pct={share} width="100%" />
-                    <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{usd(c.spend_cents)}</span>
+                    <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                      <NumLink to={`/accounting/expenses?expense_account_id=${c.ids}&has_vendor=true&date_from=${from}`}>{usd(c.spend_cents)}</NumLink>
+                    </span>
                     <span style={{ textAlign: "right", color: V3.muted, fontVariantNumeric: "tabular-nums" }}>{share.toFixed(1)}%</span>
                   </div>
                 );
@@ -190,7 +212,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
                 Open bills disagree across definitions: this screen <NumLink to="/vendors?chip=open_bills">{usd(boardOpen)}</NumLink>{" "}
                 (vendor-linked bills with an unpaid remainder) · all bills with an unpaid remainder{" "}
                 <NumLink to="/accounting/bills?has_balance=true">{usd(chk.remainder_cents)} ({int(chk.remainder_count)})</NumLink> · bills in an open status{" "}
-                {usd(chk.status_open_cents)} ({int(chk.status_open_count)}). One AP service must feed every screen.
+                <NumLink to="/accounting/bills?status=unpaid,partial">{usd(chk.status_open_cents)} ({int(chk.status_open_count)})</NumLink>. One AP service must feed every screen.
               </>
             )}
             {/* The amount and count are on the Unposted fuel tile above; the note does not restate them. */}

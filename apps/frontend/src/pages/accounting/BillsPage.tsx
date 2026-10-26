@@ -255,12 +255,13 @@ export function BillsPage() {
   // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
   // BILLS-STATUS-VOCAB-01 — one source for the option list and for the predicates that read it.
   const STATUS_FILTER_VALUES = new Set<string>(BILL_STATUS_FILTER_VALUES);
-  const initialStatus = searchParams.get("status");
+  // LEAD 10-25 FINAL-4 — a drill may carry several statuses (status=unpaid,partial or repeated status=).
+  const initialStatuses = searchParams.getAll("status").flatMap((v) => v.split(",")).map((v) => v.trim()).filter((v) => STATUS_FILTER_VALUES.has(v));
   // FILTER-MULTI-01: Status is now a real multi-select (checkbox dropdown, e.g. "Open + Partial"
   // at once) — array state, seeded from the single-value deep-link contract above (still exactly
   // one value on first load, unchanged for every existing inbound link).
   const [statusFilter, setStatusFilter] = useState<string[]>(() =>
-    initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? [initialStatus] : ["active"]
+    initialStatuses.length ? initialStatuses : ["active"]
   );
   const hasBalance = searchParams.get("has_balance") === "true";
   // ACCT-F411 — the A/P AGING BUCKET drill. The report sends WHICH bucket plus its as-of date; the
@@ -357,7 +358,9 @@ export function BillsPage() {
   // returned for a single value, and a 2+ selection is strictly a broader fetch, never narrower.
   // statusFilter's options are exactly STATUS_FILTER_VALUES's literal set (seeded from it above),
   // so a single selected value is always one of the server's accepted literals.
-  const statusParam = statusFilter.length === 1 ? (statusFilter[0] as BillStatus | "unpaid" | "active" | "all" | "posted") : undefined;
+  // LEAD 10-25 FINAL-4 — the server now ORs several statuses itself (before limit/offset, inside the same WHERE as the
+  // register totals), so every selection is narrowed server-side: no 200-row page is filtered on the client any more.
+  const statusParam = statusFilter.length ? statusFilter.join(",") : undefined;
   const vendorParam = vendorFilter.length === 1 ? vendorFilter[0] : undefined;
   const billsQuery = useQuery({
     queryKey: [
@@ -419,7 +422,7 @@ export function BillsPage() {
   // pseudo-statuses ("active" by default) to a driver bill's own status vocabulary and dropped all
   // 136 live rows. The shared predicate honours the server's meaning and never re-applies a
   // narrowing the server already did.
-  const serverNarrowedStatus = statusFilter.length === 1;
+  const serverNarrowedStatus = statusFilter.length >= 1;
   const driverBillRows = (billsQuery.data?.rows ?? [])
     .filter((row) => row.bill_type === "driver_bill")
     .map((row) => row.bill as DriverBillListRow)
@@ -957,6 +960,15 @@ export function BillsPage() {
       }}
     />
     <div className="space-y-3">
+      {/* LEAD 10-25 FINAL-4 — the server's totals over every bill matching these filters (not the 200-row page): a board
+          figure that drilled here (e.g. Vendors › bills in an open status) reads the same count and balance. */}
+      {showVendorBills && billsQuery.data?.totals?.vendor_bill ? (
+        <p className="text-xs text-gray-600" data-testid="bills-matching-totals">
+          All matching vendor bills: {billsQuery.data.totals.vendor_bill.count} ·{" "}
+          {money(billsQuery.data.totals.vendor_bill.amount_cents)} total
+          {billsQuery.data.totals.vendor_bill.balance_cents != null ? <> · {money(billsQuery.data.totals.vendor_bill.balance_cents)} balance</> : null}
+        </p>
+      ) : null}
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
       {highlightedBillId ? (

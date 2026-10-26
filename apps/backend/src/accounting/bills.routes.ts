@@ -94,7 +94,13 @@ export const DRIVER_BILL_REGISTER_TOTAL_SQL = `WITH pagination_types AS (SELECT 
   FROM (${DRIVER_BILL_REGISTER_SQL.replace("LIMIT $3 OFFSET $4", "")}) register_cohort`;
 
 /** LEAD 443.219 G-VOCAB — the register's status filter in the DRIVER-bill vocabulary (null = every status the base rule keeps). */
-export function driverBillStatusesForFilter(status: string | undefined): string[] | null {
+export function driverBillStatusesForFilter(status: string | readonly string[] | undefined): string[] | null {
+  // Multi-status: the union of each value's driver-bill statuses; any value that keeps every status keeps every status.
+  if (Array.isArray(status)) {
+    const lists = (status as readonly string[]).map((one) => driverBillStatusesForFilter(one));
+    if (!lists.length || lists.some((l) => l === null)) return null;
+    return [...new Set(lists.flatMap((l) => l ?? []))];
+  }
   if (!status || status === "all" || status === "active" || status === "posted") return null;
   if (status === "unpaid" || status === "open") return [...DRIVER_BILL_OUTSTANDING_STATUSES];
   if (status === "paid") return ["paid"];
@@ -112,11 +118,37 @@ const listVendorBalancesQuerySchema = companyQuerySchema.extend({
   sort: z.enum(["balance_desc", "balance_asc", "vendor_asc"]).optional().default("balance_desc"),
 });
 
+const BILL_LIST_STATUS_VALUES = ["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"] as const;
+type BillListStatusParam = (typeof BILL_LIST_STATUS_VALUES)[number];
+/**
+ * One status, or several (status=unpaid,partial or repeated status=) — applied server-side as an OR before
+ * limit/offset, so the list and the register totals cover every matching bill (LEAD 10-25 FINAL-4).
+ */
+const billListStatusSchema = z
+  .preprocess(
+    (v) => (typeof v === "string" && v.includes(",") ? v.split(",").map((x) => x.trim()).filter(Boolean) : v),
+    z.union([z.enum(BILL_LIST_STATUS_VALUES), z.array(z.enum(BILL_LIST_STATUS_VALUES)).min(1)])
+  )
+  .optional();
+/** Map the wire's statuses to the service vocabulary; `unpaidAs` keeps each route's existing meaning of "unpaid". */
+export function billStatusesForService<U extends "outstanding" | "open">(
+  status: BillListStatusParam | readonly BillListStatusParam[] | undefined,
+  unpaidAs: U
+): Exclude<BillListStatusParam, "unpaid"> | U | Array<Exclude<BillListStatusParam, "unpaid"> | U> | undefined {
+  const list = status === undefined ? [] : Array.isArray(status) ? [...status] : [status as BillListStatusParam];
+  if (!list.length) return undefined;
+  if (list.includes("all")) return "all";
+  const mapped = [...new Set(list.map((v) => (v === "unpaid" ? unpaidAs : v)))] as Array<Exclude<BillListStatusParam, "unpaid"> | U>;
+  return mapped.length === 1 ? mapped[0] : mapped;
+}
+const statusIncludes = (status: BillListStatusParam | readonly BillListStatusParam[] | undefined, value: BillListStatusParam) =>
+  Array.isArray(status) ? (status as readonly BillListStatusParam[]).includes(value) : status === value;
+
 const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
   include_balance: queryBoolean().optional(),
   has_balance: queryBoolean().optional(),
-  status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"]).optional(),
+  status: billListStatusSchema,
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // ACCT-F411 — the A/P AGING WINDOW, so an aging bucket on a report has a destination that
@@ -351,13 +383,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
 
     const listOptions = {
-      status:
-        // LEAD 443.219 G-VOCAB — "Unpaid" = still owes money (unpaid + partially_paid), never open-only.
-        query.data.status === "unpaid"
-          ? ("outstanding" as const)
-          : query.data.status === "all"
-            ? ("all" as const)
-            : query.data.status,
+      // LEAD 443.219 G-VOCAB — "Unpaid" = still owes money (unpaid + partially_paid), never open-only.
+      status: billStatusesForService(query.data.status, "outstanding"),
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
@@ -432,7 +459,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
 
     const listOptions = {
-      status: query.data.status === "unpaid" ? ("open" as const) : query.data.status === "all" ? ("all" as const) : query.data.status,
+      status: billStatusesForService(query.data.status, "open"),
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
@@ -461,7 +488,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       offset: query.data.offset,
     });
     const driverResult = query.data.bill_type === "vendor_bill" ? { rows: [], totals: { count: 0, amount_cents: 0 } } : await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
-      const values = [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset,
+      const values = [query.data.operating_company_id, statusIncludes(query.data.status, "all") || statusIncludes(query.data.status, "voided"), query.data.limit, query.data.offset,
           driverBillStatusesForFilter(query.data.status), query.data.driver_id ?? null, query.data.load_id ? entityIdFilterValues(query.data.load_id) : null,
           query.data.date_from ?? null, query.data.date_to ?? null, query.data.search?.trim() || null,
           query.data.vendor_id ?? null, query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : null];
@@ -470,7 +497,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       return { rows: result.rows, totals: { count: Number(total.rows[0]?.count ?? 0), amount_cents: Number(total.rows[0]?.amount_cents ?? 0) } };
     });
     const driverRows = driverResult.rows;
-    const vendorTotals = query.data.bill_type === "driver_bill" ? { count: 0, amount_cents: 0 } : await aggregateBillsForRegister(String(user.uuid), query.data.operating_company_id, { ...listOptions, vendorId: query.data.vendor_id });
+    const vendorTotals = query.data.bill_type === "driver_bill" ? { count: 0, amount_cents: 0, balance_cents: 0 } : await aggregateBillsForRegister(String(user.uuid), query.data.operating_company_id, { ...listOptions, vendorId: query.data.vendor_id });
     // R-102-B item 5 — disclosed count: company-wide, both bill tables, independent of every
     // non-status filter (vendor/date/search/etc.) so it always states the true hidden count.
     const voidedCount = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {

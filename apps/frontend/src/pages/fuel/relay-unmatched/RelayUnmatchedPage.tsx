@@ -8,6 +8,7 @@
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { listRelayFills } from "../../../api/relay-fills";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -33,10 +34,16 @@ export function RelayUnmatchedPage() {
   const companyId = selectedCompanyId ?? "";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  // LEAD 10-25 FINAL-4 — ?unposted=true lists the fills not yet booked to the GL (the Vendors board's Unposted fuel tile).
+  const [searchParams] = useSearchParams();
+  const unposted = searchParams.get("unposted") === "true";
 
   const query = useQuery({
-    queryKey: ["fuel", "relay-fills", "unmatched", companyId, page],
-    queryFn: () => listRelayFills(companyId, { unmatched: true, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    queryKey: ["fuel", "relay-fills", unposted ? "unposted" : "unmatched", companyId, page],
+    queryFn: () =>
+      listRelayFills(companyId, unposted
+        ? { unposted: true, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }
+        : { unmatched: true, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
     enabled: Boolean(companyId),
   });
 
@@ -125,13 +132,23 @@ export function RelayUnmatchedPage() {
         data-testid="relay-unmatched-v3-kpi-strip"
         data-relay-unmatched-v3-kpis="1"
       >
-        <V3KpiTile
-          label="Unmatched"
-          value={kpiValue(query.isPending ? undefined : totalCount, query.isPending)}
-          sub="fills needing a truck or driver"
-          tone={totalCount > 0 ? "red" : "green"}
-          testId="relay-unmatched-kpi-total"
-        />
+        {unposted ? (
+          <V3KpiTile
+            label="Unposted"
+            value={query.isPending ? "…" : formatMoneyCents(query.data?.total_amount_paid_cents ?? 0, "USD")}
+            sub={`${kpiValue(query.isPending ? undefined : totalCount, query.isPending)} fills not booked to the GL`}
+            tone={totalCount > 0 ? "amber" : "green"}
+            testId="relay-unposted-kpi-total"
+          />
+        ) : (
+          <V3KpiTile
+            label="Unmatched"
+            value={kpiValue(query.isPending ? undefined : totalCount, query.isPending)}
+            sub="fills needing a truck or driver"
+            tone={totalCount > 0 ? "red" : "green"}
+            testId="relay-unmatched-kpi-total"
+          />
+        )}
       </div>
       <MoneyListToolbar
         search={search}
@@ -144,8 +161,10 @@ export function RelayUnmatchedPage() {
         <span />
       </MoneyListToolbar>
       <FuelBoardSection
-        title="Relay fills — unmatched"
-        subtitle="Relay fuel fills this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver to match by hand"
+        title={unposted ? "Relay fills — not posted to the GL" : "Relay fills — unmatched"}
+        subtitle={unposted
+          ? "Relay fuel fills with no booked bank match yet (posted = the card bank line is matched and carries a journal entry)"
+          : "Relay fuel fills this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver to match by hand"}
         testId="relay-unmatched-v3-panel"
       >
         {query.isError ? (

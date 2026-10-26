@@ -137,6 +137,7 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   customerId: string;
   statuses: string[];
   hasBalance: boolean;
+  liveOpen: boolean;
   notSent: boolean;
   /** ACCT-F411 — the aging bucket drill, read as a PAIR: see the comment at the read below. */
   agingBuckets: string[];
@@ -149,6 +150,8 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   const raw = searchParams.getAll("status").map((s) => s.trim()).filter(Boolean);
   // Legacy deep-links status=with_balance / status=not_sent keep working.
   const hasBalance = searchParams.get("has_balance") === "true" || raw.includes("with_balance");
+  // LEAD 10-25 FINAL-4 — the Customers board's "Open invoices" drill (server filter, applied before pagination).
+  const liveOpen = searchParams.get("live_open") === "true";
   // ACCT-F411 — the A/R AGING BUCKET drill. The report sends WHICH bucket plus its as-of date; the
   // server resolves the bucket against the one ladder in accounting/aging/buckets.ts, the same
   // module its aging report classifies with, so this list shows exactly the rows that figure
@@ -165,7 +168,7 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   const notSent = searchParams.get("not_sent") === "true" || raw.includes("not_sent");
   const picked = raw.filter((s) => s === "active" || s === "posted" || isRealInvoiceStatus(s));
   const statuses = raw.includes("all") ? [] : picked.length === 0 && !raw.some((s) => s === "with_balance" || s === "not_sent") ? ["active"] : picked;
-  return { customerId, statuses, hasBalance, notSent, agingBuckets, agingAsOf };
+  return { customerId, statuses, hasBalance, liveOpen, notSent, agingBuckets, agingAsOf };
 }
 
 export function InvoicesListPage() {
@@ -184,11 +187,11 @@ export function InvoicesListPage() {
   const [batchId, setBatchId] = useState("");
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
   // same-route updates and browser back/forward stay truthful (no local-only stale seed).
-  const { customerId, statuses, hasBalance, notSent, agingBuckets, agingAsOf } = invoiceFilterFromSearchParams(searchParams);
+  const { customerId, statuses, hasBalance, liveOpen, notSent, agingBuckets, agingAsOf } = invoiceFilterFromSearchParams(searchParams);
   // ACCT-F5049 — reverse Open Invoices keeps source_load_id (listInvoices already filters).
   const deepLinkSourceLoadId = searchParams.get("source_load_id");
   const [search, setSearch] = useState("");
-  const [fromDate, setFromDate] = useState("");
+  const [fromDate, setFromDate] = useState(() => searchParams.get("date_from") ?? "");
   const [toDate, setToDate] = useState("");
   // Persist the entire customer selection in the URL; the server filters before count/pagination.
   const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? customerId.split(",") : []));
@@ -351,6 +354,7 @@ export function InvoicesListPage() {
       selectedCompanyId,
       statuses,
       hasBalance,
+      liveOpen,
       customerFilter,
       search,
       fromDate,
@@ -368,6 +372,7 @@ export function InvoicesListPage() {
         // U12 — every picked status goes to the server (active / posted pseudo-statuses + real ones); none = all.
         status: statuses,
         has_balance: hasBalance || undefined,
+        live_open: liveOpen || undefined,
         aging_bucket: agingBuckets.length ? agingBuckets : undefined,
         as_of: agingAsOf || undefined,
         customer_id: customerParam,

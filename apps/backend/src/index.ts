@@ -313,6 +313,7 @@ import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactoringPurchaseRoutes } from "./factoring/purchase.routes.js";
 import { registerFactoringKpiRoutes } from "./factoring/factoring-kpi.routes.js";
+import { registerFaroDebtorRoutes } from "./factoring/faro-debtor.routes.js";
 import { registerReserveByCustomerRoutes } from "./factoring/reserve-by-customer.routes.js";
 import { registerRepurchaseDueRoutes } from "./factoring/repurchase-due.routes.js";
 import { registerInterestAccrualRoutes } from "./factoring/interest-accrual.routes.js";
@@ -1284,6 +1285,7 @@ async function main() {
   await registerFactoringBatchRoutes(app);
   await registerFactoringPurchaseRoutes(app);
   await registerFactoringKpiRoutes(app);
+  await registerFaroDebtorRoutes(app);
   await registerReserveByCustomerRoutes(app);
   await registerRepurchaseDueRoutes(app);
   await registerInterestAccrualRoutes(app);

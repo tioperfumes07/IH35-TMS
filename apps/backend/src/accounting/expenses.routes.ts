@@ -68,6 +68,19 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   work_order_id: z.string().uuid().optional(),
   // ACCT-F5034 — insurance_claim_id written on create; list filter for ClaimsTab ExpensesReverseSection.
   insurance_claim_id: z.string().uuid().optional(),
+  // LEAD 10-25 FINAL-4 — the Vendors board's "Pays through" and "Spend by category" figures drill here.
+  // payment_account_id: the expense's payment account (uuid) or "none" (no payment account recorded).
+  payment_account_id: z.union([z.literal("none"), z.string().uuid()]).optional(),
+  // expense_account_id: one or more GL expense accounts (comma list), "none" = lines with no account. The list keeps
+  // every expense with a line on those accounts and reports the amount on THOSE lines (account_line_amount_cents).
+  expense_account_id: z
+    .preprocess(
+      (v) => (typeof v === "string" ? v.split(",").map((x) => x.trim()).filter(Boolean) : v),
+      z.array(z.union([z.literal("none"), z.string().uuid()])).min(1)
+    )
+    .optional(),
+  // has_vendor=true: only expenses charged to a vendor (the Vendors board counts nothing else).
+  has_vendor: z.enum(["true"]).optional(),
   search: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -86,10 +99,26 @@ export type ExpenseListFilters = {
   unitId?: string;
   workOrderId?: string;
   insuranceClaimId?: string;
+  /** uuid, or "none" = no payment account recorded. */
+  paymentAccountId?: string;
+  /** GL expense accounts (uuid or "none"); rows keep any expense with a line on them. */
+  expenseAccountIds?: string[];
+  hasVendor?: boolean;
   search?: string;
   limit: number;
   offset: number;
 };
+
+/** The amount of an expense line, as every board and report reads it. */
+const EXPENSE_LINE_AMOUNT_CENTS_SQL = "coalesce(el.amount_cents, round(el.amount * 100))";
+
+/** Lines on the requested GL accounts ("none" = a line with no account). Bound to `$idx::uuid[]`. */
+function expenseAccountLineMatchSql(ids: readonly string[], idx: number): string {
+  const parts: string[] = [];
+  if (ids.some((id) => id !== "none")) parts.push(`el.expense_account_uuid = ANY($${idx}::uuid[])`);
+  if (ids.includes("none")) parts.push("el.expense_account_uuid IS NULL");
+  return parts.length ? `(${parts.join(" OR ")})` : "false";
+}
 
 export type ExpenseListRow = {
   id: string;
@@ -97,6 +126,8 @@ export type ExpenseListRow = {
   vendor_document_number: string | null;
   transaction_date: string;
   total_amount_cents: string;
+  /** Amount on the lines of the expense_account_id filter (null when that filter is absent). */
+  account_line_amount_cents: string | null;
   status: string;
   posting_status: string;
   memo: string | null;
@@ -152,11 +183,31 @@ const EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL = `
  * following the #1755 Bills/Bill-Payments reconciliation-status precedent; 'rejected' is
  * excluded (the only non-active match_state on that table). LEFT JOINs never drop a row.
  */
-export async function queryExpensesList(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: ExpenseListRow[] }> },
-  operatingCompanyId: string,
-  filters: ExpenseListFilters
-): Promise<ExpenseListRow[]> {
+/**
+ * LEAD 10-25 FINAL-4 — payment account / GL expense account / vendor-only filters, applied in the WHERE (before
+ * LIMIT/OFFSET) by both the list and its totals, so a board figure's drill lists and totals the same population.
+ * Returns the bind index of the account-id array (for the line-amount column), or null.
+ */
+function applyExpenseDrillFilters(where: string[], values: unknown[], filters: ExpenseListFilters): number | null {
+  if (filters.paymentAccountId === "none") where.push("e.payment_account_uuid IS NULL");
+  else if (filters.paymentAccountId) {
+    values.push(filters.paymentAccountId);
+    where.push(`e.payment_account_uuid = $${values.length}::uuid`);
+  }
+  if (filters.hasVendor) where.push("e.vendor_uuid IS NOT NULL");
+  if (filters.expenseAccountIds?.length) {
+    values.push(filters.expenseAccountIds.filter((id) => id !== "none"));
+    const idx = values.length;
+    where.push(`EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id = e.id AND ${expenseAccountLineMatchSql(filters.expenseAccountIds, idx)})`);
+    return idx;
+  }
+  return null;
+}
+
+export type ExpenseListTotals = { count: number; total_amount_cents: number; account_line_amount_cents: number | null };
+
+/** WHERE + binds shared by the list and its totals (same filters, applied before any LIMIT). */
+function buildExpenseListWhere(operatingCompanyId: string, filters: ExpenseListFilters) {
   const values: unknown[] = [operatingCompanyId];
   const where: string[] = ["e.operating_company_id = $1::uuid"];
   if (filters.status === "active") {
@@ -202,6 +253,7 @@ export async function queryExpensesList(
     values.push(filters.insuranceClaimId);
     where.push(`e.insurance_claim_id = $${values.length}::uuid`);
   }
+  const accountIdx = applyExpenseDrillFilters(where, values, filters);
   if (filters.search) {
     const clause = buildListSearchClause({
       search: filters.search,
@@ -213,6 +265,44 @@ export async function queryExpensesList(
     });
     if (clause) where.push(clause);
   }
+  return { values, where, accountIdx };
+}
+
+/**
+ * LEAD 10-25 FINAL-4 — totals over EVERY matching expense (not the 200-row page), so a drilled list's Total equals the
+ * board figure it came from. account_line_amount_cents is the amount on the filtered GL account lines only.
+ */
+export async function queryExpensesListTotals(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  operatingCompanyId: string,
+  filters: ExpenseListFilters
+): Promise<ExpenseListTotals> {
+  const { values, where, accountIdx } = buildExpenseListWhere(operatingCompanyId, filters);
+  const lineSql = accountIdx == null || !filters.expenseAccountIds
+    ? "NULL::bigint"
+    : `coalesce(sum((SELECT coalesce(sum(${EXPENSE_LINE_AMOUNT_CENTS_SQL}), 0) FROM accounting.expense_lines el
+                      WHERE el.expense_id = e.id AND ${expenseAccountLineMatchSql(filters.expenseAccountIds, accountIdx)})), 0)::bigint`;
+  const res = await client.query(
+    `SELECT count(*)::int AS n, coalesce(sum(e.total_amount_cents), 0)::bigint AS total, ${lineSql} AS line_total
+       FROM accounting.expenses e
+       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+      WHERE ${where.join(" AND ")}`,
+    values
+  );
+  const r = res.rows[0] ?? {};
+  return {
+    count: Number(r.n ?? 0),
+    total_amount_cents: Number(r.total ?? 0),
+    account_line_amount_cents: r.line_total == null ? null : Number(r.line_total),
+  };
+}
+
+export async function queryExpensesList(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: ExpenseListRow[] }> },
+  operatingCompanyId: string,
+  filters: ExpenseListFilters
+): Promise<ExpenseListRow[]> {
+  const { values, where, accountIdx } = buildExpenseListWhere(operatingCompanyId, filters);
   values.push(filters.limit);
   const limitIdx = values.length;
   values.push(filters.offset);
@@ -226,6 +316,8 @@ export async function queryExpensesList(
         e.vendor_document_number                     AS vendor_document_number,
         e.transaction_date                           AS transaction_date,
         e.total_amount_cents::text                   AS total_amount_cents,
+        ${accountIdx == null || !filters.expenseAccountIds ? "NULL::text" : `(SELECT coalesce(sum(${EXPENSE_LINE_AMOUNT_CENTS_SQL}), 0) FROM accounting.expense_lines el
+          WHERE el.expense_id = e.id AND ${expenseAccountLineMatchSql(filters.expenseAccountIds, accountIdx)})::text`} AS account_line_amount_cents,
         e.status                                     AS status,
         e.posting_status                             AS posting_status,
         e.posting_hold_reason                        AS posting_hold_reason,
@@ -368,7 +460,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         return { unavailable: true as const };
       }
 
-      const rows = await queryExpensesList(client, q.operating_company_id, {
+      const filters: ExpenseListFilters = {
         status: q.status,
         dateFrom: q.date_from,
         dateTo: q.date_to,
@@ -379,10 +471,15 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         unitId: q.unit_id,
         workOrderId: q.work_order_id,
         insuranceClaimId: q.insurance_claim_id,
+        paymentAccountId: q.payment_account_id,
+        expenseAccountIds: q.expense_account_id,
+        hasVendor: q.has_vendor === "true",
         search: q.search,
         limit: q.limit,
         offset: q.offset,
-      });
+      };
+      const rows = await queryExpensesList(client, q.operating_company_id, filters);
+      const totals = await queryExpensesListTotals(client, q.operating_company_id, filters);
       // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
       // same class of defect as a badge that never renders"). Company-wide voided count, same
       // simple scope as the packet's own example ("81 live, 38 voided") — discloses what
@@ -392,11 +489,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         [q.operating_company_id]
       );
       const voidedCount = Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0);
-      return { rows, voidedCount };
+      return { rows, voidedCount, totals };
     });
 
     if ("unavailable" in result) return reply.code(200).send({ rows: [], voided_count: 0 });
-    return reply.code(200).send({ rows: result.rows, voided_count: result.voidedCount });
+    return reply.code(200).send({ rows: result.rows, voided_count: result.voidedCount, totals: result.totals });
   });
 
   // ACCT-R-17 — duplicate expense fingerprint groups (READ-ONLY). Must register before /:id.

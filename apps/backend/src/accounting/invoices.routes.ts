@@ -27,7 +27,7 @@ import {
 } from "./reinstate-document.service.js";
 
 import { queryBoolean } from "../lib/query-boolean.js";
-import { issuedInvoice } from "./live-document-predicates.sql.js";
+import { issuedInvoice, liveOpenInvoice } from "./live-document-predicates.sql.js";
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = companyQuerySchema.extend({
@@ -42,6 +42,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
   // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
   has_balance: queryBoolean().optional(),
+  // live_open=true: live (not void) with an open balance, drafts included — the Customers board's "Open invoices".
+  live_open: queryBoolean().optional(),
   // ACCT-F411 — the A/R AGING WINDOW, so an aging bucket on a report has a destination that
   // reproduces it. Days OVERDUE relative to as_of, inclusive both ends, measured off i.due_date —
   // the same column ar-aging.service.ts buckets on. Boundaries come from
@@ -438,6 +440,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         values.push(q.to_date);
         extraWhere.push(`i.issue_date <= $${values.length}::date`);
       }
+      if (q.live_open) extraWhere.push(liveOpenInvoice("i"));
       // has_balance: aging-compatible open AR — apply BEFORE LIMIT/OFFSET so pagination is truthful.
       if (q.has_balance) {
         extraWhere.push(...openArInvoiceConditions("i"));

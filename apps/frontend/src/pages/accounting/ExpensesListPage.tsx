@@ -122,11 +122,17 @@ export function ExpensesListPage() {
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkWorkOrderId = searchParams.get("work_order_id");
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
+  // LEAD 10-25 FINAL-4 — Vendors board drills: payment account, GL expense account(s), vendor-only, and the board's
+  // first counted day. Sent to the server (before pagination); the Total card then reads the server's totals.
+  const drillPaymentAccountId = searchParams.get("payment_account_id");
+  const drillExpenseAccountId = searchParams.get("expense_account_id");
+  const drillHasVendor = searchParams.get("has_vendor") === "true";
+  const drillActive = Boolean(drillPaymentAccountId || drillExpenseAccountId || drillHasVendor);
   // FILTER-MULTI-01: Status is now a real multi-select (checkbox dropdown) — array state.
   // FLT-03 — hide voided by default (Active is the initial checked state).
   const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
   const [search, setSearch] = useState("");
-  const [fromDate, setFromDate] = useState("");
+  const [fromDate, setFromDate] = useState(() => searchParams.get("date_from") ?? "");
   const [toDate, setToDate] = useState("");
   // Entity selections are CSV id sets sent to the server before pagination, URL-synced directly — no staged
   // draft/Apply/Cancel, matching every other filter on this page now.
@@ -216,6 +222,9 @@ export function ExpensesListPage() {
       deepLinkUnitId,
       deepLinkWorkOrderId,
       deepLinkInsuranceClaimId,
+      drillPaymentAccountId,
+      drillExpenseAccountId,
+      drillHasVendor,
     ],
     queryFn: () =>
       listExpenses(companyId, { search: search || undefined,
@@ -228,6 +237,9 @@ export function ExpensesListPage() {
         unit_id: deepLinkUnitId || undefined,
         work_order_id: deepLinkWorkOrderId || undefined,
         insurance_claim_id: deepLinkInsuranceClaimId || undefined,
+        payment_account_id: drillPaymentAccountId || undefined,
+        expense_account_id: drillExpenseAccountId || undefined,
+        has_vendor: drillHasVendor || undefined,
         limit: 200,
       }),
     enabled: Boolean(companyId),
@@ -400,6 +412,15 @@ export function ExpensesListPage() {
       cellClass: "text-right tabular-nums",
       render: (r) => <span className="font-semibold text-gray-900">{money(r.total_amount_cents)}</span>,
     },
+    ...(drillExpenseAccountId
+      ? [{
+          key: "account_line_amount_cents",
+          label: "On these accounts",
+          className: "text-right",
+          cellClass: "text-right tabular-nums",
+          render: (r: ExpenseListRow) => <span className="tabular-nums">{money(r.account_line_amount_cents ?? null)}</span>,
+        } satisfies ParityColumn<ExpenseListRow>]
+      : []),
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusPill status={r.status} /> },
     {
       key: "posting_status",
@@ -592,7 +613,17 @@ export function ExpensesListPage() {
             </>
           ) : (
             <>
-              {moneyListKpiCard("Total", money(totals.total), `${rows.length} expenses`)}
+              {drillActive && query.data?.totals ? (
+                // A board drill: the server's totals over every matching expense, never the 200-row page. On a GL-account
+                // drill the figure is the amount on THOSE account lines — the number the board showed.
+                moneyListKpiCard(
+                  drillExpenseAccountId ? "Total on these accounts" : "Total",
+                  money(drillExpenseAccountId ? query.data.totals.account_line_amount_cents ?? 0 : query.data.totals.total_amount_cents),
+                  `${query.data.totals.count} expenses`,
+                )
+              ) : (
+                moneyListKpiCard("Total", money(totals.total), `${rows.length} expenses`)
+              )}
               {moneyListKpiCard("Bank matched", String(totals.matched), `${totals.matched} of ${rows.length}`)}
               {moneyListKpiCard(
                 "Unmatched",

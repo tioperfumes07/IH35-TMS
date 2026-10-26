@@ -39,6 +39,13 @@ export function liveInvoice(alias: string): string {
   return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL)`;
 }
 
+/** LEAD 10-25 FINAL-4 — "open" as the Customers board counts it (and Factoring's candidates): live, balance above $0,
+ *  drafts included. The invoices list's live_open filter and the board's Open invoices tile both read this. */
+export function liveOpenInvoice(alias: string): string {
+  const a = sqlAlias(alias);
+  return `(${liveInvoice(a)} AND COALESCE(${a}.amount_open_cents, 0) > 0)`;
+}
+
 /** Issued documents supersede booking/proforma revenue, including paid invoices. */
 export function issuedInvoice(alias: string): string {
   const a = sqlAlias(alias);

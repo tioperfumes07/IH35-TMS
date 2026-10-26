@@ -509,6 +509,8 @@ export function listInvoices(
     from_date?: string;
     to_date?: string;
     has_balance?: boolean;
+    /** LEAD 10-25 FINAL-4 — live (not void) with an open balance, drafts included: the Customers board's Open invoices. */
+    live_open?: boolean;
     /** ACCT-F411 — WHICH aging bucket, by name. The server resolves it against the one ladder. */
     aging_bucket?: string | readonly string[];
     /** The report's as-of date; a bucket means nothing without it. */
@@ -529,6 +531,7 @@ export function listInvoices(
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
   if (params.has_balance) query.set("has_balance", "true");
+  if (params.live_open) query.set("live_open", "true");
   // ACCT-F411 — the bucket and its as-of travel together or not at all: half of the pair would
   // filter off the server's today instead of the report's as-of, which is a different number.
   if (params.aging_bucket && params.as_of) {
@@ -873,11 +876,16 @@ export function listVendorBills(
 export type ExpenseListStatus = "draft" | "posted" | "void" | "active";
 export type ExpensePostingStatus = "unposted" | "posted" | "reversed";
 
+/** Server totals over EVERY matching expense (not the returned page). */
+export type ExpenseListTotals = { count: number; total_amount_cents: number; account_line_amount_cents: number | null };
+
 export type ExpenseListRow = {
   id: string;
   expense_number: string | null;
   transaction_date: string;
   total_amount_cents: number | string;
+  /** Amount on the lines of the expense_account_id filter (null when that filter is absent). */
+  account_line_amount_cents?: number | string | null;
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
   /** ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, 2026-09-29) — why posting is held while posting_status='unposted', e.g. an unresolved account mapping; never "tour_open" going forward. */
@@ -931,6 +939,10 @@ export function listExpenses(
     unit_id?: string;
     work_order_id?: string;
     insurance_claim_id?: string;
+    /** LEAD 10-25 FINAL-4 drills: payment account (uuid | "none"), GL expense account(s), vendor expenses only. */
+    payment_account_id?: string;
+    expense_account_id?: string;
+    has_vendor?: boolean;
     search?: string;
     limit?: number;
     offset?: number;
@@ -938,6 +950,9 @@ export function listExpenses(
 ) {
   const query = new URLSearchParams();
   if (params.status) query.set("status", params.status);
+  if (params.payment_account_id) query.set("payment_account_id", params.payment_account_id);
+  if (params.expense_account_id) query.set("expense_account_id", params.expense_account_id);
+  if (params.has_vendor) query.set("has_vendor", "true");
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.vendor_uuid) query.set("vendor_uuid", params.vendor_uuid);
@@ -953,7 +968,7 @@ export function listExpenses(
   const qs = query.toString();
   // R-102-B item 5 — voided_count: company-wide count of voided expenses, so the list can
   // disclose what "Active (hide voided)" is hiding.
-  return apiRequest<{ rows: ExpenseListRow[]; voided_count?: number }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
+  return apiRequest<{ rows: ExpenseListRow[]; voided_count?: number; totals?: ExpenseListTotals }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
 /** WAVE-H2 reverse drill — load → expenses. */
@@ -1150,7 +1165,8 @@ export function listBills(
     // filter values alongside BillStatus/"unpaid" — BillsPage.tsx's own status filter uses
     // both (default "active" = hide voided, "all" = include voided). This type had drifted
     // narrower than what both the backend and the caller already do at runtime.
-    status?: BillStatus | "unpaid" | "active" | "all" | "posted";
+    /** One status, or several joined by commas ("unpaid,partial") — the server ORs them before limit/offset. */
+    status?: BillStatus | "unpaid" | "active" | "all" | "posted" | (string & { readonly __multiBillStatus?: true });
     include_balance?: boolean;
     has_balance?: boolean;
     /** ACCT-F411 — WHICH aging bucket, by name. The server resolves it against the one ladder. */
@@ -1252,7 +1268,8 @@ export type BillRegisterRow =
 
 export type BillRegisterResponse = {
   rows: BillRegisterRow[];
-  totals: Record<"vendor_bill" | "driver_bill", { count: number; amount_cents: number }>;
+  /** Totals over EVERY matching bill (server, no limit). balance_cents is present for vendor bills. */
+  totals: Record<"vendor_bill" | "driver_bill", { count: number; amount_cents: number; balance_cents?: number }>;
   voided_count?: number;
 };
 

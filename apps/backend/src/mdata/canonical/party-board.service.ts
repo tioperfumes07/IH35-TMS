@@ -9,6 +9,9 @@
  *            (open bills = amount_cents - paid_cents), integrations.relay_fuel_transactions (unposted fuel).
  */
 
+import { liveOpenInvoice } from "../../accounting/live-document-predicates.sql.js";
+import { relayFillPostedSql } from "../../fuel/relay-fill-posted.sql.js";
+
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type BoardRange = "ytd" | "12m" | "all";
 
@@ -70,12 +73,16 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
   }));
   const withTx = rows.filter((r) => r.invoices > 0);
   const sum = (k: "invoices" | "billed_cents" | "collected_cents" | "open_cents" | "paid_invoices") => withTx.reduce((s, r) => s + r[k], 0);
+  // The exact first day the board counts from — the Open invoices drill passes it as date_from.
+  const rangeFrom = String((await client.query(`SELECT (${from})::text AS d`)).rows[0]?.d ?? "");
   return {
     range,
+    range_from: rangeFrom,
     kpis: {
+      // One definition with the invoices list's live_open filter, so the tile's drill lists exactly these invoices.
       with_transactions: withTx.length, in_the_book: rows.length, open_invoices: (await client.query(
-        `SELECT count(*)::int AS n FROM accounting.invoices WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void'
-           AND amount_open_cents > 0 AND issue_date >= ${from}`, [oc])).rows[0].n,
+        `SELECT count(*)::int AS n FROM accounting.invoices i WHERE i.operating_company_id = $1::uuid AND ${liveOpenInvoice("i")}
+           AND i.issue_date >= ${from}`, [oc])).rows[0].n,
       billed_cents: sum("billed_cents"), ar_open_cents: sum("open_cents"), collected_cents: sum("collected_cents"),
       invoices: sum("invoices"), invoices_with_payment: sum("paid_invoices"),
     },
@@ -140,11 +147,25 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
       [oc]
     )
   ).rows[0];
+  // The fuel accounts the Fuel share numerator counts — the tile drills to exactly these expense lines.
+  const fuelAccountIds = (
+    await client.query(
+      `SELECT DISTINCT a.id::text AS id
+         FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
+         JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          AND ${FUEL_ACCOUNT_SQL}
+        ORDER BY 1`,
+      [oc]
+    )
+  ).rows.map((r) => String(r.id));
   const unposted = (
     await client.query(
-      `SELECT count(*)::int AS n, coalesce(sum(total_amount_paid_cents), 0) AS cents, min(relay_created_at) AS since
-         FROM integrations.relay_fuel_transactions
-        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND coalesce(is_active, true) AND posted_to_gl IS NOT TRUE`,
+      // OWNER LAW 2026-10-02 — posted = a booked bank match, never the staging flag; same predicate as the relay-fills
+      // list's unposted filter, so the tile and its drill agree.
+      `SELECT count(*)::int AS n, coalesce(sum(r.total_amount_paid_cents), 0) AS cents, min(r.relay_created_at) AS since
+         FROM integrations.relay_fuel_transactions r
+        WHERE r.operating_company_id = $1::uuid AND r.voided_at IS NULL AND NOT ${relayFillPostedSql("r")}`,
       [oc]
     )
   ).rows[0];
@@ -153,15 +174,19 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
   // payment account, vendors counted distinct per account (a vendor that paid through two accounts counts in both).
   const byCategory = (
     await client.query(
-      `SELECT coalesce(a.account_name, 'Uncategorized') AS category,
+      // LEAD 10-25 FINAL-4 — grouped by the ACCOUNT (id), so each line drills to /accounting/expenses?expense_account_id=
+      // and that list's line total equals this figure; a null account is "Uncategorized" (expense_account_id=none).
+      `SELECT a.id::text AS account_id, coalesce(a.account_name, 'Uncategorized') AS category,
               coalesce(sum(coalesce(el.amount_cents, round(el.amount * 100))), 0)::bigint AS spend
          FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
          LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
         WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
-        GROUP BY 1 ORDER BY 2 DESC, 1`,
+        GROUP BY a.id, a.account_name ORDER BY 3 DESC, 2`,
       [oc]
     )
-  ).rows.map((r) => ({ category: r.category as string, spend_cents: n(r.spend) }));
+  ).rows.map((r) => ({ account_id: (r.account_id as string | null) ?? null, category: r.category as string, spend_cents: n(r.spend) }));
+  // The exact first day the board counts from — drills pass it as date_from instead of re-deriving "Jan 1" client side.
+  const rangeFrom = String((await client.query(`SELECT (${from})::text AS d`)).rows[0]?.d ?? "");
   const paysThrough = (
     await client.query(
       `SELECT e.payment_account_uuid AS account_id, coalesce(pa.account_name, 'No payment account') AS account_name,
@@ -192,12 +217,16 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
     kpis: {
       with_transactions: withTx.length, in_the_book: rows.length, spend_cents: spend,
       fuel_share_pct: n(fuel.total) ? Math.round((n(fuel.fuel) / n(fuel.total)) * 1000) / 10 : null,
+      fuel_cents: n(fuel.fuel),
+      fuel_lines_total_cents: n(fuel.total),
+      fuel_account_ids: fuelAccountIds,
       open_bills_cents: openBillsCents > 0 ? openBillsCents : null,
       unposted_fuel_cents: n(unposted.cents), unposted_fuel_count: n(unposted.n), unposted_fuel_since: unposted.since ?? null,
       transactions: withTx.reduce((s, r) => s + r.txns, 0),
       top_vendor: top ? { id: top.id, name: top.name, txns: top.txns, spend_cents: top.spend_cents, share_pct: spend ? Math.round((top.spend_cents / spend) * 1000) / 10 : null } : null,
     },
     chips: { with_transactions: withTx.length, open_bills: rows.filter((r) => r.open_bills > 0).length, all: rows.length },
+    range_from: rangeFrom,
     by_category: byCategory,
     pays_through: paysThrough,
     open_bills_check: {
