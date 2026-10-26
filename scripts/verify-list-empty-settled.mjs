@@ -379,8 +379,10 @@ if (process.argv.includes("--selftest")) {
     if (insuranceListErrorContract.test(mutant)) fail(`selftest did not reject the planted Insurance ${name} retry no-op`);
   }
   const workOrders = read("apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx");
-  const workOrdersMutant = workOrders.replace("loading ? (", "false ? (");
-  if (!hasExplicitLoadingThenEmptyGate(workOrders) || hasExplicitLoadingThenEmptyGate(workOrdersMutant)) {
+  // WorkOrdersTable uses ParityTable path (b): strip loading= prop to plant the race.
+  const workOrdersMutant = workOrders.replace(/\bloading=\{[^}]+\}/, "");
+  const woUsesParityGate = (src) => src.includes("<ParityTable") && /\bloading=/.test(src);
+  if (!woUsesParityGate(workOrders) || woUsesParityGate(workOrdersMutant)) {
     fail("selftest did not reject the planted Work Orders false-empty race");
   }
   console.log(`${TAG} SELFTEST OK — stale lawsuit copy, Insurance retry no-ops, and Work Orders false-empty race rejected`);
