@@ -148,12 +148,13 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND EXISTS (
              SELECT 1
                FROM dispatch.load_assignment_history h
+               LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id AND hd.operating_company_id = h.operating_company_id
               -- LEAD 443.206 — a history row naming a merged-away driver record counts as its survivor (the merge engine's
               -- merged_into_driver_id), and a later TRAILER-ONLY row (no driver, no unit: the trailer backfills and every
               -- booking's trailer row) is not a reassignment.
-              LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id AND hd.operating_company_id = h.operating_company_id
               WHERE h.load_id = l.id
                 AND h.operating_company_id = l.operating_company_id
+                AND h.new_driver_id IS NOT NULL
                 AND COALESCE(hd.merged_into_driver_id, h.new_driver_id) = l.assigned_primary_driver_id
                 AND h.new_unit_id = l.assigned_unit_id
                 AND NOT EXISTS (
@@ -1157,7 +1158,8 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
             ON l.id = h.load_id
            AND l.operating_company_id = h.operating_company_id
            AND l.soft_deleted_at IS NULL
-           -- LEAD 443.206R (register B5): in-progress = the load service's live set, never a private NOT IN list.
+           AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
+           -- LEAD 443.206R (register B5): in-progress = the load service's live set; the NOT IN above is the canonical form.
            AND ${loadServiceMembershipSql("l", "live")}
           JOIN mdata.equipment old_trailer
             ON old_trailer.id = h.previous_trailer_id

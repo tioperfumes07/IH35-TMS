@@ -13,11 +13,11 @@ export function loadCostsRevenueJoin(load = "l", alias = "revenue"): string {
              WHERE i.source_load_id = ${load}.id
                AND i.operating_company_id = ${load}.operating_company_id
                AND i.voided_at IS NULL AND i.status NOT IN ('draft','proforma','void','voided')) issued
-      CROSS JOIN (SELECT COALESCE(SUM(lcl.amount_cents),0)::bigint AS cents
-                    FROM dispatch.load_charge_lines lcl
-                   WHERE lcl.load_id = ${load}.id
-                     AND lcl.operating_company_id = ${load}.operating_company_id
-                     AND lcl.is_active IS NOT FALSE) booked
+      CROSS JOIN (SELECT COALESCE(SUM(cl.amount_cents),0)::bigint AS cents
+                    FROM dispatch.load_charge_lines cl
+                   WHERE cl.load_id = ${load}.id
+                     AND cl.operating_company_id = ${load}.operating_company_id
+                     AND cl.is_active IS NOT FALSE) booked
   ) ${alias} ON true`;
 }
 

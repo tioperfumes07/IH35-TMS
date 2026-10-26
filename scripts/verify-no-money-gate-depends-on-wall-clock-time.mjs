@@ -58,7 +58,7 @@ export function canReachDatabase(src) {
 // verify-fuel-gl-no-stranded-unposted, verify-google-reference-miles, verify-hos-daily-summary-non-overlapping,
 // verify-load-to-cash-chain, verify-no-audit-event-without-its-journal-entry,
 // verify-no-unmatched-line-without-a-fresh-suggestion); ratchet raised to match observed live count.
-const KNOWN_WALL_CLOCK_FILES = 12;
+const KNOWN_WALL_CLOCK_FILES = 10;
 
 // LST-F404 (Lead, 2026-10-04) — the escape hatch the comment above promised and never built. A file that is CORRECTLY
 // clock-dependent (a freshness / liveness probe whose verdict is SUPPOSED to change as time passes) is recorded here BY
@@ -75,6 +75,14 @@ export const JUSTIFIED_WALL_CLOCK = {
     "liveness probe, not a population window: an integration_sync_log claim is 'stuck' only relative to now (open " +
     "longer than OPEN_CLAIM_MAX_AGE) — the same clock rule the engine itself applies (relay-fuel-ingest.cron.ts " +
     "closes an open claim older than RELAY_CLAIM_STALE_MINUTES). No money row's verdict depends on the calendar.",
+  "scripts/verify-dispatched-load-has-stop-stamps.mjs":
+    "genuine business-time window: loads with a pickup stop scheduled >24 hours ago and no actual_arrival_at stamp " +
+    "are operationally overdue — 24 h is the domain rule, not an arbitrary CI population cutoff. The guard's verdict " +
+    "is supposed to change as operational state changes (a stamp arriving clears the finding). No money row is gated.",
+  "scripts/verify-94-live-counter-linkage.mjs":
+    "freshness probe for the live-GPS counter: Samsara vehicles are 'live' only when last_seen_at is within 6 hours — " +
+    "the same window the GPS counter widget applies in the UI. The probe's verdict is supposed to change as integration " +
+    "data ages; it measures the counter's binding, not a CI-population filter. No money verdict depends on the calendar.",
 };
 
 const SELF_FILENAME = path.basename(fileURLToPath(import.meta.url));

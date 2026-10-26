@@ -67,12 +67,14 @@ export function CashAdvancesHomePage() {
     setApplied((prev) => ({ ...prev, driverId: driverIdFilter }));
   }, [driverIdFilter]);
 
-  const onApplyFilters = (next: typeof EMPTY_FILTERS) => {
-    setApplied(next);
-    patchListSearchParam(next);
-  };
-
-  const staged = useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply: onApplyFilters });
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
 
   const setDriverFilter = (driverId: string) => {
     staged.setDraft((d) => ({ ...d, driverId }));
@@ -175,6 +177,7 @@ export function CashAdvancesHomePage() {
           setListSearch("");
           setApplied(EMPTY_FILTERS);
           patchListSearchParam(EMPTY_FILTERS);
+          staged.cancel();
         }}
         activeFilterCount={activeFilterCount}
         testIdPrefix="cash-advances"
@@ -191,7 +194,7 @@ export function CashAdvancesHomePage() {
             dataTestId="cash-advances-filter-driver"
           />
         </label>
-        <div className="flex items-center gap-1 mt-2">
+        <div className="flex items-end gap-2">
           <button
             type="button"
             className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-xs font-medium text-white"
@@ -202,7 +205,7 @@ export function CashAdvancesHomePage() {
           </button>
           <button
             type="button"
-            className="h-7 rounded-sm border border-gray-300 px-2 text-xs font-medium text-gray-700"
+            className="h-7 rounded-sm border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700"
             data-testid="cash-advances-filter-cancel"
             onClick={staged.cancel}
           >
@@ -210,9 +213,12 @@ export function CashAdvancesHomePage() {
           </button>
           <button
             type="button"
-            className="h-7 rounded-sm border border-gray-300 px-2 text-xs font-medium text-gray-700"
+            className="h-7 rounded-sm border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700"
             data-testid="cash-advances-filter-reset"
-            onClick={staged.reset}
+            onClick={() => {
+              staged.reset();
+              staged.apply();
+            }}
           >
             Reset
           </button>
