@@ -10,6 +10,12 @@
  */
 import fs from "node:fs";
 
+const FIELD_H = (() => {
+  const tokens = fs.readFileSync("apps/frontend/src/design/tokens.ts", "utf8");
+  const m = tokens.match(/export const FORM_FIELD_CONTROL_SIZE_CLASS = "(h-\d+)\b/);
+  if (!m) throw new Error("FORM_FIELD_CONTROL_SIZE_CLASS not found in design/tokens.ts — re-anchor");
+  return m[1];
+})();
 const LIB = "apps/frontend/src/components/dispatch/accessorial-editor-lib.ts";
 const EDITOR = "apps/frontend/src/components/dispatch/AccessorialEditor.tsx";
 const WIZARD = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
@@ -47,14 +53,16 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!/form\.setError\(\s*["']linehaul_cents["']/.test(wizard) || !/form\.setError\(\s*["']fuel_surcharge_cents["']/.test(wizard)) {
     errors.push("linehaul/fuel surcharge negative error is not surfaced via form.setError");
   }
-  if (!/<input[\s\S]*?className="[^"]*\bh-9\b[^"]*"/.test(moneyInput)) {
-    errors.push("MoneyInput <input> is not h-9 (IH35-347-A)");
+  // One form-field height app-wide (owner format law; #27819 FINAL-2 moved the shared inputs to it): the height the
+  // design token FORM_FIELD_CONTROL_SIZE_CLASS names — read from tokens.ts, never a literal that the next sweep strands.
+  if (!new RegExp(`<input[\\s\\S]*?className="[^"]*\\b${FIELD_H}\\b[^"]*"`).test(moneyInput)) {
+    errors.push(`MoneyInput <input> is not the form-field height ${FIELD_H} (FORM_FIELD_CONTROL_SIZE_CLASS)`);
   }
   if (!/<input[\s\S]*?className="[^"]*\btabular-nums\b[^"]*"/.test(moneyInput)) {
     errors.push("MoneyInput <input> is missing tabular-nums");
   }
-  if (!/<input[\s\S]*?className=\{[^}]*\bh-9\b/.test(numberInput)) {
-    errors.push("NumberInput <input> is not h-9 (IH35-347-A)");
+  if (!new RegExp(`<input[\\s\\S]*?className=\\{[^}]*\\b${FIELD_H}\\b`).test(numberInput)) {
+    errors.push(`NumberInput <input> is not the form-field height ${FIELD_H} (FORM_FIELD_CONTROL_SIZE_CLASS)`);
   }
   if (!/<input[\s\S]*?className=\{[^}]*\btabular-nums\b/.test(numberInput)) {
     errors.push("NumberInput <input> is missing tabular-nums");
@@ -157,8 +165,9 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard.replace("inline-flex h-7 overflow-hidden", "flex h-[46px] overflow-hidden"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('linehaulFuelError("linehaul"', 'linehaulFuelErrorDISABLED("linehaul"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('form.setError("linehaul_cents"', 'form.setErrorDISABLED("linehaul_cents"'), equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("h-9 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums", "w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
+    [lib, editor, wizard, equipment, timeWindow, moneyInput.replace(`${FIELD_H} w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums`, "h-9 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput, numberInput.replace("tabular-nums", "")],
+    [lib, editor, wizard, equipment, timeWindow, moneyInput, numberInput.replace(`${FIELD_H} w-full`, "h-9 w-full")],
     [lib, editor, wizard.replace("Broker / Direct", "Customer kind"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("Incomplete typed states", "TYPED"), numberInput],
     [lib, editor.replace("accessorial-amounts-column-total", "accessorial-subtotal-only"), wizard, equipment, timeWindow, moneyInput, numberInput],
