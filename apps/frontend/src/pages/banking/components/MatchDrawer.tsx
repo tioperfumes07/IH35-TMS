@@ -995,6 +995,8 @@ export function MatchDrawer({
               selected={recordKinds}
               onChange={(next) => setRecordKinds(next as BankMatchFilterKind[])}
               allLabel="All types"
+              searchable
+              searchPlaceholder="Type record type…"
               data-testid="match-drawer-record-type-dropdown"
             />
           </div>

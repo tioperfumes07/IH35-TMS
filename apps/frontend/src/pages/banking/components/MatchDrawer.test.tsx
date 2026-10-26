@@ -86,6 +86,23 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     vi.mocked(bankingApi.getMatchCandidates).mockReset();
   });
 
+  it("narrows record types by typing while retaining multiple selections", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({ candidates: [], match_candidates_count: 0 });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    await userEvent.click(within(screen.getByTestId("match-drawer-record-type-dropdown")).getByRole("button"));
+    const search = screen.getByPlaceholderText("Type record type…");
+    await userEvent.type(search, "check");
+    expect(screen.queryByRole("button", { name: "Invoice" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Checks" }));
+    await userEvent.clear(search);
+    await userEvent.type(search, "invoice");
+    await userEvent.click(screen.getByRole("button", { name: "Invoice" }));
+    await waitFor(() => expect(bankingApi.getMatchCandidates).toHaveBeenLastCalledWith(
+      bankTxnId, companyId, expect.objectContaining({ kinds: ["check", "invoice"] }),
+    ));
+    expect(bankingApi.acceptBankReconMatch).not.toHaveBeenCalled();
+  });
+
   it("shows the Checks filter and accepts a suggested check by its canonical expense id", async () => {
     vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
       candidates: [candidate({ reference: "1234", memo: "Check 1234" })], match_candidates_count: 1,
