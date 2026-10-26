@@ -52,7 +52,7 @@ function Kv({ label, children }: { label: string; children: ReactNode }) {
 function candidateColumns(
   pickUnitId: string,
   onSelect: (c: FuelCandidateTruck) => void,
-  noLoadText: string,
+  t: (key: string, fallback: string) => string,
 ): ParityColumn<FuelCandidateTruck>[] {
   const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
   return [
@@ -119,18 +119,23 @@ function candidateColumns(
       label: "Load at fill",
       sortable: true,
       sortValue: (c) => c.load?.load_number ?? "",
-      render: (c) =>
-        !c.load ? (
-          <span className="text-[#6B7280]" data-testid={`fuel-assignment-candidate-no-load-${c.unit_id}`}>
-            {noLoadText}
-          </span>
-        ) : c.load.load_id ? (
-          <span className="font-semibold">
-            <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={stop} />
-          </span>
-        ) : (
-          c.load.load_number ?? "—"
-        ),
+      render: (c) => (
+        <>
+          {c.load ? (
+            c.load.load_id ? (
+              <span className="font-semibold">
+                <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={stop} />
+              </span>
+            ) : (
+              c.load.load_number ?? "—"
+            )
+          ) : (
+            <span className="text-[#6B7280]" data-testid={`fuel-assignment-candidate-no-load-${c.unit_id}`}>
+              {t("fuel.no_load_at_pump", "No load at pump time")}
+            </span>
+          )}
+        </>
+      ),
     },
     {
       key: "settlement",
@@ -278,7 +283,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 rowClassName={(c) => (pickUnitId === c.unit_id ? "bg-[#EEF2F6]" : "")}
                 onRowClick={selectCandidate}
                 emptyText="No GPS candidates at the pump — card truck still keeps the fill until confirmed."
-                columns={candidateColumns(pickUnitId, selectCandidate, t("fuel.no_load_at_pump", "No load at pump time"))}
+                columns={candidateColumns(pickUnitId, selectCandidate, t)}
               />
             </div>
           </BoardSection>

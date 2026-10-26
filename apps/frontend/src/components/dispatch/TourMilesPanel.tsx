@@ -63,9 +63,9 @@ function LegMiles({ leg, operatingCompanyId }: { leg: TourReadout["legs"][number
               sortable: true,
               sortValue: (row) => row.rec?.historical?.value ?? -1,
               kind: "number",
-              render: (row) => (
-                <span data-testid={`tour-miles-db-${row.field}`} title={row.rec?.historical_missing_reason ?? undefined}>
-                  {q.isLoading ? "…" : row.rec?.historical ? `${mi(row.rec.historical.value)} (${row.rec.historical.n_loads} trips)` : DASH}
+              render: ({ field, rec }) => (
+                <span data-testid={`tour-miles-db-${field}`} title={rec?.historical_missing_reason ?? undefined}>
+                  {q.isLoading ? "…" : rec?.historical ? `${mi(rec.historical.value)} (${rec.historical.n_loads} trips)` : DASH}
                 </span>
               ),
             },
@@ -75,9 +75,9 @@ function LegMiles({ leg, operatingCompanyId }: { leg: TourReadout["legs"][number
               sortable: true,
               sortValue: (row) => row.rec?.google?.value ?? -1,
               kind: "number",
-              render: (row) => (
-                <span data-testid={`tour-miles-google-${row.field}`} title={row.rec?.google_missing_reason ?? undefined}>
-                  {q.isLoading ? "…" : row.rec?.google ? mi(row.rec.google.value) : DASH}
+              render: ({ field, rec }) => (
+                <span data-testid={`tour-miles-google-${field}`} title={rec?.google_missing_reason ?? undefined}>
+                  {q.isLoading ? "…" : rec?.google ? mi(rec.google.value) : DASH}
                 </span>
               ),
             },
