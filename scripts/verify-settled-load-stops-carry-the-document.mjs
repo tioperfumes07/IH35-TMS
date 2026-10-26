@@ -7,9 +7,10 @@
  * STATIC: RULE 1 the document engine fills facility / ZIP only where the stop has none and lists (never applies) a printed
  *   address that differs from a street the load already has; RULE 2 it writes miles only through setMilesChoice source 'document';
  *   RULE 3 it runs the ONE geocode → location → fence → Samsara pass (geocodeStopsWithClient reresolve); RULE 4 the route is wired.
- * LIVE (USMCA, read-only): RULE 5 no stop of a load on a live settlement lacks a facility name or a ZIP; RULE 6 every such stop
- *   is at a location with an active fence, or carries Google's recorded "no result" (no_street_source_v3_google — listed for the
- *   owner, never fenced at a ZIP center).
+ * LIVE (USMCA, read-only): RULE 5 no stop of a load on a settlement that has a signed document (source_document_ref IS NOT NULL)
+ *   lacks a facility name or a ZIP; RULE 6 every such stop is at a location with an active fence, or carries Google's recorded
+ *   "no result" (no_street_source_v3_google — listed for the owner, never fenced at a ZIP center). Open settlements without a
+ *   document are excluded — the engine only runs when a document is uploaded.
  * --selftest plants each regression.
  */
 import { readFileSync } from "node:fs";
@@ -72,6 +73,7 @@ SELECT DISTINCT l.load_number, s.sequence_number, s.geocode_source,
        coalesce(s.geocode_failure_reason, '') = 'no_street_source_v3_google' AS google_no_result
   FROM driver_finance.settlement_lines sl
   JOIN driver_finance.driver_settlements st ON st.id = sl.settlement_id AND st.voided_at IS NULL AND st.status <> 'cancelled'
+         AND st.source_document_ref IS NOT NULL
   JOIN mdata.loads l ON l.id = sl.load_id AND l.voided_at IS NULL AND l.status::text <> 'cancelled'
   JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL
  WHERE st.operating_company_id = $1::uuid AND sl.voided_at IS NULL
