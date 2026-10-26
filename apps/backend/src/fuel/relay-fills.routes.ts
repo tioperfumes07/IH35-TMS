@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
+import { relayFillPostedSql } from "./relay-fill-posted.sql.js";
 
 /**
  * Linkage law §6 for Relay fills (integrations.relay_fuel_transactions). Relay rows never become
@@ -17,6 +18,8 @@ const query = z.object({
   driver_id: z.string().uuid().optional(),
   /** The risk window: fills Relay sent that no truck or driver has been matched to yet. */
   unmatched: z.enum(["true", "false"]).optional(),
+  /** LEAD 10-25 FINAL-4 — fills not yet booked to the GL (the Vendors board's Unposted fuel tile drills here). */
+  unposted: z.enum(["true"]).optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -49,6 +52,7 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
         where.push(`r.matched_driver_id = $${values.length}::uuid`);
       }
       if (d.unmatched === "true") where.push("(r.matched_unit_id IS NULL OR r.matched_driver_id IS NULL)");
+      if (d.unposted === "true") where.push(`NOT ${relayFillPostedSql("r")}`);
       if (d.from) {
         values.push(d.from);
         where.push(`r.relay_created_at >= $${values.length}::date`);
@@ -57,8 +61,9 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
         values.push(d.to);
         where.push(`r.relay_created_at < ($${values.length}::date + 1)`);
       }
-      const total = await client.query<{ n: number }>(
-        `SELECT count(*)::int AS n FROM integrations.relay_fuel_transactions r WHERE ${where.join(" AND ")}`,
+      const total = await client.query<{ n: number; cents: string }>(
+        `SELECT count(*)::int AS n, coalesce(sum(r.total_amount_paid_cents), 0)::bigint AS cents
+           FROM integrations.relay_fuel_transactions r WHERE ${where.join(" AND ")}`,
         values
       );
       values.push(d.limit, d.offset);
@@ -68,9 +73,7 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
                 r.total_amount_paid_cents::bigint AS total_amount_paid_cents,
                 -- OWNER LAW 2026-10-02: derived from a journal entry existing, never the hand-set staging flag. A fill
                 -- is booked when its card bank line is matched in Banking and that match carries a journal entry.
-                EXISTS (SELECT 1 FROM banking.bank_transactions bt
-                         WHERE bt.matched_relay_fuel_transaction_id = r.id AND bt.operating_company_id = r.operating_company_id
-                           AND bt.voided_at IS NULL AND bt.matched_journal_entry_id IS NOT NULL) AS posted_to_gl,
+                ${relayFillPostedSql("r")} AS posted_to_gl,
                 r.matched_unit_id::text AS unit_id, u.unit_number,
                 r.matched_driver_id::text AS driver_id,
                 NULLIF(trim(concat_ws(' ', dr.first_name, dr.last_name)), '') AS driver_name,
@@ -95,7 +98,13 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
           LIMIT $${values.length - 1} OFFSET $${values.length}`,
         values
       );
-      return { rows: rows.rows, total_count: total.rows[0]?.n ?? 0, has_more: d.offset + d.limit < (total.rows[0]?.n ?? 0) };
+      return {
+        rows: rows.rows,
+        total_count: total.rows[0]?.n ?? 0,
+        // Amount over EVERY matching fill (not the page) — a drilled tile reads the same figure.
+        total_amount_paid_cents: Number(total.rows[0]?.cents ?? 0),
+        has_more: d.offset + d.limit < (total.rows[0]?.n ?? 0),
+      };
     });
   });
 }

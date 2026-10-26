@@ -218,26 +218,41 @@ const BILL_POSTED_GL_EXISTS_SQL = `
   )
 `;
 
-function applyBillListStatusFilter(where: string[], status: BillListStatus | undefined) {
-  if (!status || status === "all") return;
-  if (status === "active") {
-    where.push("b.revoked_at IS NULL");
-    where.push("b.status NOT IN ('void', 'voided')");
-    return;
+/**
+ * One status value's predicate (revoked handled by the caller). Kept per value so a MULTI-status filter
+ * (status=unpaid,partial) is an OR of exactly the single-value predicates — never a second definition.
+ */
+function billStatusCondition(status: BillListStatus): string | null {
+  if (status === "all") return null;
+  if (status === "active") return "b.status NOT IN ('void', 'voided')";
+  if (status === "posted") return `(${BILL_POSTED_GL_EXISTS_SQL} AND b.status NOT IN ('void', 'voided'))`;
+  if (status === "outstanding" || status === "unpaid") return `b.status IN (${sqlList(AP_BILL_OUTSTANDING_STATUSES)})`;
+  if (status === "open") return "b.status IN ('open','unpaid')";
+  if (status === "partial") return "b.status IN ('partial','partially_paid')";
+  if (status === "paid") return "b.status = 'paid'";
+  if (status === "voided") return "(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)";
+  return null;
+}
+
+function applyBillListStatusFilter(where: string[], status: BillListStatus | readonly BillListStatus[] | undefined) {
+  // Server-side multi-status (LEAD 10-25 FINAL-4): the OR is applied BEFORE limit/offset and inside the same WHERE the
+  // register's aggregate totals use, so a drill to status=unpaid,partial lists — and totals — every matching bill, not a page.
+  if (Array.isArray(status)) {
+    const list = status as readonly BillListStatus[];
+    if (!list.length || list.includes("all")) return;
+    if (list.length > 1) {
+      const parts = list.map(billStatusCondition).filter((c): c is string => c != null);
+      if (parts.length) where.push(`(${parts.map((p) => `(${p})`).join(" OR ")})`);
+      if (!list.includes("voided")) where.push("b.revoked_at IS NULL");
+      return;
+    }
+    status = list[0];
   }
-  if (status === "posted") {
-    where.push(BILL_POSTED_GL_EXISTS_SQL);
-    where.push("b.revoked_at IS NULL");
-    where.push("b.status NOT IN ('void', 'voided')");
-    return;
-  }
-  // LEAD 443.219 G-VOCAB — "outstanding" (the screen's "Unpaid") = every bill that still owes money, partially paid included.
-  if (status === "outstanding" || status === "unpaid") where.push(`b.status IN (${sqlList(AP_BILL_OUTSTANDING_STATUSES)})`);
-  if (status === "open") where.push("b.status IN ('open','unpaid')");
-  if (status === "partial") where.push("b.status IN ('partial','partially_paid')");
-  if (status === "paid") where.push("b.status = 'paid'");
-  if (status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
-  if (status !== "voided") where.push("b.revoked_at IS NULL");
+  const single = status as BillListStatus | undefined;
+  if (!single || single === "all") return;
+  const condition = billStatusCondition(single);
+  if (condition) where.push(condition);
+  if (single !== "voided") where.push("b.revoked_at IS NULL");
 }
 
 /**
@@ -250,7 +265,7 @@ function applyBillListStatusFilter(where: string[], status: BillListStatus | und
 export const BILL_AGING_DUE_DATE_SQL = "COALESCE(b.due_date, b.bill_date)";
 
 type ListBillsOptions = {
-  status?: BillListStatus;
+  status?: BillListStatus | readonly BillListStatus[];
   fromDate?: string;
   toDate?: string;
   hasBalance?: boolean;
@@ -1488,7 +1503,7 @@ export async function aggregateBillsForRegister(
   userId: string,
   operatingCompanyId: string,
   options: Omit<ListBillsOptions, "limit" | "offset"> & { vendorId?: string }
-): Promise<{ count: number; amount_cents: number }> {
+): Promise<{ count: number; amount_cents: number; balance_cents: number }> {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
@@ -1497,10 +1512,16 @@ export async function aggregateBillsForRegister(
       where.push(`COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, values.length)}`);
     }
     const result = await client.query(
-      `SELECT COUNT(*)::int AS count, COALESCE(SUM(b.amount_cents), 0)::bigint AS amount_cents
+      `SELECT COUNT(*)::int AS count, COALESCE(SUM(b.amount_cents), 0)::bigint AS amount_cents,
+              -- LEAD 10-25 FINAL-4 — remaining balance over EVERY matching bill (amount − paid), the A/P figure boards drill to.
+              COALESCE(SUM(b.amount_cents - COALESCE(b.paid_cents, 0)), 0)::bigint AS balance_cents
        FROM accounting.bills b ${BILL_VENDOR_RESOLVE_JOIN_SQL}
        WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}`, values);
-    return { count: Number(result.rows[0]?.count ?? 0), amount_cents: Number(result.rows[0]?.amount_cents ?? 0) };
+    return {
+      count: Number(result.rows[0]?.count ?? 0),
+      amount_cents: Number(result.rows[0]?.amount_cents ?? 0),
+      balance_cents: Number(result.rows[0]?.balance_cents ?? 0),
+    };
   });
 }
 

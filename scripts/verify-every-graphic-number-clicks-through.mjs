@@ -24,9 +24,10 @@ const ROUTE_HELPERS = new Map([['driverProfileTabHref', '/drivers/{dynamic}']]);
 // scanned nothing; components/boards is where the boards live.
 export const BOARDS_DIR = 'apps/frontend/src/components/boards';
 // Declared no-drill values (MoneyCell drill.none / V3KpiTile noDrill, each with a written reason). SHRINK-ONLY:
-// measured 2026-10-25 after the 31 dead values were fixed. A new declaration must replace a drill-less value,
+// measured 2026-10-25 after the 31 dead values were fixed, lowered 8 -> 6 when Fuel share / Unposted fuel got real drills
+// (the 6 left are DriverOverview footer totals of the rows directly above them). A new declaration must replace a drill-less value,
 // never add to the count — build the destination filter instead.
-export const DECLARED_NO_DRILL_CEILING = 8;
+export const DECLARED_NO_DRILL_CEILING = 6;
 // Only parameters observed at the destination consumer may certify a static scope.
 // BillsPage.tsx:252-305. Other destinations remain UNVERIFIED, not guessed valid.
 const ROUTE_FILTERS = new Map([
@@ -36,20 +37,53 @@ const ROUTE_FILTERS = new Map([
   ])],
   // Board filters held in the URL. Each consumer is re-checked every run (consumerProblems).
   ['/vendors', new Set(['chip'])],
-  ['/customers', new Set(['chip'])],
-  ['/drivers', new Set(['status'])],
+  ['/customers', new Set(['chip', 'range'])],
+  ['/drivers', new Set(['status', 'load', 'settle'])],
+  // LEAD 10-25 FINAL-4 server-side drill filters (applied before pagination, totals over every matching row).
+  ['/accounting/expenses', new Set(['payment_account_id', 'expense_account_id', 'has_vendor'])],
+  ['/accounting/invoices', new Set(['live_open', 'has_balance', 'customer_id'])],
+  ['/fuel/relay-unmatched', new Set(['unposted'])],
 ]);
+const FE = 'apps/frontend/src';
 export const FILTER_CONSUMERS = [
-  { route: '/vendors', key: 'chip', file: 'apps/frontend/src/components/boards/VendorsHomeBoard.tsx' },
-  { route: '/customers', key: 'chip', file: 'apps/frontend/src/components/boards/PartyBoard.tsx' },
-  { route: '/drivers', key: 'status', file: 'apps/frontend/src/components/boards/DriverHubBoard.tsx' },
+  { route: '/vendors', key: 'chip', file: `${FE}/components/boards/VendorsHomeBoard.tsx` },
+  { route: '/customers', key: 'chip', file: `${FE}/components/boards/PartyBoard.tsx` },
+  { route: '/customers', key: 'range', file: `${FE}/components/boards/PartyBoard.tsx` },
+  { route: '/drivers', key: 'status', file: `${FE}/components/boards/DriverHubBoard.tsx` },
+  { route: '/drivers', key: 'load', file: `${FE}/components/boards/DriverHubBoard.tsx` },
+  { route: '/drivers', key: 'settle', file: `${FE}/components/boards/DriverHubBoard.tsx` },
+  { route: '/accounting/expenses', key: 'payment_account_id', file: `${FE}/pages/accounting/ExpensesListPage.tsx` },
+  { route: '/accounting/expenses', key: 'expense_account_id', file: `${FE}/pages/accounting/ExpensesListPage.tsx` },
+  { route: '/accounting/expenses', key: 'has_vendor', file: `${FE}/pages/accounting/ExpensesListPage.tsx` },
+  { route: '/accounting/invoices', key: 'live_open', file: `${FE}/pages/accounting/InvoicesListPage.tsx` },
+  { route: '/accounting/bills', key: 'status', file: `${FE}/pages/accounting/BillsPage.tsx` },
+  { route: '/fuel/relay-unmatched', key: 'unposted', file: `${FE}/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx` },
 ];
+// A destination whose WHOLE list is the figure's population (no filter exists because none is needed). Allowed only with
+// no query string, and only while the page still totals every row it lists (populationProblems re-checks the source).
+export const POPULATION_ROUTES = new Map([
+  ['/driver-finance/escrow', {
+    file: `${FE}/pages/driver-finance/SettlementsEscrowBoard.tsx`,
+    contract: 'allDriverRows.reduce((s, r) => s + r.heldCents, 0)',
+    why: 'every driver holding an escrow balance; the page total is the sum of all of them',
+  }],
+]);
+export function populationProblems(readText) {
+  const problems = [];
+  for (const [route, c] of POPULATION_ROUTES) {
+    const text = readText(c.file);
+    if (text == null || !text.includes(c.contract)) {
+      problems.push(`${route}: ${c.file} no longer totals its whole list (${c.contract}) — it cannot stand for a population figure`);
+    }
+  }
+  return problems;
+}
 export function consumerProblems(readText) {
   const problems = [];
   for (const c of FILTER_CONSUMERS) {
     const text = readText(c.file);
     if (text == null) problems.push(`filter consumer missing: ${c.file} (${c.route}?${c.key}=)`);
-    else if (!new RegExp(`\\.get\\(\\s*["']${c.key}["']\\s*\\)`).test(text)) {
+    else if (!new RegExp(`\\.get(?:All)?\\(\\s*["']${c.key}["']\\s*\\)`).test(text)) {
       problems.push(`${c.file} no longer reads ?${c.key}= — ${c.route}?${c.key}= links would not reproduce their number`);
     }
   }
@@ -73,6 +107,7 @@ export function destinationProblem(value) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return 'destination must be an internal route';
   const url = new URL(value, 'https://app.invalid');
   if (url.hash && !url.search) return 'anchor alone is not a record/filter destination';
+  if (POPULATION_ROUTES.has(url.pathname) && !url.search && !url.hash) return null;
   // SettlementsPage consumes these record keys only on the company_driver view.
   // A generic id, tab-only link, or a key on another tab is not a statement drill.
   if (url.pathname === '/driver-finance/settlements') {
@@ -81,7 +116,7 @@ export function destinationProblem(value) {
       (url.searchParams.get(key) ?? '').trim() !== '');
     return statement && identity ? null : 'settlement drill requires company_driver tab and a consumed settlement identity';
   }
-  const record = /\/(?:loads|drivers|units|customers|vendors|invoices|bills|settlements|work-orders|files|chart-of-accounts\/register)\/[^/]+$/.test(url.pathname);
+  const record = /\/(?:loads|drivers|units|customers|vendors|invoices|bills|settlements|work-orders|files|chart-of-accounts\/register|factoring\/faro-debtors)\/[^/]+$/.test(url.pathname);
   const filter = [...url.searchParams].some(([key, val]) => ROUTE_FILTERS.get(url.pathname)?.has(key) && val.trim() !== '');
   if (!record && !filter) return 'destination lacks record identity or population filter (tab/view alone is insufficient)';
   return null;
@@ -245,7 +280,36 @@ export function scanSource(source, file = 'board.tsx') {
       if (issue) add(opening, `${tag}: ${issue}: ${route}`);
     }
   }
+  // A tile written as data — `[{ label, value, … }]` rendered through `{t.value}` — is a figure the JSX scan cannot see.
+  // A tile whose value can render a number must carry its own href/to (resolvable) or a stated noDrill reason.
+  const tileValueIsFigure = (e) => {
+    if (!e) return false;
+    if (ts.isParenthesizedExpression(e)) return tileValueIsFigure(e.expression);
+    if (ts.isConditionalExpression(e)) return tileValueIsFigure(e.whenTrue) || tileValueIsFigure(e.whenFalse);
+    return !(ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e));
+  };
+  function tileObject(node) {
+    if (!ts.isObjectLiteralExpression(node) || !node.parent || !ts.isArrayLiteralExpression(node.parent)) return;
+    const prop = (n) => node.properties.find(q => ts.isPropertyAssignment(q) && q.name.getText(tree) === n);
+    const value = prop('value');
+    if (!prop('label') || !value || !tileValueIsFigure(value.initializer)) return;
+    values++;
+    const dest = prop('href') ?? prop('to');
+    if (dest) {
+      const routes = resolve(dest.initializer);
+      if (!routes) add(node, 'tile object: statically unresolved href/to; requires explicit record/filter contract');
+      else for (const route of routes) {
+        const issue = destinationProblem(route);
+        if (issue) add(node, `tile object: ${issue}: ${route}`);
+      }
+      return;
+    }
+    const reason = reasonOf(prop('noDrill')?.initializer);
+    if (reason) declared.push(`${file}:${tree.getLineAndCharacterOfPosition(node.getStart(tree)).line + 1}: ${reason}`);
+    else add(node, 'tile object: value has no href/to drill and no stated noDrill reason');
+  }
   function visit(node) {
+    tileObject(node);
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) element(node);
     ts.forEachChild(node, visit);
   }
@@ -315,6 +379,17 @@ export function selftest() {
     ['condition on a count that renders text', '<p>{n.count > 0 ? "has rows" : null}</p>', false],
     ['conditional that renders money', '<p>{ok ? money(total) : "—"}</p>', true],
     ['and-guard that renders money', '<p>{ok && usd(total)}</p>', true],
+    ['tile array without a drill', 'const tiles = [{ label: "Open", value: int(n) }];', true],
+    ['tile array with a filtered drill', 'const tiles = [{ label: "Open", value: int(n), to: "/accounting/bills?status=open" }];', false],
+    ['tile array with a record helper', 'const tiles = [{ label: "Due", value: money(c), to: driverProfileTabHref(id, "Settlements") }];', false],
+    ['tile array with a tab-only drill', 'const tiles = [{ label: "Open", value: int(n), to: "/cash-flow?tab=x" }];', true],
+    ['tile array stated noDrill', 'const tiles = [{ label: "Mix", value: pct, noDrill: "a computed share with no list" }];', false],
+    ['tile array status word is not a figure', 'const tiles = [{ label: "Integrity", value: flagged ? "Flagged" : "Clear" }];', false],
+    ['options array is not a tile', 'const opts = [{ value: "board", label: "Board" }];', false],
+    ['population route, whole list', '<Link to="/driver-finance/escrow">{money(total)}</Link>', false],
+    ['population route cannot take a query', '<Link to="/driver-finance/escrow?x=1">{money(total)}</Link>', true],
+    ['faro debtor record', '<NumLink to={`/factoring/faro-debtors/${name}`}>{money(total)}</NumLink>', false],
+    ['expenses drill filter', '<NumLink to={`/accounting/expenses?payment_account_id=${id}&has_vendor=true`}>{usd(c)}</NumLink>', false],
     ['fragment figure cannot escape', '<p>{ok ? <>{usd(total)} ({int(n)})</> : null}</p>', true],
     ['linked fragment figure', '<Link to="/accounting/bills?status=open"><>{usd(total)}</></Link>', false],
   ];
@@ -334,6 +409,15 @@ export function selftest() {
   const realRead = (rel) => { try { return fs.readFileSync(path.join(ROOT, rel), 'utf8'); } catch { return null; } };
   assert.equal(consumerProblems(realRead).length, 0, 'every URL filter consumer reads its key');
   assert.ok(consumerProblems((rel) => (realRead(rel) ?? '').replace(/\.get\(\s*["']chip["']\s*\)/g, '.get("x")')).length > 0, 'a consumer that stops reading ?chip= is caught');
+  assert.equal(populationProblems(realRead).length, 0, 'population route contract holds');
+  assert.ok(populationProblems((rel) => (realRead(rel) ?? '').replace('allDriverRows.reduce((s, r) => s + r.heldCents, 0)', '0')).length > 0,
+    'a population page that stops totalling its whole list is caught');
+  // A real tile array (DriverOverviewBoard) planted with a dead tile fails.
+  const overviewRel = `${BOARDS_DIR}/DriverOverviewBoard.tsx`;
+  const overview = fs.readFileSync(path.join(ROOT, overviewRel), 'utf8');
+  const deadTile = overview.replace(', to: driverProfileTabHref(o.driver.id, "Loads") }', ' }');
+  assert.notEqual(deadTile, overview, 'tile plant changed DriverOverviewBoard');
+  assert.ok(scanSource(deadTile, overviewRel).problems.length > scanSource(overview, overviewRel).problems.length, 'a real tile stripped of its drill fails');
   // A real board, planted with a dead number, fails; the real board as shipped passes.
   const boardRel = `${BOARDS_DIR}/VendorsHomeBoard.tsx`;
   const board = fs.readFileSync(path.join(ROOT, boardRel), 'utf8');
@@ -368,6 +452,7 @@ export function scanTree(root) {
     ...consumerProblems(read),
     ...helperProblems(read('apps/frontend/src/pages/drivers/driverProfileTabs.ts')),
     ...wrapperProblems(read('apps/frontend/src/components/boards/partyBoardKit.tsx')),
+    ...populationProblems(read),
   ];
   if (declared.length > DECLARED_NO_DRILL_CEILING) {
     problems.push(`${declared.length} declared no-drill values > ceiling ${DECLARED_NO_DRILL_CEILING} (shrink-only) — build the destination instead of declaring`);

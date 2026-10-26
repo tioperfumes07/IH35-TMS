@@ -17,6 +17,7 @@ import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import { VendorsHomeBoard } from "./VendorsHomeBoard";
 import { NumLink } from "./partyBoardKit";
+import { V3KpiTile } from "../v3";
 import { MoneyCell } from "../shared/MoneyCell";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
@@ -31,6 +32,8 @@ type CustomerRow = {
   aging: { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number };
 };
 type CustomerBoard = {
+  /** The board's first counted day (server) for the selected range. */
+  range_from: string;
   kpis: { with_transactions: number; in_the_book: number; open_invoices: number; billed_cents: number; ar_open_cents: number; collected_cents: number; invoices: number; invoices_with_payment: number };
   chips: { with_transactions: number; open_balance: number; factored: number; all: number };
   rows: CustomerRow[];
@@ -149,9 +152,17 @@ function BoardTable<R extends { id: string }>(props: {
 
 export function PartyBoard(props: { kind: "customers"; operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
-  const [range, setRange] = useState<Range>("ytd");
-  // The chip lives in the URL (?chip=) so every figure can link to the exact customer rows it sums.
-  const [searchParams] = useSearchParams();
+  // Chip and range live in the URL (?chip=, ?range=) so every tile and figure links to the exact rows it sums.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rangeParam = searchParams.get("range");
+  const range: Range = rangeParam === "12m" || rangeParam === "all" ? rangeParam : "ytd";
+  const setRange = (next: Range) =>
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next === "ytd") params.delete("range");
+      else params.set("range", next);
+      return params;
+    }, { replace: true });
   const chip = searchParams.get("chip") || "with_transactions";
   const [aging, setAging] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -176,22 +187,12 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
   const sub = "The list opens on the customers you actually do business with";
   const all = data?.chips.all ?? 0;
 
-  let tiles: Array<{ label: string; value: string; tone?: "navy" | "red" | "amber" }> = [];
   let chips: Array<{ id: string; label: string; n: number }> = [];
   let table: ReactNode = null;
   let note: ReactNode = null;
 
   if (data) {
     const b = data as CustomerBoard;
-    tiles = [
-      { label: "With transactions", value: int(b.kpis.with_transactions), tone: "navy" },
-      { label: "In the book", value: int(b.kpis.in_the_book) },
-      // ROUND 297: "open" = live, not void, balance above $0 -- the same definition Factoring's candidates use.
-      { label: "Open invoices", value: int(b.kpis.open_invoices) },
-      { label: "Billed", value: money(b.kpis.billed_cents) },
-      { label: "A/R open", value: money(b.kpis.ar_open_cents), tone: "red" },
-      { label: "Collected", value: money(b.kpis.collected_cents) },
-    ];
     chips = [
       { id: "with_transactions", label: "With transactions", n: b.chips.with_transactions },
       { id: "open_balance", label: "Open balance", n: b.chips.open_balance },
@@ -224,12 +225,12 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
           <div className="pb-note-t">This screen surfaces something you should see</div>
           <div className="pb-note-b">
             {/* Each figure opens the customer rows whose Invoices / Billed / Collected / Open balance foots it equals. */}
-            <NumLink to="/customers?chip=with_transactions">{int(b.kpis.invoices)} invoices</NumLink> issued (open and paid),{" "}
-            <strong><NumLink to="/customers?chip=with_transactions">{usd(b.kpis.billed_cents)}</NumLink> billed</strong> — and only{" "}
+            <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)} invoices</NumLink> issued (open and paid),{" "}
+            <strong><NumLink to={`/customers?chip=with_transactions&range=${range}`}>{usd(b.kpis.billed_cents)}</NumLink> billed</strong> — and only{" "}
             <strong>{int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry any payment at all</strong>,{" "}
-            <NumLink to="/customers?chip=with_transactions">{money(b.kpis.collected_cents)}</NumLink> in total.
+            <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{money(b.kpis.collected_cents)}</NumLink> in total.
             Cash that has not been applied to an invoice does not relieve A/R here, so the{" "}
-            <NumLink to="/customers?chip=open_balance">{usd(b.kpis.ar_open_cents)}</NumLink> open balance includes
+            <NumLink to={`/customers?chip=open_balance&range=${range}`}>{usd(b.kpis.ar_open_cents)}</NumLink> open balance includes
             anything already paid but not applied. Computed live from your invoices.
           </div>
         </div>
@@ -248,23 +249,26 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
           <button type="button" className="pb-create" onClick={props.onCreate}>+ Create Customer</button>
         </div>
         <div className="pb-kpis" data-testid="party-board-kpis">
-          {(tiles.length ? tiles : Array.from({ length: 6 }, (): (typeof tiles)[number] => ({ label: "", value: "…" }))).map((t, i) => (
-            <div key={`${t.label}:${i}`} className={`pb-kpi${t.tone ? ` pb-kpi--${t.tone}` : ""}`}>
-              <div className="ih-hd">{t.label || " "}</div>
-              <div className="pb-kpi-v">{t.value}</div>
-            </div>
-          ))}
+          {/* One tile format (V3KpiTile). Each tile opens the exact rows it counts: the board's own ?chip=&range= list
+              (whose column foots equal the tile) or, for Open invoices, the invoices list's live_open filter. */}
+          <V3KpiTile label="With transactions" value={data ? int(data.kpis.with_transactions) : "…"} href={`/customers?chip=with_transactions&range=${range}`} />
+          <V3KpiTile label="In the book" value={data ? int(data.kpis.in_the_book) : "…"} href={`/customers?chip=all&range=${range}`} />
+          {/* ROUND 297: "open" = live, not void, balance above $0 -- the same definition Factoring's candidates use. */}
+          <V3KpiTile label="Open invoices" value={data ? int(data.kpis.open_invoices) : "…"} href={`/accounting/invoices?live_open=true&date_from=${data?.range_from ?? ""}`} />
+          <V3KpiTile label="Billed" value={data ? money(data.kpis.billed_cents) : "…"} href={`/customers?chip=with_transactions&range=${range}`} />
+          <V3KpiTile label="A/R open" value={data ? money(data.kpis.ar_open_cents) : "…"} tone="red" href={`/customers?chip=open_balance&range=${range}`} />
+          <V3KpiTile label="Collected" value={data ? money(data.kpis.collected_cents) : "…"} href={`/customers?chip=with_transactions&range=${range}`} />
         </div>
       </div>
 
       <div className="pb-bar">
         {chips.map((c) => (
-          <Link key={c.id} className="pb-chip" to={`/customers?chip=${c.id}`} aria-current={chip === c.id && !term ? "true" : undefined}
+          <Link key={c.id} className="pb-chip" to={`/customers?chip=${c.id}&range=${range}`} aria-current={chip === c.id && !term ? "true" : undefined}
             onClick={() => setSearch("")}>
             {c.label} {int(c.n)}
           </Link>
         ))}
-        <Link className="pb-chip" to="/customers?chip=duplicates" aria-current={chip === "duplicates" && !term ? "true" : undefined}
+        <Link className="pb-chip" to={`/customers?chip=duplicates&range=${range}`} aria-current={chip === "duplicates" && !term ? "true" : undefined}
           data-testid="party-board-duplicates-chip" onClick={() => setSearch("")}>
           Possible duplicates {variantCount == null ? "…" : int(variantCount)}
         </Link>

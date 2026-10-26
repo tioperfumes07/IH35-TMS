@@ -34,6 +34,8 @@ export type RelayFillListFilter = {
   unit_id?: string;
   driver_id?: string;
   unmatched?: boolean;
+  /** LEAD 10-25 FINAL-4 — fills not yet booked to the GL (posted = a booked bank match). */
+  unposted?: boolean;
   from?: string;
   to?: string;
   limit?: number;
@@ -45,11 +47,12 @@ export function listRelayFills(operatingCompanyId: string, filter: RelayFillList
   if (filter.unit_id) search.set("unit_id", filter.unit_id);
   if (filter.driver_id) search.set("driver_id", filter.driver_id);
   if (filter.unmatched) search.set("unmatched", "true");
+  if (filter.unposted) search.set("unposted", "true");
   if (filter.from) search.set("from", filter.from);
   if (filter.to) search.set("to", filter.to);
   if (filter.limit !== undefined) search.set("limit", String(filter.limit));
   if (filter.offset !== undefined) search.set("offset", String(filter.offset));
-  return apiRequest<{ rows: RelayFillRow[]; total_count: number; has_more: boolean }>(
+  return apiRequest<{ rows: RelayFillRow[]; total_count: number; total_amount_paid_cents?: number; has_more: boolean }>(
     `/api/v1/fuel/relay-fills?${search.toString()}`
   );
 }

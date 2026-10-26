@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import { NumLink } from "./partyBoardKit";
+import { V3KpiTile } from "../v3";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
@@ -165,6 +166,8 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
       params.set("view", "board");
+      params.delete("load");
+      params.delete("settle");
       if (next === "Active") params.delete("status");
       else params.set("status", next);
       return params;
@@ -179,12 +182,19 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
     queryKey: ["driver-hub", props.operatingCompanyId],
     queryFn: () => apiRequest<Hub>(`/api/v1/mdata/boards/drivers?operating_company_id=${props.operatingCompanyId}`),
   });
+  // ?load=on|available — the On loads / Available tiles (active drivers on / not on a load), ?settle=due — drivers with
+  // an unpaid settlement (the Settle due tile counts their settlements; the Due column shows how many each has).
+  const loadParam = searchParams.get("load");
+  const settleDue = searchParams.get("settle") === "due";
   const term = search.trim().toLowerCase();
   const rows = useMemo(() => (q.data?.rows ?? []).filter((r) =>
     (term ? [r.name, r.phone ?? "", r.cdl ?? ""].some((v) => v.toLowerCase().includes(term))
+      : loadParam === "on" ? r.status === "Active" && r.on_load
+      : loadParam === "available" ? r.status === "Active" && !r.on_load
+      : settleDue ? r.due_count > 0
       : status === "All" ? true : status === "Inactive" ? r.status === "Inactive" || r.status === "Terminated" : r.status === status)
     && (units.length === 0 || (r.unit != null && units.includes(r.unit)))
-    && (basis === "all" || (basis === "none" ? r.basis == null : r.basis === basis))), [q.data, term, status, units, basis]);
+    && (basis === "all" || (basis === "none" ? r.basis == null : r.basis === basis))), [q.data, term, status, units, basis, loadParam, settleDue]);
   if (q.isError) return <ListErrorState status={q.error instanceof ApiError ? q.error.status : 0} message="Could not load drivers." onRetry={() => void q.refetch()} />;
   const h = q.data;
   const current = selected && rows.some((r) => r.id === selected) ? selected : rows[0]?.id ?? null;
@@ -198,17 +208,14 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
     { key: "name", label: "Driver", alwaysVisible: true, render: (r) => <button type="button" className="pb-name" onClick={() => setSelected(r.id)}>{r.name}</button> },
     { key: "unit", label: "Unit", minWidth: 62, render: (r) => <span className="pb-strong">{r.unit ?? <span className="ih-empty">—</span>}</span> },
     { key: "basis", label: "Pay basis", minWidth: 86, render: (r) => <span className="pb-sub-sm">{r.basis ?? "—"}</span> },
-    { key: "due", label: "Due", kind: "money", minWidth: 96, sortValue: (r) => r.due_cents, render: (r) => <span className="ih-num pb-strong"><MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} /></span> },
+    { key: "due", label: "Due", kind: "money", minWidth: 96, sortValue: (r) => r.due_cents, render: (r) => (
+      <span className="ih-num pb-strong">
+        <MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} />
+        {r.due_count > 0 ? <span className="pb-sub-sm"> (<NumLink to={driverProfileTabHref(r.id, "Settlements")}>{int(r.due_count)}</NumLink>)</span> : null}
+      </span>
+    ) },
   ];
   const statusLabel: Record<keyof Hub["chips"], string> = { Active: "Active", Probation: "Probation", OnLeave: "On leave", Inactive: "Inactive", All: "All" };
-  const tiles = h ? [
-    { label: "Active", value: `${int(h.kpis.active)} / ${int(h.kpis.total)}`, tone: "navy", onClick: () => setStatus("Active") },
-    { label: "On loads", value: int(h.kpis.on_loads) },
-    { label: "Available", value: int(h.kpis.available) },
-    { label: "On leave", value: int(h.kpis.on_leave), onClick: () => setStatus("OnLeave") },
-    { label: "Settle due", value: int(h.kpis.settle_due), tone: h.kpis.settle_due ? "amber" : undefined, onClick: () => navigate("/drivers/settlements") },
-    { label: "Escrow held", value: money(h.kpis.escrow_held_cents) },
-  ] : [];
 
   return (
     <div className="pb" data-testid="driver-hub-board">
@@ -231,12 +238,14 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
           </div>
         </div>
         <div className="pb-kpis" data-testid="driver-hub-kpis">
-          {(tiles.length ? tiles : Array.from({ length: 6 }, () => ({ label: "", value: "…" } as (typeof tiles)[number]))).map((t, i) => (
-            <button key={`${t.label}:${i}`} type="button" className={`pb-kpi pb-kpi-btn${t.tone ? ` pb-kpi--${t.tone}` : ""}`} onClick={t.onClick}>
-              <div className="ih-hd">{t.label || " "}</div>
-              <div className="pb-kpi-v">{t.value}</div>
-            </button>
-          ))}
+          {/* One tile format (V3KpiTile); each opens the exact drivers (or balances) it counts. */}
+          <V3KpiTile label="Active" value={h ? `${int(h.kpis.active)} / ${int(h.kpis.total)}` : "…"} href="/drivers?view=board&status=Active" />
+          <V3KpiTile label="On loads" value={h ? int(h.kpis.on_loads) : "…"} href="/drivers?view=board&load=on" />
+          <V3KpiTile label="Available" value={h ? int(h.kpis.available) : "…"} href="/drivers?view=board&load=available" />
+          <V3KpiTile label="On leave" value={h ? int(h.kpis.on_leave) : "…"} href="/drivers?view=board&status=OnLeave" />
+          <V3KpiTile label="Settle due" value={h ? int(h.kpis.settle_due) : "…"} tone={h && h.kpis.settle_due ? "amber" : "ink"} href="/drivers?view=board&settle=due" />
+          {/* The Escrow page lists every driver holding an escrow balance — its total is this figure. */}
+          <V3KpiTile label="Escrow held" value={h ? money(h.kpis.escrow_held_cents) : "…"} href="/driver-finance/escrow" />
         </div>
       </div>
 
@@ -286,7 +295,7 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
       <div className="pb-md">
         <div className="pb-card">
           <div className="pb-md-head">
-            <span className="ih-hd">{int(rows.length)} {term ? "matching" : statusLabel[status].toLowerCase()} drivers</span>
+            <span className="ih-hd">{int(rows.length)} {term ? "matching" : loadParam === "on" ? "active, on a load —" : loadParam === "available" ? "active, available —" : settleDue ? "with a settlement due —" : statusLabel[status].toLowerCase()} drivers</span>
             <span className="pb-sub-sm">Sorted by settlement due</span>
           </div>
           <div style={{ overflow: "auto", minHeight: 0 }}>

@@ -38,8 +38,11 @@ export function check(src = {}) {
     if (!a || !b) f.push(`${n} missing from ${!a ? F.be : F.fe}`);
     else if (a.join("|") !== b.join("|")) f.push(`${n} drifts: backend [${a}] vs shared-types [${b}]`);
   }
-  if (!/where\.push\(`b\.status IN \(\$\{sqlList\(AP_BILL_OUTSTANDING_STATUSES\)\}\)`\)/.test(s.billsSvc)) f.push(`${F.billsSvc}: the "unpaid"/outstanding filter must read AP_BILL_OUTSTANDING_STATUSES`);
-  if (!/query\.data\.status === "unpaid"\s*\?\s*\("outstanding" as const\)/.test(s.billsRoutes)) f.push(`${F.billsRoutes}: "Unpaid" must map to outstanding (unpaid + partially_paid), never open-only`);
+  // LEAD 10-25 FINAL-4 (multi-status, server-side): one predicate per value in billStatusCondition, shared by the
+  // single and the OR'd multi-status paths — the outstanding/unpaid value must still read AP_BILL_OUTSTANDING_STATUSES.
+  if (!/status === "outstanding" \|\| status === "unpaid"\) return `b\.status IN \(\$\{sqlList\(AP_BILL_OUTSTANDING_STATUSES\)\}\)`/.test(s.billsSvc)) f.push(`${F.billsSvc}: the "unpaid"/outstanding filter must read AP_BILL_OUTSTANDING_STATUSES`);
+  if (!/status: billStatusesForService\(query\.data\.status, "outstanding"\)/.test(s.billsRoutes) ||
+      !/v === "unpaid" \? unpaidAs : v/.test(s.billsRoutes)) f.push(`${F.billsRoutes}: "Unpaid" must map to outstanding (unpaid + partially_paid), never open-only`);
   if (!/AND \(\$5::text\[\] IS NULL OR db\.status = ANY\(\$5::text\[\]\)\)/.test(s.billsRoutes) || !/driverBillStatusesForFilter\(query\.data\.status\)/.test(s.billsRoutes))
     f.push(`${F.billsRoutes}: the driver-bill register must apply the status filter in the driver-bill vocabulary`);
   if (!/\[\.\.\.DRIVER_BILL_OUTSTANDING_STATUSES\]/.test(s.billsRoutes)) f.push(`${F.billsRoutes}: driver "Unpaid" must be DRIVER_BILL_OUTSTANDING_STATUSES`);
@@ -71,7 +74,9 @@ if (isMain && process.argv.includes("--selftest")) {
     ["vendor parameter missing", { billsRoutes: base.billsRoutes.replace("query.data.vendor_id ?? null, query.data.unit_id", "null, query.data.unit_id") }],
     ["UTC date boundary", { billsRoutes: base.billsRoutes.replaceAll("db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}'", "db.created_at") }],
     ["twin drifts", { fe: base.fe.replace('"open", "approved", "paid", "void", "disputed"', '"open", "paid", "void"') }],
-    ["unpaid back to open-only", { billsRoutes: base.billsRoutes.replace('("outstanding" as const)', '("open" as const)') }],
+    ["unpaid back to open-only", { billsRoutes: base.billsRoutes.replace('billStatusesForService(query.data.status, "outstanding")', 'billStatusesForService(query.data.status, "open")') }],
+    ["unpaid stops mapping", { billsRoutes: base.billsRoutes.replace('v === "unpaid" ? unpaidAs : v', "v") }],
+    ["outstanding stops reading the vocabulary", { billsSvc: base.billsSvc.replace("return `b.status IN (${sqlList(AP_BILL_OUTSTANDING_STATUSES)})`", "return `b.status IN ('open')`") }],
     ["driver register ignores status", { billsRoutes: base.billsRoutes.replace("AND ($5::text[] IS NULL OR db.status = ANY($5::text[]))", "") }],
     ["screen hides approved", { feFilter: base.feFilter.replace("DRIVER_BILL_OUTSTANDING_STATUSES as readonly string[]).includes", "[\"open\"] as readonly string[]).includes") }],
     ["void bill counts as a bill", { exceptions: base.exceptions + "\nconst q = `LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id\n AND db.id IS NULL`;" }],

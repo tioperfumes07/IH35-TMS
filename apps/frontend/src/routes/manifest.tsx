@@ -54,6 +54,7 @@ function PartyListRoute({ kind, children }: { kind: PartyKind; children: ReactNo
 
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
+const FaroDebtorRecordPage = React.lazy(() => import("../pages/factoring/FaroDebtorRecordPage").then((m) => ({ default: m.FaroDebtorRecordPage })));
 const CustomerStatementPage = React.lazy(() => import("../pages/reports/CounterpartyStatementPage").then((m) => ({ default: m.CustomerStatementPage })));
 const VendorStatementPage = React.lazy(() => import("../pages/reports/CounterpartyStatementPage").then((m) => ({ default: m.VendorStatementPage })));
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
@@ -2650,6 +2651,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="payments_to_you" />
+            </ProtectedRoute>
+          }
+        />
+        {/* LEAD 10-25 FINAL-4 — Faro debtor record (read-only); the possible-duplicates panel's debtor totals open here. */}
+        <Route
+          path="/factoring/faro-debtors/:name"
+          element={
+            <ProtectedRoute>
+              <FaroDebtorRecordPage />
             </ProtectedRoute>
           }
         />
