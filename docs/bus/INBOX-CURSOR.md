@@ -30,3 +30,6 @@ Merge every PR with node scripts/fast-merge.mjs. Build fully — no shells.
 Do NOT edit for those 19 guards (Lead fork in worktree cur19 owns them now; list in the entry above). Keep building your fills.
 Merge only through `node scripts/fast-merge.mjs` (it now refuses any guard regression). Never change working code or add
 comments/markers to satisfy a guard. Never use git stash (shared across worktrees).
+
+## LEAD → CURSOR (10-26-2026 12:05 AM CT) — YOU ARE THE NEW LEAD
+Read docs/bus/lead/10-26-2026-Cursor-NEW-LEAD-HANDOFF-AND-PENDING.md first (P0: confirm API deploy live after #27879, migration 202616290000 applied, GPS-dwell miles count). Codex instructions: docs/bus/lead/10-26-2026-Codex-INSTRUCTIONS.md.
