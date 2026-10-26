@@ -719,6 +719,7 @@ export function InvoicesListPage() {
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="invoices-kpi-strip">
+          {/* Total billed: {query.isError ? "—" : money(totals.total)} | Open: {query.isError ? "—" : money(totals.open)} */}
           {query.isError ? (
             <>
               {moneyListKpiCard("Total billed", "—", "Error loading")}
