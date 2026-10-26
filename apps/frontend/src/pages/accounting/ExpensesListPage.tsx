@@ -603,7 +603,6 @@ export function ExpensesListPage() {
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="expenses-kpi-strip">
-          {/* Total: {query.isError ? "—" : money(totals.total)} */}
           {query.isError ? (
             <>
               {moneyListKpiCard("Total", "—", "Error loading")}

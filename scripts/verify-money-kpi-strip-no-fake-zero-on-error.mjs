@@ -35,6 +35,8 @@ import fs from "node:fs";
 
 const BILLS_PAGE = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+const V3_KPI_TILE = "apps/frontend/src/components/v3/V3KpiTile.tsx";
+let settlementsV3TileSource = null; // selftest override
 const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 const EXPENSES_PAGE = "apps/frontend/src/pages/accounting/ExpensesListPage.tsx";
 // ROUND 443.267 board 4 — home KPI strip lives on FactoringHomeBoard (not DrillKpiCard in FactoringHome).
@@ -102,32 +104,22 @@ function checkSettlementsPage(src) {
   if (!kpisBlock.includes('openBillsQuery.isError ? "—"')) {
     fail(`${SETTLEMENTS_PAGE}: open_driver_bills no longer branches on openBillsQuery.isError.`);
   }
-  if (!/value:\s*number\s*\|\s*string/.test(src)) {
+  // 443.280 fill (#b8428fe499) replaced the page-local KpiCard with the shared V3KpiTile. Either the local tile still
+  // types value as number | string, or the page renders V3KpiTile and that shared tile's own value prop accepts a string.
+  const usesSharedTile = /import \{ V3KpiTile \} from "\.\.\/\.\.\/components\/v3\/V3KpiTile"/.test(src) && /<V3KpiTile\b/.test(src);
+  const sharedTileSrc = settlementsV3TileSource ?? fs.readFileSync(V3_KPI_TILE, "utf8");
+  const sharedAcceptsString = /\n\s*value:\s*(?:string|number\s*\|\s*string|string\s*\|\s*number)\s*;/.test(sharedTileSrc);
+  if (!/value:\s*number\s*\|\s*string/.test(src) && !(usesSharedTile && sharedAcceptsString)) {
     fail(`${SETTLEMENTS_PAGE}: KpiCard's value prop is no longer typed to accept the "—" string fallback.`);
   }
 }
 
 function checkInvoicesPage(src) {
-  if (!src.includes("Total billed:")) {
-    fail(`${INVOICES_PAGE}: "Total billed:" strip not found — did it move?`);
-    return;
-  }
-  if (!/Total billed:\s*\{query\.isError/.test(src)) {
-    fail(`${INVOICES_PAGE}: "Total billed" no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
-  }
-  if (!/Open:\s*\{query\.isError/.test(src)) {
-    fail(`${INVOICES_PAGE}: "Open" total no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
-  }
+  for (const m of kpiStripErrorBranchProblems(src, INVOICES_PAGE, "query.isError", ["Total billed", "Open", "Variance", "Rows"])) fail(m);
 }
 
 function checkExpensesPage(src) {
-  if (!src.includes("Total: {")) {
-    fail(`${EXPENSES_PAGE}: "Total:" strip not found — did it move?`);
-    return;
-  }
-  if (!/Total:\s*\{query\.isError/.test(src)) {
-    fail(`${EXPENSES_PAGE}: "Total" no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
-  }
+  for (const m of kpiStripErrorBranchProblems(src, EXPENSES_PAGE, "query.isError", ["Total", "Bank matched", "Unmatched", "Rows"])) fail(m);
 }
 
 // PAYMENTS-KPI-STRIP (ROUND 11, 2026-09-06): this check named Amount/Applied/Unapplied, but
@@ -139,30 +131,31 @@ function checkExpensesPage(src) {
 // three renamed tiles still branch on query.isError (confirmed live on origin/main) — only this
 // guard's literal field-name strings went stale. Checking the CURRENT canonical names here,
 // never the pre-COL-05 ones, so this guard tests the real page instead of a removed schema.
+// 443.293-C promoted the Payments / Bill payments totals into the page's kpiStrip of moneyListKpiCard tiles. The law is
+// unchanged: the strip branches on the query's isError and EVERY tile renders "—" on that branch. Judged on code with
+// comments stripped — #8d9abfca04 satisfied the old text needles with JSX comments, which proves nothing (removed).
+function stripJsComments(src) {
+  return src.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+export function kpiStripErrorBranchProblems(rawSrc, page, errFlag, labels) {
+  const src = stripJsComments(rawSrc);
+  const start = src.indexOf("kpiStrip={");
+  if (start === -1) return [`${page}: kpiStrip prop not found — did the KPI strip move?`];
+  const block = src.slice(start, start + 2400);
+  const branch = block.match(new RegExp(`\\{${errFlag.replace(".", "\\.")} \\? \\(([\\s\\S]*?)\\) : \\(`));
+  if (!branch) return [`${page}: kpiStrip does not branch on ${errFlag} — tiles will show $0.00 on a failed fetch.`];
+  const out = [];
+  for (const label of labels) {
+    if (!new RegExp(`moneyListKpiCard\\(\\s*"${label}"\\s*,\\s*"—"`).test(branch[1])) out.push(`${page}: "${label}" has no "—" tile on the ${errFlag} branch.`);
+  }
+  return out;
+}
 function checkPaymentsPage(src) {
-  if (!src.includes("Total: {")) {
-    fail(`${PAYMENTS_PAGE}: Total totals strip not found — did it move?`);
-    return;
-  }
-  if (!/Total:\s*\{query\.isError/.test(src)) {
-    fail(`${PAYMENTS_PAGE}: Total no longer branches on query.isError — will show $0.00 on a failed fetch.`);
-  }
-  if (!/Open:\s*\{query\.isError/.test(src)) {
-    fail(`${PAYMENTS_PAGE}: Open no longer branches on query.isError.`);
-  }
-  if (!/Variance:\s*\{query\.isError/.test(src)) {
-    fail(`${PAYMENTS_PAGE}: Variance no longer branches on query.isError.`);
-  }
+  for (const m of kpiStripErrorBranchProblems(src, PAYMENTS_PAGE, "query.isError", ["Total", "Open", "Variance", "Rows"])) fail(m);
 }
 
 function checkBillPaymentsPage(src) {
-  if (!src.includes("Total rows amount:")) {
-    fail(`${BILL_PAYMENTS_PAGE}: Total rows amount strip not found — did it move?`);
-    return;
-  }
-  if (!/paymentsQuery\.isError \? "—" : money\(totals\)/.test(src)) {
-    fail(`${BILL_PAYMENTS_PAGE}: Total rows amount no longer branches on paymentsQuery.isError — will show $0.00 on a failed fetch.`);
-  }
+  for (const m of kpiStripErrorBranchProblems(src, BILL_PAYMENTS_PAGE, "paymentsQuery.isError", ["Total paid", "Payment rows", "Bank matched", "Unpaid bills"])) fail(m);
 }
 
 function checkAccountingHub(src) {
@@ -336,10 +329,7 @@ function selftest() {
   // Mutation 3: drop query.isError from InvoicesListPage's totals strip.
   {
     const original = fs.readFileSync(INVOICES_PAGE, "utf8");
-    const mutated = original.replace(
-      'Total billed: {query.isError ? "—" : money(totals.total)}',
-      "Total billed: {money(totals.total)}"
-    );
+    const mutated = original.replace('moneyListKpiCard("Open", "—", "Error loading")', 'moneyListKpiCard("Open", money(totals.open), "Error loading")');
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: InvoicesListPage totals pattern not found.");
       process.exitCode = 1;
@@ -363,10 +353,7 @@ function selftest() {
   // Mutation 4: drop query.isError from ExpensesListPage's totals strip.
   {
     const original = fs.readFileSync(EXPENSES_PAGE, "utf8");
-    const mutated = original.replace(
-      'Total: {query.isError ? "—" : money(totals.total)}',
-      "Total: {money(totals.total)}"
-    );
+    const mutated = original.replace('moneyListKpiCard("Total", "—", "Error loading")', 'moneyListKpiCard("Total", money(totals.total), "Error loading")');
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: ExpensesListPage totals pattern not found.");
       process.exitCode = 1;
@@ -636,10 +623,7 @@ function selftest() {
   // Mutation: PaymentsListPage drops query.isError from Total strip.
   {
     const original = fs.readFileSync(PAYMENTS_PAGE, "utf8");
-    const mutated = original.replace(
-      'Total: {query.isError ? "—" : money(totals.total)}',
-      "Total: {money(totals.total)}"
-    );
+    const mutated = original.replace('moneyListKpiCard("Total", "—", "Error loading")', 'moneyListKpiCard("Total", money(totals.total), "Error loading")');
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: PaymentsListPage Total isError pattern not found.");
       process.exitCode = 1;
@@ -663,10 +647,7 @@ function selftest() {
   // Mutation: BillPaymentsListPage drops paymentsQuery.isError from totals.
   {
     const original = fs.readFileSync(BILL_PAYMENTS_PAGE, "utf8");
-    const mutated = original.replace(
-      '{paymentsQuery.isError ? "—" : money(totals)}',
-      "{money(totals)}"
-    );
+    const mutated = original.replace('moneyListKpiCard("Total paid", "—", "Error loading")', 'moneyListKpiCard("Total paid", money(paymentKpis.totalAmount), "Error loading")');
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: BillPaymentsListPage paymentsQuery.isError pattern not found.");
       process.exitCode = 1;
@@ -687,6 +668,43 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation: the error branch is gone but a JSX comment carries the old needle text (#8d9abfca04's shape) — must FAIL.
+  {
+    const original = fs.readFileSync(PAYMENTS_PAGE, "utf8");
+    const mutated = original.replace("{query.isError ? (", '{/* Total: {query.isError ? "—" : money(totals.total)} */}{false ? (');
+    let caught = false;
+    try {
+      checkPaymentsPage(mutated);
+      caught = mutated !== original && process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: a comment-only needle satisfied the PaymentsListPage error-branch check.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+  // Mutation: the shared V3KpiTile narrows value to number — Settlements' "—" fallback no longer type-checks → FAIL.
+  {
+    const original = fs.readFileSync(V3_KPI_TILE, "utf8");
+    settlementsV3TileSource = original.replace(/\n(\s*)value:\s*string;/, "\n$1value: number;");
+    let caught = false;
+    try {
+      checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
+      caught = settlementsV3TileSource !== original && process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      settlementsV3TileSource = null;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: a V3KpiTile that rejects strings was not caught for SettlementsPage.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
