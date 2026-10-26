@@ -177,12 +177,16 @@ function assert(files) {
     .replace(/htmlFor="[^"]*"/g, "")
     .replace(/data-testid="[^"]*"/g, "")
     .replace(/id="[^"]*"/g, "");
+  // Naive `>`…`<` scan: multi-line JSX (`>\n  {expr}\n<`) and arrow props (`onClick={() => …}`) put code
+  // between those delimiters. Trim + drop JSX expressions so only real chrome text is judged (ParityTable
+  // reference-lane columns format that way; selftest plants a bare `>loaded_miles<` label).
   const underscored = [...visible.matchAll(/>([^<{][^<]*)</g)]
-    .map((m) => m[1])
+    .map((m) => m[1].trim())
     .filter((t) => {
       if (!t.includes("_") || t.includes("http")) return false;
+      if (t.startsWith("{") || t.includes("}")) return false;
       // Ignore TypeScript / JSX expressions the naive `>` scanner also matches (=> void, check_zip).
-      if (/void;|\?:|function |=>|fillConfidence|onShortestChange|onPracticalChange|onDeadheadChange/.test(t)) return false;
+      if (/void;|\?:|function |=>|fillConfidence|onShortestChange|onPracticalChange|onDeadheadChange|onUseReferenceLane/.test(t)) return false;
       return true;
     });
   if (underscored.length) {
@@ -268,6 +272,11 @@ if (SELFTEST) {
     process.exit(1);
   }
   checks.push(["Linked painted green", assert(greenLinked).some((p) => /green\/emerald/.test(p))]);
+  const snakePlant = {
+    ...files,
+    [STRIP]: `${files[STRIP]}\n<span>loaded_miles</span>`,
+  };
+  checks.push(["user-visible snake_case label", assert(snakePlant).some((p) => /user-visible underscore/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} planted regressions caught`);
