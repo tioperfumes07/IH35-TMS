@@ -66,6 +66,12 @@ function contracts(at,overrides={}){
   const ui=read(p);
   if(!ui.includes('amount_known === false')||!ui.includes('Awaiting short miles'))errors.push(`${p}: unpriced bills must not render as currency zero`);
  }
+ // Settlement Detail line table: a line sourced from an unpriced bill carries amount_known from the canonical
+ // predicate and renders the honest label — never formatUsdCents of its placeholder 0.
+ const detailApi=read('apps/backend/src/driver-finance/settlements.routes.ts');
+ if(!detailApi.includes('(db.id IS NULL OR ${driverBillAmountKnown("db")}) AS amount_known'))errors.push('settlement detail lines must carry amount_known from driverBillAmountKnown');
+ const detail=read('apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx');
+ if(!detail.includes('amountKnown: line.amount_known !== false')||!/row\.amountKnown === false \?[\s\S]{0,200}Awaiting short miles[\s\S]{0,120}formatUsdCents\(row\.amountCents\)/.test(detail))errors.push('SettlementDetailPage line table: unpriced lines must not render as currency zero');
  if((kpi.match(/\$\{openDriverBill\("db"\)\}/g)??[]).length<2)errors.push('KPI count and rows must share openDriverBill');
  for(const p of ['driver-finance/void-document-callees.service.ts','driver-finance/settlements-bulk.routes.ts','governance/void-cancel-executors.ts']){
   const source=read('apps/backend/src/'+p);
@@ -95,6 +101,11 @@ if(process.argv.includes('--selftest')){
  // the unpriced-bill rule follows the rows there and must still catch a regression on that page.
  const workflow='apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx';
  assert.ok(contracts(ownRoot,{[workflow]:fs.readFileSync(path.join(ownRoot,workflow),'utf8').replaceAll('amount_known === false','amount_known === true')}).some(e=>e.includes(`${workflow}: unpriced bills must not render as currency zero`)));
+ const detailPage='apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx';
+ const detailSrc=fs.readFileSync(path.join(ownRoot,detailPage),'utf8');
+ assert.ok(contracts(ownRoot,{[detailPage]:detailSrc.replace(/row\.amountKnown === false \?[\s\S]*?\) : \(\s*formatUsdCents\(row\.amountCents\)\s*\)/,'formatUsdCents(row.amountCents)')}).includes('SettlementDetailPage line table: unpriced lines must not render as currency zero'),'plant: line table renders currency for an unpriced line');
+ const detailApiPath='apps/backend/src/driver-finance/settlements.routes.ts';
+ assert.ok(contracts(ownRoot,{[detailApiPath]:fs.readFileSync(path.join(ownRoot,detailApiPath),'utf8').replace('(db.id IS NULL OR ${driverBillAmountKnown("db")}) AS amount_known','true AS amount_known')}).includes('settlement detail lines must carry amount_known from driverBillAmountKnown'),'plant: API hard-codes amount_known');
  for(const name of ['openDriverBill']){
   assert.ok(contracts(ownRoot,{[cashPath]:cash.replaceAll('${'+name+'(', '${removed_'+name+'(')}).includes(`cash flow does not execute ${name}`));
  }
