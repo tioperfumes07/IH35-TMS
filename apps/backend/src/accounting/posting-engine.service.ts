@@ -1,4 +1,4 @@
-import { insertPostingLinesWithSpine, type PostingWriterClient } from "./posting-line-writer.js";
+import { insertPostingLineWithSpine, insertPostingLinesWithSpine, type PostingWriterClient } from "./posting-line-writer.js";
 import { withCurrentUser } from "../auth/db.js";
 import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
@@ -3488,81 +3488,29 @@ async function executeSourceReversalOnClient(
   let lineSequence = 1;
   for (const row of originalLines.rows) {
     const opposite = row.debit_or_credit === "debit" ? "credit" : "debit";
-    const ins = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          class_id,
-          entity_uuid,
-          entity_type,
-          debit_or_credit,
-          amount_cents,
-          description,
-          source_transaction_type,
-          source_transaction_id,
-          source_transaction_line_id,
-          posting_batch_id,
-          idempotency_key,
-          reversal_of_line_id,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
-        -- 443.93: and its party PAIR — entity_uuid without entity_type is refused (journal_entry_postings_entity_pair_check).
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $15, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
-                accounting.posting_source_load_id($10::text, $11::text, NULL, $14::uuid), now(), now())
-        RETURNING id::text
-      `,
-      [
-        input.operating_company_id,
-        reversalJeId,
-        lineSequence,
-        row.account_id,
-        row.class_id,
-        row.entity_uuid,
-        opposite,
-        row.amount_cents,
-        row.description ? `REVERSAL: ${row.description}` : "REVERSAL",
-        sourceType,
-        sourceId,
-        reversalBatchId,
-        idempotencyKey,
-        row.id,
-        row.entity_type,
-      ]
-    );
-    const reversalLineId = ins.rows[0]?.id;
-    if (!reversalLineId) throw new Error("reversal_line_insert_failed");
-    reversalPostingIds.push(reversalLineId);
-    await client.query(
-      `
-        UPDATE accounting.journal_entry_postings
-        SET reversed_by_line_id = $2::uuid,
-            updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_line_id IS NULL
-      `,
-      [row.id, reversalLineId, input.operating_company_id]
-    ).then((u) => {
-      // AUTH-400 — a line is reversed exactly once: never overwrite another reversal's back-link.
-      if (!u.rowCount) throw new PostingEngineError("POSTING_LINE_ALREADY_REVERSED", `posting ${row.id} is already reversed by another line`);
+    // ENG-28 — single posting door: insertPostingLineWithSpine writes the posting row, stamps
+    // reversed_by_line_id on the original, and inserts the spine row in one place.
+    // PostingLineAlreadyReversedError / PostingLineIsAlreadyAReversalError enforce AUTH-400 inside the writer.
+    const reversalLineId = await insertPostingLineWithSpine(client as unknown as PostingWriterClient, {
+      operating_company_id: input.operating_company_id,
+      journal_entry_uuid: reversalJeId,
+      line_sequence: lineSequence,
+      account_id: row.account_id,
+      class_id: row.class_id ?? null,
+      entity_uuid: row.entity_uuid ?? null,
+      entity_type: row.entity_type ?? null,
+      debit_or_credit: opposite,
+      amount_cents: row.amount_cents,
+      description: row.description ? `REVERSAL: ${row.description}` : "REVERSAL",
+      source_transaction_type: sourceType,
+      source_transaction_id: sourceId,
+      source_transaction_line_id: null,
+      posting_batch_id: reversalBatchId ?? null,
+      idempotency_key: idempotencyKey ?? null,
+      reversal_of_line_id: row.id,
+      relationship_role: "reversal",
     });
-    await client.query(
-      `
-        INSERT INTO accounting.transaction_source_links (
-          operating_company_id,
-          journal_entry_posting_id,
-          linked_object_type,
-          linked_object_id,
-          relationship_role
-        )
-        VALUES ($1::uuid, $2::uuid, $3, $4, 'reversal')
-      `,
-      [input.operating_company_id, reversalLineId, sourceType, sourceId]
-    );
+    reversalPostingIds.push(reversalLineId);
     lineSequence += 1;
   }
   // LV-INVOICE-VOID-REVERSAL-HAS-NO-JE-LINKAGE — link the reversal to its original AT THE JOURNAL-ENTRY
