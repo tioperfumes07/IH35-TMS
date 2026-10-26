@@ -9,7 +9,6 @@ import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
-import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
@@ -698,14 +697,13 @@ export async function createDriverCashAdvanceCore(
     );
   }
 
-  // LEAD RULING (OPTION 1) on owner 9:44 / 9:46 PM CT 2026-10-10: a HISTORICAL advance applied to its load's driver bill
-  // (B5) is disbursed in the ledger at Creator post — Dr the driver's own advance sub-account / Cr the company's existing
-  // driver NET-PAY CLEARING role account (2170 "Driver Net-Pay Clearing" in USMCA, a liability): not a bank, not A/P.
-  // NOT 1090 Undeposited Funds: an asset may not hold a credit balance (deferred guard, measured by CC-3 on prod HEAD:
-  // "1090 would hold a credit balance of -148.00"). 2170 is where driver pay waits for its bank payment already. The owner's manual Banking match of
-  // the wire / check clears it to the bank. Without this posting v_driver_advance_balances reads the advance as 0
-  // outstanding and the close cannot recover it (measured: 5775 net 1,334.40 vs TOTAL DUE 1,186.40). The one driver_advance
-  // builder posts it (credit override), behind DRIVER_ADVANCE_GL_POSTING_ENABLED like a live disbursement.
+  // LEAD RULING (OPTION 1) on owner 9:44 / 9:46 PM CT 2026-10-10 + ENG-04 (2026-10-24/26): a HISTORICAL advance applied
+  // to its load's driver bill (B5) is disbursed in the ledger at Creator post — Dr the driver's own advance sub-account /
+  // Cr the REAL cash source resolved by buildDriverAdvanceLines (from_bank_account_id → bank GL bridge; else operating
+  // cash / bank role). NEVER credit driver_payroll_clearing (2170) — that liability is settlement net-pay only. The
+  // posting engine hard-rejects 2170 on driver_advance. Without this posting v_driver_advance_balances reads the
+  // advance as 0 outstanding and the close cannot recover it. Behind DRIVER_ADVANCE_GL_POSTING_ENABLED like a live
+  // disbursement. Do not pass credit_account_id — let the engine method-route.
   if (body.disbursement_method === "historical_backfill" && body.linked_driver_bill_id && !isLoadExpense) {
     await client.query(
       `UPDATE driver_finance.driver_advances
@@ -715,10 +713,9 @@ export async function createDriverCashAdvanceCore(
       [companyId, advanceId, body.historical_posting_date ?? null]
     );
     if (await isEnabled(client as never, "DRIVER_ADVANCE_GL_POSTING_ENABLED", { operating_company_id: companyId, user_uuid: actorUserUuid })) {
-      const clearing = await resolveRoleAccount(client as never, companyId, "driver_payroll_clearing");
       await postSourceTransactionInClientTx(
         client as never,
-        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId, credit_account_id: clearing },
+        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId },
         { userId: actorUserUuid }
       );
     }

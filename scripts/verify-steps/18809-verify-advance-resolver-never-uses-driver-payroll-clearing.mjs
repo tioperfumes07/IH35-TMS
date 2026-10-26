@@ -43,7 +43,7 @@ function selftest() {
   ok(
     "buildDriverAdvanceLines has driver_payroll_clearing rejection block",
     engineSrc.includes("driver_payroll_clearing") &&
-    engineSrc.includes("INVALID_ACCOUNT") &&
+    engineSrc.includes("ADVANCE_NOT_POSTING_ELIGIBLE") &&
     engineSrc.includes("is_clearing")
   );
 
@@ -91,7 +91,7 @@ if (hasActiveClearing) {
 }
 
 // 2. posting-engine must have the hard-block guard
-if (!engineSrc.includes("driver_payroll_clearing") || !engineSrc.includes("INVALID_ACCOUNT")) {
+if (!engineSrc.includes("driver_payroll_clearing") || !engineSrc.includes("is_clearing") || !engineSrc.includes("ADVANCE_NOT_POSTING_ELIGIBLE")) {
   failures.push(
     "posting-engine.service.ts buildDriverAdvanceLines is missing the ENG-04 driver_payroll_clearing hard-block guard"
   );

@@ -85,10 +85,10 @@
    "title": "ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings \u2014 tie to open net pay, clear through documents",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-advance-resolver-never-uses-driver-payroll-clearing (step 18809)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "historical_backfill never credits 2170; guard 18809; ops dry-run 3/12 propose_reclass; residual 257596c until Lead applies reclass"
   },
   {
    "id": "ENG-05",
@@ -121,7 +121,7 @@
    "status": "CODED",
    "guard": null,
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "PR pending: bookLoadInputPrecheck + create schema refuse city-only; guard verify-book-stop-street-or-place-required; 15 historical city-only since 10-13 remain for geocode sweep"
+   "evidence": "PR #27901: bookLoadInputPrecheck + create refuse city-only; guard 18802; 15 historical city-only since 10-13 remain for geocode sweep"
   },
   {
    "id": "ENG-08",
