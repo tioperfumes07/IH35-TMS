@@ -2,6 +2,9 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+## 2026-10-26 — Banking B3
+CODEX | B3 DONE | PR #27886 | merge 52c33985697aa9868eac9d6f3a44c4efbb9d11e2 | verify-parity-drawer-z-index-above-modal + modal/discard/WO Escape selftests PASS | nested overlay/drawer/match 25/25; frontend build exit 0; 88 affected guards zero regressions. Old code fails all four initial nesting tests. Work-order/trailer tests also pass. Additional CancelLoadModal tests have four inherited missing-option failures, reproduced identically on pre-B3 main aaa271b5cf (both 4 failed/2 passed); private comparison /Users/jorgemunoz/Downloads/codex-1026-b3-cancel-main.log. No production cancel action submitted. Render/live UI verification pending.
+
 ## 2026-10-26 — Banking B2
 CODEX | B2 DONE | PR #27885 | merge aaa271b5cf7d60fd5b2ca0866eef1ea71c69e9d5 | verify-banking-match-qbo-engine PASS + 45/45 plants | 14/14 MatchDrawer tests; frontend build exit 0; fast merge 36 affected guards, zero regressions. Old code fails typed-filter behavior test. Uses the shared searchable MultiSelectDropdown behind EntityMultiSelect; fixed record-type options do not need an entity-roster endpoint. Live UI remains unverified.
 
