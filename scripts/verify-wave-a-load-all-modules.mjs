@@ -46,7 +46,9 @@ export function auditLoadColumn(sources, leaves) {
   // new P10 load leaf — live count 103. Bumped 102 -> 103 (floor goes UP only).
   // LEAD 443.312 (2026-10-24): + settlements.panel.settlement_statement_linked_records (row 218 panel, genuine new load
   // leaf) — live 104. Bumped 103 -> 104.
-  if (p10.length < 104) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  // 10-25 (Lead, CC-3 FINAL-4): + settlements.panel.close_board (Close board panel, genuine new P10 leaf with `load`
+  // required) — live 105, so removing one planted leaf landed ON the stale 104 floor. Bumped 104 -> 105 (up only).
+  if (p10.length < 105) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -73,7 +75,8 @@ export function auditLoadColumn(sources, leaves) {
   // 443.239-D9 (CC-1, 2026-10-22): dispatch.LoadStopsRecordTab new leaf — live 135. Bumped 134 -> 135.
   // 443.269-A (CC-3, 2026-10-23): + dispatch.panel.tour_miles (genuine new load leaf) — live 136. Bumped 135 -> 136.
   // LEAD 443.312 (2026-10-24): + settlements.panel.settlement_statement_linked_records — live 137. Bumped 136 -> 137.
-  if (leaves.length < 137) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // 10-25 (Lead): + settlements.panel.close_board (#27635) — live 138; bumped 137 -> 138 (up only).
+  if (leaves.length < 138) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

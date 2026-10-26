@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXPECTED = {
   "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx": 2,
@@ -15,10 +14,10 @@ const EXPECTED = {
   "apps/frontend/src/pages/safety/components/FineLifecycleActions.tsx": 1,
   "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx": 4,
 };
-function inspect() {
+function inspect(read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8")) {
   const errors = []; let total = 0;
   for (const [rel, expected] of Object.entries(EXPECTED)) {
-    const source = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    const source = read(rel);
     const count = (source.match(/<DatePicker\b/g) ?? []).length; total += count;
     if (count !== expected) errors.push(`${rel}: expected ${expected} DatePickers, found ${count}`);
     const labels = [...source.matchAll(/<label\b[\s\S]*?<\/label>/g)].map((m) => m[0]);
@@ -28,10 +27,32 @@ function inspect() {
   return errors;
 }
 function run() { const found = inspect(); if (found.length) { console.error("verify-safety-action-datepicker-label-wrappers FAIL:"); found.forEach((e) => console.error(" -", e)); process.exit(1); } console.log("verify-safety-action-datepicker-label-wrappers OK — 13 Safety action calendars are outside labels"); }
+/** In-memory plants (never writes tracked source): wrap the FIRST real <DatePicker …/> in a <label>, and duplicate one. */
+function wrapFirstDatePicker(src) {
+  const at = src.indexOf("<DatePicker");
+  const end = at < 0 ? -1 : src.indexOf("/>", at);
+  return at < 0 || end < 0 ? src : `${src.slice(0, at)}<label>${src.slice(at, end + 2)}</label>${src.slice(end + 2)}`;
+}
+function duplicateFirstDatePicker(src) {
+  const at = src.indexOf("<DatePicker");
+  const end = at < 0 ? -1 : src.indexOf("/>", at);
+  return at < 0 || end < 0 ? src : `${src.slice(0, end + 2)}${src.slice(at, end + 2)}${src.slice(end + 2)}`;
+}
 function selftest() {
-  const rel = Object.keys(EXPECTED)[0]; const file = path.join(ROOT, rel); const original = fs.readFileSync(file, "utf8");
-  try { const planted = original.replace('<div className="block text-xs text-slate-600">\n            <label htmlFor="training-record-completed-date">Completed date</label>', '<label className="block text-xs text-slate-600">\n            Completed date').replace('          </div>\n          <div className="block text-xs text-slate-600">', '          </label>\n          <div className="block text-xs text-slate-600">'); if (planted === original) throw new Error("could not plant wrapper"); fs.writeFileSync(file, planted); const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT }); if (red.status === 0) throw new Error("planted wrapper did not redden"); }
-  finally { fs.writeFileSync(file, original); }
-  console.log("verify-safety-action-datepicker-label-wrappers --selftest PASS — planted wrapper reddened guard");
+  // Plants are applied in memory to the real sources (the old selftest wrote the tracked file and its literal
+  // slate-600 wrapper no longer existed after the owner palette sweep, so it could not plant at all).
+  const real = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+  if (inspect(real).length) { console.error("verify-safety-action-datepicker-label-wrappers --selftest FAIL — real sources rejected"); process.exit(1); }
+  const rel = Object.keys(EXPECTED)[0];
+  const plants = [
+    ["DatePicker wrapped in a label", wrapFirstDatePicker],
+    ["governed DatePicker count changes", duplicateFirstDatePicker],
+  ];
+  for (const [name, plant] of plants) {
+    const planted = plant(real(rel));
+    if (planted === real(rel)) { console.error(`verify-safety-action-datepicker-label-wrappers --selftest FAIL — could not plant: ${name}`); process.exit(1); }
+    if (inspect((r) => (r === rel ? planted : real(r))).length === 0) { console.error(`verify-safety-action-datepicker-label-wrappers --selftest FAIL — escaped: ${name}`); process.exit(1); }
+  }
+  console.log(`verify-safety-action-datepicker-label-wrappers --selftest PASS — ${plants.length}/${plants.length} in-memory plants reddened the guard`);
 }
 if (process.argv.includes("--selftest")) selftest(); else run();

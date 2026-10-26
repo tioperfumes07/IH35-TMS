@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = [
   "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
@@ -20,11 +19,11 @@ function hasWrappedDatePicker(source) {
   }
   return false;
 }
-function inspect() {
+function inspect(read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8")) {
   const errors = [];
   let governed = 0;
   for (const rel of FILES) {
-    const source = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    const source = read(rel);
     if (hasWrappedDatePicker(source)) errors.push(`${rel}: filter DatePicker remains label-wrapped`);
     const count = (source.match(/<DatePicker\b/g) ?? []).length;
     governed += count;
@@ -35,10 +34,32 @@ function inspect() {
   return errors;
 }
 function run() { const found = inspect(); if (found.length) { console.error("verify-safety-filter-datepicker-label-wrappers FAIL:"); found.forEach((e) => console.error(" -", e)); process.exit(1); } console.log("verify-safety-filter-datepicker-label-wrappers OK — 9 Safety calendars are outside labels"); }
+/** In-memory plants (never writes tracked source): wrap the FIRST real <DatePicker …/> in a <label>, and duplicate one. */
+function wrapFirstDatePicker(src) {
+  const at = src.indexOf("<DatePicker");
+  const end = at < 0 ? -1 : src.indexOf("/>", at);
+  return at < 0 || end < 0 ? src : `${src.slice(0, at)}<label>${src.slice(at, end + 2)}</label>${src.slice(end + 2)}`;
+}
+function duplicateFirstDatePicker(src) {
+  const at = src.indexOf("<DatePicker");
+  const end = at < 0 ? -1 : src.indexOf("/>", at);
+  return at < 0 || end < 0 ? src : `${src.slice(0, end + 2)}${src.slice(at, end + 2)}${src.slice(end + 2)}`;
+}
 function selftest() {
-  const file = path.join(ROOT, FILES[0]); const original = fs.readFileSync(file, "utf8");
-  try { const planted = original.replace('<div className="text-xs text-slate-600">\n            <label htmlFor="drug-alcohol-history-from">From</label>', '<label className="text-xs text-slate-600">\n            <label htmlFor="drug-alcohol-history-from">From</label>').replace('          </div>\n          <div className="text-xs text-slate-600">', '          </label>\n          <div className="text-xs text-slate-600">'); if (planted === original) throw new Error("could not plant wrapper"); fs.writeFileSync(file, planted); const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT }); if (red.status === 0) throw new Error("planted wrapper did not redden"); }
-  finally { fs.writeFileSync(file, original); }
-  console.log("verify-safety-filter-datepicker-label-wrappers --selftest PASS — planted wrapper reddened guard");
+  // In-memory plants on the real sources (old selftest wrote the tracked file; its slate-600 wrapper literal
+  // stopped matching after the owner palette sweep).
+  const real = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+  if (inspect(real).length) { console.error("verify-safety-filter-datepicker-label-wrappers --selftest FAIL — real sources rejected"); process.exit(1); }
+  const rel = FILES[0];
+  const plants = [
+    ["filter DatePicker wrapped in a label", wrapFirstDatePicker],
+    ["governed DatePicker count changes", duplicateFirstDatePicker],
+  ];
+  for (const [name, plant] of plants) {
+    const planted = plant(real(rel));
+    if (planted === real(rel)) { console.error(`verify-safety-filter-datepicker-label-wrappers --selftest FAIL — could not plant: ${name}`); process.exit(1); }
+    if (inspect((r) => (r === rel ? planted : real(r))).length === 0) { console.error(`verify-safety-filter-datepicker-label-wrappers --selftest FAIL — escaped: ${name}`); process.exit(1); }
+  }
+  console.log(`verify-safety-filter-datepicker-label-wrappers --selftest PASS — ${plants.length}/${plants.length} in-memory plants reddened the guard`);
 }
 if (process.argv.includes("--selftest")) selftest(); else run();
