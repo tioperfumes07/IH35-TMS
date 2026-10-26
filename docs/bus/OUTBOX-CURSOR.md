@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel/Factoring/Escrow empty → BoardSection
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SubmitToFactor BoardSection + FORM_INPUT
 
 - **STATUS:** SHIPPING
+- **DELTA:** SubmitToFactor owner-only + purchase-posted → `BoardSection`; selects/textarea → `FORM_INPUT_CLASS` / `FORM_TEXTAREA_CLASS`. Create/post/send engines unchanged. Guard ratcheted.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-factoring-submission-queue-routed · verify-91056 leftover
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements Close + Factoring remaining DataPanel unwrap
+- **Files Modified:** SubmitToFactorTab.tsx · verify-factoring-submission-queue-routed.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel/Factoring/Escrow empty → BoardSection
+
+- **STATUS:** MERGED [#27796](https://github.com/tioperfumes07/IH35-TMS/pull/27796)
 - **DELTA:** Fuel Cards/Integrity/Unmatched/Wallet need-company → `FuelBoardSection`; Factoring no-factor → `BoardSection`; Escrow Measured note → `BoardSection`. Guards ratcheted. Engines unchanged.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fuel-home-dashboard-wired · verify-settlements-escrow-board-rebuild · verify-factoring-layout-tabs-first
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

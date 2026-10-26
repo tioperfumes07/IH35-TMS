@@ -39,9 +39,11 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { TableSearch } from "../../components/table/TableSearch";
 import {colors, FORM_FIELD_CONTROL_SIZE_CLASS, typography, FILTER_CONTROL_SIZE_CLASS} from "../../design/tokens";
+import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../../components/forms/inputClass";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -791,9 +793,11 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
         </div>
       ) : null}
       {!isOwner ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-owner-only-note">
-          {OWNER_ONLY_MESSAGE} You can review the open invoices; Save is the Owner&apos;s.
-        </div>
+        <BoardSection title="Owner only" testId="submit-factor-owner-only-note">
+          <div className="px-3.5 py-3 text-xs text-[#1F2A44]">
+            {OWNER_ONLY_MESSAGE} You can review the open invoices; Save is the Owner&apos;s.
+          </div>
+        </BoardSection>
       ) : null}
 
       {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
@@ -892,7 +896,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             <label className="flex flex-col gap-1">
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Faro report ref</span>
               <input
-                className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                className={FORM_INPUT_CLASS}
                 value={reportRef}
                 maxLength={80}
                 onChange={(e) => setReportRef(e.target.value)}
@@ -908,7 +912,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                 <label className="col-span-2 flex flex-col gap-1">
                   <span className="uppercase" style={FIELD_LABEL_STYLE}>Notes</span>
                   <input
-                    className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                    className={FORM_INPUT_CLASS}
                     value={notes}
                     maxLength={1000}
                     onChange={(e) => setNotes(e.target.value)}
@@ -918,7 +922,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                 <label className="col-span-2 flex flex-col gap-1">
                   <span className="uppercase" style={FIELD_LABEL_STYLE}>Reason for the change (required)</span>
                   <input
-                    className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                    className={FORM_INPUT_CLASS}
                     value={editReason}
                     maxLength={500}
                     placeholder="At least 10 characters — e.g. wrong purchase date entered"
@@ -932,7 +936,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Send to (Save and send)</span>
               <input
                 type="email"
-                className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                className={FORM_INPUT_CLASS}
                 value={sendTo}
                 placeholder={vendor?.email ?? "Factor submission email"}
                 onChange={(e) => setSendTo(e.target.value)}
@@ -1073,7 +1077,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                   return (
                     <button
                       type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44]"
+                      className={FORM_INPUT_CLASS}
                       onClick={() => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, cash_reserve_cents: f.cash_reserve_cents + f.escrow_reserve_cents, escrow_reserve_cents: 0 } }))}
                       disabled={f.escrow_reserve_cents === 0}
                       data-testid={`submit-factor-reserve-to-cash-${r.invoice_id}`}
@@ -1202,7 +1206,8 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       {saveError ? <SaveErrorPanel error={saveError} rows={byId} /> : null}
 
       {created ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-created">
+        <BoardSection title="Purchase posted" testId="submit-factor-created">
+        <div className="px-3.5 py-3 text-xs text-[#1F2A44]">
           Purchase{" "}
           {created.purchase.factoring_advance_id ? (
             <EntityLink kind="factoring_advance" id={created.purchase.factoring_advance_id} label={created.purchase.display_id} data-testid="submit-factor-created-link" />
@@ -1227,6 +1232,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             </div>
           ) : null}
         </div>
+        </BoardSection>
       ) : null}
 
       <div className="text-xs">
@@ -1275,7 +1281,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           <label className="flex flex-col gap-1">
             <span className="uppercase" style={FIELD_LABEL_STYLE}>Reason</span>
             <textarea
-              className="min-h-[60px] rounded-sm border border-gray-300 p-2 text-xs"
+              className={FORM_TEXTAREA_CLASS}
               value={directPayReason}
               onChange={(e) => setDirectPayReason(e.target.value)}
               data-testid="submit-factor-direct-pay-reason"
