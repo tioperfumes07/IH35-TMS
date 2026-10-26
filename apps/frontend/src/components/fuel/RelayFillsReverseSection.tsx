@@ -6,6 +6,7 @@ import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
 /**
  * Linkage law §6 (PR #23729) — Relay fills (integrations.relay_fuel_transactions) never become
@@ -39,77 +40,79 @@ export function RelayFillsReverseSection({
   const totalCount = query.isError ? 0 : (query.data?.total_count ?? rows.length);
 
   return (
-    <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-[#0F1219]">
-          Relay fills
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
-        </h3>
+    <FuelBoardSection
+      title="Relay fills"
+      subtitle={rows.length > 0 ? `(${rows.length})` : undefined}
+      testId={testId}
+      headerRight={
         <Link to="/fuel/relay-unmatched" className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Open Relay — unmatched
         </Link>
-      </div>
-      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
-      {query.isError ? (
-        <ListErrorState
-          title={`Couldn't load Relay fills for ${contextLabel}`}
-          status={0}
-          message={userFacingApiError(query.error, "Relay fills are unavailable")}
-          onRetry={() => void query.refetch()}
-        />
-      ) : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="text-xs text-gray-500">No Relay fills linked to {contextLabel}.</p>
-      ) : null}
-      {totalCount > rows.length ? (
-        <p className="text-xs text-[#6B7280]" data-testid="relay-fills-reverse-range">
-          Showing {rows.length} of {totalCount}.
-        </p>
-      ) : null}
-      {rows.length > 0 ? (
-        <ul className="space-y-2">
-          {rows.map((row) => (
-            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`relay-fill-${row.id}`}>
-              <span className="font-medium text-[#0F1219]">
-                {row.merchant_name || "Relay fill"}
-                {row.location_city || row.location_state
-                  ? ` — ${[row.location_city, row.location_state].filter(Boolean).join(", ")}`
-                  : ""}
-              </span>
-              <span className="ml-2 text-xs text-gray-500">
-                {formatDateUS(row.relay_created_at)}
-                {row.fuel_gallons != null ? ` · ${row.fuel_gallons.toLocaleString()} gal diesel` : ""}
-                {row.reefer_gallons != null ? ` · ${row.reefer_gallons.toLocaleString()} gal Reefer Diesel` : ""}
-                {row.def_gallons != null ? ` · ${row.def_gallons.toLocaleString()} gal DEF` : ""}
-                {` · ${formatMoneyCents(row.total_amount_paid_cents, "USD")}`}
-                {"unit_id" in filter ? (
-                  row.driver_id ? (
+      }
+    >
+      <div className="space-y-2 px-3.5 py-2">
+        {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+        {query.isError ? (
+          <ListErrorState
+            title={`Couldn't load Relay fills for ${contextLabel}`}
+            status={0}
+            message={userFacingApiError(query.error, "Relay fills are unavailable")}
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
+        {!query.isLoading && !query.isError && rows.length === 0 ? (
+          <p className="text-xs text-gray-500">No Relay fills linked to {contextLabel}.</p>
+        ) : null}
+        {totalCount > rows.length ? (
+          <p className="text-xs text-[#6B7280]" data-testid="relay-fills-reverse-range">
+            Showing {rows.length} of {totalCount}.
+          </p>
+        ) : null}
+        {rows.length > 0 ? (
+          <ul className="space-y-2">
+            {rows.map((row) => (
+              <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`relay-fill-${row.id}`}>
+                <span className="font-medium text-[#0F1219]">
+                  {row.merchant_name || "Relay fill"}
+                  {row.location_city || row.location_state
+                    ? ` — ${[row.location_city, row.location_state].filter(Boolean).join(", ")}`
+                    : ""}
+                </span>
+                <span className="ml-2 text-xs text-gray-500">
+                  {formatDateUS(row.relay_created_at)}
+                  {row.fuel_gallons != null ? ` · ${row.fuel_gallons.toLocaleString()} gal diesel` : ""}
+                  {row.reefer_gallons != null ? ` · ${row.reefer_gallons.toLocaleString()} gal Reefer Diesel` : ""}
+                  {row.def_gallons != null ? ` · ${row.def_gallons.toLocaleString()} gal DEF` : ""}
+                  {` · ${formatMoneyCents(row.total_amount_paid_cents, "USD")}`}
+                  {"unit_id" in filter ? (
+                    row.driver_id ? (
+                      <>
+                        {" · "}
+                        <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+                      </>
+                    ) : (
+                      " · Driver unmatched"
+                    )
+                  ) : row.unit_id ? (
                     <>
                       {" · "}
-                      <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+                      <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
                     </>
                   ) : (
-                    " · Driver unmatched"
-                  )
-                ) : row.unit_id ? (
-                  <>
-                    {" · "}
-                    <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
-                  </>
-                ) : (
-                  " · Unit unmatched"
-                )}
-                {row.relay_driver_name || row.relay_unit_number ? (
-                  <span className="text-gray-400">
-                    {" "}
-                    (Relay: {[row.relay_driver_name, row.relay_unit_number].filter(Boolean).join(" / ")})
-                  </span>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </section>
+                    " · Unit unmatched"
+                  )}
+                  {row.relay_driver_name || row.relay_unit_number ? (
+                    <span className="text-gray-400">
+                      {" "}
+                      (Relay: {[row.relay_driver_name, row.relay_unit_number].filter(Boolean).join(" / ")})
+                    </span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </FuelBoardSection>
   );
 }

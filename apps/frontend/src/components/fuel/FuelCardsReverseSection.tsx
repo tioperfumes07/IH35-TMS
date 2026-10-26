@@ -3,6 +3,7 @@ import { listFuelCardAssignments } from "../../api/fuel-card-assignments";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
+import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
 type Props = {
   operatingCompanyId: string;
@@ -29,31 +30,36 @@ export function FuelCardsReverseSection({
   const rows = query.isError ? [] : (query.data?.rows ?? []);
 
   return (
-    <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-xs font-semibold text-[#0F1219]">Fuel cards{rows.length ? ` (${rows.length})` : ""}</h2>
-      {query.isError ? (
-        <ListErrorBanner message={`Couldn't load fuel cards for ${contextLabel}.`} onRetry={() => void query.refetch()} />
-      ) : null}
-      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="text-xs text-gray-500">No fuel cards assigned to {contextLabel}.</p>
-      ) : null}
-      {rows.map((row) => (
-        <div key={row.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-[#1F2A44]">Card …{row.card_last_digits}</span>
-            {"unit_id" in filter ? (
-              <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
-            ) : (
-              <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
-            )}
+    <FuelBoardSection
+      title="Fuel cards"
+      subtitle={rows.length ? `(${rows.length})` : undefined}
+      testId={testId}
+    >
+      <div className="space-y-2 px-3.5 py-2">
+        {query.isError ? (
+          <ListErrorBanner message={`Couldn't load fuel cards for ${contextLabel}.`} onRetry={() => void query.refetch()} />
+        ) : null}
+        {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+        {!query.isLoading && !query.isError && rows.length === 0 ? (
+          <p className="text-xs text-gray-500">No fuel cards assigned to {contextLabel}.</p>
+        ) : null}
+        {rows.map((row) => (
+          <div key={row.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#1F2A44]">Card …{row.card_last_digits}</span>
+              {"unit_id" in filter ? (
+                <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+              ) : (
+                <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
+              )}
+            </div>
+            <span className="shrink-0 text-gray-500">
+              {formatDateUS(row.effective_from)} – {row.effective_to ? formatDateUS(row.effective_to) : "current"}
+              {row.voided_at ? " · voided" : ""}
+            </span>
           </div>
-          <span className="shrink-0 text-gray-500">
-            {formatDateUS(row.effective_from)} – {row.effective_to ? formatDateUS(row.effective_to) : "current"}
-            {row.voided_at ? " · voided" : ""}
-          </span>
-        </div>
-      ))}
-    </section>
+        ))}
+      </div>
+    </FuelBoardSection>
   );
 }

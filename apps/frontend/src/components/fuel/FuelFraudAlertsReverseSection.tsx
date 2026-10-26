@@ -7,6 +7,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { StatusBadge } from "../layout/StatusBadge";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
 /**
  * Linkage law §6 (PR #23729) — GAP-61/CAP-11 fraud alerts reach a fuel purchase, but the purchase's
@@ -85,67 +86,69 @@ export function FuelFraudAlertsReverseSection({
   const rows = query.isError ? [] : (query.data?.alerts ?? []).filter((a) => !a.fuel_transaction_voided);
 
   return (
-    <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-[#0F1219]">
-          Fuel fraud alerts
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
-        </h3>
-        {/* ROUND 297 audit (drill): land on the same record's alerts (the list page reads the scope param). */}
+    <FuelBoardSection
+      title="Fuel fraud alerts"
+      subtitle={rows.length > 0 ? `(${rows.length})` : undefined}
+      testId={testId}
+      headerRight={
+        // ROUND 297 audit (drill): land on the same record's alerts (the list page reads the scope param).
         <Link
           to={`/fuel/fraud-alerts?${new URLSearchParams(Object.entries(filter).filter(([, v]) => Boolean(v)) as Array<[string, string]>).toString()}`}
           className="text-xs font-semibold text-[#1F2A44] hover:underline"
         >
           Open Fraud Alerts
         </Link>
+      }
+    >
+      <div className="space-y-2 px-3.5 py-2">
+        {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+        {query.isError ? (
+          <ListErrorState
+            title={`Couldn't load fuel fraud alerts for ${contextLabel}`}
+            status={0}
+            message={userFacingApiError(query.error, "Fraud alerts are unavailable")}
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
+        {!query.isLoading && !query.isError && rows.length === 0 ? (
+          <p className="text-xs text-gray-500">No fuel fraud alerts for {contextLabel}.</p>
+        ) : null}
+        {rows.length > 0 ? (
+          <ul className="space-y-2">
+            {rows.map((row) => {
+              const status = alertStatusBadge(row.status);
+              const severity = severityBadge(row.severity);
+              const recovery = recoveryStatusBadge(row.recovery_status);
+              return (
+                <li key={row.uuid} className="text-xs text-[#1F2A44]" data-testid={`fuel-fraud-alert-${row.uuid}`}>
+                  {/* rule_id is a fraud-rule code (e.g. VELOCITY_SPIKE), not a foreign key — there is
+                      no rule detail page to drill to, so it renders as text, not an EntityLink. */}
+                  <span className="font-mono font-medium text-[#0F1219]">{`${row.rule_id}`}</span>
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <StatusBadge variant={severity.variant}>{severity.label}</StatusBadge>
+                    <StatusBadge variant={status.variant}>{status.label}</StatusBadge>
+                  </span>
+                  <span className="ml-2 text-xs text-gray-500">
+                    {formatDateTimeUS(row.detected_at)}
+                    {row.total_cost != null ? ` · ${formatMoneyCents(Math.round(row.total_cost * 100), "USD")}` : ""}
+                    {recovery && row.recovery_event_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink
+                          kind="fuel_card_overage_event"
+                          id={row.recovery_event_id}
+                          label={<StatusBadge variant={recovery.variant}>{recovery.label}</StatusBadge>}
+                          className=""
+                        />
+                      </>
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
       </div>
-      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
-      {query.isError ? (
-        <ListErrorState
-          title={`Couldn't load fuel fraud alerts for ${contextLabel}`}
-          status={0}
-          message={userFacingApiError(query.error, "Fraud alerts are unavailable")}
-          onRetry={() => void query.refetch()}
-        />
-      ) : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="text-xs text-gray-500">No fuel fraud alerts for {contextLabel}.</p>
-      ) : null}
-      {rows.length > 0 ? (
-        <ul className="space-y-2">
-          {rows.map((row) => {
-            const status = alertStatusBadge(row.status);
-            const severity = severityBadge(row.severity);
-            const recovery = recoveryStatusBadge(row.recovery_status);
-            return (
-              <li key={row.uuid} className="text-xs text-[#1F2A44]" data-testid={`fuel-fraud-alert-${row.uuid}`}>
-                {/* rule_id is a fraud-rule code (e.g. VELOCITY_SPIKE), not a foreign key — there is
-                    no rule detail page to drill to, so it renders as text, not an EntityLink. */}
-                <span className="font-mono font-medium text-[#0F1219]">{`${row.rule_id}`}</span>
-                <span className="ml-2 inline-flex items-center gap-1">
-                  <StatusBadge variant={severity.variant}>{severity.label}</StatusBadge>
-                  <StatusBadge variant={status.variant}>{status.label}</StatusBadge>
-                </span>
-                <span className="ml-2 text-xs text-gray-500">
-                  {formatDateTimeUS(row.detected_at)}
-                  {row.total_cost != null ? ` · ${formatMoneyCents(Math.round(row.total_cost * 100), "USD")}` : ""}
-                  {recovery && row.recovery_event_id ? (
-                    <>
-                      {" · "}
-                      <EntityLink
-                        kind="fuel_card_overage_event"
-                        id={row.recovery_event_id}
-                        label={<StatusBadge variant={recovery.variant}>{recovery.label}</StatusBadge>}
-                        className=""
-                      />
-                    </>
-                  ) : null}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-    </section>
+    </FuelBoardSection>
   );
 }
