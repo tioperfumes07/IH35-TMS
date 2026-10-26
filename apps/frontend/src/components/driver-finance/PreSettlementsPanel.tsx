@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { settlementNumber } from "../../lib/settlementNumber";
+import { settlementLabel } from "../../lib/settlementNumber";
 import type { TourListRow } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
@@ -82,16 +82,9 @@ type Props = {
   onViewAll?: () => void;
 };
 
-/** Board Number: AlwaysTrack doc when present, else P-series display_id while open. */
+/** Board Number: AlwaysTrack doc number when present; PENDING for open/pre-settlement; — for closed-unnumbered. */
 function tourNumberLabel(r: TourListRow): string {
-  const at = settlementNumber(r);
-  if (at) return at;
-  const did = (r.display_id ?? "").trim();
-  if (/^P-\d+/i.test(did)) return did;
-  if (did && !/^S-\d{4}-\d+/i.test(did) && did.toLowerCase() !== "open" && did.toLowerCase() !== "pending") {
-    return did;
-  }
-  return r.is_open ? "—" : "No number";
+  return settlementLabel(r);
 }
 
 /** ROUND 443.280-A — Ready = n/6 dots from listTours ready_ok / ready_total. */
