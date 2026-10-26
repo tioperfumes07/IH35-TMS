@@ -53,6 +53,10 @@ const FILE_OWNED_BY_LEAF = {
   "components/border-crossing/WizardStep4.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep5.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep6.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  // Permits list page hosts the "Create permit" drawer -- owned by permits.list leaf.
+  "pages/safety/PermitsPage.tsx": "permits.list",
+  // Expense category map settings page -- accounting settings section, owned by coa_roles leaf.
+  "pages/accounting/ExpenseCategoryMapPage.tsx": "coa_roles",
 };
 
 function walk(dir, out = []) {
@@ -86,6 +90,10 @@ function loadInventory() {
       if (!leaf || typeof leaf !== "object") continue;
       if (leaf.id) leafIds.add(String(leaf.id));
       if (leaf.surface_path) surfacePaths.add(String(leaf.surface_path).replace(/\\/g, "/"));
+      // owned_surface_paths are sub-pages/tabs owned by this leaf -- register them as known surfaces.
+      for (const p of leaf.owned_surface_paths || []) {
+        surfacePaths.add(String(p).replace(/\\/g, "/"));
+      }
     }
   }
   return { surfacePaths, leafIds };
