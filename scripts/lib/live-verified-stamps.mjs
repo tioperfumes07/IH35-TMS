@@ -199,6 +199,11 @@ export function assertLiveVerifiedStamps({ stamps, healthzSha, gitRoot }) {
     );
     return problems;
   }
+  // One `git rev-list` for the live tip, then a set lookup per claim — identical tri-state semantics to
+  // ancestorCheck (self is an ancestor; unresolvable = "unknown", never "no"). The per-claim ancestorCheck
+  // spawned 3 git processes each and took 77s for the manifests on main (2026-10-25), timing the guard out
+  // of verify-static (25s spawn limit) — a guard that times out protects nothing.
+  const isAncestorOfLive = ancestorCheckerFor(gitRoot, liveFull);
   for (const s of stamps) {
     if (!s.sha) {
       problems.push(`${s.file} item ${s.id}: live_verified_at set without live_verified_sha`);
@@ -208,7 +213,7 @@ export function assertLiveVerifiedStamps({ stamps, healthzSha, gitRoot }) {
       problems.push(`${s.file} item ${s.id}: live_verified_sha set without live_verified_at`);
       continue;
     }
-    const verdict = ancestorCheck(gitRoot, s.sha, liveFull);
+    const verdict = isAncestorOfLive(s.sha);
     if (verdict === "unknown") {
       problems.push(
         `${s.file} item ${s.id}: CANNOT DETERMINE whether live_verified_sha ${s.sha} is an ancestor of healthz ${healthzSha} — run git fetch origin (CI: fetch-depth 0)`

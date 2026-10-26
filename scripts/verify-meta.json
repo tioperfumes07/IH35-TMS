@@ -4,6 +4,7 @@
     "database": "ci / build-typecheck",
     "dependencies": "ci / build-typecheck",
     "pass8-artifact": "pass-8-smoke-verify / pass-8",
+    "backend-dist": "ci / build-typecheck",
     "pull-request-metadata": "hold-merge-gate / hold-merge-gate"
   },
   "server_required_ci_contexts": [
@@ -34,6 +35,12 @@
     ],
     "verify:hold-merge-gate": [
       "pull-request-metadata"
+    ],
+    "verify:no-boot-throwing-env-checks": [
+      "backend-dist"
+    ],
+    "verify:google-oauth-lazy-env": [
+      "backend-dist"
     ]
   },
   "server_required_live_status_checks": {
