@@ -8,7 +8,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { FuelKpiRow } from "./components/FuelKpiRow";
+import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -116,9 +116,11 @@ export function FuelCardOverageKpiCard() {
 type DieselBoardRow = DieselByTruckRow & { id: string };
 
 /**
- * Fuel Home — ROUND 443.326 full board rebuild.
- * KPI strip = planner dashboard engine (FuelKpiRow). Roster = diesel-by-truck ParityTable
- * (same aggregate as the old panel). No metric-as-rows theater, no panel-stack chrome.
+ * Fuel Home — ROUND 443.280 / 443.326 board (docs/design/v3/Fuel.dc.html).
+ * KPI strip = FuelBoardKpiStrip (Diesel spend / Gallons / Avg $/gal / Fills without a load /
+ * Open questions) from the same diesel aggregate + assignment-questions engines, period-synced
+ * with Diesel by truck. Planner dashboard kept only for Love's sync honesty (error + retry).
+ * No metric-as-rows theater, no panel-stack chrome.
  */
 export function FuelHomePage() {
   const navigate = useNavigate();
@@ -128,6 +130,7 @@ export function FuelHomePage() {
   const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
   const range = fuelBoardPeriodRange(period);
 
+  // Love's sync status — fail-loud banner only (board KPI strip is FuelBoardKpiStrip).
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
     queryFn: () => getFuelDashboard(companyId),
@@ -221,19 +224,20 @@ export function FuelHomePage() {
 
   if (!companyId) {
     return (
-      <div
-        className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-        data-testid="fuel-home-page"
-        style={{ fontFamily: V3.font }}
-      >
-        Select an operating company to view the fuel dashboard.
+      <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
+        <FuelBoardSection title="Fuel home" testId="fuel-home-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view the fuel dashboard.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }
 
   return (
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
-      <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
+      {/* 443.280 board KPIs — period-synced with Diesel by truck (not planner Active Plans chrome). */}
+      <FuelBoardKpiStrip companyId={companyId} period={period} />
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
       ) : null}

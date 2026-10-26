@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel Home board KPIs (443.280)
+
+- **STATUS:** SHIPPING
+- **DELTA:** Fuel Home replaces planner `FuelKpiRow` with period-synced `FuelBoardKpiStrip` (Diesel spend / Gallons / Avg $/gal / Fills without a load / Open questions) from diesel aggregate + assignment-questions engines; need-company → `FuelBoardSection`; Love's sync fail-loud kept. Guard ratcheted. Import fills / + Add fill stay on module chrome.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-home-dashboard-wired PASS (+ --selftest) · verify-cap-11-fuel-fraud · verify-fuel-expense-identity-honesty
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements Home/Close/Escrow + Fuel sub-tabs
+- **Files Modified:** FuelHome.tsx · FuelBoardKpiStrip.tsx · verify-fuel-home-dashboard-wired.mjs · OUTBOX-CURSOR.md · CURSOR-PENDING-ROWS-FINAL.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — CashFlowPanel unlayer nested card
 
 - **STATUS:** SHIPPING [#27780](https://github.com/tioperfumes07/IH35-TMS/pull/27780)

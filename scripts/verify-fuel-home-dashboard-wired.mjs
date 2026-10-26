@@ -2,8 +2,10 @@
 /**
  * verify-fuel-home-dashboard-wired.mjs — f-01-fuel-home-stub
  *
- * FuelHome.tsx must call GET /api/v1/fuel/planner/dashboard (via getFuelDashboard)
- * and render mtd_spend + fleet_mpg (via FuelKpiRow or inline).
+ * FuelHome.tsx must render the 443.280 Fuel.dc.html board KPI strip (FuelBoardKpiStrip:
+ * Diesel spend / Gallons / Avg $/gal / Fills without a load / Open questions) period-synced
+ * with Diesel by truck, keep Love's sync fail-loud (getFuelDashboard + lovesSyncQuery), and
+ * keep fraud / relay import additive chrome.
  *
  * Self-test: node scripts/verify-fuel-home-dashboard-wired.mjs --selftest
  */
@@ -57,16 +59,20 @@ export function computeFailures(source) {
   if (!/getFuelDashboard/.test(source) && !/\/api\/v1\/fuel\/planner\/dashboard/.test(source)) {
     errors.push("FuelHome.tsx must fetch getFuelDashboard or /api/v1/fuel/planner/dashboard");
   }
-  if (!/FuelKpiRow/.test(source) && !/mtd_spend/.test(source)) {
-    errors.push("FuelHome.tsx must render FuelKpiRow or mtd_spend");
+  // 443.280 FULL — board KPI strip (Fuel.dc.html), not planner Active Plans / MTD Savings chrome.
+  if (!/FuelBoardKpiStrip/.test(source)) {
+    errors.push("FuelHome.tsx must render FuelBoardKpiStrip (443.280 Fuel.dc.html board KPIs)");
   }
-  if (!/FuelKpiRow/.test(source) && !/fleet_mpg/.test(source)) {
-    errors.push("FuelHome.tsx must render FuelKpiRow or fleet_mpg");
+  if (!/<FuelBoardKpiStrip[\s\S]{0,120}period=\{period\}/.test(source)) {
+    errors.push("FuelHome.tsx must period-sync FuelBoardKpiStrip with Diesel by truck");
+  }
+  if (/<FuelKpiRow\b/.test(source)) {
+    errors.push("FuelHome.tsx must not keep planner FuelKpiRow on Home after 443.280 board KPIs");
   }
   if (!/FuelFraudAlertsKpiCard/.test(source) || !/RelayHistoryImport/.test(source)) {
     errors.push("FuelHome.tsx must keep FuelFraudAlertsKpiCard + RelayHistoryImport (additive-only)");
   }
-  // ROUND 443.326 — full board: FuelKpiRow + diesel ParityTable (not metric-as-rows / V3Panel stack).
+  // ROUND 443.326 — full board: diesel ParityTable (not metric-as-rows / V3Panel stack).
   if (!/ParityTable/.test(source) || !/MoneyListToolbar/.test(source)) {
     errors.push("FuelHome.tsx must mount MoneyListToolbar + ParityTable (443.326 board grammar)");
   }
@@ -381,7 +387,7 @@ function selftest() {
   console.log("selftest ok — Fuel 443.282 board shell markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
-    import { FuelKpiRow } from "./components/FuelKpiRow";
+    import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
     import { ParityTable } from "../../components/parity/ParityTable";
     import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
     import { RelayHistoryImport } from "./components/RelayHistoryImport";
@@ -390,7 +396,7 @@ function selftest() {
     export function FuelHomePage() {
       getFuelDashboard(id);
       fetchDieselByTruckAggregate(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")} /><ParityTable title="Diesel by truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip companyId={companyId} period={period} /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")} /><ParityTable title="Diesel by truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
@@ -411,6 +417,14 @@ function selftest() {
       console.error(`SELFTEST FAIL — ${c.name}: ${JSON.stringify(failures)}`);
     } else console.log(`selftest ok — ${c.name}`);
   }
+  const plannerKpiLayer = good.replace(
+    /<FuelBoardKpiStrip companyId=\{companyId\} period=\{period\} \/>/,
+    "<FuelKpiRow dashboard={dashboardQuery.data} />",
+  );
+  if (!computeFailures(plannerKpiLayer).some((failure) => failure.includes("FuelKpiRow") || failure.includes("FuelBoardKpiStrip"))) {
+    console.error("SELFTEST FAIL — planner FuelKpiRow reintro should fail");
+    process.exit(1);
+  }
   const retryNoOp = good.replace("lovesSyncQuery.refetch()", "undefined");
   if (!computeFailures(retryNoOp).some((failure) => failure.includes("sync-status failure"))) {
     console.error("SELFTEST FAIL — Love's sync-status retry no-op should fail");
@@ -418,7 +432,7 @@ function selftest() {
   }
   if (!ok) process.exit(1);
   const leftover = computeFailures(
-    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar FuelBoardSection ParityTable Diesel by truck fetchDieselByTruckAggregate navigate("/fuel/by-truck") lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    `getFuelDashboard <FuelBoardKpiStrip period={period} /> FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar FuelBoardSection ParityTable Diesel by truck fetchDieselByTruckAggregate navigate("/fuel/by-truck") lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
   );
   if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
     console.error("SELFTEST FAIL — leftover plant escaped", leftover);
