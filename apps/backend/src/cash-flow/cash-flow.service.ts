@@ -163,7 +163,10 @@ function variancePct(projected: number, actual: number): number | null {
  * posting logic change.
  */
 export function notVoidedSql(alias: string): string {
-  return liveBill(alias);
+  const a = alias ? `${alias}.` : "";
+  // Canonical void-exclusion: write-path stores status = 'void' (singular); 'voided' is legacy.
+  // revoked_at IS NULL catches revocations that don't update status (matches liveBill / listBills).
+  return `(${a}status NOT IN ('void', 'voided') AND ${a}voided_at IS NULL AND ${a}revoked_at IS NULL)`;
 }
 
 /** CASHFLOW-PROFORMA-PROJECTED-LABELED — a live proforma is the labeled projection for that load. */
@@ -225,7 +228,8 @@ export async function getDailyPrediction(
     load_id: row.id, invoice_id: row.invoice_id, load_number: row.load_number,
     customer_id: row.customer_id, customer_name: row.customer_name,
     delivery_time: row.delivery_time, amount_cents: Number(row.amount_cents),
-    basis: row.basis === "Predicted" && isConfirmedLoadStatus(row.status) ? "Confirmed" : row.basis,
+    // Proforma loads carry basis: "Proforma" (labeled projected income, excluded from Open A/R).
+    basis: row.basis === "Proforma" ? "Proforma" : row.basis === "Predicted" && isConfirmedLoadStatus(row.status) ? "Confirmed" : row.basis,
   }));
 
   // Driver pay cash-outflow predictions (0441-mod10-cashflow-driverpay-hardcoded-empty).
@@ -255,6 +259,8 @@ export async function getDailyPrediction(
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
+        -- cashFlowSettlementEligibilitySql: s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
+        -- || payment_state IN ('queued', 'sent_to_bank') (see cash-flow-obligations.sql.ts)
         AND ${cashFlowSettlementEligibilitySql("s")}
         AND COALESCE(
           s.bank_settle_date,
@@ -583,6 +589,7 @@ async function buildSevenDayStrip(
             SELECT SUM(ROUND(COALESCE(s.net_pay, 0) * 100)::bigint)
             FROM driver_finance.driver_settlements s
             WHERE s.operating_company_id = $1::uuid
+              -- s.status IN ('locked', 'final', 'approved', 'posted', 'closed') || payment_state check
               AND ${cashFlowSettlementEligibilitySql("s")}
               AND COALESCE(
                 s.bank_settle_date,

@@ -796,7 +796,7 @@ export function UsersPage() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
                   <dt className="text-[#6B7280]">Name</dt>
                   <dd className="text-center font-medium text-[#0F1219]">
-                    <EntityLink kind="user" id={selected.id} label={entityLabel(selected.name ?? selected.email, selected.id, "User")} />
+                    <EntityLink kind="user" id={selected.id} label={selected.name ?? selected.email ?? "User"} />
                   </dd>
                   <dt className="text-[#6B7280]">Email</dt>
                   <dd className="text-center text-[#0F1219]">{selected.email ?? "—"}</dd>
