@@ -106,6 +106,10 @@ function fmtDateShort(iso: string): string {
   return formatDateUS(iso);
 }
 
+function isFactoringRow(type: string): boolean {
+  return type === "Factor advance" || type === "Factor reserve";
+}
+
 /** Board day-grid / navigator: "Thu 10-22" (weekday + MM-DD). */
 function fmtChipDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -929,7 +933,23 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           <span style={{ color: V3.muted }}>—</span>
         ),
     },
-    { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
+    {
+      key: "due_date",
+      label: "Due",
+      sortable: true,
+      render: (row) => {
+        if (isFactoringRow(row.type)) {
+          return <span>—</span>;
+        }
+        return <span>{row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`}</span>;
+      },
+      sortValue: (row) => row.due_date,
+    },
+    {
+      key: "invoice_date",
+      label: "Invoice date",
+      render: (row) => fmtDateShort(row.origin_date),
+    },
     {
       key: "amount_cents",
       label: "Amount",
@@ -994,7 +1014,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "due_date",
       label: "Due",
       sortable: true,
-      render: (row) => (isBoardEmptyRow(row) ? null : fmtDateShort(row.due_date)),
+      render: (row) => (isBoardEmptyRow(row) ? null : <span>{row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`}</span>),
       sortValue: (row) => row.due_date,
     },
     {
