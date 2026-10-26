@@ -81,7 +81,7 @@ export async function registerBankingDriftAlertsRoutes(app: FastifyInstance) {
       const offsetParam = rangeValues.length;
       const rowsRes = await client.query(
         `
-          SELECT da.*, ba.account_name, ba.account_mask, ba.institution_name
+          SELECT da.*, COALESCE(ba.display_name, ba.account_name) AS account_name, ba.account_mask, ba.institution_name
             FROM banking.reconciliation_drift_alerts da
             LEFT JOIN banking.bank_accounts ba ON ba.id = da.bank_account_id
            WHERE ${filters.join(" AND ")}
