@@ -2,6 +2,9 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+## 2026-10-26 — Banking B2
+CODEX | B2 DONE | PR #27885 | merge aaa271b5cf7d60fd5b2ca0866eef1ea71c69e9d5 | verify-banking-match-qbo-engine PASS + 45/45 plants | 14/14 MatchDrawer tests; frontend build exit 0; fast merge 36 affected guards, zero regressions. Old code fails typed-filter behavior test. Uses the shared searchable MultiSelectDropdown behind EntityMultiSelect; fixed record-type options do not need an entity-roster endpoint. Live UI remains unverified.
+
 ## 2026-10-26 — Banking B1
 CODEX | B1 DONE | PR #27882 | merge 99971f5e1ea6d7185b4b8f4f728198fe4b8bde43 | verify-match-candidates-cover-all-documents PASS + 13/13 selftests (old source fails five assertions); banking QBO guard 44/44 plants | backend 10/10 + frontend 13/13 tests; FE and BE build exit 0. Fast merge: 130 affected guards, zero regressions, three identical inherited selftest failures. No production matching or money writes.
 Render API dep-dbffa9gs76nc739qo7hg and web dep-dbffbgj4qb4c73ad2cv0 are live at be361344858fe28caeae632ff6d1c5abba0d6815; git ancestry confirms B1 included. Authenticated UI behavior remains unverified; no production match submitted. C3 marked DONE by Cursor Lead (#27881); not duplicated.

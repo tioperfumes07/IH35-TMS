@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserPreferences } from "../api/safety";
 import { colors, typography } from "../design/tokens";
 import { useEscapeKey } from "../hooks/useEscapeKey";
+import { OverlayParent, useOverlayLayer } from "../hooks/useOverlayLayer";
 import { MODAL_MAX_DEFAULT_W, MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
 import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "./ModalCloseButton";
@@ -79,6 +80,7 @@ export function Modal({
   size = "md",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const layer = useOverlayLayer(open);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const boxRef = useRef<{ w: number; h: number } | null>(null);
@@ -159,9 +161,9 @@ export function Modal({
   }, [confirmDiscardOnClose, isDirty, onClose]);
 
   useEscapeKey(() => {
+    if (!layer.isTop()) return;
     // WO-CREATE-UX: Escape on an open Combobox list or nested QuickCreate must not discard the parent wizard.
     if (document.querySelector('[data-combobox-listbox="portal"]')) return;
-    if (document.querySelector('[data-parity-drawer-stack-above-modal="true"]')) return;
     // MOD-02: Escape must close the date calendar only — not the parent Modal/wizard.
     if (document.querySelector('[data-date-picker-popover="open"]')) return;
     attemptClose();
@@ -180,7 +182,7 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Tab") return;
+      if (event.key !== "Tab" || !layer.isTop()) return;
       const panel = panelRef.current;
       if (!panel) return;
       const focusable = panel.querySelectorAll<HTMLElement>(
@@ -199,10 +201,10 @@ export function Modal({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [open, layer.isTop]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !layer.isTop()) return;
     const panel = panelRef.current;
     const firstInput = panel?.querySelector<HTMLElement>("input, select, textarea, button");
     firstInput?.focus();
@@ -220,7 +222,7 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <>
+    <OverlayParent.Provider value={layer.id}>
       <div
         className={
           // z-[1001]: above DatePicker/SaveDropdown popovers (z-[1000]) and every drawer tier
@@ -237,6 +239,7 @@ export function Modal({
             : "fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4"
         }
         data-ih35-blocking-modal="true"
+        style={{ zIndex: layer.zIndex }}
         onMouseDown={attemptClose}
       >
         <div
@@ -360,7 +363,7 @@ export function Modal({
         onCancel={() => setShowDiscardConfirm(false)}
         onDiscard={finalizeClose}
       />
-    </>,
+    </OverlayParent.Provider>,
     document.body
   );
 }
