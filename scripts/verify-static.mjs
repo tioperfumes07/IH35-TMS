@@ -144,6 +144,10 @@ export function capabilityPreflight(
       "pass8-artifact": fs.existsSync(
         path.join(root, "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.json")
       ),
+      // Compiled backend (npm run build). The dist guards read the emitted JS on purpose (a boot-time env throw
+      // lives in what ships); CI runs them after Build in ci / build-typecheck(-heavy). Absent locally = not run here.
+      "backend-dist":
+        fs.existsSync(path.join(root, "apps/backend/dist")) || fs.existsSync(path.join(root, "dist")),
     },
   } = {}
 ) {
