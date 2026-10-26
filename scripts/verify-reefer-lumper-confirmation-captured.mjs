@@ -66,7 +66,10 @@ export function bookLoadPersistsLumperFields(src) {
 export function bookLoadPersistsTrailerType(src) {
   return (
     /trailer_type[\s\S]{0,200}?\)\s*\n\s*VALUES/.test(src) &&
-    /input\.trailer_type \?\? null,/.test(src)
+    // The INSERT's own positional value — a line that is exactly the value. Row 257 (#27725) added
+    // `trailerType: input.trailer_type ?? null,` (a hints object) elsewhere; an unanchored match let that line
+    // satisfy this check with the INSERT value removed.
+    /^\s*input\.trailer_type \?\? null,\s*$/m.test(src)
   );
 }
 
@@ -145,7 +148,9 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     { ...files, migration: files.migration.replace("ADD COLUMN IF NOT EXISTS lumper_payer text NULL,", "") },
     { ...files, bookLoad: files.bookLoad.replace("input.lumper_payer != null ||\n", "") },
-    { ...files, bookLoad: files.bookLoad.replace("input.trailer_type ?? null,\n", "") },
+    // Anchored to a line that IS the INSERT value: row 257 (#27725) added `trailerType: input.trailer_type ?? null,`
+    // earlier in the file, and a bare .replace() removed that one instead — the planted defect never landed.
+    { ...files, bookLoad: files.bookLoad.replace(/^\s*input\.trailer_type \?\? null,\n/m, "") },
     { ...files, loadsRoutes: files.loadsRoutes.replace('current.trailer_type === "refrigerated_van"', 'false') },
     { ...files, loadsRoutes: files.loadsRoutes.replace("current.lumper_late_penalty_applies == null", "false") },
     { ...files, loadsRoutes: files.loadsRoutes.replaceAll("reefer_lumper_confirmation_required", "x") },
@@ -166,7 +171,7 @@ if (process.argv.includes("--selftest")) {
       caught += 1;
       continue;
     }
-    throw new Error("a mutation escaped detection");
+    throw new Error(`a mutation escaped detection (#${mutations.indexOf(mutated) + 1})`);
   }
   check(files);
   console.log(`${LABEL} SELFTEST PASS (${caught}/${mutations.length} planted defects caught)`);
