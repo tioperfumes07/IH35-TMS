@@ -44,23 +44,6 @@ const ALLOWLIST = new Set([
   "accounting/journal-entries.service.ts",
   "accounting/revrec-delivery-posting/poster.service.ts",
   "accounting/posting-engine.service.ts",
-  // Load-transition runtime recursion (measured 2026-10-25 by the Lead; this is a recorded measurement, NOT an owner ruling):
-  // a transition fires the delivery latch -> auto-invoice -> invoice send -> billing-status sync -> transition, and a settlement
-  // void cascades back into a load transition. Every edge here is a real runtime call. 82e7b151e8 allowlisted 22 files as
-  // "owner-gated"; that claim was invented and is withdrawn. 11 were broken out by leaf extraction (stop-evidence, abandonment
-  // chargebacks, additional-only pay, creator restate-bill, forecast entry schema). These 11 remain until the transition engine
-  // takes its side effects by injection. SHRINK-ONLY: never add a file here.
-  "driver-finance/driver-settlement-void-cascade.service.ts",
-  "driver-finance/void-document-callees.service.ts",
-  "driver-finance/settlement-payrun-reverse.service.ts",
-  "driver-finance/settlement-continuation.service.ts",
-  "dispatch/presettlement-link.service.ts",
-  "dispatch/book-load.service.ts",
-  "dispatch/load-billing-lifecycle.service.ts",
-  "accounting/invoice-send.service.ts",
-  "accounting/auto-invoice-on-bol.service.ts",
-  "dispatch/delivery-evidence-latch.ts",
-  "dispatch/load-transition.service.ts",
 ]);
 
 /** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */
@@ -148,9 +131,33 @@ export function computeCycles() {
   return sccs.map((c) => c.map(rel));
 }
 
+export function hookContractProblems(sources) {
+  const { hooks = "", bootstrap = "", entry = "", setup = "", transition = "" } = sources;
+  const failures = [];
+  if (/^\s*import\b/m.test(hooks)) failures.push("load-transition hook contract must be a dependency-free leaf");
+  if (!/if \(!hooks\) throw new Error\("load_transition_hooks_unregistered"\)/.test(hooks)) failures.push("unregistered transition hooks must throw");
+  for (const name of ["ensureDriverBillArtifactsForLoad", "latchOnDeliveryEvidence"]) {
+    if (!bootstrap.includes(`${name}: async (client, input)`) || !bootstrap.includes(`return ${name}(client, input)`)) failures.push(`bootstrap must forward ${name} with the original client/input`);
+  }
+  if (!bootstrap.includes("registerLoadTransitionHooks({")) failures.push("bootstrap registration missing");
+  if (!entry.includes('import "./dispatch/load-transition-bootstrap.js"')) failures.push("server bootstrap missing");
+  if (!setup.includes('import "../src/dispatch/load-transition-bootstrap.js"')) failures.push("test bootstrap missing");
+  const resolved = transition.indexOf("= getLoadTransitionHooks()");
+  if (resolved < 0 || resolved > transition.indexOf("await client.query")) failures.push("transition must resolve hooks before transaction writes");
+  return failures;
+}
+
+function readHookSources() {
+  const paths = { hooks: "src/dispatch/load-transition-hooks.ts", bootstrap: "src/dispatch/load-transition-bootstrap.ts", entry: "src/index.ts", setup: "test-helpers/setup-env.ts", transition: "src/dispatch/load-transition.service.ts" };
+  return Object.fromEntries(Object.entries(paths).map(([key, rel]) => {
+    const file = path.join(ROOT, "apps/backend", rel);
+    return [key, fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""];
+  }));
+}
+
 export function run() {
   const cycles = computeCycles();
-  const failures = [];
+  const failures = hookContractProblems(readHookSources());
   for (const cycle of cycles) {
     const offenders = cycle.filter((f) => !ALLOWLIST.has(f));
     if (offenders.length) {
@@ -171,6 +178,20 @@ if (process.argv.includes("--selftest")) {
     { name: "mixed cycle fails", cycle: ["a.ts", "z.ts"], expectFail: true },
   ];
   const failed = [];
+  const source = readHookSources();
+  failed.push(...hookContractProblems(source));
+  for (const [key, before, after] of [
+    ["hooks", 'throw new Error("load_transition_hooks_unregistered")', "return {}"],
+    ["bootstrap", "return latchOnDeliveryEvidence(client, input)", 'return "skipped"'],
+    ["bootstrap", "return ensureDriverBillArtifactsForLoad(client, input)", "return ensureDriverBillArtifactsForLoad(otherClient, input)"],
+    ["entry", 'import "./dispatch/load-transition-bootstrap.js"', ""],
+    ["setup", 'import "../src/dispatch/load-transition-bootstrap.js"', ""],
+    ["transition", "= getLoadTransitionHooks()", "= {}"],
+  ]) {
+    const planted = source[key].replace(before, after);
+    if (planted === source[key] || !hookContractProblems({ ...source, [key]: planted }).length) failed.push(`hook plant not caught: ${key} ${before}`);
+  }
+  if (!hookContractProblems({ ...source, hooks: 'import "./book-load.service.js";\n' + source.hooks }).length) failed.push("hook leaf dependency plant not caught");
   for (const s of scenarios) {
     const offenders = s.cycle.filter((f) => !allow.has(f));
     const didFail = offenders.length > 0;
@@ -203,7 +224,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `verify:no-circular-dependencies --selftest PASS (${scenarios.length} synthetic + FMCSA acyclic plant + live SCC check)`
+    `verify:no-circular-dependencies --selftest PASS (${scenarios.length} synthetic + 7 hook plants + FMCSA acyclic plant + live SCC check)`
   );
   process.exit(0);
 }

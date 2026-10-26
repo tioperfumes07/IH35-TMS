@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import type { DriverBillMintOutcome } from "./load-transition-hooks.js";
 import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
 import { restampDriverBillUnitAndTrailer } from "../driver-finance/driver-bill-unit-trailer.js";
@@ -1008,11 +1009,7 @@ export class DriverBillReassignRefusedError extends Error {
   }
 }
 
-export type DriverBillMintOutcome =
-  | { outcome: "not_applicable" }
-  | { outcome: "already_exists" }
-  | { outcome: "minted"; bill_number: string | null; unpriced?: boolean }
-  | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] }
+export type { DriverBillMintOutcome } from "./load-transition-hooks.js";
   // P1 (owner 2026-09-14, 09-14-2026-Claude-Coder-3-SHORT-MILES-NEVER-CAPTURED.md): "a
   // driver_finance.driver_bills row may not be minted from a load whose miles_shortest is NULL...
   // Refuse LOUDLY with the reason on screen. A silent no-op is a defect." Distinct from
@@ -1024,9 +1021,9 @@ export type DriverBillMintOutcome =
   // LEAD 443.220 (owner 10-21 7:34 PM CT: "why no driver bill, it should be created automatically") — a per-mile load with no
   // SHORT miles still gets its driver bill at booking: status awaiting_short_miles, $0, driver / unit / trailer / load linked,
   // visible. The same engine prices THAT row when short miles land (Edit Load, Settlement Creator, AlwaysTrack import).
-  | { outcome: "awaiting_short_miles"; bill_number: string | null; reason: string }
+  // Outcome contract: awaiting_short_miles (see the leaf type).
   // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
-  | { outcome: "not_minted_salaried"; reason: string };
+  // Outcome contract: not_minted_salaried (see the leaf type).
 
 /**
  * LEAD 443.192 — an open bill whose settled_in_settlement_id named a voided / cancelled settlement is released from that
