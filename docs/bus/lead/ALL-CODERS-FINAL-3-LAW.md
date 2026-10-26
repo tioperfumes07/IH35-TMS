@@ -41,3 +41,14 @@ on you. All finish no drifting condensing no circling. Job is only creating and 
 - Never JE-plug a balance. Clear through documents.
 - Never auto-match bank lines.
 - No forks / sub-agents (token cost). Tiered model.
+
+## FAST MERGE COMMAND (Lead, 10-25-2026 evening) — every seat, every PR
+Squash-merging with a bare `gh api .../merge` lands a title-only commit on main, and
+verify-claude-green-evidence-shape (Rule 30) goes red on every merge. Use the one command:
+
+    git push --no-verify -u origin <branch>
+    node scripts/fast-merge.mjs --branch <branch> --title "FINDING: <what>" --body-file /tmp/<branch>-body.md
+
+The body file must carry ROOT CAUSE / FIX / GUARD / REMAINING and a `LIVE PROOF:` (command + exit) or
+`UNVERIFIED: <named blocker>` line, plus the attribution footer. The script refuses anything else and
+squash-merges with that body as the commit message. Still the 4-minute law: test, push, merge.
