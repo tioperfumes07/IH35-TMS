@@ -30,6 +30,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { getTourReadout } from "../../api/tourReadout";
 import { getCompanySettlementReport } from "../../api/accounting";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { SettlementDocumentBody } from "./components/SettlementDocumentBody";
 import { buildSettlementLineViews } from "./settlementDetailLineMaps";
 import {
@@ -245,9 +246,9 @@ export function SettlementDetailPage() {
           title="Settlement statement"
           subtitle="Select a settlement from the list"
         />
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">
-          No settlement selected.
-        </div>
+        <BoardSection title="Settlement statement" testId="settlement-detail-none-selected">
+          <p className="px-3.5 py-2 text-xs text-gray-600">No settlement selected.</p>
+        </BoardSection>
       </div>
     );
   }
