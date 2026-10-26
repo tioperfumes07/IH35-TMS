@@ -1,6 +1,6 @@
 {
  "date": "2026-10-26",
- "generated_at_iso": "2026-10-26T14:09:31.352Z",
+ "generated_at_iso": "2026-10-26T18:46:02.833Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27898,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-26T14:11:38Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27897,
    "title": "FINDING: N/A (CLAIM-RESERVE 18802 — ENG-07 book stop street/place)",
    "mergedAt": "2026-10-26T12:38:24Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.264 verify-cap-11-fuel-fraud accepts the V3 tile's String(openCritical) (red on main after #27267)",
    "mergedAt": "2026-10-23T08:59:26Z",
    "branch": "cc-2/443-264-fuel-fraud-guard"
-  },
-  {
-   "number": 27275,
-   "title": "Cursor- 443.250 Settlements Deductions V3 KPI strip (piggyback 1012)",
-   "mergedAt": "2026-10-23T08:59:28Z",
-   "branch": "cursor/443250-deductions-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
