@@ -773,8 +773,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         ) : (
         <>
           <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
-          <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-active-route-selector">
-            <div className="flex flex-wrap items-end gap-2">
+          <FuelBoardSection title="Active load plan" testId="fuel-active-route-selector">
+            <div className="flex flex-wrap items-end gap-2 px-3.5 py-2">
               <label className="min-w-72 flex-1 text-xs font-semibold text-[#1F2A44]">
                 Active load plan
                 <Combobox
@@ -809,7 +809,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </ActionButton>
               </div>
             </div>
-          </section>
+          </FuelBoardSection>
           <ActiveTripStrip route={activeRoute} operatingCompanyId={companyId} />
           <HosRulesBox
             maxMilesPerShift={Number(settingsQuery.data?.max_miles_per_shift ?? 720)}
@@ -818,23 +818,22 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           />
           <AvoidStatesBanner states={expensiveStates} />
 
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold text-gray-900">HOS-aware route diagram</h3>
-            <RouteDiagramSvg
-              totalMiles={detail?.total_distance_miles ?? null}
-              stops={stops}
-              expensiveStates={expensiveStates}
-            />
-          </section>
+          <FuelBoardSection title="HOS-aware route diagram" testId="fuel-planner-route-diagram">
+            <div className="px-3.5 py-2">
+              <RouteDiagramSvg
+                totalMiles={detail?.total_distance_miles ?? null}
+                stops={stops}
+                expensiveStates={expensiveStates}
+              />
+            </div>
+          </FuelBoardSection>
 
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold text-gray-900">HOS-aware stop-logic panel</h3>
+          <FuelBoardSection title="HOS-aware stop-logic panel" testId="fuel-planner-stop-logic">
             <StopReasoningTable stops={stops} />
-          </section>
+          </FuelBoardSection>
 
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold text-gray-900">Recommended stops (HOS-aware)</h3>
-            <div className="rounded-sm border border-gray-200 bg-white p-3">
+          <FuelBoardSection title="Recommended stops (HOS-aware)" testId="fuel-planner-recommended-stops">
+            <div className="px-3.5 py-2">
               {hosAware.length === 0 ? (
                 <p className="text-xs text-gray-500">No HOS-aware stop recommendations available.</p>
               ) : (
@@ -859,7 +858,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </div>
               )}
             </div>
-          </section>
+          </FuelBoardSection>
 
           <TripPlanSummaryBanner route={detail ?? activeRoute} />
 

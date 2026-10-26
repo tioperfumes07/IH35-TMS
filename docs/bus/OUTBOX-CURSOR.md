@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel Planner → FuelBoardSection
+
+- **STATUS:** SHIPPING — after [#27729](https://github.com/tioperfumes07/IH35-TMS/pull/27729) MERGED
+- **DELTA:** FuelPlannerHome planner tab — Active load plan · HOS route diagram · stop-logic · recommended stops → `FuelBoardSection`. Guard ratcheted. Engines unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-planner-active-routes-exact-range PASS (+ --selftest 7/7)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (Statement workflow / EscrowVisualizer bare cards)
+- **Files Modified:** FuelPlannerHome.tsx · verify-fuel-planner-active-routes-exact-range.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements Disputes → BoardSection
 
-- **STATUS:** SHIPPING — after [#27728](https://github.com/tioperfumes07/IH35-TMS/pull/27728) MERGED
+- **STATUS:** MERGED [#27729](https://github.com/tioperfumes07/IH35-TMS/pull/27729)
 - **DELTA:** SettlementDisputesTab filters + detail → `BoardSection`; filter/status heights to FILTER/FORM tokens; engines/resolve/review unchanged. Guard ratcheted.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-disputes-parity-surface-bar PASS (+ --selftest) · staged-filters PASS · tab-labels PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

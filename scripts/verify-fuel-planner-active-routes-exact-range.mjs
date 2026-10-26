@@ -14,9 +14,26 @@ function failures(s) {
   if (!s.backend.includes("ORDER BY computed_at DESC, id DESC") || !s.backend.includes("LIMIT $2 OFFSET $3")) out.push("active routes need stable bounded paging");
   if (!s.api.includes("{ routes: FuelActiveRoute[]; total_count: number | null;") || !s.api.includes("&limit=${range.limit}&offset=${range.offset}")) out.push("API must carry range and exact total-or-unavailable contract");
   if (!s.page.includes('activeRoutePage, setActiveRoutePage') || !s.page.includes('activeRoutePageCount')) out.push("mounted planner needs controlled server paging");
-  if (!s.page.includes('data-testid="fuel-active-route-selector"') || !s.page.includes("setSelectedActiveRouteId")) out.push("operator must be able to choose the active plan");
+  const hasActiveSelector =
+    s.page.includes('testId="fuel-active-route-selector"') ||
+    s.page.includes('data-testid="fuel-active-route-selector"');
+  if (!hasActiveSelector || !s.page.includes("setSelectedActiveRouteId")) out.push("operator must be able to choose the active plan");
   if (!/activeRoutesQuery\.isLoading[\s\S]{0,100}"Loading active plans…"[\s\S]{0,180}`Page \$\{activeRoutePage\}/.test(s.page)) out.push("active-route pager must not announce a false zero while unresolved");
   if (/routes\?\.\[0\]/.test(s.page)) out.push("planner must not silently force the first route");
+  // Fill-not-shell / 443.280 — planner tab bodies use FuelBoardSection (not bare bordered section cards).
+  for (const needle of [
+    'testId="fuel-active-route-selector"',
+    'testId="fuel-planner-route-diagram"',
+    'testId="fuel-planner-stop-logic"',
+    'testId="fuel-planner-recommended-stops"',
+  ]) {
+    if (!s.page.includes(needle) || !s.page.includes("<FuelBoardSection")) {
+      out.push(`planner must wrap ${needle} in FuelBoardSection`);
+    }
+  }
+  if (/rounded-sm border border-gray-200 bg-white p-3[\s\S]{0,80}fuel-active-route-selector/.test(s.page)) {
+    out.push("active route selector must not keep layered bare card section");
+  }
   return out;
 }
 
@@ -30,7 +47,13 @@ if (process.argv.includes("--selftest")) {
     { ...source, backend: source.backend.replace("count(*)::int AS total_count", "1::int AS total_count") },
     { ...source, backend: source.backend.replace("LIMIT $2 OFFSET $3", "LIMIT 100") },
     { ...source, api: source.api.replace("{ routes: FuelActiveRoute[]; total_count: number | null;", "{ routes: FuelActiveRoute[];") },
-    { ...source, page: source.page.replace('data-testid="fuel-active-route-selector"', 'data-testid="disabled"') },
+    {
+      ...source,
+      page: source.page
+        .replace('testId="fuel-active-route-selector"', 'testId="disabled"')
+        .replace('data-testid="fuel-active-route-selector"', 'data-testid="disabled"'),
+    },
+    { ...source, page: source.page.replace('testId="fuel-planner-route-diagram"', 'testId="gone-diagram"') },
     { ...source, page: source.page.replace('activeRoutesQuery.isLoading\n                    ? "Loading active plans…"', 'false\n                    ? "Loading active plans…"') },
     { ...source, page: `${source.page}\nconst regression = routes?.[0];` },
   ];
