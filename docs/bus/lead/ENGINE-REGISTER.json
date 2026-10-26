@@ -162,10 +162,10 @@
    "title": "ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one \u2014 $30,170.00 revenue overstated in reports; rate change must replace, not add",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-one-active-linehaul-per-load.mjs (step 18799)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "Codex 2026-10-26T21:19Z: 198 active linehaul rows / 198 loads / 0 duplicate loads, USMCA read-only; guard live + selftest exit 0. API git_sha 24e7c34e8c equals measured main. See 10-26-2026-Codex-WAVE0-EVIDENCE.md."
   },
   {
    "id": "ENG-12",
@@ -195,10 +195,10 @@
    "title": "ENG-14 G9: 1 of 209 driver bills without a unit",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-driver-bills-unit-stamp-wired.mjs (step 18823)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "Codex 2026-10-26T21:19Z: 209 total bills, 190 live, 0 live missing unit; USMCA read-only. Guard exit 0; selftest 7/7 failing plants caught. API git_sha 24e7c34e8c equals measured main. See 10-26-2026-Codex-WAVE0-EVIDENCE.md."
   },
   {
    "id": "ENG-15",
@@ -800,10 +800,10 @@
    "title": "ENG-63 verify-list-empty-settled (resolveListState no longer returns loading while pending) and verify-entity-label-rejects-uuid-shaped-name (HosTrackerSection must call entityLabel) fail on main 5a9f8303e9",
    "seat": "CC-3",
    "round": "ENG-63",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-list-empty-settled.mjs (step 12410); verify-entity-label-rejects-uuid-shaped-name.mjs (step 2978)",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "Codex 2026-10-26: both named static regressions PASS plus both selftests exit 0 on deployed 24e7c34e8c. Closure is the two guard failures only; no claim of browser verification or completion of the 21 advisory list-migration sites. See 10-26-2026-Codex-WAVE0-EVIDENCE.md."
   }
  ]
 }
