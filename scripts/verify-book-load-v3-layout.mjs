@@ -74,7 +74,14 @@ export function audit(s) {
   need("R3", /Border crossing — port of entry/.test(s.border) && !/bg-\[#FFF7ED\]/.test(s.border), "Border crossing is not the board field (label + select + consequence line)");
   // R4
   need("R4", /\["AlwaysTrack lane history", "Select from reference", "Type it"\]/.test(s.strip), "the mileage source order is not AlwaysTrack → reference → type it");
-  need("R4", /data-testid="book-load-miles-reference-row"/.test(s.strip) && /onUseReferenceLane\(lane\)/.test(s.strip), "no Select-from-reference lanes");
+  // Table-header ratchet (2026-10-25): the reference lanes render through the shared ParityTable, so the row testid is
+  // rowTestId (the hand-rolled <tr data-testid> form is still accepted). Either way every lane row carries the testid and Use.
+  need(
+    "R4",
+    (/data-testid="book-load-miles-reference-row"/.test(s.strip) || /rowTestId=\{\(\) => "book-load-miles-reference-row"\}/.test(s.strip)) &&
+      /onUseReferenceLane\(lane\)/.test(s.strip),
+    "no Select-from-reference lanes",
+  );
   need("R4", /export async function listLaneMileageReference\(/.test(s.service) && /lower\(dest_state\) = lower\(\$4\)/.test(s.service), "the reference does not read lanes on file into the same state");
   const ref = s.service.slice(s.service.indexOf("export async function listLaneMileageReference("));
   need("R4", !/short_miles/.test(ref), "the reference offers short miles from the catalog");
@@ -142,6 +149,8 @@ if (process.argv.includes("--selftest")) {
     ["trip type as small buttons FAILS", plant("modal", "grid grid-cols-1 gap-2 sm:grid-cols-3", "mt-1 flex flex-wrap gap-2")],
     ["border crossing outside the cards FAILS", plant("modal", "isCrossBorderTripType(watchedTripType) ? (\n              <BorderCrossingCaptureField", "false ? (\n              <BorderCrossingCaptureField")],
     ["source order swapped FAILS", plant("strip", '["AlwaysTrack lane history", "Select from reference", "Type it"]', '["Type it", "AlwaysTrack lane history", "Select from reference"]')],
+    ["reference lane rows without their testid FAIL", plant("strip", 'rowTestId={() => "book-load-miles-reference-row"}', 'rowTestId={() => "x"}')],
+    ["reference lanes without Use FAIL", plant("strip", "onClick={() => onUseReferenceLane(lane)}", "onClick={() => undefined}")],
     ["short miles offered from the catalog FAIL", plant("service", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, n_practical, confidence", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, short_miles, n_practical, confidence")],
     ["Google line moved below the strip FAILS", plant("strip", '<div className="grid grid-cols-2 md:grid-cols-4">', '<div className="grid grid-cols-2 md:grid-cols-4 x">')],
     ["28px inputs FAIL", plant("modal", ".blw-sec select{height:32px}", ".blw-sec select{height:28px}")],

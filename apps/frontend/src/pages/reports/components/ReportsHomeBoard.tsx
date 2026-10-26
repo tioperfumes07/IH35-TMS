@@ -305,7 +305,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     density="compact"
                     suppressToolbarSearch
                     suppressToolbarRange
-                    rows={accountingRows}
+                    rows={[...accountingRows]}
                     rowKey={([reportKey]) => reportKey}
                     rowTestId={([reportKey]) => `reports-acct-row-${reportKey}`}
                     emptyText="No reports."
