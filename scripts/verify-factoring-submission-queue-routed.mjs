@@ -95,6 +95,16 @@ export function checkSubmitTab(s) {
   if (!/<EntityLink kind="customer" id=\{r\.customer_id\}/.test(s.tab) || !/customer_id: applied\.customerId/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its customer, with a customer filter (customer)`);
   if (!/<EntityLink kind="load" id=\{r\.load_id\}/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its load (load)`);
   if (!/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ customer_id: customer\.id \}\}/.test(s.customerDrill) || !/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ load_id: loadId \}\}/.test(s.loadTab) || !/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ invoice_id: id \}\}/.test(s.invoicePage)) f.push(`FactoringPurchaseLinksPanel: customer, load and invoice pages must show the purchase back (reverse_link)`);
+  // 443.280 fill — owner-only + posted result empties use BoardSection (not bare dashed cards).
+  if (!/<BoardSection[\s\S]{0,220}testId=["']submit-factor-owner-only-note["']/.test(s.tab)) {
+    f.push(`${TAB.tab}: owner-only note must be BoardSection (submit-factor-owner-only-note)`);
+  }
+  if (!/<BoardSection[\s\S]{0,220}testId=["']submit-factor-created["']/.test(s.tab)) {
+    f.push(`${TAB.tab}: purchase-posted result must be BoardSection (submit-factor-created)`);
+  }
+  if (!/FORM_INPUT_CLASS/.test(s.tab) || !/FORM_TEXTAREA_CLASS/.test(s.tab)) {
+    f.push(`${TAB.tab}: page inputs must use FORM_INPUT_CLASS / FORM_TEXTAREA_CLASS`);
+  }
   return f;
 }
 
