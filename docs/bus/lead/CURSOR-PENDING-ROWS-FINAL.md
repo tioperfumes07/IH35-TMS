@@ -11,12 +11,12 @@
 | 37 | Accounting | Accounting › Unexpected — board verdict REBUILT | 443.280 | PARTIAL |
 | 38 | Banking | Banking › Home — board verdict REBUILT | 443.280 | PARTIAL |
 | 39 | Factoring | Factoring › Home — board verdict LAYERED | 443.280 | CODED |
-| 44 | Settlements | Settlements › Home — board verdict LAYERED | 443.280 | PARTIAL |
+| 44 | Settlements | Settlements › Home — board verdict LAYERED | 443.280 | CODED |
 | 45 | Settlements | Settlements › Open — board verdict PARTIAL | 443.280 | PARTIAL |
 | 46 | Settlements | Settlements › Closed — board verdict PARTIAL | 443.280 | PARTIAL |
-| 49 | Settlements | Settlements › Close — board verdict LAYERED | 443.280 | PARTIAL |
+| 49 | Settlements | Settlements › Close — board verdict LAYERED | 443.280 | CODED |
 | 50 | Settlements | Settlements › Company — board verdict REBUILT | 443.280 | PARTIAL |
-| 53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | 443.280 | PARTIAL |
+| 53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | 443.280 | CODED |
 | 54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | 443.280 | PARTIAL |
 | 55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | 443.280 | CODED |
 | 56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | 443.280 | CODED |
@@ -65,7 +65,7 @@
 | 218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | 443.293-A | CODED |
 | 219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | 443.293-B | CODED |
 | 220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | 443.293-C | OPEN |
-| 222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | 443.295 | OPEN |
+| 222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | 443.295 | PARTIAL |
 | 265 | UI | ENG-30 15 raw <select> left (every selector multi-select law) | ENG | CLOSED tip `e90151155a` — verify-every-selector-multi-select PASS (10 <= baseline 10; 8 pinned exceptions) |
 | 266 | UI | ENG-31 breadcrumbs on 10 of 999 pages | ENG | CLOSED tip `e90151155a` — verify-page-has-breadcrumb + structural crumb PASS (shell-mounted) |
 | 267 | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | ENG | CLOSED tip `e90151155a` — verify-money-cells-click-through shrink-only 0 <= 0 |

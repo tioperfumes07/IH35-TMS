@@ -119,6 +119,10 @@ export function collectProblems(sources) {
   if (!/fuel-assignment-engine-notes/.test(sources.popup)) {
     problems.push(`${FILES.popup}: ROUND 443.295 must keep Engine notes collapsed section`);
   }
+  if (!/BoardSection/.test(popup) || /function ModalSection/.test(popup)) {
+    problems.push(`${FILES.popup}: ROUND 443.295 sections must use BoardSection (not local ModalSection)`);
+  }
+
 
   if (!/data-testid=["']fuel-questions-badge["']/.test(badge)) {
     problems.push(`${FILES.badge}: missing fuel-questions-badge`);
