@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per TERM of the active factoring agreement (advance rate, fee, reserve, recourse …), a current-state term sheet; a term has no date of its own.
 /**
  * ROUND 443.267 / 443.282 — Factoring Home (board-exact, V3Panel off on main sections).
  * Board: docs/design/v3/Factoring.dc.html
@@ -16,36 +17,16 @@ import {
   type Factor,
 } from "../../../api/factoring";
 import { listFactoringPurchases, type FactoringPurchaseListRow } from "../../../api/factoring-purchases";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3, V3_TABLE } from "../../../design/v3-tokens";
+import { V3 } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { rateToPctString } from "../../../lib/factorProfile";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FACTORING_TAB_PATH } from "../../../router/route-manifest";
 import { formatUsdCents } from "../../../utils/qboFormat";
-
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-
-const tdStyle: CSSProperties = {
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  verticalAlign: "middle",
-};
 
 /** Board card chrome (Factoring.dc.html) — not V3Panel (443.282 panels off). */
 const BOARD_CARD_BORDER = "#DDE1E7";
@@ -492,22 +473,29 @@ export function FactoringHomeBoard({
           }
         >
           <div style={{ overflowX: "auto" }}>
-            <table className="tabular-nums" style={{ width: "100%", borderCollapse: "collapse" }} data-testid="factoring-home-terms-table">
-              <thead>
-                <tr>
-                  <th style={thStyle}>Term</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {termsRows.map((row) => (
-                  <tr key={row.term}>
-                    <td style={tdStyle}>{row.term}</td>
-                    <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ParityTable<{ term: string; value: string }>
+              tableTestId="factoring-home-terms-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={termsRows}
+              rowKey={(row) => row.term}
+              emptyText="No factoring terms."
+              columns={[
+                { key: "term", label: "Term", sortable: true, sortValue: (row) => row.term, render: (row) => row.term },
+                {
+                  key: "value",
+                  label: "Value",
+                  sortable: true,
+                  className: "text-right",
+                  cellClass: "text-right tabular-nums",
+                  sortValue: (row) => row.value,
+                  render: (row) => row.value,
+                },
+              ]}
+            />
           </div>
         </FactoringBoardCard>
       </div>

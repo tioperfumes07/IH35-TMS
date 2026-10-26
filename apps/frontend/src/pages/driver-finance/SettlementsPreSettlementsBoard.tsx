@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — the table's columns are the shared preSettlementColumns imported from components/driver-finance/PreSettlementsPanel.tsx, which carry the dated Period Begin / Period End gear columns (counted in that file).
 /**
  * ROUND 443.326 — Settlements-PreSettlements full V3 board (not chromeOnly shell).
  * kpiStrip + MoneyListToolbar + ParityTable in this surface file (Escrow grammar).

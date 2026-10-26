@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per TRUCK aggregated over the period chosen in the panel's Oct / Sep / YTD period control — the period is the filter, not a column.
 /**
  * ROUND 443.326 — KPI period via MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel).
  */

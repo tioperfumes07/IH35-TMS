@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — generic renderer — the columns come from each caller board (PartyBoard, VendorsHomeBoard, …), which carries its own dated column (Last invoice / Last paid).
 /**
  * ROUND 443.280 — shared pieces of the V3 Customers / Vendors home boards
  * (10-22-2026-LEAD-MOD-DESIGN-V3-Customers / -Vendors .dc.html). Colours and sizes come only from

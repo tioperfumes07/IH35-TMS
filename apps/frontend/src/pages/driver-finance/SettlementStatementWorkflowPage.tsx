@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per LINE of ONE settlement statement (type / load / description / amount), like bill lines; the statement period is the page header, a line has no date of its own.
 import { settlementNumber } from "../../lib/settlementNumber";
 import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";

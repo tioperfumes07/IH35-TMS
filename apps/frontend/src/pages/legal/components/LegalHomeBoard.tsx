@@ -4,7 +4,7 @@
  * Sections (order): KPI strip → Contract pipeline + Matters & deadlines → Quick actions.
  * Engines: legalTemplatesApi · legalContractsApi · legalMattersApi.
  */
-import { useMemo, type CSSProperties } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { legalContractsApi, type LegalContractSummary } from "../../../api/legal-contracts";
@@ -14,32 +14,12 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
-import { V3, V3_TABLE } from "../../../design/v3-tokens";
+import { V3 } from "../../../design/v3-tokens";
 import { formatDateUS } from "../../../lib/formatDate";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../utils/qboFormat";
-
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-
-const tdStyle: CSSProperties = {
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  verticalAlign: "middle",
-};
+import { ParityTable } from "../../../components/parity/ParityTable";
 
 const MS_DAY = 24 * 60 * 60 * 1000;
 
@@ -293,33 +273,39 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           testId="legal-home-contract-pipeline"
         >
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Stage</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Contracts</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Oldest</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pipeline.map((row) => (
-                  <tr
-                    key={row.stage}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => navigate(row.href)}
-                    data-testid={`legal-pipeline-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    <td style={tdStyle}>{row.stage}</td>
-                    <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
-                      {loading && !contractsQuery.isSuccess && !templatesQuery.isSuccess ? "…" : row.count}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
-                      {row.oldest ? formatDateUS(row.oldest) || "—" : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ParityTable<PipelineRow>
+              tableTestId="legal-home-pipeline-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={pipeline}
+              rowKey={(row) => row.stage}
+              rowTestId={(row) => `legal-pipeline-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
+              onRowClick={(row) => navigate(row.href)}
+              emptyText="No contracts."
+              columns={[
+                { key: "stage", label: "Stage", sortable: true, sortValue: (row) => row.stage, render: (row) => row.stage },
+                {
+                  key: "count",
+                  label: "Contracts",
+                  sortable: true,
+                  kind: "number",
+                  sortValue: (row) => row.count,
+                  render: (row) => (loading && !contractsQuery.isSuccess && !templatesQuery.isSuccess ? "…" : row.count),
+                },
+                {
+                  key: "oldest_date",
+                  label: "Oldest",
+                  sortable: true,
+                  className: "text-right",
+                  cellClass: "text-right tabular-nums",
+                  sortValue: (row) => row.oldest ?? "",
+                  render: (row) => (row.oldest ? formatDateUS(row.oldest) || "—" : "—"),
+                },
+              ]}
+            />
           </div>
         </BoardSection>
 
@@ -336,45 +322,60 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Matter</th>
-                    <th style={thStyle}>Next date</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>At risk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matterRows.map(({ m, next, atRisk }) => {
-                    const id = String(m.id ?? "");
-                    const type = properEnumOrFilterLabel(String(m.type ?? ""));
-                    const role = m.our_role ? properEnumOrFilterLabel(String(m.our_role)) : "—";
-                    const court = String(m.court ?? "").trim() || "—";
-                    return (
-                      <tr key={id || matterLabel(m)}>
-                        <td style={tdStyle}>
+              <ParityTable<(typeof matterRows)[number]>
+                tableTestId="legal-home-matters-table"
+                appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+                rows={matterRows}
+                rowKey={({ m }) => String(m.id ?? "") || matterLabel(m)}
+                emptyText="No open matters."
+                columns={[
+                  {
+                    key: "matter",
+                    label: "Matter",
+                    sortable: true,
+                    sortValue: ({ m }) => matterLabel(m),
+                    render: ({ m }) => {
+                      const id = String(m.id ?? "");
+                      const type = properEnumOrFilterLabel(String(m.type ?? ""));
+                      const role = m.our_role ? properEnumOrFilterLabel(String(m.our_role)) : "—";
+                      const court = String(m.court ?? "").trim() || "—";
+                      return (
+                        <>
                           <div style={{ fontWeight: 600 }}>
-                            {id ? (
-                              <EntityLink kind="matter" id={id} label={matterLabel(m)} />
-                            ) : (
-                              matterLabel(m)
-                            )}
+                            {id ? <EntityLink kind="matter" id={id} label={matterLabel(m)} /> : matterLabel(m)}
                           </div>
                           <div style={{ fontSize: 10, color: V3.muted, marginTop: 2 }}>
                             {type} · {role} · {court}
                             {" · "}
                             {claimedVsReserve(m)}
                           </div>
-                        </td>
-                        <td style={tdStyle} className="tabular-nums">
-                          {next ? formatDateUS(next) || "—" : "—"}
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>{atRisk ? "Yes" : "—"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </>
+                      );
+                    },
+                  },
+                  {
+                    key: "next_date",
+                    label: "Next date",
+                    sortable: true,
+                    cellClass: "tabular-nums",
+                    sortValue: ({ next }) => next ?? "",
+                    render: ({ next }) => (next ? formatDateUS(next) || "—" : "—"),
+                  },
+                  {
+                    key: "at_risk",
+                    label: "At risk",
+                    sortable: true,
+                    className: "text-right",
+                    cellClass: "text-right",
+                    sortValue: ({ atRisk }) => (atRisk ? 1 : 0),
+                    render: ({ atRisk }) => (atRisk ? "Yes" : "—"),
+                  },
+                ]}
+              />
             </div>
           )}
         </BoardSection>

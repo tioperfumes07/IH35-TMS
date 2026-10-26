@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — the WEX import PLAN preview: one row per import OUTCOME bucket (lines / amount) for the one statement file being previewed; nothing is written yet, the statement's dates live on the fills once imported.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { importFuelTransactions, importWexStatement } from "../../../api/fuelPlanner";
 import {
@@ -6,6 +7,7 @@ import {
 } from "../../../api/fuelAssignmentQuestions";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -236,19 +238,41 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
             <div className="font-semibold">
               Plan for {wexPlan.file}: {wexPlan.lines} lines ({wexPlan.fills} tickets) — nothing written yet
             </div>
-            <table className="w-full">
-              <tbody>
-                {(Object.keys(WEX_OUTCOME_LABEL) as WexStatementOutcome[])
-                  .filter((key) => wexPlan.by_outcome[key]?.lines > 0)
-                  .map((key) => (
-                    <tr key={key}>
-                      <td className="py-0.5">{WEX_OUTCOME_LABEL[key]}</td>
-                      <td className="py-0.5 text-right">{wexPlan.by_outcome[key].lines}</td>
-                      <td className="py-0.5"><MoneyCell cents={wexPlan.by_outcome[key].cents} drill={{ none: "WEX import plan preview — amounts are estimates until the import runs" }} /></td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <ParityTable<{ key: WexStatementOutcome; label: string; lines: number; cents: number }>
+              tableTestId="wex-statement-plan-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={(Object.keys(WEX_OUTCOME_LABEL) as WexStatementOutcome[])
+                .filter((key) => wexPlan.by_outcome[key]?.lines > 0)
+                .map((key) => ({
+                  key,
+                  label: WEX_OUTCOME_LABEL[key],
+                  lines: wexPlan.by_outcome[key].lines,
+                  cents: wexPlan.by_outcome[key].cents,
+                }))}
+              rowKey={(row) => row.key}
+              emptyText="No lines in this statement."
+              columns={[
+                { key: "outcome", label: "Outcome", sortable: true, sortValue: (row) => row.label, render: (row) => row.label },
+                { key: "lines", label: "Lines", sortable: true, kind: "number", sortValue: (row) => row.lines, render: (row) => row.lines },
+                {
+                  key: "amount",
+                  label: "Amount",
+                  sortable: true,
+                  kind: "money",
+                  sortValue: (row) => row.cents,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={row.cents}
+                      drill={{ none: "WEX import plan preview — amounts are estimates until the import runs" }}
+                    />
+                  ),
+                },
+              ]}
+            />
             {wexPlan.results.some((r) => r.outcome !== "imported" && r.outcome !== "adopted" && r.outcome !== "already_imported") ? (
               <ul className="max-h-40 list-disc space-y-1 overflow-y-auto pl-5">
                 {wexPlan.results

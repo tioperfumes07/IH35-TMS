@@ -4,7 +4,8 @@
  * Live pending bank debit candidates (shop / tire / tow / fine / lumper / medical).
  * Link → Banking For-review with txn_id. No mock rows.
  */
-import { useMemo, type CSSProperties } from "react";
+import { ParityTable } from "../../components/parity/ParityTable";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -12,7 +13,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getUnexpectedExpenses, type UnexpectedCandidate } from "../../api/unexpectedExpenses";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { V3, V3_TABLE } from "../../design/v3-tokens";
+import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
 
@@ -28,28 +29,7 @@ function formatPlainDollars(cents: number): string {
   });
 }
 
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  fontFamily: V3.font,
-};
 
-const tdStyle: CSSProperties = {
-  textAlign: "left",
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  fontSize: V3_TABLE.fontPx,
-  whiteSpace: "nowrap",
-  color: V3.ink,
-  fontFamily: V3.font,
-  fontVariantNumeric: "tabular-nums",
-};
 
 function PayeeCell({ row }: { row: UnexpectedCandidate }) {
   if (row.vendor_id) {
@@ -208,116 +188,64 @@ export function UnexpectedExpensesPage() {
             footer="Found by payee name only — nothing is categorized or matched; a person confirms each line."
             testId="unexpected-candidates-panel"
           >
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }} data-testid="unexpected-candidates-table">
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Date</th>
-                    <th style={thStyle}>Payee</th>
-                    <th style={thStyle}>Kind</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                    <th style={thStyle}>Flag</th>
-                    <th style={thStyle}>Truck / WO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {query.isLoading ? (
-                    <tr>
-                      <td colSpan={6} style={{ ...tdStyle, color: V3.muted }}>
-                        Loading…
-                      </td>
-                    </tr>
-                  ) : candidates.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} style={{ ...tdStyle, color: V3.muted }} data-testid="unexpected-empty">
-                        No unexpected bank lines this month.
-                      </td>
-                    </tr>
-                  ) : (
-                    candidates.map((row) => (
-                      <tr key={row.id} data-testid={`unexpected-row-${row.id}`}>
-                        <td style={tdStyle}>{mmDd(row.transaction_date)}</td>
-                        <td style={tdStyle}>
-                          <PayeeCell row={row} />
-                        </td>
-                        <td style={tdStyle}>{row.kind_label}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>{formatPlainDollars(row.amount_cents)}</td>
-                        <td style={tdStyle}>
-                          <FlagCell flag={row.flag} />
-                        </td>
-                        <td style={tdStyle}>
-                          <TruckWoCell row={row} />
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                  {candidates.length > 0 ? (
-                    <tr data-testid="unexpected-total-row">
-                      <td
-                        style={{
-                          ...tdStyle,
-                          fontWeight: 700,
-                          borderTop: `1px solid ${V3.border}`,
-                          background: V3.headerBg,
-                          borderBottom: "none",
-                        }}
-                      >
-                        Total
-                      </td>
-                      <td style={{ ...tdStyle, borderTop: `1px solid ${V3.border}`, background: V3.headerBg, borderBottom: "none" }} />
-                      <td style={{ ...tdStyle, borderTop: `1px solid ${V3.border}`, background: V3.headerBg, borderBottom: "none" }} />
-                      <td
-                        style={{
-                          ...tdStyle,
-                          textAlign: "right",
-                          fontWeight: 700,
-                          borderTop: `1px solid ${V3.border}`,
-                          background: V3.headerBg,
-                          borderBottom: "none",
-                        }}
-                      >
-                        {formatPlainDollars(kpis?.month_total_cents ?? 0)}
-                      </td>
-                      <td style={{ ...tdStyle, borderTop: `1px solid ${V3.border}`, background: V3.headerBg, borderBottom: "none" }} />
-                      <td style={{ ...tdStyle, borderTop: `1px solid ${V3.border}`, background: V3.headerBg, borderBottom: "none" }} />
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<(typeof candidates)[number]>
+              tableTestId="unexpected-candidates-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              loading={query.isLoading}
+              rows={candidates}
+              rowKey={(row) => row.id}
+              rowTestId={(row) => `unexpected-row-${row.id}`}
+              emptyText="No unexpected bank lines this month."
+              columns={[
+                { key: "transaction_date", label: "Date", sortable: true, sortValue: (row) => row.transaction_date, render: (row) => mmDd(row.transaction_date) },
+                { key: "payee", label: "Payee", sortable: false, render: (row) => <PayeeCell row={row} /> },
+                { key: "kind_label", label: "Kind", sortable: true, sortValue: (row) => row.kind_label, render: (row) => row.kind_label },
+                { key: "amount_cents", label: "Amount", sortable: true, kind: "money", sortValue: (row) => row.amount_cents, render: (row) => formatPlainDollars(row.amount_cents) },
+                { key: "flag", label: "Flag", sortable: false, render: (row) => <FlagCell flag={row.flag} /> },
+                { key: "truck_wo", label: "Truck / WO", sortable: false, render: (row) => <TruckWoCell row={row} /> },
+              ]}
+              footerCells={
+                candidates.length > 0
+                  ? {
+                      transaction_date: <span className="font-semibold" data-testid="unexpected-total-row">Total</span>,
+                      amount_cents: <span className="font-semibold">{formatPlainDollars(kpis?.month_total_cents ?? 0)}</span>,
+                    }
+                  : undefined
+              }
+            />
           </BoardSection>
 
           <BoardSection title="By kind" onViewAll={goBanking} testId="unexpected-by-kind-panel">
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }} data-testid="unexpected-by-kind-table">
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Kind</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(byKind.length
-                    ? byKind
-                    : [
-                        { kind: "shop" as const, label: "Repairs · shop", amount_cents: null, count: 0 },
-                        { kind: "tires" as const, label: "Tires", amount_cents: null, count: 0 },
-                        { kind: "towing" as const, label: "Towing · road service", amount_cents: null, count: 0 },
-                        { kind: "fines" as const, label: "Fines · citations · scales", amount_cents: null, count: 0 },
-                        { kind: "lumper" as const, label: "Lumper · detention", amount_cents: null, count: 0 },
-                        { kind: "medical" as const, label: "Driver medical · hotel", amount_cents: null, count: 0 },
-                      ]
-                  ).map((row) => (
-                    <tr key={row.kind} data-testid={`unexpected-kind-${row.kind}`}>
-                      <td style={tdStyle}>{row.label}</td>
-                      <td style={{ ...tdStyle, textAlign: "right" }}>
-                        {row.amount_cents == null ? "—" : formatPlainDollars(row.amount_cents)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<{ kind: string; label: string; amount_cents: number | null; count: number }>
+              tableTestId="unexpected-by-kind-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={
+                byKind.length
+                  ? byKind
+                  : [
+                      { kind: "shop", label: "Repairs · shop", amount_cents: null, count: 0 },
+                      { kind: "tires", label: "Tires", amount_cents: null, count: 0 },
+                      { kind: "towing", label: "Towing · road service", amount_cents: null, count: 0 },
+                      { kind: "fines", label: "Fines · citations · scales", amount_cents: null, count: 0 },
+                      { kind: "lumper", label: "Lumper · detention", amount_cents: null, count: 0 },
+                      { kind: "medical", label: "Driver medical · hotel", amount_cents: null, count: 0 },
+                    ]
+              }
+              rowKey={(row) => row.kind}
+              rowTestId={(row) => `unexpected-kind-${row.kind}`}
+              columns={[
+                { key: "label", label: "Kind", sortable: true, sortValue: (row) => row.label, render: (row) => row.label },
+                { key: "amount_cents", label: "Amount", sortable: true, kind: "money", sortValue: (row) => row.amount_cents ?? -1, render: (row) => (row.amount_cents == null ? "—" : formatPlainDollars(row.amount_cents)) },
+              ]}
+            />
           </BoardSection>
         </div>
       </div>

@@ -24,6 +24,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../hooks/useAutoDeductionPolicies";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdTable } from "../../lib/money";
 import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
 import { deductionsWeekSub, S443326 } from "./settlementsV3BoardStrings";
@@ -273,6 +274,16 @@ export function SettlementsDeductionsBoard() {
         sortable: true,
         sortValue: (r) => (r.remaining_cents > 0 ? 1 : 0),
         render: (r) => (r.remaining_cents > 0 ? c.nextSettlement : "—"),
+      },
+      // Gear column (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
+      // the date the schedule was set up (auto_deduction_policies.created_at). Hidden by default, one click to show.
+      {
+        key: "created_at",
+        label: "Started",
+        sortable: true,
+        defaultHidden: true,
+        sortValue: (r) => r.created_at ?? "",
+        render: (r) => (r.created_at ? formatDateUS(r.created_at) : "—"),
       },
     ];
     },

@@ -167,7 +167,7 @@ export function SettlementsCashAdvancesBoard() {
         },
       },
       {
-        key: "asked",
+        key: "submitted_at",
         label: c.colAsked,
         sortable: true,
         sortValue: (row) => String(row.submitted_at ?? ""),

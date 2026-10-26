@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per DRIVER with the current escrow balance summed across that driver's escrow accounts, a current-state balance roll-up; dated escrow activity is in the escrow register one click away.
 /**
  * ROUND 443.282 — Settlements-Escrow board REPLACES the page body.
  * Does NOT mount EscrowPage / settlementsMount (no Accounts / Pending tabs under Settlements chrome).
