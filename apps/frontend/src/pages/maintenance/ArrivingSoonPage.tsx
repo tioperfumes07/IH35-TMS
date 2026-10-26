@@ -3,7 +3,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
-import { getArrivingSoon, logArrivingSoonView, type ArrivingSoonCard as ArrivingSoonCardType } from "../../api/maintenance";
+import { getArrivingSoon, logArrivingSoonView, type ArrivingSoonCard as ArrivingSoonCardType, type ArrivingSoonConversion } from "../../api/maintenance";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ArrivingSoonFilterBar } from "./components/ArrivingSoonFilterBar";
 import { ArrivingSoonCard } from "./components/ArrivingSoonCard";
@@ -70,6 +70,56 @@ function severityTextClass(severity: string): string {
   if (s === "severe") return "text-[#A32D2D]";
   if (s === "warning") return "text-[#854F0B]";
   return "text-gray-500";
+}
+
+function ArrivingSoonRecentConversions({
+  conversions,
+  total,
+  page,
+  pageCount,
+  isFetching,
+  onPage,
+}: {
+  conversions: ArrivingSoonConversion[];
+  total: number;
+  page: number;
+  pageCount: number;
+  isFetching: boolean;
+  onPage: (updater: (p: number) => number) => void;
+}) {
+  return (
+    <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recently converted to work orders</div>
+      <ul className="divide-y divide-[#E5E7EB]">
+        {conversions.map((conversion) => (
+          <li key={conversion.issue_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
+            <span className="min-w-0 flex-1 truncate text-[#4B5563]">
+              {conversion.issue_type || conversion.issue_category || conversion.issue_description || "In-transit issue"}
+            </span>
+            {conversion.unit_id ? (
+              <EntityLink kind="unit" id={conversion.unit_id} label={entityLabel(conversion.unit_number, conversion.unit_id, "Unit")} />
+            ) : null}
+            {conversion.load_id ? (
+              <EntityLink kind="load" id={conversion.load_id} label={entityLabel(conversion.load_display_id, conversion.load_id, "Load")} />
+            ) : null}
+            <EntityLink
+              kind="work_order"
+              id={conversion.work_order_id}
+              label={entityLabel(conversion.work_order_display_id, conversion.work_order_id, "Work order")}
+              className="font-semibold"
+            />
+          </li>
+        ))}
+      </ul>
+      {pageCount > 1 ? (
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="maint-arriving-soon-recent-conversions-pager">
+          <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page <= 1 || isFetching} onClick={() => onPage((p) => Math.max(1, p - 1))}>Previous</button>
+          <span>Page {page} of {pageCount} · {total} conversions</span>
+          <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page >= pageCount || isFetching} onClick={() => onPage((p) => Math.min(pageCount, p + 1))}>Next</button>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props) {
@@ -238,37 +288,14 @@ export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props)
       ) : null}
 
       {!compact && recentConversions.length > 0 ? (
-        <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recently converted to work orders</div>
-          <ul className="divide-y divide-[#E5E7EB]">
-            {recentConversions.map((conversion) => (
-              <li key={conversion.issue_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
-                <span className="min-w-0 flex-1 truncate text-[#4B5563]">
-                  {conversion.issue_type || conversion.issue_category || conversion.issue_description || "In-transit issue"}
-                </span>
-                {conversion.unit_id ? (
-                  <EntityLink kind="unit" id={conversion.unit_id} label={entityLabel(conversion.unit_number, conversion.unit_id, "Unit")} />
-                ) : null}
-                {conversion.load_id ? (
-                  <EntityLink kind="load" id={conversion.load_id} label={entityLabel(conversion.load_display_id, conversion.load_id, "Load")} />
-                ) : null}
-                <EntityLink
-                  kind="work_order"
-                  id={conversion.work_order_id}
-                  label={entityLabel(conversion.work_order_display_id, conversion.work_order_id, "Work order")}
-                  className="font-semibold"
-                />
-              </li>
-            ))}
-          </ul>
-          {recentConversionsTotal > recentPageSize ? (
-            <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="maint-arriving-soon-recent-conversions-pager">
-              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={recentPage <= 1 || query.isFetching} onClick={() => setRecentPage((current) => Math.max(1, current - 1))}>Previous</button>
-              <span>Page {recentPage} of {recentPageCount} · {recentConversionsTotal} conversions</span>
-              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={recentPage >= recentPageCount || query.isFetching} onClick={() => setRecentPage((current) => Math.min(recentPageCount, current + 1))}>Next</button>
-            </div>
-          ) : null}
-        </section>
+        <ArrivingSoonRecentConversions
+          conversions={recentConversions}
+          total={recentConversionsTotal}
+          page={recentPage}
+          pageCount={recentPageCount}
+          isFetching={query.isFetching}
+          onPage={setRecentPage}
+        />
       ) : null}
 
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}

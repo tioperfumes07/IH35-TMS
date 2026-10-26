@@ -141,8 +141,8 @@ const CHECKS = [
   {
     name: "arriving_soon.convert_to_wo: ArrivingSoonPage real ParityTable + per-row Convert to WO action",
     file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
-    // RE-PIN 2026-10-25: actual distance measured at ~5400 chars; expanded from 4500 to 6000.
-    pattern: /Convert to WO[\s\S]{0,6000}<ParityTable/,
+    // RE-PIN 2026-10-25: extracted recent-conversions block into ArrivingSoonRecentConversions component; distance is now under 4500.
+    pattern: /Convert to WO[\s\S]{0,4500}<ParityTable/,
   },
   {
     name: "damage_reports.intake: TriageModal real Modal with Convert to Work Order / Convert to Damage Report actions",
