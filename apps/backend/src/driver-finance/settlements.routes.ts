@@ -1,4 +1,4 @@
-import { statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
+import { driverBillAmountKnown, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { readHistoricalSettlementAttributions, assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
@@ -810,6 +810,9 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             sl.*,
             l.load_number,
             db.bill_number AS source_driver_bill_number,
+            -- Unpriced-bill law (ROUND 443.213): a line sourced from a driver bill still awaiting short miles has no
+            -- real amount yet — say so, never let the UI render its placeholder 0 as $0.00. Lines without a bill are priced.
+            (db.id IS NULL OR ${driverBillAmountKnown("db")}) AS amount_known,
             COALESCE(db.load_id, sl.load_id) AS load_id,
             rate_basis.miles,
             -- SET-RATE (owner order 2026-09-05, LAW §2/§8): rate MUST read the SAME source amount

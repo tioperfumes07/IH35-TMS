@@ -124,6 +124,8 @@ export function SettlementDetailPage() {
     loadId: string | null;
     loadNumber: string;
     amountCents: number;
+    /** false = sourced from a driver bill awaiting short miles: no price yet, never render it as currency. */
+    amountKnown: boolean;
   };
 
   const lineSummaryRows = useMemo((): LineSummaryRow[] => {
@@ -134,6 +136,7 @@ export function SettlementDetailPage() {
       loadId: typeof line.load_id === "string" ? line.load_id : null,
       loadNumber: typeof line.load_number === "string" ? line.load_number : "—",
       amountCents: Math.round(Number(line.amount ?? 0) * 100),
+      amountKnown: line.amount_known !== false,
     }));
   }, [activeLines]);
 
@@ -163,7 +166,12 @@ export function SettlementDetailPage() {
         label: "Amount",
         sortable: true,
         cellClass: "text-right",
-        render: (row) => formatUsdCents(row.amountCents),
+        render: (row) =>
+          row.amountKnown === false ? (
+            <span className="text-[#6B7280]" data-testid={`settlement-line-unpriced-${row.id}`}>Awaiting short miles</span>
+          ) : (
+            formatUsdCents(row.amountCents)
+          ),
       },
     ];
   }, []);
