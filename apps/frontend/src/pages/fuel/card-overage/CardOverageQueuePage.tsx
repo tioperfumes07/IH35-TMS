@@ -321,11 +321,13 @@ export function CardOverageQueuePage() {
 
   if (!companyId) {
     return (
-      <div className="space-y-3 p-3" data-testid="fuel-card-overage-need-company">
+      <div className="space-y-3 p-3" data-testid="fuel-card-overage-page">
         <h1 className="text-page-title font-semibold text-gray-900">{"Fuel card overage"}</h1>
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to review fuel card overage events.
-        </div>
+        <FuelBoardSection title="Card overage" testId="fuel-card-overage-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to review fuel card overage events.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

@@ -153,6 +153,9 @@ export function computeBoardShellFailures(source) {
   if (/initialTab = "planner"/.test(source)) {
     errors.push("FuelPlannerHome default initialTab must be home (443.282 board landing)");
   }
+    if (!source.includes('testId="fuel-planner-need-company"')) {
+    errors.push("FuelPlannerHome need-company empty must be FuelBoardSection (fuel-planner-need-company)");
+  }
   return errors;
 }
 
@@ -479,6 +482,14 @@ function run() {
   const integrity = fs.readFileSync(INTEGRITY, "utf8");
   if (!integrity.includes('testId="fuel-integrity-need-company"') || !/<FuelBoardSection\b/.test(integrity)) {
     failures.push("FuelIntegrityPage need-company empty must be FuelBoardSection (fuel-integrity-need-company)");
+  }
+  const fraud = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx"), "utf8");
+  if (!fraud.includes('testId="fuel-fraud-need-company"') || !/<FuelBoardSection\b/.test(fraud)) {
+    failures.push("FraudAlertsList need-company empty must be FuelBoardSection (fuel-fraud-need-company)");
+  }
+  const overage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx"), "utf8");
+  if (!overage.includes('testId="fuel-card-overage-need-company"') || !/<FuelBoardSection\b/.test(overage)) {
+    failures.push("CardOverageQueuePage need-company empty must be FuelBoardSection (fuel-card-overage-need-company)");
   }
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);

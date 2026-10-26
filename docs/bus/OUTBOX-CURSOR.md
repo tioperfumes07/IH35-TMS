@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — DataPanel unwrap Submit/Repurchase + Close expense BoardSection
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel fraud/overage/planner need-company BoardSection
 
 - **STATUS:** SHIPPING
+- **DELTA:** Fraud alerts / Card overage / Fuel planner shell need-company → `FuelBoardSection`. Guard ratcheted. Engines unchanged.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fuel-home-dashboard-wired
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** FraudAlertsList · CardOverageQueuePage · FuelPlannerHome · verify-fuel-home-dashboard-wired · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — DataPanel unwrap Submit/Repurchase + Close expense BoardSection
+
+- **STATUS:** MERGED [#27799](https://github.com/tioperfumes07/IH35-TMS/pull/27799)
 - **DELTA:** SubmitToFactor Purchase/Faro actuals/Override/Totals + RepurchaseDuePanel → `BoardSection` (DataPanel removed). Settlement Close expense load confirmations → `BoardSection`. Decide/create/post engines unchanged. Guards ratcheted.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-factoring-submission-queue-routed · verify-settlements-qbo-chrome-surfaces
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
