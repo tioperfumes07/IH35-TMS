@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring report tabs → BoardSection
+
+- **STATUS:** SHIPPING
+- **DELTA:** Unwrap layered bare card divs on Faro report tabs (Funds Due · Debtor credit check · Debtor Receipts · Loan/Save · Unapplied Cash · Invoice Status · Messages & Support) into shared `BoardSection`; engines/ParityTable unchanged. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Recovered KPI from advance_recovery lines
 
 - **STATUS:** MERGED [#27721](https://github.com/tioperfumes07/IH35-TMS/pull/27721)

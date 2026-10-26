@@ -142,6 +142,25 @@ function analyze(src) {
     errors.push(`${HOME}: FactoringHomeBoard must mount exactly once (found ${boardMounts})`);
   }
 
+  // Fill-not-shell / 443.280 — Faro report tabs use BoardSection (not bare title div cards).
+  for (const [title, testId] of [
+    ["Funds Due", "factoring-funds-due-report"],
+    ["Request Debtor / Credit Check", "factoring-request-debtor-credit-check"],
+    ["Debtor Receipts", "factoring-debtor-receipts"],
+    ["Loan / Save", "factoring-loan-save"],
+    ["Unapplied Cash", "factoring-unapplied-cash"],
+    ["Invoice Status Report", "factoring-invoice-status-report"],
+    ["Messages & Support", "factoring-messages-support"],
+  ]) {
+    if (!new RegExp(`<BoardSection[\\s\\S]{0,120}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,80}testId="${testId}"`).test(home)
+      && !new RegExp(`<BoardSection[\\s\\S]{0,80}testId="${testId}"[\\s\\S]{0,120}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(home)) {
+      errors.push(`${HOME}: ${title} must wrap in BoardSection (testId=${testId})`);
+    }
+    if (new RegExp(`rounded-sm border border-gray-200 bg-white p-3" data-testid="${testId}"`).test(home)) {
+      errors.push(`${HOME}: ${title} must not keep layered bare card div (testId=${testId})`);
+    }
+  }
+
   return errors;
 }
 
