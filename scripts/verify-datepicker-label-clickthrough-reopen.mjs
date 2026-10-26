@@ -86,7 +86,9 @@ async function selftest() {
   // Offender 1: revert to the pre-fix onDoc (the exact historical shape on origin/main before
   // this fix) — plain `if (...) setOpen(false);`, no suppression at all.
   const preFixOffender = real.replace(
-    /function onDoc\(e: PointerEvent\) \{[\s\S]*?\n    \}\n(?=    if \(open\) document\.addEventListener)/,
+    // onDoc's own closing brace (4-space indent) — MOD-02 put the Escape handler between onDoc and the listener
+    // registration, so anchoring on what FOLLOWS onDoc went stale.
+    /function onDoc\(e: PointerEvent\) \{[\s\S]*?\n    \}\n/,
     `function onDoc(e: PointerEvent) {\n      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);\n    }\n`
   );
   if (preFixOffender === real) {

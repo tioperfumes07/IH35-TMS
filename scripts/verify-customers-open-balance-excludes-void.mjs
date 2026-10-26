@@ -98,7 +98,9 @@ export function assertOpenBalanceFailureTruth(sources) {
   const list = sources[LIST_REL];
   const sidebar = sources[SIDEBAR_REL];
   const drill = sources[DRILL_REL];
-  if (!/allInvoicesQuery\.isError[\s\S]*Couldn't load customer open balances[\s\S]*allInvoicesQuery\.refetch\(\)/.test(page)) {
+  // The retry must be the error state THIS query renders — an earlier allInvoicesQuery.isError elsewhere in the file
+  // (e.g. the invoicesUnavailable flag) must not satisfy it.
+  if (!/\{allInvoicesQuery\.isError \? \(\s*<ListErrorState[\s\S]{0,240}Couldn't load customer open balances[\s\S]{0,240}allInvoicesQuery\.refetch\(\)/.test(page)) {
     errors.push("all-invoices failure must expose an exact retry before balance consumers");
   }
   if ((page.match(/openBalancesAvailable=\{!allInvoicesQuery\.isError\}/g) ?? []).length !== 2) {
@@ -164,10 +166,7 @@ function selftest() {
   const cases = [
     [
       "import removed",
-      live.replace(
-        'import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";\n',
-        ""
-      ),
+      live.replace(/^import \{[^}]*isVoidInvoice[^}]*\} from "\.\/accounting\/InvoicesListPage";\n/m, ""),
       "does not import isVoidInvoice",
     ],
     [
@@ -207,7 +206,7 @@ function selftest() {
     }
   }
   for (const [file, needle, expectFragment] of [
-    [TARGET_REL, "allInvoicesQuery.isError", "exact retry"],
+    [TARGET_REL, "{allInvoicesQuery.isError ? (", "exact retry"],
     [TARGET_REL, "openBalancesAvailable={!allInvoicesQuery.isError}", "both list and master-detail"],
     [LIST_REL, "open_balance: number | null", "customer list"],
     [LIST_REL, 'c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)', "CSV export"],

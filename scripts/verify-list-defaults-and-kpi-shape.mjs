@@ -36,12 +36,20 @@ if (!predicate.includes("status NOT IN ('proforma', 'void')")) {
 }
 ok("C-31 A-21 shared predicate present");
 
-for (const [rel, label] of [
-  ["apps/frontend/src/pages/Customers.tsx", "Customers"],
-  ["apps/frontend/src/pages/Vendors.tsx", "Vendors"],
+// The V3 boards (Customers/Vendors, #27545) render their list chrome through <XBoardChrome>; the page surface is the
+// page + the chrome it mounts. The C-31 marker lives on the chrome; the page must actually mount that chrome.
+export function c31SurfaceMarkerOk(page, chrome, chromeName) {
+  return new RegExp(`<${chromeName}\\b`).test(page) && /data-c31-list-default=/.test(chrome);
+}
+for (const [rel, label, chromeRel, chromeName] of [
+  ["apps/frontend/src/pages/Customers.tsx", "Customers", "apps/frontend/src/pages/customers/CustomersBoardChrome.tsx", "CustomersBoardChrome"],
+  ["apps/frontend/src/pages/Vendors.tsx", "Vendors", "apps/frontend/src/pages/vendors/VendorsBoardChrome.tsx", "VendorsBoardChrome"],
 ]) {
   const src = read(rel);
-  if (!src.includes('data-c31-list-default=')) fail(`${label}: missing data-c31-list-default marker`);
+  const chrome = read(chromeRel);
+  if (!c31SurfaceMarkerOk(src, chrome, chromeName)) fail(`${label}: missing data-c31-list-default marker on the mounted ${chromeName}`);
+  if (c31SurfaceMarkerOk(src, chrome.replace(/data-c31-list-default=/g, "data-x="), chromeName)) fail(`${label}: selftest plant (marker removed from chrome) not caught`);
+  if (c31SurfaceMarkerOk(src.split(`<${chromeName}`).join("<div"), chrome, chromeName)) fail(`${label}: selftest plant (chrome unmounted) not caught`);
   if (!src.includes("With transactions")) fail(`${label}: With transactions tab label missing from subnav`);
   if (!src.includes("has_transactions: true")) fail(`${label}: must pass has_transactions:true to list API`);
   if (!src.includes("with_transactions")) fail(`${label}: default listTab id with_transactions missing`);

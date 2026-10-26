@@ -60,15 +60,19 @@ if (liveProblems.length) {
 }
 
 if (SELFTEST) {
+  // Plants are applied INSIDE the history route block — a file-wide .replace() hits the first match in the file (the
+  // reclassify POST at the top also calls set_config), which left "drop company context" inert.
+  const block = routeBlock(live);
+  const inBlock = (from, to) => live.replace(block, block.replace(from, to));
   const mutations = [
-    ["drop read rate limit", live.replace('rateLimit: { max: 120, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }')],
-    ["drop query validation", live.replace("historyQuerySchema.safeParse(req.query ?? {})", "historyQuerySchema.safeParse({})")],
-    ["drop company resolver input", live.replace("query.data.operating_company_id", "undefined")],
-    ["drop company context", live.replace("SELECT set_config('app.operating_company_id'", "SELECT set_config('app.unscoped_company_id'")],
-    ["restore direct log read", live.replace("FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c", "FROM mdata.customers c")],
-    ["drop scoped join", live.replace("l.entity_id = c.id", "l.entity_id = $1::uuid")],
-    ["drop log company predicate", live.replace("AND (l.operating_company_id = $2::uuid OR l.operating_company_id IS NULL)", "")],
-    ["drop company bind", live.replace("[params.data.id, companyId]", "[params.data.id]")],
+    ["drop read rate limit", inBlock('rateLimit: { max: 120, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }')],
+    ["drop query validation", inBlock("historyQuerySchema.safeParse(req.query ?? {})", "historyQuerySchema.safeParse({})")],
+    ["drop company resolver input", inBlock("query.data.operating_company_id", "undefined")],
+    ["drop company context", inBlock("SELECT set_config('app.operating_company_id'", "SELECT set_config('app.unscoped_company_id'")],
+    ["restore direct log read", inBlock("FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c", "FROM mdata.customers c")],
+    ["drop scoped join", inBlock("l.entity_id = c.id", "l.entity_id = $1::uuid")],
+    ["drop log company predicate", inBlock("AND (l.operating_company_id = $2::uuid OR l.operating_company_id IS NULL)", "")],
+    ["drop company bind", inBlock("[params.data.id, companyId]", "[params.data.id]")],
   ];
   const inert = mutations.filter(([, source]) => problems(source).length === 0).map(([name]) => name);
   if (inert.length) {
