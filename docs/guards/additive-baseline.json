@@ -137,7 +137,7 @@
     "Users",
     "VENDORS"
   ],
-  "route_path_count": 676,
+  "route_path_count": 677,
   "dispatch_board_column_keys": [
     "cargo_temp",
     "commodity",
@@ -224,9 +224,10 @@
     "Settlement"
   ],
   "pattern_scan": {
-    "total": 67,
+    "total": 70,
     "perFile": {
       "apps/frontend/src/components/accounting/PostingGrid.tsx": 1,
+      "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx": 3,
       "apps/frontend/src/pages/Customers.tsx": 4,
       "apps/frontend/src/pages/Vendors.tsx": 4,
       "apps/frontend/src/pages/accounting/BillsPage.tsx": 4,

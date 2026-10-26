@@ -24,9 +24,10 @@ const LABEL = "verify-inventory-parts-create-qbo-chrome";
 
 const CHECKS = [
   {
-    name: "parts.create / parts.create.vendor_picker / parts.create.money: PartCreateDrawer real fixed-overlay drawer + real EntityPicker vendor field + real MoneyInput",
+    // 443365-A (#27709, owner one-popup-format law): the hand-built fixed-overlay drawer became the shared <ParityDrawer>.
+    name: "parts.create / parts.create.vendor_picker / parts.create.money: PartCreateDrawer shared ParityDrawer + real EntityPicker vendor field + real MoneyInput",
     file: "apps/frontend/src/pages/inventory/PartCreateDrawer.tsx",
-    pattern: /fixed inset-0 z-50 flex justify-end[\s\S]{0,3200}inv-part-create-vendor-picker[\s\S]{0,300}kind="vendor"[\s\S]{0,2000}<MoneyInput/,
+    pattern: /<ParityDrawer\b[\s\S]{0,3200}inv-part-create-vendor-picker[\s\S]{0,300}<EntityPicker\b[\s\S]{0,120}kind="vendor"[\s\S]{0,2000}<MoneyInput\b/,
   },
 ];
 
@@ -57,6 +58,18 @@ function selftest() {
     if (planted.length < CHECKS.length) {
       console.error(`${LABEL} SELFTEST FAIL — planted chrome misses not caught (${planted.length})`);
       process.exit(1);
+    }
+    // Real-source plants: each one removes a single leaf from the live file.
+    const realSrc = fs.readFileSync(path.join(ROOT, CHECKS[0].file), "utf8");
+    for (const [name, mutated] of [
+      ["hand-built overlay instead of the shared drawer", realSrc.split("<ParityDrawer").join("<div")],
+      ["vendor picker swapped for a capped select", realSrc.split("<EntityPicker").join("<SelectCombobox")],
+      ["money field as a plain input", realSrc.split("<MoneyInput").join("<input")],
+    ]) {
+      if (mutated === realSrc || CHECKS[0].pattern.test(mutated)) {
+        console.error(`${LABEL} SELFTEST FAIL — planted "${name}" not caught`);
+        process.exit(1);
+      }
     }
     console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
   } finally {
