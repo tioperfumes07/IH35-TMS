@@ -458,10 +458,10 @@ export async function buildCompanySettlementReport(
       WHERE l.id = ANY($2::uuid[])
         AND l.operating_company_id = $1::uuid
         AND NOT EXISTS (
-          SELECT 1 FROM dispatch.load_charge_lines lcl2
-          WHERE lcl2.load_id = l.id
-            AND lcl2.operating_company_id = $1::uuid
-            AND lcl2.is_active = true
+          SELECT 1 FROM dispatch.load_charge_lines lcl
+          WHERE lcl.load_id = l.id
+            AND lcl.operating_company_id = $1::uuid
+            AND lcl.is_active = true
         )
       ORDER BY load_number, charge_code
     `,
