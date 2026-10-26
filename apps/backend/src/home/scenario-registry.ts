@@ -1158,8 +1158,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
             ON l.id = h.load_id
            AND l.operating_company_id = h.operating_company_id
            AND l.soft_deleted_at IS NULL
-           AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
-           -- LEAD 443.206R (register B5): in-progress = the load service's live set; the NOT IN above is the canonical form.
+           -- LEAD 443.206R (register B5): in-progress = views.live_loads via the load service (one canonical set — no inline status gate).
            AND ${loadServiceMembershipSql("l", "live")}
           JOIN mdata.equipment old_trailer
             ON old_trailer.id = h.previous_trailer_id
