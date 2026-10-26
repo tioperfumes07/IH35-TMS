@@ -225,7 +225,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
           <div className="pb-note-t">This screen surfaces something you should see</div>
           <div className="pb-note-b">
             {/* Each figure opens the customer rows whose Invoices / Billed / Collected / Open balance foots it equals. */}
-            <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)} invoices</NumLink> issued (open and paid),{" "}
+            <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)}</NumLink> invoices issued (open and paid),{" "}
             <strong><NumLink to={`/customers?chip=with_transactions&range=${range}`}>{usd(b.kpis.billed_cents)}</NumLink> billed</strong> — and only{" "}
             <strong>{int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry any payment at all</strong>,{" "}
             <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{money(b.kpis.collected_cents)}</NumLink> in total.

@@ -159,7 +159,7 @@ function selftest() {
     map: "ACCT-SURF-02 `/accounting/expenses`",
     manifest: 'path="/accounting/expenses"\n<ExpensesListPage />\n',
     subnav: "/accounting/expenses",
-    list: 'RecordExpenseModal\nkpiStrip\nexpenses-kpi-strip\nkind="vendor"\nkind="journal_entry"\nkind="expense"\nNo expense #\nhumanMemo(\n',
+    list: 'RecordExpenseModal\nkpiStrip\nexpenses-kpi-strip\n<BoardSection title="Expenses" testId="expenses-list-board">\nkind="vendor"\nkind="journal_entry"\nkind="expense"\nNo expense #\nhumanMemo(\n',
     modal: "ParityDrawer\n<ParityDrawer\n",
     form: ['createKind="vendor"', 'createKind="category"', 'createKind="account"'].join("\n"),
     submit: "expense_date:\namount_cents:\npayment_account_uuid:\n",

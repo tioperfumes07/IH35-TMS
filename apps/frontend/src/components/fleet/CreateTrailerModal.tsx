@@ -45,7 +45,7 @@ type Props = {
   equipmentKind?: "trailer" | "chassis";
 };
 
-const inputClass = "h-10 w-full rounded-sm border border-gray-300 px-2 text-xs";
+const inputClass = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 const EMPTY = {
   equipment_number: "",

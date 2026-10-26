@@ -27,6 +27,7 @@ import { formatUsdCents } from "../../lib/money";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
@@ -358,42 +359,43 @@ export function PaymentsListPage() {
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <ParityTable
-        title="Customer payments received"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        loading={query.isPending || (query.isFetching && rows.length === 0)}
-        onRowClick={(row) => navigate(`/accounting/payments/${row.id}`)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        exportFilename="payments"
-        storageKey="payments-list"
-        initialPageSize={50}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-        sortMode="external"
-        selectable
-        maxSelectable={200}
-        onSelectionCapExceeded={() => pushToast("You can select up to 200 payments at once.", "error")}
-        batchActions={(selected) => (
-          <Button
-            size="sm"
-            variant="danger"
-            type="button"
-            onClick={() => {
-              const voidable = selected.filter((row) => !row.voided_at);
-              setPendingVoidIds(voidable.map((row) => row.id));
-              setPendingVoidLabels(bulkRowLabelsFromRows(voidable, paymentBulkRowLabel));
-              setBatchVoidOpen(true);
-            }}
-          >
-            {`Void ${selected.filter((row) => !row.voided_at).length} selected`}
-          </Button>
-        )}
-        emptyText="No payments found."
-      />
+      <BoardSection title="Customer payments received" testId="payments-list-board">
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={query.isPending || (query.isFetching && rows.length === 0)}
+          onRowClick={(row) => navigate(`/accounting/payments/${row.id}`)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          exportFilename="payments"
+          storageKey="payments-list"
+          initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+          sortMode="external"
+          selectable
+          maxSelectable={200}
+          onSelectionCapExceeded={() => pushToast("You can select up to 200 payments at once.", "error")}
+          batchActions={(selected) => (
+            <Button
+              size="sm"
+              variant="danger"
+              type="button"
+              onClick={() => {
+                const voidable = selected.filter((row) => !row.voided_at);
+                setPendingVoidIds(voidable.map((row) => row.id));
+                setPendingVoidLabels(bulkRowLabelsFromRows(voidable, paymentBulkRowLabel));
+                setBatchVoidOpen(true);
+              }}
+            >
+              {`Void ${selected.filter((row) => !row.voided_at).length} selected`}
+            </Button>
+          )}
+          emptyText="No payments found."
+        />
+      </BoardSection>
 
       <VoidReasonModal
         open={batchVoidOpen}

@@ -17,6 +17,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
   type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
@@ -574,31 +575,46 @@ export function FixedAssetsPage() {
         />
       ) : null}
 
-      <ParityTable title="Fixed assets"
-        columns={columns}
-        rows={visibleItems}
-        rowKey={(row) => row.id}
-        loading={flagLoading || isPending || (isFetching && items.length === 0)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        storageKey="fixed-assets-list"
-        tableTestId="fixed-assets-table"
-        initialPageSize={limit}
-        emptyText="No fixed assets found."
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-      />
-
-      {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
-          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-          <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
-          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
-        </div>
-      )}
+      <BoardSection title="Fixed assets" testId="fixed-assets-list-board">
+        <ParityTable
+          columns={columns}
+          rows={visibleItems}
+          rowKey={(row) => row.id}
+          loading={flagLoading || isPending || (isFetching && items.length === 0)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          storageKey="fixed-assets-list"
+          tableTestId="fixed-assets-table"
+          initialPageSize={limit}
+          emptyText="No fixed assets found."
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+        />
+        {total > limit ? (
+          <div className="flex items-center justify-between px-3.5 py-2 text-xs text-gray-600">
+            <button
+              type="button"
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+              disabled={offset === 0}
+              className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+            >
+              ← Prev
+            </button>
+            <span>
+              {offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}
+            </span>
+            <button
+              type="button"
+              onClick={() => setOffset(offset + limit)}
+              disabled={offset + limit >= total}
+              className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+            >
+              Next →
+            </button>
+          </div>
+        ) : null}
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

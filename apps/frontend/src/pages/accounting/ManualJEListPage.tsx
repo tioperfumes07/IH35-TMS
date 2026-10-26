@@ -23,6 +23,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { DateRangePresets } from "../../components/forms/DateRangePresets";
 import { formatUsdCents } from "../../lib/money";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
@@ -415,41 +416,42 @@ export function ManualJEListPage() {
           {allPageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
         </p>
       ) : null}
-      <ParityTable title="Manual journal entries"
-        columns={columns}
-        rows={pageRows}
-        rowKey={(entry) => entry.id}
-        rowClassName={(entry) => voidedRowClassName(entry.voided_at)}
-        loading={entriesQuery.isPending || (entriesQuery.isFetching && allPageRows.length === 0)}
-        onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        suppressToolbarRange
-        storageKey="manual-je-list"
-        initialPageSize={PAGE_SIZE}
-        pageSizeOptions={[PAGE_SIZE]}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-        emptyText="No journal entries found."
-      />
-
-      <div className="flex items-center justify-between gap-2 text-xs text-gray-600">
-        <span>
-          {search.trim()
-            ? `${pageRows.length} matching "${search.trim()}" on this page`
-            : `Showing ${allPageRows.length === 0 ? 0 : page * PAGE_SIZE + 1}${allPageRows.length > 0 ? `–${page * PAGE_SIZE + allPageRows.length}` : ""}`}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" disabled={page === 0 || entriesQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-            ← Prev
-          </Button>
-          <span>Page {page + 1}</span>
-          <Button size="sm" variant="secondary" disabled={!hasNextPage || entriesQuery.isFetching} onClick={() => setPage((p) => p + 1)}>
-            Next →
-          </Button>
+      <BoardSection title="Manual journal entries" testId="manual-je-list-board">
+        <ParityTable
+          columns={columns}
+          rows={pageRows}
+          rowKey={(entry) => entry.id}
+          rowClassName={(entry) => voidedRowClassName(entry.voided_at)}
+          loading={entriesQuery.isPending || (entriesQuery.isFetching && allPageRows.length === 0)}
+          onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          suppressToolbarRange
+          storageKey="manual-je-list"
+          initialPageSize={PAGE_SIZE}
+          pageSizeOptions={[PAGE_SIZE]}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+          emptyText="No journal entries found."
+        />
+        <div className="flex items-center justify-between gap-2 px-3.5 py-2 text-xs text-gray-600">
+          <span>
+            {search.trim()
+              ? `${pageRows.length} matching "${search.trim()}" on this page`
+              : `Showing ${allPageRows.length === 0 ? 0 : page * PAGE_SIZE + 1}${allPageRows.length > 0 ? `–${page * PAGE_SIZE + allPageRows.length}` : ""}`}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" disabled={page === 0 || entriesQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+              ← Prev
+            </Button>
+            <span>Page {page + 1}</span>
+            <Button size="sm" variant="secondary" disabled={!hasNextPage || entriesQuery.isFetching} onClick={() => setPage((p) => p + 1)}>
+              Next →
+            </Button>
+          </div>
         </div>
-      </div>
+      </BoardSection>
 
       {companyId ? (
         <ManualJEModal

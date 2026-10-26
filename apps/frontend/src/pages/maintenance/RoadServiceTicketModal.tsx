@@ -85,7 +85,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       <div className="space-y-3" data-testid="road-service-ticket-modal">
         <label className={FORM_LABEL_CLASS}>
           Ticket #
-          <input className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs" value={ticketNumber} onChange={(e) => setTicketNumber(e.target.value)} />
+          <input className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={ticketNumber} onChange={(e) => setTicketNumber(e.target.value)} />
         </label>
         <label className={FORM_LABEL_CLASS}>
           Vendor
@@ -162,7 +162,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         </label>
         <label className={FORM_LABEL_CLASS}>
           Location
-          <input className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
+          <input className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
         </label>
         <label className={FORM_LABEL_CLASS}>
           Initial complaint

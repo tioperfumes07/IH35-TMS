@@ -23,6 +23,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -529,30 +530,45 @@ export function PrepaidExpensesPage() {
 
       {isError ? <p className="text-xs text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}
 
-      <ParityTable title="Prepaid expenses"
-        columns={columns}
-        rows={visibleItems}
-        rowKey={(row) => row.id}
-        loading={isPending || (isFetching && items.length === 0)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        storageKey="prepaid-expenses-list"
-        initialPageSize={limit}
-        emptyText="No prepaid expenses found."
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-      />
-
-      {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
-          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-          <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
-          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
-        </div>
-      )}
+      <BoardSection title="Prepaid expenses" testId="prepaid-expenses-list-board">
+        <ParityTable
+          columns={columns}
+          rows={visibleItems}
+          rowKey={(row) => row.id}
+          loading={isPending || (isFetching && items.length === 0)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          storageKey="prepaid-expenses-list"
+          initialPageSize={limit}
+          emptyText="No prepaid expenses found."
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+        />
+        {total > limit ? (
+          <div className="flex items-center justify-between px-3.5 py-2 text-xs text-gray-600">
+            <button
+              type="button"
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+              disabled={offset === 0}
+              className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+            >
+              ← Prev
+            </button>
+            <span>
+              {offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}
+            </span>
+            <button
+              type="button"
+              onClick={() => setOffset(offset + limit)}
+              disabled={offset + limit >= total}
+              className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+            >
+              Next →
+            </button>
+          </div>
+        ) : null}
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

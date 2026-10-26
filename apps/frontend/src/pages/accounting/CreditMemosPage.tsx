@@ -36,6 +36,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 // ACCT-F5606 — AR mirror of VendorCreditsPage.tsx's proven AP shape.
 
@@ -406,19 +407,20 @@ export function CreditMemosPage() {
           onRetry={() => void creditMemosQuery.refetch()}
         />
       ) : (
-        <ParityTable
-          title="Credit memos"
-          rows={memoRows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          loading={creditMemosQuery.isLoading}
-          filterBar={filterBar}
-          suppressToolbarSearch
-          storageKey="accounting-credit-memos"
-          tableTestId="credit-memos-table"
-          emptyText="No credit memos found."
-          onRowClick={(row) => setSelectedCreditMemoId(row.id)}
-        />
+        <BoardSection title="Credit memos" testId="credit-memos-list-board">
+          <ParityTable
+            rows={memoRows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={creditMemosQuery.isLoading}
+            filterBar={filterBar}
+            suppressToolbarSearch
+            storageKey="accounting-credit-memos"
+            tableTestId="credit-memos-table"
+            emptyText="No credit memos found."
+            onRowClick={(row) => setSelectedCreditMemoId(row.id)}
+          />
+        </BoardSection>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal), matching

@@ -33,6 +33,10 @@ if (!page.includes("kpiStrip=") || !page.includes('data-testid="checks-kpi-strip
   fails.push("the Checks page must pass AccountingSubNavWrapper kpiStrip with checks-kpi-strip + moneyListKpiCard");
 }
 if (page.includes("CollapsedListFilters")) fails.push("the Checks page must not use CollapsedListFilters");
+// 443.293-C — bare rounded card → BoardSection register chrome.
+if (!/<BoardSection[\s\S]{0,220}testId=["']checks-list-board["']/.test(page)) {
+  fails.push("the Checks page must wrap the register in BoardSection (checks-list-board)");
+}
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);

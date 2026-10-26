@@ -30,6 +30,7 @@ import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
@@ -461,43 +462,44 @@ export function BillPaymentsListPage() {
 
       {selectedBill ? <BillDetailPanel bill={selectedBill} /> : null}
 
-      <ParityTable
-        title="Bill payments"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        loading={paymentsQuery.isPending || (paymentsQuery.isFetching && rows.length === 0)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        exportFilename="bill-payments"
-        storageKey="bill-payments-list"
-        initialPageSize={50}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-        sortMode="external"
-        onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
-        selectable={canVoid}
-        maxSelectable={200}
-        onSelectionCapExceeded={() => pushToast("You can select up to 200 bill payments at once.", "error")}
-        batchActions={(selected) =>
-          canVoid ? (
-            <button
-              type="button"
-              className="rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 text-[#1F2A44]"
-              onClick={() => {
-                const voidable = selected.filter((row) => !row.revoked_at);
-                setPendingVoidIds(voidable.map((row) => row.id));
-                setPendingVoidLabels(bulkRowLabelsFromRows(voidable, billPaymentBulkRowLabel));
-                setBatchVoidOpen(true);
-              }}
-            >
-              {`Void ${selected.filter((row) => !row.revoked_at).length} selected`}
-            </button>
-          ) : null
-        }
-        emptyText="No bill payments found."
-      />
+      <BoardSection title="Bill payments" testId="bill-payments-list-board">
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={paymentsQuery.isPending || (paymentsQuery.isFetching && rows.length === 0)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          exportFilename="bill-payments"
+          storageKey="bill-payments-list"
+          initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+          sortMode="external"
+          onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
+          selectable={canVoid}
+          maxSelectable={200}
+          onSelectionCapExceeded={() => pushToast("You can select up to 200 bill payments at once.", "error")}
+          batchActions={(selected) =>
+            canVoid ? (
+              <button
+                type="button"
+                className="rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 text-[#1F2A44]"
+                onClick={() => {
+                  const voidable = selected.filter((row) => !row.revoked_at);
+                  setPendingVoidIds(voidable.map((row) => row.id));
+                  setPendingVoidLabels(bulkRowLabelsFromRows(voidable, billPaymentBulkRowLabel));
+                  setBatchVoidOpen(true);
+                }}
+              >
+                {`Void ${selected.filter((row) => !row.revoked_at).length} selected`}
+              </button>
+            ) : null
+          }
+          emptyText="No bill payments found."
+        />
+      </BoardSection>
 
       {companyId ? (
         <PayBillModal

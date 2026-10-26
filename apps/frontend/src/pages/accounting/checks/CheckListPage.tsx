@@ -14,6 +14,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { moneyListKpiCard } from "../moneyListKpiCard";
 import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 /**
  * Check list (`/accounting/checks`). U6 (owner, 2026-10-03): "Checks list must show all checks with full filters".
@@ -208,9 +209,9 @@ export function CheckListPage() {
       ) : query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
-        <div className="rounded border border-gray-200">
+        /* 443.293-C — bare rounded card → BoardSection (Bills-grammar register chrome). */
+        <BoardSection title="Checks written" testId="checks-list-board">
           <ParityTable<AllChecksRow>
-            title="Checks written"
             columns={columns}
             rows={rows}
             rowKey={(r) => `${r.kind}:${r.id}:${r.check_number ?? ""}`}
@@ -220,7 +221,7 @@ export function CheckListPage() {
             filterBar={filterBar}
             suppressToolbarSearch
           />
-        </div>
+        </BoardSection>
       )}
     </AccountingSubNavWrapper>
   );

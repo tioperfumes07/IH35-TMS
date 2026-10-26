@@ -35,6 +35,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -749,72 +750,74 @@ export function InvoicesListPage() {
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <ParityTable title="Invoices"
-        key={tableResetKey}
-        columns={columns}
-        rows={invoices}
-        rowKey={(row) => row.id}
-        loading={query.isPending || (query.isFetching && invoices.length === 0)}
-        onRowClick={(row) => navigate(`/accounting/invoices/${row.id}`)}
-        filterBar={filterBar}
-        suppressToolbarSearch
-        suppressToolbarRange
-        exportFilename="invoices"
-        storageKey="invoices-list"
-        initialPageSize={50}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-        // SORT-02 — rows now arrive pre-ordered by the server (INVOICE_LIST_SORT_SQL ORDER BY);
-        // "external" stops ParityTable's own internal re-sort, which previously reordered only
-        // the already-fetched page and silently disagreed with the true population order.
-        // REMAINING (disclosed, not fixed here): correct only for the fetched page — an entity
-        // with more invoices than the fetch limit (has_more=true) still only gets a correctly
-        // ordered PARTIAL population until real offset-paged fetching is also wired.
-        sortMode="external"
-        selectable
-        maxSelectable={200}
-        onSelectionCapExceeded={() => pushToast("You can select up to 200 invoices at once.", "error")}
-        batchActions={(selected) => (
-          <>
-            <Button
-              size="sm"
-              variant="secondary"
-              type="button"
-              onClick={() => {
-                setPendingIds(selected.map((row) => row.id));
-                setSentModalOpen(true);
-              }}
-            >
-              Mark sent
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              type="button"
-              onClick={() => {
-                setPendingIds(selected.map((row) => row.id));
-                setFactoredModalOpen(true);
-              }}
-            >
-              Mark factored
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              type="button"
-              onClick={() => {
-                setPendingIds(selected.map((row) => row.id));
-                setPendingVoidLabels(bulkRowLabelsFromRows(selected, invoiceBulkRowLabel));
-                setVoidModalOpen(true);
-              }}
-            >
-              {`Void ${selected.length} selected`}
-            </Button>
-          </>
-        )}
-        emptyText="No invoices found for the selected filters."
-      />
+      <BoardSection title="Invoices" testId="invoices-list-board">
+        <ParityTable
+          key={tableResetKey}
+          columns={columns}
+          rows={invoices}
+          rowKey={(row) => row.id}
+          loading={query.isPending || (query.isFetching && invoices.length === 0)}
+          onRowClick={(row) => navigate(`/accounting/invoices/${row.id}`)}
+          filterBar={filterBar}
+          suppressToolbarSearch
+          suppressToolbarRange
+          exportFilename="invoices"
+          storageKey="invoices-list"
+          initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+          // SORT-02 — rows now arrive pre-ordered by the server (INVOICE_LIST_SORT_SQL ORDER BY);
+          // "external" stops ParityTable's own internal re-sort, which previously reordered only
+          // the already-fetched page and silently disagreed with the true population order.
+          // REMAINING (disclosed, not fixed here): correct only for the fetched page — an entity
+          // with more invoices than the fetch limit (has_more=true) still only gets a correctly
+          // ordered PARTIAL population until real offset-paged fetching is also wired.
+          sortMode="external"
+          selectable
+          maxSelectable={200}
+          onSelectionCapExceeded={() => pushToast("You can select up to 200 invoices at once.", "error")}
+          batchActions={(selected) => (
+            <>
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  setPendingIds(selected.map((row) => row.id));
+                  setSentModalOpen(true);
+                }}
+              >
+                Mark sent
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  setPendingIds(selected.map((row) => row.id));
+                  setFactoredModalOpen(true);
+                }}
+              >
+                Mark factored
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                type="button"
+                onClick={() => {
+                  setPendingIds(selected.map((row) => row.id));
+                  setPendingVoidLabels(bulkRowLabelsFromRows(selected, invoiceBulkRowLabel));
+                  setVoidModalOpen(true);
+                }}
+              >
+                {`Void ${selected.length} selected`}
+              </Button>
+            </>
+          )}
+          emptyText="No invoices found for the selected filters."
+        />
+      </BoardSection>
 
       <BulkActionModal
         open={sentModalOpen}

@@ -65,7 +65,7 @@ export function FaroDebtorRecordPage() {
         <Link className="text-[#1F2A44] underline" to="/factoring">Factoring</Link> <span className="text-gray-500">› Faro debtor</span>
       </div>
       <div>
-        <h1 className="text-base font-semibold text-[#0F1B2D]">{name || "—"}</h1>
+        <h1 className="text-page-title font-semibold text-[#0F1B2D]">{name || "—"}</h1>
         <p className="text-gray-600" data-testid="faro-debtor-totals">
           {r ? `${r.totals.lines} Faro statement lines · ${formatUsdCentsTable(r.totals.gross_amount_cents)} gross` : "Loading…"}
         </p>
