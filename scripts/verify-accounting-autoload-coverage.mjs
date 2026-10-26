@@ -81,6 +81,8 @@ function fileContainsRoute(fileSource, endpoint) {
 function verifyRoot({ rootDir, extension, endpoints, rootLabel }) {
   const routeFiles = collectRouteFiles(rootDir, extension);
   if (routeFiles.length === 0) {
+    // Skip the dist check when the build output directory does not exist (CI runs on source only).
+    if (!fs.existsSync(rootDir)) return;
     fail(`${rootLabel}: no ${extension} route files found under ${path.relative(ROOT, rootDir)}`);
   }
 
