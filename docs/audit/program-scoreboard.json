@@ -1,10 +1,10 @@
 {
-  "healthzSha": "24507fa",
-  "generated_at": "2026-10-26T10:35:51.954Z",
+  "healthzSha": "c183e45",
+  "generated_at": "2026-10-26T14:09:35.452Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "24507fa",
+    "deployedSha": "c183e45",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 27897,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18802 — ENG-07 book stop street/place)",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 07:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27897",
+      "sha": "c183e455d0",
+      "committedAtIso": "2026-10-26T07:38:23-05:00"
+    },
+    {
+      "number": 27896,
+      "title": "FINDING: Lead — Codex ENGINE WAVE ASAP + WAVE 0 closes ENG-01/02/03/05/09/10",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 07:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27896",
+      "sha": "70d8875757",
+      "committedAtIso": "2026-10-26T07:32:43-05:00"
+    },
+    {
+      "number": 27895,
+      "title": "FINDING: Codex C2 dependency-inverted load-transition hooks",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 07:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27895",
+      "sha": "8746895e4a",
+      "committedAtIso": "2026-10-26T07:25:45-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 05:35 AM CT",
+      "url": "",
+      "sha": "5d3bcf86f6",
+      "committedAtIso": "2026-10-26T10:35:52Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27887",
       "sha": "c4b636eef6",
       "committedAtIso": "2026-10-26T01:55:31-05:00"
-    },
-    {
-      "number": 27886,
-      "title": "FINDING: Codex B3 shared modal and drawer open-order layers",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27886",
-      "sha": "52c3398569",
-      "committedAtIso": "2026-10-26T01:52:02-05:00"
-    },
-    {
-      "number": 27885,
-      "title": "FINDING: Codex B2 typeable multi-select bank match filter",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27885",
-      "sha": "aaa271b5cf",
-      "committedAtIso": "2026-10-26T01:46:03-05:00"
-    },
-    {
-      "number": 27884,
-      "title": "FINDING: Lead seat lists — Cursor Lead P0 measured + exact lists per seat",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27884",
-      "sha": "be36134485",
-      "committedAtIso": "2026-10-26T01:39:59-05:00"
-    },
-    {
-      "number": 27883,
-      "title": "FINDING: Cursor-19 — hand-rolled tables → ParityTable (ReportsHome · MilesStrip · Settlements deductions)",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27883",
-      "sha": "312e15c00a",
-      "committedAtIso": "2026-10-26T01:37:24-05:00"
     }
   ]
 }
