@@ -54,6 +54,7 @@ export async function getVendorReport(
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
     notVoided("b"),
+    `b.revoked_at IS NULL`,
     // status exclusion matches fin20-aging canonical pattern — ties to GL 2000 $126,443.92
     postedBillStatus("b"),
     `b.bill_date BETWEEN $2::date AND $3::date`,
@@ -84,6 +85,7 @@ export async function getVendorReport(
             AND b2.operating_company_id = $1::uuid
             AND b2.bill_date BETWEEN $2::date AND $3::date
             AND ${notVoided("b2")}
+            AND b2.revoked_at IS NULL
             AND bp.operating_company_id = $1::uuid
             AND ${notVoided("bp")}
         ), 0)::bigint AS total_paid_cents,
