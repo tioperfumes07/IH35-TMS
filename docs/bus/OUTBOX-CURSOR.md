@@ -171,18 +171,9 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell (FuelPlannerHome / Statement workflow bare cards)
 - **Files Modified:** SettlementDisputesTab.tsx · verify-settlement-disputes-parity-surface-bar.mjs · OUTBOX-CURSOR.md
-## 2026-10-25 CT — CURSOR → LEAD | ACCT-F443293-C gate follow-up (shipping)
+## 2026-10-25 CT — CURSOR → LEAD | ACCT-F443293-C lane CLOSED
 
-- **STATUS:** SHIPPING — branch `cursor/443293-c-accounting-tabs-c89b` rebased on `origin/main` after [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635) squash `5620b45102`
-- **DELTA:** Push-gate hygiene — selector BASELINE 11; settlement verify `ALLOW_OFFLINE_SKIP`; repair-settlement owner-auth on `--apply`; OUTBOX≤200 + HONEST-BUILT cites on seat INBOXes
-- **VERIFY:** `verify-bus-diet-outbox-cap` PASS · `verify-honest-built-launch-law-present` PASS · `branch:precheck-push` PASS at push `47c1ed699c`
-- **LIVE PROOF:** UNVERIFIED — coding-only; no Chrome
-- **NEXT:** open follow-up PR → merge
-- **Files Modified:** bus INBOX/OUTBOX · repair-settlement-header-eng43.mjs · verify-one-active-linehaul-per-load.mjs · verify-settlement-*.mjs · verify-every-selector-multi-select.mjs
-
-## 2026-10-25 CT — CURSOR → LEAD | ACCT-F443293-C MERGED #27635
-
-- **STATUS:** MERGED squash `5620b45102` — Receipts V3 board grammar
+- **STATUS:** MERGED [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635) squash `5620b45102` (Receipts V3) · MERGED [#27732](https://github.com/tioperfumes07/IH35-TMS/pull/27732) squash `36697ba25a` (push-gate hygiene post-27635)
 - **LIVE PROOF:** UNVERIFIED — coding-only per FINAL-3
 
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring internal tabs → BoardSection + FORM_INPUT
@@ -202,3 +193,5 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell (Faro imports / equipment loans / vendor merges still bare cards)
 - **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
+Older FINAL-2 rows (31–222) + row 114/118 notes: [archive/OUTBOX-CURSOR-archive-2026-10-25.md](archive/OUTBOX-CURSOR-archive-2026-10-25.md).

@@ -436,3 +436,97 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 MERGED `f8ea8f01c4` — CashFlowHomeTab rebuilt to docs/design/v3/CashFlow-Home (V3 KPIs only, 4w actual+13w forecast, Base|Conservative, category grey/black 13w, real monthly). Guard ratcheted. Seat INBOX CURRENT→FINAL-2. ENG-42 silent-skip tip-unblock fail-closed.
 
 NEXT: row 32 Projected (Auto) board completion (D042/D073 + V3 outlook) in flight.
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 114 + 118 process confirmation (443.282 / legacy-sections guard)
+
+- **BRANCH:** `cursor/443282-confirm-process` · tip after #27675 popup standard
+- **DELTA:** CONFIRM 443.282 owner-authorized build: Fuel board shell (FUEL_BOARD_SUBNAV + Import/Add fill) + Settlements Company/Open/Closed/Close/Escrow/Fuel Home/Fuel sub-tabs shipped FULL BoardSection/FuelBoardSection this FINAL-2 stretch (#27661–#27675). Row 118 `verify-board-page-no-legacy-sections` already CODED on main (Codex #27379, selftest 10/10) — Cursor does not re-author.
+- **GUARD:** verify-board-page-no-legacy-sections --selftest · verify-fuel-home-dashboard-wired board shell
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** hand-built overlay conversion batches (35 remaining, shrink-only) + any Lead re-measure reds
+- **Files Modified:** OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 222 Popup standard + Fuel Assignment FULL (shipping)
+
+- **BRANCH:** `cursor/443295-fuel-assignment-popup` · tip after #27674 Fuel sub-tabs
+- **DELTA:** Modal size caps sm480/md720/lg960/xl1280 (never 85% window); FuelAssignmentPopup = V3-Modal-FuelAssignment (Fill · Evidence · Proposed · Change · Engine notes); reason = catalog dropdown.
+- **GUARD:** verify-fuel-assignment-popup · verify-popups-one-format · verify-chrome-14-remaining-modal-shells · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** remaining FINAL-2 D/process rows
+- **Files Modified:** Modal.tsx · modal-size-prefs.ts · FuelAssignmentPopup.tsx · verify-fuel-assignment-popup · verify-popups-one-format · verify-chrome-14 · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 56 Fuel › 10 sub-tabs FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-fuel-subtabs-no-pagination` · tip after #27672 Company
+- **DELTA:** Remove pagination KPI tiles (This page / Page size / In view) from Questions, Fills, Relay unmatched, Card overage, Fraud; History = one KPI row + FuelBoardSection fills table; Expense mapping + Loves prices use FuelBoardSection.
+- **GUARD:** verify-fuel-home-dashboard-wired · verify-fuel-history-transaction-date-display · verify-fuel-assignment-popup · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** FINAL-2 D-series / remaining process rows
+- **Files Modified:** FuelPlannerHome · FuelQuestionsPanel · RelayUnmatchedPage · CardOverageQueuePage · FraudAlertsList · verify-fuel-* · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 50 Settlements Company FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-company-board` · tip after #27671 Fuel Home
+- **DELTA:** CompanySettlementsPage closed-tours board is FULL BoardSection (title + design subtitle + View all →) wrapping ParityTable; no duplicate ParityTable title; engines unchanged (listTours closed).
+- **GUARD:** verify-company-settlements-page (--selftest) · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Fuel 10 sub-tabs
+- **Files Modified:** CompanySettlementsPage.tsx · verify-company-settlements-page.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 55 Fuel › Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-fuel-home-board` · tip after #27669 Escrow
+- **DELTA:** FuelHome diesel-by-truck + Relay import wrap in FuelBoardSection; Oct|Sep|YTD grain in section header; attribution footer board text. Engines unchanged (getFuelDashboard / fetchDieselByTruckAggregate).
+- **GUARD:** verify-fuel-home-dashboard-wired · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Fuel 10 sub-tabs + Settlements Company
+- **Files Modified:** FuelHome.tsx · verify-fuel-home-dashboard-wired.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 53–54 Settlements Escrow + Escrow Register FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-escrow-board` · tip after #27666 Close
+- **DELTA:** SettlementsEscrowBoard + EscrowRegisterPage wrap ParityTable in shared BoardSection (View all + board footers). Open register → retained. Grammar forbids V3Panel. Engines unchanged.
+- **GUARD:** verify-settlements-escrow-board-rebuild + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Company + Fuel boards
+- **Files Modified:** SettlementsEscrowBoard.tsx · EscrowRegisterPage.tsx · verify-settlements-escrow-board-rebuild.mjs · verify-v3-board-grammar-every-surface.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 49 Settlements Close FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-close-board` · tip after #27663 Open/Closed
+- **DELTA:** SettlementCloseArrivalPage step body + Result unwrap to shared BoardSection (CloseBoardPanel); SubNav KPI strip = Open drivers · Gross · Deductions · Escrow · Advances recovered · Net to driver (outside wizard board per 443.280-A). Engines unchanged.
+- **GUARD:** verify-settlements-qbo-chrome-surfaces + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Company/Escrow + Fuel boards
+- **Files Modified:** SettlementCloseArrivalPage.tsx · verify-settlements-qbo-chrome-surfaces.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 rows 45–46 Settlements Open/Closed FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-open-board` · tip after #27661 Settlements Home
+- **DELTA:** SettlementsToursRegister rebuilt to docs/design/v3/Settlements-Open|Closed — V3KpiTile strip + MoneyListToolbar (search + Open/Closed pills) + shared BoardSection + ParityTable. Grammar surface promoted off chromeOnly. Engines unchanged (listTours).
+- **GUARD:** verify-settlements-module-one-readout + verify-v3-board-grammar-every-surface · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Close/Company/Escrow + Fuel boards
+- **Files Modified:** SettlementsToursRegister.tsx · verify-settlements-module-one-readout.mjs · verify-v3-board-grammar-every-surface.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 44 Settlements Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-settlements-home-board` · tip after #27660 Factoring
+- **DELTA:** SettlementsHomeBoardPanels → shared BoardSection; Week-of Status ● Paid/Open (board); chart footer board grammar; SettlementRefCell beside loads; Export control; FactoringHome grammar surface chromeOnly (tip unblock after 443.280 unlayer). Board contract folded into assertSettlementsHomeNoPanelExtract (step 18800) — no new CLAIMED verify-step (TOOL-F03).
+- **GUARD:** verify-v3-board-grammar-every-surface (Settlements Home board asserts) · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements Open/Closed/Close/Company/Escrow + Fuel boards
+- **Files Modified:** SettlementsHomeBoardPanels.tsx · SettlementsPage.tsx · verify-v3-board-grammar-every-surface.mjs · OUTBOX-CURSOR.md
+
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 39 Factoring Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-factoring-home-board` · tip `2c7957a138` (= #27657 Banking Home)
+- **DELTA:** FactoringHome unlayered — removed always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow above every Faro tab. FactoringHomeBoard mounts only under Account summary (docs/design/v3/Factoring). FactoringKpiPanel + FactoringCashFlowPanel stay on Purchase report (Rule 07 r315/r326). verify-factoring-layout-tabs-first retargeted to FactoringBoardChrome + 443.280 ratchet.
+- **GUARD:** verify-factoring-layout-tabs-first --selftest 16/16 + live PASS · verify-fact-s01-home-surface PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements / Fuel boards
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
+---
+(bus-diet rotation 2026-10-25 PM — FINAL-2 rows 39–222 from hot OUTBOX)
+
