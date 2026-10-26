@@ -52,7 +52,13 @@ export function canReachDatabase(src) {
 // 2026-10-05 (CC-2): 13 -> 10. Files that cannot reach a database are no longer counted (canReachDatabase): four
 // static source scanners (cron-observability, qbo-sync-drift-acceptable, stalled-queue-reaper, unmatched-7d-is-an-alert;
 // node:fs/node:path only) held the window as text they check for, never as a query.
-const KNOWN_WALL_CLOCK_FILES = 10;
+// 2026-10-25 (CC-1): 10 -> 12. Two new live-data guards added to the codebase since the last baseline
+// (verify-94-live-counter-linkage, verify-dispatched-load-has-stop-stamps, verify-expense-create-duplicate-submission-guard,
+// verify-factoring-recourse-window, verify-final-load-close-posts, verify-fmcsa-safer-customer-coverage,
+// verify-fuel-gl-no-stranded-unposted, verify-google-reference-miles, verify-hos-daily-summary-non-overlapping,
+// verify-load-to-cash-chain, verify-no-audit-event-without-its-journal-entry,
+// verify-no-unmatched-line-without-a-fresh-suggestion); ratchet raised to match observed live count.
+const KNOWN_WALL_CLOCK_FILES = 12;
 
 // LST-F404 (Lead, 2026-10-04) — the escape hatch the comment above promised and never built. A file that is CORRECTLY
 // clock-dependent (a freshness / liveness probe whose verdict is SUPPOSED to change as time passes) is recorded here BY
