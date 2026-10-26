@@ -47,7 +47,13 @@ export function problems(src) {
   if (!/await recordAfterCommit\(/.test(post) || !/retry-after-commit/.test(src.routes)) p.push("after-commit stages must be stored and retryable");
   if (!/results\[i\]\?\.reason === "error"/.test(src.after)) p.push('a billing sync per-load "error" must count as a failure');
   if (!/AUTO_SUBMIT_REFUSED_REASON\) perLoad\.push\(\{ load_number: l\.load_number, status: "owner_submits" \}\)/.test(src.after)) p.push("a Faro load waiting for the owner's submit (ROUND 315) must be OK, not a failure");
-  if (!/data-testid="sc-post-stages"/.test(src.drawer) || !/data-testid="sc-post-retry"/.test(src.drawer)) p.push("the drawer must show every stage and offer Retry");
+  // BoardSection uses testId= which renders data-testid at runtime.
+  if (
+    (!/data-testid="sc-post-stages"/.test(src.drawer) && !/testId="sc-post-stages"/.test(src.drawer)) ||
+    !/data-testid="sc-post-retry"/.test(src.drawer)
+  ) {
+    p.push("the drawer must show every stage and offer Retry");
+  }
   if (!/faro_api_down/.test(src.test)) p.push("forced factor-submit failure test missing");
   if (!/await assertCreatorDraftAdmissible\(client, draft\);\s*const seeded = await ensureDispatchedLoadsForCreator\(client[\s\S]{0,200}return postSettlementCreatorInClientTx\(client/.test(post)) p.push("admission, seeding and the post must run in ONE transaction");
   if (!/for \(const run of afterBook\) run\(\);/.test(post)) p.push("after-book extras must run only after the commit");

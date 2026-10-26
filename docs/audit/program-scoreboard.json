@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c26916d",
-  "generated_at": "2026-10-26T01:07:58.998Z",
+  "healthzSha": "4e9322a",
+  "generated_at": "2026-10-26T03:00:12.475Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c26916d",
+    "deployedSha": "4e9322a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27749,
-      "title": "fix(scope): entity-scope 19 unscoped load/unit/equipment/driver reads in dispatch, realtime, telematics, safety",
+      "number": 27837,
+      "title": "FINDING: N/A LANE: CC-1 — update verify-creator-advance guard for ENG-04 posting-engine contract",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 08:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27749",
-      "sha": "978249b430",
-      "committedAtIso": "2026-10-25T20:07:13-05:00"
+      "mergedAtCt": "10/25/2026, 09:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27837",
+      "sha": "0ab4728c7b",
+      "committedAtIso": "2026-10-25T21:57:13-05:00"
     },
     {
-      "number": 27748,
-      "title": "fix(scope): entity-scope 22 unscoped JOIN/FROM sites in accounting, banking, fuel (verify-join-entity-scoped)",
+      "number": 0,
+      "title": "FINDING: FINAL-2 row 41 — Trial balance viewer board-faithful (443.280) LANE: NON-FINANCIAL (FE-only; no schema, no money mutation) DOD-A: PASS — KPI tiles clickable (onTotalsDrill); cells plain 2-dp; Measured note live ReactNode GL vs subledger; footer row removed; space-y-3 DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: reports (unchanged) ROOT CAUSE: grand-total KPI tiles not clickable; table cells used $ formatting (board: plain 2-dp with true minus); Grand total footer row present (board: no footer, totals in KPI tiles only); Measured note was a plain string instead of live GL-vs-subledger comparison FIX: TrialBalancePage — resolveAmountRoute + getArAgingReport + V3; cell() for plain table numbers; arSubledgerQuery; measuredArNote→ReactNode with AmountLink GL vs AR aging Link + tie/no-tie copy; remove footerCells from ParityTable; pass onTotalsDrill; space-y-4→space-y-3. TrialBalanceBoard — ReactNode measuredArNote; onTotalsDrill prop; onClick={onTotalsDrill} on debit/credit KPI tiles GUARD: tsc -b exit 0 · vite build exit 0 LIVE PROOF: tsc -b exit 0 · vite build exit 0 REMAINING: rows 5/18/19/40/42/43/80/193/221/257/259/261-262/264 still open",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 08:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27748",
-      "sha": "5a3a3c42a4",
-      "committedAtIso": "2026-10-25T20:07:01-05:00"
+      "mergedAtCt": "10/25/2026, 09:56 PM CT",
+      "url": "",
+      "sha": "d2f372c3bd",
+      "committedAtIso": "2026-10-25T21:56:40-05:00"
     },
     {
-      "number": 27743,
-      "title": "FINDING: SETTLEMENTS-FILL-FINALIZE — FinalizeBlock → BoardSection LANE: NON-FINANCIAL",
+      "number": 27836,
+      "title": "FINDING: N/A LANE: CC-1 — bills-settlement static literals; cash-flow predicate consumer; cash-advances staged filters; proforma-timing guard needle",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 08:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27743",
-      "sha": "4671315006",
-      "committedAtIso": "2026-10-26T01:02:29Z"
+      "mergedAtCt": "10/25/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27836",
+      "sha": "9ba5ee4aee",
+      "committedAtIso": "2026-10-25T21:55:11-05:00"
     },
     {
-      "number": 27747,
-      "title": "fix(guard): disp-wire-10 accepts canonical stampDriverBillVoidedInClientTx void path (verified against helper source)",
+      "number": 27835,
+      "title": "FINDING: ACCT-F443293 — FILL-ACCT-220-MONEY-LIST-BOARDS — 12 Accounting registers → BoardSection LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 08:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27747",
-      "sha": "aa46c0bc94",
-      "committedAtIso": "2026-10-25T20:01:59-05:00"
+      "mergedAtCt": "10/25/2026, 09:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27835",
+      "sha": "4e9322a488",
+      "committedAtIso": "2026-10-25T21:54:36-05:00"
     },
     {
-      "number": 27746,
-      "title": "FINDING: HOS-F81 LANE: NON-FINANCIAL — Row 81 443.260: HOS duty-event queries now follow merged_into_driver_id chain (step 18811)",
+      "number": 27834,
+      "title": "FINDING: shared input height follows the form-field token (h-10) — NumberInput aligned, guards stop pinning literals",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 08:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27746",
-      "sha": "c26916d6c5",
-      "committedAtIso": "2026-10-25T20:00:33-05:00"
+      "mergedAtCt": "10/25/2026, 09:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27834",
+      "sha": "525def8998",
+      "committedAtIso": "2026-10-25T21:49:13-05:00"
     },
     {
-      "number": 27745,
-      "title": "FINDING: LST-F443371 trailer-type data script applied without the owner-authorization check (Lead process miss) — AUTH-470 recorded, AUTH-471 opened, AUTH-469 result corrected",
+      "number": 27833,
+      "title": "FINDING: GPS dwell is the stop boundary when the fence was never entered — automatic in the real-driven-miles cron",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 07:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27745",
-      "sha": "6384a5d9fd",
-      "committedAtIso": "2026-10-25T19:59:03-05:00"
+      "mergedAtCt": "10/25/2026, 09:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27833",
+      "sha": "9fedfdb865",
+      "committedAtIso": "2026-10-25T21:48:05-05:00"
     },
     {
-      "number": 27742,
-      "title": "FINDING: N/A LANE: DOCS — OUTBOX tip: fill-not-shell BoardSection batch MERGED",
+      "number": 27832,
+      "title": "FINDING: restore CLAIMED-NUMBERS.json escaping (no content change)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 07:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27742",
-      "sha": "4278842115",
-      "committedAtIso": "2026-10-25T19:57:27-05:00"
+      "mergedAtCt": "10/25/2026, 09:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27832",
+      "sha": "9bff2d2a28",
+      "committedAtIso": "2026-10-25T21:47:24-05:00"
     },
     {
-      "number": 27744,
-      "title": "FINDING: N/A LANE: DOCS — LEAD FINAL-4: main has 149 red static guards (+22 unwired) hidden by --no-verify fast merges; split by lane + Cursor inbox",
+      "number": 27831,
+      "title": "Claude-3-FINAL2-d032-picker-size",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 07:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27744",
-      "sha": "92f6975402",
-      "committedAtIso": "2026-10-25T19:56:45-05:00"
+      "mergedAtCt": "10/25/2026, 09:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27831",
+      "sha": "e9a0fbd22b",
+      "committedAtIso": "2026-10-25T21:47:19-05:00"
     },
     {
-      "number": 27740,
-      "title": "FINDING: SETTLEMENTS-FILL-DETAIL-EMPTY — SettlementDetail empty → BoardSection LANE: NON-FINANCIAL",
+      "number": 27830,
+      "title": "FINDING: claim verify-step 18909 (stop dwell boundary)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 07:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27740",
-      "sha": "cad0822521",
-      "committedAtIso": "2026-10-26T00:53:54Z"
+      "mergedAtCt": "10/25/2026, 09:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27830",
+      "sha": "38f225c79f",
+      "committedAtIso": "2026-10-25T21:46:48-05:00"
     },
     {
-      "number": 27741,
-      "title": "Claude-3- FINDING: ACCT-F443810 ENG-28 posting single door — fold reversal into insertPostingLineWithSpine",
+      "number": 27829,
+      "title": "FINDING: owner no-HOLD ruling — hold-merge-gate retired as a required CI check",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 07:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27741",
-      "sha": "517a3e7647",
-      "committedAtIso": "2026-10-25T19:53:00-05:00"
+      "mergedAtCt": "10/25/2026, 09:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27829",
+      "sha": "70cd5d8570",
+      "committedAtIso": "2026-10-25T21:46:21-05:00"
     }
   ]
 }
