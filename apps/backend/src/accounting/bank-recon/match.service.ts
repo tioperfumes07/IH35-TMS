@@ -68,6 +68,7 @@ import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-
 // 443.100: LedgerEntryKind lives in the type-only leaf ledger-entry-kind.type.ts so the one unmatch writer can name it
 // without importing this engine (verify-no-circular-dependencies).
 import type { LedgerEntryKind } from "./ledger-entry-kind.type.js";
+import type { BankMatchFilterKind } from "./match-api-kinds.js";
 import { createRelatedPartyLoanEntry } from "../related-party-loan-posting/create-entry.service.js";
 export type { LedgerEntryKind };
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
@@ -505,7 +506,7 @@ function toCandidate(kind: LedgerEntryKind, row: RawRow, counterpartyKind: Match
 export type CandidateFilters = {
   windowDays?: number;
   searchQuery?: string;
-  kinds?: LedgerEntryKind[];
+  kinds?: Array<LedgerEntryKind | BankMatchFilterKind>;
   payee?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -622,7 +623,7 @@ async function fetchLedgerCandidates(
   const hasFilters = Boolean(searchNeedle || payeeNeedle || options.amountMinCents != null || options.amountMaxCents != null);
   const rowLimit = hasFilters ? 2000 : 500;
   const likeParam = searchNeedle ? `%${searchNeedle}%` : null;
-  const wants = (kind: LedgerEntryKind) => !options.kinds?.length || options.kinds.includes(kind);
+  const wants = (kind: LedgerEntryKind | BankMatchFilterKind) => !options.kinds?.length || options.kinds.includes(kind);
   // LEAD 443.155 DEFECT 1 — every candidate belongs to THIS bank line's account (QuickBooks never offers a document that
   // does not land in the register being reconciled): a document qualifies when it moves money through this account's
   // ledger (expense paid from it, payment / bill payment deposited to or paid from it), or is an open clearing item that
@@ -906,7 +907,7 @@ async function fetchLedgerCandidates(
   // --- MONEY OUT (withdrawal) — settlement-born bill_payments / bills + expenses --
   if (!isCredit) {
     // --- CASH settlement-born bill_payments (primary match targets) ----------------
-    if (wants("bill_payment")) {
+    if (wants("bill_payment") || wants("check")) {
       const billPayments = await client.query<RawRow>(
         `
           SELECT bp.id::text, bp.amount_cents::int, bp.payment_date::text AS event_date,
@@ -920,7 +921,9 @@ async function fetchLedgerCandidates(
              AND bp.payment_date BETWEEN $2::date AND $3::date
              AND bp.revoked_at IS NULL
              AND bp.voided_at IS NULL
-             AND ${SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN}
+             AND COALESCE(bp.settlement_deduction_noncash, false) IS NOT TRUE
+             AND (${SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN} OR upper(bp.payment_method) = 'CHECK')
+             AND ($8::boolean OR upper(bp.payment_method) = 'CHECK')
              AND ($4::text IS NULL OR lower(COALESCE(bp.reference_number, '') || ' ' || COALESCE(bp.memo, '') || ' ' || COALESCE(bp.check_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
              AND NOT EXISTS (
                SELECT 1 FROM banking.reconciliation_matches m
@@ -940,7 +943,7 @@ async function fetchLedgerCandidates(
                                 AND jp.reversal_of_line_id IS NULL))
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId, ledgerId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId, ledgerId, wants("bill_payment")]
       );
       for (const row of billPayments.rows) results.push(toCandidate("bill_payment", row, "vendor"));
     }
@@ -979,18 +982,19 @@ async function fetchLedgerCandidates(
     }
 
     // --- Posted expenses (Part 1 Match drawer — money-out; restored ROUND 259) ---
-    // Accept path requires status=posted (no new JE on match). Exclude already-matched / voided.
-    if (wants("expense")) {
+    // Match the accept path's posting_status, not the separate draft/paid workflow status.
+    // Checks retain their canonical expense identity so accept/unmatch cannot create a second match.
+    if (wants("expense") || wants("check")) {
       const expenses = await client.query<RawRow>(
         `
           SELECT
             e.id::text,
             e.total_amount_cents::int AS amount_cents,
             e.transaction_date::text AS event_date,
-            COALESCE(e.expense_number, e.memo)::text AS memo,
+            COALESCE(NULLIF(e.check_number, ''), e.expense_number, e.memo)::text AS memo,
             e.vendor_uuid::text AS counterparty_id,
-            v.vendor_name::text AS counterparty_name,
-            COALESCE(NULLIF(e.vendor_document_number, ''), e.expense_number)::text AS reference,
+            COALESCE(NULLIF(e.print_on_check_name, ''), v.vendor_name)::text AS counterparty_name,
+            COALESCE(NULLIF(e.check_number, ''), NULLIF(e.vendor_document_number, ''), e.expense_number)::text AS reference,
             e.memo::text AS description,
             NULL::int AS open_balance_cents
           FROM accounting.expenses e
@@ -999,10 +1003,11 @@ async function fetchLedgerCandidates(
             AND e.transaction_date BETWEEN $2::date AND $3::date
             AND e.is_active = true
             AND e.voided_at IS NULL
-            AND e.status = 'posted'
+            AND e.posting_status = 'posted'
+            AND ($7::boolean OR e.payment_type = 'check')
             -- 443.155: an expense is a candidate only on the account it was paid from.
             AND e.payment_account_uuid = $6::uuid
-            AND ($4::text IS NULL OR lower(COALESCE(e.expense_number, '') || ' ' || COALESCE(e.memo, '') || ' ' || COALESCE(e.vendor_document_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
+            AND ($4::text IS NULL OR lower(COALESCE(e.check_number, '') || ' ' || COALESCE(e.print_on_check_name, '') || ' ' || COALESCE(e.expense_number, '') || ' ' || COALESCE(e.memo, '') || ' ' || COALESCE(e.vendor_document_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
             AND NOT EXISTS (
               SELECT 1 FROM banking.reconciliation_matches m
               WHERE m.ledger_entry_kind = 'expense'
@@ -1016,7 +1021,7 @@ async function fetchLedgerCandidates(
             AND e.source_bank_transaction_id IS NULL
           LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId, wants("expense")]
       );
       for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
     }
@@ -1689,7 +1694,7 @@ export async function findCandidates(input: {
   /** Optional memo/payee/ref text filter (case-insensitive contains). */
   search_query?: string;
   /** BANK-MATCH-QBO filters — Show (kinds), Payee, date From/To, amount From/To. */
-  kinds?: LedgerEntryKind[];
+  kinds?: Array<LedgerEntryKind | BankMatchFilterKind>;
   payee?: string;
   date_from?: string;
   date_to?: string;
