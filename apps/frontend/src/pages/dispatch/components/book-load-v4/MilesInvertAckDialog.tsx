@@ -38,7 +38,8 @@ export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, reve
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[225] flex items-center justify-center bg-black/50 p-4"
+      className="z-[225] flex items-center justify-center bg-black/50 p-4"
+      style={{ position: "fixed", inset: 0 }}
       data-testid="miles-invert-ack-dialog"
       onMouseDown={(event) => event.stopPropagation()}
     >

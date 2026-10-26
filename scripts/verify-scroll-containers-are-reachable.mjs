@@ -142,6 +142,9 @@ export function findFixedMenusWithoutMaxHeight(source, file) {
     const obj = source.slice(start, end + 1);
     if (obj.includes(OPT_OUT)) continue;
     if (/\bmaxHeight\b/.test(obj)) continue;
+    // inset: 0 pins all four sides → full-viewport overlay bounded by the viewport, not a menu/popover.
+    // Same reasoning as CLASS A's inset-0 exemption.
+    if (/\binset:\s*0\b/.test(obj)) continue;
     const line = source.slice(0, m.index).split("\n").length;
     hits.push({ file, line, text: obj.replace(/\s+/g, " ").slice(0, 160) });
   }
@@ -219,6 +222,10 @@ function selftest() {
     ).length === 1,
   );
   ok("B7 walk() skips node_modules", !walk(path.join(ROOT, "apps/frontend/src")).some((p) => p.includes("node_modules")));
+  ok(
+    "B8 inset: 0 → full-viewport overlay, not a menu → not a hit",
+    findFixedMenusWithoutMaxHeight('style={{ position: "fixed", inset: 0 }}', "x").length === 0,
+  );
 
   const failed = cases.filter((c) => !c.pass);
   for (const c of cases) console.log(`${c.pass ? "ok  " : "FAIL"} ${c.name}`);

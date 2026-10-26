@@ -1,9 +1,5 @@
 {
   "_why": "SHRINK-ONLY. Files that still paint their own fixed inset-0 overlay (measured 2026-10-25, owner: one popup format across the entire app). Each conversion to <Modal>/<ParityDrawer> removes its line; nothing is ever added.",
   "measured_at": "2026-10-25",
-  "overlays": [
-    "components/dispatch/LoadDetailDrawer.tsx",
-    "pages/dispatch/components/BookLoadModalV4.tsx",
-    "pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx"
-  ]
+  "overlays": []
 }

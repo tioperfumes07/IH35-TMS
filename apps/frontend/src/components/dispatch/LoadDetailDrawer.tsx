@@ -677,7 +677,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   // (Devin Live FAIL: WO→load reached /dispatch/loads/:id?view=list with no visible drawer).
   const body = (
     <>
-      {isPage ? null : <div className="fixed inset-0 z-[200] bg-black/30" data-testid="load-detail-drawer-backdrop" />}
+      {isPage ? null : <div className="z-[200] bg-black/30" style={{ position: "fixed", inset: 0 }} data-testid="load-detail-drawer-backdrop" />}
       <aside
         className={
           isPage
@@ -860,7 +860,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 </Button>
                 {moreOpen ? (
                   <>
-                    <div className="fixed inset-0 z-[215]" onClick={() => setMoreOpen(false)} aria-hidden="true" />
+                    <div className="z-[215]" style={{ position: "fixed", inset: 0 }} onClick={() => setMoreOpen(false)} aria-hidden="true" />
                     <div className="absolute right-0 z-[212] mt-1 min-w-[190px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" role="menu">
                       {moreTabs.map((tab) => (
                         <button

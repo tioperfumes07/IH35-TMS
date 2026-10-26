@@ -35,12 +35,33 @@ const LABEL = "verify-book-load-modal-z-index-above-drawer";
 const DRAWER_Z = 210;
 const MODAL_MIN_Z = DRAWER_Z + 1;
 
-/** Extracts the z-[N] value from the first `fixed inset-0 z-[N]` match, or null. */
+/**
+ * Extracts the z-[N] value from the BookLoadModalV4 outer backdrop element.
+ *
+ * Two shapes are accepted:
+ *   (a) Old Tailwind: className="... fixed inset-0 z-[N] ..."
+ *   (b) New inline-style (popups-one-format): style={{ position: "fixed", inset: 0, ... }} with
+ *       z-[N] in the className of the same element, identified by data-ih35-blocking-modal nearby.
+ */
 function extractOverlayZ(src) {
+  // (a) Old Tailwind pattern
   const m = src.match(/fixed inset-0 z-\[(\d+)\]/);
   if (m) return Number(m[1]);
   // A bare Tailwind z-50 (no bracket) is the historical bug shape — treat as z=50.
   if (/fixed inset-0 z-50\b/.test(src)) return 50;
+  // (b) Inline-style pattern: position:"fixed" on the same element as data-ih35-blocking-modal.
+  // className (with z-[N]) appears BEFORE the data attribute; style (with position:fixed) appears AFTER.
+  const blockIdx = src.indexOf('data-ih35-blocking-modal');
+  if (blockIdx !== -1) {
+    const forwardRegion = src.slice(blockIdx, blockIdx + 300);
+    const hasInlineFixed = /position:\s*["']?fixed/.test(forwardRegion);
+    if (hasInlineFixed) {
+      // Find the last z-[N] before the data attribute (it's in the className ternary)
+      const backwardRegion = src.slice(Math.max(0, blockIdx - 600), blockIdx);
+      const allMatches = [...backwardRegion.matchAll(/z-\[(\d+)\]/g)];
+      if (allMatches.length) return Number(allMatches[allMatches.length - 1][1]);
+    }
+  }
   return null;
 }
 
@@ -74,9 +95,13 @@ function readIf(rel) {
 
 if (process.argv.includes("--selftest")) {
   const goodModal = 'className="fixed inset-0 z-[216] flex items-start justify-center overflow-y-auto px-4 py-6"';
+  // New inline-style shape (popups-one-format): position/inset in style prop, z-[N] in className.
+  const goodModalInlineStyle =
+    'className="z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6"\n      data-ih35-blocking-modal="true"\n      style={{ position: "fixed", inset: 0, background: "rgba(15,19,32,0.6)" }}';
   const goodDrawer = 'className="fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"';
 
   const pass = computeFailures({ bookLoadModal: goodModal, loadDetailDrawer: goodDrawer });
+  const passInlineStyle = computeFailures({ bookLoadModal: goodModalInlineStyle, loadDetailDrawer: goodDrawer });
 
   const failOldBug = computeFailures({
     bookLoadModal: 'className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-6"',
@@ -94,7 +119,8 @@ if (process.argv.includes("--selftest")) {
   });
 
   const checks = [
-    ["clean inputs produce zero failures", pass.length === 0],
+    ["clean Tailwind inputs produce zero failures", pass.length === 0],
+    ["clean inline-style inputs produce zero failures", passInlineStyle.length === 0],
     ["the original bare z-50 regression is flagged", failOldBug.some((e) => e.includes("must be >="))],
     ["a z-index above 50 but still below the drawer is flagged", failTooLow.some((e) => e.includes("must be >="))],
     ["an unnoticed LoadDetailDrawer z-index change is flagged", failDrawerZChanged.some((e) => e.includes("expected its panel to still carry"))],
