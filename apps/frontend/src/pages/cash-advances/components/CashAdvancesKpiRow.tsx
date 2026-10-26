@@ -8,6 +8,18 @@ import { formatUsdTable } from "../../../lib/money";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatDisplayName } from "../../../components/v3/formatDisplayName";
 
+/** A missing or non-numeric amount is UNKNOWN (null → "—"), never a confident 0. */
+function amountOrNull(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function centsFromDollars(v: unknown): number | null {
+  const n = amountOrNull(v);
+  return n == null ? null : Math.round(n * 100);
+}
+
 type Props = {
   kpis?: Record<string, unknown>;
   /** ROUND 443.254 N1 — when mounted under Settlements, keep KPI drills in-module. */
@@ -215,7 +227,7 @@ export function CashAdvancesKpiRow({
                   previewRequests.map((row) => {
                     const id = String(row.id ?? "");
                     const name = formatDisplayName(row.driver_name ? String(row.driver_name) : null);
-                    const cents = Number(row.requested_amount_cents ?? 0);
+                    const cents = amountOrNull(row.requested_amount_cents);
                     return (
                       <tr key={id || String(row.display_id)} data-testid={`settlements-cash-advances-request-${id}`}>
                         <td style={tdStyle}>
@@ -228,7 +240,7 @@ export function CashAdvancesKpiRow({
                         <td style={tdStyle}>{formatAsked(row.submitted_at)}</td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           <MoneyCell
-                            cents={Number.isFinite(cents) ? cents : null}
+                            cents={cents}
                             drill={{ entity: { kind: "cash_advance_request", id } }}
                           />
                         </td>
@@ -341,14 +353,14 @@ export function CashAdvancesKpiRow({
                         <td style={tdStyle}>{labelMethod(row.disbursement_method)}</td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           <MoneyCell
-                            cents={Math.round(Number(row.amount ?? 0) * 100)}
+                            cents={centsFromDollars(row.amount)}
                             format={(c) => formatUsdTable(c / 100)}
                             drill={{ entity: { kind: "cash_advance", id } }}
                           />
                         </td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           <MoneyCell
-                            cents={Math.round(Number(row.outstanding_balance ?? 0) * 100)}
+                            cents={centsFromDollars(row.outstanding_balance)}
                             format={(c) => formatUsdTable(c / 100)}
                             drill={{ entity: { kind: "cash_advance", id } }}
                           />
