@@ -11,6 +11,7 @@ import { formatUsdCents } from "../../lib/money";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 /**
  * REG-023(b) (owner 2026-09-10: "the Open Driver Bill button is unwired — no driver_bills/:id route
@@ -99,23 +100,27 @@ export function DriverBillDetailPage() {
       />
 
       {bill.load_id ? (
-        <div className="mt-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-bill-detail-body">
+        <div className="mt-3">
+        <BoardSection title="Driver pay detail" testId="driver-bill-detail-body">
           {/* ALL-SEATS LAW (owner, 2026-09-13) — every load-number reference (the breadcrumb above)
               carries a settlement/tour reference beside it. */}
-          <p className="mb-2 text-xs text-gray-600">
-            <span className="font-semibold text-gray-500">Load: </span>
-            <EntityLink kind="load" id={bill.load_id} label={loadLabel} />
-            <span className="mx-2 text-gray-400">·</span>
-            <span className="font-semibold text-gray-500">Settlement/Tour: </span>
-            <SettlementRefCell loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} />
-          </p>
-          {/* Reuse the canonical Driver Pay detail (LDT-3) — USMCA books in USD. */}
-          <LoadDetailDriverPayTab loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} currencyCode="USD" />
+          <div className="space-y-2 px-3.5 py-2">
+            <p className="text-xs text-gray-600">
+              <span className="font-semibold text-gray-500">Load: </span>
+              <EntityLink kind="load" id={bill.load_id} label={loadLabel} />
+              <span className="mx-2 text-gray-400">·</span>
+              <span className="font-semibold text-gray-500">Settlement/Tour: </span>
+              <SettlementRefCell loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} />
+            </p>
+            {/* Reuse the canonical Driver Pay detail (LDT-3) — USMCA books in USD. */}
+            <LoadDetailDriverPayTab loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} currencyCode="USD" />
+          </div>
+        </BoardSection>
         </div>
       ) : (
-        <div className="mt-3 rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
-          This driver bill is not linked to a load.
-        </div>
+        <BoardSection title="Driver bill" testId="driver-bill-detail-unlinked">
+          <p className="px-3.5 py-2 text-xs text-gray-500">This driver bill is not linked to a load.</p>
+        </BoardSection>
       )}
     </div>
   );
