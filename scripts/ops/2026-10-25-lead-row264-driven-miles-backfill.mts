@@ -12,6 +12,8 @@ import { computeLoadRealDrivenMiles, persistLoadRealDrivenMiles } from "../../ap
 
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
+// --ids a,b,c re-runs only those loads (e.g. the ones that lost a lock race with the live positions tick).
+const IDS_ARG = process.argv.includes("--ids") ? String(process.argv[process.argv.indexOf("--ids") + 1] ?? "").split(",").filter(Boolean) : null;
 // Owner authorization (verify-no-unauthorized-production-write): an --apply refuses unless AUTH-471 is open on main.
 if (APPLY) {
   const { execFileSync } = await import("node:child_process");
@@ -54,7 +56,8 @@ try {
   out.before = await tx(count, false);
   const ids = await tx(async () => (await client.query(
     `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1 AND status::text <> 'cancelled'
-        AND soft_deleted_at IS NULL AND miles_driven_actual IS NULL ORDER BY 1`, [CO])).rows.map((r: { id: string }) => r.id), false);
+        AND soft_deleted_at IS NULL AND miles_driven_actual IS NULL
+        AND ($2::uuid[] IS NULL OR id = ANY($2::uuid[])) ORDER BY 1`, [CO, IDS_ARG])).rows.map((r: { id: string }) => r.id), false);
   for (const id of ids) {
     try {
       await tx(async () => {
