@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — BatchDetail → BoardSection
+
+- **STATUS:** SHIPPING [#27767](https://github.com/tioperfumes07/IH35-TMS/pull/27767) (squash auto-merge armed)
+- **DELTA:** BatchDetail summary/invoices/reserve + loading/error/unavailable → `BoardSection`. Engines/reserve KPI unchanged. New guard verify-factoring-batch-detail-board.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-batch-detail-board PASS · paritytable · wave-c-liability
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** BatchDetail.tsx · verify-factoring-batch-detail-board.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel reverse sections → FuelBoardSection
 
 - **STATUS:** SHIPPING
