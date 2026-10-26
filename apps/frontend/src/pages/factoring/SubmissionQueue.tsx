@@ -16,6 +16,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatUsdCents } from "../../lib/money";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 function asMoney(cents: number) {
   return formatUsdCents(cents);
@@ -223,12 +224,11 @@ export function SubmissionQueue() {
     return (
       <div className="space-y-3 p-4">
         <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-          data-testid="factoring-submit-need-company"
-        >
-          Select an operating company to view the submission queue.
-        </div>
+        <BoardSection title="Submission queue" testId="factoring-submit-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view the submission queue.
+          </div>
+        </BoardSection>
       </div>
     );
   }
@@ -237,65 +237,69 @@ export function SubmissionQueue() {
     <div className="space-y-3 p-4">
       <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
 
-      <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-submit-filters">
-        <label className="text-xs text-[#4B5563]">
-          Customer
-          <EntityMultiSelect
-            kind="customer"
-            operatingCompanyId={companyId}
-            value={filterDraft.customerId || null}
-            onChange={(next) => setCustomerFilter(next ?? "")}
-            placeholder="All customers"
-            className="mt-1"
-            dataTestId="factoring-submit-filter-customer"
-          />
-        </label>
-        <label className="text-xs text-[#4B5563]">
-          Load
-          <EntityMultiSelect
-            kind="load"
-            operatingCompanyId={companyId}
-            value={filterDraft.loadId || null}
-            onChange={(next) => setLoadFilter(next ?? "")}
-            placeholder="All loads"
-            className="mt-1"
-            dataTestId="factoring-submit-filter-load"
-          />
-        </label>
-        <Button type="button" size="sm" data-testid="factoring-submit-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-          Apply
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          data-testid="factoring-submit-filter-cancel"
-          onClick={staged.cancel}
-          disabled={!staged.dirty}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          data-testid="factoring-submit-filter-reset"
-          onClick={() => {
-            staged.cancel();
-            setApplied(EMPTY_FILTERS);
-            patchListSearchParam(EMPTY_FILTERS);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
+      <BoardSection title="Filters" testId="factoring-submit-filters-board">
+        <div className="relative flex flex-wrap items-end gap-3 px-3.5 py-2" data-testid="factoring-submit-filters">
+          <label className="text-xs text-[#4B5563]">
+            Customer
+            <EntityMultiSelect
+              kind="customer"
+              operatingCompanyId={companyId}
+              value={filterDraft.customerId || null}
+              onChange={(next) => setCustomerFilter(next ?? "")}
+              placeholder="All customers"
+              className="mt-1"
+              dataTestId="factoring-submit-filter-customer"
+            />
+          </label>
+          <label className="text-xs text-[#4B5563]">
+            Load
+            <EntityMultiSelect
+              kind="load"
+              operatingCompanyId={companyId}
+              value={filterDraft.loadId || null}
+              onChange={(next) => setLoadFilter(next ?? "")}
+              placeholder="All loads"
+              className="mt-1"
+              dataTestId="factoring-submit-filter-load"
+            />
+          </label>
+          <Button type="button" size="sm" data-testid="factoring-submit-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+            Apply
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="factoring-submit-filter-cancel"
+            onClick={staged.cancel}
+            disabled={!staged.dirty}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="factoring-submit-filter-reset"
+            onClick={() => {
+              staged.cancel();
+              setApplied(EMPTY_FILTERS);
+              patchListSearchParam(EMPTY_FILTERS);
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+      </BoardSection>
 
       {queueQuery.isError ? (
         <ListErrorBanner onRetry={() => void queueQuery.refetch()} />
       ) : (
-        <>
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+        <BoardSection
+          title="Invoices waiting to submit — no batch yet"
+          testId="factoring-submit-queue-board"
+          headerRight={
+            <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-[#6B7280]">
               <span>
                 {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
               </span>
@@ -308,19 +312,19 @@ export function SubmissionQueue() {
                 />
                 Select all submittable
               </label>
+              {selected.length > 0 ? (
+                <>
+                  <span data-testid="factoring-submit-expected-reserve">
+                    Expected reserve: {asMoney(selectedExpectedReserve)}
+                  </span>
+                  <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
+                    Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
+                  </Button>
+                </>
+              ) : null}
             </div>
-            {selected.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-[#6B7280]" data-testid="factoring-submit-expected-reserve">
-                  Expected reserve: {asMoney(selectedExpectedReserve)}
-                </span>
-                <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
-                  Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
-                </Button>
-              </div>
-            )}
-          </div>
-
+          }
+        >
           {/* FAC-F3540: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar. */}
           <div data-testid="factoring-submit-honest-empty">
             <ParityTable<SubmissionQueueItem>
@@ -337,14 +341,14 @@ export function SubmissionQueue() {
             />
           </div>
 
-          {submitMutation.isError && (
+          {submitMutation.isError ? (
             <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
               {submitMutation.error instanceof Error
                 ? submitMutation.error.message
                 : "Submission failed — check docs and try again."}
             </div>
-          )}
-        </>
+          ) : null}
+        </BoardSection>
       )}
     </div>
   );
