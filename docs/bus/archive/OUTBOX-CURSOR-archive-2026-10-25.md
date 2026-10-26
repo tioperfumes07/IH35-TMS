@@ -231,3 +231,46 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 
 - **DONE** [#27445](https://github.com/tioperfumes07/IH35-TMS/pull/27445) squash `5f0c13e0af45e1539909d043ab7bf699fa928d0c` — Dispatch `/dispatch/expense-load-confirmations` + Close blocking panel (fail-closed); ROUND 133 auth-gate on tip Claude void/backfill ops.
 - **REMAINING:** Chrome live after deploy; Close unblocks when 443.288-B engine on tip.
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 38 Banking Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-banking-home-board` · tip `6c57206410` (= #27651 Unexpected)
+- **DELTA:** BankingHomeBoard closed REBUILT/PARTIAL vs docs/design/v3/Banking — Accounts|Drift `lg:grid-cols-2`; Feed green/gray dots; Drift KPI tone red; Latest Date MM-DD; Latest Amount signed without $; institution middot labels. Engines unchanged (getMoneyMap/getDriftAlerts/getPlaidCompanyTransactions). Factoring/Escrow cards stay on Accounts tab (Rule 07). verify-banking-home-preview-parity ratcheted.
+- **GUARD:** verify-banking-home-preview-parity --selftest 11/11 + live PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Factoring Home / Settlements / Fuel boards
+- **Files Modified:** BankingHomeBoard.tsx · verify-banking-home-preview-parity.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 37 Accounting Unexpected board complete (shipping)
+
+- **BRANCH:** `cursor/443280-acct-unexpected-board` · tip `5f05b804bc` (= #27650 Manual)
+- **DELTA:** UnexpectedExpensesPage V3Panel→BoardSection; duplicate KPI sub hyphen; verify-accounting-nav Check 9 ratcheted to board grammar
+- **GUARD:** verify-accounting-nav PASSED
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **REMAINING:** CC-2 rows 99/113 (duplicate count / Plaid PENDING double-count) are data/engine — not this board chrome PR
+- **NEXT:** Banking Home / Factoring / Settlements / Fuel boards
+- **Files Modified:** UnexpectedExpensesPage.tsx · verify-accounting-nav.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 35 Cash Flow Manual FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-cf-manual-board` · base tip `99ae6b0ab2` (= #27647 Rolling Ledger)
+- **DELTA:** ManualDailyProjectionsTab rebuilt to docs/design/v3/CashFlow-Manual — Filters/day-nav/History/Save projection chrome; Party/Payee · Doc/load · Due · Amount; Opening-cash editor off board (under Filters); Measured BoardSection; MDP guards ratcheted.
+- **GUARD:** verify-mdp-fields / verify-mdp-single-row / verify-mdp-panel-proportion PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements/Fuel LAYERED|CHROME-ONLY boards + D-series
+- **Files Modified:** ManualDailyProjectionsTab.tsx · verify-mdp-fields.mjs · verify-mdp-single-row.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 34 Cash Flow Rolling Ledger FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-cf-rolling-ledger-board` · base tip `a62b2df01c` (= #27641 AVP)
+- **DELTA:** RollingLedgerTab rebuilt to docs/design/v3/CashFlow-RollingLedger — V3KpiTile 6 board KPIs (remove layered CashFlowKpiStrip); Filters ▾ + Date + By day|By type + day nav + Export; Income Party/Doc·load/Due/Amount; Expenses Payee/Doc·load/Due/Amount + priority groups w/ empty hints; Carried Group/Items/Amount; Day grid Date/Income/Expenses/Net/Running cash + click-day footer. Banking filter contracts retained under Filters. Guards ratcheted.
+- **GUARD:** verify-cash-flow-rolling-ledger --selftest 27/27 + LIVE OK · verify-cash-flow-home-tab --selftest + live (RL no longer requires CashFlowKpiStrip)
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** row 35 Cash Flow › Manual LAYERED board rebuild
+- **Files Modified:** RollingLedgerTab.tsx · verify-cash-flow-rolling-ledger.mjs · verify-cash-flow-home-tab.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
+## 2026-10-25 2:20 PM CT — CURSOR → LEAD | FINAL-2 row 31 Cash Flow Home FULL BOARD MERGED #27634
+
+MERGED `f8ea8f01c4` — CashFlowHomeTab rebuilt to docs/design/v3/CashFlow-Home (V3 KPIs only, 4w actual+13w forecast, Base|Conservative, category grey/black 13w, real monthly). Guard ratcheted. Seat INBOX CURRENT→FINAL-2. ENG-42 silent-skip tip-unblock fail-closed.
+
+NEXT: row 32 Projected (Auto) board completion (D042/D073 + V3 outlook) in flight.

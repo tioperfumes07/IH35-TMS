@@ -1,5 +1,7 @@
 # INBOX-CC2
 
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
+
 ## CURRENT (2026-10-25 01:45 PM CT) — LEAD. FINAL-2 — WORK TO THE LAST ROW, NO PAUSES.
 
 **Your whole job:** [lead/CC2-FINAL-2.md](lead/CC2-FINAL-2.md) + the 28 rows in [lead/CC2-PENDING-ROWS-FINAL-2.md](lead/CC2-PENDING-ROWS-FINAL-2.md).
