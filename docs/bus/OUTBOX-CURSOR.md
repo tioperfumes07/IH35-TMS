@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL batch tip (BoardSection unlayer)
+
+- **STATUS:** MERGED — #27723 · #27727 · #27728 · #27729 · #27731 · #27733 · #27735 · #27737 · #27738 · #27740
+- **DELTA:** Factoring Faro tabs + Escrow/Cash/Aging/Fees/Purchase/Account Summary/internal tabs; Settlements Disputes/Statement/Header/DriverBill/Detail empty; Fuel Planner + Relay deposit empty/error → BoardSection/FuelBoardSection; FORM_INPUT heights where page inputs touched. Engines unchanged.
+- **VERIFY:** each PR: `tsc -b` EXIT 0 · `vite build` EXIT 0 · surface guards PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (FinalizeBlock Save Draft still honest stub — no draft API; remaining bare cards elsewhere)
+- **Files Modified:** OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SettlementDetail empty → BoardSection
 
-- **STATUS:** SHIPPING — after [#27735](https://github.com/tioperfumes07/IH35-TMS/pull/27735) MERGED
+- **STATUS:** MERGED [#27740](https://github.com/tioperfumes07/IH35-TMS/pull/27740)
 - **DELTA:** SettlementDetailPage no-settlement empty → `BoardSection`. Guard ratcheted.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-detail-sections PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
