@@ -40,7 +40,7 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
   const dismiss = () => closeUnlessPending(Boolean(loading), onClose);
 
   return (
-    <Modal size="sm" open={open} onClose={dismiss} title="Deactivate active factor">
+    <Modal open={open} onClose={dismiss} title="Deactivate active factor" size="sm">
       <div className="space-y-3 text-xs" data-deactivate-factor-confirm-modal="true">
         <p className="text-gray-700">This disables the active factor for this operating company. Use only during controlled migration windows.</p>
         <ul className="list-disc pl-5 text-xs text-gray-600">
