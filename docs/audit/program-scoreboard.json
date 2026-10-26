@@ -1,6 +1,6 @@
 {
   "healthzSha": "4e9322a",
-  "generated_at": "2026-10-26T03:00:12.475Z",
+  "generated_at": "2026-10-26T03:07:15.015Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 27838,
+      "title": "FINDING: ACCT-F443280 — FILL-SETTLEMENT-CREATOR-BOARD — Settlement Creator sections → BoardSection LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 10:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27838",
+      "sha": "ffc1ad4478",
+      "committedAtIso": "2026-10-25T22:05:15-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: FINAL-2 ENG-29 — backfill real driven miles ops script (dry-run default) LANE: NON-FINANCIAL (ops script; no app code; Lead applies with --apply + AUTH-ENG29-BACKFILL-MILES) DOD-A: PASS — scripts/ops/2026-10-25-cc3-eng29-backfill-real-driven-miles.mts: runs computeLoadRealDrivenMiles + persistLoadRealDrivenMiles on all delivered USMCA loads (no 14-day window); dry-run default; --apply commits under AUTH-ENG29-BACKFILL-MILES DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: dispatch (unchanged) ROOT CAUSE: ENG-29 — cron's 14-day window prevents computing miles on older delivered loads that have fence data; 12 of 198 loads have miles_driven_actual; remaining 186 need backfill through the service FIX: ops script queries ALL delivered USMCA loads (not voided/canceled, has unit, has arrived stop), runs computeLoadRealDrivenMiles in 50-load batches, prints counts; --apply persists via persistLoadRealDrivenMiles under AUTH-ENG29-BACKFILL-MILES GUARD: backend tsc -p tsconfig.json — pre-existing settlement-resolution.sql.ts errors, not in diff LIVE PROOF: script written; Lead applies --apply; UNVERIFIED until run REMAINING: rows 5/18/19/40/42/43/80/193/257/259/261-262 still open",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 10:01 PM CT",
+      "url": "",
+      "sha": "ef261c6475",
+      "committedAtIso": "2026-10-25T22:01:42-05:00"
+    },
+    {
+      "number": 0,
+      "title": "chore: update OUTBOX-CC-3 with rows 41/221 done",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 10:00 PM CT",
+      "url": "",
+      "sha": "280ca5d758",
+      "committedAtIso": "2026-10-25T22:00:01-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: FINAL-2 row 221 — VoidReasonModal memo typing gated to Owner/Accountant only LANE: NON-FINANCIAL (FE-only; no schema, no money mutation) DOD-A: PASS — VoidReasonModal: useAuth + canTypeMemo check; Owner/Accountant see dropdown+memo textarea; all other roles see dropdown only (no typing, no textarea); effectiveMemo blanked for non-owners so composed carries only the catalog label DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: accounting (unchanged) ROOT CAUSE: Row 221 — VoidReasonModal showed memo textarea for all roles; the owner ruling requires only Owner/Accountant to be able to type a memo, all others should get dropdown-only with no free text entry FIX: VoidReasonModal.tsx — import useAuth; derive canTypeMemo = role Owner|Accountant; wrap textarea in canTypeMemo conditional; use effectiveMemo (blanked for non-owners) in composeVoidReason; needsMemo restricted to canTypeMemo users GUARD: tsc -b exit 0 · vite build exit 0 LIVE PROOF: tsc -b exit 0 · vite build exit 0 REMAINING: rows 5/18/19/40/42/43/80/193/257/259/261-262/264 still open",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 10:00 PM CT",
+      "url": "",
+      "sha": "8656ed746f",
+      "committedAtIso": "2026-10-25T22:00:01-05:00"
+    },
+    {
       "number": 27837,
       "title": "FINDING: N/A LANE: CC-1 — update verify-creator-advance guard for ENG-04 posting-engine contract",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27833",
       "sha": "9fedfdb865",
       "committedAtIso": "2026-10-25T21:48:05-05:00"
-    },
-    {
-      "number": 27832,
-      "title": "FINDING: restore CLAIMED-NUMBERS.json escaping (no content change)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27832",
-      "sha": "9bff2d2a28",
-      "committedAtIso": "2026-10-25T21:47:24-05:00"
-    },
-    {
-      "number": 27831,
-      "title": "Claude-3-FINAL2-d032-picker-size",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27831",
-      "sha": "e9a0fbd22b",
-      "committedAtIso": "2026-10-25T21:47:19-05:00"
-    },
-    {
-      "number": 27830,
-      "title": "FINDING: claim verify-step 18909 (stop dwell boundary)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27830",
-      "sha": "38f225c79f",
-      "committedAtIso": "2026-10-25T21:46:48-05:00"
-    },
-    {
-      "number": 27829,
-      "title": "FINDING: owner no-HOLD ruling — hold-merge-gate retired as a required CI check",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27829",
-      "sha": "70cd5d8570",
-      "committedAtIso": "2026-10-25T21:46:21-05:00"
     }
   ]
 }
