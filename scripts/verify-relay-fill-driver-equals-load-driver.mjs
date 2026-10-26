@@ -15,6 +15,22 @@ export const REQUIRES_LIVE_DB = "counts Relay fill/driver pairs; always advisory
 const LABEL = "verify-relay-fill-driver-equals-load-driver";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+// --selftest (lib/guard-selftest.mjs live-guard contract, Devin build order 2026-10-05): this guard's inputs are rows on
+// Neon, so it cannot be fixture-tested. One case MUST pass (live check green, or the canonical no-credential refusal) and
+// one MUST fail (dead credential — a live guard that cannot look must refuse, never report green).
+if (process.argv.includes("--selftest")) {
+  const { runGuard, reportSelftest, statusOf, outputOf, DEAD_DB_ENV } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath: toPath } = await import("node:url");
+  const me = toPath(import.meta.url);
+  const real = runGuard(me);
+  const noDb = runGuard(me, { env: DEAD_DB_ENV });
+  const refused = /DATABASE_URL (?:is )?(?:not set|unset|required)|credential/.test(outputOf(real));
+  reportSelftest("verify-relay-fill-driver-equals-load-driver", [
+    { name: "live check green, or canonically refuses with no credential", pass: statusOf(real) === 0 || refused, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-300) },
+    { name: "refuses on dead credential", pass: statusOf(noDb) !== 0, detail: statusOf(noDb) !== 0 ? undefined : outputOf(noDb).slice(-200) },
+  ]);
+}
+
 const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {

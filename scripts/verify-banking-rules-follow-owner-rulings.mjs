@@ -11,11 +11,32 @@ const LABEL = 'verify-banking-rules-follow-owner-rulings';
 
 // --- static check: PATCH endpoint schema must accept then_account_id ---
 const routes = fs.readFileSync('apps/backend/src/banking/p7-wave2.routes.ts', 'utf8');
-const patchBlock = routes.slice(routes.indexOf('app.patch("/api/v1/banking/rules/'));
-assert(
-  patchBlock.includes('then_account_id') || patchBlock.includes('then_vendor_id'),
-  'PATCH /api/v1/banking/rules must accept then_account_id — RC2 not implemented'
-);
+/** Static half as a pure function so --selftest can plant the defect into a copy (never the tracked file). */
+function patchAcceptsTarget(src) {
+  const at = src.indexOf('app.patch("/api/v1/banking/rules/');
+  if (at < 0) return false;
+  const next = src.indexOf('app.', at + 10);
+  const block = src.slice(at, next > at ? next : undefined);
+  return block.includes('then_account_id') || block.includes('then_vendor_id');
+}
+if (process.argv.includes('--selftest')) {
+  const at = routes.indexOf('app.patch("/api/v1/banking/rules/');
+  const next = routes.indexOf('app.', at + 10);
+  const end = next > at ? next : routes.length;
+  const mutations = [
+    ['PATCH route removed', routes.split('app.patch("/api/v1/banking/rules/').join('app.patch("/api/v1/banking/renamed/')],
+    ['PATCH no longer accepts the rule target', routes.slice(0, at) + routes.slice(at, end).split('then_account_id').join('x_acct').split('then_vendor_id').join('x_vendor') + routes.slice(end)],
+  ];
+  if (!patchAcceptsTarget(routes)) { console.error(`${LABEL} --selftest FAIL — real source rejected`); process.exit(1); }
+  let caught = 0;
+  for (const [name, mutated] of mutations) {
+    if (mutated === routes || patchAcceptsTarget(mutated)) { console.error(`${LABEL} --selftest FAIL — mutation "${name}" escaped or was inert`); process.exit(1); }
+    caught += 1;
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length} planted defects caught (static half; live half is advisory)`);
+  process.exit(0);
+}
+assert(patchAcceptsTarget(routes), 'PATCH /api/v1/banking/rules must accept then_account_id — RC2 not implemented');
 
 // --- live check ---
 const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
