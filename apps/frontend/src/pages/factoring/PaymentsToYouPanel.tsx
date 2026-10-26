@@ -22,6 +22,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
 
 function cents(v: number | string | null | undefined): number {
@@ -297,23 +298,27 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
 
   return (
     <div className="space-y-3" data-testid="factoring-payments-to-you">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-xs font-medium text-gray-900">Payments to You</div>
-        <div className="text-xs text-gray-500" data-testid="factoring-payments-to-you-note">
+      <BoardSection title="Payments to You" testId="factoring-payments-to-you-intro">
+        <div className="px-3.5 py-2 text-xs text-gray-500" data-testid="factoring-payments-to-you-note">
           One row per Faro wire (= factoring purchase). Click a purchase to see its invoices, fees,
           reserves, and bank match state.
         </div>
-      </div>
+      </BoardSection>
       {voided ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" role="status" data-testid="payments-to-you-voided">
           Purchase {voided} — Voided. Its invoices are back on Submit to Factor.
         </div>
       ) : null}
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          {filterBar}
-          {summaryDetailToggle}
-        </div>
+      <BoardSection
+        title={view === "summary" ? "Payments to you — by month" : "Payments to you — by purchase"}
+        testId="factoring-payments-to-you-list"
+        headerRight={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {filterBar}
+            {summaryDetailToggle}
+          </div>
+        }
+      >
         {listQuery.isError ? (
           <ListErrorState
             title="Couldn't load payments"
@@ -358,7 +363,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
             )}
           </div>
         )}
-      </div>
+      </BoardSection>
 
       {selectedId ? (
         <PurchaseDetailCard
@@ -426,11 +431,10 @@ function PurchaseDetailCard(props: {
 }) {
   const { detail, loading, error, onClose, onRetry, onUndo, onEdit } = props;
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-payments-to-you-detail">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-xs font-medium text-gray-900">
-          Purchase {detail?.display_id ?? "…"}
-        </div>
+    <BoardSection
+      title={`Purchase ${detail?.display_id ?? "…"}`}
+      testId="factoring-payments-to-you-detail"
+      headerRight={
         <span className="flex items-center gap-2">
           {detail?.status === "voided" ? (
             <span className="text-xs font-semibold text-red-700" data-testid="payments-to-you-detail-voided">
@@ -451,13 +455,14 @@ function PurchaseDetailCard(props: {
             Close
           </Button>
         </span>
-      </div>
+      }
+    >
       {error ? (
         <ListErrorState title="Couldn't load purchase" status={0} message="Retry to reload this wire." onRetry={onRetry} />
       ) : loading || !detail ? (
-        <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+        <div className="px-3.5 py-4 text-center text-xs text-gray-500">Loading…</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 px-3.5 py-2">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="payments-to-you-detail-totals">
             <Total label="Gross" value={formatUsdCents(detail.gross_cents)} />
             <Total label="Escrow reserve" value={formatUsdCents(detail.escrow_reserve_cents)} />
@@ -591,7 +596,7 @@ function PurchaseDetailCard(props: {
           />
         </div>
       )}
-    </div>
+    </BoardSection>
   );
 }
 

@@ -20,9 +20,17 @@ function read() {
 
 function assertLive(src) {
   const problems = [];
-  if (!src.includes('data-testid="factoring-reserves-need-company"')) problems.push("need-company");
-  if (!src.includes('data-testid="factoring-reserves-honest-empty"')) problems.push("honest empty");
-  if (!/balancesQ\.isError \? \(\s*<ListErrorState/.test(src)) problems.push("balances error gate (ListErrorState)");
+  // BoardSection uses testId= (renders data-testid at runtime); accept either form.
+  if (!/testId="factoring-reserves-need-company"|data-testid="factoring-reserves-need-company"/.test(src)) {
+    problems.push("need-company");
+  }
+  if (!/testId="factoring-reserves-honest-empty"|data-testid="factoring-reserves-honest-empty"/.test(src)) {
+    problems.push("honest empty");
+  }
+  // Fill-not-shell: error may sit inside BoardSection; still must gate on balancesQ.isError + ListErrorState.
+  if (!/balancesQ\.isError \? \(/.test(src) || !src.includes("<ListErrorState")) {
+    problems.push("balances error gate (ListErrorState)");
+  }
   if (!src.includes("enabled: Boolean(companyId)")) problems.push("not company-gated");
   if (!src.includes("getReserveBalances")) problems.push("getReserveBalances");
   return problems;
@@ -37,8 +45,8 @@ if (SELFTEST) {
   const pagePath = path.join(ROOT, PAGE);
   const orig = fs.readFileSync(pagePath, "utf8");
   const plants = [
-    ["need-company", orig.replace(/data-testid="factoring-reserves-need-company"/, 'data-testid="x"')],
-    ["honest empty", orig.replace(/data-testid="factoring-reserves-honest-empty"/, 'data-testid="x"')],
+    ["need-company", orig.replace(/testId="factoring-reserves-need-company"|data-testid="factoring-reserves-need-company"/, 'testId="x"')],
+    ["honest empty", orig.replace(/testId="factoring-reserves-honest-empty"|data-testid="factoring-reserves-honest-empty"/, 'testId="x"')],
     ["error gate", orig.replace(/balancesQ\.isError \? \(/, "false ? (")],
   ];
   for (const [name, planted] of plants) {
