@@ -22,6 +22,11 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(!/<table\b/.test(src), "SettlementDisputesTab: must not use raw HTML table");
   assert(src.includes('kind="driver"'), "SettlementDisputesTab: keep driver drills/filter");
   assert(src.includes("resolveSettlementDispute"), "SettlementDisputesTab: keep resolve writer");
+  // Fill-not-shell / 443.280 — filters + detail + list use BoardSection (not bare title cards).
+  assert(src.includes('testId="settlement-disputes-filters-board"'), "SettlementDisputesTab: filters BoardSection");
+  assert(src.includes('testId="settlement-disputes-board-section"'), "SettlementDisputesTab: list BoardSection");
+  assert(src.includes('testId="settlement-disputes-detail-board"'), "SettlementDisputesTab: detail BoardSection");
+  assert(!/rounded-sm border border-gray-200 bg-white p-3/.test(src), "SettlementDisputesTab: no layered bare card divs");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -33,15 +38,16 @@ async function selftest() {
   await withMutatedCopy(
     realPath,
     (good) => {
-  const planted = good
-    .replace(/import \{ ParityTable[\s\S]*?\} from "[^"]+";\n/, "")
-    .replace(/const columns = useMemo[\s\S]*?\],\s*\[\],\s*\);\n\n/, "")
-    .replace(
-      /\/\/ ACCT-F3536:[\s\S]*?\/>\n\s*\)\}/,
-      `<div><table className="min-w-full text-left text-xs"><tbody /></table></div>`,
-    );
-  assert(planted.includes("<table"), "selftest plant must include raw table");
-  assert(!planted.includes("ParityTable"), "selftest plant must remove ParityTable");
+      // Drop ParityTable + BoardSection list body; plant a raw table so check() must reject.
+      const planted = good
+        .replace(/import \{ ParityTable[\s\S]*?\} from "[^"]+";\n/, "")
+        .replace(/ParityTable/g, "GoneTable")
+        .replace(
+          /\/\/ ACCT-F3536[\s\S]*?<\/BoardSection>/,
+          `<div><table className="min-w-full text-left text-xs"><tbody /></table></div>`,
+        );
+      assert(planted.includes("<table"), "selftest plant must include raw table");
+      assert(!planted.includes("ParityTable"), "selftest plant must remove ParityTable");
       return planted;
     },
     (tmpPath) => {
