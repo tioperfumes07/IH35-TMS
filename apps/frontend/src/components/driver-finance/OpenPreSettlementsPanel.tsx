@@ -65,7 +65,7 @@ const columns: ParityColumn<OpenPreSettlement>[] = [
       row.settlement_number ? (
         <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_number, row.settlement_id, "Settlement")} />
       ) : (
-        "—"
+        <EntityLink kind="settlement" id={row.settlement_id} label="PENDING" title="Tour still open — numbered by AlwaysTrack on settlement" />
       ),
   },
   {
