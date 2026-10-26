@@ -29,8 +29,10 @@ function hasInlineToolbar(src, entity) {
   return src.includes(`data-${entity}-roster-filter-toolbar="inline"`);
 }
 
+// ROUND 443.326 (Customers/Vendors V3 boards) moved the segment/quality tabs from NavyPageSubNav into the board chrome's
+// own tab strip (<CustomersBoardChrome|VendorsBoardChrome tabItems=…>, role="tablist") — same control, new shape.
 function hasNavyPageSubNav(src) {
-  return src.includes("NavyPageSubNav");
+  return src.includes("NavyPageSubNav") || /<(?:Customers|Vendors)BoardChrome\b[\s\S]{0,600}?\btabItems=\{/.test(src);
 }
 
 function hasSidebarSearch(src, entity) {
@@ -70,7 +72,7 @@ function auditCustomers(src) {
     f.push(`${CUSTOMERS_PATH}: missing data-list-status-filter="customers" (inline status toggle)`);
 
   if (!hasNavyPageSubNav(src))
-    f.push(`${CUSTOMERS_PATH}: missing NavyPageSubNav (quality tabs)`);
+    f.push(`${CUSTOMERS_PATH}: missing the quality tab strip (board chrome tabItems / NavyPageSubNav)`);
 
   if (!hasSidebarSearch(src, "customers"))
     f.push(`${CUSTOMERS_PATH}: missing sidebar search wiring (onSearchChange / search)`);
@@ -111,7 +113,7 @@ function auditVendors(src) {
     f.push(`${VENDORS_PATH}: missing data-list-status-filter="vendors" (inline status toggle)`);
 
   if (!hasNavyPageSubNav(src))
-    f.push(`${VENDORS_PATH}: missing NavyPageSubNav (segment tabs)`);
+    f.push(`${VENDORS_PATH}: missing the segment tab strip (board chrome tabItems / NavyPageSubNav)`);
 
   if (!hasSidebarSearch(src, "vendors"))
     f.push(`${VENDORS_PATH}: missing sidebar search wiring (onSearchChange / search)`);

@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   customers: "apps/frontend/src/pages/Customers.tsx",
+  detailTabNav: "apps/frontend/src/pages/customers/CustomersDetailTabNav.tsx",
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
   profileForm: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
   editModal: "apps/frontend/src/components/customers/CustomerEditModal.tsx",
@@ -114,7 +115,13 @@ export function audit(src) {
   // this regex also required a literal single space between activeId={...} and the next prop, which
   // JSX attribute formatting never produces (each prop is its own line). Both re-anchored to the
   // actual, correct, working wiring rather than to a name/shape that component never had.
-  if (!/activeId=\{activeTab\}\s+onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers)) {
+  // Customers V3 (443.326) extracted the detail tab strip into CustomersDetailTabNav (activeTab= / onTabChange=), which
+  // forwards both to NavyPageSubNav — the wiring is checked end to end, not by the old prop name.
+  const directWiring = /activeId=\{activeTab\}\s+onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers);
+  const viaDetailNav =
+    /<CustomersDetailTabNav\b[\s\S]{0,400}?activeTab=\{activeTab\}\s+onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers) &&
+    /<NavyPageSubNav\s+activeId=\{activeTab\}\s+onTabChange=\{onTabChange\}/.test(src.detailTabNav ?? "");
+  if (!directWiring && !viaDetailNav) {
     failures.push(`${FILES.customers}: secondary detail tab controls must drive the canonical URL-backed active tab`);
   }
   if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src.customers)) {
@@ -191,6 +198,7 @@ export function audit(src) {
 function loadSrc(root) {
   return {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
+    detailTabNav: fs.readFileSync(path.join(root, FILES.detailTabNav), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
     profileForm: fs.readFileSync(path.join(root, FILES.profileForm), "utf8"),
     editModal: fs.readFileSync(path.join(root, FILES.editModal), "utf8"),
@@ -232,6 +240,7 @@ if (process.argv.includes("--selftest")) {
     ["coi-create-customer-id", "coi", /(createInsuranceCoiRequest\(\{[\s\S]*?)customer_id: input\.customerId/, "$1customer_id: undefined"],
     ["detail-tab-url", "customers", /params\.set\("tab", next\)/, 'params.set("panel", next)'],
     ["detail-tab-control", "customers", /onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/, "onTabChange={() => undefined}"],
+    ["detail-tab-nav-drops-handler", "detailTabNav", /onTabChange=\{onTabChange\}/, "onTabChange={() => undefined}"],
     ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
     [
       "sync-panel-capability-gate",
