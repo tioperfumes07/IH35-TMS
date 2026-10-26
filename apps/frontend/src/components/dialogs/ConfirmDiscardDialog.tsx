@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { Button } from "../Button";
+import { OverlayParent, useOverlayLayer } from "../../hooks/useOverlayLayer";
 
 type Props = {
   open: boolean;
@@ -21,11 +22,14 @@ type Props = {
  * LISTBOX_Z_INDEX=220. Locked by verify-confirm-discard-dialog-z-index-above-modal.mjs.
  */
 export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
+  const layer = useOverlayLayer(open, 1004);
   if (!open) return null;
 
   return createPortal(
+    <OverlayParent.Provider value={layer.id}>
     <div
       className="fixed inset-0 z-[1004] flex items-center justify-center bg-black/45 p-4"
+      style={{ zIndex: layer.zIndex }}
       onMouseDown={onCancel}
       role="presentation"
       data-testid="confirm-discard-backdrop"
@@ -56,7 +60,8 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
           </Button>
         </div>
       </div>
-    </div>,
+    </div>
+    </OverlayParent.Provider>,
     document.body
   );
 }

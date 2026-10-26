@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDiscardDialog } from "../dialogs/ConfirmDiscardDialog";
+import { OverlayParent, useOverlayLayer } from "../../hooks/useOverlayLayer";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE, PARITY_DRAWER_WIDTH_HALF, PARITY_DRAWER_WIDTH_XWIDE } from "./sizing";
 import { colors, typography } from "../../design/tokens";
 import "../../styles/proportion-chrome.css";
@@ -55,6 +56,7 @@ export function ParityDrawer({
   onRegisterAttemptClose,
 }: ParityDrawerProps) {
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const layer = useOverlayLayer(open, stackAboveModal ? 1003 : 1001);
   const finalizeClose = useCallback(() => {
     setShowDiscardConfirm(false);
     onClose();
@@ -80,7 +82,7 @@ export function ParityDrawer({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || !layer.isTop()) return;
       // FLEET-F-ESCAPE-EATS-DRAWER (2026-08-21): the capture-phase listener below ran BEFORE a
       // nested Combobox's own bubble-phase Escape handler ever got a chance to fire, so pressing
       // Escape to dismiss an open picker dropdown inside this drawer instead discarded the whole
@@ -101,7 +103,7 @@ export function ParityDrawer({
     };
     document.addEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
     return () => document.removeEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
-  }, [attemptClose, open, stackAboveModal]);
+  }, [attemptClose, open, stackAboveModal, layer.isTop]);
 
   if (!open) return null;
   const widthClass =
@@ -144,8 +146,10 @@ export function ParityDrawer({
   // inside this drawer still paints on top of it. Locked by verify-parity-drawer-z-index-above-modal.mjs.
   const stackClass = stackAboveModal ? "z-[1003]" : "z-[60]";
   return createPortal(
+    <OverlayParent.Provider value={layer.id}>
     <div
       className={`fixed inset-0 ${stackClass}`}
+      style={{ zIndex: layer.zIndex }}
       {...(stackAboveModal ? { "data-parity-drawer-stack-above-modal": "true" } : {})}
     >
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={attemptClose} />
@@ -210,7 +214,8 @@ export function ParityDrawer({
         onCancel={() => setShowDiscardConfirm(false)}
         onDiscard={finalizeClose}
       />
-    </div>,
+    </div>
+    </OverlayParent.Provider>,
     document.body
   );
 }

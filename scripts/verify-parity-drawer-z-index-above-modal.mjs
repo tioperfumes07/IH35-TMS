@@ -61,6 +61,17 @@ function comboboxListboxZIndex(text) {
 }
 
 function check(root = ROOT) {
+  const layer = fs.readFileSync(path.join(root, "apps/frontend/src/hooks/useOverlayLayer.ts"), "utf8");
+  for (const rel of ["components/Modal.tsx", "components/parity/ParityDrawer.tsx", "components/dialogs/ConfirmDiscardDialog.tsx"]) {
+    const src = fs.readFileSync(path.join(root, "apps/frontend/src", rel), "utf8");
+    assert(/useOverlayLayer\(open/.test(src), `${rel}: missing automatic shared overlay registration`);
+    assert(/style=\{\{ zIndex: layer\.zIndex \}\}/.test(src), `${rel}: shared overlay order not rendered`);
+    assert(/OverlayParent\.Provider value=\{layer\.id\}/.test(src), `${rel}: nested overlays lack parent context`);
+    if (!rel.includes("ConfirmDiscard")) assert(/!layer\.isTop\(\)/.test(src), `${rel}: Escape must only close the top layer`);
+  }
+  assert(/if \(parent\) visit\(parent\)/.test(layer), "shared layer must order parent before child on initial mount");
+  assert(/Math\.max\(prior \+ 2, layer\.minimum\)/.test(layer), "each nested layer must exceed its predecessor");
+  assert(/layers = layers\.filter\(layer => layer\.id !== id\)/.test(layer), "closed layers must unregister");
   const drawerZ = drawerStackAboveModalZIndex(fs.readFileSync(path.join(root, "apps/frontend/src/components/parity/ParityDrawer.tsx"), "utf8"));
   const modalZ = modalZIndex(fs.readFileSync(path.join(root, "apps/frontend/src/components/Modal.tsx"), "utf8"));
   const listboxZ = comboboxListboxZIndex(fs.readFileSync(path.join(root, "apps/frontend/src/components/Combobox.tsx"), "utf8"));
@@ -95,7 +106,9 @@ function selftest() {
     const drawerRel = "apps/frontend/src/components/parity/ParityDrawer.tsx";
     const modalRel = "apps/frontend/src/components/Modal.tsx";
     const comboboxRel = "apps/frontend/src/components/Combobox.tsx";
-    for (const rel of [modalRel, comboboxRel]) {
+    const layerRel = "apps/frontend/src/hooks/useOverlayLayer.ts";
+    const discardRel = "apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx";
+    for (const rel of [modalRel, comboboxRel, layerRel, discardRel]) {
       const dst = path.join(tmp, rel);
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       fs.copyFileSync(path.join(ROOT, rel), dst);
@@ -114,6 +127,25 @@ function selftest() {
       failed = true;
     }
     assert(failed, "--selftest expected FAIL when ParityDrawer's stackAboveModal z-index regresses below Modal's");
+    fs.writeFileSync(tmpDrawerDst, drawerSrc);
+    for (const [rel, before, after] of [
+      [drawerRel, "useOverlayLayer(open,", "useUnorderedLayer(open,"],
+      [modalRel, "style={{ zIndex: layer.zIndex }}", "style={{ zIndex: 1 }}"],
+      [discardRel, "OverlayParent.Provider value={layer.id}", "OverlayParent.Provider value={null}"],
+      [drawerRel, "!layer.isTop()", "false"],
+      [layerRel, "if (parent) visit(parent)", "if (false) visit(parent)"],
+      [layerRel, "Math.max(prior + 2, layer.minimum)", "layer.minimum"],
+      [layerRel, "layers = layers.filter(layer => layer.id !== id)", "layers = layers"],
+    ]) {
+      const original = fs.readFileSync(path.join(ROOT, rel), "utf8");
+      const changed = original.replace(before, after);
+      assert(changed !== original, `plant did not match ${rel}: ${before}`);
+      fs.writeFileSync(path.join(tmp, rel), changed);
+      let refused = false;
+      try { check(tmp); } catch { refused = true; }
+      assert(refused, `plant not refused ${rel}: ${before}`);
+      fs.writeFileSync(path.join(tmp, rel), original);
+    }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
