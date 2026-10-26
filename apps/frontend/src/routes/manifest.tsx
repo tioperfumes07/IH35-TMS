@@ -346,6 +346,7 @@ const HelpPage = React.lazy(() => import("../pages/help/HelpPage").then((m) => (
 const RunbooksIndex = React.lazy(() => import("../pages/help/RunbooksIndex").then((m) => ({ default: m.RunbooksIndex })));
 const OnboardingWizard = React.lazy(() => import("../pages/onboarding/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
 const ReportsHomePage = React.lazy(() => import("../pages/reports/ReportsHome").then((m) => ({ default: m.ReportsHomePage })));
+const CustomReportBuilderPage = React.lazy(() => import("../pages/reports/CustomReportBuilder").then((m) => ({ default: m.CustomReportBuilder })));
 import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
 const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunner").then((m) => ({ default: m.ReportsRunnerPage })));
 const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
@@ -4119,6 +4120,16 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ReeferFuelCreditReportPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Reports Home "+ Custom report" and Saved → "Open report builder" land here (the v3 rebuild #27715 linked
+            /reports/custom but never registered it — a dead door). */}
+        <Route
+          path="/reports/custom"
+          element={
+            <ProtectedRoute>
+              <CustomReportBuilderPage />
             </ProtectedRoute>
           }
         />
