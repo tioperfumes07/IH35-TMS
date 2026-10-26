@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements Disputes → BoardSection
+
+- **STATUS:** SHIPPING — after [#27728](https://github.com/tioperfumes07/IH35-TMS/pull/27728) MERGED
+- **DELTA:** SettlementDisputesTab filters + detail → `BoardSection`; filter/status heights to FILTER/FORM tokens; engines/resolve/review unchanged. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-disputes-parity-surface-bar PASS (+ --selftest) · staged-filters PASS · tab-labels PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (FuelPlannerHome / Statement workflow bare cards)
+- **Files Modified:** SettlementDisputesTab.tsx · verify-settlement-disputes-parity-surface-bar.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring internal tabs → BoardSection + FORM_INPUT
 
-- **STATUS:** SHIPPING — after [#27727](https://github.com/tioperfumes07/IH35-TMS/pull/27727) MERGED
+- **STATUS:** MERGED [#27728](https://github.com/tioperfumes07/IH35-TMS/pull/27728)
 - **DELTA:** Faro imports (upsert + recent) · Equipment loans (create / list / ledger) · Vendor merges (create + history) → `BoardSection`; page inputs → `FORM_INPUT_CLASS` (40px). Guard ratcheted. Engines/upload/save paths unchanged.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

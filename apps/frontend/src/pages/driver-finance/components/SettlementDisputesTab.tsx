@@ -23,6 +23,7 @@ import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { FILTER_CONTROL_SIZE_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS } from "../../../design/tokens";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -226,14 +227,14 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="relative grid gap-2 md:grid-cols-3" data-testid="settlement-disputes-filters">
+      <BoardSection title="Dispute filters" testId="settlement-disputes-filters-board">
+        <div className="relative grid gap-2 px-3.5 py-2 md:grid-cols-3" data-testid="settlement-disputes-filters">
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Status</div>
             <SelectCombobox
               value={status}
               onChange={(event) => setStatus(event.target.value as "open" | "all")}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className={`w-full rounded-sm border border-gray-300 px-2 ${FILTER_CONTROL_SIZE_CLASS}`}
             >
               <option value="all">All</option>
               <option value="open">Open / Under Review</option>
@@ -283,7 +284,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             </Button>
           </div>
         </div>
-      </div>
+      </BoardSection>
 
       {listState.isError ? (
         <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -313,20 +314,11 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       )}
 
       {detail ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold">Dispute Detail</p>
-              <p className="text-xs text-gray-500">
-                <EntityLink kind="settlement" id={detail.settlement_id} label={entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} /> ·{" "}
-                <span
-                  title={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
-                  className="single-line-name"
-                >
-                  <EntityLink kind="driver" id={detail.driver_id} label={entityLabel(detail.driver_name, detail.driver_id, "Driver")} />
-                </span>
-              </p>
-            </div>
+        <BoardSection
+          title="Dispute detail"
+          testId="settlement-disputes-detail-board"
+          subtitle={`${entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} · ${entityLabel(detail.driver_name, detail.driver_id, "Driver")}`}
+          headerRight={
             <Button
               size="sm"
               variant="secondary"
@@ -339,86 +331,98 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             >
               Close
             </Button>
-          </div>
+          }
+        >
+          <div className="space-y-3 px-3.5 py-2">
+            <p className="text-xs text-gray-500">
+              <EntityLink kind="settlement" id={detail.settlement_id} label={entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} /> ·{" "}
+              <span
+                title={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
+                className="single-line-name"
+              >
+                <EntityLink kind="driver" id={detail.driver_id} label={entityLabel(detail.driver_name, detail.driver_id, "Driver")} />
+              </span>
+            </p>
 
-          <div className="grid gap-2 text-xs md:grid-cols-2">
-            <div className="border-t border-gray-100 pt-2">
-              <p className="font-semibold text-gray-700">Dispute</p>
-              <p>Category: {titleize(detail.dispute_category)}</p>
-              <p>Status: {titleize(detail.status)}</p>
-              <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
-              <p>Description: {detail.dispute_description}</p>
-              {detail.resolution_journal_entry_id ? (
+            <div className="grid gap-2 text-xs md:grid-cols-2">
+              <div className="border-t border-gray-100 pt-2">
+                <p className="font-semibold text-gray-700">Dispute</p>
+                <p>Category: {titleize(detail.dispute_category)}</p>
+                <p>Status: {titleize(detail.status)}</p>
+                <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
+                <p>Description: {detail.dispute_description}</p>
+                {detail.resolution_journal_entry_id ? (
+                  <p>
+                    Resolution JE:{" "}
+                    <EntityLink kind="journal_entry" id={detail.resolution_journal_entry_id} label="Open journal entry" />
+                  </p>
+                ) : null}
+              </div>
+              <div className="border-t border-gray-100 pt-2">
+                <p className="font-semibold text-gray-700">Settlement Breakdown</p>
                 <p>
-                  Resolution JE:{" "}
-                  <EntityLink kind="journal_entry" id={detail.resolution_journal_entry_id} label="Open journal entry" />
+                  Period: {detail.period_start ? formatDateUS(detail.period_start) : "—"} to{" "}
+                  {detail.period_end ? formatDateUS(detail.period_end) : "—"}
                 </p>
-              ) : null}
+                <p>Gross: {money(Number(detail.gross_pay ?? 0))}</p>
+                <p>Deductions: {money(Number(detail.deductions_total ?? 0))}</p>
+                <p>Net: {money(Number(detail.net_pay ?? 0))}</p>
+              </div>
             </div>
-            <div className="border-t border-gray-100 pt-2">
-              <p className="font-semibold text-gray-700">Settlement Breakdown</p>
-              <p>
-                Period: {detail.period_start ? formatDateUS(detail.period_start) : "—"} to{" "}
-                {detail.period_end ? formatDateUS(detail.period_end) : "—"}
-              </p>
-              <p>Gross: {money(Number(detail.gross_pay ?? 0))}</p>
-              <p>Deductions: {money(Number(detail.deductions_total ?? 0))}</p>
-              <p>Net: {money(Number(detail.net_pay ?? 0))}</p>
-            </div>
-          </div>
 
-          <div className="mt-3 space-y-2 border-t border-gray-100 pt-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Action Panel</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-2 border-t border-gray-100 pt-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Action Panel</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={reviewMutation.isPending || detail.status !== "open"}
+                  onClick={() => reviewMutation.mutate(detail.id)}
+                >
+                  Review
+                </Button>
+                <SelectCombobox
+                  value={resolution}
+                  onChange={(event) => setResolution(event.target.value as "in_favor" | "rejected" | "partial")}
+                  className={`rounded-sm border border-gray-300 px-2 ${FORM_FIELD_CONTROL_SIZE_CLASS}`}
+                >
+                  <option value="in_favor">Resolve in Favor</option>
+                  <option value="rejected">Reject</option>
+                  <option value="partial">Partial</option>
+                </SelectCombobox>
+                {/* M-1 [HOLD]: dollars-mode; Math.round(resolutionAmount*100)=resolution_amount_cents drives the
+                    corrective JE (debit/credit posting) — byte-for-byte, GUARD live-verifies before merge. */}
+                <MoneyInput
+                  valueDollars={resolutionAmount ? Number(resolutionAmount) : null}
+                  onChangeDollars={(d) => setResolutionAmount(d == null ? "" : String(d))}
+                  ariaLabel="Adjustment amount (USD)"
+                  placeholder="Adjustment amount (USD)"
+                  disabled={resolution === "rejected"}
+                />
+              </div>
+              <textarea
+                value={resolutionNotes}
+                onChange={(event) => setResolutionNotes(event.target.value)}
+                className="min-h-[90px] w-full rounded-sm border border-gray-300 px-2 py-2 text-xs"
+                placeholder="Resolution notes (minimum 20 chars, required for audit clarity)"
+              />
+
+              {resolution === "in_favor" || resolution === "partial" ? (
+                <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
+                  Corrective JE preview: debit and credit entries will be posted for {money(resolutionAmountPreviewCents)}.
+                </div>
+              ) : null}
+
               <Button
                 size="sm"
-                variant="secondary"
-                disabled={reviewMutation.isPending || detail.status !== "open"}
-                onClick={() => reviewMutation.mutate(detail.id)}
+                disabled={!canResolve || resolveMutation.isPending || detail.status === "withdrawn"}
+                onClick={() => resolveMutation.mutate(detail.id)}
               >
-                Review
+                Resolve
               </Button>
-              <SelectCombobox
-                value={resolution}
-                onChange={(event) => setResolution(event.target.value as "in_favor" | "rejected" | "partial")}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="in_favor">Resolve in Favor</option>
-                <option value="rejected">Reject</option>
-                <option value="partial">Partial</option>
-              </SelectCombobox>
-              {/* M-1 [HOLD]: dollars-mode; Math.round(resolutionAmount*100)=resolution_amount_cents drives the
-                  corrective JE (debit/credit posting) — byte-for-byte, GUARD live-verifies before merge. */}
-              <MoneyInput
-                valueDollars={resolutionAmount ? Number(resolutionAmount) : null}
-                onChangeDollars={(d) => setResolutionAmount(d == null ? "" : String(d))}
-                ariaLabel="Adjustment amount (USD)"
-                placeholder="Adjustment amount (USD)"
-                disabled={resolution === "rejected"}
-              />
             </div>
-            <textarea
-              value={resolutionNotes}
-              onChange={(event) => setResolutionNotes(event.target.value)}
-              className="min-h-[90px] w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              placeholder="Resolution notes (minimum 20 chars, required for audit clarity)"
-            />
-
-            {resolution === "in_favor" || resolution === "partial" ? (
-              <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
-                Corrective JE preview: debit and credit entries will be posted for {money(resolutionAmountPreviewCents)}.
-              </div>
-            ) : null}
-
-            <Button
-              size="sm"
-              disabled={!canResolve || resolveMutation.isPending || detail.status === "withdrawn"}
-              onClick={() => resolveMutation.mutate(detail.id)}
-            >
-              Resolve
-            </Button>
           </div>
-        </div>
+        </BoardSection>
       ) : null}
     </div>
   );
