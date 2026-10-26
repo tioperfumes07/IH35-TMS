@@ -11,8 +11,10 @@
  *   RULE 3 (D10) — the cross-module load picker (EntityPicker kind "load": Settlement Creator lines, claims, expenses)
  *                  reads board_scope=picker = every real load that happened, dispatched / in transit included, never
  *                  draft / cancelled / voided / sample / deleted. Before: board_scope=history hid every rolling load.
- * LIVE (read-only, with DATABASE_URL, USMCA): the picker scope contains every dispatch-work load and no draft /
- *   cancelled / voided / sample row; the report scope returns no such row.
+ * --live (read-only, DATABASE_URL required, USMCA): the picker scope contains every dispatch-work load and no draft /
+ *   cancelled / voided / sample row; the report scope returns no such row. No DB with --live = FAIL (requireLiveDbOrExit).
+ *   Without --live only the static half runs — listed in scripts/lib/e7-batch2-live-guards.json live_flag_guards, so
+ *   money-pr-local-gate.mjs runs it --live (same convention as verify-event-log-spine, FINAL-4 10-25).
  * --selftest plants each regression.
  */
 import fs from "node:fs";
@@ -114,6 +116,10 @@ const fails = check();
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);
+}
+if (!process.argv.includes("--live")) {
+  console.log(`${LABEL}: OK (static) — database half runs with --live (live_flag_guards; money-pr-local-gate runs it)`);
+  process.exit(0);
 }
 const { register } = await import("tsx/esm/api");
 register();
