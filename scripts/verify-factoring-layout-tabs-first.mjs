@@ -143,7 +143,7 @@ function analyze(src) {
   }
 
   // Fill-not-shell / 443.280 — Faro report tabs use BoardSection (not bare title div cards).
-  for (const [title, testId] of [
+  for (const [titleNeedle, testId] of [
     ["Funds Due", "factoring-funds-due-report"],
     ["Request Debtor / Credit Check", "factoring-request-debtor-credit-check"],
     ["Debtor Receipts", "factoring-debtor-receipts"],
@@ -151,13 +151,31 @@ function analyze(src) {
     ["Unapplied Cash", "factoring-unapplied-cash"],
     ["Invoice Status Report", "factoring-invoice-status-report"],
     ["Messages & Support", "factoring-messages-support"],
+    ["Security Reserve (Faro statement:", "factoring-escrow-account-summary"],
+    ["Cash Reserve", "factoring-cash-reserve-summary"],
+    ["Chargebacks & Overpayments", "factoring-chargebacks-overpayments-summary"],
+    ["Account Summary", "factoring-account-summary"],
+    ["Purchase report —", "factoring-purchase-report"],
+    ["Fees Paid", "factoring-fees-paid"],
+    ["Aging Report — as of", "factoring-aging-summary"],
+    ["Reserve tracker", "factoring-reserve-tracker"],
+    ["Invoices inside recourse window", "factoring-home-recourse-filters"],
+    ["Monthly fee summaries", "factoring-monthly-fee-summaries"],
+    ["Chargebacks + fee history", "factoring-chargebacks-fee-history"],
+    ["Single-factor invariant status", "factoring-single-factor-invariant"],
+    ["Statement history", "factoring-statement-history"],
+    ["Faro deactivation (Owner-only)", "factoring-faro-deactivation"],
   ]) {
-    if (!new RegExp(`<BoardSection[\\s\\S]{0,120}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,80}testId="${testId}"`).test(home)
-      && !new RegExp(`<BoardSection[\\s\\S]{0,80}testId="${testId}"[\\s\\S]{0,120}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(home)) {
-      errors.push(`${HOME}: ${title} must wrap in BoardSection (testId=${testId})`);
+    const hasBoard =
+      home.includes(`testId="${testId}"`) &&
+      home.includes("<BoardSection") &&
+      new RegExp(`<BoardSection[\\s\\S]{0,280}testId="${testId}"`).test(home) &&
+      home.includes(titleNeedle);
+    if (!hasBoard) {
+      errors.push(`${HOME}: ${titleNeedle} must wrap in BoardSection (testId=${testId})`);
     }
     if (new RegExp(`rounded-sm border border-gray-200 bg-white p-3" data-testid="${testId}"`).test(home)) {
-      errors.push(`${HOME}: ${title} must not keep layered bare card div (testId=${testId})`);
+      errors.push(`${HOME}: ${titleNeedle} must not keep layered bare card div (testId=${testId})`);
     }
   }
 

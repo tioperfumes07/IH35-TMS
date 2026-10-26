@@ -1672,9 +1672,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* FT2 — Escrow Account tab: ESCROW pool only (factor.reserve_rate). Do not merge with Cash Reserve. */}
       {show("escrow_account") ? (
         <div className="space-y-3" data-testid="factoring-escrow-account">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Security Reserve (Faro statement: "Escrow Reserve")</div>
-            <div className="mb-2 text-xs text-gray-600">
+          <BoardSection
+            title='Security Reserve (Faro statement: "Escrow Reserve")'
+            testId="factoring-escrow-account-summary"
+          >
+            <div className="mb-2 px-3.5 pt-2 text-xs text-gray-600">
               Escrow reserve rate{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-escrow-rate-pct">
                 {activeFactor ? `${rateToPctString(activeFactor.reserve_rate)}%` : "—"}
@@ -1686,8 +1688,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase escrow cents.
             </div>
-            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-escrow-summary-strip">
+            <div className="mb-2 px-3.5">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
+            <div className="grid grid-cols-2 gap-2 px-3.5 pb-2 sm:grid-cols-3" data-testid="factoring-escrow-summary-strip">
               {/* ROUND 435 — "Escrow held" repeated the Escrow reserve balance tile and "Posted wires" the cash-flow
                   strip's Posted wires, on the same screen: removed. The rate is this section's own figure. */}
               <DrillKpiCard
@@ -1698,8 +1700,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 to={FACTORING_TAB_PATH.statements_settings}
               />
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
+          </BoardSection>
+          <BoardSection title="Escrow reserve — by purchase" testId="factoring-escrow-account-table-section">
             {purchasesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load escrow purchases"
@@ -1770,7 +1772,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }}
               />
             )}
-          </div>
+          </BoardSection>
           {companyId ? <FaroReserveRegisterPanel companyId={companyId} register="escrow" isOwner={user?.role === "Owner"} canPost={["Owner", "Administrator", "Accountant"].includes(String(user?.role ?? ""))} /> : null}
         </div>
       ) : null}
@@ -1778,9 +1780,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* FT2 — Cash Reserve tab: CASH pool only (factor.cash_reserve_rate). Separate from Escrow. */}
       {show("cash_reserve") ? (
         <div className="space-y-3" data-testid="factoring-cash-reserve">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Cash Reserve</div>
-            <div className="mb-2 text-xs text-gray-600">
+          <BoardSection title="Cash Reserve" testId="factoring-cash-reserve-summary">
+            <div className="mb-2 px-3.5 pt-2 text-xs text-gray-600">
               Cash reserve rate{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-rate-pct">
                 {activeFactor ? `${rateToPctString(activeFactor.cash_reserve_rate ?? 0)}%` : "—"}
@@ -1792,8 +1793,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase cash reserve cents.
             </div>
-            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-cash-reserve")}</div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-cash-reserve-summary-strip">
+            <div className="mb-2 px-3.5">{dateRangeOnlyFilterBar("factoring-home-cash-reserve")}</div>
+            <div className="grid grid-cols-2 gap-2 px-3.5 pb-2 sm:grid-cols-3" data-testid="factoring-cash-reserve-summary-strip">
               {/* ROUND 435 — "Cash reserve held" and "Posted wires" were already on this screen: removed. */}
               <DrillKpiCard
               size="md"
@@ -1803,8 +1804,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 to={FACTORING_TAB_PATH.statements_settings}
               />
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
+          </BoardSection>
+          <BoardSection title="Cash reserve — by purchase" testId="factoring-cash-reserve-table-section">
             {purchasesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load cash-reserve purchases"
@@ -1875,7 +1876,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }}
               />
             )}
-          </div>
+          </BoardSection>
           {companyId ? <FaroReserveRegisterPanel companyId={companyId} register="cash" isOwner={user?.role === "Owner"} canPost={["Owner", "Administrator", "Accountant"].includes(String(user?.role ?? ""))} /> : null}
         </div>
       ) : null}
@@ -1906,11 +1907,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           honest reuse of real data, not a fabricated new layout. */}
       {show("chargebacks_overpayments") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
-              {summaryDetailToggle(chargebacksOverpaymentsView, setChargebacksOverpaymentsView, "factoring-chargebacks-overpayments")}
-            </div>
+          <BoardSection
+            title="Chargebacks & Overpayments"
+            testId="factoring-chargebacks-overpayments-summary"
+            headerRight={summaryDetailToggle(chargebacksOverpaymentsView, setChargebacksOverpaymentsView, "factoring-chargebacks-overpayments")}
+          >
             {/* UI-01 (flat containers, no box-in-box): unlike the Aging tab's summary strip
                 (individually-bordered tiles, already the file's one grandfathered instance of
                 this shape), this strip's tiles stay borderless -- divided by a thin border
@@ -1933,9 +1934,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 </div>
               </div>
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-chargebacks-overpayments")}</div>
+          </BoardSection>
+          <BoardSection title="Chargebacks & overpayments — detail" testId="factoring-chargebacks-overpayments-table">
+            <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-chargebacks-overpayments")}</div>
             {feesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load chargebacks & overpayments"
@@ -1960,7 +1961,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 )}
               </div>
             )}
-          </div>
+          </BoardSection>
         </div>
       ) : null}
 
@@ -1996,15 +1997,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {summaryQuery.isError ? (
                 <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
               ) : (
-                <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-account-summary">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs font-medium text-gray-900">Account Summary</div>
-                    <div className="flex items-center gap-2">
-                      <AccountSummaryInfoPopover />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                <BoardSection
+                  title="Account Summary"
+                  testId="factoring-account-summary"
+                  headerRight={<AccountSummaryInfoPopover />}
+                >
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 px-3.5 py-2 sm:grid-cols-2">
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Beginning Balance</span>
                       <NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />
@@ -2042,7 +2040,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     </div>
                   </div>
 
-                  <div className="mt-3 border-t border-gray-200 pt-2">
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
                     <div className="text-xs font-medium text-gray-900">
                       Fees Paid{latestMonth ? ` — ${fmtDate(latestMonth.statement_month)} (most recent posted month)` : ""}
                     </div>
@@ -2072,7 +2070,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     </div>
                   </div>
 
-                  <div className="mt-3 border-t border-gray-200 pt-2">
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
                       {summaryMoneyOrDash({
@@ -2089,7 +2087,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     </div>
                   </div>
 
-                  <div className="mt-3 border-t border-gray-200 pt-2">
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pb-2 pt-2">
                     <div className="overflow-x-auto">
                       <ParityTable
                         title="Beginning and ending — balance sheet items"
@@ -2136,7 +2134,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       />
                     </div>
                   </div>
-                </div>
+                </BoardSection>
               )}
             </div>
           );
@@ -2167,17 +2165,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             dateTo={dateToFromUrl || undefined}
           />
         </BoardSection>
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
-          {/* LEAD 443.173 — one title row: section title, filters, Summary (one row per purchase) / Detail (one row per invoice). */}
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <h2 className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]" data-testid="factoring-purchase-report-title">
+        <BoardSection
+          title={`Purchase report — ${purchaseReportView === "summary" ? "by purchase" : "by invoice"}`}
+          testId="factoring-purchase-report"
+          headerRight={
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="sr-only" data-testid="factoring-purchase-report-title">
                 Purchase report — {purchaseReportView === "summary" ? "by purchase" : "by invoice"}
-              </h2>
+              </span>
               {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
+              {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
             </div>
-            {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
-          </div>
+          }
+        >
           {purchaseLinesQuery.isError ? (
             <ListErrorState
               title="Couldn't load purchase report"
@@ -2301,7 +2301,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             </div>
           )}
-        </div>
+        </BoardSection>
         </div>
       ) : null}
 
@@ -2313,9 +2313,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           one combined factor_fee_amount, not a Discount/Schedule/Wire breakdown, same limitation
           noted on Account Summary. PO/Ref has no backing field -- rendered "—", never fabricated. */}
       {show("fees_paid") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-medium text-gray-900">Fees Paid</div>
+        <BoardSection
+          title="Fees Paid"
+          testId="factoring-fees-paid"
+          headerRight={
             <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
               <button
                 type="button"
@@ -2336,8 +2337,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 View All Fees
               </button>
             </div>
-          </div>
-
+          }
+        >
           {feesPaidView === "open_invoices" ? (
             recourseQuery.isError ? (
               <ListErrorState
@@ -2435,24 +2436,18 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             </div>
           )}
-        </div>
+        </BoardSection>
       ) : null}
 
       {show("aging") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Aging Report — as of {fmtDate(new Date().toISOString())}</div>
-              <div className="flex items-center gap-2">
-                {summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
-                <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
-                Aged by factored date (the date each invoice entered the factoring register) —
-                the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
-                wired this pass; this data model has one real date field to age against.
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
+          <BoardSection
+            title={`Aging Report — as of ${fmtDate(new Date().toISOString())}`}
+            testId="factoring-aging-summary"
+            headerRight={summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
+            subtitle='Aged by factored date — Invoice/Purchase/Fund Date toggle not wired (one real date field).'
+          >
+            <div className="grid grid-cols-2 gap-2 px-3.5 py-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
               <div className="border border-gray-200 p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
@@ -2472,9 +2467,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 </div>
               </div>
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-aging")}</div>
+            <p className="sr-only" data-testid="factoring-aging-date-basis-note">
+              Aged by factored date (the date each invoice entered the factoring register) —
+              the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
+              wired this pass; this data model has one real date field to age against.
+            </p>
+          </BoardSection>
+          <BoardSection title="Aging — detail" testId="factoring-aging-table">
+            <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-aging")}</div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load aging report"
@@ -2571,24 +2571,26 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 )}
               </div>
             )}
-          </div>
+          </BoardSection>
         </div>
       ) : null}
 
       {show("reserve_tracker") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <BoardSection title="Reserve tracker" testId="factoring-reserve-tracker">
           <ReserveTracker />
-        </div>
+        </BoardSection>
       ) : null}
 
       {show("recourse_pipeline") ? (
-        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-recourse-filters">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
-            <span className="text-gray-600">
+        <BoardSection
+          title="Invoices inside recourse window (sorted by days until expiry)"
+          testId="factoring-home-recourse-filters"
+          headerRight={
+            <span className="text-xs text-gray-600">
               Advance {fmtCurrency(recourseTotals.advance)} · Reserve {fmtCurrency(recourseTotals.reserve)}
             </span>
-          </div>
+          }
+        >
           <div className="overflow-x-auto">
             <RecoursePipelineTable
               rows={invoices}
@@ -2671,7 +2673,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             />
           </div>
           <CappedListNotice shown={invoices.length} limit={200} total={recourseQuery.data?.total} hint="Narrow the filters to see the remaining invoices." />
-        </div>
+        </BoardSection>
       ) : null}
 
       {show("chargebacks_fees") ? (
@@ -2681,8 +2683,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               Fee Summary above, not interleaved." Was a side-by-side lg:grid-cols-2 (two panels
               sharing one screen width, each squeezed) — now a vertical stack, summary ABOVE
               detail, each full-width and un-interleaved, per the owner's own second option. */}
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Monthly fee summaries</div>
+          <BoardSection title="Monthly fee summaries" testId="factoring-monthly-fee-summaries">
             {feesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load monthly fee summaries"
@@ -2700,9 +2701,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-home-monthly-fee-summaries"
               />
             )}
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks + fee history</div>
+          </BoardSection>
+          <BoardSection title="Chargebacks + fee history" testId="factoring-chargebacks-fee-history">
             <div className="overflow-x-auto">
               <ChargebacksTable
                 rows={feesQuery.data?.history ?? []}
@@ -2766,28 +2766,30 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               total={feesQuery.data?.history_total}
               hint="Narrow the customer filter to see the remaining chargebacks and fees."
             />
-          </div>
+          </BoardSection>
         </div>
       ) : null}
 
       {show("statements_settings") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="font-medium text-gray-900">Single-factor invariant status</div>
-            <div className="mt-1 text-gray-700">
-              Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
-              <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-[#1F2A44]" : "text-red-700"}>
-                {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
-              </span>
+          <BoardSection title="Single-factor invariant status" testId="factoring-single-factor-invariant">
+            <div className="space-y-1 px-3.5 py-2 text-xs text-gray-700">
+              <div>
+                Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
+                <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-[#1F2A44]" : "text-red-700"}>
+                  {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
+                </span>
+              </div>
+              <div>Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 95)} days</div>
             </div>
-            <div className="mt-1 text-gray-700">Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 95)} days</div>
-          </div>
+          </BoardSection>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Statement history</div>
-              {/* NEW-25: Summary (monthly totals, the long-standing default) vs Detail (the same
-                  line-item chargeback/fee history the Chargebacks & Fees tab renders). */}
+          <BoardSection
+            title="Statement history"
+            testId="factoring-statement-history"
+            headerRight={
+              /* NEW-25: Summary (monthly totals, the long-standing default) vs Detail (the same
+                  line-item chargeback/fee history the Chargebacks & Fees tab renders). */
               <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-statements-view-toggle">
                 <button
                   type="button"
@@ -2808,7 +2810,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   Detail
                 </button>
               </div>
-            </div>
+            }
+          >
             {statementsView === "summary" ? (
               settingsQuery.isError ? (
                 <ListErrorState
@@ -2842,23 +2845,24 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 />
               </div>
             )}
-          </div>
+          </BoardSection>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="font-medium text-gray-900">Faro deactivation (Owner-only)</div>
-            <p className="mt-1 text-gray-600">Disables the active factor for this operating company. Intended for controlled migration windows only.</p>
-            <div className="mt-2">
-              <Button
-                size="sm"
-                variant="danger"
-                disabled={!canDeactivate || deactivating || !companyId}
-                onClick={() => setDeactivateModalOpen(true)}
-              >
-                Deactivate active factor
-              </Button>
+          <BoardSection title="Faro deactivation (Owner-only)" testId="factoring-faro-deactivation">
+            <div className="space-y-2 px-3.5 py-2 text-xs">
+              <p className="text-gray-600">Disables the active factor for this operating company. Intended for controlled migration windows only.</p>
+              <div>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  disabled={!canDeactivate || deactivating || !companyId}
+                  onClick={() => setDeactivateModalOpen(true)}
+                >
+                  Deactivate active factor
+                </Button>
+              </div>
+              {!canDeactivate ? <div className="text-xs text-[#1F2A44]">Only Owner role can deactivate an active factor.</div> : null}
             </div>
-            {!canDeactivate ? <div className="mt-2 text-xs text-[#1F2A44]">Only Owner role can deactivate an active factor.</div> : null}
-          </div>
+          </BoardSection>
           <div data-deactivate-factor-confirm-modal="true">
             <DeactivateFactorConfirmModal
               open={deactivateModalOpen}
