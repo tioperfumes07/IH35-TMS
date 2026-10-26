@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel fraud/overage/planner need-company BoardSection
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SubmitToFactor edit banner BoardSection
 
 - **STATUS:** SHIPPING
+- **DELTA:** Edit-purchase banner + non-posted block → `BoardSection` (Cancel in headerRight). Engines unchanged. Guard ratcheted.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-factoring-submission-queue-routed
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** SubmitToFactorTab.tsx · verify-factoring-submission-queue-routed.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel fraud/overage/planner need-company BoardSection
+
+- **STATUS:** MERGED [#27800](https://github.com/tioperfumes07/IH35-TMS/pull/27800)
 - **DELTA:** Fraud alerts / Card overage / Fuel planner shell need-company → `FuelBoardSection`. Guard ratcheted. Engines unchanged.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fuel-home-dashboard-wired
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

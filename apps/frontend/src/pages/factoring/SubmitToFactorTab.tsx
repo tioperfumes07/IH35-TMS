@@ -767,29 +767,38 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
   return (
     <div className="space-y-3" data-testid="submit-to-factor-tab">
       {editing ? (
-        <div ref={editBannerRef} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-edit-banner">
-          <span>
-            {editQuery.isLoading ? "Loading purchase…" : null}
-            {editQuery.isError ? <span className="text-red-700">Could not load the purchase to edit.</span> : null}
-            {editDetail ? (
-              <>
-                <span className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]" data-testid="submit-factor-edit-title">
-                  Purchase {editDetail.display_id}
-                </span>{" "}
-                · Editing purchase <strong><EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /></strong>
-                {editDetail.factoring_company_name ? ` · ${editDetail.factoring_company_name}` : ""} — change dates, amounts or invoices, then Save changes.
-              </>
-            ) : null}
-          </span>
-          <Button type="button" variant="secondary" size="sm" onClick={onEditCancel} data-testid="submit-factor-edit-cancel">
-            Cancel edit
-          </Button>
+        <div ref={editBannerRef}>
+          <BoardSection
+            title="Editing purchase"
+            testId="submit-factor-edit-banner"
+            headerRight={
+              <Button type="button" variant="secondary" size="sm" onClick={onEditCancel} data-testid="submit-factor-edit-cancel">
+                Cancel edit
+              </Button>
+            }
+          >
+            <div className="px-3.5 py-3 text-xs text-[#1F2A44]">
+              {editQuery.isLoading ? "Loading purchase…" : null}
+              {editQuery.isError ? <span className="text-red-700">Could not load the purchase to edit.</span> : null}
+              {editDetail ? (
+                <>
+                  <span className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]" data-testid="submit-factor-edit-title">
+                    Purchase {editDetail.display_id}
+                  </span>{" "}
+                  · Editing purchase <strong><EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /></strong>
+                  {editDetail.factoring_company_name ? ` · ${editDetail.factoring_company_name}` : ""} — change dates, amounts or invoices, then Save changes.
+                </>
+              ) : null}
+            </div>
+          </BoardSection>
         </div>
       ) : null}
       {editing && editDetail && editDetail.status !== "posted" ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
-          <EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /> is {editDetail.status} — only a posted purchase can be edited.
-        </div>
+        <BoardSection title="Cannot edit" testId="submit-factor-edit-status-block">
+          <div className="px-3.5 py-3 text-xs text-red-800" role="alert">
+            <EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /> is {editDetail.status} — only a posted purchase can be edited.
+          </div>
+        </BoardSection>
       ) : null}
       {!isOwner ? (
         <BoardSection title="Owner only" testId="submit-factor-owner-only-note">

@@ -103,6 +103,10 @@ export function checkSubmitTab(s) {
   if (!/<BoardSection[\s\S]{0,220}testId=["']submit-factor-created["']/.test(s.tab)) {
     f.push(`${TAB.tab}: purchase-posted result must be BoardSection (submit-factor-created)`);
   }
+  if (!/<BoardSection[\s\S]{0,220}testId=["']submit-factor-edit-banner["']/.test(s.tab)) {
+    f.push(`${TAB.tab}: edit banner must be BoardSection (submit-factor-edit-banner)`);
+  }
+
   if (!/FORM_INPUT_CLASS/.test(s.tab) || !/FORM_TEXTAREA_CLASS/.test(s.tab)) {
     f.push(`${TAB.tab}: page inputs must use FORM_INPUT_CLASS / FORM_TEXTAREA_CLASS`);
   }
