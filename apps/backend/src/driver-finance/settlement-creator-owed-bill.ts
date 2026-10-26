@@ -127,6 +127,56 @@ export async function writeCreatorOwedBill(client: Queryable, input: CreatorOwed
   return { billId, billNumber, journalEntryId };
 }
 
+/** Key fields used to decide whether a prior owed bill can be kept (amended) on Edit. */
+export type PriorOwedBillKey = {
+  bill_id: string;
+  vendor_id: string;
+  load_id: string | null;
+  item_id: string;
+  amount_cents: number;
+};
+
+/** Load the key fields of prior Creator owed bills so the Edit path can amend instead of void+repost. */
+export async function fetchPriorOwedBillKeys(client: Queryable, billIds: string[]): Promise<PriorOwedBillKey[]> {
+  if (!billIds.length) return [];
+  const { rows } = await client.query<PriorOwedBillKey>(`
+    SELECT b.id::text AS bill_id, b.vendor_id::text AS vendor_id, bl.load_id::text AS load_id,
+           bl.item_id::text AS item_id, bl.amount_cents::int AS amount_cents
+      FROM accounting.bills b
+      JOIN accounting.bill_lines bl ON bl.bill_id = b.id
+     WHERE b.id = ANY($1::uuid[])
+       AND b.source = 'settlement_creator_owed'
+       AND b.voided_at IS NULL
+  `, [billIds]);
+  return rows;
+}
+
+/**
+ * On Edit: if a prior owed bill matches the new input (same vendor/load/item/amount), keep it (no void, no GL change).
+ * Otherwise write a new bill. The caller must void any prior bills not kept after the write loop.
+ */
+export async function amendOrWriteCreatorOwedBill(
+  client: Queryable,
+  input: CreatorOwedBillInput,
+  priorBills: PriorOwedBillKey[],
+  usedPriorIds: Set<string>,
+): Promise<{ billId: string; billNumber: string; journalEntryId: string | null; isAmend: boolean }> {
+  const match = priorBills.find(
+    (p) =>
+      !usedPriorIds.has(p.bill_id) &&
+      p.vendor_id === input.vendorId &&
+      p.load_id === input.loadId &&
+      p.item_id === input.itemId &&
+      p.amount_cents === input.amountCents,
+  );
+  if (match) {
+    usedPriorIds.add(match.bill_id);
+    return { billId: match.bill_id, billNumber: "", journalEntryId: null, isAmend: true };
+  }
+  const written = await writeCreatorOwedBill(client, input);
+  return { ...written, isAmend: false };
+}
+
 /** Edit = void and repost: the prior post's owed bills are voided through the bill void engine (reversal JE). */
 export async function voidCreatorOwedBills(
   client: Queryable,
