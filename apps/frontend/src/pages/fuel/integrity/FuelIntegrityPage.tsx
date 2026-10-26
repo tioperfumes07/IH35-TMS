@@ -221,8 +221,12 @@ export function FuelIntegrityPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid="fuel-integrity-page">
-        Select an operating company to view fuel integrity.
+      <div className="space-y-3" data-testid="fuel-integrity-page">
+        <FuelBoardSection title="Fuel integrity" testId="fuel-integrity-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view fuel integrity.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

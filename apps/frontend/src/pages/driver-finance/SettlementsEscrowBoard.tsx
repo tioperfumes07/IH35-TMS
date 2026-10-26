@@ -323,16 +323,12 @@ export function SettlementsEscrowBoard() {
         </BoardSection>
       )}
 
-      <div
-        className="flex gap-2 items-start rounded-sm border px-3 py-2 text-xs"
-        style={{ borderColor: V3.border, borderLeftWidth: 3, borderLeftColor: V3.amber, background: V3.surface }}
-      >
-        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
-        <span>
+      <BoardSection title="Measured" testId="settlements-escrow-measured-note">
+        <div className="px-3.5 py-3 text-xs" style={{ color: V3.ink }}>
           Junk rows (&quot;Driver — not visible&quot;, Safety, duplicate closed bonds) are hidden on this
           Settlements list; Accounting › Escrow keeps the full ledger.
-        </span>
-      </div>
+        </div>
+      </BoardSection>
     </div>
   );
 }

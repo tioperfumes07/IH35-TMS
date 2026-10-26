@@ -20,6 +20,7 @@ const CARDS = path.join(ROOT, "apps/frontend/src/pages/fuel/cards/FuelCardsPage.
 const UNMATCHED = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx");
 const WALLET = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-wallet/RelayWalletRollForwardPage.tsx");
 const FUEL_PLANNER_HOME = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
+const INTEGRITY = path.join(ROOT, "apps/frontend/src/pages/fuel/integrity/FuelIntegrityPage.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -181,6 +182,9 @@ export function computeCardsFailures(source) {
       errors.push(`FuelCardsPage must keep board label "${label}"`);
     }
   }
+  if (!source.includes('testId="fuel-cards-need-company"') || !/<FuelBoardSection\b/.test(source)) {
+    errors.push("FuelCardsPage need-company empty must be FuelBoardSection (fuel-cards-need-company)");
+  }
   return errors;
 }
 
@@ -215,6 +219,9 @@ export function computeUnmatchedFailures(source) {
     if (source.includes(`label="${label}"`) || source.includes(`label={'${label}'}`) || source.includes(`label={"${label}"}`)) {
       errors.push(`RelayUnmatchedPage must not render pagination KPI "${label}" (443.280)`);
     }
+  }
+  if (!source.includes('testId="relay-unmatched-need-company"') || !/<FuelBoardSection\b/.test(source)) {
+    errors.push("RelayUnmatchedPage need-company empty must be FuelBoardSection (relay-unmatched-need-company)");
   }
   return errors;
 }
@@ -256,6 +263,9 @@ export function computeWalletFailures(source) {
     if (!source.includes(label)) {
       errors.push(`RelayWalletRollForwardPage must keep board label "${label}"`);
     }
+  }
+  if (!source.includes('testId="relay-wallet-need-company"') || !/<FuelBoardSection\b/.test(source)) {
+    errors.push("RelayWalletPage need-company empty must be FuelBoardSection (relay-wallet-need-company)");
   }
   return errors;
 }
@@ -466,6 +476,10 @@ function run() {
     ...computeWalletFailures(wallet),
     ...computeBoardShellFailures(fuelPlannerHome),
   ];
+  const integrity = fs.readFileSync(INTEGRITY, "utf8");
+  if (!integrity.includes('testId="fuel-integrity-need-company"') || !/<FuelBoardSection\b/.test(integrity)) {
+    failures.push("FuelIntegrityPage need-company empty must be FuelBoardSection (fuel-integrity-need-company)");
+  }
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);

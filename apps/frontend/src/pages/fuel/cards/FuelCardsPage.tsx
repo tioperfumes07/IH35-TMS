@@ -341,8 +341,12 @@ export function FuelCardsPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid="fuel-cards-page">
-        Select an operating company to view fuel cards.
+      <div className="space-y-3" data-testid="fuel-cards-page">
+        <FuelBoardSection title="Fuel cards" testId="fuel-cards-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view fuel cards.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

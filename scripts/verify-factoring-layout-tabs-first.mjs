@@ -138,6 +138,10 @@ function analyze(src) {
   } else if (boardIdx < 0 || boardIdx < accountSummaryShowIdx) {
     errors.push(`${HOME}: FactoringHomeBoard must mount under show("account_summary") (board = Account summary; was always-on LAYERED)`);
   }
+  if (!/<BoardSection[\s\S]{0,220}testId=["']factoring-home-no-factor["']/.test(home)) {
+    errors.push(`${HOME}: no-factor empty must be BoardSection (factoring-home-no-factor)`);
+  }
+
   // Only one board mount — always-on + tab mount would be LAYERED.
   const boardMounts = (home.match(/<FactoringHomeBoard/g) || []).length;
   if (boardMounts !== 1) {
