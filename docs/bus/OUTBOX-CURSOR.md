@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Collections/VendorBalances/Waterfall/ImportFuel (batch 2)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — MultiEntity + QBO reconcile boards (batch 3)
 
 - **STATUS:** SHIPPING
+- **DELTA:** Multi-entity Scope/KPIs/by-company/accounts · QBO reconcile ParityTables (health/captures/conflict fields/runs) → BoardSection. Engines unchanged. Guard verify-fill-batch3-boards via 1747. Prior #27872 MERGED.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fill-batch3-boards PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Banking Transactions/Recon bare panels; Chrome close PARTIAL
+- **Files Modified:** MultiEntityAccountingPage · QboReconcileCapturesPage · verify-fill-batch3-boards.mjs · 1747 · OUTBOX
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Collections/VendorBalances/Waterfall/ImportFuel (batch 2)
+
+- **STATUS:** MERGED [#27872](https://github.com/tioperfumes07/IH35-TMS/pull/27872) @ `0faec95a3a`
 - **DELTA:** Collections filters/queue/detail · Vendor balances vendors/bills/payments · Company waterfall · Import Fuel selected+WEX plan → BoardSection. Pay/sync/import engines kept. Guard verify-fill-batch2-boards via 1747. Prior #27867 MERGED.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fill-batch2-boards PASS · verify-settlement-detail-reference PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
@@ -185,15 +194,5 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell
 - **Files Modified:** BatchDetail.tsx · verify-factoring-batch-detail-board.mjs · OUTBOX-CURSOR.md
-
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel reverse sections → FuelBoardSection
-
-- **STATUS:** SHIPPING
-- **DELTA:** RelayFills / FuelCards / FuelCardOverage / FuelFraudAlerts / FuelTransactions reverse sections → `FuelBoardSection`. Engines/links unchanged. New guard verify-fuel-reverse-board-sections.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-reverse-board-sections PASS (+ --selftest 5/5) · reefer-fuel-credit · null-gallons-honesty
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** RelayFillsReverseSection · FuelCardsReverseSection · FuelCardOverageReverseSection · FuelFraudAlertsReverseSection · FuelTransactionsReverseSection · verify-fuel-reverse-board-sections.mjs · OUTBOX-CURSOR.md
 
 

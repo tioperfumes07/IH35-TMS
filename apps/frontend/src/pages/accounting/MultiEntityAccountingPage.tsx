@@ -10,6 +10,7 @@ import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -125,8 +126,9 @@ export function MultiEntityAccountingPage() {
   return (
     <AccountingSubNavWrapper title="Multi-entity accounting" subtitle="Consolidated accounting summary across selected operating companies.">
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-xs font-semibold text-gray-900">Scope</div>
+      <BoardSection title="Scope" testId="multi-entity-query-board">
+      <div className="p-3">
+        <div className="sr-only">Scope</div>
         <div className="grid gap-3 md:grid-cols-4">
           <div className="md:col-span-2 space-y-1">
             {sortedCompanies.map((company) => {
@@ -165,6 +167,7 @@ export function MultiEntityAccountingPage() {
           </div>
         </div>
       </div>
+      </BoardSection>
 
       {summaryQuery.isError ? (
         <ListErrorState
@@ -178,22 +181,14 @@ export function MultiEntityAccountingPage() {
       {summaryQuery.data ? (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-xs text-gray-500">Revenue</div>
-              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.revenue_cents)}</div>
-            </div>
-            <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-xs text-gray-500">Expense</div>
-              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.expense_cents)}</div>
-            </div>
-            <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-xs text-gray-500">Net income</div>
-              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.net_income_cents)}</div>
-            </div>
+            <BoardSection title="Revenue" testId="multi-entity-kpi-revenue"><div className="p-3 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.revenue_cents)}</div></BoardSection>
+            <BoardSection title="Expense" testId="multi-entity-kpi-expense"><div className="p-3 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.expense_cents)}</div></BoardSection>
+            <BoardSection title="Net income" testId="multi-entity-kpi-net"><div className="p-3 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.net_income_cents)}</div></BoardSection>
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <ParityTable title="Results — by company"
+            <BoardSection title="Results — by company" testId="multi-entity-by-company-board">
+            <ParityTable
               columns={byCompanyColumns}
               rows={summaryQuery.data.by_company}
               rowKey={(row) => row.operating_company_id}
@@ -201,8 +196,10 @@ export function MultiEntityAccountingPage() {
               emptyText="No per-company rows for the selected scope."
               tableTestId="multi-entity-by-company-table"
             />
+            </BoardSection>
 
-            <ParityTable title="Consolidated balances — by account"
+            <BoardSection title="Consolidated balances — by account" testId="multi-entity-accounts-board">
+            <ParityTable
               columns={accountColumns}
               rows={summaryQuery.data.accounts}
               rowKey={(row) => row.account_id}
@@ -210,6 +207,7 @@ export function MultiEntityAccountingPage() {
               emptyText="No account balances for the selected scope."
               tableTestId="multi-entity-accounts-table"
             />
+            </BoardSection>
           </div>
         </>
       ) : null}
