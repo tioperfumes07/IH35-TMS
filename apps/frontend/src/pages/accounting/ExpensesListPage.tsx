@@ -417,6 +417,9 @@ export function ExpensesListPage() {
       ? [{
           key: "account_line_amount_cents",
           label: "On these accounts",
+          sortable: true,
+          // Unknown amounts sort as unknown (null), never as a $0 line.
+          sortValue: (r: ExpenseListRow) => (r.account_line_amount_cents == null ? null : Number(r.account_line_amount_cents)),
           className: "text-right",
           cellClass: "text-right tabular-nums",
           render: (r: ExpenseListRow) => <span className="tabular-nums">{money(r.account_line_amount_cents ?? null)}</span>,
