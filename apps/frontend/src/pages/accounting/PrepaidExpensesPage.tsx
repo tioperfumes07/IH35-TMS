@@ -223,7 +223,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
     && form.asset_account_id && form.payment_account_id);
 
   return (
-    <Modal open onClose={onClose} title="New Prepaid Expense" size="md" modalKind="prepaid-expense-create">
+    <Modal variant="drawer" open onClose={onClose} title="New Prepaid Expense" size="md" modalKind="prepaid-expense-create">
       <div className="space-y-3 text-xs">
         {error && <p className="text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
         <div className="space-y-3">

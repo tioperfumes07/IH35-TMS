@@ -572,7 +572,7 @@ export function FactorAdmin() {
         </div>
       ) : null}
 
-      <Modal open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm" modalKind="factor-admin-add">
+      <Modal variant="drawer" open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm" modalKind="factor-admin-add">
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Name</div>

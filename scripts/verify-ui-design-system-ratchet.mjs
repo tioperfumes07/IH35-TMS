@@ -138,8 +138,9 @@ function flatten(o) {
 }
 
 
-// FIELD-SIZE-36 (IH35-347-A 2026-10-24: raised from 32px/h-8 to 36px/h-9; register rows 153/156/158/159/160/197):
-// the single-line field is 36px (h-8 class, CSS variable → 36px) everywhere. The ONE shared rule lives in
+// FIELD-SIZE (IH35-347-A 2026-10-24: 32px → 36px; owner design law 2026-10-25 4:05 PM CT rule 2: "40px for a field
+// being edited" → 40px = FORM_FIELD_CONTROL_SIZE_CLASS h-10; register rows 153/156/158/159/160/197):
+// the single-line field is ONE size (CSS variable → 40px) everywhere. The ONE shared rule lives in
 // styles/proportion-chrome.css (applied by Modal + ParityDrawer); the six screens below must not
 // re-introduce a per-page 38/40/48px input height override. Fixed-rule, not a ratchet count.
 const FIELD_CSS = path.join(SRC, "styles", "proportion-chrome.css");
@@ -153,7 +154,8 @@ const FIELD_SCREENS = [
   "components/insurance/PolicyCreateWizard.tsx",
   "pages/maintenance/RoadServiceTicketModal.tsx",
 ];
-const FORBIDDEN_FIELD_HEIGHT = /(?<![\w-])(?:h-\[(?:3[3-9]|4\d)px\]|h-(?:9|10|11|12)|min-h-(?:9|10|11|12)|min-h-\[(?:3[3-9]|4\d)px\]|py-(?:2|2\.5|3))(?![\w.-])/;
+// A per-page override of any OTHER height is forbidden; the law size itself (h-10 / 40px) is the shared value, not drift.
+const FORBIDDEN_FIELD_HEIGHT = /(?<![\w-])(?:h-\[(?:3[3-9]|4[1-9])px\]|h-(?:9|11|12)|min-h-(?:9|11|12)|min-h-\[(?:3[3-9]|4[1-9])px\]|py-(?:2|2\.5|3))(?![\w.-])/;
 /** Returns messages for every <input> (not hidden/checkbox/radio/file) or input-class constant carrying a non-36px height. */
 export function fieldHeightViolations(label, src) {
   const out = [];
@@ -161,7 +163,7 @@ export function fieldHeightViolations(label, src) {
   for (const b of blocks) {
     if (/type=["'](?:hidden|checkbox|radio|file)["']/.test(b)) continue;
     const m = b.match(FORBIDDEN_FIELD_HEIGHT);
-    if (m) out.push(`${label}: <input> carries ${m[0]} (single-line fields render at 36px via proportion-chrome.css; use h-8 class, not h-9+)`);
+    if (m) out.push(`${label}: <input> carries ${m[0]} (single-line fields render at the shared 40px via proportion-chrome.css; no per-page height override)`);
   }
   for (const line of src.split("\n")) {
     if (/\b(?:inputClass|FLD|INPUT|inputCls)\s*=\s*["'`]/.test(line) && FORBIDDEN_FIELD_HEIGHT.test(line)) {
@@ -171,8 +173,8 @@ export function fieldHeightViolations(label, src) {
   return out;
 }
 export function fieldCssViolations(css) {
-  return /input:not\(\[type="checkbox"\]\)[^{]*\{[^}]*\bheight:\s*var\(--ih35-field-height\)[^}]*\bmax-height:\s*var\(--ih35-field-height\)/.test(css) && /--ih35-field-height:\s*36px/.test(css)
-    ? [] : ["proportion-chrome.css lost the shared 36px single-line field rule (height + max-height = --ih35-field-height: 36px)"];
+  return /input:not\(\[type="checkbox"\]\)[^{]*\{[^}]*\bheight:\s*var\(--ih35-field-height\)[^}]*\bmax-height:\s*var\(--ih35-field-height\)/.test(css) && /--ih35-field-height:\s*40px/.test(css)
+    ? [] : ["proportion-chrome.css lost the shared 40px single-line field rule (height + max-height = --ih35-field-height: 40px, owner design law 2026-10-25)"];
 }
 function fieldSizeCheck() {
   const out = fieldCssViolations(fs.readFileSync(FIELD_CSS, "utf8"));
@@ -218,8 +220,11 @@ function selftest() {
   const plantedA = fieldHeightViolations("plant", '<input className="h-[38px] w-full" />');
   const plantedB = fieldHeightViolations("plant", 'const inputClass = "min-h-12 w-full";');
   const plantedC = fieldCssViolations(".x { min-height: 36px; }");
+  const plantedD = fieldCssViolations('input:not([type="checkbox"]) { height: var(--ih35-field-height); max-height: var(--ih35-field-height); } :root { --ih35-field-height: 36px; }');
+  const plantedE = fieldHeightViolations("plant", '<input className="h-9 w-full" />');
+  const cleanB = fieldHeightViolations("clean", '<input className="h-10 w-full" />');
   const cleanA = fieldHeightViolations("clean", '<input type="hidden" className="py-2" /><input className="h-8 w-full" />');
-  if (plantedA.length !== 1 || plantedB.length !== 1 || plantedC.length !== 1 || cleanA.length !== 0) {
+  if (plantedA.length !== 1 || plantedB.length !== 1 || plantedC.length !== 1 || plantedD.length !== 1 || plantedE.length !== 1 || cleanA.length !== 0 || cleanB.length !== 0) {
     console.error(`${LABEL}: SELFTEST FAIL — FIELD-SIZE-36 rule does not fail its plants / pass clean (${plantedA.length},${plantedB.length},${plantedC.length},${cleanA.length})`);
     process.exit(1);
   }
@@ -258,7 +263,7 @@ if (headerBgMatch[1].toUpperCase() === "#14314F" || headerTextMatch[1].toUpperCa
 
 const fieldBad = fieldSizeCheck();
 if (fieldBad.length) {
-  console.error(`${LABEL}: FAIL — single-line field size drifted off the shared 36px (IH35-347-A 2026-10-24)`);
+  console.error(`${LABEL}: FAIL — single-line field size drifted off the shared 40px (owner design law 2026-10-25)`);
   for (const v of fieldBad) console.error(`  ${v}`);
   process.exit(1);
 }

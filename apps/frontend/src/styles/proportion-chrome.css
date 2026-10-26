@@ -1,13 +1,16 @@
 /* CLS-PROPORTION-CHROME — modal / side-panel density vs QBO approved chrome (2026-08-12)
  *
- * Approved density: compact fields (36px), header/body padding px-4 py-3,
+ * Approved density: form fields 40px (owner design law 2026-10-25), header/body padding px-4 py-3,
  * no balloon padding (p-8 / py-8) on shared shells.
- * FIELD-SIZE-36: input height pinned to --ih35-field-height (36px/h-9) across all modal/drawer shells.
- * IH35-347-A 2026-10-24: raised from 32px (h-8) to 36px (h-9).
+ * FIELD-SIZE: input height pinned to --ih35-field-height across all modal/drawer shells.
+ * IH35-347-A 2026-10-24: 32px -> 36px. Owner design law 2026-10-25 4:05 PM CT (docs/design/00-OWNER-DESIGN-LAW…,
+ * rule 2: "40px for a field being edited"): 36px -> 40px, the same value as control-sizing-law.css and
+ * FORM_FIELD_CONTROL_SIZE_CLASS (h-10). This rule out-specifies the zero-specificity law file, so it MUST carry the
+ * law value or the law never reaches a Modal/Drawer field.
  */
 
 [data-proportion-chrome="qbo-compact"] {
-  --ih35-field-height: 36px;
+  --ih35-field-height: 40px;
   --ih35-chrome-pad-x: 1rem; /* px-4 */
   --ih35-chrome-pad-y: 0.75rem; /* py-3 */
 }
@@ -20,7 +23,7 @@
 
 /* ONE shared single-line field size (register rows 153/156/158/159/160/197, Lead order "one shared
  * size, not per page"): every single-line input / select inside a modal or drawer is exactly
- * 36px (IH35-347-A 2026-10-24, h-9). Overrides per-page py-2 / min-h-12 drift; textareas,
+ * 40px (owner design law 2026-10-25, h-10). Overrides per-page py-2 / min-h-12 drift; textareas,
  * multi-selects and non-text controls are excluded. */
 [data-proportion-chrome="qbo-compact"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="image"]),
 [data-proportion-chrome="qbo-compact"] select:not([multiple]) {

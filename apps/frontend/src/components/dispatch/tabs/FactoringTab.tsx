@@ -662,7 +662,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           </div>
         ) : null}
 
-        <Modal open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm">
+        <Modal variant="drawer" open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm">
           <div className="space-y-2 text-xs">
             <label className="block">
               <div className="mb-1">Name</div>
