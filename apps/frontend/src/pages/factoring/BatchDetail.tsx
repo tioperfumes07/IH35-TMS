@@ -4,6 +4,7 @@ import { getFactoringBatchDetail, getReserveMovements, type FactoringBatchInvoic
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
 import { titleize } from "../../lib/titleize";
 import { formatDateUS } from "../../lib/formatDate";
@@ -130,39 +131,50 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
   const detail = detailQuery.data;
 
   if (detailQuery.isLoading) {
-    return <div className="text-xs text-gray-500">Loading submitted batch detail...</div>;
+    return (
+      <BoardSection title="Batch detail" testId="factoring-batch-detail-loading">
+        <div className="px-3.5 py-3 text-xs text-gray-500">Loading submitted batch detail...</div>
+      </BoardSection>
+    );
   }
   if (detailQuery.isError) {
     return (
-      <ListErrorState
-        title="Couldn't load batch detail"
-        status={0}
-        message={(detailQuery.error as Error)?.message}
-        onRetry={() => void detailQuery.refetch()}
-      />
+      <BoardSection title="Batch detail" testId="factoring-batch-detail-error">
+        <ListErrorState
+          title="Couldn't load batch detail"
+          status={0}
+          message={(detailQuery.error as Error)?.message}
+          onRetry={() => void detailQuery.refetch()}
+        />
+      </BoardSection>
     );
   }
   if (!detail) {
-    return <div className="text-xs text-gray-500">Batch detail unavailable.</div>;
+    return (
+      <BoardSection title="Batch detail" testId="factoring-batch-detail-unavailable">
+        <div className="px-3.5 py-3 text-xs text-gray-500">Batch detail unavailable.</div>
+      </BoardSection>
+    );
   }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 p-3 text-xs">
-        <div className="font-semibold text-gray-900">{detail.batch.batch_number}</div>
-        <div className="text-gray-700">
-          Status: {titleize(detail.batch.status)} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
-          {asMoney(detail.batch.expected_fee_cents)} · Reserve:{" "}
-          {/* WAVE-C-liability-batches-detail: same Net − Fee − Advance derivation as batches.create,
-              header summary alongside the real per-movement Reserve Movements ledger below. */}
-          <span data-testid="factoring-batch-detail-expected-reserve">
-            {asMoney(detail.batch.total_face_cents - detail.batch.expected_advance_cents - detail.batch.expected_fee_cents)}
-          </span>
+      <BoardSection title={detail.batch.batch_number} testId="factoring-batch-detail-summary">
+        <div className="space-y-2 px-3.5 py-2 text-xs">
+          <div className="text-gray-700">
+            Status: {titleize(detail.batch.status)} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
+            {asMoney(detail.batch.expected_fee_cents)} · Reserve:{" "}
+            {/* WAVE-C-liability-batches-detail: same Net − Fee − Advance derivation as batches.create,
+                header summary alongside the real per-movement Reserve Movements ledger below. */}
+            <span data-testid="factoring-batch-detail-expected-reserve">
+              {asMoney(detail.batch.total_face_cents - detail.batch.expected_advance_cents - detail.batch.expected_fee_cents)}
+            </span>
+          </div>
+          <div className="text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
         </div>
-        <div className="mt-2 text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
-      </div>
+      </BoardSection>
 
-      <div className="rounded-sm border border-gray-200 p-3">
+      <BoardSection title="Invoices in this batch" testId="factoring-batch-detail-invoices">
         <ParityTable
           title="Invoices in this batch"
           columns={INVOICE_COLUMNS}
@@ -172,9 +184,9 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
           tableTestId="factoring-batch-invoices-table"
           emptyText="No invoices on this batch."
         />
-      </div>
+      </BoardSection>
 
-      <div className="rounded-sm border border-gray-200 p-3">
+      <BoardSection title="Reserve movements — this batch" testId="factoring-batch-detail-reserve-movements">
         {reserveMovementsQuery.isError ? (
           <ListErrorState
             title="Couldn't load reserve movements"
@@ -194,7 +206,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
             tableTestId="factoring-batch-reserve-movements-table"
           />
         )}
-      </div>
+      </BoardSection>
     </div>
   );
 }
