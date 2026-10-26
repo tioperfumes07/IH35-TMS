@@ -47,7 +47,12 @@ function verify(source) {
     }
     // The shared path's own INSERT is the real persistence point once delegated -- confirm IT
     // still writes and returns the column, same invariant the old local checks enforced directly.
-    need(/load_trailer_equipment_id,/.test(source.book), "shared create path's INSERT must persist load_trailer_equipment_id");
+    // Scoped to the shared create path's own INSERT INTO mdata.loads column list: book-load also names
+    // load_trailer_equipment_id elsewhere (row-257 trailer-type resolver, UPDATE paths), and a file-wide
+    // match let the INSERT drop the column unseen.
+    const insertStart = source.book.indexOf("INSERT INTO mdata.loads (");
+    const insertCols = insertStart >= 0 ? source.book.slice(insertStart, source.book.indexOf(")", insertStart)) : "";
+    need(/\bload_trailer_equipment_id\b/.test(insertCols), "shared create path's INSERT INTO mdata.loads must persist load_trailer_equipment_id");
     need(/RETURNING \*/.test(source.book) || /RETURNING[\s\S]{0,2000}load_trailer_equipment_id/.test(source.book), "shared create path's INSERT must return load_trailer_equipment_id (RETURNING * or an explicit column)");
   } else {
     need(/const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert\([\s\S]{0,180}b\.operating_company_id,[\s\S]{0,100}b\.load_trailer_equipment_id/.test(create), "mdata creator must resolve explicit-or-DRY_VAN equipment before INSERT");
