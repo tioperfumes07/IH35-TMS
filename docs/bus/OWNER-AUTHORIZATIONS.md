@@ -8162,6 +8162,6 @@ owner_quotes: "Finish the rest of the pending" (owner 2026-10-25 5:35 PM CT); re
 scope: USMCA completed loads with miles_driven_actual NULL — mint stop fences (bindLoadToGeofences), replay the assigned unit's STORED GPS fixes through the canonical detector with suppressOperationalSideEffects (immutable geo.geofence_events only), odometer captures (real OBD or absent), and the driven-miles engine's own persist. No stop stamp, status walk, settlement or money write.
 action: OWNER_AUTH_ID=AUTH-471 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-row264-driven-miles-backfill.mts --apply
 rehearsal: per-load dry run on prod (each load rolled back)
-result: PENDING
+result: APPLIED 2026-10-26 ~02:05 UTC (per-load commits). Dry run: 175 loads, 357 fences, 1013 events, 0 failed. Apply: 175 loads, 357 fences bound, 606,675 stored fixes replayed, 1274 geofence_events, 1716 odometer captures; 6 lock-timeout/deadlock failures re-run with --ids (#27786): 6 committed, 0 failed. Loads with real miles_driven_actual: 14 -> 26 of 194. Remaining NULL: 92 'stop 1 departure: no geofence event' — truck never entered the stop fence (nearest approach 1.08 mi load 13510 Linden NJ, 1.34 mi 13652): stop geocodes ~1 mi from the real dock; 20 'stop 2 arrival: no event'. No money write.
 expires_at: 2026-10-27T00:00:00Z
-status: OPEN
+status: CLOSED
