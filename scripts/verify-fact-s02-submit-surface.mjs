@@ -10,6 +10,12 @@ const SELFTEST = process.argv.includes("--selftest");
 const PAGE = "apps/frontend/src/pages/factoring/SubmissionQueue.tsx";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
+// Cursor's V3 BoardSection fill (#27754/#27757) moved these markers onto <BoardSection testId="…">, which renders
+// data-testid={testId} on its <section>. Either spelling is the same rendered marker; nothing else counts.
+function hasTestId(src, id) {
+  return src.includes(`data-testid="${id}"`) || new RegExp(`<BoardSection\\b[^>]*\\btestId="${id}"`).test(src);
+}
+
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
@@ -29,8 +35,8 @@ function assertLive(pageOverride, homeOverride) {
   const tabRoute = /path="\/factoring\/submit-invoice"[\s\S]{0,300}?tabId="submit_invoice"/.test(manifest);
   const mountedInTab = /show\("submit_invoice"\)[\s\S]{0,1500}?<SubmissionQueue \/>/.test(home);
   if (!manifest.includes("SubmissionQueue") && !(redirects && tabRoute && mountedInTab)) problems.push("SubmissionQueue not mounted");
-  if (!src.includes('data-testid="factoring-submit-need-company"')) problems.push("need-company missing");
-  if (!src.includes('data-testid="factoring-submit-honest-empty"')) problems.push("honest empty missing");
+  if (!hasTestId(src, "factoring-submit-need-company")) problems.push("need-company missing");
+  if (!hasTestId(src, "factoring-submit-honest-empty")) problems.push("honest empty missing");
   if (!src.includes("ListErrorBanner")) problems.push("ListErrorBanner missing");
   if (!src.includes("enabled: Boolean(companyId)")) problems.push("query not company-gated");
   if (!src.includes("listSubmissionQueue")) problems.push("listSubmissionQueue missing");
@@ -56,6 +62,15 @@ if (SELFTEST) {
     const homeOrig = read(HOME);
     if (!assertLive(undefined, homeOrig.replace("<SubmissionQueue />", "")).length) {
       console.error(`${LABEL} SELFTEST FAILED: queue unmounted from the submit-invoice tab not caught`);
+      process.exit(1);
+    }
+  }
+  {
+    // Planted: the need-company state loses its marker (either spelling) — the select-a-company state is gone.
+    const srcNc = read(PAGE);
+    const strip = (t) => t.split('data-testid="factoring-submit-need-company"').join('data-testid="x"').split('testId="factoring-submit-need-company"').join('testId="x"');
+    if (strip(srcNc) === srcNc || hasTestId(strip(srcNc), "factoring-submit-need-company")) {
+      console.error(`${LABEL} SELFTEST FAILED: need-company plant was inert`);
       process.exit(1);
     }
   }

@@ -12,13 +12,19 @@ const SELFTEST = process.argv.includes("--selftest");
 const PAGE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const BOARD = "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx";
 
+// Cursor's V3 BoardSection fill (#27754/#27757) moved these markers onto <BoardSection testId="…">, which renders
+// data-testid={testId} on its <section>. Either spelling is the same rendered marker; nothing else counts.
+function hasTestId(src, id) {
+  return src.includes(`data-testid="${id}"`) || new RegExp(`<BoardSection\\b[^>]*\\btestId="${id}"`).test(src);
+}
+
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
 function assertLive(home, board) {
   const problems = [];
-  if (!home.includes('data-testid="factoring-home-need-company"')) problems.push("need-company missing");
+  if (!hasTestId(home, "factoring-home-need-company")) problems.push("need-company missing");
   if (!/<FactoringHomeBoard/.test(home)) problems.push("FactoringHomeBoard not mounted");
   if (!board.includes('data-testid="factoring-home-kpi-row"')) problems.push("kpi-row missing on board");
   if (!board.includes("ListErrorBanner")) problems.push("ListErrorBanner missing on board");
@@ -44,6 +50,15 @@ if (SELFTEST) {
   if (!assertLive(home, planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);
+  }
+  {
+    // Planted: the need-company state loses its marker (either spelling) — the select-a-company state is gone.
+    const srcNc = read(PAGE);
+    const strip = (t) => t.split('data-testid="factoring-home-need-company"').join('data-testid="x"').split('testId="factoring-home-need-company"').join('testId="x"');
+    if (strip(srcNc) === srcNc || hasTestId(strip(srcNc), "factoring-home-need-company")) {
+      console.error(`${LABEL} SELFTEST FAILED: need-company plant was inert`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

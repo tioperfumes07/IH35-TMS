@@ -50,7 +50,10 @@ export function check({ card, escrow, home, board, files }) {
     if (!/lg:grid-cols-2/.test(board) || !/banking-home-board-accounts-drift/.test(board)) {
       f.push(`${BOARD}: Accounts|Drift must be lg:grid-cols-2 (board 1fr 1fr)`);
     }
-    if (!/function FeedCell/.test(board) || !/#15803D/.test(board) || !/#94A3B8/.test(board)) {
+    // The dot colors come from the V3 design tokens (V3.green #15803D / V3.slate #94A3B8) — #27762 removed the raw
+    // hex for banking palette §7 and, in doing so, turned both dots slate. Green-for-feed is required again via token.
+    const feedCell = (board.match(/function FeedCell[\s\S]*?\n}\n/) || [""])[0];
+    if (!feedCell || !/feed\s*\?\s*V3\.green\s*:\s*V3\.slate/.test(feedCell)) {
       f.push(`${BOARD}: Feed column must render green/gray status dots (board Feed / No feed)`);
     }
     if (!/tone=\{driftCount > 0 \? "red" : "ink"\}/.test(board)) {
@@ -126,7 +129,8 @@ if (process.argv.includes("--selftest")) {
       /return isCredit \? `\+\$\{body\}` : `−\$\{body\}`;/,
       () => BOARD_SIGNED_WITH_DOLLAR,
     ) }],
-    ["feed dots removed", { ...r, board: r.board.replace(/#15803D/g, "#111111").replace(/function FeedCell/g, "function FeedText") }],
+    ["feed dots removed", { ...r, board: r.board.replace(/function FeedCell/g, "function FeedText") }],
+    ["feed dot not green (the #27762 regression: both dots slate)", { ...r, board: r.board.replace("feed ? V3.green : V3.slate", "feed ? V3.ink : V3.slate") }],
   ];
   const missed = plants.filter(([, s]) => check(s).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }

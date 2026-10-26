@@ -118,11 +118,12 @@ function FeedCell({ feed }: { feed: boolean }): ReactNode {
     >
       <span
         aria-hidden
-        className={feed ? "bg-slate-800" : "bg-slate-400"}
         style={{
           width: 7,
           height: 7,
           borderRadius: "50%",
+          // Board Feed / No feed: design-system tokens (V3.green / V3.slate), never a raw hex.
+          background: feed ? V3.green : V3.slate,
           display: "inline-block",
           flexShrink: 0,
         }}

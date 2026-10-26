@@ -12,7 +12,8 @@ function failures(input = source) {
   const out = [];
   for (const [key, text] of Object.entries(input)) {
     if (!/const submissionGeneration = lifecycleGenerationRef\.current;\s*setLoading\(true\);/.test(text)) out.push(`${key} captures request generation`);
-    if (!/const res = await [^;]+;\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/.test(text)) out.push(`${key} stale success is inert`);
+    // #27756 routed the import through importFuelFile(kind, …) → `const outcome = await …`; same stale-generation check.
+    if (!/const (?:res|outcome) = await [^;]+;\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/.test(text)) out.push(`${key} stale success is inert`);
     if (!/catch \(error\) \{\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/.test(text)) out.push(`${key} stale failure is inert`);
     if (!/finally \{\s*if \(lifecycleGenerationRef\.current === submissionGeneration\) setLoading\(false\);/.test(text)) out.push(`${key} stale request cannot clear loading`);
     if (!/const completeClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);/.test(text)) out.push(`${key} completed lifecycle invalidates request`);

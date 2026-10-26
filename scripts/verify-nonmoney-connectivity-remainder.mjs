@@ -2,9 +2,9 @@
 /**
  * verify-nonmoney-connectivity-remainder.mjs
  *
- * @matrix-built {"modules":["accounting","banking","driver-hub","factoring","fuel","legal","lists","maintenance","reports"],"cols":["connectivity"],"leaves":["accounting.modal.decide_fault","accounting.panel.factoring_interest_accrual","accounting.panel.faro_cash_reserve_reclass","accounting.panel.register_inline_edit","banking.panel.banking_kpi","driver-hub.panel.driver","factoring.panel.factoring_cash_flow","factoring.panel.factoring_kpi","factoring.panel.factoring_purchase_links","factoring.panel.factoring_reserves_shared","factoring.panel.faro_reserve_register","factoring.panel.payments_to_you","factoring.panel.repurchase_due","factoring.panel.save_error","fuel.drawer.end_card","fuel.drawer.void_card","fuel.modal.card_overage_exempt","fuel.modal.card_overage_void","fuel.panel.card_issuers","legal.panel.matter_reserve","lists.panel.ledger_kpi","maintenance.panel.pm_cost_per_mile","reports.panel.three_mile_cpm"],"task":"DEVIN-NONMONEY-CONNECTIVITY-REMAINDER-23"}
+ * @matrix-built {"modules":["accounting","banking","driver-hub","factoring","fuel","legal","lists","maintenance","reports"],"cols":["connectivity"],"leaves":["accounting.modal.decide_fault","accounting.panel.factoring_interest_accrual","accounting.panel.faro_cash_reserve_reclass","accounting.panel.register_inline_edit","banking.panel.banking_kpi","driver-hub.panel.driver","factoring.panel.factoring_cash_flow","factoring.panel.factoring_kpi","factoring.panel.factoring_purchase_links","factoring.panel.factoring_reserves_shared","factoring.panel.faro_reserve_register","factoring.panel.payments_to_you","factoring.panel.repurchase_due","factoring.panel.save_error","fuel.drawer.end_card","fuel.drawer.void_card","fuel.modal.card_overage_exempt","fuel.modal.card_overage_void","fuel.panel.card_issuers","legal.panel.matter_reserve","lists.panel.ledger_kpi","maintenance.panel.pm_cost_per_mile","reports.panel.three_mile_cpm","reports.panel.simple_category"],"task":"DEVIN-NONMONEY-CONNECTIVITY-REMAINDER-23"}
  *
- * Owns the 23 non-money connectivity cells that merged required.json leaves left unclaimed
+ * Owns the 24 non-money connectivity cells that merged required.json leaves left unclaimed
  * (verify-codex-vertical-nonmoney-zero-remainder reported them as unowned canonical-column gaps).
  * For each named leaf this guard asserts the leaf exists in its module's required.json AND that
  * its route_hint resolves to a mounted route or a real surface:// component — the exact
@@ -37,7 +37,7 @@ const OWNED = new Map([
   ["legal", ["legal.panel.matter_reserve"]],
   ["lists", ["lists.panel.ledger_kpi"]],
   ["maintenance", ["maintenance.panel.pm_cost_per_mile"]],
-  ["reports", ["reports.panel.three_mile_cpm"]],
+  ["reports", ["reports.panel.three_mile_cpm", "reports.panel.simple_category"]],
 ]);
 
 export function collectOwnedLeaves(readDir = fs.readdirSync, read = fs.readFileSync) {
@@ -106,5 +106,5 @@ else {
     for (const f of failures) console.error(`- ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — 23 non-money remainder leaves resolve to mounted routes/surfaces`);
+  console.log(`${LABEL} PASS — ${[...OWNED.values()].flat().length} non-money remainder leaves resolve to mounted routes/surfaces`);
 }

@@ -23,7 +23,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -262,6 +262,28 @@ if (isCliMain() && process.argv.includes("--selftest")) {
  * an EXISTING broad claim's module list, or fixing unrelated code in the same script file, no longer
  * re-triggers a hard-fail; it stays counted in the legacy baseline where it already was. A genuinely
  * new task, or an entry that flips from leaf-specific back to broad, still hard-fails as new. */
+/** Read origin/main:scripts/<name> for every name in ONE git process. Byte-exact (sizes from the batch header). */
+export function readOriginMainBlobs(names) {
+  const cache = new Map();
+  if (!names.length) return cache;
+  const out = execFileSync("git", ["cat-file", "--batch"], {
+    cwd: ROOT,
+    input: names.map((n) => `origin/main:scripts/${n}`).join("\n") + "\n",
+    maxBuffer: 1024 * 1024 * 1024,
+  });
+  let off = 0;
+  for (const name of names) {
+    const nl = out.indexOf(0x0a, off);
+    const header = out.subarray(off, nl).toString("utf8");
+    const m = /^\S+ blob (\d+)$/.exec(header);
+    if (!m) throw new Error(`cat-file: unexpected header for ${name}: ${header}`);
+    const size = Number(m[1]);
+    cache.set(name, out.subarray(nl + 1, nl + 1 + size).toString("utf8"));
+    off = nl + 1 + size + 1;
+  }
+  return cache;
+}
+
 function originMainEntries() {
   try {
     const feedText = execSync(`git show origin/main:${FEED_FILE}`, { cwd: ROOT, encoding: "utf8" });
@@ -285,13 +307,9 @@ function originMainEntries() {
       // git grep exit 1 = no matches; treat as empty tagged set (feed-only compare still runs).
       taggedScripts = [];
     }
-    const scriptBlobCache = new Map();
-    for (const name of taggedScripts) {
-      scriptBlobCache.set(
-        name,
-        execSync(`git show origin/main:scripts/${name}`, { cwd: ROOT, encoding: "utf8" }),
-      );
-    }
+    // One `git cat-file --batch` for every tagged blob (was one `git show` process per script: ~600 spawns,
+    // 22.6s of spawnSync in a --cpu-prof, which timed this guard out of verify-static's 25s budget).
+    const scriptBlobCache = readOriginMainBlobs(taggedScripts);
     return scanEntries(
       (p) => {
         const rel = path.relative(ROOT, p).split(path.sep).join("/");

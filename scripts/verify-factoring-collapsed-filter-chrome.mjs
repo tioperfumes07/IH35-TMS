@@ -30,6 +30,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeStagedFilters, faroStripViaBoardChrome, readRepoOrEmpty, STAGED_FILTERS_REL, BOARD_CHROME_REL } from "./lib/factoring-v3-chrome.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-collapsed-filter-chrome";
@@ -86,7 +87,9 @@ export function run() {
   const failures = [];
   const home = read(HOME);
   if (!home.ok) failures.push(home.err);
-  else failures.push(...checkHomeUsesCollapsedFilters(home.src));
+  // 443.326 V3: FactoringHome renders the filters through FactoringStagedFilters; judged as CollapsedListFilters only
+  // when that wrapper is proven to be exactly it (scripts/lib/factoring-v3-chrome.mjs).
+  else failures.push(...checkHomeUsesCollapsedFilters(normalizeStagedFilters(home.src, readRepoOrEmpty(STAGED_FILTERS_REL))));
 
   for (const file of [RECOURSE_TABLE, CHARGEBACKS_TABLE]) {
     const { ok, src, err } = read(file);
@@ -152,6 +155,18 @@ function Home() {
     ["missing filterBar passthrough fails", checkTablePassthrough(RECOURSE_TABLE, badTableNoPassthrough).length > 0],
     ["clean FactoringHome passes", checkHomeUsesCollapsedFilters(goodHome).length === 0],
     ["bespoke grid regression fails", checkHomeUsesCollapsedFilters(badHomeBespokeGrid).length > 0],
+    // 443.326 V3 path: the page uses FactoringStagedFilters; it counts ONLY when the wrapper is exactly CollapsedListFilters.
+    ...(() => {
+      const realWrapper = readRepoOrEmpty(STAGED_FILTERS_REL);
+      const v3Home = goodHome
+        .replace('import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";', 'import { FactoringStagedFilters } from "./FactoringStagedFilters";')
+        .split("CollapsedListFilters").join("FactoringStagedFilters");
+      const hollowWrapper = realWrapper.replace("return <CollapsedListFilters {...props} />;", "return <div>{props.children}</div>;");
+      return [
+        ["V3 home via the proven FactoringStagedFilters wrapper passes", checkHomeUsesCollapsedFilters(normalizeStagedFilters(v3Home, realWrapper)).length === 0],
+        ["V3 home via a wrapper that is NOT CollapsedListFilters fails", hollowWrapper !== realWrapper && checkHomeUsesCollapsedFilters(normalizeStagedFilters(v3Home, hollowWrapper)).length > 0],
+      ];
+    })(),
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
