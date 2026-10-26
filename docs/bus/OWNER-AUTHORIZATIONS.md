@@ -8165,3 +8165,14 @@ rehearsal: per-load dry run on prod (each load rolled back)
 result: APPLIED 2026-10-26 ~02:05 UTC (per-load commits). Dry run: 175 loads, 357 fences, 1013 events, 0 failed. Apply: 175 loads, 357 fences bound, 606,675 stored fixes replayed, 1274 geofence_events, 1716 odometer captures; 6 lock-timeout/deadlock failures re-run with --ids (#27786): 6 committed, 0 failed. Loads with real miles_driven_actual: 14 -> 26 of 194. Remaining NULL: 92 'stop 1 departure: no geofence event' — truck never entered the stop fence (nearest approach 1.08 mi load 13510 Linden NJ, 1.34 mi 13652): stop geocodes ~1 mi from the real dock; 20 'stop 2 arrival: no event'. No money write.
 expires_at: 2026-10-27T00:00:00Z
 status: CLOSED
+
+## AUTH-472
+issued_at: 2026-10-26T02:45:00Z
+issued_by: Owner (Jorge), recorded by Lead
+owner_quotes: "if they are flatbed then mark as flatbed update app" (owner 2026-10-25 9:37 PM CT, answering the FB-56711 / FB-56707 / 56702 DryVan question)
+scope: mdata.equipment FB-56707, FB-56711, 56702 equipment_type DryVan -> Flatbed; then the loads that carried them re-derive load_trailer_equipment_id / trailer_type from the trailer (existing evidence script). No money write.
+action: OWNER_AUTH_ID=AUTH-472 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-fb-trailers-flatbed.mts --apply ; OWNER_AUTH_ID=AUTH-472 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts --apply
+rehearsal: dry run on prod (rolled back): 3 trailers DryVan -> Flatbed
+result: PENDING
+expires_at: 2026-10-27T00:00:00Z
+status: OPEN
