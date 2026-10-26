@@ -28,6 +28,8 @@ const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers"
  */
 function withCanonicalEngineScope<T>(userId: string, companyId: string, fn: (client: never) => Promise<T>): Promise<T> {
   return withLuciaBypass(async (client) => {
+    // Membership is proven on THIS transaction client before the tenant GUC is set (cross-tenant law).
+    await assertCompanyMembership(client, userId, companyId);
     await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     return fn(client as never);
   }, { actorUserId: userId });

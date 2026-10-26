@@ -48,7 +48,8 @@ export function check(src = {}) {
     "register_vendor.operating_company_id = db.operating_company_id",
     "register_vendor.driver_id = db.driver_id",
     "register_vendor.id::text = $11::text OR register_vendor.qbo_vendor_id = $11::text",
-    "query.data.vendor_id ?? null]",
+    // #27464 (443.287 multi-select filters) appended the unit filter as $12 — vendor stays bound as $11.
+    "query.data.vendor_id ?? null, query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : null]",
     "db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}'",
   ]) if (!s.billsRoutes.includes(contract)) f.push(`${F.billsRoutes}: missing register filter contract: ${contract}`);
   if (!/return bill\.status === "open" \|\| bill\.status === "partial";/.test(s.feFilter) || !/DRIVER_BILL_OUTSTANDING_STATUSES as readonly string\[\]\)\.includes/.test(s.feFilter))
@@ -67,7 +68,7 @@ if (isMain && process.argv.includes("--selftest")) {
     ["vendor ignored", { billsRoutes: base.billsRoutes.replace("$11::text IS NULL OR EXISTS (", "true OR EXISTS (") }],
     ["cross company vendor", { billsRoutes: base.billsRoutes.replace("register_vendor.operating_company_id = db.operating_company_id", "true") }],
     ["wrong vendor driver", { billsRoutes: base.billsRoutes.replace("register_vendor.driver_id = db.driver_id", "true") }],
-    ["vendor parameter missing", { billsRoutes: base.billsRoutes.replace("query.data.vendor_id ?? null]", "null]") }],
+    ["vendor parameter missing", { billsRoutes: base.billsRoutes.replace("query.data.vendor_id ?? null, query.data.unit_id", "null, query.data.unit_id") }],
     ["UTC date boundary", { billsRoutes: base.billsRoutes.replaceAll("db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}'", "db.created_at") }],
     ["twin drifts", { fe: base.fe.replace('"open", "approved", "paid", "void", "disputed"', '"open", "paid", "void"') }],
     ["unpaid back to open-only", { billsRoutes: base.billsRoutes.replace('("outstanding" as const)', '("open" as const)') }],

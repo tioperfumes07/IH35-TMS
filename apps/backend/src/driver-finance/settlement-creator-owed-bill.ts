@@ -18,6 +18,7 @@ import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
 import { reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 type Queryable = { query: <R = any>(sql: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -146,7 +147,7 @@ export async function fetchPriorOwedBillKeys(client: Queryable, billIds: string[
       JOIN accounting.bill_lines bl ON bl.bill_id = b.id
      WHERE b.id = ANY($1::uuid[])
        AND b.source = 'settlement_creator_owed'
-       AND b.voided_at IS NULL
+       AND ${notVoided("b")}
   `, [billIds]);
   return rows;
 }

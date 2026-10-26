@@ -42,7 +42,7 @@ import {
   DELIVERY_EVIDENCE_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown, notVoided } from "../accounting/live-document-predicates.sql.js";
+import { driverBillAmountKnown, liveBill, liveExpense, notVoided, openDriverBill } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
 import { operatingBankActualsByDaySql, operatingBankFeedCountSql } from "./cash-flow-bank-actuals.sql.js";
 import { cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
@@ -1202,7 +1202,7 @@ export async function getRollingLedgerRows(
       AND COALESCE(fa.advance_amount_cents, 0) > 0
       AND NOT EXISTS (
         SELECT 1 FROM banking.bank_transactions bt
-        WHERE bt.matched_factoring_advance_id = fa.id AND bt.voided_at IS NULL
+        WHERE bt.matched_factoring_advance_id = fa.id AND ${notVoided("bt")}
       )
     ORDER BY fa.advanced_at ASC
     `,
@@ -1313,7 +1313,7 @@ export async function getRollingLedgerRows(
       AND jep.operating_company_id = $1::uuid
     JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
       AND je.operating_company_id = $1::uuid
-      AND je.voided_at IS NULL
+      AND ${notVoided("je")}
     WHERE ca.operating_company_id = $1::uuid
       AND ca.id = $3::uuid
       AND ca.deactivated_at IS NULL
@@ -1359,7 +1359,7 @@ export async function getRollingLedgerRows(
       AND jep.operating_company_id = $1::uuid
     JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
       AND je.operating_company_id = $1::uuid
-      AND je.voided_at IS NULL
+      AND ${notVoided("je")}
     WHERE ca.operating_company_id = $1::uuid
       AND ca.id = $3::uuid
       AND ca.deactivated_at IS NULL

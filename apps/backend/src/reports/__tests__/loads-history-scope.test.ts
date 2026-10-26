@@ -189,21 +189,22 @@ describe("GET /api/v1/reports/loads-history", () => {
 // 443.286-A tie-out: guard that the service SQL excludes voided/cancelled loads
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
+import { expandLivePredicates } from "./expand-live-predicates.js";
 describe("TIEOUT: loads-history SQL scope", () => {
   it("service imports LOADS_REPORT_SCOPE_SQL and excludes voided invoices", () => {
-    const src = readFileSync(
+    const src = expandLivePredicates(readFileSync(
       fileURLToPath(new URL("../loads-history.service.ts", import.meta.url)),
       "utf-8"
-    );
+    ));
     // Service delegates load filtering to the canonical LOADS_REPORT_SCOPE_SQL
     expect(src).toContain("LOADS_REPORT_SCOPE_SQL");
     // Invoice join in AR tie-out excludes voided invoices
     expect(src).toContain("voided_at IS NULL");
     // Canonical scope in loads-report.service.ts covers cancelled + draft + voided
-    const scope = readFileSync(
+    const scope = expandLivePredicates(readFileSync(
       fileURLToPath(new URL("../loads-report.service.ts", import.meta.url)),
       "utf-8"
-    );
+    ));
     expect(scope).toContain("cancelled");
     expect(scope).toContain("voided_at IS NULL");
   });

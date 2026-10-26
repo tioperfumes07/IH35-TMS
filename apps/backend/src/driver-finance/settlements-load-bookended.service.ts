@@ -18,6 +18,7 @@ import {
   settlementDeductionsSumSql,
   settlementReimbursementsSumSql,
 } from "./settlement-line-buckets.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * OFF-by-default flag (per-entity-only; routed through the canonical `isEnabled` resolver, NOT a
@@ -553,7 +554,7 @@ async function closeLoadBookendedSettlementForDriver(
         WHERE sl.operating_company_id = $1::uuid
           AND sl.load_id = $2::uuid
           AND ds.driver_id = $3::uuid
-          AND ds.voided_at IS NULL
+          AND ${notVoided("ds")}
           AND sl.is_active = true
         LIMIT 1`,
       [opts.operatingCompanyId, opts.load.id, opts.driverId]
@@ -1217,13 +1218,13 @@ export async function refreshOpenTourPeriodDates(
         LEFT JOIN driver_finance.driver_bills db
           ON db.id = sl.source_driver_bill_id AND db.operating_company_id = $2::uuid
        WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
-         AND sl.is_active = true AND sl.voided_at IS NULL
+         AND sl.is_active = true AND ${notVoided("sl")}
          AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
     ),
     linked_loads AS (
       SELECT l.id AS load_id FROM mdata.loads l
        WHERE l.presettlement_link_id = $1::uuid AND l.operating_company_id = $2::uuid
-         AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL
+         AND l.soft_deleted_at IS NULL AND ${notVoided("l")}
          AND NOT EXISTS (SELECT 1 FROM line_loads)
     ),
     all_load_ids AS (SELECT load_id FROM line_loads UNION SELECT load_id FROM linked_loads)

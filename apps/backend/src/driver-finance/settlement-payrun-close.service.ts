@@ -72,6 +72,7 @@ import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account
 import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 import { proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -333,7 +334,7 @@ async function loadAccruedEscrowContributionCents(client: DbClient, settlementId
       WHERE settlement_id = $1::uuid
         AND line_type = 'escrow_contribution'
         AND is_active = true
-        AND voided_at IS NULL
+        AND ${notVoided()}
     `,
     [settlementId]
   );
@@ -845,7 +846,7 @@ export async function closeSettlementPayRun(
           WHERE settlement_id = $1
             AND line_type = 'deduction'
             AND is_active = true
-            AND voided_at IS NULL`,
+            AND ${notVoided()}`,
         [settlementId]
       );
       const linesDeductionCents = parseInt(linesDeductionRes.rows[0].total_cents, 10);
@@ -1902,7 +1903,7 @@ export async function postFinalLoadSettlementsGl(opts: {
             AND settlement_model = 'load_bookended'
             AND status = 'open'
             AND trip_closed_at IS NOT NULL
-            AND voided_at IS NULL
+            AND ${notVoided()}
             AND last_load_id = $2::uuid`,
         [operatingCompanyId, opts.loadId]
       );

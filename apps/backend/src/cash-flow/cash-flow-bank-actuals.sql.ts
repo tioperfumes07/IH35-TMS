@@ -22,6 +22,7 @@
  * verify-bank-transactions-direction-uses-is-credit). On USMCA's October lines both agree: 29 credits
  * $216,532.56 in, 209 debits $239,059.03 out (incl. pending).
  */
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 export function operatingBankAccountSetSql(baAlias: string, hideFilterOnBaAlias: string): string {
   if (!/^[a-z_][a-z0-9_]*$/i.test(baAlias)) throw new Error(`invalid SQL alias: ${baAlias}`);
   const a = baAlias;
@@ -47,7 +48,7 @@ export function operatingBankActualsByDaySql(hideFilterOnBaAlias: string): strin
     WHERE bt.operating_company_id = $1::uuid
       AND bt.transaction_date BETWEEN $2::date AND $3::date
       AND ${operatingBankAccountSetSql("ba", hideFilterOnBaAlias)}
-      AND bt.voided_at IS NULL
+      AND ${notVoided("bt")}
       AND bt.merged_into_bank_transaction_id IS NULL
       AND COALESCE(bt.pending, false) = false
       AND COALESCE(bt.is_sample_data, false) = false
@@ -62,7 +63,7 @@ export function operatingBankActualsByDaySql(hideFilterOnBaAlias: string): strin
         JOIN banking.bank_accounts pa ON pa.id = pt.bank_account_id AND pa.operating_company_id = pt.operating_company_id
         WHERE pt.id = bt.paired_transaction_id
           AND pt.bank_account_id <> bt.bank_account_id
-          AND pt.voided_at IS NULL
+          AND ${notVoided("pt")}
           AND ${otherSide("pa")}
       )
     GROUP BY bt.transaction_date

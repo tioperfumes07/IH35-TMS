@@ -62,7 +62,7 @@ function contracts(at,overrides={}){
  if(cash.includes('ACTIVE_LOAD_FILTER')||cashSql.includes('l.rate_total_cents'))errors.push('private cash-flow load/revenue definition');
  const kpi=read('apps/backend/src/driver-finance/driver-bills.routes.ts');
  if(!kpi.includes('unknown_amount_count')||!kpi.includes('AS amount_known'))errors.push('driver-bill API must expose unknown amounts');
- for(const p of ['apps/frontend/src/pages/driver-finance/SettlementsPage.tsx','apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx','apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx','apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx']){
+ for(const p of ['apps/frontend/src/pages/driver-finance/SettlementsPage.tsx','apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx','apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx','apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx']){
   const ui=read(p);
   if(!ui.includes('amount_known === false')||!ui.includes('Awaiting short miles'))errors.push(`${p}: unpriced bills must not render as currency zero`);
  }
@@ -91,6 +91,10 @@ if(process.argv.includes('--selftest')){
  const cash=fs.readFileSync(path.join(ownRoot,cashPath),'utf8');
  const panel='apps/frontend/src/pages/driver-finance/SettlementsPage.tsx';
  assert.ok(contracts(ownRoot,{[panel]:fs.readFileSync(path.join(ownRoot,panel),'utf8').replaceAll('amount_known === false','amount_known === true')}).some(e=>e.includes('unpriced bills must not render as currency zero')));
+ // #27368 (Cursor 443.280-A) moved the driver-bill rows off SettlementDetailPage onto the Statement workflow page;
+ // the unpriced-bill rule follows the rows there and must still catch a regression on that page.
+ const workflow='apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx';
+ assert.ok(contracts(ownRoot,{[workflow]:fs.readFileSync(path.join(ownRoot,workflow),'utf8').replaceAll('amount_known === false','amount_known === true')}).some(e=>e.includes(`${workflow}: unpriced bills must not render as currency zero`)));
  for(const name of ['openDriverBill']){
   assert.ok(contracts(ownRoot,{[cashPath]:cash.replaceAll('${'+name+'(', '${removed_'+name+'(')}).includes(`cash flow does not execute ${name}`));
  }
