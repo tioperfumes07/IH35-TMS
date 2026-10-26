@@ -17,6 +17,8 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ApiError } from "../../../api/client";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
@@ -178,22 +180,24 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
 
   return (
     <div className="min-w-0 space-y-3" data-testid="insurance-home-board" data-insurance-home-board="1">
-      {errored ? (
+      {/* The summary feeds the KPI strip: when it fails, the strip is not drawn under the error (no "—" wall). */}
+      {summaryQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load insurance summary"
+          status={summaryQuery.error instanceof ApiError ? summaryQuery.error.status : 0}
+          message={userFacingApiError(summaryQuery.error, "Failed to load insurance summary.")}
+          onRetry={() => void summaryQuery.refetch()}
+        />
+      ) : null}
+      {!summaryQuery.isError && errored ? (
         <ListErrorBanner
-          message={errorMsg ?? "Failed to load insurance dashboard."}
-          onRetry={() => {
-            void summaryQuery.refetch();
-            void policiesQuery.refetch();
-          }}
+          message={errorMsg ?? "Failed to load insurance policies."}
+          onRetry={() => void policiesQuery.refetch()}
         />
       ) : null}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-          gap: 8,
-        }}
+      {!summaryQuery.isError ? <section
+        className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[repeat(5,minmax(0,1fr))] [&>*]:min-w-0"
         data-testid="insurance-home-kpi-strip"
       >
         <V3KpiTile
@@ -241,7 +245,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           tone={gapCount != null && gapCount > 0 ? "red" : "ink"}
           onClick={() => navigate("/insurance/coverage-gaps")}
         />
-      </div>
+      </section> : null}
 
       <div
         className="grid grid-cols-1 gap-3 lg:grid-cols-[1.4fr_1fr] lg:items-start"

@@ -388,8 +388,8 @@ export function suggestionSourceLabel(source: string | null | undefined): string
   return "Suggestion";
 }
 
-/** 443.343-C — High / Medium / Low from suggested_confidence. */
-export function suggestionConfidenceLabel(
+/** 443.343-C — High / Medium / Low from suggested_confidence (categorization-rules engine; not match/link-suggestion confidence). */
+export function categorizationConfidenceLabel(
   confidence: PlaidBankTransaction["suggested_confidence"] | string | null | undefined,
 ): string | null {
   const c = String(confidence ?? "").trim().toLowerCase();
@@ -1767,10 +1767,10 @@ export function BankingTransactionsDesignView({
                     <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Suggested: </span>
                     {tx.suggested_vendor_name || tx.suggested_customer_name || tx.suggested_account_name || "a category"}
                     {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
-                    {suggestionConfidenceLabel(tx.suggested_confidence) ? (
+                    {categorizationConfidenceLabel(tx.suggested_confidence) ? (
                       <span className="text-[#6B7280]" data-testid="bank-txn-suggested-confidence">
                         {" "}
-                        · {suggestionConfidenceLabel(tx.suggested_confidence)}
+                        · {categorizationConfidenceLabel(tx.suggested_confidence)}
                       </span>
                     ) : null}
                     {suggestionSourceLabel(tx.suggested_source) ? (

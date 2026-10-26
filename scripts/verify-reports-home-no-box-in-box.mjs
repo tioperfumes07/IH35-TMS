@@ -5,6 +5,11 @@
  * Management reports stay a single outer section frame with flat divide/border-t cells
  * — no nested `rounded-sm border` tiles (Cascade row 205).
  *
+ * FINAL-3 row 40 (#27715, owner v3 rebuild — docs/design/v3/Reports.dc.html): the whole hub, including the
+ * Management strip, moved into ReportsHomeBoard. The Management frame is now the shared V3Panel (or the legacy
+ * single section frame); the flat border-t / sm:divide-x cell law and the no-nested-tile law are unchanged, and the
+ * accounting panel title is the v3 spec's "Accounting & financial".
+ *
  * --selftest exercises pass + nested-tile failure fixtures.
  */
 import fs from "node:fs";
@@ -32,9 +37,11 @@ export function managementCatalogSection(src) {
   const body = stripComments(src);
   const start = body.indexOf("Management reports");
   if (start < 0) return "";
-  const sectionStart = body.lastIndexOf("<section", start);
-  const endMarker = body.indexOf("<FrequentlyRunTable", start);
-  const end = endMarker >= 0 ? endMarker : body.length;
+  const sectionStart = Math.max(body.lastIndexOf("<section", start), body.lastIndexOf("<V3Panel", start));
+  const frequently = body.indexOf("<FrequentlyRunTable", start);
+  const panelClose = body.indexOf("</V3Panel>", start);
+  const ends = [frequently, panelClose >= 0 ? panelClose + "</V3Panel>".length : -1].filter((i) => i >= 0);
+  const end = ends.length ? Math.min(...ends) : body.length;
   return body.slice(sectionStart >= 0 ? sectionStart : start, end);
 }
 
@@ -46,7 +53,8 @@ export function collectManagementProblems(section) {
     return problems;
   }
   const frames = section.match(FRAME_RE);
-  if (!frames || frames.length < 1) {
+  const v3Frame = /^<V3Panel\b/.test(section.trimStart());
+  if (!v3Frame && (!frames || frames.length < 1)) {
     problems.push(
       `${HOME}: Management must use a single overflow-hidden section frame`,
     );
@@ -76,7 +84,7 @@ export function collectManagementProblems(section) {
 export function collectBoardProblems(boardSrc) {
   const problems = [];
   const body = stripComments(boardSrc);
-  if (!body.includes("Accounting + financial reports")) {
+  if (!body.includes('title="Accounting &amp; financial"') && !body.includes("Accounting + financial reports")) {
     problems.push(`${BOARD}: missing Accounting + financial reports panel`);
   }
   if (!body.includes("What it shows")) {
@@ -154,6 +162,21 @@ function selftest() {
       );
     }
   `;
+  const goodV3Mgmt = `
+    <V3Panel title="Management reports" subtitle="Branded financial compilations">
+      <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]">
+        <button className="border-t border-[#E5E7EB] px-3 py-2">Sales</button>
+      </div>
+    </V3Panel>
+  `;
+  const badV3Mgmt = goodV3Mgmt
+    .replace('className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]"', 'className="grid gap-2 p-3 sm:grid-cols-3"')
+    .replace('className="border-t border-[#E5E7EB] px-3 py-2"', 'className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2"');
+  const goodV3P = collectManagementProblems(managementCatalogSection(goodV3Mgmt));
+  if (goodV3P.length) throw new Error(`selftest good V3Panel mgmt failed: ${goodV3P.join("; ")}`);
+  if (collectManagementProblems(managementCatalogSection(badV3Mgmt)).length < 2) {
+    throw new Error("selftest: nested tiles inside the V3Panel Management frame were not flagged");
+  }
   const goodP = collectManagementProblems(managementCatalogSection(goodMgmt));
   if (goodP.length) throw new Error(`selftest good mgmt failed: ${goodP.join("; ")}`);
   const badP = collectManagementProblems(managementCatalogSection(badMgmt));
@@ -181,7 +204,8 @@ if (IS_MAIN) {
     process.exit(1);
   }
   const problems = [
-    ...collectManagementProblems(managementCatalogSection(homeSrc)),
+    // The Management strip lives on the board since #27715; the home shell no longer carries it.
+    ...collectManagementProblems(managementCatalogSection(boardSrc)),
     ...collectBoardProblems(boardSrc),
   ];
   if (problems.length) {
