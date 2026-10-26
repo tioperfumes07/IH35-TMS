@@ -17219,5 +17219,25 @@
     "lane": "CC-1",
     "pr": "PENDING",
     "step": 18849
+  },
+  "18861": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-26",
+    "purpose": "verify-factoring-batch-detail-board"
+  },
+  "18873": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-26",
+    "purpose": "verify-factoring-profile-admin-board"
+  },
+  "18885": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-26",
+    "purpose": "verify-fill-shell-empty-states"
+  },
+  "18897": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-26",
+    "purpose": "verify-fuel-reverse-board-sections"
   }
 }
