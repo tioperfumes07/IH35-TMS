@@ -125,7 +125,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       const lastDispatchActivityAt = dr.last_dispatch_activity_at ? String(dr.last_dispatch_activity_at) : null;
       return {
         driverId,
-        driverName: name || "—",
+        driverName: name ? formatPersonName(name) : "—",
         unit,
         hosStatus,
         currentLoad,

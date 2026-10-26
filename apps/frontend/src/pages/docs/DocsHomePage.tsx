@@ -289,7 +289,7 @@ export function DocsHomePage() {
           <input
             value={staged.draft.typeFilter}
             onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs font-normal"
+            className="h-10 w-full rounded-sm border border-gray-300 px-2 text-xs font-normal"
             placeholder="Category code, label, mime type"
           />
         </label>
@@ -298,7 +298,7 @@ export function DocsHomePage() {
           <DatePicker
             value={staged.draft.expiresBefore}
             onChange={(next) => staged.setDraft({ ...staged.draft, expiresBefore: next })}
-            className="h-9 w-full font-normal"
+            className="h-10 w-full font-normal"
           />
         </label>
         <div className="flex items-end gap-2">
