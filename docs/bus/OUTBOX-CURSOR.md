@@ -1,8 +1,18 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting 220 money-list BoardSection (real code)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlement Creator BoardSection (real code)
 
 - **STATUS:** SHIPPING
+- **DELTA:** SettlementCreatorDrawer `Section()` + Post result + Settlement totals + JE Preview → shared `BoardSection`. Money engines / Preview / Post / subtotals / PDF tie-out unchanged. New verify-settlement-creator-board-sections (wired via step 3424). Pending Open/Closed stay PARTIAL (tabs already BoardSection+engines; creator was the bare-card gap).
+- **VERIFY:** tsc -b EXIT 0 · verify-settlement-creator-board-sections PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Settlements Open/Closed remaining depth if any; Factoring profile FORM_INPUT; Accounting Reclassify/Batch
+- **Files Modified:** SettlementCreatorDrawer.tsx · verify-settlement-creator-board-sections.mjs · 3424-verify-settlements-qbo-chrome-surfaces.mjs · OUTBOX-CURSOR.md
+
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting 220 money-list BoardSection (real code)
+
+- **STATUS:** MERGED [#27835](https://github.com/tioperfumes07/IH35-TMS/pull/27835) @ `4e9322a488`
 - **DELTA:** Real `BoardSection` register wraps on 12 Accounting money-list tabs (Expenses · Receipts · Checks · Invoices · Payments · Bill payments · Vendor credits · Credit memos · Manual JE · Factoring advances · Prepaid · Fixed assets). kpiStrip + moneyListKpiCard + void/create engines unchanged. Prior Expenses tip was guard-only — this ships the page code. New guard verify-acct-220-money-list-boards; receipts/checks/expenses guards ratcheted. Pending 220 PARTIAL.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-surf-02-expenses PASS · verify-acct-receipts-leaf PASS · verify-checks-list-shows-every-check PASS · verify-acct-220-money-list-boards PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

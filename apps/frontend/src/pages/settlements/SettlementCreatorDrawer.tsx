@@ -6,6 +6,7 @@ import { companyToday } from "../../lib/businessDate";
  */
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Combobox } from "../../components/Combobox";
@@ -326,44 +327,49 @@ function Section({
     pdfCents == null || subtotalCents == null
       ? null
       : Math.round(subtotalCents) === Math.round(pdfCents);
+  const slug = title.replace(/\s+/g, "-").toLowerCase();
+  // 443.280 fill-not-shell — money sections use shared BoardSection (not bare rounded card).
+  // Engines / subtotals / PDF tie-out unchanged; + Add stays under the last line (owner 2026-10-07).
   return (
-    <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2">
-      <div className="flex items-center justify-center gap-2">
-        <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h3>
-      </div>
-      {children}
-      {subtotalCents != null ? (
-        // QBO presentation: a subtotal sits on a ruled line, right-aligned, in lining figures, with
-        // the label left and the amount in a fixed 120px money column so every section's amount
-        // stacks on the same decimal point down the drawer. Centred grey text did not read as a
-        // total and could not be scanned against the AlwaysTrack statement.
-        <div
-          className="mt-1 flex items-baseline justify-between gap-2 border-t border-[#E5E7EB] pt-1"
-          data-testid={`sc-section-subtotal-${title.replace(/\s+/g, "-").toLowerCase()}`}
-        >
-          <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">
-            Subtotal
-          </span>
-          <span className="flex items-baseline gap-2">
-            {pdfCents != null ? (
-              <span className="text-xs text-[#6B7280]">
-                PDF{" "}
-                <span className="inline-block w-[120px]">
-                  <MoneyCell cents={pdfCents} drill={{ none: "Total printed on the uploaded settlement PDF — a preview, not yet a record" }} />
-                </span>
-              </span>
-            ) : null}
-            <span
-              className={`inline-block w-[120px] text-xs font-bold ${
-                tied === null ? "text-[#0F1219]" : tied ? "text-[#16A34A]" : "text-red-600"
-              }`}
-            >
-              <MoneyCell cents={subtotalCents} drill={{ none: "Subtotal of the lines being built in this settlement — a preview until it is posted" }} />
+    <BoardSection
+      title={title}
+      testId={`sc-section-${slug}`}
+      footer={
+        subtotalCents != null ? (
+          // QBO presentation: a subtotal sits on a ruled line, right-aligned, in lining figures, with
+          // the label left and the amount in a fixed 120px money column so every section's amount
+          // stacks on the same decimal point down the drawer. Centred grey text did not read as a
+          // total and could not be scanned against the AlwaysTrack statement.
+          <div
+            className="flex items-baseline justify-between gap-2"
+            data-testid={`sc-section-subtotal-${slug}`}
+          >
+            <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">
+              Subtotal
             </span>
-          </span>
-        </div>
-      ) : null}
-    </section>
+            <span className="flex items-baseline gap-2">
+              {pdfCents != null ? (
+                <span className="text-xs text-[#6B7280]">
+                  PDF{" "}
+                  <span className="inline-block w-[120px]">
+                    <MoneyCell cents={pdfCents} drill={{ none: "Total printed on the uploaded settlement PDF — a preview, not yet a record" }} />
+                  </span>
+                </span>
+              ) : null}
+              <span
+                className={`inline-block w-[120px] text-xs font-bold ${
+                  tied === null ? "text-[#0F1219]" : tied ? "text-[#16A34A]" : "text-red-600"
+                }`}
+              >
+                <MoneyCell cents={subtotalCents} drill={{ none: "Subtotal of the lines being built in this settlement — a preview until it is posted" }} />
+              </span>
+            </span>
+          </div>
+        ) : undefined
+      }
+    >
+      <div className="space-y-2 p-2">{children}</div>
+    </BoardSection>
   );
 }
 
@@ -1377,9 +1383,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
           />
         ) : null}
         {postStages ? (
-          <section className="rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="sc-post-stages">
-            <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Post result</h3>
-            <ul className="mt-1 space-y-0.5">
+          <BoardSection title="Post result" testId="sc-post-stages">
+            <ul className="space-y-0.5 px-3.5 py-2">
               {(["documents", "ledger", "factoring", "billing"] as const).map((k) => (
                 <li key={k} data-testid={`sc-post-stage-${k}`} className={postStages.stages[k].ok ? "text-[#16A34A]" : "text-red-600"}>
                   {postStages.stages[k].ok ? "✓" : "✗"} {postStages.stages[k].message}
@@ -1387,13 +1392,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
               ))}
             </ul>
             {!postStages.ok && (!postStages.stages.factoring.ok || !postStages.stages.billing.ok) ? (
-              <div className="mt-1 text-center">
+              <div className="px-3.5 pb-2 text-center">
                 <Button size="sm" variant="secondary" loading={busy} onClick={() => void retryAfterCommit()} data-testid="sc-post-retry">
                   Retry the failed step
                 </Button>
               </div>
             ) : null}
-          </section>
+          </BoardSection>
         ) : null}
         {wrongEntity ? (
           <p className="text-xs text-red-600" data-testid="settlement-creator-usmca-only">
@@ -3223,14 +3228,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
           the way QBO closes a statement. It computes nothing new — every figure is the SAME
           value its section shows, so the summary can never disagree with the section above it.
         */}
-        <section
-          className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2"
-          data-testid="sc-settlement-totals"
+        <BoardSection
+          title="Settlement totals · check against AlwaysTrack before posting"
+          testId="sc-settlement-totals"
         >
-          <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
-            Settlement totals · check against AlwaysTrack before posting
-          </h3>
-          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+          <div className="grid gap-x-6 gap-y-1 px-3.5 py-2 md:grid-cols-2">
             <div>
               <TotalRow label="Invoice / line haul" cents={loadsSubtotal} />
               <TotalRow label="Fuel purchases" cents={fuelSubtotal} />
@@ -3275,7 +3277,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
             Post refuses when it differs from the AlwaysTrack TOTAL DUE.
           */}
           {preview?.close_totals ? (
-            <div className="border-t border-[#E5E7EB] pt-2" data-testid="sc-posting-engine-totals">
+            <div className="border-t border-[#E5E7EB] px-3.5 py-2" data-testid="sc-posting-engine-totals">
               <h4 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
                 Posting engine · what Post writes
               </h4>
@@ -3299,76 +3301,77 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
             </div>
           ) : null}
           {preview?.driver_net_cents == null ? (
-            <p className="text-center text-xs text-[#6B7280]">
+            <p className="px-3.5 pb-2 text-center text-xs text-[#6B7280]">
               Driver net is computed by the engine — press Preview JE to fill it. Everything above is
               live as you type.
             </p>
           ) : null}
-        </section>
+        </BoardSection>
 
         {/* JE preview */}
         {preview ? (
-          <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="sc-je-preview">
-            <h3 className="text-center text-section-header font-bold uppercase text-[#4B5563]">JE Preview</h3>
-            <div className="grid grid-cols-2 gap-2 text-center text-xs">
-              <div className={preview.company_expenses_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
-                Company {formatUsdCents(preview.company_expenses_cents)}{" "}
-                {preview.company_expenses_matches_pdf ? "✓" : "≠ PDF"}
-              </div>
-              <div className={preview.driver_net_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
-                Driver net {formatUsdCents(preview.driver_net_cents)}{" "}
-                {preview.driver_net_matches_pdf ? "✓" : "≠ PDF"}
-              </div>
-            </div>
-            <div className="max-h-48 overflow-auto" data-testid="sc-je-lines">
-              <div
-                className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)] gap-x-2 text-center text-xs"
-                role="table"
-                aria-label="Journal entry preview lines"
-              >
-                <div role="row" className="contents text-section-header font-bold uppercase text-[#4B5563]">
-                  <div role="columnheader" className="p-1">
-                    Account
-                  </div>
-                  <div role="columnheader" className="p-1">
-                    Dr
-                  </div>
-                  <div role="columnheader" className="p-1">
-                    Cr
-                  </div>
-                  <div role="columnheader" className="p-1">
-                    Memo
-                  </div>
+          <BoardSection title="JE Preview" testId="sc-je-preview">
+            <div className="space-y-2 px-3.5 py-2">
+              <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                <div className={preview.company_expenses_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
+                  Company {formatUsdCents(preview.company_expenses_cents)}{" "}
+                  {preview.company_expenses_matches_pdf ? "✓" : "≠ PDF"}
                 </div>
-                {preview.je_lines.map((line, i) => (
-                  <div key={i} role="row" className="contents border-t border-[#E5E7EB]">
-                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
-                      {formatAccountDisplayLabel({
-                        account_number: line.account_number,
-                        account_name: line.account_name,
-                      })}
+                <div className={preview.driver_net_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
+                  Driver net {formatUsdCents(preview.driver_net_cents)}{" "}
+                  {preview.driver_net_matches_pdf ? "✓" : "≠ PDF"}
+                </div>
+              </div>
+              <div className="max-h-48 overflow-auto" data-testid="sc-je-lines">
+                <div
+                  className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)] gap-x-2 text-center text-xs"
+                  role="table"
+                  aria-label="Journal entry preview lines"
+                >
+                  <div role="row" className="contents text-section-header font-bold uppercase text-[#4B5563]">
+                    <div role="columnheader" className="p-1">
+                      Account
                     </div>
-                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
-                      {line.debit_cents ? formatUsdCents(line.debit_cents) : ""}
+                    <div role="columnheader" className="p-1">
+                      Dr
                     </div>
-                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
-                      {line.credit_cents ? formatUsdCents(line.credit_cents) : ""}
+                    <div role="columnheader" className="p-1">
+                      Cr
                     </div>
-                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
-                      {line.memo}
+                    <div role="columnheader" className="p-1">
+                      Memo
                     </div>
                   </div>
-                ))}
+                  {preview.je_lines.map((line, i) => (
+                    <div key={i} role="row" className="contents border-t border-[#E5E7EB]">
+                      <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                        {formatAccountDisplayLabel({
+                          account_number: line.account_number,
+                          account_name: line.account_name,
+                        })}
+                      </div>
+                      <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                        {line.debit_cents ? formatUsdCents(line.debit_cents) : ""}
+                      </div>
+                      <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                        {line.credit_cents ? formatUsdCents(line.credit_cents) : ""}
+                      </div>
+                      <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                        {line.memo}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+              {preview.blockers.length ? (
+                <ul className="list-inside list-disc text-left text-xs text-red-600">
+                  {preview.blockers.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
-            {preview.blockers.length ? (
-              <ul className="list-inside list-disc text-left text-xs text-red-600">
-                {preview.blockers.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
+          </BoardSection>
         ) : null}
       </div>
     </ParityDrawer>
