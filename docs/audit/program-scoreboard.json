@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4e9322a",
-  "generated_at": "2026-10-26T03:07:15.015Z",
+  "healthzSha": "ec18721",
+  "generated_at": "2026-10-26T04:52:07.657Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "4e9322a",
+    "deployedSha": "ec18721",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27838,
-      "title": "FINDING: ACCT-F443280 — FILL-SETTLEMENT-CREATOR-BOARD — Settlement Creator sections → BoardSection LANE: NON-FINANCIAL",
+      "number": 27878,
+      "title": "FINDING: ACCT-F220 — MultiEntity + QBO reconcile BoardSection fill",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 10:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27838",
-      "sha": "ffc1ad4478",
-      "committedAtIso": "2026-10-25T22:05:15-05:00"
+      "mergedAtCt": "10/25/2026, 11:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27878",
+      "sha": "277dfe9978",
+      "committedAtIso": "2026-10-25T23:10:41-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: FINAL-2 ENG-29 — backfill real driven miles ops script (dry-run default) LANE: NON-FINANCIAL (ops script; no app code; Lead applies with --apply + AUTH-ENG29-BACKFILL-MILES) DOD-A: PASS — scripts/ops/2026-10-25-cc3-eng29-backfill-real-driven-miles.mts: runs computeLoadRealDrivenMiles + persistLoadRealDrivenMiles on all delivered USMCA loads (no 14-day window); dry-run default; --apply commits under AUTH-ENG29-BACKFILL-MILES DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: dispatch (unchanged) ROOT CAUSE: ENG-29 — cron's 14-day window prevents computing miles on older delivered loads that have fence data; 12 of 198 loads have miles_driven_actual; remaining 186 need backfill through the service FIX: ops script queries ALL delivered USMCA loads (not voided/canceled, has unit, has arrived stop), runs computeLoadRealDrivenMiles in 50-load batches, prints counts; --apply persists via persistLoadRealDrivenMiles under AUTH-ENG29-BACKFILL-MILES GUARD: backend tsc -p tsconfig.json — pre-existing settlement-resolution.sql.ts errors, not in diff LIVE PROOF: script written; Lead applies --apply; UNVERIFIED until run REMAINING: rows 5/18/19/40/42/43/80/193/257/259/261-262 still open",
+      "number": 27877,
+      "title": "FINDING: bank-line Check No also parsed from FOR CHECK #XXXXX001091 (cashed-check holds)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 10:01 PM CT",
-      "url": "",
-      "sha": "ef261c6475",
-      "committedAtIso": "2026-10-25T22:01:42-05:00"
+      "mergedAtCt": "10/25/2026, 11:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27877",
+      "sha": "b1171e222f",
+      "committedAtIso": "2026-10-25T23:08:24-05:00"
     },
     {
-      "number": 0,
-      "title": "chore: update OUTBOX-CC-3 with rows 41/221 done",
+      "number": 27876,
+      "title": "FINDING: claim migration 202616290000 (bank-line check number from cashed-check text)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 10:00 PM CT",
-      "url": "",
-      "sha": "280ca5d758",
-      "committedAtIso": "2026-10-25T22:00:01-05:00"
+      "mergedAtCt": "10/25/2026, 11:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27876",
+      "sha": "a7a0a413c5",
+      "committedAtIso": "2026-10-25T23:06:56-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: FINAL-2 row 221 — VoidReasonModal memo typing gated to Owner/Accountant only LANE: NON-FINANCIAL (FE-only; no schema, no money mutation) DOD-A: PASS — VoidReasonModal: useAuth + canTypeMemo check; Owner/Accountant see dropdown+memo textarea; all other roles see dropdown only (no typing, no textarea); effectiveMemo blanked for non-owners so composed carries only the catalog label DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: accounting (unchanged) ROOT CAUSE: Row 221 — VoidReasonModal showed memo textarea for all roles; the owner ruling requires only Owner/Accountant to be able to type a memo, all others should get dropdown-only with no free text entry FIX: VoidReasonModal.tsx — import useAuth; derive canTypeMemo = role Owner|Accountant; wrap textarea in canTypeMemo conditional; use effectiveMemo (blanked for non-owners) in composeVoidReason; needsMemo restricted to canTypeMemo users GUARD: tsc -b exit 0 · vite build exit 0 LIVE PROOF: tsc -b exit 0 · vite build exit 0 REMAINING: rows 5/18/19/40/42/43/80/193/257/259/261-262/264 still open",
+      "number": 27875,
+      "title": "FINDING: 2 import cycles broken, load-transition cycle 17 -> 11 files; invented owner-gated allowlist withdrawn",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 10:00 PM CT",
-      "url": "",
-      "sha": "8656ed746f",
-      "committedAtIso": "2026-10-25T22:00:01-05:00"
+      "mergedAtCt": "10/25/2026, 11:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27875",
+      "sha": "fc3a9e9f40",
+      "committedAtIso": "2026-10-25T23:05:41-05:00"
     },
     {
-      "number": 27837,
-      "title": "FINDING: N/A LANE: CC-1 — update verify-creator-advance guard for ENG-04 posting-engine contract",
+      "number": 27872,
+      "title": "FINDING: ACCT-F220 — Collections/VendorBalances/Waterfall/ImportFuel BoardSection",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27837",
-      "sha": "0ab4728c7b",
-      "committedAtIso": "2026-10-25T21:57:13-05:00"
+      "mergedAtCt": "10/25/2026, 11:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27872",
+      "sha": "0faec95a3a",
+      "committedAtIso": "2026-10-25T23:05:39-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: FINAL-2 row 41 — Trial balance viewer board-faithful (443.280) LANE: NON-FINANCIAL (FE-only; no schema, no money mutation) DOD-A: PASS — KPI tiles clickable (onTotalsDrill); cells plain 2-dp; Measured note live ReactNode GL vs subledger; footer row removed; space-y-3 DOD-B: N/A DOD-C: N/A DOD-D: N/A DOD-E: N/A VERIFY-1: N/A VERIFY-2: N/A VERIFY-3: N/A VERIFY-4: N/A VERIFY-5: N/A VERIFY-6: N/A VERIFY-7: N/A VERIFY-8: N/A MODULE_PROGRESS: reports (unchanged) ROOT CAUSE: grand-total KPI tiles not clickable; table cells used $ formatting (board: plain 2-dp with true minus); Grand total footer row present (board: no footer, totals in KPI tiles only); Measured note was a plain string instead of live GL-vs-subledger comparison FIX: TrialBalancePage — resolveAmountRoute + getArAgingReport + V3; cell() for plain table numbers; arSubledgerQuery; measuredArNote→ReactNode with AmountLink GL vs AR aging Link + tie/no-tie copy; remove footerCells from ParityTable; pass onTotalsDrill; space-y-4→space-y-3. TrialBalanceBoard — ReactNode measuredArNote; onTotalsDrill prop; onClick={onTotalsDrill} on debit/credit KPI tiles GUARD: tsc -b exit 0 · vite build exit 0 LIVE PROOF: tsc -b exit 0 · vite build exit 0 REMAINING: rows 5/18/19/40/42/43/80/193/221/257/259/261-262/264 still open",
+      "number": 27874,
+      "title": "Claude-1-FINDING: Row 213 — Tour period dates stale; compute period_end as today for open tours",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:56 PM CT",
-      "url": "",
-      "sha": "d2f372c3bd",
-      "committedAtIso": "2026-10-25T21:56:40-05:00"
+      "mergedAtCt": "10/25/2026, 11:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27874",
+      "sha": "13098b65cb",
+      "committedAtIso": "2026-10-25T23:04:24-05:00"
     },
     {
-      "number": 27836,
-      "title": "FINDING: N/A LANE: CC-1 — bills-settlement static literals; cash-flow predicate consumer; cash-advances staged filters; proforma-timing guard needle",
+      "number": 27873,
+      "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27836",
-      "sha": "9ba5ee4aee",
-      "committedAtIso": "2026-10-25T21:55:11-05:00"
+      "mergedAtCt": "10/25/2026, 11:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27873",
+      "sha": "186344d6a4",
+      "committedAtIso": "2026-10-25T23:03:47-05:00"
     },
     {
-      "number": 27835,
-      "title": "FINDING: ACCT-F443293 — FILL-ACCT-220-MONEY-LIST-BOARDS — 12 Accounting registers → BoardSection LANE: NON-FINANCIAL",
+      "number": 27871,
+      "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27835",
-      "sha": "4e9322a488",
-      "committedAtIso": "2026-10-25T21:54:36-05:00"
+      "mergedAtCt": "10/25/2026, 11:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27871",
+      "sha": "c88cc16e1b",
+      "committedAtIso": "2026-10-25T23:01:52-05:00"
     },
     {
-      "number": 27834,
-      "title": "FINDING: shared input height follows the form-field token (h-10) — NumberInput aligned, guards stop pinning literals",
+      "number": 27870,
+      "title": "FINDING: table-header ratchet — 16 date-column sites honest, 10 hand-rolled tables to ParityTable",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27834",
-      "sha": "525def8998",
-      "committedAtIso": "2026-10-25T21:49:13-05:00"
+      "mergedAtCt": "10/25/2026, 11:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27870",
+      "sha": "fb769d45ab",
+      "committedAtIso": "2026-10-25T23:00:38-05:00"
     },
     {
-      "number": 27833,
-      "title": "FINDING: GPS dwell is the stop boundary when the fence was never entered — automatic in the real-driven-miles cron",
+      "number": 27869,
+      "title": "FINDING: Row 212 — Settlements board shows P-series display_id; replace with settlementLabel (PENDING for open, AT number when settled)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 09:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27833",
-      "sha": "9fedfdb865",
-      "committedAtIso": "2026-10-25T21:48:05-05:00"
+      "mergedAtCt": "10/25/2026, 11:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27869",
+      "sha": "da769b5db2",
+      "committedAtIso": "2026-10-25T23:00:16-05:00"
     }
   ]
 }
