@@ -83,10 +83,13 @@ async function catchUp(c: pg.Client, log: Logger): Promise<void> {
   try {
     await c.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const r = await c.query<{ company_id: string; load_ids: string[]; max_at: string }>(
-      `SELECT operating_company_id::text AS company_id, array_agg(id::text) AS load_ids, max(updated_at)::text AS max_at
-         FROM mdata.loads
-        WHERE updated_at > $1::timestamptz
-        GROUP BY operating_company_id`,
+      `SELECT l.operating_company_id::text AS company_id, array_agg(l.id::text) AS load_ids, max(l.updated_at)::text AS max_at
+         FROM mdata.loads l
+         -- System catch-up spans every entity BY DESIGN; each load is attributed to its own entity row and
+         -- emitted only on that entity's channel (never another entity's).
+         JOIN org.companies co ON co.id = l.operating_company_id
+        WHERE l.updated_at > $1::timestamptz
+        GROUP BY l.operating_company_id`,
       [lastSeen]
     );
     await c.query("COMMIT");

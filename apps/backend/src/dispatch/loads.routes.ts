@@ -1060,7 +1060,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     // (canonical dispatch work), never every load in the table.
     const filters: string[] = [`l.operating_company_id = $1::uuid`, `l.soft_deleted_at IS NULL`];
     if (query.scope === "all") {
-      filters.push(`EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.id = l.id AND ${canonicalRealLoadRowClause("bl")})`);
+      filters.push(`EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.id = l.id AND bl.operating_company_id = l.operating_company_id AND ${canonicalRealLoadRowClause("bl")})`);
     } else {
       // the board, read through the load service: no status = open_dispatch (dispatch work); an explicit status list narrows
       // the STATUS half within the live set (open_dispatch + pre_settlement, e.g. delivered_pending_docs on Overview).
@@ -2117,7 +2117,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT count(*)::int AS count
             FROM mdata.loads l
             -- LEAD 443.206R — the board set (the load service via canonicalDispatchWorkWhereClause), narrowed to these statuses.
-            WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+            WHERE l.operating_company_id = $1::uuid
+              AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
               AND l.status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
           `,
           [operatingCompanyId]
@@ -2273,7 +2274,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
           -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/
           -- "No driver on file") — never drop it from one list and keep it on the other.
-          WHERE ${UNIT_IN_SERVICE_SQL}
+          WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+            AND ${UNIT_IN_SERVICE_SQL}
             AND l.id IS NULL
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             last_delivery.last_drop_at, last_delivery.load_id, last_delivery.load_number,

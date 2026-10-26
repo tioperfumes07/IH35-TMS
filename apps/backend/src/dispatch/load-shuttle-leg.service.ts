@@ -102,6 +102,7 @@ export async function listLoadShuttleLegs(client: DbClient, operatingCompanyId: 
        FROM dispatch.load_shuttle_legs sl
        JOIN mdata.load_stops s ON s.id = sl.from_stop_id
        LEFT JOIN mdata.units u ON u.id = sl.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = sl.operating_company_id
       WHERE sl.operating_company_id = $1::uuid AND sl.load_id = $2::uuid AND sl.voided_at IS NULL
       ORDER BY sl.created_at`,
     [operatingCompanyId, loadId]

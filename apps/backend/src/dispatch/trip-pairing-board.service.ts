@@ -65,8 +65,13 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
        FROM mdata.units u
       -- LEAD 443.206 D3/D4 — THE board unit gate, and never a gate on load membership: a unit carrying a board-set
       -- load is listed even when the gate would drop it (its load shows on every other board).
-      WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
-         OR EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})`,
+      -- Entity scope: branch 1 is this entity's own/leased unit (the gate repeats the same predicate);
+      -- branch 2 reaches a unit ONLY through this entity's own board load (bl.operating_company_id = $1).
+      WHERE (COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+             AND ${canonicalBoardUnitGateSql("u", "$1::uuid")})
+         OR EXISTS (SELECT 1 FROM mdata.loads bl
+                     WHERE bl.assigned_unit_id = u.id AND bl.operating_company_id = $1::uuid
+                       AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})`,
     [operatingCompanyId]
   );
 

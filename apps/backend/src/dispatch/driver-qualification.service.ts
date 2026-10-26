@@ -347,10 +347,14 @@ export function splitPaperFileReasons(
 }
 
 /** LEAD 443.204 — the driver's paper-DQ-file stamp (NULL = full gate). Fail-closed: a direct query. */
-export async function driverDqFileOnPaperSince(client: QueryableClient, driverId: string): Promise<string | null> {
+export async function driverDqFileOnPaperSince(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  driverId: string
+): Promise<string | null> {
   const r = await client.query<{ since: string | null }>(
-    `SELECT dq_file_on_paper_since::text AS since FROM mdata.drivers WHERE id = $1::uuid`,
-    [driverId]
+    `SELECT dq_file_on_paper_since::text AS since FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [driverId, operatingCompanyId]
   );
   return r.rows[0]?.since ?? null;
 }

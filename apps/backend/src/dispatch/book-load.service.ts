@@ -525,8 +525,9 @@ export async function resolveLoadTrailerEquipmentIdForInsert(
   let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
   if (!code && hints.companyTrailerId) {
     const eq = await client.query<{ equipment_type: string | null }>(
-      `SELECT equipment_type::text AS equipment_type FROM mdata.equipment WHERE id = $1::uuid LIMIT 1`,
-      [hints.companyTrailerId]
+      `SELECT equipment_type::text AS equipment_type FROM mdata.equipment
+        WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+      [hints.companyTrailerId, operatingCompanyId]
     );
     code = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
   }
@@ -572,7 +573,9 @@ async function writeC9HoldFieldsIfPresent(
   ).catch(async (err: Error) => {
     // ENG-22: nothing new to resolve from — keep what the load already carries instead of re-defaulting it.
     if (err.message !== "load_trailer_type_required") throw err;
-    const cur = await client.query<{ id: string }>(`SELECT load_trailer_equipment_id::text AS id FROM mdata.loads WHERE id = $1::uuid`, [loadId]);
+    const cur = await client.query<{ id: string }>(`SELECT load_trailer_equipment_id::text AS id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [loadId, input.operating_company_id]
+    );
     if (cur.rows[0]?.id) return cur.rows[0].id;
     throw err;
   });
@@ -2837,7 +2840,7 @@ export async function createLoadWithFullSideEffects(
         };
       }
       // LEAD 443.204 — a current driver (DQ file held on paper, owner 10-21) is never blocked on HOS: recorded instead.
-      const hosPaperSince = hos?.is_in_violation ? await driverDqFileOnPaperSince(client, String(hos.id)) : null;
+      const hosPaperSince = hos?.is_in_violation ? await driverDqFileOnPaperSince(client, input.operating_company_id, String(hos.id)) : null;
       if (hos?.is_in_violation && hosPaperSince) {
         await recordDqFileOnPaper(client, {
           actorUserId: input.requestingUserUuid, operatingCompanyId: input.operating_company_id, driverId: String(hos.id),
