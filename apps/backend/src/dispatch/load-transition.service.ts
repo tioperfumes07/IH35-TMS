@@ -12,10 +12,9 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
-import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition, validateLoadStatusWrite, validateLoadStopStatusWrite, type LoadStatusWriteKind } from "./load-state-machine.js";
 import { loadStatusRequiresDeliveryDepartureStamp, stampEarlierStopsOnDelivery, stampFinalActiveDeliveryDeparture } from "./stamp-final-delivery-departure.js";
-import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
+import { getLoadTransitionHooks, type DriverBillMintOutcome } from "./load-transition-hooks.js";
 
 export type DispatchTransitionInput = {
   new_status: Parameters<typeof validateLoadStatusTransition>[1];
@@ -34,6 +33,9 @@ export type DispatchTransitionInput = {
 export type TransitionClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
 export async function transitionDispatchLoadInClientTx(client: TransitionClient, actorUserId: string, operatingCompanyId: string, loadId: string, input: DispatchTransitionInput) {
+  // Missing composition is a boot/configuration error, never a silent loss of invoices.
+  // Resolve before the first query, outside any business-effect catch/savepoint.
+  const { ensureDriverBillArtifactsForLoad, latchOnDeliveryEvidence } = getLoadTransitionHooks();
   // ROUND 315: a status transition never waits minutes on a lock nor sits idle holding one. Every caller runs this
   // in a managed transaction (after-commit queue), so the money side effects run after COMMIT; these bound the
   // window if anything inside still blocks. SET LOCAL -> ends with the transaction.

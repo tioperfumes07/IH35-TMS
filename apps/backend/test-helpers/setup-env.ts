@@ -1,3 +1,5 @@
+import "../src/dispatch/load-transition-bootstrap.js";
+
 // Allow Vitest to import backend modules that eagerly validate env (matches local CI Postgres defaults).
 process.env.DATABASE_URL ??= "postgres://postgres:postgres@127.0.0.1:5432/ih35_test";
 process.env.DATABASE_DIRECT_URL ??= process.env.DATABASE_URL;

@@ -2,6 +2,10 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+## 2026-10-26 — Banking B4
+CODEX | B4 DONE | PR #27889 | merge 3a4f44bdf6b678dd19b1843a9623b4cebb04738a | banking QBO guard PASS + 47/47 plants | modal/overlay/match 24/24 tests; frontend build exit 0. New tests fail old lg/toggle and pass repaired behavior; full-page preserves unsaved input. Fast merge 123 affected guards, zero regressions after fixing commit finding-ID metadata. No live match submitted; deployment pending.
+B2 API health returned aaa271b5cf7d60fd5b2ca0866eef1ea71c69e9d5; B3 web version returned 52c3398. B1 is an ancestor of both. Latest Render deployments continue to advance with other seats; production interactions remain unverified in code-complete mode.
+
 ## 2026-10-26 — Banking B3
 CODEX | B3 DONE | PR #27886 | merge 52c33985697aa9868eac9d6f3a44c4efbb9d11e2 | verify-parity-drawer-z-index-above-modal + modal/discard/WO Escape selftests PASS | nested overlay/drawer/match 25/25; frontend build exit 0; 88 affected guards zero regressions. Old code fails all four initial nesting tests. Work-order/trailer tests also pass. Additional CancelLoadModal tests have four inherited missing-option failures, reproduced identically on pre-B3 main aaa271b5cf (both 4 failed/2 passed); private comparison /Users/jorgemunoz/Downloads/codex-1026-b3-cancel-main.log. No production cancel action submitted. Render/live UI verification pending.
 
