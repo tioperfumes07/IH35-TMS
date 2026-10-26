@@ -38,6 +38,13 @@ export function check(srcOverride) {
   );
   assert(src.includes("MoneyListToolbar"), "RelayDepositReview: ROUND 443.326 must mount MoneyListToolbar");
   assert(!/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(src), "RelayDepositReview: ROUND 443.326 must not use V3Panel");
+  // Fill-not-shell — empty/error returns also use FuelBoardSection (not bare bordered section).
+  assert(src.includes('testId="fuel-relay-inbox-no-company"'), "RelayDepositReview: no-company FuelBoardSection");
+  assert(src.includes('testId="fuel-relay-inbox-load-error"'), "RelayDepositReview: load-error FuelBoardSection");
+  assert(
+    !/rounded-sm border border-gray-200 bg-white p-4/.test(src),
+    "RelayDepositReview: must not keep layered bare section cards",
+  );
 }
 
 function selftest() {
