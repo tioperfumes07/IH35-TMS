@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per GPS candidate truck at the pump at THIS fill's moment; every row shares the one fill date shown in the popup header.
 /**
  * ROUND 443.295 — Fuel Assignment popup = docs/design/v3/V3-Modal-FuelAssignment (md 720).
  * Engines unchanged: answerFuelAssignmentQuestion confirm_proposed / pick_other / keep_card_truck.
@@ -13,6 +14,7 @@ import {
 import { Modal } from "../../../components/Modal";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
@@ -46,70 +48,115 @@ function Kv({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function CandidateRow({
-  c,
-  selected,
-  onSelect,
-}: {
-  c: FuelCandidateTruck;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <tr
-      data-testid={`fuel-assignment-candidate-${c.unit_id}`}
-      className={selected ? "bg-[#EEF2F6]" : undefined}
-      onClick={onSelect}
-      style={{ cursor: "pointer" }}
-    >
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">
-        <input type="radio" checked={selected} onChange={onSelect} aria-label={`Truck ${c.unit_number}`} />
-      </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold text-[#1F2A44]">
-        {c.unit_id ? (
-          <EntityLink kind="unit" id={c.unit_id} label={entityLabel(c.unit_number, c.unit_id, "Unit")} onClick={(e) => e.stopPropagation()} />
+/** One row per GPS candidate truck at the pump at the fill moment; picking a row picks that truck + its load. */
+function candidateColumns(
+  pickUnitId: string,
+  onSelect: (c: FuelCandidateTruck) => void,
+  t: (key: string, fallback: string) => string,
+): ParityColumn<FuelCandidateTruck>[] {
+  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
+  return [
+    {
+      key: "pick",
+      label: "Pick",
+      sortable: false,
+      render: (c) => (
+        <input
+          type="radio"
+          checked={pickUnitId === c.unit_id}
+          onChange={() => onSelect(c)}
+          aria-label={`Truck ${c.unit_number}`}
+        />
+      ),
+    },
+    {
+      key: "truck",
+      label: "Truck",
+      sortable: true,
+      sortValue: (c) => c.unit_number ?? "",
+      render: (c) =>
+        c.unit_id ? (
+          <span className="font-semibold text-[#1F2A44]">
+            <EntityLink kind="unit" id={c.unit_id} label={entityLabel(c.unit_number, c.unit_id, "Unit")} onClick={stop} />
+          </span>
         ) : (
           c.unit_number ?? "—"
-        )}
-      </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
-        {c.distance_mi != null ? `${c.distance_mi} mi` : "—"}
-      </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
-        {c.minutes_off != null ? `${c.minutes_off} min` : "—"}
-      </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.samsara_driver ?? "—"}</td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
-        {c.odometer != null ? `${c.odometer} mi` : "—"}
-      </td>
-      {c.load ? (
+        ),
+    },
+    {
+      key: "distance_mi",
+      label: "From station",
+      sortable: true,
+      kind: "number",
+      sortValue: (c) => c.distance_mi ?? Number.POSITIVE_INFINITY,
+      render: (c) => (c.distance_mi != null ? `${c.distance_mi} mi` : "—"),
+    },
+    {
+      key: "minutes_off",
+      label: "At station",
+      sortable: true,
+      kind: "number",
+      sortValue: (c) => c.minutes_off ?? Number.POSITIVE_INFINITY,
+      render: (c) => (c.minutes_off != null ? `${c.minutes_off} min` : "—"),
+    },
+    {
+      key: "driver",
+      label: "Driver",
+      sortable: true,
+      sortValue: (c) => c.samsara_driver ?? "",
+      render: (c) => c.samsara_driver ?? "—",
+    },
+    {
+      key: "odometer",
+      label: "Odometer at fill",
+      sortable: true,
+      kind: "number",
+      sortValue: (c) => c.odometer ?? -1,
+      render: (c) => (c.odometer != null ? `${c.odometer} mi` : "—"),
+    },
+    {
+      key: "load",
+      label: "Load at fill",
+      sortable: true,
+      sortValue: (c) => c.load?.load_number ?? "",
+      render: (c) => (
         <>
-          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
-            {c.load.load_id ? (
-              <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={(e) => e.stopPropagation()} />
+          {c.load ? (
+            c.load.load_id ? (
+              <span className="font-semibold">
+                <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={stop} />
+              </span>
             ) : (
               c.load.load_number ?? "—"
-            )}
-          </td>
-          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.settlement_ref ?? "—"}</td>
-          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.route ?? "—"}</td>
+            )
+          ) : (
+            <span className="text-[#6B7280]" data-testid={`fuel-assignment-candidate-no-load-${c.unit_id}`}>
+              {t("fuel.no_load_at_pump", "No load at pump time")}
+            </span>
+          )}
         </>
-      ) : (
-        <td
-          colSpan={3}
-          className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs text-[#6B7280]"
-          data-testid={`fuel-assignment-candidate-no-load-${c.unit_id}`}
-        >
-          {t("fuel.no_load_at_pump", "No load at pump time")}
-        </td>
-      )}
-    </tr>
-  );
+      ),
+    },
+    {
+      key: "settlement",
+      label: "Settlement",
+      sortable: true,
+      sortValue: (c) => c.load?.settlement_ref ?? "",
+      render: (c) => c.load?.settlement_ref ?? "—",
+    },
+    {
+      key: "route",
+      label: "Route",
+      sortable: true,
+      sortValue: (c) => c.load?.route ?? "",
+      render: (c) => c.load?.route ?? "—",
+    },
+  ];
 }
 
 export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClose, onAnswered }: Props) {
   const { pushToast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<"confirm" | "pick" | "keep">("confirm");
   const [pickUnitId, setPickUnitId] = useState<string>("");
@@ -165,8 +212,12 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
 
   if (!question) return null;
 
-  const th =
-    "border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-section-header font-bold uppercase text-[#4B5563]";
+  const selectCandidate = (c: FuelCandidateTruck) => {
+    setPickUnitId(c.unit_id);
+    setPickLoadId(c.load?.load_id ?? "");
+    setMode("pick");
+  };
+
 
   const modeBtn = (active: boolean): React.CSSProperties => ({
     height: 32,
@@ -219,43 +270,21 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
 
           <BoardSection title="Evidence — trucks at the station" testId="fuel-assignment-candidates-table">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className={th}>Pick</th>
-                    <th className={th}>Truck</th>
-                    <th className={th}>From station</th>
-                    <th className={th}>At station</th>
-                    <th className={th}>Driver</th>
-                    <th className={th}>Odometer at fill</th>
-                    <th className={th}>Load at fill</th>
-                    <th className={th}>Settlement</th>
-                    <th className={th}>Route</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="border border-[#E5E7EB] px-2 py-3 text-center text-[#6B7280]">
-                        No GPS candidates at the pump — card truck still keeps the fill until confirmed.
-                      </td>
-                    </tr>
-                  ) : (
-                    candidates.map((c) => (
-                      <CandidateRow
-                        key={c.unit_id}
-                        c={c}
-                        selected={pickUnitId === c.unit_id}
-                        onSelect={() => {
-                          setPickUnitId(c.unit_id);
-                          setPickLoadId(c.load?.load_id ?? "");
-                          setMode("pick");
-                        }}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <ParityTable<FuelCandidateTruck>
+                tableTestId="fuel-assignment-candidates-grid"
+                appearance="board"
+                hidePager
+                density="compact"
+                suppressToolbarSearch
+                suppressToolbarRange
+                rows={candidates}
+                rowKey={(c) => c.unit_id}
+                rowTestId={(c) => `fuel-assignment-candidate-${c.unit_id}`}
+                rowClassName={(c) => (pickUnitId === c.unit_id ? "bg-[#EEF2F6]" : "")}
+                onRowClick={selectCandidate}
+                emptyText="No GPS candidates at the pump — card truck still keeps the fill until confirmed."
+                columns={candidateColumns(pickUnitId, selectCandidate, t)}
+              />
             </div>
           </BoardSection>
 

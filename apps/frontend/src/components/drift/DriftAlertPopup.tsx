@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per OPEN reconciler exception right now (entity / field / reason), a current-state worklist; the check's run date and time are shown in the popup header.
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,6 +8,9 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useTranslation } from "../../hooks/useTranslation";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { ParityTable } from "../parity/ParityTable";
+
+type DriftRow = ReturnType<typeof driftRows>[number];
 
 /**
  * LEAD 443.327 — app-wide DRIFT ALERT (owner 10-24 2:43 PM CT): "a pop up message should appear in dispatch,
@@ -100,38 +104,43 @@ export function DriftAlertPopup() {
             time: q.data ? new Date(q.data.ran_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "—",
           })}
         </p>
-        <div className="max-h-[55vh] overflow-auto rounded-sm border border-[#E5E7EB]">
-          <table className="w-full table-fixed border-collapse text-xs">
-            <colgroup>
-              <col className="w-[84px]" />
-              <col className="w-[132px]" />
-              <col />
-            </colgroup>
-            <thead className="sticky top-0 bg-[#F3F4F6] text-left text-gray-700">
-              <tr>
-                <th className="px-2 py-1.5 font-normal">{t("topbar.driftAlert.colLoad", "Load")}</th>
-                <th className="px-2 py-1.5 font-normal">{t("topbar.driftAlert.colProblem", "Problem")}</th>
-                <th className="px-2 py-1.5 font-normal">{t("topbar.driftAlert.colFix", "What to fix")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.key} className="border-t border-[#E5E7EB] align-top" data-testid="drift-alert-row">
-                  <td className="whitespace-nowrap px-2 py-1.5">
-                    {r.entity_type === "load" ? (
-                      <Link to={`/dispatch/loads/${r.entity_id}`} onClick={remindLater} className="text-[#1D4ED8] hover:underline">
-                        {r.entity_label}
-                      </Link>
-                    ) : (
-                      r.entity_label
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1.5 text-gray-900">{t(`topbar.driftAlert.field.${r.field}`, FIELD_LABEL[r.field] ?? r.field)}</td>
-                  <td className="break-words px-2 py-1.5 text-gray-700">{r.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="max-h-[55vh] overflow-auto">
+          <ParityTable<DriftRow>
+            appearance="board"
+            hidePager
+            density="compact"
+            stickyHeader
+            suppressToolbarSearch
+            suppressToolbarRange
+            rows={rows}
+            rowKey={(r) => r.key}
+            rowTestId={() => "drift-alert-row"}
+            emptyText={t("topbar.driftAlert.none", "Nothing to fix.")}
+            columns={[
+              {
+                key: "entity_label",
+                label: t("topbar.driftAlert.colLoad", "Load"),
+                sortable: true,
+                sortValue: (r) => r.entity_label,
+                render: (r) =>
+                  r.entity_type === "load" ? (
+                    <Link to={`/dispatch/loads/${r.entity_id}`} onClick={remindLater} className="text-blue-700 hover:underline">
+                      {r.entity_label}
+                    </Link>
+                  ) : (
+                    r.entity_label
+                  ),
+              },
+              {
+                key: "field",
+                label: t("topbar.driftAlert.colProblem", "Problem"),
+                sortable: true,
+                sortValue: (r) => r.field,
+                render: (r) => t(`topbar.driftAlert.field.${r.field}`, FIELD_LABEL[r.field] ?? r.field),
+              },
+              { key: "reason", label: t("topbar.driftAlert.colFix", "What to fix"), sortable: true, allowWrap: true, render: (r) => r.reason },
+            ]}
+          />
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={() => { remindLater(); navigate("/tasks/exceptions"); }}>

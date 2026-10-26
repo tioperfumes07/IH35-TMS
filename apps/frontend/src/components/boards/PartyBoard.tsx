@@ -210,7 +210,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => money(r.billed_cents), foot: money(sum("billed_cents")) },
       { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => (r.collected_cents ? usd(r.collected_cents) : <span className="ih-empty">—</span>), foot: money(sum("collected_cents")) },
       { key: "open", label: "Open balance", num: true, width: 130, sort: (r) => r.open_cents, cell: (r) => <span className="pb-strong"><MoneyCell cents={r.open_cents} format={money} drill={{ entity: { kind: "customer", id: r.id } }} /></span>, foot: money(sum("open_cents")) },
-      { key: "last", label: "Last invoice", num: true, width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span className="pb-muted">{day(r.last_invoice)}</span> },
+      { key: "last_invoice_date", label: "Last invoice", num: true, width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span className="pb-muted">{day(r.last_invoice)}</span> },
       { key: "factored", label: "Factored", width: 108, sort: (r) => r.factored ?? "", cell: (r) => <span className="pb-muted2">{r.factored ?? "—"}</span> },
       { key: "status", label: "Status", width: 96, sort: (r) => r.status, cell: (r) => <span className="pb-status">{r.status}</span> },
     ];

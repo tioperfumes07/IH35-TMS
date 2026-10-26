@@ -243,7 +243,8 @@ if (SELFTEST) {
   const mutations = [
     {
       name: "443.266-B: an unguarded c.load read (the c5a43b1d null-load crash)",
-      apply: (s) => ({ ...s, popup: s.popup.replace("      onClick={onSelect}", "      onClick={onSelect} title={c.load.load_number}") }),
+      // Plants an unguarded c.load read in the candidates grid (ParityTable rows since the table-header ratchet conversion).
+      apply: (s) => ({ ...s, popup: s.popup.replace("rowKey={(c) => c.unit_id}", "rowKey={(c) => c.load.load_number}") }),
     },
     {
       name: "443.266-B: the null-load branch removed",

@@ -4,6 +4,7 @@
  * Sections (order): KPI strip → 2026 close calendar → Receivables aging · Cash pulse · Settlements open.
  * Engines only — no mock/sample rows. Find Tx / TB / P&L panels removed (not on board).
  */
+import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -109,17 +110,6 @@ export function accountingTabSubtitle(
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const MONTH_UPPER = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as const;
 
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  fontFamily: V3.font,
-};
 
 const tdStyle: CSSProperties = {
   textAlign: "left",
@@ -663,44 +653,27 @@ export function AccountingHubPage() {
                       <div style={{ flex: 1, background: V3.chartGrid }} />
                     ) : null}
                   </div>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead>
-                        <tr>
-                          <th style={thStyle}>Bucket</th>
-                          <th style={{ ...thStyle, textAlign: "right" }}>Invoices</th>
-                          <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                          <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {agingBuckets.rows.map((b) => (
-                          <tr key={b.key}>
-                            <td style={tdStyle}>{b.label}</td>
-                            <td style={{ ...tdStyle, textAlign: "right" }}>
-                              {arAgingQ.isLoading ? "…" : b.invoices || ""}
-                            </td>
-                            <td style={{ ...tdStyle, textAlign: "right" }}>
-                              {arAgingQ.isLoading ? "…" : formatPlainAmount(b.amountCents)}
-                            </td>
-                            <td style={{ ...tdStyle, textAlign: "right" }}>
-                              {arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)}
-                            </td>
-                          </tr>
-                        ))}
-                        <tr>
-                          <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
-                          <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>
-                            {arAgingQ.isLoading ? "…" : agingBuckets.totalInv}
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>
-                            {arAgingQ.isLoading ? "…" : formatPlainAmount(agingBuckets.totalAmt)}
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right", borderBottom: "none" }}></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  <ParityTable<(typeof agingBuckets.rows)[number]>
+                    appearance="board"
+                    hidePager
+                    density="compact"
+                    suppressToolbarSearch
+                    suppressToolbarRange
+                    rows={agingBuckets.rows}
+                    rowKey={(b) => b.key}
+                    emptyText="No open invoices."
+                    columns={[
+                      { key: "label", label: "Bucket", sortable: false, render: (b) => b.label },
+                      { key: "invoices", label: "Invoices", sortable: false, kind: "number", render: (b) => (arAgingQ.isLoading ? "…" : b.invoices || "") },
+                      { key: "amountCents", label: "Amount", sortable: false, kind: "money", render: (b) => (arAgingQ.isLoading ? "…" : formatPlainAmount(b.amountCents)) },
+                      { key: "share", label: "Share", sortable: false, kind: "number", render: (b) => (arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)) },
+                    ]}
+                    footerCells={{
+                      label: <span className="font-semibold">Total</span>,
+                      invoices: <span className="font-semibold">{arAgingQ.isLoading ? "…" : agingBuckets.totalInv}</span>,
+                      amountCents: <span className="font-semibold">{arAgingQ.isLoading ? "…" : formatPlainAmount(agingBuckets.totalAmt)}</span>,
+                    }}
+                  />
                 </>
               )}
             </div>
@@ -758,68 +731,55 @@ export function AccountingHubPage() {
             onViewAll={() => navigate("/driver-finance/settlements?state=open")}
             testId="accounting-hub-settlements-open"
           >
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Driver</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>Open</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {toursOpenQ.isLoading ? (
-                    <tr>
-                      <td colSpan={2} style={{ ...tdStyle, color: V3.muted }}>
-                        Loading…
-                      </td>
-                    </tr>
-                  ) : toursOpenQ.isError ? (
-                    <tr>
-                      <td colSpan={2} style={{ ...tdStyle, color: V3.red }}>
-                        Could not load open settlements.
-                      </td>
-                    </tr>
-                  ) : settlementsOpen.length === 0 ? (
-                    <tr>
-                      <td colSpan={2} style={{ ...tdStyle, color: V3.muted }}>
-                        No open settlements.
-                      </td>
-                    </tr>
-                  ) : (
-                    settlementsOpen.map((row) => (
-                      <tr key={`${row.driverId ?? "x"}-${row.name}`}>
-                        <td style={tdStyle}>
-                          {row.driverId ? (
-                            <EntityLinkOrTombstone
-                              kind="driver"
-                              id={row.driverId}
-                              name={row.name}
-                              noun="Driver"
-                              className="truncate"
-                            />
-                          ) : (
-                            <span>{row.name}</span>
-                          )}
-                        </td>
-                        <td style={tdStyle} className="text-right tabular-nums">
-                          <Link
-                            className="underline"
-                            style={{ color: V3.ink }}
-                            to={
-                              row.driverId
-                                ? `/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driverId)}`
-                                : "/driver-finance/settlements?state=open"
-                            }
-                          >
-                            {formatUsdCents(row.cents)}
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {toursOpenQ.isError ? (
+              <p style={{ ...tdStyle, color: V3.red, margin: 0 }}>Could not load open settlements.</p>
+            ) : (
+              <ParityTable<(typeof settlementsOpen)[number]>
+                appearance="board"
+                hidePager
+                density="compact"
+                suppressToolbarSearch
+                suppressToolbarRange
+                loading={toursOpenQ.isLoading}
+                rows={settlementsOpen}
+                rowKey={(row) => `${row.driverId ?? "x"}-${row.name}`}
+                emptyText="No open settlements."
+                columns={[
+                  {
+                    key: "name",
+                    label: "Driver",
+                    sortable: true,
+                    sortValue: (row) => row.name,
+                    render: (row) =>
+                      row.driverId ? (
+                        <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.name} noun="Driver" className="truncate" />
+                      ) : (
+                        <span>{row.name}</span>
+                      ),
+                  },
+                  {
+                    key: "cents",
+                    label: "Open",
+                    sortable: true,
+                    kind: "money",
+                    sortValue: (row) => row.cents,
+                    render: (row) => (
+                      <Link
+                        className="underline"
+                        style={{ color: V3.ink }}
+                        to={
+                          row.driverId
+                            ? `/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driverId)}`
+                            : "/driver-finance/settlements?state=open"
+                        }
+                      >
+                        {formatUsdCents(row.cents)}
+                      </Link>
+                    ),
+                  },
+                ]}
+              />
+            )}
           </BoardSection>
         </div>
       </div>

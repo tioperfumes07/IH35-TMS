@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one confirmation row for the bill just saved in this session (bill / status); the bill's dates live on the bill itself one click away.
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createVendorBill } from "../../api/accounting";

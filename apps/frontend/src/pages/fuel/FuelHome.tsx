@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — Diesel by truck is one row per TRUCK aggregated over the period chosen in the board's Oct / Sep / YTD period control — the period is the filter, not a column.
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";

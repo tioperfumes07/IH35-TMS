@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per UNIT with its current health (odometer / location / PM interval / miles left), a current-state view; each unit's last-reported telemetry time is printed under its location.
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";

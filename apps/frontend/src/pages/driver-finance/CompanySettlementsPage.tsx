@@ -26,7 +26,7 @@ import {
 import { listTours, type TourListRow } from "../../api/tourReadout";
 import { openPrintableDocument, openCanonicalDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
-import { mmmDd } from "../../lib/formatDate";
+import { formatDateUS, mmmDd } from "../../lib/formatDate";
 import { settlementNumber } from "../../lib/settlementNumber";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
 import {
@@ -275,6 +275,26 @@ export function CompanySettlementsPage() {
             </span>
           ),
         exportValue: (r) => (r.margin_pct == null ? DASH : `${r.margin_pct.toFixed(1)}%`),
+      },
+      // Gear columns (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
+      // the settlement period the row belongs to. Hidden by default, one click to show.
+      {
+        key: "period_start",
+        label: "Period Begin",
+        sortable: true,
+        defaultHidden: true,
+        sortValue: (r) => r.period_start ?? "",
+        render: (r) => (r.period_start ? formatDateUS(r.period_start) : DASH),
+        exportValue: (r) => (r.period_start ? formatDateUS(r.period_start) : DASH),
+      },
+      {
+        key: "period_end",
+        label: "Period End",
+        sortable: true,
+        defaultHidden: true,
+        sortValue: (r) => r.period_end ?? "",
+        render: (r) => (r.period_end ? formatDateUS(r.period_end) : DASH),
+        exportValue: (r) => (r.period_end ? formatDateUS(r.period_end) : DASH),
       },
     ],
     []

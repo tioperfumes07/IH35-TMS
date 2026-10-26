@@ -4,7 +4,7 @@
  * Sections (order): KPI strip → Policy year + Premium by coverage → Fleet Covered note.
  * Engines: getInsuranceSummary · listInsurancePolicies · listInsuranceTypeCatalog.
  */
-import { useMemo, type CSSProperties } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -21,33 +21,13 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ApiError } from "../../../api/client";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
-import { V3, V3_TABLE } from "../../../design/v3-tokens";
+import { V3 } from "../../../design/v3-tokens";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../utils/qboFormat";
-
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-
-const tdStyle: CSSProperties = {
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  verticalAlign: "middle",
-};
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function dayMs(iso: string): number {
   const d = String(iso).slice(0, 10);
@@ -72,7 +52,63 @@ type PremiumShareRow = {
   share: number;
   policyId: string | null;
   vendorId: string | null;
+  /** Policy expiration (insurance policy expiry_date) — the gear "Expires" column. */
+  expiry_date: string | null;
 };
+
+const premiumColumns: ParityColumn<PremiumShareRow>[] = [
+  {
+    key: "coverage",
+    label: "Coverage",
+    sortable: true,
+    sortValue: (row) => row.coverage,
+    render: (row) =>
+      row.policyId ? <EntityLink kind="insurance_policy" id={row.policyId} label={row.coverage} /> : row.coverage,
+  },
+  {
+    key: "carrier",
+    label: "Carrier",
+    sortable: true,
+    sortValue: (row) => row.carrier,
+    render: (row) => (row.vendorId ? <EntityLink kind="vendor" id={row.vendorId} label={row.carrier} /> : row.carrier),
+  },
+  {
+    key: "premium",
+    label: "Premium",
+    sortable: true,
+    kind: "money",
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    sortValue: (row) => row.premiumCents,
+    render: (row) =>
+      row.policyId ? (
+        <MoneyCell cents={row.premiumCents} drill={{ entity: { kind: "insurance_policy", id: row.policyId } }} />
+      ) : (
+        <Link className="underline" to="/insurance" style={{ color: "inherit" }}>
+          {formatUsdCents(row.premiumCents)}
+        </Link>
+      ),
+  },
+  {
+    key: "share",
+    label: "Share",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    sortValue: (row) => row.share,
+    render: (row) => <span data-quantity="share-pct">{row.share.toFixed(1)}%</span>,
+  },
+  // Gear column (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
+  // the policy's expiration date. Hidden by default, one click to show.
+  {
+    key: "expiry_date",
+    label: "Expires",
+    sortable: true,
+    defaultHidden: true,
+    sortValue: (row) => row.expiry_date ?? "",
+    render: (row) => (row.expiry_date ? formatDateUS(row.expiry_date) || "—" : "—"),
+  },
+];
 
 export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
@@ -153,6 +189,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
         share: (cents / total) * 100,
         policyId: p.id,
         vendorId: p.vendor_id || null,
+        expiry_date: p.expiry_date ?? null,
       };
     });
   }, [activePolicies, annualPremiumCents, typesQuery.data]);
@@ -356,83 +393,34 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-home-premium-by-coverage"
         >
           <div style={{ overflowX: "auto", padding: "0 0 4px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Coverage</th>
-                  <th style={thStyle}>Carrier</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Premium</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
-                </tr>
-              </thead>
-              <tbody>
-                {premiumRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ ...tdStyle, color: V3.muted }}>
-                      {loading ? "Loading…" : "No active premiums."}
-                    </td>
-                  </tr>
-                ) : (
-                  premiumRows.map((row) => (
-                    <tr key={`${row.coverage}-${row.policyId ?? row.carrier}`}>
-                      <td style={tdStyle}>
-                        {row.policyId ? (
-                          <EntityLink kind="insurance_policy" id={row.policyId} label={row.coverage} />
-                        ) : (
-                          row.coverage
-                        )}
-                      </td>
-                      <td style={tdStyle}>
-                        {row.vendorId ? (
-                          <EntityLink kind="vendor" id={row.vendorId} label={row.carrier} />
-                        ) : (
-                          row.carrier
-                        )}
-                      </td>
-                      <td style={{ ...tdStyle, textAlign: "right" }} className="text-right tabular-nums">
-                        {row.policyId ? (
-                          <MoneyCell
-                            cents={row.premiumCents}
-                            drill={{ entity: { kind: "insurance_policy", id: row.policyId } }}
-                          />
-                        ) : (
-                          <Link className="underline" to="/insurance" style={{ color: "inherit" }}>
-                            {formatUsdCents(row.premiumCents)}
+            <ParityTable<PremiumShareRow>
+              tableTestId="insurance-home-premium-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={premiumRows}
+              rowKey={(row) => `${row.coverage}-${row.policyId ?? row.carrier}`}
+              loading={loading}
+              emptyText="No active premiums."
+              columns={premiumColumns}
+              footerCells={
+                premiumRows.length > 0
+                  ? {
+                      coverage: <span style={{ fontWeight: 700 }}>Total</span>,
+                      premium: (
+                        <span className="text-right tabular-nums">
+                          <Link className="underline" to="/insurance" style={{ color: "inherit", fontWeight: 700 }}>
+                            {formatUsdCents(annualPremiumCents)}
                           </Link>
-                        )}
-                      </td>
-                      <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums" data-quantity="share-pct">
-                        {row.share.toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))
-                )}
-                {premiumRows.length > 0 ? (
-                  <tr>
-                    <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
-                    <td style={{ ...tdStyle, borderBottom: "none" }}>{""}</td>
-                    <td
-                      style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}
-                      className="text-right tabular-nums"
-                    >
-                      <Link
-                        className="underline"
-                        to="/insurance"
-                        style={{ color: "inherit", fontWeight: 700 }}
-                      >
-                        {formatUsdCents(annualPremiumCents)}
-                      </Link>
-                    </td>
-                    <td
-                      style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}
-                      className="tabular-nums"
-                    >
-                      100%
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+                        </span>
+                      ),
+                      share: <span className="tabular-nums" style={{ fontWeight: 700 }}>100%</span>,
+                    }
+                  : undefined
+              }
+            />
           </div>
         </BoardSection>
       </div>

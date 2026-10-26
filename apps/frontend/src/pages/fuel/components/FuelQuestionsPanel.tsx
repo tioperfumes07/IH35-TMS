@@ -78,7 +78,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   const columns = useMemo<Array<ParityColumn<FuelAssignmentQuestion>>>(
     () => [
       {
-        key: "fill_moment_ct",
+        key: "fill_moment_at",
         label: "Fill (Central)",
         sortable: true,
         sortValue: (r) => r.fill_moment_ct ?? "",

@@ -1,6 +1,10 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per MILES KIND on one tour (practical / shortest / loaded / deadhead …) comparing DB vs Google vs the load; the tour's dates live on the tour header, a miles kind has no date of its own.
 import { useLoadMilesRecommendations, MILES_FIELD_LABELS, type MilesFieldRec } from "../../api/milesRecommendations";
 import type { TourReadout } from "../../api/tourReadout";
 import { EntityLink } from "../shared/EntityLink";
+import { ParityTable } from "../parity/ParityTable";
+
+type MilesRow = { field: (typeof MILES_FIELD_LABELS)[number]["field"]; label: string; rec: MilesFieldRec | undefined };
 
 /**
  * LEAD 443.269-A item 3c / item 5 (owner standing order "miles everywhere"): per leg of the tour, OUR database miles
@@ -40,37 +44,54 @@ function LegMiles({ leg, operatingCompanyId }: { leg: TourReadout["legs"][number
           <button type="button" className="ldt-link" onClick={() => void q.refetch()}>Retry</button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs" data-testid="tour-miles-table">
-            <thead>
-              <tr className="text-[#4B5563]">
-                <th className="px-2 py-1 text-left font-semibold">Miles</th>
-                <th className="px-2 py-1 text-right font-semibold">Our database</th>
-                <th className="px-2 py-1 text-right font-semibold">Google</th>
-                <th className="px-2 py-1 text-right font-semibold">On the load</th>
-                <th className="px-2 py-1 text-left font-semibold">Bill uses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MILES_FIELD_LABELS.map(({ field, label }) => {
-                const rec = q.data?.fields[field];
-                return (
-                  <tr key={field} className="border-t border-[#E5E7EB]" data-testid={`tour-miles-row-${field}`}>
-                    <td className="px-2 py-1">{field === "short" ? "Shortest" : label}</td>
-                    <td data-quantity className="px-2 py-1 text-right tabular-nums" data-testid={`tour-miles-db-${field}`} title={rec?.historical_missing_reason ?? undefined}>
-                      {q.isLoading ? "…" : rec?.historical ? `${mi(rec.historical.value)} (${rec.historical.n_loads} trips)` : DASH}
-                    </td>
-                    <td data-quantity className="px-2 py-1 text-right tabular-nums" data-testid={`tour-miles-google-${field}`} title={rec?.google_missing_reason ?? undefined}>
-                      {q.isLoading ? "…" : rec?.google ? mi(rec.google.value) : DASH}
-                    </td>
-                    <td data-quantity className="px-2 py-1 text-right tabular-nums">{mi(rec?.current?.value ?? stored[field])}</td>
-                    <td className="px-2 py-1">{field === "practical" ? "revenue per mile" : field === "short" ? `driver pay · ${usedLabel(rec)}` : `empty pay · ${usedLabel(rec)}`}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<MilesRow>
+          tableTestId="tour-miles-table"
+          appearance="board"
+          hidePager
+          density="compact"
+          suppressToolbarSearch
+          suppressToolbarRange
+          rows={MILES_FIELD_LABELS.map(({ field, label }) => ({ field, label, rec: q.data?.fields[field] }))}
+          rowKey={(row) => row.field}
+          rowTestId={(row) => `tour-miles-row-${row.field}`}
+          emptyText="No miles sources."
+          columns={[
+            { key: "miles", label: "Miles", sortable: true, sortValue: (row) => (row.field === "short" ? "Shortest" : row.label), render: (row) => (row.field === "short" ? "Shortest" : row.label) },
+            {
+              key: "db",
+              label: "Our database",
+              sortable: true,
+              sortValue: (row) => row.rec?.historical?.value ?? -1,
+              kind: "number",
+              render: ({ field, rec }) => (
+                <span data-testid={`tour-miles-db-${field}`} title={rec?.historical_missing_reason ?? undefined}>
+                  {q.isLoading ? "…" : rec?.historical ? `${mi(rec.historical.value)} (${rec.historical.n_loads} trips)` : DASH}
+                </span>
+              ),
+            },
+            {
+              key: "google",
+              label: "Google",
+              sortable: true,
+              sortValue: (row) => row.rec?.google?.value ?? -1,
+              kind: "number",
+              render: ({ field, rec }) => (
+                <span data-testid={`tour-miles-google-${field}`} title={rec?.google_missing_reason ?? undefined}>
+                  {q.isLoading ? "…" : rec?.google ? mi(rec.google.value) : DASH}
+                </span>
+              ),
+            },
+            { key: "on_load", label: "On the load", sortable: true, sortValue: (row) => Number(row.rec?.current?.value ?? stored[row.field] ?? -1), kind: "number", render: (row) => mi(row.rec?.current?.value ?? stored[row.field]) },
+            {
+              key: "bill_uses",
+              label: "Bill uses",
+              sortable: true,
+              sortValue: (row) => row.field,
+              render: (row) =>
+                row.field === "practical" ? "revenue per mile" : row.field === "short" ? `driver pay · ${usedLabel(row.rec)}` : `empty pay · ${usedLabel(row.rec)}`,
+            },
+          ]}
+        />
       )}
     </div>
   );
