@@ -17,11 +17,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // this guard was written; SecondaryNavTabs.tsx still exists and is used elsewhere (Users.tsx,
 // VendorDetail.tsx), it just isn't what renders these two list segment-tab rows anymore. Re-anchored
 // to the component actually wired here, not to the one that used to be.
+// ROUND 443.326 re-anchor (same move as DISP-F9998 above): the V3 boards render the segment tabs through the board
+// chrome's tab strip — <VendorsBoardChrome|CustomersBoardChrome tabItems=…>. NavyPageSubNav is still accepted.
+function hasSegmentTabs(src, chrome) {
+  return /NavyPageSubNav/.test(src) || new RegExp(`<${chrome}\\b[\\s\\S]{0,600}?\\btabItems=\\{`).test(src);
+}
 function assertVendors(src) {
   const problems = [];
   if (!/by-category/.test(src)) problems.push("Vendors.tsx missing by-category list segment");
   if (!/By Category/.test(src)) problems.push("Vendors.tsx missing By Category tab label");
-  if (!/NavyPageSubNav/.test(src)) problems.push("Vendors.tsx missing NavyPageSubNav");
+  if (!hasSegmentTabs(src, "VendorsBoardChrome")) problems.push("Vendors.tsx missing the segment tab strip (VendorsBoardChrome tabItems)");
   if (!/VENDOR_LIST_TAB_IDS/.test(src)) problems.push("Vendors.tsx missing VENDOR_LIST_TAB_IDS");
   return problems;
 }
@@ -29,7 +34,7 @@ function assertVendors(src) {
 function assertCustomers(src) {
   const problems = [];
   // Customers restore may already be present — require NavyPageSubNav + at least Preferred/Watch/Inactive
-  if (!/NavyPageSubNav/.test(src)) problems.push("Customers.tsx missing NavyPageSubNav");
+  if (!hasSegmentTabs(src, "CustomersBoardChrome")) problems.push("Customers.tsx missing the segment tab strip (CustomersBoardChrome tabItems)");
   const need = [/Preferred/i, /Watch/i, /Inactive/i];
   for (const re of need) {
     if (!re.test(src)) problems.push(`Customers.tsx missing segment label matching ${re}`);
@@ -48,6 +53,16 @@ function selftest() {
   }
   if (assertVendors(badV).length < 1) {
     console.error("bad vendors should fail");
+    failed++;
+  }
+  const noStripV = goodV.split("<VendorsBoardChrome").join("<div");
+  if (assertVendors(noStripV).length < 1) {
+    console.error("vendors with the tab strip unmounted should fail");
+    failed++;
+  }
+  const noStripC = goodC.replace(/tabItems=\{/g, "items={");
+  if (assertCustomers(noStripC).length < 1) {
+    console.error("customers with the tab strip dropped should fail");
     failed++;
   }
   if (assertCustomers(goodC).length !== 0) {
