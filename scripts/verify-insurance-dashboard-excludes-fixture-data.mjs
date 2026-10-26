@@ -80,12 +80,18 @@ export function audit(src) {
         `— a fixture policy must not mask a real unit's real coverage gap.`,
     );
   }
-  if (!/excludeDemoPhantomSql\(\s*["']u\.unit_number["']\s*\)/.test(src.coverageGap)) {
-    failures.push(`${FILES.coverageGap}: unit scan must apply excludeDemoPhantomSql("u.unit_number").`);
-  }
-  if (!/excludeSampleDataSql\(\s*["']u\.is_sample_data["']\s*\)/.test(src.coverageGap)) {
-    failures.push(`${FILES.coverageGap}: unit scan must apply excludeSampleDataSql("u.is_sample_data").`);
-  }
+  // EVERY unit scan (each SQL template that reads mdata.units u) carries both filters — one occurrence anywhere in
+  // the file is not proof (the file has more than one unit scan; a second scan dropping the filter was invisible).
+  const unitScans = (src.coverageGap.match(/`[^`]*\bmdata\.units\s+u\b[^`]*`/g) ?? []);
+  if (unitScans.length === 0) failures.push(`${FILES.coverageGap}: no unit scan found (mdata.units u) — guard out of sync.`);
+  unitScans.forEach((scan, i) => {
+    if (!/excludeDemoPhantomSql\(\s*["']u\.unit_number["']\s*\)/.test(scan)) {
+      failures.push(`${FILES.coverageGap}: unit scan #${i + 1} must apply excludeDemoPhantomSql("u.unit_number").`);
+    }
+    if (!/excludeSampleDataSql\(\s*["']u\.is_sample_data["']\s*\)/.test(scan)) {
+      failures.push(`${FILES.coverageGap}: unit scan #${i + 1} must apply excludeSampleDataSql("u.is_sample_data").`);
+    }
+  });
 
   // The 3 list endpoints — must stay in parity with the KPI counts above (a list showing rows its own
   // headline count excludes is the FLEET-KPI-PARITY bug class, already fixed once for Fleet).
@@ -134,6 +140,8 @@ if (process.argv.includes("--selftest")) {
     { key: "coverageGap", from: '\n     AND ${excludeInsuranceFixtureSql("p.policy_number")}', to: "" },
     { key: "coverageGap", from: '\n    AND ${excludeDemoPhantomSql("u.unit_number")}', to: "" },
     { key: "coverageGap", from: '\n    AND ${excludeSampleDataSql("u.is_sample_data")}', to: "" },
+    { key: "coverageGap", from: '\n      AND ${excludeDemoPhantomSql("u.unit_number")}', to: "" },
+    { key: "coverageGap", from: '\n      AND ${excludeSampleDataSql("u.is_sample_data")}', to: "" },
     { key: "policyList", from: ', excludeInsuranceFixtureSql("p.policy_number")', to: "" },
     { key: "claimList", from: ', excludeInsuranceFixtureSql("c.claim_number")', to: "" },
     { key: "lawsuitList", from: ', excludeInsuranceFixtureSql("lawsuit.case_number")', to: "" },

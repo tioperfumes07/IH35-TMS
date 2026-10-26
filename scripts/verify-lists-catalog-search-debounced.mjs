@@ -142,7 +142,8 @@ function selftest() {
   assert(failed, "selftest: expected FAIL when CatalogListSearchInput removed");
 
   // Depth regression: plant ../../../../ on a nested safety page.
-  const nested = path.join(ROOT, "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx");
+  // SafetyGenericCatalogListPage left the anchor set 2026-10-02 (see top) — plant on a nested safety catalog that still mounts the input.
+  const nested = path.join(ROOT, "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx");
   const nestedGood = fs.readFileSync(nested, "utf8");
   const nestedBad = nestedGood.replace(
     'from "../../../components/lists/CatalogListSearchInput"',
