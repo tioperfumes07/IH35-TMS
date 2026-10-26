@@ -1,5 +1,23 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FuelAssignmentPopup ModalSection → BoardSection
+
+- **STATUS:** SHIPPING
+- **DELTA:** Fuel assignment popup sections (Fill / Evidence / Proposed / Change) → shared `BoardSection` (source as subtitle). Confirm/choose/keep engines unchanged. Guard ratcheted. Pending rows 44/49/53 → CODED.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fuel-assignment-popup PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Accounting 220 depth; Settlements Open/Closed PARTIAL
+- **Files Modified:** FuelAssignmentPopup.tsx · verify-fuel-assignment-popup.mjs · CURSOR-PENDING-ROWS-FINAL.md · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL batch tip (engines + BoardSection)
+
+- **STATUS:** MERGED — #27765 · #27769 · #27780 · #27787 · #27792 · #27794 · #27796 · #27797 · #27799 · #27800 · #27801 (+ OUTBOX diet #27793)
+- **DELTA:** Fuel Home board KPIs period-synced; By-truck period sync; Settlements Payments V3; Fuel FORM_INPUT; Fuel/Factoring/Escrow empties; SubmitToFactor BoardSection+FORM_INPUT+DataPanel unwrap; Close expense BoardSection; Fuel fraud/overage/planner empties; Submit edit banner. Engines/actions kept. Guards ratcheted.
+- **VERIFY:** each PR: tsc -b · vite build · surface guards PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Accounting 220 (Receipts already Bills-grammar); Settlements Open/Closed PARTIAL depth; Fuel assignment popup 443.295
+- **Files Modified:** OUTBOX-CURSOR.md · CURSOR-PENDING-ROWS-FINAL.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SubmitToFactor edit banner BoardSection
 
 - **STATUS:** SHIPPING
@@ -154,40 +172,3 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell (FinalizeBlock Save Draft still honest stub — no draft API; remaining bare cards elsewhere)
 - **Files Modified:** OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SettlementDetail empty → BoardSection
-
-- **STATUS:** MERGED [#27740](https://github.com/tioperfumes07/IH35-TMS/pull/27740)
-- **DELTA:** SettlementDetailPage no-settlement empty → `BoardSection`. Guard ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-detail-sections PASS
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** SettlementDetailPage.tsx · verify-settlement-detail-sections.mjs · OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — DriverBillDetail → BoardSection
-
-- **STATUS:** SHIPPING
-- **DELTA:** DriverBillDetailPage pay body + unlinked empty → `BoardSection` (LoadDetailDriverPayTab unchanged). Guard ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-load-detail-driver-pay-bills PASS (+ --selftest)
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** DriverBillDetailPage.tsx · verify-load-detail-driver-pay-bills.mjs · OUTBOX-CURSOR.md
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SettlementHeader → BoardSection
-
-- **STATUS:** MERGED [#27735](https://github.com/tioperfumes07/IH35-TMS/pull/27735)
-- **DELTA:** SettlementHeader bare grid card → `BoardSection` (Refresh in headerRight). Engines/EntityLinks unchanged. verify-settlement-fe-honesty ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest)
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** SettlementHeader.tsx · verify-settlement-fe-honesty.mjs · OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Relay deposit empty/error → FuelBoardSection
-
-- **STATUS:** MERGED [#27737](https://github.com/tioperfumes07/IH35-TMS/pull/27737)
-- **DELTA:** RelayDepositReview no-company + load-error returns → `FuelBoardSection` (engines unchanged). Guard ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-relay-deposit-review-parity-surface-bar PASS (+ --selftest)
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** RelayDepositReview.tsx · verify-relay-deposit-review-parity-surface-bar.mjs · OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Statement workflow + EscrowVisualizer → BoardSection

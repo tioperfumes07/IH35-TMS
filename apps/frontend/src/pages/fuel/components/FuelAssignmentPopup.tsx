@@ -11,6 +11,7 @@ import {
   type FuelCandidateTruck,
 } from "../../../api/fuelAssignmentQuestions";
 import { Modal } from "../../../components/Modal";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -35,39 +36,6 @@ function money(cents: string | null): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n / 100);
 }
 
-function ModalSection({
-  title,
-  source,
-  children,
-  testId,
-}: {
-  title: string;
-  source?: string;
-  children: ReactNode;
-  testId?: string;
-}) {
-  return (
-    <section data-testid={testId} style={{ border: `1px solid ${V3.border}`, borderRadius: 2, overflow: "hidden" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 8,
-          padding: "6px 10px",
-          background: "#F7F8FA",
-          borderBottom: `1px solid ${V3.borderSoft}`,
-        }}
-      >
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: V3.muted }}>
-          {title}
-        </span>
-        {source ? <span style={{ fontSize: 11, color: V3.muted }}>{source}</span> : null}
-      </div>
-      <div style={{ padding: 10 }}>{children}</div>
-    </section>
-  );
-}
 
 function Kv({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -224,7 +192,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
         size="md"
       >
         <div className="space-y-3 text-xs text-[#0F1219]" data-testid="fuel-assignment-popup">
-          <ModalSection title="Fill" source={question.evidence?.moment_source ?? "Dreamline · Relay"} testId="fuel-assignment-fill-summary">
+          <BoardSection title="Fill" subtitle={question.evidence?.moment_source ?? "Dreamline · Relay"} testId="fuel-assignment-fill-summary">
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10 }}>
               <Kv label="Fill time (Central)">{question.fill_moment_ct ?? "—"}</Kv>
               <Kv label="Station">
@@ -247,9 +215,9 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 )}
               </Kv>
             </div>
-          </ModalSection>
+          </BoardSection>
 
-          <ModalSection title="Evidence — trucks at the station" testId="fuel-assignment-candidates-table">
+          <BoardSection title="Evidence — trucks at the station" testId="fuel-assignment-candidates-table">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -289,9 +257,9 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 </tbody>
               </table>
             </div>
-          </ModalSection>
+          </BoardSection>
 
-          <ModalSection title="Proposed" source="engine" testId="fuel-assignment-proposed">
+          <BoardSection title="Proposed" subtitle="engine" testId="fuel-assignment-proposed">
             <div style={{ display: "grid", gap: 8 }}>
               <Kv label="Load">
                 {question.proposed_load_id ? (
@@ -334,10 +302,10 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 </button>
               </div>
             </div>
-          </ModalSection>
+          </BoardSection>
 
           {mode === "pick" || mode === "keep" ? (
-            <ModalSection title="Change" source="only when not confirming" testId="fuel-assignment-pick-fields">
+            <BoardSection title="Change" subtitle="only when not confirming" testId="fuel-assignment-pick-fields">
               <div style={{ display: "grid", gridTemplateColumns: "160px 200px", gap: 12, alignItems: "end" }}>
                 {mode === "pick" ? (
                   <label className="block" style={{ fontSize: 11, color: V3.muted }}>
@@ -375,7 +343,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
               <p style={{ marginTop: 8, fontSize: 11, color: V3.muted }}>
                 Reason is chosen from the catalog on Confirm (dropdown — never a text box).
               </p>
-            </ModalSection>
+            </BoardSection>
           ) : null}
 
           <details

@@ -580,3 +580,41 @@ Older FINAL-2 rows (31–222) + row 114/118 notes: [archive/OUTBOX-CURSOR-archiv
 - **DELTA:** SettlementDisputesTab filters + detail → `BoardSection`; filter/status heights to FILTER/FORM tokens; engines/resolve/review unchanged. Guard ratcheted.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-disputes-parity-surface-bar PASS (+ --selftest) · staged-filters PASS · tab-labels PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SettlementDetail empty → BoardSection
+
+- **STATUS:** MERGED [#27740](https://github.com/tioperfumes07/IH35-TMS/pull/27740)
+- **DELTA:** SettlementDetailPage no-settlement empty → `BoardSection`. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-detail-sections PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** SettlementDetailPage.tsx · verify-settlement-detail-sections.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — DriverBillDetail → BoardSection
+
+- **STATUS:** SHIPPING
+- **DELTA:** DriverBillDetailPage pay body + unlinked empty → `BoardSection` (LoadDetailDriverPayTab unchanged). Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-load-detail-driver-pay-bills PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** DriverBillDetailPage.tsx · verify-load-detail-driver-pay-bills.mjs · OUTBOX-CURSOR.md
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SettlementHeader → BoardSection
+
+- **STATUS:** MERGED [#27735](https://github.com/tioperfumes07/IH35-TMS/pull/27735)
+- **DELTA:** SettlementHeader bare grid card → `BoardSection` (Refresh in headerRight). Engines/EntityLinks unchanged. verify-settlement-fe-honesty ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** SettlementHeader.tsx · verify-settlement-fe-honesty.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Relay deposit empty/error → FuelBoardSection
+
+- **STATUS:** MERGED [#27737](https://github.com/tioperfumes07/IH35-TMS/pull/27737)
+- **DELTA:** RelayDepositReview no-company + load-error returns → `FuelBoardSection` (engines unchanged). Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-relay-deposit-review-parity-surface-bar PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** RelayDepositReview.tsx · verify-relay-deposit-review-parity-surface-bar.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Statement workflow + EscrowVisualizer → BoardSection
