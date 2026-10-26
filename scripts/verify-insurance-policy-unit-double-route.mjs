@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=insurance,fleet cols=connectivity,reverse_link */
+/** @matrix-built modules=insurance,fleet cols=connectivity,reverse_link leafRe=^(policies\.detail|unit\.profile\.insurance_summary)$ */
 import fs from "node:fs";
 
 const LABEL = "verify-insurance-policy-unit-double-route";

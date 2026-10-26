@@ -7,7 +7,6 @@
  *
  * --selftest: mutates the SQL and verifies the mutation is caught.
  */
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 
 const ROLLUP_FILE = "apps/backend/src/accounting/load-cost-rollup.sql.ts";
@@ -22,46 +21,50 @@ function pass(msg) {
   console.log(`[${LABEL}] PASS — ${msg}`);
 }
 
-// ─── selftest ────────────────────────────────────────────────────────────────
-const selftest = process.argv.includes("--selftest");
-if (selftest) {
-  const src = fs.readFileSync(ROLLUP_FILE, "utf8");
-  const mutated = src.replace(
-    "AND (b.bill_category IS NULL OR b.bill_category <> 'driver')",
-    "-- MUTATION-REMOVED-DRIVER-FILTER"
-  );
-  if (mutated === src) fail("SELFTEST SETUP FAILED: driver-bill exclusion line not found in rollup file");
-  const tmp = ROLLUP_FILE + ".selftest.bak";
-  fs.writeFileSync(tmp, src);
-  fs.writeFileSync(ROLLUP_FILE, mutated);
-  try {
-    execSync(`node scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs`, { stdio: "pipe" });
-    fs.writeFileSync(ROLLUP_FILE, src);
-    fs.unlinkSync(tmp);
-    fail("SELFTEST FAILED: mutation should have been caught but was not");
-  } catch {
-    fs.writeFileSync(ROLLUP_FILE, src);
-    fs.unlinkSync(tmp);
-    console.log(`[${LABEL}] SELFTEST PASS (mutation caught, real file clean)`);
-    process.exit(0);
+// ─── static checks (pure, so --selftest can plant defects into an in-memory copy) ─────────────
+const FILTER = "b.bill_category IS NULL OR b.bill_category <> 'driver'";
+function staticFailures(rollup) {
+  const f = [];
+  // 1) bill_category filter must be present in the bc subquery
+  if (!rollup.includes(FILTER)) {
+    f.push(`${ROLLUP_FILE} bc subquery missing driver-bill exclusion: expected "${FILTER}"`);
+    return f;
   }
+  // 2) The filter must appear INSIDE the bc LEFT JOIN block (before GROUP BY bl.load_id)
+  const start = rollup.indexOf("LEFT JOIN (");
+  const end = rollup.indexOf("GROUP BY bl.load_id");
+  const bcBlock = start >= 0 && end > start ? rollup.slice(start, end + 20) : "";
+  if (!bcBlock.includes(FILTER)) f.push("driver-bill category exclusion is not in the bc subquery block — may be misplaced");
+  return f;
 }
 
-// ─── static checks ───────────────────────────────────────────────────────────
-const rollup = fs.readFileSync(ROLLUP_FILE, "utf8");
-
-// 1) bill_category filter must be present in the bc subquery
-if (!rollup.includes("b.bill_category IS NULL OR b.bill_category <> 'driver'")) {
-  fail(`${ROLLUP_FILE} bc subquery missing driver-bill exclusion: expected "b.bill_category IS NULL OR b.bill_category <> 'driver'"`);
+// ─── selftest ────────────────────────────────────────────────────────────────
+// Was: wrote the mutated SQL into the tracked rollup file and ran itself as a child — which ALSO failed on
+// "DATABASE_URL not set", so it reported "caught" even when the static check was gone. Now in-memory only,
+// against the real static check, and each planted defect must be caught by THAT check.
+if (process.argv.includes("--selftest")) {
+  const src = fs.readFileSync(ROLLUP_FILE, "utf8");
+  if (staticFailures(src).length) fail(`SELFTEST: real rollup rejected — ${staticFailures(src).join("; ")}`);
+  const removed = src.replace("AND (" + FILTER + ")", "-- MUTATION-REMOVED-DRIVER-FILTER");
+  const cases = [
+    ["driver-bill exclusion removed", removed],
+    ["exclusion moved outside the bc subquery", removed + "\nWHERE (" + FILTER + ")"],
+  ];
+  let caught = 0;
+  for (const [name, mutated] of cases) {
+    if (mutated === src) fail(`SELFTEST SETUP FAILED: mutation "${name}" changed nothing`);
+    if (staticFailures(mutated).length === 0) fail(`SELFTEST FAILED: mutation "${name}" escaped`);
+    caught += 1;
+  }
+  console.log(`[${LABEL}] SELFTEST PASS — ${caught}/${cases.length} planted defects caught (in-memory; real file untouched)`);
+  process.exit(0);
 }
-pass("bc subquery has driver-bill category exclusion");
 
-// 2) The filter must appear INSIDE the bc LEFT JOIN block (before GROUP BY bl.load_id)
-const bcBlock = rollup.slice(rollup.indexOf("LEFT JOIN ("), rollup.indexOf("GROUP BY bl.load_id") + 20);
-if (!bcBlock.includes("b.bill_category IS NULL OR b.bill_category <> 'driver'")) {
-  fail("driver-bill category exclusion is not in the bc subquery block — may be misplaced");
+{
+  const f = staticFailures(fs.readFileSync(ROLLUP_FILE, "utf8"));
+  if (f.length) fail(f.join("; "));
+  pass("bc subquery has driver-bill category exclusion, inside the bc subquery block");
 }
-pass("driver-bill exclusion is correctly placed inside bc subquery");
 
 // ─── live database check ─────────────────────────────────────────────────────
 const dbUrl = process.env.DATABASE_URL;

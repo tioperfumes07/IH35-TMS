@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @matrix-built {"modules":["banking"],"cols":["suggestion_engine_priority"],"task":"RC1-443.341"}
+// @matrix-built {"modules":["banking"],"cols":["suggestion_engine_priority"],"leafRe":"^transactions\\.categorize$","task":"RC1-443.341"}
 // RC1 443.341: catch-all rules (targeting 9000 or no vendor) must never beat a specific rule.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
