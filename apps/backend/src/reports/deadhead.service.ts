@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import type { PoolClient } from "pg";
+import { rollingLaneWindow } from "./lane-profitability.service.js";
 import { estimateCityPairMiles } from "./city-centroids.js";
 
 export type DeadheadCalculationMethod = "samsara" | "manual" | "estimated";
@@ -638,10 +639,17 @@ export async function getBackhaulSuggestions(
         AND LOWER(origin_city) = LOWER($2)
         AND LOWER(origin_state) = LOWER($3)
         AND load_count >= 1
+        -- One window only: the latest rolling 12-month snapshot. Across windows a lane would be suggested once per
+        -- cached window (the nightly refresh left one per day until 2026-10-25).
+        AND period_start = $4::date
+        AND period_end = (
+          SELECT max(c2.period_end) FROM reports.lane_profitability_cache c2
+           WHERE c2.operating_company_id = $1::uuid AND c2.period_start = $4::date
+        )
       ORDER BY profit_per_mile_cents DESC NULLS LAST, margin_pct DESC NULLS LAST
       LIMIT 5
     `,
-    [operatingCompanyId, current.city, current.state]
+    [operatingCompanyId, current.city, current.state, rollingLaneWindow().start]
   );
 
   const suggestions: BackhaulSuggestion[] = lanesRes.rows.map((row) => ({

@@ -23,6 +23,8 @@
  *   node scripts/verify-no-negative-open-balance.mjs [--selftest]
  */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+export const REQUIRES_LIVE_DB =
+  "live-money guard (overpaid bills/invoices); fails closed with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (E7 batch 2)";
 
 const LABEL = "verify-no-negative-open-balance";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";

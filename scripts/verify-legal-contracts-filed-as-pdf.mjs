@@ -16,9 +16,10 @@
  * LIVE
  *   USMCA contract instances with no filed PDF — shrink-only from 3 (opening a contract files it). Before migration
  *   202615430900 is applied the column does not exist: PENDING DEPLOY, then the ceiling applies. No DATABASE_URL = FAIL.
- * Run: node scripts/verify-legal-contracts-filed-as-pdf.mjs [--selftest]
+ * Run: node scripts/verify-legal-contracts-filed-as-pdf.mjs [--selftest] [--live]
  *
- * REQUIRES_LIVE_DB — skipped by no-DB static sweep; fail-closed under the money gate.
+ * --live runs the LIVE half (DATABASE_URL required; none = FAIL). Without --live only STATIC runs — listed in
+ * scripts/lib/e7-batch2-live-guards.json live_flag_guards, so money-pr-local-gate.mjs runs --live.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -87,8 +88,10 @@ if (process.argv.includes("--selftest")) selftest();
 
 const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 const problems = staticProblems(src);
-let note = "";
-if (!process.env.DATABASE_URL) problems.push("live: DATABASE_URL not set — unfiled contracts were not counted, and an unread count is not a pass");
+let note = "live half not run (pass --live)";
+if (!process.argv.includes("--live")) {
+  // static only
+} else if (!process.env.DATABASE_URL) problems.push("live: DATABASE_URL not set — unfiled contracts were not counted, and an unread count is not a pass");
 else {
   const { default: pg } = await import("pg");
   const c = new pg.Client({ connectionString: process.env.DATABASE_URL });

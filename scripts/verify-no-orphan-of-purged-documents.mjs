@@ -16,7 +16,9 @@
  *   3. migration 202615450900 gives feed_intake_checks the DELETE-only, listed-row arm (UPDATE still refused)
  * LIVE (DATABASE_URL required — an unread count is not a pass)
  *   4. every ORPHANS predicate counts 0 for USMCA
- * Run: node scripts/verify-no-orphan-of-purged-documents.mjs [--selftest]
+ * --live runs LIVE (DATABASE_URL required; none = FAIL). Without --live only STATIC runs — listed in
+ * scripts/lib/e7-batch2-live-guards.json live_flag_guards, so money-pr-local-gate.mjs runs --live.
+ * Run: node scripts/verify-no-orphan-of-purged-documents.mjs [--selftest] [--live]
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -78,8 +80,10 @@ if (process.argv.includes("--selftest")) selftest();
 
 const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 const problems = staticProblems(src);
-let note = "";
-if (!process.env.DATABASE_URL) problems.push("live: DATABASE_URL not set — orphans were not counted, and an unread count is not a pass");
+let note = "live half not run (pass --live)";
+if (!process.argv.includes("--live")) {
+  // static only
+} else if (!process.env.DATABASE_URL) problems.push("live: DATABASE_URL not set — orphans were not counted, and an unread count is not a pass");
 else {
   const cls = JSON.parse(src.cls);
   const { default: pg } = await import("pg");
@@ -99,4 +103,6 @@ else {
   } finally { await c.end(); }
 }
 if (problems.length) { console.error(`${LABEL} FAIL\n  - ${problems.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL} OK — no USMCA row points at a purged load / invoice / settlement / driver bill / fuel transaction; live: ${note}`);
+console.log(process.argv.includes("--live")
+  ? `${LABEL} OK — no USMCA row points at a purged load / invoice / settlement / driver bill / fuel transaction; live: ${note}`
+  : `${LABEL} OK (static) — every purge-remnant table has a parent-gone predicate, no banking target, executor lists rows for an AUTH; ${note}`);

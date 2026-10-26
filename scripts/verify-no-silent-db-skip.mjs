@@ -63,6 +63,10 @@ const LIVE_FLAG_FILES = new Map([
   ["verify-seed-script-usmca-cutover-floor.mjs", "--live"],
   ["verify-stops-geocoded.mjs", "--live"],
   ["verify-double-entry-balance-trigger.mjs", "--live"],
+  // FINAL-4 (2026-10-25): static half by default, catalog/count half behind --live (e7 live_flag_guards).
+  ["verify-event-log-spine.mjs", "--live"],
+  ["verify-legal-contracts-filed-as-pdf.mjs", "--live"],
+  ["verify-no-orphan-of-purged-documents.mjs", "--live"],
 ]);
 
 // Not a lightweight money/data guard despite the verify- prefix and a DATABASE_URL mention — it

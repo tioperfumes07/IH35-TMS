@@ -603,13 +603,35 @@ export function resolveLanePeriod(
   return { start: start.toISOString().slice(0, 10), end };
 }
 
+/** The rolling 12-month window the nightly refresh keeps current: first of the month 11 months back → today (UTC). */
+export function rollingLaneWindow(now: Date = new Date()): { start: string; end: string } {
+  const end = now.toISOString().slice(0, 10);
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1)).toISOString().slice(0, 10);
+  return { start, end };
+}
+
+/** A cached window older than this is never served: readLaneProfitabilityCache marks it stale and the route recomputes. */
+export const LANE_CACHE_SERVE_HOURS = 24;
+
 export async function refreshLaneProfitabilityLast12Months(
   client: PoolClient,
   operatingCompanyId: string
 ): Promise<number> {
-  const now = new Date();
-  const end = now.toISOString().slice(0, 10);
-  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
-  const start = startDate.toISOString().slice(0, 10);
-  return refreshLaneProfitabilityCache(client, operatingCompanyId, start, end);
+  const { start, end } = rollingLaneWindow();
+  const written = await refreshLaneProfitabilityCache(client, operatingCompanyId, start, end);
+  // The window's END is today, so every night writes a new (start, end) key and the DELETE above (exact key) never
+  // touched yesterday's snapshot: measured 2026-10-25, USMCA held 16 daily snapshots of the same window, and the
+  // oldest kept lanes whose loads no longer exist (verify-no-orphan-of-purged-documents). Retire every OTHER window of
+  // this company that is past the serve age — no reader can return it (it is stale by definition and is recomputed on
+  // demand), and readers that span windows (backhaul suggestions) would otherwise count each lane once per night.
+  await client.query(
+    `
+      DELETE FROM reports.lane_profitability_cache
+      WHERE operating_company_id = $1::uuid
+        AND NOT (period_start = $2::date AND period_end = $3::date)
+        AND computed_at < now() - make_interval(hours => $4::int)
+    `,
+    [operatingCompanyId, start, end, LANE_CACHE_SERVE_HOURS]
+  );
+  return written;
 }
