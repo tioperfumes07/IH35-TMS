@@ -1,10 +1,10 @@
 {
-  "healthzSha": "79dedc1",
-  "generated_at": "2026-10-26T08:49:03.089Z",
+  "healthzSha": "24507fa",
+  "generated_at": "2026-10-26T10:35:51.954Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "79dedc1",
+    "deployedSha": "24507fa",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 03:49 AM CT",
+      "url": "",
+      "sha": "24507fa8e1",
+      "committedAtIso": "2026-10-26T08:49:03Z"
+    },
+    {
       "number": 27890,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27883",
       "sha": "312e15c00a",
       "committedAtIso": "2026-10-26T01:37:24-05:00"
-    },
-    {
-      "number": 27882,
-      "title": "FINDING: Codex B1 canonical checks in bank match candidates",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27882",
-      "sha": "99971f5e1e",
-      "committedAtIso": "2026-10-26T01:36:56-05:00"
     }
   ]
 }
