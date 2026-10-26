@@ -141,6 +141,14 @@ export function computeBoardShellFailures(source) {
   if (!/tab === "by_truck"/.test(source) || !/FuelDieselByTruckPanel/.test(source)) {
     errors.push("FuelPlannerHome must wire by_truck tab with FuelBoardKpiStrip + FuelDieselByTruckPanel");
   }
+  // 443.280 — By-truck KPI strip period-synced with diesel roster (same Oct/Sep/YTD).
+  if (
+    !/<FuelBoardKpiStrip[\s\S]{0,120}period=\{byTruckPeriod\}/.test(source) ||
+    !/<FuelDieselByTruckPanel[\s\S]{0,200}period=\{byTruckPeriod\}/.test(source) ||
+    !/onPeriodChange=\{setByTruckPeriod\}/.test(source)
+  ) {
+    errors.push("FuelPlannerHome by_truck must period-sync FuelBoardKpiStrip with FuelDieselByTruckPanel");
+  }
   if (/initialTab = "planner"/.test(source)) {
     errors.push("FuelPlannerHome default initialTab must be home (443.282 board landing)");
   }

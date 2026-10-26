@@ -36,6 +36,7 @@ import {
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
 import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
+import type { FuelBoardPeriodId } from "./fuelBoardPeriod";
 import { ActiveTripStrip } from "./components/ActiveTripStrip";
 import { AvoidStatesBanner } from "./components/AvoidStatesBanner";
 import { CompliancePanel } from "./components/CompliancePanel";
@@ -84,6 +85,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
+  /** By-truck board: KPI strip + diesel roster share one Oct/Sep/YTD period (443.280). */
+  const [byTruckPeriod, setByTruckPeriod] = useState<FuelBoardPeriodId>("oct");
   const activeRoutePageSize = 25;
   const [activeRoutePage, setActiveRoutePage] = useState(1);
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);
@@ -449,8 +452,12 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
       {tab === "by_truck" ? (
         <div className="space-y-3" data-testid="fuel-by-truck-page">
-          <FuelBoardKpiStrip companyId={companyId} />
-          <FuelDieselByTruckPanel companyId={companyId} />
+          <FuelBoardKpiStrip companyId={companyId} period={byTruckPeriod} />
+          <FuelDieselByTruckPanel
+            companyId={companyId}
+            period={byTruckPeriod}
+            onPeriodChange={setByTruckPeriod}
+          />
         </div>
       ) : null}
 
