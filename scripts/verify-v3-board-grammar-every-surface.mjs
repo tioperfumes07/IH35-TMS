@@ -285,6 +285,8 @@ function hasParityTable(src, surfaceId) {
   if (/<ParityTable[\s/<]/.test(src) || /ParityTable\s*</.test(src)) return true;
   // Fuel history roster: FuelTransactionsTable is the ParityTable wrapper for that surface.
   if (surfaceId === "FuelPlannerHome" && /\bFuelTransactionsTable\b/.test(src)) return true;
+  // Cash advances roster: CashAdvancesTable is the ParityTable wrapper for that surface.
+  if (surfaceId === "CashAdvancesHome" && /\bCashAdvancesTable\b/.test(src)) return true;
   return false;
 }
 
