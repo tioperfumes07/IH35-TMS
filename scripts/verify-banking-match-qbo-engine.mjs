@@ -297,6 +297,9 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
     if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: filter control ${id} missing (register M5)`);
   }
   const recordTypeDropdown = drawer.match(/<MultiSelectDropdown\b(?:(?!\/>)[\s\S])*data-testid="match-drawer-record-type-dropdown"(?:(?!\/>)[\s\S])*\/>/)?.[0] ?? "";
+  const matchPopup = view.match(/<Modal\s+(?:(?!<Modal)[\s\S])*?title="Categorize \/ Match"[\s\S]*?>/)?.[0] ?? "";
+  if (!/size="lg"/.test(matchPopup) || !/sizePreset="lg"/.test(matchPopup) || !/\ballowFullPage\b/.test(matchPopup))
+    p.push("view: match popup must opt into shared lg 960 and full-page toggle (C1 B4)");
   if (!/\bsearchable\s/.test(recordTypeDropdown))
     p.push("drawer: record type must use the shared searchable multi-select (C1 B2)");
   if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin \?\? undefined/.test(drawer) || !/amountMax: amountMax \?\? undefined/.test(drawer))
@@ -337,6 +340,8 @@ function selftest() {
     process.exit(1);
   }
   const mutants = [
+    ["match popup missing full page", { ...base, view: base.view.replace("        allowFullPage", "") }],
+    ["match popup wrong preset", { ...base, view: base.view.replace('modalKind="banking-categorize-match"\n        sizePreset="lg"', 'modalKind="banking-categorize-match"\n        sizePreset="xl"') }],
     ["record type cannot be typed", { ...base, drawer: base.drawer.replace(/\s+searchable\s+searchPlaceholder="Type record type…"/, "") }],
     ["resurrect QBO 90", { ...base, service: base.service.replace("export const MATCH_WINDOW_STEPS", "export const QBO_DAYS_BEFORE = 90;\nexport const MATCH_WINDOW_STEPS") }],
     ["step1 wrong bounds", { ...base, service: base.service.replace("step1: { before: 3, after: 1 }", "step1: { before: 90, after: 20 }") }],

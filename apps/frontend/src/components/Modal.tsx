@@ -60,7 +60,9 @@ type ModalProps = {
    * - `wide` stays the rare 960px forms escape hatch (prefer sizePreset="lg")
    * Applied as an inline max-width so no stylesheet can stretch a centered card.
    */
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
+  /** Opt-in expansion for review workspaces; ordinary decision dialogs stay bounded. */
+  allowFullPage?: boolean;
 };
 
 export function Modal({
@@ -78,6 +80,7 @@ export function Modal({
   onBack,
   variant = "center",
   size = "md",
+  allowFullPage = false,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const layer = useOverlayLayer(open);
@@ -86,8 +89,11 @@ export function Modal({
   const boxRef = useRef<{ w: number; h: number } | null>(null);
   const failedSizeRef = useRef<{ w: number; h: number } | null>(null);
   const [sizeSaveError, setSizeSaveError] = useState(false);
+  const [fullPage, setFullPage] = useState(false);
 
   const isDrawer = variant === "drawer";
+  const isFullPage = allowFullPage && fullPage && !isDrawer;
+  useEffect(() => { if (!open) setFullPage(false); }, [open]);
   // The create drawer is a fixed-width right panel, so the persisted free-resize box (which sizes a
   // centered card) does not apply to it — persisting a w/h here would fight the 480px contract.
   const useCustomSize = Boolean(modalKind && sizePreset) && !isDrawer;
@@ -210,12 +216,14 @@ export function Modal({
     firstInput?.focus();
   }, [open]);
 
-  const centeredMaxWidth = wide
+  const centeredMaxWidth = wide || size === "lg"
     ? "min(960px, calc(100vw - 2rem))"
     : size === "sm"
       ? "min(480px, calc(100vw - 2rem))"
       : "min(720px, calc(100vw - 2rem))";
-  const panelStyle: CSSProperties | undefined = box
+  const panelStyle: CSSProperties | undefined = isFullPage
+    ? { width: "100vw", height: "100dvh", maxWidth: "100vw", maxHeight: "100dvh", borderRadius: 0 }
+    : box
     ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
     : { maxWidth: centeredMaxWidth };
 
@@ -236,7 +244,9 @@ export function Modal({
           // inside this Modal (e.g. the cancellation-reason picker) still paints above the Modal itself.
           isDrawer
             ? "fixed inset-0 z-[1001] flex justify-end bg-black/50"
-            : "fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4"
+            : isFullPage
+              ? "fixed inset-0 z-[1001] flex items-center justify-center bg-black/50"
+              : "fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4"
         }
         data-ih35-blocking-modal="true"
         style={{ zIndex: layer.zIndex }}
@@ -259,9 +269,9 @@ export function Modal({
             isDrawer
               ? `relative flex h-full max-h-full flex-col border-l border-gray-200 bg-white shadow-xl ${PARITY_CREATE_DRAWER_WIDTH}`
               : `relative flex flex-col rounded-lg bg-white shadow-xl ${
-                  box
+                  isFullPage || box
                     ? "overflow-hidden"
-                    : wide
+                    : wide || size === "lg"
                       ? "max-h-[min(85vh,calc(100dvh-2rem))] w-full max-w-[min(960px,calc(100vw-2rem))]"
                       : size === "sm"
                         ? "max-h-[min(85vh,calc(100dvh-2rem))] w-full max-w-[min(480px,calc(100vw-2rem))]"
@@ -299,7 +309,16 @@ export function Modal({
                 {title}
               </h2>
             </div>
-            <ModalCloseButton title={title} onClose={attemptClose} />
+            <div className="flex shrink-0 items-center gap-2">
+              {allowFullPage && !isDrawer ? <button
+                type="button"
+                aria-label={isFullPage ? "Restore popup size" : "Expand to full page"}
+                aria-pressed={isFullPage}
+                onClick={() => setFullPage(value => !value)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              >{isFullPage ? "Restore" : "Full page"}</button> : null}
+              <ModalCloseButton title={title} onClose={attemptClose} />
+            </div>
           </div>
           {useCustomSize && (prefsQuery.isError || sizeSaveError) ? (
             <div
@@ -328,7 +347,7 @@ export function Modal({
             </div>
           ) : null}
           <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">{children}</div>
-          {resizeEnabled ? (
+          {resizeEnabled && !isFullPage ? (
             <ResizeHandle
               onPointerDrag={(dx, dy) => {
                 setBox((prev) => {

@@ -4122,9 +4122,10 @@ export function BankingTransactionsDesignView({
         open={Boolean(expandedTxId)}
         onClose={() => setExpandedTxId(null)}
         title="Categorize / Match"
-        wide
+        size="lg"
+        allowFullPage
         modalKind="banking-categorize-match"
-        sizePreset="xl"
+        sizePreset="lg"
       >
         <div className="overflow-auto p-3" data-testid="banking-categorize-match-modal">
           {(() => {
