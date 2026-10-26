@@ -616,6 +616,8 @@ export type BankMatchCandidateKind =
 
 /** Kinds POST /bank-recon/accept-match accepts (bill is view-only in the drawer). */
 export type BankMatchAcceptKind = Exclude<BankMatchCandidateKind, "bill">;
+/** Checks are expense/bill-payment documents, not a second persisted match kind. */
+export type BankMatchFilterKind = BankMatchCandidateKind | "check";
 
 export type BankMatchCandidate = {
   ledger_entry_kind: BankMatchCandidateKind;
@@ -647,7 +649,7 @@ export type BankMatchFilters = {
   windowStep?: 1 | 2;
   q?: string;
   /** Show: which record types (QuickBooks "Show" dropdown). Empty = all. */
-  kinds?: BankMatchCandidateKind[];
+  kinds?: BankMatchFilterKind[];
   payee?: string;
   dateFrom?: string;
   dateTo?: string;

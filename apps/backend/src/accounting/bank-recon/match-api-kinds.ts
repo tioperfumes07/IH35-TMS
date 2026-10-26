@@ -18,6 +18,7 @@ export const bankMatchAcceptKindSchema = z.enum(BANK_MATCH_ACCEPT_KINDS);
 
 /** Kinds GET .../match-candidates `kinds` filter may request (includes view-only bill). */
 export const BANK_MATCH_FILTER_KINDS = [
+  "check",
   "payment",
   "bill_payment",
   "transfer",
@@ -33,3 +34,4 @@ export const BANK_MATCH_FILTER_KINDS = [
 ] as const;
 
 export const bankMatchFilterKindSchema = z.enum(BANK_MATCH_FILTER_KINDS);
+export type BankMatchFilterKind = (typeof BANK_MATCH_FILTER_KINDS)[number];

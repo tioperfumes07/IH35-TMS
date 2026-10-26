@@ -73,6 +73,15 @@ export function assertCandidatesCoverAllDocuments(src) {
   }
 
   // Company scoping is not optional on a money read.
+  for (const [pattern, message] of [
+    [/wants\("check"\)/, "Checks filter must reach canonical documents"],
+    [/e\.posting_status = 'posted'/, "expense/check candidates must use posting_status"],
+    [/e\.payment_type = 'check'/, "Checks filter must restrict expense documents"],
+    [/upper\(bp\.payment_method\) = 'CHECK'/, "Checks filter must include check bill payments"],
+    [/NULLIF\(e\.check_number, ''\)/, "check number must be exposed for matching"],
+  ]) {
+    if (!pattern.test(body)) problems.push(`${SERVICE}: ${message}`);
+  }
   if (!/operating_company_id/.test(body)) {
     problems.push(`${SERVICE}: fetchLedgerCandidates no longer scopes by operating_company_id. A money read is never unscoped.`);
   }
@@ -139,6 +148,11 @@ if (process.argv.includes("--selftest")) {
   expect("unscoped", good.replace(/operating_company_id/g, "xx_col"), "never unscoped");
   // 6 — the function itself removed.
   expect("function-gone", good.replace("async function fetchLedgerCandidates", "async function removedCandidates"), "fetchLedgerCandidates is gone");
+  expect("checks-filter-gone", good.replaceAll('wants("check")', 'wants("expense")'), "Checks filter must reach");
+  expect("check-posting-state", good.replaceAll("e.posting_status = 'posted'", "e.status = 'posted'"), "must use posting_status");
+  expect("check-expense-filter", good.replaceAll("e.payment_type = 'check'", "true"), "restrict expense");
+  expect("check-bill-payment-filter", good.replaceAll("upper(bp.payment_method) = 'CHECK'", "true"), "check bill payments");
+  expect("check-reference", good.replaceAll("NULLIF(e.check_number, '')", "NULLIF(e.expense_number, '')"), "check number must");
 
   const amountLive = assertLedgerAmountFailClosed(good);
   if (amountLive.length) failures.push(`amount-live: ${amountLive.join(" | ")}`);
@@ -167,7 +181,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 8/8 OK`);
+    console.log(`${LABEL} selftest 13/13 OK`);
   }
 } else {
   const problems = [...assertCandidatesCoverAllDocuments(read()), ...assertLedgerAmountFailClosed(read())];

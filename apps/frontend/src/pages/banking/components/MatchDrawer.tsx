@@ -12,6 +12,7 @@ import {
   saveBankTransactionSplitDraft,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
+  type BankMatchFilterKind,
 } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
 import { listPartyAccounts } from "../../../api/related-party-loans";
@@ -131,7 +132,8 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
 const RELAY_MATCH_KINDS = new Set<BankMatchCandidateKind>(["relay_fuel", "relay_deposit"]);
 
 /** ORDERS §19 Find Other Matches — Record type chips (QBO Show). */
-const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: string }> = [
+const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchFilterKind; label: string }> = [
+  { kind: "check", label: "Checks" },
   { kind: "payment", label: "Payment" },
   { kind: "bill_payment", label: "Bill Payment" },
   { kind: "expense", label: "Expense" },
@@ -255,7 +257,7 @@ export function MatchDrawer({
   /** ORDERS §19 — Suggested chip (auto_match / high-confidence only). */
   const [suggestedOnly, setSuggestedOnly] = useState(false);
   /** 432-CUR #1 — Record type is a multi-select; empty = all types. */
-  const [recordKinds, setRecordKinds] = useState<BankMatchCandidateKind[]>([]);
+  const [recordKinds, setRecordKinds] = useState<BankMatchFilterKind[]>([]);
   const { pushToast } = useToast();
 
   const seedPlusMinus90 = () => {
@@ -991,7 +993,7 @@ export function MatchDrawer({
               label="Record type"
               options={RECORD_TYPE_CHIPS.map((chip) => ({ value: chip.kind, label: chip.label }))}
               selected={recordKinds}
-              onChange={(next) => setRecordKinds(next as BankMatchCandidateKind[])}
+              onChange={(next) => setRecordKinds(next as BankMatchFilterKind[])}
               allLabel="All types"
               data-testid="match-drawer-record-type-dropdown"
             />

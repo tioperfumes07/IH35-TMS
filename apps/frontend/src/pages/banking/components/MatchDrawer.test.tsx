@@ -86,6 +86,28 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     vi.mocked(bankingApi.getMatchCandidates).mockReset();
   });
 
+  it("shows the Checks filter and accepts a suggested check by its canonical expense id", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [candidate({ reference: "1234", memo: "Check 1234" })], match_candidates_count: 1,
+    });
+    vi.mocked(bankingApi.acceptBankReconMatch).mockResolvedValue({ ok: true, result: {} });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    await screen.findByTestId("match-candidate-row");
+    await userEvent.click(within(screen.getByTestId("match-drawer-record-type-dropdown")).getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: "Checks" }));
+    await waitFor(() => expect(bankingApi.getMatchCandidates).toHaveBeenLastCalledWith(
+      bankTxnId, companyId, expect.objectContaining({ kinds: ["check"] }),
+    ));
+    expect(bankingApi.acceptBankReconMatch).not.toHaveBeenCalled();
+    const refreshedRow = await screen.findByTestId("match-candidate-row");
+    const confirm = within(refreshedRow).getByTestId("match-candidate-confirm");
+    await waitFor(() => expect(confirm).not.toBeDisabled());
+    await userEvent.click(confirm);
+    await waitFor(() => expect(bankingApi.acceptBankReconMatch).toHaveBeenCalledWith(expect.objectContaining({
+      ledger_entry_kind: "expense", ledger_entry_id: "e1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    })));
+  });
+
   it("enables Confirm for a gap=0 expense candidate and calls acceptBankReconMatch with kind+id on click", async () => {
     const expenseCandidate = candidate({
       ledger_entry_kind: "expense",

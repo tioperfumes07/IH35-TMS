@@ -43,6 +43,8 @@ const readAll = () => Object.fromEntries(Object.entries(FILES).map(([k, rel]) =>
 
 /** 443.155 — each candidate source and the predicate that ties it to the bank line's account. */
 export const SCOPED_SOURCES = {
+  // Checks filter the two existing document sources; BOTH retain their bank-account scope.
+  check: /(?=[\s\S]*bp\.from_bank_account_id = \$6::uuid)(?=[\s\S]*e\.payment_account_uuid = \$6::uuid)/,
   payment: /p\.deposited_to_account_id::text = \$6::text/,
   deposit: /d\.bank_account_id = \$6::uuid/,
   bill_payment: /bp\.from_bank_account_id = \$6::uuid/,
