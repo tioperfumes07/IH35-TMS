@@ -1227,9 +1227,17 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       ) : null}
 
       {show("funds_due") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
-          <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-funds-due")}</div>
+        <BoardSection
+          title="Funds Due"
+          testId="factoring-funds-due-report"
+          footer={
+            <span data-testid="factoring-funds-due-footnote">
+              Invoices submitted to the factor but not yet advanced. Distinct from the other tabs on
+              this page, which only ever show invoices that have already been funded.
+            </span>
+          }
+        >
+          <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-funds-due")}</div>
           {fundsDueQuery.isError ? (
             <ListErrorState
               title="Couldn't load funds due"
@@ -1269,13 +1277,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   advance_amount_cents: fmtCents(fundsDueRows.reduce((sum, row) => sum + Number(row.advance_amount_cents ?? 0), 0)),
                 }}
               />
-              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-funds-due-footnote">
-                Invoices submitted to the factor but not yet advanced. Distinct from the other
-                tabs on this page, which only ever show invoices that have already been funded.
-              </p>
             </div>
           )}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* REG-015 (owner 2026-09-10): Six real read-only factoring report tabs — replacing the
@@ -1287,9 +1291,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           and fees. No separate backend endpoint needed — the recourse pipeline already carries
           all the per-invoice factoring data keyed by customer. */}
       {show("request_debtor_credit_check") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-request-debtor-credit-check">
-          <div className="mb-2 text-xs font-medium text-gray-900">Request Debtor / Credit Check</div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-credit-check")}</div>
+        <BoardSection title="Request Debtor / Credit Check" testId="factoring-request-debtor-credit-check">
+          <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-debtor-credit-check")}</div>
           {recourseQuery.isError ? (
             <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
           ) : null}
@@ -1360,16 +1363,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* Debtor Receipts — payments received from customers on factored invoices. New backend
           endpoint GET /api/v1/factoring/debtor-receipts. Live-verified 2026-09-10: 0 rows
           (USMCA has no customer payments yet — honest empty state). */}
       {show("debtor_receipts") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-debtor-receipts">
-          <div className="mb-2 text-xs font-medium text-gray-900">Debtor Receipts</div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-receipts")}</div>
+        <BoardSection title="Debtor Receipts" testId="factoring-debtor-receipts">
+          <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-debtor-receipts")}</div>
           {debtorReceiptsQuery.isError ? (
             <ListErrorBanner onRetry={() => void debtorReceiptsQuery.refetch()} />
           ) : null}
@@ -1415,16 +1417,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
           amount = principal borrowed) with the reserve as the savings holdback. Also shows the
           total reserve balance from the factoring KPI engine (escrow + cash reserve roles). */}
       {show("loan_save") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
-          <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
+        <BoardSection title="Loan / Save" testId="factoring-loan-save">
+          <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-loan-save-summary">
             {/* ROUND 435 — "Total Loan Balance" was the Outstanding Liability Balance tile and "Total Reserve (Savings)"
                 the shared reserve panel's Total reserve, both already on this screen from the same queries: removed, not
@@ -1481,15 +1482,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* Unapplied Cash — payments with unapplied balances. New backend endpoint
           GET /api/v1/factoring/unapplied-cash. Live-verified 2026-09-10: 0 rows. */}
       {show("unapplied_cash") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-unapplied-cash">
-          <div className="mb-2 text-xs font-medium text-gray-900">Unapplied Cash</div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-unapplied-cash")}</div>
+        <BoardSection title="Unapplied Cash" testId="factoring-unapplied-cash">
+          <div className="mb-2 px-3.5 pt-2">{dateRangeOnlyFilterBar("factoring-home-unapplied-cash")}</div>
           {unappliedCashQuery.isError ? (
             <ListErrorBanner onRetry={() => void unappliedCashQuery.refetch()} />
           ) : null}
@@ -1530,7 +1530,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* Invoice Status Report — all non-void invoices with their factoring_status, joined to
@@ -1539,13 +1539,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           (51 advanced, 8 not_factored sent, 5 proforma). REG-046: each row shows invoiced date,
           settlement number, delivery date, Original Invoice Amount, Advance, Reserve, Fees. */}
       {show("invoice_status_report") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-invoice-status-report">
-          <div className="mb-2 text-xs font-medium text-gray-900">Invoice Status Report</div>
-          <div className="mb-2 text-xs text-gray-500" data-testid="factoring-invoice-status-label">
-            Each row shows the money waterfall: invoiced date → settlement # → delivery date → Original Invoice Amount → Advance → Reserve → Fees.
+        <BoardSection
+          title="Invoice Status Report"
+          testId="factoring-invoice-status-report"
+          subtitle="Each row shows the money waterfall: invoiced date → settlement # → delivery date → Original Invoice Amount → Advance → Reserve → Fees."
+        >
+          <div className="mb-2 px-3.5 pt-2 text-xs text-gray-500" data-testid="factoring-invoice-status-label">
             Invoice, Customer, and Factoring Status columns follow for reference.
           </div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-invoice-status")}</div>
+          <div className="mb-2 px-3.5">{dateRangeOnlyFilterBar("factoring-home-invoice-status")}</div>
           {invoiceStatusQuery.isError ? (
             <ListErrorBanner onRetry={() => void invoiceStatusQuery.refetch()} />
           ) : null}
@@ -1601,15 +1603,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* Messages & Support — contact information for the active factor company. Read-only
           display of the factor's name, email, phone, and address from the factor profile.
           No message-writing capability (read-only report, no external system submission). */}
       {show("messages_support") ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-messages-support">
-          <div className="mb-2 text-xs font-medium text-gray-900">Messages &amp; Support</div>
+        <BoardSection title="Messages & Support" testId="factoring-messages-support">
           {summaryQuery.isError ? (
             <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
           ) : null}
@@ -1657,7 +1658,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               );
             })()
           ) : null}
-        </div>
+        </BoardSection>
       ) : null}
 
       {/* ROUND 315 / Lead B7 — Reserve tab mounts the SAME shared panel Banking Home uses
