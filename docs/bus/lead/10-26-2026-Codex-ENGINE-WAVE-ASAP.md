@@ -1,6 +1,11 @@
 # CODEX — ENGINE WAVE ASAP — 10-26-2026 ~7:30 AM CT (Cursor Lead)
 **Goal:** burn down the remaining ~58 OPEN engines + finish the 314-row register honestly. Fastest path = **measure-close first, then horizontal money writers**. No shells. No stash. No fake-green.
 
+## STATUS UPDATE — 10-26 ~3:30 PM CT (Cursor Lead)
+CLOSED — do not redo: ENG-01/02/03/05/09/10 (Lead #27896); ENG-11/14/63 (Codex #27900); ENG-07 CODED (#27901 guard 18802).
+ENG-04 CODED writer: historical_backfill never credits 2170; guard 18809 PASS; ops dry-run `scripts/ops/2026-10-26-eng-04-2170-advance-reclass-dry-run.mts` → 3 PROPOSE_RECLASS / 3 NO-EVIDENCE / 6 BANK_AMBIGUOUS; **257596¢ residual until Lead applies**.
+NEXT for Codex: ENG-08 live proof, ENG-12 retype (81 other), ENG-17 Faro residuals, ENG-13/22 trailer; flip ENG-07 DONE-LIVE after tip deploy.
+
 USMCA only `5c854333-6ea5-4faa-af31-67cb272fef80`.  
 Prod: `DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"` inline; every SQL `SET LOCAL app.bypass_rls='lucia'`. Never print the URL.
 
