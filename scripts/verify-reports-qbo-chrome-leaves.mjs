@@ -98,9 +98,24 @@ export function audit(opts = {}) {
   const failures = [];
 
   const reportsHome = opts.reportsHome ?? read(`${REPORTS_DIR}/ReportsHome.tsx`);
-  if (!/<CategoryHoverNav/.test(reportsHome)) failures.push("ReportsHome missing real CategoryHoverNav mount");
-  if (!/CustomReportBuilder/.test(reportsHome)) failures.push("ReportsHome missing real CustomReportBuilder toggle");
-  if (!/never fabricate counts/.test(reportsHome)) failures.push("ReportsHome missing the honest KPI no-fabrication guarantee");
+  // Reports v3 board (FINAL-3 row 40, #27715): the hub mounts ReportsHomeBoard; the category nav is the board's
+  // sidebar, the custom builder is its own route, and KPI honesty is checked in CODE (comment markers prove nothing).
+  const reportsBoard = opts.reportsBoard ?? read(`${REPORTS_DIR}/components/ReportsHomeBoard.tsx`);
+  const routes = opts.routes ?? read("apps/frontend/src/routes/manifest.tsx");
+  if (!/<ReportsHomeBoard\b/.test(reportsHome)) failures.push("ReportsHome missing the ReportsHomeBoard mount");
+  if (!/testId="reports-category-nav"/.test(reportsBoard)) failures.push("ReportsHome board missing the real category nav (sidebar)");
+  for (const id of ["financial", "operations", "drivers", "fleet", "fuel", "safety", "compliance", "automation", "saved"]) {
+    if (!new RegExp(`\\{\\s*id:\\s*"${id}"\\s+as const`).test(reportsBoard)) failures.push(`ReportsHome category nav missing real "${id}" entry`);
+  }
+  if (!/navigate\("\/reports\/custom"\)/.test(reportsHome) || !/path="\/reports\/custom"/.test(routes) || !/import\("\.\.\/pages\/reports\/CustomReportBuilder"\)/.test(routes)) {
+    failures.push("ReportsHome missing a real CustomReportBuilder door (+ Custom report → mounted /reports/custom)");
+  }
+  const kpiTiles = reportsBoard.match(/<V3KpiTile[\s\S]*?\/>/g) ?? [];
+  const honestTiles = kpiTiles.filter((t) => /dash\(|"—"/.test(t) && /isError/.test(t));
+  if (kpiTiles.length === 0 || honestTiles.length !== kpiTiles.length || !/<ListErrorBanner[\s\S]{0,200}onRetry/.test(reportsBoard)) {
+    failures.push("ReportsHome missing the honest KPI no-fabrication guarantee (every KPI tile renders — on null/error, retryable error banner)");
+  }
+  if (!/getFrequentlyRun/.test(reportsBoard) || !/<FrequentlyRunTable\b/.test(reportsBoard)) failures.push("ReportsHome missing the Frequently run table (Rule 07 — never remove)");
 
   const categoryHoverNav = opts.categoryHoverNav ?? read("apps/frontend/src/components/reports/CategoryHoverNav.tsx");
   for (const id of ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "automation", "saved"]) {
@@ -163,10 +178,22 @@ function selftest() {
     process.exit(1);
   }
 
-  const mut1 = audit({ reportsHome: read(`${REPORTS_DIR}/ReportsHome.tsx`).replace("<CategoryHoverNav", "<div") });
-  if (!mut1.failures.some((f) => /ReportsHome missing real CategoryHoverNav/.test(f))) {
-    console.error(`${LABEL} SELFTEST FAIL — CategoryHoverNav mutation not caught`);
-    process.exit(1);
+  const board = read(`${REPORTS_DIR}/components/ReportsHomeBoard.tsx`);
+  const home = read(`${REPORTS_DIR}/ReportsHome.tsx`);
+  const routesSrc = read("apps/frontend/src/routes/manifest.tsx");
+  for (const [name, o, re] of [
+    ["category nav dropped", { reportsBoard: board.replace('testId="reports-category-nav"', 'testId="x"') }, /category nav/],
+    ["fuel category dropped", { reportsBoard: board.replace('{ id: "fuel" as const', '{ id: "gas" as const') }, /"fuel" entry/],
+    ["custom builder route unregistered (the #27715 dead door)", { routes: routesSrc.replace('path="/reports/custom"', 'path="/reports/custom-x"') }, /CustomReportBuilder door/],
+    ["custom report button removed", { reportsHome: home.replace('navigate("/reports/custom")', 'navigate("/reports")') }, /CustomReportBuilder door/],
+    ["a KPI tile fabricates a value on error", { reportsBoard: board.replace("dash(kpiQuery.data?.available_reports)", "String(kpiQuery.data?.available_reports ?? 0)").replace('sub={kpiReady ? "categories live" : kpiQuery.isError ? "Failed to load" : "Loading…"}', 'sub="categories live"') }, /no-fabrication/],
+    ["Frequently run removed", { reportsBoard: board.replace(/<FrequentlyRunTable\b/g, "<div") }, /Frequently run/],
+  ]) {
+    const changed = Object.entries(o).some(([k, v]) => v !== { reportsBoard: board, reportsHome: home, routes: routesSrc }[k]);
+    if (!changed || !audit(o).failures.some((f) => re.test(f))) {
+      console.error(`${LABEL} SELFTEST FAIL — planted "${name}" not caught`);
+      process.exit(1);
+    }
   }
 
   const mut2 = audit({ categoryHoverNav: read("apps/frontend/src/components/reports/CategoryHoverNav.tsx").replace('id: "fuel"', 'id: "gas"') });

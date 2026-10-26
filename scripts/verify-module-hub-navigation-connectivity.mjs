@@ -85,7 +85,11 @@ export function verify(source) {
     needNavItem("reportsSubnav", label, href, `reports subnav ${label} must remain wired`);
   }
   need("reportsHome", "<ReportsSubNav />", "reports home must retain shared subnavigation");
-  need("reportsHome", "setShowCustomBuilder", "reports home must retain its custom-builder door");
+  // Reports v3 board (FINAL-3 row 40, #27715): the custom-builder door is "+ Custom report" → /reports/custom, and that
+  // route must really mount CustomReportBuilder (the rebuild linked it without registering it — a dead door).
+  need("reportsHome", 'navigate("/reports/custom")', "reports home must retain its custom-builder door (+ Custom report → /reports/custom)");
+  need("routes", 'path="/reports/custom"', "the custom report builder route /reports/custom must be mounted");
+  need("routes", 'import("../pages/reports/CustomReportBuilder")', "/reports/custom must render the real CustomReportBuilder");
   need("reportsHub", "<ReportsSubNav />", "reports hub must retain shared subnavigation");
   need("reportsHub", 'kind="report_category"', "reports hub must link every returned category landing via EntityLink");
   for (const slug of ["ops-dispatch", "driver-perf", "equipment", "safety", "customers", "vendors", "accounting", "tax-reg", "multi-company"]) need("routes", `path="/reports/categories/${slug}"`, `report category ${slug} must remain mounted`);
@@ -110,7 +114,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["finance", 'id: "overview"', 'id: "broken-overview"'], ["finance", "to: tab.to", "to: \"/broken\""],
     ["statements", 'id: "pl"', 'id: "broken-pl"'], ["fuelConfig", 'id: "home"', 'id: "broken-home"'],
@@ -123,7 +127,7 @@ if (process.argv.includes("--self-test")) {
     ["reportsSubnav", '{ label: "Reports", to: "/reports" }', '{ label: "Reports", to: "/broken" }'],
     ["reportsSubnav", 'label: "Run report"', 'label: "Broken runner"'],
     ["reportsSubnav", 'label: "Audit"', 'label: "Broken audit"'],
-    ["reportsHome", "<ReportsSubNav />", "<div />"], ["reportsHome", "setShowCustomBuilder", "brokenCustomBuilder"],
+    ["reportsHome", "<ReportsSubNav />", "<div />"], ["reportsHome", 'navigate("/reports/custom")', 'navigate("/reports")'], ["routes", 'path="/reports/custom"', 'path="/reports/custom-x"'], ["routes", 'import("../pages/reports/CustomReportBuilder")', 'import("../pages/reports/Missing")'],
     ["reportsHub", 'kind="report_category"', 'kind="broken_category"'],
     ["routes", 'path="/finance/statements"', 'path="/broken-finance"'], ["routes", 'path="/fuel/planner"', 'path="/broken-fuel"'],
     ["routes", 'path="/help/runbooks"', 'path="/broken-help"'], ["routes", 'path="/driver-hub/reporting"', 'path="/broken-driver-hub"'],

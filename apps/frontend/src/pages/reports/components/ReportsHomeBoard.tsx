@@ -7,7 +7,8 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getIftaStatus, getKpiSummary } from "../../../api/reports";
+import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
+import { FrequentlyRunTable } from "../../../components/reports/FrequentlyRunTable";
 import {
   BasisSelector,
   type AccountingBasis,
@@ -123,6 +124,12 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
     queryFn: () => getKpiSummary(companyId),
     enabled: Boolean(companyId),
   });
+  // Rule 07 (never remove): Frequently run stays on the hub — real API rows only, nothing fabricated.
+  const frequentQuery = useQuery({
+    queryKey: ["reports", "home-board", "frequently-run", companyId],
+    queryFn: () => getFrequentlyRun(companyId),
+    enabled: Boolean(companyId),
+  });
   const iftaQuery = useQuery({
     queryKey: ["reports", "home-board", "ifta-status", companyId],
     queryFn: () => getIftaStatus(companyId),
@@ -163,6 +170,23 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       return;
     }
     navigate(href);
+  }
+
+  function runFrequentReport(row: FrequentlyRunReport) {
+    const href = PHASE_6_REPORT_HREFS[row.id];
+    if (href) {
+      navigate(href);
+      return;
+    }
+    if (row.id === "ar-aging") {
+      navigate("/reports/ar-aging");
+      return;
+    }
+    if (row.id === "ap-aging") {
+      navigate("/reports/ap-aging");
+      return;
+    }
+    navigate(`/reports/run/${encodeURIComponent(row.id)}`);
   }
 
   function basisLabel(reportKey: string): string {
@@ -364,6 +388,20 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           )}
         </div>
       </div>
+
+      {/* Rule 07 — Frequently run stays on the hub (restored after the v3 rebuild #27715 dropped it). */}
+      <V3Panel title="Frequently run" subtitle="Your most-run reports — run counts from the report log" testId="reports-home-frequently-run">
+        {frequentQuery.isError ? (
+          <ListErrorBanner
+            message={userFacingApiError(frequentQuery.error, "Failed to load frequently run reports.")}
+            onRetry={() => void frequentQuery.refetch()}
+          />
+        ) : frequentQuery.isLoading ? (
+          <div className="px-3 py-2 text-xs text-[#6B7280]">Loading…</div>
+        ) : (
+          <FrequentlyRunTable rows={frequentQuery.data ?? []} onRun={runFrequentReport} />
+        )}
+      </V3Panel>
 
       {/* IFTA preparer (S05) — the quarter, due date and countdown from the real IFTA status; drawn only once loaded. */}
       {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
