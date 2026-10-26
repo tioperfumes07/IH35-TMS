@@ -22,6 +22,11 @@ import { readFileSync } from "node:fs";
 
 const LABEL = "verify-disp-wire-10-cancel-economics";
 const SVC = "apps/backend/src/dispatch/cancellation.service.ts";
+const HELPER = "apps/backend/src/driver-finance/driver-bill-void-state.service.ts";
+function helperSetsVoid(src) {
+  const m = /export async function stampDriverBillVoidedInClientTx[\s\S]*?\n}\n/.exec(src || "");
+  return !!m && /UPDATE\s+driver_finance\.driver_bills[\s\S]{0,200}SET\s+status\s*=\s*'void'\s*,\s*voided_at/i.test(m[0]);
+}
 
 function stripCommentsAndStrings(src) {
   return src
@@ -35,7 +40,7 @@ function stripCommentsOnly(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
-function check(raw) {
+function check(raw, helperSrc = readFileSync(HELPER, "utf8")) {
   const code = stripCommentsAndStrings(raw);
   const withStrings = stripCommentsOnly(raw);
   const errors = [];
@@ -67,10 +72,18 @@ function check(raw) {
   }
 
   // 4. Driver bills must now be cascade-voided (owner ruling 2026-09-01 — one-click).
-  if (!/UPDATE\s+driver_finance\.driver_bills[\s\S]{0,300}status\s*=\s*'void'/i.test(withStrings)) {
+  //    Accepted forms: an inline UPDATE ... status='void', OR the canonical helper
+  //    stampDriverBillVoidedInClientTx(client, ...) — and the helper itself must still set
+  //    status='void' with voided_at (checked against its own source, not trusted by name).
+  const inlineVoid = /UPDATE\s+driver_finance\.driver_bills[\s\S]{0,300}status\s*=\s*'void'/i.test(withStrings);
+  const helperVoid = /await\s+stampDriverBillVoidedInClientTx\(\s*client\s*,/.test(withStrings) &&
+    /import[\s\S]{0,200}stampDriverBillVoidedInClientTx[\s\S]{0,200}driver-bill-void-state\.service/.test(withStrings) &&
+    helperSetsVoid(helperSrc);
+  if (!inlineVoid && !helperVoid) {
     errors.push(
       `${SVC}: cancellation must void open driver bills in-cascade (owner ruling 2026-09-01) — not leave ` +
-        `them as orphaned open payables on a cancelled load`
+        `them as orphaned open payables on a cancelled load (no inline UPDATE and no ` +
+        `stampDriverBillVoidedInClientTx(client, ...) call whose helper sets status='void')`
     );
   }
 
@@ -99,11 +112,10 @@ function selftest() {
   const mutations = [
     ["invoices no longer touched", (s) => s.split("accounting.invoices").join("accounting.something_else")],
     ["driver bills no longer observed", (s) => s.split("driver_finance.driver_bills").join("driver_finance.other")],
-    ["driver bills void removed", (s) =>
-      s.replace(
-        /UPDATE driver_finance\.driver_bills\s+SET status = 'void'/,
-        "/* REMOVED UPDATE driver_finance.driver_bills SET status = 'void' */"
-      )
+    ["driver bills void removed (inline UPDATE and helper call both gone)", (s) =>
+      s
+        .replace(/UPDATE driver_finance\.driver_bills\s+SET status = 'void'/g, "/* REMOVED */")
+        .replace(/await\s+stampDriverBillVoidedInClientTx\(/g, "await noopVoid(")
     ],
     ["outcome made silent", (s) => s.split("cancellation_money_artifacts").join("nothing_recorded")],
     [
@@ -114,6 +126,20 @@ function selftest() {
       (s) => s.replace(/SET status = 'void',\s*voided_at = now\(\),/, "SET status = 'void',"),
     ],
   ];
+
+  {
+    const helperReal = readFileSync(HELPER, "utf8");
+    const helperBroken = helperReal.replace(/SET status = 'void',/, "SET status = status,");
+    if (helperBroken === helperReal) {
+      console.error(`${LABEL} --selftest FAIL — helper mutation changed nothing (guard is stale).`);
+      process.exit(1);
+    }
+    const hasInline = /UPDATE\s+driver_finance\.driver_bills[\s\S]{0,300}status\s*=\s*'void'/i.test(real);
+    if (!hasInline && check(real, helperBroken).length === 0) {
+      console.error(`${LABEL} --selftest FAIL — helper that no longer sets status='void' was NOT detected.`);
+      process.exit(1);
+    }
+  }
 
   for (const [name, mutate] of mutations) {
     const broken = mutate(real);
