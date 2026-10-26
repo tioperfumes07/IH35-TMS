@@ -169,7 +169,7 @@ export function misdirectedAlertProblems({ service, e47, e47sql, feed, view }) {
 export function suggestionReasonUiProblems({ view, api, feed, categorize, queue }) {
   const p = [];
   if (!/export function suggestionSourceLabel/.test(view)) p.push("view: suggestionSourceLabel missing (443.343-C)");
-  if (!/export function suggestionConfidenceLabel/.test(view)) p.push("view: suggestionConfidenceLabel missing (443.343-C)");
+  if (!/export function categorizationConfidenceLabel/.test(view)) p.push("view: categorizationConfidenceLabel missing (443.343-C)");
   if (!/export function categorizedWhoWhenText/.test(view)) p.push("view: categorizedWhoWhenText missing (443.343-C)");
   if (!/data-testid="bank-txn-suggested-confidence"/.test(view)) p.push("view: Suggested line hides confidence (443.343-C)");
   if (!/data-testid="bank-txn-suggested-source"/.test(view)) p.push("view: Suggested line hides source (443.343-C)");

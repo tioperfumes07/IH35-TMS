@@ -37,23 +37,28 @@ export function run(root = ROOT) {
   const boardSrc = read(BOARD, root);
   const cardSrc = read(CARD_FILE, root);
 
+  // FINAL-3 row 40 (#27715, owner v3 rebuild — docs/design/v3/Reports.dc.html): the hub content moved from the
+  // ReportsHome shell into ReportsHomeBoard, and the category hover nav became the v3 category sidebar. The hub is
+  // judged as the rendered pair (shell + board); each requirement below is unchanged in substance.
+  const hubSrc = `${homeSrc}\n${boardSrc}`;
   // RPT-S01
-  if (!/CategoryHoverNav/.test(homeSrc)) {
+  const v3CategoryNav = /SIDEBAR_CATEGORIES\.map\(/.test(boardSrc) && /aria-label="Report categories"/.test(boardSrc);
+  if (!/CategoryHoverNav/.test(homeSrc) && !v3CategoryNav) {
     failures.push(`${FILE}: must render a category hover nav for report catalog`);
   }
   if (!/ReportsHomeBoard/.test(homeSrc)) {
     failures.push(`${FILE}: must mount ReportsHomeBoard`);
   }
-  if (!/Accounting \+ financial reports/.test(boardSrc)) {
+  if (!/Accounting \+ financial reports/.test(boardSrc) && !/title="Accounting &amp; financial"/.test(boardSrc)) {
     failures.push(`${BOARD}: must render an accounting/financial reports section`);
   }
-  if (!/Management reports/.test(homeSrc)) {
+  if (!/Management reports/.test(hubSrc)) {
     failures.push(`${FILE}: must render a management reports section`);
   }
-  if (/QBO-standard branded compilations/.test(homeSrc)) {
+  if (/QBO-standard branded compilations/.test(hubSrc)) {
     failures.push(`${FILE}: USMCA-visible management report copy must not claim a QBO standard`);
   }
-  if (!/Branded financial compilations/.test(homeSrc)) {
+  if (!/Branded financial compilations/.test(hubSrc)) {
     failures.push(`${FILE}: management report copy must describe the TMS-native branded compilation`);
   }
   // Count explicit report rows: board accounting tuples + hub management ids (15 minimum).
@@ -61,7 +66,11 @@ export function run(root = ROOT) {
   const accountingRows = (boardSrc.match(rowTupleRe) ?? []).length;
   const managementReportIds = ["company-overview", "sales-performance", "expenses-performance"];
   const mgmtSection = homeSrc.match(/Management reports[\s\S]{0,2500}(?=FrequentlyRunTable|ScheduledReportsPanel)/)?.[0] ?? "";
-  const mgmtRows = managementReportIds.filter((id) => mgmtSection.includes(`"${id}"`)).length;
+  // On the v3 board the Management rows are the MANAGEMENT_ROWS table rendered inside the Management panel.
+  const boardMgmt = /MANAGEMENT_ROWS\.map\(/.test(boardSrc) && /Management reports/.test(boardSrc)
+    ? (boardSrc.match(/const MANAGEMENT_ROWS = \[[\s\S]*?\] as const;/)?.[0] ?? "")
+    : "";
+  const mgmtRows = managementReportIds.filter((id) => mgmtSection.includes(`"${id}"`) || boardMgmt.includes(`"${id}"`)).length;
   const totalRows = accountingRows + mgmtRows;
   if (totalRows < 15) {
     failures.push(`${FILE}+${BOARD}: expected at least 15 report launch rows, found ${totalRows} (accounting=${accountingRows}, mgmt=${mgmtRows})`);
@@ -74,7 +83,7 @@ export function run(root = ROOT) {
   }
 
   // RPT-S05
-  if (!/IftaPreparerCard/.test(homeSrc)) {
+  if (!/<IftaPreparerCard\b/.test(hubSrc)) {
     failures.push(`${FILE}: must render IftaPreparerCard on the reports home`);
   }
   if (!/getIftaStatus\s*\(/.test(homeSrc) && !/getIftaStatus\s*\(/.test(boardSrc)) {
@@ -103,17 +112,30 @@ function main() {
     const boardBackup = fs.readFileSync(boardPath, "utf8");
     const homeBackup = fs.readFileSync(homePath, "utf8");
     try {
-      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/Accounting \+ financial reports/g, ""), "utf8");
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/Accounting \+ financial reports/g, "").replace('title="Accounting &amp; financial"', 'title="Reports"'), "utf8");
       const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted missing section did not fail");
         process.exit(1);
       }
       fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup, "utf8");
-      fs.writeFileSync(path.join(tmpRoot, FILE), homeBackup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
+      fs.writeFileSync(path.join(tmpRoot, FILE), homeBackup, "utf8");
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
       const qboCopyPlanted = run(tmpRoot);
       if (!qboCopyPlanted.some((failure) => failure.includes("must not claim a QBO standard"))) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted QBO copy did not fail");
+        process.exit(1);
+      }
+      // Planted original S05 defect: the IFTA preparer card dropped from the hub.
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/<IftaPreparerCard\b[^>]*\/>/g, "null"), "utf8");
+      if (!run(tmpRoot).some((failure) => failure.includes("IftaPreparerCard"))) {
+        console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: dropped IftaPreparerCard did not fail");
+        process.exit(1);
+      }
+      // Planted original S01 defect: no category nav at all.
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace('aria-label="Report categories"', ""), "utf8");
+      if (!run(tmpRoot).some((failure) => failure.includes("category hover nav"))) {
+        console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: missing category nav did not fail");
         process.exit(1);
       }
       console.log(`[verify-rpt-s01-s05-reports-home-ifta] SELFTEST PASS (${planted.length} section failures + QBO-copy mutation detected)`);

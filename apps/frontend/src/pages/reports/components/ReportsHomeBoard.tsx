@@ -13,6 +13,7 @@ import {
   type AccountingBasis,
 } from "../../../components/accounting/BasisSelector";
 import { PHASE_6_REPORT_HREFS } from "../../../components/reports/phase6ReportLinks";
+import { IftaPreparerCard } from "../../../components/reports/IftaPreparerCard";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
@@ -221,8 +222,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       {/* Two-column: sidebar + right panel (v3 design) */}
       <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 12, alignItems: "start" }}>
 
-        {/* Left: category sidebar */}
-        <div className="rounded-sm border border-[#E5E7EB] bg-white p-1.5">
+        {/* Left: category sidebar — the report-catalog category nav (v3 spec replaces the old hover nav). */}
+        <V3Panel title="Categories" testId="reports-category-nav">
+          <nav aria-label="Report categories" className="p-1.5">
           {SIDEBAR_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -237,7 +239,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
               {cat.label}
             </button>
           ))}
-        </div>
+          </nav>
+        </V3Panel>
 
         {/* Right: category panel */}
         <div>
@@ -314,11 +317,12 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
               </V3Panel>
 
               {/* Rule 07 — management compilations stay on the hub */}
-              <div className="mt-3 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-                <div className="border-b border-[#E5E7EB] px-3 py-2">
-                  <h3 className="text-xs font-semibold text-[#0F1219]">Management reports</h3>
-                  <p className="text-xs text-[#6B7280]">Branded financial compilations — lender, insurance, and stakeholder ready</p>
-                </div>
+              <div className="mt-3">
+              <V3Panel
+                title="Management reports"
+                subtitle="Branded financial compilations — lender, insurance, and stakeholder ready"
+                testId="reports-home-management"
+              >
                 <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]">
                   {MANAGEMENT_ROWS.map(({ type, label, sub }) => (
                     <button
@@ -332,12 +336,14 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     </button>
                   ))}
                 </div>
+              </V3Panel>
               </div>
             </>
           ) : activeCategory === "automation" ? (
             <ScheduledReportsPanel />
           ) : activeCategory === "saved" ? (
-            <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-4 text-center text-xs text-[#4B5563]">
+            <V3Panel title="Saved" testId="reports-category-panel-saved">
+            <div className="px-3 py-4 text-center text-xs text-[#4B5563]">
               <p>Open <strong className="text-[#0F1219]">+ Custom report</strong> (top right) to build and save reports — saved definitions appear in the builder list.</p>
               <button
                 type="button"
@@ -347,6 +353,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 Open report builder →
               </button>
             </div>
+            </V3Panel>
           ) : (
             /* Simple report table for other categories */
             <SimpleCategoryPanel
@@ -357,6 +364,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           )}
         </div>
       </div>
+
+      {/* IFTA preparer (S05) — the quarter, due date and countdown from the real IFTA status; drawn only once loaded. */}
+      {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
     </div>
   );
 }
@@ -373,10 +383,7 @@ function SimpleCategoryPanel({
   const tdS: CSSProperties = { fontSize: V3_TABLE.fontPx, color: V3.ink, padding: `${V3_TABLE.rowPadY}px 12px`, borderBottom: `1px solid ${V3.borderSoft}`, verticalAlign: "middle" };
   const label = SIDEBAR_CATEGORIES.find((c) => c.id === category)?.label ?? category;
   return (
-    <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white" data-testid={`reports-category-panel-${category}`}>
-      <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
-        <div className="text-xs font-bold text-[#0F1219]">{label}</div>
-      </div>
+    <V3Panel title={label} testId={`reports-category-panel-${category}`}>
       {rows.length === 0 ? (
         <div className="px-3 py-4 text-xs text-[#6B7280]">No reports in this category yet.</div>
       ) : (
@@ -407,6 +414,6 @@ function SimpleCategoryPanel({
           </tbody>
         </table>
       )}
-    </div>
+    </V3Panel>
   );
 }

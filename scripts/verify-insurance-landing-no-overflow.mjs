@@ -96,7 +96,16 @@ if (!fs.existsSync(filePath)) {
   console.error(`[${LABEL}] FAILED — missing ${TARGET}`);
   process.exit(1);
 }
-const problems = collectProblems(fs.readFileSync(filePath, "utf8"));
+// ROUND 443.267 (#27323, board-faithful Landing): the KPI strip and summary error state moved out of the landing
+// shell into InsuranceHomeBoard, which the landing mounts. The contract is judged over the rendered pair — the
+// shell owns min-w-0/overflow-x-hidden, the board owns the KPI grid and the summary error state.
+const BOARD = "apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx";
+const landingSrc = fs.readFileSync(filePath, "utf8");
+if (!/<InsuranceHomeBoard\b/.test(landingSrc)) {
+  console.error(`[${LABEL}] FAILED — ${TARGET} no longer mounts InsuranceHomeBoard; re-anchor this guard to wherever the KPI strip lives.`);
+  process.exit(1);
+}
+const problems = collectProblems(landingSrc + "\n" + fs.readFileSync(path.join(ROOT, BOARD), "utf8"));
 if (problems.length) {
   console.error(`[${LABEL}] FAILED — ${problems.length} issue(s):`);
   for (const p of problems) console.error(`  ✗ ${p}`);

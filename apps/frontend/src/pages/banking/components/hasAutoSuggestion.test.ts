@@ -3,7 +3,7 @@ import {
   categorizedWhoWhenText,
   hasAutoSuggestion,
   matchesTransactionTypeFilter,
-  suggestionConfidenceLabel,
+  categorizationConfidenceLabel,
   suggestionSourceLabel,
 } from "./BankingTransactionsDesignView";
 import type { PlaidBankTransaction } from "../../../api/banking";
@@ -78,10 +78,10 @@ describe("443.343-C suggestion labels", () => {
   });
 
   it("maps confidence to High / Medium / Low", () => {
-    expect(suggestionConfidenceLabel("high")).toBe("High");
-    expect(suggestionConfidenceLabel("medium")).toBe("Medium");
-    expect(suggestionConfidenceLabel("low")).toBe("Low");
-    expect(suggestionConfidenceLabel(null)).toBeNull();
+    expect(categorizationConfidenceLabel("high")).toBe("High");
+    expect(categorizationConfidenceLabel("medium")).toBe("Medium");
+    expect(categorizationConfidenceLabel("low")).toBe("Low");
+    expect(categorizationConfidenceLabel(null)).toBeNull();
   });
 
   it("formats who+when on accepted lines", () => {
