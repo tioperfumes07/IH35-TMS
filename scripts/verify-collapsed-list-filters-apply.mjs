@@ -4,7 +4,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeStagedFilters, readRepoOrEmpty, STAGED_FILTERS_REL } from "./lib/factoring-v3-chrome.mjs";
 import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -58,7 +57,9 @@ export function audit(sources) {
     }
   }
   if (consumers < 49) failures.push(`consumer inventory shrank to ${consumers}`);
-  if (exempt !== 1) failures.push(`expected exactly one QBO-sync exemption, found ${exempt}`);
+  // At most ONE owner-ruled QBO-sync exemption, and only on ALLOWED_EXEMPT (checked above). Zero is correct once that page
+  // moved to the always-visible money toolbar (FILTER-MULTI-01 / 443.293 Receipts V3, #27635) — nothing left to exempt.
+  if (exempt > 1) failures.push(`expected at most one QBO-sync exemption, found ${exempt}`);
   const inventory = JSON.parse(fs.readFileSync(path.join(ROOT, INVENTORY), "utf8"));
   const sidebarSource = fs.readFileSync(path.join(ROOT, SIDEBAR), "utf8");
   const sidebarBlock = sidebarSource.match(/SIDEBAR_ITEM_IDS[\s\S]*?=\s*\[([\s\S]*?)\]/)?.[1] ?? "";
@@ -110,13 +111,30 @@ function extractConsumers(source) {
 // 443.326 V3: FactoringHome renders its filters through FactoringStagedFilters (a proven pass-through to
 // CollapsedListFilters). Normalize so those panels stay IN this Apply/Cancel/Reset audit instead of hiding behind
 // the wrapper name (scripts/lib/factoring-v3-chrome.mjs — a wrapper that is not exactly CollapsedListFilters is left as-is).
-const stagedWrapperSrc = readRepoOrEmpty(STAGED_FILTERS_REL);
+// Generalized (443.326 added StagedListFilterShell for Customers/Vendors the same way): any component PROVEN from its
+// own source to be exactly `return <CollapsedListFilters {...props} />` with props typed as CollapsedListFilters' props
+// is transparent. Its callers are audited as CollapsedListFilters consumers; its own spread tag is not a consumer (every
+// prop is forwarded, so the caller owns onApply/onReset/onCancel). A wrapper that drops or renames anything is NOT
+// proven and stays opaque — its callers then fail the class-consumer evidence, never pass on the name.
+export function provenPassThroughName(src) {
+  if (!/import \{ CollapsedListFilters \} from "[^"]*\/CollapsedListFilters";/.test(src)) return null;
+  const m = src.match(/export function (\w+)\(\s*props: ComponentProps<typeof CollapsedListFilters>,?\s*\)\s*\{\s*return <CollapsedListFilters \{\.\.\.props\} \/>;\s*\}/);
+  return m ? m[1] : null;
+}
+export function normalizeWrappers(text, wrapperNames) {
+  let out = text;
+  for (const name of wrapperNames) out = out.split(`<${name}`).join("<CollapsedListFilters").split(`</${name}>`).join("</CollapsedListFilters>");
+  return out;
+}
+const rawSources = Object.fromEntries(
+  walk(SRC).map((abs) => [path.relative(SRC, abs).split(path.sep).join("/"), fs.readFileSync(abs, "utf8")]),
+);
+const wrappers = new Map(Object.entries(rawSources).map(([rel, text]) => [rel, provenPassThroughName(text)]).filter(([, n]) => n));
+const wrapperNames = [...wrappers.values()];
 const sources = Object.fromEntries(
-  walk(SRC).map((abs) => {
-    const rel = path.relative(SRC, abs).split(path.sep).join("/");
-    const text = fs.readFileSync(abs, "utf8");
-    return [rel, rel === "pages/factoring/FactoringStagedFilters.tsx" ? text : normalizeStagedFilters(text, stagedWrapperSrc)];
-  }),
+  Object.entries(rawSources)
+    .filter(([rel]) => !wrappers.has(rel))
+    .map(([rel, text]) => [rel, normalizeWrappers(text, wrapperNames)]),
 );
 
 const FILTER_POPOVER = "components/lists/ListView/components/FilterPopover.tsx";
@@ -178,6 +196,23 @@ if (process.argv.includes("--selftest")) {
   const result = audit(fixture);
   if (!result.failures.some((failure) => failure.includes("missing onApply"))) {
     console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — missing Apply contract escaped");
+    process.exit(1);
+  }
+  // Pass-through wrappers: a proven one is transparent (its callers are audited); an unproven one is not.
+  const goodWrapper = 'import { CollapsedListFilters } from "./CollapsedListFilters";\nexport function Shell(\n  props: ComponentProps<typeof CollapsedListFilters>,\n) {\n  return <CollapsedListFilters {...props} />;\n}';
+  const badWrapper = 'import { CollapsedListFilters } from "./CollapsedListFilters";\nexport function Shell(props: ComponentProps<typeof CollapsedListFilters>) {\n  return <CollapsedListFilters {...props} onApply={undefined} />;\n}';
+  if (provenPassThroughName(goodWrapper) !== "Shell" || provenPassThroughName(badWrapper) !== null) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — pass-through proof accepts a wrapper that overrides a prop (or rejects the exact one)");
+    process.exit(1);
+  }
+  const viaWrapper = audit({ "pages/dispatch/Bad.tsx": normalizeWrappers(`<Shell activeFilterCount={1}>x</Shell>`, ["Shell"]) });
+  if (!viaWrapper.failures.some((f) => f.includes("missing onApply"))) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — a caller hiding behind a pass-through wrapper escaped the Apply audit");
+    process.exit(1);
+  }
+  const twoExempt = audit({ [ALLOWED_EXEMPT]: `<CollapsedListFilters applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE" activeFilterCount={1}>x</CollapsedListFilters><CollapsedListFilters applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE" activeFilterCount={1}>y</CollapsedListFilters>` });
+  if (!twoExempt.failures.some((f) => f.includes("at most one"))) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — a second exemption escaped");
     process.exit(1);
   }
   const unauthorized = audit({ "pages/dispatch/Bad.tsx": `<CollapsedListFilters applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE" activeFilterCount={1}>x</CollapsedListFilters>` });
