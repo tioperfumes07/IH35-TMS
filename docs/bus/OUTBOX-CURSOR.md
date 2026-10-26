@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FuelAssignmentPopup ModalSection → BoardSection
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Expenses list BoardSection (443.293-C)
 
 - **STATUS:** SHIPPING
+- **DELTA:** ExpensesListPage register → `BoardSection` (expenses-list-board). moneyListKpiCard strip + void engines unchanged. Guard ratcheted. Pending 220 PARTIAL.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-surf-02-expenses
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue Accounting 220 other tabs to Bills grammar
+- **Files Modified:** ExpensesListPage.tsx · verify-acct-surf-02-expenses.mjs · OUTBOX-CURSOR.md · CURSOR-PENDING-ROWS-FINAL.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FuelAssignmentPopup ModalSection → BoardSection
+
+- **STATUS:** MERGED [#27802](https://github.com/tioperfumes07/IH35-TMS/pull/27802)
 - **DELTA:** Fuel assignment popup sections (Fill / Evidence / Proposed / Change) → shared `BoardSection` (source as subtitle). Confirm/choose/keep engines unchanged. Guard ratcheted. Pending rows 44/49/53 → CODED.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fuel-assignment-popup PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
