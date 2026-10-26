@@ -89,7 +89,12 @@ function assertLive(overrides = {}) {
   if (!directUnitLink && !fallbackUnitLink) problems.push("S30 driver rows missing canonical unit link or tombstone");
   if (!/PlannerAxisHead/.test(timeline)) problems.push("S30 timeline missing two-row PlannerAxisHead");
   if (!/timeline-util-/.test(timeline)) problems.push("S30 timeline missing util column");
-  if (!/h-\[34px\]/.test(timeline)) problems.push("S30 timeline missing 34px row height");
+  // DSP-F443355 (31d76a9364) moved planner row height from a `[&_.pg-r]:h-[34px]` class onto PlannerGrid's own rowPx
+  // prop (44px, the global baseline). The rule is unchanged in substance: EVERY timeline grid states its row height
+  // through the one prop — not a free-floating 34px class that #27785 satisfied by resizing an unrelated button.
+  const grids = (timeline.match(/<PlannerGrid\b/g) ?? []).length;
+  const sized = (timeline.match(/<PlannerGrid\b[^>]*?\browPx=\{44\}/g) ?? []).length;
+  if (grids === 0 || sized !== grids) problems.push(`S30 timeline grids must set rowPx={44} (${sized}/${grids})`);
 
   const truck = get(FILES.truck);
   if (!/data-testid="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");
@@ -114,6 +119,7 @@ if (SELFTEST) {
   }
   const cases = [
     [FILES.timeline, "timeline-util-"],
+    [FILES.timeline, "rowPx={44}"],
     [FILES.timeline, '<EntityLinkOrTombstone kind="unit" id={unitId ?? undefined} name={unitNumber} noun="Unit"'],
     [FILES.grid, '<EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver"'],
     [FILES.grid, '<EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit"'],
