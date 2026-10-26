@@ -66,6 +66,7 @@ const LIVE_FLAG_FILES = new Map([
   // FINAL-4 (2026-10-25): static half by default, catalog/count half behind --live (e7 live_flag_guards).
   ["verify-event-log-spine.mjs", "--live"],
   ["verify-legal-contracts-filed-as-pdf.mjs", "--live"],
+  ["verify-document-status-vocabulary.mjs", "--live"],
   ["verify-no-orphan-of-purged-documents.mjs", "--live"],
   ["verify-no-hos-query-ignores-merged-shells.mjs", "--live"],
 ]);

@@ -24,6 +24,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeStagedFilters, faroStripViaBoardChrome, readRepoOrEmpty, STAGED_FILTERS_REL, BOARD_CHROME_REL } from "./lib/factoring-v3-chrome.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-equipment-vendor-merges-collapsed-filters";
@@ -79,7 +80,8 @@ export function run() {
     failures.push(err);
     return { ok: false, failures };
   }
-  failures.push(...checkBothTabs(src));
+  // 443.326 V3: filters render through FactoringStagedFilters — judged as CollapsedListFilters only when proven.
+  failures.push(...checkBothTabs(normalizeStagedFilters(src, readRepoOrEmpty(STAGED_FILTERS_REL))));
   return { ok: failures.length === 0, failures };
 }
 

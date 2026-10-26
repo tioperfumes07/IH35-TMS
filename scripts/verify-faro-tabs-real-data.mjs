@@ -39,6 +39,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeStagedFilters, faroStripViaBoardChrome, readRepoOrEmpty, STAGED_FILTERS_REL, BOARD_CHROME_REL } from "./lib/factoring-v3-chrome.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-faro-tabs-real-data";
@@ -101,7 +102,7 @@ export const OWNER_TEN = [
 const MANIFEST = "apps/frontend/src/router/route-manifest.ts";
 
 /** Exported for --selftest. */
-export function checkNavOrder(src, manifestSrc = read(MANIFEST).src) {
+export function checkNavOrder(src, manifestSrc = read(MANIFEST).src, chromeSrc = readRepoOrEmpty(BOARD_CHROME_REL)) {
   const failures = [];
   const subnavMatch = src.match(/const SUBNAV = \[([\s\S]*?)\] as const;/);
   if (!subnavMatch) {
@@ -112,7 +113,8 @@ export function checkNavOrder(src, manifestSrc = read(MANIFEST).src) {
   for (const id of REQUIRED_NAV_ORDER) {
     if (!ids.includes(id)) failures.push(`${HOME}: Rule 07 regression — section "${id}" was deleted instead of shown inside its Faro tab.`);
   }
-  if (!/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src)) {
+  // 443.326 V3: the strip may be FactoringBoardChrome's subnavItems built from FARO_TABS (proven, not name-matched).
+  if (!/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src) && !faroStripViaBoardChrome(src, chromeSrc)) {
     failures.push(`${HOME}: the tab strip must be built from FARO_TABS (router/route-manifest.ts), the owner's ten.`);
   }
   const start = manifestSrc.indexOf("export const FARO_TABS = [");
@@ -627,6 +629,18 @@ ${accountSummaryBlock}
   const checks = [
     ["clean source passes", checkNavOrder(goodSrc, goodManifest).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc, panelFixture).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
     ["a deleted section fails", checkNavOrder(badWrongOrder, goodManifest).length > 0],
+    // 443.326 V3 path: strip through FactoringBoardChrome subnavItems — accepted only when the chrome really renders it.
+    ...(() => {
+      const realHome = readRepoOrEmpty("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+      const realChrome = readRepoOrEmpty(BOARD_CHROME_REL);
+      const chromeDropsStrip = realChrome.replace("<HoverDropdownNav items={navItems}", "<span data-x={navItems}");
+      const homeNotFromFaroTabs = realHome.replace("() => FARO_TABS.map((item) =>", "() => [].map((item) =>");
+      return [
+        ["V3 strip via FactoringBoardChrome (real sources) is recognised", faroStripViaBoardChrome(realHome, realChrome)],
+        ["V3 chrome that no longer renders the strip is rejected", chromeDropsStrip !== realChrome && !faroStripViaBoardChrome(realHome, chromeDropsStrip)],
+        ["V3 strip not built from FARO_TABS is rejected", homeNotFromFaroTabs !== realHome && !faroStripViaBoardChrome(homeNotFromFaroTabs, realChrome)],
+      ];
+    })(),
     ["an eleventh Faro tab fails", checkNavOrder(goodSrc, manifestEleven).length > 0],
     ["a tab label that is not the owner's wording fails", checkNavOrder(goodSrc, manifestRelabelled).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],

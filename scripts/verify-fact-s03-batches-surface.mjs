@@ -11,6 +11,12 @@ const WIZARD = "apps/frontend/src/pages/factoring/BatchWizard.tsx";
 const DETAIL = "apps/frontend/src/pages/factoring/BatchDetail.tsx";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
+// Cursor's V3 BoardSection fill (#27754/#27757) moved these markers onto <BoardSection testId="…">, which renders
+// data-testid={testId} on its <section>. Either spelling is the same rendered marker; nothing else counts.
+function hasTestId(src, id) {
+  return src.includes(`data-testid="${id}"`) || new RegExp(`<BoardSection\\b[^>]*\\btestId="${id}"`).test(src);
+}
+
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
@@ -22,8 +28,8 @@ function assertLive(wizardOverride) {
   const manifest = read(MANIFEST);
   if (!/path="\/factoring\/batches\/new"/.test(manifest)) problems.push("batches/new route missing");
   if (!/path="\/factoring\/batches\/:id"/.test(manifest)) problems.push("batches/:id route missing");
-  if (!wizard.includes('data-testid="factoring-batches-need-company"')) problems.push("wizard need-company");
-  if (!wizard.includes('data-testid="factoring-batches-honest-empty"')) problems.push("wizard honest empty");
+  if (!hasTestId(wizard, "factoring-batches-need-company")) problems.push("wizard need-company");
+  if (!hasTestId(wizard, "factoring-batches-honest-empty")) problems.push("wizard honest empty");
   if (!wizard.includes("ListErrorBanner")) problems.push("wizard ListErrorBanner");
   if (!wizard.includes("enabled: Boolean(companyId)")) problems.push("wizard not company-gated");
   if (!detail.includes("enabled: Boolean(batchId && companyId)")) problems.push("detail not company-gated");
@@ -43,6 +49,15 @@ if (SELFTEST) {
   {
     if (!assertLive(planted).length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+      process.exit(1);
+    }
+  }
+  {
+    // Planted: the need-company state loses its marker (either spelling) — the select-a-company state is gone.
+    const srcNc = read(WIZARD);
+    const strip = (t) => t.split('data-testid="factoring-batches-need-company"').join('data-testid="x"').split('testId="factoring-batches-need-company"').join('testId="x"');
+    if (strip(srcNc) === srcNc || hasTestId(strip(srcNc), "factoring-batches-need-company")) {
+      console.error(`${LABEL} SELFTEST FAILED: need-company plant was inert`);
       process.exit(1);
     }
   }

@@ -57,6 +57,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeStagedFilters, faroStripViaBoardChrome, readRepoOrEmpty, STAGED_FILTERS_REL, BOARD_CHROME_REL } from "./lib/factoring-v3-chrome.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-nav-reachable";
@@ -171,11 +172,12 @@ export function tenTabReachability(factoringHomeSrc, manifestSrc) {
   return failures;
 }
 
-export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc = "" }) {
+export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc = "", chromeSrc = "" }) {
   const failures = [];
 
   // --- (1) STRUCTURAL ---
-  if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(factoringHomeSrc)) {
+  // 443.326 V3: FactoringBoardChrome subnavItems built from FARO_TABS is the same flat ten-tab strip (proven).
+  if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(factoringHomeSrc) || faroStripViaBoardChrome(factoringHomeSrc, chromeSrc)) {
     failures.push(...tenTabReachability(factoringHomeSrc, manifestSrc));
   } else {
   const subnavIds = extractIdsFromConstBlock(factoringHomeSrc, "SUBNAV");
@@ -281,7 +283,8 @@ function runReal() {
   const navTestSrc = navTestExists ? fs.readFileSync(navTestPath, "utf8") : "";
 
   const manifestSrc = readRepo("apps/frontend/src/router/route-manifest.ts");
-  const failures = assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc });
+  const chromeSrc = readRepoOrEmpty(BOARD_CHROME_REL);
+  const failures = assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc, chromeSrc });
   if (failures.length > 0) {
     console.error(`[${LABEL}] FAIL (static checks):`);
     for (const f of failures) console.error(`  - ${f}`);

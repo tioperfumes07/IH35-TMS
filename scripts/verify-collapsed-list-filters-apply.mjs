@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeStagedFilters, readRepoOrEmpty, STAGED_FILTERS_REL } from "./lib/factoring-v3-chrome.mjs";
 import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -106,8 +107,16 @@ function extractConsumers(source) {
   return tags;
 }
 
+// 443.326 V3: FactoringHome renders its filters through FactoringStagedFilters (a proven pass-through to
+// CollapsedListFilters). Normalize so those panels stay IN this Apply/Cancel/Reset audit instead of hiding behind
+// the wrapper name (scripts/lib/factoring-v3-chrome.mjs — a wrapper that is not exactly CollapsedListFilters is left as-is).
+const stagedWrapperSrc = readRepoOrEmpty(STAGED_FILTERS_REL);
 const sources = Object.fromEntries(
-  walk(SRC).map((abs) => [path.relative(SRC, abs).split(path.sep).join("/"), fs.readFileSync(abs, "utf8")]),
+  walk(SRC).map((abs) => {
+    const rel = path.relative(SRC, abs).split(path.sep).join("/");
+    const text = fs.readFileSync(abs, "utf8");
+    return [rel, rel === "pages/factoring/FactoringStagedFilters.tsx" ? text : normalizeStagedFilters(text, stagedWrapperSrc)];
+  }),
 );
 
 const FILTER_POPOVER = "components/lists/ListView/components/FilterPopover.tsx";

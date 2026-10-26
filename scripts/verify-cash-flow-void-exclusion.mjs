@@ -35,7 +35,15 @@ function readRepo(rel) {
   }
 }
 
-export function checkCashFlow(src) {
+const PREDICATES_FILE = "apps/backend/src/accounting/live-document-predicates.sql.ts";
+/** notVoidedSql may delegate to the canonical liveBill(); then the rules are judged on liveBill's own body. */
+function resolveHelperBody(h, predicatesSrc) {
+  if (!/return\s+liveBill\(\s*alias\s*\)\s*;/.test(h)) return h;
+  const lb = (predicatesSrc ?? "").match(/export function liveBill\([^)]*\)\s*:\s*string\s*\{[\s\S]*?\n\}/);
+  return lb ? lb[0] : "";
+}
+
+export function checkCashFlow(src, predicatesSrc = readRepo(PREDICATES_FILE)) {
   const errs = [];
   if (!src) {
     errs.push(`${CASH_FLOW_FILE} not found`);
@@ -46,7 +54,7 @@ export function checkCashFlow(src) {
   if (!helper) {
     errs.push("notVoidedSql(alias) helper is missing — the void-exclusion predicate must be centralized.");
   } else {
-    const h = helper[0];
+    const h = resolveHelperBody(helper[0], predicatesSrc);
     if (!h.includes("'void'")) errs.push("notVoidedSql must exclude the SINGULAR 'void' (the value the write-path stores).");
     if (!h.includes("'voided'")) errs.push("notVoidedSql must also exclude legacy 'voided' status.");
     if (!/revoked_at\s+IS\s+NULL/i.test(h)) errs.push("notVoidedSql must also exclude rows carrying revoked_at (revoked_at IS NULL).");
@@ -107,8 +115,8 @@ export function checkForecast(src) {
   return errs;
 }
 
-export function checkAll({ cashFlow, forecast } = { cashFlow: readRepo(CASH_FLOW_FILE), forecast: readRepo(FORECAST_FILE) }) {
-  return [...checkCashFlow(cashFlow), ...checkForecast(forecast)];
+export function checkAll({ cashFlow, forecast, predicates } = { cashFlow: readRepo(CASH_FLOW_FILE), forecast: readRepo(FORECAST_FILE) }) {
+  return [...checkCashFlow(cashFlow, predicates ?? readRepo(PREDICATES_FILE)), ...checkForecast(forecast)];
 }
 
 function selftest() {
@@ -148,14 +156,20 @@ l.status <> 'cancelled'
 proformaRemainingCentsSql
 `;
 
+  const delegating = goodCash.replace(/return `[^`]*`;/, "return liveBill(alias);");
+  const liveBillGood = "export function liveBill(alias: string): string {\n  return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL AND ${a}.revoked_at IS NULL)`;\n}\n";
+  const liveBillNoRevoked = liveBillGood.replace(" AND ${a}.revoked_at IS NULL", "");
+  if (delegating === goodCash) { console.error(`${LABEL} --selftest: delegating fixture did not apply`); process.exit(1); }
   const cases = [
+    { name: "helper delegates to canonical liveBill", cashFlow: delegating, forecast: goodForecast, predicates: liveBillGood, want: 0 },
+    { name: "canonical liveBill drops revoked_at (delegation judged on its body)", cashFlow: delegating, forecast: goodForecast, predicates: liveBillNoRevoked, wantMin: 1 },
     { name: "good", cashFlow: goodCash, forecast: goodForecast, want: 0 },
     { name: "voided-only helper", cashFlow: badVoidedOnly, forecast: goodForecast, wantMin: 1 },
     { name: "missing proforma include", cashFlow: badNoProforma, forecast: goodForecast, wantMin: 1 },
     { name: "forecast AR omits proforma exclude", cashFlow: goodCash, forecast: badForecastAr, wantMin: 1 },
   ];
   for (const c of cases) {
-    const got = checkAll({ cashFlow: c.cashFlow, forecast: c.forecast }).length;
+    const got = checkAll({ cashFlow: c.cashFlow, forecast: c.forecast, predicates: c.predicates ?? "" }).length;
     if (c.want != null && got !== c.want) {
       console.error(`${LABEL} --selftest ${c.name}: expected ${c.want} findings, got ${got}`);
       process.exit(1);

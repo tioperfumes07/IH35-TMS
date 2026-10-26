@@ -163,10 +163,8 @@ function variancePct(projected: number, actual: number): number | null {
  * posting logic change.
  */
 export function notVoidedSql(alias: string): string {
-  const a = alias ? `${alias}.` : "";
-  // Canonical void-exclusion: write-path stores status = 'void' (singular); 'voided' is legacy.
-  // revoked_at IS NULL catches revocations that don't update status (matches liveBill / listBills).
-  return `(${a}status NOT IN ('void', 'voided') AND ${a}voided_at IS NULL AND ${a}revoked_at IS NULL)`;
+  // One definition: the canonical liveBill — status NOT IN ('void','voided') AND voided_at IS NULL AND revoked_at IS NULL.
+  return liveBill(alias);
 }
 
 /** CASHFLOW-PROFORMA-PROJECTED-LABELED — a live proforma is the labeled projection for that load. */

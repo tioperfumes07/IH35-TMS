@@ -92,6 +92,13 @@ if (isMain && process.argv.includes("--selftest")) {
 if (isMain) {
   const f = check();
   if (f.length) { console.error(`${LABEL}: FAIL (static) —\n  ${f.join("\n  ")}`); process.exit(1); }
+  // Static by default; the live half (driver_bills CHECK + live A/P statuses) runs only with --live, where a missing
+  // or dead connection still FAILS (requireLiveDbOrExit). Listed in scripts/lib/e7-batch2-live-guards.json
+  // live_flag_guards, so money-pr-local-gate.mjs runs it with --live.
+  if (!process.argv.includes("--live")) {
+    console.log(`${LABEL}: PASS (static) — vocabularies match their twin, every fixed site reads them; live half not run (pass --live)`);
+    process.exit(0);
+  }
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN READ ONLY");
