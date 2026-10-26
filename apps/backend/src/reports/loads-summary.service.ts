@@ -58,7 +58,6 @@ function buildFilters(query: LoadsSummaryQuery): { filters: string[]; values: un
   const { operatingCompanyId, from, to, dateField } = query;
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `l.operating_company_id = $1::uuid`,
     ...LOADS_REPORT_SCOPE_SQL,
     `${scheduledStopDateSql(effectiveDateField(dateField as LoadsReportDateField))} BETWEEN $2::date AND $3::date`,
   ];
@@ -160,8 +159,10 @@ export async function getLoadsSummary(
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+        AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
       ${loadCostRollupLateral("l.id", "$1::uuid")}
-      WHERE ${filters.join("\n        AND ")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${filters.join("\n        AND ")}
       GROUP BY ${keyExpr}, ${labelExpr}
       ORDER BY ${orderExpr}
     `,

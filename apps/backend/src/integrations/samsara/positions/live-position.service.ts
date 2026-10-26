@@ -70,7 +70,7 @@ export async function getLivePositionsForActiveLoads(
             p.lat::text, p.lng::text, p.speed_mph::text, p.recorded_at::text,
             l.assigned_primary_driver_id::text AS driver_id, ${loadServiceDriverNameSql("l", "dr")} AS driver_name
      FROM mdata.loads l
-     LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
+     LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id AND dr.operating_company_id = l.operating_company_id
      JOIN mdata.units u ON u.id = l.assigned_unit_id
                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
      LEFT JOIN LATERAL (

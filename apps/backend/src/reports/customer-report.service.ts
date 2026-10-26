@@ -66,7 +66,6 @@ export async function getCustomerReport(
 
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `l.operating_company_id = $1::uuid`,
     ...LOADS_REPORT_SCOPE_SQL,
     `${scheduledStopDateSql(effectiveDateField(dateField as LoadsReportDateField))} BETWEEN $2::date AND $3::date`,
   ];
@@ -109,7 +108,8 @@ export async function getCustomerReport(
         AND inv.voided_at IS NULL
         AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
       ${loadCostRollupLateral("l.id", "$1::uuid")}
-      WHERE ${filters.join("\n        AND ")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${filters.join("\n        AND ")}
       GROUP BY l.customer_id, c.customer_name
       ORDER BY revenue_cents DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}

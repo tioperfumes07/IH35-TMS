@@ -108,6 +108,7 @@ export async function getCompanySettlementsReport(
       FROM accounting.company_settlements cs
       LEFT JOIN accounting.company_settlement_driver_settlements csds ON csds.company_settlement_id = cs.id
       LEFT JOIN driver_finance.driver_settlements ds ON ds.id = csds.driver_settlement_id
+        AND ds.operating_company_id = cs.operating_company_id
       WHERE ${filters.join("\n        AND ")}
       GROUP BY cs.id, cs.display_id, cs.period_start, cs.period_end, cs.status, cs.closed_at, cs.voided_at
       ORDER BY cs.period_start DESC, cs.display_id DESC

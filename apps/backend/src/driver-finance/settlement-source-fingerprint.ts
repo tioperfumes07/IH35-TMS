@@ -82,9 +82,9 @@ async function fingerprintFromLive(client: Q, companyId: string, settlementId: s
     `SELECT net_pay::text, period_start::text, period_end::text FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     [settlementId, companyId])).rows[0]!;
   const rows = (await client.query<{ line_type: string; load_number: string | null; amount: string }>(
-    `SELECT sl.line_type, l.load_number, sl.amount::text FROM driver_finance.settlement_lines sl LEFT JOIN mdata.loads l ON l.id = sl.load_id
+    `SELECT sl.line_type, l.load_number, sl.amount::text FROM driver_finance.settlement_lines sl LEFT JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = $2::uuid
       WHERE sl.settlement_id = $1::uuid AND sl.is_active IS TRUE AND sl.line_type NOT IN ('earnings', 'deadhead_pay')`,
-    [settlementId])).rows;
+    [settlementId, companyId])).rows;
   const kind = (t: string) => (t === "extra_pay" ? "additional_pay" : t === "escrow_contribution" ? "escrow" : t);
   const lines = rows.map((r) => ({ kind: kind(r.line_type), load: r.load_number, text: "", amount_cents: Math.round(Number(r.amount) * 100) }))
     .sort((a, b) => coarseKey(a).localeCompare(coarseKey(b)));

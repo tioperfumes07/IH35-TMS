@@ -52,7 +52,6 @@ export async function getVendorReport(
 
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `b.operating_company_id = $1::uuid`,
     `b.voided_at IS NULL`,
     // status exclusion matches fin20-aging canonical pattern — ties to GL 2000 $126,443.92
     `b.status NOT IN ('void', 'voided', 'draft')`,
@@ -94,7 +93,8 @@ export async function getVendorReport(
       FROM accounting.bills b
       LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id -- 443.290: uuid side cast (bills.vendor_id is text)
         AND v.operating_company_id = $1::uuid
-      WHERE ${filters.join("\n        AND ")}
+      WHERE b.operating_company_id = $1::uuid
+        AND ${filters.join("\n        AND ")}
       GROUP BY b.vendor_id, v.vendor_name
       ORDER BY total_billed_cents DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}

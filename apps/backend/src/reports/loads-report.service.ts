@@ -131,7 +131,6 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
   const { operatingCompanyId, from, to, dateField } = query;
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `l.operating_company_id = $1::uuid`,
     ...LOADS_REPORT_SCOPE_SQL,
     `${buildDateExpr(dateField)} BETWEEN $2::date AND $3::date`,
   ];
@@ -267,6 +266,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+        AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
       -- LEAD 00:35Z parity re-run (13699 customer trailer null on the report): the load service's one trailer projection.
       ${loadServiceTrailerLateralSql("l", "tr")}
       LEFT JOIN pickup p ON p.load_id = l.id
@@ -275,7 +275,8 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
       LEFT JOIN factoring_by_load fbl ON fbl.load_id = l.id
       LEFT JOIN factoring_by_id fbi ON fbi.factoring_advance_id = inv.factoring_advance_id
       ${loadCostRollupLateral("l.id", "$1::uuid")}
-      WHERE ${filters.join("\n        AND ")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${filters.join("\n        AND ")}
       ORDER BY l.load_number DESC NULLS LAST, l.created_at DESC
     `,
     values

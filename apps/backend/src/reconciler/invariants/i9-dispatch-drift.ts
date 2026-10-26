@@ -68,6 +68,7 @@ export const I9_SQL = `
          na.labels AS streetless_stops
     FROM live lv
     LEFT JOIN mdata.units u ON u.id = lv.assigned_unit_id
+                          AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
     LEFT JOIN LATERAL (
       SELECT count(*) AS n, coalesce(sum(c.amount_cents), 0) AS cents
         FROM dispatch.load_charge_lines c

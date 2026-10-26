@@ -151,7 +151,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
               -- LEAD 443.206 — a history row naming a merged-away driver record counts as its survivor (the merge engine's
               -- merged_into_driver_id), and a later TRAILER-ONLY row (no driver, no unit: the trailer backfills and every
               -- booking's trailer row) is not a reassignment.
-              LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id
+              LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id AND hd.operating_company_id = h.operating_company_id
               WHERE h.load_id = l.id
                 AND h.operating_company_id = l.operating_company_id
                 AND COALESCE(hd.merged_into_driver_id, h.new_driver_id) = l.assigned_primary_driver_id
@@ -159,7 +159,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                 AND NOT EXISTS (
                   SELECT 1
                     FROM dispatch.load_assignment_history later
-                    LEFT JOIN mdata.drivers ld ON ld.id = later.new_driver_id
+                    LEFT JOIN mdata.drivers ld ON ld.id = later.new_driver_id AND ld.operating_company_id = later.operating_company_id
                    WHERE later.load_id = h.load_id
                      AND later.operating_company_id = h.operating_company_id
                      AND (later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)

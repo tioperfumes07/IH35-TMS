@@ -60,7 +60,6 @@ function buildFilters(query: LoadsHistoryQuery): { filters: string[]; values: un
   const { operatingCompanyId, from, to, dateField } = query;
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    `l.operating_company_id = $1::uuid`,
     ...LOADS_REPORT_SCOPE_SQL,
     `${scheduledStopDateSql(effectiveDateField(dateField as LoadsReportDateField))} BETWEEN $2::date AND $3::date`,
   ];
@@ -214,6 +213,7 @@ export async function getLoadsHistoryPage(
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+          AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
         ${loadServiceTrailerLateralSql("l", "tr")}
         LEFT JOIN pickup p ON p.load_id = l.id
         LEFT JOIN delivery d ON d.load_id = l.id
@@ -221,7 +221,8 @@ export async function getLoadsHistoryPage(
         LEFT JOIN factoring_by_load fbl ON fbl.load_id = l.id
         LEFT JOIN factoring_by_id fbi ON fbi.factoring_advance_id = inv.factoring_advance_id
         ${loadCostRollupLateral("l.id", "$1::uuid")}
-        WHERE ${filters.join("\n          AND ")}
+        WHERE l.operating_company_id = $1::uuid
+        AND ${filters.join("\n          AND ")}
         ORDER BY l.load_number DESC NULLS LAST, l.created_at DESC
       )
       SELECT * FROM base
@@ -289,7 +290,8 @@ export async function getLoadsHistoryPage(
         AND inv.operating_company_id = $1::uuid
         AND inv.status <> 'void'
         AND inv.voided_at IS NULL
-      WHERE ${totalsFilters.join("\n        AND ")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${totalsFilters.join("\n        AND ")}
     `,
     totalsValues
   );

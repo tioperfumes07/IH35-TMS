@@ -62,6 +62,7 @@ export async function loadShopBays(client: Q, companyId: string): Promise<ShopBa
     `SELECT ${WO_COLUMNS}
        FROM maintenance.work_orders wo
        LEFT JOIN mdata.units u ON u.id = wo.unit_id
+                             AND (u.owner_company_id = wo.operating_company_id OR u.currently_leased_to_company_id = wo.operating_company_id)
       WHERE wo.operating_company_id = $1::uuid AND wo.voided_at IS NULL
         AND wo.bay_number IS NOT NULL AND wo.bay_released_at IS NULL
       ORDER BY wo.bay_number`,
@@ -71,6 +72,7 @@ export async function loadShopBays(client: Q, companyId: string): Promise<ShopBa
     `SELECT ${WO_COLUMNS}
        FROM maintenance.work_orders wo
        LEFT JOIN mdata.units u ON u.id = wo.unit_id
+                             AND (u.owner_company_id = wo.operating_company_id OR u.currently_leased_to_company_id = wo.operating_company_id)
       WHERE wo.operating_company_id = $1::uuid AND wo.voided_at IS NULL
         AND wo.status = ANY($2::text[])
         AND (wo.bay_number IS NULL OR wo.bay_released_at IS NOT NULL)
