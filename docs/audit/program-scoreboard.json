@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e154bb3",
-  "generated_at": "2026-10-26T15:15:14.953Z",
+  "healthzSha": "0e4596e",
+  "generated_at": "2026-10-26T16:36:54.503Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e154bb3",
+    "deployedSha": "0e4596e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 10:15 AM CT",
+      "url": "",
+      "sha": "0e4596ee55",
+      "committedAtIso": "2026-10-26T15:15:15Z"
+    },
+    {
       "number": 27898,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "6c0a3c9d61",
       "committedAtIso": "2026-10-26T07:01:40Z"
-    },
-    {
-      "number": 27889,
-      "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27889",
-      "sha": "3a4f44bdf6",
-      "committedAtIso": "2026-10-26T01:57:25-05:00"
     }
   ]
 }
