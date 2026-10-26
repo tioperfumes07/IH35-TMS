@@ -1186,6 +1186,13 @@ export async function pingSettlementOnLoadEvent(
         loadId: opts.loadId,
         actorUserId: opts.actorUserId ?? null,
       });
+      // ROW-213 (443.292-B): re-derive period_start from earliest pickup stop; best-effort (open only).
+      try {
+        const settlRes = await client.query<{ status: string }>(`SELECT status FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
+        if (settlRes.rows[0]?.status === "open") {
+          await refreshOpenTourPeriodDates(client, { settlementId: String(settlementId), operatingCompanyId: opts.operatingCompanyId, actorUserId: opts.actorUserId ?? "" });
+        }
+      } catch { /* non-fatal — period_end display path covers open tours via CASE in buildTourReadout */ }
     }
   }
 }

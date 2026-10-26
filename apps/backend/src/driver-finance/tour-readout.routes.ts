@@ -109,7 +109,9 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     gross_pay: unknown; deductions_total: unknown; reimbursements_total: unknown; net_pay: unknown; locked_at: string | null; paid_at: string | null; approval_status: string | null;
     first_load_id: string | null; last_load_id: string | null; voided_at: string | null;
   }>(
-    `SELECT s.id::text, s.display_id, s.source_document_ref, s.status, s.settlement_model, s.trip_started_at::text, s.trip_closed_at::text, s.period_start::text, s.period_end::text,
+    `SELECT s.id::text, s.display_id, s.source_document_ref, s.status, s.settlement_model, s.trip_started_at::text, s.trip_closed_at::text, s.period_start::text,
+            -- ROW-213 (443.292-B): open tours accumulate through today; use today in Central, not the stale stored value.
+            CASE WHEN s.trip_closed_at IS NULL THEN (NOW() AT TIME ZONE 'America/Chicago')::date::text ELSE s.period_end::text END AS period_end,
             s.driver_id::text, concat_ws(' ', d.first_name, d.last_name) AS driver_name, s.tour_id::text,
             s.gross_pay, s.deductions_total, s.reimbursements_total, s.net_pay, s.locked_at::text, s.paid_at::text, s.approval_status,
             s.first_load_id::text, s.last_load_id::text, s.voided_at::text
