@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring internal tabs → BoardSection + FORM_INPUT
+
+- **STATUS:** SHIPPING — after [#27727](https://github.com/tioperfumes07/IH35-TMS/pull/27727) MERGED
+- **DELTA:** Faro imports (upsert + recent) · Equipment loans (create / list / ledger) · Vendor merges (create + history) → `BoardSection`; page inputs → `FORM_INPUT_CLASS` (40px). Guard ratcheted. Engines/upload/save paths unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements/Fuel dead actions / KPI gaps
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring remaining tabs → BoardSection
 
-- **STATUS:** SHIPPING — follow-up after [#27723](https://github.com/tioperfumes07/IH35-TMS/pull/27723) MERGED
+- **STATUS:** MERGED [#27727](https://github.com/tioperfumes07/IH35-TMS/pull/27727)
 - **DELTA:** Escrow Account · Cash Reserve · Chargebacks & Overpayments · Account Summary Faro lines · Purchase report · Fees Paid · Aging · Reserve tracker · Recourse · Chargebacks & Fees · Statements/Settings → shared `BoardSection` (engines/ParityTable unchanged). Guard ratcheted for all listed testIds.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

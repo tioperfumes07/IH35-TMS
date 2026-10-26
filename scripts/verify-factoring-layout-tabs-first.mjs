@@ -165,6 +165,12 @@ function analyze(src) {
     ["Single-factor invariant status", "factoring-single-factor-invariant"],
     ["Statement history", "factoring-statement-history"],
     ["Faro deactivation (Owner-only)", "factoring-faro-deactivation"],
+    ["Upsert Faro daily import batch", "factoring-faro-import-upsert"],
+    ["Recent Faro imports", "factoring-faro-imports-recent"],
+    ["Create equipment loan", "factoring-equipment-loan-create"],
+    ["Loans + ledger actions", "factoring-home-equipment-loan-filters"],
+    ["Merge duplicate QBO vendors for a driver", "factoring-vendor-merge-create"],
+    ["Recent merge history", "factoring-home-vendor-merges-filters"],
   ]) {
     const hasBoard =
       home.includes(`testId="${testId}"`) &&
