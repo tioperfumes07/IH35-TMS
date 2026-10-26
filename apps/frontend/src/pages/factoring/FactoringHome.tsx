@@ -2,6 +2,7 @@ import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -2890,19 +2891,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {show("faro_imports") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
-              {summaryDetailToggle(faroImportView, setFaroImportView, "factoring-faro-import")}
-            </div>
-            <div className="grid gap-2 md:grid-cols-3 mb-3">
+          <BoardSection
+            title="Upsert Faro daily import batch"
+            testId="factoring-faro-import-upsert"
+            headerRight={summaryDetailToggle(faroImportView, setFaroImportView, "factoring-faro-import")}
+          >
+            <div className="mb-3 grid gap-2 px-3.5 pt-2 md:grid-cols-3">
               <DatePicker
-                className=""
+                className={FORM_INPUT_CLASS}
                 value={faroStatementDate}
                 onChange={setFaroStatementDate}
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={faroStatementRef}
                 onChange={(event) => setFaroStatementRef(event.target.value)}
                 placeholder="statement reference"
@@ -2966,12 +2967,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }
               }}
             />
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Recent Faro imports</div>
-              <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-faro-imports")}</div>
-            </div>
+          </BoardSection>
+          <BoardSection
+            title="Recent Faro imports"
+            testId="factoring-faro-imports-recent"
+            headerRight={dateRangeOnlyFilterBar("factoring-home-faro-imports")}
+          >
             {faroImportsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load Faro imports"
@@ -3076,15 +3077,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-home-faro-imports"
               />
             )}
-          </div>
+          </BoardSection>
         </div>
       ) : null}
 
       {show("equipment_loans") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Create equipment loan</div>
-            <div className="grid gap-2 md:grid-cols-5">
+          <BoardSection title="Create equipment loan" testId="factoring-equipment-loan-create">
+            <div className="grid gap-2 px-3.5 pt-2 md:grid-cols-5">
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={companyId}
@@ -3114,14 +3114,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 placeholder="Principal"
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={loanAprPercent}
                 onChange={(event) => setLoanAprPercent(event.target.value)}
                 placeholder="apr percent"
               />
-              <DatePicker className="" value={loanStartedOn} onChange={setLoanStartedOn} />
+              <DatePicker className={FORM_INPUT_CLASS} value={loanStartedOn} onChange={setLoanStartedOn} />
             </div>
-            <div className="mt-2">
+            <div className="mt-2 px-3.5 pb-2">
               <Button
                 size="sm"
                 disabled={!companyId || !loanEquipmentId || !loanLenderVendorId || !loanPrincipalCents || !loanStartedOn || creatingLoan}
@@ -3152,14 +3152,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 {creatingLoan ? "Saving..." : "Create Loan"}
               </Button>
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-equipment-loan-filters">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-medium text-gray-900">Loans + ledger actions</div>
-              {/* NEW-26: this list is a raw card list, not a ParityTable, so there is no
+          </BoardSection>
+          <BoardSection
+            title="Loans + ledger actions"
+            testId="factoring-home-equipment-loan-filters"
+            headerRight={
+              /* NEW-26: this list is a raw card list, not a ParityTable, so there is no
                   search/range/gear row to fold into via filterBar — FactoringStagedFilters is used
                   standalone here instead, still compacting the always-open filter grid into a
-                  toggle. */}
+                  toggle. */
               <FactoringStagedFilters
                 activeFilterCount={applied.vendorId ? 1 : 0}
                 onApply={staged.apply}
@@ -3188,8 +3189,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   />
                 </label>
               </FactoringStagedFilters>
-            </div>
-            <div className="space-y-2">
+            }
+          >
+            <div className="space-y-2 px-3.5 py-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
                 <div key={row.id} className="p-2 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -3237,33 +3239,33 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ))}
               {(equipmentLoansQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No equipment loans yet.</p> : null}
             </div>
-          </div>
+          </BoardSection>
           {selectedLoanId ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 font-medium text-gray-900">
-                Selected loan ledger:{" "}
-                {selectedEquipmentLoan?.equipment_id ? (
-                  <EntityLink
-                    kind="unit"
-                    id={selectedEquipmentLoan.equipment_id}
-                    label={entityLabel(selectedEquipmentLoan?.equipment_number, selectedEquipmentLoan?.equipment_id, "Equipment")}
-                  />
-                ) : (
-                  (selectedEquipmentLoan?.equipment_number ?? "—")
-                )}
+            <BoardSection title="Selected loan ledger" testId="factoring-equipment-loan-ledger">
+              <div className="space-y-1 px-3.5 py-2 text-xs">
+                <div className="font-medium text-gray-900">
+                  {selectedEquipmentLoan?.equipment_id ? (
+                    <EntityLink
+                      kind="unit"
+                      id={selectedEquipmentLoan.equipment_id}
+                      label={entityLabel(selectedEquipmentLoan?.equipment_number, selectedEquipmentLoan?.equipment_id, "Equipment")}
+                    />
+                  ) : (
+                    (selectedEquipmentLoan?.equipment_number ?? "—")
+                  )}
+                </div>
+                <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
+                <p>Payments: {(selectedLoanLedgerQuery.data?.payments ?? []).length}</p>
               </div>
-              <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
-              <p>Payments: {(selectedLoanLedgerQuery.data?.payments ?? []).length}</p>
-            </div>
+            </BoardSection>
           ) : null}
         </div>
       ) : null}
 
       {show("vendor_merges") ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>
-            <div className="grid gap-2 md:grid-cols-2">
+          <BoardSection title="Merge duplicate QBO vendors for a driver" testId="factoring-vendor-merge-create">
+            <div className="grid gap-2 px-3.5 pt-2 md:grid-cols-2">
               <DriverAutocomplete
                 companyId={companyId}
                 limit={200}
@@ -3274,13 +3276,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }}
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={mergeReason}
                 onChange={(event) => setMergeReason(event.target.value)}
                 placeholder="reason"
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={mergeFromVendor}
                 onChange={(event) => {
                   setMergeFromVendor(event.target.value);
@@ -3289,7 +3291,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 placeholder="from qbo vendor id"
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={mergeToVendor}
                 onChange={(event) => {
                   setMergeToVendor(event.target.value);
@@ -3338,9 +3340,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 {creatingMerge ? "Saving..." : "Merge Vendors"}
               </Button>
             </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-vendor-merges-filters">
-            <div className="mb-2 text-xs font-medium text-gray-900">Recent merge history</div>
+          </BoardSection>
+          <BoardSection title="Recent merge history" testId="factoring-home-vendor-merges-filters">
             {vendorMergesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load merge history"
@@ -3406,7 +3407,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }
               />
             )}
-          </div>
+          </BoardSection>
         </div>
       ) : null}
 
