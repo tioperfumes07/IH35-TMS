@@ -7,6 +7,7 @@ import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 (CC-2) — Built reverse_link on create-path surfaces.
@@ -71,96 +72,100 @@ export function FuelTransactionsReverseSection({
   const openRoute = resolveEntityRoute(FUEL_HISTORY_KIND[filterKey], filterValue);
 
   return (
+    // DRV-12: whole-card click still opens Fuel History when a route resolves; FuelBoardSection
+    // owns the border — wrap keeps the navigate target without re-layering a bare card.
     <div
-      className={`space-y-2 rounded-sm border border-gray-200 bg-white p-3 ${openRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+      className={openRoute ? "cursor-pointer" : undefined}
       onClick={openRoute ? () => navigate(openRoute) : undefined}
-      data-testid={testId}
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-[#0F1219]">
-          Fuel transactions
-          {/* ROUND 297 audit: the server's total, not the first page's length (capped at 50). */}
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({fuelQ.data?.total_count ?? rows.length})</span> : null}
-        </h3>
-        <EntityLink
-          kind={FUEL_HISTORY_KIND[filterKey]}
-          id={filterValue}
-          label="Open Fuel History"
-          className="text-xs font-semibold text-[#1F2A44] underline"
-        />
-      </div>
-      {fuelQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
-      {fuelQ.isError ? (
-        <ListErrorState
-          title={`Couldn't load fuel transactions for ${contextLabel}`}
-          status={0}
-          message={userFacingApiError(fuelQ.error, "Fuel history is unavailable")}
-          onRetry={() => void fuelQ.refetch()}
-        />
-      ) : null}
-      {!fuelQ.isLoading && !fuelQ.isError && rows.length === 0 ? (
-        <p className="text-xs text-gray-500">No fuel transactions linked to {contextLabel}.</p>
-      ) : null}
-      {rows.length > 0 ? (
-        <ul className="space-y-2">
-          {rows.map((row) => (
-            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`fuel-transaction-${row.id}`}>
-              <span className="font-medium text-[#0F1219]">{row.station || "Fuel stop"}</span>
-              <span className="ml-2 text-xs text-gray-500">
-                {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${row.gallons.toLocaleString()} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
-                {filterKey !== "driver_id" && row.driver_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
-                  </>
-                ) : null}
-                {filterKey !== "unit_id" && row.unit_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
-                  </>
-                ) : null}
-                {filterKey !== "load_id" && row.load_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
-                  </>
-                ) : null}
-                {filterKey !== "trailer_id" && row.trailer_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number, row.trailer_id, "Trailer")} />
-                  </>
-                ) : null}
-                {filterKey !== "vendor_id" && row.vendor_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
-                  </>
-                ) : null}
-                {/* Linkage law §8 (PR #23729) — forward drill to the accounting document this
-                    purchase posted through, and its own posting, from the embedded reverse list too. */}
-                {row.expense_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink
-                      kind="expense"
-                      id={row.expense_id}
-                      label={visibleDocumentLabel(row.expense_number, row.expense_id, "Expense")}
-                    />
-                  </>
-                ) : null}
-                {row.journal_entry_id ? (
-                  <>
-                    {" · "}
-                    <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" />
-                  </>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <FuelBoardSection
+        title="Fuel transactions"
+        subtitle={rows.length > 0 ? `(${fuelQ.data?.total_count ?? rows.length})` : undefined}
+        testId={testId}
+        headerRight={
+          <EntityLink
+            kind={FUEL_HISTORY_KIND[filterKey]}
+            id={filterValue}
+            label="Open Fuel History"
+            className="text-xs font-semibold text-[#1F2A44] underline"
+          />
+        }
+      >
+        <div className="space-y-2 px-3.5 py-2">
+          {fuelQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+          {fuelQ.isError ? (
+            <ListErrorState
+              title={`Couldn't load fuel transactions for ${contextLabel}`}
+              status={0}
+              message={userFacingApiError(fuelQ.error, "Fuel history is unavailable")}
+              onRetry={() => void fuelQ.refetch()}
+            />
+          ) : null}
+          {!fuelQ.isLoading && !fuelQ.isError && rows.length === 0 ? (
+            <p className="text-xs text-gray-500">No fuel transactions linked to {contextLabel}.</p>
+          ) : null}
+          {rows.length > 0 ? (
+            <ul className="space-y-2">
+              {rows.map((row) => (
+                <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`fuel-transaction-${row.id}`}>
+                  <span className="font-medium text-[#0F1219]">{row.station || "Fuel stop"}</span>
+                  <span className="ml-2 text-xs text-gray-500">
+                    {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${row.gallons.toLocaleString()} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
+                    {filterKey !== "driver_id" && row.driver_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+                      </>
+                    ) : null}
+                    {filterKey !== "unit_id" && row.unit_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+                      </>
+                    ) : null}
+                    {filterKey !== "load_id" && row.load_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
+                      </>
+                    ) : null}
+                    {filterKey !== "trailer_id" && row.trailer_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number, row.trailer_id, "Trailer")} />
+                      </>
+                    ) : null}
+                    {filterKey !== "vendor_id" && row.vendor_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
+                      </>
+                    ) : null}
+                    {/* Linkage law §8 (PR #23729) — forward drill to the accounting document this
+                        purchase posted through, and its own posting, from the embedded reverse list too. */}
+                    {row.expense_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink
+                          kind="expense"
+                          id={row.expense_id}
+                          label={visibleDocumentLabel(row.expense_number, row.expense_id, "Expense")}
+                        />
+                      </>
+                    ) : null}
+                    {row.journal_entry_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" />
+                      </>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </FuelBoardSection>
     </div>
   );
 }

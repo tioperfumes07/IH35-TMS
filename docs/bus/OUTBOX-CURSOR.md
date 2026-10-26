@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel reverse sections → FuelBoardSection
+
+- **STATUS:** SHIPPING
+- **DELTA:** RelayFills / FuelCards / FuelCardOverage / FuelFraudAlerts / FuelTransactions reverse sections → `FuelBoardSection`. Engines/links unchanged. New guard verify-fuel-reverse-board-sections.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-reverse-board-sections PASS (+ --selftest 5/5) · reefer-fuel-credit · null-gallons-honesty
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** RelayFillsReverseSection · FuelCardsReverseSection · FuelCardOverageReverseSection · FuelFraudAlertsReverseSection · FuelTransactionsReverseSection · verify-fuel-reverse-board-sections.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FactoringProfile + FactorAdmin → BoardSection
 
 - **STATUS:** SHIPPING [#27757](https://github.com/tioperfumes07/IH35-TMS/pull/27757) (squash auto-merge armed)
