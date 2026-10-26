@@ -6,7 +6,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = { route: "apps/backend/src/telematics/hos.routes.ts", page: "apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx" };
 export function audit(src) {
   const failures = [];
-  if (!/WHERE operating_company_id = \$1::uuid[\s\S]{0,140}driver_id = \$2::uuid[\s\S]{0,100}source = 'manual_edit'/.test(src.route)) failures.push(`${FILES.route}: manual-edit audit must retain exact company, driver, and source predicates`);
+  // Row 81 (c26916d6c5, 443.260): the driver predicate follows merged shells — the driver OR a record of THIS company merged
+  // into them. Accept exactly that shape (or the plain driver form); a bare `merged_into_driver_id = $2` must not satisfy it.
+  const plain = /WHERE operating_company_id = \$1::uuid\s+AND driver_id = \$2::uuid\s+AND source = 'manual_edit'/;
+  const merged = /WHERE operating_company_id = \$1::uuid\s+AND \(driver_id = \$2::uuid\s+OR driver_id IN \(\s*SELECT id FROM mdata\.drivers\s+WHERE operating_company_id = \$1::uuid\s+AND merged_into_driver_id = \$2::uuid\s*\)\)\s+AND source = 'manual_edit'/;
+  if (!plain.test(src.route) && !merged.test(src.route)) failures.push(`${FILES.route}: manual-edit audit must retain exact company, driver (incl. this company's merged shells), and source predicates`);
   if (!/source = 'manual_edit'[\s\S]{0,100}ORDER BY started_at DESC, id DESC/.test(src.route)) failures.push(`${FILES.route}: manual-edit audit needs deterministic timestamp/id ordering`);
   if (/source = 'manual_edit'[\s\S]{0,140}LIMIT\s+\d+/i.test(src.route)) failures.push(`${FILES.route}: manual-edit audit must not silently cap regulated edit history`);
   if (!/Current count: \{hosQuery\.data\.manual_edits\.count\}/.test(src.page) || !/hosQuery\.data\.manual_edits\.events\.map/.test(src.page)) failures.push(`${FILES.page}: mounted HOS detail must render and count the authoritative manual-edit range`);
@@ -18,7 +22,9 @@ if (process.argv.includes("--selftest")) {
   if (audit(good).length) process.exit(1);
   const mutations = [
     ["cap", "route", /ORDER BY started_at DESC, id DESC/, "ORDER BY started_at DESC LIMIT 100"],
-    ["scope", "route", /driver_id = \$2::uuid\n\s+AND source = 'manual_edit'/, "driver_id IS NOT NULL\n            AND source = 'manual_edit'"],
+    // anchored to the manual-edit query (the file has another `AND (driver_id = $2::uuid` query above it)
+    ["scope", "route", /AND \(driver_id = \$2::uuid(?=(?:(?!hos\.duty_status_events)[\s\S])*?source = 'manual_edit')/, "AND (driver_id IS NOT NULL"],
+    ["merged-shell scope", "route", /WHERE operating_company_id = \$1::uuid\s+AND merged_into_driver_id = \$2::uuid(?=(?:(?!hos\.duty_status_events)[\s\S])*?source = 'manual_edit')/, "WHERE merged_into_driver_id = $2::uuid"],
     ["source", "route", /source = 'manual_edit'/, "source IS NOT NULL"],
     ["order", "route", /ORDER BY started_at DESC, id DESC/, "ORDER BY started_at DESC"],
     ["render", "page", /hosQuery\.data\.manual_edits\.events\.map/, "[].map"],

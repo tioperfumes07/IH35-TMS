@@ -9,6 +9,10 @@
  * LIVE: the ceiling for USMCA drivers where merged_into_driver_id IS NOT NULL AND they have
  * duty_status_events is 0 new orphaned results — i.e., every merged shell's events are
  * reachable via the canonical driver.
+ *
+ *   --live      also runs the database half (DATABASE_URL required; no DB = FAIL, via requireLiveDbOrExit). Without
+ *               --live only the static half runs — listed in scripts/lib/e7-batch2-live-guards.json live_flag_guards,
+ *               so money-pr-local-gate.mjs runs it --live (same convention as verify-event-log-spine, FINAL-4 10-25).
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -78,6 +82,10 @@ if (staticProblems.length > 0) {
   process.exit(1);
 }
 console.log(`${GUARD}: STATIC — merged-shell expansion present in hos-clocks.service.ts and hos.routes.ts`);
+if (!process.argv.includes("--live")) {
+  console.log(`${GUARD}: OK (static) — database half runs with --live (live_flag_guards; money-pr-local-gate runs it)`);
+  process.exit(0);
+}
 
 // ── LIVE ─────────────────────────────────────────────────────────────────────
 
