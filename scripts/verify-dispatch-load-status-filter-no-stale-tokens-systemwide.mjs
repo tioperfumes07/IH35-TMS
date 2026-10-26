@@ -84,22 +84,35 @@ function run() {
 
 function selftest() {
   const files = listFiles(path.join(root, SCAN_DIR)).map((f) => [path.relative(root, f), fs.readFileSync(f, "utf8")]);
-  const [targetRel, targetText] = files.find(([, text]) => text.includes('status: ["dispatched", "in_transit"],'));
-  if (!targetText) {
-    console.error("FAIL(selftest): could not find the known-good DispatchOverview.tsx call site — pattern out of sync");
+  // Plant into a REAL listDispatchLoads() call that sends a status array (any caller, not one literal —
+  // the DispatchOverview literal this used to pin was rewritten by 443.206R #936c8f6ce6).
+  const callWithStatus = /listDispatchLoads\([\s\S]{0,2400}?status:\s*\[/;
+  const target = files.find(([, text]) => {
+    const m = callWithStatus.exec(text);
+    return m && !m[0].includes(");");
+  });
+  if (!target) {
+    console.error("FAIL(selftest): no real listDispatchLoads() call with a status array found — nothing to plant into");
     process.exit(1);
   }
-  const offenderText = targetText.replace(
-    'status: ["dispatched", "in_transit"],',
-    'status: ["dispatched", "in_transit", "delivered"],'
-  );
+  const [targetRel, targetText] = target;
+  const offenderText = targetText.replace(callWithStatus, (m) => `${m}"delivered", `);
+  if (offenderText === targetText) {
+    console.error("FAIL(selftest): plant did not change the source");
+    process.exit(1);
+  }
+  const baseline = check(files);
+  if (baseline.length) {
+    console.error(`FAIL(selftest): real tree is not clean: ${baseline[0]}`);
+    process.exit(1);
+  }
   const offenderFiles = files.map(([rel, text]) => (rel === targetRel ? [rel, offenderText] : [rel, text]));
   const failures = check(offenderFiles);
   if (failures.length === 0) {
-    console.error("FAIL(selftest): planted offender (stale 'delivered' token added to a real listDispatchLoads call) was NOT caught");
+    console.error(`FAIL(selftest): planted stale 'delivered' token in ${targetRel} was NOT caught`);
     process.exit(1);
   }
-  console.log("PASS(selftest): planted stale-token regression correctly caught; baseline clean");
+  console.log(`PASS(selftest): planted stale-token regression in ${targetRel} correctly caught; baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {
