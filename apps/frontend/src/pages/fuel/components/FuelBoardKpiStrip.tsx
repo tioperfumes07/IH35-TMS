@@ -61,15 +61,29 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         value={spendValue}
         sub={spendSub}
         testId="fuel-board-kpi-diesel-spend"
+        onClick={() => navigate("/fuel/history")}
       />
-      <V3KpiTile label="Gallons" value={gallonsValue} sub="" testId="fuel-board-kpi-gallons" />
-      <V3KpiTile label="Avg $/gal" value={avgValue} sub="" testId="fuel-board-kpi-avg-gal" />
+      <V3KpiTile
+        label="Gallons"
+        value={gallonsValue}
+        sub=""
+        testId="fuel-board-kpi-gallons"
+        onClick={() => navigate("/fuel/history")}
+      />
+      <V3KpiTile
+        label="Avg $/gal"
+        value={avgValue}
+        sub=""
+        testId="fuel-board-kpi-avg-gal"
+        onClick={() => navigate("/fuel/history")}
+      />
       <V3KpiTile
         label="Fills without a load"
         value={noLoadValue}
         sub={noLoadSub}
         tone={noLoadTone as "green" | "ink"}
         testId="fuel-board-kpi-no-load"
+        onClick={() => navigate("/fuel/history")}
       />
       <V3KpiTile
         label="Open questions"
