@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=settlements cols=connectivity task=SETTLE-SWEEP-PRE */
+/** @matrix-built modules=settlements cols=connectivity leafRe=^pre_settlements$ task=SETTLE-SWEEP-PRE */
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";

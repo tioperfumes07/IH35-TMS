@@ -11,7 +11,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-econ-012-expense-category-map-align";
@@ -25,7 +24,12 @@ function fail(msg) {
   process.exit(1);
 }
 
+// --selftest plants defects into IN-MEMORY copies via this map — never into the tracked files
+// (verify-no-selftest-mutates-tracked-source: a selftest must not edit the shared working tree).
+const PLANTED = new Map();
+
 function read(rel) {
+  if (PLANTED.has(rel)) return PLANTED.get(rel);
   const abs = path.join(ROOT, rel);
   if (!fs.existsSync(abs)) fail(`missing ${rel}`);
   return fs.readFileSync(abs, "utf8");
@@ -107,37 +111,21 @@ if (process.argv.includes("--selftest")) {
     const ok = assertSources();
     if (ok.length) throw new Error(ok.join("; "));
     selftestMapper();
-    // Planted failure: drop revenue exclusion → child assert must fail.
-    const migAbs = path.join(ROOT, MIGRATION);
-    const original = fs.readFileSync(migAbs, "utf8");
-    const planted = original.replace("IS DISTINCT FROM 'revenue'", "IS DISTINCT FROM '__planted__'");
-    fs.writeFileSync(migAbs, planted);
-    let child;
-    try {
-      child = spawnSync(process.execPath, [path.join(ROOT, "scripts", "verify-econ-012-expense-category-map-align.mjs")], {
-        cwd: ROOT,
-        encoding: "utf8",
-      });
-    } finally {
-      fs.writeFileSync(migAbs, original);
-    }
-    if (child.status === 0) throw new Error("planted revenue-exclusion removal should fail live assert");
+    // Planted failure: drop revenue exclusion → the real assertion must fail.
+    const original = read(MIGRATION);
+    PLANTED.set(MIGRATION, original.replace("IS DISTINCT FROM 'revenue'", "IS DISTINCT FROM '__planted__'"));
+    if (PLANTED.get(MIGRATION) === original) throw new Error("selftest setup: revenue exclusion text not found");
+    const caught1 = assertSources().length > 0;
+    PLANTED.delete(MIGRATION);
+    if (!caught1) throw new Error("planted revenue-exclusion removal should fail the assertion");
     // Planted failure: legacy category lines re-stamped as account_id → must fail.
-    const edAbs = path.join(ROOT, EDITOR);
-    const edOriginal = fs.readFileSync(edAbs, "utf8");
+    const edOriginal = read(EDITOR);
     if (!edOriginal.includes("legacyCategoryIdsRef.current.has(picked)")) throw new Error("selftest setup: legacy guard text not found");
-    fs.writeFileSync(edAbs, edOriginal.replace("legacyCategoryIdsRef.current.has(picked)", "false"));
-    let child2;
-    try {
-      child2 = spawnSync(process.execPath, [path.join(ROOT, "scripts", "verify-econ-012-expense-category-map-align.mjs")], {
-        cwd: ROOT,
-        encoding: "utf8",
-      });
-    } finally {
-      fs.writeFileSync(edAbs, edOriginal);
-    }
-    if (child2.status === 0) throw new Error("planted legacy-category re-stamp should fail live assert");
-    console.log(`${LABEL} selftest OK (planted failures exit=${child.status}/${child2.status})`);
+    PLANTED.set(EDITOR, edOriginal.replace("legacyCategoryIdsRef.current.has(picked)", "false"));
+    const caught2 = assertSources().length > 0;
+    PLANTED.delete(EDITOR);
+    if (!caught2) throw new Error("planted legacy-category re-stamp should fail the assertion");
+    console.log(`${LABEL} selftest OK — 2/2 planted failures caught (in-memory copies; tracked files untouched)`);
     process.exit(0);
   } catch (e) {
     console.error(`${LABEL} selftest FAIL`, e);
