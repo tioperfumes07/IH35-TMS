@@ -1992,6 +1992,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   No factor configured. Activate a factor to manage its profile.
                 </div>
               ) : null}
+              <div data-testid="factoring-account-summary">
               {summaryQuery.isError ? (
                 <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
               ) : (
@@ -2134,6 +2135,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   </div>
                 </BoardSection>
               )}
+              </div>
             </div>
           );
         })()
