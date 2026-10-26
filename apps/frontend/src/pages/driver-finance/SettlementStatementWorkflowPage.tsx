@@ -31,6 +31,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -456,7 +458,9 @@ export function SettlementStatementWorkflowPage() {
     return (
       <div className="space-y-3">
         <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Select a settlement from list view" />
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">No settlement selected.</div>
+        <BoardSection title="Settlement workflow" testId="settlement-statement-none-selected">
+          <p className="px-3.5 py-2 text-xs text-gray-600">No settlement selected.</p>
+        </BoardSection>
       </div>
     );
   }
@@ -984,28 +988,32 @@ export function SettlementStatementWorkflowPage() {
             }}
           />
           {canApproveSettlement ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Approval</p>
+            <BoardSection
+              title="Approval"
+              testId="settlement-statement-approval"
+              headerRight={
                 <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">{approvalStatus}</span>
+              }
+            >
+              <div className="space-y-2 px-3.5 py-2 text-xs">
+                <p className="text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
+                <button
+                  type="button"
+                  className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
+                  onClick={() => {
+                    if (!companyId) return;
+                    void approveSettlement(settlementId, companyId)
+                      .then(() => {
+                        pushToast("Settlement approved", "success");
+                        void refreshSettlementViews();
+                      })
+                      .catch((error) => pushToast(userFacingApiError(error, "Approve blocked — all lines must be reviewed first"), "error"));
+                  }}
+                >
+                  Approve Settlement
+                </button>
               </div>
-              <p className="mb-2 text-xs text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
-              <button
-                type="button"
-                className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                onClick={() => {
-                  if (!companyId) return;
-                  void approveSettlement(settlementId, companyId)
-                    .then(() => {
-                      pushToast("Settlement approved", "success");
-                      void refreshSettlementViews();
-                    })
-                    .catch((error) => pushToast(userFacingApiError(error, "Approve blocked — all lines must be reviewed first"), "error"));
-                }}
-              >
-                Approve Settlement
-              </button>
-            </div>
+            </BoardSection>
           ) : null}
           {showFinalizeBlock ? (
             <FinalizeBlock
@@ -1058,12 +1066,14 @@ export function SettlementStatementWorkflowPage() {
             />
           ) : null}
           {isFinalSettlement ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</p>
+            <BoardSection
+              title="Payment Status"
+              testId="settlement-statement-payment-status"
+              headerRight={
                 <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
-              </div>
-              <div className="space-y-2">
+              }
+            >
+              <div className="space-y-2 px-3.5 py-2 text-xs">
                 {paymentState === "unpaid" ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1071,13 +1081,13 @@ export function SettlementStatementWorkflowPage() {
                         value={manualPaymentMethod}
                         onChange={(event) => setManualPaymentMethod(event.target.value)}
                         placeholder="Payment method (e.g. check)"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        className={FORM_INPUT_CLASS}
                       />
                       <input
                         value={manualReference}
                         onChange={(event) => setManualReference(event.target.value)}
                         placeholder="Manual payment reference"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        className={FORM_INPUT_CLASS}
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1161,7 +1171,7 @@ export function SettlementStatementWorkflowPage() {
                       value={bounceReason}
                       onChange={(event) => setBounceReason(event.target.value)}
                       placeholder="Bounce reason"
-                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                      className={FORM_INPUT_CLASS}
                     />
                     <button
                       type="button"
@@ -1188,13 +1198,13 @@ export function SettlementStatementWorkflowPage() {
                         value={manualPaymentMethod}
                         onChange={(event) => setManualPaymentMethod(event.target.value)}
                         placeholder="Payment method (e.g. check)"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        className={FORM_INPUT_CLASS}
                       />
                       <input
                         value={manualReference}
                         onChange={(event) => setManualReference(event.target.value)}
                         placeholder="Manual payment reference"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        className={FORM_INPUT_CLASS}
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1256,7 +1266,7 @@ export function SettlementStatementWorkflowPage() {
                     onChange={(event) => setReopenReason(event.target.value)}
                     placeholder="Reason for reopening (required)"
                     disabled={!canReopen}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-gray-100 disabled:text-gray-400"
+                    className={`${FORM_INPUT_CLASS} disabled:bg-gray-100 disabled:text-gray-400`}
                   />
                   <button
                     type="button"
@@ -1311,7 +1321,7 @@ export function SettlementStatementWorkflowPage() {
                   ) : null}
                 </div>
               </div>
-            </div>
+            </BoardSection>
           ) : null}
         </div>
       </div>

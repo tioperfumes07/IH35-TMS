@@ -128,12 +128,14 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">
-        Loads that need a human decision before joining a pre-settlement — trip type not yet known,
-        or a return leg with no open tour to join yet. "Create New" opens a fresh pre-settlement for
-        this load; "Link Suggested" joins the recommended one; "Reject" clears this row without
-        linking (the load can be re-suggested later once more information is known).
-      </div>
+      <BoardSection title="Needs review — how this queue works" testId="presettlement-suggestions-help">
+        <p className="px-3.5 py-2 text-xs text-gray-600">
+          Loads that need a human decision before joining a pre-settlement — trip type not yet known,
+          or a return leg with no open tour to join yet. "Create New" opens a fresh pre-settlement for
+          this load; "Link Suggested" joins the recommended one; "Reject" clears this row without
+          linking (the load can be re-suggested later once more information is known).
+        </p>
+      </BoardSection>
 
       {listState.isError ? (
         <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">

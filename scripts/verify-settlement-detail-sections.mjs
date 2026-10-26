@@ -115,6 +115,24 @@ checkFile(STATEMENT_TAB_PAGE, "SettlementDetailPage Statement tab", [
   { pattern: /isOpen=\{false\}/, description: "Statement tab document must be read-only (isOpen={false})" },
 ]);
 
+// Fill-not-shell / 443.280 — Approval + Payment Status + empty state use BoardSection.
+checkFile(WORKFLOW_PAGE, "SettlementStatementWorkflowPage BoardSection", [
+  { pattern: /testId="settlement-statement-approval"/, description: "Approval BoardSection missing" },
+  { pattern: /testId="settlement-statement-payment-status"/, description: "Payment Status BoardSection missing" },
+  { pattern: /testId="settlement-statement-none-selected"/, description: "No-settlement BoardSection missing" },
+  { pattern: /FORM_INPUT_CLASS/, description: "Payment inputs must use FORM_INPUT_CLASS" },
+]);
+checkFile("apps/frontend/src/pages/driver-finance/components/EscrowVisualizer.tsx", "EscrowVisualizer BoardSection", [
+  { pattern: /BoardSection/, description: "EscrowVisualizer must use BoardSection" },
+  { pattern: /testId="settlement-statement-escrow-visualizer"/, description: "EscrowVisualizer BoardSection testId missing" },
+]);
+{
+  const escrowSrc = fs.readFileSync("apps/frontend/src/pages/driver-finance/components/EscrowVisualizer.tsx", "utf8");
+  if (/rounded-sm border border-gray-200 bg-white p-3/.test(escrowSrc)) {
+    fail("EscrowVisualizer: must not keep layered bare card div");
+  }
+}
+
 if (failures > 0) {
   console.error(`\n[verify-settlement-detail-sections] FAIL — ${failures} issue(s)`);
   process.exit(1);

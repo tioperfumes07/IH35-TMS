@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Statement workflow + EscrowVisualizer → BoardSection
+
+- **STATUS:** SHIPPING — after [#27731](https://github.com/tioperfumes07/IH35-TMS/pull/27731) MERGED
+- **DELTA:** EscrowVisualizer · Approval · Payment Status · no-settlement empty · Presettlement help → `BoardSection`; payment/reopen inputs → `FORM_INPUT_CLASS`. Engines/approve/pay paths unchanged. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-detail-sections PASS · verify-acct-surf-09-reverse-drill PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** EscrowVisualizer · SettlementStatementWorkflowPage · PresettlementSuggestionsTab · verify-settlement-detail-sections · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel Planner → FuelBoardSection
 
-- **STATUS:** SHIPPING — after [#27729](https://github.com/tioperfumes07/IH35-TMS/pull/27729) MERGED
+- **STATUS:** MERGED [#27731](https://github.com/tioperfumes07/IH35-TMS/pull/27731)
 - **DELTA:** FuelPlannerHome planner tab — Active load plan · HOS route diagram · stop-logic · recommended stops → `FuelBoardSection`. Guard ratcheted. Engines unchanged.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-planner-active-routes-exact-range PASS (+ --selftest 7/7)
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
