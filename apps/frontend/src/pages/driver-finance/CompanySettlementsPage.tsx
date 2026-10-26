@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -147,7 +148,7 @@ export function CompanySettlementsPage() {
     // Period list may lag; open waterfall with tour-sourced identity.
     setSelected({
       id,
-      display_id: (r.company_settlement_display_id ?? "").trim() || id.slice(0, 8),
+      display_id: (r.company_settlement_display_id ?? "").trim() || entityLabel(null, id, "Settlement"),
       period_start: r.period_start ?? r.trip_started_at ?? "",
       period_end: r.period_end ?? r.trip_closed_at ?? "",
       status: "closed",

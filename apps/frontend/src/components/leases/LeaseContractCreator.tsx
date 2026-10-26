@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { leasesApi, type BillingMode, type LeaseType } from "../../api/leases";
+import { entityLabel } from "../../lib/entity-label";
 import { listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listCoaAccountsForJe } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -72,12 +73,12 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
         const r = await listEquipment({ operating_company_id: String(lessorCompanyId), limit: 1000 });
         return (r.equipment ?? [])
           .filter((e) => (e as { owner_company_id?: string }).owner_company_id === lessorCompanyId)
-          .map((e) => ({ id: e.id, label: e.equipment_number ?? e.id.slice(0, 8), kind: "equipment" as const }));
+          .map((e) => ({ id: e.id, label: entityLabel(e.equipment_number, e.id, "Equipment"), kind: "equipment" as const }));
       }
       const r = await listUnits({ operating_company_id: lessorCompanyId });
       return (r.units as Array<{ id: string; unit_number?: string; owner_company_id?: string; kind?: string }>)
         .filter((u) => u.kind !== "trailer" && u.owner_company_id === lessorCompanyId)
-        .map((u) => ({ id: u.id, label: u.unit_number ?? u.id.slice(0, 8), kind: "unit" as const }));
+        .map((u) => ({ id: u.id, label: entityLabel(u.unit_number, u.id, "Unit"), kind: "unit" as const }));
     },
   });
   const assets = fleet.data ?? [];

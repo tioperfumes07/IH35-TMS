@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -358,7 +359,7 @@ export function LegalContractInstancesPage() {
                         } catch (error) {
                           failed += 1;
                           pushToast(
-                            userFacingApiError(error, `Failed to download contract ${row.template_code ?? row.id.slice(0, 8)}`),
+                            userFacingApiError(error, `Failed to download contract ${row.template_code ?? entityLabel(null, row.id, "Contract")}`),
                             "error",
                           );
                         }

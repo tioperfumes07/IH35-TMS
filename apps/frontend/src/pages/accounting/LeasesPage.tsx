@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 import { leasesApi, type LeaseListRow } from "../../api/leases";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -22,7 +23,7 @@ export function LeasesPage() {
   const query = useQuery({ queryKey: ["leases", "list", companyId], queryFn: () => leasesApi.list(companyId), enabled: Boolean(companyId) });
   const columns = useMemo<ParityColumn<LeaseListRow>[]>(
     () => [
-      { key: "display_id", label: "Lease", alwaysVisible: true, render: (r) => <EntityLink kind="lease_contract" id={r.id} label={r.display_id ?? `Lease ${r.id.slice(0, 8)}`} className="font-semibold underline" /> },
+      { key: "display_id", label: "Lease", alwaysVisible: true, render: (r) => <EntityLink kind="lease_contract" id={r.id} label={entityLabel(r.display_id, r.id, "Lease")} className="font-semibold underline" /> },
       { key: "lease_type", label: "Type", sortable: true, render: (r) => r.lease_type ?? "—" },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "lessor_vendor", label: "Lessor", render: (r) => (r.lessor_vendor_id ? <EntityLink kind="vendor" id={r.lessor_vendor_id} label={r.lessor_vendor ?? r.lessor_company ?? "Vendor"} className="underline" /> : r.lessor_company ?? "—") },
