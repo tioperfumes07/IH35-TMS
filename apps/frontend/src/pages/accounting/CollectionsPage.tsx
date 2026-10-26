@@ -18,6 +18,7 @@ import {
   type CollectionTaskResolution,
 } from "../../api/collections";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -120,7 +121,8 @@ export function CollectionsPage() {
 
       {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before managing collections.</p> : null}
 
-      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
+      <BoardSection title="Collections filters" testId="collections-filters-board">
+      <div className="grid gap-3 p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">
           Aging bucket
           <SelectCombobox value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded-sm border border-gray-300 px-2`}>
@@ -144,10 +146,11 @@ export function CollectionsPage() {
           </Button>
         </div>
       </div>
+      </BoardSection>
 
       <div className="grid gap-3 lg:grid-cols-5">
-        <section className="rounded-sm border border-gray-200 bg-white lg:col-span-2">
-          <header className="border-b border-gray-100 px-3 py-2 text-xs font-semibold">Queue</header>
+        <div className="lg:col-span-2">
+        <BoardSection title="Queue" testId="collections-queue-board">
           <div className="max-h-136 overflow-auto">
             {(tasksQuery.data?.tasks ?? []).map((task) => (
               /*
@@ -200,10 +203,11 @@ export function CollectionsPage() {
             ) : null}
             {!tasksQuery.isLoading && !tasksQuery.isError && (tasksQuery.data?.tasks?.length ?? 0) === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No tasks match current filters.</p> : null}
           </div>
-        </section>
+        </BoardSection>
+        </div>
 
-        <section className="rounded-sm border border-gray-200 bg-white lg:col-span-3">
-          <header className="border-b border-gray-100 px-3 py-2 text-xs font-semibold">Task detail</header>
+        <div className="lg:col-span-3">
+        <BoardSection title="Task detail" testId="collections-task-detail-board">
           {!selectedTask ? (
             <p className="px-3 py-4 text-xs text-gray-500">Select a task from the queue.</p>
           ) : (
@@ -306,7 +310,8 @@ export function CollectionsPage() {
               </div>
             </div>
           )}
-        </section>
+        </BoardSection>
+        </div>
       </div>
     </AccountingSubNavWrapper>
   );

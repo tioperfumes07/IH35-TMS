@@ -12,5 +12,7 @@ export default {
     await ctx.run("node", ["scripts/verify-acct-220-tools-boards.mjs"]);
     // Horizontal fill — Settlements detail sections + remaining Accounting registers BoardSection
     await ctx.run("node", ["scripts/verify-fill-remaining-boards-batch.mjs"]);
+    // Batch 2 — Collections / Vendor balances / Company waterfall / Import fuel
+    await ctx.run("node", ["scripts/verify-fill-batch2-boards.mjs"]);
   },
 };

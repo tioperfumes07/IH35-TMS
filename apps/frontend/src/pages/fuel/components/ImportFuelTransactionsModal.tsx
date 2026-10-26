@@ -8,6 +8,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ParityTable } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -209,9 +210,11 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           />
           Drag &amp; drop a fleet-card .xlsx or .csv export or click to pick file
         </label>
-        <div className="rounded-sm border border-gray-200 bg-white px-2 py-1">
-          Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
-        </div>
+        <BoardSection title="Selected file" testId="fuel-import-selected-board">
+          <div className="px-2 py-1">
+            Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
+          </div>
+        </BoardSection>
         {result && result.dead_letters > 0 ? (
           <div
             data-testid="fuel-import-rejected-rows"
@@ -234,7 +237,8 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           </div>
         ) : null}
         {kind === "wex" && wexPlan ? (
-          <div data-testid="wex-statement-plan" className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
+          <BoardSection title="WEX statement plan" testId="fuel-import-wex-plan-board">
+          <div data-testid="wex-statement-plan" className="space-y-2 p-3">
             <div className="font-semibold">
               Plan for {wexPlan.file}: {wexPlan.lines} lines ({wexPlan.fills} tickets) — nothing written yet
             </div>
@@ -285,6 +289,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
               </ul>
             ) : null}
           </div>
+          </BoardSection>
         ) : null}
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={attemptClose} disabled={loading}>Cancel</Button>

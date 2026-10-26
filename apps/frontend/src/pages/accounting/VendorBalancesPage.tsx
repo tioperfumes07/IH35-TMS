@@ -8,6 +8,7 @@ import { getApAgingReport } from "../../api/reports";
 import { companyToday } from "../../lib/businessDate";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
@@ -117,8 +118,7 @@ export function VendorBalancesPage() {
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <section className="rounded-sm border border-gray-200 bg-white">
-          <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendors by balance</div>
+        <BoardSection title="Vendors by balance" testId="vendor-balances-vendors-board">
           <div className="max-h-[65vh] overflow-auto">
             {balancesQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading vendor balances...</p> : null}
             {!balancesQuery.isLoading && (balancesQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No outstanding balances.</p> : null}
@@ -157,32 +157,28 @@ export function VendorBalancesPage() {
               </div>
             ))}
           </div>
-        </section>
+        </BoardSection>
 
-        <section className="rounded-sm border border-gray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {selectedVendor ? (
-                <>
-                  Bills ·{" "}
-                  <EntityLink
-                    kind="vendor"
-                    id={selectedVendor.vendor_id}
-                    label={entityLabel(selectedVendor.vendor_name, selectedVendor.vendor_id, "Vendor")}
-                    className="normal-case tracking-normal"
-                    data-testid="vendor-balances-selected-vendor"
-                  />
-                </>
-              ) : (
-                "Bills"
-              )}
-            </div>
-            {selectedVendor ? (
-              <Button size="sm" variant="secondary" onClick={() => setMultiPayModalOpen(true)}>
-                Pay multiple
-              </Button>
-            ) : null}
-          </div>
+        <BoardSection
+          title={selectedVendor ? "Bills" : "Bills"}
+          testId="vendor-balances-bills-board"
+          headerRight={
+            selectedVendor ? (
+              <div className="flex items-center gap-2">
+                <EntityLink
+                  kind="vendor"
+                  id={selectedVendor.vendor_id}
+                  label={entityLabel(selectedVendor.vendor_name, selectedVendor.vendor_id, "Vendor")}
+                  className="text-xs normal-case tracking-normal"
+                  data-testid="vendor-balances-selected-vendor"
+                />
+                <Button size="sm" variant="secondary" onClick={() => setMultiPayModalOpen(true)}>
+                  Pay multiple
+                </Button>
+              </div>
+            ) : null
+          }
+        >
           <div className="max-h-[65vh] overflow-auto">
             {!selectedVendor ? <p className="px-3 py-3 text-xs text-gray-500">Select a vendor to view bills.</p> : null}
             {selectedVendor && billsQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading bills...</p> : null}
@@ -227,10 +223,9 @@ export function VendorBalancesPage() {
               );
             })}
           </div>
-        </section>
+        </BoardSection>
 
-        <section className="rounded-sm border border-gray-200 bg-white">
-          <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment history</div>
+        <BoardSection title="Payment history" testId="vendor-balances-payments-board">
           <div className="max-h-[65vh] overflow-auto">
             {!selectedBill ? <p className="px-3 py-3 text-xs text-gray-500">Select a bill to view payments.</p> : null}
             {selectedBill && billDetailQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading payment history...</p> : null}
@@ -255,7 +250,7 @@ export function VendorBalancesPage() {
               </div>
             ))}
           </div>
-        </section>
+        </BoardSection>
       </div>
 
       <PayBillModal
