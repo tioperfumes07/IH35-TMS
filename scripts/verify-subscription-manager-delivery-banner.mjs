@@ -97,7 +97,7 @@ if (process.argv.includes("--selftest")) {
     },
     {
       name: "remove the honest delivery explanation paragraph",
-      mutate: (t) => t.replace(/no backend worker exists to send them[^]*?until\n\s*report delivery ships\./, "report delivery is active."),
+      mutate: (t) => t.replace(/no backend worker exists to send them[^]*?until\s+report delivery ships\./, "report delivery is active."),
     },
   ];
   let caught = 0;

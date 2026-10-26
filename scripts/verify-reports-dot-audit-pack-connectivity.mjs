@@ -19,5 +19,8 @@ const failures=(s=source)=>[
  ["forward drill links",config.includes('entityKind: "work_order"')&&table.includes("<EntityLink kind={column.entityKind}")],
  ["fake xlsx remains unused",safetyReports.includes("hardcoded stub workbook")],
 ].filter(([,ok])=>!ok).map(([name])=>name);
-if(process.argv.includes("--selftest")){const mutated=source.replace("AND di.voided_at IS NULL","AND di.voided_at IS NOT NULL");if(!failures(mutated).includes("voided inspections excluded"))process.exit(1);console.log("verify-reports-dot-audit-pack-connectivity selftest PASS — void-scope mutation red");process.exit(0);}
+// Selftest plants the void-scope defect on the dot-audit-pack query itself. The file now carries the predicate
+// in several queries, and the check is "includes", so the planted defect must remove EVERY occurrence or the
+// mutation is inert (the guard is then only as strong as its weakest copy) — and say why when it escapes.
+if(process.argv.includes("--selftest")){const mutated=source.split("AND di.voided_at IS NULL").join("AND di.voided_at IS NOT NULL");if(mutated===source||!failures(mutated).includes("voided inspections excluded")){console.error("verify-reports-dot-audit-pack-connectivity selftest FAIL — void-scope mutation escaped or was inert");process.exit(1);}console.log("verify-reports-dot-audit-pack-connectivity selftest PASS — void-scope mutation red");process.exit(0);}
 const missing=failures();if(missing.length){console.error(`verify-reports-dot-audit-pack-connectivity FAIL — ${missing.join(", ")}`);process.exit(1);}console.log("verify-reports-dot-audit-pack-connectivity PASS — scoped inspection ledger→CSV runner+entity drills; fake XLSX unused");
