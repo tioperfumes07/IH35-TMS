@@ -105,6 +105,13 @@ function checkReg023bDriverBillRoute() {
     if (!/LoadDetailDriverPayTab/.test(pageSrc)) {
       errors.push("DriverBillDetailPage must reuse the canonical LoadDetailDriverPayTab (one source of truth), not re-implement driver pay math");
     }
+    // Fill-not-shell / 443.280 — detail body uses BoardSection (not bare bordered card).
+    if (!pageSrc.includes("<BoardSection") || !pageSrc.includes('testId="driver-bill-detail-body"')) {
+      errors.push("DriverBillDetailPage must wrap pay detail in BoardSection (testId=driver-bill-detail-body)");
+    }
+    if (/rounded-sm border border-gray-200 bg-white p-3/.test(pageSrc)) {
+      errors.push("DriverBillDetailPage must not keep layered bare card div");
+    }
   }
 
   const backend = "apps/backend/src/driver-finance/driver-bills.routes.ts";
