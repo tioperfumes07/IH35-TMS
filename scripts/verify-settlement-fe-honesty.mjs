@@ -90,6 +90,18 @@ export function run(overrides = {}) {
     errors
   );
 
+  // Fill-not-shell / 443.280 — SettlementHeader uses BoardSection (not bare bordered grid card).
+  assert(
+    header.includes("<BoardSection") && header.includes('testId="settlement-header-board"'),
+    "SettlementHeader must wrap in BoardSection (testId=settlement-header-board)",
+    errors
+  );
+  assert(
+    !/rounded-sm border border-gray-200 bg-white p-3/.test(header),
+    "SettlementHeader must not keep layered bare card div",
+    errors
+  );
+
   assert(
     vendor.includes("vendor_type_name ?? row.vendor_type_code ?? row.code ?? \"\""),
     "VendorCreateModal must fallback through vendor_type_name / vendor_type_code / code when display_name is empty",
