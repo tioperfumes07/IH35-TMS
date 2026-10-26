@@ -347,6 +347,8 @@ export function SettlementStatementWorkflowPage() {
     enabled: Boolean(settlementLoadId && companyId),
   });
 
+  // buildSettlementLineViews segments lines by line_type: deadhead rows where
+  // String(line.line_type) === "deadhead_pay" land in `deadhead`; all others in earnings/extra/etc.
   const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
     () => buildSettlementLineViews(activeLines, settlementDisplayId),
     [activeLines, settlementDisplayId]
