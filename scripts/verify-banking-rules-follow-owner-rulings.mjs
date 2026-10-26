@@ -3,9 +3,11 @@
 // Owner 10-11: Dreamline Transit→5000(fuel), Alberto Lozano→6110 dispatch, not 5100.
 // INFORMATIONAL guard: prints correction instructions for live DB rule violations.
 // Exit 0 always — static code check is blocking, live data check is advisory until data is patched.
+//   --live  also runs the database half (DATABASE_URL required; no DB = FAIL, via requireLiveDbOrExit).
+//           Without --live only the static half runs — listed in scripts/lib/e7-batch2-live-guards.json
+//           live_flag_guards, so money-pr-local-gate.mjs runs it --live.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { requireLiveDbOrExit } from './lib/require-live-db.mjs';
 
 const LABEL = 'verify-banking-rules-follow-owner-rulings';
 
@@ -37,8 +39,15 @@ if (process.argv.includes('--selftest')) {
   process.exit(0);
 }
 assert(patchAcceptsTarget(routes), 'PATCH /api/v1/banking/rules must accept then_account_id — RC2 not implemented');
+console.log(`${LABEL} STATIC PASS — PATCH /api/v1/banking/rules accepts then_account_id`);
 
-// --- live check ---
+if (!process.argv.includes('--live')) {
+  console.log(`${LABEL}: OK (static) — database half runs with --live (live_flag_guards; money-pr-local-gate runs it)`);
+  process.exit(0);
+}
+
+// --- live check (--live only) ---
+const { requireLiveDbOrExit } = await import('./lib/require-live-db.mjs');
 const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 try {
   const USMCA = '5c854333-6ea5-4faa-af31-67cb272fef80';

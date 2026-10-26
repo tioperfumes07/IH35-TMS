@@ -84,9 +84,11 @@ if (process.argv.includes("--selftest")) {
       if (!auto) pushToast("Factoring package popup was blocked — allow popups for this site and try again", "error");
       return;
     }
+    win.opener = null;
     win.document.write(html);
     win.document.close();`,
       `    if (win) {
+      win.opener = null;
       win.document.write(html);
       win.document.close();
     }`,
