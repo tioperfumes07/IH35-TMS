@@ -32,7 +32,7 @@ function audit(s) {
   //        the module home. The page was right and the guard still pinned the pre-move parent. Not looser: the crumbs must
   //        now also link to the module paths (the U18 rule), and a breadcrumb parented on Accounting fails.
   if (!/<Link[^>]*to="\/dispatch">Dispatch<\/Link>[\s\S]{0,160}<Link[^>]*to="\/dispatch\/load-costs">Load costs<\/Link>/.test(s.drawer)) p.push("breadcrumb is not Dispatch › Load costs › load (module-path links)");
-  if (!/\{isPage \? null : <div className="fixed inset-0 z-\[200\] bg-black\/30"/.test(s.drawer)) p.push("backdrop rendered in page mode");
+  if (!/\{isPage \? null : <div className="z-\[200\] bg-black\/30" style=/.test(s.drawer)) p.push("backdrop rendered in page mode");
   if (!/data-testid="load-costs-load-back"/.test(s.drawer)) p.push("page mode lacks the ← Load costs link (Close replaced)");
   if (!/data-testid="ldt0-header-stats"/.test(s.drawer)) p.push("shared header stat boxes missing");
   if (/\/dispatch\/loads\/\$\{r\.(load_id|loadId)\}\?tab=Costs/.test(s.board)) p.push("board still links loads to the drawer instead of the page");
@@ -51,6 +51,7 @@ if (process.argv.includes("--selftest")) {
     ["breadcrumb parented on Accounting again", { ...clean, drawer: clean.drawer.replace('<Link className="hover:underline" to="/dispatch">Dispatch</Link>', '<Link className="hover:underline" to="/accounting">Accounting</Link>') }],
     ["breadcrumb crumb not a module-path link", { ...clean, drawer: clean.drawer.replace('to="/dispatch/load-costs">Load costs</Link>', 'to={-1}>Load costs</Link>') }],
     ["board links back to drawer", { ...clean, board: clean.board.replace("/dispatch/load-costs/${r.load_id}?tab=Costs", "/dispatch/loads/${r.load_id}?tab=Costs") }],
+    ["backdrop not guarded by isPage", { ...clean, drawer: clean.drawer.replace('{isPage ? null : <div className="z-[200] bg-black/30" style=', '<div className="z-[200] bg-black/30" style=') }],
   ];
   let escaped = 0;
   for (const [l, m] of plants) if (audit(m).length === 0) { console.error(`SELFTEST FAIL — not caught: ${l}`); escaped++; }

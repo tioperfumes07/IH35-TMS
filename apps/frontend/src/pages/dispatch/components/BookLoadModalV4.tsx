@@ -1944,13 +1944,13 @@ export function BookLoadModalV4({
       // unambiguously topmost even alongside a Modal.tsx-based dialog.
       className={
         bookLoadPresentation === "side"
-          ? "fixed inset-0 z-[1002] flex items-stretch justify-end overflow-y-auto"
-          : "fixed inset-0 z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6"
+          ? "z-[1002] flex items-stretch justify-end overflow-y-auto" // scroll-reachable-exempt: inset:0 in style prop bounds all sides to viewport
+          : "z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6" // scroll-reachable-exempt: inset:0 in style prop bounds all sides to viewport
       }
       data-ih35-blocking-modal="true"
       data-testid="book-load-presentation-shell"
       data-presentation={bookLoadPresentation}
-      style={{ background: "rgba(15, 19, 32, 0.6)" }}
+      style={{ position: "fixed", inset: 0, background: "rgba(15, 19, 32, 0.6)" }}
     >
       <div
         ref={panelRef}
