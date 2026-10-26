@@ -7,12 +7,12 @@ import { useListState } from "../../components/list-state";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
-import { useCashAdvancesParityColumns } from "./components/CashAdvancesTable";
+import { CashAdvancesTable } from "./components/CashAdvancesTable";
 import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
-import { ParityTable } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { useStagedListFilters } from "../../components/table/useStagedListFilters";
 import { moneyListKpiCard } from "../accounting/moneyListKpiCard";
 import { formatUsdTable } from "../../lib/money";
 
@@ -67,10 +67,15 @@ export function CashAdvancesHomePage() {
     setApplied((prev) => ({ ...prev, driverId: driverIdFilter }));
   }, [driverIdFilter]);
 
-  const setDriverFilterLive = (driverId: string) => {
-    const next = { ...applied, driverId };
+  const onApplyFilters = (next: typeof EMPTY_FILTERS) => {
     setApplied(next);
     patchListSearchParam(next);
+  };
+
+  const staged = useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply: onApplyFilters });
+
+  const setDriverFilter = (driverId: string) => {
+    staged.setDraft((d) => ({ ...d, driverId }));
   };
 
   const effectiveDriverId = applied.driverId.trim() || undefined;
@@ -135,7 +140,6 @@ export function CashAdvancesHomePage() {
     setSelectedId(String(row.id));
     setMarkDisbursedOpen(true);
   };
-  const columns = useCashAdvancesParityColumns(onOpenDetail, onMarkDisbursed);
 
   const kpisFailed = kpisQuery.isError;
   const outstandingDisplay = kpisFailed
@@ -180,13 +184,39 @@ export function CashAdvancesHomePage() {
           <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
-            value={applied.driverId || null}
-            onChange={(next) => setDriverFilterLive(next ?? "")}
+            value={staged.draft.driverId || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="cash-advances-filter-driver"
           />
         </label>
+        <div className="flex items-center gap-1 mt-2">
+          <button
+            type="button"
+            className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-xs font-medium text-white"
+            data-testid="cash-advances-filter-apply"
+            onClick={staged.apply}
+          >
+            Apply
+          </button>
+          <button
+            type="button"
+            className="h-7 rounded-sm border border-gray-300 px-2 text-xs font-medium text-gray-700"
+            data-testid="cash-advances-filter-cancel"
+            onClick={staged.cancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="h-7 rounded-sm border border-gray-300 px-2 text-xs font-medium text-gray-700"
+            data-testid="cash-advances-filter-reset"
+            onClick={staged.reset}
+          >
+            Reset
+          </button>
+        </div>
       </MoneyListToolbar>
 
       <div className="flex flex-wrap gap-2" data-testid="cash-advances-tab-buttons">
@@ -222,21 +252,12 @@ export function CashAdvancesHomePage() {
           onRetry={() => void listQuery.refetch()}
         />
       ) : (
-        <div data-testid="cash-advances-empty">
-          <ParityTable<Record<string, unknown>>
-            title="Cash advances"
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => String(row.id)}
-            loading={listState.isLoading}
-            emptyText="No cash advances found — none created for this entity yet (or no rows match the current filter)."
-            storageKey="cash-advances-roster"
-            exportFilename="cash-advances"
-            tableTestId="cash-advances-table"
-            gearButtonTestId="cash-advances-column-gear"
-            suppressToolbarSearch
-          />
-        </div>
+        <CashAdvancesTable
+          rows={rows}
+          onOpenDetail={onOpenDetail}
+          onMarkDisbursed={onMarkDisbursed}
+          isLoading={listState.isLoading}
+        />
       )}
 
       {detailOpen && detailQuery.isError ? (
