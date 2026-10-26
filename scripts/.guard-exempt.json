@@ -1,6 +1,5 @@
 {
   "_README": "Guards that are not FULLY WIRED (package.json script AND CI execution via workflow or verify-steps/pre-commit). Baselined initially 2026-07-10 (G3 orphans). Extended 2026-07-16 (B-D2) for package.json-only and workflow-only partials. Each should be WIRED (both sides) or given an individual reason; do not add NEW guards here without justification. New fully-unwired or package.json-only / workflow-only guards fail CI via verify:guard-wired.",
-  "verify-no-uuid-slice-entity-label.mjs": "FINAL-3 row 19 2026-10-25 — new guard; verify-step claim (CC-3 ≡3 mod-4) pending separate chore/claim-reserve PR before it can be authored as NNNN-*.mjs; exempt until that PR merges",
   "verify-1099-recipient-shared-driver-identity.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-a8-audit-reports-section.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-acc20-void-unmatch-resets-review-state.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",

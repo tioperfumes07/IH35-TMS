@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import { legalContractsApi, type LegalContractSummary } from "../../../api/legal-contracts";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { legalTemplatesApi } from "../../../api/legal-templates";
-import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -70,7 +69,7 @@ function matterLabel(m: LegalMatterRow): string {
   const num = String(m.matter_number ?? "").trim();
   if (num) return num;
   const id = String(m.id ?? "");
-  return id ? entityLabel(null, id, "Matter") : "Matter";
+  return id ? id.slice(0, 8) : "Matter";
 }
 
 function nextMatterDate(m: LegalMatterRow): string | null {
