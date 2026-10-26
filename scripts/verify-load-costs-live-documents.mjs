@@ -14,8 +14,8 @@ const paths = {
 const rules = [
   ['model','SUM(i.total_cents-i.tax_cents)','issued revenue excludes tax liability'],
   ['model','issued.document_count > 0','zero-dollar issued invoice is authoritative'],
-  ['model','SUM(lcl.amount_cents)','booking revenue (inner alias lcl — #27126: no caller alias can collide)'],
-  ['model','lcl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
+  ['model','SUM(cl.amount_cents)','booking revenue (inner alias cl — #27126: no caller alias can collide)'],
+  ['model','cl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
   ['model','i.voided_at IS NULL','void invoice excluded'],
   ['model',"i.status NOT IN ('draft','proforma','void','voided')",'only issued invoice replaces booking'],
   ['model','COALESCE(el.load_id,e.load_id)','line expense attribution'],

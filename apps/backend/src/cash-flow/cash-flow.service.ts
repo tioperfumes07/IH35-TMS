@@ -1072,6 +1072,7 @@ export async function getRollingLedgerRows(
         -- BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL is the canonical settled-bill check; openDriverBill embeds it.
         AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
         AND ${openDriverBill("db")}
+        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
         AND (COALESCE(db.gross_amount_cents, 0) > 0 OR NOT ${driverBillAmountKnown("db")})
       ORDER BY 5 ASC, db.created_at ASC

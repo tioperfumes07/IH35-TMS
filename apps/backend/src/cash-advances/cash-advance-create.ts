@@ -9,6 +9,7 @@ import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
@@ -713,13 +714,11 @@ export async function createDriverCashAdvanceCore(
         WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
       [companyId, advanceId, body.historical_posting_date ?? null]
     );
-    // ENG-04 (2026-10-24): historical_backfill no longer credits driver_payroll_clearing (2170).
-    // The engine resolver in buildDriverAdvanceLines resolves the credit from from_bank_account_id
-    // (operating_bank role fallback when absent). 2170 belongs to bill payments only.
     if (await isEnabled(client as never, "DRIVER_ADVANCE_GL_POSTING_ENABLED", { operating_company_id: companyId, user_uuid: actorUserUuid })) {
+      const clearing = await resolveRoleAccount(client as never, companyId, "driver_payroll_clearing");
       await postSourceTransactionInClientTx(
         client as never,
-        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId },
+        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId, credit_account_id: clearing },
         { userId: actorUserUuid }
       );
     }

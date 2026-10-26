@@ -40,6 +40,7 @@ import { ReserveDashboardAddFactorModal } from "./ReserveDashboardAddFactorModal
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { useListState } from "../../components/list-state";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 
@@ -219,7 +220,7 @@ export function ReserveTracker() {
   }, [factorsQ.data]);
 
   const reserveBalances = balancesQ.data ?? [];
-  const listState = { isEmpty: !balancesQ.isPending && !balancesQ.isError && reserveBalances.length === 0 };
+  const balancesListState = useListState(balancesQ, reserveBalances.length === 0);
   const totalHistPages = Math.max(1, Math.ceil((historyQ.data?.total ?? 0) / PAGE_SIZE));
 
   const forecastByWindow = {
@@ -309,11 +310,11 @@ export function ReserveTracker() {
             onRetry={() => void balancesQ.refetch()}
           />
         </BoardSection>
-      ) : balancesQ.isLoading ? (
+      ) : balancesListState.isLoading ? (
         <BoardSection title="Per-factor reserve balances" testId="factoring-reserve-balances">
           <div className="px-3.5 py-3 text-xs text-gray-500">Loading reserve balances…</div>
         </BoardSection>
-      ) : listState.isEmpty ? (
+      ) : balancesListState.isEmpty ? (
         <BoardSection title="Per-factor reserve balances" testId="factoring-reserves-honest-empty">
           <div className="px-3.5 py-3 text-xs text-gray-500">No reserve balances found.</div>
         </BoardSection>

@@ -44,10 +44,8 @@ const ALLOWLIST = new Set([
   "accounting/journal-entries.service.ts",
   "accounting/revrec-delivery-posting/poster.service.ts",
   "accounting/posting-engine.service.ts",
-  // dispatch/driver-finance delivery + void cascade cluster (17 files, added post-2026-07-12).
-  // These modules form an intentional settlement/delivery pipeline where settlement delivery triggers
-  // dispatch state transitions which trigger accrual/void services back through settlement. Breaking
-  // this cycle requires owner-gated financial refactor to extract a shared event-bus/domain-event layer.
+  // dispatch ↔ driver-finance delivery cycle — settlement delivery, void cascade, and load transitions are tightly
+  // coupled; extraction requires a shared types package (owner-gated architectural refactor, GO-23 wave).
   "driver-finance/settlement-creator-deliver.ts",
   "dispatch/stamp-final-delivery-departure.ts",
   "driver-finance/driver-pay-delivery-accrual.service.ts",
@@ -65,17 +63,15 @@ const ALLOWLIST = new Set([
   "driver-finance/settlements-load-bookended.service.ts",
   "dispatch/load-transition.service.ts",
   "driver-finance/abandonment.service.ts",
-  // settlement-creator preflight/service/seed-loads cluster (3 files, added post-2026-07-12).
-  // These three files are the settlement creation pipeline stages; the cycle reflects intentional
-  // co-dependency. Owner-gated refactor to extract shared types would break the cycle cleanly.
+  // forecast manual entry ↔ service cycle — manual cash-forecast entry service is registered in the routes directly;
+  // extracting the type boundary requires splitting the service (owner-gated, deferred to cash-flow sprint).
+  "forecast/cash-forecast-manual.routes.ts",
+  "forecast/cash-forecast-entry.service.ts",
+  // settlement creator 3-file cycle — preflight, seed-loads, and main service share state that is threaded through
+  // parameters; extracting a shared types module is owner-gated (GO-23 wave).
   "driver-finance/settlement-creator-preflight.ts",
   "driver-finance/settlement-creator.service.ts",
   "driver-finance/settlement-creator-seed-loads.ts",
-  // cash-forecast routes ↔ entry service cycle (2 files, added post-2026-07-12).
-  // Manual cash forecast route imports entry service which imports the route for status helpers.
-  // Owner-gated refactor to extract shared forecast types/helpers.
-  "forecast/cash-forecast-manual.routes.ts",
-  "forecast/cash-forecast-entry.service.ts",
 ]);
 
 /** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */

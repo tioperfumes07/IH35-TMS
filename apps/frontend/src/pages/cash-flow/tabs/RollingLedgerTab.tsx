@@ -162,6 +162,13 @@ function isBoardEmptyRow(row: RollingLedgerRow): boolean {
   return row.document_id.startsWith("__board_empty__");
 }
 
+function RowStatusPill({ row }: { row: RollingLedgerRow }) {
+  if (isFactoringRow(row.type)) {
+    return <span style={{ color: V3.muted }}>—</span>;
+  }
+  return <span>{row.status?.replace(/_/g, " ") ?? "—"}</span>;
+}
+
 function ensureExpenseGroupRows(rows: RollingLedgerRow[], dueDate: string): RollingLedgerRow[] {
   const present = new Set(rows.map(expenseGroupKey));
   const extras: RollingLedgerRow[] = [];
@@ -951,6 +958,16 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       render: (row) => fmtDateShort(row.origin_date),
     },
     {
+      key: "days",
+      label: "Days",
+      render: (row) => (row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (row) => <RowStatusPill row={row} />,
+    },
+    {
       key: "amount_cents",
       label: "Amount",
       className: "text-right",
@@ -1024,6 +1041,14 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       cellClass: "text-right font-mono font-medium",
       kind: "money",
       render: (row) => (isBoardEmptyRow(row) ? null : row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)),
+    },
+    {
+      key: "days",
+      label: "Days",
+      render: (row) => {
+        if (isBoardEmptyRow(row)) return null;
+        return row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`;
+      },
     },
     {
       key: "action",
