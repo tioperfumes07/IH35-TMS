@@ -28,6 +28,7 @@ import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { facilityAtPoint, isGooglePlacesConfigured, isGooglePlacesEnabled, searchAddress } from "../integrations/google/google-places-client.js";
 import { detectStops, type PositionFix, type StopEvent } from "./stop-odometer-capture.service.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
+import { loadDwellExclusionZones } from "./stop-dwell-boundary.service.js";
 import { learnLoadLanes } from "../dispatch/load-lane-learning.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -218,20 +219,9 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     fixDays = new Set(pf.map((f) => f.capturedAt.toISOString().slice(0, 10)));
     fixPoints = pf.filter((f) => f.lat != null && f.lng != null).map((f) => ({ lat: f.lat!, lng: f.lng! }));
     const raw = detectStops(load.unit_id, pf).filter((d): d is Dwell => d.lat != null && d.lng != null);
-    // A fuel stop or the company yard is never a pickup / delivery.
-    const excluded = (await client.query<{ lat: number; lng: number; r: number }>(
-      `SELECT center_lat::float8 AS lat, center_lng::float8 AS lng, greatest(coalesce(enter_radius_m, radius_m, 200), 200)::float8 AS r
-         FROM geo.geofences WHERE operating_company_id = $1::uuid AND is_active AND center_lat IS NOT NULL
-          AND (location_kind = 'fuel_stop' OR location_kind = 'yard'
-               OR location_ref_id IN (SELECT id FROM mdata.locations WHERE operating_company_id = $1::uuid AND is_ih35_yard))`,
-      [input.operatingCompanyId])).rows;
-    // The owner's own non-shipper addresses in Samsara (the EBT yard, CAT / weigh scales, fuel and truck stops) — measured
-    // 2026-10-11: 69 of the first run's 175 "disagreements" were the EBT Yard and 22 were CAT scales.
-    const notShipper = (await client.query<{ lat: number; lng: number }>(
-      `SELECT lat::float8 AS lat, lng::float8 AS lng FROM integrations.samsara_addresses
-        WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND lat IS NOT NULL AND lng IS NOT NULL
-          AND coalesce(name, '') ~* '(yard|cat scale|scale|weigh|love''?s|pilot|flying j|petro|truck ?stop|travel ?center|wash)'`,
-      [input.operatingCompanyId])).rows.map((r) => ({ ...r, r: 400 }));
+    // A fuel stop, the company yard or one of the owner's non-shipper Samsara addresses is never a pickup / delivery
+    // (shared with the GPS-dwell stop boundary — one definition).
+    const excluded = await loadDwellExclusionZones(client, input.operatingCompanyId);
     // Every stop of the same truck's OTHER loads in the window: a dwell there is that load's stop, never this one.
     const otherStops = (await client.query<{ lat: number; lng: number }>(
       `SELECT s.latitude::float8 AS lat, s.longitude::float8 AS lng
@@ -244,7 +234,6 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     const ours = stopsIn.filter((x) => x.lat != null && x.lng != null);
     dwells = raw.filter((d) =>
       !excluded.some((e) => metersBetween(d.lat, d.lng, e.lat, e.lng) <= e.r) &&
-      !notShipper.some((e) => metersBetween(d.lat, d.lng, e.lat, e.lng) <= e.r) &&
       // another load's stop excludes the dwell unless it is ALSO at one of this load's own stops (same facility reused)
       (!otherStops.some((e) => metersBetween(d.lat, d.lng, e.lat, e.lng) <= e.r) || ours.some((o) => metersBetween(d.lat, d.lng, o.lat!, o.lng!) <= VERIFY_RADIUS_M)));
   }
