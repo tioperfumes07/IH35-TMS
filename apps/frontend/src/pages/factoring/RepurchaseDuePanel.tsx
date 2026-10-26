@@ -11,7 +11,8 @@ import {
   type RepurchaseDueDecision,
   type RepurchaseDueRow,
 } from "../../api/factoring-repurchase-due";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -21,7 +22,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
-const ACTION = "rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44] disabled:opacity-50";
+const ACTION = `${FORM_INPUT_CLASS} disabled:opacity-50`;
 
 export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; isOwner: boolean }) {
   const queryClient = useQueryClient();
@@ -114,7 +115,10 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
   if (!query.isError && rows.length === 0) return null;
 
   return (
-    <DataPanel title={`Repurchase deadline — ${rows.length} awaiting your decision`}>
+    <BoardSection
+      title={`Repurchase deadline — ${rows.length} awaiting your decision`}
+      testId="factoring-repurchase-due-board"
+    >
       <p className="mb-2 text-xs text-[#1F2A44]">
         Faro's 95-day repurchase deadline has arrived for these invoices. Nothing posts until you decide.
       </p>
@@ -154,6 +158,6 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
           </div>
         </Modal>
       ) : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

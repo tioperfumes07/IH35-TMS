@@ -1048,41 +1048,45 @@ export function SettlementCloseArrivalPage() {
           </div>
 
           {settlement ? (
-            <div
-              data-testid="settlement-close-expense-load-confirmations"
-              data-blocks-close={loadConfirmBlocksClose ? "1" : "0"}
-              style={{
-                border: `1px solid ${loadConfirmBlocksClose ? "#DC2626" : V3.border}`,
-                borderRadius: 2,
-                background: V3.surface,
-                padding: 12,
-              }}
+            <BoardSection
+              title="Expense load confirmations"
+              testId="settlement-close-expense-load-confirmations"
             >
-              <p className="mb-2 text-xs text-[#4B5563]">
-                Blocking before close — confirm every proposed expense-to-load assignment on this
-                settlement&apos;s loads. Empty means confirmed.
-              </p>
-              {loadConfirmEngineUnavailable ? (
-                <p className="text-xs text-red-700" data-testid="settlement-close-load-confirm-engine-missing">
-                  Confirm engine not on this deploy yet (443.288-B). Close stays blocked until the
-                  engine is live — empty is not confirmed while the engine is missing.
+              <div
+                className="px-3.5 py-3"
+                data-blocks-close={loadConfirmBlocksClose ? "1" : "0"}
+                style={
+                  loadConfirmBlocksClose
+                    ? { borderLeft: "3px solid #DC2626" }
+                    : undefined
+                }
+              >
+                <p className="mb-2 text-xs text-[#4B5563]">
+                  Blocking before close — confirm every proposed expense-to-load assignment on this
+                  settlement&apos;s loads. Empty means confirmed.
                 </p>
-              ) : null}
-              {!loadConfirmEngineUnavailable ? (
-                <ExpenseLoadConfirmationsBoard
-                  operatingCompanyId={companyId}
-                  settlementId={settlement.id}
-                  defaultStatus="proposed"
-                  compact
-                  testId="settlement-close-expense-load-confirmations-board"
-                  onQueueChanged={() => {
-                    void qc.invalidateQueries({
-                      queryKey: ["expense-load-confirmations", "close-gate", companyId, settlement.id],
-                    });
-                  }}
-                />
-              ) : null}
-            </div>
+                {loadConfirmEngineUnavailable ? (
+                  <p className="text-xs text-red-700" data-testid="settlement-close-load-confirm-engine-missing">
+                    Confirm engine not on this deploy yet (443.288-B). Close stays blocked until the
+                    engine is live — empty is not confirmed while the engine is missing.
+                  </p>
+                ) : null}
+                {!loadConfirmEngineUnavailable ? (
+                  <ExpenseLoadConfirmationsBoard
+                    operatingCompanyId={companyId}
+                    settlementId={settlement.id}
+                    defaultStatus="proposed"
+                    compact
+                    testId="settlement-close-expense-load-confirmations-board"
+                    onQueueChanged={() => {
+                      void qc.invalidateQueries({
+                        queryKey: ["expense-load-confirmations", "close-gate", companyId, settlement.id],
+                      });
+                    }}
+                  />
+                ) : null}
+              </div>
+            </BoardSection>
           ) : null}
         </div>
       )}

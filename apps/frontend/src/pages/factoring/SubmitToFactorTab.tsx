@@ -33,7 +33,6 @@ import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { SaveDropdown } from "../../components/forms/SaveDropdown";
-import { DataPanel } from "../../components/layout/DataPanel";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -866,7 +865,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <DataPanel title="Purchase">
+        <BoardSection title="Purchase" testId="submit-factor-purchase-board">
           <div className="grid grid-cols-2 gap-3 p-3 text-xs" data-testid="submit-factor-form">
             <label className="col-span-2 flex flex-col gap-1">
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Factoring company</span>
@@ -945,10 +944,10 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             </label>
             )}
           </div>
-        </DataPanel>
+        </BoardSection>
 
         {selectedRows.length ? (
-          <DataPanel title="Selected invoices — Faro actuals">
+          <BoardSection title="Selected invoices — Faro actuals" testId="submit-factor-faro-actuals-board">
             <div className="p-3 text-xs" data-testid="submit-factor-actuals">
               <p className="mb-2 text-[#4B5563]">
                 Enter Faro's purchase-report figures here when they differ from the expected split.{" "}
@@ -1088,11 +1087,11 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                 }}
               />
             </div>
-          </DataPanel>
+          </BoardSection>
         ) : null}
 
         {missingDocsRows.length ? (
-          <DataPanel title="Override approval — missing documents">
+          <BoardSection title="Override approval — missing documents" testId="submit-factor-override-board">
             <div className="p-3 text-xs" data-testid="submit-factor-docs-override">
               <p className="mb-2 text-[#4B5563]">
                 {missingDocsRows.length} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
@@ -1109,10 +1108,10 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                 />
               )}
             </div>
-          </DataPanel>
+          </BoardSection>
         ) : null}
 
-        <DataPanel title="Selection totals">
+        <BoardSection title="Selection totals" testId="submit-factor-totals-board">
           <dl className="grid grid-cols-2 items-center gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
             <dt className="text-[#4B5563]">Invoices</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{totals.count}</dd>
@@ -1200,7 +1199,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             />
             )}
           </div>
-        </DataPanel>
+        </BoardSection>
       </div>
 
       {saveError ? <SaveErrorPanel error={saveError} rows={byId} /> : null}
