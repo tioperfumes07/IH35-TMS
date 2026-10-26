@@ -29,8 +29,13 @@ export function audit(src) {
   if (trailerReaderCalls.length < 2) {
     failures.push(`${FILES.tablePage}: both complete roster queries must request trailer rows through listAllUnits`);
   }
-  if (!/kindFilter && r\.kind !== kindFilter/.test(src.tablePage)) {
-    failures.push(`${FILES.tablePage}: roster.kind.trailers filter must apply to real row.kind`);
+  // EVERY row derivation that depends on kindFilter must apply it: FleetTablePage derives the displayed `rows`
+  // AND the KPI/table `sourceRows` (both list kindFilter in their deps); a file-wide match let one of them
+  // drop the kind filter unseen (the Trailers tab would then count/show trucks in that derivation).
+  const kindMemos = [...src.tablePage.matchAll(/useMemo\(([\s\S]*?)(?:\n\s*|\},\s*)\[([^\]]*)\]\s*\)/g)]
+    .filter((m) => /\bkindFilter\b/.test(m[2]));
+  if (kindMemos.length === 0 || !kindMemos.every((m) => /kindFilter && r\.kind !== kindFilter/.test(m[1]))) {
+    failures.push(`${FILES.tablePage}: roster.kind.trailers filter must apply to real row.kind in every row derivation that depends on kindFilter`);
   }
   if (!/row\.kind === "trailer" \? "equipment" : "units"/.test(src.table)) {
     failures.push(`${FILES.table}: bulk inactivate must route trailer rows to the equipment endpoint, not units`);
@@ -62,6 +67,8 @@ if (process.argv.includes("--selftest")) {
     ["complete-unfiltered-reader", "tablePage", /listAllUnits\(\{ operating_company_id: operatingCompanyId, include: "trailers" \}\)/, 'listAllUnits({ operating_company_id: operatingCompanyId })'],
     ["complete-filtered-reader", "tablePage", /include: "trailers",\n        type:/, 'include: undefined,\n        type:'],
     ["kind-filter", "tablePage", /kindFilter && r\.kind !== kindFilter/, "false"],
+    // second derivation (KPI/table sourceRows) loses the kind filter while the first keeps it
+    ["kind-filter-second-derivation", "tablePage", /(kindFilter && r\.kind !== kindFilter[\s\S]*?)kindFilter && r\.kind !== kindFilter/, "$1false"],
     ["bulk-inactivate-route", "table", /row\.kind === "trailer" \? "equipment" : "units"/, '"units"'],
     ["bulk-split", "table", /const trailers = selectedRows\.filter\(\(row\) => row\.kind === "trailer"\)/, "const trailers = []"],
     ["edit-unit-kind-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={editingUnitId !== null}"],

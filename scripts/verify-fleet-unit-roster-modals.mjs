@@ -86,11 +86,22 @@ export function audit(src) {
   if (!/const kindFilter = searchParams\.get\("kind"\) \?\? ""/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: roster.kind.trucks must filter real rows by a real kindFilter`);
   }
-  if (!/if \(kindFilter && r\.kind !== kindFilter\) return false/.test(src.tablePage)) {
-    failures.push(`${FILES.tablePage}: kind filter must actually apply to the real row set`);
+  // EVERY row derivation depending on kindFilter must apply it (FleetTablePage derives the displayed `rows` AND
+  // the KPI/table `sourceRows`); a file-wide match let one derivation drop the kind filter unseen.
+  {
+    const kindMemos = [...src.tablePage.matchAll(/useMemo\(([\s\S]*?)(?:\n\s*|\},\s*)\[([^\]]*)\]\s*\)/g)]
+      .filter((m) => /\bkindFilter\b/.test(m[2]));
+    if (kindMemos.length === 0 || !kindMemos.every((m) => /if \(kindFilter && r\.kind !== kindFilter\) return false/.test(m[1]))) {
+      failures.push(`${FILES.tablePage}: kind filter must actually apply to the real row set`);
+    }
   }
-  if (!/function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/.test(src.tablePage) ||
-      !/if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/.test(src.tablePage)) {
+  // EVERY row derivation depending on effectiveStatus must apply the status filter (displayed `rows` AND the
+  // KPI/table `sourceRows`), not just one of them.
+  const statusMemos = [...src.tablePage.matchAll(/useMemo\(([\s\S]*?)(?:\n\s*|\},\s*)\[([^\]]*)\]\s*\)/g)]
+    .filter((m) => /\beffectiveStatus\b/.test(m[2]));
+  const statusApplied = statusMemos.length > 0 && statusMemos.every((m) =>
+    /if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/.test(m[1]));
+  if (!/function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/.test(src.tablePage) || !statusApplied) {
     failures.push(`${FILES.tablePage}: roster.filter.status_* must apply a real status filter to truck rows`);
   }
   if (!/const truckBulkMutation = useMutation\(\{/.test(src.table)) {
@@ -228,8 +239,10 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["kind-filter-decl", "tablePage", /const kindFilter = searchParams\.get\("kind"\) \?\? ""/, 'const kindFilter = ""'],
     ["kind-filter-apply", "tablePage", /if \(kindFilter && r\.kind !== kindFilter\) return false/, "if (false) return false"],
+    ["kind-filter-apply-second-derivation", "tablePage", /(if \(kindFilter && r\.kind !== kindFilter\) return false[\s\S]*?)if \(kindFilter && r\.kind !== kindFilter\) return false/, "$1if (false) return false"],
     ["status-filter-helper", "tablePage", /function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/, "function removedFleetStatusFilter(row: UnifiedUnitRow, status: string): boolean {"],
     ["status-filter-apply", "tablePage", /if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/, "if (false) return false"],
+    ["status-filter-apply-second-derivation", "tablePage", /(if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false[\s\S]*?)if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/, "$1if (false) return false"],
     ["bulk-mutation", "table", /const truckBulkMutation = useMutation\(\{/, "const truckBulkMutationUnused = useMutation({"],
     ["trailer-bulk-mutation", "table", /const trailerBulkMutation = useMutation\(\{/, "const trailerBulkMutationUnused = useMutation({"],
     ["bulk-status", "table", /if \(patch\.status\) trailerPatch\.status = patch\.status/, "if (false) trailerPatch.status = patch.status"],
