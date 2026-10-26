@@ -16,8 +16,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdTable } from "../../lib/money";
 import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /** A missing or non-numeric amount is UNKNOWN (null → "—"), never a confident 0. */
 function amountOrNull(v: unknown): number | null {
@@ -207,30 +209,70 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
       : null;
 
   const root = basePath.replace(/\/+$/, "") || "/driver-finance/deductions";
+
+  const remainingOf = (row: (typeof scheduleRows)[number]): number | null => {
+    const owed = amountOrNull(row.total_owed_cents);
+    const deducted = amountOrNull(row.deducted_so_far_cents);
+    return owed == null || deducted == null ? null : Math.max(0, owed - deducted);
+  };
+  const scheduleColumns: ParityColumn<(typeof scheduleRows)[number]>[] = [
+    {
+      key: "driver",
+      label: "Driver",
+      sortable: true,
+      sortValue: (row) => row.driver_name || row.driver_id,
+      render: (row) => (
+        <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+      ),
+    },
+    {
+      key: "type",
+      label: "Type",
+      sortable: true,
+      sortValue: (row) => row.deduction_type_display_name?.trim() || row.deduction_type,
+      render: (row) => row.deduction_type_display_name?.trim() || row.deduction_type,
+    },
+    {
+      key: "per",
+      label: "Per settlement",
+      sortable: true,
+      kind: "money",
+      sortValue: (row) => amountOrNull(row.max_per_settlement_cents) ?? -1,
+      render: (row) => (
+        <MoneyCell cents={amountOrNull(row.max_per_settlement_cents)} drill={{ entity: { kind: "driver", id: row.driver_id } }} />
+      ),
+    },
+    {
+      key: "remaining",
+      label: "Remaining",
+      sortable: true,
+      kind: "money",
+      sortValue: (row) => remainingOf(row) ?? -1,
+      render: (row) => <MoneyCell cents={remainingOf(row)} drill={{ entity: { kind: "driver", id: row.driver_id } }} />,
+    },
+    {
+      key: "next",
+      label: "Next",
+      sortable: true,
+      sortValue: (row) => ((remainingOf(row) ?? 0) > 0 ? 1 : 0),
+      render: (row) => {
+        const remaining = remainingOf(row);
+        return remaining != null && remaining > 0 ? "Next settlement" : "—";
+      },
+    },
+    // Gear column (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
+    // the date the schedule was set up (auto_deduction_policies.created_at). Hidden by default, one click to show.
+    {
+      key: "created_at",
+      label: "Started",
+      sortable: true,
+      defaultHidden: true,
+      sortValue: (row) => row.created_at ?? "",
+      render: (row) => (row.created_at ? formatDateUS(row.created_at) : "—"),
+    },
+  ];
   const weekMoney = week.dollars === null ? null : formatUsdTable(week.dollars);
   const byTypeFailed = deductionsListQuery.isError;
-
-  const thStyle = {
-    textAlign: "left" as const,
-    fontSize: 11,
-    fontWeight: 700,
-    color: V3.muted,
-    padding: "7px 12px",
-    borderBottom: `1px solid ${V3.border}`,
-    background: V3.page,
-    whiteSpace: "nowrap" as const,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase" as const,
-  };
-  const tdStyle = {
-    padding: "7px 12px",
-    borderBottom: `1px solid ${V3.borderSoft}`,
-    fontSize: 12,
-    color: V3.ink,
-    whiteSpace: "nowrap" as const,
-    fontFamily: V3.font,
-    fontVariantNumeric: "tabular-nums" as const,
-  };
 
   return (
     <div className="space-y-3" data-testid="settlements-deductions-v3-chrome">
@@ -286,88 +328,65 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-by-type-body">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Type</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Drivers</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TYPE_ROWS.map((row) => {
-                  const bucket = byType[row.id];
+            <ParityTable<(typeof TYPE_ROWS)[number]>
+              tableTestId="settlements-deductions-by-type-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={[...TYPE_ROWS]}
+              rowKey={(row) => row.id}
+              rowTestId={(row) => `settlements-deductions-by-type-${row.id}`}
+              emptyText="—"
+              columns={[
+                { key: "type", label: "Type", sortable: true, sortValue: (row) => row.label, render: (row) => row.label },
+                {
+                  key: "drivers",
+                  label: "Drivers",
+                  sortable: true,
+                  kind: "number",
+                  sortValue: (row) => (byTypeFailed ? -1 : byType[row.id].drivers.size),
                   // 443.282 — loaded zeros show $0.00 / 0, not "—" (em-dash is error/unload only).
-                  const loaded = !byTypeFailed;
-                  return (
-                    <tr key={row.id} data-testid={`settlements-deductions-by-type-${row.id}`}>
-                      <td style={tdStyle}>{row.label}</td>
-                      <td style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}>
-                        {loaded ? bucket.drivers.size : "—"}
-                      </td>
-                      <td
-                        style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}
-                        className="text-right tabular-nums"
-                      >
-                        {loaded ? (
-                          <Link className="underline" to={root} style={{ color: "inherit" }}>
-                            {bucket.amount == null ? "—" : formatUsdTable(bucket.amount)}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                <tr data-testid="settlements-deductions-by-type-total">
-                  <td
-                    style={{
-                      ...tdStyle,
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                  >
+                  render: (row) =>
+                    byTypeFailed ? <span style={{ color: V3.muted }}>—</span> : byType[row.id].drivers.size,
+                },
+                {
+                  key: "amount",
+                  label: "Amount",
+                  sortable: true,
+                  kind: "money",
+                  sortValue: (row) => (byTypeFailed ? -1 : (byType[row.id].amount ?? -1)),
+                  render: (row) => {
+                    if (byTypeFailed) return <span style={{ color: V3.muted }}>—</span>;
+                    const amt = byType[row.id].amount;
+                    return (
+                      <Link className="underline" to={root} style={{ color: "inherit" }}>
+                        {amt == null ? "—" : formatUsdTable(amt)}
+                      </Link>
+                    );
+                  },
+                },
+              ]}
+              footerCells={{
+                type: (
+                  <span data-testid="settlements-deductions-by-type-total" style={{ fontWeight: 700 }}>
                     Total
-                  </td>
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: "right",
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                  />
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: "right",
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                    className="text-right tabular-nums"
-                  >
+                  </span>
+                ),
+                amount: (
+                  <span className="text-right tabular-nums" style={{ fontWeight: 700 }}>
                     {weekMoney != null ? (
-                      <Link
-                        className="underline"
-                        to={root}
-                        style={{ color: "inherit", fontWeight: 700 }}
-                      >
+                      <Link className="underline" to={root} style={{ color: "inherit", fontWeight: 700 }}>
                         {display(weekMoney)}
                       </Link>
                     ) : (
                       "—"
                     )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </span>
+                ),
+              }}
+            />
           </div>
         </BoardSection>
 
@@ -397,66 +416,22 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
           footer="Every deduction links to its liability, settlement line and journal entry."
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-schedule-body">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Driver</th>
-                  <th style={thStyle}>Type</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Per settlement</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Remaining</th>
-                  <th style={thStyle}>Next</th>
-                </tr>
-              </thead>
-              <tbody>
-                {policiesQuery.isError ? (
-                  <tr>
-                    <td colSpan={5} style={{ ...tdStyle, color: V3.muted }}>
-                      Schedule failed to load — retry from the policies list below.
-                    </td>
-                  </tr>
-                ) : scheduleRows.length === 0 ? (
-                  <tr data-testid="settlements-deductions-schedule-empty">
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                  </tr>
-                ) : (
-                  scheduleRows.map((row) => {
-                    const owed = amountOrNull(row.total_owed_cents);
-                    const deducted = amountOrNull(row.deducted_so_far_cents);
-                    const remaining = owed == null || deducted == null ? null : Math.max(0, owed - deducted);
-                    const typeLabel = row.deduction_type_display_name?.trim() || row.deduction_type;
-                    return (
-                      <tr key={row.id} data-testid={`settlements-deductions-schedule-row-${row.id}`}>
-                        <td style={tdStyle}>
-                          <EntityLink
-                            kind="driver"
-                            id={row.driver_id}
-                            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-                          />
-                        </td>
-                        <td style={tdStyle}>{typeLabel}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>
-                          <MoneyCell
-                            cents={amountOrNull(row.max_per_settlement_cents)}
-                            drill={{ entity: { kind: "driver", id: row.driver_id } }}
-                          />
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>
-                          <MoneyCell
-                            cents={remaining}
-                            drill={{ entity: { kind: "driver", id: row.driver_id } }}
-                          />
-                        </td>
-                        <td style={tdStyle}>{remaining != null && remaining > 0 ? "Next settlement" : "—"}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+            <ParityTable<(typeof scheduleRows)[number]>
+              tableTestId="settlements-deductions-schedule-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={policiesQuery.isError ? [] : scheduleRows}
+              rowKey={(row) => row.id}
+              rowTestId={(row) => `settlements-deductions-schedule-row-${row.id}`}
+              loading={policiesQuery.isLoading}
+              emptyText={
+                policiesQuery.isError ? "Schedule failed to load — retry from the policies list below." : "No active deduction schedules."
+              }
+              columns={scheduleColumns}
+            />
           </div>
         </BoardSection>
       </div>

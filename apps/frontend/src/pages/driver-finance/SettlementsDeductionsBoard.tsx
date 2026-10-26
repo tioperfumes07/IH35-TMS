@@ -290,28 +290,6 @@ export function SettlementsDeductionsBoard() {
     [],
   );
 
-  const thStyle = {
-    textAlign: "left" as const,
-    fontSize: 11,
-    fontWeight: 700,
-    color: V3.muted,
-    padding: "7px 12px",
-    borderBottom: `1px solid ${V3.border}`,
-    background: V3.page,
-    whiteSpace: "nowrap" as const,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase" as const,
-  };
-  const tdStyle = {
-    padding: "7px 12px",
-    borderBottom: `1px solid ${V3.borderSoft}`,
-    fontSize: 12,
-    color: V3.ink,
-    whiteSpace: "nowrap" as const,
-    fontFamily: V3.font,
-    fontVariantNumeric: "tabular-nums" as const,
-  };
-
   return (
     <div
       className="space-y-3"
@@ -402,72 +380,58 @@ export function SettlementsDeductionsBoard() {
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-by-type-body">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>{S443326.deductions.thType}</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>{S443326.deductions.thDrivers}</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>{S443326.deductions.thAmount}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TYPE_ROWS.map((row) => {
-                  const bucket = byType[row.id];
-                  const loaded = !byTypeFailed;
-                  return (
-                    <tr key={row.id} data-testid={`settlements-deductions-by-type-${row.id}`}>
-                      <td style={tdStyle}>{row.label}</td>
-                      <td style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}>
-                        {loaded ? bucket.drivers.size : "—"}
-                      </td>
-                      <td
-                        style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}
-                        className="text-right tabular-nums"
-                      >
-                        {loaded ? (
-                          <Link className="underline" to={root} style={{ color: "inherit" }}>
-                            {formatUsdTable(bucket.amount)}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                <tr data-testid="settlements-deductions-by-type-total">
-                  <td
-                    style={{
-                      ...tdStyle,
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                  >
+            <ParityTable<(typeof TYPE_ROWS)[number]>
+              tableTestId="settlements-deductions-by-type-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={[...TYPE_ROWS]}
+              rowKey={(row) => row.id}
+              rowTestId={(row) => `settlements-deductions-by-type-${row.id}`}
+              emptyText="—"
+              columns={[
+                {
+                  key: "type",
+                  label: S443326.deductions.thType,
+                  sortable: true,
+                  sortValue: (row) => row.label,
+                  render: (row) => row.label,
+                },
+                {
+                  key: "drivers",
+                  label: S443326.deductions.thDrivers,
+                  sortable: true,
+                  kind: "number",
+                  sortValue: (row) => (byTypeFailed ? -1 : byType[row.id].drivers.size),
+                  render: (row) =>
+                    byTypeFailed ? <span style={{ color: V3.muted }}>—</span> : byType[row.id].drivers.size,
+                },
+                {
+                  key: "amount",
+                  label: S443326.deductions.thAmount,
+                  sortable: true,
+                  kind: "money",
+                  sortValue: (row) => (byTypeFailed ? -1 : byType[row.id].amount),
+                  render: (row) =>
+                    byTypeFailed ? (
+                      <span style={{ color: V3.muted }}>—</span>
+                    ) : (
+                      <Link className="underline" to={root} style={{ color: "inherit" }}>
+                        {formatUsdTable(byType[row.id].amount)}
+                      </Link>
+                    ),
+                },
+              ]}
+              footerCells={{
+                type: (
+                  <span data-testid="settlements-deductions-by-type-total" style={{ fontWeight: 700 }}>
                     {S443326.deductions.rowTotal}
-                  </td>
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: "right",
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                  />
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: "right",
-                      fontWeight: 700,
-                      borderTop: `1px solid ${V3.border}`,
-                      background: V3.page,
-                      borderBottom: "none",
-                    }}
-                    className="text-right tabular-nums"
-                  >
+                  </span>
+                ),
+                amount: (
+                  <span className="text-right tabular-nums" style={{ fontWeight: 700 }}>
                     {weekMoney != null ? (
                       <Link className="underline" to={root} style={{ color: "inherit", fontWeight: 700 }}>
                         {display(weekMoney)}
@@ -475,10 +439,10 @@ export function SettlementsDeductionsBoard() {
                     ) : (
                       "—"
                     )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </span>
+                ),
+              }}
+            />
           </div>
         </BoardSection>
 

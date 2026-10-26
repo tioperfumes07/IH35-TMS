@@ -1,5 +1,7 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per LANE on file (AlwaysTrack history) into the same state, aggregated over all its runs (practical miles / trips / confidence); a lane is a route, not a dated event.
 import type { LaneMileageFillConfidence, LaneMileageReferenceRow } from "../../../../api/dispatch";
 import { useTranslation } from "../../../../hooks/useTranslation";
+import { ParityTable } from "../../../../components/parity/ParityTable";
 
 type Props = {
   practical?: number | null;
@@ -293,45 +295,81 @@ export function MilesStrip({
               : "No lane on file into that state — type the miles."}
           </p>
           {referenceLanes.lanes.length > 0 ? (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-y border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]">
-                  <th className="px-3 py-1 text-left font-semibold">{t("bookLoad.miles.ref.lane", "Lane on file (AlwaysTrack history)")}</th>
-                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.practical", "Practical")}</th>
-                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.short", "Short")}</th>
-                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.trips", "Trips")}</th>
-                  <th className="px-3 py-1 text-left font-semibold">{t("bookLoad.miles.ref.confidence", "Confidence")}</th>
-                  <th className="px-3 py-1" />
-                </tr>
-              </thead>
-              <tbody>
-                {referenceLanes.lanes.map((lane) => {
-                  const chosen = lane.lane_id === referenceLaneId;
-                  return (
-                    <tr key={lane.lane_id} className="border-b border-[#E5E7EB] last:border-b-0" data-testid="book-load-miles-reference-row">
-                      <td className="px-3 py-1 text-[#0F1219]">{laneText(lane)}</td>
-                      <td data-quantity className="px-3 py-1 text-right font-mono tabular-nums">{fmt1(lane.practical_miles)}</td>
-                      {/* Short is never offered from the catalog (verify-miles-shortest-never-autofilled-from-catalog). */}
-                      <td className="px-3 py-1 text-right text-[#6B7280]">—</td>
-                      <td data-quantity className="px-3 py-1 text-right tabular-nums">{lane.runs}</td>
-                      <td className="px-3 py-1">{lane.confidence ?? "—"}</td>
-                      <td className="px-3 py-1 text-right">
-                        {onUseReferenceLane ? (
-                          <button
-                            type="button"
-                            data-testid="book-load-miles-reference-use"
-                            onClick={() => onUseReferenceLane(lane)}
-                            className="font-semibold text-[#1F2A44] hover:underline"
-                          >
-                            {chosen ? "Use ✓" : "Use"}
-                          </button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <ParityTable<LaneMileageReferenceRow>
+              tableTestId="book-load-miles-reference-table"
+              appearance="board"
+              hidePager
+              density="compact"
+              suppressToolbarSearch
+              suppressToolbarRange
+              rows={referenceLanes.lanes}
+              rowKey={(lane) => lane.lane_id}
+              rowTestId={() => "book-load-miles-reference-row"}
+              emptyText="No lane on file into that state."
+              columns={[
+                {
+                  key: "lane",
+                  label: t("bookLoad.miles.ref.lane", "Lane on file (AlwaysTrack history)"),
+                  sortable: true,
+                  sortValue: (lane) => laneText(lane),
+                  render: (lane) => <span className="text-[#0F1219]">{laneText(lane)}</span>,
+                },
+                {
+                  key: "practical",
+                  label: t("bookLoad.miles.ref.practical", "Practical"),
+                  sortable: true,
+                  kind: "number",
+                  sortValue: (lane) => lane.practical_miles,
+                  render: (lane) => (
+                    <span data-quantity className="font-mono tabular-nums">
+                      {fmt1(lane.practical_miles)}
+                    </span>
+                  ),
+                },
+                {
+                  key: "short",
+                  label: t("bookLoad.miles.ref.short", "Short"),
+                  sortable: false,
+                  className: "text-right",
+                  cellClass: "text-right",
+                  // Short is never offered from the catalog (verify-miles-shortest-never-autofilled-from-catalog).
+                  render: () => <span className="text-[#6B7280]">—</span>,
+                },
+                {
+                  key: "trips",
+                  label: t("bookLoad.miles.ref.trips", "Trips"),
+                  sortable: true,
+                  kind: "number",
+                  sortValue: (lane) => lane.runs,
+                  render: (lane) => <span data-quantity>{lane.runs}</span>,
+                },
+                {
+                  key: "confidence",
+                  label: t("bookLoad.miles.ref.confidence", "Confidence"),
+                  sortable: true,
+                  sortValue: (lane) => lane.confidence ?? "",
+                  render: (lane) => lane.confidence ?? "—",
+                },
+                {
+                  key: "use",
+                  label: "",
+                  sortable: false,
+                  className: "text-right",
+                  cellClass: "text-right",
+                  render: (lane) =>
+                    onUseReferenceLane ? (
+                      <button
+                        type="button"
+                        data-testid="book-load-miles-reference-use"
+                        onClick={() => onUseReferenceLane(lane)}
+                        className="font-semibold text-[#1F2A44] hover:underline"
+                      >
+                        {lane.lane_id === referenceLaneId ? "Use ✓" : "Use"}
+                      </button>
+                    ) : null,
+                },
+              ]}
+            />
           ) : null}
         </div>
       ) : null}
