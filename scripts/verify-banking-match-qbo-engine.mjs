@@ -296,6 +296,9 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
   for (const id of ["match-drawer-qbo-filters", "match-filter-payee", "match-date-from", "match-date-to", "match-filter-amount-min", "match-filter-amount-max", "match-drawer-record-type-dropdown"]) {
     if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: filter control ${id} missing (register M5)`);
   }
+  const recordTypeDropdown = drawer.match(/<MultiSelectDropdown\b(?:(?!\/>)[\s\S])*data-testid="match-drawer-record-type-dropdown"(?:(?!\/>)[\s\S])*\/>/)?.[0] ?? "";
+  if (!/\bsearchable\s/.test(recordTypeDropdown))
+    p.push("drawer: record type must use the shared searchable multi-select (C1 B2)");
   if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin \?\? undefined/.test(drawer) || !/amountMax: amountMax \?\? undefined/.test(drawer))
     p.push("drawer: Payee / Amount from / Amount to are not sent to getMatchCandidates (register M5)");
   for (const id of ["match-candidate-payee", "match-candidate-difference", "match-candidate-days-off", "match-candidate-date"]) {
@@ -334,6 +337,7 @@ function selftest() {
     process.exit(1);
   }
   const mutants = [
+    ["record type cannot be typed", { ...base, drawer: base.drawer.replace(/\s+searchable\s+searchPlaceholder="Type record type…"/, "") }],
     ["resurrect QBO 90", { ...base, service: base.service.replace("export const MATCH_WINDOW_STEPS", "export const QBO_DAYS_BEFORE = 90;\nexport const MATCH_WINDOW_STEPS") }],
     ["step1 wrong bounds", { ...base, service: base.service.replace("step1: { before: 3, after: 1 }", "step1: { before: 90, after: 20 }") }],
     // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
