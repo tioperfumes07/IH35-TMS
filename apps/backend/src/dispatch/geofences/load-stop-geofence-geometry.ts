@@ -40,3 +40,12 @@ export function circlePolygon(lat: number, lng: number, radiusMeters: number, ve
 export function loadStopFenceLabel(loadId: string, sequence: number): string {
   return `load-${loadId}-stop-${sequence}`;
 }
+
+/** The stop's GPS-VERIFIED fence: drawn at the truck's own dwell when the document point sits off the dock
+ *  (stop-dwell-boundary.service.ts). Same load-…-stop-… family, so the same retirement and replay apply. */
+export function loadStopGpsFenceLabel(loadId: string, sequence: number): string {
+  return `${loadStopFenceLabel(loadId, sequence)}-gps`;
+}
+
+/** A dwell's median position is a measured point — sized like a rooftop geocode. */
+export const LOAD_STOP_GPS_FENCE_RADIUS_M = 400;

@@ -14,6 +14,10 @@
  *      dwell branch is guarded by !deviceTime and carries the evidence in via (dwellVia).
  *   5. WIRED — runLoadRealDrivenMilesCronTick computes through computeLoadRealDrivenMiles and the cron registers it.
  *   6. ONE exclusion definition — stop-gps-verification uses loadDwellExclusionZones (no second copy of the fuel/yard SQL).
+ *   7. END TO END — the cron tick writes the dwell evidence (persistStopDwellEvidence: stop event, link only when NULL,
+ *      GPS-verified fence through the single minter bindVerifiedStopFence, replay through replayUnitWindowForFences), runs
+ *      captureGeofenceOdometerEvents and recomputes; the compute matches the stop's own -gps fence; the evidence writer never
+ *      stamps a stop time / source / precision.
  *
  *   node scripts/verify-stop-dwell-boundary.mjs [--selftest]
  */
@@ -24,6 +28,8 @@ const DWELL = "apps/backend/src/telematics/stop-dwell-boundary.service.ts";
 const MILES = "apps/backend/src/telematics/load-real-driven-miles.service.ts";
 const VERIFY = "apps/backend/src/telematics/stop-gps-verification.service.ts";
 const CRON = "apps/backend/src/telematics/load-real-driven-miles.cron.ts";
+const EVIDENCE = "apps/backend/src/telematics/stop-dwell-evidence.service.ts";
+const BINDER = "apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts";
 
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
@@ -33,6 +39,8 @@ export function check(src) {
   const miles = strip(src.miles);
   const verify = strip(src.verify);
   const cron = strip(src.cron);
+  const evidence = strip(src.evidence);
+  const binder = strip(src.binder);
 
   const radius = dwell.match(/export const DWELL_BOUNDARY_RADIUS_M = (\d+)/);
   if (!radius || Number(radius[1]) > 4828) p.push(`${DWELL}: DWELL_BOUNDARY_RADIUS_M missing or above 4828 m (3 mi).`);
@@ -71,14 +79,27 @@ export function check(src) {
   if (!/runLoadRealDrivenMilesCronTick[\s\S]*computeLoadRealDrivenMiles\(db, company\.id,/.test(miles)) p.push(`${MILES}: the cron tick no longer computes through computeLoadRealDrivenMiles (WIRED).`);
   if (!/runLoadRealDrivenMilesCronTick/.test(cron)) p.push(`${CRON}: the cron no longer runs runLoadRealDrivenMilesCronTick (WIRED).`);
 
+  const tick = miles.match(/export async function runLoadRealDrivenMilesCronTick[\s\S]*?\n\}/)?.[0] ?? "";
+  if (!/await persistStopDwellEvidence\(db, company\.id, evidence\)/.test(tick)) p.push(`${MILES}: the cron tick no longer writes the GPS-dwell evidence (END TO END).`);
+  if (!/await captureGeofenceOdometerEvents\(db as never, \{ operatingCompanyId: company\.id \}\)/.test(tick)) p.push(`${MILES}: the tick no longer reads the odometer for the replayed crossings.`);
+  if (!/persistLoadRealDrivenMiles\(db, company\.id, await computeLoadRealDrivenMiles\(db, company\.id, again\)\)/.test(tick)) p.push(`${MILES}: the tick no longer recomputes the GPS-verified loads.`);
+  if (!/g\.label = q\.gps_label/.test(miles) || !/loadStopGpsFenceLabel\(w\.stop\.load_id, w\.stop\.sequence_number\)/.test(miles)) p.push(`${MILES}: the compute no longer matches the stop's own GPS-verified fence.`);
+  if (!/'load_stop_gps_dwell'/.test(src.evidence)) p.push(`${EVIDENCE}: the dwell is no longer written as a stop event.`);
+  if (!/s\.actual_stop_event_id IS NULL/.test(evidence)) p.push(`${EVIDENCE}: the stop link can overwrite existing evidence.`);
+  if (/actual_(arrival|departure)_at\s*=|actual_stamp_precision\s*=|actual_(arrival|departure)_source\s*=/.test(evidence)) p.push(`${EVIDENCE}: the evidence writer stamps a stop time / source / precision (detention reads them).`);
+  if (!/await bindVerifiedStopFence\(/.test(evidence)) p.push(`${EVIDENCE}: the GPS-verified fence is not minted through the single minter.`);
+  if (/INSERT INTO geo\.geofences/.test(evidence)) p.push(`${EVIDENCE}: a second fence minter.`);
+  if (!/await replayUnitWindowForFences\(/.test(evidence)) p.push(`${EVIDENCE}: the dwell window is not replayed through the canonical detector.`);
+  if (!/export async function bindVerifiedStopFence/.test(binder) || !/loadStopGpsFenceLabel\(loadId, sequence\)/.test(binder)) p.push(`${BINDER}: bindVerifiedStopFence (the -gps fence) is gone from the single minter.`);
   if (!/await loadDwellExclusionZones\(client, input\.operatingCompanyId\)/.test(verify)) p.push(`${VERIFY}: stop GPS verification no longer uses the shared loadDwellExclusionZones.`);
   if (/location_kind = 'fuel_stop'/.test(verify)) p.push(`${VERIFY}: a second copy of the fuel-stop / yard exclusion SQL.`);
   return p;
 }
 
 function read() {
-  for (const f of [DWELL, MILES, VERIFY, CRON]) if (!existsSync(f)) return { missing: f };
-  return { dwell: readFileSync(DWELL, "utf8"), miles: readFileSync(MILES, "utf8"), verify: readFileSync(VERIFY, "utf8"), cron: readFileSync(CRON, "utf8") };
+  for (const f of [DWELL, MILES, VERIFY, CRON, EVIDENCE, BINDER]) if (!existsSync(f)) return { missing: f };
+  return { dwell: readFileSync(DWELL, "utf8"), miles: readFileSync(MILES, "utf8"), verify: readFileSync(VERIFY, "utf8"), cron: readFileSync(CRON, "utf8"),
+    evidence: readFileSync(EVIDENCE, "utf8"), binder: readFileSync(BINDER, "utf8") };
 }
 
 function selftest() {
@@ -97,6 +118,14 @@ function selftest() {
     ["dwell odometer invented", "miles", (s) => s.replace("anchor: timeAnchor?.anchor ?? null,", "anchor: { odometer_mi: 0, read_at: dwell.hit.at, source: \"vehicle_locations\" },")],
     ["cron unwired", "cron", (s) => s.split("runLoadRealDrivenMilesCronTick").join("noop")],
     ["second exclusion copy", "verify", (s) => s + "\nconst x = `location_kind = 'fuel_stop'`;"],
+    ["tick stops writing evidence", "miles", (s) => s.replace("await persistStopDwellEvidence(db, company.id, evidence)", "await Promise.resolve(evidence)")],
+    ["tick skips odometer capture", "miles", (s) => s.replace("await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id })", "await Promise.resolve()")],
+    ["gps fence not matched", "miles", (s) => s.replace("g.label = q.gps_label", "false")],
+    ["evidence overwrites a link", "evidence", (s) => s.replace("s.actual_stop_event_id IS NULL", "true")],
+    ["evidence stamps a time", "evidence", (s) => s.replace("SET actual_stop_event_id = $2::uuid", "SET actual_stop_event_id = $2::uuid, actual_departure_at = now()")],
+    ["second fence minter", "evidence", (s) => s + "\nconst m = `INSERT INTO geo.geofences (label) VALUES ('x')`;"],
+    ["no replay", "evidence", (s) => s.replace("await replayUnitWindowForFences(", "await Promise.resolve(")],
+    ["binder loses -gps fence", "binder", (s) => s.replace("export async function bindVerifiedStopFence", "async function bindVerifiedStopFenceGone")],
   ];
   let caught = 0;
   for (const [name, key, mut] of plants) {
@@ -117,4 +146,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} problem(s):\n  - ${problems.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — GPS dwell (<= 3 mi, >= 10 min, fuel/yard excluded) is the stop boundary when no fence/device time exists; far dwell refused; no dwell -> NULL + reason; odometer via the shared anchor; runs in the hourly real-driven-miles cron.`);
+console.log(`${LABEL} PASS — GPS dwell (<= 3 mi, >= 10 min, fuel/yard excluded) is the stop boundary when no fence/device time exists; far dwell refused; no dwell -> NULL + reason; odometer via the shared anchor; the hourly cron writes stop evidence, the -gps fence, replayed crossings, odometer captures and recomputed driven miles.`);
