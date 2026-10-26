@@ -12,6 +12,17 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 
+/** A missing or non-numeric amount is UNKNOWN (null → "—"), never a confident 0. */
+function amountOrNull(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatUsdOrNull(n: number | null): string | null {
+  return n == null ? null : formatUsd(n);
+}
+
 /**
  * ROUND 443.274-C — Settlements-PreSettlements board (Settlements-PreSettlements.png).
  *
@@ -91,11 +102,14 @@ export function SettlementsPreSettlementsKpiRow({ basePath: _basePath = "/driver
   const driverPayThisPeriod = kpiBaseQuery.isError
     ? null
     : serverKpi != null
-      ? formatUsd(Number(serverKpi.driver_pay_this_period ?? 0))
-      : formatUsd(
+      ? formatUsdOrNull(amountOrNull(serverKpi.driver_pay_this_period))
+      : formatUsdOrNull(
           kpiSettlements
             .filter((s) => isInThisPeriod(s, periodStart) && s.status !== "cancelled")
-            .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0),
+            .reduce<number | null>((sum, s) => {
+              const n = amountOrNull(s.net_pay);
+              return sum == null || n == null ? null : sum + n;
+            }, 0),
         );
 
   const driversWithDebt = kpiBaseQuery.isError
@@ -116,15 +130,18 @@ export function SettlementsPreSettlementsKpiRow({ basePath: _basePath = "/driver
     if (kpiBaseQuery.isError) return "sum of net pay this period";
     const thisWeekStart = periodStart.getTime();
     const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
-    let thisNet = 0;
-    let lastNet = 0;
+    let thisNet: number | null = 0;
+    let lastNet: number | null = 0;
     for (const s of kpiSettlements) {
       if (s.status === "cancelled") continue;
       const end = new Date(s.period_end).getTime();
       if (Number.isNaN(end)) continue;
-      if (end >= thisWeekStart) thisNet += Number(s.net_pay ?? 0);
-      else if (end >= lastWeekStart && end < thisWeekStart) lastNet += Number(s.net_pay ?? 0);
+      const n = amountOrNull(s.net_pay);
+      if (end >= thisWeekStart) thisNet = thisNet == null || n == null ? null : thisNet + n;
+      else if (end >= lastWeekStart && end < thisWeekStart) lastNet = lastNet == null || n == null ? null : lastNet + n;
     }
+    // A settlement with unknown net pay makes the week-over-week trend unknowable — say so.
+    if (thisNet == null || lastNet == null) return "trend unavailable — a settlement has no net pay";
     const delta = thisNet - lastNet;
     if (delta === 0) return "flat vs last wk";
     if (delta > 0) {

@@ -19,6 +19,13 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatUsdTable } from "../../lib/money";
 import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
 
+/** A missing or non-numeric amount is UNKNOWN (null → "—"), never a confident 0. */
+function amountOrNull(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 /**
  * ROUND 443.274-C — Settlements-Deductions board
  * (Settlements-Deductions.dc.html).
@@ -45,14 +52,16 @@ function thisWeekDeductions(
   const start = startOfWeekSunday(now);
   const end = new Date(start);
   end.setDate(end.getDate() + 7);
-  let dollars = 0;
+  let dollars: number | null = 0;
   let settlementCount = 0;
   for (const s of rows) {
     if (s.status === "cancelled") continue;
     const pe = new Date(s.period_end);
     if (Number.isNaN(pe.getTime())) continue;
     if (pe.getTime() >= start.getTime() && pe.getTime() < end.getTime()) {
-      dollars += Number(s.deductions_total ?? 0);
+      const d = amountOrNull(s.deductions_total);
+      // One settlement whose total is unknown makes the week's total unknown — not understated.
+      dollars = d == null || dollars == null ? null : dollars + d;
       settlementCount += 1;
     }
   }
@@ -136,10 +145,10 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
 
   const byType = useMemo(() => {
     const empty = {
-      escrow: { drivers: new Set<string>(), amount: 0 },
-      advances: { drivers: new Set<string>(), amount: 0 },
-      fines: { drivers: new Set<string>(), amount: 0 },
-      damages: { drivers: new Set<string>(), amount: 0 },
+      escrow: { drivers: new Set<string>(), amount: 0 as number | null },
+      advances: { drivers: new Set<string>(), amount: 0 as number | null },
+      fines: { drivers: new Set<string>(), amount: 0 as number | null },
+      damages: { drivers: new Set<string>(), amount: 0 as number | null },
     };
     if (deductionsListQuery.isError || settlementsQuery.isError) return empty;
     const now = new Date();
@@ -164,7 +173,10 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
       const bucket = deductionsBoardBucket(d.deduction_type);
       if (bucket === "other") continue;
       empty[bucket].drivers.add(d.driver_id);
-      empty[bucket].amount += Number(d.amount_cents ?? 0) / 100;
+      const cents = amountOrNull(d.amount_cents);
+      // An unknown line amount makes the bucket total unknown (null → "—"), never silently smaller.
+      const prev = empty[bucket].amount;
+      empty[bucket].amount = cents == null || prev == null ? null : prev + cents / 100;
     }
     return empty;
   }, [deductionsListQuery.isError, deductionsListQuery.data, settlementsQuery.isError, settlementsQuery.data]);
@@ -299,7 +311,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                       >
                         {loaded ? (
                           <Link className="underline" to={root} style={{ color: "inherit" }}>
-                            {formatUsdTable(bucket.amount)}
+                            {bucket.amount == null ? "—" : formatUsdTable(bucket.amount)}
                           </Link>
                         ) : (
                           "—"
@@ -412,9 +424,9 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                   </tr>
                 ) : (
                   scheduleRows.map((row) => {
-                    const owed = Number(row.total_owed_cents ?? 0);
-                    const deducted = Number(row.deducted_so_far_cents ?? 0);
-                    const remaining = Math.max(0, owed - deducted);
+                    const owed = amountOrNull(row.total_owed_cents);
+                    const deducted = amountOrNull(row.deducted_so_far_cents);
+                    const remaining = owed == null || deducted == null ? null : Math.max(0, owed - deducted);
                     const typeLabel = row.deduction_type_display_name?.trim() || row.deduction_type;
                     return (
                       <tr key={row.id} data-testid={`settlements-deductions-schedule-row-${row.id}`}>
@@ -428,7 +440,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                         <td style={tdStyle}>{typeLabel}</td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           <MoneyCell
-                            cents={row.max_per_settlement_cents ?? 0}
+                            cents={amountOrNull(row.max_per_settlement_cents)}
                             drill={{ entity: { kind: "driver", id: row.driver_id } }}
                           />
                         </td>
@@ -438,7 +450,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
                             drill={{ entity: { kind: "driver", id: row.driver_id } }}
                           />
                         </td>
-                        <td style={tdStyle}>{remaining > 0 ? "Next settlement" : "—"}</td>
+                        <td style={tdStyle}>{remaining != null && remaining > 0 ? "Next settlement" : "—"}</td>
                       </tr>
                     );
                   })
