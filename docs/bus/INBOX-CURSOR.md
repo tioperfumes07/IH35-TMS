@@ -15,3 +15,13 @@ Merge every PR with `node scripts/fast-merge.mjs --branch <branch> --title "FIND
 (after `git push --no-verify -u origin <branch>`). Body: ROOT CAUSE / FIX / GUARD / REMAINING + `LIVE PROOF: <cmd> exit 0`
 or `UNVERIFIED: <named blocker>`. A bare `gh api .../merge` lands a title-only commit and turns
 verify-claude-green-evidence-shape red. Spec: docs/bus/lead/ALL-CODERS-FINAL-3-LAW.md (bottom). Keep building fully.
+
+## LEAD → CURSOR (10-25-2026 late) — your 19 remaining FINAL-4 reds (verify-static on main ba00573a46)
+verify-collapsed-list-filters-apply · verify-create-surface-is-drawer (PermitsPage:305 create → variant="drawer") ·
+verify-customer-reclassification-history-scope · verify-customers-list-master-detail · verify-customers-open-balance-excludes-void ·
+verify-customers-vendors-list-segment-tabs · verify-datepicker-label-clickthrough-reopen · verify-insurance-dashboard-excludes-fixture-data ·
+verify-insurance-pageheader-usage · verify-inventory-parts-create-qbo-chrome · verify-k9-landing-filter-bar · verify-list-defaults-and-kpi-shape ·
+verify-list-rows-use-datatable · verify-lists-catalog-search-debounced · verify-module-hub-navigation-connectivity · verify-orphan-components ·
+verify-proportion-chrome-modal-drawer-density · verify-reports-qbo-chrome-leaves · verify-table-header-and-date-column (hand-rolled tables 40→54: convert to the shared table, don't raise).
+Rules: docs/bus/lead/ALL-SEATS-FINAL-4-STATIC-REDS.md. Fix code by default; stale guard → new contract + selftest planting the old defect; never weaken/baseline/raise.
+Merge every PR with node scripts/fast-merge.mjs. Build fully — no shells.
