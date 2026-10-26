@@ -25,35 +25,8 @@ const DUPLICATE_CEILING = 15;
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-function selftest() {
-  const cases = [
-    { count: 0, ceiling: 15, expectFail: false },
-    { count: 15, ceiling: 15, expectFail: false },
-    { count: 16, ceiling: 15, expectFail: true },
-    { count: 89, ceiling: 15, expectFail: true },
-    { count: 0, ceiling: 0, expectFail: false },
-    { count: 1, ceiling: 0, expectFail: true },
-  ];
-  for (const { count, ceiling, expectFail } of cases) {
-    const fails = count > ceiling;
-    if (fails !== expectFail) {
-      console.error(
-        `${LABEL} SELFTEST FAIL: count=${count} ceiling=${ceiling} expected_fail=${expectFail} got_fail=${fails}`
-      );
-      process.exit(1);
-    }
-  }
-  console.log(`${LABEL} SELFTEST OK (${cases.length}/${cases.length} cases)`);
-}
-
-async function liveRun() {
-  const db = process.env.DATABASE_URL;
-  if (!db) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (offline; CI runs this with Neon neondb_owner)`);
-    process.exit(0);
-  }
-
-  const sql = `
+/** The live query, as a constant the selftest can mutate (a copy — never the tracked file). */
+export const DUPES_SQL = `
     SELECT COUNT(*)::int AS dupe_groups
     FROM (
       SELECT sl.settlement_id, sl.load_id, sl.line_type
@@ -67,34 +40,76 @@ async function liveRun() {
     ) g
   `.trim();
 
+/** The query must count exactly the defect: live (active, unvoided) duplicate triples, USMCA-scoped. */
+export function sqlFailures(sql) {
+  const f = [];
+  if (!/sl\.is_active = true/.test(sql)) f.push("query no longer restricts to active lines");
+  if (!/sl\.voided_at IS NULL/.test(sql)) f.push("query no longer excludes voided lines");
+  if (!/GROUP BY sl\.settlement_id, sl\.load_id, sl\.line_type/.test(sql)) f.push("query no longer groups by the (settlement, load, line_type) triple");
+  if (!/HAVING COUNT\(\*\) > 1/.test(sql)) f.push("query no longer counts only duplicate groups");
+  if (!/ds\.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid/.test(sql)) f.push("query is no longer USMCA-scoped");
+  return f;
+}
+
+/** The one verdict the live run uses: a count above the shrink-only ceiling fails. */
+export function verdict(count, ceiling) {
+  if (!Number.isInteger(count) || count < 0) return { ok: false, msg: `could not read a count (${count})` };
+  if (count > ceiling) return { ok: false, msg: `${count} active duplicate settlement-line groups (ceiling=${ceiling})` };
+  return { ok: true, msg: `${count} duplicate groups (ceiling=${ceiling})` };
+}
+
+function selftest() {
+  const cases = [];
+  // The REAL verdict function the live run calls (was: a re-typed `count > ceiling` that could never disagree with itself).
+  for (const [count, ceiling, expectOk] of [[0, 15, true], [15, 15, true], [16, 15, false], [89, 15, false], [1, 0, false], [NaN, 15, false]]) {
+    cases.push([`verdict(${count}, ${ceiling}) ${expectOk ? "passes" : "fails"}`, verdict(count, ceiling).ok === expectOk]);
+  }
+  cases.push(["the guard's real ceiling rejects one more than itself", verdict(DUPLICATE_CEILING + 1, DUPLICATE_CEILING).ok === false]);
+  // The REAL query: passes as shipped; each planted weakening is caught.
+  cases.push(["real query passes its contract", sqlFailures(DUPES_SQL).length === 0]);
+  for (const [name, from, to] of [
+    ["voided lines counted", "AND sl.voided_at IS NULL", ""],
+    ["inactive lines counted", "AND sl.is_active = true", ""],
+    ["every group counted, not only duplicates", "HAVING COUNT(*) > 1", "HAVING COUNT(*) > 0"],
+    ["entity scope dropped", "WHERE ds.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid\n        AND", "WHERE"],
+  ]) {
+    const mutated = DUPES_SQL.split(from).join(to);
+    cases.push([`planted "${name}" caught`, mutated !== DUPES_SQL && sqlFailures(mutated).length > 0]);
+  }
+  let ok = 0;
+  for (const [name, pass] of cases) { console.log(`  ${pass ? "PASS" : "FAIL"}  ${name}`); if (pass) ok += 1; }
+  console.log(`${LABEL} SELFTEST ${ok === cases.length ? "OK" : "FAIL"} (${ok}/${cases.length} cases)`);
+  process.exit(ok === cases.length ? 0 : 1);
+}
+
+async function liveRun() {
+  const db = process.env.DATABASE_URL;
+  if (!db) {
+    console.log(`${LABEL}: SKIP — no DATABASE_URL (offline; CI runs this with Neon neondb_owner)`);
+    process.exit(0);
+  }
+
+  // SET LOCAL in the same implicit transaction: the count is never masked by RLS whatever role connects.
+  const sql = `SET LOCAL app.bypass_rls = 'lucia'; ${DUPES_SQL}`;
+
   let count;
   try {
     const out = execSync(
       `psql "${db}" -t -A -c "${sql.replace(/"/g, '\\"').replace(/\n/g, " ")}"`,
       { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
     ).trim();
-    count = parseInt(out, 10);
+    count = parseInt(out.split("\n").pop(), 10); // psql echoes the SET tag first
   } catch (e) {
     console.error(`${LABEL} ERROR querying DB: ${e.message}`);
     process.exit(1);
   }
 
-  if (isNaN(count)) {
-    console.error(`${LABEL} ERROR: could not parse DB result`);
+  const v = verdict(count, DUPLICATE_CEILING);
+  if (!v.ok) {
+    console.error(`${LABEL} FAIL: ${v.msg} on USMCA. ENG-42 fix required — run a void/dedup script and lower DUPLICATE_CEILING.`);
     process.exit(1);
   }
-
-  if (count > DUPLICATE_CEILING) {
-    console.error(
-      `${LABEL} FAIL: ${count} active duplicate settlement-line groups found on USMCA (ceiling=${DUPLICATE_CEILING}). ` +
-        `ENG-42 fix required — run a void/dedup script and lower DUPLICATE_CEILING.`
-    );
-    process.exit(1);
-  }
-
-  console.log(
-    `${LABEL} OK — ${count} duplicate groups (ceiling=${DUPLICATE_CEILING})`
-  );
+  console.log(`${LABEL} OK — ${v.msg}`);
 }
 
 if (process.argv.includes("--selftest")) {
