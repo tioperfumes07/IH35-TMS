@@ -994,9 +994,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             subtitle={factoringChromeSubtitle}
             nav={<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />}
           />
-          <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600" data-testid="factoring-home-loading">
-            Loading…
-          </div>
+          <BoardSection title="Factoring" testId="factoring-home-loading">
+            <div className="px-3.5 py-3 text-xs text-gray-600">Loading…</div>
+          </BoardSection>
         </div>
       );
     }
@@ -1007,12 +1007,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           subtitle={factoringChromeSubtitle}
           nav={<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />}
         />
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-          data-testid="factoring-home-need-company"
-        >
-          Select an operating company to view factoring KPIs and the active factor profile.
-        </div>
+        <BoardSection title="Factoring" testId="factoring-home-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view factoring KPIs and the active factor profile.
+          </div>
+        </BoardSection>
       </div>
     );
   }

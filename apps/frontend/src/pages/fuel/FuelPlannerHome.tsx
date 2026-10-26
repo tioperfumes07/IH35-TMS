@@ -467,15 +467,19 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           {/* Locked named section (verify-architectural-design — module header|h3 patterns only). */}
           <h3 className="text-xs font-semibold text-gray-900">Planner settings</h3>
           {settingsQuery.isLoading ? (
-            <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
+            <FuelBoardSection title="Planner settings" testId="fuel-planner-settings-loading">
+              <div className="px-3.5 py-3 text-xs text-gray-500">Loading planner settings…</div>
+            </FuelBoardSection>
           ) : settingsQuery.isError ? (
             <ListErrorBanner onRetry={() => void settingsQuery.refetch()} />
           ) : settingsQuery.data ? (
             <PlannerSettingsForm companyId={companyId} key={companyId} settings={settingsQuery.data} />
           ) : (
-            <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
-              Planner settings are unavailable for the selected company.
-            </section>
+            <FuelBoardSection title="Planner settings" testId="fuel-planner-settings-unavailable">
+              <div className="px-3.5 py-3 text-xs text-gray-500">
+                Planner settings are unavailable for the selected company.
+              </div>
+            </FuelBoardSection>
           )}
         </div>
       ) : null}

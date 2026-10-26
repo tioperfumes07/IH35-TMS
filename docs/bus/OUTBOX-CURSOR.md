@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Home/Wizard/Planner empty states → BoardSection
+
+- **STATUS:** SHIPPING [#27765](https://github.com/tioperfumes07/IH35-TMS/pull/27765) (squash auto-merge armed)
+- **DELTA:** FactoringHome loading/need-company → `BoardSection`; BatchWizard need-company + body → `BoardSection`; Fuel planner settings loading/unavailable → `FuelBoardSection`. Engines unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fill-shell-empty-states PASS · layout-tabs-first · fuel-planner-active-routes · wave-c-liability · settings-lifecycle
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** FactoringHome.tsx · BatchWizard.tsx · FuelPlannerHome.tsx · verify-fill-shell-empty-states.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — BatchDetail → BoardSection
 
-- **STATUS:** SHIPPING [#27767](https://github.com/tioperfumes07/IH35-TMS/pull/27767) (squash auto-merge armed)
+- **STATUS:** MERGED [#27767](https://github.com/tioperfumes07/IH35-TMS/pull/27767)
 - **DELTA:** BatchDetail summary/invoices/reserve + loading/error/unavailable → `BoardSection`. Engines/reserve KPI unchanged. New guard verify-factoring-batch-detail-board.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-batch-detail-board PASS · paritytable · wave-c-liability
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

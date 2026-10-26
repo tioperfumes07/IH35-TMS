@@ -20,6 +20,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatUsdCents } from "../../lib/money";
 
 
@@ -149,12 +150,11 @@ export function BatchWizard() {
           title="Factoring Batch Wizard"
           subtitle="Assemble paid-ready invoices into a factoring batch"
         />
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-          data-testid="factoring-batches-need-company"
-        >
-          Select an operating company to assemble a factoring batch.
-        </div>
+        <BoardSection title="Factoring Batch Wizard" testId="factoring-batches-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to assemble a factoring batch.
+          </div>
+        </BoardSection>
       </div>
     );
   }
@@ -168,22 +168,28 @@ export function BatchWizard() {
         subtitle="Assemble paid-ready invoices into a factoring batch"
       />
       {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
-      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {[
-          { id: 1, label: "Select invoices" },
-          { id: 2, label: "Review draft" },
-          { id: 3, label: "Confirm submit" },
-          { id: 4, label: "Submitted" },
-        ].map((item) => (
-          <span
-            key={item.id}
-            className={`rounded-sm px-2 py-1 ${step === item.id ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-600"}`}
-          >
-            {item.id}. {item.label}
-          </span>
-        ))}
-      </div>
+      <BoardSection
+        title="Batch wizard"
+        testId="factoring-batch-wizard-board"
+        headerRight={
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {[
+              { id: 1, label: "Select invoices" },
+              { id: 2, label: "Review draft" },
+              { id: 3, label: "Confirm submit" },
+              { id: 4, label: "Submitted" },
+            ].map((item) => (
+              <span
+                key={item.id}
+                className={`rounded-sm px-2 py-1 ${step === item.id ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-600"}`}
+              >
+                {item.id}. {item.label}
+              </span>
+            ))}
+          </div>
+        }
+      >
+      <div className="space-y-3 px-3.5 py-2">
 
       {step === 1 ? (
         <div className="space-y-3">
@@ -298,6 +304,7 @@ export function BatchWizard() {
         </div>
       ) : null}
       </div>
+      </BoardSection>
     </div>
   );
 }
