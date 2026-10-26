@@ -226,7 +226,7 @@ export function TruckPlanner() {
   }
 
   return (
-    <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-slate-200 bg-white p-3">
+    <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xs font-bold">Truck planner — {days.length} selected days</h2><Link to="/dispatch/loads" className="text-xs">View all loads →</Link></div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!isLoading && !isError && excludedUnitCount > 0 ? (
@@ -320,7 +320,7 @@ export function TruckPlanner() {
               return {
               id: row.unitId,
               idle: row.status === "available",
-              name: <span className="flex min-w-0 items-center gap-1"><Truck className="h-5 w-8 shrink-0 text-slate-600" aria-hidden="true" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
+              name: <span className="flex min-w-0 items-center gap-1"><Truck className="h-5 w-8 shrink-0 text-gray-600" aria-hidden="true" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
               // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
               sortKey: row.unitNumber,
               statusSortKey: status,

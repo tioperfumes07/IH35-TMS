@@ -693,7 +693,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             ? WIDE_DRAWER_CLASS
             : activeTab !== "Overview"
               ? WIDE_DRAWER_CLASS
-              : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[640px]"
+              : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         }
         data-testid={isPage ? "load-costs-load-page" : "load-detail-drawer"}
         data-surface="load-detail"
