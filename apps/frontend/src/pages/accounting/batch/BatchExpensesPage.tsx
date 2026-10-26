@@ -12,6 +12,7 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../../design/tokens";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -147,37 +148,40 @@ export function BatchExpensesPage() {
 
   return (
     <AccountingSubNavWrapper title="Batch transactions — Expenses / Checks" subtitle="Enter or paste many expenses at once. Every row posts as its own real expense through the standard engine (expense → lines → journal entry); rows with errors stay unsaved with the reason.">
-      <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs" data-testid="batch-expenses-type" data-b5-batch-type="1">
-        <span className="font-semibold uppercase tracking-wide text-[#4B5563]">Transaction type</span>
-        <button type="button" className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-white" data-b5-batch-type-expenses="1">
-          Expenses / Checks
-        </button>
-        <a href="/accounting/bills/vendor?create=1" className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]" data-b5-batch-type-bills="1">
-          Bills (Create Multiple Bills)
-        </a>
-        {/* B-5 §23 — deposit + settlement batch grids already exist on their engines; type strip must hop, never claim unwired. */}
-        <Link
-          to="/banking/deposits?batch=1"
-          className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
-          data-b5-batch-type-deposits="1"
-        >
-          Deposits (Make Deposit batch)
-        </Link>
-        <Link
-          to="/driver-finance/settlements/batch"
-          className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
-          data-b5-batch-type-settlements="1"
-        >
-          Settlements (batch grid)
-        </Link>
-      </div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs" data-testid="batch-expenses-toolbar" data-b5-batch-transactions="1">
-        <textarea ref={pasteRef} onPaste={onPaste} placeholder="Paste rows from a spreadsheet here: Date | Payee | Paid from | Method | Ref no. | Amount | Category | Class | Load | Memo" className={`${FILTER_CONTROL_SIZE_CLASS} min-w-[28rem] flex-1 rounded border border-dashed border-gray-400 px-2 py-1`} data-testid="batch-expenses-paste" />
-        <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => [...p, ...Array.from({ length: 5 }, () => newRow())])}>+ 5 rows</Button>
-        <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => p.filter((r) => r.status === "saved" || !isRowEmpty(r)))}>Remove empty</Button>
-        <span className="ml-auto font-semibold" data-testid="batch-expenses-totals">{totals.rows} row(s) · {formatCurrencyFromCents(totals.cents)} · {totals.ready} ready · {totals.errors} with errors · {totals.saved} saved</span>
-        <Button type="button" size="sm" loading={saving} disabled={totals.ready === 0} onClick={() => void saveAll()} data-testid="batch-expenses-save">Save {totals.ready} expense(s)</Button>
-      </div>
+      <BoardSection title="Transaction type" testId="batch-expenses-type-board">
+        <div className="mb-0 flex flex-wrap items-center gap-2 px-3.5 py-2 text-xs" data-testid="batch-expenses-type" data-b5-batch-type="1">
+          <button type="button" className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-white" data-b5-batch-type-expenses="1">
+            Expenses / Checks
+          </button>
+          <a href="/accounting/bills/vendor?create=1" className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]" data-b5-batch-type-bills="1">
+            Bills (Create Multiple Bills)
+          </a>
+          {/* B-5 §23 — deposit + settlement batch grids already exist on their engines; type strip must hop, never claim unwired. */}
+          <Link
+            to="/banking/deposits?batch=1"
+            className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-b5-batch-type-deposits="1"
+          >
+            Deposits (Make Deposit batch)
+          </Link>
+          <Link
+            to="/driver-finance/settlements/batch"
+            className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-b5-batch-type-settlements="1"
+          >
+            Settlements (batch grid)
+          </Link>
+        </div>
+      </BoardSection>
+      <BoardSection title="Batch paste / save" testId="batch-expenses-toolbar-board">
+        <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 text-xs" data-testid="batch-expenses-toolbar" data-b5-batch-transactions="1">
+          <textarea ref={pasteRef} onPaste={onPaste} placeholder="Paste rows from a spreadsheet here: Date | Payee | Paid from | Method | Ref no. | Amount | Category | Class | Load | Memo" className={`${FILTER_CONTROL_SIZE_CLASS} min-w-[28rem] flex-1 rounded border border-dashed border-gray-400 px-2 py-1`} data-testid="batch-expenses-paste" />
+          <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => [...p, ...Array.from({ length: 5 }, () => newRow())])}>+ 5 rows</Button>
+          <Button type="button" size="sm" variant="tertiary" onClick={() => setRows((p) => p.filter((r) => r.status === "saved" || !isRowEmpty(r)))}>Remove empty</Button>
+          <span className="ml-auto font-semibold" data-testid="batch-expenses-totals">{totals.rows} row(s) · {formatCurrencyFromCents(totals.cents)} · {totals.ready} ready · {totals.errors} with errors · {totals.saved} saved</span>
+          <Button type="button" size="sm" loading={saving} disabled={totals.ready === 0} onClick={() => void saveAll()} data-testid="batch-expenses-save">Save {totals.ready} expense(s)</Button>
+        </div>
+      </BoardSection>
       {accountsQ.error ? <ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /> : null}
       <CappedListNotice
         shown={vendors.length}
@@ -186,8 +190,8 @@ export function BatchExpensesPage() {
         hint="Type in the payee column to search the full vendor roster."
       />
       {lastBatch ? <div className="mb-2 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <ParityTable<IndexedRow> title="New expenses — batch entry"
+      <BoardSection title="New expenses — batch entry" testId="batch-expenses-grid-board">
+        <ParityTable<IndexedRow>
           storageKey="batch-expenses-grid"
           tableTestId="batch-expenses-grid"
           rows={rows.map((r, i) => ({ ...r, rowIndex: i }))}
@@ -262,7 +266,7 @@ export function BatchExpensesPage() {
             } },
           ]}
         />
-      </div>
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

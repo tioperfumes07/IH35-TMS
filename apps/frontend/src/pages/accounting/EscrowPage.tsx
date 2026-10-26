@@ -17,6 +17,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 
 type EscrowViewTab = "accounts" | "pending";
@@ -352,38 +353,42 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
                   Show $0 accounts ({accountRows.length - accountRows.filter((r) => (r.balance_cents ?? 0) !== 0).length})
                 </label>
               </MoneyListToolbar>
-              <ParityTable title="Escrow accounts"
-              columns={accountColumns}
-              rows={visibleAccountRows}
-              rowKey={(row) => row.id}
-              loading={accountsQuery.isPending || (accountsQuery.isFetching && accountRows.length === 0)}
-              suppressToolbarSearch
-              onRowClick={(row) => {
-                setSelectedAccountId(row.id);
-                postingsQuery.mutate(row.id);
-              }}
-              rowClassName={(row) => (selectedAccountId === row.id ? "bg-[#F7F8FA]" : "")}
-              storageKey="escrow-accounts"
-              sortKey={sortKey}
-              sortDirection={sortDirection}
-              onSortChange={onSortChange}
-              emptyText="No escrow accounts found."
-            />
+              <BoardSection title="Escrow accounts" testId="escrow-accounts-list-board">
+                <ParityTable
+                  columns={accountColumns}
+                  rows={visibleAccountRows}
+                  rowKey={(row) => row.id}
+                  loading={accountsQuery.isPending || (accountsQuery.isFetching && accountRows.length === 0)}
+                  suppressToolbarSearch
+                  onRowClick={(row) => {
+                    setSelectedAccountId(row.id);
+                    postingsQuery.mutate(row.id);
+                  }}
+                  rowClassName={(row) => (selectedAccountId === row.id ? "bg-[#F7F8FA]" : "")}
+                  storageKey="escrow-accounts"
+                  sortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSortChange={onSortChange}
+                  emptyText="No escrow accounts found."
+                />
+              </BoardSection>
             </>
           )}
 
           {selectedAccountId ? (
-            <ParityTable title="Postings — selected escrow account"
-              columns={postingColumns}
-              rows={postingRows}
-              rowKey={(row) => row.id}
-              loading={postingsQuery.isPending}
-              storageKey="escrow-postings"
-              sortKey={postingSortKey}
-              sortDirection={postingSortDirection}
-              onSortChange={onPostingSortChange}
-              emptyText="No escrow postings found for this account."
-            />
+            <BoardSection title="Postings — selected escrow account" testId="escrow-postings-list-board">
+              <ParityTable
+                columns={postingColumns}
+                rows={postingRows}
+                rowKey={(row) => row.id}
+                loading={postingsQuery.isPending}
+                storageKey="escrow-postings"
+                sortKey={postingSortKey}
+                sortDirection={postingSortDirection}
+                onSortChange={onPostingSortChange}
+                emptyText="No escrow postings found for this account."
+              />
+            </BoardSection>
           ) : null}
         </>
       ) : null}
