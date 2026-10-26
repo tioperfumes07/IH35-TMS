@@ -8173,6 +8173,6 @@ owner_quotes: "if they are flatbed then mark as flatbed update app" (owner 2026-
 scope: mdata.equipment FB-56707, FB-56711, 56702 equipment_type DryVan -> Flatbed; then the loads that carried them re-derive load_trailer_equipment_id / trailer_type from the trailer (existing evidence script). No money write.
 action: OWNER_AUTH_ID=AUTH-472 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-fb-trailers-flatbed.mts --apply ; OWNER_AUTH_ID=AUTH-472 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts --apply
 rehearsal: dry run on prod (rolled back): 3 trailers DryVan -> Flatbed
-result: PENDING
+result: APPLIED 2026-10-26 ~02:50 UTC. Equipment: FB-56707, FB-56711, 56702 DryVan -> Flatbed (3 rows). Loads re-derived: 10 loads -> FLATBED, trailer_type text synced 10, books_identical true, 1 load (13595) no trailer evidence left NULL.
 expires_at: 2026-10-27T00:00:00Z
-status: OPEN
+status: CLOSED
