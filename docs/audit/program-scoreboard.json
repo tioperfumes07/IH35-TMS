@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ec18721",
-  "generated_at": "2026-10-26T04:52:07.657Z",
+  "healthzSha": "c4b636e",
+  "generated_at": "2026-10-26T07:01:40.796Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ec18721",
+    "deployedSha": "c4b636e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27878,
-      "title": "FINDING: ACCT-F220 — MultiEntity + QBO reconcile BoardSection fill",
+      "number": 27889,
+      "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27878",
-      "sha": "277dfe9978",
-      "committedAtIso": "2026-10-25T23:10:41-05:00"
+      "mergedAtCt": "10/26/2026, 01:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27889",
+      "sha": "3a4f44bdf6",
+      "committedAtIso": "2026-10-26T01:57:25-05:00"
     },
     {
-      "number": 27877,
-      "title": "FINDING: bank-line Check No also parsed from FOR CHECK #XXXXX001091 (cashed-check holds)",
+      "number": 27888,
+      "title": "FINDING: Lead seat lists refresh — B2/B3 done, remaining B1/B4/C2 + CC reds",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27877",
-      "sha": "b1171e222f",
-      "committedAtIso": "2026-10-25T23:08:24-05:00"
+      "mergedAtCt": "10/26/2026, 01:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27888",
+      "sha": "673f611cfa",
+      "committedAtIso": "2026-10-26T01:56:52-05:00"
     },
     {
-      "number": 27876,
-      "title": "FINDING: claim migration 202616290000 (bank-line check number from cashed-check text)",
+      "number": 27887,
+      "title": "FINDING: Lead tip reds — ReportsHome gear/sort · SAVEPOINT period refresh · live_loads · OUTBOX diet",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27876",
-      "sha": "a7a0a413c5",
-      "committedAtIso": "2026-10-25T23:06:56-05:00"
+      "mergedAtCt": "10/26/2026, 01:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27887",
+      "sha": "c4b636eef6",
+      "committedAtIso": "2026-10-26T01:55:31-05:00"
     },
     {
-      "number": 27875,
-      "title": "FINDING: 2 import cycles broken, load-transition cycle 17 -> 11 files; invented owner-gated allowlist withdrawn",
+      "number": 27886,
+      "title": "FINDING: Codex B3 shared modal and drawer open-order layers",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27875",
-      "sha": "fc3a9e9f40",
-      "committedAtIso": "2026-10-25T23:05:41-05:00"
+      "mergedAtCt": "10/26/2026, 01:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27886",
+      "sha": "52c3398569",
+      "committedAtIso": "2026-10-26T01:52:02-05:00"
     },
     {
-      "number": 27872,
-      "title": "FINDING: ACCT-F220 — Collections/VendorBalances/Waterfall/ImportFuel BoardSection",
+      "number": 27885,
+      "title": "FINDING: Codex B2 typeable multi-select bank match filter",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27872",
-      "sha": "0faec95a3a",
-      "committedAtIso": "2026-10-25T23:05:39-05:00"
+      "mergedAtCt": "10/26/2026, 01:46 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27885",
+      "sha": "aaa271b5cf",
+      "committedAtIso": "2026-10-26T01:46:03-05:00"
     },
     {
-      "number": 27874,
-      "title": "Claude-1-FINDING: Row 213 — Tour period dates stale; compute period_end as today for open tours",
+      "number": 27884,
+      "title": "FINDING: Lead seat lists — Cursor Lead P0 measured + exact lists per seat",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27874",
-      "sha": "13098b65cb",
-      "committedAtIso": "2026-10-25T23:04:24-05:00"
+      "mergedAtCt": "10/26/2026, 01:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27884",
+      "sha": "be36134485",
+      "committedAtIso": "2026-10-26T01:39:59-05:00"
     },
     {
-      "number": 27873,
-      "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
+      "number": 27883,
+      "title": "FINDING: Cursor-19 — hand-rolled tables → ParityTable (ReportsHome · MilesStrip · Settlements deductions)",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27873",
-      "sha": "186344d6a4",
-      "committedAtIso": "2026-10-25T23:03:47-05:00"
+      "mergedAtCt": "10/26/2026, 01:37 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27883",
+      "sha": "312e15c00a",
+      "committedAtIso": "2026-10-26T01:37:24-05:00"
     },
     {
-      "number": 27871,
-      "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
+      "number": 27882,
+      "title": "FINDING: Codex B1 canonical checks in bank match candidates",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27871",
-      "sha": "c88cc16e1b",
-      "committedAtIso": "2026-10-25T23:01:52-05:00"
+      "mergedAtCt": "10/26/2026, 01:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27882",
+      "sha": "99971f5e1e",
+      "committedAtIso": "2026-10-26T01:36:56-05:00"
     },
     {
-      "number": 27870,
-      "title": "FINDING: table-header ratchet — 16 date-column sites honest, 10 hand-rolled tables to ParityTable",
+      "number": 27881,
+      "title": "Claude-3-FINDING: verify-popups-one-format baseline 3→0 + factoring selftest re-anchored",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27870",
-      "sha": "fb769d45ab",
-      "committedAtIso": "2026-10-25T23:00:38-05:00"
+      "mergedAtCt": "10/26/2026, 01:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27881",
+      "sha": "cbba508672",
+      "committedAtIso": "2026-10-26T01:12:34-05:00"
     },
     {
-      "number": 27869,
-      "title": "FINDING: Row 212 — Settlements board shows P-series display_id; replace with settlementLabel (PENDING for open, AT number when settled)",
+      "number": 27880,
+      "title": "FINDING: Lead handoff — Cursor new Lead, Codex instructions, pending list",
       "state": "merged",
-      "mergedAtCt": "10/25/2026, 11:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27869",
-      "sha": "da769b5db2",
-      "committedAtIso": "2026-10-25T23:00:16-05:00"
+      "mergedAtCt": "10/26/2026, 12:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27880",
+      "sha": "01f225261c",
+      "committedAtIso": "2026-10-26T00:02:49-05:00"
     }
   ]
 }
