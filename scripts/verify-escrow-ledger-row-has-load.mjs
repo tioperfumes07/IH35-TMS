@@ -10,6 +10,8 @@
  */
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB = "Neon live verification required — queries driver_finance.escrow_ledger for NULL load_id violations";
+
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // --selftest (lib/guard-selftest.mjs live-guard contract, Devin build order 2026-10-05): this guard's inputs are rows on
