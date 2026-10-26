@@ -4,7 +4,8 @@ import fs from "node:fs";
 const file = "apps/frontend/src/pages/maintenance/FleetTablePage.tsx";
 const contracts = [
   "kpisQuery.isError ? undefined : kpisQuery.data",
-  ["rowsQuery.isError ? [] : rowsQuery.data?.rows ?? []", 2],
+  // Every roster derivation fails closed: allRows, the KPI `counters` sourceRows and the table sourceRows (3).
+  ["rowsQuery.isError ? [] : rowsQuery.data?.rows ?? []", 3],
   "[rowsQuery.data?.rows, rowsQuery.isError]",
   "fleetLocationQuery.isError ? [] : fleetLocationQuery.data?.rows ?? []",
   "[fleetLocationQuery.data, fleetLocationQuery.isError]",
@@ -23,7 +24,10 @@ if (process.argv.includes("--selftest")) {
   for (const entry of contracts) {
     const contract = text(entry);
     const mutated = source.replace(contract, "");
-    if (mutated === source || count(mutated, contract) >= required(entry)) process.exit(1);
+    if (mutated === source || count(mutated, contract) >= required(entry)) {
+      console.error(`verify-fleet-table-failure-exclusion SELFTEST FAIL — removing one "${contract}" left the guard green`);
+      process.exit(1);
+    }
   }
   console.log(`verify-fleet-table-failure-exclusion SELFTEST PASS — ${contracts.length}/${contracts.length} exact mutations red`);
   process.exit(0);
