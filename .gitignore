@@ -36,3 +36,4 @@ wt-*/
 .tmp-scratch/
 .r330-staged/
 .gate-step-map.json
+/dist
