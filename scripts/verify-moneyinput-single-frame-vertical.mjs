@@ -56,7 +56,7 @@ function verify(source, policySource, files) {
   );
   // The <input> itself keeps its own hardcoded frame — this guard is about the OUTER wrapper only.
   require_(
-    /className="h-7 w-full rounded-sm border border-gray-300/.test(source),
+    /className="h-9 w-full rounded-sm border border-gray-300/.test(source),
     "MoneyInput's own <input> frame must stay intact — this guard governs the outer wrapper, not the control"
   );
 
@@ -107,8 +107,8 @@ if (process.argv.includes("--selftest")) {
     [
       "input's own frame silently dropped",
       source.replace(
-        /className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs[^"]*"/,
-        'className="h-7 w-full pl-4 pr-2 text-left text-xs"'
+        /className="h-9 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs[^"]*"/,
+        'className="h-9 w-full pl-4 pr-2 text-left text-xs"'
       ),
       policySource,
     ],
