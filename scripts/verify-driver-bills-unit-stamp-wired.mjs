@@ -40,8 +40,8 @@ const CHECKS = [
     pattern: /restampDriverBillUnitAndTrailer/,
   },
   {
-    name: "settlement-creator.service.ts calls restampDriverBillUnitAndTrailer",
-    file: "apps/backend/src/driver-finance/settlement-creator.service.ts",
+    name: "settlement-creator restate (settlement-creator-restate-bill.ts, moved verbatim out of settlement-creator.service.ts 2026-10-25) calls restampDriverBillUnitAndTrailer",
+    file: "apps/backend/src/driver-finance/settlement-creator-restate-bill.ts",
     pattern: /restampDriverBillUnitAndTrailer/,
   },
   {

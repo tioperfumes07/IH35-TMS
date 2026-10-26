@@ -238,6 +238,9 @@ export function frontendDrawerProblems(root = ROOT) {
 
 // LEAD RULING 15:10Z #2 — Empty (deadhead) miles in the Settlement Creator are the signed document's ONLY.
 const CREATOR_SVC = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+// The Creator's driver-bill restate (signed pay -> bill, incl. miles_deadhead) was moved VERBATIM out of the service into this
+// leaf on 2026-10-25 to break an import cycle; the service re-exports it. The two files are judged as ONE Creator source.
+const CREATOR_RESTATE = "apps/backend/src/driver-finance/settlement-creator-restate-bill.ts";
 const DEADHEAD_ENGINE_RE = /\b(fillLoadDeadhead|fillDeadheadAtBooking|computeFirstStopDeadhead|recomputeFirstStopDeadhead|fillFirstStopDeadhead)\b/;
 
 /** 15:10Z #2 — the drawer never auto-fills Empty miles; the backend Creator never fills / pays deadhead from the engine. */
@@ -255,7 +258,9 @@ export function creatorEmptyMilesProblems(root = ROOT) {
   const drawer = read(FE_DRAWER);
   const seed = read(CREATOR_SEED);
   const pay = read(CREATOR_PAY);
-  const svc = read(CREATOR_SVC);
+  const svcMain = read(CREATOR_SVC);
+  const svcRestate = read(CREATOR_RESTATE);
+  const svc = svcMain == null || svcRestate == null ? null : `${svcMain}\n${svcRestate}`;
   if (miles) {
     const fill = fnBody(miles, "export function fillEstimateMilesFromRecommendations");
     if (fill) {
@@ -447,6 +452,8 @@ export function driverBillRowsToSettlementLoads(rows) { return rows; }
   const tmpSettleAbs = path.join(dir, SETTLE);
   fs.mkdirSync(path.dirname(tmpBatchAbs), { recursive: true });
   const creatorGood = {
+    // The restate leaf (moved out of the service 2026-10-25) is part of the Creator source; the fixture's bill text lives in CREATOR_SVC.
+    [CREATOR_RESTATE]: "export async function restateCreatorDriverBillFromSignedLoad() {}\n",
     [CREATOR_PAY]: `export function creatorPayMiles(load) {
   const miles = Number(load.miles_shortest ?? NaN);
   return Number.isFinite(miles) && miles > 0 ? miles : null;

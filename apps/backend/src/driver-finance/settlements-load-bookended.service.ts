@@ -4,7 +4,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
-import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
+import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment-chargebacks.service.js";
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
 import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";

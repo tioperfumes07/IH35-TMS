@@ -73,6 +73,6 @@ export async function stampFinalActiveDeliveryDeparture(
  */
 export async function stampEarlierStopsOnDelivery(client: Queryable, operatingCompanyId: string, loadId: string): Promise<void> {
   // Dynamic import: settlement-creator-deliver imports the transition engine, which imports this module.
-  const { stampStopsFromTracking } = await import("../driver-finance/settlement-creator-deliver.js");
+  const { stampStopsFromTracking } = await import("../driver-finance/stop-evidence-from-tracking.js");
   await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});
 }

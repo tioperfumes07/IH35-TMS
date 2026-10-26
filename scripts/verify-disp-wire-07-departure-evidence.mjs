@@ -60,12 +60,12 @@ function isRealTime(expr) {
  * 443.187 (CC-2, 2026-10-17) — EVENT-TIME writers. These sites stamp the time the departure HAPPENED (a telematics stop
  * event / geofence exit / the settlement document's own date); now() there would FABRICATE evidence. Each is pinned to its
  * exact SQL text + the evidence that the value cannot be null — any edit to the line makes it a finding again, and the
- * list may only shrink. Written after this guard: 443.51 settlement-creator-deliver, geofence detector + retro sync.
+ * list may only shrink. Written after this guard: 443.51 settlement-creator-deliver (stop-evidence moved verbatim to stop-evidence-from-tracking.ts 2026-10-25, import-cycle break), geofence detector + retro sync.
  */
 export const EVENT_TIME_WRITERS = [
-  { file: "apps/backend/src/driver-finance/settlement-creator-deliver.ts", expr: "$3::timestamptz,",
+  { file: "apps/backend/src/driver-finance/stop-evidence-from-tracking.ts", expr: "$3::timestamptz,",
     why: "departed = pick.ended_at ?? pick.started_at; telematics.unit_stop_events.started_at is NOT NULL (202615030000)" },
-  { file: "apps/backend/src/driver-finance/settlement-creator-deliver.ts", expr: "($2::date)::timestamp AT TIME ZONE $3,",
+  { file: "apps/backend/src/driver-finance/stop-evidence-from-tracking.ts", expr: "($2::date)::timestamp AT TIME ZONE $3,",
     why: "$2 = the stop's settlement-document day; `if (!day) continue` leaves the stop unstamped before this UPDATE" },
   { file: "apps/backend/src/telematics/geofence-detector.service.ts", expr: "$4::timestamptz,",
     why: "$4 = input.occurred_at — a required string on the geofence transition input (the exit's own time)" },
