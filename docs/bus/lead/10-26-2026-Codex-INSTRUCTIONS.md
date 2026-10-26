@@ -20,9 +20,9 @@ setup; unregistered hook THROWS; identical functions/order/transaction; guard + 
 pre-82e7b151e8 set; test parity vs origin/main (dispatch transitions, delivery latch, auto-invoice, invoice send, settlement void,
 book-load). See handoff for detail.
 
-## C3 — If CC-3 is out of usage: the last 3 hand-built overlays → shared Modal/ParityDrawer
-components/dispatch/LoadDetailDrawer.tsx · pages/dispatch/components/BookLoadModalV4.tsx · book-load-v4/MilesInvertAckDialog.tsx.
-All mutations preserved; verify-popups-one-format baseline → 0.
+## C3 — DONE on tip (#27881, `cbba508672`) — do not redo
+LoadDetailDrawer · BookLoadModalV4 · MilesInvertAckDialog already converted; verify-popups-one-format baseline 3→0.
+If nested overlay order (B3) needs the shared Modal/ParityDrawer layer, that is still open under B3.
 
 ## C4 — Any CC-1 / CC-2 static reds the Lead hands you (lists in the handoff)
 DONE line per item: `CODEX | <item> DONE | PR # | merge sha | guard PASS line | tests`.
