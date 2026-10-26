@@ -12,6 +12,9 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { fetchOdometerAnchors, realDrivenMiles, type BoundaryRequest, type OdometerAnchor } from "./odometer-anchor.js";
 import { dwellVia, fetchStopDwells, type DwellPick, type DwellRequest } from "./stop-dwell-boundary.service.js";
+import { persistStopDwellEvidence, type StopDwellEvidence } from "./stop-dwell-evidence.service.js";
+import { loadStopGpsFenceLabel } from "../dispatch/geofences/load-stop-geofence-geometry.js";
+import { captureGeofenceOdometerEvents } from "../integrations/samsara/geofences/geofence-odometer-capture.service.js";
 
 /**
  * ORDER-2026-09-04 three-mile CPM: REAL DRIVEN miles per leg and per load, from the odometer only.
@@ -39,6 +42,8 @@ export type LegRow = {
   reason: string | null;
 };
 export type LoadRealMilesRow = {
+  /** GPS-dwell boundaries this compute used (written by the cron through persistStopDwellEvidence; never by a read). */
+  dwell_evidence?: StopDwellEvidence[];
   load_id: string;
   unit_id: string | null;
   legs: LegRow[];
@@ -112,7 +117,8 @@ export function resolveStopBoundary(
   const label = `stop ${stop.sequence_number} ${side}`;
   if (hit) {
     if (hit.odo != null && hit.src === "real_obd") return { anchor: { odometer_mi: hit.odo, read_at: hit.at, source: "odometer_readings" }, reason: null, at: hit.at, via: "geofence" };
-    return { anchor: null, reason: `${label}: geofence ${side === "arrival" ? "entry" : "exit"} at ${hit.at} has a ${hit.src ?? "missing"} odometer -- not a measurement`, at: hit.at, via: "geofence" };
+    // A crossing with no real OBD read is not a measurement; the truck's GPS dwell (with the shared anchor) may still be.
+    if (!dwell?.hit) return { anchor: null, reason: `${label}: geofence ${side === "arrival" ? "entry" : "exit"} at ${hit.at} has a ${hit.src ?? "missing"} odometer -- not a measurement`, at: hit.at, via: "geofence" };
   }
   const at = side === "arrival" ? stop.arrival_at : stop.departure_at;
   const src = side === "arrival" ? stop.arrival_source : stop.departure_source;
@@ -200,16 +206,19 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
   if (geo.length) {
     const r = await client.query<{ k: string; odo: string | null; at: string; src: string | null }>(
       `SELECT q.k, c.odometer_mi::text AS odo, c.occurred_at::text AS at, c.odometer_source AS src
-         FROM unnest($2::text[], $3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::text[]) AS q(k, unit_id, lat, lng, at, ev)
+         FROM unnest($2::text[], $3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::text[], $10::text[]) AS q(k, unit_id, lat, lng, at, ev, gps_label)
          CROSS JOIN LATERAL (
            SELECT c.* FROM telematics.geofence_odometer_captures c
              JOIN geo.geofences g ON g.id = c.geofence_id AND g.operating_company_id = c.operating_company_id
             WHERE c.operating_company_id = $1::uuid AND c.unit_id = q.unit_id AND c.event_kind = q.ev
               AND c.occurred_at BETWEEN q.at - make_interval(hours => $8::int) AND q.at + make_interval(hours => $8::int)
-              AND g.center_lat IS NOT NULL
-              AND 6371000 * 2 * asin(sqrt(power(sin(radians(g.center_lat - q.lat) / 2), 2)
-                    + cos(radians(q.lat)) * cos(radians(g.center_lat)) * power(sin(radians(g.center_lng - q.lng) / 2), 2)))
-                  <= GREATEST(COALESCE(g.radius_m, 0), $9::int)
+              AND (
+                -- the stop's own GPS-verified fence (stop-dwell-evidence.service.ts), drawn at the truck's dwell
+                g.label = q.gps_label
+                OR (g.center_lat IS NOT NULL
+                    AND 6371000 * 2 * asin(sqrt(power(sin(radians(g.center_lat - q.lat) / 2), 2)
+                          + cos(radians(q.lat)) * cos(radians(g.center_lat)) * power(sin(radians(g.center_lng - q.lng) / 2), 2)))
+                        <= GREATEST(COALESCE(g.radius_m, 0), $9::int)))
             ORDER BY abs(extract(epoch FROM c.occurred_at - q.at))
             LIMIT 1) c`,
       [
@@ -222,6 +231,7 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
         geo.map((w) => (w.side === "arrival" ? "entered" : "exited")),
         GEOFENCE_MATCH_WINDOW_HOURS,
         GEOFENCE_MIN_RADIUS_M,
+        geo.map((w) => loadStopGpsFenceLabel(w.stop.load_id, w.stop.sequence_number)),
       ]
     );
     for (const row of r.rows) hits.set(row.k, { odo: row.odo == null ? null : Number(row.odo), at: row.at, src: row.src });
@@ -229,7 +239,9 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
   const timed: BoundaryRequest[] = [];
   const dwellReqs: DwellRequest[] = [];
   for (const w of wanted) {
-    if (hits.has(w.key) || !w.stop.unit_id) continue;
+    const h = hits.get(w.key);
+    // a real-OBD fence crossing is the measurement; a crossing without one still lets the dwell try
+    if ((h && h.odo != null && h.src === "real_obd") || !w.stop.unit_id) continue;
     const at = w.side === "arrival" ? w.stop.arrival_at : w.stop.departure_at;
     const src = w.side === "arrival" ? w.stop.arrival_source : w.stop.departure_source;
     if (at && src && (MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src)) timed.push({ key: w.key, unit_id: w.stop.unit_id, at });
@@ -249,6 +261,15 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
   const anchors = await fetchOdometerAnchors(client, operatingCompanyId, timed);
   const boundary = new Map<string, Boundary>();
   for (const w of wanted) boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key), dwells.get(w.key)));
+  // The GPS-dwell boundaries actually used, per stop (written by the cron, never by a read).
+  const evidenceByKey = new Map<string, StopDwellEvidence>();
+  for (const w of wanted) {
+    const b = boundary.get(w.key);
+    const pick = dwells.get(w.key);
+    if (b?.via?.startsWith("gps_dwell") && pick?.hit && w.stop.unit_id) {
+      evidenceByKey.set(w.key, { load_id: w.stop.load_id, stop_id: w.stop.stop_id, unit_id: w.stop.unit_id, sequence_number: w.stop.sequence_number, hit: pick.hit });
+    }
+  }
 
   const out: LoadRealMilesRow[] = [];
   for (const loadId of loadIds) {
@@ -265,7 +286,9 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
       return { ...base, ...legFromBoundaries(from, to, kind, st.sequence_number) };
     });
     const total = loadTotalFromLegs(legs);
-    out.push({ load_id: loadId, unit_id: unitId, legs, miles_driven_actual: total.miles, source: total.source, reason: total.reason });
+    const keys = list.flatMap((st, i) => [`${st.stop_id}:arrival`, `${st.stop_id}:departure`, ...(i === 0 ? [`${st.stop_id}:prior_departure`] : [])]);
+    const dwell_evidence = keys.map((k) => evidenceByKey.get(k)).filter((e): e is StopDwellEvidence => !!e);
+    out.push({ load_id: loadId, unit_id: unitId, legs, miles_driven_actual: total.miles, source: total.source, reason: total.reason, ...(dwell_evidence.length ? { dwell_evidence } : {}) });
   }
   return out;
 }
@@ -351,6 +374,17 @@ export async function runLoadRealDrivenMilesCronTick(): Promise<void> {
       for (let i = 0; i < ids.length; i += 200) {
         const rows = await computeLoadRealDrivenMiles(db, company.id, ids.slice(i, i + 200));
         await persistLoadRealDrivenMiles(db, company.id, rows);
+        // GPS-dwell stops: write their evidence (stop event, link, GPS-verified fence, replayed crossings), read the real
+        // odometer per new crossing, and recompute those loads through the fence path in the same tick.
+        const evidence = rows.flatMap((r) => r.dwell_evidence ?? []);
+        if (evidence.length) {
+          const written = await persistStopDwellEvidence(db, company.id, evidence);
+          if (written.events_written > 0) {
+            await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id });
+            const again = [...new Set(rows.filter((r) => r.dwell_evidence?.length).map((r) => r.load_id))];
+            await persistLoadRealDrivenMiles(db, company.id, await computeLoadRealDrivenMiles(db, company.id, again));
+          }
+        }
       }
     }
   });

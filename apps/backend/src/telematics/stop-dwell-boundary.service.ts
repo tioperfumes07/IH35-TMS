@@ -33,8 +33,8 @@ export const DWELL_BOUNDARY_MIN_MINUTES = 10;
 export const DWELL_BOUNDARY_WINDOW_HOURS = 48;
 
 export type DwellZone = { lat: number; lng: number; r: number };
-export type DwellCandidate = { startedAt: Date; endedAt: Date; dwellMinutes: number; lat: number; lng: number };
-export type DwellHit = { at: string; started_at: string; ended_at: string; minutes: number; distance_m: number };
+export type DwellCandidate = { startedAt: Date; endedAt: Date; dwellMinutes: number; lat: number; lng: number; sampleCount?: number };
+export type DwellHit = { at: string; started_at: string; ended_at: string; minutes: number; distance_m: number; lat: number; lng: number; samples?: number };
 export type DwellPick = { hit: DwellHit | null; reason: string | null };
 export type DwellRequest = { key: string; unit_id: string; lat: number; lng: number; at: string; side: "arrival" | "departure" };
 
@@ -77,7 +77,7 @@ export function pickStopDwell(
   const started = best.d.startedAt.toISOString();
   const ended = best.d.endedAt.toISOString();
   return {
-    hit: { at: side === "arrival" ? started : ended, started_at: started, ended_at: ended, minutes: best.d.dwellMinutes, distance_m: Math.round(best.m) },
+    hit: { at: side === "arrival" ? started : ended, started_at: started, ended_at: ended, minutes: best.d.dwellMinutes, distance_m: Math.round(best.m), lat: best.d.lat, lng: best.d.lng, samples: best.d.sampleCount },
     reason: null,
   };
 }
@@ -145,7 +145,7 @@ export async function fetchStopDwells(
       }));
       const dwells: DwellCandidate[] = detectStops(unitId, fixes)
         .filter((d) => d.lat != null && d.lng != null)
-        .map((d) => ({ startedAt: d.startedAt, endedAt: d.endedAt, dwellMinutes: d.dwellMinutes, lat: d.lat as number, lng: d.lng as number }));
+        .map((d) => ({ startedAt: d.startedAt, endedAt: d.endedAt, dwellMinutes: d.dwellMinutes, lat: d.lat as number, lng: d.lng as number, sampleCount: d.sampleCount }));
       for (const q of w.reqs) {
         const t = Date.parse(q.at);
         const hasFixes = fixes.some((f) => Math.abs(f.capturedAt.getTime() - t) <= W);

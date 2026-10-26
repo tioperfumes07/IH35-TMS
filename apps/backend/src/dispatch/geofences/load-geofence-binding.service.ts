@@ -8,7 +8,7 @@
  * replace-stops, and by the E-25 sync cron for every board-active load (the booking call ran
  * before geocoding and therefore bound nothing — measured: 0 load-stop fences ever, any company).
  */
-import { circlePolygon, loadStopFenceLabel, loadStopFenceRadiusMeters } from "./load-stop-geofence-geometry.js";
+import { circlePolygon, LOAD_STOP_GPS_FENCE_RADIUS_M, loadStopFenceLabel, loadStopFenceRadiusMeters, loadStopGpsFenceLabel } from "./load-stop-geofence-geometry.js";
 
 type QueryClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -66,66 +66,77 @@ export async function bindLoadToGeofences(
       result.skipped_low_precision.push({ stop_id: stop.stop_id, sequence: stop.sequence, geocode_precision: stop.geocode_precision });
       continue;
     }
-    const vertices = circlePolygon(stop.lat, stop.lng, radius);
-    const label = loadStopFenceLabel(loadId, stop.sequence);
-    // Serialise binds of the same stop fence: two concurrent binds (auto_dispatch) each saw "no fence" and inserted
-    // one -- 24 stop labels carry two fences live. The lock is per company + label and released at commit.
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1 || ':' || $2))`, [operatingCompanyId, label]);
-    const existing = await client.query<{ id: string; center_lat: string | null; center_lng: string | null; radius_m: number | null }>(
-      `
-        SELECT id::text, center_lat::text, center_lng::text, radius_m
-        FROM geo.geofences
-        WHERE operating_company_id = $1::uuid
-          AND location_kind = 'customer_site'
-          AND is_active = true
-          AND location_ref_id IS NULL
-          AND label = $2
-        LIMIT 1
-      `,
-      [operatingCompanyId, label]
-    );
-    if (existing.rows[0]?.id) {
-      const row = existing.rows[0];
-      const sameCenter =
-        row.center_lat !== null && row.center_lng !== null && row.radius_m === radius &&
-        Math.abs(Number(row.center_lat) - stop.lat) < 1e-7 && Math.abs(Number(row.center_lng) - stop.lng) < 1e-7;
-      if (sameCenter) {
-        result.unchanged += 1;
-        result.geofence_ids.push(row.id);
-        result.bound += 1;
-        continue;
-      }
-      const refreshed = await client.query<{ id: string }>(
-        `UPDATE geo.geofences
-            SET vertices_json = $3::jsonb, center_lat = $4, center_lng = $5, radius_m = $6, updated_at = now()
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND is_active = true
-          RETURNING id::text`,
-        [row.id, operatingCompanyId, JSON.stringify(vertices), stop.lat, stop.lng, radius]
-      );
-      if (!refreshed.rows[0]?.id) throw new Error("load_geofence_refresh_failed");
-      result.refreshed += 1;
-      result.geofence_ids.push(refreshed.rows[0].id);
-      result.bound += 1;
-      continue;
-    }
-
-    const inserted = await client.query<{ id: string }>(
-      `
-        INSERT INTO geo.geofences (
-          operating_company_id, label, location_kind, vertices_json, is_active, source, center_lat, center_lng, radius_m
-        )
-        VALUES ($1::uuid, $2, 'customer_site', $3::jsonb, true, 'auto_dispatch', $4, $5, $6)
-        RETURNING id::text
-      `,
-      [operatingCompanyId, label, JSON.stringify(vertices), stop.lat, stop.lng, radius]
-    );
-    if (!inserted.rows[0]?.id) throw new Error("load_geofence_insert_failed");
-    result.created += 1;
-    result.geofence_ids.push(inserted.rows[0].id);
+    const r = await upsertStopFence(client, operatingCompanyId, loadStopFenceLabel(loadId, stop.sequence), stop.lat, stop.lng, radius);
+    result[r.outcome] += 1;
+    result.geofence_ids.push(r.id);
     result.bound += 1;
   }
 
   return result;
+}
+
+type UpsertOutcome = "created" | "refreshed" | "unchanged";
+
+/** One stop fence, idempotent on coordinates (the single insert/refresh path for every load-stop fence). */
+async function upsertStopFence(
+  client: QueryClient, operatingCompanyId: string, label: string, lat: number, lng: number, radius: number
+): Promise<{ id: string; outcome: UpsertOutcome }> {
+  const vertices = circlePolygon(lat, lng, radius);
+  // Serialise binds of the same stop fence: two concurrent binds (auto_dispatch) each saw "no fence" and inserted
+  // one -- 24 stop labels carry two fences live. The lock is per company + label and released at commit.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1 || ':' || $2))`, [operatingCompanyId, label]);
+  const existing = await client.query<{ id: string; center_lat: string | null; center_lng: string | null; radius_m: number | null }>(
+    `
+      SELECT id::text, center_lat::text, center_lng::text, radius_m
+      FROM geo.geofences
+      WHERE operating_company_id = $1::uuid
+        AND location_kind = 'customer_site'
+        AND is_active = true
+        AND location_ref_id IS NULL
+        AND label = $2
+      LIMIT 1
+    `,
+    [operatingCompanyId, label]
+  );
+  if (existing.rows[0]?.id) {
+    const row = existing.rows[0];
+    const sameCenter =
+      row.center_lat !== null && row.center_lng !== null && row.radius_m === radius &&
+      Math.abs(Number(row.center_lat) - lat) < 1e-7 && Math.abs(Number(row.center_lng) - lng) < 1e-7;
+    if (sameCenter) return { id: row.id, outcome: "unchanged" };
+    const refreshed = await client.query<{ id: string }>(
+      `UPDATE geo.geofences
+          SET vertices_json = $3::jsonb, center_lat = $4, center_lng = $5, radius_m = $6, updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND is_active = true
+        RETURNING id::text`,
+      [row.id, operatingCompanyId, JSON.stringify(vertices), lat, lng, radius]
+    );
+    if (!refreshed.rows[0]?.id) throw new Error("load_geofence_refresh_failed");
+    return { id: refreshed.rows[0].id, outcome: "refreshed" };
+  }
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO geo.geofences (
+        operating_company_id, label, location_kind, vertices_json, is_active, source, center_lat, center_lng, radius_m
+      )
+      VALUES ($1::uuid, $2, 'customer_site', $3::jsonb, true, 'auto_dispatch', $4, $5, $6)
+      RETURNING id::text
+    `,
+    [operatingCompanyId, label, JSON.stringify(vertices), lat, lng, radius]
+  );
+  if (!inserted.rows[0]?.id) throw new Error("load_geofence_insert_failed");
+  return { id: inserted.rows[0].id, outcome: "created" };
+}
+
+/**
+ * The stop's GPS-VERIFIED fence (owner 2026-10-11 "the gps is source of truth"): drawn at the truck's own dwell when the
+ * document point sits off the dock (stop-dwell-boundary.service.ts). Label load-<id>-stop-<seq>-gps; the document fence is
+ * left as it is. Same single insert/refresh path as bindLoadToGeofences.
+ */
+export async function bindVerifiedStopFence(
+  client: QueryClient, operatingCompanyId: string, loadId: string, sequence: number, point: { lat: number; lng: number }
+): Promise<{ id: string; outcome: UpsertOutcome }> {
+  return upsertStopFence(client, operatingCompanyId, loadStopGpsFenceLabel(loadId, sequence), point.lat, point.lng, LOAD_STOP_GPS_FENCE_RADIUS_M);
 }
