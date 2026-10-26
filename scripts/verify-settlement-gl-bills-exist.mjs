@@ -21,6 +21,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-gl-bills-exist";
 const CEILING = 0;
 
+export const ALLOW_OFFLINE_SKIP =
+  "static AP-chain source check always runs; live USMCA closed-settlement GL bill count needs DATABASE_URL and CI runs it live";
+
 const AP_CHAIN_SERVICE = "apps/backend/src/driver-finance/settlement-ap-chain.service.ts";
 
 export function staticFailures() {
