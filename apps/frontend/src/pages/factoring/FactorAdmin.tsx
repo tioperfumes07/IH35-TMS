@@ -33,10 +33,12 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
 import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 
 function formatPct(value: number) {
@@ -425,143 +427,148 @@ export function FactorAdmin() {
       )}
 
       {selectedFactor ? (
-        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-gray-900">{selectedFactor.name} details</div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  setNoaForm({
-                    noa_stamp_text: selectedFactor.noa_stamp_text ?? "",
-                    noa_remit_to_name: selectedFactor.noa_remit_to_name ?? "",
-                    noa_remit_to_addr: selectedFactor.noa_remit_to_addr ?? "",
-                    noa_remit_to_wire_ref: selectedFactor.noa_remit_to_wire_ref ?? "",
-                  });
-                  setShowNoaModal(true);
-                }}
-              >
-                Edit NOA Config
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => setShowLorModal(true)}>
-                + Letter of Release
-              </Button>
-              {selectedFactor.active ? (
+        <div className="space-y-3">
+          <BoardSection
+            title={`${selectedFactor.name} details`}
+            testId="factor-admin-selected-detail"
+            headerRight={
+              <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="secondary"
-                  loading={deactivateFactorMutation.isPending}
-                  onClick={() => setShowDeactivateFactorModal(true)}
+                  onClick={() => {
+                    setNoaForm({
+                      noa_stamp_text: selectedFactor.noa_stamp_text ?? "",
+                      noa_remit_to_name: selectedFactor.noa_remit_to_name ?? "",
+                      noa_remit_to_addr: selectedFactor.noa_remit_to_addr ?? "",
+                      noa_remit_to_wire_ref: selectedFactor.noa_remit_to_wire_ref ?? "",
+                    });
+                    setShowNoaModal(true);
+                  }}
                 >
-                  Deactivate
+                  Edit NOA Config
                 </Button>
+                <Button size="sm" variant="secondary" onClick={() => setShowLorModal(true)}>
+                  + Letter of Release
+                </Button>
+                {selectedFactor.active ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={deactivateFactorMutation.isPending}
+                    onClick={() => setShowDeactivateFactorModal(true)}
+                  >
+                    Deactivate
+                  </Button>
+                ) : null}
+              </div>
+            }
+          >
+            <div className="space-y-2 px-3.5 py-2 text-xs">
+              <div className="bg-gray-50 p-2">
+                <div className="mb-1 font-medium text-gray-700">NOA / Remit-To Config</div>
+                {selectedFactor.noa_stamp_text || selectedFactor.noa_remit_to_name ? (
+                  <div className="space-y-0.5 text-gray-700">
+                    {selectedFactor.noa_remit_to_name ? <div><span className="text-gray-500">Remit to: </span>{selectedFactor.noa_remit_to_name}</div> : null}
+                    {selectedFactor.noa_remit_to_addr ? <div><span className="text-gray-500">Address: </span>{selectedFactor.noa_remit_to_addr}</div> : null}
+                    {selectedFactor.noa_remit_to_wire_ref ? <div><span className="text-gray-500">Wire ref: </span>{selectedFactor.noa_remit_to_wire_ref}</div> : null}
+                    {selectedFactor.noa_stamp_text ? <div className="mt-1 rounded bg-white p-1 text-gray-600 italic">{selectedFactor.noa_stamp_text.slice(0, 120)}{selectedFactor.noa_stamp_text.length > 120 ? "…" : ""}</div> : null}
+                  </div>
+                ) : (
+                  <div className="text-red-600">Not configured — invoices for assigned customers will be blocked until NOA fields are set.</div>
+                )}
+              </div>
+
+              {(lorQuery.data ?? []).length > 0 ? (
+                <div className="text-xs">
+                  <div className="mb-1 font-medium text-gray-700">Letters of Release</div>
+                  <div className="space-y-1">
+                    {(lorQuery.data ?? []).slice(0, 5).map((lor) => (
+                      <div key={lor.id} className="flex items-center gap-3 text-gray-700">
+                        <span>Issued: {lor.issued_date}</span>
+                        <span>Effective: {lor.effective_release_date}</span>
+                        {lor.notes ? <span className="text-gray-500">{lor.notes}</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : null}
             </div>
-          </div>
+          </BoardSection>
 
-          {/* NOA config status */}
-          <div className="border-t border-gray-100 bg-gray-50 p-2 text-xs">
-            <div className="mb-1 font-medium text-gray-700">NOA / Remit-To Config</div>
-            {selectedFactor.noa_stamp_text || selectedFactor.noa_remit_to_name ? (
-              <div className="space-y-0.5 text-gray-700">
-                {selectedFactor.noa_remit_to_name ? <div><span className="text-gray-500">Remit to: </span>{selectedFactor.noa_remit_to_name}</div> : null}
-                {selectedFactor.noa_remit_to_addr ? <div><span className="text-gray-500">Address: </span>{selectedFactor.noa_remit_to_addr}</div> : null}
-                {selectedFactor.noa_remit_to_wire_ref ? <div><span className="text-gray-500">Wire ref: </span>{selectedFactor.noa_remit_to_wire_ref}</div> : null}
-                {selectedFactor.noa_stamp_text ? <div className="mt-1 rounded bg-white p-1 text-gray-600 italic">{selectedFactor.noa_stamp_text.slice(0, 120)}{selectedFactor.noa_stamp_text.length > 120 ? "…" : ""}</div> : null}
+          {/* Factor profile — compact read-only summary (own BoardSection; not nested under details). */}
+          <FactoringProfilePanel factor={selectedFactor} variant="compact" onSave={() => { void queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] }); }} />
+
+          <BoardSection
+            title="Customer history"
+            testId="factor-admin-customer-history"
+            headerRight={
+              <div className="w-80" data-testid="factor-admin-filter-customer">
+                <EntityMultiSelect
+                  kind="customer"
+                  value={detailCustomerId || null}
+                  onChange={(next) => selectDetailCustomer(next ?? "")}
+                  operatingCompanyId={companyId}
+                  placeholder="Select customers for history"
+                  disabled={!companyId}
+                />
+              </div>
+            }
+          >
+            {detailCustomerId ? (
+              <div className="grid gap-3 px-3.5 py-2 lg:grid-cols-2">
+                {customerFactorDetailQuery.data?.capped_customer_count ? <p role="status" className="lg:col-span-2">{t("common.batch_history_limit", "Batch history is limited to the latest 200 batches per customer. {{count}} selected customer histories reached that limit; this is not a complete total.", { count: customerFactorDetailQuery.data.capped_customer_count })}</p> : null}
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
+                  </div>
+                  {assignmentsListState.isError ? (
+                    <ListErrorState
+                      title="Couldn't load assignment history"
+                      status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
+                      message={(customerFactorDetailQuery.error as Error | undefined)?.message}
+                      onRetry={() => void customerFactorDetailQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable<CustomerFactorAssignment>
+                      title={`Factor assignment history${selectedCustomer ? ` — ${selectedCustomer.name}` : ""}`}
+                      columns={ASSIGNMENT_COLUMNS}
+                      rows={assignmentRows}
+                      rowKey={(row) => row.id}
+                      loading={assignmentsListState.isLoading}
+                      emptyText={assignmentsListState.isEmpty ? "No assignments found for this factor/customer." : undefined}
+                      storageKey="factor-admin-assignments"
+                      tableTestId="factor-admin-assignments-table"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  {batchesListState.isError ? (
+                    <ListErrorState
+                      title="Couldn't load batch history"
+                      status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
+                      message={(customerFactorDetailQuery.error as Error | undefined)?.message}
+                      onRetry={() => void customerFactorDetailQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable<FactorBatchHistoryRow>
+                      title="Factoring batches — selected customers"
+                      columns={BATCH_COLUMNS}
+                      rows={batchRows}
+                      rowKey={(row) => row.id}
+                      loading={batchesListState.isLoading}
+                      emptyText={batchesListState.isEmpty ? "No batch history for this customer." : undefined}
+                      storageKey="factor-admin-batches"
+                      tableTestId="factor-admin-batches-table"
+                    />
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="text-red-600">Not configured — invoices for assigned customers will be blocked until NOA fields are set.</div>
+              <div className="px-3.5 py-2 text-xs text-gray-600">Select a customer to view assignment and batch history.</div>
             )}
-          </div>
-
-          {/* Factor profile — compact read-only summary */}
-          <div className="border-t border-gray-100 p-2">
-            <FactoringProfilePanel factor={selectedFactor} variant="compact" onSave={() => { void queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] }); }} />
-          </div>
-
-          {/* LOR history */}
-          {(lorQuery.data ?? []).length > 0 ? (
-            <div className="border-t border-gray-100 p-2 text-xs">
-              <div className="mb-1 font-medium text-gray-700">Letters of Release</div>
-              <div className="space-y-1">
-                {(lorQuery.data ?? []).slice(0, 5).map((lor) => (
-                  <div key={lor.id} className="flex items-center gap-3 text-gray-700">
-                    <span>Issued: {lor.issued_date}</span>
-                    <span>Effective: {lor.effective_release_date}</span>
-                    {lor.notes ? <span className="text-gray-500">{lor.notes}</span> : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {/* CLS-CUST-BARE-SELECT: ReferenceSelect createKind=customer (EntityPicker has no customer kind). */}
-            <div className="w-80" data-testid="factor-admin-filter-customer">
-              <EntityMultiSelect
-                kind="customer"
-                value={detailCustomerId || null}
-                onChange={(next) => selectDetailCustomer(next ?? "")}
-                operatingCompanyId={companyId}
-                placeholder="Select customers for history"
-                disabled={!companyId}
-              />
-            </div>
-          </div>
-
-          {detailCustomerId ? (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {customerFactorDetailQuery.data?.capped_customer_count ? <p role="status" className="lg:col-span-2">{t("common.batch_history_limit", "Batch history is limited to the latest 200 batches per customer. {{count}} selected customer histories reached that limit; this is not a complete total.", { count: customerFactorDetailQuery.data.capped_customer_count })}</p> : null}
-              <div className="border-t border-gray-200 p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                  Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
-                </div>
-                {assignmentsListState.isError ? (
-                  <ListErrorState
-                    title="Couldn't load assignment history"
-                    status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
-                    message={(customerFactorDetailQuery.error as Error | undefined)?.message}
-                    onRetry={() => void customerFactorDetailQuery.refetch()}
-                  />
-                ) : (
-                  <ParityTable<CustomerFactorAssignment>
-                    title={`Factor assignment history${selectedCustomer ? ` — ${selectedCustomer.name}` : ""}`}
-                    columns={ASSIGNMENT_COLUMNS}
-                    rows={assignmentRows}
-                    rowKey={(row) => row.id}
-                    loading={assignmentsListState.isLoading}
-                    emptyText={assignmentsListState.isEmpty ? "No assignments found for this factor/customer." : undefined}
-                    storageKey="factor-admin-assignments"
-                    tableTestId="factor-admin-assignments-table"
-                  />
-                )}
-              </div>
-
-              <div className="border-t border-gray-200 p-3">
-                {batchesListState.isError ? (
-                  <ListErrorState
-                    title="Couldn't load batch history"
-                    status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
-                    message={(customerFactorDetailQuery.error as Error | undefined)?.message}
-                    onRetry={() => void customerFactorDetailQuery.refetch()}
-                  />
-                ) : (
-                  <ParityTable<FactorBatchHistoryRow>
-                    title="Factoring batches — selected customers"
-                    columns={BATCH_COLUMNS}
-                    rows={batchRows}
-                    rowKey={(row) => row.id}
-                    loading={batchesListState.isLoading}
-                    emptyText={batchesListState.isEmpty ? "No batch history for this customer." : undefined}
-                    storageKey="factor-admin-batches"
-                    tableTestId="factor-admin-batches-table"
-                  />
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-600">Select a customer to view assignment and batch history.</div>
-          )}
+          </BoardSection>
         </div>
       ) : null}
 
@@ -572,7 +579,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.name}
                   onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                 />
               </label>
               <label className="block">
@@ -580,7 +587,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.advance_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                 />
               </label>
               <label className="block">
@@ -588,7 +595,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.fee_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                 />
               </label>
               <label className="block">
@@ -596,7 +603,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.reserve_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                 />
               </label>
               <label className="block">
@@ -604,7 +611,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.recourse_days}
                   onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                 />
               </label>
             </div>
@@ -703,7 +710,7 @@ export function FactorAdmin() {
                   rows={4}
                   value={noaForm.noa_stamp_text}
                   onChange={(event) => setNoaForm((current) => ({ ...current, noa_stamp_text: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
+                  className={`${FORM_INPUT_CLASS} font-mono`}
                   placeholder="NOTICE OF ASSIGNMENT: Pursuant to UCC 9-406, payment must be remitted to..."
                 />
               </label>
@@ -712,7 +719,7 @@ export function FactorAdmin() {
                 <input
                   value={noaForm.noa_remit_to_name}
                   onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_name: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                   placeholder="Faro Capital LLC Lockbox"
                 />
               </label>
@@ -721,7 +728,7 @@ export function FactorAdmin() {
                 <input
                   value={noaForm.noa_remit_to_addr}
                   onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_addr: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                   placeholder="PO Box 12345, Dallas TX 75201"
                 />
               </label>
@@ -730,7 +737,7 @@ export function FactorAdmin() {
                 <input
                   value={noaForm.noa_remit_to_wire_ref}
                   onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_wire_ref: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                   placeholder="ABA 021000021 · Acct 4567890123 · Ref: [Invoice #]"
                 />
               </label>
@@ -773,7 +780,7 @@ export function FactorAdmin() {
                 <input
                   value={lorForm.notes}
                   onChange={(event) => setLorForm((current) => ({ ...current, notes: event.target.value }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className={FORM_INPUT_CLASS}
                   placeholder="Reference LOR document # or comments"
                 />
               </label>
