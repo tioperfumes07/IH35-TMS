@@ -53,13 +53,19 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — good sources rejected`);
     process.exit(1);
   }
+  // Duplicate the REAL driver DocumentsTab element (its props changed with the proper-case law —
+  // entityName now goes through formatPersonName — so a literal copy of the old props matched nothing).
+  const docsTabElement = good.driverDetail.match(/<DocumentsTab entityType="driver"[\s\S]*?\/>/)?.[0] ?? "";
   const doubled = {
     ...good,
-    driverDetail: good.driverDetail.replace(
-      '<DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} operatingCompanyId={driver.operating_company_id ?? companyId} />',
-      '<DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} operatingCompanyId={driver.operating_company_id ?? companyId} /><DocumentsTab entityType="driver" entityId={driver.id} entityName="x" operatingCompanyId={companyId} />'
-    ),
+    driverDetail: docsTabElement
+      ? good.driverDetail.replace(docsTabElement, () => docsTabElement + docsTabElement)
+      : good.driverDetail,
   };
+  if (doubled.driverDetail === good.driverDetail) {
+    console.error(`${LABEL} SELFTEST FAIL — could not locate the driver <DocumentsTab> element to plant a double`);
+    process.exit(1);
+  }
   const unscopedRoute = { ...good, filesRoute: good.filesRoute.replace("fl.entity_id = $", "1 = $") };
   for (const [name, plant] of [
     ["doubled DocumentsTab", doubled],
