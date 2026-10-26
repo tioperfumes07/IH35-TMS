@@ -19,7 +19,15 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
-    tests: [(s) => /data-testid="fuel-card-overage-need-company"/.test(s) || "card-overage need-company"],
+    // #27800 (FILL-FUEL-FRAUD-OVERAGE-PLANNER-EMPTY) moved the marker onto <FuelBoardSection testId=…>; that form
+    // counts only while FuelBoardSection itself still renders data-testid={testId} (read from its source).
+    tests: [
+      (s, read = readTracked) =>
+        /data-testid="fuel-card-overage-need-company"/.test(s) ||
+        (/<FuelBoardSection[^>]*testId="fuel-card-overage-need-company"/.test(s) &&
+          /data-testid=\{testId\}/.test(read("apps/frontend/src/pages/fuel/FuelBoardSection.tsx") ?? "")) ||
+        "card-overage need-company",
+    ],
   },
   {
     file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
@@ -74,7 +82,7 @@ function run(read = readTracked) {
       continue;
     }
     for (const t of tests) {
-      const msg = t(src);
+      const msg = t(src, read);
       if (typeof msg === "string") problems.push(`${file}: ${msg}`);
     }
   }
@@ -101,11 +109,15 @@ if (process.argv.includes("--selftest")) {
     rel === district ? `${readTracked(rel)}\n<select value={districtId}></select>` : readTracked(rel),
   );
   const nativeCaught = nativeSelect.some((p) => p.includes("must not use a native ID-valued select"));
-  if (caught !== CHECKS.length || !nativeCaught) {
+  const fbs = "apps/frontend/src/pages/fuel/FuelBoardSection.tsx";
+  const deadSection = run((rel) => (rel === fbs ? readTracked(rel).replace(/data-testid=\{testId\}/g, "") : readTracked(rel)));
+  const sectionCaught = deadSection.some((p) => p.includes("card-overage need-company"));
+  if (!sectionCaught) console.error(`${LABEL} SELFTEST: FuelBoardSection that stops rendering testId escaped`);
+  if (caught !== CHECKS.length || !nativeCaught || !sectionCaught) {
     console.error(`${LABEL} SELFTEST FAIL: caught ${caught}/${CHECKS.length} blanked files; native select plant caught=${nativeCaught}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS (${caught}/${CHECKS.length} blanked-file plants + native-select plant caught)`);
+  console.log(`${LABEL} SELFTEST PASS (${caught}/${CHECKS.length} blanked-file plants + native-select plant + dead-testId FuelBoardSection plant caught)`);
   process.exit(0);
 }
 
