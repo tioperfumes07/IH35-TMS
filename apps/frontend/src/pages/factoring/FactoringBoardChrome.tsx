@@ -26,12 +26,14 @@ export function FactoringBoardChrome({
   title,
   subtitle,
   actions,
-  subnavItems,
+  subnavItems = [],
+  nav,
 }: {
   title: string;
   subtitle: string;
   actions?: ReactNode;
-  subnavItems: SubNavItem[];
+  subnavItems?: SubNavItem[];
+  nav?: ReactNode;
 }) {
   const { pathname, search } = useLocation();
   const breadcrumb = [{ label: "Factoring", href: "/factoring" }, { label: title }];
@@ -60,7 +62,7 @@ export function FactoringBoardChrome({
         </div>
       </div>
       <div className="relative z-10">
-        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />
+        {nav ?? <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />}
       </div>
     </div>
   );
