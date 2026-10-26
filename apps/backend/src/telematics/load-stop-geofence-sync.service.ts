@@ -149,35 +149,106 @@ export async function replayUnitHistoryForFences(
     if (load.earliest_scheduled) sinceCandidates.push(new Date(load.earliest_scheduled).getTime() - 24 * 3600_000);
     const floor = Date.now() - RETRO_REPLAY_LOOKBACK_DAYS * 86_400_000;
     const since = new Date(Math.max(floor, Math.min(...sinceCandidates))).toISOString();
-    const positions = await client.query<{ lat: number; lng: number; captured_at: string }>(
-      `SELECT lat::double precision AS lat, lng::double precision AS lng, captured_at::text
-         FROM telematics.vehicle_locations
-        WHERE unit_id = $1::uuid AND captured_at >= $2::timestamptz
-        ORDER BY captured_at ASC, id ASC`,
-      [load.unit_id, since]
-    );
-    const containment = new Map<string, boolean>();
-    for (const p of positions.rows) {
-      positionsChecked += 1;
-      let changed = false;
-      for (const f of loadFences) {
-        const inside = pointInPolygon(p.lat, p.lng, f.vertices);
-        const prev = containment.get(f.id);
-        if (prev !== inside) {
-          containment.set(f.id, inside);
-          changed = changed || inside || prev === true;
-        }
-      }
-      if (!changed) continue;
-      const r = await processGeofenceDetectionsForGpsPoint(
-        client,
-        { operating_company_id: operatingCompanyId, unit_id: load.unit_id, latitude: p.lat, longitude: p.lng, occurred_at: p.captured_at, source: "samsara_gps" },
-        { suppressOperationalSideEffects: true }
-      );
-      eventsWritten += r.transitions_written;
-    }
+    const r = await replayUnitWindowForFences(client, operatingCompanyId, load.unit_id, loadFences, since, null);
+    positionsChecked += r.positions_checked;
+    eventsWritten += r.events_written;
   }
   return { positions_checked: positionsChecked, events_written: eventsWritten };
+}
+
+/**
+ * ONE replay loop (shared by the live sync above and the completed-load backfill below): walk a unit's STORED fixes in
+ * time order over [since, until) and send each fix that changes containment of the given fences through the canonical
+ * detector with suppressOperationalSideEffects — immutable geo.geofence_events only, never a stop stamp, status walk or
+ * money event. The detector reads each fence's previous state AS OF the fix's own time, so an in-order replay of the past
+ * is exact; its 5-minute near-duplicate check makes a second run write nothing.
+ */
+export async function replayUnitWindowForFences(
+  client: DbClient,
+  operatingCompanyId: string,
+  unitId: string,
+  fences: Array<{ id: string; vertices: ReturnType<typeof normalizeVertices> }>,
+  since: string,
+  until: string | null
+): Promise<{ positions_checked: number; events_written: number }> {
+  const positions = await client.query<{ lat: number; lng: number; captured_at: string }>(
+    `SELECT lat::double precision AS lat, lng::double precision AS lng, captured_at::text
+       FROM telematics.vehicle_locations
+      WHERE unit_id = $1::uuid AND captured_at >= $2::timestamptz AND ($3::timestamptz IS NULL OR captured_at < $3::timestamptz)
+      ORDER BY captured_at ASC, id ASC`,
+    [unitId, since, until]
+  );
+  let positionsChecked = 0;
+  let eventsWritten = 0;
+  const containment = new Map<string, boolean>();
+  for (const p of positions.rows) {
+    positionsChecked += 1;
+    let changed = false;
+    for (const f of fences) {
+      const inside = pointInPolygon(p.lat, p.lng, f.vertices);
+      const prev = containment.get(f.id);
+      if (prev !== inside) {
+        containment.set(f.id, inside);
+        changed = changed || inside || prev === true;
+      }
+    }
+    if (!changed) continue;
+    const r = await processGeofenceDetectionsForGpsPoint(
+      client,
+      { operating_company_id: operatingCompanyId, unit_id: unitId, latitude: p.lat, longitude: p.lng, occurred_at: p.captured_at, source: "samsara_gps" },
+      { suppressOperationalSideEffects: true }
+    );
+    eventsWritten += r.transitions_written;
+  }
+  return { positions_checked: positionsChecked, events_written: eventsWritten };
+}
+
+/**
+ * LEAD row 264 (ENG-29, 10-25-2026). Real driven miles need fence crossings with a real odometer read; measured USMCA:
+ * 180 of 198 loads had none because fences are minted only for board-active loads and the replay above looks back at
+ * most RETRO_REPLAY_LOOKBACK_DAYS — a completed or back-dated trip was never replayed. For each COMPLETED load with no
+ * driven miles and an assigned unit: mint its stop fences through bindLoadToGeofences (the only minter), then replay the
+ * unit's stored fixes from 24 h before its first stop to 48 h after its last. The odometer-capture cron then stores the
+ * real OBD read (or 'absent') per crossing and the driven-miles tick computes the load — or keeps NULL with its reason.
+ */
+export async function backfillCompletedLoadFenceEvidence(
+  client: DbClient,
+  operatingCompanyId: string,
+  opts: { limit?: number; loadIds?: string[] } = {}
+): Promise<{ loads: number; fences_bound: number; positions_checked: number; events_written: number; skipped_no_fence: number }> {
+  const loads = await client.query<{ load_id: string; unit_id: string; first_at: string | null; last_at: string | null }>(
+    `SELECT l.id::text AS load_id, l.assigned_unit_id::text AS unit_id,
+            min(coalesce(ls.actual_arrival_at, ls.scheduled_arrival_at, ls.appointment_start_at))::text AS first_at,
+            max(coalesce(ls.actual_departure_at, ls.actual_arrival_at, ls.scheduled_arrival_at, ls.appointment_end_at, ls.appointment_start_at))::text AS last_at
+       FROM mdata.loads l JOIN mdata.load_stops ls ON ls.load_id = l.id AND ls.soft_deleted_at IS NULL
+      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled'
+        AND l.assigned_unit_id IS NOT NULL AND l.miles_driven_actual IS NULL
+        AND NOT (${canonicalDispatchWorkStatusClause("l")})
+        AND ($3::uuid[] IS NULL OR l.id = ANY($3::uuid[]))
+      GROUP BY l.id, l.assigned_unit_id
+      ORDER BY l.id
+      LIMIT $2`,
+    [operatingCompanyId, opts.limit ?? 500, opts.loadIds ?? null]
+  );
+  let fencesBound = 0, positionsChecked = 0, eventsWritten = 0, skippedNoFence = 0;
+  for (const load of loads.rows) {
+    if (!load.first_at || !load.last_at) { skippedNoFence += 1; continue; }
+    const bound = await bindLoadToGeofences(client as never, operatingCompanyId, load.load_id);
+    fencesBound += bound.created;
+    const fenceRows = await client.query<{ id: string; vertices_json: unknown }>(
+      `SELECT id::text, vertices_json FROM geo.geofences
+        WHERE operating_company_id = $1::uuid AND label LIKE 'load-' || $2 || '-stop-%'`,
+      [operatingCompanyId, load.load_id]
+    );
+    if (!fenceRows.rows.length) { skippedNoFence += 1; continue; }
+    const fences = fenceRows.rows.map((f) => ({ id: f.id, vertices: normalizeVertices(f.vertices_json) }));
+    const since = new Date(new Date(load.first_at).getTime() - 24 * 3600_000).toISOString();
+    const until = new Date(new Date(load.last_at).getTime() + 48 * 3600_000).toISOString();
+    const r = await replayUnitWindowForFences(client, operatingCompanyId, load.unit_id, fences, since, until);
+    positionsChecked += r.positions_checked;
+    eventsWritten += r.events_written;
+  }
+  return { loads: loads.rows.length, fences_bound: fencesBound, positions_checked: positionsChecked, events_written: eventsWritten, skipped_no_fence: skippedNoFence };
 }
 
 export async function stampStopsFromGeofenceEvents(
