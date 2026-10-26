@@ -26,6 +26,8 @@ import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingHomeBoard } from "./components/BankingHomeBoard";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { FORM_SELECT_CLASS } from "../../components/forms/inputClass";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -610,18 +612,21 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           </div>
           {companyId ? <FactoringReservesSharedPanel companyId={companyId} host="banking" /> : null}
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr]">
-            <div className="rounded-sm border border-gray-200 bg-white">
-              <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                <span>Bank accounts</span>
+            <BoardSection
+              title="Bank accounts"
+              testId="banking-home-accounts-board"
+              headerRight={
                 <button
-                  className="text-[#1F2A44] hover:underline"
+                  className="text-[#1F2A44] hover:underline text-xs"
                   type="button"
                   onClick={() => setManageOpen(true)}
                   aria-label="Manage bank accounts"
                 >
                   +
                 </button>
-              </div>
+              }
+            >
+              <div>
               <div className="max-h-[320px] overflow-y-auto">
                 {bankAccountsPanelRows.map((row, idx) => (
                   <div
@@ -672,9 +677,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 />
                 Show disconnected history
               </label>
-            </div>
-            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
-              <p className="font-semibold uppercase tracking-wide text-[#4B5563]">Factoring · virtual bank</p>
+              </div>
+            </BoardSection>
+            <BoardSection title="Factoring · virtual bank" testId="banking-home-factoring-virtual-board">
+            <div className="px-3 py-2 text-xs text-[#1F2A44]">
+              <p className="sr-only">Factoring · virtual bank</p>
               <p className="mt-1 text-[#6B7280]">
                 Reserves held and MTD lines are on the Factoring summary card above (one engine). Open Factoring for
                 chargebacks, fees, and the reserve tracker.
@@ -689,9 +696,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 {factoringTile ? <span className="text-[#6B7280]">{factoringTile.display_name}</span> : null}
               </div>
             </div>
+            </BoardSection>
           </div>
           {inspectTileId ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
+            <BoardSection title="Account inspect" testId="bank-account-inspect-board">
+            <div className="p-3" data-testid="bank-account-inspect-panel">
               {(() => {
                 const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
                 const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
@@ -741,6 +750,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 );
               })()}
             </div>
+            </BoardSection>
           ) : null}
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </div>
@@ -852,9 +862,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             </div>
           ) : (
-            <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <BoardSection title="Relay Card · Banking" testId="banking-home-relay-board">
+            <div className="p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
+                <p className="sr-only">Relay Card · Banking</p>
                 <ActionButton
                   onClick={() => {
                     const first = relayWalletTiles[0];
@@ -879,6 +890,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
               </p>
             </div>
+            </BoardSection>
           )}
         </div>
       ) : null}
@@ -915,8 +927,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
+          <BoardSection title="Bank Statement Import" testId="banking-home-statement-import-board">
+          <div className="p-3">
+            <p className="sr-only">Bank Statement Import</p>
             <p className="mb-3 text-xs text-gray-700">
               CSV import for non-feed banks (PDF parser remains Phase 6).{" "}
               <InfoPopover label="About CSV import">
@@ -927,7 +940,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <label className="mb-2 block text-xs font-semibold text-gray-600">
               Bank account
               <SelectCombobox
-                className="mt-1 w-full max-w-md rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
+                className={`${FORM_SELECT_CLASS} mt-1 max-w-md`}
                 value={selectedId ?? ""}
                 onChange={(e) => setSelectedAccountId(e.target.value || null)}
               >
@@ -953,13 +966,15 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
             </div>
           </div>
+          </BoardSection>
         </div>
       ) : null}
 
       {activeTab === "plaid_connections" ? (
         <div className="space-y-3" data-testid="banking-plaid-connections-tab">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Plaid Connections</p>
+          <BoardSection title="Plaid Connections" testId="banking-home-plaid-board">
+          <div className="p-3">
+            <p className="sr-only">Plaid Connections</p>
             <p className="mb-3 text-xs text-gray-700">
               Live bank feed config — connect, reconnect, and inspect items. Same panel remains on Accounts and Settings
               (additive; never removed).
@@ -969,6 +984,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
             </div>
           </div>
+          </BoardSection>
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </div>
       ) : null}
@@ -991,8 +1007,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Banking Settings</p>
+          <BoardSection title="Banking Settings" testId="banking-home-settings-board">
+          <div className="p-3">
+            <p className="sr-only">Banking Settings</p>
             <p className="mb-3 text-xs text-gray-700">
               Account map, Cash GL, categorization rules, queues, and visibility — Owner/Administrator surfaces stay
               role-gated on their pages.
@@ -1007,6 +1024,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate("/banking/qbo-sync-queue")}>QBO Sync Queue</ActionButton>
             </div>
           </div>
+          </BoardSection>
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </div>
       ) : null}
