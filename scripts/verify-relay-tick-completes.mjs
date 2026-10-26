@@ -53,7 +53,23 @@ function fnBody(src, name) {
   return next < 0 ? src.slice(i) : src.slice(i, i + 1 + next);
 }
 
-export function staticProblems(cronSrc, migrationsSql) {
+export function buildBackendSrcCache(root = ROOT) {
+  const acc = [];
+  const walk = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fp = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        if (ent.name !== "__tests__") walk(fp);
+      } else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".test.ts")) {
+        acc.push([fp, fs.readFileSync(fp, "utf8")]);
+      }
+    }
+  };
+  walk(path.join(root, "apps/backend/src"));
+  return acc;
+}
+
+export function staticProblems(cronSrc, migrationsSql, { backendSrcCache = null } = {}) {
   const p = [];
   const tick = fnBody(cronSrc, "runRelayFuelIngestTick") ?? "";
   const finallyBlocks = [...tick.matchAll(/\}\s*finally\s*\{([\s\S]*?)\n    \}\n/g)].map((m) => m[1]);
@@ -97,19 +113,8 @@ export function staticProblems(cronSrc, migrationsSql) {
   for (const x of dateFloorStaticProblems(floorSrc, cronSrc)) {
     p.push(`R8: ${x}`);
   }
-  // R9 — FORCE-RLS UPDATE class (441.21-B R2)
-  const backendSrc = [];
-  const walk = (dir) => {
-    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-      const fp = path.join(dir, ent.name);
-      if (ent.isDirectory()) {
-        if (ent.name !== "__tests__") walk(fp);
-      } else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".test.ts")) {
-        backendSrc.push([fp, fs.readFileSync(fp, "utf8")]);
-      }
-    }
-  };
-  walk(path.join(ROOT, "apps/backend/src"));
+  // R9 — FORCE-RLS UPDATE class (441.21-B R2); backendSrcCache avoids re-walking 2000+ files per selftest plant
+  const backendSrc = backendSrcCache ?? buildBackendSrcCache();
   for (const x of forceRlsProblems(migrationsSql, backendSrc)) {
     p.push(`R9: ${x}`);
   }
@@ -167,17 +172,19 @@ const cronSrc = fs.readFileSync(path.join(ROOT, CRON), "utf8");
 const migrationsSql = loadMigrationsSql();
 
 if (process.argv.includes("--selftest")) {
-  const real = staticProblems(cronSrc, migrationsSql);
+  // Build backendSrc once — reused for the real-tree check and every plant call.
+  const backendSrcCache = buildBackendSrcCache();
+  const real = staticProblems(cronSrc, migrationsSql, { backendSrcCache });
   if (real.length) {
     console.error(`${LABEL} --selftest FAIL — real tree is not green:\n  - ${real.join("\n  - ")}`);
     process.exit(1);
   }
   const plants = [
-    ["R1 finish outside finally", staticProblems(cronSrc.replace(/\} finally \{/, "} /*no finally*/ {"), migrationsSql), "R1"],
-    ["R2 finish without row check", staticProblems(cronSrc.replace("rows.length !== 1", "rows.length > 99"), migrationsSql), "R2"],
-    ["R3 no stale reclaim", staticProblems(cronSrc.replace("finished_at IS NULL AND started_at <=", "finished_at IS NULL AND started_at >"), migrationsSql), "R3"],
-    ["R3 skip on any recent claim", staticProblems(cronSrc.replace("finished_at IS NULL OR success = true", "true"), migrationsSql), "R3"],
-    ["R4 no watermark fallback", staticProblems(cronSrc.replace("max(relay_created_at)", "max(created_at)"), migrationsSql), "R4"],
+    ["R1 finish outside finally", staticProblems(cronSrc.replace(/\} finally \{/, "} /*no finally*/ {"), migrationsSql, { backendSrcCache }), "R1"],
+    ["R2 finish without row check", staticProblems(cronSrc.replace("rows.length !== 1", "rows.length > 99"), migrationsSql, { backendSrcCache }), "R2"],
+    ["R3 no stale reclaim", staticProblems(cronSrc.replace("finished_at IS NULL AND started_at <=", "finished_at IS NULL AND started_at >"), migrationsSql, { backendSrcCache }), "R3"],
+    ["R3 skip on any recent claim", staticProblems(cronSrc.replace("finished_at IS NULL OR success = true", "true"), migrationsSql, { backendSrcCache }), "R3"],
+    ["R4 no watermark fallback", staticProblems(cronSrc.replace("max(relay_created_at)", "max(created_at)"), migrationsSql, { backendSrcCache }), "R4"],
     [
       "R5 watermark read before try",
       staticProblems(
@@ -185,11 +192,12 @@ if (process.argv.includes("--selftest")) {
           "    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));",
           "    void lastCoveredEndDate(null as never, '');\n    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));"
         ),
-        migrationsSql
+        migrationsSql,
+        { backendSrcCache }
       ),
       "R5",
     ],
-    ["R6 no UPDATE policy", staticProblems(cronSrc, migrationsSql.replace(/FOR UPDATE/g, "FOR SELECT")), "R6"],
+    ["R6 no UPDATE policy", staticProblems(cronSrc, migrationsSql.replace(/FOR UPDATE/g, "FOR SELECT"), { backendSrcCache }), "R6"],
     [
       "R7 claim outside try",
       staticProblems(
@@ -197,7 +205,8 @@ if (process.argv.includes("--selftest")) {
           "    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));",
           "    logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));\n    try {\n      void 0;"
         ),
-        migrationsSql
+        migrationsSql,
+        { backendSrcCache }
       ),
       "R7",
     ],
