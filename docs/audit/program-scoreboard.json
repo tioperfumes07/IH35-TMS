@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c4b636e",
-  "generated_at": "2026-10-26T07:01:40.796Z",
+  "healthzSha": "79dedc1",
+  "generated_at": "2026-10-26T08:49:03.089Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c4b636e",
+    "deployedSha": "79dedc1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27890,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 02:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27890",
+      "sha": "79dedc1037",
+      "committedAtIso": "2026-10-26T07:02:00Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 02:01 AM CT",
+      "url": "",
+      "sha": "6c0a3c9d61",
+      "committedAtIso": "2026-10-26T07:01:40Z"
+    },
+    {
       "number": 27889,
       "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27882",
       "sha": "99971f5e1e",
       "committedAtIso": "2026-10-26T01:36:56-05:00"
-    },
-    {
-      "number": 27881,
-      "title": "Claude-3-FINDING: verify-popups-one-format baseline 3→0 + factoring selftest re-anchored",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27881",
-      "sha": "cbba508672",
-      "committedAtIso": "2026-10-26T01:12:34-05:00"
-    },
-    {
-      "number": 27880,
-      "title": "FINDING: Lead handoff — Cursor new Lead, Codex instructions, pending list",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 12:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27880",
-      "sha": "01f225261c",
-      "committedAtIso": "2026-10-26T00:02:49-05:00"
     }
   ]
 }
