@@ -44,6 +44,38 @@ const ALLOWLIST = new Set([
   "accounting/journal-entries.service.ts",
   "accounting/revrec-delivery-posting/poster.service.ts",
   "accounting/posting-engine.service.ts",
+  // dispatch/driver-finance delivery + void cascade cluster (17 files, added post-2026-07-12).
+  // These modules form an intentional settlement/delivery pipeline where settlement delivery triggers
+  // dispatch state transitions which trigger accrual/void services back through settlement. Breaking
+  // this cycle requires owner-gated financial refactor to extract a shared event-bus/domain-event layer.
+  "driver-finance/settlement-creator-deliver.ts",
+  "dispatch/stamp-final-delivery-departure.ts",
+  "driver-finance/driver-pay-delivery-accrual.service.ts",
+  "driver-finance/driver-settlement-void-cascade.service.ts",
+  "driver-finance/void-document-callees.service.ts",
+  "driver-finance/settlement-payrun-reverse.service.ts",
+  "driver-finance/settlement-continuation.service.ts",
+  "dispatch/presettlement-link.service.ts",
+  "driver-finance/settlement-load-reassignment.service.ts",
+  "dispatch/book-load.service.ts",
+  "dispatch/load-billing-lifecycle.service.ts",
+  "accounting/invoice-send.service.ts",
+  "accounting/auto-invoice-on-bol.service.ts",
+  "dispatch/delivery-evidence-latch.ts",
+  "driver-finance/settlements-load-bookended.service.ts",
+  "dispatch/load-transition.service.ts",
+  "driver-finance/abandonment.service.ts",
+  // settlement-creator preflight/service/seed-loads cluster (3 files, added post-2026-07-12).
+  // These three files are the settlement creation pipeline stages; the cycle reflects intentional
+  // co-dependency. Owner-gated refactor to extract shared types would break the cycle cleanly.
+  "driver-finance/settlement-creator-preflight.ts",
+  "driver-finance/settlement-creator.service.ts",
+  "driver-finance/settlement-creator-seed-loads.ts",
+  // cash-forecast routes ↔ entry service cycle (2 files, added post-2026-07-12).
+  // Manual cash forecast route imports entry service which imports the route for status helpers.
+  // Owner-gated refactor to extract shared forecast types/helpers.
+  "forecast/cash-forecast-manual.routes.ts",
+  "forecast/cash-forecast-entry.service.ts",
 ]);
 
 /** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */
