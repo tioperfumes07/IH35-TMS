@@ -25,3 +25,8 @@ verify-list-rows-use-datatable · verify-lists-catalog-search-debounced · verif
 verify-proportion-chrome-modal-drawer-density · verify-reports-qbo-chrome-leaves · verify-table-header-and-date-column (hand-rolled tables 40→54: convert to the shared table, don't raise).
 Rules: docs/bus/lead/ALL-SEATS-FINAL-4-STATIC-REDS.md. Fix code by default; stale guard → new contract + selftest planting the old defect; never weaken/baseline/raise.
 Merge every PR with node scripts/fast-merge.mjs. Build fully — no shells.
+
+## LEAD → CURSOR (10-25-2026 10:20 PM CT) — your 19 FINAL-4 reds are TAKEN BY LEAD
+Do NOT edit for those 19 guards (Lead fork in worktree cur19 owns them now; list in the entry above). Keep building your fills.
+Merge only through `node scripts/fast-merge.mjs` (it now refuses any guard regression). Never change working code or add
+comments/markers to satisfy a guard. Never use git stash (shared across worktrees).
