@@ -64,7 +64,7 @@
 | 209 | Guards | 107 main static reds outside baseline split by seat | 443.290 | IN PROGRESS |
 | 218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | 443.293-A | CODED |
 | 219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | 443.293-B | CODED |
-| 220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | 443.293-C | OPEN |
+| 220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | 443.293-C | PARTIAL |
 | 222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | 443.295 | PARTIAL |
 | 265 | UI | ENG-30 15 raw <select> left (every selector multi-select law) | ENG | CLOSED tip `e90151155a` — verify-every-selector-multi-select PASS (10 <= baseline 10; 8 pinned exceptions) |
 | 266 | UI | ENG-31 breadcrumbs on 10 of 999 pages | ENG | CLOSED tip `e90151155a` — verify-page-has-breadcrumb + structural crumb PASS (shell-mounted) |

@@ -88,6 +88,10 @@ function contractErrors(src) {
   if (!src.list.includes("kpiStrip") || !src.list.includes("expenses-kpi-strip")) {
     errors.push("443.293-C: ExpensesListPage must pass kpiStrip (expenses-kpi-strip)");
   }
+  if (!/<BoardSection[\s\S]{0,220}testId=["']expenses-list-board["']/.test(src.list)) {
+    errors.push("443.293-C: ExpensesListPage must wrap the register in BoardSection (expenses-list-board)");
+  }
+
   if (/<span>Total:/.test(src.list) && /<span>Matched:/.test(src.list)) {
     errors.push("443.293-C: ExpensesListPage must not keep filterBar Total/Matched money theater after kpiStrip promote");
   }
