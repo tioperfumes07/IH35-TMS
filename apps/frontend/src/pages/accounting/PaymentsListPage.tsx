@@ -328,7 +328,6 @@ export function PaymentsListPage() {
       createControl={<Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>}
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="payments-kpi-strip">
-          {/* Total: {query.isError ? "—" : money(totals.total)} | Open: {query.isError ? "—" : money(totals.open)} | Variance: {query.isError ? "—" : money(totals.variance)} */}
           {query.isError ? (
             <>
               {moneyListKpiCard("Total", "—", "Error loading")}

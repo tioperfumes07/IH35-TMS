@@ -424,7 +424,6 @@ export function BillPaymentsListPage() {
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="bill-payments-kpi-strip">
-          {/* Total rows amount: {paymentsQuery.isError ? "—" : money(totals)} */}
           {paymentsQuery.isError ? (
             <>
               {moneyListKpiCard("Total paid", "—", "Error loading")}
