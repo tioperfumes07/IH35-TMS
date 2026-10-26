@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c183e45",
-  "generated_at": "2026-10-26T14:09:35.452Z",
+  "healthzSha": "e154bb3",
+  "generated_at": "2026-10-26T15:15:14.953Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c183e45",
+    "deployedSha": "e154bb3",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27898,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 09:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27898",
+      "sha": "e154bb36b0",
+      "committedAtIso": "2026-10-26T14:11:37Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 09:09 AM CT",
+      "url": "",
+      "sha": "170167a9a9",
+      "committedAtIso": "2026-10-26T14:09:35Z"
+    },
+    {
       "number": 27897,
       "title": "FINDING: N/A (CLAIM-RESERVE 18802 — ENG-07 book stop street/place)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27889",
       "sha": "3a4f44bdf6",
       "committedAtIso": "2026-10-26T01:57:25-05:00"
-    },
-    {
-      "number": 27888,
-      "title": "FINDING: Lead seat lists refresh — B2/B3 done, remaining B1/B4/C2 + CC reds",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27888",
-      "sha": "673f611cfa",
-      "committedAtIso": "2026-10-26T01:56:52-05:00"
-    },
-    {
-      "number": 27887,
-      "title": "FINDING: Lead tip reds — ReportsHome gear/sort · SAVEPOINT period refresh · live_loads · OUTBOX diet",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27887",
-      "sha": "c4b636eef6",
-      "committedAtIso": "2026-10-26T01:55:31-05:00"
     }
   ]
 }
