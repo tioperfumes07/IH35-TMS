@@ -84,6 +84,11 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
     failures.push(`${REGISTER}: must not remount V3Panel`);
   }
 
+  
+  if (!board.includes('testId="settlements-escrow-measured-note"') || !/<BoardSection\b/.test(board)) {
+    failures.push(`${BOARD}: Measured note must be BoardSection (settlements-escrow-measured-note)`);
+  }
+
   return failures;
 }
 
@@ -103,7 +108,8 @@ if (process.argv.includes("--selftest")) {
     `import { BoardSection } from "../../components/v3/BoardSection";\n` +
       `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\nsettlementsEscrowRegisterHref\n` +
       `toolbar\nfooterCells\n<BoardSection\nOpen register →\n` +
-      `testId="escrow-kpi-scheduled-releases"\nno schedule feed\nvalue="—"\n`,
+      `testId="escrow-kpi-scheduled-releases"\nno schedule feed\nvalue="—"\n` +
+      `testId="settlements-escrow-measured-note"\n`,
   );
   mk(
     REGISTER,

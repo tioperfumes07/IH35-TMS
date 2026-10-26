@@ -530,3 +530,29 @@ NEXT: row 32 Projected (Auto) board completion (D042/D073 + V3 outlook) in fligh
 ---
 (bus-diet rotation 2026-10-25 PM — FINAL-2 rows 39–222 from hot OUTBOX)
 
+- **NEXT:** continue fill-not-shell (FuelPlannerHome / Statement workflow bare cards)
+- **Files Modified:** SettlementDisputesTab.tsx · verify-settlement-disputes-parity-surface-bar.mjs · OUTBOX-CURSOR.md
+## 2026-10-25 CT — CURSOR → LEAD | ACCT-F443293-C lane CLOSED
+
+- **STATUS:** MERGED [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635) squash `5620b45102` (Receipts V3) · MERGED [#27732](https://github.com/tioperfumes07/IH35-TMS/pull/27732) squash `36697ba25a` (push-gate hygiene post-27635)
+- **LIVE PROOF:** UNVERIFIED — coding-only per FINAL-3
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring internal tabs → BoardSection + FORM_INPUT
+
+- **STATUS:** MERGED [#27728](https://github.com/tioperfumes07/IH35-TMS/pull/27728)
+- **DELTA:** Faro imports (upsert + recent) · Equipment loans (create / list / ledger) · Vendor merges (create + history) → `BoardSection`; page inputs → `FORM_INPUT_CLASS` (40px). Guard ratcheted. Engines/upload/save paths unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements/Fuel dead actions / KPI gaps
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Factoring remaining tabs → BoardSection
+
+- **STATUS:** MERGED [#27727](https://github.com/tioperfumes07/IH35-TMS/pull/27727)
+- **DELTA:** Escrow Account · Cash Reserve · Chargebacks & Overpayments · Account Summary Faro lines · Purchase report · Fees Paid · Aging · Reserve tracker · Recourse · Chargebacks & Fees · Statements/Settings → shared `BoardSection` (engines/ParityTable unchanged). Guard ratcheted for all listed testIds.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 16/16)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (Faro imports / equipment loans / vendor merges still bare cards)
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
+Older FINAL-2 rows (31–222) + row 114/118 notes: [archive/OUTBOX-CURSOR-archive-2026-10-25.md](archive/OUTBOX-CURSOR-archive-2026-10-25.md).

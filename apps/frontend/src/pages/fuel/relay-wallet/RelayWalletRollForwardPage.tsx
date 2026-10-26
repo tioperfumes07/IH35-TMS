@@ -77,8 +77,12 @@ export function RelayWalletRollForwardPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid="relay-wallet-page">
-        Select an operating company to view the Relay wallet.
+      <div className="space-y-3" data-testid="relay-wallet-page">
+        <FuelBoardSection title="Relay wallet" testId="relay-wallet-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view the Relay wallet.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

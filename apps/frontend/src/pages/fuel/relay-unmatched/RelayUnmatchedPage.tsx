@@ -107,8 +107,12 @@ export function RelayUnmatchedPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid="relay-unmatched-page">
-        Select an operating company to view unmatched Relay fills.
+      <div className="space-y-3" data-testid="relay-unmatched-page">
+        <FuelBoardSection title="Relay unmatched" testId="relay-unmatched-need-company">
+          <div className="px-3.5 py-3 text-xs text-gray-700">
+            Select an operating company to view unmatched Relay fills.
+          </div>
+        </FuelBoardSection>
       </div>
     );
   }

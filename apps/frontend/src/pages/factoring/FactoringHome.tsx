@@ -1984,12 +1984,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 />
               ) : null}
               {companyId && !activeFactor ? (
-                <div
-                  className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-600"
-                  data-testid="factoring-home-no-factor"
-                >
-                  No factor configured. Activate a factor to manage its profile.
-                </div>
+                <BoardSection title="Active factor" testId="factoring-home-no-factor">
+                  <div className="px-3.5 py-3 text-xs text-gray-600">
+                    No factor configured. Activate a factor to manage its profile.
+                  </div>
+                </BoardSection>
               ) : null}
               <div data-testid="factoring-account-summary">
               {summaryQuery.isError ? (
