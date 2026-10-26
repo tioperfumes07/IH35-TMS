@@ -197,21 +197,23 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
 
   if (!companyId) {
     return (
-      <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
-        Select a company to review Relay deposits.
-      </section>
+      <FuelBoardSection title="Relay deposit funding" testId="fuel-relay-inbox-no-company">
+        <p className="px-3.5 py-2 text-xs text-gray-500">Select a company to review Relay deposits.</p>
+      </FuelBoardSection>
     );
   }
   if (depositsQuery.isError || cardsQuery.isError) {
     return (
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <ListErrorBanner
-          onRetry={() => {
-            void depositsQuery.refetch();
-            void cardsQuery.refetch();
-          }}
-        />
-      </section>
+      <FuelBoardSection title="Relay deposit funding" testId="fuel-relay-inbox-load-error">
+        <div className="px-3.5 py-2">
+          <ListErrorBanner
+            onRetry={() => {
+              void depositsQuery.refetch();
+              void cardsQuery.refetch();
+            }}
+          />
+        </div>
+      </FuelBoardSection>
     );
   }
 

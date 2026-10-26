@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Relay deposit empty/error → FuelBoardSection
+
+- **STATUS:** SHIPPING — after fill-not-shell batch (#27727–#27735)
+- **DELTA:** RelayDepositReview no-company + load-error returns → `FuelBoardSection` (engines unchanged). Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-relay-deposit-review-parity-surface-bar PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** RelayDepositReview.tsx · verify-relay-deposit-review-parity-surface-bar.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Statement workflow + EscrowVisualizer → BoardSection
 
 - **STATUS:** SHIPPING — after [#27731](https://github.com/tioperfumes07/IH35-TMS/pull/27731) MERGED
