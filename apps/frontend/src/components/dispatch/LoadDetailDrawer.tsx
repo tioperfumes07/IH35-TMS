@@ -677,7 +677,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   // (Devin Live FAIL: WO→load reached /dispatch/loads/:id?view=list with no visible drawer).
   const body = (
     <>
-      {isPage ? null : <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />}
+      {isPage ? null : <div className="fixed inset-0 z-[200] bg-black/30" data-testid="load-detail-drawer-backdrop" />}
       <aside
         className={
           isPage
