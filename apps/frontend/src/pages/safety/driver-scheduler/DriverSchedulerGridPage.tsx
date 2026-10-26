@@ -441,6 +441,7 @@ export function DriverSchedulerGridPage() {
                 value={tempCoverForm.unitId}
                 onChange={(unitId) => setTempCoverForm((f) => ({ ...f, unitId }))}
                 allowCreate
+                size="sm"
               />
             </div>
           </label>
@@ -452,6 +453,7 @@ export function DriverSchedulerGridPage() {
                 value={tempCoverForm.primaryDriverId}
                 onChange={(primaryDriverId) => setTempCoverForm((f) => ({ ...f, primaryDriverId }))}
                 shell="modal"
+                size="sm"
               />
             </div>
           </label>
@@ -463,6 +465,7 @@ export function DriverSchedulerGridPage() {
                 value={tempCoverForm.coverDriverId}
                 onChange={(coverDriverId) => setTempCoverForm((f) => ({ ...f, coverDriverId }))}
                 shell="modal"
+                size="sm"
               />
             </div>
           </label>
