@@ -55,7 +55,7 @@ export const LIVE_STATEMENT_DISCOUNT_JES_SQL = `
        AND je.memo LIKE '% statement % — Fuel Card Discount'
        AND EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id AND l.relationship_role = 'fuel_card_discount')
        AND je.reversed_by_je_id IS NULL
-       AND NOT EXISTS (SELECT 1 FROM accounting.journal_entries r WHERE r.reverses_je_id = je.id AND r.voided_at IS NULL)
+       AND NOT EXISTS (SELECT 1 FROM accounting.journal_entries r WHERE r.reverses_je_id = je.id AND r.operating_company_id = je.operating_company_id AND r.voided_at IS NULL)
      GROUP BY je.id, je.entry_date, je.memo
      ORDER BY je.entry_date, je.id`;
 
@@ -79,8 +79,9 @@ const tb = async (c: QueryClient, companyId: string) =>
 const acctNet = async (c: QueryClient, companyId: string, num: string) =>
   Number((await c.query<{ net: string }>(
     `SELECT COALESCE(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net
-       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-       JOIN catalogs.accounts a ON a.id = p.account_id
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+       JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid AND je.voided_at IS NULL AND a.account_number = $2`, [companyId, num])).rows[0]!.net);
 
 /** One batch inside the caller's transaction. Throws CardCreditRepairRefused on any failed assert (→ rollback). */

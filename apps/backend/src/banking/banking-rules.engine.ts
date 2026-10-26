@@ -198,8 +198,8 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
   let acctMap = new Map<string, string>();
   if (acctIds.length) {
     const acctRes = await client.query<{ id: string; account_number: string }>(
-      `SELECT id::text, account_number FROM catalogs.accounts WHERE id = ANY($1::uuid[])`,
-      [acctIds]
+      `SELECT id::text, account_number FROM catalogs.accounts WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
+      [acctIds, operatingCompanyId]
     );
     acctMap = new Map(acctRes.rows.map((a) => [a.id, a.account_number]));
   }

@@ -101,7 +101,7 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
               COUNT(*)::int AS group_count
             FROM banking.bank_transactions bt
             LEFT JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
-            LEFT JOIN catalogs.accounts cat ON cat.id = ba.ledger_account_id, co
+            LEFT JOIN catalogs.accounts cat ON cat.id = ba.ledger_account_id AND cat.operating_company_id = bt.operating_company_id, co
             WHERE bt.operating_company_id = co.oc_id
               AND NOT bt.is_credit
               AND bt.voided_at IS NULL

@@ -233,6 +233,7 @@ export async function getUnexpectedExpensesReport(input: {
           NULL::text AS work_order_display_id
         FROM banking.bank_transactions bt
         LEFT JOIN mdata.units u ON u.id = bt.categorization_unit_id
+         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = bt.operating_company_id
         WHERE bt.operating_company_id = $1::uuid
           AND bt.is_sample_data IS NOT TRUE
           AND bt.is_credit = false

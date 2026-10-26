@@ -140,7 +140,7 @@ async function fillCt(client: DbClient, moment: string | null): Promise<string |
   ).rows[0]?.t ?? null;
 }
 
-async function loadWindowLabel(client: DbClient, loadId: string | null): Promise<FuelCandidateLoad> {
+async function loadWindowLabel(client: DbClient, companyId: string, loadId: string | null): Promise<FuelCandidateLoad> {
   if (!loadId) {
     return { load_id: null, load_number: null, settlement_ref: null, pickup: null, delivery: null, route: null };
   }
@@ -157,7 +157,8 @@ async function loadWindowLabel(client: DbClient, loadId: string | null): Promise
               -- settlement is mdata.loads.presettlement_link_id. The signed number when there is one, else the tour's P-number.
               (SELECT COALESCE(ds.source_document_ref, ds.display_id)
                  FROM driver_finance.driver_settlements ds
-                WHERE ds.id = l.presettlement_link_id AND ds.voided_at IS NULL) AS settlement_ref,
+                WHERE ds.id = l.presettlement_link_id AND ds.operating_company_id = l.operating_company_id
+                  AND ds.voided_at IS NULL) AS settlement_ref,
               (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                  FROM mdata.load_stops s
                 WHERE s.load_id = l.id AND s.stop_type::text = 'pickup' AND s.soft_deleted_at IS NULL
@@ -176,8 +177,8 @@ async function loadWindowLabel(client: DbClient, loadId: string | null): Promise
                   WHERE s.load_id = l.id AND s.stop_type::text IN ('delivery','drop') AND s.soft_deleted_at IS NULL
                   ORDER BY s.sequence_number DESC NULLS LAST LIMIT 1)
               ) AS route
-         FROM mdata.loads l WHERE l.id = $1::uuid`,
-      [loadId]
+         FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid`,
+      [loadId, companyId]
     )
   ).rows[0];
   return {
@@ -237,7 +238,7 @@ async function enrichCandidate(
     loadId = load?.load_id ?? null;
   }
   // 443.258-A: no load at the pump moment -> load: null (never an empty object, never omitted)
-  const load = loadId ? await loadWindowLabel(client, loadId) : null;
+  const load = loadId ? await loadWindowLabel(client, companyId, loadId) : null;
   return {
     unit_id: c.unit_id,
     unit_number: c.unit_number,
@@ -276,7 +277,7 @@ async function fillMoney(client: DbClient, companyId: string, fuelId: string) {
               f.driver_id::text,
               nullif(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
          FROM fuel.fuel_transactions f
-         LEFT JOIN mdata.drivers d ON d.id = f.driver_id
+         LEFT JOIN mdata.drivers d ON d.id = f.driver_id AND d.operating_company_id = f.operating_company_id
         WHERE f.id = $2::uuid AND f.operating_company_id = $1::uuid`,
       [companyId, fuelId]
     )
@@ -319,7 +320,7 @@ export async function upsertFuelAssignmentQuestion(
     proposedLoadId = l?.load_id ?? null;
     proposedLoadNumber = l?.load_number ?? null;
   }
-  const proposedLoad = await loadWindowLabel(client, proposedLoadId);
+  const proposedLoad = await loadWindowLabel(client, input.companyId, proposedLoadId);
   const evidence = {
     candidates,
     truck_resolution: res.truck_resolution,
@@ -605,7 +606,7 @@ export async function answerFuelAssignmentQuestion(
   if (!loadId) return { error: "load_required" };
 
   const loadNumber = (
-    await client.query<{ n: string | null }>(`SELECT load_number::text AS n FROM mdata.loads WHERE id = $1::uuid`, [loadId])
+    await client.query<{ n: string | null }>(`SELECT load_number::text AS n FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [loadId, input.companyId])
   ).rows[0]?.n ?? null;
 
   const res = await resolveFillTruckAndLoad(client, input.companyId, q.fuel_transaction_id);

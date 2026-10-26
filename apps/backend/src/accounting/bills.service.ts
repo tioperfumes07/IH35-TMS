@@ -1281,7 +1281,7 @@ export async function countBillsByVendor(
               COALESCE(SUM(${BILL_OPEN_BALANCE_SQL}), 0)::bigint AS total_balance_cents
          FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
-        WHERE ${where.join(" AND ")}`,
+        WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}`,
       values
     );
     return {
@@ -1499,7 +1499,7 @@ export async function aggregateBillsForRegister(
     const result = await client.query(
       `SELECT COUNT(*)::int AS count, COALESCE(SUM(b.amount_cents), 0)::bigint AS amount_cents
        FROM accounting.bills b ${BILL_VENDOR_RESOLVE_JOIN_SQL}
-       WHERE ${where.join(" AND ")}`, values);
+       WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}`, values);
     return { count: Number(result.rows[0]?.count ?? 0), amount_cents: Number(result.rows[0]?.amount_cents ?? 0) };
   });
 }

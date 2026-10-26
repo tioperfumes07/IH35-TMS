@@ -96,7 +96,8 @@ export async function loadFillFacts(client: DbClient, companyId: string, fuelId:
             r.location_city AS r_city, r.location_state AS r_state, r.location_fuel_merchant_location_id AS r_store, r.location_name AS r_name
        FROM fuel.fuel_transactions f
        LEFT JOIN mdata.units cu ON cu.id = COALESCE(f.card_unit_id, f.unit_id)
-       LEFT JOIN mdata.loads l ON l.id = f.load_id
+        AND COALESCE(cu.currently_leased_to_company_id, cu.owner_company_id) = f.operating_company_id
+       LEFT JOIN mdata.loads l ON l.id = f.load_id AND l.operating_company_id = f.operating_company_id
        LEFT JOIN integrations.relay_fuel_transactions r ON r.id = f.relay_fuel_transaction_id
       WHERE f.id = $2::uuid AND f.operating_company_id = $1::uuid`,
     [companyId, fuelId]
@@ -140,6 +141,7 @@ export async function gpsTrucksAtStation(
             round(min(abs(extract(epoch FROM v.captured_at - $2::timestamptz)) / 60))::int AS minutes_off
        FROM telematics.vehicle_locations v
        JOIN mdata.units u ON u.id = v.unit_id
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = v.operating_company_id
       WHERE v.operating_company_id = $1::uuid
         AND v.captured_at BETWEEN $2::timestamptz - make_interval(mins => $3) AND $2::timestamptz + make_interval(mins => $3)
         AND CASE WHEN $4::float8 IS NOT NULL THEN ${dist} <= $6
@@ -253,7 +255,7 @@ export async function applyFillTruckAndLoad(
         SET card_unit_id = COALESCE(card_unit_id, unit_id),
             unit_id = COALESCE($3::uuid, unit_id),
             driver_id = CASE WHEN $3::uuid IS NOT NULL AND $3::uuid IS DISTINCT FROM unit_id
-                             THEN COALESCE((SELECT l.assigned_primary_driver_id FROM mdata.loads l WHERE l.id = $4::uuid), driver_id)
+                             THEN COALESCE((SELECT l.assigned_primary_driver_id FROM mdata.loads l WHERE l.id = $4::uuid AND l.operating_company_id = $1::uuid), driver_id)
                              ELSE driver_id END,
             fill_moment_at = COALESCE(fill_moment_at, $5::timestamptz),
             fill_moment_source = COALESCE(fill_moment_source, $6),
@@ -311,7 +313,7 @@ export async function runFuelFollowsTruck(
       toUnit = ruling.to_unit_id ?? res.truck_unit_id ?? res.card_unit_id;
       if (ruling.to_load_id) {
         toLoad = ruling.to_load_id;
-        toLoadNumber = (await client.query<{ n: string | null }>(`SELECT load_number::text AS n FROM mdata.loads WHERE id = $1::uuid`, [toLoad])).rows[0]?.n ?? null;
+        toLoadNumber = (await client.query<{ n: string | null }>(`SELECT load_number::text AS n FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [toLoad, input.companyId])).rows[0]?.n ?? null;
       } else if (toUnit && res.moment) {
         const l = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: input.companyId, unitId: toUnit, driverId: null, at: res.moment });
         toLoad = l?.load_id ?? null;
