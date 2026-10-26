@@ -44,7 +44,17 @@ const SUMMARY_START_MARKER = 'data-testid="factoring-account-summary"';
 const SUMMARY_END_MARKER = '{show("purchase_report")';
 
 function countTopLevelNavItems(src, manifestSrc = fs.readFileSync(MANIFEST, "utf8")) {
-  // ROUND 435: the strip is `items={FARO_TABS.map(...)}` — one source of truth, counted from the FARO_TABS literal.
+  // ROUND 443.326: FactoringBoardChrome + factoringSubnavItems built from FARO_TABS.map — new chrome contract.
+  if (/\bFactoringBoardChrome\b/.test(src) && /\bfactoringSubnavItems\b/.test(src)) {
+    if (!/FARO_TABS\.map\(/.test(src)) {
+      return { count: -1, error: "factoringSubnavItems must be built from FARO_TABS.map — not a hand-rolled array" };
+    }
+    const start = manifestSrc.indexOf("export const FARO_TABS = [");
+    const end = manifestSrc.indexOf("] as const;", start);
+    if (start < 0 || end < 0) return { count: -1, error: "could not read FARO_TABS in router/route-manifest.ts" };
+    return { count: (manifestSrc.slice(start, end).match(/\{\s*id:\s*"/g) ?? []).length, error: null };
+  }
+  // ROUND 435: legacy <NavyPageSubNav items={FARO_TABS.map(...)} — one source of truth, counted from FARO_TABS literal.
   if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src)) {
     const start = manifestSrc.indexOf("export const FARO_TABS = [");
     const end = manifestSrc.indexOf("] as const;", start);
@@ -52,7 +62,7 @@ function countTopLevelNavItems(src, manifestSrc = fs.readFileSync(MANIFEST, "utf
     return { count: (manifestSrc.slice(start, end).match(/\{\s*id:\s*"/g) ?? []).length, error: null };
   }
   const marker = src.indexOf("<NavyPageSubNav");
-  if (marker < 0) return { count: -1, error: "FactoringHome must render <NavyPageSubNav>" };
+  if (marker < 0) return { count: -1, error: "FactoringHome must render <NavyPageSubNav> or <FactoringBoardChrome subnavItems={factoringSubnavItems}>" };
   const itemsStart = src.indexOf("items={[", marker);
   if (itemsStart < 0) return { count: -1, error: "<NavyPageSubNav> must take an items={[...]} array" };
   let i = itemsStart + "items={[".length;
@@ -184,23 +194,24 @@ if (process.argv.includes("--selftest")) {
 
   const mutations = [];
 
-  // 1. Tab count (ROUND 435): a hand-written strip of 11 tabs instead of FARO_TABS must fail.
-  mutations.push([
-    "the strip is hand-written with an 11th tab",
-    base.home.replace(
-      "items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}",
-      "items={[" + Array.from({ length: 11 }, (_, k) => `{ label: "T${k}", to: "/factoring/t${k}" }`).join(", ") + "]}"
-    ),
-  ]);
+  // 1. Tab count (ROUND 443.326): factoringSubnavItems hand-rolled to 11 items instead of FARO_TABS.map must fail.
+  {
+    const anchor = "() => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),";
+    if (!base.home.includes(anchor)) throw new Error("selftest anchor #1 missing — re-anchor to factoringSubnavItems useMemo body");
+    mutations.push([
+      "factoringSubnavItems is hand-rolled to 11 tabs instead of FARO_TABS.map",
+      base.home.replace(anchor, "() => [" + Array.from({ length: 11 }, (_, k) => `{ label: "T${k}", to: "/factoring/t${k}" }`).join(", ") + "],"),
+    ]);
+  }
 
-  // 1b. A top-level runtime spread other than FARO_TABS must fail.
-  mutations.push([
-    "top-level nav adds another spread",
-    base.home.replace(
-      "items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}",
-      "items={[...EXTRA_TABS.map((x) => x)]}"
-    ),
-  ]);
+  // 1b. factoringSubnavItems driven by a non-FARO_TABS source must fail.
+  {
+    const anchor = "() => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),";
+    mutations.push([
+      "factoringSubnavItems uses a non-FARO_TABS runtime source",
+      base.home.replace(anchor, "() => EXTRA_TABS.map((x) => ({ label: x.label, to: x.to })),"),
+    ]);
+  }
 
   // 2. A bare dash with no title= (simulate a future cell forgetting the canonical NotApplicable
   //    component entirely and hand-rolling a plain dash instead).
