@@ -769,7 +769,7 @@ export async function backfillRelayFillSettlementRefs(
   input: { operating_company_id: string; actor_user_uuid: string },
 ): Promise<{ stamped: Array<{ expense_id: string; settlement_no: string }>; unnamed: string[] }> {
   const docs = (await client.query<{ id: string }>(
-    `SELECT e.id::text FROM accounting.expenses e JOIN mdata.vendors v ON v.id = e.vendor_uuid
+    `SELECT e.id::text FROM accounting.expenses e JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND v.vendor_name ~* '^relay( |$)'
         AND (e.settlement_no IS NULL OR e.source_settlement_ref IS NULL)
         AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = e.journal_entry_id AND p.source_transaction_type = 'fuel_event')

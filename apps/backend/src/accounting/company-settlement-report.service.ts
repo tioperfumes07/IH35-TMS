@@ -310,7 +310,7 @@ export async function computeCompanySettlementNetRevenueCents(
         SELECT lk.cs_id, SUM(ROUND(sl.amount * 100)::bigint) AS cents
         FROM links lk
         JOIN driver_finance.settlement_lines sl ON sl.settlement_id = lk.ds_id
-        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id AND ds.operating_company_id = $1::uuid
         WHERE sl.is_active = true AND sl.line_type = ANY($3::text[])
         GROUP BY lk.cs_id
       ),

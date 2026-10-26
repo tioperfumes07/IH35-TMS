@@ -3052,7 +3052,7 @@ export async function settlementNetCombinations(
        FROM driver_finance.driver_settlement_gl_bills g
        JOIN driver_finance.driver_settlements s ON s.id = g.settlement_id AND s.operating_company_id = g.operating_company_id
        JOIN accounting.bills b ON b.id = g.accounting_bill_id AND b.operating_company_id = g.operating_company_id
-       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+       LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
       WHERE g.operating_company_id = $1::uuid
         AND s.voided_at IS NULL
         AND b.status::text NOT IN ('void', 'voided', 'paid')

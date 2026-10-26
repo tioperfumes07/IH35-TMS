@@ -86,7 +86,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
                 r.bank_account_filter_id, r.then_vendor_id, r.then_account_id, r.then_class_id,
                 a.account_number AS then_account_number
          FROM accounting.banking_rules r
-         JOIN catalogs.accounts a ON a.id = r.then_account_id
+         JOIN catalogs.accounts a ON a.id = r.then_account_id AND a.operating_company_id = r.operating_company_id
          WHERE r.operating_company_id = $1::uuid AND r.is_active = true`,
         [q.operating_company_id]
       );
@@ -677,7 +677,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
                 r.bank_account_filter_id, r.then_vendor_id, r.then_account_id, r.then_class_id,
                 a.account_number AS then_account_number
          FROM accounting.banking_rules r
-         JOIN catalogs.accounts a ON a.id = r.then_account_id
+         JOIN catalogs.accounts a ON a.id = r.then_account_id AND a.operating_company_id = r.operating_company_id
          WHERE r.operating_company_id = $1::uuid AND r.is_active = true`,
         [body.data.operating_company_id]
       );
