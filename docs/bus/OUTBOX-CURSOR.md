@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting tools BoardSection + Factoring FORM_INPUT (real code)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Banking Home BoardSection panels (real code)
 
 - **STATUS:** SHIPPING
+- **DELTA:** BankingHome Accounts bank-list · Factoring virtual · Inspect · Relay · Statement Import · Plaid · Settings panels → shared `BoardSection`. Honesty banners unchanged. Statement account select → FORM_SELECT_CLASS. Engines (reorder/inspect/StatementUpload/Plaid) kept. New verify-banking-home-boards via step 12561. Prior ACCT-F220 tools #27843 MERGED.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-banking-home-boards PASS · verify-banking-bare-plus-accessible-label PASS · verify-banking-home-preview-parity PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Settlements Open/Closed/Escrow Register PARTIAL depth; popup 222; Accounting 220 remaining audit
+- **Files Modified:** BankingHome.tsx · verify-banking-home-boards.mjs · 12561-verify-banking-home-preview-parity.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting tools BoardSection + Factoring FORM_INPUT (real code)
+
+- **STATUS:** MERGED [#27843](https://github.com/tioperfumes07/IH35-TMS/pull/27843) @ `385e220d78`
 - **DELTA:** Reclassify (account tree · filters · grid · batches) · Batch Expenses (type · toolbar · grid) · Accounting Escrow (accounts · postings) → shared `BoardSection`. Factoring Home profile edit inputs → `FORM_INPUT_CLASS`. Engines (applyReclassify / createExpense / escrow list) unchanged. New verify-acct-220-tools-boards (wired via step 1747). Pending 220 PARTIAL; Factoring Home stays CODED.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-acct-220-tools-boards PASS · verify-b5-reclassify-batch PASS · verify-v3-board-grammar-every-surface PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
@@ -187,13 +196,4 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell
 - **Files Modified:** PaymentsToYouPanel.tsx · ReserveTracker.tsx · FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · verify-fact-s04-reserves-surface.mjs · OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FinalizeBlock → BoardSection
-
-- **STATUS:** MERGED [#27743](https://github.com/tioperfumes07/IH35-TMS/pull/27743)
-- **DELTA:** FinalizeBlock → `BoardSection`; Save Draft stays honestly disabled (no draft API). Guard ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest)
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** FinalizeBlock.tsx · verify-settlement-fe-honesty.mjs · OUTBOX-CURSOR.md
 
