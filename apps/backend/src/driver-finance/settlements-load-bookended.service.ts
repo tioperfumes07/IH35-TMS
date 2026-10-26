@@ -1187,12 +1187,25 @@ export async function pingSettlementOnLoadEvent(
         actorUserId: opts.actorUserId ?? null,
       });
       // ROW-213 (443.292-B): re-derive period_start from earliest pickup stop; best-effort (open only).
+      // SAVEPOINT so a failure cannot poison the outer txn (25P02); log — never silent bare catch.
+      await client.query("SAVEPOINT refresh_open_tour_period_dates");
       try {
         const settlRes = await client.query<{ status: string }>(`SELECT status FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
         if (settlRes.rows[0]?.status === "open") {
           await refreshOpenTourPeriodDates(client, { settlementId: String(settlementId), operatingCompanyId: opts.operatingCompanyId, actorUserId: opts.actorUserId ?? "" });
         }
-      } catch { /* non-fatal — period_end display path covers open tours via CASE in buildTourReadout */ }
+        await client.query("RELEASE SAVEPOINT refresh_open_tour_period_dates");
+      } catch (err) {
+        try {
+          await client.query("ROLLBACK TO SAVEPOINT refresh_open_tour_period_dates");
+        } catch {
+          /* nested rollback already failed — outer handler continues */
+        }
+        console.error(
+          { err, settlement_id: settlementId, load_id: opts.loadId },
+          "driver_finance.refresh_open_tour_period_dates failed (period_end display path covers open tours via CASE in buildTourReadout)",
+        );
+      }
     }
   }
 }

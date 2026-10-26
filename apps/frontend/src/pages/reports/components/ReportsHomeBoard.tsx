@@ -145,7 +145,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
     v == null || (typeof v === "number" && !Number.isFinite(v)) ? "—" : String(v);
 
   const accountingColumns: ParityColumn<(typeof accountingRows)[number]>[] = [
-    { key: "favorite", label: "☆", sortable: false, render: () => <span style={{ color: V3.muted }}>☆</span> },
+    { key: "favorite", label: "☆", sortable: true, sortValue: ([, label]) => label, render: () => <span style={{ color: V3.muted }}>☆</span> },
     {
       key: "report",
       label: "Report",
@@ -162,7 +162,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
     {
       key: "open",
       label: "Open in viewer",
-      sortable: false,
+      sortable: true,
+      sortValue: ([, label]) => label,
       render: ([reportKey]) => (
         <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => openReport(reportKey)}>
           Run →
@@ -172,7 +173,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
     {
       key: "export",
       label: "Export",
-      sortable: false,
+      sortable: true,
+      sortValue: ([, label]) => label,
       render: ([reportKey]) => (
         <button type="button" className="hover:underline" style={{ color: V3.muted, fontSize: V3_TABLE.fontPx }} title="Opens the live viewer — export PDF / XLSX from the report with filters applied" onClick={() => openReport(reportKey)}>
           PDF · XLSX
@@ -300,6 +302,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 <div style={{ overflowX: "auto" }}>
                   <ParityTable<(typeof accountingRows)[number]>
                     tableTestId="reports-accounting-financial-table"
+                    storageKey="ih35.reports.home.accounting-financial.v1"
                     appearance="board"
                     hidePager
                     density="compact"
@@ -403,6 +406,7 @@ function SimpleCategoryPanel({
       ) : (
         <ParityTable<{ id: string; label: string; shows: string }>
           tableTestId={`reports-category-table-${category}`}
+          storageKey={`ih35.reports.home.category.${category}.v1`}
           appearance="board"
           hidePager
           density="compact"
@@ -427,7 +431,8 @@ function SimpleCategoryPanel({
             {
               key: "run",
               label: "Run",
-              sortable: false,
+              sortable: true,
+              sortValue: (r) => r.label,
               render: (r) => (
                 <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
                   Run →
