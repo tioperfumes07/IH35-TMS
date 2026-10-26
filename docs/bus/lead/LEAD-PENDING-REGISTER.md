@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 05:15 PM CT · CODE-COMPLETE MODE · ENGINE ENG-01..63
+# IH35-TMS — Lead pending register (USMCA) · 10-26-2026 07:30 AM CT · CODE-COMPLETE MODE · ENGINE ENG-01..63 (Lead remeasure WAVE 0 started)
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -242,16 +242,16 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 236 | ENG | Reports | ENG-19 Company settlement report + Trip Profitability counted fuel twice (fuel fill's own expense); 61 of 81 settlements negative -> 23; net -$177,024.87 -> +$113,862.11; trips negative 66 of 92 -> 25 | LEAD | 443.321 | CODED-QUEUED | 2a4fbbc2d3; parity 81/81 to the cent; guard red on old engines |
 | 237 | ENG | Ledger | AUTH-461 / AUTH-462 recorded in OWNER-AUTHORIZATIONS.md with owner quotes and audit counts | LEAD | AUTH ledger | CODED-QUEUED | claude/lead-auth-461-462-ledger |
 | 238 | ENG | Dispatch | Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301) | OWNER | ENG-21 | OPEN | owner gives the delivery street address; Lead enters it |
-| 239 | ENG | Settlements | ENG-01 P-0113/P-0117/P-0119 closed but never posted (posted_at NULL, 0 postings); ledger ratchet 1 -> live 3; blocks #27478. DB refusal: no close without posting | CC-1 | 443.322 | OPEN |  |
-| 240 | ENG | Driver pay | ENG-02 driver_pay_cents reads the accrued A/P bill, not driver_bills.gross (13574 $1,538.81 vs $957.55) | CC-1 | 443.322 | OPEN |  |
-| 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | OPEN |  |
+| 239 | ENG | Settlements | ENG-01 P-0113/P-0117/P-0119 closed but never posted (posted_at NULL, 0 postings); ledger ratchet 1 -> live 3; blocks #27478. DB refusal: no close without posting | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: closed_unposted=0; P-0113/17/19 posted |
+| 240 | ENG | Driver pay | ENG-02 driver_pay_cents reads the accrued A/P bill, not driver_bills.gross (13574 $1,538.81 vs $957.55) | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 13574 gross=95755; rollup uses gross_amount_cents |
+| 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 62/62 load_id |
 | 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | OPEN |  |
-| 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | OPEN |  |
+| 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
 | 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
 | 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | OPEN |  |
 | 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | OPEN |  |
-| 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | OPEN | reads docs/bus/lead/ENGINE-REGISTER.json |
-| 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | OPEN |  |
+| 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | DONE-LIVE | verify-engine-register-closed-by-guard PASS |
+| 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | DONE-LIVE | verify-no-live-duplicate-documents 0 groups |
 | 249 | ENG | Dispatch | ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one — $30,170.00 revenue overstated in reports; rate change must replace, not add | CC-2 | 443.323 | OPEN |  |
 | 250 | ENG | Settlements | ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account | CC-2 | 443.323 | OPEN |  |
 | 251 | ENG | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | 443.323 | OPEN |  |
