@@ -146,7 +146,9 @@ export async function fetchPriorOwedBillKeys(
   if (!billIds.length) return [];
   const { rows } = await client.query<PriorOwedBillKey>(`
     SELECT b.id::text AS bill_id, b.vendor_id::text AS vendor_id, bl.load_id::text AS load_id,
-           bl.item_id::text AS item_id, bl.amount_cents::int AS amount_cents
+           bl.item_id::text AS item_id,
+           -- bill_lines.amount is numeric DOLLARS (no amount_cents column; #27755 read one and threw 42703).
+           ROUND(bl.amount * 100)::int AS amount_cents
       FROM accounting.bills b
       JOIN accounting.bill_lines bl ON bl.bill_id = b.id
      WHERE b.id = ANY($1::uuid[])
