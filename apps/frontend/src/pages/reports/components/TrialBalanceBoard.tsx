@@ -1,7 +1,9 @@
 /**
  * ROUND 443.267 board 8 — Trial balance viewer (board-faithful).
  * Board: ~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports-Viewer-TrialBalance.dc.html
- * Sections (order): KPI strip → N accounts panel (table) → Measured A/R note.
+ * Sections (order): KPI strip → N accounts panel (table, no footer row) → Measured A/R note.
+ * ROUND 443.280 row 41: grand-total KPI tiles drill to the ledger; the Measured note is a live ReactNode
+ * (GL 1100 net vs the A/R invoice list) built by TrialBalancePage — nothing hardcoded.
  * Engines stay on TrialBalancePage (getTrialBalanceReport · AmountLink · ParityTable · export/print).
  * 443.282: Measured callout uses live account 1100 from this TB — no hardcoded A/R dollars (443.248).
  */
@@ -51,6 +53,7 @@ export function TrialBalanceBoard({
   loading,
   onCustomize,
   measuredArNote,
+  onTotalsDrill,
   children,
 }: {
   summary: TrialBalanceBoardSummary | null | undefined;
@@ -58,7 +61,9 @@ export function TrialBalanceBoard({
   loading?: boolean;
   onCustomize?: () => void;
   /** Live 1100 note from TrialBalancePage — never a hardcoded dollar string. */
-  measuredArNote?: string | null;
+  measuredArNote?: ReactNode;
+  /** Opens the ledger lines behind the grand totals; omitted when no list sums to them (e.g. cash basis). */
+  onTotalsDrill?: () => void;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -73,11 +78,13 @@ export function TrialBalanceBoard({
           <V3KpiTile
             label="Grand total debits"
             value={money(summary.grand_total_debits)}
+            onClick={onTotalsDrill}
             testId="trial-balance-kpi-debits"
           />
           <V3KpiTile
             label="Grand total credits"
             value={money(summary.grand_total_credits)}
+            onClick={onTotalsDrill}
             testId="trial-balance-kpi-credits"
           />
           <V3KpiTile

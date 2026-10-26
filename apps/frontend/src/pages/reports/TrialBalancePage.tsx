@@ -1,9 +1,8 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
-import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
-import { MoneyCell } from "../../components/shared/MoneyCell";
+import { useMemo, useState, type ReactNode } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { AmountLink, resolveAmountRoute, type AmountFilter } from "../../components/shared/AmountLink";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -12,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportTrialBalanceReport,
+  getArAgingReport,
   getTrialBalanceReport,
   type AccountingTrialBalanceRow,
 } from "../../api/reports";
@@ -28,12 +28,20 @@ import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
 import { TrialBalanceBoard, trialBalanceMeasuredArNote } from "./components/TrialBalanceBoard";
+import { V3 } from "../../design/v3-tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
   if (!cents) return "—";
   return formatUsdCents(cents);
+}
+
+/** Board table cells: plain 2-dp numbers (no $), true minus sign, em dash for zero. KPI tiles keep $. */
+function cell(cents: number) {
+  if (!cents) return "—";
+  const s = (Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return cents < 0 ? `−${s}` : s;
 }
 
 const TB_GEAR_TEST_ID = "trial-balance-column-gear";
@@ -66,6 +74,7 @@ export function TrialBalancePage() {
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
@@ -83,6 +92,14 @@ export function TrialBalancePage() {
         to_date: applied.end,
         basis: applied.basis,
       }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+
+  // Live A/R invoice-list total (the subledger) as of the applied end date, for the Measured note.
+  const arSubledgerQuery = useQuery({
+    queryKey: ["reports", "trial-balance", "ar-subledger", companyId, applied.end],
+    queryFn: () => getArAgingReport(companyId, applied.end),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -130,14 +147,49 @@ export function TrialBalancePage() {
 
   const summary = query.data?.summary;
 
-  // 443.282 — Measured A/R note from live 1100 on this TB (never hardcoded dollars).
-  const measuredArNote = useMemo(() => {
-    if (query.isLoading) return trialBalanceMeasuredArNote(null);
+  // Measured A/R note (443.248 / 443.282 / 443.280) — computed live: GL account 1100 net from this TB vs the
+  // A/R invoice list (aging) total. No hardcoded dollars; every figure clicks through.
+  const measuredArNote = useMemo<ReactNode>(() => {
+    if (query.isLoading) return null;
     const ar = (query.data?.rows ?? []).find(
       (row) => row.account_code === "1100" || row.account_name.toLowerCase().includes("accounts receivable"),
     );
-    return trialBalanceMeasuredArNote(ar ? ar.net_balance : null);
-  }, [query.isLoading, query.data?.rows]);
+    if (!ar) return trialBalanceMeasuredArNote(null);
+    const glFilter = tbFilter(ar.account_id && !SYNTHETIC_ACCOUNT_IDS.has(ar.account_id), ar.account_id, applied);
+    const glNode = (
+      <AmountLink filter={glFilter} data-testid="tb-measured-gl">
+        {formatUsdCents(ar.net_balance)}
+      </AmountLink>
+    );
+    const sub = arSubledgerQuery.data;
+    if (!sub) {
+      return (
+        <>
+          Account 1100 (A/R) nets {glNode} on this trial balance — reconcile the invoice subledger before trusting any AR
+          report (assigned 443.248).
+        </>
+      );
+    }
+    const subNode = (
+      <Link to="/reports/ar-aging" style={{ color: V3.link }} className="hover:underline" data-testid="tb-measured-subledger">
+        {formatUsdCents(sub.total_open_cents)}
+      </Link>
+    );
+    const diff = ar.net_balance - sub.total_open_cents;
+    if (diff === 0) {
+      return (
+        <>
+          A/R in the ledger nets {glNode} and the invoice list shows {subNode} open — the subledger and GL tie.
+        </>
+      );
+    }
+    return (
+      <>
+        A/R in the ledger nets {glNode} while the invoice list shows {subNode} open — the subledger and GL do not tie by{" "}
+        {formatUsdCents(Math.abs(diff))}. Must reconcile before any AR report is trusted (assigned 443.248).
+      </>
+    );
+  }, [query.isLoading, query.data?.rows, arSubledgerQuery.data, applied]);
 
   // LEAD 443.181 — the account name + every amount keep their register AmountLink (the row opens the account
   // ledger). LST-F405 — canDrill already excludes SYNTHETIC_ACCOUNT_IDS, so the synthetic cash-basis AR/AP rows
@@ -171,7 +223,7 @@ export function TrialBalancePage() {
         kind: "money",
         render: (row) => (
           <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
-            {money(row.total_debits)}
+            {cell(row.total_debits)}
           </AmountLink>
         ),
       },
@@ -182,7 +234,7 @@ export function TrialBalancePage() {
         kind: "money",
         render: (row) => (
           <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
-            {money(row.total_credits)}
+            {cell(row.total_credits)}
           </AmountLink>
         ),
       },
@@ -194,7 +246,7 @@ export function TrialBalancePage() {
         render: (row) => (
           <span className={row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"}>
             <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
-              {money(row.net_balance)}
+              {cell(row.net_balance)}
             </AmountLink>
           </span>
         ),
@@ -265,7 +317,7 @@ export function TrialBalancePage() {
   }
 
   return (
-    <div className="space-y-4 print:space-y-2">
+    <div className="space-y-3 print:space-y-2">
       <style>{`
         @media print { .no-print { display: none !important; } body { background: white; } }
       `}</style>
@@ -357,6 +409,14 @@ export function TrialBalancePage() {
         accountCount={rows.length}
         loading={query.isLoading}
         measuredArNote={measuredArNote}
+        onTotalsDrill={
+          resolveAmountRoute(grandTotalLedger)
+            ? () => {
+                const to = resolveAmountRoute(grandTotalLedger);
+                if (to) navigate(to);
+              }
+            : undefined
+        }
         onCustomize={() => {
           const gear = document.querySelector<HTMLButtonElement>(`[data-testid="${TB_GEAR_TEST_ID}"]`);
           gear?.click();
@@ -383,15 +443,6 @@ export function TrialBalancePage() {
           suppressToolbarSearch
           suppressToolbarRange
           gearButtonTestId={TB_GEAR_TEST_ID}
-          footerCells={
-            summary
-              ? {
-                  account_name: "Grand total",
-                  total_debits: <MoneyCell cents={summary.grand_total_debits} format={money} drill={{ amount: grandTotalLedger }} />,
-                  total_credits: <MoneyCell cents={summary.grand_total_credits} format={money} drill={{ amount: grandTotalLedger }} />,
-                }
-              : undefined
-          }
         />
       </TrialBalanceBoard>
     </div>
