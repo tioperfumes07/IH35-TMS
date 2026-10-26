@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
@@ -153,7 +153,8 @@ export function initializeComplianceReminderCron(app: FastifyInstance) {
             }
           });
         },
-        app.log
+        app.log,
+        { leaseSeconds: JOB_LEASE_SECONDS } // single-fire across both API instances (LST-F443369)
       );
     },
     {

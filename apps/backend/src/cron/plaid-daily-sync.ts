@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import cron from "node-cron";
-import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncTransactions, handleItemError } from "../integrations/plaid/plaid.service.js";
 import { sendEmail } from "../notifications/email.service.js";
@@ -140,7 +140,8 @@ export function initializePlaidDailySyncCron(app: FastifyInstance) {
         async () => {
           await runPlaidDailySyncTick(app.log);
         },
-        app.log
+        app.log,
+        { leaseSeconds: JOB_LEASE_SECONDS } // single-fire across both API instances (LST-F443369)
       );
     },
     {
