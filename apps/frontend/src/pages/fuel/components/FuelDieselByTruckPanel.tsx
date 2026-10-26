@@ -19,6 +19,9 @@ type Props = {
   companyId: string;
   maxRows?: number;
   viewAllHref?: string;
+  /** Controlled Oct/Sep/YTD — when set with onPeriodChange, parent can period-sync FuelBoardKpiStrip. */
+  period?: FuelBoardPeriodId;
+  onPeriodChange?: (next: FuelBoardPeriodId) => void;
 };
 
 type DieselRow = {
@@ -31,8 +34,19 @@ type DieselRow = {
   load_count: number;
 };
 
-export function FuelDieselByTruckPanel({ companyId, maxRows, viewAllHref }: Props) {
-  const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
+export function FuelDieselByTruckPanel({
+  companyId,
+  maxRows,
+  viewAllHref,
+  period: periodProp,
+  onPeriodChange,
+}: Props) {
+  const [periodLocal, setPeriodLocal] = useState<FuelBoardPeriodId>("oct");
+  const period = periodProp ?? periodLocal;
+  const setPeriod = (next: FuelBoardPeriodId) => {
+    if (onPeriodChange) onPeriodChange(next);
+    else setPeriodLocal(next);
+  };
   const [search, setSearch] = useState("");
   const range = fuelBoardPeriodRange(period);
 

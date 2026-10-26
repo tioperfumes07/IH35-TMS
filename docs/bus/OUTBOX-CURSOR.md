@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel By-truck period-sync KPIs
+
+- **STATUS:** SHIPPING
+- **DELTA:** By-truck tab shares one Oct/Sep/YTD `byTruckPeriod` between `FuelBoardKpiStrip` and `FuelDieselByTruckPanel` (controlled period props). Same diesel aggregate engine. Guard ratcheted on verify-fuel-home-dashboard-wired board shell.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-home-dashboard-wired PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements Home/Close/Escrow + Fuel modals FORM_INPUT
+- **Files Modified:** FuelPlannerHome.tsx · FuelDieselByTruckPanel.tsx · verify-fuel-home-dashboard-wired.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel Home board KPIs (443.280)
 
 - **STATUS:** SHIPPING
