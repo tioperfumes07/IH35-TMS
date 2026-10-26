@@ -2576,11 +2576,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {show("reserve_tracker") ? (
-        <BoardSection title="Reserve tracker" testId="factoring-reserve-tracker">
-          <ReserveTracker />
-        </BoardSection>
-      ) : null}
+      {/* ROUND 443.280 fill-not-shell — ReserveTracker owns BoardSections (forecast / balances /
+          history / chargebacks). Outer wrap removed so boards are not nested box-in-box. */}
+      {show("reserve_tracker") ? <ReserveTracker /> : null}
 
       {show("recourse_pipeline") ? (
         <BoardSection

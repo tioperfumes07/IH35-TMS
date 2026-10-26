@@ -39,6 +39,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ReserveDashboardAddFactorModal } from "./ReserveDashboardAddFactorModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 
@@ -229,9 +230,11 @@ export function ReserveTracker() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-gray-500" data-testid="factoring-reserves-need-company">
-        Select an operating company to view the reserve tracker.
-      </div>
+      <BoardSection title="Reserve tracker" testId="factoring-reserves-need-company">
+        <div className="px-3.5 py-3 text-xs text-gray-500">
+          Select an operating company to view the reserve tracker.
+        </div>
+      </BoardSection>
     );
   }
 
@@ -243,10 +246,10 @@ export function ReserveTracker() {
           overlapping band one screen higher from the same summary query. See the file header
           comment for the full explanation. */}
 
-      {/* Release forecast */}
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
+      <BoardSection
+        title="Estimated Reserve Release Schedule"
+        testId="factoring-reserve-tracker"
+        headerRight={
           <div className="min-w-[220px]" data-testid="reserve-tracker-factor-picker">
             {/* LST-F159: bare <SelectCombobox> had no + Add new — operators left Reserve Tracker to create a factor. */}
             <Combobox
@@ -262,10 +265,9 @@ export function ReserveTracker() {
               }}
             />
           </div>
-        </div>
-
-        {/* Forecast windows */}
-        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        }
+      >
+        <div className="mb-3 grid grid-cols-2 gap-2 px-3.5 pt-2 sm:grid-cols-4">
           {([7, 14, 30, 60] as const).map((days) => (
             <div key={days} className="border-t border-gray-200 bg-gray-50 p-2 text-center">
               <div className="text-section-header uppercase tracking-wide text-gray-500">Next {days}d</div>
@@ -276,7 +278,6 @@ export function ReserveTracker() {
           ))}
         </div>
 
-        {/* Forecast schedule table */}
         {fc60.isError ? (
           <ListErrorState
             title="Couldn't load release forecast"
@@ -294,64 +295,69 @@ export function ReserveTracker() {
             emptyText={fc60.isLoading ? "Calculating…" : "No projected releases in the next 60 days."}
           />
         )}
-      </div>
+      </BoardSection>
 
       {/* Per-factor reserve balances. ROUND 435 (carried over from the retired ReserveDashboard): a failed balances read
           says so and an empty one says it is empty — never a silently missing section that reads as "nothing held". */}
       {balancesQ.isError ? (
-        <ListErrorState
-          title="Couldn't load reserve balances"
-          status={0}
-          message={(balancesQ.error as Error)?.message}
-          onRetry={() => void balancesQ.refetch()}
-        />
+        <BoardSection title="Per-factor reserve balances" testId="factoring-reserve-balances">
+          <ListErrorState
+            title="Couldn't load reserve balances"
+            status={0}
+            message={(balancesQ.error as Error)?.message}
+            onRetry={() => void balancesQ.refetch()}
+          />
+        </BoardSection>
       ) : balancesQ.isLoading ? (
-        <div className="rounded-sm border bg-white p-3 text-xs text-gray-500">Loading reserve balances…</div>
+        <BoardSection title="Per-factor reserve balances" testId="factoring-reserve-balances">
+          <div className="px-3.5 py-3 text-xs text-gray-500">Loading reserve balances…</div>
+        </BoardSection>
       ) : reserveBalances.length === 0 ? (
-        <div className="rounded-sm border bg-white p-3 text-xs text-gray-500" data-testid="factoring-reserves-honest-empty">
-          No reserve balances found.
-        </div>
+        <BoardSection title="Per-factor reserve balances" testId="factoring-reserves-honest-empty">
+          <div className="px-3.5 py-3 text-xs text-gray-500">No reserve balances found.</div>
+        </BoardSection>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {reserveBalances.map((bal) => (
-            <div
-              key={bal.factor_id}
-              className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
-                selectedFactorId === bal.factor_id
-                  ? "border-[#E5E7EB] bg-[#F7F8FA]"
-                  : "border-gray-200 bg-[var(--surface-unselected)] hover:border-[#E5E7EB]"
-              }`}
-              onClick={() => setSelectedFactorId(bal.factor_id)}
-            >
-              {/* LINK reverse_link: factor_id was dead text — EntityLink kind="factor" resolves to
-                  /factoring/factors?factor_id= (FactorAdmin). stopPropagation so the link doesn't
-                  also fire this card's own onClick (local selectedFactorId toggle). */}
-              <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">
-                <EntityLink
-                  kind="factor"
-                  id={bal.factor_id}
-                  label={entityLabel(factorNameById.get(bal.factor_id), bal.factor_id, "Factor")}
-                  onClick={(e) => e.stopPropagation()}
-                />
+        <BoardSection title="Per-factor reserve balances" testId="factoring-reserve-balances">
+          <div className="grid gap-3 px-3.5 py-2 sm:grid-cols-2 lg:grid-cols-3">
+            {reserveBalances.map((bal) => (
+              <div
+                key={bal.factor_id}
+                className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
+                  selectedFactorId === bal.factor_id
+                    ? "border-[#E5E7EB] bg-[#F7F8FA]"
+                    : "border-gray-200 bg-[var(--surface-unselected)] hover:border-[#E5E7EB]"
+                }`}
+                onClick={() => setSelectedFactorId(bal.factor_id)}
+              >
+                {/* LINK reverse_link: factor_id was dead text — EntityLink kind="factor" resolves to
+                    /factoring/factors?factor_id= (FactorAdmin). stopPropagation so the link doesn't
+                    also fire this card's own onClick (local selectedFactorId toggle). */}
+                <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">
+                  <EntityLink
+                    kind="factor"
+                    id={bal.factor_id}
+                    label={entityLabel(factorNameById.get(bal.factor_id), bal.factor_id, "Factor")}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div className="mt-1 text-page-title font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Last movement: {fmtDt(bal.last_movement_at)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Total movements: {bal.movement_count}
+                </div>
               </div>
-              <div className="mt-1 text-page-title font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
-              <div className="mt-1 text-xs text-gray-500">
-                Last movement: {fmtDt(bal.last_movement_at)}
-              </div>
-              <div className="text-xs text-gray-500">
-                Total movements: {bal.movement_count}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </BoardSection>
       )}
 
-      {/* Reserve balance history table */}
       {selectedFactorId ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-xs font-semibold text-gray-800">
-            Reserve Movement History — {entityLabel(factorNameById.get(selectedFactorId), selectedFactorId, "Factor")}
-          </div>
+        <BoardSection
+          title={`Reserve Movement History — ${entityLabel(factorNameById.get(selectedFactorId), selectedFactorId, "Factor")}`}
+          testId="factoring-reserve-movement-history"
+        >
           {historyQ.isError ? (
             <ListErrorState
               title="Couldn't load reserve movement history"
@@ -377,7 +383,7 @@ export function ReserveTracker() {
                 hidePager
               />
               {/* Server-side pager (histPage drives the API offset) — handlers unchanged. */}
-              <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+              <div className="mt-2 flex items-center justify-between px-3.5 pb-2 text-xs text-gray-600">
                 <span>
                   Page {Math.min(histPage + 1, totalHistPages)} of {totalHistPages}
                 </span>
@@ -402,22 +408,20 @@ export function ReserveTracker() {
               </div>
             </>
           )}
-        </div>
+        </BoardSection>
       ) : null}
 
-      {/* Chargebacks pending detail */}
       {chargebacksQ.isError ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-xs font-semibold text-gray-800">Chargeback + Fee History</div>
+        <BoardSection title="Chargeback + Fee History" testId="factoring-reserve-chargeback-history">
           <ListErrorState
             title="Couldn't load chargeback + fee history"
             status={0}
             message={userFacingApiError(chargebacksQ.error, "Request failed")}
             onRetry={() => void chargebacksQ.refetch()}
           />
-        </div>
+        </BoardSection>
       ) : (chargebacksQ.data?.history ?? []).length > 0 ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <BoardSection title="Chargeback + Fee History" testId="factoring-reserve-chargeback-history">
           <ParityTable<FactoringChargebackFeeRow>
             title="Chargeback and fee history — latest 50"
             columns={CHARGEBACK_COLUMNS}
@@ -427,7 +431,7 @@ export function ReserveTracker() {
             tableTestId="chargeback-fee-history-table"
             emptyText="No chargebacks or fees recorded."
           />
-        </div>
+        </BoardSection>
       ) : null}
 
       <ReserveDashboardAddFactorModal

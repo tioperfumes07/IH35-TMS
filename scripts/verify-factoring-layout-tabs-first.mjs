@@ -21,6 +21,8 @@ import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const BOARD = "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx";
+const PAYMENTS = "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx";
+const RESERVE = "apps/frontend/src/pages/factoring/ReserveTracker.tsx";
 
 const KPI_TEST_IDS = [
   "factoring-kpi-outstanding-liability",
@@ -31,7 +33,7 @@ const KPI_TEST_IDS = [
 ];
 
 function analyze(src) {
-  const { home, board } = src;
+  const { home, board, payments, reserve } = src;
   const errors = [];
 
   if (!board) {
@@ -143,6 +145,7 @@ function analyze(src) {
   }
 
   // Fill-not-shell / 443.280 — Faro report tabs use BoardSection (not bare title div cards).
+  // Reserve tracker boards live in ReserveTracker.tsx (not nested under a Home BoardSection).
   for (const [titleNeedle, testId] of [
     ["Funds Due", "factoring-funds-due-report"],
     ["Request Debtor / Credit Check", "factoring-request-debtor-credit-check"],
@@ -158,7 +161,6 @@ function analyze(src) {
     ["Purchase report —", "factoring-purchase-report"],
     ["Fees Paid", "factoring-fees-paid"],
     ["Aging Report — as of", "factoring-aging-summary"],
-    ["Reserve tracker", "factoring-reserve-tracker"],
     ["Invoices inside recourse window", "factoring-home-recourse-filters"],
     ["Monthly fee summaries", "factoring-monthly-fee-summaries"],
     ["Chargebacks + fee history", "factoring-chargebacks-fee-history"],
@@ -185,12 +187,66 @@ function analyze(src) {
     }
   }
 
+  if (!home.includes("<ReserveTracker") || !/show\("reserve_tracker"\)\s*\?\s*<ReserveTracker/.test(home)) {
+    errors.push(`${HOME}: reserve_tracker tab must mount <ReserveTracker /> (boards owned by panel)`);
+  }
+  if (/<BoardSection[\s\S]{0,200}testId="factoring-reserve-tracker"[\s\S]{0,200}<ReserveTracker/.test(home)) {
+    errors.push(`${HOME}: must not nest ReserveTracker inside BoardSection (box-in-box)`);
+  }
+
+  if (!payments) {
+    errors.push(`${PAYMENTS}: missing`);
+  } else {
+    for (const [titleNeedle, testId] of [
+      ["Payments to You", "factoring-payments-to-you-intro"],
+      ["Payments to you — by", "factoring-payments-to-you-list"],
+      ["Purchase ", "factoring-payments-to-you-detail"],
+    ]) {
+      const hasBoard =
+        payments.includes("<BoardSection") &&
+        payments.includes(`testId="${testId}"`) &&
+        new RegExp(`<BoardSection[\\s\\S]{0,320}testId="${testId}"`).test(payments) &&
+        payments.includes(titleNeedle);
+      if (!hasBoard) {
+        errors.push(`${PAYMENTS}: ${titleNeedle} must wrap in BoardSection (testId=${testId})`);
+      }
+      if (new RegExp(`rounded-sm border border-gray-200 bg-white p-3" data-testid="${testId}"`).test(payments)) {
+        errors.push(`${PAYMENTS}: ${titleNeedle} must not keep layered bare card div (testId=${testId})`);
+      }
+    }
+  }
+
+  if (!reserve) {
+    errors.push(`${RESERVE}: missing`);
+  } else {
+    for (const [titleNeedle, testId] of [
+      ["Estimated Reserve Release Schedule", "factoring-reserve-tracker"],
+      ["Per-factor reserve balances", "factoring-reserve-balances"],
+      ["Reserve Movement History", "factoring-reserve-movement-history"],
+      ["Chargeback + Fee History", "factoring-reserve-chargeback-history"],
+    ]) {
+      const hasBoard =
+        reserve.includes("<BoardSection") &&
+        reserve.includes(`testId="${testId}"`) &&
+        new RegExp(`<BoardSection[\\s\\S]{0,400}testId="${testId}"`).test(reserve) &&
+        reserve.includes(titleNeedle);
+      if (!hasBoard) {
+        errors.push(`${RESERVE}: ${titleNeedle} must wrap in BoardSection (testId=${testId})`);
+      }
+      if (new RegExp(`rounded-sm border border-gray-200 bg-white p-3" data-testid="${testId}"`).test(reserve)) {
+        errors.push(`${RESERVE}: ${titleNeedle} must not keep layered bare card div (testId=${testId})`);
+      }
+    }
+  }
+
   return errors;
 }
 
 const base = {
   home: fs.readFileSync(HOME, "utf8"),
   board: fs.existsSync(BOARD) ? fs.readFileSync(BOARD, "utf8") : "",
+  payments: fs.existsSync(PAYMENTS) ? fs.readFileSync(PAYMENTS, "utf8") : "",
+  reserve: fs.existsSync(RESERVE) ? fs.readFileSync(RESERVE, "utf8") : "",
 };
 
 function withField(field, transform) {
@@ -220,6 +276,12 @@ if (process.argv.includes("--selftest")) {
     ["board drops measured amber rail", withField("board", (s) => s.replace(/borderLeft:\s*"3px solid #B45309"/g, 'borderLeft: "0"'))],
     ["home re-layers KPI strip", withField("home", (s) => s.replace("<DuplicateVendorsBanner", '<div data-testid="factoring-home-kpi-strip" /><DuplicateVendorsBanner'))],
     ["home double-mounts board", withField("home", (s) => s.replace("<DuplicateVendorsBanner", "<FactoringHomeBoard companyId={companyId} /><DuplicateVendorsBanner"))],
+    ["payments drops BoardSection", withField("payments", (s) => s.replace(/<BoardSection/g, "<div"))],
+    ["reserve drops BoardSection", withField("reserve", (s) => s.replace(/<BoardSection/g, "<div"))],
+    ["home nests ReserveTracker board", withField("home", (s) => s.replace(
+      /\{show\("reserve_tracker"\) \? <ReserveTracker \/> : null\}/,
+      '{show("reserve_tracker") ? <BoardSection title="Reserve tracker" testId="factoring-reserve-tracker"><ReserveTracker /></BoardSection> : null}',
+    ))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

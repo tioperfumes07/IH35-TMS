@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FinalizeBlock → BoardSection
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — PaymentsToYou + ReserveTracker → BoardSection
 
 - **STATUS:** SHIPPING
+- **DELTA:** PaymentsToYouPanel intro/list/detail → `BoardSection`; ReserveTracker forecast/balances/history/chargebacks → `BoardSection` (no nested Home wrap). Engines/void/undo unchanged. Guards ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 19/19) · verify-fact-s04 · verify-reserve-tracker-factor-picker · r315-payments-tabs · no-duplicate-kpi-band
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (FactoringProfilePanel / FactorAdmin bare cards)
+- **Files Modified:** PaymentsToYouPanel.tsx · ReserveTracker.tsx · FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · verify-fact-s04-reserves-surface.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FinalizeBlock → BoardSection
+
+- **STATUS:** MERGED [#27743](https://github.com/tioperfumes07/IH35-TMS/pull/27743)
 - **DELTA:** FinalizeBlock → `BoardSection`; Save Draft stays honestly disabled (no draft API). Guard ratcheted.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest)
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
