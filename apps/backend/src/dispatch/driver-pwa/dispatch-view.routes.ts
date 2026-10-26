@@ -406,6 +406,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     const driver = req.driver;
     if (!driver) return;
 
+    let finalGlCompanyId: string | null = null;
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
       const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; operating_company_id: string }>(
         `
@@ -440,6 +441,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
+      finalGlCompanyId = stop.operating_company_id;
       if (stop.latitude != null && stop.longitude != null) {
         const distance = haversineMiles(body.data.geo_lat, body.data.geo_lng, Number(stop.latitude), Number(stop.longitude));
         if (distance > 25) return { error: "outside_geofence" as const, distance };
@@ -466,9 +468,11 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
     // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
-    postFinalLoadSettlementsGl({ loadId: params.data.uuid, actorUserId: req.user!.uuid }).catch((err) =>
-      console.warn({ err, load_id: params.data.uuid }, "driver_pwa_stop_final_settlement_gl_post_failed")
-    );
+    if (finalGlCompanyId) {
+      postFinalLoadSettlementsGl({ loadId: params.data.uuid, actorUserId: req.user!.uuid, operatingCompanyId: finalGlCompanyId }).catch((err) =>
+        console.warn({ err, load_id: params.data.uuid }, "driver_pwa_stop_final_settlement_gl_post_failed")
+      );
+    }
     return updated;
   });
 

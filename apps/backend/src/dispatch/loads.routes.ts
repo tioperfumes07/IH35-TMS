@@ -2092,7 +2092,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       });
     }
     // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
-    postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: authUser.uuid }).catch((err) =>
+    postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: authUser.uuid, operatingCompanyId }).catch((err) =>
       console.warn({ err, load_id: params.data.id }, "dispatch_transition_final_settlement_gl_post_failed")
     );
     return result;

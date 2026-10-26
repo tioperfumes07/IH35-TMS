@@ -108,7 +108,7 @@ export async function registerTruckLineStopStampRoutes(app: FastifyInstance) {
         return errorReply(reply, result);
       }
       // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
-      postFinalLoadSettlementsGl({ loadId: params.data.loadId, actorUserId: user.uuid }).catch((err) =>
+      postFinalLoadSettlementsGl({ loadId: params.data.loadId, actorUserId: user.uuid, operatingCompanyId: body.data.operating_company_id }).catch((err) =>
         console.warn({ err, load_id: params.data.loadId }, "truck_line_stop_final_settlement_gl_post_failed")
       );
       return reply.code(200).send({ ok: true, proforma_invoice: result.proforma_invoice });

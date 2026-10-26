@@ -1462,7 +1462,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       return { ok: true, status: result.status };
     }
     // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
-    postFinalLoadSettlementsGl({ loadId: parsedParams.data.id, actorUserId: authUser.uuid }).catch((err) =>
+    postFinalLoadSettlementsGl({
+      loadId: parsedParams.data.id,
+      actorUserId: authUser.uuid,
+      operatingCompanyId: String(result.row?.operating_company_id ?? ""),
+    }).catch((err) =>
       console.warn({ err, load_id: parsedParams.data.id }, "mdata_load_final_settlement_gl_post_failed")
     );
     return result.row;

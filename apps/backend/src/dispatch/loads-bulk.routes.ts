@@ -397,10 +397,10 @@ export async function registerLoadsBulkRoutes(app: FastifyInstance) {
     perEntityHandler: handleLoadBulk,
     // ENG-61: after the batch transaction commits, post GL for any load_bookended settlements
     // whose trip_closed_at was just set (no-op for non-delivery loads — the function queries first).
-    onAfterBatchCommit: ({ ids, action, actorUserId }) => {
+    onAfterBatchCommit: ({ ids, action, operatingCompanyId, actorUserId }) => {
       if (action !== "set_status") return;
       for (const id of ids) {
-        postFinalLoadSettlementsGl({ loadId: id, actorUserId }).catch((err) =>
+        postFinalLoadSettlementsGl({ loadId: id, actorUserId, operatingCompanyId }).catch((err) =>
           console.warn({ err, load_id: id }, "bulk_load_final_settlement_gl_post_failed")
         );
       }
