@@ -556,3 +556,27 @@ NEXT: row 32 Projected (Auto) board completion (D042/D073 + V3 outlook) in fligh
 - **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
 
 Older FINAL-2 rows (31–222) + row 114/118 notes: [archive/OUTBOX-CURSOR-archive-2026-10-25.md](archive/OUTBOX-CURSOR-archive-2026-10-25.md).
+
+
+- **STATUS:** MERGED [#27733](https://github.com/tioperfumes07/IH35-TMS/pull/27733)
+- **DELTA:** EscrowVisualizer · Approval · Payment Status · no-settlement empty · Presettlement help → `BoardSection`; payment/reopen inputs → `FORM_INPUT_CLASS`. Engines/approve/pay paths unchanged. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-detail-sections PASS · verify-acct-surf-09-reverse-drill PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** EscrowVisualizer · SettlementStatementWorkflowPage · PresettlementSuggestionsTab · verify-settlement-detail-sections · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel Planner → FuelBoardSection
+
+- **STATUS:** MERGED [#27731](https://github.com/tioperfumes07/IH35-TMS/pull/27731)
+- **DELTA:** FuelPlannerHome planner tab — Active load plan · HOS route diagram · stop-logic · recommended stops → `FuelBoardSection`. Guard ratcheted. Engines unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-fuel-planner-active-routes-exact-range PASS (+ --selftest 7/7)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (Statement workflow / EscrowVisualizer bare cards)
+- **Files Modified:** FuelPlannerHome.tsx · verify-fuel-planner-active-routes-exact-range.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements Disputes → BoardSection
+
+- **STATUS:** MERGED [#27729](https://github.com/tioperfumes07/IH35-TMS/pull/27729)
+- **DELTA:** SettlementDisputesTab filters + detail → `BoardSection`; filter/status heights to FILTER/FORM tokens; engines/resolve/review unchanged. Guard ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-disputes-parity-surface-bar PASS (+ --selftest) · staged-filters PASS · tab-labels PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome

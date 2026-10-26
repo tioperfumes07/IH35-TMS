@@ -10,11 +10,11 @@
 | 35 | Cash Flow | Cash Flow › Manual — board verdict LAYERED | 443.280 | CODED |
 | 37 | Accounting | Accounting › Unexpected — board verdict REBUILT | 443.280 | PARTIAL |
 | 38 | Banking | Banking › Home — board verdict REBUILT | 443.280 | PARTIAL |
-| 39 | Factoring | Factoring › Home — board verdict LAYERED | 443.280 | PARTIAL |
+| 39 | Factoring | Factoring › Home — board verdict LAYERED | 443.280 | CODED |
 | 44 | Settlements | Settlements › Home — board verdict LAYERED | 443.280 | PARTIAL |
 | 45 | Settlements | Settlements › Open — board verdict PARTIAL | 443.280 | PARTIAL |
 | 46 | Settlements | Settlements › Closed — board verdict PARTIAL | 443.280 | PARTIAL |
-| 49 | Settlements | Settlements › Close — board verdict LAYERED | 443.280 | OPEN |
+| 49 | Settlements | Settlements › Close — board verdict LAYERED | 443.280 | PARTIAL |
 | 50 | Settlements | Settlements › Company — board verdict REBUILT | 443.280 | PARTIAL |
 | 53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | 443.280 | PARTIAL |
 | 54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | 443.280 | PARTIAL |

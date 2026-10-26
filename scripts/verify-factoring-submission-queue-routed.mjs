@@ -83,6 +83,7 @@ const TAB = {
   customerDrill: "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
   loadTab: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
   invoicePage: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+  repurchase: "apps/frontend/src/pages/factoring/RepurchaseDuePanel.tsx",
 };
 
 /** Matrix leaf factoring.tab.submit_to_factor — connectivity, customer, load, reverse_link. */
@@ -105,6 +106,18 @@ export function checkSubmitTab(s) {
   if (!/FORM_INPUT_CLASS/.test(s.tab) || !/FORM_TEXTAREA_CLASS/.test(s.tab)) {
     f.push(`${TAB.tab}: page inputs must use FORM_INPUT_CLASS / FORM_TEXTAREA_CLASS`);
   }
+  if (/<DataPanel\b/.test(s.tab) || /from ["'].*DataPanel["']/.test(s.tab)) {
+    f.push(`${TAB.tab}: must not keep DataPanel after 443.280 BoardSection unlayer`);
+  }
+  for (const id of ["submit-factor-purchase-board", "submit-factor-faro-actuals-board", "submit-factor-totals-board"]) {
+    if (!new RegExp(`testId=["']${id}["']`).test(s.tab)) {
+      f.push(`${TAB.tab}: must mount BoardSection ${id}`);
+    }
+  }
+  if (s.repurchase && (/<DataPanel\b/.test(s.repurchase) || !/testId=["']factoring-repurchase-due-board["']/.test(s.repurchase))) {
+    f.push(`RepurchaseDuePanel: must be BoardSection (factoring-repurchase-due-board), not DataPanel`);
+  }
+
   return f;
 }
 

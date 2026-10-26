@@ -71,6 +71,13 @@ const CHECKS = [
     pattern:
       /from ["'].*components\/v3\/BoardSection["'][\s\S]*function CloseBoardPanel\b[\s\S]*<BoardSection\b[\s\S]*settlement-close-result-panel/,
   },
+  {
+    // 443.280 fill — expense load confirmations gate uses BoardSection (not hand-rolled bordered card).
+    name: "SettlementCloseArrivalPage expense load confirmations BoardSection",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern:
+      /<BoardSection[\s\S]{0,220}testId=["']settlement-close-expense-load-confirmations["']/,
+  },
   // ROUND 443.274-C Settlements-Close.dc.html — 2fr|1fr Driver on arrival | Result (getTourReadout legs).
   {
     name: "SettlementCloseArrivalPage 2fr|1fr board Driver on arrival + Result",
