@@ -76,9 +76,16 @@ if (!warningContractHolds(panel, modal)) {
 }
 
 if (process.argv.includes("--selftest")) {
+  /** Replace the first `from` that sits inside the failed-read .catch block (not an earlier copy). */
+  const inCatch = (from, to) => {
+    const at = panel.indexOf(from, panel.indexOf(".catch((err) => {"));
+    return at < 0 ? panel : panel.slice(0, at) + to + panel.slice(at + from.length);
+  };
   const mutations = [
-    ["failure reports passing", panel.replace("onValidationChange?.(false, false, false, false);", "onValidationChange?.(true, false, false, false);")],
-    ["failure drops parent signal", panel.replace("onValidationChange?.(false, false, false, false);", "")],
+    // Anchored inside the .catch block: the empty-inputs path also calls onValidationChange?.(false, …) earlier
+    // in the file, and a first-occurrence replace mutated that one, not the failed-read path under test.
+    ["failure reports passing", inCatch("onValidationChange?.(false, false, false, false);", "onValidationChange?.(true, false, false, false);")],
+    ["failure drops parent signal", inCatch("onValidationChange?.(false, false, false, false);", "")],
     ["empty identity stays loading", panel.replace("setLoading(false);", "")],
     ["failed read has no retry", panel.replace(/onClick=\{\(\) => setRetryGeneration\([\s\S]*?\}\n/, "")],
     ["warning count dropped", panel.replace("hasUnackedInsScheduleConfirm", "nope")],

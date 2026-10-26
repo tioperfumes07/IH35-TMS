@@ -31,7 +31,8 @@ const checks = [
       const s = sources.get(PLANNER_GRID_FILE) ?? "";
       sources.set(
         PLANNER_GRID_FILE,
-        s.replace('className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}', 'className="pg-col-name"')
+        // Strip whatever title the name cell carries (the fallback became row.sortKey; the literal plant no longer matched).
+        s.replace(/className="pg-col-name"\s+title=\{[^}]*\}/, 'className="pg-col-name"')
       );
     },
   ],
