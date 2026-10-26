@@ -160,7 +160,12 @@ function main() {
     const finalizeMutants = [
       processor.replace('if (String(row.status) !== "ready_review") return { ok: false as const, error: "not_ready" as const };', ""),
       processor.replace("AND status = 'ready_review'", "AND status IS NOT NULL"),
-      processor.replace("AND converted_load_id IS NULL", ""),
+      // Anchored inside finalizeOcrIntakeConversion: the file header comment also names this predicate
+      // (ROUND 337 header, dd17a57c80), and a bare .replace() mutated the comment, not the SQL.
+      (() => {
+        const at = processor.indexOf("AND converted_load_id IS NULL", processor.indexOf("export async function finalizeOcrIntakeConversion"));
+        return at < 0 ? processor : processor.slice(0, at) + processor.slice(at + "AND converted_load_id IS NULL".length);
+      })(),
       processor.replace('if (!updated.rows[0]) return { ok: false as const, error: "already_converted" as const };', ""),
       processor.replace("AND soft_deleted_at IS NULL\n        LIMIT 1", "LIMIT 1"),
     ];

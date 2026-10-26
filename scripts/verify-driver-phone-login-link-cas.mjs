@@ -27,13 +27,19 @@ if (failures.length) {
 }
 
 if (process.argv.includes("--selftest")) {
+  // Plants are applied INSIDE the enable-phone-login route: #27750 (3512923025) added the same
+  // `operating_company_id = $4::uuid` predicate to an earlier JOIN in drivers.routes.ts, and a whole-file
+  // .replace() hit that one instead of the route under test.
+  const ROUTE_RE = /app\.post\("\/api\/v1\/mdata\/drivers\/:id\/enable-phone-login"[\s\S]*?\n  \}\);/;
+  const routeText = source.match(ROUTE_RE)?.[0] ?? "";
+  const inRoute = (from, to) => source.replace(routeText, () => routeText.replace(from, () => to));
   const mutations = [
-    source.replace("SELECT d.id, d.operating_company_id, d.phone, d.email, d.identity_user_id", "SELECT d.id, d.phone, d.email, d.identity_user_id"),
-    source.replace("AND operating_company_id = $4::uuid", "AND true"),
-    source.replace("AND identity_user_id IS NULL", "AND true"),
-    source.replace("AND identity_user_id IS NULL\n              AND deactivated_at IS NULL", "AND identity_user_id IS NULL\n              AND true"),
-    source.replace('await client.query("ROLLBACK TO SAVEPOINT driver_phone_login_enable");', 'await client.query("SELECT 1");'),
-    source.replace('updated.error === "driver_phone_login_state_changed"', 'updated.error === "lost"'),
+    inRoute("SELECT d.id, d.operating_company_id, d.phone, d.email, d.identity_user_id", "SELECT d.id, d.phone, d.email, d.identity_user_id"),
+    inRoute("AND operating_company_id = $4::uuid", "AND true"),
+    inRoute("AND identity_user_id IS NULL", "AND true"),
+    inRoute("AND identity_user_id IS NULL\n              AND deactivated_at IS NULL", "AND identity_user_id IS NULL\n              AND true"),
+    inRoute('await client.query("ROLLBACK TO SAVEPOINT driver_phone_login_enable");', 'await client.query("SELECT 1");'),
+    inRoute('updated.error === "driver_phone_login_state_changed"', 'updated.error === "lost"'),
   ];
   const missed = mutations.map((mutation, index) => ({ index, failures: failuresFor(mutation) })).filter((entry) => entry.failures.length === 0);
   const caught = mutations.length - missed.length;
