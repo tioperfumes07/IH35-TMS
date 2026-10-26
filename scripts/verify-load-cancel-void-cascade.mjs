@@ -66,8 +66,10 @@ export function assertGuard(src) {
   if (!/driver_finance\.driver_bills[\s\S]{0,200}status <> 'void'/.test(src)) {
     errs.push(`${FILE}: must query open driver bills (status <> 'void') for cascade void — no longer a hard gate`);
   }
-  if (!/UPDATE driver_finance\.driver_bills[\s\S]{0,200}status = 'void'/.test(src)) {
-    errs.push(`${FILE}: must void open driver bills in-cascade (UPDATE ... status = 'void') — no silent orphan`);
+  // RE-PIN 2026-10-25: cancellation.service.ts delegates the UPDATE to stampDriverBillVoidedInClientTx
+  // (driver-bill-void-state.service.ts) — same canonical void, just via the shared stamp function.
+  if (!/stampDriverBillVoidedInClientTx\(/.test(src)) {
+    errs.push(`${FILE}: must void open driver bills in-cascade via stampDriverBillVoidedInClientTx — no silent orphan`);
   }
   // 7. OLD hard-gate codes must NOT exist (replaced by cascade)
   if (/load_cancel_blocked_open_driver_bills/.test(src)) {
@@ -108,7 +110,7 @@ function selftest() {
   const bad1 = assertGuard(good.replace(/postVoidReversal\(/g, "/* removed */postVoidReversalXXX("));
   const bad2 = assertGuard(good.replace('r.status === "paid" || r.status === "factored"', "false"));
   const bad3 = assertGuard(good.replace(/load_cancel_blocked_unvoidable_invoice/g, "REMOVED_CODE"));
-  const bad4 = assertGuard(good.replace(/UPDATE driver_finance\.driver_bills[\s\S]{0,200}status = 'void'/m, "/* REMOVED driver bill void */"));
+  const bad4 = assertGuard(good.replace(/stampDriverBillVoidedInClientTx\(/g, "stampDriverBillVoidedINClientTxREMOVED("));
   const bad5 = assertGuard(good.replace(/executeVoidCancel\(["']driver_settlement["']/, "executeVoidCancelXXX('driver_settlement'"));
   const bad6 = assertGuard(good.replace('auditVoid(client, userId, "invoice"', 'auditVoid(client, userId, "invoiceXXX"'));
 

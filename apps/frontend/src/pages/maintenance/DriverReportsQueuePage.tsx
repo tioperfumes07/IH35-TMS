@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -240,7 +240,7 @@ export function DriverReportsQueuePage({
               <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
                 <label className="text-xs text-[#4B5563]">
                   Driver
-                  <EntityMultiSelect
+                  <EntityPicker
                     kind="driver"
                     operatingCompanyId={operatingCompanyId}
                     value={staged.draft.driverId || null}
@@ -252,7 +252,7 @@ export function DriverReportsQueuePage({
                 </label>
                 <label className="text-xs text-[#4B5563]">
                   Load
-                  <EntityMultiSelect
+                  <EntityPicker
                     kind="load"
                     operatingCompanyId={operatingCompanyId}
                     value={staged.draft.loadId || null}
