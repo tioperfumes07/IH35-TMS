@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { listActiveOperatingCompanyIds } from "./depreciation-autopost.cron.js";
 import { getRollingLedgerRows, type RollingLedgerRow } from "../cash-flow/cash-flow.service.js";
@@ -119,7 +119,8 @@ export function initializeCashFlowRollingLedgerNotifyCron(app: FastifyInstance) 
           const summary = await runCashFlowRollingLedgerNotifyCronTick();
           app.log.info(summary, "cash-flow rolling-ledger overdue-notify cron completed");
         },
-        app.log
+        app.log,
+        { leaseSeconds: JOB_LEASE_SECONDS } // single-fire across both API instances (LST-F443369)
       );
     },
     { maxRandomDelay: 20000 /* cron-stagger — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }

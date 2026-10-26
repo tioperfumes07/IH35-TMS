@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { createNotification, listCompanyNotifyUserIds } from "../notifications/notification.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
@@ -259,7 +259,8 @@ export function initializeInsuranceMonthlyReportCron(app: FastifyInstance) {
         async () => {
           await runInsuranceMonthlyReportTick(app);
         },
-        app.log
+        app.log,
+        { leaseSeconds: JOB_LEASE_SECONDS } // single-fire across both API instances (LST-F443369)
       );
     },
     {

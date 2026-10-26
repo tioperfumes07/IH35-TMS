@@ -11,7 +11,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { createNotification, listCompanyNotifyUserIds } from "../notifications/notification.service.js";
 import { dispatchDriverWebPush } from "../notifications/web-push-dispatcher.js";
@@ -175,7 +175,8 @@ export function initializeDriverLeaveAdvanceReminderCron(app: FastifyInstance) {
           const fired = await runDriverLeaveAdvanceReminderTick();
           if (fired > 0) app.log.info({ fired }, "driver leave advance reminders sent");
         },
-        app.log
+        app.log,
+        { leaseSeconds: JOB_LEASE_SECONDS } // single-fire across both API instances (LST-F443369)
       );
     },
     {

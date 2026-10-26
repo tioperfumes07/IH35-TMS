@@ -4,7 +4,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { appendDeadlineReminderSent, listDeadlinesNeedingReminder } from "./matters.service.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 let initialized = false;
@@ -106,7 +106,7 @@ export function initializeLegalMattersReminderCron(app: FastifyInstance) {
     async () => {
       await wrapBackgroundJobTick("legal.matters_reminder_cron", async () => {
         await runLegalMattersReminderTick(app);
-      }, app.log);
+      }, app.log, { leaseSeconds: JOB_LEASE_SECONDS }); // single-fire across both API instances (LST-F443369)
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }

@@ -3,6 +3,10 @@
 // tick under a lease (wrapBackgroundJobTick(..., { leaseSeconds }) -> withJobLease) or its own claim, and the lease
 // claim stays one atomic statement on _system.job_leases (migration 202615340700).
 // Static only. A new CC-2 cron file without a lease or claim FAILS; --selftest plants each regression.
+// LST-F443369 (LEAD 10-25-2026): widened to EVERY scheduled job that emails / texts / notifies, whatever its lane — the
+// owner received every daily report twice and 9 sending crons (task alarms, compliance, cert-expiry, legal reminders,
+// plaid sync, cash-flow notify, driver-leave x2, insurance monthly) ran on both instances because only CC-2 keyword
+// files were checked.
 export const ALLOW_OFFLINE_SKIP = "static source contract — never touches the database";
 import fs from "node:fs";
 import path from "node:path";
@@ -17,6 +21,18 @@ const NOT_CC2 = {
   "apps/backend/src/cron/evidence-presence-reconcile.cron.ts": "CC-3 (evidence / crons) — board EVIDENCE-PRESENCE-CRON-UNION-ORDER-BY-2026100304",
   "apps/backend/src/cron/reconciliation-worker.cron.ts": "QBO / Samsara reference-data reconciliation (not banking) — board CRONS-WITHOUT-LEASE-2026100310",
 };
+/** A scheduled job that sends something to a person. */
+const SENDS = /\b(enqueueEmail|sendSms|createNotification|dispatchReliabilityAlarm|sendEmail)\(/;
+/** Sending jobs deliberately NOT on the shared lease — each named with why. */
+const SENDING_EXEMPT = {
+  "apps/backend/src/cron/qbo-token-refresh.ts": "per-instance in-memory runner health marker (markRunnerTick) — a lease would leave one instance's marker stale",
+  "apps/backend/src/cron/qbo-historical-import-runner.ts": "per-instance in-memory runner state (markRunnerFailed); import rows claimed per row",
+  "apps/backend/src/integrations/qbo/qbo-sync-worker.ts": "queue worker — rows claimed per row, both instances drain the same queue",
+  "apps/backend/src/cron/event-spine-heartbeat.cron.ts": "setInterval health heartbeat; its alarms go through dispatchReliabilityAlarm's 24h repeat window (#27691)",
+  "apps/backend/src/cron/evidence-presence-reconcile.cron.ts": "setInterval; alarms go through dispatchReliabilityAlarm's 24h repeat window (#27691)",
+  "apps/backend/src/reports/scheduled/runner.service.ts": "per-subscription compare-and-set claim (claimSubscriptionRun, #27699)",
+};
+
 /** Crons that single-fire through their own per-company claim (not the shared lease) — each named with its mechanism. */
 const OWN_CLAIM = {
   "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts": "claimRelayTick: pg_advisory_xact_lock + 30-minute claim row",
@@ -31,6 +47,10 @@ function cronFiles() {
       const rel = path.join(d, e.name);
       if (e.isDirectory()) { if (!["node_modules", "__tests__"].includes(e.name)) walk(rel); }
       else if (/\.(cron|job)\.ts$/.test(e.name) && CC2_CRON.test(rel)) out.push(rel);
+      else if (/\.ts$/.test(e.name) && !/\.test\.ts$/.test(e.name)) {
+        const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+        if (/cron\.schedule\(/.test(src) && SENDS.test(src)) out.push(rel);
+      }
     }
   };
   walk("apps/backend/src");
@@ -61,7 +81,7 @@ export function check(helper, files) {
   }
   for (const [file, src] of Object.entries(files)) {
     if (!/cron\.schedule\(|setInterval\(/.test(src)) continue;
-    if (OWN_CLAIM[file] || NOT_CC2[file]) continue;
+    if (OWN_CLAIM[file] || NOT_CC2[file] || SENDING_EXEMPT[file]) continue;
     const calls = wrapCalls(src);
     if (calls.length === 0) { f.push(`${file}: a scheduled CC-2 job with neither a lease nor a named own claim`); continue; }
     const unleased = calls.filter((c) => !/leaseSeconds/.test(c));
@@ -82,6 +102,7 @@ if (process.argv.includes("--selftest")) {
     ["lease dropped from a cron", helper, { ...files, [tieout]: files[tieout].replace(", { leaseSeconds: JOB_LEASE_SECONDS }", "") }],
     ["non-atomic claim", helper.replace("WHERE _system.job_leases.leased_until < now()", ""), files],
     ["skip ignored", helper.replace('if (outcome === "skipped") return;', ""), files],
+    ["sending cron (any lane) without a lease", helper, { ...files, "apps/backend/src/legal/new-reminder.ts": 'cron.schedule("0 8 * * *", async () => { await wrapBackgroundJobTick("y", async () => { await enqueueEmail({}); }, app.log); });' }],
     ["new unleased cron", helper, { ...files, "apps/backend/src/cron/bank-new.cron.ts": 'cron.schedule("0 1 * * *", async () => { await wrapBackgroundJobTick("x", async () => {}, app.log); });' }],
   ];
   for (const [name, h, fs2] of plants) {
@@ -96,4 +117,4 @@ if (process.argv.includes("--selftest")) {
 const files = cronFiles();
 const fails = check(read(HELPER), Object.fromEntries(files.map((f) => [f, read(f)])));
 if (fails.length) { console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — ${files.length} CC-2 cron file(s): every scheduled tick leased or under a named own claim`);
+console.log(`${LABEL}: PASS — ${files.length} cron file(s) (CC-2 + every sending job): every scheduled tick leased or under a named own claim / exemption`);
