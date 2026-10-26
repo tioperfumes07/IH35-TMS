@@ -80,7 +80,7 @@ import type {
   SettlementCreatorPreview,
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
-import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
+import { amendOrWriteCreatorOwedBill, fetchPriorOwedBillKeys, type PriorOwedBillKey, voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
 import { createExpenseInClientTx, postExpenseDocumentInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 import { isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
@@ -458,7 +458,7 @@ async function voidPriorCreatorSettlementForEdit(
   opco: string,
   settlementId: string,
   settlementLabel: string,
-): Promise<string[]> {
+): Promise<{ fuelIds: string[]; priorOwedBillIds: string[] }> {
   const reason = `Settlement Creator Edit = void and repost (${settlementLabel})`;
   const businessDate = companyBusinessDate();
 
@@ -513,8 +513,8 @@ async function voidPriorCreatorSettlementForEdit(
     }
   }
 
-  // 443.110 G4 — the prior post's owed vendor bills are voided through the bill void engine (reversal JE).
-  await voidCreatorOwedBills(client, { operatingCompanyId: opco, billIds: prior.owed_bill_ids ?? [], reason, actorUserId, currentBusinessDate: businessDate });
+  // 443.110 G4 ENG-24 — owed bills are NOT voided here; the write loop amends matching bills and voids only the
+  // remainder after the loop, so Edit avoids unnecessary reversal JEs for unchanged bills.
 
   // Option 1 (Lead ruling 2026-10-11, 5769 repair) — the prior fill rows are KEPT and re-used by the repost (a fill is one
   // provider transaction: voiding and re-inserting it collides on its provider hash), and the prior loads' sent invoices
@@ -605,7 +605,7 @@ async function voidPriorCreatorSettlementForEdit(
     },
     "warning",
     AUDIT_TAG,
-  );  return prior.fuel_transaction_ids ?? [];
+  );  return { fuelIds: prior.fuel_transaction_ids ?? [], priorOwedBillIds: prior.owed_bill_ids ?? [] };
 }
 
 /**
@@ -1173,6 +1173,10 @@ export async function postSettlementCreatorInClientTx(
   let settlementId: string;
   // Option 1 — fill rows of the settlement this Edit replaces, re-used (never re-inserted) by the fuel loop below.
   let priorFuelIds: string[] = [];
+  // ENG-24 — prior owed bills deferred from the void step; the write loop amends matching bills, then voids the rest.
+  let priorOwedBillIds: string[] = [];
+  let priorOwedBillKeys: PriorOwedBillKey[] = [];
+  const usedPriorOwedBillIds = new Set<string>();
   let displayId: string;
   let sourceDocumentRef: string | null = null;
 
@@ -1197,13 +1201,16 @@ export async function postSettlementCreatorInClientTx(
           `${targetDisplay} already exists. Confirm Edit = void and repost to replace it.`,
         );
       }
-      priorFuelIds = await voidPriorCreatorSettlementForEdit(
+      const priorEdit = await voidPriorCreatorSettlementForEdit(
         client,
         actorUserId,
         draft.operating_company_id,
         found.rows[0].id,
         targetDisplay,
       );
+      priorFuelIds = priorEdit.fuelIds;
+      priorOwedBillIds = priorEdit.priorOwedBillIds;
+      priorOwedBillKeys = await fetchPriorOwedBillKeys(client, priorOwedBillIds);
     }
     const ins = await client.query<{ id: string }>(
       `
@@ -1262,13 +1269,16 @@ export async function postSettlementCreatorInClientTx(
             `Settlement ${typedNo} already exists (${existing.rows[0].display_id}).${detail} Confirm Edit = void and repost to replace it.`,
           );
         }
-        priorFuelIds = await voidPriorCreatorSettlementForEdit(
+        const priorEdit2 = await voidPriorCreatorSettlementForEdit(
           client,
           actorUserId,
           draft.operating_company_id,
           existing.rows[0].id,
           typedNo,
         );
+        priorFuelIds = priorEdit2.fuelIds;
+        priorOwedBillIds = priorEdit2.priorOwedBillIds;
+        priorOwedBillKeys = await fetchPriorOwedBillKeys(client, priorOwedBillIds);
       }
       atRef = typedNo;
     } else if (!typedNo) {
@@ -2002,31 +2012,37 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("expense_quantity_rate_mismatch", `Company expense "${exp.item_name}": ${qty} ${uom} does not price to ${dollarsFromCents(exp.amount_cents)}.`);
     }
     if (card === "owed") {
-      // Owed -> a BILL in Accounts Payable. 443.110 G4: numbered on the load spine, GL-posted here (Dr item account /
-      // Cr A/P with the vendor), id kept in the posted audit so Edit voids it (settlement-creator-owed-bill.ts).
-      const owed = await writeCreatorOwedBill(client, {
-        operatingCompanyId: draft.operating_company_id,
-        actorUserId,
-        vendorId: vendor.id,
-        vendorDocumentNumber: exp.vendor_document_number,
-        loadId,
-        // ROUND 443.6 c / 443.113 BCF-04 — the bill carries its LOAD's driver and unit (and the settlement's trailer).
-        driverId: expLoad.driverId,
-        unitId: expLoad.unitId,
-        trailerId: draft.trailer_id ?? null,
-        billDate: exp.date,
-        amountCents: exp.amount_cents,
-        memo: `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500),
-        itemId: itemAcct.item_id,
-        accountId: itemAcct.id,
-        quantity: qty,
-        rateCents,
-        unitOfMeasure: uom,
-        description: exp.description ?? exp.item_name ?? null,
-        label: exp.item_name,
-      });
+      // Owed -> a BILL in Accounts Payable. 443.110 G4/ENG-24: numbered on the load spine, GL-posted here (Dr item
+      // account / Cr A/P with the vendor), id kept in the posted audit. On Edit, amend (keep) the prior bill when
+      // vendor/load/item/amount are unchanged; void+repost only what changed.
+      const owed = await amendOrWriteCreatorOwedBill(
+        client,
+        {
+          operatingCompanyId: draft.operating_company_id,
+          actorUserId,
+          vendorId: vendor.id,
+          vendorDocumentNumber: exp.vendor_document_number,
+          loadId,
+          // ROUND 443.6 c / 443.113 BCF-04 — the bill carries its LOAD's driver and unit (and the settlement's trailer).
+          driverId: expLoad.driverId,
+          unitId: expLoad.unitId,
+          trailerId: draft.trailer_id ?? null,
+          billDate: exp.date,
+          amountCents: exp.amount_cents,
+          memo: `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500),
+          itemId: itemAcct.item_id,
+          accountId: itemAcct.id,
+          quantity: qty,
+          rateCents,
+          unitOfMeasure: uom,
+          description: exp.description ?? exp.item_name ?? null,
+          label: exp.item_name,
+        },
+        priorOwedBillKeys,
+        usedPriorOwedBillIds,
+      );
       owedBillIds.push(owed.billId);
-      journalEntryIds.push(owed.journalEntryId);
+      if (owed.journalEntryId) journalEntryIds.push(owed.journalEntryId);
       continue;
     }
     const preference = card === "dreamline" ? "dreamline_card_payable" : card === "wex" ? "wex_card_payable" : "relay_fuel_wallet";
@@ -2091,6 +2107,18 @@ export async function postSettlementCreatorInClientTx(
     } catch (err) {
       throw new SettlementCreatorError("expense_post_refused", `Company expense "${exp.item_name}": the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
     }
+  }
+
+  // ENG-24 — void any prior owed bills that were not kept by the amend loop above.
+  const unconsumedPriorOwedBills = priorOwedBillIds.filter((id) => !usedPriorOwedBillIds.has(id));
+  if (unconsumedPriorOwedBills.length) {
+    await voidCreatorOwedBills(client, {
+      operatingCompanyId: draft.operating_company_id,
+      billIds: unconsumedPriorOwedBills,
+      reason: `Settlement Creator Edit = amend/void (${draft.settlement_no ?? "unknown"})`,
+      actorUserId,
+      currentBusinessDate: companyBusinessDate(),
+    });
   }
 
   // Reimbursable expenses + explicit reimbursements → settlement_lines (driver net; no cash Cr).
