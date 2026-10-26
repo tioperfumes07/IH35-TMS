@@ -1865,15 +1865,19 @@ export async function postLoadBookendedSettlementGlAfterClose(
 export async function postFinalLoadSettlementsGl(opts: {
   loadId: string;
   actorUserId: string;
+  /** The entity the caller acted under. The load must belong to it — a load id alone never selects the books. */
+  operatingCompanyId: string;
 }): Promise<void> {
-  // Look up the operating_company_id for this load (need it for both the settlement query and the poster).
+  // Confirm the load belongs to the caller's operating company before posting anything to its books
+  // (CLS-JOIN-ENTITY-UNSCOPED: a bare load id from another entity must not select that entity's GL).
   let operatingCompanyId: string | null = null;
   try {
     const companyRes = await withCurrentUser(opts.actorUserId, async (client) => {
       await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
       return client.query<{ operating_company_id: string }>(
-        `SELECT operating_company_id::text FROM mdata.loads WHERE id = $1::uuid AND soft_deleted_at IS NULL LIMIT 1`,
-        [opts.loadId]
+        `SELECT operating_company_id::text FROM mdata.loads
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+        [opts.loadId, opts.operatingCompanyId]
       );
     });
     operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
@@ -1881,7 +1885,11 @@ export async function postFinalLoadSettlementsGl(opts: {
     console.warn({ err, load_id: opts.loadId }, "postFinalLoadSettlementsGl_opco_lookup_failed");
     return;
   }
-  if (!operatingCompanyId) return;
+  if (!operatingCompanyId) {
+    // Not silent: the caller's entity does not own this load, so nothing is posted and it is logged.
+    console.warn({ load_id: opts.loadId, operating_company_id: opts.operatingCompanyId }, "postFinalLoadSettlementsGl_load_not_in_entity");
+    return;
+  }
 
   let settlementIds: string[] = [];
   try {

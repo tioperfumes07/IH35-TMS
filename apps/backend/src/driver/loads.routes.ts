@@ -616,6 +616,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     const driver = req.driver;
     if (!driver) return;
 
+    let finalGlCompanyId: string | null = null;
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
       const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number; operating_company_id: string }>(
         `
@@ -652,6 +653,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
+      finalGlCompanyId = stop.operating_company_id;
       if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { error: "invalid_stop_state" as const };
 
       // MULTI-DROP FIX — only the FINAL ACTIVE delivery stop completes the load. The previous
@@ -762,9 +764,11 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
     // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
-    postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: req.user!.uuid }).catch((err) =>
-      console.warn({ err, load_id: params.data.id }, "driver_load_final_settlement_gl_post_failed")
-    );
+    if (finalGlCompanyId) {
+      postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: req.user!.uuid, operatingCompanyId: finalGlCompanyId }).catch((err) =>
+        console.warn({ err, load_id: params.data.id }, "driver_load_final_settlement_gl_post_failed")
+      );
+    }
     return updated;
   });
 }
