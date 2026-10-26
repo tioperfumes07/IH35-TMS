@@ -31,7 +31,8 @@ function failures(tree) {
     ["driver API arrival source", /actual_arrival_at = now\(\),\s*actual_arrival_source = 'driver_app'/s.test(tree.driver)],
     ["driver API departure source", /actual_departure_at = now\(\),\s*actual_departure_source = 'driver_app'/s.test(tree.driver)],
     ["arrival prompt source", /actual_arrival_source = CASE\s+WHEN actual_arrival_at IS NULL THEN 'driver_app'\s+ELSE actual_arrival_source\s+END,\s+actual_arrival_at = COALESCE/s.test(tree.prompts)],
-    ["PWA arrival source", /stampStopArrival\(client, stop, \{[^}]*source: "driver_app"/s.test(tree.pwa) && /actual_arrival_at = now\(\),\s*actual_arrival_source = \$3/s.test(tree.stamp) && /\[stop\.id, ctx\.loadId, ctx\.source\]/.test(tree.stamp)],
+    // RE-PIN 2026-10-25: LEAD 443.279 added evidence-time COALESCE to arrival; 4th param ctx.at ?? null added to array.
+    ["PWA arrival source", /stampStopArrival\(client, stop, \{[^}]*source: "driver_app"/s.test(tree.pwa) && /actual_arrival_at = COALESCE\(\$4::timestamptz, now\(\)\),\s*actual_arrival_source = \$3/s.test(tree.stamp) && /\[stop\.id, ctx\.loadId, ctx\.source, ctx\.at \?\? null\]/.test(tree.stamp)],
     // LEAD 443.279 — the stop engine takes an evidence time (`at`, a stored fence-exit fix); absent it is now(). The PWA tap
     // passes no `at`, so a driver departure is still stamped at the tap and attributed 'driver_app'.
     ["PWA departure source", /stampStopDeparture\(client, stop, \{[^}]*source: "driver_app"/s.test(tree.pwa) && !/stampStopDeparture\(client, stop, \{[^}]*\bat:/s.test(tree.pwa) && /actual_departure_at = COALESCE\(\$4::timestamptz, now\(\)\),\s*actual_departure_source = \$3/s.test(tree.stamp)],
