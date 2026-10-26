@@ -58,7 +58,7 @@ export function run(reader = readFileSync) {
     ["inline-create-stack", /stackAboveModal/.test(inlineCreate)],
     ["combobox-escape-stop", /event\.key === "Escape"[\s\S]{0,120}stopPropagation\(\)/.test(combobox)],
     ["modal-escape-guard-combobox", /data-combobox-listbox="portal"/.test(modal)],
-    ["modal-escape-guard-drawer", /data-parity-drawer-stack-above-modal="true"/.test(modal)],
+    ["modal-escape-guard-drawer", /useEscapeKey\(\(\) => \{\s*if \(!layer\.isTop\(\)\) return;/.test(modal)],
     ["modal-escape-guard-datepicker", /data-date-picker-popover="open"/.test(modal)],
     ["wo-new-page", /export function WorkOrderNewPage/.test(woNewPage)],
     ["manifest-wo-new-route", /path="\/maintenance\/work-orders\/new"/.test(manifest) && /WorkOrderNewPage/.test(manifest)],
@@ -92,6 +92,12 @@ function selftest() {
   );
   if (caught.ok || !caught.failed.includes("parity-z-above-modal")) {
     console.error(`${LABEL} SELFTEST FAIL: planted z-index regression not caught`, caught);
+    process.exit(1);
+  }
+  const modal = readFileSync(FILES.modal, "utf8");
+  const noTopGuard = modal.replace("if (!layer.isTop()) return;", "");
+  if (noTopGuard === modal || !run((file, encoding) => file === FILES.modal ? noTopGuard : readFileSync(file, encoding)).failed.includes("modal-escape-guard-drawer")) {
+    console.error(`${LABEL} SELFTEST FAIL: parent Escape regression not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST OK`);
