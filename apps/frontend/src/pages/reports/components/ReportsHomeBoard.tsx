@@ -1,10 +1,11 @@
+// TABLE_DATE_OMIT: these tables have no date column by design — they are the report CATALOG (one row per report: name / what it shows / basis / run / export); a report's dates are chosen in the live viewer it opens, not listed here.
 /**
  * ROUND 443.267 → FINAL-3 row 40 — Reports Home board (v3, sidebar, non-layered).
  * v3 spec: docs/design/v3/Reports.dc.html — KPI strip → two-column (200px sidebar + right panel).
  * Selected category drives the right panel. Financial = detailed accounting table + management rows (Rule 07).
  * Automation = ScheduledReportsPanel. Saved = Custom report entry. Others = simple report table.
  */
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
@@ -22,6 +23,7 @@ import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { mmmDd } from "../../../lib/formatDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ScheduledReportsPanel } from "../ScheduledReportsPanel";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 // ── Sidebar categories (v3 design) ──────────────────────────────────────────
 const SIDEBAR_CATEGORIES = [
@@ -92,26 +94,6 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
 };
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-const tdStyle: CSSProperties = {
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  verticalAlign: "middle",
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
@@ -161,6 +143,43 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
 
   const dash = (v: number | null | undefined) =>
     v == null || (typeof v === "number" && !Number.isFinite(v)) ? "—" : String(v);
+
+  const accountingColumns: ParityColumn<(typeof accountingRows)[number]>[] = [
+    { key: "favorite", label: "☆", sortable: false, render: () => <span style={{ color: V3.muted }}>☆</span> },
+    {
+      key: "report",
+      label: "Report",
+      sortable: true,
+      sortValue: ([, label]) => label,
+      render: ([reportKey, label]) => (
+        <button type="button" className="text-left font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => openReport(reportKey)}>
+          {label}
+        </button>
+      ),
+    },
+    { key: "shows", label: "What it shows", sortable: true, sortValue: ([, , shows]) => shows, render: ([, , shows]) => <span style={{ color: V3.muted }}>{shows}</span> },
+    { key: "basis", label: "Basis", sortable: true, sortValue: ([reportKey]) => basisLabel(reportKey), render: ([reportKey]) => basisLabel(reportKey) },
+    {
+      key: "open",
+      label: "Open in viewer",
+      sortable: false,
+      render: ([reportKey]) => (
+        <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => openReport(reportKey)}>
+          Run →
+        </button>
+      ),
+    },
+    {
+      key: "export",
+      label: "Export",
+      sortable: false,
+      render: ([reportKey]) => (
+        <button type="button" className="hover:underline" style={{ color: V3.muted, fontSize: V3_TABLE.fontPx }} title="Opens the live viewer — export PDF / XLSX from the report with filters applied" onClick={() => openReport(reportKey)}>
+          PDF · XLSX
+        </button>
+      ),
+    },
+  ];
 
   function openReport(reportKey: string) {
     const href = PHASE_6_REPORT_HREFS[reportKey];
@@ -279,61 +298,19 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 testId="reports-home-accounting-financial"
               >
                 <div style={{ overflowX: "auto" }}>
-                  <table
-                    style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}
-                    data-testid="reports-accounting-financial-table"
-                  >
-                    <thead>
-                      <tr>
-                        <th style={{ ...thStyle, width: 28 }} aria-label="Favorite">☆</th>
-                        <th style={thStyle}>Report</th>
-                        <th style={thStyle}>What it shows</th>
-                        <th style={thStyle}>Basis</th>
-                        <th style={thStyle}>Open in viewer</th>
-                        <th style={thStyle}>Export</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accountingRows.map(([reportKey, label, shows]) => (
-                        <tr key={reportKey} data-testid={`reports-acct-row-${reportKey}`}>
-                          <td style={{ ...tdStyle, color: V3.muted, textAlign: "center" }}>☆</td>
-                          <td style={tdStyle}>
-                            <button
-                              type="button"
-                              className="text-left font-semibold hover:underline"
-                              style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }}
-                              onClick={() => openReport(reportKey)}
-                            >
-                              {label}
-                            </button>
-                          </td>
-                          <td style={{ ...tdStyle, color: V3.muted }}>{shows}</td>
-                          <td style={tdStyle}>{basisLabel(reportKey)}</td>
-                          <td style={tdStyle}>
-                            <button
-                              type="button"
-                              className="font-semibold hover:underline"
-                              style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }}
-                              onClick={() => openReport(reportKey)}
-                            >
-                              Run →
-                            </button>
-                          </td>
-                          <td style={{ ...tdStyle, color: V3.muted }}>
-                            <button
-                              type="button"
-                              className="hover:underline"
-                              style={{ color: V3.muted, fontSize: V3_TABLE.fontPx }}
-                              title="Opens the live viewer — export PDF / XLSX from the report with filters applied"
-                              onClick={() => openReport(reportKey)}
-                            >
-                              PDF · XLSX
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ParityTable<(typeof accountingRows)[number]>
+                    tableTestId="reports-accounting-financial-table"
+                    appearance="board"
+                    hidePager
+                    density="compact"
+                    suppressToolbarSearch
+                    suppressToolbarRange
+                    rows={accountingRows}
+                    rowKey={([reportKey]) => reportKey}
+                    rowTestId={([reportKey]) => `reports-acct-row-${reportKey}`}
+                    emptyText="No reports."
+                    columns={accountingColumns}
+                  />
                 </div>
                 <p className="px-3 py-2 text-xs" style={{ color: V3.muted, borderTop: `1px solid ${V3.borderSoft}` }}>
                   Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF · XLSX export exactly what the viewer shows with the filters applied.
@@ -418,39 +395,47 @@ function SimpleCategoryPanel({
   rows: { id: string; label: string; shows: string }[];
   onRun: (id: string) => void;
 }) {
-  const tdS: CSSProperties = { fontSize: V3_TABLE.fontPx, color: V3.ink, padding: `${V3_TABLE.rowPadY}px 12px`, borderBottom: `1px solid ${V3.borderSoft}`, verticalAlign: "middle" };
   const label = SIDEBAR_CATEGORIES.find((c) => c.id === category)?.label ?? category;
   return (
     <V3Panel title={label} testId={`reports-category-panel-${category}`}>
       {rows.length === 0 ? (
         <div className="px-3 py-4 text-xs text-[#6B7280]">No reports in this category yet.</div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: "left", fontSize: V3_TABLE.headerPx, fontWeight: 600, color: V3.muted, padding: `${V3_TABLE.rowPadY}px 12px`, borderBottom: `1px solid ${V3.border}`, background: V3.headerBg, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em" }}>Report</th>
-              <th style={{ textAlign: "left", fontSize: V3_TABLE.headerPx, fontWeight: 600, color: V3.muted, padding: `${V3_TABLE.rowPadY}px 12px`, borderBottom: `1px solid ${V3.border}`, background: V3.headerBg, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em" }}>What it shows</th>
-              <th style={{ textAlign: "left", fontSize: V3_TABLE.headerPx, fontWeight: 600, color: V3.muted, padding: `${V3_TABLE.rowPadY}px 12px`, borderBottom: `1px solid ${V3.border}`, background: V3.headerBg, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em" }}>Run</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td style={tdS}>
-                  <button type="button" className="text-left font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
-                    {r.label}
-                  </button>
-                </td>
-                <td style={{ ...tdS, color: V3.muted }}>{r.shows}</td>
-                <td style={tdS}>
-                  <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
-                    Run →
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ParityTable<{ id: string; label: string; shows: string }>
+          tableTestId={`reports-category-table-${category}`}
+          appearance="board"
+          hidePager
+          density="compact"
+          suppressToolbarSearch
+          suppressToolbarRange
+          rows={rows}
+          rowKey={(r) => r.id}
+          emptyText="No reports in this category yet."
+          columns={[
+            {
+              key: "report",
+              label: "Report",
+              sortable: true,
+              sortValue: (r) => r.label,
+              render: (r) => (
+                <button type="button" className="text-left font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
+                  {r.label}
+                </button>
+              ),
+            },
+            { key: "shows", label: "What it shows", sortable: true, sortValue: (r) => r.shows, render: (r) => <span style={{ color: V3.muted }}>{r.shows}</span> },
+            {
+              key: "run",
+              label: "Run",
+              sortable: false,
+              render: (r) => (
+                <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
+                  Run →
+                </button>
+              ),
+            },
+          ]}
+        />
       )}
     </V3Panel>
   );
