@@ -113,6 +113,7 @@ checkFile(STATEMENT_TAB_PAGE, "SettlementDetailPage Statement tab", [
   { pattern: /SettlementDocumentBody/, description: "SettlementDocumentBody not mounted on Statement tab" },
   { pattern: /buildSettlementLineViews/, description: "buildSettlementLineViews not used on Statement tab" },
   { pattern: /isOpen=\{false\}/, description: "Statement tab document must be read-only (isOpen={false})" },
+  { pattern: /testId="settlement-detail-none-selected"/, description: "empty-state BoardSection missing" },
 ]);
 
 // Fill-not-shell / 443.280 — Approval + Payment Status + empty state use BoardSection.
