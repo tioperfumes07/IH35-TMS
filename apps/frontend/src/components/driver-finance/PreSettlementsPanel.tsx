@@ -9,6 +9,14 @@ import { BoardSection } from "../v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
 import { formatUsdCents } from "../../lib/money";
 import { MoneyCell } from "../shared/MoneyCell";
+import { formatDateUS } from "../../lib/formatDate";
+
+/** Plain English for the tour status (no machine names on screen). */
+function humanizeTourStatus(status: string | null | undefined): string {
+  if (!status) return "—";
+  const s = status.replace(/_/g, " ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 type TourRowWithLoadLinks = TourListRow & {
   /** Optional; when absent, projected from legs for SETL-F5831 reverse drill. */
@@ -120,7 +128,8 @@ function waitingOnReason(r: TourListRow): string {
  * ROUND 443.280-A board columns (Settlements-PreSettlements.png):
  * Number · Driver · Unit · Loads so far · Pay so far · Ready · Waiting on.
  * Unit / Ready / Waiting on read listTours — never hardcoded "—".
- * Period Begin/End / Liabilities / Status are OFF the board (layout replace, not Rule-07 layer).
+ * Period Begin / Period End / Status are gear columns (defaultHidden — owner 2026-10-25: "columns can be added or
+ * removed in the gear filter"); additive law — d6e9d60ba5 had dropped them. Liabilities render inside Number.
  */
 /** Exported for SettlementsPreSettlementsBoard ParityTable mount (443.326). */
 export const preSettlementColumns: ParityColumn<TourListRow>[] = [
@@ -205,6 +214,31 @@ export const preSettlementColumns: ParityColumn<TourListRow>[] = [
         <span className="text-[#6B7280]">—</span>
       );
     },
+  },
+  // Gear columns (Rule 07 additive; owner 2026-10-25 gear ruling) — hidden by default, one click to show.
+  {
+    key: "period_start",
+    label: "Period Begin",
+    sortable: true,
+    defaultHidden: true,
+    sortValue: (row) => row.period_start ?? "",
+    render: (row) => formatDateUS(row.period_start),
+  },
+  {
+    key: "period_end",
+    label: "Period End",
+    sortable: true,
+    defaultHidden: true,
+    sortValue: (row) => row.period_end ?? "",
+    render: (row) => formatDateUS(row.period_end),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    defaultHidden: true,
+    sortValue: (row) => row.status,
+    render: (row) => humanizeTourStatus(row.status),
   },
   // 443.293-B — Dispatch / Settlements board: Close settlement → same 7-step wizard (one engine).
   {

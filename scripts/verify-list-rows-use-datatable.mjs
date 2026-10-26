@@ -25,6 +25,20 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 //   why (b): COL-06 (4b2365beb6) split the one Date into the period's begin/end and the ALL-SEATS law renamed the
 //            settlement column Settlement/Tour. Still every governed column, one more than before.
 export const PRE_SETTLEMENT_HEADERS = ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Amount", "Status"];
+//   newer rule (b), 443.280-A / 443.326 V3 board (owner design Settlements-PreSettlements.png): the governed columns are
+//   kept, some under the board's names — Settlement/Tour = key "number" (settlement link), Load Number = key
+//   "loads_so_far" (load links), Amount = key "amount" (Pay so far, MoneyCell). Period Begin / Period End / Status are gear
+//   columns (owner 2026-10-25 "columns can be added or removed in the gear filter"). Each governed column is proven by its
+//   column key AND the field it renders — dropping any of them still fails.
+export const PRE_SETTLEMENT_GOVERNED = [
+  ["Period Begin", /key:\s*"period_start",[\s\S]{0,200}?row\.period_start/],
+  ["Period End", /key:\s*"period_end",[\s\S]{0,200}?row\.period_end/],
+  ["Driver", /key:\s*"driver",[\s\S]{0,300}?row\.driver_id/],
+  ["Load Number", /key:\s*"loads_so_far",[\s\S]{0,200}?renderLoadPills\(/],
+  ["Settlement/Tour", /key:\s*"number",[\s\S]{0,300}?kind="settlement"/],
+  ["Amount", /key:\s*"amount",[\s\S]{0,300}?<MoneyCell/],
+  ["Status", /key:\s*"status",[\s\S]{0,200}?row\.status/],
+];
 
 export function collectFailures({ dataTableExists, settlements, preSettlements, dataTable, duplicateExists }) {
   const failures = [];
@@ -40,8 +54,8 @@ export function collectFailures({ dataTableExists, settlements, preSettlements, 
   if (!preSettlements.includes('from "../parity/ParityTable"') || !preSettlements.includes("preSettlementColumns")) {
     failures.push("PreSettlementsPanel must use the canonical components/parity/ParityTable column primitive");
   }
-  for (const header of PRE_SETTLEMENT_HEADERS) {
-    if (!preSettlements.includes(`label: "${header}"`)) failures.push(`PreSettlementsPanel missing governed ${header} column`);
+  for (const [header, re] of PRE_SETTLEMENT_GOVERNED) {
+    if (!preSettlements.includes(`label: "${header}"`) && !re.test(preSettlements)) failures.push(`PreSettlementsPanel missing governed ${header} column`);
   }
   if (preSettlements.includes('<span className="text-gray-400">·</span>')) {
     failures.push("PreSettlementsPanel must not jam repeated row fields together with middots");
@@ -77,8 +91,10 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["open driver bills columns removed", { settlements: SOURCES.settlements.replaceAll("buildOpenDriverBillColumns", "REMOVED_COLUMNS") }],
     ["open driver bills table not rendering the columns", { settlements: SOURCES.settlements.replace(/(<ParityTable\s+storageKey="[^"]+"\s+)columns=\{columns\}/, "$1columns={[]}") }],
-    ["pre-settlement Settlement/Tour column dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Settlement/Tour"', 'label: "Ref"') }],
-    ["pre-settlement period end dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Period End"', 'label: "End"') }],
+    ["pre-settlement Settlement/Tour column dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Settlement/Tour"', 'label: "Ref"').replace('key: "number"', 'key: "ref"') }],
+    ["pre-settlement period end dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Period End"', 'label: "End"').replace('key: "period_end"', 'key: "end"') }],
+    ["pre-settlement amount no longer a money cell", { preSettlements: SOURCES.preSettlements.replace('label: "Amount"', 'label: "X"').replace(/(key:\s*"amount",[\s\S]{0,300}?)<MoneyCell/, "$1<span") }],
+    ["pre-settlement status gear column dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Status"', 'label: "S"').replace('key: "status"', 'key: "s"') }],
     ["middot column jam", { preSettlements: SOURCES.preSettlements + '\n<span className="text-gray-400">·</span>' }],
     ["sort control inoperable", { dataTable: SOURCES.dataTable.replaceAll("onClick={() => toggleSort(key)}", "onClick={undefined}") }],
     ["duplicate primitive", { duplicateExists: true }],
