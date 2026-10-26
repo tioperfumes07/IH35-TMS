@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements Payments V3 KPIs + Fuel create/import FORM_INPUT
+
+- **STATUS:** SHIPPING
+- **DELTA:** Settlements Payments Pending Acks / Held Deductions → `V3KpiTile` (removed local `KpiCard`); CreateFuelTransactionModal + ImportFuel kind select → `FORM_INPUT_CLASS` / `FORM_SELECT_CLASS` (40px). Engines/focus filters/import/create unchanged. Guards ratcheted.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlement-fe-honesty PASS (+ --selftest) · verify-fuel-office-create-modal PASS · verify-fuel-history-import-wired PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell Settlements Home/Close/Escrow + Factoring Home remaining
+- **Files Modified:** SettlementsPage.tsx · CreateFuelTransactionModal.tsx · ImportFuelTransactionsModal.tsx · verify-settlement-fe-honesty.mjs · verify-fuel-office-create-modal.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Fuel By-truck period-sync KPIs
 
 - **STATUS:** SHIPPING

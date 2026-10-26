@@ -11,6 +11,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
 import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
+import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 
 type ImportKind = "fleet" | "wex";
 
@@ -170,7 +171,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           <span className="font-semibold">File</span>
           <select
             data-testid="fuel-import-kind"
-            className="rounded-sm border border-gray-200 bg-white px-2 py-1"
+            className={FORM_SELECT_CLASS}
             value={kind}
             disabled={loading}
             onChange={(event) => {

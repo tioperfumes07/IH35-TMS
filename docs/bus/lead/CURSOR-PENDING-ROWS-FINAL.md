@@ -11,7 +11,7 @@
 | 37 | Accounting | Accounting › Unexpected — board verdict REBUILT | 443.280 | PARTIAL |
 | 38 | Banking | Banking › Home — board verdict REBUILT | 443.280 | PARTIAL |
 | 39 | Factoring | Factoring › Home — board verdict LAYERED | 443.280 | OPEN |
-| 44 | Settlements | Settlements › Home — board verdict LAYERED | 443.280 | OPEN |
+| 44 | Settlements | Settlements › Home — board verdict LAYERED | 443.280 | PARTIAL |
 | 45 | Settlements | Settlements › Open — board verdict PARTIAL | 443.280 | PARTIAL |
 | 46 | Settlements | Settlements › Closed — board verdict PARTIAL | 443.280 | PARTIAL |
 | 49 | Settlements | Settlements › Close — board verdict LAYERED | 443.280 | OPEN |
@@ -19,7 +19,7 @@
 | 53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | 443.280 | OPEN |
 | 54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | 443.280 | PARTIAL |
 | 55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | 443.280 | CODED |
-| 56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | 443.280 | OPEN |
+| 56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | 443.280 | PARTIAL |
 | 98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | 443.281 | CODED |
 | 102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | 443.281 | CODED |
 | 103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | 443.281 | CODED-QUEUED |

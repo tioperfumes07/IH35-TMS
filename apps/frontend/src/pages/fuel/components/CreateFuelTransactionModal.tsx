@@ -18,6 +18,7 @@ import { formatFuelStopLocationLabel } from "../../../lib/fuelStopLocationLabel"
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { FORM_INPUT_CLASS, FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -331,7 +332,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             Load exemption reason * (G18 — required when no trip)
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              className={`mt-1 ${FORM_INPUT_CLASS}`}
               value={loadExemptionReason}
               onChange={(e) => setLoadExemptionReason(e.target.value)}
               placeholder="e.g. Yard fuel — no active trip"
@@ -345,7 +346,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             Fuel type
             <div className="mt-1">
               <SelectCombobox
-                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={FORM_SELECT_CLASS}
                 value={fuelType}
                 onChange={(e) => setFuelType(e.target.value as FuelType)}
               >
@@ -422,7 +423,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         <label className="block font-semibold text-gray-700">
           Notes
           <input
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className={`mt-1 ${FORM_INPUT_CLASS}`}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -437,7 +438,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             id="fuel-source-doc"
             type="file"
             data-testid="fuel-create-source-doc-input"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            className={FORM_INPUT_CLASS}
             onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
           />
           {sourceDocFile ? (
