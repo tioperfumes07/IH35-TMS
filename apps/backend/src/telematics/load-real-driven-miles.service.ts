@@ -11,6 +11,7 @@
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { fetchOdometerAnchors, realDrivenMiles, type BoundaryRequest, type OdometerAnchor } from "./odometer-anchor.js";
+import { dwellVia, fetchStopDwells, type DwellPick, type DwellRequest } from "./stop-dwell-boundary.service.js";
 
 /**
  * ORDER-2026-09-04 three-mile CPM: REAL DRIVEN miles per leg and per load, from the odometer only.
@@ -94,14 +95,19 @@ type GeofenceHit = { odo: number | null; at: string; src: string | null };
  *    OBD odometer (interpolated / absent captures are not measurements and refuse with that reason).
  * 2. Else the stop's recorded time, only when a device or the driver's tap recorded it, resolved through the
  *    shared odometer-anchor rule.
- * 3. Else NOT measurable: a manual (typed) stop time is an approximation -- measured 2026-10-01, all 216 manual
+ * 3. Else the truck's GPS DWELL at the stop (stop-dwell-boundary.service.ts): the nearest dwell >= 10 min within 3 mi of the
+ *    stop's point and 48 h of its time, fuel stops / the yard excluded -- arrival = dwell start, departure = dwell end, odometer
+ *    through the same shared anchor rule (owner 2026-10-11: "the gps is source of truth"; 2026-10-25: "the system is supposed
+ *    to do it automatically").
+ * 4. Else NOT measurable: a manual (typed) stop time is an approximation -- measured 2026-10-01, all 216 manual
  *    USMCA stop times sit on the hour, and legs between them spanned exactly 23/47/71/95 h.
  */
 export function resolveStopBoundary(
   side: "arrival" | "departure",
   stop: StopPoint,
   hit: GeofenceHit | undefined,
-  timeAnchor: { anchor: OdometerAnchor | null; reason: string | null } | undefined
+  timeAnchor: { anchor: OdometerAnchor | null; reason: string | null } | undefined,
+  dwell?: DwellPick
 ): Boundary {
   const label = `stop ${stop.sequence_number} ${side}`;
   if (hit) {
@@ -110,9 +116,20 @@ export function resolveStopBoundary(
   }
   const at = side === "arrival" ? stop.arrival_at : stop.departure_at;
   const src = side === "arrival" ? stop.arrival_source : stop.departure_source;
-  if (!at) return { anchor: null, reason: `${label}: no geofence event for the truck and no recorded time`, at: null, via: null };
+  const deviceTime = !!at && !!src && (MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src);
+  if (!deviceTime && dwell?.hit) {
+    // GPS dwell: the time is the truck's own stop; the odometer is the shared anchor at that time (timeAnchor).
+    return {
+      anchor: timeAnchor?.anchor ?? null,
+      reason: timeAnchor?.anchor ? null : `${label}: GPS dwell at ${dwell.hit.at} -- ${timeAnchor?.reason ?? "odometer not resolved"}`,
+      at: dwell.hit.at,
+      via: dwellVia(dwell.hit),
+    };
+  }
+  const dwellWhy = dwell?.reason ? `; GPS dwell: ${dwell.reason}` : "";
+  if (!at) return { anchor: null, reason: `${label}: no geofence event for the truck and no recorded time${dwellWhy}`, at: null, via: null };
   if (!src || !(MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src)) {
-    return { anchor: null, reason: `${label}: no geofence event for the truck; the stop time is ${src ? `a ${src}` : "an unsourced"} entry, not a measurement`, at, via: null };
+    return { anchor: null, reason: `${label}: no geofence event for the truck; the stop time is ${src ? `a ${src}` : "an unsourced"} entry, not a measurement${dwellWhy}`, at, via: null };
   }
   return { anchor: timeAnchor?.anchor ?? null, reason: timeAnchor?.anchor ? null : `${label}: ${timeAnchor?.reason ?? "odometer not resolved"}`, at, via: src };
 }
@@ -210,15 +227,28 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
     for (const row of r.rows) hits.set(row.k, { odo: row.odo == null ? null : Number(row.odo), at: row.at, src: row.src });
   }
   const timed: BoundaryRequest[] = [];
+  const dwellReqs: DwellRequest[] = [];
   for (const w of wanted) {
     if (hits.has(w.key) || !w.stop.unit_id) continue;
     const at = w.side === "arrival" ? w.stop.arrival_at : w.stop.departure_at;
     const src = w.side === "arrival" ? w.stop.arrival_source : w.stop.departure_source;
     if (at && src && (MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src)) timed.push({ key: w.key, unit_id: w.stop.unit_id, at });
+    else {
+      // No fence capture, no device time: the truck's GPS dwell at the stop (stop-dwell-boundary.service.ts).
+      const ref = w.side === "arrival" ? w.stop.arrival_at ?? w.stop.scheduled_arrival_at : w.stop.departure_at ?? w.stop.arrival_at ?? w.stop.scheduled_arrival_at;
+      if (ref && w.stop.latitude != null && w.stop.longitude != null) {
+        dwellReqs.push({ key: w.key, unit_id: w.stop.unit_id, lat: w.stop.latitude, lng: w.stop.longitude, at: ref, side: w.side });
+      }
+    }
+  }
+  const dwells = await fetchStopDwells(client, operatingCompanyId, dwellReqs);
+  for (const [key, pick] of dwells) {
+    const unit = dwellReqs.find((q) => q.key === key)!.unit_id;
+    if (pick.hit) timed.push({ key, unit_id: unit, at: pick.hit.at });
   }
   const anchors = await fetchOdometerAnchors(client, operatingCompanyId, timed);
   const boundary = new Map<string, Boundary>();
-  for (const w of wanted) boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key)));
+  for (const w of wanted) boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key), dwells.get(w.key)));
 
   const out: LoadRealMilesRow[] = [];
   for (const loadId of loadIds) {
