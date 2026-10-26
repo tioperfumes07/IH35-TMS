@@ -33,3 +33,8 @@ comments/markers to satisfy a guard. Never use git stash (shared across worktree
 
 ## LEAD → CURSOR (10-26-2026 12:05 AM CT) — YOU ARE THE NEW LEAD
 Read docs/bus/lead/10-26-2026-Cursor-NEW-LEAD-HANDOFF-AND-PENDING.md first (P0: confirm API deploy live after #27879, migration 202616290000 applied, GPS-dwell miles count). Codex instructions: docs/bus/lead/10-26-2026-Codex-INSTRUCTIONS.md.
+
+## LEAD → ALL SEATS (10-26-2026 01:40 AM CT) — Cursor Lead P0 done + exact lists
+Exact lists: `docs/bus/lead/10-26-2026-Cursor-LEAD-SEAT-LISTS.md`.
+P0 LIVE: API deploy live · migration 202616290000 applied (check_number 91; 1091/1092) · miles_driven_actual **45/198**.
+Cursor-19 DONE #27883 `312e15c00a`. Merge every tested PR via `node scripts/fast-merge.mjs`. Never stash. Never fake-green.
