@@ -17,7 +17,14 @@ const FILES = {
   creator: "apps/backend/src/driver-finance/settlement-creator.service.ts",
   accrual: "apps/backend/src/driver-finance/driver-pay-delivery-accrual.service.ts",
 };
-const read = () => Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, readFileSync(join(ROOT, p), "utf8")]));
+// The Creator's driver-bill restate was moved VERBATIM into settlement-creator-restate-bill.ts on 2026-10-25 (import-cycle break;
+// the service re-exports it). The Creator source is judged as the service + that leaf, as one text.
+const CREATOR_RESTATE = "apps/backend/src/driver-finance/settlement-creator-restate-bill.ts";
+const read = () => {
+  const out = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, readFileSync(join(ROOT, p), "utf8")]));
+  out.creator = `${out.creator}\n${readFileSync(join(ROOT, CREATOR_RESTATE), "utf8")}`;
+  return out;
+};
 
 export function repriceFailures({ engine, bookLoad, creator, accrual }) {
   const f = [];

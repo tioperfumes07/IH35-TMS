@@ -15,6 +15,8 @@ const files = {
   api: "apps/frontend/src/api/forecast.ts",
   route: "apps/backend/src/forecast/cash-forecast-manual.routes.ts",
   writer: "apps/backend/src/forecast/cash-forecast-entry.service.ts",
+  // The entry body schema lives in a leaf module (routes <-> service import cycle broken 2026-10-25); the routes validate with it.
+  schema: "apps/backend/src/forecast/cash-forecast-entry.schema.ts",
   dispute: "apps/frontend/src/pages/accounting/DisputeQueuePage.tsx",
   disputeRoute: "apps/backend/src/accounting/disputes.routes.ts",
 };
@@ -48,7 +50,7 @@ function failures(source) {
     ["reload restores driver id", source.ui.includes("party_ref_id: e.party_ref_id ?? \"\"")],
     ["forward driver drill", hasDriverForwardDrill(source.ui)],
     ["client contract carries id", source.api.includes("party_ref_id: string | null")],
-    ["backend accepts UUID only", source.route.includes("party_ref_id: z.string().uuid().nullish()")],
+    ["backend accepts UUID only", source.schema.includes("party_ref_id: z.string().uuid().nullish()") && source.route.includes("entryBody.safeParse(")],
     ["backend scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.route)],
     ["create uses canonical writer", source.route.includes("return createCashForecastEntry(client, user.uuid, b.data)")],
     ["writer scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.writer)],
@@ -66,6 +68,8 @@ if (process.argv.includes("--selftest")) {
     ["writer","operating_company_id = $2::uuid","TRUE"],
     ["writer","partyRefLabel = driver.rows[0].label","partyRefLabel = null"],
     ["route","return createCashForecastEntry(client, user.uuid, b.data)","return otherWriter(client, user.uuid, b.data)"],
+    ["schema","party_ref_id: z.string().uuid().nullish()","party_ref_id: z.string().nullish()"],
+    ["route","entryBody.safeParse(","looseBody.safeParse("],
   ]) {
     if(!source[key].includes(from))throw Error(`inert mutation ${from}`);
     if(!failures({...source,[key]:source[key].replaceAll(from,to)}).length)throw Error(`escaped mutation ${from}`);

@@ -99,7 +99,7 @@ const BASELINE = new Set([
   "apps/backend/src/cash-advances/cash-advances.routes.ts::accounting.bill_payments",
   "apps/backend/src/cash-advances/lumper-cash-advance-split.ts::accounting.bill_payments",
   "apps/backend/src/cash-advances/lumper-cash-advance-split.ts::accounting.expenses",
-  "apps/backend/src/driver-finance/abandonment.service.ts::driver_finance.settlement_lines",
+  "apps/backend/src/driver-finance/abandonment-chargebacks.service.ts::driver_finance.settlement_lines", // same INSERT, moved verbatim out of abandonment.service.ts 2026-10-25 (import-cycle break) — not new debt
   "apps/backend/src/driver-finance/settlement-contract-terms.service.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlement-deduction-cap.service.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlements-mvp.routes.ts::driver_finance.settlement_lines",

@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createCashForecastEntry } from "./cash-forecast-entry.service.js";
+import { entryBody } from "./cash-forecast-entry.schema.js";
 
 // FIREWALL: this module is the hand-entered cash projection. It must NEVER import
 // accounting/finance/reports, post to the GL, or FK into another schema. Enforced by
@@ -27,30 +28,8 @@ const dateRangeQuery = companyQuery.extend({
 });
 const idParams = z.object({ id: z.string().uuid() });
 
-const entryBody = z.object({
-  operating_company_id: z.string().uuid(),
-  entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  direction: z.enum(["income", "expense"]),
-  amount_cents: z.number().int().min(0),
-  party_name: z.string().trim().max(200).nullish(),
-  invoice_no: z.string().trim().max(120).nullish(),
-  category: z.string().trim().max(120).nullish(),
-  memo: z.string().trim().max(2000).nullish(),
-  ref_kind: z.enum(["account", "unit", "driver", "truck", "trailer"]).nullish(),
-  ref_label: z.string().trim().max(200).nullish(),
-  ref_external_id: z.string().trim().max(120).nullish(),
-  // Part B snapshot refs (read-only display copies, no FK): income row = load/unit/customer
-  // auto-filled from a picked load; expense row = driver/vendor party.
-  load_ref_id: z.string().trim().max(120).nullish(),
-  load_ref_label: z.string().trim().max(200).nullish(),
-  unit_ref_label: z.string().trim().max(200).nullish(),
-  customer_ref_label: z.string().trim().max(200).nullish(),
-  party_ref_kind: z.enum(["customer", "driver", "vendor"]).nullish(),
-  party_ref_id: z.string().uuid().nullish(),
-  party_ref_label: z.string().trim().max(200).nullish(),
-});
 const entryPatch = entryBody.partial().extend({ operating_company_id: z.string().uuid() });
-export type ForecastEntryInput = z.infer<typeof entryBody>;
+export type { ForecastEntryInput } from "./cash-forecast-entry.schema.js";
 const openingBalanceBody = z.object({
   operating_company_id: z.string().uuid(),
   amount_cents: z.number().int(),

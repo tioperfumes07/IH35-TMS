@@ -23,6 +23,10 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-creator-stop-stamps-from-tracking";
+// The stop-evidence engine (stampStopsFromTracking) was moved VERBATIM out of settlement-creator-deliver.ts into
+// stop-evidence-from-tracking.ts on 2026-10-25 (import-cycle break; deliver re-exports it). "deliver" is judged as both files.
+const STOP_EVIDENCE = "apps/backend/src/driver-finance/stop-evidence-from-tracking.ts";
+const withStopEvidence = (m) => ({ ...m, deliver: `${m.deliver}\n${fs.readFileSync(path.join(ROOT, STOP_EVIDENCE), "utf8")}` });
 const F = {
   deliver: "apps/backend/src/driver-finance/settlement-creator-deliver.ts",
   seed: "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
@@ -52,7 +56,7 @@ export function problems(src) {
 
 function selftest() {
   const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
-  const good = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, read(rel)]));
+  const good = withStopEvidence(Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, read(rel)])));
   const m = (k, from, to) => ({ ...good, [k]: good[k].replace(from, to) });
   const bad = [];
   if (problems(good).length) bad.push(`real tree flagged: ${problems(good).join("; ")}`);
@@ -65,7 +69,7 @@ function selftest() {
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();
-const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
+const src = withStopEvidence(Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")])));
 const p = problems(src);
 if (p.length) { console.error(`${LABEL} FAIL\n  - ${p.join("\n  - ")}`); process.exit(1); }
 console.log(`${LABEL} OK — every Creator stop is stamped from the truck's tracked stop event (nearest within ${"805"} m, linked) or marked date-only with the reason; no invented time; no GPS row written.`);

@@ -25,7 +25,7 @@ import { resolvePayComponentItem } from "./pay-component-items.js";
 import { resolveTeamSplitForLoad } from "../settlements/team-splits/apply.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
-import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/book-load.service.js";
+import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/additional-only-driver-pay.js";
 
 export class DriverPayAccrualError extends Error {
   constructor(public readonly code: string, message: string, public readonly details: Record<string, unknown> = {}) {

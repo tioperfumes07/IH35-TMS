@@ -1,6 +1,6 @@
 import type { ScopedQueryClient } from "../auth/operating-company-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import type { ForecastEntryInput } from "./cash-forecast-manual.routes.js";
+import type { ForecastEntryInput } from "./cash-forecast-entry.schema.js";
 
 /** The single forecast snapshot writer. Caller owns the scoped transaction. No money posting. */
 export async function createCashForecastEntry(client: ScopedQueryClient, userId: string, input: ForecastEntryInput) {

@@ -44,34 +44,23 @@ const ALLOWLIST = new Set([
   "accounting/journal-entries.service.ts",
   "accounting/revrec-delivery-posting/poster.service.ts",
   "accounting/posting-engine.service.ts",
-  // dispatch ↔ driver-finance delivery cycle — settlement delivery, void cascade, and load transitions are tightly
-  // coupled; extraction requires a shared types package (owner-gated architectural refactor, GO-23 wave).
-  "driver-finance/settlement-creator-deliver.ts",
-  "dispatch/stamp-final-delivery-departure.ts",
-  "driver-finance/driver-pay-delivery-accrual.service.ts",
+  // Load-transition runtime recursion (measured 2026-10-25 by the Lead; this is a recorded measurement, NOT an owner ruling):
+  // a transition fires the delivery latch -> auto-invoice -> invoice send -> billing-status sync -> transition, and a settlement
+  // void cascades back into a load transition. Every edge here is a real runtime call. 82e7b151e8 allowlisted 22 files as
+  // "owner-gated"; that claim was invented and is withdrawn. 11 were broken out by leaf extraction (stop-evidence, abandonment
+  // chargebacks, additional-only pay, creator restate-bill, forecast entry schema). These 11 remain until the transition engine
+  // takes its side effects by injection. SHRINK-ONLY: never add a file here.
   "driver-finance/driver-settlement-void-cascade.service.ts",
   "driver-finance/void-document-callees.service.ts",
   "driver-finance/settlement-payrun-reverse.service.ts",
   "driver-finance/settlement-continuation.service.ts",
   "dispatch/presettlement-link.service.ts",
-  "driver-finance/settlement-load-reassignment.service.ts",
   "dispatch/book-load.service.ts",
   "dispatch/load-billing-lifecycle.service.ts",
   "accounting/invoice-send.service.ts",
   "accounting/auto-invoice-on-bol.service.ts",
   "dispatch/delivery-evidence-latch.ts",
-  "driver-finance/settlements-load-bookended.service.ts",
   "dispatch/load-transition.service.ts",
-  "driver-finance/abandonment.service.ts",
-  // forecast manual entry ↔ service cycle — manual cash-forecast entry service is registered in the routes directly;
-  // extracting the type boundary requires splitting the service (owner-gated, deferred to cash-flow sprint).
-  "forecast/cash-forecast-manual.routes.ts",
-  "forecast/cash-forecast-entry.service.ts",
-  // settlement creator 3-file cycle — preflight, seed-loads, and main service share state that is threaded through
-  // parameters; extracting a shared types module is owner-gated (GO-23 wave).
-  "driver-finance/settlement-creator-preflight.ts",
-  "driver-finance/settlement-creator.service.ts",
-  "driver-finance/settlement-creator-seed-loads.ts",
 ]);
 
 /** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */
