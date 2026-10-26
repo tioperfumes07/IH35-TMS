@@ -51,7 +51,9 @@ const OVERVIEW_RE = /query=\{unitsWithoutLoadQ\}\s*errorMessage="Couldn't load u
 export function checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc) {
   const problems = [];
 
-  if (!/const unassignedUnits = unitsWithoutLoadQuery\.isError \? \[\] : \(unitsWithoutLoadQuery\.data\?\.units \?\? \[\]\)/.test(boardSrc)) {
+  // RE-PIN 2026-10-25: the direct assignment was wrapped in useMemo for perf (filterDispatchUnits call).
+  // Contract preserved: on isError the units array is [] — just wrapped in useMemo now.
+  if (!/unassignedUnits = useMemo\([\s\S]{0,60}unitsWithoutLoadQuery\.isError \? \[\]/.test(boardSrc)) {
     problems.push("the failed unassigned-unit feed retains stale rows and section counts");
   }
 

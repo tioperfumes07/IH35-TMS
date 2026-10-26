@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
 import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -185,7 +185,7 @@ export function PodReviewPage() {
         <label className="text-xs">
           Filter by load
           <div className="mt-1" data-testid="pod-load-filter">
-            <EntityMultiSelect
+            <EntityPicker
               kind="load"
               operatingCompanyId={companyId}
               value={staged.draft.loadId || null}

@@ -98,7 +98,9 @@ const CHECKS = [
     file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
     // RE-PIN 2026-09-06: the Documents tab component was renamed to LdtDocumentsTab (LDT-D).
     // Accept either <DocumentsTab or <LdtDocumentsTab.
-    pattern: /(?=[\s\S]*role="dialog")(?=[\s\S]*"Overview")(?=[\s\S]*"Documents")(?=[\s\S]*<(?:Ldt)?DocumentsTab)/,
+    // RE-PIN 2026-10-25: LoadDetailDrawer now sets role via object spread ({...(isPage ? {} : { role: "dialog" })});
+    // accept role: "dialog" (spread) or role="dialog" (direct JSX) — same semantic contract.
+    pattern: /(?=[\s\S]*role[=:]\s*"dialog")(?=[\s\S]*"Overview")(?=[\s\S]*"Documents")(?=[\s\S]*<(?:Ldt)?DocumentsTab)/,
   },
   {
     name: "dispatch.modal.abandonment_report: AbandonmentReportModal real Modal + DriverPickerWithCreate + DateTimePicker",

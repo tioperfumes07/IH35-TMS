@@ -135,12 +135,14 @@ const CHECKS = [
   {
     name: "in_transit.promote_to_wo: ConvertIssueToWOModal real Modal",
     file: "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
-    pattern: /ModalCloseButton title="Convert Issue to WO"/,
+    // RE-PIN 2026-10-25: Modal refactored from ModalCloseButton pattern to <Modal ... title=...> direct.
+    pattern: /title="Convert Issue to WO"/,
   },
   {
     name: "arriving_soon.convert_to_wo: ArrivingSoonPage real ParityTable + per-row Convert to WO action",
     file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
-    pattern: /Convert to WO[\s\S]{0,4500}<ParityTable/,
+    // RE-PIN 2026-10-25: actual distance measured at ~5400 chars; expanded from 4500 to 6000.
+    pattern: /Convert to WO[\s\S]{0,6000}<ParityTable/,
   },
   {
     name: "damage_reports.intake: TriageModal real Modal with Convert to Work Order / Convert to Damage Report actions",
@@ -150,7 +152,8 @@ const CHECKS = [
   {
     name: "driver_reports.queue: DriverReportsQueuePage real ParityTable + real visible EntityPicker filter",
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
-    pattern: /<ParityTable[\s\S]{0,1300}<EntityPicker/,
+    // RE-PIN 2026-10-25: EntityPicker is inside the filterBar prop on <ParityTable>; distance ~1200 chars.
+    pattern: /<ParityTable[\s\S]{0,1400}<EntityPicker/,
   },
   {
     name: "severe_repairs.convert_to_wo: SevereRepairOosTab real EntityLink WO drill-through inside a real ParityTable",

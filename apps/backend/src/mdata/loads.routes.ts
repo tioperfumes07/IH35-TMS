@@ -210,7 +210,7 @@ const listLoadsQuerySchema = z.object({
   include_progress: queryBoolean().default(false),
   include_live_eta: queryBoolean().default(false),
   // LEAD 443.206 D10 — "picker": every real load that happened (load-picker-scope.ts), for the cross-module load picker.
-  board_scope: z.enum(["live", "history", "picker"]).optional(),
+  board_scope: z.enum(["live", "history"]).or(z.literal("picker")).optional(),
   // ROUND-20.2 (RT-FULL-TOUR) — owner ruling: "DISPATCH OPEN-ONLY stands everywhere else. Round
   // Trips is the ONE exception, because the tour IS the unit of this view." An opt-in flag, not a
   // behavior change to board_scope=live itself: every OTHER board_scope=live consumer (Kanban,

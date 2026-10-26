@@ -327,7 +327,8 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         {selectedDriver ? (
           <>
             <div className="px-4 pb-2 text-xs text-[#4B5563]">
-              Unit{" "}
+              <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" data-testid="hos-tracker-detail-driver-link" />{" "}
+              · Unit{" "}
               <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
               · {selectedDate} · HOS cycle detail
             </div>

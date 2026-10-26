@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../../api/client";
 import { peekNextLoadNumber } from "../../../../api/dispatch";
-import { listDispatchLoads } from "../../../../api/catalog-loads";
 import { QboDocumentNumberField } from "../../../../components/forms/QboDocumentNumberField";
 import { EntityLink } from "../../../../components/shared/EntityLink";
 
@@ -59,8 +58,7 @@ function isFirstLoadNumberRequired(err: unknown): boolean {
  */
 export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
-  // LEAD 443.270-H: the load holding the previous number — the helper links to it (a real record, not a label).
-  const [previousLoad, setPreviousLoad] = useState<{ id: string; load_number: string } | null>(null);
+  const [previousLoad] = useState<{ id: string; load_number: string } | null>(null);
   const [manualNumber, setManualNumber] = useState("");
   const manualNumberRef = useRef("");
   manualNumberRef.current = manualNumber;
@@ -93,15 +91,6 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       if (scopeGenerationRef.current !== submittedGeneration) return;
       setAwaitingFirstNumber(false);
       setPreview(r.next_number);
-      // LEAD 443.270-H: the load holding the PREVIOUS number (exact match, any state) — linked under the box. Best-effort read.
-      try {
-        const prevNumber = (BigInt(r.next_number) - 1n).toString();
-        const found = await listDispatchLoads({ operating_company_id: submittedCompanyId, view: "home", limit: 5, offset: 0, status: [], search: prevNumber, scope: "all" });
-        const hit = found.loads.find((l) => String(l.load_number) === prevNumber);
-        setPreviousLoad(hit ? { id: String(hit.id), load_number: String(hit.load_number) } : null);
-      } catch {
-        setPreviousLoad(null);
-      }
       if (!hasUserEditedRef.current) {
         // Pre-fill the BOX visually with the previewed number — still fully editable; the moment
         // the operator types (even to clear it), hasUserEditedRef flips and this branch never
@@ -139,7 +128,6 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
   useEffect(() => {
     scopeGenerationRef.current += 1;
     setPreview(null);
-    setPreviousLoad(null);
     setError(null);
     setAwaitingFirstNumber(false);
     setManualNumber("");
