@@ -58,7 +58,6 @@ jobs:
               'required-checks / required-checks-gate',
               'ci / build-typecheck',
               'ci / verify-branch-fresh',
-              'hold-merge-gate / hold-merge-gate',
               'locked-guards / locked-guards',
               'security-checks / security-audit',
               'premerge-gates / rls-migration-scan',

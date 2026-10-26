@@ -758,9 +758,9 @@ test("readVerifyMeta returns db_gated, c5_skip_after_c4, and orchestrator skip l
   assert.ok(Array.isArray(meta.block_ready_c5_skip_orchestrators));
   assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:local-ci"));
   assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:static"));
-  assert.deepEqual(meta.server_required_guard_capabilities["verify:hold-merge-gate"], [
-    "pull-request-metadata",
-  ]);
+  // Owner 2026-10-25 9:37 PM CT: "there is no hold" — the HOLD guard is no longer capability-gated.
+  assert.equal(meta.server_required_guard_capabilities["verify:hold-merge-gate"], undefined);
+  assert.deepEqual(meta.server_required_guard_capabilities["verify:pass-8-clean-baseline"], ["pass8-artifact"]);
 });
 
 test("C5 honors block_ready_c5_skip_after_c4 for verify:arch-design", () => {
@@ -782,9 +782,10 @@ test("C5 still runs verify scripts not in skip-after-c4 or orchestrator sets", (
   assert.equal(shouldSkipC5VerifyScript("verify:fixture-other", meta), false);
 });
 
-test("C5 delegates server-required PR metadata to verify:static and authoritative CI", () => {
+test("C5 delegates server-required capabilities to authoritative CI; the HOLD guard runs locally (owner: no hold)", () => {
   const meta = readVerifyMeta(REPO_ROOT);
-  assert.equal(shouldSkipC5VerifyScript("verify:hold-merge-gate", meta), true);
+  // Owner 2026-10-25 9:37 PM CT: "there is no hold" — verify:hold-merge-gate is not delegated; it runs in C5.
+  assert.equal(shouldSkipC5VerifyScript("verify:hold-merge-gate", meta), false);
   assert.equal(shouldSkipC5VerifyScript("verify:pass-8-clean-baseline", meta), true);
-  assert.match(getC5SkipReason("verify:hold-merge-gate", meta) ?? "", /server-required/);
+  assert.match(getC5SkipReason("verify:pass-8-clean-baseline", meta) ?? "", /server-required/);
 });

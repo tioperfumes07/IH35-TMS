@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   BASELINE_ONLY_MESSAGE,
+  FORBIDDEN_GATE_CONTEXTS,
   REQUIRED_GATE_CONTEXTS,
   STRICT_FRESHNESS_CONTEXT,
   baselineOnlyOutcome,
@@ -76,6 +77,17 @@ test("live ruleset drift rejects conditional checks as required contexts", () =>
     }));
     assert.ok(drift.some((item) => item.includes(`non-approved required context: ${context}`)));
   }
+});
+
+test("owner no-HOLD ruling: hold-merge-gate is never a required gate and re-adding it is drift", () => {
+  // Owner 2026-10-25 9:37 PM CT: "there is no hold" (law §2: no HOLD gate, never re-introduce).
+  const hold = "hold-merge-gate / hold-merge-gate";
+  assert.ok(FORBIDDEN_GATE_CONTEXTS.includes(hold));
+  assert.ok(!REQUIRED_GATE_CONTEXTS.includes(hold));
+  const drift = evaluateProtectionDrift(expected, liveProtection({
+    required_status_checks: { contexts: [...REQUIRED_GATE_CONTEXTS, hold] },
+  }));
+  assert.ok(drift.some((item) => item.includes(`non-approved required context: ${hold}`)));
 });
 
 test("live ruleset drift rejects bypassable governance controls", () => {

@@ -41,7 +41,8 @@ const EFFECTIVE_RULES = [
 ];
 const RULESET_IDENTITY = {
   id: TRUSTED_GITHUB_AUTHORITY.rulesetId,
-  name: TRUSTED_GITHUB_AUTHORITY.rulesetName,
+  // rulesetName (singular) no longer exists — the authority accepts a list of names for the same immutable id.
+  name: TRUSTED_GITHUB_AUTHORITY.rulesetNames[0],
   target: "branch",
   source_type: "Repository",
   source: TRUSTED_GITHUB_AUTHORITY.repository,
@@ -237,4 +238,30 @@ test("wrong ruleset identity fails closed even with matching context and integra
   });
   assert.deepEqual([...live.requiredContexts], []);
   assert.match(live.errors["pull-request-metadata"], /identity does not match/);
+});
+
+test("no live-required capability: a disabled ruleset is never consulted and is not an error (owner: no hold)", () => {
+  // Owner 2026-10-25 9:37 PM CT: "there is no hold" — ruleset 17935054 disabled; verify-meta declares no live check.
+  let calls = 0;
+  const live = loadLiveRequiredStatusChecks(".", {}, {
+    run: () => {
+      calls += 1;
+      return result({ stdout: JSON.stringify({ ...RULESET_IDENTITY, enforcement: "disabled" }) });
+    },
+  });
+  assert.equal(calls, 0);
+  assert.deepEqual([...live.requiredContexts], []);
+  assert.deepEqual(live.errors, {});
+});
+
+test("a capability that DOES declare a live check still fails closed on a disabled ruleset", () => {
+  const live = loadLiveRequiredStatusChecks(".", DECLARATIONS, {
+    run: sequence(
+      result({ stdout: LOCAL_VARIABLES }),
+      result({ stdout: JSON.stringify(EFFECTIVE_RULES) }),
+      result({ stdout: JSON.stringify({ ...RULESET_IDENTITY, enforcement: "disabled" }) })
+    ),
+  });
+  assert.deepEqual([...live.requiredContexts], []);
+  assert.match(String(live.errors["pull-request-metadata"]), /ruleset identity/);
 });

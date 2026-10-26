@@ -111,41 +111,29 @@ export function checkPushGateClassification(fixture) {
       return null;
     }
   })();
+  // OWNER RULING 2026-10-25 9:37 PM CT: "there is no hold." Law §2: no JORGE-APPROVED label, no HOLD gate, never
+  // re-introduce. GitHub ruleset 17935054 is disabled by the owner (fast-merge law). The hold-merge CI context is
+  // therefore NOT a server-required / protection-required / live-required check, and verify:hold-merge-gate is NOT
+  // capability-gated (it runs locally; its held-migration firewall check stays). Re-introducing any of these FAILS.
   const holdContext = "hold-merge-gate / hold-merge-gate";
-  if (
-    verifyMeta?.server_required_ci_equivalents?.["pull-request-metadata"] !==
-    holdContext
-  ) {
-    violations.push("PR-metadata capability is not bound to the hold-merge CI context");
+  if (verifyMeta?.server_required_ci_equivalents?.["pull-request-metadata"] === holdContext) {
+    violations.push("HOLD re-introduced: PR-metadata capability is bound to the hold-merge CI context (owner: no hold)");
+  }
+  if (verifyMeta?.server_required_ci_contexts?.includes(holdContext)) {
+    violations.push("HOLD re-introduced: hold-merge CI context is declared server-required (owner: no hold)");
+  }
+  if (verifyMeta?.server_required_ci_wiring?.[holdContext]) {
+    violations.push("HOLD re-introduced: hold-merge CI context has server-required wiring (owner: no hold)");
+  }
+  if (verifyMeta?.server_required_guard_capabilities?.["verify:hold-merge-gate"]?.length) {
+    violations.push("HOLD re-introduced: local HOLD guard is capability-gated instead of running locally (owner: no hold)");
   }
   if (
-    !verifyMeta?.server_required_ci_contexts?.includes(holdContext) ||
-    verifyMeta?.non_protection_ci_contexts?.includes(holdContext)
+    Object.values(verifyMeta?.server_required_live_status_checks ?? {}).some(
+      (declaration) => declaration?.context === holdContext || declaration?.check_context === "hold-merge-gate"
+    )
   ) {
-    violations.push("hold-merge CI context must remain server-required and protection-required");
-  }
-  const holdWiring = verifyMeta?.server_required_ci_wiring?.[holdContext];
-  if (
-    holdWiring?.workflow !== ".github/workflows/hold-merge-gate.yml" ||
-    holdWiring?.job !== "hold-merge-gate"
-  ) {
-    violations.push("PR-metadata capability lacks exact hold-merge workflow wiring");
-  }
-  if (
-    !verifyMeta?.server_required_guard_capabilities?.[
-      "verify:hold-merge-gate"
-    ]?.includes("pull-request-metadata")
-  ) {
-    violations.push("local HOLD guard is not classified as PR-metadata dependent");
-  }
-  const liveDeclaration =
-    verifyMeta?.server_required_live_status_checks?.["pull-request-metadata"];
-  if (
-    liveDeclaration?.context !== holdContext ||
-    liveDeclaration?.check_context !== "hold-merge-gate" ||
-    Number(liveDeclaration?.integration_id) !== 15368
-  ) {
-    violations.push("HOLD capability lacks exact live GitHub Actions ruleset declaration");
+    violations.push("HOLD re-introduced: hold-merge-gate declared as a live-required GitHub ruleset check (owner: no hold)");
   }
   requireMatch(
     "holdWorkflow",
@@ -214,6 +202,14 @@ export function checkPushGateClassification(fixture) {
   ) {
     violations.push("committed branch protection omits strict freshness context");
   }
+  if (protection?.protection?.required_status_checks?.contexts?.includes(holdContext)) {
+    violations.push("HOLD re-introduced: committed branch protection requires the hold-merge context (owner: no hold)");
+  }
+  requireMatch(
+    "policyVerifier",
+    /FORBIDDEN_GATE_CONTEXTS = Object\.freeze\(\["hold-merge-gate \/ hold-merge-gate"\]\)/,
+    "policy verifier does not forbid the owner-ruled HOLD context"
+  );
   requireMatch(
     "policyVerifier",
     /STRICT_FRESHNESS_CONTEXT = "ci \/ verify-branch-fresh"/,
@@ -340,34 +336,19 @@ const goodFixture = {
   verifyMeta: JSON.stringify({
     server_required_ci_equivalents: {
       "pass8-artifact": "pass-8-smoke-verify / pass-8",
-      "pull-request-metadata": "hold-merge-gate / hold-merge-gate",
     },
-    server_required_ci_contexts: [
-      "pass-8-smoke-verify / pass-8",
-      "hold-merge-gate / hold-merge-gate",
-    ],
+    server_required_ci_contexts: ["pass-8-smoke-verify / pass-8"],
     non_protection_ci_contexts: ["pass-8-smoke-verify / pass-8"],
     server_required_ci_wiring: {
       "pass-8-smoke-verify / pass-8": {
         workflow: ".github/workflows/pass-8-smoke-verify.yml",
         job: "pass-8",
       },
-      "hold-merge-gate / hold-merge-gate": {
-        workflow: ".github/workflows/hold-merge-gate.yml",
-        job: "hold-merge-gate",
-      },
     },
     server_required_guard_capabilities: {
       "verify:pass-8-clean-baseline": ["pass8-artifact"],
-      "verify:hold-merge-gate": ["pull-request-metadata"],
     },
-    server_required_live_status_checks: {
-      "pull-request-metadata": {
-        context: "hold-merge-gate / hold-merge-gate",
-        check_context: "hold-merge-gate",
-        integration_id: 15368,
-      },
-    },
+    server_required_live_status_checks: {},
   }),
   pass8Workflow: `
 jobs:
@@ -397,7 +378,7 @@ jobs:
   gitignore: "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*",
   trackedFiles: [],
   policyVerifier:
-    'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; const value = env.GH_ADMIN_TOKEN; "BASELINE PASS — LIVE UNVERIFIED, owner handoff required";',
+    'export const FORBIDDEN_GATE_CONTEXTS = Object.freeze(["hold-merge-gate / hold-merge-gate"]); const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; const value = env.GH_ADMIN_TOKEN; "BASELINE PASS — LIVE UNVERIFIED, owner handoff required";',
   protection: JSON.stringify({
     protection: {
       required_status_checks: { strict: true, contexts: ["ci / verify-branch-fresh"] },
@@ -424,11 +405,16 @@ const badFixture = {
   protection: "{}",
   codeowners: "/.github/ @untrusted",
   verifyMeta: JSON.stringify({
-    server_required_ci_equivalents: {},
-    server_required_ci_contexts: [],
+    server_required_ci_equivalents: { "pull-request-metadata": "hold-merge-gate / hold-merge-gate" },
+    server_required_ci_contexts: ["hold-merge-gate / hold-merge-gate"],
     non_protection_ci_contexts: [],
-    server_required_ci_wiring: {},
-    server_required_guard_capabilities: {},
+    server_required_ci_wiring: {
+      "hold-merge-gate / hold-merge-gate": { workflow: ".github/workflows/hold-merge-gate.yml", job: "hold-merge-gate" },
+    },
+    server_required_guard_capabilities: { "verify:hold-merge-gate": ["pull-request-metadata"] },
+    server_required_live_status_checks: {
+      "pull-request-metadata": { context: "hold-merge-gate / hold-merge-gate", check_context: "hold-merge-gate", integration_id: 15368 },
+    },
   }),
   freshness: 'execSync("git rev-list")',
   pass8Workflow: `
@@ -450,5 +436,6 @@ runExecutableGuard({
     "legacy manifest fallback",
     "strict freshness",
     "producer failure",
+    "HOLD re-introduced",
   ],
 });

@@ -37,8 +37,9 @@ const LABEL = "ci-dependabot-reaper";
 const REPO = process.env.REAPER_REPO ?? "tioperfumes07/IH35-TMS";
 const DRY = process.argv.includes("--dry-run");
 
-/** The four contexts the ruleset actually requires. Kept in sync with repos/.../rulesets. */
-export const REQUIRED_CHECKS = ["hold-merge-gate", "required-checks-gate", "build-typecheck", "locked-guards"];
+/** Required checks a Dependabot PR must pass before the reaper merges it. hold-merge-gate is NOT one:
+ * owner 2026-10-25 "there is no hold" (ruleset 17935054 disabled). */
+export const REQUIRED_CHECKS = ["required-checks-gate", "build-typecheck", "locked-guards"];
 
 /**
  * Classify a Dependabot title as major / minor / patch.
