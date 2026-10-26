@@ -15,7 +15,13 @@ export function audit(src) {
   if (!/\}, \[rowsQuery\.data\?\.rows, rowsQuery\.isError, softDeleteFilter\]\);/.test(src))
     failures.push("counters must depend on roster rows and the active/inactive slice");
 
-  const required = [
+  // The counter derivation is checked INSIDE the `counters` useMemo: the page has a second, table-row
+  // `sourceRows` derivation (kind/status filters) and a file-wide match let either one satisfy the contract,
+  // so the counters could drop the isError guard while the table's copy kept the guard green.
+  const countersStart = src.indexOf("const counters = useMemo(() =>");
+  const countersEnd = src.indexOf("}, [rowsQuery.data?.rows, rowsQuery.isError, softDeleteFilter]);", countersStart);
+  const countersBlock = countersStart >= 0 && countersEnd > countersStart ? src.slice(countersStart, countersEnd) : "";
+  const countersRequired = [
     /const sourceRows = \(rowsQuery\.isError \? \[\] : rowsQuery\.data\?\.rows \?\? \[\]\)\.filter\(/,
     /softDeleteFilter === "active" && r\.deactivated_at != null/,
     /softDeleteFilter === "inactive" && r\.deactivated_at == null/,
@@ -23,6 +29,9 @@ export function audit(src) {
     /active: sourceRows\.filter\(\(r\) => r\.status === "InService"\)\.length/,
     /inShop: sourceRows\.filter\(\(r\) => r\.status === "InMaintenance"\)\.length/,
     /outOfService: sourceRows\.filter\(\(r\) => rowMatchesFleetStatus\(r, "OutOfService"\)\)\.length/,
+  ];
+  for (const pattern of countersRequired) if (!pattern.test(countersBlock)) failures.push(`missing counter contract (inside counters useMemo): ${pattern.source}`);
+  const required = [
     /value=\{counters\.total\}/,
     /value=\{counters\.active\}/,
     /value=\{counters\.inShop\}/,
