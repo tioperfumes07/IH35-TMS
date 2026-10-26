@@ -57,6 +57,15 @@ export function run(overrides = {}) {
     "Settlements home must render REG-005 KPI strip (SettlementsPage) + V3 week/deductions panels (SettlementsPage + SettlementsHomeBoardPanels)",
     errors
   );
+  // 443.280 fill — Payments focus filters are V3KpiTile (not local KpiCard chrome).
+  assert(
+    page.includes('data-settlements-payments-v3-kpis="1"') &&
+      page.includes('testId="settlements-payments-kpi-pending-acks"') &&
+      page.includes('testId="settlements-payments-kpi-held"') &&
+      !/function KpiCard\(/.test(page),
+    "Settlements Payments focus KPIs must be V3KpiTile (data-settlements-payments-v3-kpis; no local KpiCard)",
+    errors
+  );
   assert(
     companyPage.includes('data-testid="company-settlements-kpi-strip"') &&
       companyPage.includes("V3KpiTile") &&

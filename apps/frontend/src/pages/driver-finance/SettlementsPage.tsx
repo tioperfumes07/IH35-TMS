@@ -1,7 +1,7 @@
 import { settlementLabel } from "../../lib/settlementNumber";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllSettlements, getOpenDriverBills, listAllSettlementDeductions, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -685,18 +685,27 @@ export function SettlementsPage() {
       </MoneyListToolbar>
       {/* B-A3: Pending Acks / Held Deductions focus filters live on the Payments view alongside the
           payment pipeline (the top-of-page REG-005 KPI strip carries the summary tiles for both
-          views). These two set ?focus= predicates matching the KPI counts on this same list. */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiCard
+          views). These two set ?focus= predicates matching the KPI counts on this same list.
+          443.280 fill — V3KpiTile (not local KpiCard chrome). */}
+      <div
+        className="grid grid-cols-2 gap-2 md:grid-cols-4"
+        data-testid="settlements-payments-focus-kpis"
+        data-settlements-payments-v3-kpis="1"
+      >
+        <V3KpiTile
           label="Pending Acks"
-          value={kpis.pending_acks}
-          active={focusFilter === "pending_acks"}
+          value={String(kpis.pending_acks)}
+          sub={focusFilter === "pending_acks" ? "filter on" : "click to filter"}
+          tone={focusFilter === "pending_acks" ? "amber" : "ink"}
+          testId="settlements-payments-kpi-pending-acks"
           onClick={() => setFocus(focusFilter === "pending_acks" ? null : "pending_acks")}
         />
-        <KpiCard
+        <V3KpiTile
           label="Held Deductions"
-          value={kpis.held_deductions}
-          active={focusFilter === "held"}
+          value={String(kpis.held_deductions)}
+          sub={focusFilter === "held" ? "filter on" : "click to filter"}
+          tone={focusFilter === "held" ? "amber" : "ink"}
+          testId="settlements-payments-kpi-held"
           onClick={() => setFocus(focusFilter === "held" ? null : "held")}
         />
       </div>
@@ -979,52 +988,3 @@ function OpenDriverBillsPanel({
   );
 }
 
-function KpiCard({
-  label,
-  value,
-  to,
-  onClick,
-  active,
-  disabled,
-  disabledReason,
-}: {
-  label: string;
-  value: number | string;
-  to?: string;
-  onClick?: () => void;
-  active?: boolean;
-  disabled?: boolean;
-  disabledReason?: string;
-}) {
-  const content = (
-    <>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </>
-  );
-  const base = `rounded-sm border px-2 py-1 text-xs ${
-    active ? "border-[#4B5563] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)]"
-  }`;
-  if (disabled) {
-    return (
-      <div className={`${base} cursor-not-allowed opacity-70`} aria-disabled="true" title={disabledReason} data-kpi-disabled="true">
-        {content}
-      </div>
-    );
-  }
-  if (to) {
-    return (
-      <Link to={to} className={`block ${base} transition hover:shadow-xs`}>
-        {content}
-      </Link>
-    );
-  }
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} aria-pressed={Boolean(active)} className={`${base} w-full text-left transition hover:shadow-xs`}>
-        {content}
-      </button>
-    );
-  }
-  return <div className={base}>{content}</div>;
-}

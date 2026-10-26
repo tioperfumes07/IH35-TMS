@@ -66,6 +66,13 @@ export function collectProblems(sources) {
   if (sources.modal.includes("#8A92AB")) {
     problems.push(`${FILES.modal}: leftover off-scale muted #8A92AB`);
   }
+  // 443.280 fill — page inputs use shared FORM_INPUT_CLASS (40px), not hand-rolled h-9.
+  if (!/FORM_INPUT_CLASS/.test(modal) || !/FORM_SELECT_CLASS/.test(modal)) {
+    problems.push(`${FILES.modal}: must use FORM_INPUT_CLASS / FORM_SELECT_CLASS for page inputs`);
+  }
+  if (/\bh-9\b/.test(modal)) {
+    problems.push(`${FILES.modal}: must not keep hand-rolled h-9 input heights after FORM_INPUT_CLASS`);
+  }
   return problems;
 }
 
