@@ -9,13 +9,15 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import { VendorsHomeBoard } from "./VendorsHomeBoard";
+import { NumLink } from "./partyBoardKit";
+import { MoneyCell } from "../shared/MoneyCell";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { SelectCombobox } from "../Combobox";
@@ -148,7 +150,9 @@ function BoardTable<R extends { id: string }>(props: {
 export function PartyBoard(props: { kind: "customers"; operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
   const [range, setRange] = useState<Range>("ytd");
-  const [chip, setChip] = useState<string>("with_transactions");
+  // The chip lives in the URL (?chip=) so every figure can link to the exact customer rows it sums.
+  const [searchParams] = useSearchParams();
+  const chip = searchParams.get("chip") || "with_transactions";
   const [aging, setAging] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [gearOpen, setGearOpen] = useState(false);
@@ -204,7 +208,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       { key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices, cell: (r) => (r.invoices ? int(r.invoices) : <span className="ih-empty">—</span>), foot: int(sum("invoices")) },
       { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => money(r.billed_cents), foot: money(sum("billed_cents")) },
       { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => (r.collected_cents ? usd(r.collected_cents) : <span className="ih-empty">—</span>), foot: money(sum("collected_cents")) },
-      { key: "open", label: "Open balance", num: true, width: 130, sort: (r) => r.open_cents, cell: (r) => <span className="pb-strong">{money(r.open_cents)}</span>, foot: money(sum("open_cents")) },
+      { key: "open", label: "Open balance", num: true, width: 130, sort: (r) => r.open_cents, cell: (r) => <span className="pb-strong"><MoneyCell cents={r.open_cents} format={money} drill={{ entity: { kind: "customer", id: r.id } }} /></span>, foot: money(sum("open_cents")) },
       { key: "last", label: "Last invoice", num: true, width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span className="pb-muted">{day(r.last_invoice)}</span> },
       { key: "factored", label: "Factored", width: 108, sort: (r) => r.factored ?? "", cell: (r) => <span className="pb-muted2">{r.factored ?? "—"}</span> },
       { key: "status", label: "Status", width: 96, sort: (r) => r.status, cell: (r) => <span className="pb-status">{r.status}</span> },
@@ -219,9 +223,13 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
         <div className="pb-note" data-testid="party-board-note">
           <div className="pb-note-t">This screen surfaces something you should see</div>
           <div className="pb-note-b">
-            {int(b.kpis.invoices)} invoices issued (open and paid), <strong>{usd(b.kpis.billed_cents)} billed</strong> — and only{" "}
-            <strong>{int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry any payment at all</strong>, {money(b.kpis.collected_cents)} in total.
-            Cash that has not been applied to an invoice does not relieve A/R here, so the {usd(b.kpis.ar_open_cents)} open balance includes
+            {/* Each figure opens the customer rows whose Invoices / Billed / Collected / Open balance foots it equals. */}
+            <NumLink to="/customers?chip=with_transactions">{int(b.kpis.invoices)} invoices</NumLink> issued (open and paid),{" "}
+            <strong><NumLink to="/customers?chip=with_transactions">{usd(b.kpis.billed_cents)}</NumLink> billed</strong> — and only{" "}
+            <strong>{int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry any payment at all</strong>,{" "}
+            <NumLink to="/customers?chip=with_transactions">{money(b.kpis.collected_cents)}</NumLink> in total.
+            Cash that has not been applied to an invoice does not relieve A/R here, so the{" "}
+            <NumLink to="/customers?chip=open_balance">{usd(b.kpis.ar_open_cents)}</NumLink> open balance includes
             anything already paid but not applied. Computed live from your invoices.
           </div>
         </div>
@@ -251,14 +259,15 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
 
       <div className="pb-bar">
         {chips.map((c) => (
-          <button key={c.id} type="button" className="pb-chip" aria-pressed={chip === c.id && !term} onClick={() => { setChip(c.id); setSearch(""); }}>
+          <Link key={c.id} className="pb-chip" to={`/customers?chip=${c.id}`} aria-current={chip === c.id && !term ? "true" : undefined}
+            onClick={() => setSearch("")}>
             {c.label} {int(c.n)}
-          </button>
+          </Link>
         ))}
-        <button type="button" className="pb-chip" aria-pressed={chip === "duplicates" && !term} data-testid="party-board-duplicates-chip"
-          onClick={() => { setChip("duplicates"); setSearch(""); }}>
+        <Link className="pb-chip" to="/customers?chip=duplicates" aria-current={chip === "duplicates" && !term ? "true" : undefined}
+          data-testid="party-board-duplicates-chip" onClick={() => setSearch("")}>
           Possible duplicates {variantCount == null ? "…" : int(variantCount)}
-        </button>
+        </Link>
         <span className="pb-sep" />
             <SelectCombobox aria-label="Date range" className="pb-select" value={range} onChange={(e) => setRange(e.target.value as Range)}>
               <option value="ytd">This year</option><option value="12m">Last 12 months</option><option value="all">All time</option>

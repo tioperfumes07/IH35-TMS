@@ -22,6 +22,7 @@ import {
   type DriverProfileTab,
 } from "../../pages/drivers/driverProfileTabs";
 import { CollapsibleProfileCard } from "./CollapsibleProfileCard";
+import { NumLink } from "./partyBoardKit";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
@@ -159,11 +160,11 @@ export function DriverOverviewBoard(props: {
   const flagged = t.integrity_flags_90d > 0;
   const sum = (k: "loads" | "miles" | "line_haul_cents" | "additional_cents" | "deductions_cents" | "net_cents") => o.settlements.reduce((s, r) => s + r[k], 0);
   const tiles = [
-    { label: "Settlement due", value: money(t.settlement_due_cents), sub: `${int(t.settlements_due)} unpaid` },
-    { label: "Additional pay", value: money(t.additional_pay_cents), sub: `${int(t.additional_items)} items, 90 days` },
-    { label: "Escrow held", value: t.escrow_held_cents == null ? "—" : usd(t.escrow_held_cents), sub: t.escrow_target_cents ? `target ${usd(t.escrow_target_cents)}` : "no target set" },
-    { label: "Miles, 30 days", value: t.miles_30d ? int(t.miles_30d) : "—", sub: `fleet ${int(t.fleet_miles_30d_per_driver)}` },
-    { label: "MPG, 30 days", value: t.mpg_30d == null ? "—" : String(t.mpg_30d), sub: `fleet ${t.fleet_mpg_30d ?? "—"}` },
+    { label: "Settlement due", value: money(t.settlement_due_cents), sub: `${int(t.settlements_due)} unpaid`, to: driverProfileTabHref(o.driver.id, "Settlements") },
+    { label: "Additional pay", value: money(t.additional_pay_cents), sub: `${int(t.additional_items)} items, 90 days`, to: driverProfileTabHref(o.driver.id, "Additional payments") },
+    { label: "Escrow held", value: t.escrow_held_cents == null ? "—" : usd(t.escrow_held_cents), sub: t.escrow_target_cents ? `target ${usd(t.escrow_target_cents)}` : "no target set", to: driverProfileTabHref(o.driver.id, "Pay & escrow") },
+    { label: "Miles, 30 days", value: t.miles_30d ? int(t.miles_30d) : "—", sub: `fleet ${int(t.fleet_miles_30d_per_driver)}`, to: driverProfileTabHref(o.driver.id, "Loads") },
+    { label: "MPG, 30 days", value: t.mpg_30d == null ? "—" : String(t.mpg_30d), sub: `fleet ${t.fleet_mpg_30d ?? "—"}`, to: driverProfileTabHref(o.driver.id, "Fuel") },
     { label: "Complaints", value: int(t.complaints_90d), sub: `fleet avg ${t.fleet_complaints_avg_90d} · 90 days`, tone: t.complaints_90d > t.fleet_complaints_avg_90d && t.complaints_90d > 0 ? "amber" : "", to: driverProfileTabHref(o.driver.id, "Complaints") },
     { label: "Integrity", value: flagged ? "Flagged" : "Clear", sub: `${int(t.integrity_flags_90d)} flags · 90 days`, tone: flagged ? "amber" : "navy" },
   ];
@@ -228,7 +229,7 @@ export function DriverOverviewBoard(props: {
               scope={scope}
               cardId="settlements"
               title="Settlements"
-              count={o.settlement_count}
+              badge={<NumLink to={driverProfileTabHref(o.driver.id, "Settlements")}>{int(o.settlement_count)}</NumLink>}
               action={<Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Settlements")}>All {int(o.settlement_count)} →</Link>}
             >
               {o.settlements.length === 0 ? <div className="dd-note">No settlement has been issued to this driver.</div> : (
@@ -271,7 +272,7 @@ export function DriverOverviewBoard(props: {
               cardId="additional"
               title="Additional payments"
               subtitle="Anything paid outside line haul — it rides the settlement, it never becomes a separate cheque"
-              count={o.additional.length}
+              badge={<NumLink to={driverProfileTabHref(o.driver.id, "Additional payments")}>{int(o.additional.length)}</NumLink>}
               action={<button type="button" className="dd-add" onClick={runSettlement}>+ Add</button>}
             >
               {o.additional.length === 0 ? <div className="dd-note">No additional payment in the last 90 days.</div> : (
@@ -307,7 +308,7 @@ export function DriverOverviewBoard(props: {
               cardId="complaints"
               title="Complaints against the driver"
               subtitle="Late, refused to roll, service failure — logged with who raised it and what it cost"
-              count={o.complaints.length}
+              badge={<NumLink to={driverProfileTabHref(o.driver.id, "Complaints")}>{int(o.complaints.length)}</NumLink>}
               action={
                 <span className="inline-flex items-center gap-2">
                   <button
@@ -352,7 +353,8 @@ export function DriverOverviewBoard(props: {
               )}
             </CollapsibleProfileCard>
 
-            <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports &amp; damage he filed" count={o.reports.length}>
+            <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports &amp; damage he filed"
+              badge={<NumLink to={driverProfileTabHref(o.driver.id, "Reports & damage")}>{int(o.reports.length)}</NumLink>}>
               {o.reports.length === 0 ? <div className="dd-note">No driver report and no DVIR defect filed by this driver.</div> : (
                 <ParityTable<Overview["reports"][number]>
                   appearance="board"
@@ -382,7 +384,7 @@ export function DriverOverviewBoard(props: {
               scope={scope}
               cardId="integrity"
               title="Integrity"
-              count={t.integrity_flags_90d}
+              badge={int(t.integrity_flags_90d)}
               action={<span className={`dd-tag ${flagged ? "dd-tag--amber" : "dd-tag--navy"}`}>{flagged ? "Flagged" : "Clear"}</span>}
             >
               <div>
@@ -406,7 +408,7 @@ export function DriverOverviewBoard(props: {
               cardId="trucks"
               title="Trucks he has held"
               subtitle="How damage gets pinned on the right man when trucks rotate"
-              count={o.trucks.length}
+              badge={<NumLink to={driverProfileTabHref(o.driver.id, "Equipment")}>{int(o.trucks.length)}</NumLink>}
             >
               {o.trucks.length === 0 ? <div className="dd-note">No truck assignment recorded for this driver.</div> : (
                 <ParityTable<Overview["trucks"][number]>
@@ -433,11 +435,12 @@ export function DriverOverviewBoard(props: {
             <CollapsibleProfileCard scope={scope} cardId="pay-terms" title="Pay terms">
               <div>
                 <div className="dd-kv"><span>Pay basis</span><span className="ih-num">{o.pay_terms.basis ?? "No rate card"}</span></div>
-                <div className="dd-kv"><span>Rate</span><span className="ih-num">{o.pay_terms.rate_per_mile_cents != null ? `${usd(o.pay_terms.rate_per_mile_cents)} / mi` : o.pay_terms.flat_per_load_cents != null ? `${usd(o.pay_terms.flat_per_load_cents)} / load` : "—"}</span></div>
-                <div className="dd-kv"><span>Empty miles</span><span className="ih-num">{o.pay_terms.empty_rate_per_mile_cents != null ? `${usd(o.pay_terms.empty_rate_per_mile_cents)} / mi` : "—"}</span></div>
+                {/* Pay terms open the driver's Pay & escrow tab, where the rate card and escrow schedule live. */}
+                <div className="dd-kv"><span>Rate</span><span className="ih-num">{o.pay_terms.rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.rate_per_mile_cents)} / mi`}</NumLink> : o.pay_terms.flat_per_load_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.flat_per_load_cents)} / load`}</NumLink> : "—"}</span></div>
+                <div className="dd-kv"><span>Empty miles</span><span className="ih-num">{o.pay_terms.empty_rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.empty_rate_per_mile_cents)} / mi`}</NumLink> : "—"}</span></div>
                 <div className="dd-kv"><span>Worker class</span><span className="ih-num">{o.pay_terms.worker_class ?? "—"}</span></div>
                 <div className="dd-kv"><span>Net pay floor</span><span className="ih-num">{o.pay_terms.net_pay_floor_pct != null ? `${o.pay_terms.net_pay_floor_pct}%` : "—"}</span></div>
-                <div className="dd-kv"><span>Escrow target</span><span className="ih-num">{money(o.pay_terms.escrow_target_cents)}</span></div>
+                <div className="dd-kv"><span>Escrow target</span><span className="ih-num">{o.pay_terms.escrow_target_cents == null ? "—" : <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{money(o.pay_terms.escrow_target_cents)}</NumLink>}</span></div>
               </div>
             </CollapsibleProfileCard>
 

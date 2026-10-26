@@ -19,7 +19,8 @@
 .pb-bar { background: var(--ih-card); border-bottom: 1px solid var(--ih-border); padding: 9px var(--ih-gutter); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pb-chip { font: inherit; font-size: var(--ih-fs-sub); min-height: var(--ih-h-control); padding: 0 11px; border: 1px solid var(--ih-border-control); background: var(--surface-unselected); color: var(--ih-navy-ink); border-radius: var(--ih-radius); cursor: pointer; }
 .pb-chip:hover { background: var(--surface-hover); }
-.pb-chip[aria-pressed="true"] { font-weight: 600; border-color: var(--ih-navy); background: var(--ih-navy); color: var(--ih-card); }
+.pb-chip[aria-pressed="true"],
+.pb-chip[aria-current="true"] { font-weight: 600; border-color: var(--ih-navy); background: var(--ih-navy); color: var(--ih-card); }
 .pb-sep { width: 1px; height: 22px; background: var(--ih-divider); margin: 0 4px; }
 .pb-select { font: inherit; font-size: 12px; min-height: var(--ih-h-control); border: 1px solid var(--ih-border-control); border-radius: var(--ih-radius); padding: 0 8px; background: var(--ih-card); color: var(--ih-navy-ink); }
 .pb-search { font: inherit; font-size: var(--ih-fs-body); min-height: var(--ih-h-control); flex-grow: 1; min-width: 200px; border: 1px solid var(--ih-border-control); border-radius: var(--ih-radius); padding: 0 10px; background: var(--ih-card); color: var(--ih-ink); }
@@ -126,3 +127,5 @@
 .wl { width: 268px; max-width: 100%; }   /* email */
 .wide { width: 100%; }                  /* notes only */
 .de-ctrl { height: 34px; box-sizing: border-box; }
+/* Chips that hold their filter in the URL render as links — same chip, no underline. */
+a.pb-chip { text-decoration: none; display: inline-flex; align-items: center; }
