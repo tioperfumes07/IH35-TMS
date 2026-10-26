@@ -14,6 +14,16 @@ import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 
 type ImportKind = "fleet" | "wex";
 
+type FuelImportOutcome =
+  | { kind: "wex"; res: WexStatementImportResult }
+  | { kind: "fleet"; res: FuelTransactionImportResult };
+
+/** The operator's file-kind choice IS part of the request: it decides which import endpoint receives the file. */
+async function importFuelFile(kind: ImportKind, operatingCompanyId: string, file: File, wexDryRun: boolean): Promise<FuelImportOutcome> {
+  if (kind === "wex") return { kind, res: await importWexStatement(operatingCompanyId, file, wexDryRun) };
+  return { kind, res: await importFuelTransactions(operatingCompanyId, file) };
+}
+
 // LEAD 443.202 — what each England WEX statement line will do / did, in the owner's words.
 const WEX_OUTCOME_LABEL: Record<WexStatementOutcome, string> = {
   imported: "New fill — posts Dr fuel / Cr England WEX (2520)",
@@ -104,8 +114,10 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
     if (kind === "wex") {
       try {
         // First click: the plan (dry run, nothing written). Second click: post exactly that file.
-        const res = await importWexStatement(operatingCompanyId, file, wexPlan === null);
+        const outcome = await importFuelFile(kind, operatingCompanyId, file, wexPlan === null);
         if (lifecycleGenerationRef.current !== submissionGeneration) return;
+        if (outcome.kind !== "wex") return;
+        const res = outcome.res;
         if (res.dry_run) {
           setWexPlan(res);
           return;
@@ -128,8 +140,10 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
       return;
     }
     try {
-      const res = await importFuelTransactions(operatingCompanyId, file);
+      const outcome = await importFuelFile(kind, operatingCompanyId, file, false);
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
+      if (outcome.kind !== "fleet") return;
+      const res = outcome.res;
       setResult(res);
       pushToast(
         `Fuel import complete: +${res.rows_inserted} inserted, ${res.rows_duplicate} duplicate, ${res.rows_skipped} skipped, ${res.dead_letters} rejected`,

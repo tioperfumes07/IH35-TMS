@@ -33,21 +33,20 @@ export function BulkActionModal({
 }: BulkActionModalProps) {
   const needsReason = requiresReason ?? reasonRequired ?? false;
   const [typedConfirm, setTypedConfirm] = useState("");
-  const [typedError, setTypedError] = useState<string | null>(null);
   const [voidModalOpen, setVoidModalOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setTypedConfirm("");
-      setTypedError(null);
     }
   }, [open]);
 
+  // The typed phrase is a transient acknowledgement: it gates Confirm (and says why) — it is never sent.
+  const confirmDisabledReason =
+    requiresTypedConfirm && typedConfirm.trim() !== requiresTypedConfirm ? `Type ${requiresTypedConfirm} to confirm.` : undefined;
+
   const handleConfirmClick = () => {
-    if (requiresTypedConfirm && typedConfirm.trim() !== requiresTypedConfirm) {
-      setTypedError(`Type ${requiresTypedConfirm} to confirm.`);
-      return;
-    }
+    if (requiresTypedConfirm && typedConfirm.trim() !== requiresTypedConfirm) return;
     if (needsReason) {
       setVoidModalOpen(true);
     } else {
@@ -70,6 +69,7 @@ export function BulkActionModal({
           </p>
           {description ? <p className="text-gray-600">{description}</p> : null}
           {payloadFields}
+          {/* C9-SUBMISSION-GATE: the typed phrase gates Confirm and renders its disabled reason; it is not a payload field. */}
           {requiresTypedConfirm ? (
             <label className="block space-y-1">
               <span className="font-medium text-gray-800">Type {requiresTypedConfirm} to confirm</span>
@@ -77,13 +77,10 @@ export function BulkActionModal({
                 type="text"
                 className="w-full rounded-sm border border-gray-300 p-2 text-xs"
                 value={typedConfirm}
-                onChange={(e) => {
-                  setTypedConfirm(e.target.value);
-                  if (typedError) setTypedError(null);
-                }}
-                aria-invalid={Boolean(typedError)}
+                onChange={(e) => setTypedConfirm(e.target.value)}
+                aria-invalid={Boolean(confirmDisabledReason) && typedConfirm.length > 0}
               />
-              {typedError ? <span className="text-xs text-red-600">{typedError}</span> : null}
+              {confirmDisabledReason ? <span className="text-xs text-red-600">{confirmDisabledReason}</span> : null}
             </label>
           ) : null}
           <div className="flex justify-end gap-2 pt-2">
@@ -99,7 +96,7 @@ export function BulkActionModal({
               type="button"
               className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
               onClick={handleConfirmClick}
-              disabled={confirming}
+              disabled={confirming || (Boolean(requiresTypedConfirm) && typedConfirm.trim() !== requiresTypedConfirm)}
             >
               {confirming ? "Applying…" : "Confirm"}
             </button>

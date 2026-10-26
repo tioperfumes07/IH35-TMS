@@ -53,11 +53,18 @@ export function checkUnmatchResetsReviewState(src) {
   if (!/undoBankLineOnClient\(client,/.test(fnBody)) {
     failures.push(`${WORKLIST_REL}: unmatchBankTransaction no longer goes through the bank-line state machine (undoBankLineOnClient)`);
   }
-  const upd = src.unmatch.match(/UPDATE banking\.bank_transactions[\s\S]*?RETURNING/);
-  if (!upd || !/matched_journal_entry_id = NULL/.test(upd[0])) {
+  // The writer is the UPDATE of banking.bank_transactions that clears matched_journal_entry_id. Comments are
+  // stripped first (a prose "UPDATE...RETURNING" once captured the wrong span), and a block may not cross
+  // into another UPDATE (LEAD 443.305 added a pointer-only pre-UPDATE that clears matched_related_party_loan_id
+  // before the main writer runs — that pre-step is not the writer and must not be judged as one).
+  const unmatchCode = src.unmatch.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1").replace(/--[^\n]*/g, "");
+  const blocks = [...unmatchCode.matchAll(/UPDATE banking\.bank_transactions\b(?:(?!\bUPDATE\b)[\s\S])*?\bRETURNING\b/g)].map((m) => m[0]);
+  const writers = blocks.filter((b) => /matched_journal_entry_id\s*=\s*NULL/.test(b));
+  const upd = writers.length ? writers : null;
+  if (!upd) {
     failures.push(`${UNMATCH_REL}: the unmatch writer no longer clears matched_journal_entry_id — source shape changed, guard needs updating`);
   }
-  if (!upd || !/review_state\s*=\s*'for_review'/.test(upd[0])) {
+  if (!upd || !upd.every((b) => /review_state\s*=\s*'for_review'/.test(b))) {
     failures.push(`${UNMATCH_REL}: the unmatch writer clears every matched_*_id pointer but never resets review_state back to 'for_review' — the row is left stuck at 'matched' with nothing matched (an orphaned state that will not re-surface in the for-review queue)`);
   }
   return failures;
@@ -90,6 +97,21 @@ export async function closeReconPeriod() {}
   const broken = { ...good, unmatch: good.unmatch.replace("          review_state = 'for_review',\n", "") };
   if (!checkUnmatchResetsReviewState(broken).some((f) => f.includes("review_state"))) {
     throw new Error("selftest: removing the review_state reset must be flagged — it was not");
+  }
+  // Real shape (LEAD 443.305): a pointer-only pre-UPDATE and a prose comment naming UPDATE...RETURNING precede
+  // the writer. The guard must still find and judge the real writer — passing here, and still failing below.
+  const preStep = {
+    ...good,
+    unmatch:
+      "await client.query(`UPDATE banking.bank_transactions SET matched_related_party_loan_id = NULL WHERE id = $1`);\n" +
+      "// Postgres UPDATE...RETURNING reflects the NEW row\n" + good.unmatch,
+  };
+  if (checkUnmatchResetsReviewState(preStep).length !== 0) {
+    throw new Error(`selftest: a pointer-only pre-UPDATE before the writer must not fail — got ${JSON.stringify(checkUnmatchResetsReviewState(preStep))}`);
+  }
+  const preStepBroken = { ...preStep, unmatch: preStep.unmatch.replace("          review_state = 'for_review',\n", "") };
+  if (!checkUnmatchResetsReviewState(preStepBroken).some((f) => f.includes("review_state"))) {
+    throw new Error("selftest: with the pre-UPDATE present, removing the review_state reset must still be flagged");
   }
   // Planted mutation: the route regrows its own inline UPDATE (the pre-288.2 second writer).
   const inline = { ...good, routes: good.routes.replace("await unmatchBankTransaction({", "await client.query(`UPDATE banking.bank_transactions SET matched_load_id = NULL`); ({") };
