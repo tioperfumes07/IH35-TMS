@@ -14,6 +14,7 @@ const paths = {
   board: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
   api: "apps/frontend/src/api/loads.ts",
   backend: "apps/backend/src/mdata/loads.routes.ts",
+  loadService: "apps/backend/src/dispatch/load-service.ts",
   driver: "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx",
   unit: "apps/frontend/src/components/dispatch/InlineUnitPicker.tsx",
   trailer: "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx",
@@ -46,7 +47,6 @@ function audit(candidate = source) {
   }
   for (const needle of [
     "tr.id AS trailer_id",
-    "tr.equipment_number AS trailer_number",
     "FROM dispatch.load_assignment_history lah",
     "AND lah.operating_company_id = l.operating_company_id",
     "COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id",
@@ -54,6 +54,13 @@ function audit(candidate = source) {
   ]) {
     if (!candidate.backend.includes(needle)) failures.push(`backend: mounted list producer missing ${needle}`);
   }
+  // The label: the fleet trailer's number, or — LEAD 23:45Z parity — the load service's ONE trailer projection, which
+  // also resolves a customer (non-owned) trailer and falls back to the same fleet tr.equipment_number. #bb402de45e
+  // replaced the helper with the bare column to satisfy this needle; customer trailers then rendered null (reverted).
+  const helperBody = candidate.loadService.slice(candidate.loadService.indexOf("export function loadServiceTrailerNumberSql("), candidate.loadService.indexOf("export function loadServiceTrailerNumberSql(") + 900);
+  const viaHelper = candidate.backend.includes('${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number') &&
+    /ELSE \$\{fleetTrailerAlias\}\.equipment_number END/.test(helperBody) && /dispatch\.non_owned_trailers/.test(helperBody);
+  if (!viaHelper && !candidate.backend.includes("tr.equipment_number AS trailer_number")) failures.push("backend: mounted list producer missing the trailer label (tr.equipment_number AS trailer_number or loadServiceTrailerNumberSql(\"l\", \"tr\"))");
   if (!candidate.board.includes("id={load.trailer_id}") || !candidate.board.includes('name={load.trailer_number}')) {
     failures.push("board: trailer reverse drill does not consume the typed list id/label");
   }
@@ -69,6 +76,8 @@ if (process.argv.includes("--selftest")) {
     ["board", "<InlineTrailerPicker", "<RemovedInlineTrailerPicker", "mounted trailer control"],
     ["api", "assigned_unit_number: string | null;\n  trailer_id?: string | null;", "assigned_unit_number: string | null;", "trailer id response contract"],
     ["backend", "tr.id AS trailer_id", "NULL::uuid AS trailer_id", "trailer id projection"],
+    ["backend", '${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number', "NULL::text AS trailer_number", "trailer label projection"],
+    ["loadService", "ELSE ${fleetTrailerAlias}.equipment_number END", "ELSE NULL END", "helper drops the fleet trailer label"],
     ["backend", "AND lah.operating_company_id = l.operating_company_id", "", "assignment-history entity scope"],
     ["board", "id={load.trailer_id}", "id={null}", "mounted trailer id consumer"],
   ];
