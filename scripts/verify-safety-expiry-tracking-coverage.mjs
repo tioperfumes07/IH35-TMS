@@ -50,7 +50,14 @@ export function collectProblems(root = ROOT) {
   if (!/createSafetyBackgroundCheck\(input\.companyId/.test(sources.section) || !/driver_id: input\.driverId/.test(sources.section)) failures.push("background creator must submit the snapshotted selected-company driver FK");
   if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId,\s*\{\s*limit:\s*pageSize,\s*offset:/.test(sources.section) || !/<EntityLink kind="driver"/.test(sources.section)) failures.push("background list must use exact reverse filtering, server range, and canonical driver drill-through");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver background-check surface");
-  if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact background-check reverse history");
+  // EVERY driver-profile mount must be driver-scoped: the page mounts the section in the overview linkage AND the
+  // Safety file tab; a single-occurrence match let one mount fall back to the all-driver list unseen.
+  {
+    const mounts = sources.driver.match(/<BackgroundChecksSection\b[^>]*>/g) ?? [];
+    if (mounts.length === 0 || !mounts.every((m) => /operatingCompanyId=\{companyId\} driverId=\{id\}/.test(m))) {
+      failures.push("driver profile must mount exact background-check reverse history (every mount driver-scoped)");
+    }
+  }
   // UPL-05 — MVR create surface exists (not a missing screen): DOT mount + Create chrome + mvr check_type.
   if (!/\{\s*value:\s*"mvr"\s*,\s*label:\s*"Motor vehicle record"\s*\}/.test(sources.section)) {
     failures.push("UPL-05: BackgroundChecksSection must offer check_type=mvr (Motor vehicle record)");
