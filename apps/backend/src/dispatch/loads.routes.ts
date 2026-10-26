@@ -430,6 +430,21 @@ const createDispatchLoadBodySchema = z.object({
   if (data.save_mode !== "draft" && data.stops.length < 2) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["stops"], message: "Array must contain at least 2 element(s)" });
   }
+  // ENG-07: live book refuses city-only pickup/delivery (street or Google place required). Drafts exempt.
+  if (data.save_mode !== "draft") {
+    data.stops.forEach((s, i) => {
+      if (s.stop_type !== "pickup" && s.stop_type !== "delivery") return;
+      const street = (s.address_line1 ?? "").trim();
+      const place = (s.google_place_id ?? "").trim();
+      if (!street && !place) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["stops", i, "address_line1"],
+          message: "street address or Google place is required — city-only is refused",
+        });
+      }
+    });
+  }
 });
 
 // Block 06 (Inc 2) — full load edit. All fields optional (PATCH semantics); only present keys update.

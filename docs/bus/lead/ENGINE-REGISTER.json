@@ -118,10 +118,10 @@
    "title": "ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "OPEN",
+   "status": "CODED",
    "guard": null,
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "PR pending: bookLoadInputPrecheck + create schema refuse city-only; guard verify-book-stop-street-or-place-required; 15 historical city-only since 10-13 remain for geocode sweep"
   },
   {
    "id": "ENG-08",

@@ -248,7 +248,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | OPEN |  |
 | 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
 | 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
-| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | OPEN |  |
+| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | CODED | book refuses city-only; guard 18802; 15 historical remain for sweep |
 | 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | OPEN |  |
 | 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | DONE-LIVE | verify-engine-register-closed-by-guard PASS |
 | 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | DONE-LIVE | verify-no-live-duplicate-documents 0 groups |
