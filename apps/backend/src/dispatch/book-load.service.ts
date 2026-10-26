@@ -2093,6 +2093,28 @@ function bookLoadInputPrecheck(input: BookLoadInput, source: LoadCreateSource = 
       const refusal = trailerChoiceShapeRefusal(input.trailer_choice);
       if (refusal) return { kind: "error", status: 422, payload: refusal };
     }
+    // ENG-07 / G11 (owner): a live booking refuses a city-only stop. Pickup/delivery must carry a street
+    // (address_line1) or a Google place id so geocode/fence can bind. Drafts + historical_backfill exempt
+    // (backfill may still land city-only until the resolver/sweep fills them; live Book cannot create more).
+    if (source === "live_feed") {
+      for (const s of input.stops ?? []) {
+        if (s.stop_type !== "pickup" && s.stop_type !== "delivery") continue;
+        const street = String(s.address_line1 ?? "").trim();
+        const place = String(s.google_place_id ?? "").trim();
+        if (!street && !place) {
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "stop_street_or_google_place_required",
+              message: `Stop ${s.sequence_number} (${s.stop_type}) needs a street address or Google place — city-only is refused`,
+              sequence_number: s.sequence_number,
+              stop_type: s.stop_type,
+            },
+          };
+        }
+      }
+    }
   }
   return null;
 }
