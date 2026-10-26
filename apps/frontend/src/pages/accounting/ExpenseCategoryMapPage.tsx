@@ -217,7 +217,7 @@ export function ExpenseCategoryMapPage() {
         />
       )}
 
-      <Modal
+      <Modal variant="drawer"
         open={showAddModal}
         onClose={() => {
           setShowAddModal(false);

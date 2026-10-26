@@ -103,7 +103,7 @@ export function SubscriptionEditor({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={mode === "edit" ? "Edit subscription" : "Add subscription"} size="sm" data-testid="subscription-editor">
+    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "edit" ? "Edit subscription" : "Add subscription"} size="sm" data-testid="subscription-editor">
         <div className="space-y-3 text-xs">
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Report</span>

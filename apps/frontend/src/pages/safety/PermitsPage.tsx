@@ -302,7 +302,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         </p>
       ) : null}
 
-      <Modal open={createOpen} onClose={closeCreate} title="Create permit" size="sm" data-testid="permits-create-modal">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create permit" size="sm" data-testid="permits-create-modal">
         <div className="grid gap-2">
               <label className="text-xs">
                 Permit type
