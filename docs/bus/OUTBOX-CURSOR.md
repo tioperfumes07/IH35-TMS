@@ -1,12 +1,21 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FactoringProfile + FactorAdmin → BoardSection
+
+- **STATUS:** SHIPPING [#27757](https://github.com/tioperfumes07/IH35-TMS/pull/27757) (squash auto-merge armed)
+- **DELTA:** FactoringProfilePanel full/compact → `BoardSection` (FAC-07 ≤220px wrap kept); FactorAdmin selected detail + customer history → `BoardSection`; modal inputs → `FORM_INPUT_CLASS`. Engines unchanged. New guard verify-factoring-profile-admin-board.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-profile-admin-board PASS (+ --selftest) · canonical-factor-profile · ft5 · no-nested-box · factor-admin parity/create-vocab
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell (remaining Factoring bare cards / Settlements / Fuel)
+- **Files Modified:** FactoringProfilePanel.tsx · FactorAdmin.tsx · verify-factoring-profile-admin-board.mjs · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — PaymentsToYou + ReserveTracker → BoardSection
 
-- **STATUS:** SHIPPING
+- **STATUS:** MERGED [#27754](https://github.com/tioperfumes07/IH35-TMS/pull/27754)
 - **DELTA:** PaymentsToYouPanel intro/list/detail → `BoardSection`; ReserveTracker forecast/balances/history/chargebacks → `BoardSection` (no nested Home wrap). Engines/void/undo unchanged. Guards ratcheted.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 19/19) · verify-fact-s04 · verify-reserve-tracker-factor-picker · r315-payments-tabs · no-duplicate-kpi-band
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell (FactoringProfilePanel / FactorAdmin bare cards)
+- **NEXT:** continue fill-not-shell
 - **Files Modified:** PaymentsToYouPanel.tsx · ReserveTracker.tsx · FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · verify-fact-s04-reserves-surface.mjs · OUTBOX-CURSOR.md
 
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — FinalizeBlock → BoardSection

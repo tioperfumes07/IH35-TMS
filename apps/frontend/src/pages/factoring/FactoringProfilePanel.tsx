@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "../../components/Button";
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import type { Factor } from "../../api/factoring";
 import { parseRemittanceDetails, rateToPctString } from "../../lib/factorProfile";
 
@@ -61,74 +62,80 @@ export function FactoringProfilePanel({ factor, saving, onSave, variant = "full"
     const contact = remit.primaryContactName || remit.telephone || remit.generalEmail || "—";
     const submissionEmail = remit.submissionEmail || "—";
     return (
-      <section
-        className="rounded-sm border border-gray-200 bg-white p-3 text-xs"
-        data-testid="factoring-profile-panel"
+      // FAC-07 hard ceiling: the collapsed card never grows past 220px next to the KPI row.
+      // BoardSection owns the border; maxHeight wraps the board so compact stays ≤220 when closed.
+      <div
         data-factoring-profile-panel
         data-factoring-profile-compact
-        // FAC-07 hard ceiling: the collapsed card never grows past 220px next to the KPI row.
         style={detailsOpen ? undefined : { maxHeight: 220, overflow: "hidden" }}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="truncate font-semibold text-gray-900" title={factor.name}>
+        <BoardSection
+          title={factor.name}
+          subtitle="Primary factoring company on file"
+          testId="factoring-profile-panel"
+          headerRight={
+            <span className="flex items-center gap-2">
               {vendorId ? (
-                <EntityLink kind="vendor" id={vendorId} label={factor.name} />
-              ) : (
-                factor.name
-              )}
-            </h3>
-            <p className="text-xs text-gray-500">Primary factoring company on file</p>
-          </div>
-          <Button size="sm" variant="secondary" onClick={onSave} loading={saving} data-testid="factoring-profile-edit">
-            Edit
-          </Button>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-700" data-testid="factoring-profile-rates">
-          <span>Advance <b className="text-gray-900">{dash(rateToPctString(factor.advance_rate))}%</b></span>
-          <span>Escrow reserve <b className="text-gray-900">{dash(rateToPctString(factor.reserve_rate))}%</b></span>
-          <span>Cash reserve <b className="text-gray-900">{dash(rateToPctString(factor.cash_reserve_rate ?? 0))}%</b></span>
-          <span>Fee <b className="text-gray-900">{dash(rateToPctString(factor.fee_rate))}%</b></span>
-          <span>Recourse <b className="text-gray-900">{dash(factor.recourse_days)}d</b></span>
-        </div>
-        <div className="mt-1 truncate text-xs text-gray-600" title={contact}>Contact: {contact}</div>
-        <div
-          className="mt-0.5 truncate text-xs text-gray-600"
-          title={submissionEmail}
-          data-testid="factoring-profile-submission-email-display"
+                <EntityLink kind="vendor" id={vendorId} label="Vendor" />
+              ) : null}
+              <Button size="sm" variant="secondary" onClick={onSave} loading={saving} data-testid="factoring-profile-edit">
+                Edit
+              </Button>
+            </span>
+          }
         >
-          Submission: {submissionEmail}
-        </div>
-        <button
-          type="button"
-          className="mt-2 text-xs font-medium text-[#1F2A44] hover:underline"
-          data-testid="factoring-profile-details-toggle"
-          aria-expanded={detailsOpen}
-          onClick={() => setDetailsOpen((v) => !v)}
-        >
-          {detailsOpen ? "Details ▴" : "Details ▾"}
-        </button>
-        {detailsOpen ? (
-          <div className="mt-2 border-t border-gray-100 pt-2">
-            <FlatFieldGrid columns={2} fields={FULL_FIELDS(factor)} />
+          <div className="space-y-1 px-3.5 py-2 text-xs">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-700" data-testid="factoring-profile-rates">
+              <span>Advance <b className="text-gray-900">{dash(rateToPctString(factor.advance_rate))}%</b></span>
+              <span>Escrow reserve <b className="text-gray-900">{dash(rateToPctString(factor.reserve_rate))}%</b></span>
+              <span>Cash reserve <b className="text-gray-900">{dash(rateToPctString(factor.cash_reserve_rate ?? 0))}%</b></span>
+              <span>Fee <b className="text-gray-900">{dash(rateToPctString(factor.fee_rate))}%</b></span>
+              <span>Recourse <b className="text-gray-900">{dash(factor.recourse_days)}d</b></span>
+            </div>
+            <div className="truncate text-xs text-gray-600" title={contact}>Contact: {contact}</div>
+            <div
+              className="truncate text-xs text-gray-600"
+              title={submissionEmail}
+              data-testid="factoring-profile-submission-email-display"
+            >
+              Submission: {submissionEmail}
+            </div>
+            <button
+              type="button"
+              className="text-xs font-medium text-[#1F2A44] hover:underline"
+              data-testid="factoring-profile-details-toggle"
+              aria-expanded={detailsOpen}
+              onClick={() => setDetailsOpen((v) => !v)}
+            >
+              {detailsOpen ? "Details ▴" : "Details ▾"}
+            </button>
+            {detailsOpen ? (
+              <div className="border-t border-gray-100 pt-2">
+                <FlatFieldGrid columns={2} fields={FULL_FIELDS(factor)} />
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </section>
+        </BoardSection>
+      </div>
     );
   }
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="factoring-profile-panel" data-factoring-profile-panel>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <h3 className="font-medium text-gray-900">Active factoring company profile</h3>
-          <p className="text-xs text-gray-500">{factor.name} · primary factoring company on file</p>
+    <div data-factoring-profile-panel>
+      <BoardSection
+        title="Active factoring company profile"
+        subtitle={`${factor.name} · primary factoring company on file`}
+        testId="factoring-profile-panel"
+        headerRight={
+          <Button size="sm" variant="secondary" onClick={onSave} loading={saving} data-testid="factoring-profile-edit">
+            Edit factoring profile
+          </Button>
+        }
+      >
+        <div className="px-3.5 py-2 text-xs">
+          <FlatFieldGrid columns={3} fields={FULL_FIELDS(factor)} />
         </div>
-        <Button size="sm" variant="secondary" onClick={onSave} loading={saving} data-testid="factoring-profile-edit">
-          Edit factoring profile
-        </Button>
-      </div>
-      <FlatFieldGrid columns={3} fields={FULL_FIELDS(factor)} />
-    </section>
+      </BoardSection>
+    </div>
   );
 }
