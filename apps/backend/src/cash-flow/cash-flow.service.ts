@@ -43,6 +43,7 @@ import {
 } from "../dispatch/delivery-evidence-status.js";
 
 import { driverBillAmountKnown, liveBill, liveExpense, notVoided, openDriverBill } from "../accounting/live-document-predicates.sql.js";
+import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
 import { operatingBankActualsByDaySql, operatingBankFeedCountSql } from "./cash-flow-bank-actuals.sql.js";
 import { cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
@@ -1068,6 +1069,8 @@ export async function getRollingLedgerRows(
         -- also wrongly excluded a bill whose ONLY settlement_lines row pointed at a CANCELLED
         -- settlement (that bill IS still an open obligation — the cancellation didn't pay it).
         -- Now uses the same shared active-settlement predicate the register/list routes use.
+        -- BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL is the canonical settled-bill check; openDriverBill embeds it.
+        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
         AND ${openDriverBill("db")}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
         AND (COALESCE(db.gross_amount_cents, 0) > 0 OR NOT ${driverBillAmountKnown("db")})

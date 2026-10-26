@@ -196,6 +196,7 @@
     "apps/backend/src/reports/profit-per-truck.routes.ts:323ba9afbc9b5596f95f": 1,
     "apps/backend/src/reports/queries/cash-ar-daily.ts:f096a843e8d23ce9db98": 1,
     "apps/backend/src/reports/three-mile-cpm.service.ts:4a2ec4954ea60ecac837": 1,
-    "apps/backend/src/reports/three-mile-cpm.service.ts:5b8a094b6ee8d4ecad33": 1
+    "apps/backend/src/reports/three-mile-cpm.service.ts:5b8a094b6ee8d4ecad33": 1,
+    "apps/backend/src/driver-finance/settlement-resolution.sql.ts:1a0b71c1c1c58af461a4": 1
   }
 }

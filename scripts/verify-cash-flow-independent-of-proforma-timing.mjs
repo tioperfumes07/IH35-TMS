@@ -39,7 +39,7 @@ export function collectFailures({ cashFlow = load(CASH_FLOW_PATH), receipts = lo
     failures.push("cash-flow.service.ts no longer has the lp (no-proforma) CTE at all");
   } else {
     const lpBlock = receipts.slice(lpStart, receipts.indexOf("), proforma_receipts AS ("));
-    if (!lpBlock.includes("COALESCE(revenue.revenue_cents, 0)::bigint AS amount_cents") || !lpBlock.includes('${loadCostsRevenueJoin("l")}') || !revenue.includes("FROM dispatch.load_charge_lines cl") || !revenue.includes("ELSE booked.cents")) {
+    if (!lpBlock.includes("COALESCE(revenue.revenue_cents, 0)::bigint AS amount_cents") || !lpBlock.includes('${loadCostsRevenueJoin("l")}') || !revenue.includes("FROM dispatch.load_charge_lines lcl") || !revenue.includes("ELSE booked.cents")) {
       failures.push("unbilled forecast must read canonical booked charge lines without requiring an invoice");
     }
     if (!lpBlock.includes("AND NOT EXISTS (SELECT 1 FROM accounting.invoices pf") || !lpBlock.includes("pf.status = 'proforma'")) {
