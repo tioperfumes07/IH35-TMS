@@ -1951,7 +1951,6 @@ export function BookLoadModalV4({
       data-testid="book-load-presentation-shell"
       data-presentation={bookLoadPresentation}
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
-      onMouseDown={attemptBookLoadClose}
     >
       <div
         ref={panelRef}
