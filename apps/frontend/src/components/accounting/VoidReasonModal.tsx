@@ -6,6 +6,7 @@ import { ApiError } from "../../api/client";
 import { listVoidCancelReasons, type VoidCancelReason } from "../../api/catalogs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../Combobox";
+import { useAuth } from "../../auth/useAuth";
 
 function extractVoidError(err: unknown): string {
   if (err instanceof ApiError) {
@@ -43,7 +44,7 @@ type Props = {
   submitLabel?: string;
 };
 
-/** VOID-REASON-CATALOG-01 — catalogs.void_cancel_reasons dropdown + optional memo. */
+/** VOID-REASON-CATALOG-01 — catalogs.void_cancel_reasons dropdown + optional memo (owner/accountant only). */
 export function VoidReasonModal({
   open,
   title,
@@ -55,6 +56,9 @@ export function VoidReasonModal({
   submitLabel = "Void",
 }: Props) {
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
+  // Row 221: only Owner/Accountant may type a free-text memo; all other roles get dropdown-only.
+  const canTypeMemo = user?.role === "Owner" || user?.role === "Accountant";
   const [reasonId, setReasonId] = useState("");
   const [memo, setMemo] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -73,8 +77,10 @@ export function VoidReasonModal({
 
   const selected = reasons.find((r) => r.id === reasonId) ?? null;
   const catalogAvailable = reasons.length > 0;
-  const composed = composeVoidReason(selected, memo);
-  const needsMemo = Boolean(selected?.requires_note);
+  // Row 221: non-owner/non-accountant memo is always blank; do not include it in composed.
+  const effectiveMemo = canTypeMemo ? memo : "";
+  const composed = composeVoidReason(selected, effectiveMemo);
+  const needsMemo = canTypeMemo && Boolean(selected?.requires_note);
   const valid = catalogAvailable
     ? Boolean(selected) && (!needsMemo || memo.trim().length >= minLength) && composed.trim().length >= minLength
     : composed.trim().length >= minLength;
@@ -144,34 +150,37 @@ export function VoidReasonModal({
           </div>
         ) : null}
 
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-600" htmlFor="void-reason">
-            {catalogAvailable ? (
-              <>
-                Memo {needsMemo ? <span className="text-red-600">*</span> : <span className="font-normal text-gray-500">(optional)</span>}
-              </>
-            ) : (
-              <>
-                Reason <span className="text-red-600">*</span>
-              </>
-            )}
-          </label>
-          <textarea
-            id="void-reason"
-            rows={3}
-            value={memo}
-            onChange={(event) => setMemo(event.target.value)}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
-            placeholder={
-              catalogAvailable
-                ? needsMemo
-                  ? `Required note (min ${minLength} chars)`
-                  : "Optional note"
-                : `Required reason (min ${minLength} chars)`
-            }
-            autoFocus={!catalogAvailable}
-          />
-        </div>
+        {/* Row 221: memo textarea only for Owner/Accountant; others get dropdown-only, no typing. */}
+        {canTypeMemo || !catalogAvailable ? (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="void-reason">
+              {catalogAvailable ? (
+                <>
+                  Memo {needsMemo ? <span className="text-red-600">*</span> : <span className="font-normal text-gray-500">(optional)</span>}
+                </>
+              ) : (
+                <>
+                  Reason <span className="text-red-600">*</span>
+                </>
+              )}
+            </label>
+            <textarea
+              id="void-reason"
+              rows={3}
+              value={memo}
+              onChange={(event) => setMemo(event.target.value)}
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
+              placeholder={
+                catalogAvailable
+                  ? needsMemo
+                    ? `Required note (min ${minLength} chars)`
+                    : "Optional note"
+                  : `Required reason (min ${minLength} chars)`
+              }
+              autoFocus={!catalogAvailable}
+            />
+          </div>
+        ) : null}
 
         {!valid ? (
           <p className="text-xs text-gray-500">
