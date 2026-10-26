@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Banking Home BoardSection panels (real code)
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Settlements detail + Accounting remaining boards (horizontal)
 
 - **STATUS:** SHIPPING
+- **DELTA:** Settlement detail sections (Earnings · Deadhead · Extra pay · Reimbursements · Deductions · Fuel · Loads) → BoardSection (Add buttons kept as headerRight). Accounting Month close · Sales tax · Opening balances · Create multiple bills · Daily recon · Account register → BoardSection. Engines unchanged. Guard verify-fill-remaining-boards-batch via 1747; settlement-detail-reference accepts BoardSection testId.
+- **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-fill-remaining-boards-batch PASS · verify-settlement-detail-sections PASS · verify-settlement-detail-reference PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** Remaining PARTIAL depth (Unexpected already BoardSection; popup 222; Collections/VendorBalances); Chrome close when authorized
+- **Files Modified:** driver-finance/*Section.tsx · MonthClosePage · SalesTaxPage · OpeningBalanceRegisterPage · CreateMultipleBillsPage · DailyReconPage · AccountRegisterPage · verify-fill-remaining-boards-batch.mjs · verify-settlement-detail-reference.mjs · 1747 · OUTBOX
+
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Banking Home BoardSection panels (real code)
+
+- **STATUS:** MERGED [#27858](https://github.com/tioperfumes07/IH35-TMS/pull/27858) @ `2da5eaff04`
 - **DELTA:** BankingHome Accounts bank-list · Factoring virtual · Inspect · Relay · Statement Import · Plaid · Settings panels → shared `BoardSection`. Honesty banners unchanged. Statement account select → FORM_SELECT_CLASS. Engines (reorder/inspect/StatementUpload/Plaid) kept. New verify-banking-home-boards via step 12561. Prior ACCT-F220 tools #27843 MERGED.
 - **VERIFY:** tsc -b EXIT 0 · vite build EXIT 0 · verify-banking-home-boards PASS · verify-banking-bare-plus-accessible-label PASS · verify-banking-home-preview-parity PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
@@ -187,13 +196,4 @@
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
 - **NEXT:** continue fill-not-shell (remaining Factoring bare cards / Settlements / Fuel)
 - **Files Modified:** FactoringProfilePanel.tsx · FactorAdmin.tsx · verify-factoring-profile-admin-board.mjs · OUTBOX-CURSOR.md
-
-## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — PaymentsToYou + ReserveTracker → BoardSection
-
-- **STATUS:** MERGED [#27754](https://github.com/tioperfumes07/IH35-TMS/pull/27754)
-- **DELTA:** PaymentsToYouPanel intro/list/detail → `BoardSection`; ReserveTracker forecast/balances/history/chargebacks → `BoardSection` (no nested Home wrap). Engines/void/undo unchanged. Guards ratcheted.
-- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-layout-tabs-first PASS (+ --selftest 19/19) · verify-fact-s04 · verify-reserve-tracker-factor-picker · r315-payments-tabs · no-duplicate-kpi-band
-- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
-- **NEXT:** continue fill-not-shell
-- **Files Modified:** PaymentsToYouPanel.tsx · ReserveTracker.tsx · FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · verify-fact-s04-reserves-surface.mjs · OUTBOX-CURSOR.md
 

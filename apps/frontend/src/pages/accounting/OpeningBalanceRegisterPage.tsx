@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -379,15 +380,14 @@ export function OpeningBalanceRegisterPage() {
       ) : null}
 
       {view ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <BoardSection
+          title="Source period cleanup"
+          subtitle="advisory only — does not block commit"
+          testId="opening-balance-finality-board"
+        >
+        <div className="p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold text-gray-900">
-                Source period cleanup{" "}
-                <span className="ml-1 rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-500">
-                  advisory only — does not block commit
-                </span>
-              </p>
               <p className="text-xs text-gray-600">
                 {view.finality.is_final
                   ? `Marked final${view.finality.set_by_name ? ` by ${view.finality.set_by_name}` : ""}${
@@ -425,9 +425,11 @@ export function OpeningBalanceRegisterPage() {
             </p>
           ) : null}
         </div>
+        </BoardSection>
       ) : null}
 
-      <ParityTable title="Opening balances — by account"
+      <BoardSection title="Opening balances — by account" testId="opening-balance-register-board">
+      <ParityTable
         columns={columns}
         rows={view?.lines ?? []}
         rowKey={(row) => row.account_id}
@@ -436,9 +438,11 @@ export function OpeningBalanceRegisterPage() {
         initialPageSize={100}
         emptyText="No opening balances staged yet. Import from QuickBooks (or the clone-as-is fixture), or enter them by hand."
       />
+      </BoardSection>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <p className="text-xs font-semibold text-gray-900">Audit trail</p>
+      <BoardSection title="Audit trail" testId="opening-balance-audit-board">
+      <div className="p-3">
+        <p className="sr-only">Audit trail</p>
         <p className="text-xs text-gray-500">
           Every import, edit, finality change, refused commit and commit is recorded and cannot be altered or deleted.
         </p>
@@ -457,6 +461,7 @@ export function OpeningBalanceRegisterPage() {
           ) : null}
         </ul>
       </div>
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

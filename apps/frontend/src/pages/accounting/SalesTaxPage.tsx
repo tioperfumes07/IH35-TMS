@@ -17,6 +17,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { FORM_INPUT_CLASS, FORM_SELECT_CLASS } from "../../components/forms/inputClass";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -228,34 +230,32 @@ export function SalesTaxPage() {
     <AccountingSubNavWrapper title="Sales tax handling" subtitle="Manage sales tax agencies, prepare returns, and track filed/paid states.">
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-          <div className="text-xs text-gray-500">Taxable sales</div>
-          <div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.taxable)}</div>
-        </div>
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-          <div className="text-xs text-gray-500">Tax collected</div>
-          <div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.collected)}</div>
-        </div>
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-          <div className="text-xs text-gray-500">Tax owed</div>
-          <div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.owed)}</div>
-        </div>
+        <BoardSection title="Taxable sales" testId="sales-tax-kpi-taxable">
+          <div className="p-3 text-xs"><div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.taxable)}</div></div>
+        </BoardSection>
+        <BoardSection title="Tax collected" testId="sales-tax-kpi-collected">
+          <div className="p-3 text-xs"><div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.collected)}</div></div>
+        </BoardSection>
+        <BoardSection title="Tax owed" testId="sales-tax-kpi-owed">
+          <div className="p-3 text-xs"><div className="mt-1 text-page-title font-semibold text-gray-900">{money(totals.owed)}</div></div>
+        </BoardSection>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-xs font-semibold text-gray-900">Create agency</div>
+      <BoardSection title="Create agency" testId="sales-tax-create-agency-board">
+      <div className="p-3">
+        <div className="sr-only">Create agency</div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <input
             value={agencyName}
             onChange={(event) => setAgencyName(event.target.value)}
             placeholder="Agency name"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            className={FORM_INPUT_CLASS}
           />
           <input
             value={jurisdiction}
             onChange={(event) => setJurisdiction(event.target.value)}
             placeholder="Jurisdiction (optional)"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            className={FORM_INPUT_CLASS}
           />
           <div className="text-xs text-gray-500 md:col-span-1 md:flex md:items-center">Agency links to vendor optional (API supports it).</div>
           <Button
@@ -267,9 +267,11 @@ export function SalesTaxPage() {
           </Button>
         </div>
       </div>
+      </BoardSection>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-xs font-semibold text-gray-900">Prepare return</div>
+      <BoardSection title="Prepare return" testId="sales-tax-prepare-return-board">
+      <div className="p-3">
+        <div className="sr-only">Prepare return</div>
         {agenciesQuery.isError ? (
           <div className="mb-2">
             <ListErrorBanner
@@ -280,7 +282,7 @@ export function SalesTaxPage() {
         ) : null}
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <SelectCombobox
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            className={FORM_SELECT_CLASS}
             value={selectedAgencyId}
             onChange={(event) => setSelectedAgencyId(event.target.value)}
           >
@@ -302,16 +304,20 @@ export function SalesTaxPage() {
           </Button>
         </div>
       </div>
+      </BoardSection>
 
       {returnsQuery.isError ? (
+        <BoardSection title="Sales tax returns" testId="sales-tax-returns-board">
         <ListErrorState
           title="Couldn't load sales tax returns"
           status={0}
           message={(returnsQuery.error as Error)?.message}
           onRetry={() => void returnsQuery.refetch()}
         />
+        </BoardSection>
       ) : (
-        <ParityTable title="Sales tax returns"
+        <BoardSection title="Sales tax returns" testId="sales-tax-returns-board">
+        <ParityTable
           rows={returnsQuery.data?.returns ?? []}
           columns={returnColumns}
           rowKey={(row) => row.id}
@@ -321,6 +327,7 @@ export function SalesTaxPage() {
           storageKey="accounting-sales-tax-returns"
           tableTestId="sales-tax-returns-table"
         />
+        </BoardSection>
       )}
     </AccountingSubNavWrapper>
   );

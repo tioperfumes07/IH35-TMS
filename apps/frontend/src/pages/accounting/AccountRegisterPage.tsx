@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BankTieoutHeader } from "../../components/banking/BankTieoutHeader";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
@@ -1008,11 +1009,12 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
         {/* Opening balance is a running summary, not a paginated row — kept pinned above the table
             (QBO shows it as the first register line; ParityTable's rows are page-sliced, so a summary
             row belongs outside it to stay visible on every page). */}
-        <div className="mb-0 flex items-center justify-between rounded-t-md border border-b-0 border-gray-200 bg-gray-50/60 px-2 py-1.5 text-xs text-gray-600">
+        <BoardSection title="Register lines" testId="account-register-lines-board">
+        <div className="mb-0 flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-2 py-1.5 text-xs text-gray-600">
           <span>Opening balance ({normal === "debit" ? "Dr" : "Cr"})</span>
           <span className="font-medium tabular-nums">{report ? fmtCents(report.opening_balance_cents) : "—"}</span>
         </div>
-        <ParityTable title="Register lines"
+        <ParityTable
           columns={columns}
           rows={filteredRows}
           rowKey={(r) => r.posting_id}
@@ -1083,6 +1085,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
             </>
           }
         />
+        </BoardSection>
         </>
       ) : auditQuery.isError ? (
         <ListErrorState
@@ -1092,7 +1095,8 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
           onRetry={() => void auditQuery.refetch()}
         />
       ) : (
-        <ParityTable title="Account audit history"
+        <BoardSection title="Account audit history" testId="account-register-audit-board">
+        <ParityTable
           columns={auditColumns}
           rows={auditQuery.data?.events ?? []}
           rowKey={(e) => e.id}
@@ -1101,6 +1105,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
           storageKey="account-register-audit"
           suppressToolbarSearch
         />
+        </BoardSection>
       )}
     </Shell>
   );

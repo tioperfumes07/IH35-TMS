@@ -60,7 +60,8 @@ function verify(files) {
   if (!/<SettlementNumberBox/.test(page)) f.push("number-box-not-mounted");
 
   // 5 — LOADS + COMPANY WATERFALL sections exist with testids, mounted on the page.
-  if (!/data-testid="settlement-loads-section"/.test(loadsSection)) f.push("loads-section-testid-missing");
+  // BoardSection testId= renders data-testid at runtime (fill-not-shell 443.293-C).
+  if (!/(?:data-testid|testId)="settlement-loads-section"/.test(loadsSection)) f.push("loads-section-testid-missing");
   if (!/<SettlementLoadsSection/.test(page)) f.push("loads-section-not-mounted");
   if (!/data-testid="settlement-company-waterfall-section"/.test(waterfallSection)) f.push("waterfall-section-testid-missing");
   if (!/<CompanyWaterfallSection/.test(page)) f.push("waterfall-section-not-mounted");
@@ -106,7 +107,7 @@ if (process.argv.includes("--selftest")) {
     { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box-frozen">', 'data-testid="settlement-number-box-frozen"><input />') },
     { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box-frozen"', 'data-testid="oops"') },
     { ...base, page: base.page.replace("<SettlementNumberBox", "<Nope") },
-    { ...base, loadsSection: base.loadsSection.replace('data-testid="settlement-loads-section"', 'data-testid="oops"') },
+    { ...base, loadsSection: base.loadsSection.replace(/(?:data-testid|testId)="settlement-loads-section"/, 'testId="oops"') },
     { ...base, page: base.page.replace("<SettlementLoadsSection", "<Nope") },
     { ...base, waterfallSection: base.waterfallSection.replaceAll('data-testid="settlement-company-waterfall-section"', 'data-testid="oops"') },
     { ...base, page: base.page.replaceAll("<CompanyWaterfallSection", "<Nope") },

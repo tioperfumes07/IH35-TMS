@@ -10,5 +10,7 @@ export default {
     await ctx.run("node", ["scripts/verify-acct-220-money-list-boards.mjs"]);
     // 443.293-C — Accounting tools tabs (Reclassify/Batch/Escrow) BoardSection + Factoring FORM_INPUT
     await ctx.run("node", ["scripts/verify-acct-220-tools-boards.mjs"]);
+    // Horizontal fill — Settlements detail sections + remaining Accounting registers BoardSection
+    await ctx.run("node", ["scripts/verify-fill-remaining-boards-batch.mjs"]);
   },
 };
