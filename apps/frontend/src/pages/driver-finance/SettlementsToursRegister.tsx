@@ -11,7 +11,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, mmmDd } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { closeTour, getTourReadout, listTours, type TourListRow } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -198,9 +198,9 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   // ROUND 443.254 N7 — PU date and DEL date as separate sortable columns (V3 Open/Closed).
   { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? formatDateUS(r.origin_pickup_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_pickup_date} /> },
   { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? formatDateUS(r.origin_delivery_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_delivery_date} /> },
-  { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? formatDateUS(r.trip_started_at) : DASH },
+  { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
   // ROUND 443.250 Closed board — column label "Ended" (was "Date ended").
-  ...(state === "closed" ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? formatDateUS(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
+  ...(state === "closed" ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
   { key: "costs", label: "Costs", testId: "setl-tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
   { key: "driver_pay", label: "Driver pay", testId: "setl-tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },

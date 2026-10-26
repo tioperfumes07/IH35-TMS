@@ -43,6 +43,17 @@ const ALLOWED_NESTED = new Set([
   "pages/lists/LocationsListPage.tsx",
   // LEAD 443.327 — global topbar drift alert host; not a standalone create surface.
   "components/drift/DriftAlertPopup.tsx",
+  // FINAL-4 batch-2 — nested action / confirm / filter Modals with no standalone leaf.
+  "components/driver-inbox/DriverInbox.tsx",
+  "components/reports/SubscriptionEditor.tsx",
+  "pages/accounting/ExpenseCategoryMapPage.tsx",
+  "pages/accounting/ReclassifyTransactionsPage.tsx",
+  "pages/dispatch/NeedsDeliveryAuthorizationPage.tsx",
+  "pages/driver/ArrivalPrompt.tsx",
+  "pages/driver/StatusSuggestionPrompt.tsx",
+  "pages/maintenance/FaultDraftsPage.tsx",
+  "pages/safety/PermitsPage.tsx",
+  "pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
 ]);
 
 /**
