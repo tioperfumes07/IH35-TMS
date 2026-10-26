@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-creator-board-sections";
 const FILE = "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx";
-const src = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+export function check(src) {
 const fails = [];
 
 if (!src.includes('from "../../components/v3/BoardSection"')) {
@@ -49,6 +49,31 @@ for (const title of [
     fails.push(`${FILE}: missing money Section title="${title}" (engine surface must stay)`);
   }
 }
+return fails;
+}
+
+const realSrc = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+if (process.argv.includes("--selftest")) {
+  const plants = [
+    ["BoardSection import dropped", (s) => s.replace('from "../../components/v3/BoardSection"', 'from "./x"')],
+    ["Section() back to a bare bordered shell", (s) => s.replace(/testId=\{`sc-section-\$\{slug\}`\}/, 'testId="x"')],
+    ["JE preview unwrapped", (s) => s.split("sc-je-preview").join("sc-je-gone")],
+    ["Escrow money section removed", (s) => s.split('<Section title="Escrow"').join('<Section title="Gone"')],
+  ];
+  const problems = check(realSrc).length ? [`clean tree red: ${check(realSrc).join("; ")}`] : [];
+  for (const [name, mutate] of plants) {
+    const planted = mutate(realSrc);
+    if (planted === realSrc) problems.push(`plant "${name}" changed nothing`);
+    else if (check(planted).length === 0) problems.push(`plant "${name}" escaped`);
+  }
+  if (problems.length) {
+    console.error(`${LABEL} SELFTEST FAIL\n  - ${problems.join("\n  - ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — clean tree passes; ${plants.length}/${plants.length} plants caught`);
+  process.exit(0);
+}
+const fails = check(realSrc);
 
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
