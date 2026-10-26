@@ -5,6 +5,13 @@ const ROUTE = "apps/backend/src/maintenance/fault-auto-wo/fault-history.routes.t
 const PROFILE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const read = (file) => fs.readFileSync(file, "utf8");
 
+/** True when the prop appears at least once and EVERY occurrence carries exactly `value`. */
+function everyPropExact(src, prop, value) {
+  const occurrences = [...src.matchAll(new RegExp(`\\b${prop}=\\{`, "g"))].map((m) => m.index);
+  if (occurrences.length === 0) return false;
+  return occurrences.every((at) => src.startsWith(`${prop}=${value}`, at));
+}
+
 export function verify(sources = {}) {
   const route = sources.route ?? read(ROUTE);
   const profile = sources.profile ?? read(PROFILE);
@@ -14,8 +21,11 @@ export function verify(sources = {}) {
     ["counts share scoped where", /FROM maintenance\.samsara_fault_code_history h[\s\S]*?WHERE \$\{where\}/.test(route)],
     ["stable bounded rows", /ORDER BY h\.occurred_at DESC, h\.id DESC[\s\S]*?LIMIT/.test(route)],
     ["route returns counts", /total_count: Number\(countRow\?\.total_count/.test(route) && /auto_wo_count: Number\(countRow\?\.auto_wo_count/.test(route)],
-    ["profile consumes exact active count", /activeFaultCount=\{faultSummaryQuery\.isError \? 0 : faultSummaryQuery\.data\?\.total_count \?\? 0\}/.test(profile)],
-    ["profile consumes exact auto-WO count", /pendingFaultDraftCount=\{faultSummaryQuery\.isError \? 0 : faultSummaryQuery\.data\?\.auto_wo_count \?\? 0\}/.test(profile)],
+    // EVERY consumer must take the exact count — the profile passes it to MaintenanceSnapshotSection AND
+    // UnitFaultsReverseSection (second consumer added with the row-6 photos layout, e882b97537); a check
+    // satisfied by any one occurrence let the other regress to a capped page count unseen.
+    ["profile consumes exact active count (every consumer)", everyPropExact(profile, "activeFaultCount", "{faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}")],
+    ["profile consumes exact auto-WO count (every consumer)", everyPropExact(profile, "pendingFaultDraftCount", "{faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count ?? 0}")],
     ["profile no longer counts a capped page", !/activeFaultCount=\{faultSummaryQuery\.data\?\.items\?\.length/.test(profile) && !/limit=100/.test(profile)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
