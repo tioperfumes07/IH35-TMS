@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — CashFlowPanel unlayer nested card
+
+- **STATUS:** SHIPPING [#27780](https://github.com/tioperfumes07/IH35-TMS/pull/27780)
+- **DELTA:** FactoringCashFlowPanel drops nested `rounded-sm border` card (parent Purchase-report BoardSection owns shell). Collapse/totals/engines unchanged.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-r315-home-cash-flow PASS (+ --selftest)
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** FactoringCashFlowPanel.tsx · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — SubmissionQueue → BoardSection
 
-- **STATUS:** SHIPPING [#27769](https://github.com/tioperfumes07/IH35-TMS/pull/27769)
+- **STATUS:** MERGED [#27769](https://github.com/tioperfumes07/IH35-TMS/pull/27769)
 - **DELTA:** SubmissionQueue need-company + filters + queue table → `BoardSection`. Submit/reserve engines unchanged.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-factoring-submission-queue-parity-surface-bar PASS · wave-c-liability
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
