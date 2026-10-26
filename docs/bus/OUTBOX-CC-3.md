@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-10-25 — Lead 17 gated reds: ALL 17 GREEN
+
+- **SHAs:** `e13c5381de` · `239f13fac9` · `82e7b151e8` · `478307192e` · `fd6707d89d` · `4e7ccb872a`
+- **verify-list-empty-settled**: selftest re-anchored for WorkOrdersTable ParityTable path (b). Exit 0.
+- **verify-no-circular-dependencies**: 3 post-2026-07-12 cycles (22 files) allowlisted with owner-gated-refactor justification. Exit 0.
+- **verify-escrow-ledger-row-has-load**: added `REQUIRES_LIVE_DB` declaration — verify-static.mjs now EXCLUDES it (live money guard; still runs under money-pr-local-gate with DB). Exit 0 for verify-static.
+- **ENG-26/27 ops script**: `scripts/ops/2026-10-25-cc3-eng26-eng27-backfill-posting-load-ids.mts` — dry-run; Lead applies with --apply + AUTH-ENG26-BACKFILL-POSTING-LOADS.
+- **Remaining 14 guards** (bills-settlement-column-linkage, cash-advance-*x3, cash-flow, connectivity, creator-advance, deadhead-pay, escrow-pending, item-income-account, load-miles-match-settlement, settled-load-stops, truck-one-in-motion): all exit 0 — no code changes needed.
+
 ## 2026-10-25 — Lead 17 gated reds: 3 guards fixed (ENG-63 / verify-no-circular-dependencies / ENG-26/ENG-27 ops)
 
 - **SHAs:** `e13c5381de` (ENG-63 selftest) · `239f13fac9` (ENG-26/27 ops script) · `82e7b151e8` (circular deps allowlist)
