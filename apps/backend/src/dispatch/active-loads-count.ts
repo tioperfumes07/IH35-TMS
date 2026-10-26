@@ -72,7 +72,8 @@ export async function countDispatchLoadsByStatuses(
       -- LEAD 443.206 D2 — THE board set (canonical dispatch work), narrowed to the status subset; never
       -- private status list on mdata.loads (LEAD 443.206R: the set is the load service's).
       FROM mdata.loads l
-      WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
         AND l.status IN (${statusInClause(statuses)})
     `,
     [operatingCompanyId]
@@ -152,7 +153,8 @@ export async function getOpenLoadsBreakdown(
         count(*) FILTER (WHERE status NOT IN (${transitIn}) AND assigned_primary_driver_id IS NULL)::int AS unassigned
       -- LEAD 443.206 D2 / D13 — the Overview OPEN LOADS breakdown is the board set itself.
       FROM mdata.loads l
-      WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+      WHERE l.operating_company_id = $1::uuid
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
     `,
     [operatingCompanyId]
   );

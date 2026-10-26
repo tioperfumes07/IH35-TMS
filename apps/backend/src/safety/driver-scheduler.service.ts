@@ -1137,8 +1137,11 @@ export async function getFleetSchedule(
       -- LEAD 443.266-A: in service = THE shared unit gate UNIT_IN_SERVICE_SQL (board gate: InService, not sold/disposed/
       -- sample; + not OOS + no open work order) — the same set as Truck Line AVAILABLE and /dispatch/units-without-load.
       -- A truck in the shop or out of service is not "vacant".
-      WHERE ${UNIT_IN_SERVICE_SQL}
-        AND NOT EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})
+      WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        AND ${UNIT_IN_SERVICE_SQL}
+        AND NOT EXISTS (SELECT 1 FROM mdata.loads bl
+                         WHERE bl.assigned_unit_id = u.id AND bl.operating_company_id = $1::uuid
+                           AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})
       ORDER BY u.unit_number, u.id
     `,
     [args.operatingCompanyId]

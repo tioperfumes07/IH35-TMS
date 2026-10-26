@@ -37,7 +37,7 @@ export async function resolveShortMilesFallback(
   deps: { shortestLeg?: typeof computeShortestRouteMilesOrReason } = {}
 ): Promise<ShortMilesFallback> {
   const practical = Number(
-    (await client.query<{ p: string | null }>(`SELECT miles_practical::text AS p FROM mdata.loads WHERE id = $1::uuid`, [input.loadId])).rows[0]?.p ?? NaN
+    (await client.query<{ p: string | null }>(`SELECT miles_practical::text AS p FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [input.loadId, input.operatingCompanyId])).rows[0]?.p ?? NaN
   );
   const fits = (m: number) => !(Number.isFinite(practical) && practical > 0 && m > practical);
   const reasons: string[] = [];

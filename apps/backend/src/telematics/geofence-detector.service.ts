@@ -182,6 +182,7 @@ async function resolveDriverIdForUnit(
       SELECT COALESCE(l.assigned_primary_driver_id, l.assigned_secondary_driver_id)::text AS driver_id
       FROM mdata.loads l
       WHERE l.assigned_unit_id = $2::uuid
+        AND l.operating_company_id = $1::uuid
         -- LEAD 443.238 (register B5 / C1): the unit's current load is the load service's board set (one definition), never a
         -- private NOT IN list (it let invoiced / closed / voided / abandoned / draft loads name the driver of a GPS point).
         AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}

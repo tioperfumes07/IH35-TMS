@@ -269,6 +269,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         FROM mdata.units u
         LEFT JOIN mdata.loads board_l
           ON board_l.assigned_unit_id = u.id
+         AND board_l.operating_company_id = $1::uuid
          AND board_l.soft_deleted_at IS NULL
          AND ${canonicalDispatchWorkWhereClause("board_l", "$1::uuid")}
         ${unitCurrentDriverSql("u", "$1::uuid")}
@@ -276,7 +277,8 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         LEFT JOIN telematics.vehicle_latest_position p
           ON p.unit_id = u.id
          AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
-        WHERE ${UNIT_IN_SERVICE_SQL}
+        WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+          AND ${UNIT_IN_SERVICE_SQL}
           AND board_l.id IS NULL
         ORDER BY u.unit_number ASC NULLS LAST, u.id
         `,
