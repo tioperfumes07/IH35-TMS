@@ -184,20 +184,35 @@ if (SELFTEST) {
 
   // Behavioral: empty staged + HEAD files must classify (amend path)
   const resolved = resolveCommitMsgFiles({
+    kind: "amend",
     stagedDiff: () => "",
     headTree: () => "db/migrations/202609100050_example.sql\napps/backend/src/accounting/x.ts\n",
   });
-  if (resolved.source !== "head-amend" || resolved.files.length !== 2) {
+  if (resolved.source !== "amend" || resolved.files.length !== 2) {
     failures.push(
       `resolveCommitMsgFiles amend path broken: ${JSON.stringify(resolved)}`
     );
   }
   const stagedOnly = resolveCommitMsgFiles({
+    kind: "new",
     stagedDiff: () => "apps/backend/src/accounting/y.ts\n",
     headTree: () => "should-not-use\n",
   });
   if (stagedOnly.source !== "staged" || stagedOnly.files[0] !== "apps/backend/src/accounting/y.ts") {
     failures.push(`resolveCommitMsgFiles staged path broken: ${JSON.stringify(stagedOnly)}`);
+  }
+
+  const unknown = resolveCommitMsgFiles({ kind: null, stagedDiff: () => "docs/note.md\n", headTree: () => "apps/backend/src/accounting/prior.ts\n" });
+  if (!unknown.files.includes("apps/backend/src/accounting/prior.ts") || !unknown.files.includes("docs/note.md")) failures.push("ambiguous hook lost a candidate money path");
+  let readFailed = false;
+  try { resolveCommitMsgFiles({ kind: "new", stagedDiff: () => { throw new Error("Git read failed"); } }); }
+  catch { readFailed = true; }
+  if (!readFailed) failures.push("failed Git read silently accepted as empty commit");
+
+  const { testCommitMsgFiles } = await import("./lib/commit-msg-files.integration.mjs");
+  for (const [name, pass] of testCommitMsgFiles()) {
+    console.log(`  ${pass ? "PASS" : "FAIL"} ENG-18 real Git: ${name}`);
+    if (!pass) failures.push(`ENG-18 real Git: ${name}`);
   }
 
   const liveProblems = assertMoneyPrLocalGate();

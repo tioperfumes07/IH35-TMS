@@ -239,10 +239,10 @@
    "title": "ENG-18 prepare-commit-msg hook (amend vs new commit)",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-money-pr-local-gate --selftest; prepare-commit-kind --selftest",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "Explicit commit-with-evidence intent; unknown raw Git checks both candidate diffs. Nine isolated real-Git behavior cases pass, including root/merge amendments and partial indexes; old-main behavior fails. No production runtime or money change. See 10-26-2026-Codex-ENG18-COMMIT-INTENT.md."
   },
   {
    "id": "ENG-22",
