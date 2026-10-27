@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a0c864c",
-  "generated_at": "2026-10-27T01:04:20.449Z",
+  "healthzSha": "f66bb27",
+  "generated_at": "2026-10-27T02:41:51.607Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "a0c864c",
+    "deployedSha": "f66bb27",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27903,
-      "title": "FINDING: ENG-08 DONE-LIVE — lumper advance posts as load expense",
+      "number": 27912,
+      "title": "FINDING: Codex ENG-06 consolidate full spine gate without lost assertions",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 08:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27903",
-      "sha": "a0c864c457",
-      "committedAtIso": "2026-10-26T19:00:21-06:00"
+      "mergedAtCt": "10/26/2026, 09:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27912",
+      "sha": "f66bb27929",
+      "committedAtIso": "2026-10-26T20:02:40-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27911,
+      "title": "FINDING: Codex ENG-18 explicit commit intent without amend guessing",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 05:32 PM CT",
-      "url": "",
-      "sha": "fb88853357",
-      "committedAtIso": "2026-10-26T22:32:45Z"
+      "mergedAtCt": "10/26/2026, 08:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27911",
+      "sha": "12fe88914b",
+      "committedAtIso": "2026-10-26T19:57:44-06:00"
     },
     {
-      "number": 27902,
-      "title": "FINDING: ENG-04 advances never credit 2170 Driver Net-Pay Clearing",
+      "number": 27910,
+      "title": "FINDING: Codex ENG-06 restore inline spine regression plant",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 04:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27902",
-      "sha": "c6027d8470",
-      "committedAtIso": "2026-10-26T15:33:25-06:00"
+      "mergedAtCt": "10/26/2026, 08:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27910",
+      "sha": "66c1aebe74",
+      "committedAtIso": "2026-10-26T19:53:21-06:00"
     },
     {
-      "number": 27901,
-      "title": "FINDING: ENG-07 Book/Edit Load refuses city-only stop",
+      "number": 27909,
+      "title": "FINDING: Codex ENG-09 require unwired sentinel mutation",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 04:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27901",
-      "sha": "4f8e5492da",
-      "committedAtIso": "2026-10-26T15:22:34-06:00"
+      "mergedAtCt": "10/26/2026, 08:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27909",
+      "sha": "1b554277f6",
+      "committedAtIso": "2026-10-26T19:51:23-06:00"
     },
     {
-      "number": 27900,
-      "title": "FINDING: Codex Wave 0 measured closures ENG-11 ENG-14 ENG-63",
+      "number": 27908,
+      "title": "FINDING: ENG-25 guard must verify actual shared resolver calls on both paths",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 04:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27900",
-      "sha": "f3ee1b904f",
-      "committedAtIso": "2026-10-26T15:21:43-06:00"
+      "mergedAtCt": "10/26/2026, 08:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27908",
+      "sha": "2cfb419df6",
+      "committedAtIso": "2026-10-26T19:38:32-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27907,
+      "title": "FINDING: ENG-15 prove work-order bill stamp values through shared writer",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 03:33 PM CT",
-      "url": "",
-      "sha": "24e7c34e8c",
-      "committedAtIso": "2026-10-26T20:33:32Z"
+      "mergedAtCt": "10/26/2026, 08:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27907",
+      "sha": "29d7048fba",
+      "committedAtIso": "2026-10-26T19:35:37-06:00"
     },
     {
-      "number": 27899,
+      "number": 27906,
+      "title": "FINDING: ENG-17 first Faro batch ties; remaining owner matches explicit",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 08:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27906",
+      "sha": "19b1f16137",
+      "committedAtIso": "2026-10-26T19:33:56-06:00"
+    },
+    {
+      "number": 27905,
+      "title": "FINDING: N/A (CLAIM-RESERVE migrations 202616301200/1201 — ENG-12)",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 08:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27905",
+      "sha": "07ddcb4770",
+      "committedAtIso": "2026-10-26T19:33:54-06:00"
+    },
+    {
+      "number": 27904,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27899",
-      "sha": "8ffa7637ab",
-      "committedAtIso": "2026-10-26T18:47:28Z"
+      "mergedAtCt": "10/26/2026, 08:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27904",
+      "sha": "989785a6dd",
+      "committedAtIso": "2026-10-27T01:05:39Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:46 PM CT",
+      "mergedAtCt": "10/26/2026, 08:04 PM CT",
       "url": "",
-      "sha": "4bccd55f72",
-      "committedAtIso": "2026-10-26T18:46:53Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 11:36 AM CT",
-      "url": "",
-      "sha": "4f0798f3a8",
-      "committedAtIso": "2026-10-26T16:36:54Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 10:15 AM CT",
-      "url": "",
-      "sha": "0e4596ee55",
-      "committedAtIso": "2026-10-26T15:15:15Z"
+      "sha": "3cad89968f",
+      "committedAtIso": "2026-10-27T01:04:20Z"
     }
   ]
 }
