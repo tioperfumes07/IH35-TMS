@@ -1,6 +1,6 @@
 {
  "date": "2026-10-27",
- "generated_at_iso": "2026-10-27T06:49:42.310Z",
+ "generated_at_iso": "2026-10-27T12:45:18.423Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27913,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-27T06:50:17Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27912,
    "title": "FINDING: Codex ENG-06 consolidate full spine gate without lost assertions",
    "mergedAt": "2026-10-27T02:02:40Z",
@@ -17330,12 +17336,6 @@
    "title": "Claude-1-443.265-B D074: truck-line + units-without-load vehicle_locations CTE + parallel queries",
    "mergedAt": "2026-10-23T10:25:47Z",
    "branch": "cc-1/443265-d074-dispatch-speed"
-  },
-  {
-   "number": 27290,
-   "title": "Cursor-443.250 Fuel Integrity V3 KPI strip + V3Panel (engines untouched)",
-   "mergedAt": "2026-10-23T10:15:43Z",
-   "branch": "cursor/443250-fuel-integrity-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
