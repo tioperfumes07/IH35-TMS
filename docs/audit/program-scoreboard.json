@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f66bb27",
-  "generated_at": "2026-10-27T02:41:51.607Z",
+  "healthzSha": "da56de7",
+  "generated_at": "2026-10-27T04:35:32.350Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f66bb27",
+    "deployedSha": "da56de7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 09:41 PM CT",
+      "url": "",
+      "sha": "da56de71a0",
+      "committedAtIso": "2026-10-27T02:41:51Z"
+    },
+    {
       "number": 27912,
       "title": "FINDING: Codex ENG-06 consolidate full spine gate without lost assertions",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27904",
       "sha": "989785a6dd",
       "committedAtIso": "2026-10-27T01:05:39Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 08:04 PM CT",
-      "url": "",
-      "sha": "3cad89968f",
-      "committedAtIso": "2026-10-27T01:04:20Z"
     }
   ]
 }
