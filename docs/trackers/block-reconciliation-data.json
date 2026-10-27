@@ -1,6 +1,6 @@
 {
  "date": "2026-10-27",
- "generated_at_iso": "2026-10-27T12:45:18.423Z",
+ "generated_at_iso": "2026-10-27T18:27:27.964Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27914,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-27T12:45:47Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27913,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-27T06:50:17Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor-443.250 Fuel Relay Unmatched V3 KPI strip + V3Panel (engines untouched)",
    "mergedAt": "2026-10-23T10:25:52Z",
    "branch": "cursor/443250-relay-unmatched-v3-c89b"
-  },
-  {
-   "number": 27291,
-   "title": "Claude-1-443.265-B D074: truck-line + units-without-load vehicle_locations CTE + parallel queries",
-   "mergedAt": "2026-10-23T10:25:47Z",
-   "branch": "cc-1/443265-d074-dispatch-speed"
   }
  ],
  "merged_pr_total": 3000,
