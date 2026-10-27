@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c6027d8",
-  "generated_at": "2026-10-26T22:32:45.020Z",
+  "healthzSha": "a0c864c",
+  "generated_at": "2026-10-27T01:04:20.449Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c6027d8",
+    "deployedSha": "a0c864c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27903,
+      "title": "FINDING: ENG-08 DONE-LIVE — lumper advance posts as load expense",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 08:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27903",
+      "sha": "a0c864c457",
+      "committedAtIso": "2026-10-26T19:00:21-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/26/2026, 05:32 PM CT",
+      "url": "",
+      "sha": "fb88853357",
+      "committedAtIso": "2026-10-26T22:32:45Z"
+    },
+    {
       "number": 27902,
       "title": "FINDING: ENG-04 advances never credit 2170 Driver Net-Pay Clearing",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "",
       "sha": "0e4596ee55",
       "committedAtIso": "2026-10-26T15:15:15Z"
-    },
-    {
-      "number": 27898,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 09:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27898",
-      "sha": "e154bb36b0",
-      "committedAtIso": "2026-10-26T14:11:37Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/26/2026, 09:09 AM CT",
-      "url": "",
-      "sha": "170167a9a9",
-      "committedAtIso": "2026-10-26T14:09:35Z"
     }
   ]
 }
