@@ -893,7 +893,9 @@
     "202616240400",
     "202616251000",
     "202616261600",
-    "202616261700"
+    "202616261700",
+    "202616301200",
+    "202616301201"
   ],
   "202616142000": {
     "claimed_by": "claude",
@@ -1014,5 +1016,15 @@
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-25",
     "purpose": "LEAD bank-match 4: bank-line check number also parsed from 'FOR CHECK #XXXXX001091' (cashed-check holds), one SQL parser function shared by the trigger and the USMCA backfill"
+  },
+  "202616301200": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-26",
+    "purpose": "ENG-12: widen chart_of_accounts_roles CHECK for fine_recovery + permit_recovery (live-superset + two new roles)"
+  },
+  "202616301201": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-26",
+    "purpose": "ENG-12: USMCA seed fine_recovery→4910 permit_recovery→5700; rebind Fine/I-94 driver-deduction items off 7200"
   }
 }
