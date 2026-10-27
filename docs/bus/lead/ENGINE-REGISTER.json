@@ -206,10 +206,10 @@
    "title": "ENG-15 maintenance bill writer must stamp linked_work_order_uuid + source",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-maintenance-bill-writer-source-stamp.mjs (step 18815); two-section-bill-write.test.ts",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "Codex 2026-10-26: existing autoCreateBillFromWO already uses insertBillHeaderOnClient with work_order source and exact WO id. Added real writer bound-value assertions for two distinct WO ids; null link, wrong WO and wrong source plants rejected. Tests 3/3; guard selftest 5/5. Live remains UNVERIFIED: zero WO-source bills; no fixture or production write made."
   },
   {
    "id": "ENG-16",
