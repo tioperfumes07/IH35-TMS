@@ -283,10 +283,10 @@
    "title": "ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule)",
    "seat": "CC-3",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-one-fuel-to-load-helper.mjs (money-pr-local-gate) and step 18537",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "2026-10-26 Codex: import and bank-match already call the canonical resolver. Existing guard now parses executable imports and awaited calls on BOTH surfaces; old guard accepted a removed call. Selftest 18/18 including alias/shadow plants, existing G7 plants 6/6, fuel import unit tests 11/11. No money writer/data change. Live outcome remains UNVERIFIED; static tests are not live fuel attribution proof."
   },
   {
    "id": "ENG-26",
