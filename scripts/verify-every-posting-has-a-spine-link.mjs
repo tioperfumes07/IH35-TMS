@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB = "reads accounting.journal_entry_postings against accounting.transaction_source_links";
 
@@ -32,6 +33,23 @@ const FILES = {
 /** COMMITTED ceiling (shrink-only): postings stranded by the AUTH-177 purge, by source type. Measured 2026-10-03. */
 export const STRANDED_CEILING = { expense: 3860, invoice: 48 };
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+// ENG-06: one full gate composes the distinct all-postings/cutoff/trigger arm
+// with the source-document/writer/net-zero arm below. Keep the population guard
+// callable for its existing verify-step; do not delete or weaken a live check.
+export function populationArmStatus(result) {
+  return !result?.error && !result?.signal && result?.status === 0 ? 0 : 1;
+}
+function runPopulationArm(selftest = false) {
+  const result = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-every-posting-has-its-spine-link.mjs"), ...(selftest ? ["--selftest"] : [])], {
+    stdio: "inherit", timeout: 60000,
+  });
+  if (populationArmStatus(result)) {
+    console.error(`${LABEL}: FAIL — population/cutoff/trigger arm failed (exit=${result.status}, signal=${result.signal ?? "none"})`);
+    return 1;
+  }
+  return 0;
+}
 
 /** ROUND 391: the ONE writer inserts the posting, then its spine row, on the caller's client — nothing in between can skip it. */
 export function writerGaps(writer) {
@@ -99,6 +117,15 @@ const read = () => Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k
 if (process.argv.includes("--selftest")) {
   const real = read();
   const fails = [];
+  if (runPopulationArm(true)) fails.push("population arm selftest failed");
+  const propagationCases = [
+    [{ status: 0 }, 0], [{ status: 1 }, 1], [{ status: null }, 1],
+    [{ status: 0, error: new Error("spawn failed") }, 1],
+    [{ status: 0, signal: "SIGTERM" }, 1], [undefined, 1],
+  ];
+  for (const [result, expected] of propagationCases) {
+    if (populationArmStatus(result) !== expected) fails.push("population arm failure propagation broken");
+  }
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
   // Keep testing the legacy inline branch of check(), even though the real engine
   // now delegates to the shared writer. Replacing an INSERT in today's engine
@@ -131,7 +158,7 @@ async function reversePostedSourceTransaction() {
   if (judge([{ source_type: "bill", unlinked_doc_exists: 1, unlinked_doc_gone: 0, stranded_net_cents: 0 }]).length !== 1) fails.push("a live unlinked posting not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 3861, stranded_net_cents: 0 }]).length !== 1) fails.push("stranded growth not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 10, stranded_net_cents: 500 }]).length !== 1) fails.push("one-sided stranded balance not caught");
-  const n = plants.length + 5;
+  const n = plants.length + 5 + propagationCases.length;
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
   console.log(`${LABEL} --selftest PASS ${n}/${n}`);
   process.exit(0);
@@ -139,6 +166,9 @@ async function reversePostedSourceTransaction() {
 
 const codeFails = check(read());
 if (codeFails.length) { console.error(`${LABEL}: FAIL\n  ${codeFails.join("\n  ")}`); process.exit(1); }
+// Run before the purge-window exit: an empty source population must not skip the
+// installed trigger / all-postings checks that the former separate gate enforced.
+if (runPopulationArm()) process.exit(1);
 if (!process.env.DATABASE_URL) { console.error(`${LABEL}: FAIL — code arm passed; the live arm needs DATABASE_URL`); process.exit(1); }
 const { default: pg } = await import("pg");
 const c = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 15000, statement_timeout: 30000 });
