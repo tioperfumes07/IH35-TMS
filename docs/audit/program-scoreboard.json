@@ -1,10 +1,10 @@
 {
-  "healthzSha": "421cf49",
-  "generated_at": "2026-10-27T20:25:43.680Z",
+  "healthzSha": "754a360",
+  "generated_at": "2026-10-27T22:24:28.603Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "421cf49",
+    "deployedSha": "754a360",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 27917,
+      "title": "FINDING: ACCT-F443323 ENG-16/15 DONE-LIVE — Check Creator commissioned",
+      "state": "merged",
+      "mergedAtCt": "10/27/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27917",
+      "sha": "754a360c02",
+      "committedAtIso": "2026-10-27T15:01:06-06:00"
+    },
+    {
+      "number": 27916,
+      "title": "FINDING: ACCT-F443323 ENG-12 Fine + I-94 deductions leave 7200 admin-fee path",
+      "state": "merged",
+      "mergedAtCt": "10/27/2026, 03:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27916",
+      "sha": "94bd9ccc34",
+      "committedAtIso": "2026-10-27T14:57:29-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/27/2026, 03:25 PM CT",
+      "url": "",
+      "sha": "4ce6330fa7",
+      "committedAtIso": "2026-10-27T20:25:43Z"
+    },
+    {
       "number": 27915,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "",
       "sha": "fa51f2e93b",
       "committedAtIso": "2026-10-27T10:33:46Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 03:41 AM CT",
-      "url": "",
-      "sha": "266eea802f",
-      "committedAtIso": "2026-10-27T08:41:20Z"
-    },
-    {
-      "number": 27913,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 01:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27913",
-      "sha": "d909abb385",
-      "committedAtIso": "2026-10-27T01:50:17-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 01:49 AM CT",
-      "url": "",
-      "sha": "54c15b0908",
-      "committedAtIso": "2026-10-27T06:49:17Z"
     }
   ]
 }
