@@ -1,6 +1,6 @@
 {
  "date": "2026-10-27",
- "generated_at_iso": "2026-10-27T01:04:38.301Z",
+ "generated_at_iso": "2026-10-27T06:49:42.310Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,60 @@
  ],
  "merged_prs": [
   {
+   "number": 27912,
+   "title": "FINDING: Codex ENG-06 consolidate full spine gate without lost assertions",
+   "mergedAt": "2026-10-27T02:02:40Z",
+   "branch": "codex/eng06-one-spine-gate"
+  },
+  {
+   "number": 27911,
+   "title": "FINDING: Codex ENG-18 explicit commit intent without amend guessing",
+   "mergedAt": "2026-10-27T01:57:45Z",
+   "branch": "codex/eng18-explicit-commit-intent"
+  },
+  {
+   "number": 27910,
+   "title": "FINDING: Codex ENG-06 restore inline spine regression plant",
+   "mergedAt": "2026-10-27T01:53:21Z",
+   "branch": "codex/eng06-spine-plant-coverage"
+  },
+  {
+   "number": 27909,
+   "title": "FINDING: Codex ENG-09 require unwired sentinel mutation",
+   "mergedAt": "2026-10-27T01:51:24Z",
+   "branch": "codex/eng09-unwired-sentinel"
+  },
+  {
+   "number": 27908,
+   "title": "FINDING: ENG-25 guard must verify actual shared resolver calls on both paths",
+   "mergedAt": "2026-10-27T01:38:32Z",
+   "branch": "codex/eng25-fuel-helper-call-guard"
+  },
+  {
+   "number": 27907,
+   "title": "FINDING: ENG-15 prove work-order bill stamp values through shared writer",
+   "mergedAt": "2026-10-27T01:35:38Z",
+   "branch": "codex/eng15-wo-stamp-behavior"
+  },
+  {
+   "number": 27906,
+   "title": "FINDING: ENG-17 first Faro batch ties; remaining owner matches explicit",
+   "mergedAt": "2026-10-27T01:33:57Z",
+   "branch": "claude/eng-17-faro-residual-batch1"
+  },
+  {
+   "number": 27905,
+   "title": "FINDING: N/A (CLAIM-RESERVE migrations 202616301200/1201 — ENG-12)",
+   "mergedAt": "2026-10-27T01:33:54Z",
+   "branch": "chore/claim-migration-202616301200"
+  },
+  {
+   "number": 27904,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-27T01:05:40Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27903,
    "title": "FINDING: ENG-08 DONE-LIVE — lumper advance posts as load expense",
    "mergedAt": "2026-10-27T01:00:22Z",
@@ -17282,60 +17336,6 @@
    "title": "Cursor-443.250 Fuel Integrity V3 KPI strip + V3Panel (engines untouched)",
    "mergedAt": "2026-10-23T10:15:43Z",
    "branch": "cursor/443250-fuel-integrity-v3-c89b"
-  },
-  {
-   "number": 27289,
-   "title": "Cursor- 443.250 Fuel Cards V3 chrome (listFuelCardAssignments unchanged)",
-   "mergedAt": "2026-10-23T10:10:12Z",
-   "branch": "cursor/443250-fuel-cards-v3-c89b"
-  },
-  {
-   "number": 27288,
-   "title": "Cursor- 443.250 Settlements Statement V3 board chrome (SettlementDetailPage identity strip + panel)",
-   "mergedAt": "2026-10-23T10:03:07Z",
-   "branch": "cursor/443250-settlements-statement-v3-c89b"
-  },
-  {
-   "number": 27287,
-   "title": "Claude-1-443.265-B D074: truck-line Promise.all + units-without-load vehicle_locations CTE",
-   "mergedAt": "2026-10-23T10:01:53Z",
-   "branch": "cc-1/443265-d074-dispatch-speed"
-  },
-  {
-   "number": 27286,
-   "title": "Claude-1-443.265-B: overdue bills current-week clamp + 4 disbursement rows (driver/vendor/lease/insurance)",
-   "mergedAt": "2026-10-23T10:01:42Z",
-   "branch": "cc-1/443265-cashflow-disbursement-rows"
-  },
-  {
-   "number": 27285,
-   "title": "CC-2-443.264 claim-reserve: migrations 202616150700-202616190700 + verify-steps 18671/18675/18679",
-   "mergedAt": "2026-10-23T09:52:25Z",
-   "branch": "chore/claim-reserve-cc2-443-260"
-  },
-  {
-   "number": 27284,
-   "title": "Cursor- fix(settlements): ACCT-F443250 — PreSettlements V3 KPI strip + V3Panel chrome",
-   "mergedAt": "2026-10-23T09:49:51Z",
-   "branch": "cursor/443250-settlements-presettle-v3-c89b"
-  },
-  {
-   "number": 27283,
-   "title": "CC-2-443.265-D guard selftest fixtures no longer inherit the git hook's GIT_DIR (verify-no-merge-conflict-markers 1/2 in every worktree pre-push)",
-   "mergedAt": "2026-10-23T09:43:37Z",
-   "branch": "cc-2/443-264-selftest-fixture-git-env"
-  },
-  {
-   "number": 27282,
-   "title": "Cursor- fix(settlements): ACCT-F443250 — Settlements Close V3 chrome (Result strip + steps + panel)",
-   "mergedAt": "2026-10-23T09:35:12Z",
-   "branch": "cursor/443250-settlements-close-v3-c89b"
-  },
-  {
-   "number": 27281,
-   "title": "Cursor- 443.250 Settlements Company V3 board chrome",
-   "mergedAt": "2026-10-23T09:24:46Z",
-   "branch": "cursor/443250-settlements-company-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
