@@ -47,6 +47,8 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   insurance_recovery: "Insurance recovery",
   fuel_advance_recovery: "Fuel advance recovery",
   other_recovery: "Other recovery",
+  fine_recovery: "Fine recovery",
+  permit_recovery: "Permit recovery",
   abandonment_chargeback_recovery: "Abandonment chargeback recovery",
   settlement_dispute_correction_recovery: "Settlement dispute correction recovery",
   cash_dip: "Cash DIP (operating)",
