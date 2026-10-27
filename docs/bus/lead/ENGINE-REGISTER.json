@@ -231,7 +231,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "Codex 2026-10-26 read-only batch 1: 17 posted Faro purchases; all 17 tie document net less linked bank amount to their 1090 advance ledger balance; 3 matched and cleared, 14 unmatched. OPEN / UNVERIFIED remaining settlement of residual: owner-only purchase bank matching and approved document evidence, not a balancing JE. 2510 measured by source, not repaired. See 10-26-2026-Codex-ENG17-BATCH1.md."
   },
   {
    "id": "ENG-18",
