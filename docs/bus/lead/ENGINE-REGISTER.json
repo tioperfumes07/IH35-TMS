@@ -107,10 +107,10 @@
    "title": "ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) \u2014 merge",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-every-posting-has-a-spine-link (full composite gate)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "One money-gate invocation, union of original trigger paths. Distinct underlying live assertions preserved, no guard deleted. Composite selftest 16/16 plus population 6/6; planted child failure exits 1. USMCA read-only live: 8116 postings, zero unlinked, zero stranded, trigger installed; independent review PASS."
   },
   {
    "id": "ENG-07",
