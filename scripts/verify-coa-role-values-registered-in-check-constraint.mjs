@@ -92,12 +92,8 @@ function cumulativeCheckValues(migrationsDir) {
  * CHECK does not yet allow, with the reason. A NEW unregistered role fails; an entry here that becomes registered also
  * fails until it is removed from this list (so the list can only shrink).
  */
-const KNOWN_UNREGISTERED = new Map([
-  ["rou_asset", "lease ASC 842 — added only by HELD migration 202615210000_lease_to_own_lessee_asc842 (never runs on prod); board LEASE-ROLES-AHEAD-OF-HELD-MIGRATION-2026100301"],
-  ["lease_liability", "lease ASC 842 — same held migration 202615210000"],
-  ["accumulated_rou_amortization", "lease ASC 842 — same held migration 202615210000"],
-  ["lease_interest_expense", "lease ASC 842 — same held migration 202615210000"],
-]);
+// ENG-12 (202616301200): live CHECK already admitted the four lease ASC 842 roles; debt list emptied.
+const KNOWN_UNREGISTERED = new Map([]);
 
 function violations(resolverSrc, migrationsDir) {
   const errors = [];

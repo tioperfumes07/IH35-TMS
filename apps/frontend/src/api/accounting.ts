@@ -2341,6 +2341,8 @@ export const COA_ROLE_VALUES = [
   // SETL-DED-UI — bank/wire/ACH fee recovery role; see resolver.service.ts's own comment for why
   // it is added here even though the live DB CHECK constraint does not admit it yet.
   "bank_fee_recovery",
+  "fine_recovery",
+  "permit_recovery",
   // ROUND 321 (CC-1) — lease-to-own, ASC 842 lessee (migration 202615210000). Owner designates; engine refuses until bound.
   "rou_asset",
   "lease_liability",

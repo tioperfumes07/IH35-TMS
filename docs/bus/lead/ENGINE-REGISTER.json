@@ -173,10 +173,10 @@
    "title": "ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "CODED",
+   "guard": "verify-settlement-deduction-types-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "migrations 202616301200/1201 fine_recovery=4910 permit_recovery=5700; Fine/I-94 items off 7200; Creator refuse admin-fee path; 2 historical on closed P-0045/P-0065 remain"
   },
   {
    "id": "ENG-13",

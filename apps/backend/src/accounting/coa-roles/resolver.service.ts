@@ -175,6 +175,8 @@ export const COA_ROLE_VALUES = [
   // resolveRoleAccountOptional correctly returns null (never guessed) until then.
   // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
   "bank_fee_recovery",
+  "fine_recovery",
+  "permit_recovery",
   // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10, INBOX-CC-1): driver_reimbursements.
   // reimbursement_type ('toll','fuel','scale','parking','lumper','other') was collapsing every type
   // onto the SAME generic 'reimbursement_expense' role (account "Driver Trip-Lumper Reimbursement")
