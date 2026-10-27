@@ -258,7 +258,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 252 | ENG | Driver pay | ENG-14 G9: 1 of 209 driver bills without a unit | CC-2 | 443.323 | DONE-LIVE | Codex 10-26: 209 total / 190 live / 0 live missing unit; guard PASS + 7/7 plants; WAVE0-EVIDENCE |
 | 253 | ENG | Accounting | ENG-15 maintenance bill writer must stamp linked_work_order_uuid + source | CC-2 | 443.323 | OPEN |  |
 | 254 | ENG | Accounting | ENG-16 Check Creator not commissioned: check_number_registry 0 rows (starting number from owner) | CC-2 | 443.323 | OPEN |  |
-| 255 | ENG | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | 443.323 | OPEN |  |
+| 255 | ENG | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | 443.323 | OPEN | Codex 10-26 batch 1: 17/17 posted Faro documents tie; 3 matched/cleared, 14 unmatched. UNVERIFIED: remaining owner bank matches; no balancing JE. 2510 not repaired. See ENG17-BATCH1 evidence. |
 | 256 | ENG | Engine | ENG-18 prepare-commit-msg hook (amend vs new commit) | CC-2 | 443.323 | OPEN |  |
 | 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | OPEN |  |
 | 258 | ENG | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | ENG | OPEN |  |
