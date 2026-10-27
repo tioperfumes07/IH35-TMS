@@ -88,7 +88,7 @@
    "status": "CODED",
    "guard": "verify-advance-resolver-never-uses-driver-payroll-clearing (step 18809)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "historical_backfill never credits 2170; guard 18809; ops dry-run 3/12 propose_reclass; residual 257596c until Lead applies reclass"
+   "evidence": "PR #27902: historical_backfill never credits 2170; guard 18809; ops dry-run 3/12 propose_reclass; residual 257596c until Lead applies reclass"
   },
   {
    "id": "ENG-05",
@@ -129,10 +129,10 @@
    "title": "ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-lumper-advance-posts-at-disbursement (step 18553)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-26 CT: USMCA purpose=lumper advances=0; disbursed_lumper_missing_expense=0; guard 18553 PASS; writer lumper-advance-expense.service wired"
   },
   {
    "id": "ENG-09",
