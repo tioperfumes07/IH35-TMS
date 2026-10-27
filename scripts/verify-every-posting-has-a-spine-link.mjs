@@ -100,10 +100,21 @@ if (process.argv.includes("--selftest")) {
   const real = read();
   const fails = [];
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
-  const engineNoLink = real.engine.replace(
-    /(async function insertPostingLines\([\s\S]*?)INSERT INTO accounting\.transaction_source_links/,
-    "$1INSERT INTO accounting.audit_noop"
-  );
+  // Keep testing the legacy inline branch of check(), even though the real engine
+  // now delegates to the shared writer. Replacing an INSERT in today's engine
+  // changed nothing and caused the selftest to fail before testing the defect.
+  const inlineEngine = `async function insertPostingLines(input) {
+  for (const line of input.lines) {
+    await input.client.query(\`INSERT INTO accounting.journal_entry_postings\`);
+    await input.client.query(\`INSERT INTO accounting.transaction_source_links\`);
+  }
+}
+async function reversePostedSourceTransaction() {
+  return insertPostingLineWithSpine();
+}
+`;
+  if (check({ ...real, engine: inlineEngine }).length) fails.push("valid legacy inline poster fixture rejected");
+  const engineNoLink = inlineEngine.replace("INSERT INTO accounting.transaction_source_links", "INSERT INTO accounting.audit_noop");
   const plants = [
     ["poster stops writing the link", { ...real, engine: engineNoLink }],
     ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return insertPostingLinesWithSpine(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
@@ -120,7 +131,7 @@ if (process.argv.includes("--selftest")) {
   if (judge([{ source_type: "bill", unlinked_doc_exists: 1, unlinked_doc_gone: 0, stranded_net_cents: 0 }]).length !== 1) fails.push("a live unlinked posting not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 3861, stranded_net_cents: 0 }]).length !== 1) fails.push("stranded growth not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 10, stranded_net_cents: 500 }]).length !== 1) fails.push("one-sided stranded balance not caught");
-  const n = plants.length + 4;
+  const n = plants.length + 5;
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
   console.log(`${LABEL} --selftest PASS ${n}/${n}`);
   process.exit(0);
