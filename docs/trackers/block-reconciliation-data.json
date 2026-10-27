@@ -1,6 +1,6 @@
 {
- "date": "2026-10-26",
- "generated_at_iso": "2026-10-26T18:46:02.833Z",
+ "date": "2026-10-27",
+ "generated_at_iso": "2026-10-27T01:04:38.301Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,36 @@
  ],
  "merged_prs": [
   {
+   "number": 27903,
+   "title": "FINDING: ENG-08 DONE-LIVE — lumper advance posts as load expense",
+   "mergedAt": "2026-10-27T01:00:22Z",
+   "branch": "cursor/eng-08-measure-close"
+  },
+  {
+   "number": 27902,
+   "title": "FINDING: ENG-04 advances never credit 2170 Driver Net-Pay Clearing",
+   "mergedAt": "2026-10-26T21:33:25Z",
+   "branch": "cursor/eng-04-no-2170-advance"
+  },
+  {
+   "number": 27901,
+   "title": "FINDING: ENG-07 Book/Edit Load refuses city-only stop",
+   "mergedAt": "2026-10-26T21:22:35Z",
+   "branch": "cursor/eng-07-city-only-stop"
+  },
+  {
+   "number": 27900,
+   "title": "FINDING: Codex Wave 0 measured closures ENG-11 ENG-14 ENG-63",
+   "mergedAt": "2026-10-26T21:21:44Z",
+   "branch": "codex/1026-engine-wave0-measure"
+  },
+  {
+   "number": 27899,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-26T18:47:29Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27898,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-26T14:11:38Z",
@@ -17306,36 +17336,6 @@
    "title": "Cursor- 443.250 Settlements Company V3 board chrome",
    "mergedAt": "2026-10-23T09:24:46Z",
    "branch": "cursor/443250-settlements-company-v3-c89b"
-  },
-  {
-   "number": 27280,
-   "title": "CC-2-443.264 verify-dispatch-cancellation-write-identity: re-anchor 2 selftest plants on transitionLoadStatus (selftest red on main)",
-   "mergedAt": "2026-10-23T09:17:39Z",
-   "branch": "cc-2/443-264-cancel-guard-plant"
-  },
-  {
-   "number": 27279,
-   "title": "Claude-3- CLAIM-RESERVE 18705 (443.265-A Book Load V3 layout guard)",
-   "mergedAt": "2026-10-23T09:16:26Z",
-   "branch": "chore/claim-reserve-cc3-18705"
-  },
-  {
-   "number": 27278,
-   "title": "Cursor- 443.250 Settlements Open/Closed tours V3 board chrome",
-   "mergedAt": "2026-10-23T09:19:14Z",
-   "branch": "cursor/443250-settlements-tours-v3-c89b"
-  },
-  {
-   "number": 27277,
-   "title": "Claude-1-443.264: guard 18681 type-fix + fuel trailing 4-wk avg projected rows",
-   "mergedAt": "2026-10-23T09:06:33Z",
-   "branch": "cc-1/443264-cash-flow-fuel-trailing-avg"
-  },
-  {
-   "number": 27276,
-   "title": "CC-2-443.264 verify-cap-11-fuel-fraud accepts the V3 tile's String(openCritical) (red on main after #27267)",
-   "mergedAt": "2026-10-23T08:59:26Z",
-   "branch": "cc-2/443-264-fuel-fraud-guard"
   }
  ],
  "merged_pr_total": 3000,
