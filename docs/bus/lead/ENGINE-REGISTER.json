@@ -314,12 +314,12 @@
    "id": "ENG-28",
    "area": "Engine",
    "title": "ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine \u2014 fold in or rule",
-   "seat": "CC-3",
+   "seat": "CODEX",
    "round": "ENG",
    "status": "OPEN",
    "guard": null,
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LEAD 10-27 CT: YES \u2014 all specialized paths through full posting-engine validation; preserve accounting behavior; test each path; code not money rewrite; guard no insert outside door. See 10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md"
   },
   {
    "id": "ENG-29",
