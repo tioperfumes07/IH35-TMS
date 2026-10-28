@@ -1,6 +1,6 @@
 {
  "date": "2026-10-28",
- "generated_at_iso": "2026-10-28T12:33:25.145Z",
+ "generated_at_iso": "2026-10-28T18:30:21.422Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,30 @@
  ],
  "merged_prs": [
   {
+   "number": 27924,
+   "title": "FINDING: ACCT-F443323 measure-close ENG-12/07/13/22/30",
+   "mergedAt": "2026-10-28T12:42:27Z",
+   "branch": "cursor/eng-12-13-measure"
+  },
+  {
+   "number": 27923,
+   "title": "FINDING: ACCT-F443323 measure-close ENG-12/07/13/22/30",
+   "mergedAt": "2026-10-28T12:38:14Z",
+   "branch": "cursor/eng-12-13-measure"
+  },
+  {
+   "number": 27922,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-28T12:34:46Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 27921,
+   "title": "FINDING: ACCT-F443323 Lead→Codex ENG-28 YES / 13595 trailer 445 / ENG-17 paths",
+   "mergedAt": "2026-10-28T12:33:13Z",
+   "branch": "cursor/lead-codex-answers"
+  },
+  {
    "number": 27920,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-28T06:37:04Z",
@@ -17312,30 +17336,6 @@
    "title": "Claude-3- Kanban unit-availability modal Required leaf (2 static reds on main)",
    "mergedAt": "2026-10-23T11:10:55Z",
    "branch": "claude/cc3-443-265-kanban-modal-inventory"
-  },
-  {
-   "number": 27301,
-   "title": "Cursor-443.250 Fuel Compliance V3 — V3KpiTile + V3Panel (chrome only)",
-   "mergedAt": "2026-10-23T11:09:48Z",
-   "branch": "cursor/443250-fuel-compliance-v3-c89b"
-  },
-  {
-   "number": 27300,
-   "title": "Cursor-443.250 Fuel Expense mapping V3 — V3KpiTile + V3Panel (chrome only)",
-   "mergedAt": "2026-10-23T11:05:09Z",
-   "branch": "cursor/443250-fuel-expense-map-v3-c89b"
-  },
-  {
-   "number": 27299,
-   "title": "Claude-3- 443.265-A follow-up: Book Load live-walk fixes + A/B level + one-line Upload Rate Con",
-   "mergedAt": "2026-10-23T11:01:57Z",
-   "branch": "claude/cc3-443-265-a2-book-load-live-fixes"
-  },
-  {
-   "number": 27298,
-   "title": "Cursor-443.250 Fuel History & savings V3 — V3KpiTile + V3Panel (chrome only)",
-   "mergedAt": "2026-10-23T10:48:43Z",
-   "branch": "cursor/443250-fuel-history-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
