@@ -1,6 +1,6 @@
 {
  "date": "2026-10-28",
- "generated_at_iso": "2026-10-28T06:36:14.560Z",
+ "generated_at_iso": "2026-10-28T12:33:25.145Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27920,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-28T06:37:04Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27919,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-28T00:49:49Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor-443.250 Fuel History & savings V3 — V3KpiTile + V3Panel (chrome only)",
    "mergedAt": "2026-10-23T10:48:43Z",
    "branch": "cursor/443250-fuel-history-v3-c89b"
-  },
-  {
-   "number": 27297,
-   "title": "Claude-1-443.265-E: cash flow tie fix — ending balance from rows + diesel row + vendor bills corrected",
-   "mergedAt": "2026-10-23T10:47:46Z",
-   "branch": "cc-1/443265-e-cashflow-tie-diesel"
   }
  ],
  "merged_pr_total": 3000,
