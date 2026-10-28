@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T21:50:51Z",
+ "generated": "2026-10-28T21:52:06Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -385,7 +385,7 @@
    "status": "PARTIAL",
    "guard": "verify-guard-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 10-28 CT: scripts/.guard-exempt.json has 918 script keys (+_README=919); verify-guard-wired reports active exempt=122, unaccounted=0, fully-wired=6219/6341. \"920\" ≈ file size; shrink-only work remains on the 122 active + stale JSON keys. No mass delete this PR."
+   "evidence": "LIVE 10-28 CT: removed 796 stale .guard-exempt.json entries already fully-wired in CI (918→122). verify-guard-wired PASS — active exempt=122, unaccounted=0. Remaining 122 still need wire-or-delete shrink. See 10-28-2026-Cursor-ENG-34-EXEMPT-SHRINK.md"
   },
   {
    "id": "ENG-36",
