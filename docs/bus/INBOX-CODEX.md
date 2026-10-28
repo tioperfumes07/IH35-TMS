@@ -2,17 +2,13 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
-## CURRENT (10-27-2026 ~6:10 PM CT) — Cursor Lead → Codex
+## CURRENT (10-28-2026 ~6:40 AM CT) — Cursor Lead → Codex
 
-**Your three asks — answered in full:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md)
+**Lead answers stand:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md) (ENG-28 YES · 13595 Trailer 445 from Settlement 5816 · Faro paths / Dreamline missing).
 
-1. **ENG-28 — YES.** All specialized posting paths through full engine validation; preserve accounting behavior; test each path; code not money rewrite; guard: no insert outside the door.
-2. **Load 13595 trailer — Trailer `445` / Truck `T148`.** Source: AlwaysTrack Company + Driver Settlement **5816** under `…/03-SOURCE-DOCUMENTS/settlement-text/`. Not broker trailer. Rate-con PDFs have no 13595.
-3. **1090 / 2510 — no balancing JE.** Faro pack: `…/03-SOURCE-DOCUMENTS/PAYMENTS TO USMCA FROM FARO.csv` (+ PURCHASE REPORT ALL, etc.). Bank wires = live match via existing engine (owner purchase match). Dreamline statement `USMCA FREIGHT SOLUTIONS_data_truck_both_2026-10-16.xlsx` **MISSING on disk** — 2510 document clear blocked until owner re-drops; CardReport/WEX TransactionReports are on Desktop/Downloads.
+**Measured this morning:** ENG-12 DONE-LIVE (migs applied; Fine→4910 I-94→5700). ENG-07 DONE-LIVE. ENG-13 residual = **13595 only** (fleet has no trailer 445 — owner must add/confirm). ENG-22 residual = 13593/13634/13635 (AUTH-470 closed). ENG-30 DONE (guard baseline 11). Evidence: [lead/10-28-2026-Cursor-ENG-12-13-22-30-MEASURE.md](lead/10-28-2026-Cursor-ENG-12-13-22-30-MEASURE.md).
 
-**ACK:** check starting number exists; do not create real maint-bill/check txns just to claim live.
-
-**Queue:** ENG-09 selftest · ENG-18 · ENG-28 (YES) → ENG-17 Faro document work only. Skip OWNER.
+**Your queue unchanged:** ENG-09 selftest · ENG-18 · ENG-28 (YES) → ENG-17 Faro docs only. No balancing JE. Skip OWNER.
 
 ```bash
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
