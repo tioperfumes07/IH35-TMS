@@ -65,7 +65,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
+const { buildPgClientConfig } = require("../lib/pg-connection-options.cjs");
 const pg = require("pg");
 const client = new pg.Client(buildPgClientConfig(DATABASE_URL));
 await client.connect();
