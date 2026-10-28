@@ -1,10 +1,10 @@
 {
-  "healthzSha": "754a360",
-  "generated_at": "2026-10-27T22:24:28.603Z",
+  "healthzSha": "a219c59",
+  "generated_at": "2026-10-28T00:49:21.866Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "754a360",
+    "deployedSha": "a219c59",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27918,
+      "title": "FINDING: Codex restore frontend deploy with complete recovery role labels",
+      "state": "merged",
+      "mergedAtCt": "10/27/2026, 06:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27918",
+      "sha": "a219c5997e",
+      "committedAtIso": "2026-10-27T17:07:38-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/27/2026, 05:24 PM CT",
+      "url": "",
+      "sha": "991eeaef6e",
+      "committedAtIso": "2026-10-27T22:24:28Z"
+    },
+    {
       "number": 27917,
       "title": "FINDING: ACCT-F443323 ENG-16/15 DONE-LIVE — Check Creator commissioned",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27914",
       "sha": "faa40c4d6b",
       "committedAtIso": "2026-10-27T07:45:47-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 07:44 AM CT",
-      "url": "",
-      "sha": "1610aa89cf",
-      "committedAtIso": "2026-10-27T12:44:54Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 05:33 AM CT",
-      "url": "",
-      "sha": "fa51f2e93b",
-      "committedAtIso": "2026-10-27T10:33:46Z"
     }
   ]
 }
