@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ee3a2c6",
-  "generated_at": "2026-10-28T08:30:47.479Z",
+  "healthzSha": "e013f62",
+  "generated_at": "2026-10-28T10:25:31.833Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ee3a2c6",
+    "deployedSha": "e013f62",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 03:30 AM CT",
+      "url": "",
+      "sha": "e013f628c4",
+      "committedAtIso": "2026-10-28T08:30:47Z"
+    },
+    {
       "number": 27920,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27917",
       "sha": "754a360c02",
       "committedAtIso": "2026-10-27T15:01:06-06:00"
-    },
-    {
-      "number": 27916,
-      "title": "FINDING: ACCT-F443323 ENG-12 Fine + I-94 deductions leave 7200 admin-fee path",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 03:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27916",
-      "sha": "94bd9ccc34",
-      "committedAtIso": "2026-10-27T14:57:29-06:00"
     }
   ]
 }
