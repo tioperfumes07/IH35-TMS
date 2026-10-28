@@ -267,7 +267,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 261 | ENG | Accounting | ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load | CC-3 | ENG | OPEN |  |
 | 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | OPEN |  |
 | 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | OPEN |  |
-| 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | OPEN |  |
+| 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | PARTIAL |  |
 | 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | DONE |  |
 | 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | DONE |  |
 | 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | DONE |  |
@@ -300,7 +300,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 294 | ENG | Settlements | ENG-49 settlement 5787 non-diesel expenses $235.01 vs signed $140.20 | CC-2 | 443.329 | OPEN |  |
 | 295 | ENG | Factoring | ENG-50 invoice amount_paid vs applications (9-13515 $525, 7 $350); book = Faro = AlwaysTrack 12 issues; factoring-advance-links-its-load selftest | CC-2 | 443.329 | OPEN |  |
 | 296 | ENG | Banking | ENG-51 944 composite-memo rows unbackfilled; 1 Creator load miles without source | CC-2 | 443.329 | OPEN |  |
-| 297 | ENG | Accounting | ENG-52 load-costs-board revenue not from loadCostRollupLateral (one source) | CC-2 | 443.329 | OPEN |  |
+| 297 | ENG | Accounting | ENG-52 load-costs-board revenue not from loadCostRollupLateral (one source) | CC-2 | 443.329 | DONE |  |
 | 298 | ENG | Dispatch | ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s | CC-3 | 443.330 | OPEN |  |
 | 299 | ENG | Fleet | ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks) | OWNER | ENG-54 | OPEN |  |
 | 300 | ENG | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | 443.327 | CODED-QUEUED | eb338ebe94; reconciler 42/42, popup 5/5 |
