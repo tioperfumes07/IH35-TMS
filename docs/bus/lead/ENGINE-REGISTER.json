@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T12:37:29Z",
+ "generated": "2026-10-28T18:54:41Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -349,10 +349,10 @@
    "title": "ENG-31 breadcrumbs on 10 of 999 pages",
    "seat": "Cursor",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-every-route-has-a-structural-breadcrumb.mjs; verify-breadcrumb-mounted-app-wide.mjs; verify-page-has-breadcrumb.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT tip: structural breadcrumb app-wide; 565/565 non-Accounting routes resolve crumb; 0 history-back; page-has-breadcrumb PASS (16/16 local trails). \"10 of 999\" stale."
   },
   {
    "id": "ENG-32",
@@ -360,10 +360,10 @@
    "title": "ENG-32 89 money cells do not open their transaction (re-measure + shrink)",
    "seat": "Cursor",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-money-cells-click-through.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT tip: shrink-only 0<=0; declared no-drill 34<=34 PASS. \"89 money cells\" stale — remaining are intentional no-drill totals/settings/previews."
   },
   {
    "id": "ENG-33",
@@ -371,10 +371,10 @@
    "title": "ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017",
    "seat": "Cursor",
    "round": "ENG",
-   "status": "OPEN",
+   "status": "DONE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: BankingTransactionsDesignView moved to components/; MatchDrawer is actively mounted (no orphaned comment at old :4017). Stale comment claim obsolete."
   },
   {
    "id": "ENG-34",
@@ -745,10 +745,10 @@
    "title": "ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0",
    "seat": "Cursor",
    "round": "443.326",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-v3-board-grammar-every-surface.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT tip: 0/44 failing (= baseline 0); pass count 44. Cursor 443.326 board grammar closed."
   },
   {
    "id": "443.333",

@@ -269,9 +269,9 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | OPEN |  |
 | 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | OPEN |  |
 | 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | DONE |  |
-| 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | OPEN |  |
-| 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | OPEN |  |
-| 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | OPEN |  |
+| 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | DONE |  |
+| 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | DONE |  |
+| 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | DONE |  |
 | 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | OPEN |  |
 | 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | OPEN |  |
 | 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | OPEN |  |
@@ -305,7 +305,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 299 | ENG | Fleet | ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks) | OWNER | ENG-54 | OPEN |  |
 | 300 | ENG | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | 443.327 | CODED-QUEUED | eb338ebe94; reconciler 42/42, popup 5/5 |
 | 301 | ENG | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine | CC-3 | 443.324 | OPEN | Lead applies under AUTH-464 |
-| 302 | ENG | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | Cursor | 443.326 | OPEN |  |
+| 302 | ENG | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | Cursor | 443.326 | DONE |  |
 | 303 | ENG | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | 443.331 | CODED-QUEUED | 1c1ea23b1e; real runner in prod mode on fresh fork: APPLY 3, SKIP 1,531, held untouched |
 | 304 | ENG | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | scoreboard | CODED-QUEUED | 7de5f80937 |
 | 305 | ENG | Engine | ENG-59 harness-only live failures (not data): pooler refused (list-apis, reports-neon-pv, loves-geofences), loopback-only fixture (invoice-header), CI-only file (no-sample-data), tsx import (recon-usmca), geocode key absent locally; rpt-s02 + invoice-copies PASS on rerun | LEAD | ENG-35 | DONE | rerun 10-24 3:25 PM CT |
