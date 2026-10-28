@@ -13,7 +13,7 @@
 1. **ENG-17** — Faro 1090 doc match only; no balancing JE; Dreamline MISSING → 2510 BLOCKED.
 2. **ENG-48 → 51** (CC-2 leftovers — you own them).
 3. **ENG-13** residual 13595 Trailer 445 — list BLOCKED only.
-4. Then help **ENG-46 / 47 / 60 / 26 / 27 / 23 / 29 / 53 / 25b**.
+4. Then help **ENG-46 / 47 / 60 / 27 / 23 / 29 / 53 / 25b**. (**ENG-26 DONE-LIVE**.)
 
 ### Skip
 OWNER ENG-38/54 · LEAD-ENG-21 · AUTH-453 · invent trailer 445 · invent Dreamline · dependabot

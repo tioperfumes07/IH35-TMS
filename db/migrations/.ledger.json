@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1534,
+  "migration_count": 1550,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -6138,6 +6138,70 @@
     {
       "filename": "202616240000_escrow_ledger_stamp_load_id_and_settlement_id.sql",
       "checksum": "76b035e50d189ab831aa8a89a6ca9f4acdf153f572970f2336621a7f00bf5de6"
+    },
+    {
+      "filename": "202616240100_factoring_advance_bank_wire_cents.sql",
+      "checksum": "a30d5bbab7b852a115e7a22cedb2eab8cf1147f0c812606f9b31d457a93ad906"
+    },
+    {
+      "filename": "202616240200_refuse_holder_delete_with_escrow.sql",
+      "checksum": "2fe55cf7db986a558ae8ad2a5b036194698bbc4b09cd664d746c49b1b8bd5f41"
+    },
+    {
+      "filename": "202616240300_one_open_settlement_per_driver_excludes_trip_closed.sql",
+      "checksum": "02546975ca1e6323f0c20eb73ed467a57d3f67f6692e2c495efdd3e6053fa6ca"
+    },
+    {
+      "filename": "202616240400_bank_line_check_number_from_description.sql",
+      "checksum": "fbb7164381c0950d3635700cdc0dfe4cf5ff5f25fb61dd095df73042553cae70"
+    },
+    {
+      "filename": "202616250900_customer_vendor_names_normalized_at_write.sql",
+      "checksum": "619c479d84885da9670f5a19b46f7f0768c060c603869d152e3eadf126f1966b"
+    },
+    {
+      "filename": "202616251000_factoring_advance_bank_wire_gap_account.sql",
+      "checksum": "c474fcb388a7268a6ad011cca2ab18591a186c19c9de8e084ff6ce5776340581"
+    },
+    {
+      "filename": "202616261000_driver_preferred_languages_array.sql",
+      "checksum": "77d658ce32ba9516ad237113ce7ba5624dd75e911a327ed6b94a69ca2120dea1"
+    },
+    {
+      "filename": "202616261600_vehicle_latest_position_cache_entity_walls.sql",
+      "checksum": "4d2d8aac7a3758437627068c5546395f8256e7a58a70f5dfc1385aeea4e26c06"
+    },
+    {
+      "filename": "202616261700_work_order_shop_bays.sql",
+      "checksum": "8ab06f37db1f0167edef0bba9da8980b6cd7696b5f84728aefe9e96a14d411b1"
+    },
+    {
+      "filename": "202616270000_usmca_card_payable_role_bindings.sql",
+      "checksum": "669ba9f7b653420ddbb7c8165f36f37ffcf666eace55f28fa59e767d284c0fbc"
+    },
+    {
+      "filename": "202616280000_notification_queues_prod_drift.sql",
+      "checksum": "c19e8cfad6552ea15cb20fb51eeec9db9b5225901248fe4de6b82b6493cd9190"
+    },
+    {
+      "filename": "202616290000_bank_line_check_number_cashed_check_hold.sql",
+      "checksum": "9c8ac61c804acd2e883ba6070ae40c76382319fd5ce9cbdecd1b2344ef8ee95c"
+    },
+    {
+      "filename": "202616301200_coa_roles_widen_fine_and_permit_recovery.sql",
+      "checksum": "1fbbb1f2ea80129a01ccabf981d1edb3d350dc31ed25f545fb6119e061d50843"
+    },
+    {
+      "filename": "202616301201_usmca_seed_fine_permit_recovery_and_rebind_items.sql",
+      "checksum": "637a8e15ebe67a38bba45077590500ec6edc04d05a033e30d59f686de0c47c4a"
+    },
+    {
+      "filename": "202616301300_posting_source_load_id_factoring_deposit.sql",
+      "checksum": "213eb5231540a93b499c61d5edbc365e92f63ace54eba05d0b8597e1c24f9612"
+    },
+    {
+      "filename": "202616301400_posting_source_load_id_factoring_rule3_and_backfill.sql",
+      "checksum": "48dd1892123eaeaa18c70dc741c5687c70624c091d6915398b8affe7b1b26932"
     }
   ]
 }
