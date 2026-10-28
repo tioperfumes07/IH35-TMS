@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:35:12Z",
+ "generated": "2026-10-28T22:35:58Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -613,10 +613,10 @@
    "title": "ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000\u00a2 vs baseline 132,500\u00a2; 5796/P-0102 USMCA settlement for a Transportation document",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-bill-payment-has-spine-link.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: ad02cc37 is settlement_deduction_noncash escrow contribution (no bank by design) but 0 JE spine rows (in 223 ceiling). Escrow driver view 320000\u00a2 vs acct 397500\u00a2 (delta 77500\u00a2) \u2014 prior 315k/132.5k claim stale. P-0102\u21925796 USMCA tip-OK (Transportation claim cleared). Residual: spine for noncash escrow BP + escrow view tieout."
   },
   {
    "id": "ENG-47",
