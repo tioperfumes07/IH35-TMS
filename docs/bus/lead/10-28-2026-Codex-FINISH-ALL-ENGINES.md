@@ -8,7 +8,7 @@
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
 ```
 
-**Lead tip-closed this session (do not rebuild):** ENG-18/28/41/42/61 · ENG-01c/24/39/40 · ENG-43/45 · **ENG-26 DONE-LIVE** (mig 301300+1400 RULE 2 OK) · ENG-44 PARTIAL · ENG-27 PARTIAL (290 ceiling)
+**Lead tip-closed this session (do not rebuild):** ENG-18/28/41/42/61 · 01c/24/39/40 · 43/45 · **26 DONE-LIVE** · 44/27/46/47/60 PARTIAL
 
 ---
 
@@ -27,9 +27,9 @@ export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
 ### P1 — help Cursor (Claude seats idle)
 | ID | Done = |
 |---|---|
-| **ENG-46** | bill_payment ad02cc37; escrow driver 320k¢ vs acct 397.5k¢; P-0102/5796 USMCA tip-OK |
-| **ENG-47** | Stale guards vs owner rulings |
-| **ENG-60** | Retire `insurance.lawsuit` → legal matters |
+| **ENG-46** PARTIAL | residual noncash BP spine + escrow Δ77500¢ |
+| **ENG-47** PARTIAL | residual archive RLS / unbilled latch / S-13655 mapping |
+| **ENG-60** PARTIAL | lawsuit table 0; FE LawsuitsTab cutover |
 | **ENG-27** | Shrink below 290 pre-10-17 bank-cat no-load (explain or engine back-fill; **never auto-match**) |
 | **ENG-23 / 29 / 53 / 25b** | As before |
 
