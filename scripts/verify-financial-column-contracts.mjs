@@ -49,7 +49,7 @@ const KNOWN_COLUMNS = {
     // verified present on prod 2026-08-19 (information_schema.columns, tiny-field-89581227).
     "entity_type",
     // 202615510300_settle_je_settlement_id_link.sql: ADD COLUMN IF NOT EXISTS settlement_id uuid (FK to
-    // driver_finance.driver_settlements); stamped by posting-line-writer.ts. Live-verified present on prod 2026-10-12.
+    // driver_finance.driver_settlements); stamped by posting-engine.service.ts. Live-verified present on prod 2026-10-12.
     "settlement_id",
     // ROUND 363-CC1-A (202615350500_journal_entry_postings_load_id_stamp.sql): load lineage on
     // the posting itself; location_id added alongside it for cost-center/geo attribution.

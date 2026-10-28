@@ -28,7 +28,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   engine: "apps/backend/src/accounting/posting-engine.service.ts",
   voidSvc: "apps/backend/src/accounting/void.service.ts",
-  writer: "apps/backend/src/accounting/posting-line-writer.ts",
+  writer: "apps/backend/src/accounting/posting-engine.service.ts",
 };
 /** COMMITTED ceiling (shrink-only): postings stranded by the AUTH-177 purge, by source type. Measured 2026-10-03. */
 export const STRANDED_CEILING = { expense: 3860, invoice: 48 };
@@ -68,10 +68,18 @@ export function writerGaps(writer) {
 export function check({ engine, voidSvc, writer = "" }) {
   const f = [];
   const fn = engine.match(/async function insertPostingLines\([\s\S]*?\n\}\n/);
-  const viaWriter = Boolean(fn && /insertPostingLinesWithSpine\(\s*input\.client/.test(fn[0]));
+  const viaWriter = Boolean(fn && /postValidatedPostingLinesInClientTx\(\s*input\.client/.test(fn[0]));
   if (!fn) f.push(`${FILES.engine}: insertPostingLines not found`);
   else if (viaWriter) {
     f.push(...writerGaps(writer));
+    const batch = engine.match(/export async function postValidatedPostingLinesInClientTx\([\s\S]*?\n\}\n/)?.[0] ?? "";
+    if (!/for \(const line of lines\)[^\n]*await writeLine\(client, line,/.test(batch)) {
+      f.push(`${FILES.engine}: the validated batch must write every line and its spine on the same client`);
+    }
+    const reversal = engine.match(/async function executeSourceReversalOnClient\([\s\S]*?\n\}\n/)?.[0] ?? "";
+    if (!/await postValidatedPostingLinesInClientTx\([^;]*reversalWrites\)/.test(reversal)) {
+      f.push(`${FILES.engine}: the reversal path must use the validated batch and its spine writer`);
+    }
   } else {
     const body = fn[0];
     const loop = body.indexOf("for (const line of input.lines)");
@@ -85,11 +93,13 @@ export function check({ engine, voidSvc, writer = "" }) {
     }
   }
   if ((engine.match(/INSERT INTO accounting\.transaction_source_links/g) ?? []).length + (viaWriter ? 1 : 0) < 2 &&
+      !/executeSourceReversalOnClient[\s\S]*postValidatedPostingLinesInClientTx\([^;]*reversalWrites\)/.test(engine) &&
       !/reversePostedSourceTransaction[\s\S]*insertPostingLineWithSpine\(/.test(engine)) {
     f.push(`${FILES.engine}: the reversal path no longer writes its spine link`);
   }
   // ROUND 393.3: void writes each reversal leg through the writer, its spine row naming the voided entity as 'reversal_of'.
-  if (!/insertPostingLineWithSpineIfNew\(client[\s\S]{0,1400}relationship_role: "reversal_of",\s*spine_link: \{ linked_object_type: params\.entityType, linked_object_id: params\.entityId \}/.test(voidSvc)) {
+  if (!/postingLines\.push\(\{[\s\S]{0,1400}relationship_role: "reversal_of",\s*spine_link: \{ linked_object_type: params\.entityType, linked_object_id: params\.entityId \}/.test(voidSvc) ||
+      !/await postValidatedPostingLinesInClientTx\(client as never, postingLines, \{ skipOnIdempotencyConflict: true \}\)/.test(voidSvc)) {
     f.push(`${FILES.voidSvc}: each reversal leg must write its 'reversal_of' link on the same client`);
   }
   return f;
@@ -144,9 +154,12 @@ async function reversePostedSourceTransaction() {
   const engineNoLink = inlineEngine.replace("INSERT INTO accounting.transaction_source_links", "INSERT INTO accounting.audit_noop");
   const plants = [
     ["poster stops writing the link", { ...real, engine: engineNoLink }],
-    ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return insertPostingLinesWithSpine(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
+    ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return postValidatedPostingLinesInClientTx(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
     ["the writer stops writing the link", { ...real, writer: real.writer.replace(/INSERT INTO accounting\.transaction_source_links/, "INSERT INTO accounting.audit_noop") }],
     ["the writer stops refusing a sourceless line", { ...real, writer: real.writer.replace("if (!line.source_transaction_type || !line.source_transaction_id) {", "if (false) {") }],
+    ["the validated batch skips the spine writer", { ...real, engine: real.engine.replace("await writeLine(client, line,", "await writeLineWithoutSpine(client, line,") }],
+    ["the reversal bypasses the validated batch", { ...real, engine: real.engine.replace("const reversalPostingIds = await postValidatedPostingLinesInClientTx(", "const reversalPostingIds = await writeRawPostingLines(") }],
+    ["void bypasses the validated batch", { ...real, voidSvc: real.voidSvc.replace("await postValidatedPostingLinesInClientTx(client as never, postingLines", "await writeRawPostingLines(client as never, postingLines") }],
     ["void stops naming the voided entity on its spine", { ...real, voidSvc: real.voidSvc.replace('relationship_role: "reversal_of",', 'relationship_role: "source_transaction",') }],
   ];
   for (const [name, s] of plants) {

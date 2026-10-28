@@ -19,7 +19,16 @@ describe("bank-recon resolve difference Q8 compliance", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
 
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+      if (sql.includes("FROM catalogs.accounts") && (sql.includes("SELECT true AS ok") || sql.includes("FOR SHARE"))) {
+        expect(values?.[1]).toBe("11111111-1111-4111-8111-111111111111");
+        return { rows: [{ id: "cash-account-1", is_postable: true, deactivated_at: null }, { id: "diff-account-9", is_postable: true, deactivated_at: null }] };
+      }
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("FOR UPDATE")) {
+        expect(values).toEqual(["je-diff-1", "11111111-1111-4111-8111-111111111111"]);
+        return { rows: [{ entry_date: "2026-05-22" }] };
+      }
       if (sql.includes("FROM banking.bank_transactions")) {
         return {
           rows: [

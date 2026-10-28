@@ -13,12 +13,12 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
 import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
-import { BANK_LINE_DOCUMENT_POINTER_COLUMNS } from "../banking/bank-line-match-pointer.js";
-import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
+import { BANK_TX_UNMATCH_RESET_SQL, resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
+export { resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
+import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js";
 import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { companyBusinessDate } from "../lib/company-business-date.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this void-reversal insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module (no accounting-service imports) to avoid a cycle with
@@ -144,15 +144,6 @@ export function canDelete(role: string | null | undefined): boolean {
  *   - original period open (originalDate > closedThrough, or nothing closed) -> reverse at originalDate.
  *   - original period closed (originalDate <= closedThrough)                 -> reverse at currentDate.
  */
-export function resolveReversalDate(
-  originalDate: string,
-  closedThrough: string | null,
-  currentDate: string
-): string {
-  if (closedThrough && originalDate <= closedThrough) return currentDate;
-  return originalDate;
-}
-
 /** True when the reversal lands in a different (current) period than the original — i.e. closed-period void. */
 export function isClosedPeriodReversal(originalDate: string, reversalDate: string): boolean {
   return reversalDate !== originalDate;
@@ -214,10 +205,6 @@ export function assertBalanced(rows: Array<{ debit_or_credit: "debit" | "credit"
 }
 
 /** Today's date as ISO YYYY-MM-DD (the "current open period" anchor for closed-period reversals). */
-export function todayIso(): string {
-  return companyBusinessDate();
-}
-
 /**
  * ACCT-F5026 / LV-BILLVOID class — coerce a pg DATE/timestamp column into ISO `YYYY-MM-DD`.
  *
@@ -599,61 +586,6 @@ const BANK_LINE_MATCHED_COLUMN: Partial<Record<VoidableEntityType, string>> = {
 // line: 'for_review' is the correct "back in the queue" state (session-scoped comment above already
 // established this same fact for the sibling route); 'unmatched' is not a legal review_state per the
 // CHECK constraint.
-const BANK_TX_UNMATCH_RESET_SQL = `
-  UPDATE banking.bank_transactions
-     SET status = 'pending_categorization',
-         review_state = 'for_review',
-         matched_journal_entry_id = NULL,
-         matched_load_id = NULL,
-         matched_bill_id = NULL,
-         matched_settlement_id = NULL,
-         matched_expense_id = NULL,
-         matched_transfer_id = NULL,
-         matched_payment_id = NULL,
-         matched_bill_payment_id = NULL,
-         matched_factoring_advance_id = NULL,
-         matched_fuel_transaction_id = NULL,
-         matched_relay_fuel_transaction_id = NULL,
-         matched_relay_deposit_id = NULL,
-         matched_invoice_id = NULL,
-         matched_advance_id = NULL,
-         matched_deposit_id = NULL,
-         linked_entity_id = NULL,
-         category = NULL,
-         category_kind = NULL,
-         categorization_customer_id = NULL,
-         categorization_vendor_id = NULL,
-         categorization_gl_account_id = NULL,
-         categorization_project_id = NULL,
-         categorization_memo = NULL,
-         categorization_driver_id = NULL,
-         categorization_unit_id = NULL,
-         categorization_load_id = NULL,
-         -- BANK-ORPHAN-01 live-catch, 2026-09-01: categorization_recover_from_driver is
-         -- NOT NULL DEFAULT false on prod (confirmed via information_schema, not assumed) --
-         -- setting it to NULL threw "null value ... violates not-null constraint" the first
-         -- time this reset actually ran against a row that had it set, which every prior
-         -- selftest/guard pass missed because none of them execute real SQL against a live
-         -- schema. Reset to its own default, not NULL.
-         categorization_recover_from_driver = false,
-         categorization_recover_deduction_type = NULL,
-         categorization_deduction_id = NULL,
-         categorization_item_id = NULL,
-         categorization_trailer_id = NULL,
-         categorization_class_id = NULL,
-         categorization_location = NULL,
-         suggested_match_invoice_id = NULL,
-         suggested_match_bill_id = NULL,
-         categorized_at = NULL,
-         updated_at = now()
-   WHERE operating_company_id = $1::uuid
-`;
-
-// ROUND 363-CC3-B — the release of every match a reset clears is recorded BEFORE the reset, through
-// banking.release_bank_line_matches() (bank-line-release.ts). The trail this file used to write after the reset
-// (recordVoidedMatches) read the matched_* ids from the UPDATE's RETURNING row — Postgres returns the NEW values, which
-// the reset had just set to NULL — so it recorded nothing on every void.
-
 /**
  * BANK-ORPHAN-01 shared primitive #1: reset ONE bank_transactions row (known by its own id) back to
  * the review worklist. Callers that already hold a bank_transaction_id directly (a column that is not
@@ -694,26 +626,6 @@ export async function unmatchBankTransactionById(
  * shared reset. The column is the ENG-MATCH list (14 pointers including matched_deposit_id), never a second copy
  * and never interpolated from input.
  */
-const RELEASABLE_POINTER_COLUMNS = new Set<string>(BANK_LINE_DOCUMENT_POINTER_COLUMNS);
-export async function releaseBankLinesNamingDocument(
-  client: QueryableClient,
-  params: { operatingCompanyId: string; pointerColumn: string; documentId: string },
-  actor: { userId: string | null; reason: string }
-): Promise<number> {
-  if (!RELEASABLE_POINTER_COLUMNS.has(params.pointerColumn)) throw new Error(`not_a_bank_line_pointer: ${params.pointerColumn}`);
-  const where = `operating_company_id = $1::uuid AND voided_at IS NULL AND ${params.pointerColumn} = $2::uuid`;
-  await releaseBankLineMatchesWhere(client, where, [params.operatingCompanyId, params.documentId], {
-    kind: "void",
-    reason: actor.reason,
-    actorUserId: actor.userId,
-  });
-  const res = await client.query<{ id: string }>(
-    `${BANK_TX_UNMATCH_RESET_SQL} AND voided_at IS NULL AND ${params.pointerColumn} = $2::uuid RETURNING id`,
-    [params.operatingCompanyId, params.documentId]
-  );
-  return res.rows.length;
-}
-
 export async function unmatchBankTransactionsForVoid(
   client: QueryableClient,
   params: { operatingCompanyId: string; entityType: VoidableEntityType; entityId: string },
@@ -900,6 +812,7 @@ export async function postVoidReversal(
       );
   const reversalJeId = header.rows[0]!.id;
 
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let seq = 1;
   for (const line of reversalLines) {
     // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
@@ -911,7 +824,7 @@ export async function postVoidReversal(
     //   reversal_of_line_id  ROUND 86 line-level FK back to the original (its load is the original's load);
     //   spine            CODER-12: the voided entity, role 'reversal_of' — so a purge can tell a reversed document from an
     //                    unreversed one. A conflict no-op writes neither the line nor a link.
-    const reversalPostingId = await insertPostingLineWithSpineIfNew(client as never, {
+    postingLines.push({
       operating_company_id: params.operatingCompanyId,
       journal_entry_uuid: reversalJeId,
       line_sequence: seq++,
@@ -928,6 +841,10 @@ export async function postVoidReversal(
       relationship_role: "reversal_of",
       spine_link: { linked_object_type: params.entityType, linked_object_id: params.entityId },
     });
+  }
+  const postingIds = await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
+  for (const [index, line] of reversalLines.entries()) {
+    const reversalPostingId = postingIds[index];
     if (reversalPostingId) {
       // ROUND 86 — the other half of the line-level link: point the ORIGINAL line forward at
       // this new reversal line. Without this, the original stays a "stranded posting" — its own

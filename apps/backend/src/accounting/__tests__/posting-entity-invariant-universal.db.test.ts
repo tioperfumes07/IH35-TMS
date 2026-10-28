@@ -9,7 +9,8 @@ import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { insertPostingLineWithSpine, UnclassifiedPostingSourceTypeError } from "../posting-line-writer.js";
+import { UnclassifiedPostingSourceTypeError } from "../posting-line-writer.js";
+import { postBalancedSourceLine } from "../../../test-helpers/post-balanced-source-line.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -40,7 +41,7 @@ describeIntegration("posting entity invariant is universal (443.113 I-02, real P
       let seq = 0;
       const post = async (type: string | null, id: string | null) => {
         seq += 1;
-        const postingId = await insertPostingLineWithSpine(db as never, {
+        const postingId = await postBalancedSourceLine(db as never, {
           operating_company_id: opco, journal_entry_uuid: je, line_sequence: seq, account_id: account,
           debit_or_credit: seq % 2 ? "debit" : "credit", amount_cents: 100, description: `TST I02 ${type}`,
           source_transaction_type: type, source_transaction_id: id,

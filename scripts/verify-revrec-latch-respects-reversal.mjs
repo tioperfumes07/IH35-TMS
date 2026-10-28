@@ -29,6 +29,7 @@ import { join, relative } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const POSTER = "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts";
+const PREDICATE = "apps/backend/src/accounting/revrec-delivery-posting/standing-latch-predicate.ts";
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 const LABEL = "verify-revrec-latch-respects-reversal";
 const TABLE = "load_revenue_recognition_postings";
@@ -56,16 +57,17 @@ export function auditLatchReads(src, rel) {
   return problems;
 }
 
-/** The predicate must be defined exactly once, in the poster, and exported. */
-export function auditSingleDefinition(posterSrc, engineSrc) {
+/** The predicate must be defined exactly once, in the dependency-free leaf, and exported. */
+export function auditSingleDefinition(predicateSrc, engineSrc, posterSrc = "") {
   const problems = [];
   const poster = stripComments(posterSrc);
+  const predicate = stripComments(predicateSrc);
   const engine = stripComments(engineSrc);
-  if (!/export\s+function\s+standingLatchJePredicate/.test(poster)) {
-    problems.push(`${POSTER}: STANDING_LATCH_JE_PREDICATE is not defined and exported — the reversal test has no single home.`);
+  if (!/export\s+function\s+standingLatchJePredicate/.test(predicate)) {
+    problems.push(`${PREDICATE}: STANDING_LATCH_JE_PREDICATE is not defined and exported — the reversal test has no single home.`);
   }
-  if (/function\s+standingLatchJePredicate/.test(engine)) {
-    problems.push(`${ENGINE}: defines its own STANDING_LATCH_JE_PREDICATE. Import the poster's — two copies drift.`);
+  for (const [rel, code] of [[ENGINE, engine], [POSTER, poster]]) {
+    if (/function\s+standingLatchJePredicate/.test(code)) problems.push(`${rel}: defines its own STANDING_LATCH_JE_PREDICATE. Import the leaf's — two copies drift.`);
   }
   if (/reversed_by_je_id/.test(engine) && !/STANDING_LATCH_JE_PREDICATE/.test(engine)) {
     problems.push(`${ENGINE}: open-codes a reversed_by_je_id test instead of importing the shared predicate.`);
@@ -102,8 +104,9 @@ function auditTree() {
     problems.push(...auditLatchReads(src, rel));
   }
   const poster = readFileSync(join(ROOT, POSTER), "utf8");
+  const predicate = readFileSync(join(ROOT, PREDICATE), "utf8");
   const engine = readFileSync(join(ROOT, ENGINE), "utf8");
-  problems.push(...auditSingleDefinition(poster, engine));
+  problems.push(...auditSingleDefinition(predicate, engine, poster));
   return problems;
 }
 
@@ -121,6 +124,8 @@ function selftest() {
   if (auditSingleDefinition("const x = 1;", "").length === 0) failures.push("case4 FAIL — a missing exported predicate was NOT caught");
   if (!auditSingleDefinition("export function standingLatchJePredicate(a) { return ``; }", "function standingLatchJePredicate(a) { return ``; }").some((p) => p.includes("defines its own")))
     failures.push("case5 FAIL — a duplicate predicate definition was NOT caught");
+  if (!auditSingleDefinition("export function standingLatchJePredicate(a) { return ``; }", "", "function standingLatchJePredicate(a) { return ``; }").some((p) => p.includes("defines its own")))
+    failures.push("case5b FAIL — a duplicate predicate in the poster was NOT caught");
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case6 FAIL — real sources flagged: ${tree.join(" | ")}`);

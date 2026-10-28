@@ -7,7 +7,7 @@
 // reversed it a SECOND time, and never reversed the reclass in-leg that now carried the money.
 //
 // static:
-//   1. posting-line-writer.ts stamps the original's reversed_by_line_id after writing any reversal line, only when it is
+//   1. posting-engine.service.ts stamps the original's reversed_by_line_id after writing any reversal line, only when it is
 //      unreversed, and refuses (PostingLineAlreadyReversedError) when another line already reversed it;
 //   2. posting-engine.service.ts reverses only LIVE lines naming the document (not the bare batch), refuses an unbalanced
 //      set (REVERSAL_NOT_BALANCED), and never overwrites a back-link (POSTING_LINE_ALREADY_REVERSED);
@@ -17,7 +17,7 @@
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-reversal-links-both-directions";
-const WRITER = "apps/backend/src/accounting/posting-line-writer.ts";
+const WRITER = "apps/backend/src/accounting/posting-engine.service.ts";
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 const MIG = "db/migrations/202615410300_one_reversal_per_posting_line.sql";
 const JES = "apps/backend/src/accounting/journal-entries.service.ts";
@@ -31,13 +31,14 @@ export function problems(writer, engine, mig, jes = read(JES)) {
   if (!/if \(!back\.rows\[0\]\) throw new PostingLineAlreadyReversedError\(line\.reversal_of_line_id\)/.test(writer)) p.push("writer must refuse an original already reversed by another line");
   if (!/AND reversed_by_line_id IS NULL\s*\n\s*AND reversal_of_line_id IS NULL\s*\n\s*AND \(posting_batch_id = \$2::uuid OR \(source_transaction_type = \$3 AND source_transaction_id = \$4\)\)/.test(engine)) p.push("posting-engine reversal must select only LIVE lines naming the document");
   if (!/"REVERSAL_NOT_BALANCED"/.test(engine.slice(engine.indexOf("async function executeSourceReversalOnClient(")))) p.push("posting-engine reversal must refuse an unbalanced live set");
-  // ENG-28 (#27741): the engine no longer stamps the back-link itself — every reversal line goes through the single
-  // posting door (insertPostingLineWithSpine), whose guarded UPDATE + PostingLineAlreadyReversedError (checked above)
-  // is the no-overwrite rule. The engine must route reversals through that door and must not regrow its own UPDATE.
+  // ENG-28: every reversal batch goes through the full engine and its private writeLine.
+  // Its guarded UPDATE + PostingLineAlreadyReversedError (checked above) is the no-overwrite rule;
+  // the reversal orchestration must not grow an unguarded second UPDATE.
   const rev = engine.slice(engine.indexOf("async function executeSourceReversalOnClient("));
-  const viaDoor = /await insertPostingLineWithSpine\([\s\S]{0,1200}?reversal_of_line_id: row\.id/.test(rev);
+  const viaDoor = /reversalWrites\.push\(\{[\s\S]{0,1600}?reversal_of_line_id: row\.id/.test(rev) &&
+    /await postValidatedPostingLinesInClientTx\(client as unknown as PostingWriterClient, reversalWrites\)/.test(rev);
   const ownUnguardedUpdate = /SET reversed_by_line_id\s*=(?![\s\S]{0,200}reversed_by_line_id IS NULL)/.test(engine);
-  if (!viaDoor || ownUnguardedUpdate) p.push("posting-engine must never overwrite a reversal back-link (reverse only through insertPostingLineWithSpine; no unguarded back-link UPDATE)");
+  if (!viaDoor || ownUnguardedUpdate) p.push("posting-engine must never overwrite a reversal back-link (reverse only through postValidatedPostingLinesInClientTx; no unguarded back-link UPDATE)");
   if (!/CREATE UNIQUE INDEX IF NOT EXISTS uq_jep_one_reversal_per_line\s*\n\s*ON accounting\.journal_entry_postings \(reversal_of_line_id\)\s*\n\s*WHERE reversal_of_line_id IS NOT NULL;/.test(mig)) p.push("migration must create uq_jep_one_reversal_per_line");
   return p;
 }
@@ -49,7 +50,7 @@ const plants = [
   ["writer overwrites", w.replace("AND (reversed_by_line_id IS NULL OR reversed_by_line_id = $2::uuid)", ""), e, m],
   ["engine reverses the whole batch", w, e.replace(/AND reversed_by_line_id IS NULL\s*\n\s*AND reversal_of_line_id IS NULL\s*\n\s*AND \(posting_batch_id = \$2::uuid OR \(source_transaction_type = \$3 AND source_transaction_id = \$4\)\)/, "AND posting_batch_id = $2::uuid"), m],
   ["engine overwrites the back-link", w, e.replace("reversal_of_line_id: row.id,", "reversal_of_line_id: null,\n      /* */ }); await client.query(`UPDATE accounting.journal_entry_postings SET reversed_by_line_id = $2::uuid WHERE id = $1::uuid`, [row.id, reversalLineId]); ({"), m],
-  ["engine bypasses the posting door", w, e.replace("const reversalLineId = await insertPostingLineWithSpine(", "const reversalLineId = await insertRawPostingLine("), m],
+  ["engine bypasses the posting door", w, e.replace("const reversalPostingIds = await postValidatedPostingLinesInClientTx(", "const reversalPostingIds = await insertRawPostingLine("), m],
   ["writer stamps another company's original", w.replace("\n          AND operating_company_id = $3::uuid\n        RETURNING id::text`,\n      [line.reversal_of_line_id, postingId, line.operating_company_id]", "\n        RETURNING id::text`,\n      [line.reversal_of_line_id, postingId]"), e, m],
   ["no index", w, e, m.replace("CREATE UNIQUE INDEX", "CREATE INDEX")],
   ["restore duplicates a live original", w, e, m, read(JES).replace("if (l.o_id && l.o_reversed_by !== l.id) {", "if (false) {")],

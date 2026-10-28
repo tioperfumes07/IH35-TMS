@@ -19,7 +19,7 @@ const FILES = {
   reconcile: "apps/backend/src/banking/obligation-reconcile.routes.ts",
   kpiGuard: "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
   feedLinks: "scripts/lib/bank-feed-state-machine.mjs",
-  voidReleaser: "apps/backend/src/accounting/void.service.ts",
+  voidReleaser: "apps/backend/src/accounting/posting-reversal-context.ts",
   voidGuard: "scripts/verify-every-void-releases-its-bank-lines.mjs",
 };
 
@@ -130,6 +130,7 @@ function selftest() {
     ["a KPI that treats for_review as unmatched fails", pointerFailures({ ...src, kpi: src.kpi + "\nconst UNMATCHED = `b.review_state = 'for_review'`" }).length > 0],
     ["an accept path without the live-pointer refusal fails", pointerFailures(plant("match", "bankLineHasLiveDocumentPointer", "x")).length > 0],
     ["a feed state machine without matched_relay_deposit_id fails", pointerFailures(plant("feedLinks", "matched_relay_deposit_id", "x")).length > 0],
+    ["a void releaser without the shared document pointer list fails", pointerFailures(plant("voidReleaser", "BANK_LINE_DOCUMENT_POINTER_COLUMNS", "x")).length > 0],
   ];
   for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, ok]) => !ok).length;

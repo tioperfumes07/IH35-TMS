@@ -44,7 +44,15 @@ describe("fuel-posting poster.service company-direct path", () => {
     });
 
     let postingLineIdx = 0;
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("FOR UPDATE")) {
+        expect(values).toEqual(["je-2", "11111111-1111-4111-8111-111111111111"]);
+        return { rows: [{ entry_date: "2026-05-23" }] };
+      }
+      if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+        expect(values?.[1]).toBe("11111111-1111-4111-8111-111111111111");
+        return { rows: ["cccccccc-cccc-4ccc-8ccc-cccccccccccc", "dddddddd-dddd-4ddd-8ddd-dddddddddddd"].map(id => ({ id, is_postable: true, deactivated_at: null })) };
+      }
       if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
       if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
       // ROUND 377: cash fuel credits the bound operating_bank role (accounting.chart_of_accounts_roles), never a guess.
@@ -129,7 +137,15 @@ describe("fuel-posting poster.service company-direct path", () => {
       posting_side: "debit",
     }));
     let n = 0;
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("FOR UPDATE")) {
+        expect(values).toEqual(["je-m", "11111111-1111-4111-8111-111111111111"]);
+        return { rows: [{ entry_date: "2026-09-10" }] };
+      }
+      if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+        expect(values?.[1]).toBe("11111111-1111-4111-8111-111111111111");
+        return { rows: ["acct-5000", "acct-5010", "acct-5015", "acct-1295"].map(id => ({ id, is_postable: true, deactivated_at: null })) };
+      }
       if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
       if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) return { rows: [{ account_id: "acct-1295" }] };

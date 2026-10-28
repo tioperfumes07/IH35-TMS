@@ -71,7 +71,7 @@ export function checkReversalPostingSourceTag(src) {
     return { ok: true };
   }
 
-  const usesWriter = /insertPostingLineWithSpineIfNew/.test(body);
+  const usesWriter = /await postValidatedPostingLinesInClientTx\(client as never, postingLines, \{ skipOnIdempotencyConflict: true \}\)/.test(body) && /postingLines\.push\(\{/.test(body);
   const usesLineSource = /reversalLineSource\s*\(\s*line\s*,\s*trueType\s*,\s*trueId\s*\)/.test(body);
   const resolvesTrueSource = /resolveTrueReversalSource/.test(body);
   if (usesWriter && usesLineSource && resolvesTrueSource) return { ok: true };
@@ -112,16 +112,19 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
     export async function postVoidReversal(client, params, actor) {
       const { trueType, trueId } = await resolveTrueReversalSource(client, params.operatingCompanyId, params.entityType, params.entityId);
       for (const line of reversalLines) {
-        await insertPostingLineWithSpineIfNew(client, {
+        postingLines.push({
           operating_company_id: params.operatingCompanyId,
           idempotency_key: \`void:\${params.entityType}:\${params.entityId}\`,
           ...reversalLineSource(line, trueType, trueId),
         });
       }
+      await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
     }
   `;
   const goodWriterResult = checkReversalPostingSourceTag(goodWriter);
   if (!goodWriterResult.ok) fail(`selftest: ROUND 393.3 writer fixture should pass — ${goodWriterResult.reason}`);
+  if (checkReversalPostingSourceTag(goodWriter.replace("await postValidatedPostingLinesInClientTx(", "await rawWrite(")).ok) fail("selftest: batch bypass escaped");
+  if (checkReversalPostingSourceTag(goodWriter.replace("...reversalLineSource(line, trueType, trueId)", "...unrelatedSource(line)")).ok) fail("selftest: missing true source escaped");
 
   const regressedNoColumns = `
     export async function postVoidReversal(client, params, actor) {

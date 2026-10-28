@@ -31,7 +31,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
-import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "../posting-engine.service.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { computeDepreciationSchedule } from "../fixed-assets.math.js";
 import {
@@ -223,12 +223,13 @@ export async function insertBalancedPostingLines(
   }
 ): Promise<string[]> {
   const postingIds: string[] = [];
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let lineSequence = 1;
   for (const line of args.lines) {
     // ROUND 393.2 — the one posting-line writer: the line and its primary spine row (the entry's first link) together;
     // the remaining links follow on the same posting. A replay of the same (key, line) writes nothing and no link.
-    const [primary, ...more] = args.links;
-    const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+    const [primary] = args.links;
+    postingLines.push({
       operating_company_id: args.operatingCompanyId,
       journal_entry_uuid: args.journalEntryId,
       line_sequence: lineSequence,
@@ -243,6 +244,11 @@ export async function insertBalancedPostingLines(
         ? { spine_link: { linked_object_type: primary.linked_object_type, linked_object_id: primary.linked_object_id }, relationship_role: primary.relationship_role }
         : {}),
     });
+    lineSequence += 1;
+  }
+  const results = await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
+  const [, ...more] = args.links;
+  for (const postingId of results) {
     if (postingId) {
       postingIds.push(postingId);
       for (const link of more) {
@@ -255,7 +261,6 @@ export async function insertBalancedPostingLines(
         });
       }
     }
-    lineSequence += 1;
   }
   return postingIds;
 }

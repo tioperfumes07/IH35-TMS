@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VOID_SERVICE = "apps/backend/src/accounting/void.service.ts";
+const REVERSAL_CONTEXT = "apps/backend/src/accounting/posting-reversal-context.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const RECON_WORKLIST = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
 const UNMATCH_FILE = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
@@ -35,8 +36,10 @@ function assert(cond, msg, errors) {
 // LST-F408 (Lead, 2026-10-04): the checks are a pure function of the two source TEXTS, so the selftest plants a defect into
 // a string — it never writes a file. (It used to writeFileSync the planted text into apps/backend/src/accounting/
 // void.service.ts and restore it in `finally`: any interrupted run, or a commit made meanwhile, carried the mutation.)
-export function run(voidService = read(VOID_SERVICE), reconRoutes = read(RECON_ROUTES), reconWorklist = read(RECON_WORKLIST), unmatchSrc = read(UNMATCH_FILE)) {
+export function run(voidService = read(VOID_SERVICE) + "\n" + read(REVERSAL_CONTEXT), reconRoutes = read(RECON_ROUTES), reconWorklist = read(RECON_WORKLIST), unmatchSrc = read(UNMATCH_FILE)) {
   const errors = [];
+  assert(/import \{[^}]*BANK_TX_UNMATCH_RESET_SQL[^}]*\} from "\.\/posting-reversal-context\.js"/.test(voidService),
+    `${VOID_SERVICE}: must consume the shared BANK_TX_UNMATCH_RESET_SQL from the reversal context`, errors);
 
   const resetBlockMatch = voidService.match(/const BANK_TX_UNMATCH_RESET_SQL = `[\s\S]*?`;/);
   assert(!!resetBlockMatch, `${VOID_SERVICE}: could not locate BANK_TX_UNMATCH_RESET_SQL — guard markers moved`, errors);
@@ -78,7 +81,7 @@ export function run(voidService = read(VOID_SERVICE), reconRoutes = read(RECON_R
 }
 
 function selftest() {
-  const source = read(VOID_SERVICE);
+  const source = read(VOID_SERVICE) + "\n" + read(REVERSAL_CONTEXT);
   const planted = source.replace("review_state = 'for_review',\n         matched_journal_entry_id = NULL,", "matched_journal_entry_id = NULL,");
   if (planted === source) {
     throw new Error("selftest setup failed: expected source text not found (guard markers stale)");
@@ -88,6 +91,10 @@ function selftest() {
   const worklistFixture = "export async function unmatchBankTransaction(input) { throw null; }";
   const unmatchFixture = "export async function unmatchBankTransactionOnClient(client, input) { await q(`UPDATE banking.bank_transactions SET review_state = 'for_review'`); }";
   const errors = run(planted, routesFixture, worklistFixture, unmatchFixture);
+  const disconnected = source.replace("import { BANK_TX_UNMATCH_RESET_SQL,", "import { UNUSED_RESET_SQL,");
+  if (disconnected === source || !run(disconnected, routesFixture, worklistFixture, unmatchFixture).some(e => e.includes("must consume the shared"))) {
+    throw new Error("planted removal of the shared reset import not detected");
+  }
   // and the sibling door is checked too: a delegated service that stops resetting is caught.
   const sibling = run(source, routesFixture, worklistFixture, unmatchFixture.replace("review_state = 'for_review'", "status = 'x'"));
   if (!sibling.some((e) => e.includes("unmatchBankTransactionOnClient (the manual /unmatch door) must reset"))) {
@@ -96,7 +103,7 @@ function selftest() {
   if (!errors.some((e) => e.includes("must reset review_state = 'for_review'"))) {
     throw new Error("planted removal of review_state reset not detected");
   }
-  console.log("[verify-acc20-void-unmatch-resets-review-state] SELFTEST PASS (2 planted failures detected; no file written)");
+  console.log("[verify-acc20-void-unmatch-resets-review-state] SELFTEST PASS (3 planted failures detected; no file written)");
 }
 
 function main() {
