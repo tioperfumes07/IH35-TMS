@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e013f62",
-  "generated_at": "2026-10-28T10:25:31.833Z",
+  "healthzSha": "8e2658a",
+  "generated_at": "2026-10-28T12:33:30.486Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e013f62",
+    "deployedSha": "8e2658a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27921,
+      "title": "FINDING: ACCT-F443323 Lead→Codex ENG-28 YES / 13595 trailer 445 / ENG-17 paths",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 07:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27921",
+      "sha": "c3ddd16857",
+      "committedAtIso": "2026-10-28T06:33:12-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:25 AM CT",
+      "url": "",
+      "sha": "8e2658a6bb",
+      "committedAtIso": "2026-10-28T10:25:32Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27918",
       "sha": "a219c5997e",
       "committedAtIso": "2026-10-27T17:07:38-06:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 05:24 PM CT",
-      "url": "",
-      "sha": "991eeaef6e",
-      "committedAtIso": "2026-10-27T22:24:28Z"
-    },
-    {
-      "number": 27917,
-      "title": "FINDING: ACCT-F443323 ENG-16/15 DONE-LIVE — Check Creator commissioned",
-      "state": "merged",
-      "mergedAtCt": "10/27/2026, 04:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27917",
-      "sha": "754a360c02",
-      "committedAtIso": "2026-10-27T15:01:06-06:00"
     }
   ]
 }
