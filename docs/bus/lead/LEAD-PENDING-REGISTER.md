@@ -262,7 +262,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 256 | ENG | Engine | ENG-18 prepare-commit-msg hook (amend vs new commit) | CC-2 | 443.323 | DONE |  |
 | 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | PARTIAL |  |
 | 258 | ENG | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | ENG | OPEN |  |
-| 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | OPEN |  |
+| 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | DONE-LIVE | 10-28: amend+load+expense guards PASS; active no-load lines=0 |
 | 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | DONE | Codex 10-26: both writers already use canonical resolver; guard strengthened to executable import + awaited call on both. 18/18 selftests including alias/shadow plants, G7 6/6, import tests 11/11. No money changes; live attribution UNVERIFIED. |
 | 261 | ENG | Accounting | ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load | CC-3 | ENG | OPEN |  |
 | 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | OPEN |  |
@@ -286,9 +286,9 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 280 | ENG | Accounting | Spine links: 0 of 8,057 postings without a spine link; TB 0 | - | 10-03 | DONE | prod measured 10-24 |
 | 281 | ENG | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | various | MERGED-UNVERIFIED | 9b5809f1c0 3312d604a6 4693704449 202615380200 202615360600 |
 | 282 | ENG | Engine | ENG-35 live sweep 10-24 3:10 PM CT: 339 live guards on a fresh prod fork — 283 PASS / 56 FAIL; split into ENG-39..53 + harness items | LEAD | ENG-35 | DONE | /tmp/live-results.txt; boxes 443.328/329/330 |
-| 283 | ENG | Settlements | ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row — writer + back-fill; ENG-01b refusal proven on fork | CC-1 | 443.322 | OPEN |  |
-| 284 | ENG | Accounting | ENG-39 P0 vendor-balance view ≠ A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) — what the close owes vs what the view assumes | CC-1 | 443.328 | OPEN |  |
-| 285 | ENG | Settlements | ENG-40 P-0067 and P-0119 closed with no company settlement | CC-1 | 443.328 | OPEN |  |
+| 283 | ENG | Settlements | ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row — writer + back-fill; ENG-01b refusal proven on fork | CC-1 | 443.322 | DONE-LIVE | 10-28: 0 orphans; P-0119 $10 VOIDED AUTH-466 |
+| 284 | ENG | Accounting | ENG-39 P0 vendor-balance view ≠ A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) — what the close owes vs what the view assumes | CC-1 | 443.328 | DONE-LIVE | 10-28: vendor_balances=AP 12921653¢; variance 0 |
+| 285 | ENG | Settlements | ENG-40 P-0067 and P-0119 closed with no company settlement | CC-1 | 443.328 | DONE-LIVE | 10-28: P-0067→5816 P-0119→P-0119; 0 closed w/o company |
 | 286 | ENG | Settlements | ENG-41 P-0121 cancelled but still reusable | CC-1 | 443.328 | DONE-LIVE |  |
 | 287 | ENG | Settlements | ENG-42 89 active duplicate settlement-line groups | CC-1 | 443.328 | DONE-LIVE |  |
 | 288 | ENG | Settlements | ENG-43 2 posted with zero load lines; P-0112/0116/0079/0114 $0 header; line ffac5c35 miles/rate NULL; closed-unposted with voided deduction | CC-1 | 443.328 | OPEN |  |
