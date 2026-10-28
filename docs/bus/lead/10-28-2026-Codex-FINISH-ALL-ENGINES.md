@@ -8,7 +8,7 @@
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
 ```
 
-**Lead just closed on tip (do not rebuild):** ENG-18/28/41/42/61 · ENG-01c/24/39/40 — see `10-28-2026-Cursor-ENG-01c-24-39-40-CLOSE.md`.
+**Lead just closed on tip (do not rebuild):** ENG-18/28/41/42/61 · ENG-01c/24/39/40 · ENG-43/45 — see close docs. **ENG-44 PARTIAL** (due_date writer+sweep shipped; 13690/13698 clear after deploy sweep).
 
 ---
 
