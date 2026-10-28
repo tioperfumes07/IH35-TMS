@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:35:58Z",
+ "generated": "2026-10-28T22:36:59Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -624,10 +624,10 @@
    "title": "ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-display-id-lookups-entity-scoped.mjs; verify-customers-open-balance-excludes-void.mjs; verify-usmca-seed-completeness.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: Tio Perfumes customer ACTIVE (kept per owner). Loads 13655/13656 invoiced. display-id entity-scoped OK; customers open-balance excludes void OK; usmca-seed-completeness PASS (USMCA hidden). Residual: archive RLS guard plants + unbilled revenue latch wording + S-13655 source_document_ref mapping audit."
   },
   {
    "id": "ENG-48",
