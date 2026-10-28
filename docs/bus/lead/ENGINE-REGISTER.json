@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T18:57:06Z",
+ "generated": "2026-10-28T21:40:02Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -85,10 +85,10 @@
    "title": "ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "CODED",
+   "status": "PARTIAL",
    "guard": "verify-advance-resolver-never-uses-driver-payroll-clearing (step 18809)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "PR #27902: historical_backfill never credits 2170; guard 18809; ops dry-run 3/12 propose_reclass; residual 257596c until Lead applies reclass"
+   "evidence": "CODED #27902 + LIVE dry-run 10-28 CT reconfirmed: 12 advances / 3 PROPOSE_RECLASS ($705.97: CA-0004/0006/0007 BANK_UNIQUE) / 3 NO-EVIDENCE / 6 AMBIGUOUS; residual clearing 257596¢. Writer never credits 2170 going forward. APPLY of 3 reclasses BLOCKED — no OWNER AUTH / apply script yet (dry-run only). Do not invent JE."
   },
   {
    "id": "ENG-05",
@@ -415,10 +415,10 @@
    "title": "ENG-37 natural-sign rendering: measure money columns not using naturalBalance",
    "seat": "LEAD",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-balances-render-in-natural-sign.mjs; verify-no-surface-prints-a-raw-ledger-sign.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: both guards PASS. 54 accounts with balance; 25 income/liability/equity negative-raw now render positive. 3 genuinely abnormal still render negative (named): 1000 BofA Operating -77987.89; 3000 Owner Capital -21450.00; 8000 Interco Transportation -12596.50. Not a rendering bug — real sign/posting issues tracked elsewhere."
   },
   {
    "id": "ENG-38",
