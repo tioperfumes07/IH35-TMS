@@ -247,7 +247,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 62/62 load_id |
 | 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | PARTIAL | writer never credits 2170; guard 18809; dry-run 3/12 propose_reclass ($705.97); residual until Lead applies |
 | 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
-| 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
+| 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | DONE-LIVE |  |
 | 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | DONE-LIVE | book refuses city-only; guard 18802; 15 historical remain for sweep |
 | 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | DONE-LIVE | 0 lumper advances; 0 missing expense; guard 18553 PASS |
 | 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | DONE-LIVE | verify-engine-register-closed-by-guard PASS |
@@ -263,7 +263,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | PARTIAL |  |
 | 258 | ENG | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | ENG | OPEN |  |
 | 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | OPEN |  |
-| 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | CODED | Codex 10-26: both writers already use canonical resolver; guard strengthened to executable import + awaited call on both. 18/18 selftests including alias/shadow plants, G7 6/6, import tests 11/11. No money changes; live attribution UNVERIFIED. |
+| 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | DONE | Codex 10-26: both writers already use canonical resolver; guard strengthened to executable import + awaited call on both. 18/18 selftests including alias/shadow plants, G7 6/6, import tests 11/11. No money changes; live attribution UNVERIFIED. |
 | 261 | ENG | Accounting | ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load | CC-3 | ENG | OPEN |  |
 | 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | OPEN |  |
 | 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | OPEN |  |
@@ -272,8 +272,8 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | DONE |  |
 | 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | DONE |  |
 | 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | DONE |  |
-| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | OPEN |  |
-| 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | OPEN |  |
+| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | PARTIAL |  |
+| 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | DONE |  |
 | 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | PARTIAL | 21/87 neg; fuel>rev; guard path fixed |
 | 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | DONE |  |
 | 273 | ENG | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | ENG | OPEN |  |
