@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:31:05Z",
+ "generated": "2026-10-28T22:32:44Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -305,10 +305,10 @@
    "title": "ENG-27 G6: 458 bank-categorization postings before 10-17 without a load \u2014 back-fill or explain",
    "seat": "CC-3",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-eng27-bank-cat-pre-1017-no-load-ceiling.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: 290 pre-10-17 bank_categorization postings without load (claimed 458). Shrink-only ceiling 290. Never auto-match. Remaining need document explain or engine back-fill."
   },
   {
    "id": "ENG-28",
