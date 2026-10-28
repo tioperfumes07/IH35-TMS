@@ -7,13 +7,13 @@
 **FULL ORDERS:** [lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md](lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md)  
 **Rulings:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md)
 
-**Lead tip-closed (skip):** ENG-18/28/41/42/61 · ENG-01c/24/39/40
+**Lead tip-closed (skip):** ENG-18/28/41/42/61 · ENG-01c/24/39/40 · ENG-43/45 · ENG-44 PARTIAL (sweep clears 13690/13698)
 
 ### Do now (in order)
 1. **ENG-17** — Faro 1090 doc match only; no balancing JE; Dreamline MISSING → 2510 BLOCKED.
 2. **ENG-48 → 51** (CC-2 leftovers — you own them).
 3. **ENG-13** residual 13595 Trailer 445 — list BLOCKED only.
-4. Then help **ENG-43..47 / 60 / 26 / 27 / 23 / 29 / 53 / 25b**.
+4. Then help **ENG-46 / 47 / 60 / 26 / 27 / 23 / 29 / 53 / 25b**.
 
 ### Skip
 OWNER ENG-38/54 · LEAD-ENG-21 · AUTH-453 · invent trailer 445 · invent Dreamline · dependabot

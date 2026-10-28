@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:21:01Z",
+ "generated": "2026-10-28T22:26:25Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -294,10 +294,10 @@
    "title": "ENG-26 G8: 991 of 8,057 postings without a load \u2014 factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load",
    "seat": "CC-3",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-every-load-born-posting-carries-its-load.mjs; verify-every-load-born-document-and-posting-traces-to-its-load.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: load-born document/posting traces PASS. RULE 2 red on 4 factoring_advance_deposit postings \u2014 SQL posting_source_load_id lacked deposit+invoice fallback (TS writer already had it). Migration 202616301300 mirrors TS; txn-proven stamp=resolved on the 4 reds. Apply on deploy then re-run RULE 2."
   },
   {
    "id": "ENG-27",
