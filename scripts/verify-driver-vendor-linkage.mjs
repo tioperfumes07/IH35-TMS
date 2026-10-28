@@ -9,18 +9,14 @@
  *   (a) 0 SETTLEMENT-ACTIVE drivers without a live vendor_type='Driver' row.
  *   (b) 0 driver-linked vendors still typed 'Other'.
  *
- * "Settlement-active" = has a driver_finance.driver_settlements row carrying real financial
- * substance (nonzero gross/net/deductions/reimbursements, a posted_at, or an accounting_bill_id)
- * — NOT merely an empty $0.00 open draft shell. Two USMCA drivers (HUGO GAYTAN 3445cf68,
- * GENARO GUERRERO CHAVEZ 6edcb351) surfaced during this backfill as duplicate driver records:
- * each has a $0.00 open/unposted settlement with no vendor, while a SIBLING driver_id for the
- * same person already carries the correctly-typed 'Driver' vendor. Minting a second vendor for
- * either would collide on mdata.vendors' name-uniqueness constraint (by design) and would fork a
- * second real-money payee for one physical person — worse than the original defect. This is a
- * SEPARATE, boarded defect (duplicate mdata.drivers rows from an unidentified 2026-09-05 write
- * path), not fixed by this guard/backfill. If either drafted settlement ever gets real money
- * (gross/net/deductions/reimbursements != 0, posted, or billed), this guard goes RED and that is
- * the correct signal to resolve the duplicate before it can post.
+ * "Settlement-active" = has a NON-VOIDED, NON-CANCELLED driver_finance.driver_settlements row
+ * carrying real financial substance (nonzero gross/net/deductions/reimbursements, a posted_at, or
+ * an accounting_bill_id) — NOT an empty $0.00 open draft shell, and NOT a cancelled/voided shell
+ * on a duplicate Inactive driver row (ENG-45: Carvallo / Morales Noguez duplicates whose only
+ * settlements are cancelled; sibling profiles already carry the Driver vendor). Minting a second
+ * vendor for a duplicate would collide on mdata.vendors' name-uniqueness and fork a second
+ * real-money payee for one physical person. If a duplicate's settlement ever becomes live again
+ * (un-voided with substance), this guard goes RED — correct signal to merge before it can post.
  *
  * Target: Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a (prod). Read-only.
  * Usage:
@@ -110,6 +106,10 @@ try {
          AND EXISTS (
            SELECT 1 FROM driver_finance.driver_settlements ds
             WHERE ds.driver_id = d.id
+              -- Cancelled/voided shells on duplicate Inactive driver rows (ENG-45) are not
+              -- settlement-active — they cannot post. Sibling profiles already carry the Driver vendor.
+              AND ds.voided_at IS NULL
+              AND ds.status NOT IN ('cancelled', 'voided')
               AND (ds.gross_pay <> 0 OR ds.net_pay <> 0 OR ds.deductions_total <> 0
                    OR ds.reimbursements_total <> 0 OR ds.posted_at IS NOT NULL
                    OR ds.accounting_bill_id IS NOT NULL)

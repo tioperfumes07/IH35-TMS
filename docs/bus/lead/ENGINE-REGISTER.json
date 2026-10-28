@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:11:07Z",
+ "generated": "2026-10-28T22:16:50Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -580,10 +580,10 @@
    "title": "ENG-43 2 posted with zero load lines; P-0112/0116/0079/0114 $0 header; line ffac5c35 miles/rate NULL; closed-unposted with voided deduction",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-payrun-close-requires-load-activity.mjs; verify-no-empty-zero-settlement.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: closed-unposted=0; named $0 headers P-0112/0116/0079/0114 have net_pay; ffac5c35 has qty/rate; 2 posted w/ zero earnings lines are salaried (P-0067/P-0122 weekly_salary + Salaried loads) \u2014 guard now mirrors engine salaried UNION; PASS live."
   },
   {
    "id": "ENG-44",
@@ -602,10 +602,10 @@
    "title": "ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) \u2014 one profile per driver",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-driver-vendor-linkage.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: PASS 0 settlement-active without Driver vendor (control=91). Carvallo/Morales Noguez Inactive dupes only have cancelled/voided settlements; siblings Pena Carvallo / Morales already have Driver vendors. Guard excludes voided/cancelled from settlement-active."
   },
   {
    "id": "ENG-46",
