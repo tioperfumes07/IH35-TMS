@@ -1,10 +1,10 @@
 {
-  "healthzSha": "dda483f",
-  "generated_at": "2026-10-28T18:29:59.929Z",
+  "healthzSha": "a73e6bb",
+  "generated_at": "2026-10-28T20:26:32.695Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "dda483f",
+    "deployedSha": "a73e6bb",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 27927,
+      "title": "FINDING: ACCT-F443323 ENG-36 measure 21 negatives + ratchet guard path",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 01:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27927",
+      "sha": "a73e6bb2b5",
+      "committedAtIso": "2026-10-28T12:57:20-06:00"
+    },
+    {
+      "number": 27926,
+      "title": "FINDING: ACCT-F443323 measure-close ENG-31/32/33/56 DONE",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 01:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27926",
+      "sha": "b15de768a1",
+      "committedAtIso": "2026-10-28T12:55:01-06:00"
+    },
+    {
+      "number": 27925,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 01:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27925",
+      "sha": "1a8568e85b",
+      "committedAtIso": "2026-10-28T18:31:48Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 01:30 PM CT",
+      "url": "",
+      "sha": "53de333105",
+      "committedAtIso": "2026-10-28T18:30:00Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "",
       "sha": "d3fc2cc355",
       "committedAtIso": "2026-10-28T12:33:30Z"
-    },
-    {
-      "number": 27921,
-      "title": "FINDING: ACCT-F443323 Lead→Codex ENG-28 YES / 13595 trailer 445 / ENG-17 paths",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 07:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27921",
-      "sha": "c3ddd16857",
-      "committedAtIso": "2026-10-28T06:33:12-06:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:25 AM CT",
-      "url": "",
-      "sha": "8e2658a6bb",
-      "committedAtIso": "2026-10-28T10:25:32Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 03:30 AM CT",
-      "url": "",
-      "sha": "e013f628c4",
-      "committedAtIso": "2026-10-28T08:30:47Z"
-    },
-    {
-      "number": 27920,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 01:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27920",
-      "sha": "ee3a2c6b84",
-      "committedAtIso": "2026-10-28T06:37:03Z"
     }
   ]
 }
