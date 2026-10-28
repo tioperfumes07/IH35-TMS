@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T21:52:06Z",
+ "generated": "2026-10-28T21:53:02Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -327,10 +327,10 @@
    "title": "ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events",
    "seat": "CC-3",
    "round": "ENG",
-   "status": "OPEN",
+   "status": "PARTIAL",
    "guard": null,
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: miles_driven_actual on 45/194 active USMCA loads (was 12/198). GPS-dwell cron filling; remainder dominated by manual stop times / far GPS refuse. Engine fill-from-fence still open."
   },
   {
    "id": "ENG-30",
@@ -679,10 +679,10 @@
    "title": "ENG-52 load-costs-board revenue not from loadCostRollupLateral (one source)",
    "seat": "CC-2",
    "round": "443.329",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-load-costs-live-documents.mjs; verify-load-costs-settlement-column-and-invoiced-not-open.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT tip: load-costs-board.routes mounts loadCostRollupLateral (one shared money). verify-load-costs-live-documents PASS 26/26; settlement-column guard PASS. Original gap closed 2026-10-24."
   },
   {
    "id": "ENG-53",
