@@ -1,6 +1,6 @@
 {
- "date": "2026-10-27",
- "generated_at_iso": "2026-10-27T18:27:27.964Z",
+ "date": "2026-10-28",
+ "generated_at_iso": "2026-10-28T00:49:15.394Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,30 @@
  ],
  "merged_prs": [
   {
+   "number": 27918,
+   "title": "FINDING: Codex restore frontend deploy with complete recovery role labels",
+   "mergedAt": "2026-10-27T23:07:39Z",
+   "branch": "codex/fix-coa-recovery-labels-deploy"
+  },
+  {
+   "number": 27917,
+   "title": "FINDING: ACCT-F443323 ENG-16/15 DONE-LIVE — Check Creator commissioned",
+   "mergedAt": "2026-10-27T21:01:07Z",
+   "branch": "cursor/eng-16-measure-close"
+  },
+  {
+   "number": 27916,
+   "title": "FINDING: ACCT-F443323 ENG-12 Fine + I-94 deductions leave 7200 admin-fee path",
+   "mergedAt": "2026-10-27T20:57:30Z",
+   "branch": "cursor/eng-12-deduction-types"
+  },
+  {
+   "number": 27915,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-27T18:28:22Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27914,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-27T12:45:47Z",
@@ -17312,30 +17336,6 @@
    "title": "CC-2-443.265-F un-baseline the 8 guards from 6dab5b2070 and fix each at the root (guard read a retired code shape; no code regressed)",
    "mergedAt": "2026-10-23T10:47:29Z",
    "branch": "cc-2/443-265-f-unbaseline-8"
-  },
-  {
-   "number": 27295,
-   "title": "Cursor-443.250 Fuel Questions V3 — V3KpiTile + V3Panel (chrome only)",
-   "mergedAt": "2026-10-23T10:41:10Z",
-   "branch": "cursor/443250-fuel-questions-v3-c89b"
-  },
-  {
-   "number": 27294,
-   "title": "Claude-3- 443.265-A Book Load V3 layout (Load #, Broker/Direct, NB/TR/SB cards, miles reference, 32px stops)",
-   "mergedAt": "2026-10-23T10:36:32Z",
-   "branch": "claude/cc3-443-265-a-book-load-layout"
-  },
-  {
-   "number": 27293,
-   "title": "Cursor-443.250 Fuel Relay Wallet V3 — V3KpiTile + V3Panel (chrome only)",
-   "mergedAt": "2026-10-23T10:31:01Z",
-   "branch": "cursor/443250-relay-wallet-v3-c89b"
-  },
-  {
-   "number": 27292,
-   "title": "Cursor-443.250 Fuel Relay Unmatched V3 KPI strip + V3Panel (engines untouched)",
-   "mergedAt": "2026-10-23T10:25:52Z",
-   "branch": "cursor/443250-relay-unmatched-v3-c89b"
   }
  ],
  "merged_pr_total": 3000,
