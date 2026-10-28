@@ -38,6 +38,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-void-cascade";
 const ROUTES_FILE = "apps/backend/src/driver-finance/settlements.routes.ts";
 const VOID_SERVICE_FILE = "apps/backend/src/accounting/void.service.ts";
+const REVERSAL_CONTEXT_FILE = "apps/backend/src/accounting/posting-reversal-context.ts";
+const readVoidControls = () => (read(VOID_SERVICE_FILE) ?? "") + "\n" + (read(REVERSAL_CONTEXT_FILE) ?? "");
 // VOID-DOCUMENT-CALLEES (Round 35.3, CC-3, 2026-09-23): the /reverse route now delegates its
 // cascade to reverseSettlementForVoid so CC-1's voidDocument() dispatcher can call the SAME
 // function -- one implementation, not two. The cascade-detail assertions below check the UNION of
@@ -151,7 +153,7 @@ function selftest() {
   const goodRoutes = read(ROUTES_FILE) ?? "";
   const goodCallee = withCascade(read(CALLEE_FILE) ?? "");
   const goodCascade = goodRoutes + "\n" + goodCallee;
-  const goodVoidService = read(VOID_SERVICE_FILE) ?? "";
+  const goodVoidService = readVoidControls();
   const goodRoutesErrs = assertRoutesGuard(goodRoutes, goodCascade);
   const goodVoidErrs = assertBankOrphanGuard(goodVoidService);
   if (goodRoutesErrs.length) {
@@ -199,7 +201,7 @@ if (process.argv.includes("--selftest")) {
 const liveRoutesSrc = read(ROUTES_FILE);
 const liveCalleeSrc = withCascade(read(CALLEE_FILE) ?? "");
 const routesErrs = assertRoutesGuard(liveRoutesSrc, (liveRoutesSrc ?? "") + "\n" + liveCalleeSrc);
-const voidServiceErrs = assertBankOrphanGuard(read(VOID_SERVICE_FILE));
+const voidServiceErrs = assertBankOrphanGuard(readVoidControls());
 const errs = [...routesErrs, ...voidServiceErrs];
 if (errs.length) {
   console.error(`[${LABEL}] FAILED — ${errs.length} issue(s):`);

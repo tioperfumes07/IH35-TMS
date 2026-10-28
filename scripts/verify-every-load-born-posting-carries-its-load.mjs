@@ -129,6 +129,10 @@ export function newestResolverMigration() {
 export const FACTORING_EVENT_TYPES = ["factoring_customer_payment", "factoring_reserve_release", "factoring_chargeback", "factoring_default_interest", "factoring_advance_deposit"];
 const FACTORING_EVENT_TYPES_SQL = FACTORING_EVENT_TYPES.map((t) => `'${t}'`).join(", ");
 export const WRITER = "apps/backend/src/accounting/posting-line-writer.ts";
+// ENG-28: read-only source resolvers stay in the leaf; insertion and fail-closed
+// source/load validation now belong to the full engine. Check both actual homes.
+const readWriterControls = () => readFileSync(join(ROOT, WRITER), "utf8") + "\n" +
+  readFileSync(join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8");
 
 /**
  * RULE 4 (static, 443.110 G8) — the ONE posting writer derives a posting's load from its source document when the
@@ -190,8 +194,8 @@ export function run() {
   const resolver = newestResolverMigration();
   if (!resolver) failures.push("RULE 3: no migration defines accounting.posting_source_load_id — the matcher is stale");
   else failures.push(...resolverFailures(resolver.rel, resolver.sql));
-  failures.push(...writerFailures(readFileSync(join(ROOT, WRITER), "utf8")));
-  failures.push(...partyFailures(readFileSync(join(ROOT, WRITER), "utf8"),
+  failures.push(...writerFailures(readWriterControls()));
+  failures.push(...partyFailures(readWriterControls(),
     writtenSourceTypes(files, readFileSync(join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8"))));
   return { failures, inserts, resolver: resolver?.rel };
 }
@@ -348,7 +352,7 @@ if (isMain) {
       ["a live query error is a FAIL line, not a crash", liveErrorFailures(new Error("more than one row returned by a subquery used as an expression")).some((x) => x.startsWith("RULE 2") && x.includes("more than one row"))],
       // RULE 4 (443.110 G8) — the real writer passes; each planted removal is caught.
       ...(() => {
-        const w = readFileSync(join(ROOT, WRITER), "utf8");
+        const w = readWriterControls();
         return [
           ["RULE 4: the real posting writer passes", writerFailures(w).length === 0],
           ["RULE 4: a factoring event dropped from the writer fails", writerFailures(w.replace('"factoring_chargeback",', "")).some((x) => x.includes("factoring_chargeback"))],
@@ -360,7 +364,7 @@ if (isMain) {
       })(),
       // RULE 5 (443.113 I-02) — the real writer + every written source type pass; each planted regression is caught.
       ...(() => {
-        const w = readFileSync(join(ROOT, WRITER), "utf8");
+        const w = readWriterControls();
         const files = walk(join(ROOT, "apps/backend/src")).map((p) => ({ rel: relative(ROOT, p), src: readFileSync(p, "utf8") }));
         const written = writtenSourceTypes(files, readFileSync(join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8"));
         return [

@@ -14,12 +14,28 @@ vi.mock("../auth/db.js", async (orig) => {
 
 function createMockClient(handler: (sql: string, values?: unknown[]) => { rows: unknown[]; rowCount?: number }) {
   const calls: QueryCall[] = [];
+  const headerDates = new Map<string, unknown>();
+  const originalLines = new Map<string, unknown>();
   return {
     calls,
     client: {
       query: vi.fn(async (sql: string, values?: unknown[]) => {
         calls.push({ sql, values });
-        return handler(sql, values);
+        if (sql.includes("SELECT entry_date::text FROM accounting.journal_entries")) {
+          return { rows: headerDates.has(String(values?.[0])) ? [{ entry_date: headerDates.get(String(values?.[0])) }] : [] };
+        }
+        if (sql.includes("FROM catalogs.accounts WHERE id = ANY")) {
+          return { rows: (values?.[0] as string[]).map(id => ({ id, is_postable: true })) };
+        }
+        if (sql.includes("SELECT account_id::text, debit_or_credit, amount_cents, reversal_of_line_id::text")) {
+          return { rows: originalLines.has(String(values?.[0])) ? [originalLines.get(String(values?.[0]))] : [] };
+        }
+        const result = handler(sql, values);
+        if (sql.includes("SELECT id::text, account_id::text")) for (const row of result.rows) originalLines.set(String((row as { id: string }).id), row);
+        if (sql.includes("INSERT INTO accounting.journal_entries") && result.rows[0]) {
+          headerDates.set(String((result.rows[0] as { id: string }).id), values?.[1]);
+        }
+        return result;
       }),
     },
   };

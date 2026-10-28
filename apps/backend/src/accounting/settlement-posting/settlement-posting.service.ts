@@ -32,7 +32,7 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { hasSignedDeductionAuthorization } from "../../legal/signed-finance-handoff.service.js";
 import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
-import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "../posting-engine.service.js";
 import { postVoidReversal } from "../void.service.js";
 import { applyDeductionToBucket, reverseDeductionFromBucket } from "./bucket-ledger.service.js";
 import { resolveRoleAccountOptional, isCoaRole } from "../coa-roles/resolver.service.js";
@@ -372,11 +372,12 @@ export async function postSettlementToGl(
     const journalEntryId = headerRes.rows[0]?.id;
     if (!journalEntryId) throw new Error("settlement_journal_entry_insert_failed");
 
+    const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
     let lineSequence = 1;
     for (const line of lines) {
       // ROUND 393.2 — the one posting-line writer: the line and its primary spine row (source settlement -> posting)
       // together. A replay of the same (key, line) writes nothing and no second link.
-      const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+      postingLines.push({
         operating_company_id: input.operatingCompanyId,
         journal_entry_uuid: journalEntryId,
         line_sequence: lineSequence,
@@ -390,6 +391,11 @@ export async function postSettlementToGl(
         spine_link: { linked_object_type: "driver_settlement", linked_object_id: input.settlementId },
         relationship_role: line.link_role,
       });
+      lineSequence += 1;
+    }
+    const postingIds = await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
+    for (const [index, line] of lines.entries()) {
+      const postingId = postingIds[index];
       if (postingId) {
         if (line.deduction_id) {
           // deduction line -> its driver_settlement_deductions row
@@ -412,7 +418,6 @@ export async function postSettlementToGl(
           }
         }
       }
-      lineSequence += 1;
     }
 
     // Apply each bucketed deduction against its ledger (decrement remaining) — same transaction.

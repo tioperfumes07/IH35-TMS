@@ -7,7 +7,7 @@ import {
   bankTransactionHiddenFilterSql,
   isBankAccountHideEnabled,
 } from "../../banking/bank-account-visibility.js";
-import { insertPostingLineWithSpine } from "../posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "../posting-engine.service.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
 import { backlinkBankTransactionToBill } from "../payments/bank-bill-backlink.service.js";
@@ -1623,13 +1623,14 @@ async function postDifferenceJournalEntry(
     { account_id: cashAccountId, side: cashSide, description: "Bank reconciliation variance leg", key: `bank-recon-var:${journalEntryId}`, seq: 1 },
     { account_id: input.difference_account_id, side: diffSide, description: "Bank reconciliation offset leg", key: `bank-recon-off:${journalEntryId}`, seq: 2 },
   ] as const;
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   if (input.split?.length) {
     if (input.split.reduce((a, l) => a + l.cents, 0) !== magnitude) throw new Error("card_discount_split_does_not_equal_variance");
     let seq = 0;
     for (const l of input.split) {
       for (const [account_id, side, role] of [[cashAccountId, cashSide, "card payable"], [input.difference_account_id, diffSide, "fuel cost"]] as const) {
         seq += 1;
-        await insertPostingLineWithSpine(client, {
+        postingLines.push({
           operating_company_id: input.operating_company_id, journal_entry_uuid: journalEntryId, line_sequence: seq, account_id,
           debit_or_credit: side, amount_cents: l.cents, description: `${l.label} (${role})`,
           idempotency_key: `bank-recon-card:${journalEntryId}:${l.source_expense_id}:${side}`,
@@ -1639,10 +1640,11 @@ async function postDifferenceJournalEntry(
         });
       }
     }
+    await postValidatedPostingLinesInClientTx(client, postingLines);
     return journalEntryId;
   }
   for (const leg of legs) {
-    await insertPostingLineWithSpine(client, {
+    postingLines.push({
       operating_company_id: input.operating_company_id,
       journal_entry_uuid: journalEntryId,
       line_sequence: leg.seq,
@@ -1659,6 +1661,8 @@ async function postDifferenceJournalEntry(
         : {}),
     });
   }
+
+  await postValidatedPostingLinesInClientTx(client, postingLines);
 
   // CODER-12 audit-spine: write the immutable audit event for the variance posting to
   // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write

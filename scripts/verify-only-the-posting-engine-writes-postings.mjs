@@ -22,6 +22,40 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
+
+const SPECIALIZED_POSTERS = [
+  "accounting/amortization-posting/amortization-posting.service.ts",
+  "accounting/bank-recon/match.service.ts",
+  "accounting/expense-correction.service.ts",
+  "accounting/fuel-posting/poster.service.ts",
+  "accounting/journal-entries.service.ts",
+  "accounting/lease-asc842/lease-posting.service.ts",
+  "accounting/period-close-retained-earnings.service.ts",
+  "accounting/settlement-posting/settlement-posting.service.ts",
+  "accounting/void.service.ts",
+];
+
+function callsValidatedBatch(source) {
+  const tree = ts.createSourceFile("poster.ts", source, ts.ScriptTarget.Latest, true);
+  const bindings = new Set();
+  for (const node of tree.statements) {
+    if (!ts.isImportDeclaration(node) || !ts.isStringLiteral(node.moduleSpecifier) ||
+        !node.moduleSpecifier.text.endsWith("posting-engine.service.js")) continue;
+    const names = node.importClause?.namedBindings;
+    if (names && ts.isNamedImports(names)) for (const item of names.elements) {
+      if ((item.propertyName ?? item.name).text === "postValidatedPostingLinesInClientTx") bindings.add(item.name.text);
+    }
+  }
+  let called = false;
+  const visit = (node) => {
+    if (ts.isAwaitExpression(node) && ts.isCallExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) && bindings.has(node.expression.expression.text)) called = true;
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return called;
+}
 
 // --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one that
 // MUST fail (a bare fixture cwd — a guard that reports green with none of its inputs present is a
@@ -32,6 +66,18 @@ async function selftest_verify_only_the_posting_engine_writes_postings() {
   const { fileURLToPath } = await import("node:url");
   const me = fileURLToPath(import.meta.url);
   const live = runGuard(me);
+  const fixture = {
+    "apps/backend/src/accounting/posting-engine.service.ts": "await client.query(`INSERT INTO accounting.journal_entry_postings (id) VALUES ($1)`, [id]);",
+    ...Object.fromEntries(SPECIALIZED_POSTERS.map(p => [`apps/backend/src/${p}`, 'import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js"; await postValidatedPostingLinesInClientTx(client, lines);'])),
+  };
+  const cases = [];
+  const positive = withTmpFixture(fixture, [], tmp => runGuard(me, { env: { VERIFY_ROOT: tmp } }));
+  cases.push({ name: "complete single-door fixture passes", pass: statusOf(positive) === 0, detail: outputOf(positive).slice(-300) });
+  for (const p of SPECIALIZED_POSTERS) {
+    const key = `apps/backend/src/${p}`;
+    const result = withTmpFixture({ ...fixture, [key]: fixture[key].replace("await postValidatedPostingLinesInClientTx(client, lines);", "// await postValidatedPostingLinesInClientTx(client, lines);") }, [], tmp => runGuard(me, { env: { VERIFY_ROOT: tmp } }));
+    cases.push({ name: `${p} missing executable batch call fails`, pass: statusOf(result) !== 0 && outputOf(result).includes(p) });
+  }
   const planted = withTmpFixture(
     {
       "apps/backend/src/accounting/posting-engine.service.ts": "// the engine\nawait client.query(`INSERT INTO accounting.journal_entry_postings (id) VALUES ($1)`, [id]);",
@@ -41,6 +87,7 @@ async function selftest_verify_only_the_posting_engine_writes_postings() {
     (tmp) => runGuard(me, { env: { VERIFY_ROOT: tmp } }),
   );
   reportSelftest("verify_only_the_posting_engine_writes_postings", [
+    ...cases,
     { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
     { name: "planted unallowlisted writer fails", pass: statusOf(planted) !== 0 && /backdoor\.ts/.test(outputOf(planted)), detail: outputOf(planted).slice(-200) },
   ]);
@@ -56,7 +103,6 @@ const SRC = path.join(ROOT, "apps/backend/src");
 // NOTHING IS ADDED HERE WITHOUT A LEAD RULING FILENAME. Entries leave as the collapse lands.
 const ALLOWED = new Map([
   ["accounting/posting-engine.service.ts", "THE ENGINE. The one sanctioned writer. This entry never leaves."],
-  ["accounting/posting-line-writer.ts", "THE ONE POSTING-LINE WRITER (Lead ruling docs/bus/10-04-2026-LEAD-RULING-ONE-POSTING-LINE-WRITER.md): inserts the line AND its transaction_source_links row together. Every door below collapses into it; this entry never leaves."],
 ]);
 
 const INSERT_RE = /insert\s+into\s+accounting\.journal_entry_postings/i;
@@ -109,18 +155,7 @@ if (unexpected.length) {
 const WRITER_REL = "accounting/posting-line-writer.ts";
 const ENGINE_REL = "accounting/posting-engine.service.ts";
 const IMPORT_RE = /from\s+['"][^'"]*posting-line-writer(?:\.js)?['"]/;
-const IMPORT_BASELINE = new Set([
-  "accounting/amortization-posting/amortization-posting.service.ts",
-  "accounting/bank-recon/match.service.ts",
-  "accounting/expense-correction.service.ts",
-  "accounting/fuel-posting/poster.service.ts",
-  "accounting/journal-entries.service.ts",
-  "accounting/lease-asc842/lease-posting.service.ts",
-  "accounting/period-close-retained-earnings.service.ts",
-  "accounting/settlement-posting/settlement-posting.service.ts",
-  "accounting/void.service.ts",
-  "fuel/dreamline-statement-import.service.ts",
-]);
+const IMPORT_BASELINE = new Set();
 const illegalImporters = [];
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
@@ -145,6 +180,15 @@ if (newIllegal.length) {
 }
 console.log(`  ENG-28: ${illegalImporters.length} baseline importer(s) of ${WRITER_REL} (${IMPORT_BASELINE.size} allowed; shrink-only; ${collapsed.length} collapsed)`);
 
+const missingCalls = SPECIALIZED_POSTERS.filter(p => {
+  const full = path.join(SRC, p);
+  return !fs.existsSync(full) || !callsValidatedBatch(fs.readFileSync(full, "utf8"));
+});
+if (missingCalls.length || !found.includes(ENGINE_REL)) {
+  console.error(`${LABEL}: FAIL — engine insert and every specialized validated batch call required: ${missingCalls.join(", ")}`);
+  process.exit(1);
+}
 
-console.log(`\n${LABEL}: PASS — no new direct writer; no illegal importer of ${WRITER_REL}. ${ALLOWED.size - closed.length} door(s) still to collapse into the engine.`);
+
+console.log(`\n${LABEL}: PASS — one engine writer; no illegal importer of ${WRITER_REL}; all ${SPECIALIZED_POSTERS.length} specialized paths call the validated batch door.`);
 process.exit(0);

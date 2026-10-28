@@ -71,7 +71,10 @@ export function checkVarianceJeBalancedShape(source) {
     } else {
       if (!/amount_cents: magnitude,/.test(loop[1])) failures.push("the leg writer no longer posts the ONE shared magnitude for every leg");
       if (!/debit_or_credit: leg\.side,/.test(loop[1])) failures.push("the leg writer no longer takes each leg's side from the legs array");
-      if (!/insertPostingLineWithSpine\(/.test(loop[1])) failures.push("the legs are no longer written through the one posting-line writer");
+      if (!/postingLines\.push\(\{/.test(loop[1]) ||
+          !/for \(const leg of legs\) \{[\s\S]*?\n  \}\s*await postValidatedPostingLinesInClientTx\(client, postingLines\)/.test(source)) {
+        failures.push("the legs are no longer written together through the validated posting engine");
+      }
     }
   }
   return failures;
@@ -86,12 +89,13 @@ function runSelftest() {
     { account_id: input.difference_account_id, side: diffSide, description: "Bank reconciliation offset leg", key: \`bank-recon-off:\${journalEntryId}\`, seq: 2 },
   ] as const;
   for (const leg of legs) {
-    await insertPostingLineWithSpine(client, {
+    postingLines.push({
       debit_or_credit: leg.side,
       amount_cents: magnitude,
       description: leg.description,
     });
   }
+  await postValidatedPostingLinesInClientTx(client, postingLines);
   `;
   if (checkVarianceJeBalancedShape(good).length !== 0) {
     throw new Error(
@@ -121,6 +125,8 @@ function runSelftest() {
   if (checkVarianceJeBalancedShape(brokenLoop).length === 0) {
     throw new Error("selftest: a per-leg amount in the writer loop must be flagged — it was not");
   }
+  const bypass = good.replace("await postValidatedPostingLinesInClientTx(client, postingLines)", "await rawInsert(client, postingLines)");
+  if (checkVarianceJeBalancedShape(bypass).length === 0) throw new Error("selftest: bypassing batch validation must fail");
   console.log(`[${LABEL}] --selftest OK (correct shape passes; per-leg amount, same-side legs, opposite-side defs and loop-amount mutations all detected)`);
 }
 

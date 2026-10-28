@@ -46,13 +46,20 @@ export function check({ match, engine, unmatch, faro }) {
   const calls = [...code.matchAll(/\b(post[A-Z]\w*|sweep[A-Z]\w*|createJournalEntryOnClient|reverse[A-Z]\w*)\s*\(/g)]
     .filter((m) => !/(async )?function\s*$/.test(code.slice(Math.max(0, m.index - 16), m.index)))
     .map((m) => m[1]);
-  const allowedHelpers = new Set([...MATCH_TIME_POSTERS, "postSourceTransactionInClientTx"]);
+  const allowedHelpers = new Set([...MATCH_TIME_POSTERS, "postSourceTransactionInClientTx", "postValidatedPostingLinesInClientTx"]);
   for (const name of new Set(calls)) if (!allowedHelpers.has(name)) f.push(`${MATCH}: ${name}() — a new posting call in the match path; match writes no journal entry (or add it to MATCH_TIME_POSTERS WITH its unmatch reversal)`);
   const pst = [...code.matchAll(/\bpostSourceTransactionInClientTx\s*\(/g)].length;
   if (pst > 1) f.push(`${MATCH}: postSourceTransactionInClientTx is called ${pst} times — only sweepMatchedReceiptToBank may post a source transaction from the match path`);
   const inserts = [...code.matchAll(/INSERT INTO accounting\.journal_entries\b/g)];
   const diffStart = code.indexOf("async function postDifferenceJournalEntry");
   const diffEnd = code.indexOf("\nasync function", diffStart + 10) > 0 ? code.indexOf("\nasync function", diffStart + 10) : code.indexOf("\nexport async function", diffStart + 10);
+  // ENG-28 moved the existing variance's line inserts into the full engine. This
+  // is not a new match-time poster: only that same variance function may call it.
+  const batchCalls = [...code.matchAll(/\bpostValidatedPostingLinesInClientTx\s*\(/g)];
+  for (const m of batchCalls) if (!(m.index > diffStart && m.index < diffEnd)) {
+    f.push(`${MATCH}: validated posting batch outside postDifferenceJournalEntry`);
+  }
+  if (batchCalls.length > 2) f.push(`${MATCH}: more than the existing split and unsplit variance batch calls`);
   for (const m of inserts) if (!(m.index > diffStart && m.index < diffEnd)) f.push(`${MATCH}: a raw journal entry INSERT outside postDifferenceJournalEntry`);
   // each poster's reversal
   if (!/source_transaction_type = 'customer_payment_deposit'/.test(engine) || !/source_transaction_type = 'factoring_advance_deposit'/.test(engine)) f.push(`${ENGINE}: unmatch no longer reverses the deposit sweep the match created`);
@@ -76,6 +83,7 @@ if (process.argv.includes("--selftest")) {
   if (check(r).length) fails.push(`tree not clean: ${check(r).join("; ")}`);
   const plants = [
     ["a new poster on match", { ...r, match: r.match.replace("const journalEntryId = await postDifferenceJournalEntry(client, {", "await postExpenseAgainOnMatch(client);\n    const journalEntryId = await postDifferenceJournalEntry(client, {") }],
+    ["validated batch outside variance", { ...r, match: r.match + "\nawait postValidatedPostingLinesInClientTx(client, unrelatedLines);" }],
     ["sweep reversal gone", { ...r, engine: r.engine.replace("source_transaction_type = 'customer_payment_deposit'", "source_transaction_type = 'x'") }],
     ["variance reversal gone", { ...r, engine: r.engine.replace("relationship_role = 'bank_reconciliation_variance'", "relationship_role = 'x'") }],
     ["fuel reversal gone", { ...r, unmatch: r.unmatch.replace("row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id || row.prev_factoring_advance_id", "false") }],

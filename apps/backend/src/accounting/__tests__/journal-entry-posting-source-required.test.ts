@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 vi.mock("../journal-entry-type-resolver.js", () => ({
@@ -30,6 +29,15 @@ function fakeClient() {
   const lines: Line[] = [];
   const links: Array<{ type: unknown; id: unknown; role: unknown }> = [];
   const query = vi.fn(async (sql: string, params: unknown[] = []) => {
+    if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+    if (sql.includes("FROM accounting.journal_entries") && sql.includes("FOR UPDATE")) {
+      expect(params).toEqual([JE_ID, COMPANY]);
+      return { rows: [{ entry_date: "2026-09-22" }] };
+    }
+    if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+      expect(params[1]).toBe(COMPANY);
+      return { rows: [{ id: "a-debit", is_postable: true, deactivated_at: null }, { id: "a-credit", is_postable: true, deactivated_at: null }] };
+    }
     if (sql.includes("INSERT INTO accounting.journal_entries")) {
       return { rows: [{ id: JE_ID, operating_company_id: COMPANY, entry_date: "2026-09-22", memo: null, status: "posted", source: params[3], qbo_sync_pending: true, created_at: "" }] };
     }

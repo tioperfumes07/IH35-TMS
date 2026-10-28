@@ -16,7 +16,7 @@ import { ensureOpenPeriod, resolvePostingTemplateId } from "../posting-engine.se
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
-import { insertPostingLineWithSpine } from "../posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "../posting-engine.service.js";
 
 // ACCT-LINK-05: fuel_event is a hardcoded source_transaction_type literal outside the shared
 // PostingSourceType union (fuel posting has its own poster, not the generic posting-engine). Stamp the
@@ -651,11 +651,12 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
     },
   ];
 
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let sequence = 1;
   for (const line of lineValues) {
     // ROUND 393.2 — the one posting-line writer: the line and its spine row (fuel_event, fuel_expense / fuel_offset)
     // together, exactly as this poster wrote them by hand before.
-    const postingId = await insertPostingLineWithSpine(client, {
+    postingLines.push({
       operating_company_id: input.operating_company_id,
       journal_entry_uuid: journalEntryId,
       line_sequence: sequence,
@@ -671,9 +672,11 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       relationship_role: line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset",
       ...(input.load_id ? { load_id: input.load_id } : {}),
     });
-    postingIds.push(postingId);
-
     sequence += 1;
+  }
+  for (const id of await postValidatedPostingLinesInClientTx(client, postingLines)) {
+    if (id === null) throw new Error("fuel_posting_line_insert_failed");
+    postingIds.push(id);
   }
 
   await client.query(
