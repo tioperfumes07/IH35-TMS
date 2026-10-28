@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T21:40:02Z",
+ "generated": "2026-10-28T21:50:51Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -107,10 +107,10 @@
    "title": "ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "CODED",
-   "guard": "verify-every-posting-has-a-spine-link (full composite gate)",
+   "status": "DONE-LIVE",
+   "guard": "verify-every-posting-has-a-spine-link.mjs (composes has-its); steps 12421",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "One money-gate invocation, union of original trigger paths. Distinct underlying live assertions preserved, no guard deleted. Composite selftest 16/16 plus population 6/6; planted child failure exits 1. USMCA read-only live: 8116 postings, zero unlinked, zero stranded, trigger installed; independent review PASS."
+   "evidence": "LIVE 10-28 CT: composite selftest 16/16 + its 6/6; USMCA postings 8121, unlinked 0, stranded none, trigger armed. Duplicate step 12981 retired into 12421. No money rewrite."
   },
   {
    "id": "ENG-07",
@@ -283,10 +283,10 @@
    "title": "ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule)",
    "seat": "CC-3",
    "round": "ENG",
-   "status": "CODED",
-   "guard": "verify-one-fuel-to-load-helper.mjs (money-pr-local-gate) and step 18537",
+   "status": "DONE",
+   "guard": "verify-one-fuel-to-load-helper.mjs (step 18537)",
    "deadline_utc": null,
-   "evidence": "2026-10-26 Codex: import and bank-match already call the canonical resolver. Existing guard now parses executable imports and awaited calls on BOTH surfaces; old guard accepted a removed call. Selftest 18/18 including alias/shadow plants, existing G7 plants 6/6, fuel import unit tests 11/11. No money writer/data change. Live outcome remains UNVERIFIED; static tests are not live fuel attribution proof."
+   "evidence": "LIVE 10-28 CT tip: selftest 18/18 PASS; static OK — import + bank-match await resolveFuelLoadAtTime. Live fuel attribution population UNVERIFIED (static≠live proof)."
   },
   {
    "id": "ENG-26",
@@ -382,21 +382,10 @@
    "title": "ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only",
    "seat": "CC-1",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-guard-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
-  },
-  {
-   "id": "ENG-35",
-   "area": "Engine",
-   "title": "ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds",
-   "seat": "LEAD",
-   "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
-   "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: scripts/.guard-exempt.json has 918 script keys (+_README=919); verify-guard-wired reports active exempt=122, unaccounted=0, fully-wired=6219/6341. \"920\" ≈ file size; shrink-only work remains on the 122 active + stale JSON keys. No mass delete this PR."
   },
   {
    "id": "ENG-36",
@@ -528,7 +517,7 @@
    "status": "DONE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "/tmp/live-results.txt; boxes 443.328/329/330"
+   "evidence": "10-24 sweep DONE (283/56). 10-28: removed stale OPEN duplicate register row (empty evidence). Reds already split ENG-39..53. Re-sweep only if owner orders."
   },
   {
    "id": "ENG-01c",
