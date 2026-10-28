@@ -245,7 +245,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 239 | ENG | Settlements | ENG-01 P-0113/P-0117/P-0119 closed but never posted (posted_at NULL, 0 postings); ledger ratchet 1 -> live 3; blocks #27478. DB refusal: no close without posting | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: closed_unposted=0; P-0113/17/19 posted |
 | 240 | ENG | Driver pay | ENG-02 driver_pay_cents reads the accrued A/P bill, not driver_bills.gross (13574 $1,538.81 vs $957.55) | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 13574 gross=95755; rollup uses gross_amount_cents |
 | 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 62/62 load_id |
-| 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | CODED | writer never credits 2170; guard 18809; dry-run 3/12 propose_reclass ($705.97); residual until Lead applies |
+| 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | PARTIAL | writer never credits 2170; guard 18809; dry-run 3/12 propose_reclass ($705.97); residual until Lead applies |
 | 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
 | 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
 | 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | DONE-LIVE | book refuses city-only; guard 18802; 15 historical remain for sweep |
@@ -275,7 +275,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | OPEN |  |
 | 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | OPEN |  |
 | 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | PARTIAL | 21/87 neg; fuel>rev; guard path fixed |
-| 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | OPEN |  |
+| 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | DONE |  |
 | 273 | ENG | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | ENG | OPEN |  |
 | 274 | ENG | Banking | M1 candidates scoped to the bank line's account | - | 443.155 | MERGED-UNVERIFIED | 722038f896 |
 | 275 | ENG | Banking | M2 invoices + Faro purchases in the match union | - | 443.155 | MERGED-UNVERIFIED | 722038f896 add69bd031 |
