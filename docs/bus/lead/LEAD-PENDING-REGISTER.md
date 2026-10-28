@@ -272,7 +272,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | DONE |  |
 | 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | DONE |  |
 | 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | DONE |  |
-| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | PARTIAL |  |
+| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | PARTIAL | exempt JSON 918→122; 122 remain to wire |
 | 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | DONE |  |
 | 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | PARTIAL | 21/87 neg; fuel>rev; guard path fixed |
 | 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | DONE |  |
