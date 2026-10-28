@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:32:44Z",
+ "generated": "2026-10-28T22:35:12Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -756,10 +756,10 @@
    "title": "ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section \u2192 legal matters by claim, claim.lawsuit_id \u2192 legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities",
    "seat": "CC-1",
    "round": "ENG-60",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "insurance.lawsuit rowcount",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: insurance.lawsuit=0. FE LawsuitsTab still listInsuranceLawsuits. Retirement coding remains."
   },
   {
    "id": "ENG-61",
