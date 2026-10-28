@@ -91,6 +91,23 @@ export async function accrueDriverPayAtDeliveryInClientTx(
   }
   const deliveryDate = due.due_date;
 
+  // ENG-44 — stamp due_date to the delivery date for EVERY open bill on this load, including those
+  // already linked to an open pre-settlement. Accrual below may still skip settled bills (A/P posts
+  // at close), but cash-flow / A/P aging / verify-driver-bill-due-date-matches-delivery need the
+  // due_date flipped from 'projected' the moment delivery evidence exists (13690/13698 residual).
+  await client.query(
+    `UPDATE driver_finance.driver_bills
+        SET due_date = $3::date,
+            due_date_basis = 'delivered',
+            updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+        AND voided_at IS NULL
+        AND status <> 'void'
+        AND (due_date IS DISTINCT FROM $3::date OR due_date_basis IS DISTINCT FROM 'delivered')`,
+    [opco, input.loadId, deliveryDate]
+  );
+
   const bills = (
     await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null; quicksave_pending_fields?: Record<string, unknown> }>(
       `SELECT db.id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.driver_id::text, db.team_driver_id::text,

@@ -67,6 +67,10 @@ export function deliveryPayErrors(src) {
 
   // 3. accrual
   need("accrual", "basis !== \"delivered\"", "pay accrues only on delivery evidence");
+  // ENG-44: stamp due_date to delivery for ALL open bills on the load (incl. open pre-settlement)
+  // before the accrual select — otherwise projected due_dates stay stale (13690/13698).
+  need("accrual", "due_date_basis = 'delivered'", "due_date flips to delivered for every open bill on the load");
+  need("accrual", "due_date IS DISTINCT FROM $3::date OR due_date_basis IS DISTINCT FROM 'delivered'", "stale projected due_dates are rewritten at delivery");
   need("accrual", "\"driver_pay_expense\"", "Dr the driver pay account");
   need("accrual", "billDate: deliveryDate,", "bill dated the delivery");
   need("accrual", "dueDate: deliveryDate,", "due on the delivery");

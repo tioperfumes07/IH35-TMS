@@ -34,17 +34,30 @@ export async function runDriverPayAccrualSweep(operatingCompanyId: string): Prom
 
   const candidates = await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    // ENG-44: also pick up bills still due_date_basis='projected' whose load is already delivered
+    // (load_driver_pay_due → delivered). accrueDriverPayAtDeliveryInClientTx stamps due_date for all
+    // open bills on the load (incl. pre-settlement-linked) then accrues unsettled ones.
     const res = await client.query<{ load_id: string; driver_bill_id: string }>(
       `SELECT db.load_id::text, db.id::text AS driver_bill_id
          FROM driver_finance.driver_bills db
         WHERE db.operating_company_id = $1::uuid
-          AND db.due_date_basis = 'delivered'
-          AND db.accrued_bill_id IS NULL
-          AND db.accrued_team_bill_id IS NULL
           AND db.voided_at IS NULL
           AND db.status <> 'void'
-          AND db.settled_in_settlement_id IS NULL
           AND COALESCE(db.gross_amount_cents, 0) > 0
+          AND db.load_id IS NOT NULL
+          AND (
+            (db.due_date_basis = 'delivered'
+              AND db.accrued_bill_id IS NULL
+              AND db.accrued_team_bill_id IS NULL
+              AND db.settled_in_settlement_id IS NULL)
+            OR (
+              COALESCE(db.due_date_basis, 'projected') = 'projected'
+              AND EXISTS (
+                SELECT 1 FROM driver_finance.load_driver_pay_due(db.load_id) d
+                 WHERE d.basis = 'delivered'
+              )
+            )
+          )
         ORDER BY db.created_at ASC
         LIMIT 50`,
       [operatingCompanyId]
