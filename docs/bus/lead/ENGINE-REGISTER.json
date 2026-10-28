@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T21:53:02Z",
+ "generated": "2026-10-28T22:06:24Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -239,10 +239,10 @@
    "title": "ENG-18 prepare-commit-msg hook (amend vs new commit)",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "CODED",
-   "guard": "verify-money-pr-local-gate --selftest; prepare-commit-kind --selftest",
+   "status": "DONE",
+   "guard": "prepare-commit-kind.mjs; verify-money-pr-local-gate.mjs (ENG-18 real Git)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "Explicit commit-with-evidence intent; unknown raw Git checks both candidate diffs. Nine isolated real-Git behavior cases pass, including root/merge amendments and partial indexes; old-main behavior fails. No production runtime or money change. See 10-26-2026-Codex-ENG18-COMMIT-INTENT.md."
+   "evidence": "LIVE 10-28 CT tip: prepare-commit-kind --selftest 6/6 PASS; money-pr-local-gate SELFTEST PASS (9 real-Git ENG-18 cases). Hook wired."
   },
   {
    "id": "ENG-22",
@@ -316,10 +316,10 @@
    "title": "ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule",
    "seat": "CODEX",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-only-the-posting-engine-writes-postings.mjs",
    "deadline_utc": null,
-   "evidence": "LEAD 10-27 CT: YES — all specialized paths through full posting-engine validation; preserve accounting behavior; test each path; code not money rewrite; guard no insert outside door. See 10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md"
+   "evidence": "LIVE 10-28 CT: PASS — one engine writer; 0 illegal posting-line-writer importers; all 9 specialized paths call validated batch door. Lead YES ruling satisfied. Code≠money."
   },
   {
    "id": "ENG-29",
@@ -558,10 +558,10 @@
    "title": "ENG-41 P-0121 cancelled but still reusable",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-cancelled-settlement-not-reusable.mjs; verify-load-bookended-settlement-reuse-checks-lines.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: cancelled-not-reusable PASS — 0 of 122 load_bookended cancelled-but-reusable; P-0121 cancelled+voided; reuse whitelist status=open only (ACCT-F347)."
   },
   {
    "id": "ENG-42",
@@ -569,10 +569,10 @@
    "title": "ENG-42 89 active duplicate settlement-line groups",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-no-duplicate-settlement-lines.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: verify-no-duplicate-settlement-lines OK — 0 duplicate groups (ceiling=0). Prior 89 claim cleared on tip."
   },
   {
    "id": "ENG-43",
@@ -767,10 +767,10 @@
    "title": "ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting — refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open",
    "seat": "CC-1",
    "round": "ENG-61",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "tg_settlement_close_requires_posting + closeLoadBookendedSettlementForDriver trip_closed_at-only",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "seen 10-24 on 13699/13700 stamp: settlements a41008ca, 6ba08647"
+   "evidence": "LIVE 10-28 CT: closed_unposted=0; named a41008ca/P-0120 + 6ba08647/P-0122 now closed+posted. Code sets trip_closed_at only; GL via postFinalLoadSettlementsGl. Residual trip_closed+open: P-0112, P-0115 (await GL post — listed, not fake-closed)."
   },
   {
    "id": "ENG-62",
