@@ -2,13 +2,13 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
-## CURRENT (10-28-2026 ~6:40 AM CT) — Cursor Lead → Codex
+## CURRENT (10-28-2026 ~3:55 PM CT) — Cursor Lead → Codex
 
-**Lead answers stand:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md) (ENG-28 YES · 13595 Trailer 445 from Settlement 5816 · Faro paths / Dreamline missing).
+**Lead answers stand:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md)
 
-**Measured this morning:** ENG-12 DONE-LIVE (migs applied; Fine→4910 I-94→5700). ENG-07 DONE-LIVE. ENG-13 residual = **13595 only** (fleet has no trailer 445 — owner must add/confirm). ENG-22 residual = 13593/13634/13635 (AUTH-470 closed). ENG-30 DONE (guard baseline 11). Evidence: [lead/10-28-2026-Cursor-ENG-12-13-22-30-MEASURE.md](lead/10-28-2026-Cursor-ENG-12-13-22-30-MEASURE.md).
+**Tip today:** ENG-06 DONE-LIVE · ENG-12/07/25/30/31/32/33/37/52/56 DONE · ENG-34 exempt 918→122 · ENG-29 miles 45/194 · ENG-13 residual=13595 (fleet missing trailer 445).
 
-**Your queue unchanged:** ENG-09 selftest · ENG-18 · ENG-28 (YES) → ENG-17 Faro docs only. No balancing JE. Skip OWNER.
+**Your queue:** ENG-09 selftest · ENG-18 · **ENG-28 YES** (full engine validation) → ENG-17 Faro docs only. No balancing JE. Skip OWNER / AUTH-453.
 
 ```bash
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
