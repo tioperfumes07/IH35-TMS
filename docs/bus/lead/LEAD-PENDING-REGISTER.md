@@ -292,7 +292,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 286 | ENG | Settlements | ENG-41 P-0121 cancelled but still reusable | CC-1 | 443.328 | DONE-LIVE |  |
 | 287 | ENG | Settlements | ENG-42 89 active duplicate settlement-line groups | CC-1 | 443.328 | DONE-LIVE |  |
 | 288 | ENG | Settlements | ENG-43 2 posted with zero load lines; P-0112/0116/0079/0114 $0 header; line ffac5c35 miles/rate NULL; closed-unposted with voided deduction | CC-1 | 443.328 | DONE-LIVE | 10-28: salaried zeros + tip-cleared; load-activity guard mirrors engine |
-| 289 | ENG | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | 443.328 | OPEN |  |
+| 289 | ENG | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | 443.328 | PARTIAL | 10-28: 13697+self-ref+stray tip OK; writer stamps due_date; residual 13690/13698 until sweep |
 | 290 | ENG | Drivers | ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) — one profile per driver | CC-1 | 443.328 | DONE-LIVE | 10-28: cancelled-only dupes; guard PASS 0 active without vendor |
 | 291 | ENG | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document | CC-1 | 443.328 | OPEN |  |
 | 292 | ENG | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS | CC-1 | 443.328 | OPEN |  |

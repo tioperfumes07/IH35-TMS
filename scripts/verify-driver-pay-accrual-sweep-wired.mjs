@@ -40,6 +40,9 @@ function check(readFile) {
       failures.push(`${SERVICE_FILE}: must filter due_date_basis='delivered'`);
     if (!/accrued_bill_id IS NULL/.test(svcSrc))
       failures.push(`${SERVICE_FILE}: must filter accrued_bill_id IS NULL`);
+    // ENG-44: sweep must also pick projected bills whose load is already delivered
+    if (!/load_driver_pay_due/.test(svcSrc) || !/projected/.test(svcSrc))
+      failures.push(`${SERVICE_FILE}: must pick projected bills whose load_driver_pay_due is delivered (ENG-44)`);
   }
 
   const indexSrc = readFile(INDEX);
@@ -58,7 +61,7 @@ if (process.argv.includes("--selftest")) {
   const goodIndex = `import { initializeDriverPayAccrualSweepCron } from "./accounting/driver-pay-accrual-sweep.cron.js";
   initializeDriverPayAccrualSweepCron(app);`;
   const goodCron = `import cron from "node-cron"; cron.schedule("*/15 * * * *", ...); export function initializeDriverPayAccrualSweepCron(app) {}`;
-  const goodSvc = `due_date_basis = 'delivered' accrued_bill_id IS NULL export function runDriverPayAccrualSweep() {}`;
+  const goodSvc = `due_date_basis = 'delivered' accrued_bill_id IS NULL projected load_driver_pay_due export function runDriverPayAccrualSweep() {}`;
 
   const files = {
     [INDEX]: goodIndex,

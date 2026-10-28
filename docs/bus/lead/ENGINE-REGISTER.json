@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T22:16:50Z",
+ "generated": "2026-10-28T22:21:01Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -591,10 +591,10 @@
    "title": "ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "verify-driver-bill-due-date-matches-delivery.mjs; verify-live-load-number-not-self-referential.mjs; verify-settlement-creator-salaried-stray-bill-void.mjs; verify-presettlement-autolink-all-paths.mjs; verify-driver-pay-recognized-at-delivery.mjs; verify-driver-pay-accrual-sweep-wired.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: 13697 due_date=delivered OK; live_load_number self-ref PASS; salaried stray bills PASS 0; autolink 13556/13563 known legacy. Residual: 13690/13698 still projected after actual delivery (on open pre-settlement \u2014 accrual skipped). Writer+sweep now stamp due_date for ALL open bills at delivery / projected\u2192delivered pickup. Clears on next accrual sweep after deploy."
   },
   {
    "id": "ENG-45",
