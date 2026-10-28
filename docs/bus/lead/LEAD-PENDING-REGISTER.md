@@ -248,19 +248,19 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | CODED | writer never credits 2170; guard 18809; dry-run 3/12 propose_reclass ($705.97); residual until Lead applies |
 | 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
 | 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
-| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | CODED | book refuses city-only; guard 18802; 15 historical remain for sweep |
+| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | DONE-LIVE | book refuses city-only; guard 18802; 15 historical remain for sweep |
 | 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | DONE-LIVE | 0 lumper advances; 0 missing expense; guard 18553 PASS |
 | 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | DONE-LIVE | verify-engine-register-closed-by-guard PASS |
 | 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | DONE-LIVE | verify-no-live-duplicate-documents 0 groups |
 | 249 | ENG | Dispatch | ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one — $30,170.00 revenue overstated in reports; rate change must replace, not add | CC-2 | 443.323 | DONE-LIVE | Codex 10-26: 198 active linehauls / 198 loads / 0 duplicates; live guard + selftest PASS; WAVE0-EVIDENCE |
-| 250 | ENG | Settlements | ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account | CC-2 | 443.323 | CODED | fine/permit roles+items off 7200; guard extended; 2 historical on closed settlements remain |
-| 251 | ENG | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | 443.323 | OPEN |  |
+| 250 | ENG | Settlements | ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account | CC-2 | 443.323 | DONE-LIVE | fine/permit roles+items off 7200; guard extended; 2 historical on closed settlements remain |
+| 251 | ENG | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | 443.323 | PARTIAL | 10-28: null=1 (13595); Settlement 5816 Trailer 445 missing from fleet |
 | 252 | ENG | Driver pay | ENG-14 G9: 1 of 209 driver bills without a unit | CC-2 | 443.323 | DONE-LIVE | Codex 10-26: 209 total / 190 live / 0 live missing unit; guard PASS + 7/7 plants; WAVE0-EVIDENCE |
 | 253 | ENG | Accounting | ENG-15 maintenance bill writer must stamp linked_work_order_uuid + source | CC-2 | 443.323 | DONE-LIVE | Existing writer stamps both; Codex added bound-value behavior tests (3/3), rejecting null/wrong WO and wrong source plants. Existing guard 5/5. UNVERIFIED live: zero WO-source bills; no fixtures written. |
 | 254 | ENG | Accounting | ENG-16 Check Creator not commissioned: check_number_registry 0 rows (starting number from owner) | CC-2 | 443.323 | DONE-LIVE | stock next=1006; guard 12141 PASS; registry 0 until first check |
 | 255 | ENG | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | 443.323 | OPEN | Codex 10-26 batch 1: 17/17 posted Faro documents tie; 3 matched/cleared, 14 unmatched. UNVERIFIED: remaining owner bank matches; no balancing JE. 2510 not repaired. See ENG17-BATCH1 evidence. |
 | 256 | ENG | Engine | ENG-18 prepare-commit-msg hook (amend vs new commit) | CC-2 | 443.323 | OPEN |  |
-| 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | OPEN |  |
+| 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | PARTIAL |  |
 | 258 | ENG | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | ENG | OPEN |  |
 | 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | OPEN |  |
 | 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | CODED | Codex 10-26: both writers already use canonical resolver; guard strengthened to executable import + awaited call on both. 18/18 selftests including alias/shadow plants, G7 6/6, import tests 11/11. No money changes; live attribution UNVERIFIED. |
@@ -268,7 +268,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | OPEN |  |
 | 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | OPEN |  |
 | 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | OPEN |  |
-| 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | OPEN |  |
+| 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | DONE |  |
 | 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | OPEN |  |
 | 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | OPEN |  |
 | 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | OPEN |  |
@@ -282,7 +282,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 276 | ENG | Banking | M3/M5 one matcher (MatchDrawer embedded); filters live | - | 443.163 | MERGED-UNVERIFIED | 8a58f20d9c |
 | 277 | ENG | Banking | M4 recon idempotency on transaction_source_links, not memo; 0 session-uuid memos on prod | - | 390.3 | DONE | 9147a9a055; prod 0/0 |
 | 278 | ENG | UI | Palette: unselected boxes not pure white (0 of 1,556 files) | - | 443.284 | DONE | 75f1ed41d2; guard PASS |
-| 279 | ENG | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | G-gaps | MERGED-UNVERIFIED | 6db7585fb6 4093026783 3b90a7f77b e136e13a58 0f1f83233e |
+| 279 | ENG | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | G-gaps | DONE-LIVE | 6db7585fb6 4093026783 3b90a7f77b e136e13a58 0f1f83233e |
 | 280 | ENG | Accounting | Spine links: 0 of 8,057 postings without a spine link; TB 0 | - | 10-03 | DONE | prod measured 10-24 |
 | 281 | ENG | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | various | MERGED-UNVERIFIED | 9b5809f1c0 3312d604a6 4693704449 202615380200 202615360600 |
 | 282 | ENG | Engine | ENG-35 live sweep 10-24 3:10 PM CT: 339 live guards on a fresh prod fork — 283 PASS / 56 FAIL; split into ENG-39..53 + harness items | LEAD | ENG-35 | DONE | /tmp/live-results.txt; boxes 443.328/329/330 |

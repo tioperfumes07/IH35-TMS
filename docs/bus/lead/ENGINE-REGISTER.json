@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-26T12:31:30Z",
- "source": "docs/bus/lead/LEAD-PENDING-REGISTER.md ENG section + Lead live measure 10-26",
+ "generated": "2026-10-28T12:37:29Z",
+ "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
    "id": "LEAD-443.319",
@@ -71,7 +71,7 @@
   {
    "id": "ENG-03",
    "area": "Settlements",
-   "title": "ENG-03 escrow_ledger 58 rows, 0 with load_id \u2014 writer stamps the load; back-fill",
+   "title": "ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill",
    "seat": "CC-1",
    "round": "443.322",
    "status": "DONE-LIVE",
@@ -82,7 +82,7 @@
   {
    "id": "ENG-04",
    "area": "Accounting",
-   "title": "ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings \u2014 tie to open net pay, clear through documents",
+   "title": "ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents",
    "seat": "CC-1",
    "round": "443.322",
    "status": "CODED",
@@ -93,7 +93,7 @@
   {
    "id": "ENG-05",
    "area": "Engine",
-   "title": "ENG-05 swallowed DB errors grew 122 -> 125 \u2014 fix the 3 new, baseline back to 122",
+   "title": "ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122",
    "seat": "CC-1",
    "round": "443.322",
    "status": "DONE-LIVE",
@@ -104,7 +104,7 @@
   {
    "id": "ENG-06",
    "area": "Engine",
-   "title": "ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) \u2014 merge",
+   "title": "ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge",
    "seat": "CC-1",
    "round": "443.322",
    "status": "CODED",
@@ -118,10 +118,10 @@
    "title": "ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop",
    "seat": "CC-1",
    "round": "443.322",
-   "status": "CODED",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "verify-book-stop-street-or-place-required.mjs (step 18802)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "PR #27901: bookLoadInputPrecheck + create refuse city-only; guard 18802; 15 historical city-only since 10-13 remain for geocode sweep"
+   "evidence": "LIVE 10-28 CT: tip has #27901; guard PASS; Book/Edit refuse city-only. 15 historical city-only stops remain for geocode sweep (not this engine)."
   },
   {
    "id": "ENG-08",
@@ -137,7 +137,7 @@
   {
    "id": "ENG-09",
    "area": "Engine",
-   "title": "ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard \u2014 a register row is DONE only with a wired guard + evidence; wired in step 1",
+   "title": "ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1",
    "seat": "CC-1",
    "round": "443.322",
    "status": "DONE-LIVE",
@@ -159,7 +159,7 @@
   {
    "id": "ENG-11",
    "area": "Dispatch",
-   "title": "ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one \u2014 $30,170.00 revenue overstated in reports; rate change must replace, not add",
+   "title": "ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one — $30,170.00 revenue overstated in reports; rate change must replace, not add",
    "seat": "CC-2",
    "round": "443.323",
    "status": "DONE-LIVE",
@@ -173,21 +173,21 @@
    "title": "ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "CODED",
+   "status": "DONE-LIVE",
    "guard": "verify-settlement-deduction-types-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "PR #27916: migrations 202616301200/1201 + Creator refuse; tip migrate PENDING (prod latest 202616290000; items still on 7200 until deploy)"
+   "evidence": "LIVE 10-28 CT: migs 202616301200/1201 applied 2026-10-27 20:59Z; Fine items→4910; I-94→5700; roles fine_recovery/permit_recovery active. Historical closed-settlement rows WORM. #27916."
   },
   {
    "id": "ENG-13",
    "area": "Dispatch",
-   "title": "ENG-13 G1: 129 loads (10-11) with no trailer choice \u2014 back-fill from documents",
+   "title": "ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents",
    "seat": "CC-2",
    "round": "443.323",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts (AUTH-470 CLOSED)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: USMCA active loads trailer_source company=181 customer=12 none=0 null=1. Residual load 13595 only. Settlement 5816 documents Trailer 445 / Truck T148, but mdata.equipment has NO 445 (any entity). Cannot invent fleet row. BLOCKED pending owner add/confirm trailer 445. See 10-27 Lead answers + 10-28 measure."
   },
   {
    "id": "ENG-14",
@@ -225,7 +225,7 @@
   {
    "id": "ENG-17",
    "area": "Accounting",
-   "title": "ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals \u2014 tie document by document (rows 78, 79)",
+   "title": "ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79)",
    "seat": "CC-2",
    "round": "443.323",
    "status": "OPEN",
@@ -247,13 +247,13 @@
   {
    "id": "ENG-22",
    "area": "Dispatch",
-   "title": "ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types \u2014 verify reefer vs dry van",
-   "seat": "CC-3",
+   "title": "ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van",
+   "seat": "Cursor",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "PARTIAL",
+   "guard": "scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT: mix REFRIGERATED_VAN=103 FLATBED=61 DRY_VAN=30. Residual DRY_VAN booked + Reefer assigned: 13593→10219, 13634→10870, 13635→10218. AUTH-470 CLOSED — need owner AUTH to --apply existing ops."
   },
   {
    "id": "ENG-23",
@@ -269,7 +269,7 @@
   {
    "id": "ENG-24",
    "area": "Settlements",
-   "title": "ENG-24 G4/G5/G13: prod checks \u2014 Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links",
+   "title": "ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links",
    "seat": "CC-3",
    "round": "ENG",
    "status": "OPEN",
@@ -291,7 +291,7 @@
   {
    "id": "ENG-26",
    "area": "Accounting",
-   "title": "ENG-26 G8: 991 of 8,057 postings without a load \u2014 factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load",
+   "title": "ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load",
    "seat": "CC-3",
    "round": "ENG",
    "status": "OPEN",
@@ -302,7 +302,7 @@
   {
    "id": "ENG-27",
    "area": "Banking",
-   "title": "ENG-27 G6: 458 bank-categorization postings before 10-17 without a load \u2014 back-fill or explain",
+   "title": "ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain",
    "seat": "CC-3",
    "round": "ENG",
    "status": "OPEN",
@@ -313,18 +313,18 @@
   {
    "id": "ENG-28",
    "area": "Engine",
-   "title": "ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine \u2014 fold in or rule",
+   "title": "ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule",
    "seat": "CODEX",
    "round": "ENG",
    "status": "OPEN",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "LEAD 10-27 CT: YES \u2014 all specialized paths through full posting-engine validation; preserve accounting behavior; test each path; code not money rewrite; guard no insert outside door. See 10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md"
+   "evidence": "LEAD 10-27 CT: YES — all specialized paths through full posting-engine validation; preserve accounting behavior; test each path; code not money rewrite; guard no insert outside door. See 10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md"
   },
   {
    "id": "ENG-29",
    "area": "Settlements",
-   "title": "ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual \u2014 fill from fence events",
+   "title": "ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events",
    "seat": "CC-3",
    "round": "ENG",
    "status": "OPEN",
@@ -338,10 +338,10 @@
    "title": "ENG-30 15 raw <select> left (every selector multi-select law)",
    "seat": "Cursor",
    "round": "ENG",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE",
+   "guard": "verify-every-selector-multi-select.mjs",
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "LIVE 10-28 CT tip: guard PASS — 11 raw <select> = BASELINE 11; all PINNED scalar chrome. Original \"15 left\" stale. Shrink-only law holds."
   },
   {
    "id": "ENG-31",
@@ -379,7 +379,7 @@
   {
    "id": "ENG-34",
    "area": "Engine",
-   "title": "ENG-34 920 guard-exempt entries (CI does not run them) \u2014 wire or delete, shrink-only",
+   "title": "ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only",
    "seat": "CC-1",
    "round": "ENG",
    "status": "OPEN",
@@ -401,7 +401,7 @@
   {
    "id": "ENG-36",
    "area": "Reports",
-   "title": "ENG-36 23 company settlements still negative after ENG-19 \u2014 measure each",
+   "title": "ENG-36 23 company settlements still negative after ENG-19 — measure each",
    "seat": "LEAD",
    "round": "ENG",
    "status": "OPEN",
@@ -423,7 +423,7 @@
   {
    "id": "ENG-38",
    "area": "Accounting",
-   "title": "ENG-38 periods: 24 USMCA periods all open \u2014 lock closed months (owner names the months)",
+   "title": "ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months)",
    "seat": "OWNER",
    "round": "ENG",
    "status": "OPEN",
@@ -522,7 +522,7 @@
   {
    "id": "ENG-35",
    "area": "Engine",
-   "title": "ENG-35 live sweep 10-24 3:10 PM CT: 339 live guards on a fresh prod fork \u2014 283 PASS / 56 FAIL; split into ENG-39..53 + harness items",
+   "title": "ENG-35 live sweep 10-24 3:10 PM CT: 339 live guards on a fresh prod fork — 283 PASS / 56 FAIL; split into ENG-39..53 + harness items",
    "seat": "LEAD",
    "round": "ENG-35",
    "status": "DONE",
@@ -533,7 +533,7 @@
   {
    "id": "ENG-01c",
    "area": "Settlements",
-   "title": "ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row \u2014 writer + back-fill; ENG-01b refusal proven on fork",
+   "title": "ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row — writer + back-fill; ENG-01b refusal proven on fork",
    "seat": "CC-1",
    "round": "443.322",
    "status": "OPEN",
@@ -544,7 +544,7 @@
   {
    "id": "ENG-39",
    "area": "Accounting",
-   "title": "ENG-39 P0 vendor-balance view \u2260 A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) \u2014 what the close owes vs what the view assumes",
+   "title": "ENG-39 P0 vendor-balance view ≠ A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) — what the close owes vs what the view assumes",
    "seat": "CC-1",
    "round": "443.328",
    "status": "OPEN",
@@ -610,7 +610,7 @@
   {
    "id": "ENG-45",
    "area": "Drivers",
-   "title": "ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) \u2014 one profile per driver",
+   "title": "ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) — one profile per driver",
    "seat": "CC-1",
    "round": "443.328",
    "status": "OPEN",
@@ -621,7 +621,7 @@
   {
    "id": "ENG-46",
    "area": "Accounting",
-   "title": "ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000\u00a2 vs baseline 132,500\u00a2; 5796/P-0102 USMCA settlement for a Transportation document",
+   "title": "ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document",
    "seat": "CC-1",
    "round": "443.328",
    "status": "OPEN",
@@ -643,7 +643,7 @@
   {
    "id": "ENG-48",
    "area": "Fuel",
-   "title": "ENG-48 fuel-expense one-to-one (13563-1 JE 0\u00a2 + 14 loads); same-day duplicate fill pairs; traceability shrink fc461eb6; literal account '5000' in statement-card-credit-repair",
+   "title": "ENG-48 fuel-expense one-to-one (13563-1 JE 0¢ + 14 loads); same-day duplicate fill pairs; traceability shrink fc461eb6; literal account '5000' in statement-card-credit-repair",
    "seat": "CC-2",
    "round": "443.329",
    "status": "OPEN",
@@ -709,7 +709,7 @@
   {
    "id": "ENG-54",
    "area": "Fleet",
-   "title": "ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking \u2014 waits for the owner's truck list (16 trucks)",
+   "title": "ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks)",
    "seat": "OWNER",
    "round": "ENG-54",
    "status": "OPEN",
@@ -764,7 +764,7 @@
   {
    "id": "ENG-60",
    "area": "Legal",
-   "title": "ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section \u2192 legal matters by claim, claim.lawsuit_id \u2192 legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities",
+   "title": "ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities",
    "seat": "CC-1",
    "round": "ENG-60",
    "status": "OPEN",
@@ -775,7 +775,7 @@
   {
    "id": "ENG-61",
    "area": "Settlements",
-   "title": "ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting \u2014 refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open",
+   "title": "ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting — refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open",
    "seat": "CC-1",
    "round": "ENG-61",
    "status": "OPEN",
@@ -786,13 +786,13 @@
   {
    "id": "ENG-62",
    "area": "Dispatch",
-   "title": "ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) \u2014 engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 \u2192 0",
+   "title": "ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0",
    "seat": "LEAD",
    "round": "443.335",
    "status": "CODED-QUEUED",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "a74b63e99b; prod applied: 13700 dispatched\u2192delivered_pending_docs, 13699 in_transit\u2192delivered_pending_docs"
+   "evidence": "a74b63e99b; prod applied: 13700 dispatched→delivered_pending_docs, 13699 in_transit→delivered_pending_docs"
   },
   {
    "id": "ENG-63",
