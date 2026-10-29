@@ -1,10 +1,10 @@
 {
-  "healthzSha": "79ed1c2",
-  "generated_at": "2026-10-29T10:25:44.677Z",
+  "healthzSha": "07243eb",
+  "generated_at": "2026-10-29T12:34:20.367Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "79ed1c2",
+    "deployedSha": "07243eb",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "10/29/2026, 05:25 AM CT",
+      "url": "",
+      "sha": "07243eb9f7",
+      "committedAtIso": "2026-10-29T10:25:44Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "10/29/2026, 03:30 AM CT",
       "url": "",
       "sha": "79ed1c2133",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27942",
       "sha": "0bb20f7f60",
       "committedAtIso": "2026-10-28T16:36:07-06:00"
-    },
-    {
-      "number": 27941,
-      "title": "FINDING: ACCT-F443323 ENG-60 PARTIAL — insurance.lawsuit empty; FE cutover remains",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27941",
-      "sha": "8bc9253d27",
-      "committedAtIso": "2026-10-28T16:35:21-06:00"
     }
   ]
 }
