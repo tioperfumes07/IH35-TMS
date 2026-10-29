@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e6023a0",
-  "generated_at": "2026-10-28T22:24:55.428Z",
+  "healthzSha": "331205a",
+  "generated_at": "2026-10-29T00:49:51.244Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e6023a0",
+    "deployedSha": "331205a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,69 @@
   },
   "recentActivity": [
     {
+      "number": 27943,
+      "title": "FINDING: ACCT-F443323 ENG-47 PARTIAL + Codex FINISH-ALL refresh",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27943",
+      "sha": "331205a42c",
+      "committedAtIso": "2026-10-28T16:37:09-06:00"
+    },
+    {
+      "number": 27942,
+      "title": "FINDING: ACCT-F443323 ENG-46 PARTIAL — P-0102 USMCA tip-OK; escrow/ad02cc37 measured",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27942",
+      "sha": "0bb20f7f60",
+      "committedAtIso": "2026-10-28T16:36:07-06:00"
+    },
+    {
+      "number": 27941,
+      "title": "FINDING: ACCT-F443323 ENG-60 PARTIAL — insurance.lawsuit empty; FE cutover remains",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27941",
+      "sha": "8bc9253d27",
+      "committedAtIso": "2026-10-28T16:35:21-06:00"
+    },
+    {
+      "number": 27940,
+      "title": "FINDING: ACCT-F443323 ENG-27 PARTIAL — 290 bank-cat ceiling + Codex FINISH-ALL refresh",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27940",
+      "sha": "800a5aee7a",
+      "committedAtIso": "2026-10-28T16:33:26-06:00"
+    },
+    {
+      "number": 27939,
+      "title": "FINDING: ACCT-F443323 ENG-26 DONE-LIVE — factoring load resolver RULE3 + stamp backfill",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27939",
+      "sha": "c05f656a58",
+      "committedAtIso": "2026-10-28T16:31:53-06:00"
+    },
+    {
+      "number": 27938,
+      "title": "FINDING: ACCT-F443323 ENG-26 PARTIAL — posting_source_load_id factoring deposit resolver",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27938",
+      "sha": "b0fe5341ac",
+      "committedAtIso": "2026-10-28T16:26:54-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 05:24 PM CT",
+      "url": "",
+      "sha": "4f18285560",
+      "committedAtIso": "2026-10-28T22:24:55Z"
+    },
+    {
       "number": 27937,
       "title": "FINDING: ACCT-F443323 ENG-44 PARTIAL — stamp due_date at delivery for pre-settlement bills",
       "state": "merged",
@@ -2148,69 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27935",
       "sha": "9137c3ee1f",
       "committedAtIso": "2026-10-28T16:13:17-06:00"
-    },
-    {
-      "number": 27934,
-      "title": "FINDING: ACCT-F443323 Codex FINISH-ALL + ENG-18/28/41/42/61 close",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27934",
-      "sha": "759896c003",
-      "committedAtIso": "2026-10-28T16:06:33-06:00"
-    },
-    {
-      "number": 27933,
-      "title": "FINDING: Codex ENG-28 single validated posting engine door",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27933",
-      "sha": "4c8029a3ad",
-      "committedAtIso": "2026-10-28T15:59:04-06:00"
-    },
-    {
-      "number": 27932,
-      "title": "FINDING: ACCT-F443323 refresh INBOX-CODEX tip",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27932",
-      "sha": "986e22ac16",
-      "committedAtIso": "2026-10-28T15:53:44-06:00"
-    },
-    {
-      "number": 27931,
-      "title": "FINDING: ACCT-F443323 ENG-52 DONE + ENG-29 miles PARTIAL",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27931",
-      "sha": "5481346834",
-      "committedAtIso": "2026-10-28T15:53:13-06:00"
-    },
-    {
-      "number": 27930,
-      "title": "FINDING: ACCT-F443323 ENG-34 shrink guard-exempt 918→122",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27930",
-      "sha": "98861e411e",
-      "committedAtIso": "2026-10-28T15:52:24-06:00"
-    },
-    {
-      "number": 27929,
-      "title": "FINDING: ACCT-F443323 ENG-06/25/34/35 measure-close",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27929",
-      "sha": "0faa517e6a",
-      "committedAtIso": "2026-10-28T15:51:05-06:00"
-    },
-    {
-      "number": 27928,
-      "title": "FINDING: ACCT-F443323 ENG-37 DONE + ENG-04 dry-run PARTIAL",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 04:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27928",
-      "sha": "6123a548f1",
-      "committedAtIso": "2026-10-28T15:40:14-06:00"
     }
   ]
 }
