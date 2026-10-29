@@ -1,10 +1,10 @@
 {
-  "healthzSha": "07243eb",
-  "generated_at": "2026-10-29T12:34:20.367Z",
+  "healthzSha": "35dc658",
+  "generated_at": "2026-10-29T14:27:37.227Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "07243eb",
+    "deployedSha": "35dc658",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27946,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/29/2026, 07:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27946",
+      "sha": "35dc658c6d",
+      "committedAtIso": "2026-10-29T06:34:51-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/29/2026, 07:34 AM CT",
+      "url": "",
+      "sha": "0707a60a4a",
+      "committedAtIso": "2026-10-29T12:34:20Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "",
       "sha": "86a2f55641",
       "committedAtIso": "2026-10-29T00:49:51Z"
-    },
-    {
-      "number": 27943,
-      "title": "FINDING: ACCT-F443323 ENG-47 PARTIAL + Codex FINISH-ALL refresh",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27943",
-      "sha": "331205a42c",
-      "committedAtIso": "2026-10-28T16:37:09-06:00"
-    },
-    {
-      "number": 27942,
-      "title": "FINDING: ACCT-F443323 ENG-46 PARTIAL — P-0102 USMCA tip-OK; escrow/ad02cc37 measured",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27942",
-      "sha": "0bb20f7f60",
-      "committedAtIso": "2026-10-28T16:36:07-06:00"
     }
   ]
 }
