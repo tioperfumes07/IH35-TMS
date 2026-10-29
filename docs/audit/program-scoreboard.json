@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8cc1537",
-  "generated_at": "2026-10-29T02:30:23.584Z",
+  "healthzSha": "5d22bcf",
+  "generated_at": "2026-10-29T04:27:54.410Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8cc1537",
+    "deployedSha": "5d22bcf",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 09:30 PM CT",
+      "url": "",
+      "sha": "5d22bcfef8",
+      "committedAtIso": "2026-10-29T02:30:23Z"
+    },
+    {
       "number": 27944,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "4f18285560",
       "committedAtIso": "2026-10-28T22:24:55Z"
-    },
-    {
-      "number": 27937,
-      "title": "FINDING: ACCT-F443323 ENG-44 PARTIAL — stamp due_date at delivery for pre-settlement bills",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27937",
-      "sha": "38c26ee20e",
-      "committedAtIso": "2026-10-28T16:21:28-06:00"
     }
   ]
 }
