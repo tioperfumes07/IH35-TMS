@@ -1,10 +1,10 @@
 {
-  "healthzSha": "331205a",
-  "generated_at": "2026-10-29T00:49:51.244Z",
+  "healthzSha": "8cc1537",
+  "generated_at": "2026-10-29T02:30:23.584Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "331205a",
+    "deployedSha": "8cc1537",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27944,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 07:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27944",
+      "sha": "8cc1537026",
+      "committedAtIso": "2026-10-28T18:49:55-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/28/2026, 07:49 PM CT",
+      "url": "",
+      "sha": "86a2f55641",
+      "committedAtIso": "2026-10-29T00:49:51Z"
+    },
+    {
       "number": 27943,
       "title": "FINDING: ACCT-F443323 ENG-47 PARTIAL + Codex FINISH-ALL refresh",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27937",
       "sha": "38c26ee20e",
       "committedAtIso": "2026-10-28T16:21:28-06:00"
-    },
-    {
-      "number": 27936,
-      "title": "FINDING: ACCT-F443323 ENG-43/45 DONE-LIVE — salaried load-activity + vendor guard",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27936",
-      "sha": "e6023a0a2e",
-      "committedAtIso": "2026-10-28T16:17:24-06:00"
-    },
-    {
-      "number": 27935,
-      "title": "FINDING: ACCT-F443323 ENG-01c/24/39/40 DONE-LIVE + Codex FINISH-ALL refresh",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27935",
-      "sha": "9137c3ee1f",
-      "committedAtIso": "2026-10-28T16:13:17-06:00"
     }
   ]
 }
