@@ -67,7 +67,8 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
   }
 
   cron.schedule(
-    "*/5 * * * *",
+   // "*/5 * * * *", // ORIGINAL: Changed to stagger the schedule and avoid 100% CPU spikes
+    "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
     async () => {
       await wrapBackgroundJobTick(
         CRON_NAME,
