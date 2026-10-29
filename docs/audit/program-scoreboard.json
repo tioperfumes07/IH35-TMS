@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4b04bdf",
-  "generated_at": "2026-10-29T08:30:33.153Z",
+  "healthzSha": "79ed1c2",
+  "generated_at": "2026-10-29T10:25:44.677Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "4b04bdf",
+    "deployedSha": "79ed1c2",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/29/2026, 03:30 AM CT",
+      "url": "",
+      "sha": "79ed1c2133",
+      "committedAtIso": "2026-10-29T08:30:33Z"
+    },
+    {
       "number": 27945,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27941",
       "sha": "8bc9253d27",
       "committedAtIso": "2026-10-28T16:35:21-06:00"
-    },
-    {
-      "number": 27940,
-      "title": "FINDING: ACCT-F443323 ENG-27 PARTIAL — 290 bank-cat ceiling + Codex FINISH-ALL refresh",
-      "state": "merged",
-      "mergedAtCt": "10/28/2026, 05:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27940",
-      "sha": "800a5aee7a",
-      "committedAtIso": "2026-10-28T16:33:26-06:00"
     }
   ]
 }
