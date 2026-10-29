@@ -1,6 +1,6 @@
 {
  "date": "2026-10-29",
- "generated_at_iso": "2026-10-29T00:49:21.517Z",
+ "generated_at_iso": "2026-10-29T06:36:37.888Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27944,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-29T00:49:56Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27943,
    "title": "FINDING: ACCT-F443323 ENG-47 PARTIAL + Codex FINISH-ALL refresh",
    "mergedAt": "2026-10-28T22:37:10Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- FACT-F443267-4 Factoring Home board-faithful (443.267)",
    "mergedAt": "2026-10-23T13:54:02Z",
    "branch": "cursor/443267-factoring-home-c89b"
-  },
-  {
-   "number": 27321,
-   "title": "Cursor-443.267 Banking Home board-faithful (BANK-F443267-3)",
-   "mergedAt": "2026-10-23T13:41:34Z",
-   "branch": "cursor/443267-banking-home-c89b"
   }
  ],
  "merged_pr_total": 3000,
