@@ -1,6 +1,6 @@
 {
  "date": "2026-10-30",
- "generated_at_iso": "2026-10-30T00:50:14.014Z",
+ "generated_at_iso": "2026-10-30T06:36:51.648Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27949,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-30T00:50:50Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27948,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-29T18:31:02Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- fix(reports): RPT-F443267-7 — Reports home board-faithful KPI + Accounting financial table",
    "mergedAt": "2026-10-23T14:45:39Z",
    "branch": "cursor/443267-reports-home-c89b"
-  },
-  {
-   "number": 27325,
-   "title": "Cursor- 443.267 Legal home + 443.270-G Insurance FE build unblock",
-   "mergedAt": "2026-10-23T14:27:42Z",
-   "branch": "cursor/443267-legal-home-c89b"
   }
  ],
  "merged_pr_total": 3000,
