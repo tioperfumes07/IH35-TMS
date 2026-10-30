@@ -1,6 +1,6 @@
 {
  "date": "2026-10-30",
- "generated_at_iso": "2026-10-30T06:36:51.648Z",
+ "generated_at_iso": "2026-10-30T12:33:57.345Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27950,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-30T06:37:50Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27949,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-30T00:50:50Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor-443.267 Trial balance viewer board-faithful (KPI + panel + Measured)",
    "mergedAt": "2026-10-23T14:56:56Z",
    "branch": "cursor/443267-tb-viewer-c89b"
-  },
-  {
-   "number": 27327,
-   "title": "Cursor- fix(reports): RPT-F443267-7 — Reports home board-faithful KPI + Accounting financial table",
-   "mergedAt": "2026-10-23T14:45:39Z",
-   "branch": "cursor/443267-reports-home-c89b"
   }
  ],
  "merged_pr_total": 3000,
