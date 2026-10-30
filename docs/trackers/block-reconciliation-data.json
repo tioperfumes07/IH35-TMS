@@ -1,6 +1,6 @@
 {
- "date": "2026-10-29",
- "generated_at_iso": "2026-10-29T18:29:19.832Z",
+ "date": "2026-10-30",
+ "generated_at_iso": "2026-10-30T00:50:14.014Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27948,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-29T18:31:02Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27946,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-29T12:34:52Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- 443.267 Legal home + 443.270-G Insurance FE build unblock",
    "mergedAt": "2026-10-23T14:27:42Z",
    "branch": "cursor/443267-legal-home-c89b"
-  },
-  {
-   "number": 27324,
-   "title": "Claude-3- 443.268-A item 4: Work Orders list 500 fixed (text = uuid) + unblock frontend build",
-   "mergedAt": "2026-10-23T14:11:16Z",
-   "branch": "claude/cc3-443-268-a-work-orders-500"
   }
  ],
  "merged_pr_total": 3000,
