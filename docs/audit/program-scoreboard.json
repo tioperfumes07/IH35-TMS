@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ff9c015",
-  "generated_at": "2026-10-31T14:22:57.208Z",
+  "healthzSha": "7896509",
+  "generated_at": "2026-10-31T16:23:44.140Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ff9c015",
+    "deployedSha": "7896509",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/31/2026, 09:22 AM CT",
+      "url": "",
+      "sha": "789650979a",
+      "committedAtIso": "2026-10-31T14:22:57Z"
+    },
+    {
       "number": 27955,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "781d43561c",
       "committedAtIso": "2026-10-31T00:42:14Z"
-    },
-    {
-      "number": 27953,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "10/30/2026, 07:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27953",
-      "sha": "efce9e2ae0",
-      "committedAtIso": "2026-10-31T00:42:01Z"
     }
   ]
 }
