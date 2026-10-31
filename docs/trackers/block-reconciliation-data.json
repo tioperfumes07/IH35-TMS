@@ -1,6 +1,6 @@
 {
- "date": "2026-10-30",
- "generated_at_iso": "2026-10-30T18:24:55.340Z",
+ "date": "2026-10-31",
+ "generated_at_iso": "2026-10-31T00:41:29.205Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27952,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-30T18:25:36Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27951,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-30T12:34:54Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- 443.267 Cash Flow Home board-faithful (V3 KPIs · Base|Conservative)",
    "mergedAt": "2026-10-23T15:09:44Z",
    "branch": "cursor/443267-cashflow-home-c89b"
-  },
-  {
-   "number": 27329,
-   "title": "LEAD 443.271: fix 6 live 500s (cash-forecast, catalogs/registry, dispatch-overrides, sync/health, undeposited, geofences) + zod 400",
-   "mergedAt": "2026-10-23T15:04:08Z",
-   "branch": "claude/lead-443-271-live-500s"
   }
  ],
  "merged_pr_total": 3000,
