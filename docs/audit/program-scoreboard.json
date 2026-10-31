@@ -1,10 +1,10 @@
 {
-  "healthzSha": "71d4d23",
-  "generated_at": "2026-10-31T00:42:14.652Z",
+  "healthzSha": "781d435",
+  "generated_at": "2026-10-31T02:26:09.181Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "71d4d23",
+    "deployedSha": "781d435",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/30/2026, 07:42 PM CT",
+      "url": "",
+      "sha": "781d43561c",
+      "committedAtIso": "2026-10-31T00:42:14Z"
+    },
+    {
       "number": 27953,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "dcc9382d95",
       "committedAtIso": "2026-10-30T12:34:22Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "10/30/2026, 05:26 AM CT",
-      "url": "",
-      "sha": "dd3fb1524a",
-      "committedAtIso": "2026-10-30T10:26:00Z"
     }
   ]
 }
