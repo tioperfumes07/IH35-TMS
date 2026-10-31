@@ -1,6 +1,6 @@
 {
  "date": "2026-10-31",
- "generated_at_iso": "2026-10-31T12:25:52.441Z",
+ "generated_at_iso": "2026-10-31T18:23:52.977Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27955,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-31T12:26:28Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27954,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-31T06:29:35Z",
@@ -17330,12 +17336,6 @@
    "title": "Claude-1-443.274-A: fix driver pay double-count (,558.12) + backfill 107 accrued_bill_id links",
    "mergedAt": "2026-10-23T15:57:45Z",
    "branch": "cc-1/443274a-driver-pay-dedup"
-  },
-  {
-   "number": 27332,
-   "title": "Cursor- 443.267 Settlements Home board (Week-of · deduction split · Deductions grain)",
-   "mergedAt": "2026-10-23T15:41:22Z",
-   "branch": "cursor/443267-settlements-home-c89b"
   }
  ],
  "merged_pr_total": 3000,
