@@ -1,6 +1,6 @@
 {
  "date": "2026-11-01",
- "generated_at_iso": "2026-11-01T12:26:06.743Z",
+ "generated_at_iso": "2026-11-01T18:23:51.654Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27959,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-01T12:26:55Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27958,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-11-01T06:30:36Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor-443.274-C Settlements-Open: Ready dots, Waiting on, P-number",
    "mergedAt": "2026-10-23T19:50:17Z",
    "branch": "cursor/443274-settlements-open-c89b"
-  },
-  {
-   "number": 27336,
-   "title": "Codex-443.269-C shared responsive navigation, KPI and table repairs",
-   "mergedAt": "2026-10-23T19:35:50Z",
-   "branch": "codex/443269-shared-responsive-layout"
   }
  ],
  "merged_pr_total": 3000,
