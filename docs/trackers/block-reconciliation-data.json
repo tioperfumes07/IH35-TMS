@@ -1,6 +1,6 @@
 {
  "date": "2026-11-01",
- "generated_at_iso": "2026-11-01T06:29:56.308Z",
+ "generated_at_iso": "2026-11-01T12:26:06.743Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27958,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-01T06:30:36Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27957,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-11-01T00:48:55Z",
@@ -17330,12 +17336,6 @@
    "title": "Codex-443.269-C shared responsive navigation, KPI and table repairs",
    "mergedAt": "2026-10-23T19:35:50Z",
    "branch": "codex/443269-shared-responsive-layout"
-  },
-  {
-   "number": 27335,
-   "title": "CC-2- 443.271 main static reds: 8 guards re-anchored + Insurance ISO + Banking/Reports board guards + ratchet (+ Lead 443.272 export parity)",
-   "mergedAt": "2026-10-23T19:34:57Z",
-   "branch": "cc-2/443-271-main-static-reds"
   }
  ],
  "merged_pr_total": 3000,
