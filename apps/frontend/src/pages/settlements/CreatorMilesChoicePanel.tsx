@@ -11,6 +11,7 @@
 import type { MilesField, MilesRecommendations } from "../../api/milesRecommendations";
 import { MILES_FIELDS } from "../../api/milesRecommendations";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { SelectCombobox } from "../../components/Combobox";
 import { formatQuantityTable } from "../../lib/money";
 
 export type CreatorMilesFieldChoice = { source: "document" | "historical" | "google" | "manual"; manual_value?: number | null; reason?: string | null };
@@ -160,8 +161,8 @@ export function CreatorMilesChoicePanel({
               const s = saved?.[f];
               return (
                 <>
-                  <select
-                    className="w-full rounded-sm border border-[#E5E7EB] px-1 py-0.5 text-xs"
+                  <SelectCombobox
+                    className="w-full text-xs"
                     value={c.source}
                     aria-label={`${LABEL[f]} miles source`}
                     data-testid={`sc-load-miles-source-${idx}-${f}`}
@@ -174,7 +175,7 @@ export function CreatorMilesChoicePanel({
                     <option value="historical" disabled={!h}>Historical{h ? ` (${fmt(h.value)})` : ""}</option>
                     <option value="google" disabled={!g}>Google{g ? ` (${fmt(g.value)})` : ""}</option>
                     <option value="manual">Manual</option>
-                  </select>
+                  </SelectCombobox>
                   {c.source === "manual" ? (
                     <div className="mt-1 grid grid-cols-2 gap-1">
                       <input
