@@ -10,7 +10,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { colors } from "../../design/tokens";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../../components/CappedListNotice";
