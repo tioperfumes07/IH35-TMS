@@ -2,6 +2,41 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
+
+| PR / item | guard | selftest | regressions | live re-measure | verdict |
+|---|---|---|---|---|---|
+| #27985 | diff read; precision predicate present | stop-dwell + dwell-isolation: 2 files, 8 tests PASS, exit 0 on current main | merge-specific pending | 326/19/57 prior counts NOT remeasured | UNVERIFIED |
+| Design-system ratchet | exit 0 | not executed | raw_font_sizes 128 <= 129 | not a live computed-style measurement | PASS ratchet only |
+| Accounting / aging | AccountingHubPage.tsx:666–669 has 4 sortable:false columns | n/a | n/a | 4 headers rendered as text; 4 amount cells + total lack currency symbol; screenshot private in Codex task, Accounting 12:48 CT | FAIL |
+| Module inventory | 13 target rows located; 6 explicit auto_check scripts, 7 without auto_check | not executed | n/a | 0 tieouts remeasured | UNVERIFIED |
+| ACCT-R-04 | closure guard exit 0 | exit 0; 2 sub-guards present, env plant executed | n/a | Render configured UUIDs not read | UNVERIFIED runtime |
+| ACCT-TIEOUT-01 | source inspection: accounting-trial-balance.mjs:69 unscoped discriminator; :118–120 TRANSP comparative | not run | n/a | prohibited company read avoided | BLOCKED scope |
+| Accounting / Manual JE | canonical Header form opens | not submitted | n/a | date 11/02/2026, calendar, type combobox, reference, memo, Continue visible | PASS opening only |
+| #27986 / named local checks | automatch threshold, ECON-04 honesty, owner rules, factoring popup, Faro KPI, fuel posting, Relay completion: 7 scans exit 0 | all 7 selftests exit 0 (Faro 10/10, fuel 49/49, Relay 8/8 plants) | merge-specific pending | DB-disabled; owner-rules live advisory NOT run | PASS local only |
+| #27984 / lawsuit retirement | create + update guards exit 0 | create 3/3; update 4/4 plants, exit 0 | merge-specific pending | no production POST/PATCH submitted | PASS local only |
+| Banking / Home | BankingHomeBoard.tsx:60–76 intentionally abbreviates dates and removes currency glyph | n/a | n/a | 3 tables, 31 rows, 14 headers non-sortable and not centered; 5 latest-line dates MM-DD, 5 amounts without currency symbol; private screenshot Banking 12:54 CT | FAIL U30 / date / money display |
+| Banking / Record Transfer | menu opens canonical same-entity drawer | not submitted | n/a | 2 account comboboxes, date calendar, amount, memo, disabled Save while empty; closed without changes | PASS opening only |
+| #27971 | memo parser diff read | expense-memo.test.ts 5/5 exit 0 (correct frontend cwd; initial root invocation found no tests) | pending | no data remeasure | PASS tests only |
+| #27984 | route diff read | lawsuit.routes.test.ts 4/4 exit 0 | pending | no mutation probe | PASS tests only |
+| Bills tabs | vendor/driver tab separation renders | no writes | n/a | 186 vendor total / 190 driver total; 50 visible per tab | PASS visible type separation only |
+| Expenses | 200 ReceiptAttach mounts vs GET limit 60/min | source proof | n/a | receipt cells rate-limited after page load; 4 KPI em dashes; raw UUID memo labels | FAIL; filed Cursor |
+| Reclassify | account tree + batch rows loaded; transaction register stalled | Year select 2026→2025 works | n/a | 25 batch rows; transaction Loading across repeated observations | U19 OPEN; U21 partial PASS |
+| Session | Bills navigation hit API session timeout | retry once restored session | n/a | screenshot private 13:01 CT | FAIL intermittent; not claimed logout |
+| #27991 | trailer/equipment guard inspected | guard 5/5; backend mismatch tests 3/3, exit 0 | historical pending | no booking submitted | PASS local only |
+| Settlements / Closed | 21 data-header sort buttons | settlement sort asc/desc changes first rows | n/a | 89 total, 25 visible, 30 void excluded; reverse drill pending | PASS tested sort only |
+| Dispatch / Home | DispatchLoadCostsPanel.tsx:70–78 reads wizard linehaul and canonical net separately | not run | n/a | 3 rows show positive wizard linehaul but margin equals negative cost plus driver pay; private screenshot 13:05 CT | NEEDS canonical revenue interpretation; not ledger finding |
+| Fuel / Home | FuelHome.tsx:267–289 renders empty table even when dieselQuery.isError | one Refresh reproduced failure | n/a | 4 fill KPIs unavailable; error banner plus No diesel spend simultaneously; private screenshot 13:08 CT | FAIL error-as-empty presentation; request root cause unverified |
+| Factoring / Home | 5 tables render | no submissions | n/a | visible rows 100/25/25/25/16; sort controls present on data headers | PARTIAL; filters, drills and source tieout pending |
+| Vendors | 30 transacting / 604 book; two tables rendered | canonical Create Vendor opened and closed without save | n/a | vendor type, terms and default expense-account pickers visible | PARTIAL; reverse depth pending |
+| Customers | 87 transacting / 1217 book; customer forward drill opens | no changes | n/a | same Profile shows Documents (46) and separate No documents linked; two private screenshots 13:12 CT | FAIL conflicting readers, filed Cursor |
+| BANK-TIEOUT-01 | scoped query read; runtime not executed | selftest exit 0 | n/a | Neon authentication still blocked | UNVERIFIED live |
+| Insurance | Home 3 policies; register 3 rows, human links and dates | status picker opened only | n/a | Coverage Amount displays total_premium_cents; status single-value | FAIL label / U12 |
+| #28004 | backend diff read; unscoped null-next repair under withLuciaBypass | new runDue test checks empty summary, not wiring/order | not run on merge | no affected population query | FAIL cross-company repair scope; Cursor notified |
+
+QA control finding: checkNoRegressions uses origin/main...HEAD. Running it on an already-merged ancestor selects zero changed files, so an empty result cannot independently certify the historical merge. Historical per-PR comparison must cover merge-parent to merge, without changing shared refs/guards or reporting a zero-coverage pass.
+Spec discrepancy for Lead: Round 7 quotes radius 4px / rail #1B2333; linked GLOBAL-TYPE-SIZE-BASELINE and 00-IH35-LAW require radius 2px / rail #14314F (09-04 owner ruling). Both recorded; no arbitrary pass/fail on disputed values. No writes submitted through live UI. ENG17/48/49 reassignment acknowledged.
+
 ## 2026-10-26 — Banking B4
 CODEX | B4 DONE | PR #27889 | merge 3a4f44bdf6b678dd19b1843a9623b4cebb04738a | banking QBO guard PASS + 47/47 plants | modal/overlay/match 24/24 tests; frontend build exit 0. New tests fail old lg/toggle and pass repaired behavior; full-page preserves unsaved input. Fast merge 123 affected guards, zero regressions after fixing commit finding-ID metadata. No live match submitted; deployment pending.
 B2 API health returned aaa271b5cf7d60fd5b2ca0866eef1ea71c69e9d5; B3 web version returned 52c3398. B1 is an ancestor of both. Latest Render deployments continue to advance with other seats; production interactions remain unverified in code-complete mode.
