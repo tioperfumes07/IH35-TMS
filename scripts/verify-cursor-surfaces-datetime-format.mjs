@@ -19,12 +19,18 @@ const FILES = [
   "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
   "apps/frontend/src/components/drivers/DriverCommunicationsTab.tsx",
   "apps/frontend/src/components/driver-profile/DriverProfileFuelVerdictsSection.tsx",
+  "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx",
+  "apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx",
+  "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx",
+  "apps/frontend/src/pages/legal/attorney-review/LegalAttorneyReviewPortalPage.tsx",
+  "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx",
 ];
 
 const DATE_ONLY = [
   "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx",
   "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
   "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
+  "apps/frontend/src/pages/docs/DocsHomePage.tsx",
 ];
 
 const QUANTITY = [

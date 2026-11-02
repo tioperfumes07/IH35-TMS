@@ -11,6 +11,7 @@ import {
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 export function LegalAttorneyReviewPortalPage() {
   const { token = "" } = useParams();
@@ -149,7 +150,7 @@ export function LegalAttorneyReviewPortalPage() {
         subtitle={`${details.display_name_en} · ${details.template_code} v${details.version}`}
       />
       {details.submitted_for_review_at ? (
-        <p className="-mt-2 text-xs text-gray-500">Submitted {new Date(details.submitted_for_review_at).toLocaleString()}</p>
+        <p className="-mt-2 text-xs text-gray-500">Submitted {formatDateTimeUS(details.submitted_for_review_at)}</p>
       ) : null}
 
       <section className="grid gap-4 lg:grid-cols-2">
