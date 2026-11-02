@@ -4,6 +4,7 @@
  */
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { FuelBoardSection } from "../FuelBoardSection";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   sourceAvailable: boolean;
@@ -30,7 +31,7 @@ export function CompliancePanel({
   fleetTotalRecommendations,
   driverPct,
 }: Props) {
-  const sentLabel = sentToDriverAt ? new Date(sentToDriverAt).toLocaleString() : "Not sent";
+  const sentLabel = sentToDriverAt ? formatDateTimeUS(sentToDriverAt) || "Not sent" : "Not sent";
 
   return (
     <div className="space-y-3" data-testid="fuel-compliance-panel">

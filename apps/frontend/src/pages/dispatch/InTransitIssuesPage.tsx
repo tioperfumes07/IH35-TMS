@@ -24,6 +24,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { SelectCombobox } from "../../components/Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -183,7 +184,7 @@ export function InTransitIssuesPage() {
         key: "reported_at",
         label: "Reported",
         sortable: true,
-        render: (issue) => new Date(issue.reported_at).toLocaleString(),
+        render: (issue) => formatDateTimeUS(issue.reported_at) || "—",
       },
       {
         key: "load_number",

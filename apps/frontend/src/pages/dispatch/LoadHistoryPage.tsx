@@ -17,12 +17,11 @@ import {
   type LoadHistoryLinkedDocument,
   type LoadHistoryLink,
 } from "../../api/loads";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime()) || d.getTime() === 0) return "—";
-  return d.toLocaleString();
+  return formatDateTimeUS(iso) || "—";
 }
 
 function kindLabel(kind: LoadHistoryRow["kind"]): string {

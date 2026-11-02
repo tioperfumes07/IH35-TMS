@@ -17,6 +17,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useStagedListFilters } from "../../components/table";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Filters = {
   driverId: string;
@@ -73,7 +74,7 @@ export function AssignmentHistoryPage() {
   type AssignmentHistoryRow = (typeof rows)[number];
 
   const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
-    { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => new Date(row.assigned_at).toLocaleString() },
+    { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => formatDateTimeUS(row.assigned_at) || "—" },
     {
       key: "load_number",
       label: "Load",

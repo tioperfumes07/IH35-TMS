@@ -2,7 +2,7 @@
 import { settlementNumber } from "../../lib/settlementNumber";
 import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -1301,7 +1301,7 @@ export function SettlementStatementWorkflowPage() {
                   {(paymentEventsQuery.data?.events ?? []).map((event) => (
                     <div key={event.id} className="border-t border-gray-100 px-2 py-1 text-xs">
                       <p className="font-semibold text-gray-800">{event.event_type}</p>
-                      <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
+                      <p className="text-gray-500">{formatDateTimeUS(event.created_at) || "—"}</p>
                     </div>
                   ))}
                   {/* LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE — this query had NO error branch, so a failed
