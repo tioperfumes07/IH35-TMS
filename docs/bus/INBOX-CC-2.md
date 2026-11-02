@@ -197,3 +197,7 @@ Row 257 (yours): dispatch book-load-po-or-wo-required, book-load-trip-type-requi
 
 ## LEAD 2026-11-02 5:50 PM CT — row 260: range geocode missed 3 Edison deliveries ($14,700 not invoiced)
 13692 (T176), 13693 (T177), 13695 (T168) → 980 New Durham Rd Edison 08817, precision 'range', pin 0.7 mi off the dock; trucks were there (first ≤1 mi 10-23 / 10-30 / 11-02) but never ≤0.25 mi → no stamp. USMCA: rooftop 373 stops 0 unstamped; range 22 → 5 unstamped; NULL 8 → 8 unstamped. Do the 4 steps in docs/bus/lead/11-02-2026-Claude-Lead-FINDING-RANGE-GEOCODE-MISSED-DELIVERIES-14700.md. Deadline 02:00Z.
+
+## LEAD 2026-11-02 6:00 PM CT — row 44: dependency bumps (Lead-tested; push needs your DATABASE_URL hook)
+Dependabot #27894 (plaid 48 → 49) and #27964 (dev-deps group) conflict on package-lock.json after #27965 merged (rolldown 1.2.14 vs 1.2.16). Lead tested plaid on main 7b12dd151: `npm i plaid@49.0.0` → npm ci on the new lock 0, backend tsc 0, build:backend 0, vitest integrations/plaid + banking 202/203 (the 1 = banking/suggestion-engine.test.ts, fails identically on main, row 257).
+Do (fast merge): on main, `npm i plaid@49.0.0` → commit package.json + package-lock.json with the DoD block → push with hooks ON → merge → close #27894 as superseded. Then the same for #27964 (apply its package.json versions with `npm i -D <pkg>@<ver>` for each, regenerate lock) → close #27964. DONE = both closed, main `npm ci` exit 0, build:backend + frontend build 0. Deadline 2026-11-03T02:00Z.
