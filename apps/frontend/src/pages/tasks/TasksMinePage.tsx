@@ -4,7 +4,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getMe } from "../../api/identity";
@@ -13,22 +14,25 @@ import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } from "./taskDisplay";
 import { formatDateUS } from "../../lib/formatDate";
 import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
-import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
-type StatusFilter = "all" | "open" | "completed";
+const STATUS_FILTER_OPTIONS = statusOptions({
+  open: "Open",
+  completed: "Completed",
+});
 
 // TASK-2: My Tasks — the current user's assigned tasks (was an unbuilt placeholder). Reads the
 // existing /api/v1/tasks/planner endpoint filtered by assigned_to = current user.
 // CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7 — staged Filters Apply triad (chrome.toolbar_filter).
+// U12 — Status is MultiSelectDropdown (0 = all; open / completed multi-filter client-side).
 export function TasksMinePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const meQuery = useQuery({ queryKey: ["identity", "me"], queryFn: ({ signal }) => getMe(signal) });
   const myId = meQuery.data?.user.uuid ?? "";
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const staged = useStagedListFilters({
     applied: { statusFilter },
-    empty: { statusFilter: "all" as StatusFilter },
+    empty: { statusFilter: [] as string[] },
     onApply: (next) => setStatusFilter(next.statusFilter),
   });
 
@@ -46,9 +50,12 @@ export function TasksMinePage() {
   const openTasks = tasks.filter((t) => isOpenTaskStatus(t.status));
   const overdue = openTasks.filter((t) => t.scheduled_date < today);
   const visibleTasks = useMemo(() => {
-    if (statusFilter === "open") return tasks.filter((t) => isOpenTaskStatus(t.status));
-    if (statusFilter === "completed") return tasks.filter((t) => t.status === "completed");
-    return tasks;
+    if (statusFilter.length === 0) return tasks;
+    return tasks.filter((t) => {
+      if (statusFilter.includes("open") && isOpenTaskStatus(t.status)) return true;
+      if (statusFilter.includes("completed") && t.status === "completed") return true;
+      return false;
+    });
   }, [tasks, statusFilter]);
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
@@ -117,7 +124,7 @@ export function TasksMinePage() {
       </div>
 
       <CollapsedListFilters
-        activeFilterCount={statusFilter !== "all" ? 1 : 0}
+        activeFilterCount={statusFilter.length}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -125,18 +132,14 @@ export function TasksMinePage() {
         testIdPrefix="tasks-mine"
         dataAttributes={{ "data-tasks-mine-filter-toolbar": "collapsed" }}
       >
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Status
-          <SelectCombobox
-            value={staged.draft.statusFilter}
-            onChange={(event) => staged.setDraft({ statusFilter: event.target.value as StatusFilter })}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-          >
-            <option value="all">All</option>
-            <option value="open">Open</option>
-            <option value="completed">Completed</option>
-          </SelectCombobox>
-        </label>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUS_FILTER_OPTIONS}
+          selected={staged.draft.statusFilter}
+          onChange={(next) => staged.setDraft({ statusFilter: next })}
+          allLabel="All statuses"
+          data-testid="tasks-mine-status-filter"
+        />
       </CollapsedListFilters>
 
       {query.isError ? (
