@@ -37,3 +37,16 @@ Query (load window = first stop − 1 day … last stop + 1 day, fill date in Am
 - Example: load 13530 (settlement 5780, trip 08-18 → 08-21, T148) carries 8 rows ($2,914.18); the signed settlement lists ONE fill on 13530: 08-19 LOVES inv 99525016 153.16 gal $843.76. Rows dated 08-03 (2) and 08-12 (4) are other trips' fills.
 Writers that set fuel.load_id: fuel/fill-truck-and-load.service.ts, fuel/fuel-load-at-time.ts, fuel/dreamline-statement-import.service.ts, fuel/fuel-transaction-import.ts, driver-finance/settlement-creator.service.ts, integrations/relay-payments/relay-fuel-load-rematch.service.ts.
 Owner: **CC-3** (LANES: settlements and fuel).
+
+## ADDENDUM 2026-11-02 (Lead) — 5846/5847 read; NEW ENG-62 Relay fill expenses not linked to their fuel row
+Signed documents found (owner Mac stage files C5846.txt, C5847.txt): **5846 net +2,696.36**, **5847 net +3,885.83** — both POSITIVE. Measured negative only because guard 18841's expense CTE treats an expense as fuel only when `source_fuel_transaction_id` points at a fuel row on the settlement's loads.
+- 5846 measured expenses $4,576.21 vs signed $435.50; 5847 $4,739.94 vs signed $145.50. The excess is memo `Relay fuel fill <relay_fuel_transactions.id>` expenses with `source_fuel_transaction_id IS NULL` (loads 13661, 13666, 13667, 13673, 13683).
+- USMCA-wide (live, prod read, bypass): Relay fill expenses **249**; unlinked **90 = $38,717.03**, all 90 posted (JE + postings), created 2026-10-11 … 10-29.
+- The memo uuid is `integrations.relay_fuel_transactions.id` (90/90 resolve). Resolution to `fuel.fuel_transactions.relay_fuel_transaction_id` (live rows):
+  - **18** → exactly one fuel row, none already linked to another expense → link is a pure backfill (no money moves).
+  - **48** → NO fuel row: the Relay fill never landed in fuel.fuel_transactions (the fill exists only as an expense) → fuel row must be created by the Relay importer, then linked.
+  - **24** → MORE THAN ONE live fuel row for one Relay fill → duplicate fuel rows (same family as verify-diesel-expense-fuel-dedupe P0) → dedupe first, then link.
+- 0 of the 90 would create a duplicate expense if linked.
+5824 / 5829: signed documents still not found on the owner Mac stage.
+
+Owner: **CC-1** (ENG-48 writer — ON-RECEIPT path must always set `source_fuel_transaction_id`; repair = link 18, import 48, dedupe 24 then link; dry run first, guard: every live `Relay fuel fill` expense has a live fuel row). CC-3 re-measures ENG-36 after the link.

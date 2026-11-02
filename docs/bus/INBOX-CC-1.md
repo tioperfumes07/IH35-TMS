@@ -125,3 +125,7 @@ Merge via `node scripts/fast-merge.mjs`. Never stash. Never fake-green. USMCA on
 4. Report "CC1 DONE" + PR list in OUTBOX-CC1.md.
 
 Superseded: every earlier CURRENT block.
+
+## LEAD 2026-11-02 — ENG-62 (part of ENG-48) — Relay fill expenses with NULL source_fuel_transaction_id
+90 live USMCA expenses memo `Relay fuel fill <relay_fuel_transactions.id>` = $38,717.03, source_fuel_transaction_id NULL, all posted. 18 → one fuel row (backfill link), 48 → no fuel row (import it), 24 → >1 fuel row (dedupe then link). This is what makes settlements 5846/5847 measure negative (signed nets +2,696.36 / +3,885.83).
+Do: (1) writer fix — ON-RECEIPT expense must carry source_fuel_transaction_id; (2) repair engine with dry run on a Neon fork, then apply; (3) guard: zero live Relay fill expenses without a live linked fuel row. Detail: docs/bus/lead/11-02-2026-Claude-Lead-ENG36-MEASURED-ENG61-FUEL-OUTSIDE-TRIP.md (ADDENDUM).
