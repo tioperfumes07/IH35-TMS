@@ -4,6 +4,10 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+14:40 CT Safety Geofence Alerts: 18 active, Central display dates PASS for observed rows; names contain load UUIDs. Forward geofence link lands page 1 of 95 (2354 rows), selected record not visible; source only highlights matching row without paging/detail. Filed Cursor. No acknowledge/activate/create action taken.
+
+14:38 CT: #28066 merged 5fb40776f65869909eee04db864c884ea0c48012, 3 affected guards / 0 regressions. Internal Fines 5 rows and existing detail read, external fines 3 rows and existing detail read; full UUID in internal detail and no thousands separator in external list/detail filed Cursor. Complaint list 2 rows, MM/DD/YYYY and record links; generic Employee label remains. No production writes, payments, disputes or state transitions submitted. Cargo-create reason error also filed before batch 8 merge; no empty claims acceptance.
+
 14:35 CT: Safety orphan-route/drill-through scan PASS + 5/5 planted defects caught. Design-system ratchet exit 0, raw_font_sizes 128 versus baseline 129; no baseline changed, not zero violations. Trailer interchange 0 rows; Create opens required trailer/location/description and disabled empty Save, closed untouched. Cargo Claims 0 rows PLUS reproducible related-load-label API cap error (<=200); filed Cursor with source and private screenshot. No data writes.
 
 14:33 CT: #28064 merged 2f4bfdbacbed5c956b45aad711b7ff6b78b00e3c; 5 affected guards, 0 regressions after preserving both concurrent bus entries. Fast-merge created PR then hit conflict; after sync/checks its create-only retry returned existing-PR 422, so the same authorized squash endpoint completed with exact head SHA. Hooks remained on; no static bypass.
