@@ -26,7 +26,7 @@ import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { rateToPctString } from "../../../lib/factorProfile";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FACTORING_TAB_PATH } from "../../../router/route-manifest";
-import { formatDateUS, formatUsd, formatUsdCents } from "../../../utils/qboFormat";
+import { formatDateUS, formatQuantityTable, formatUsd, formatUsdCents } from "../../../utils/qboFormat";
 
 /** Board card chrome (Factoring.dc.html) — not V3Panel (443.282 panels off). */
 const BOARD_CARD_BORDER = "#DDE1E7";
@@ -401,7 +401,7 @@ export function FactoringHomeBoard({
               ? "—"
               : trueCostPct == null
                 ? "—"
-                : `${trueCostPct.toFixed(2)}%`
+                : `${formatQuantityTable(trueCostPct, 2)}%`
           }
           sub={
             summaryQuery.isError || purchasesQuery.isError

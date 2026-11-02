@@ -23,6 +23,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3 } from "../../../design/v3-tokens";
 import { companyToday } from "../../../lib/businessDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { formatDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -96,7 +97,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     className: "text-right",
     cellClass: "text-right tabular-nums",
     sortValue: (row) => row.share,
-    render: (row) => <span data-quantity="share-pct">{row.share.toFixed(1)}%</span>,
+    render: (row) => <span data-quantity="share-pct">{formatQuantityTable(row.share, 1)}%</span>,
   },
   // Gear column (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
   // the policy's expiration date. Hidden by default, one click to show.

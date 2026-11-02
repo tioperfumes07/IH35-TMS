@@ -44,7 +44,12 @@ function analyze(src) {
   }
   if (!/testId:\s*"setl-tour-col-margin-pct"/.test(setl)) errors.push('SettlementsToursRegister must add a separate "Margin %" column (testId setl-tour-col-margin-pct)');
   if (!/key:\s*"margin_pct"[\s\S]{0,240}?label:\s*"Margin %"/.test(setl)) errors.push('SettlementsToursRegister "Margin %" column must carry key margin_pct + label "Margin %"');
-  if (!/key:\s*"margin_pct"[\s\S]{0,320}?r\.margin_pct\.toFixed\(1\)\}%/.test(setl)) errors.push('SettlementsToursRegister "Margin %" column must render r.margin_pct.toFixed(1)%');
+  if (
+    !/key:\s*"margin_pct"[\s\S]{0,360}?r\.margin_pct\.toFixed\(1\)\}%/.test(setl) &&
+    !/key:\s*"margin_pct"[\s\S]{0,360}?formatQuantityTable\(r\.margin_pct,\s*1\)\}%/.test(setl)
+  ) {
+    errors.push('SettlementsToursRegister "Margin %" column must render margin % via toFixed(1) or formatQuantityTable(..., 1)');
+  }
 
   // 2. Load-Costs register (TOUR_LOAD_COLUMNS, TourLoadRows.tsx) — same split, field load_margin_pct.
   if (/\{fmt\(r\.load_margin_cents\)\}\{r\.load_margin_pct/.test(board)) {
