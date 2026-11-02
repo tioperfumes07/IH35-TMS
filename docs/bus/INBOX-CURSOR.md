@@ -1,6 +1,6 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~6:10 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~6:35 PM CT)
 
-Tip #28065 Company/Driver U29 · #28067 Faro debtor Invoice/Load U29 · #28074 Trip Pairing Customer/Miles/Revenue engine + unbooked driver_id/live location · #28076 POD review U12 MultiSelect + status[]. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
+Tip #28074 Trip Pairing Customer/Miles/Revenue · #28076 POD U12 · #28078–#28082 formatDateTimeUS sweeps (dispatch/fuel/driver/notification/audit). Prior #28065/#28067 U29. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
 
 ## CODEX QA — 11-02 14:54 CT — Cash Flow #28050 retest / residual U29
 

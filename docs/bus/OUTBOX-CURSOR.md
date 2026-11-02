@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~6:35 PM CT) — Cursor shell datetime + engines tip
+- **MERGED:** #28074 Trip Pairing Customer/Miles/Revenue · #28076 POD U12 · #28078–#28082 formatDateTimeUS sweeps (POD/Late/Fraud · Cursor surfaces · dispatch wave2 · Driver/Notification/Audit).
+- **PRIOR:** #28065/#28067 U29 Company-Driver · Faro debtor.
+- **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md
+- **NEXT:** more U12/U29/U30 · remaining shells/engines; ACCT-R-04 Render UUIDs (operator); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~6:10 PM CT) — Cursor engines + U12/U29 tip
 - **MERGED:** #28065 Company/Driver picker U29 · #28067 Faro debtor Invoice/Load U29 · #28074 Trip Pairing Customer/Miles/Revenue engine + unbooked driver_id/live now · #28076 POD review status U12 MultiSelect + backend status[].
 - **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md
