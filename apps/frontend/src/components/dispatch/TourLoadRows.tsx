@@ -17,7 +17,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { mmmDd } from "../../lib/formatDate";
 import { settlementLabel } from "../../lib/settlementNumber";
 import { legPillClass } from "./TourLegsCell";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 const DASH = "—";
 const fmt = (c: number) => formatUsdCents(c);
@@ -117,8 +117,8 @@ export function TOUR_LOAD_COLUMNS(state: "open" | "closed"): ParityColumn<TourLo
     { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, cellClass: MONEY, minWidth: 100, maxWidth: 140, sortValue: r => r.load_driver_pay_cents, render: r => fmt(r.load_driver_pay_cents) },
     { key: "tour_margin", label: "Margin", testId: "tour-col-margin", sortable: true, cellClass: MONEY, minWidth: 100, maxWidth: 140, sortValue: r => r.load_margin_cents, render: r => <span className={neg(r.load_margin_cents)}>{fmt(r.load_margin_cents)}</span> },
     { key: "tour_margin_pct", label: "Margin %", testId: "tour-col-margin-pct", sortable: true, cellClass: MONEY, minWidth: 76, maxWidth: 100, sortValue: r => r.load_margin_pct ?? -Infinity, render: r => r.load_margin_pct == null ? DASH : <span className={neg(r.load_margin_pct)}>{r.load_margin_pct.toFixed(1)}%</span> },
-    { key: "miles_practical", label: "Practical miles", testId: "tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.load_miles_practical ?? -Infinity, render: r => r.load_miles_practical == null ? DASH : r.load_miles_practical.toLocaleString("en-US") },
-    { key: "miles_real", label: "Real miles", testId: "tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.load_miles_real ?? -Infinity, render: r => r.load_miles_real == null ? DASH : r.load_miles_real.toLocaleString("en-US") },
+    { key: "miles_practical", label: "Practical miles", testId: "tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.load_miles_practical ?? -Infinity, render: r => r.load_miles_practical == null ? DASH : formatQuantityTable(r.load_miles_practical) },
+    { key: "miles_real", label: "Real miles", testId: "tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.load_miles_real ?? -Infinity, render: r => r.load_miles_real == null ? DASH : formatQuantityTable(r.load_miles_real) },
     ...(state === "open" ? [
       { key: "ready_ok", label: "Checks passed", testId: "tour-col-checks-passed", sortable: true, sortValue: (r: TourLoadRow) => r.ready_ok, render: (r: TourLoadRow) => r.ready_ok } as ParityColumn<TourLoadRow>,
       { key: "ready_total", label: "Checks required", testId: "tour-col-checks-required", sortable: true, sortValue: (r: TourLoadRow) => r.ready_total, render: (r: TourLoadRow) => r.ready_total } as ParityColumn<TourLoadRow>,
