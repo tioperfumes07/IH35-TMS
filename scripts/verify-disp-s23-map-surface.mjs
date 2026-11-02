@@ -23,7 +23,10 @@ function assertLive(over = {}) {
   if (!/operating_company_id=\$\{companyId\}/.test(page) && !/operating_company_id=\$\{/.test(page)) {
     problems.push("fetch missing operating_company_id");
   }
-  if (!/data-testid="dispatch-map-need-company"/.test(page)) problems.push("missing need-company");
+  if (!/data-testid="dispatch-map-need-company"|testId="dispatch-map-need-company"/.test(page)) problems.push("missing need-company");
+  if (!/<BoardSection\b/.test(page) || !/testId="dispatch-map-need-company"/.test(page)) {
+    problems.push("need-company empty must be BoardSection");
+  }
   if (!/data-testid="dispatch-map-positions-honest-empty"/.test(page)) {
     problems.push("missing positions honest empty");
   }

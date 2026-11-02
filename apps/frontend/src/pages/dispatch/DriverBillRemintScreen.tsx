@@ -8,6 +8,7 @@ import {
 } from "../../api/loads";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
@@ -149,6 +150,9 @@ export function DriverBillRemintScreen() {
     return (
       <div className="space-y-3">
         <PageHeader title="Driver Bill Remint" subtitle="Select a company first" />
+        <BoardSection title="Driver bill remint" testId="driver-bill-remint-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }
