@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~10:20 PM CT) — Cursor Cash Flow pct format
+- **PRIOR:** #28130 Fuel KPI house formatters · #28128/#28127 quantity waves.
+- **THIS WAVE:** CashFlowHome matrix % + ActualVsProjected formatPct → formatQuantityTable.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~10:05 PM CT) — Cursor Fuel KPI house formatters
 - **PRIOR:** #28128 margin selftest · #28127 quantity/pct · #28123 Settlements KPI.
 - **THIS WAVE:** FuelKpiRow → formatUsd/formatUsdRateTable; Compliance/FactorAdmin/BatchWizard/CargoSensor → formatQuantityTable; fuel-kpi-money-format accepts house money.
