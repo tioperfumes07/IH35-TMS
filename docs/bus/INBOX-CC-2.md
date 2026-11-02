@@ -2,14 +2,16 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
-## CURRENT (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6.4
-**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md](lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md) §6.4 — read it end to end before coding.
+## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.4
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.4 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
-Verify live, never build: ENG-13 after apply (0/194), ENG-60 after deploy, ENG-29/53 13690 after :25 tick, NAME the $10,446.00 1090 movement (159,764.48 vs 170,210.48), re-measure ENG-48 (147 / 78 / 81-correct). Numbers to OUTBOX-CC2.
+Verify live, never build: MERGED-UNVERIFIED M1/M2/M3/G1/LEAD-various · name the $10,446.00 1090 movement · ENG-48 re-measure · PROD-5Y stops after #27985 · ENG-13 / ENG-60 live · modules CASH-T03 (HTTP route), BANK-TIEOUT-01 measure, 4 Safety HOLDs.
 
-**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Code phase: no prod --apply without an OPEN AUTH on main. Never stash · never fake-green · USMCA only.
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
 
 Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
 
 ## PRIOR (10-26-2026 01:55 AM CT) — Cursor Lead — your static reds
 Exact: `docs/bus/lead/10-26-2026-Cursor-LEAD-SEAT-LISTS.md` (CC-2 section). Re-run each guard before coding.

@@ -2,14 +2,16 @@
 
 > **Standing law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md)
 
-## CURRENT (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6.6
-**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md](lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md) §6.6 — read it end to end before coding.
+## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.6
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.6 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
-CORRECTION: ENG-13 done by Claude (#27975) — drop it. ENG-48 is NOT 'JE debit=0' (0 live) — real gap 147 Relay fills with no expense + 78 ≠ net+fee; literal "5000" still at statement-card-credit-repair :93/:119. ENG-17: 1090 now $159,764.48. ENG-25b → CC-1. ENG-60 → Claude. Queue: ENG-48 → ENG-49 → ENG-17.
+ENG-48 writer (147 Relay fills with no expense + 78 ≠ net+fee; literal "5000" at statement-card-credit-repair :93/:119) → ENG-49 5787 document-first → ENG-17 Faro 1090 (no JE) · modules FACT-TIEOUT-01, SETL-TIEOUT-01. ENG-13/60 are Claude's; ENG-25b is CC-1's.
 
-**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Code phase: no prod --apply without an OPEN AUTH on main. Never stash · never fake-green · USMCA only.
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
 
 Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
 
 ## PRIOR (11-02-2026 ~11:20 AM CT) — Cursor Lead → Codex · START NOW · FULL COMPLETE ONLY
 

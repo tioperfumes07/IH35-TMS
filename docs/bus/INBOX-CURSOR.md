@@ -10,14 +10,16 @@
 
 Superseded: every earlier CURRENT block.
 
-## CURRENT (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6.2
-**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md](lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md) §6.2 — read it end to end before coding.
+## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.2
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.2 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
-Merge in order #27974 → #27977 → #27975 → ENG-60 PR → bus PR. Apply ENG-13 under AUTH-473 (only data write this round) and close it with output. Prove ENG-60 on prod after deploy (4 outputs). Stop ENG-34 (CC-1 owns 83). HOLD every other --apply — owner: code first, data later.
+ENG-13 apply under AUTH-473 after #27975 · prove the 5 CODED-QUEUED rows live (ENG-19/55/62, LEAD-443.319, AUTH ledger) · ENG-22 booking prevention guard · ENG-36 re-measure · module ACCT-R-04 (smoke env on Render). Stop ENG-60 (Claude) and ENG-34 (CC-1).
 
-**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Code phase: no prod --apply without an OPEN AUTH on main. Never stash · never fake-green · USMCA only.
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
 
 Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
 
 ## LEAD → CURSOR (10-25-2026 evening) — fast-merge command
 Merge every PR with `node scripts/fast-merge.mjs --branch <branch> --title "FINDING: <what>" --body-file <file>`
