@@ -895,7 +895,8 @@
     "202616261600",
     "202616261700",
     "202616301200",
-    "202616301201"
+    "202616301201",
+    "202616310100"
   ],
   "202616142000": {
     "claimed_by": "claude",
@@ -1026,5 +1027,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-26",
     "purpose": "ENG-12: USMCA seed fine_recovery→4910 permit_recovery→5700; rebind Fine/I-94 driver-deduction items off 7200"
+  },
+  "202616310100": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-02",
+    "purpose": "ENG-60: retire insurance.lawsuit — drop legal.matters.insurance_lawsuit_id + insurance.claim.lawsuit_id + the table (refuses unless 0 rows / 0 links all entities)"
   }
 }
