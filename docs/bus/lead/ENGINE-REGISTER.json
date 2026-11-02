@@ -759,7 +759,7 @@
    "status": "PARTIAL",
    "guard": "insurance.lawsuit rowcount",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: insurance.lawsuit=0. FE cutover DONE. Mutate routes still write side table — next 410 retire + guard retarget; table drop AUTH-gated (see AUTH-SEATS-OPEN)."
+   "evidence": "LIVE 11-02 CT: insurance.lawsuit=0. FE cutover DONE. Backend POST/PATCH → 410 Gone (legal.matters). GET list kept until AUTH table drop. Remaining: drop insurance.lawsuit (owner OPEN AUTH)."
   },
   {
    "id": "ENG-61",
