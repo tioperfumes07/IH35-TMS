@@ -643,7 +643,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       ...sources,
       "docs/specs/scoreboard/modules/insurance.required.json": sources[
         "docs/specs/scoreboard/modules/insurance.required.json"
-      ].replaceAll('"/insurance/lawsuits"', '"/insurance"'),
+      ].replaceAll('"/legal/lawsuits"', '"/insurance"'),
     }),
     () => ({
       ...sources,

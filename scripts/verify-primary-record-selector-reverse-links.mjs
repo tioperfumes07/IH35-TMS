@@ -82,7 +82,7 @@ function check(sources) {
     ["dispatchMatrix", "planning.loads", ["load", "connectivity", "reverse_link"], "/dispatch/planners/loads"],
     ["dispatchMatrix", "planning.timeline", ["load", "connectivity", "reverse_link"], "/dispatch/planners/timeline"],
     ["insuranceMatrix", "claims.list", ["connectivity", "reverse_link"], "/insurance/claims"],
-    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/insurance/lawsuits"],
+    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/legal/lawsuits"],
     ["maintenanceMatrix", "home.rm_status_board", ["work_order", "connectivity", "reverse_link"], "/maintenance?tab=rm_status_board"],
     ["maintenanceMatrix", "home.recent_activity", ["work_order", "connectivity", "reverse_link"], "/maintenance"],
   ];
