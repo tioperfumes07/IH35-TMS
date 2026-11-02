@@ -524,7 +524,7 @@ function exportRowsCsv(rows: RollingLedgerRow[]): void {
       r.counterparty,
       r.origin_date,
       r.due_date,
-      r.amount_known === false ? "UNKNOWN — awaiting short miles" : (r.amount_cents / 100).toFixed(2),
+      r.amount_known === false ? "UNKNOWN — awaiting short miles" : formatUsdCents(r.amount_cents),
       String(r.days_overdue),
       r.status,
       r.reason_label ?? "",

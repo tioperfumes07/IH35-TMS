@@ -18,6 +18,7 @@ const P = {
   idx: "apps/backend/src/index.ts",
   cat: "apps/backend/src/system/engine-status.catalog.ts",
   man: "apps/frontend/src/routes/manifest.tsx",
+  page: "apps/frontend/src/pages/fleet/RosterIntegrityPage.tsx",
 };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
@@ -34,6 +35,10 @@ export function check(src) {
   if (!/registerRosterIntegrityRoutes\(app\)/.test(src.idx) || !/initializeRosterIntegrityCron\(app\)/.test(src.idx)) p.push(`${P.idx}: roster routes or cron not wired.`);
   if (!/id: "E-17",[\s\S]{0,700}relation: "fleet\.roster_findings"[\s\S]{0,200}kind: "engine"/.test(src.cat)) p.push(`${P.cat}: E-17 engine-board probe on fleet.roster_findings missing.`);
   if (!/path="\/fleet\/roster-integrity"/.test(src.man)) p.push(`${P.man}: /fleet/roster-integrity route missing.`);
+  // fill-not-shell — BoardSection + U18 back to Fleet home
+  if (!/import \{ BoardSection \} from ["'].*BoardSection["']/.test(src.page)) p.push(`${P.page}: must import BoardSection`);
+  if (!/testId="roster-integrity-board"/.test(src.page)) p.push(`${P.page}: findings BoardSection testId=roster-integrity-board required`);
+  if (!/backHref="\/fleet"/.test(src.page)) p.push(`${P.page}: PageHeader backHref must be /fleet (U18 module home)`);
   return p;
 }
 const real = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, read(v)]));
@@ -45,7 +50,8 @@ if (process.argv.includes("--selftest")) {
   ex("engine deletes", { ...real, svc: real.svc + "\n// DELETE FROM fleet.roster_findings WHERE true" }, true);
   ex("rule drift", { ...real, svc: real.svc.replace("  IRP_EXPIRED:", "  IRP_LAPSED:") }, true);
   ex("probe unwired", { ...real, cat: real.cat.replace('relation: "fleet.roster_findings"', 'relation: "x.y"') }, true);
-  console.log(ok ? `${LABEL} --selftest PASS (5/5)` : `${LABEL} --selftest FAIL`);
+  ex("board stripped", { ...real, page: real.page.replace(/import \{ BoardSection \} from ["'][^"']+["'];\n?/, "").replace(/testId="roster-integrity-board"/g, 'testId="x"').replace(/backHref="\/fleet"/g, "") }, true);
+  console.log(ok ? `${LABEL} --selftest PASS (6/6)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = check(real);

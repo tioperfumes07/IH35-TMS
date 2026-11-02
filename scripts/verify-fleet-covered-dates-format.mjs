@@ -26,6 +26,16 @@ function collect(fleetSrc, homeSrc) {
   if (/render:\s*\(row\)\s*=>\s*row\.covered_since\s*\?\?\s*["']—["']/.test(fleetSrc)) {
     fails.push(`${FLEET_COVERED}: Covered Since must not render raw covered_since`);
   }
+  // fill-not-shell — BoardSection + module-home back (U18), not a bare custom header shell
+  if (!/import \{ BoardSection \} from ["'].*BoardSection["']/.test(fleetSrc)) {
+    fails.push(`${FLEET_COVERED}: must import BoardSection`);
+  }
+  if (!/testId="fleet-covered-board"/.test(fleetSrc)) {
+    fails.push(`${FLEET_COVERED}: covered units BoardSection testId=fleet-covered-board required`);
+  }
+  if (!/backHref="\/insurance"/.test(fleetSrc)) {
+    fails.push(`${FLEET_COVERED}: PageHeader backHref must be /insurance (U18 module home)`);
+  }
 
   if (!/import \{ humanizeEnumLabel \} from ["'].*humanizeEnumLabel["']/.test(homeSrc)) {
     fails.push(`${FLEET_HOME}: must import humanizeEnumLabel`);
@@ -55,7 +65,10 @@ if (process.argv.includes("--selftest")) {
     .replace(/import \{ formatDateUS \} from ["'][^"']+["'];\n?/, "")
     .replace(/const expiry = formatDateUS\(coverage\.expiry_date\) \|\| "—";\n\s*/g, "")
     .replace(/\{coverage\.policy_number\} · \{expiry\}/g, "{coverage.policy_number} · {coverage.expiry_date}")
-    .replace(/formatDateUS\(row\.covered_since\) \|\| "—"/g, 'row.covered_since ?? "—"');
+    .replace(/formatDateUS\(row\.covered_since\) \|\| "—"/g, 'row.covered_since ?? "—"')
+    .replace(/import \{ BoardSection \} from ["'][^"']+["'];\n?/, "")
+    .replace(/testId="fleet-covered-board"/g, 'testId="fleet-covered-shell"')
+    .replace(/backHref="\/insurance"/g, 'backHref="/insurance/fleet-covered"');
   const plantHome = home
     .replace(/import \{ humanizeEnumLabel \} from ["'][^"']+["'];\n?/, "")
     .replace(/humanizeEnumLabel\(u\.status\) \|\| "—"/g, 'u.status ?? "—"')
@@ -64,8 +77,8 @@ if (process.argv.includes("--selftest")) {
       "Registration, inspection, and insurance expiry are not on unit or trailer records yet (FLT-F428). that needs its own migration and round.",
     );
   const planted = collect(plantFleet, plantHome);
-  if (planted.length < 5) {
-    console.error(`${LABEL} --selftest FAIL: plant should trip ≥5 checks, got ${planted.length}`, planted);
+  if (planted.length < 8) {
+    console.error(`${LABEL} --selftest FAIL: plant should trip ≥8 checks, got ${planted.length}`, planted);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

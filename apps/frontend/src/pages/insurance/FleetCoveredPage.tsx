@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFleetCoveredUnit } from "../../api/insurance";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -67,31 +69,57 @@ export function FleetCoveredPage() {
     { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => formatDateUS(row.covered_since) || "—" },
   ], []);
 
-  if (!companyId) return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view covered fleet.</div>;
-  if (query.isError) return <ListErrorState status={0} message="Failed to load covered fleet." onRetry={() => void query.refetch()} />;
-
-  return <div className="space-y-4">
-    <header className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-xs font-semibold text-[#0F1219]">Fleet Covered</h2>
-      <p className="mt-1 text-xs text-[#4B5563]">One row per active tractor or trailer, with current policy and allocated monthly economics.</p>
-      <p className="mt-2 text-xs font-medium text-[#1F2A44]">Premium allocation: {allocationMethods.length ? allocationMethods.map(label).join(", ") : "—"}</p>
-    </header>
-    {/* DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw 2-row footer. Row 1
-        (Totals) migrates 1:1 -- one cell per column, keyed, follows reorder/hide automatically.
-        Row 2 (the Policy 437539 TIV reconciliation line) was a second, unrelated <tr> the old
-        raw-footer prop happened to allow bolting on; footerCells is one row by design (DSP-TBL's
-        own spec: "footer rendered from the same ordered visible column list as the header"), so
-        that comparison line moves to its own paragraph right below the table -- same information,
-        same order on the page, no longer inside ParityTable's own footer machinery. */}
-    <ParityTable rows={rows} columns={columns} rowKey={(row) => row.asset_id} loading={query.isPending} storageKey="insurance-fleet-covered" emptyText="No active fleet assets." enableColumnResize enableColumnReorder exportFilename="insurance-fleet-covered.csv" footerCells={{
-      unit_number: <span className={coveredRows.length === 34 ? "text-[#0F1219]" : "text-red-700"}>Totals · {coveredRows.length} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
-      insured_value_cents: <span>{formatMoney(totals.tiv)}</span>,
-      premium_per_month_cents: <span>{formatMoney(totals.premium)}</span>,
-    }} />
-    <p className="text-xs text-[#1F2A44]" data-testid="fleet-covered-policy-tiv-diff">
-      Policy 437539 TIV {formatMoney(POLICY_437539_TIV_CENTS)} · Difference{" "}
-      <span className={`font-semibold ${tivDifference === 0 ? "text-[#1F2A44]" : "text-red-700"}`}>{formatMoney(tivDifference)}</span>
-    </p>
-    <p className="text-xs text-[#6B7280]">Deductible is shown as — because the current policy schema does not store a deductible; no value is inferred.</p>
-  </div>;
+  return (
+    <div className="space-y-3" data-testid="fleet-covered-page">
+      <PageHeader
+        backHref="/insurance"
+        breadcrumb={["Insurance", "Fleet Covered"]}
+        title="Fleet Covered"
+        subtitle="One row per active tractor or trailer, with current policy and allocated monthly economics."
+      />
+      {!companyId ? (
+        <BoardSection title="Fleet Covered" testId="fleet-covered-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view covered fleet.</p>
+        </BoardSection>
+      ) : query.isError ? (
+        <ListErrorState status={0} message="Failed to load covered fleet." onRetry={() => void query.refetch()} />
+      ) : (
+        <BoardSection
+          title="Covered units"
+          subtitle={`Premium allocation: ${allocationMethods.length ? allocationMethods.map(label).join(", ") : "—"}`}
+          testId="fleet-covered-board"
+        >
+          {/* DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw 2-row footer. Row 1
+              (Totals) migrates 1:1 -- one cell per column, keyed, follows reorder/hide automatically.
+              Row 2 (the Policy 437539 TIV reconciliation line) was a second, unrelated <tr> the old
+              raw-footer prop happened to allow bolting on; footerCells is one row by design (DSP-TBL's
+              own spec: "footer rendered from the same ordered visible column list as the header"), so
+              that comparison line moves to its own paragraph right below the table -- same information,
+              same order on the page, no longer inside ParityTable's own footer machinery. */}
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.asset_id}
+            loading={query.isPending}
+            storageKey="insurance-fleet-covered"
+            emptyText="No active fleet assets."
+            enableColumnResize
+            enableColumnReorder
+            exportFilename="insurance-fleet-covered.csv"
+            tableTestId="fleet-covered-table"
+            footerCells={{
+              unit_number: <span className={coveredRows.length === 34 ? "text-[#0F1219]" : "text-red-700"}>Totals · {coveredRows.length} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
+              insured_value_cents: <span>{formatMoney(totals.tiv)}</span>,
+              premium_per_month_cents: <span>{formatMoney(totals.premium)}</span>,
+            }}
+          />
+          <p className="px-3.5 py-2 text-xs text-[#1F2A44]" data-testid="fleet-covered-policy-tiv-diff">
+            Policy 437539 TIV {formatMoney(POLICY_437539_TIV_CENTS)} · Difference{" "}
+            <span className={`font-semibold ${tivDifference === 0 ? "text-[#1F2A44]" : "text-red-700"}`}>{formatMoney(tivDifference)}</span>
+          </p>
+          <p className="px-3.5 pb-2 text-xs text-[#6B7280]">Deductible is shown as — because the current policy schema does not store a deductible; no value is inferred.</p>
+        </BoardSection>
+      )}
+    </div>
+  );
 }
