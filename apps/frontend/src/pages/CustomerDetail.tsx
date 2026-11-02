@@ -1229,7 +1229,9 @@ export function CustomerDetailPage() {
         // CUST-01 C7: this whole block (dispatcher/safety events, complaints, ETA notifications,
         // cargo claims, safety alerts, cash forecast, load templates, 4 factoring sections) used
         // to vanish with no explanation when no operating company was selected.
-        <p className="text-xs text-red-600">Select an operating company to view linked records.</p>
+        <BoardSection title="Linked records" testId="customer-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view linked records.</p>
+        </BoardSection>
       )}
 
       {/* ROUND 326 1B: AR aging, credit/exposure, open loads, payments, factoring, rate history, contacts, documents. */}

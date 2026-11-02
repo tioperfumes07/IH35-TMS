@@ -33,7 +33,12 @@ function assertLive() {
   if (!/path="\/dispatch\/settlements"/.test(manifest)) problems.push("S35 route missing");
   if (!/path="\/dispatch\/trip-pairing"/.test(manifest)) problems.push("S36 route missing");
 
-  if (!/data-testid="dispatch-pre-settlements-need-company"/.test(dispatch)) problems.push("S33 need-company");
+  if (!/data-testid="dispatch-pre-settlements-need-company"|testId="dispatch-pre-settlements-need-company"/.test(dispatch)) {
+    problems.push("S33 need-company");
+  }
+  if (!/<BoardSection\b/.test(dispatch) || !/testId="dispatch-pre-settlements-need-company"/.test(dispatch)) {
+    problems.push("S33 need-company must be BoardSection");
+  }
   if (!/ListErrorBanner/.test(dispatch) || !/preSettlementsQuery\.isError/.test(dispatch)) {
     problems.push("S33 ListErrorBanner on pre-settlements");
   }
@@ -45,7 +50,12 @@ function assertLive() {
   if (!/ListErrorBanner/.test(settings)) problems.push("S34 ListErrorBanner");
   if (!/useCompanyContext/.test(settings)) problems.push("S34 missing company context");
 
-  if (!/data-testid="dispatch-settlements-need-company"/.test(dispatch)) problems.push("S35 need-company");
+  if (!/data-testid="dispatch-settlements-need-company"|testId="dispatch-settlements-need-company"/.test(dispatch)) {
+    problems.push("S35 need-company");
+  }
+  if (!/<BoardSection\b/.test(dispatch) || !/testId="dispatch-settlements-need-company"/.test(dispatch)) {
+    problems.push("S35 need-company must be BoardSection");
+  }
   if (!/data-testid="dispatch-settlements-honest-empty"/.test(dispatch)) problems.push("S35 honest empty");
 
   if (!/data-testid="dispatch-trip-pairing-need-company"|testId="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company");

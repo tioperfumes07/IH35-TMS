@@ -474,7 +474,9 @@ export function UserDetailPage() {
       {tab === "activity" && selectedCompanyId ? (
         <UserActivityTab operatingCompanyId={selectedCompanyId} userId={userId} />
       ) : tab === "activity" ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Select an operating company to view activity.</div>
+        <BoardSection title="Activity" testId="user-detail-activity-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view activity.</p>
+        </BoardSection>
       ) : null}
 
       <Modal variant="drawer" open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">

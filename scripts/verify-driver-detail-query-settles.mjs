@@ -32,6 +32,10 @@ function analyzeSources({ detail, mdata }) {
   if (!/Select an operating company to load this driver/.test(detail)) {
     record("DriverDetail must show explicit company-missing terminal state");
   }
+  // fill-not-shell — need-company empty uses BoardSection
+  if (!/<BoardSection\b/.test(detail) || !/testId="driver-detail-need-company"/.test(detail)) {
+    record("DriverDetail need-company empty must be BoardSection (driver-detail-need-company)");
+  }
   if (!/queryFn:\s*\(\{\s*signal\s*\}\)\s*=>\s*getDriver\(id,\s*companyId,\s*signal\)/.test(detail)) {
     record("DriverDetail driverQuery must pass React Query AbortSignal into getDriver");
   }
@@ -75,6 +79,13 @@ function selftest() {
   const failures = analyzeSources({ ...source, detail: planted });
   if (!failures.some((message) => message.includes("AbortSignal into getDriver"))) {
     fail("mutated DriverDetail (no signal) did not fail the signal assertion");
+  }
+  const bare = source.detail
+    .replace(/testId="driver-detail-need-company"/g, 'testId="x"')
+    .replace(/data-testid="driver-detail-need-company"/g, 'data-testid="x"');
+  const bareFails = analyzeSources({ ...source, detail: bare });
+  if (!bareFails.some((message) => message.includes("driver-detail-need-company"))) {
+    fail("selftest did not catch stripped driver-detail-need-company BoardSection");
   }
   console.log("PASS: verify-driver-detail-query-settles --selftest");
 }

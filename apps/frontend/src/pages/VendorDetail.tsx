@@ -567,7 +567,11 @@ export function VendorDetailPage() {
             forecast, equipment loans, merges, A/P aging, payment methods, bank transactions) each
             silently render nothing when companyId is empty -- same honest-message convention
             already used on the A/P tab below. */}
-        {!companyId ? <p className="text-xs text-red-600">Select an operating company to view linked records.</p> : null}
+        {!companyId ? (
+          <BoardSection title="Linked records" testId="vendor-detail-linked-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view linked records.</p>
+          </BoardSection>
+        ) : null}
         <BoardSection title="Vendor Profile" testId="vendor-profile-board">
           {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
               Distinct from QBO Mapping. */}
@@ -944,7 +948,11 @@ export function VendorDetailPage() {
 
       {activeTab === "A/P" ? (
         <div className="space-y-2" data-testid="vendor-ap-readonly">
-          {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+          {!companyId ? (
+            <BoardSection title="Vendor" testId="vendor-detail-need-company">
+              <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+            </BoardSection>
+          ) : null}
           <div
             className="rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]"
             data-testid="vendor-record-bill-payment-disabled"

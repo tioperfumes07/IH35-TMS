@@ -70,6 +70,7 @@ import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
+import { BoardSection } from "../components/v3/BoardSection";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { Modal } from "../components/Modal";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
@@ -829,7 +830,9 @@ export function DriverDetailPage() {
   if (!companyId) {
     return (
       <div className="space-y-3">
-        <div className="text-xs text-crit">Select an operating company to load this driver.</div>
+        <BoardSection title="Driver" testId="driver-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load this driver.</p>
+        </BoardSection>
         <Button variant="secondary" onClick={() => navigate("/drivers")}>
           Back to Drivers
         </Button>
