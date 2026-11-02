@@ -330,7 +330,7 @@
    "status": "PARTIAL",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "LIVE 11-02 CT: missing miles_driven_actual 149/194 (was 182). Ceiling shrink 182→149. 45 filled via fences. Never estimate."
+   "evidence": "LIVE 11-02 CT: missing 149/194. Tip: only 13690 newly fillable (1731.7 geofence→geofence). Cron SAVEPOINT isolation + NULL-first due + stale-NULL-after-stop-times shipped — awaiting deploy :25 tick (no AUTH). Backfill --apply still needs owner OPEN AUTH."
   },
   {
    "id": "ENG-30",
@@ -638,7 +638,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 11-02 CT: createExpenseFromFuelTransaction creatable gap remains AUTH-gated (AUTH-145 CONSUMED; need new OPEN OWNER_AUTH_ID for bridge --apply). No invented AUTH."
   },
   {
    "id": "ENG-49",
@@ -693,7 +693,7 @@
    "status": "PARTIAL",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: missing loaded_miles=0 (was 16). 13700 stamped+miles OK. Residual 13690 miles_deadhead/miles_driven_actual NULL (no fence/time). T174 odometer UNVERIFIED."
+   "evidence": "LIVE 11-02 CT: missing loaded_miles=0 among live set; residual 13690 stored NULL but tip-computes 1731.7 (deadhead honest NULL). Cron dwell-evidence was rolling back miles persist — SAVEPOINT fix shipped. 13698 still honest NULL. T174 UNVERIFIED."
   },
   {
    "id": "ENG-54",

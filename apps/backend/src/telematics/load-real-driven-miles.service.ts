@@ -342,7 +342,13 @@ export async function persistLoadRealDrivenMiles(client: DbClient, operatingComp
   return changed;
 }
 
-/** Loads to (re)compute: delivered (last stop arrived) and either never computed or touched in the last 14 days. */
+/**
+ * Loads to (re)compute: delivered (last stop arrived) and either never computed, touched in the last 14 days,
+ * or still NULL after stop times arrived later than the last compute (ENG-29/53 — 13690 class: fences/times
+ * stamped after a NULL reason was frozen; cron must re-pick even outside the 14-day window).
+ * NULL-miles loads are ordered first so a long tick still fills newly measurable trips before re-checking
+ * already-filled rows.
+ */
 export async function loadsDueForRealMiles(client: DbClient, operatingCompanyId: string, ready: boolean): Promise<string[]> {
   const r = await client.query<{ id: string }>(
     `SELECT l.id::text
@@ -351,8 +357,27 @@ export async function loadsDueForRealMiles(client: DbClient, operatingCompanyId:
         AND l.voided_at IS NULL AND l.canceled_at IS NULL
         AND l.assigned_unit_id IS NOT NULL
         AND EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL AND s.actual_arrival_at IS NOT NULL)
-        ${ready ? "AND (l.miles_driven_actual_computed_at IS NULL OR l.updated_at > now() - interval '14 days' OR l.miles_driven_actual_computed_at > now() - interval '14 days')" : ""}
-      ORDER BY l.id`,
+        ${
+          ready
+            ? `AND (
+                 l.miles_driven_actual_computed_at IS NULL
+                 OR l.updated_at > now() - interval '14 days'
+                 OR l.miles_driven_actual_computed_at > now() - interval '14 days'
+                 OR (
+                   l.miles_driven_actual IS NULL
+                   AND EXISTS (
+                     SELECT 1 FROM mdata.load_stops s
+                      WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL
+                        AND (
+                          (s.actual_arrival_at IS NOT NULL AND s.actual_arrival_at > l.miles_driven_actual_computed_at)
+                          OR (s.actual_departure_at IS NOT NULL AND s.actual_departure_at > l.miles_driven_actual_computed_at)
+                        )
+                   )
+                 )
+               )`
+            : ""
+        }
+      ORDER BY (l.miles_driven_actual IS NULL) DESC, l.id`,
     [operatingCompanyId]
   );
   return r.rows.map((x) => x.id);
@@ -373,16 +398,33 @@ export async function runLoadRealDrivenMilesCronTick(): Promise<void> {
       const ids = await loadsDueForRealMiles(db, company.id, ready);
       for (let i = 0; i < ids.length; i += 200) {
         const rows = await computeLoadRealDrivenMiles(db, company.id, ids.slice(i, i + 200));
+        // Persist miles BEFORE dwell evidence. The whole tick is one withLuciaBypass txn — if evidence /
+        // odometer capture throws, a bare throw would ROLLBACK the miles write (ENG-53 13690: tip-proven
+        // 1731.7 stayed NULL while computed_at stayed 2026-10-22). Isolate evidence in a SAVEPOINT.
         await persistLoadRealDrivenMiles(db, company.id, rows);
-        // GPS-dwell stops: write their evidence (stop event, link, GPS-verified fence, replayed crossings), read the real
-        // odometer per new crossing, and recompute those loads through the fence path in the same tick.
         const evidence = rows.flatMap((r) => r.dwell_evidence ?? []);
         if (evidence.length) {
-          const written = await persistStopDwellEvidence(db, company.id, evidence);
-          if (written.events_written > 0) {
-            await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id });
-            const again = [...new Set(rows.filter((r) => r.dwell_evidence?.length).map((r) => r.load_id))];
-            await persistLoadRealDrivenMiles(db, company.id, await computeLoadRealDrivenMiles(db, company.id, again));
+          await db.query("SAVEPOINT real_driven_miles_dwell_evidence");
+          try {
+            const written = await persistStopDwellEvidence(db, company.id, evidence);
+            if (written.events_written > 0) {
+              await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id });
+              const again = [...new Set(rows.filter((r) => r.dwell_evidence?.length).map((r) => r.load_id))];
+              await persistLoadRealDrivenMiles(db, company.id, await computeLoadRealDrivenMiles(db, company.id, again));
+            }
+            await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
+          } catch (err) {
+            await db.query("ROLLBACK TO SAVEPOINT real_driven_miles_dwell_evidence");
+            await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
+            // Miles already persisted above; dwell evidence retries next hourly tick.
+            console.error(
+              JSON.stringify({
+                engine: "telematics.load_real_driven_miles_cron",
+                company_id: company.id,
+                event: "dwell_evidence_isolated_failure",
+                error: err instanceof Error ? err.message : String(err),
+              }),
+            );
           }
         }
       }
