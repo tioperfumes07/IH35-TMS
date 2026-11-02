@@ -38,7 +38,7 @@ function leftoverHits(src) {
 function d029Hits(path, src) {
   if (path !== RECON) return [];
   const hits = [];
-  if (!/import\s*\{\s*formatDateUS\s*\}\s*from\s*["'][^"']*formatDate["']/.test(src)) {
+  if (!/import\s*\{[^}]*\bformatDateUS\b[^}]*\}\s*from\s*["'][^"']*formatDate["']/.test(src)) {
     hits.push("D029: must import formatDateUS from lib/formatDate");
   }
   if (!/formatDateUS\(\s*row\.since\s*\)/.test(src)) {
