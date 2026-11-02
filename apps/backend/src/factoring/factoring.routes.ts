@@ -15,6 +15,7 @@ import {
   factoringClearedOpenCents,
   listUnclearedFactoringAdvances,
 } from "../accounting/uncleared-applied-documents.js";
+import { listFaro1090WireProposals } from "./faro-1090-wire-proposal.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -868,5 +869,81 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
 
       return { invoices: rows.rows, total: rows.total };
     }
+  );
+
+  // ENG-17 BUILD-ONLY — Faro 1090 wire proposals (PROPOSED / AMBIGUOUS / NO_EVIDENCE). Read-only; never matches.
+  app.get(
+    "/api/v1/factoring/1090-wire-proposals",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (user.role !== "Owner" && user.role !== "Administrator" && user.role !== "Accountant") {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const query = companyQuerySchema
+        .extend({ as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() })
+        .safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const companyId = query.data.operating_company_id;
+      return withCompanyScope(user.uuid, companyId, async (client) => {
+        const asOf = query.data.as_of ?? companyBusinessDate();
+        const result = await listFaro1090WireProposals(client, companyId, asOf);
+        return {
+          as_of: asOf,
+          summary: result.summary,
+          proposals: result.proposals,
+          match_execution: "deferred",
+          note: "ENG-17 BUILD-ONLY — proposals only; owner BUILD-FIRST forbids executing matches yet.",
+        };
+      });
+    },
+  );
+
+  // Dry-run Accept preview — always refuses execute. Never writes a match or deposit.
+  app.post(
+    "/api/v1/factoring/1090-wire-proposals/dry-run-accept",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (user.role !== "Owner" && user.role !== "Administrator") {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const body = z
+        .object({
+          operating_company_id: z.string().uuid(),
+          purchase_id: z.string().uuid(),
+          bank_transaction_id: z.string().uuid(),
+          execute: z.boolean().optional(),
+        })
+        .safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      if (body.data.execute === true) {
+        return reply.code(409).send({
+          error: "match_execution_deferred",
+          message: "ENG-17 BUILD-ONLY — owner BUILD-FIRST; do not execute Faro 1090 matches yet.",
+        });
+      }
+      return withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const asOf = companyBusinessDate();
+        const { proposals } = await listFaro1090WireProposals(client, body.data.operating_company_id, asOf);
+        const proposal = proposals.find((row) => row.purchase_id === body.data.purchase_id);
+        if (!proposal) return reply.code(404).send({ error: "purchase_not_unfunded" });
+        const candidate = proposal.candidates.find((c) => c.bank_transaction_id === body.data.bank_transaction_id);
+        if (!candidate) return reply.code(404).send({ error: "candidate_not_on_proposal" });
+        return {
+          executed: false,
+          would_call: "existing factoring_advance bank match / createBankDeposit path",
+          purchase_id: proposal.purchase_id,
+          factoring_advance_id: proposal.factoring_advance_id,
+          bank_transaction_id: candidate.bank_transaction_id,
+          net_to_company_cents: proposal.net_to_company_cents,
+          bank_amount_cents: candidate.amount_cents,
+          classification: proposal.classification,
+          note: "Dry-run only. Undo would reverse the same match pointer after a future owner-approved execute.",
+        };
+      });
+    },
   );
 }

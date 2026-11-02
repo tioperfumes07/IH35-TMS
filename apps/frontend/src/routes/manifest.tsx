@@ -284,6 +284,9 @@ const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringH
 const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
 const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
+const Faro1090WireProposalsPage = React.lazy(() =>
+  import("../pages/factoring/Faro1090WireProposalsPage").then((m) => ({ default: m.Faro1090WireProposalsPage })),
+);
 const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
@@ -2798,6 +2801,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="faro_imports" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/1090-wire-proposals"
+          element={
+            <ProtectedRoute>
+              <Faro1090WireProposalsPage />
             </ProtectedRoute>
           }
         />
