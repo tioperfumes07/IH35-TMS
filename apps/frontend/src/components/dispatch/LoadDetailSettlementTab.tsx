@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyDollars } from "./constants";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { formatDateUS } from "../../lib/formatDate";
 
 type SettlementLeg = {
   load_id: string;
@@ -184,13 +185,13 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
           {settlement.period_start ? (
             <div>
               <span className="font-medium">Period start:</span>{" "}
-              {new Date(settlement.period_start).toLocaleDateString()}
+              {formatDateUS(settlement.period_start)}
             </div>
           ) : null}
           {settlement.period_end ? (
             <div>
               <span className="font-medium">Period end:</span>{" "}
-              {new Date(settlement.period_end).toLocaleDateString()}
+              {formatDateUS(settlement.period_end)}
             </div>
           ) : null}
         </div>
