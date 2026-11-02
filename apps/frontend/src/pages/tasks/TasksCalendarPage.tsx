@@ -12,9 +12,25 @@ import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const PRIORITY_DOT = ["bg-[#6B7280]", "bg-orange-500", "bg-red-600"];
 
+const MONTH_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
 function monthLabel(iso: string): string {
   const [y, m] = iso.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return iso;
+  return `${MONTH_LONG[m - 1]} ${y}`;
 }
 
 // TASK-1: Calendar — month grid of tasks by scheduled_date (was an unbuilt placeholder). Reads the

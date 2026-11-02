@@ -90,9 +90,12 @@ function buildDateRange(from: string, to: string): string[] {
   return dates;
 }
 
+const DOW_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
 function fmtDow(date: string) {
   const d = new Date(date + "T00:00:00");
-  return d.toLocaleDateString("en-US", { weekday: "short" });
+  if (Number.isNaN(d.getTime())) return "";
+  return DOW_SHORT[d.getDay()] ?? "";
 }
 
 function fmtMD(date: string) {
