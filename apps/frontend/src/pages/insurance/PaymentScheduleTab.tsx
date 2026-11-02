@@ -8,7 +8,7 @@ import {
 } from "../../api/insurance";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
@@ -125,8 +125,8 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   );
 
   return (
-    <DataPanel title="Payment Schedule">
-      <div className="mb-3 flex items-center gap-2">
+    <BoardSection title="Payment Schedule" testId="insurance-payment-schedule-board">
+      <div className="mb-3 flex items-center gap-2 px-3 pt-3">
         <label className="text-xs font-semibold text-gray-600">
           Payment status filter
           <SelectCombobox
@@ -178,6 +178,6 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
           )}
         />
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

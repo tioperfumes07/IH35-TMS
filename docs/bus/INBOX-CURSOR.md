@@ -2,6 +2,11 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 ~1:50 PM CT) — Cursor Q8 emailer engine + shells
+ROUND 7.11 SubscriptionManager: emailer null-Next backfill shipped; FE board names live worker. Fill: Insurance Claims/PaymentSchedule + FactoringDetail + ServiceLocation + ComingSoon BoardSection. Owner BUILD-FIRST. Next: remaining DataPanel shells + U12/U18/U28–U30. No match/reconcile/Dreamline.
+
+Superseded: every earlier CURRENT block.
+
 ## CURRENT (11-02-2026 12:40 PM CT) — Claude Lead — ROUND 7.2 (amended)
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.0-B + §7.2 + §7.10.
 

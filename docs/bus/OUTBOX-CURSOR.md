@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~1:50 PM CT) — Cursor Q8 emailer + BoardSection fill
+- **SHIPPED:** #28003 SubscriptionManager BoardSection; shells11 — ensureActiveSubscriptionNextScheduledAt in runDue (null-Next seed self-heal) + FE names live emailer; Insurance Claims/PaymentSchedule, FactoringDetail, ServiceLocation, ComingSoon → BoardSection.
+- **VERIFY:** vitest scheduled.test 11/11; verify-subscription-manager-delivery-banner normal+selftest; insurance claims/payment guards PASS.
+- **NEXT:** fill-not-shell remaining DataPanel shells; U12/U18/U28/U29/U30; ENG-49/17 build-only; Dreamline/match deferred.
+- **OWNER:** BUILD-FIRST — no bank match / month reconcile.
+
 ## OUTBOX (11-02-2026 ~1:10 PM CT) — Cursor tip
 - **MERGED:** #27990–#27997 — ENG-13 AUTH-473 DONE-LIVE · ENG-22 prevention · Profitability hub fill · MapView BoardSection · ELD cert/settings BoardSection · INBOX tip.
 - **ENG-36:** verify-18841 PASS still 21/≤21 negatives (ENG-25b fuel/expense class).

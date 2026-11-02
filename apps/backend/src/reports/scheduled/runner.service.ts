@@ -18,6 +18,7 @@ import type { ScheduledReportId } from "../scheduled-report-runner.js";
 import { Q8_REPORT_LABELS, computeNextScheduledAt, type CadenceInput } from "./cadence.js";
 import {
   appendDeliveryLog,
+  ensureActiveSubscriptionNextScheduledAt,
   listDueSubscriptions,
   markSubscriptionSent,
   claimSubscriptionRun,
@@ -368,6 +369,9 @@ export type RunDueSummary = {
 };
 
 export async function runDue(now: Date = new Date()): Promise<RunDueSummary> {
+  // Seeded Active rows historically had next_scheduled_at NULL — backfill before the due scan
+  // so Next populates and the emailer can claim runs (ROUND 7.11 / GAP-43).
+  await ensureActiveSubscriptionNextScheduledAt(now);
   const due = await listDueSubscriptions(now);
   let succeeded = 0;
   let failed = 0;

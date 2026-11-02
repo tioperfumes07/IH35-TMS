@@ -70,9 +70,24 @@ vi.mock("../../../auth/db.js", async (importOriginal) => {
     ...actual,
     withLuciaBypass: vi.fn(async (fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) => {
       // LST-F443368: the run claim (UPDATE ... RETURNING uuid) wins unless a test says another instance took it.
-      const query = vi.fn(async (sql: string) =>
-        /RETURNING uuid/.test(String(sql)) ? { rows: [{ uuid: "x" }], rowCount: (globalThis as { __claimLost?: boolean }).__claimLost ? 0 : 1 } : { rows: [], rowCount: 0 },
-      );
+      // ROUND 7.11: ensureActiveSubscriptionNextScheduledAt SELECT returns null-next seed rows when planted.
+      const planted = (globalThis as { __nullNextRows?: Array<Record<string, unknown>> }).__nullNextRows;
+      const query = vi.fn(async (sql: string) => {
+        const text = String(sql);
+        if (/RETURNING uuid/.test(text)) {
+          return {
+            rows: [{ uuid: "x" }],
+            rowCount: (globalThis as { __claimLost?: boolean }).__claimLost ? 0 : 1,
+          };
+        }
+        if (planted && /next_scheduled_at IS NULL/.test(text) && /SELECT \*/.test(text)) {
+          return { rows: planted, rowCount: planted.length };
+        }
+        if (planted && /SET next_scheduled_at = \$2/.test(text)) {
+          return { rows: [], rowCount: 1 };
+        }
+        return { rows: [], rowCount: 0 };
+      });
       return fn({ query });
     }),
     withCurrentUser: vi.fn(async (_userId: string, fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) => {
@@ -83,8 +98,11 @@ vi.mock("../../../auth/db.js", async (importOriginal) => {
 });
 
 import { enqueueEmail } from "../../../email/queue.service.js";
-import { deliverSubscription } from "../runner.service.js";
-import type { ScheduledSubscription } from "../subscription.service.js";
+import { deliverSubscription, runDue } from "../runner.service.js";
+import {
+  ensureActiveSubscriptionNextScheduledAt,
+  type ScheduledSubscription,
+} from "../subscription.service.js";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 
@@ -189,6 +207,50 @@ describe("GAP-43 scheduled reports runner", () => {
   it("logs failed delivery when recipients are empty", async () => {
     await deliverSubscription(baseSub({ recipient_emails: [] }));
     expect(enqueueEmail).not.toHaveBeenCalled();
+  });
+
+  it("ROUND 7.11: ensureActiveSubscriptionNextScheduledAt backfills seeded null Next", async () => {
+    (globalThis as { __nullNextRows?: Array<Record<string, unknown>> }).__nullNextRows = [
+      {
+        uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        operating_company_id: COMPANY,
+        report_slug: "weekly-cash-position",
+        cadence: "weekly",
+        day_of_week: 1,
+        day_of_month: null,
+        time_of_day: "07:00:00",
+        timezone: "America/Chicago",
+        recipient_emails: ["owner@example.com"],
+        recipient_user_uuids: null,
+        is_active: true,
+        last_sent_at: null,
+        next_scheduled_at: null,
+        delivery_format: "pdf",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+    try {
+      const updated = await ensureActiveSubscriptionNextScheduledAt(
+        DateTime.fromObject(
+          { year: 2026, month: 6, day: 4, hour: 10, minute: 0 },
+          { zone: "America/Chicago" }
+        ).toJSDate()
+      );
+      expect(updated).toBe(1);
+    } finally {
+      delete (globalThis as { __nullNextRows?: Array<Record<string, unknown>> }).__nullNextRows;
+    }
+  });
+
+  it("ROUND 7.11: runDue calls null-Next backfill before the due scan", async () => {
+    (globalThis as { __nullNextRows?: Array<Record<string, unknown>> }).__nullNextRows = [];
+    try {
+      const summary = await runDue(new Date("2026-06-04T15:00:00.000Z"));
+      expect(summary).toMatchObject({ processed: 0, succeeded: 0, failed: 0 });
+    } finally {
+      delete (globalThis as { __nullNextRows?: Array<Record<string, unknown>> }).__nullNextRows;
+    }
   });
 });
 
