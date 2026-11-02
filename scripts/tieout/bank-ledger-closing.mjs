@@ -20,8 +20,10 @@ const { buildPgPoolConfig } = pgConnectionOptions;
 export const EXPECTED = {
   mode: "ledger_equals_bank",
   operating_company_code: "USMCA",
-  live_bank_account_count: 5,
-  include_faro_1296: true,
+  // 9 active USMCA bank accounts as of 2026-11-02: 1000/1005/1230/1235/1295/2150/2500-00-001/2510/2520
+  live_bank_account_count: 9,
+  // Faro Escrow Reserve (1230, factoring_reserves) is the factoring presence check; 1296 never existed in live
+  include_faro_factoring_reserve: true,
   tolerance_cents: 0,
 };
 
@@ -31,7 +33,7 @@ export function evaluateTieout(rows) {
   }
   const countMatches = rows.length === EXPECTED.live_bank_account_count;
   const observed = rows.map((row) => `${row.account_name} [${row.account_number ?? "unbound"}]`).join(", ");
-  const countReason = countMatches ? null : `expected 5 live USMCA bank accounts; observed ${rows.length}: ${observed}`;
+  const countReason = countMatches ? null : `expected ${EXPECTED.live_bank_account_count} live USMCA bank accounts; observed ${rows.length}: ${observed}`;
   const unbound = rows.filter((row) => !row.ledger_account_id);
   if (unbound.length > 0) {
     return { ok: false, reason: `missing ledger_account_id: ${unbound.map((r) => r.account_name).join(", ")}` };
@@ -40,9 +42,10 @@ export function evaluateTieout(rows) {
   if (missingGl.length > 0) {
     return { ok: false, reason: `missing linked GL balance: ${missingGl.map((r) => r.account_name).join(", ")}` };
   }
-  const faro = rows.filter((row) => row.account_number === "1296" && row.system_purpose === "faro_factoring_wallet");
-  if (faro.length !== 1) {
-    return { ok: false, reason: `expected exactly one live Faro 1296 wallet; observed ${faro.length}` };
+  // Faro Escrow Reserve must be present (system_purpose = factoring_reserves)
+  const faroReserve = rows.filter((row) => row.system_purpose === "factoring_reserves");
+  if (faroReserve.length !== 1) {
+    return { ok: false, reason: `expected exactly one factoring_reserves account; observed ${faroReserve.length}` };
   }
   const measured = rows.map((row) => {
     const bankClosingCents = Number(row.bank_closing_cents);
@@ -61,23 +64,27 @@ export function evaluateTieout(rows) {
 
 function selftest() {
   const base = [
-    ["Operating", "1000", "cash", 100, 100],
-    ["Payroll", "1010", "cash", 200, 200],
-    ["Relay", "1295", "relay_fuel_wallet", 300, 300],
-    ["Faro", "1296", "faro_factoring_wallet", 400, 400],
-    ["Test Amex", "1020", "cash", 500, 500],
+    ["USMCA FREIGHT", "1000", "bank_operating", 100, 100],
+    ["Petty Cash", "1005", null, 0, 0],
+    ["Faro Escrow Reserve", "1230", "factoring_reserves", 200, 200],
+    ["Faro Cash Reserve", "1235", null, 0, 0],
+    ["Relay Fuel Wallet", "1295", "relay_fuel_wallet", 300, 300],
+    ["Faro Factoring", "2150", "factoring_advance_liability", 0, 0],
+    ["Amex-Scentsx", "2500-00-001", null, 0, 0],
+    ["Dreamline Diesel Card", "2510", null, 0, 0],
+    ["England WEX Fuel Card", "2520", null, 400, 400],
   ].map(([account_name, account_number, system_purpose, bank_closing_cents, gl_closing_cents], index) => ({
     id: String(index), account_name, account_number, system_purpose,
     ledger_account_id: `ledger-${index}`, bank_closing_cents, gl_closing_cents,
   }));
-  if (!evaluateTieout(base).ok) throw new Error("equal five-account population must pass");
+  if (!evaluateTieout(base).ok) throw new Error("equal nine-account population must pass");
   if (evaluateTieout([]).ok) throw new Error("empty population must fail");
-  if (evaluateTieout(base.slice(0, 4)).ok) throw new Error("missing live account must fail");
-  if (evaluateTieout(base.map((r) => r.account_number === "1296" ? { ...r, account_number: "1297" } : r)).ok) throw new Error("missing Faro must fail");
+  if (evaluateTieout(base.slice(0, 8)).ok) throw new Error("missing live account must fail");
+  if (evaluateTieout(base.map((r) => r.system_purpose === "factoring_reserves" ? { ...r, system_purpose: "other" } : r)).ok) throw new Error("missing factoring_reserves must fail");
   if (evaluateTieout(base.map((r, i) => i === 0 ? { ...r, ledger_account_id: null } : r)).ok) throw new Error("unbound must fail");
   if (evaluateTieout(base.map((r, i) => i === 1 ? { ...r, gl_closing_cents: null } : r)).ok) throw new Error("missing GL must fail");
   if (evaluateTieout(base.map((r, i) => i === 2 ? { ...r, gl_closing_cents: r.gl_closing_cents + 1 } : r)).ok) throw new Error("one-cent mutation must fail");
-  console.log("SELFTEST PASS: BANK-TIEOUT-01 rejects empty/missing/Faro/unbound/one-cent mutations");
+  console.log("SELFTEST PASS: BANK-TIEOUT-01 rejects empty/missing/factoring_reserves/unbound/one-cent mutations");
 }
 
 if (process.argv.includes("--expected-only")) { console.log(JSON.stringify(EXPECTED)); process.exit(0); }
