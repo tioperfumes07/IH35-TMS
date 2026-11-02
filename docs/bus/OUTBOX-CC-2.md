@@ -158,3 +158,17 @@ Code-verified on main `4eafcd4b93` (2026-11-02 ~1:50 PM CT). Per FINAL-3 law: co
 
 Register still shows OPEN: Codex live Chrome measurement pending. Code built, not shell.
 
+### ROUND 7.17 — CC-2 items (2026-11-02, deadline 2026-11-03T02:00Z)
+
+**A. ENG-13 — DONE-LIVE**
+SEAT: CC-2 | ITEM: ENG-13 | sha: (merged by Cursor ENG-13 PR #27975) | guard: verify-loads-trailer-source-recorded PASS | live: USMCA live loads trailer_source NULL 0/194, customer loads without trailer row 0/194 | CT: ~1:30 PM CT 11-02-2026
+
+**B. PROD-5Y 13690 — DONE-LIVE (cron stored)**
+SEAT: CC-2 | ITEM: PROD-5Y 13690 | sha: PR #27985 deploy | guard: cron tick confirmed | live: mdata.loads load_id=426025eb miles_driven_actual=1731.7, miles_driven_actual_computed_at=2026-11-02T19:25:03Z, source=odometer | CT: 2:25 PM CT 11-02-2026
+
+**U9 CheckPrintPage test fix — MERGED**
+SEAT: CC-2 | ITEM: U9 test suite | PR: #28047 (fork) + #28048 (cc-2) | sha: 58bda3a0e8 | guard: vitest run CheckPrintPage.editableNumbers.test.tsx 3 PASS, WriteCheckForm.test.tsx 5 PASS | live: UNVERIFIED (test-only) | CT: ~8:10 PM CT 11-02-2026
+
+**Items 4+5 — SAF-ORPH-05/SAF-B08 + 18 Accounting U-rows — written to INBOX-CODEX.md**
+SEAT: CC-2 | ITEM: SAF-ORPH-05 28 routes + SAF-B08 KPI + 18 U-rows Codex queue | PR: pending | sha: pending | CT: ~8:10 PM CT 11-02-2026
+
