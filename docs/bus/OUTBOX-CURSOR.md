@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~9:25 PM CT) — Cursor Settlements KPI + planner miles format
+- **PRIOR:** #28121 MilesStrip/AtRisk + settlements boards · #28120 PlannerCalendar/Factoring/Fuel.
+- **THIS WAVE:** SettlementsPage KPI/source-changed · HomeBoardPanels money · CompanyWaterfall gallons/pct · TripPairing/planner-bars/LoadsPlanner quantities.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~9:05 PM CT) — Cursor MilesStrip + settlements format wave
 - **PRIOR:** #28120 PlannerCalendar MMM-DD + Factoring/Fuel/BookLoad formatters · #28118 Geofences syntax.
 - **THIS WAVE:** MilesStrip/AtRisk quantities · Settlements tours/pre/cash-advances/loads/company-driver/statement/escrow/workflow canonical money+miles+dates.

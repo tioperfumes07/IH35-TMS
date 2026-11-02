@@ -13,7 +13,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SelectCombobox } from "../../components/Combobox";
@@ -298,7 +298,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     sortValue: (t) => t.miles_total ?? -1,
     render: (t) =>
       t.miles_total != null ? (
-        <span className="tabular-nums">{Math.round(t.miles_total).toLocaleString("en-US")}</span>
+        <span className="tabular-nums">{formatQuantityTable(Math.round(t.miles_total), 0)}</span>
       ) : (
         <span className="text-[#4B5563]">—</span>
       ),
