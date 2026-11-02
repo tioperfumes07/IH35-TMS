@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~1:25 PM CT) — Cursor U12 waves + ENG-17 BUILD-ONLY
+- **MERGED:** #28018 Driver Reports U12 · #28022 Fines/Integrity/Legal/Inventory U12 · #28026 Policies/Templates/Loads/Invoice/Customers U12 · #28027 Finance+Legal Contracts U12 · #28032 ENG-17 Faro 1090 wire proposal engine + pick screen (`/factoring/1090-wire-proposals`) dry-run Accept; execute=true → 409 match_execution_deferred.
+- **ENGINES:** ENG-17 proposal classifier PROPOSED/AMBIGUOUS/NO_EVIDENCE (read-only; no bank match written).
+- **SHELLS:** U12 status multi-select sweep advanced across maintenance/safety/legal/inventory/insurance/reports/customers/finance.
+- **NEXT:** Codex QA shells (premium label, customer dual Documents, Expenses KPI/fan-out, Fuel Home honesty, Banking U30); U28–U30; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~3:15 PM CT) — Cursor BUILD-FIRST session tip
 - **MERGED:** #28003 SubscriptionManager BoardSection · #28004 Q8 emailer null-Next + boards · #28005/#28008 DataPanel→BoardSection (0 opens left under pages/) · #28010 ROUND 7.13 orphan ledger DONE-LIVE · #28011 U18 detail breadcrumbs · #28013 U12 LoadHistory status multi-select.
 - **ENGINES:** Q8 scheduled-reports emailer self-heals seeded null Next on every tick; 6 generators already existed.
