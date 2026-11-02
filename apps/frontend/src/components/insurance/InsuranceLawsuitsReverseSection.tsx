@@ -1,34 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
-import { listInsuranceLawsuits } from "../../api/insurance";
-import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
-import { ListErrorState } from "../ListErrorState";
+import { LegalMattersReverseSection } from "../legal/LegalMattersReverseSection";
 
-export function InsuranceLawsuitsReverseSection({ operatingCompanyId, filter, contextLabel }: {
+/**
+ * ENG-60: insurance.lawsuit side table retired (0 rows). Reverse chrome now reads legal.matters
+ * (same filter keys VehicleProfile / DriverProfile already mount via LegalMattersReverseSection).
+ * Kept as a named export so fleet/driver call sites do not break; renders the legal reverse once.
+ */
+export function InsuranceLawsuitsReverseSection({
+  operatingCompanyId,
+  filter,
+  contextLabel,
+}: {
   operatingCompanyId: string;
   filter: { driver_id?: string; unit_id?: string };
   contextLabel: string;
 }) {
-  const query = useQuery({
-    queryKey: ["insurance-lawsuits-reverse", operatingCompanyId, filter.driver_id ?? null, filter.unit_id ?? null],
-    queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter }),
-    enabled: Boolean(operatingCompanyId && (filter.driver_id || filter.unit_id)),
-  });
-  const rows = query.isError ? [] : (query.data?.lawsuits ?? []);
+  const legalFilter = filter.driver_id
+    ? ({ related_driver_id: filter.driver_id } as const)
+    : filter.unit_id
+      ? ({ unit_id: filter.unit_id } as const)
+      : null;
+  if (!legalFilter) return null;
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="insurance-lawsuits-reverse">
-      <h3 className="text-xs font-semibold text-[#0F1219]">Insurance lawsuits</h3>
-      {query.isError ? <ListErrorState status={0} message="Lawsuits could not be loaded." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="mt-2 text-xs text-[#6B7280]">No lawsuits reference {contextLabel}.</p> : null}
-      <div className="mt-2 space-y-1 text-xs">
-        {rows.map((row) => (
-          <div key={row.id}>
-            <EntityLink kind="lawsuit" id={row.id} label={entityLabel(row.case_number, row.id, "Case")} />{" "}
-            <span className="text-[#6B7280]">{row.status} · {formatDateUS(row.filed_date)}</span>
-          </div>
-        ))}
-      </div>
-    </section>
+    <LegalMattersReverseSection
+      operatingCompanyId={operatingCompanyId}
+      filter={legalFilter}
+      contextLabel={contextLabel}
+      data-testid="insurance-lawsuits-reverse"
+    />
   );
 }

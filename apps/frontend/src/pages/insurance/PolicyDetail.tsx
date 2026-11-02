@@ -9,14 +9,13 @@ import {
   listInsuranceTypeCatalog,
   listInsuranceClaims,
   listInsuranceCoiRequests,
-  listInsuranceLawsuits,
   updateInsurancePolicy,
   type InsuranceClaim,
   type InsuranceCoiRequest,
-  type InsuranceLawsuit,
   type InsurancePolicyStatus,
   type InsurancePolicyUnit,
 } from "../../api/insurance";
+import { legalMattersApi, type LegalMatterListRow } from "../../api/legal-matters";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -82,13 +81,24 @@ export function PolicyDetail() {
       ),
   });
 
+  // ENG-60: insurance.lawsuit retired (0 rows). Policy lawsuits = legal.matters type=lawsuit
+  // linked to this policy's claims (or to the policy via claim reverse).
+  const claimIds = useMemo(
+    () => new Set((claimsQuery.data ?? []).map((c) => c.id).filter(Boolean)),
+    [claimsQuery.data],
+  );
   const lawsuitsQuery = useQuery({
-    queryKey: ["insurance", "policy", "lawsuits", companyId, policyId],
-    enabled: Boolean(companyId && policyId),
-    queryFn: () =>
-      listInsuranceLawsuits({ operating_company_id: companyId, policy_id: policyId }).then(
-        (result) => result.lawsuits,
-      ),
+    queryKey: ["legal-matters", "policy-lawsuits", companyId, policyId, [...claimIds].sort().join(",")],
+    enabled: Boolean(companyId && policyId && !claimsQuery.isLoading),
+    queryFn: async () => {
+      const res = await legalMattersApi.list(companyId, { type: "lawsuit", limit: 500 });
+      const matters = res.matters ?? [];
+      if (claimIds.size === 0) return [] as LegalMatterListRow[];
+      return matters.filter((m) => {
+        const claimId = m.insurance_claim_id == null ? "" : String(m.insurance_claim_id);
+        return claimId && claimIds.has(claimId);
+      });
+    },
   });
 
   const updateMutation = useMutation({
@@ -198,18 +208,35 @@ export function PolicyDetail() {
     [],
   );
 
-  const lawsuitColumns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
+  const lawsuitColumns = useMemo<ParityColumn<LegalMatterListRow>[]>(
     () => [
       {
         key: "case_number",
         label: "Case #",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="lawsuit" id={row.id} label={entityLabel(row.case_number, row.id, "Case")} />
+          <EntityLink
+            kind="matter"
+            id={String(row.id ?? "")}
+            label={entityLabel(String(row.case_number ?? row.matter_number ?? ""), String(row.id ?? ""), "Case")}
+          />
         ),
       },
-      { key: "status", label: "Status", sortable: true },
-      { key: "demand_cents", label: "Demand", sortable: true, render: (row) => formatMoney(row.demand_cents) },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => String(row.status ?? ""),
+      },
+      {
+        key: "amount_claimed_against_us",
+        label: "Demand",
+        sortable: true,
+        render: (row) => {
+          const cents = Number(row.amount_claimed_against_us ?? row.financial_reserve_cents ?? 0);
+          return formatMoney(Number.isFinite(cents) ? cents : 0);
+        },
+      },
     ],
     [],
   );
@@ -403,7 +430,7 @@ export function PolicyDetail() {
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits (INS-06)</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits (legal.matters)</h3>
           <div className="mt-2">
             {lawsuitsQuery.isError ? (
               <ListErrorState
@@ -416,10 +443,10 @@ export function PolicyDetail() {
               <ParityTable
                 rows={lawsuitRows}
                 columns={lawsuitColumns}
-                rowKey={(row) => row.id}
+                rowKey={(row) => String(row.id ?? "")}
                 loading={lawsuitsQuery.isPending || (lawsuitsQuery.isFetching && lawsuitRows.length === 0)}
                 storageKey="insurance-policy-lawsuits"
-                emptyText="No lawsuits linked to this policy's claims."
+                emptyText="No legal matters (type lawsuit) linked to this policy's claims."
               />
             )}
           </div>

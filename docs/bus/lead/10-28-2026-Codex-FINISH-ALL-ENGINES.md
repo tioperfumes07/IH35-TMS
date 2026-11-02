@@ -1,4 +1,4 @@
-# CODEX — FINISH ALL YOUR ENGINES — 10-28-2026 ~5:15 PM CT (Cursor Lead · REFRESH 3)
+# CODEX — FINISH ALL YOUR ENGINES — 11-02-2026 ~10:30 AM CT (Cursor Lead · REFRESH 4)
 
 **Law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) · USMCA only · never stash · never fake-green · `SEAT=CODEX node scripts/fast-merge.mjs`
 
@@ -8,7 +8,7 @@
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
 ```
 
-**Lead tip-closed this session (do not rebuild):** ENG-18/28/41/42/61 · 01c/24/39/40 · 43/45 · **26 DONE-LIVE** · 44/27/46/47/60 PARTIAL
+**Lead tip-closed (do not rebuild):** ENG-18/28/41/42/61 · 01c/24/39/40 · 43/45 · 26 · **44/50 DONE-LIVE** · 46 spine CLOSED · 60 FE cutover DONE · 27 PARTIAL (290)
 
 ---
 
@@ -20,18 +20,16 @@ export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
 | **ENG-17** | Faro 1090 document match only. **14 unmatched stay unmatched until owner selects.** Dreamline **MISSING** → 2510 BLOCKED. **NO balancing JE. NO AUTH-453.** |
 | **ENG-48** | Fuel↔expense one-to-one; same-day dups named; writer refuses double; guard |
 | **ENG-49** | Settlement **5787** non-diesel $235.01 vs signed $140.20 — document-first through engine |
-| **ENG-50** | Invoice `amount_paid` vs applications — fix writer/apply; guard |
 | **ENG-51** | 944 composite-memo backfill **or** explain; Creator miles source required |
 | **ENG-13** residual | **13595** Trailer **445** missing from fleet → list BLOCKED only |
 
-### P1 — help Cursor (Claude seats idle)
+### P1 — help Cursor
 | ID | Done = |
 |---|---|
-| **ENG-46** PARTIAL | residual noncash BP spine + escrow Δ77500¢ |
-| **ENG-47** PARTIAL | residual archive RLS / unbilled latch / S-13655 mapping |
-| **ENG-60** PARTIAL | lawsuit table 0; FE LawsuitsTab cutover |
-| **ENG-27** | Shrink below 290 pre-10-17 bank-cat no-load (explain or engine back-fill; **never auto-match**) |
-| **ENG-23 / 29 / 53 / 25b** | As before |
+| **ENG-46** PARTIAL | escrow Δ77500¢ (driver 320k vs acct 397.5k) — name/tie |
+| **ENG-47** PARTIAL | archive RLS / unbilled latch / S-13655 mapping |
+| **ENG-60** PARTIAL | FE cutover DONE; drop `insurance.lawsuit` + retire backend routes |
+| **ENG-27 / 23 / 29 / 53 / 25b** | As before |
 
 ---
 

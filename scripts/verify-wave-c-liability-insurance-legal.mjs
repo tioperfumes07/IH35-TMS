@@ -10,7 +10,8 @@
  *     amount_paid_cents (liability) AND real EntityLink kind="bill" / kind="expense" rows
  *     (gl_je, transitively real via accounting.bills/expenses journal_entry_id, already
  *     verified in WAVE-C-gl_je-accounting-core-leaves).
- *   - insurance lawsuits.create: LawsuitsTab.tsx renders real demand_cents / settlement_cents.
+ *   - insurance lawsuits.create: ENG-60 moved to Legal › Lawsuits (legal.matters type=lawsuit);
+ *     LegalMattersListPage / form carries amount_claimed_against_us + financial_reserve_cents.
  *   - legal matters.create / matters.detail: LegalMatterFormFields.tsx (the create form) and
  *     LegalMatterDetailPage.tsx both carry a real financial_reserve_cents field — an explicit
  *     legal-matter reserve/liability figure, not a fabricated placeholder.
@@ -52,14 +53,19 @@ const CHECKS = [
     pattern: /kind="bill"[\s\S]*kind="expense"/,
   },
   {
-    name: "insurance lawsuits.create: LawsuitsTab.tsx renders real demand_cents/settlement_cents",
+    name: "insurance lawsuits.create (ENG-60): LawsuitsTab redirects to Legal",
     file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
-    pattern: /demand_cents[\s\S]*settlement_cents/,
+    pattern: /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/,
   },
   {
     name: "legal matters.create: LegalMatterFormFields.tsx carries financial_reserve field",
     file: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
     pattern: /financial_reserve/,
+  },
+  {
+    name: "legal matters.create: LegalMatterFormFields.tsx carries amount_claimed_against_us (lawsuit demand)",
+    file: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
+    pattern: /amount_claimed_against_us/,
   },
   {
     name: "legal matters.detail: LegalMatterDetailPage.tsx renders financial_reserve_cents",
@@ -88,8 +94,9 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/insurance/PoliciesList.tsx": "p.total_premium_cents",
     "apps/frontend/src/pages/insurance/ClaimsTab.tsx":
       'claim.amount_claimed_cents ... kind="bill" ... kind="expense"',
-    "apps/frontend/src/pages/insurance/LawsuitsTab.tsx": "lawsuit.demand_cents ... lawsuit.settlement_cents",
-    "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx": "financial_reserve_cents",
+    "apps/frontend/src/pages/insurance/LawsuitsTab.tsx": "Navigate to={`/legal/lawsuits${search}`}",
+    "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx":
+      "financial_reserve_cents amount_claimed_against_us",
     "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx": "matter.financial_reserve_cents",
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
