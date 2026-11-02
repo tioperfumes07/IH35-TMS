@@ -21,7 +21,13 @@ function failures(source) {
       "frontend contract admits null gallons",
       /export type FuelTransactionListItem = \{[\s\S]*?gallons: number \| null;[\s\S]*?amount_cents: number;/.test(source.api),
     ],
-    ["history table shows unknown gallons honestly", source.table.includes('row.gallons == null ? "—" : row.gallons.toFixed(2)')],
+    [
+      "history table shows unknown gallons honestly",
+      // Accept canonical formatQuantityTable OR legacy toFixed — null must stay "—", never "0.00".
+      /row\.gallons == null \? "—" : (?:row\.gallons\.toFixed\(2\)|formatQuantityTable\(row\.gallons,\s*2\))/.test(
+        source.table,
+      ),
+    ],
     ["CSV exports unknown gallons as blank", source.table.includes('row.gallons == null ? "" : row.gallons.toFixed(2)')],
     ["reverse panels show unavailable gallons", source.reverse.includes('row.gallons == null ? "Gallons unavailable"')],
     ["old API zero coercion is absent", !source.route.includes("row.gallons === null ? 0")],

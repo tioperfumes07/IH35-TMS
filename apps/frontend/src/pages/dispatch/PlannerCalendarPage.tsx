@@ -18,6 +18,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { formatPlannerDayLabel } from "./planners/plannerDayLabel";
 
 function plannerWeekStart(input?: string): string {
   if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
@@ -267,7 +268,7 @@ export function PlannerCalendarPage() {
                   <th className="sticky left-0 z-10 bg-[#F7F8FA] px-3 py-2">Driver / Unit</th>
                   {days.map((day) => (
                     <th key={day} className="px-3 py-2">
-                      {new Date(`${day}T12:00:00.000Z`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                      {formatPlannerDayLabel(day)}
                     </th>
                   ))}
                 </tr>

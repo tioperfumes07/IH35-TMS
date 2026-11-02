@@ -39,6 +39,11 @@ function auditSource(src) {
   if (!/findIndex\(/.test(src) || !/pinned/.test(src)) {
     fails.push(`${FILE}: must pin deep-linked geofence to front of display list`);
   }
+  // Codex ROUND 7.6 P0: #28094 shipped an unterminated class string (`ring-[#F59E0B]/`)
+  // that blocked every subsequent frontend deploy. Closing quote after the Tailwind color is required.
+  if (/ring-\[#F59E0B\]\//.test(src) || !/ring-\[#F59E0B\]"/.test(src)) {
+    fails.push(`${FILE}: rowClassName highlight class must close the string after ring-[#F59E0B] (no '/" typo)`);
+  }
   return fails;
 }
 
@@ -67,10 +72,15 @@ data-testid="geofence-deeplink-banner"
 rowTestId={(item) => \`geofence-row-\${item.id}\`}
 onPageChange={setTablePage}
 highlightedGeofenceId
+rowClassName={(item) => highlightedGeofenceId === item.id ? "bg-[#FEF3C7] ring-1 ring-inset ring-[#F59E0B]" : ""}
 `;
   if (auditSource(good).length) throw new Error("SELFTEST FAIL clean: " + JSON.stringify(auditSource(good)));
   const bad = good.replace("pinned", "x").replace("findIndex", "indexOf");
   if (auditSource(bad).length === 0) throw new Error("SELFTEST FAIL: missing pin undetected");
+  const brokenQuote = good.replace('ring-[#F59E0B]"', 'ring-[#F59E0B]/');
+  if (!auditSource(brokenQuote).some((f) => f.includes("close the string"))) {
+    throw new Error("SELFTEST FAIL: broken ring class string undetected");
+  }
   behavioralBeyondFirstPage();
   // mutation: without pin, target not on page 1
   const rows = Array.from({ length: 100 }, (_, i) => ({ id: `g-${i}` }));
