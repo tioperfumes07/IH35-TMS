@@ -16,6 +16,7 @@ import { SettlementReferenceCell } from "../../components/settlements/Settlement
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const POD_STATUS_OPTIONS = statusOptions({
   pending_review: "Pending review",
@@ -159,7 +160,7 @@ export function PodReviewPage() {
         key: "created_at",
         label: "Captured",
         sortable: true,
-        render: (doc) => new Date(doc.created_at).toLocaleString(),
+        render: (doc) => formatDateTimeUS(doc.created_at) || "—",
       },
       {
         key: "actions",

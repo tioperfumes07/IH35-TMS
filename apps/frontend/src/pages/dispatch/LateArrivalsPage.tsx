@@ -12,11 +12,12 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
   const cls = String(prediction.confidence_class ?? "");
-  const at = prediction.predicted_arrival_at ? new Date(String(prediction.predicted_arrival_at)).toLocaleString() : "";
+  const at = prediction.predicted_arrival_at ? formatDateTimeUS(String(prediction.predicted_arrival_at)) : "";
   const variance = prediction.variance_minutes != null ? `${prediction.variance_minutes}m variance` : "";
   return [cls, at, variance].filter(Boolean).join(" · ");
 }
@@ -131,7 +132,7 @@ export function LateArrivalsPage() {
       key: "next_stop_scheduled_at",
       label: "Scheduled",
       sortable: true,
-      render: (load) => (load.next_stop_scheduled_at ? new Date(load.next_stop_scheduled_at).toLocaleString() : "—"),
+      render: (load) => (load.next_stop_scheduled_at ? formatDateTimeUS(load.next_stop_scheduled_at) || "—" : "—"),
     },
     {
       key: "eta_signal",
