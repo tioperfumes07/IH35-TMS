@@ -171,7 +171,7 @@ export function QboStyleHomePage({ auth }: Props) {
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
           <Link
-            to="/system/settings"
+            to="/settings/company"
             className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
             title="Company and display settings"
           >
