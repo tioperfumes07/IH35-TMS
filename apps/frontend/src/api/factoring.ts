@@ -539,6 +539,7 @@ export type WorkqueueItem = {
   batch_number: string | null;
   factoring_status: string | null;
   submitted_at: string | null;
+  factor_vendor_id: string | null;
   factor_name: string | null;
   total_cents: number;
   advance_cents: number;

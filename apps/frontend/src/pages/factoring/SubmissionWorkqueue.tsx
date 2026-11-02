@@ -98,7 +98,16 @@ export function SubmissionWorkqueue() {
       {
         key: "factor_name",
         label: "Factor",
-        render: (item) => <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>,
+        render: (item) =>
+          item.factor_vendor_id ? (
+            <EntityLink
+              kind="vendor"
+              id={item.factor_vendor_id}
+              label={entityLabel(item.factor_name, item.factor_vendor_id, "Factor")}
+            />
+          ) : (
+            <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>
+          ),
       },
       {
         key: "total_cents",
