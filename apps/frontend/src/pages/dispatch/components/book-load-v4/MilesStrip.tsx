@@ -2,7 +2,7 @@
 import type { LaneMileageFillConfidence, LaneMileageReferenceRow } from "../../../../api/dispatch";
 import { useTranslation } from "../../../../hooks/useTranslation";
 import { ParityTable } from "../../../../components/parity/ParityTable";
-import { formatUsd } from "../../../../lib/money";
+import { formatNumber, formatQuantityTable, formatUsd } from "../../../../lib/money";
 
 type Props = {
   practical?: number | null;
@@ -64,7 +64,7 @@ function numFromInput(raw: string): number | null {
 }
 
 function formatMiles(n: number | null | undefined): string {
-  return n != null && Number.isFinite(n) && !(n <= 0) ? n.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "";
+  return n != null && Number.isFinite(n) && !(n <= 0) ? formatQuantityTable(n, 1, 0) : "";
 }
 
 function inputValue(n: number | null | undefined): string {
@@ -142,7 +142,7 @@ export function MilesStrip({
       : fillConfidence === "operator" || laneState === "new"
         ? 3
         : 1;
-  const fmt1 = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const fmt1 = (n: number) => formatQuantityTable(n, 1);
   const practicalCaption = chosenReference
     ? `from reference: ${laneCityLabel(chosenReference.origin_city, chosenReference.origin_state).replace(/, [A-Z]+$/, "")} → ${laneCityLabel(chosenReference.dest_city, chosenReference.dest_state)}`
     : "revenue per mile";
@@ -290,7 +290,7 @@ export function MilesStrip({
         <div className="border-t border-[#E5E7EB]" data-testid="book-load-miles-reference">
           <p className="mx-3 my-2 border-l-2 border-[#B45309] bg-white px-2 py-1 text-xs text-[#0F1219]">
             No lane {referenceLanes.originLabel} → {referenceLanes.destLabel} in AlwaysTrack history (
-            {referenceLanes.lanesOnFile.toLocaleString()} lanes on file).{" "}
+            {formatNumber(referenceLanes.lanesOnFile)} lanes on file).{" "}
             {referenceLanes.lanes.length > 0
               ? "Select from reference — lanes on file into the same state:"
               : "No lane on file into that state — type the miles."}
@@ -376,9 +376,9 @@ export function MilesStrip({
       ) : null}
       {historyOffer ? (
         <p className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-lane-history">
-          Seen {historyOffer.runs} times · median {historyOffer.median.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi
+          Seen {formatNumber(historyOffer.runs)} times · median {formatQuantityTable(historyOffer.median, 1, 0)} mi
           {historyOffer.spread != null
-            ? ` · spread ${historyOffer.spread.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
+            ? ` · spread ${formatQuantityTable(historyOffer.spread, 1, 0)}`
             : ""}{" "}
           {onUseHistoryMiles ? (
             <button

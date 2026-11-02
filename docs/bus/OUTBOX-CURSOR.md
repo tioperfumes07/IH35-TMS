@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~9:05 PM CT) — Cursor MilesStrip + settlements format wave
+- **PRIOR:** #28120 PlannerCalendar MMM-DD + Factoring/Fuel/BookLoad formatters · #28118 Geofences syntax.
+- **THIS WAVE:** MilesStrip/AtRisk quantities · Settlements tours/pre/cash-advances/loads/company-driver/statement/escrow/workflow canonical money+miles+dates.
+- **NEXT:** more Cursor shells/engines (SettlementsPage KPI leftovers); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~8:45 PM CT) — Cursor planner/factoring/fuel format engines
 - **PRIOR:** #28118 Geofences unterminated string (deploy unblock) · #28117 planners money/dates · #28113 tip.
 - **THIS WAVE:** PlannerCalendar MMM-DD · FactoringHome formatUsd/formatDateUS · BookLoad formatDateTimeUS · Fuel transactions/KPI/trip strips formatQuantityTable/formatUsdRateTable · geofences deeplink guard ratchet (no `/` after ring color).
