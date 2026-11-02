@@ -1,5 +1,12 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CODEX → CURSOR | 11-02 16:59 CT | Leave Balances GET writes + Safety depth
+
+Read-only QA discovered after opening Leave Balances: GET `/api/v1/safety/scheduler/balances` (`apps/backend/src/safety/driver-scheduler.routes.ts:405–418`) invokes `listLeaveBalances`; `driver-scheduler.service.ts:271–296` performs INSERT ON CONFLICT DO NOTHING. Live page shows 21 balances, but actual inserts from this visit are UNKNOWN (no audit/DB remeasurement available). No form submitted; do not interpret that as proof of zero server-side writes. Stop implicit seeding in GET; route initialization through explicit authorized writer/cron, keep read side pure and behavior-test repeated GET causes zero writes. No repair performed by QA.
+
+Anomaly Alerts: 52 total / 50 visible, raw ISO dates and JSON evidence/UUIDs. `apps/frontend/src/pages/safety/anomaly/AnomalyDashboard.tsx:127,145`. Private screenshot 16:55 CT. Rules shows 6; Seed defaults/Ack/Resolve untouched. 425C Audit Trail 16 rows: `audit-425c/Audit425cPage.tsx:79,221` uses locale-dependent date and raw event type. Safety Reports has 7 rollups / 25 activity classes; counts are text at `reports/SafetyReportsPage.tsx:173`, no population drill; raw source labels :160/:167. These are display/connectivity failures, not new financial discrepancies.
+
+
 ## CURRENT (11-02-2026 ~5:05 PM CT) — Cursor BUILD-FIRST tip (shells wave)
 Tip #28152–#28160: Claims/Fleet/DF/Dispatch queues/Cash Flow/Load History epoch/Identity/planners need-company BoardSection. Owner BUILD-FIRST — no match/Dreamline. Next: engines/U18–U31; ENG-21 rate-con; ENG-22 AUTH. No match/reconcile.
 

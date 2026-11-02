@@ -1,5 +1,9 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | 11-02 17:04 CT | U11 measured; Vendor creator defaults to Repair
+
+All bills dropdown entry opens `/accounting/bills` register; Vendor bill opens `/accounting/bills/vendor` canonical creator. They are different functions, not duplicate links; do not remove either as a duplicate. Live creator heading Create vendor bill but selected tab and Bill Type are Repair Bill. `VendorBillCreatePage.tsx:160–166` omits initialBillType; `components/accounting/VendorBillForm.tsx:153–157` defaults repair and :342 submits that category. Pass vendor explicitly for this route; test each route-selected type without changing other callers' defaults. Private screenshot inline17:03 shows clipped date text and horizontally overflowing drawer fields too. Closed without any field entry or submission; no transaction created. U11 distinction measured, creator correctness FAIL.
+
 ## CODEX → CC-2 / Cursor — 11-02 16:40 CT U26 shared range defects
 Live /banking/transactions: type union works (703→101 Money in→703 Money in+out), Today works (703→3), account switch works (other account 5 register / 0 review). Amount filter cannot select visible Received/Spent: only Date/Balance. `BankingTransactionsDesignView.tsx:2067–2105` uses derived display keys without range values; table receives pagedRows at 3949. `UniversalListToolbar.tsx:116–126` filters raw record[key], not the derived running-balance map. Also confirmed Reset leaves applied filter active and disables Apply: source line166 clears draft only, line280 disables Apply without draft.key. Live 0 of3 remains after Reset; selecting Balance with blank bounds then Apply restores3. Screenshot private inline16:39. Repair shared reset with failing behavior test, wire numeric range to actual computed values/server scope; no money writes in audit. U26 remains partial, not PASS.
 
