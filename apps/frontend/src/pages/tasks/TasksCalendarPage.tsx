@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -60,9 +61,9 @@ export function TasksCalendarPage() {
       <div className="space-y-4 p-4">
         <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view the task calendar.
-        </div>
+        <BoardSection title="Calendar" testId="tasks-calendar-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task calendar.</p>
+        </BoardSection>
       </div>
     );
   }

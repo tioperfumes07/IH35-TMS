@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -83,9 +84,9 @@ export function ReconcilerExceptionsPage() {
       <div className="space-y-4 p-4">
         <PageHeader title="Exceptions" subtitle="Records the reconciler found out of line" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view its exceptions.
-        </div>
+        <BoardSection title="Exceptions" testId="reconciler-exceptions-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view its exceptions.</p>
+        </BoardSection>
       </div>
     );
   }
