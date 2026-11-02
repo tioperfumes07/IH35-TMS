@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useListState } from "../../components/list-state";
@@ -24,6 +25,14 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { companyToday } from "../../lib/businessDate";
+import { statusOptions } from "../../lib/statusListParams";
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  active: "Active",
+  pending: "Pending",
+  expired: "Expired",
+  cancelled: "Cancelled",
+});
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -55,25 +64,30 @@ export function PoliciesList() {
   const [lastPolicyId, setLastPolicyId] = useState<string | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<"" | InsurancePolicyStatus>("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [expiringSoonOnly, setExpiringSoonOnly] = useState(false);
   const staged = useStagedListFilters({
     applied: { typeFilter, statusFilter, expiringSoonOnly },
-    empty: { typeFilter: "", statusFilter: "" as const, expiringSoonOnly: false },
+    empty: { typeFilter: "", statusFilter: [] as string[], expiringSoonOnly: false },
     onApply: (next) => { setTypeFilter(next.typeFilter); setStatusFilter(next.statusFilter); setExpiringSoonOnly(next.expiringSoonOnly); },
   });
   const canCreatePolicy = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
 
   const policiesQuery = useQuery({
-    queryKey: ["insurance", "policies", companyId, typeFilter || "all", statusFilter || "all", vendorId],
+    queryKey: ["insurance", "policies", companyId, typeFilter || "all", statusFilter.join(",") || "all", vendorId],
     enabled: Boolean(companyId),
-    queryFn: () =>
-      listInsurancePolicies({
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const status = statusFilter.length === 1 ? (statusFilter[0] as InsurancePolicyStatus) : undefined;
+      const policies = await listInsurancePolicies({
         operating_company_id: companyId,
         coverage_type: typeFilter ? (typeFilter as InsurancePolicy["coverage_type"]) : undefined,
-        status: statusFilter || undefined,
+        status,
         vendor_id: vendorId,
-      }).then((result) => result.policies),
+      }).then((result) => result.policies);
+      if (statusFilter.length <= 1) return policies;
+      return policies.filter((policy) => statusFilter.includes(policy.status));
+    },
   });
 
   const typesQuery = useQuery({
@@ -155,7 +169,7 @@ export function PoliciesList() {
       ) : null}
 
       <CollapsedListFilters
-        activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
+        activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter.length ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -189,22 +203,18 @@ export function PoliciesList() {
             )}
           </div>
 
-          <div className="text-xs font-semibold text-[#4B5563]">
+          <div className="text-xs font-semibold text-[#4B5563]" data-testid="insurance-policies-status-filter">
             <label htmlFor="insurance-policies-status-filter">Status</label>
-            <Combobox
-              id="insurance-policies-status-filter"
-              className="mt-1 w-full"
-              value={staged.draft.statusFilter}
-              onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: (next ?? "") as "" | InsurancePolicyStatus })}
-              options={[
-                { value: "", label: "All statuses" },
-                { value: "active", label: "Active" },
-                { value: "pending", label: "Pending" },
-                { value: "expired", label: "Expired" },
-                { value: "cancelled", label: "Cancelled" },
-              ]}
-              allowClear={false}
-            />
+            <div className="mt-1" id="insurance-policies-status-filter">
+              <MultiSelectDropdown
+                label="Status"
+                options={STATUS_FILTER_OPTIONS}
+                selected={staged.draft.statusFilter}
+                onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                allLabel="All statuses"
+                data-testid="insurance-policies-status-multiselect"
+              />
+            </div>
           </div>
 
           <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-[#1F2A44]">
