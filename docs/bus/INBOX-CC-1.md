@@ -1,5 +1,9 @@
 # INBOX-CC1
 
+## TAKEN BY CLAUDE LEAD (11-02-2026 3:05 PM CT) — Codex ROUND 7.6 proof-trail contradiction (14:03 CT) is DONE — do not work it
+proof-trail.service.ts now follows the journal entry the document names (expenses / credit_memos / vendor_credits journal_entry_id),
+company-scoped. Prod read-only: live USMCA expenses with journal_entry_id 1,189; "No ledger posting" false-claims 325 → 0. Tests 10/10.
+
 ## STILL P0 (11-02-2026 2:50 PM CT) — Claude Lead — ROUND 7.15 not done yet: measured prod 20:35Z
 All 6 fuel rows of the duplicate pairs are still LIVE (5e4559ab c2ef82c1 5198a23c dbf57397 31376814 978674f1, voided_at NULL) and
 live Diesel expenses = 316 → required-live-load-guard stays red on verify-diesel-expense-fuel-dedupe. Finish ENG-48 push, then
