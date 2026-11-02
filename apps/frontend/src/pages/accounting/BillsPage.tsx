@@ -656,9 +656,18 @@ export function BillsPage() {
         key: "receipt",
         label: "Receipt",
         sortable: true,
+        sortValue: (bill) => Number(bill.attachment_count ?? 0),
         render: (bill) =>
           companyId ? (
-            <ReceiptAttach operatingCompanyId={companyId} entityType="bill" entityId={bill.id} readOnly testId={`receipt-attach-bill-${bill.id}`} />
+            <ReceiptAttach
+              operatingCompanyId={companyId}
+              entityType="bill"
+              entityId={bill.id}
+              readOnly
+              listWhen="open"
+              initialCount={Number(bill.attachment_count ?? 0)}
+              testId={`receipt-attach-bill-${bill.id}`}
+            />
           ) : null,
       },
       {

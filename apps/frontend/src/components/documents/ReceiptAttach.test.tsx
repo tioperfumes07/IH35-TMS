@@ -71,4 +71,27 @@ describe("ReceiptAttach", () => {
     fireEvent.click(screen.getByTestId("r-count"));
     expect(screen.getByTestId("r-list")).not.toHaveTextContent("remove");
   });
+
+  it("listWhen=open uses initialCount on mount and only GETs attachments when opened", async () => {
+    listAttachments.mockResolvedValueOnce({
+      rows: [{ id: "a1", entity_type: "expense", entity_id: "e1", category: "receipt", filename: "relay.jpg", content_type: "image/jpeg", size_bytes: 10, uploaded_at: "" }],
+    });
+    render(
+      <ReceiptAttach
+        operatingCompanyId="c"
+        entityType="expense"
+        entityId="e1"
+        readOnly
+        listWhen="open"
+        initialCount={1}
+        testId="r"
+      />,
+    );
+    expect(screen.getByTestId("r")).toHaveAttribute("data-receipt-list-when", "open");
+    expect(screen.getByTestId("r-count")).toHaveTextContent("1 receipt");
+    expect(listAttachments).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("r-count"));
+    await waitFor(() => expect(listAttachments).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("r-list")).toHaveTextContent("relay.jpg"));
+  });
 });

@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~1:45 PM CT) — Cursor U30 Banking + Expenses fan-out + aging U30
+- **MERGED:** #28037 Banking Home Accounts/Drift/Latest → ParityTable (U30); DrillKpiCard shows live values with unavailable=non-navigable; tip tsc reds cleared.
+- **THIS WAVE:** Expenses/Bills ReceiptAttach `listWhen="open"` + `initialCount` from `attachment_count` (no 200× GET fan-out); Expenses memo → humanMemo; Accounting Hub aging sortable + formatUsdCents.
+- **NEXT:** U19 Reclassify register; U28–U29; remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~1:25 PM CT) — Cursor U12 waves + ENG-17 BUILD-ONLY
 - **MERGED:** #28018 Driver Reports U12 · #28022 Fines/Integrity/Legal/Inventory U12 · #28026 Policies/Templates/Loads/Invoice/Customers U12 · #28027 Finance+Legal Contracts U12 · #28032 ENG-17 Faro 1090 wire proposal engine + pick screen (`/factoring/1090-wire-proposals`) dry-run Accept; execute=true → 409 match_execution_deferred.
 - **ENGINES:** ENG-17 proposal classifier PROPOSED/AMBIGUOUS/NO_EVIDENCE (read-only; no bank match written).
