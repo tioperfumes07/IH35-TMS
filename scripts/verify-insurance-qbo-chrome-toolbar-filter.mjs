@@ -29,6 +29,17 @@ const CHECKS = [
       /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*<ParityTable/,
   },
   {
+    name: "PoliciesList: BoardSection + U18 module-home back",
+    file: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+    pattern:
+      /BoardSection[\s\S]*testId="insurance-policies-list-board"[\s\S]*backHref="\/insurance"|backHref="\/insurance"[\s\S]*testId="insurance-policies-list-board"/,
+  },
+  {
+    name: "InsuranceLanding: need-company BoardSection",
+    file: "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
+    pattern: /testId="insurance-landing-need-company"/,
+  },
+  {
     name: "ClaimsTab: CollapsedListFilters Apply triad + ParityTable",
     file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     pattern:
