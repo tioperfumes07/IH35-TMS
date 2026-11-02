@@ -1,15 +1,15 @@
 # ENG-34 shrink + ENG-49 measure — 2026-11-02 CT
 
-## ENG-34 PARTIAL → shrink 123 → 108
+## ENG-34 PARTIAL → shrink 123 → 108 → 83
 
 Wired **15** static/selftest-passing exempts into `scripts/verify-steps/18921…19089-*` and removed them from `.guard-exempt.json`.
 
 ```
-verify:guard-wired — 6342 guards: 6234 fully-wired, 108 exempt, 0 unaccounted
+verify:guard-wired — 6342 guards: 6259 fully-wired, 83 exempt, 0 unaccounted
 PASS
 ```
 
-Remaining **108** still need wire-or-delete (shrink-only). No invented deletes of active checks.
+Wave-2: +25 static guards (19101–19389). Remaining **83** still need wire-or-delete (shrink-only). No invented deletes of active checks.
 
 ## ENG-49 OPEN — document-first (settlement 5787 → P-0018)
 
