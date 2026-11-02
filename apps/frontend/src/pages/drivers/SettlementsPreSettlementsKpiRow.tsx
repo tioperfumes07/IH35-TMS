@@ -11,6 +11,7 @@ import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
+import { formatUsd } from "../../lib/money";
 
 /** A missing or non-numeric amount is UNKNOWN (null → "—"), never a confident 0. */
 function amountOrNull(v: unknown): number | null {
@@ -47,10 +48,6 @@ function isInThisPeriod(s: SettlementListRow, periodStart: Date): boolean {
 function isYtd(s: SettlementListRow, year: number): boolean {
   const end = new Date(s.period_end);
   return !Number.isNaN(end.getTime()) && end.getFullYear() === year;
-}
-
-function formatUsd(dollars: number): string {
-  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));

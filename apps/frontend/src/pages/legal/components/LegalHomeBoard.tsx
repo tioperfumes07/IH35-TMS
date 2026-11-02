@@ -19,6 +19,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../utils/qboFormat";
+import { formatUsd } from "../../../lib/money";
 import { ParityTable } from "../../../components/parity/ParityTable";
 
 const MS_DAY = 24 * 60 * 60 * 1000;
@@ -73,9 +74,7 @@ function claimedVsReserve(m: LegalMatterRow): string {
   const claimedDisplay =
     claimed == null || claimed === ""
       ? "—"
-      : typeof claimed === "number"
-        ? `$${Number(claimed).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : `$${Number(claimed).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      : formatUsd(Number(claimed));
   const reserveStr =
     reserve == null || reserve === "" ? "—" : formatUsdCents(Number(reserve));
   return `${claimedDisplay} vs ${reserveStr}`;

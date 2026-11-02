@@ -24,6 +24,7 @@ import { EntityLink, type EntityKind } from "../../../components/shared/EntityLi
 import { getDownloadUrl } from "../../../api/docs";
 import { statusOptions } from "../../../lib/statusListParams";
 import "../../../design/ih35-design-tokens.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 const CATEGORY_LABELS: Record<string, string> = {
   employment: "Employment",
@@ -247,8 +248,8 @@ export function LegalContractInstancesPage() {
       },
       { key: "signer_type", label: "Type", sortable: true, render: (row) => row.signer_type },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusClass(row.status)}>{row.status}</span> },
-      { key: "sent_at", label: "Sent", sortable: true, render: (row) => (row.sent_at ? new Date(row.sent_at).toLocaleString() : "—") },
-      { key: "signed_at", label: "Signed", sortable: true, render: (row) => (row.signed_at ? new Date(row.signed_at).toLocaleString() : "—") },
+      { key: "sent_at", label: "Sent", sortable: true, render: (row) => (row.sent_at ? formatDateTimeUS(row.sent_at) : "—") },
+      { key: "signed_at", label: "Signed", sortable: true, render: (row) => (row.signed_at ? formatDateTimeUS(row.signed_at) : "—") },
       {
         key: "pdf_file_id",
         label: "PDF",
@@ -513,7 +514,7 @@ export function LegalContractInstancesPage() {
                     {detailQuery.data.signatures.length === 0 ? <div className="text-xs text-gray-500">No signatures yet.</div> : null}
                     {detailQuery.data.signatures.map((signature) => (
                       <div key={signature.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
-                        {signature.signed_by_name} · {new Date(signature.signed_at).toLocaleString()} · IP {signature.signer_ip ?? "—"}
+                        {signature.signed_by_name} · {formatDateTimeUS(signature.signed_at)} · IP {signature.signer_ip ?? "—"}
                       </div>
                     ))}
                   </div>
@@ -525,7 +526,7 @@ export function LegalContractInstancesPage() {
                     {detailQuery.data.audit_log.map((entry) => (
                       <div key={entry.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
                         <div className="font-semibold">{entry.event_type}</div>
-                        <div>{new Date(entry.created_at).toLocaleString()}</div>
+                        <div>{formatDateTimeUS(entry.created_at)}</div>
                       </div>
                     ))}
                   </div>
