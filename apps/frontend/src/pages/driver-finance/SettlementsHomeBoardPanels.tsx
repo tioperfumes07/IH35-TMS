@@ -12,6 +12,7 @@ import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { companyToday } from "../../lib/businessDate";
+import { formatUsd } from "../../lib/money";
 import {
   formatSettlementsUsd,
   formatWeekOfTitle,
@@ -100,8 +101,7 @@ function boardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held"; c
   return { label: "Open", color: V3.link };
 }
 
-const money = (n: number) =>
-  n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = (n: number) => formatUsd(n);
 
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {

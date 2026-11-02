@@ -1,10 +1,11 @@
 import { BoardSection } from "../../../components/v3/BoardSection";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import type { TourReadout } from "../../../api/tourReadout";
 import type { CompanySettlementReport } from "../../../api/accounting";
 
 const DASH = "—";
 const money = (c: number | null | undefined) => (c == null ? DASH : formatUsdCents(c));
+const pct1 = (n: number) => `${formatQuantityTable(n, 1)}%`;
 
 /**
  * SETL-DETAIL-01 (lead ROUND 14) — COMPANY WATERFALL: Invoiced − Quick Pay 0.50% − Driver −
@@ -75,7 +76,7 @@ export function CompanyWaterfallSection({
             <span>
               Less · Fuel purchases
               {report.sections.fuel_purchases.total_gallons > 0
-                ? ` (${report.sections.fuel_purchases.total_gallons.toLocaleString()} gal)`
+                ? ` (${formatQuantityTable(report.sections.fuel_purchases.total_gallons, 1, 0)} gal)`
                 : ""}
             </span>
             <span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span>
@@ -85,7 +86,7 @@ export function CompanyWaterfallSection({
             <span className="ldt-m">{money(report.sections.expenses.total_cents)}</span>
           </div>
           <div className="ldt-row big">
-            <span>Net · {marginPct == null ? DASH : `${marginPct.toFixed(1)}%`}</span>
+            <span>Net · {marginPct == null ? DASH : pct1(marginPct)}</span>
             <span className="ldt-m" data-testid="waterfall-net">{money(netCents)}</span>
           </div>
         </div>
@@ -124,7 +125,7 @@ export function CompanyWaterfallSection({
         </div>
         <div className="ldt-row big">
           <span>
-            Net · {tot.margin_pct == null ? DASH : `${tot.margin_pct.toFixed(1)}%`}
+            Net · {tot.margin_pct == null ? DASH : pct1(tot.margin_pct)}
           </span>
           <span className="ldt-m" data-testid="waterfall-net">{money(cs.margin_cents)}</span>
         </div>
