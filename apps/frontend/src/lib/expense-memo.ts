@@ -6,10 +6,13 @@
  *   "<item> — <address> — inv <receipt no> — <YYYY-MM-DD> — $<amount> (settlement <n>)"
  *   "<item> — <address> (settlement <n>)"           · "<item> —  (settlement <n>)"
  *   "… (missing-USMCA-seed)"                          → no signed settlement number on the row
+ *   "[SC <n>] <vendor> —"                             → ENG-51 stub; settlement from bracket tag
  * and vendor_document_number as "<receipt no>-L<load>[-<cents>-<slug>]" or "<receipt no>-<slug>".
  * This parser splits that string for DISPLAY. It never invents: a part that is not present is null, and a memo that is not
  * in the seed shape comes back as description = the memo, everything else null (receipt no. from vendor_document_number's
  * leading digits when present). The durable fix is structured fields on the row (bus item REG-PARSE-DATA).
+ *
+ * MUST STAY IN SYNC with apps/backend/src/accounting/expense-memo-parse.ts.
  */
 export type ParsedExpenseMemo = {
   description: string | null;
@@ -21,6 +24,7 @@ export type ParsedExpenseMemo = {
 };
 
 const SETTLEMENT_TAIL = /\s*\((settlement\s+(\d+)|missing-USMCA-seed)\)\s*$/i;
+const SC_BRACKET = /^\[SC\s+(\d+)\]/i;
 const RECEIPT_PART = /^inv\s+([A-Za-z0-9-]+)$/i;
 const DATE_PART = /^\d{4}-\d{2}-\d{2}$/;
 const AMOUNT_PART = /^\$-?\d[\d,]*(\.\d+)?$/;
@@ -37,8 +41,12 @@ export function parseExpenseMemo(memo: string | null | undefined, vendorDocument
     settlementNumber = tail[2] ?? null;
     body = raw.slice(0, raw.length - tail[0].length).trim();
   }
+  if (!settlementNumber) {
+    const sc = raw.match(SC_BRACKET);
+    if (sc) settlementNumber = sc[1];
+  }
   const parts = body.split(/\s+—\s+|\s+—$|^—\s+/).map((p) => p.trim());
-  if (!tail && parts.length < 2) {
+  if (!tail && !settlementNumber && parts.length < 2) {
     return { description: raw, address: null, receiptNumber: docReceipt, settlementNumber: null, seedShape: false };
   }
   const description = parts[0] || null;
@@ -51,5 +59,11 @@ export function parseExpenseMemo(memo: string | null | undefined, vendorDocument
     if (DATE_PART.test(p) || AMOUNT_PART.test(p)) continue; // date and amount live in their own columns already
     if (address == null) address = p;
   }
-  return { description, address, receiptNumber: receiptNumber ?? docReceipt, settlementNumber, seedShape: true };
+  return {
+    description,
+    address,
+    receiptNumber: receiptNumber ?? docReceipt,
+    settlementNumber,
+    seedShape: Boolean(tail || settlementNumber || parts.length >= 2),
+  };
 }

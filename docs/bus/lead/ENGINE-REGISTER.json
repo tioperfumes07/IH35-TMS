@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T16:36:35Z",
+ "generated": "2026-11-02T17:12:52Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -668,10 +668,10 @@
    "title": "ENG-51 944 composite-memo rows unbackfilled; 1 Creator load miles without source",
    "seat": "CC-2",
    "round": "443.329",
-   "status": "OPEN",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "scripts/verify-reg-parse-data-backfill.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 11-02 CT: composite-memo unbackfilled 948→0 (audited backfill + [SC n] parser). verify-reg-parse-data-backfill PASS. Creator miles-without-source: 45 loads have miles_driven_actual with empty reason (ENG-29 fence fills) — not a second composite debt; leave reason blank until fence audit stamps."
   },
   {
    "id": "ENG-52",
