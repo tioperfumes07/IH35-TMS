@@ -25,7 +25,8 @@ const EVIDENCE = {
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
   home: ["apps/frontend/src/components/home/DriverDaySummaryCard.tsx", "<ParityTable"],
-  insurance: ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", "<ParityTable"],
+  // ENG-60: /insurance/lawsuits redirects; list chrome lives on Legal › Lawsuits board.
+  insurance: ["apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx", "<ParityTable"],
   inventory: ["apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx", "<ParityTable"],
   legal: ["apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx", "<ParityTable"],
   lists: ["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", "<ParityTable"],
@@ -46,7 +47,7 @@ const EXACT_CONSUMERS = {
   "cash-flow": { route: "/cash-flow?tab=actual_vs_projected", surface: "pages/cash-flow/tabs/ActualVsProjectedTab.tsx" },
   form_425: { route: "/425c?tab=history", surface: "pages/form425c/tabs/HistoryTab.tsx" },
   fuel: { route: "/fuel/card-overage", surface: "pages/fuel/card-overage/CardOverageQueuePage.tsx" },
-  insurance: { route: "/insurance/lawsuits", surface: "pages/insurance/LawsuitsTab.tsx" },
+  insurance: { route: "/legal/lawsuits", surface: "pages/legal/matters/LegalMattersListPage.tsx" },
   inventory: { route: "/inventory/assignments", surface: "pages/inventory/InventoryAssignmentsPage.tsx" },
   legal: { route: "/legal/matters", surface: "pages/legal/matters/LegalMattersListPage.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },

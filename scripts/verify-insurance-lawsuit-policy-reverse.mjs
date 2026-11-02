@@ -31,10 +31,15 @@ function audit(s) {
   if (!/INSERT INTO insurance\.lawsuit \(\s*operating_company_id,[\s\S]{0,500}VALUES \(\s*\$1::uuid, \$2,/.test(s.route)) failures.push("lawsuit create must stamp the scoped company ($1) into the FORCE-RLS operating_company_id");
   if (/INSERT INTO insurance\.lawsuit \([^)]*\btenant_id\b/.test(s.route)) failures.push("lawsuit create writes tenant_id — ROUND 342 step 2c retires it");
   if ((s.api.match(/policy_id\?: string;/g) ?? []).length < 7) failures.push("lawsuit API and public wrapper must expose policy filter");
-  if (!/listInsuranceLawsuits\(\{ operating_company_id: companyId, policy_id: policyId \}\)/.test(s.policy)) failures.push("policy detail must request exact lawsuit reverse filter");
-  if (/\.filter\(\(lawsuit\) => lawsuit\.claim_id/.test(s.policy)) failures.push("policy detail must not browser-filter company-wide lawsuits");
+  // ENG-60: PolicyDetail reads legal.matters type=lawsuit (insurance.lawsuit retired, 0 rows).
+  if (!/legalMattersApi\.list\(companyId,\s*\{\s*type:\s*"lawsuit"/.test(s.policy)) {
+    failures.push("policy detail must list legal.matters type=lawsuit (ENG-60; insurance.lawsuit retired)");
+  }
+  if (!/insurance_claim_id/.test(s.policy) || !/claimIds/.test(s.policy)) {
+    failures.push("policy detail must scope lawsuit matters to this policy's claim ids");
+  }
   if (!/Couldn't load this policy's lawsuits/.test(s.policy) || !/lawsuitsQuery\.refetch/.test(s.policy)) failures.push("reverse surface must expose retryable errors");
-  if (!/kind="lawsuit"[\s\S]{0,80}row\.id/.test(s.policy)) failures.push("reverse row must drill to canonical lawsuit");
+  if (!/kind="matter"[\s\S]{0,120}row\.id/.test(s.policy)) failures.push("reverse row must drill to canonical legal matter");
   if (!/case "lawsuit":[\s\S]{0,100}lawsuits\?insurance_lawsuit_id=/.test(s.link)) failures.push("lawsuit drill must target highlighted canonical list");
   return failures;
 }
@@ -55,9 +60,9 @@ if (process.argv.includes("--selftest")) {
     ["create opco stamp", "route", /(INSERT INTO insurance\.lawsuit \(\s*)operating_company_id,/, "$1opco_missing,"],
     ["create legacy column", "route", /(INSERT INTO insurance\.lawsuit \(\s*)operating_company_id,/, "$1tenant_id, operating_company_id,"],
     ["api", "api", /policy_id\?: string;/g, ""],
-    ["exact read", "policy", /listInsuranceLawsuits\(\{ operating_company_id: companyId, policy_id: policyId \}\)/, "listInsuranceLawsuits({ operating_company_id: companyId })"],
+    ["exact read", "policy", /legalMattersApi\.list\(companyId,\s*\{\s*type:\s*"lawsuit"/, 'legalMattersApi.list(companyId, { type: "claim"'],
     ["error", "policy", /Couldn't load this policy's lawsuits/, "Lawsuits unavailable"],
-    ["drill", "policy", /kind="lawsuit"/, 'kind="claim"'],
+    ["drill", "policy", /kind="matter"/, 'kind="claim"'],
     ["route", "link", /case "lawsuit":/, 'case "lawsuit_missing":'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

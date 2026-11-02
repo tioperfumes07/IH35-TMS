@@ -25,13 +25,11 @@ function failures(s = files) { return [
   ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && !multiSelectFilterProblems(s.coveragePage,{file:'apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx',kind:'unit',testId:'coverage-gap-filter-unit'}).length],
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
-  ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
+  // ENG-60: InsuranceLawsuitsReverseSection → LegalMattersReverseSection; LawsuitsTab → Legal redirect.
+  ["exact lawsuit drill", s.lawsuitReverse.includes("LegalMattersReverseSection") && (s.lawsuitReverse.includes("related_driver_id") || s.lawsuitReverse.includes("unit_id"))],
   ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.operating_company_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id")],
   ["lawsuit label payload typed", ["claim_number: string | null", "driver_name: string | null", "unit_number: string | null"].every((token) => s.insuranceApi.includes(token))],
-  // LawsuitsTab migrated its EntityLink columns to EntityLinkOrTombstone, which computes
-  // entityLabel(name, id, noun) INTERNALLY (and renders the honest tombstone when id is missing) —
-  // callers just pass the raw name/id/noun now, they no longer call entityLabel(...) inline.
-  ["lawsuit links consume human labels", s.lawsuitPage.includes('kind="claim" id={lawsuit.claim_id} name={lawsuit.claim_number} noun="Claim"') && s.lawsuitPage.includes('kind="driver" id={lawsuit.driver_id} name={lawsuit.driver_name} noun="Driver"') && s.lawsuitPage.includes('kind="unit" id={lawsuit.unit_id} name={lawsuit.unit_number} noun="Unit"')],
+  ["lawsuit links consume human labels", /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(s.lawsuitPage)],
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   if (failures().length) throw new Error(failures().join('; '));
@@ -45,10 +43,10 @@ if (process.argv.includes("--selftest")) {
     failures({...files, insuranceSummary: files.insuranceSummary.replace('kind="insurance_coverage_gaps"', 'kind="unit"')}).includes("unit profile exact coverage target"),
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
-    failures({...files, lawsuitReverse: files.lawsuitReverse.replace('kind="lawsuit" id={row.id}', 'kind="claim" id={row.id}')}).includes("exact lawsuit drill"),
+    failures({...files, lawsuitReverse: files.lawsuitReverse.replaceAll("LegalMattersReverseSection", "RetiredSection")}).includes("exact lawsuit drill"),
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("driver.operating_company_id = lawsuit.operating_company_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
     failures({...files, insuranceApi: files.insuranceApi.replace("driver_name: string | null", "")}).includes("lawsuit label payload typed"),
-    failures({...files, lawsuitPage: files.lawsuitPage.replace("lawsuit.unit_number", "null")}).includes("lawsuit links consume human labels"),
+    failures({...files, lawsuitPage: files.lawsuitPage.replace("/legal/lawsuits", "/insurance/lawsuits")}).includes("lawsuit links consume human labels"),
   ];
   if (checks.some((ok)=>!ok)) { console.error(`verify-insurance-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
   console.log(`verify-insurance-profile-reverse selftest PASS — ${checks.length}/${checks.length} claim/API/profile/target/label mutations red`); process.exit(0);

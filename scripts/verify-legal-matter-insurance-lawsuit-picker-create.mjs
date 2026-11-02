@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * verify-legal-matter-insurance-lawsuit-picker-create.mjs
- * LV-LEGAL-MATTER-INSURANCE-LINK-PICKERS-NO-INLINE-CREATE
  *
- * Legal matter insurance_lawsuit picker must offer inline create that writes
- * insurance.lawsuits via LawsuitCreateModal (same R=W as claim path).
+ * ENG-60: insurance.lawsuit is retired (0 rows). The insurance_lawsuit EntityPicker kind now
+ * reads/writes legal.matters type=lawsuit and must NOT offer inline create into the dead table.
+ * Create lawsuits in Legal › Lawsuits (legal.matters).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,8 +15,6 @@ const LABEL = "verify-legal-matter-insurance-lawsuit-picker-create";
 const FILES = {
   form: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
   registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
-  picker: "apps/frontend/src/components/EntityPicker.tsx",
-  modal: "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
 };
 
 function read(rel) {
@@ -33,42 +31,19 @@ function analyze(s) {
   const failures = [];
   const lawsuit = extractPicker(s.form, "insurance_lawsuit");
   if (!lawsuit) failures.push("LegalMatterFormFields missing insurance_lawsuit EntityPicker");
-  else if (/allowCreate=\{false\}/.test(lawsuit) || !/\ballowCreate\b/.test(lawsuit)) {
-    failures.push("LegalMatterFormFields insurance_lawsuit must allowCreate");
+  else if (!/allowCreate=\{false\}/.test(lawsuit)) {
+    failures.push("LegalMatterFormFields insurance_lawsuit must allowCreate={false} (ENG-60; create in Legal)");
   }
 
-  if (
-    !/insurance_lawsuit:\s*\{[\s\S]*?inlineCreate:\s*\{\s*available:\s*true/.test(s.registry)
-  ) {
-    failures.push("entityPickerRegistry insurance_lawsuit.inlineCreate.available must be true");
+  const block = s.registry.match(/insurance_lawsuit:\s*\{[\s\S]*?\n  \},\n\n  legal_matter:/)?.[0] ?? "";
+  if (!/readTable:\s*"legal\.matters"/.test(block) || !/writeTable:\s*"legal\.matters"/.test(block)) {
+    failures.push("insurance_lawsuit registry must declare read/write legal.matters (ENG-60)");
   }
-  if (
-    !/readTable:\s*"insurance\.lawsuits"[\s\S]*?writeTable:\s*"insurance\.lawsuits"/.test(
-      s.registry.match(/insurance_lawsuit:\s*\{[\s\S]*?\n  \},/)?.[0] ?? "",
-    )
-  ) {
-    // softer check on full registry block
-    const block = s.registry.match(/insurance_lawsuit:\s*\{[\s\S]*?\n  \},\n\n  legal_matter:/)?.[0] ?? "";
-    if (!/readTable:\s*"insurance\.lawsuits"/.test(block) || !/writeTable:\s*"insurance\.lawsuits"/.test(block)) {
-      failures.push("insurance_lawsuit registry must declare read/write insurance.lawsuits");
-    }
+  if (!/inlineCreate:\s*\{\s*available:\s*false/.test(block)) {
+    failures.push("entityPickerRegistry insurance_lawsuit.inlineCreate.available must be false (ENG-60)");
   }
-
-  if (!/import \{ LawsuitCreateModal \}/.test(s.picker)) {
-    failures.push("EntityPicker must import LawsuitCreateModal");
-  }
-  if (
-    !/kind === "insurance_lawsuit"[\s\S]{0,320}<LawsuitCreateModal[\s\S]{0,280}handleCreated\(id, label\)/.test(
-      s.picker,
-    )
-  ) {
-    failures.push("EntityPicker must mount LawsuitCreateModal and auto-select id/label");
-  }
-
-  if (
-    !/onSuccess:\s*\(lawsuit(?:,\s*input)?\)[\s\S]{0,260}onCreated\(lawsuit\.id, lawsuit\.case_number\)/.test(s.modal)
-  ) {
-    failures.push("LawsuitCreateModal must return persisted id + case_number to onCreated");
+  if (!/type:\s*"lawsuit"/.test(block)) {
+    failures.push("insurance_lawsuit registry list must filter type=lawsuit");
   }
 
   return failures;
@@ -81,30 +56,25 @@ function fail(msg) {
 
 function selftest() {
   const good = {
-    form: `<EntityPicker kind="insurance_lawsuit" allowCreate />`,
+    form: `<EntityPicker kind="insurance_lawsuit" allowCreate={false} />`,
     registry: `insurance_lawsuit: {
     kind: "insurance_lawsuit",
-    readTable: "insurance.lawsuits",
-    writeTable: "insurance.lawsuits",
+    readTable: "legal.matters",
+    writeTable: "legal.matters",
     inlineCreate: {
-      available: true,
+      available: false,
+      reason: "Create in Legal",
+    },
+    async list(operatingCompanyId) {
+      await legalMattersApi.list(operatingCompanyId, { type: "lawsuit" });
     },
   },
 
   legal_matter: {`,
-    picker: `import { LawsuitCreateModal } from "../insurance/LawsuitCreateModal";
-      {createOffered && kind === "insurance_lawsuit" ? (
-        <LawsuitCreateModal
-          onCreated={(id, label) => (id ? handleCreated(id, label) : setCreateOpen(false))}
-        />
-      ) : null}`,
-    modal: `onSuccess: (lawsuit) => {
-      onCreated(lawsuit.id, lawsuit.case_number);
-    },`,
   };
   const badForm = {
     ...good,
-    form: `<EntityPicker kind="insurance_lawsuit" allowCreate={false} />`,
+    form: `<EntityPicker kind="insurance_lawsuit" allowCreate />`,
   };
   if (analyze(good).length) fail(`selftest GOOD unexpected: ${analyze(good).join("; ")}`);
   if (!analyze(badForm).length) fail("selftest expected BAD form to fail");
@@ -118,5 +88,8 @@ if (process.argv.includes("--selftest")) {
 
 const sources = Object.fromEntries(Object.entries(FILES).map(([k, f]) => [k, read(f)]));
 const failures = analyze(sources);
-if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — lawsuit picker inline create wired`);
+if (failures.length) {
+  console.error(`${LABEL} FAIL:\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — insurance_lawsuit picker → legal.matters type=lawsuit; no inline create (ENG-60)`);
