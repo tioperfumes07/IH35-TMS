@@ -21,6 +21,7 @@ import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatOosDate, formatOosDays } from "../lib/oos-display";
 import { formatOdometerCellHonest } from "../lib/odometerHonesty";
+import { formatQuantityTable } from "../lib/money";
 
 export type FleetRow = {
   id: string;
@@ -112,7 +113,7 @@ const FLEET_MAINT_COLUMNS: FleetColumn[] = [
 
 function fmtMiles(value: number | null | undefined, readingAt?: string | null): string {
   if (value == null) return formatOdometerCellHonest({ odometerMi: null, odometerReadingAt: readingAt });
-  return `${Math.round(value).toLocaleString()} mi`;
+  return `${formatQuantityTable(Math.round(value), 0)} mi`;
 }
 
 // Same calendar-day presentation used by SevereRepairOosTab. Null means the unit was never

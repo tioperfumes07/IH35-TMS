@@ -1,3 +1,5 @@
+import { formatQuantityTable } from "../lib/money";
+
 /**
  * CLS-SILENT-CAP — the one place a truncated list admits it is truncated.
  *
@@ -42,7 +44,7 @@ export function CappedListNotice({ shown, limit, total, hint, className }: Cappe
   const capped = knownTotal !== null ? knownTotal > shown : shown >= limit;
   if (!capped) return null;
 
-  const fmt = (n: number) => n.toLocaleString("en-US");
+  const fmt = (n: number) => formatQuantityTable(n, 0);
 
   return (
     <p className={className ?? "capped-list-notice"} data-testid="capped-list-notice" role="status">

@@ -10,6 +10,7 @@ import { PreviewModal } from "./PreviewModal";
 import { UploadModal } from "./UploadModal";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type VersionHistoryModalProps = {
   rootFileId: string;
@@ -102,7 +103,7 @@ export function VersionHistoryModal({
                     v{version.version_number} - {version.original_filename}
                   </div>
                   <div className="text-xs text-gray-600">
-                    {new Date(version.created_at).toLocaleString()} | {formatSize(version.size_bytes)}
+                    {formatDateTimeUS(version.created_at)} | {formatSize(version.size_bytes)}
                   </div>
                 </div>
                 <div className="mt-1 text-xs text-gray-600">Uploader: <EntityLink kind="user" id={version.uploader_user_id} label={entityLabel(version.uploader_email, version.uploader_user_id, "User")} /></div>

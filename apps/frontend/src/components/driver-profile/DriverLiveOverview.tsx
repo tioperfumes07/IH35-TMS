@@ -10,7 +10,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { FleetTruck } from "../../pages/maintenance/components/FleetHealthLine";
 import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
-import { formatUsdTable, formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdTable, formatUsdCentsTable } from "../../lib/money";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import { settlementLabel } from "../../lib/settlementNumber";
 import type { DriverProfileAggregate } from "../../pages/drivers/DriverProfilePage";
@@ -57,7 +57,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
           <span>{unit.isError ? "Unit details unavailable" : [unit.data?.make, unit.data?.model, unit.data?.year].map(text).filter(Boolean).join(" · ")}</span>
         </div>
         <div className="space-y-2 p-3">
-          <div className="flex flex-wrap items-center justify-center gap-4 overflow-hidden bg-slate-100 p-3 [&>svg]:h-20 [&>svg]:w-52"><FleetTruck row={{ state: "none" }} /><span className="text-xs font-semibold tabular-nums">{position?.speed_mph != null ? <EntityLink kind="unit" id={unitId} label={`${position.speed_mph.toLocaleString("en-US")} mph`} /> : "Speed unavailable"}</span></div>
+          <div className="flex flex-wrap items-center justify-center gap-4 overflow-hidden bg-slate-100 p-3 [&>svg]:h-20 [&>svg]:w-52"><FleetTruck row={{ state: "none" }} /><span className="text-xs font-semibold tabular-nums">{position?.speed_mph != null ? <EntityLink kind="unit" id={unitId} label={`${formatQuantityTable(position.speed_mph, 0)} mph`} /> : "Speed unavailable"}</span></div>
           <p className="text-xs text-slate-600">{position ? `Last reported ${formatDateTimeUS(position.captured_at)} · heading ${position.heading_deg == null ? "unavailable" : `${position.heading_deg}°`}` : positions.isError ? "Position source unavailable." : positions.isFetching ? "Loading last reported position…" : "No position reported for this assignment."}</p>
           {position ? <p className="text-xs text-slate-600">Location: {Number.isFinite(position.lat) && Number.isFinite(position.lng) ? `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : "Unavailable"}. Speed is the last reported value, not a current movement assertion.</p> : null}
         </div>

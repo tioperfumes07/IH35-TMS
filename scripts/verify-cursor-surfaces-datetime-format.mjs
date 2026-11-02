@@ -48,6 +48,12 @@ const FILES = [
   "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
   "apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx",
   "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx",
+  "apps/frontend/src/components/tasks/TasksTab.tsx",
+  "apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
+  "apps/frontend/src/components/shared/ValidationPanel.tsx",
+  "apps/frontend/src/components/users/UserActivityTab.tsx",
+  "apps/frontend/src/components/documents/VersionHistoryModal.tsx",
+  "apps/frontend/src/components/documents/PreviewModal.tsx",
 ];
 
 const DATE_ONLY = [
@@ -59,6 +65,11 @@ const DATE_ONLY = [
   "apps/frontend/src/components/dispatch/tabs/LdtDocumentsTab.tsx",
   "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
   "apps/frontend/src/pages/VendorDetail.tsx",
+  "apps/frontend/src/lib/oos-display.ts",
+  "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
+  "apps/frontend/src/pages/lists/LocationsListPage.tsx",
+  "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
+  "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx",
 ];
 
 const QUANTITY = [
@@ -77,6 +88,16 @@ const QUANTITY = [
   "apps/frontend/src/pages/Vendors.tsx",
   "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
   "apps/frontend/src/pages/settlements/CreatorMilesChoicePanel.tsx",
+  "apps/frontend/src/components/vendors/VendorProfileOverview.tsx",
+  "apps/frontend/src/components/FleetTable.tsx",
+  "apps/frontend/src/lib/odometerHonesty.ts",
+  "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
+  "apps/frontend/src/components/driver-profile/DriverLiveOverview.tsx",
+  "apps/frontend/src/components/CappedListNotice.tsx",
+];
+
+const MONEY_CENTS = [
+  "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
 ];
 
 const MONEY = [
@@ -120,6 +141,16 @@ for (const path of MONEY) {
   }
   if (/toLocaleString\(["']en-US["']/.test(src)) {
     fails.push(`${path}: must not money toLocaleString("en-US")`);
+  }
+}
+
+for (const path of MONEY_CENTS) {
+  const src = fs.readFileSync(path, "utf8");
+  if (!/formatUsdCents/.test(src)) {
+    fails.push(`${path}: must import/use formatUsdCents`);
+  }
+  if (/toLocaleString\(/.test(src)) {
+    fails.push(`${path}: must not money toLocaleString()`);
   }
 }
 

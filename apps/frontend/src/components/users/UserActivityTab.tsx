@@ -7,6 +7,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { SelectCombobox } from "../Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 interface UserActivityTabProps {
   operatingCompanyId: string;
@@ -24,9 +25,7 @@ const SOURCE_OPTIONS = [
 ];
 
 function formatWhen(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return formatDateTimeUS(value) || value;
 }
 
 type EventWithPayload = AuditEventListItem & {

@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~8:20 PM CT) — Cursor shared format wave (tasks/docs/fleet/cash-advances)
+- **PRIOR:** #28192 CRM/Drivers + ENG-21 BLOCKED tip.
+- **THIS:** TasksTab/NotificationLog/ValidationPanel/UserActivity/Docs Version+Preview datetime · oos-display/MilesRec/Locations/CashAdvances dates · FleetTable/odometerHonesty/VendorFuel/Driver mph/CappedListNotice qty · SettlementsSection money. Extended cursor-surfaces datetime guard.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-21 still BLOCKED (rate con not on file).
+
 ## OUTBOX (11-02-2026 ~8:00 PM CT) — Cursor CRM/Drivers house format + ENG-21 BLOCKED
 - **ENG-21 (load 13699 / Copamex):** BLOCKED — live Neon measure: delivery stop already `{ city: 'Bradley', state: 'IL', facility_name: 'Copamex' }`; `docs.files` for the load only has driver-instructions PDFs; load.notes say **"rate con not on file"**. No Edit Load — signed rate-con is not in the system (do not invent). Needs rate-con upload/find before document-decides close.
 - **THIS WAVE:** CustomerDetail/VendorDetail/Drivers/UnitDriverHistory/CoiTab/PortalUsers/DocumentAlerts/Vendors+Customers SyncPanels/FMCSA modal/FreeTimeDetention/Customers+Vendors KPI miles/CreatorMilesChoicePanel → house formatDateUS/formatDateTimeUS/formatQuantityTable. Extended `verify-cursor-surfaces-datetime-format` (already wired).
