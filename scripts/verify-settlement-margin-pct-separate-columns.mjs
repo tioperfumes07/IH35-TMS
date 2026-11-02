@@ -90,7 +90,7 @@ if (process.argv.includes("--selftest")) {
     ["setl recombines margin", withField("setl", (s) => s.replace(/render: r => <span className=\{r\.margin_cents < 0 \? "text-\[#991B1B\]" : undefined\}>\{fmt\(r\.margin_cents\)\}<\/span> \},/, 'render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },'))],
     ["setl drops pct testId", withField("setl", (s) => s.replace(/setl-tour-col-margin-pct/g, "gone"))],
     ["setl drops pct label", withField("setl", (s) => s.replace(/label: "Margin %"/g, 'label: "X"'))],
-    ["setl drops pct render", withField("setl", (s) => s.replace(/r\.margin_pct\.toFixed\(1\)\}%/g, '"x"}'))],
+    ["setl drops pct render", withField("setl", (s) => s.replace(/r\.margin_pct\.toFixed\(1\)\}%/g, '"x"}').replace(/formatQuantityTable\(r\.margin_pct,\s*1\)\}%/g, '"x"}'))],
     ["board drops pct testId", withField("board", (s) => s.replace(/tour-col-margin-pct/g, "gone"))],
     ["board drops pct key", withField("board", (s) => s.replace(/key: "tour_margin_pct"/g, 'key: "gone"'))],
     ["board drops pct render", withField("board", (s) => s.replace(/r\.load_margin_pct\.toFixed\(1\)\}%/g, '"x"}'))],
