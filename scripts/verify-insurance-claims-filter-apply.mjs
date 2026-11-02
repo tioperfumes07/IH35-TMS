@@ -19,6 +19,16 @@ function verify(source) {
   // BANK-F91279 leftover refuse — ClaimsTab page-scoped text token ratchet
   if (source.includes("text-[11px]")) failures.push(`${FILE}: leftover text-[11px]`);
   if (source.includes("#8A92AB") || source.includes("#334155")) failures.push(`${FILE}: leftover off-scale muted`);
+  // fill-not-shell — need-company early path uses BoardSection (not bare bordered div)
+  if (!source.includes('from "../../components/v3/BoardSection"')) {
+    failures.push(`${FILE}: must import BoardSection`);
+  }
+  if (!source.includes('testId="insurance-claims-need-company"')) {
+    failures.push(`${FILE}: need-company empty must be BoardSection (insurance-claims-need-company)`);
+  }
+  if (!source.includes('testId="insurance-claims-board"')) {
+    failures.push(`${FILE}: claims board BoardSection (insurance-claims-board) required`);
+  }
   return failures;
 }
 
@@ -47,7 +57,23 @@ if (process.argv.includes("--selftest")) {
     console.error(`FAIL leftover plant escaped: ${leftover.join("; ")}`);
     process.exit(1);
   }
-  console.log(`PASS verify-insurance-claims-filter-apply selftest: ${caught}/${mutations.length} planted defects caught + leftover plant`);
+  const boardPlant = verify(
+    source
+      .replace(/from ["']\.\.\/\.\.\/components\/v3\/BoardSection["']/g, 'from "../../components/v3/Stripped"')
+      .replace(/testId="insurance-claims-need-company"/g, 'testId="x"')
+      .replace(/testId="insurance-claims-board"/g, 'testId="y"'),
+  );
+  if (
+    !boardPlant.some((e) => e.includes("BoardSection")) ||
+    !boardPlant.some((e) => e.includes("insurance-claims-need-company")) ||
+    !boardPlant.some((e) => e.includes("insurance-claims-board"))
+  ) {
+    console.error(`FAIL BoardSection plant escaped: ${boardPlant.join("; ")}`);
+    process.exit(1);
+  }
+  console.log(
+    `PASS verify-insurance-claims-filter-apply selftest: ${caught}/${mutations.length} planted defects caught + leftover + BoardSection plant`,
+  );
 } else {
   console.log("PASS verify-insurance-claims-filter-apply");
 }
