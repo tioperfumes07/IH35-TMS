@@ -14,14 +14,11 @@ See `docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md`.
 
 Superseded: every earlier CURRENT block.
 
-## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.2
-**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.2 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
-
-ENG-13 apply under AUTH-473 after #27975 · prove the 5 CODED-QUEUED rows live (ENG-19/55/62, LEAD-443.319, AUTH ledger) · ENG-22 booking prevention guard · ENG-36 re-measure · module ACCT-R-04 (smoke env on Render). Stop ENG-60 (Claude) and ENG-34 (CC-1).
-
-**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
+## CURRENT (11-02-2026 ~12:20 PM CT) — Cursor ROUND 7.2 ship
+ENG-13 AUTH-473 CLOSED DONE-LIVE (13595 customer 445; trailer_source NULL 0/194). ENG-22 prevention: Book/Edit refuse `trailer_equipment_type_mismatch` or re-derive from company trailer; guard 18930 active mismatches 0 (cancelled 13593/13634/13635 wait AUTH). CODED-QUEUED → DONE-LIVE: ENG-19/55/62, LEAD-443.319, LEAD-AUTH ledger. Stop ENG-60/34. Next: fill-not-shell remaining module shells + ACCT-R-04 Render dashboard UUIDs (code already declares sync:false).
 
 Superseded: every earlier CURRENT block.
+
 
 ## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
 

@@ -8,10 +8,10 @@
    "title": "Escrow with a balance always visible (active or inactive driver); 11 orphan TEST escrow accounts deleted; DB refuses deleting a driver/vendor that still has escrow",
    "seat": "LEAD",
    "round": "443.319",
-   "status": "CODED-QUEUED",
+   "status": "DONE-LIVE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "938da431f6; AUTH-462 prod COMMITTED 11 deleted; trigger refused on fork"
+   "evidence": "LIVE 11-02 CT Cursor: tip #27596 (91ba4c9cd7) on main; USMCA escrow_accounts=33; orphan holder_id links=0; AUTH-462 CONSUMED (11 deleted)."
   },
   {
    "id": "ENG-19",
@@ -19,10 +19,10 @@
    "title": "ENG-19 Company settlement report + Trip Profitability counted fuel twice (fuel fill's own expense); 61 of 81 settlements negative -> 23; net -$177,024.87 -> +$113,862.11; trips negative 66 of 92 -> 25",
    "seat": "LEAD",
    "round": "443.321",
-   "status": "CODED-QUEUED",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "scripts/verify-trip-profitability-single-load-no-double-count.mjs",
    "deadline_utc": null,
-   "evidence": "2a4fbbc2d3; parity 81/81 to the cent; guard red on old engines"
+   "evidence": "LIVE 11-02 CT Cursor: verify-trip-profitability-single-load-no-double-count PASS (selftest 2/2 + production guard all 5 dollar metrics); tip includes #15921 f66436af7f single-load-trip double-count fix."
   },
   {
    "id": "LEAD-AUTH ledger",
@@ -30,10 +30,10 @@
    "title": "AUTH-461 / AUTH-462 recorded in OWNER-AUTHORIZATIONS.md with owner quotes and audit counts",
    "seat": "LEAD",
    "round": "AUTH ledger",
-   "status": "CODED-QUEUED",
+   "status": "DONE-LIVE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "claude/lead-auth-461-462-ledger"
+   "evidence": "LIVE 11-02 CT Cursor: AUTH-461 CONSUMED (3 duplicate settlements deleted); AUTH-462 CONSUMED (11 orphan TEST escrow accounts deleted). Both recorded with owner quotes + audit counts on main."
   },
   {
    "id": "LEAD-ENG-21",
@@ -184,10 +184,10 @@
    "title": "ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents",
    "seat": "CLAUDE-LEAD",
    "round": "443.323",
-   "status": "CODED-QUEUED",
+   "status": "DONE-LIVE",
    "guard": "scripts/verify-loads-trailer-source-recorded.mjs (step 18913)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 11-02 CT (Claude Lead, read-only Neon): USMCA live loads 194; trailer_source NULL = 1 (13595); customer loads without non_owned_trailer = 0; trailer 445 in mdata.equipment (any entity) = 0; load customer Paypa Transport. OWNER 11-02: 'THEN IT IS A BROKER TRAILER.' -> AUTH-473 (OPEN). Fix via Edit Load engine updateDispatchLoad trailer_choice {customer,'445'} (precedent 443.203 load 13689). Equipment type unchanged (no document states 445 body type). Remaining: Cursor 7.2-A --apply; guard FAIL(1)->PASS(0)."
+   "evidence": "LIVE 11-02 CT Cursor APPLY AUTH-473 CLOSED: load 13595 trailer_source=customer, trailer_number=445, non_owned_trailer_id=70a1fe5f-7e90-4185-83e7-08ae1e2711b7, counterparty Paypa Transport, equipment_code DRY_VAN unchanged, TB identical. verify-loads-trailer-source-recorded PASS — 194 USMCA live loads, trailer_source NULL 0, customer without trailer row 0. No fleet row invented."
   },
   {
    "id": "ENG-14",
@@ -251,9 +251,9 @@
    "seat": "Cursor",
    "round": "ENG",
    "status": "PARTIAL",
-   "guard": "scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts",
+   "guard": "scripts/verify-booked-trailer-matches-company-equipment.mjs (step 18930); ops 2026-10-25-lead-load-trailer-type-from-evidence.mts",
    "deadline_utc": null,
-   "evidence": "LIVE 10-28 CT: mix REFRIGERATED_VAN=103 FLATBED=61 DRY_VAN=30. Residual DRY_VAN booked + Reefer assigned: 13593→10219, 13634→10870, 13635→10218. AUTH-470 CLOSED — need owner AUTH to --apply existing ops."
+   "evidence": "LIVE 11-02 CT Cursor: active USMCA mismatches 0 (REEFER=103/Reefer, FLATBED=61/Flatbed, DRY_VAN=18/DryVan). Residual 3 are cancelled only: 13593→10219, 13634→10870, 13635→10218. PREVENTION shipped: Book/Edit Load refuse trailer_equipment_type_mismatch or re-derive from company trailer. Cancelled residual --apply waits owner AUTH (AUTH-470 CLOSED)."
   },
   {
    "id": "ENG-23",
@@ -712,10 +712,10 @@
    "title": "ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live",
    "seat": "LEAD",
    "round": "443.327",
-   "status": "CODED-QUEUED",
+   "status": "DONE-LIVE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "eb338ebe94; reconciler 42/42, popup 5/5"
+   "evidence": "LIVE 11-02 CT Cursor: tip #27655 (f1d306eb99) on main — DriftAlertPopup + reconciler I9 shipped; FE components/drift/DriftAlertPopup.tsx present."
   },
   {
    "id": "ENG-25b",
@@ -778,10 +778,10 @@
    "title": "ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0",
    "seat": "LEAD",
    "round": "443.335",
-   "status": "CODED-QUEUED",
-   "guard": null,
+   "status": "DONE-LIVE",
+   "guard": "scripts/verify-dispatched-load-has-stop-stamps.mjs",
    "deadline_utc": null,
-   "evidence": "a74b63e99b; prod applied: 13700 dispatched→delivered_pending_docs, 13699 in_transit→delivered_pending_docs"
+   "evidence": "LIVE 11-02 CT Cursor: tip #27586 (6503eac681) on main; 13699+13700 status=delivered_pending_docs; verify-dispatched-load-has-stop-stamps PASS (0 known stale). Residual separate: 13687+13688 delivery actual_arrival_at still NULL (not ENG-62 named pair)."
   },
   {
    "id": "ENG-63",

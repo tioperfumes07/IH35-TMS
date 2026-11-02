@@ -36,7 +36,18 @@ export type ResolvedTrailerChoice =
   | { kind: "interchange"; non_owned_trailer_id: string }
   | { kind: "none" };
 
-export type TrailerChoiceRefusal = { error: "trailer_choice_required" | "trailer_not_in_company_fleet" | "customer_trailer_number_required" | "interchange_trailer_not_found" };
+export type TrailerChoiceRefusal = {
+  error:
+    | "trailer_choice_required"
+    | "trailer_not_in_company_fleet"
+    | "customer_trailer_number_required"
+    | "interchange_trailer_not_found"
+    /** ENG-22: company trailer body type ≠ booked load_trailer_equipment (e.g. DRY_VAN on a Reefer). */
+    | "trailer_equipment_type_mismatch";
+  booked_code?: string;
+  trailer_code?: string;
+  equipment_number?: string;
+};
 
 /** Normalise a customer trailer number the way decidePrintedTrailers keys it (trimmed, upper case). */
 export function normalizeTrailerNumber(raw: string | null | undefined): string {

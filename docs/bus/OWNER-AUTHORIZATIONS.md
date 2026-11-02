@@ -8183,7 +8183,7 @@ issued_by: Owner (Jorge), recorded by Claude (Lead)
 owner_quotes: "THEN IT IS A BROKER TRAILER." (owner 2026-11-02 ~11:14 AM CT, answering the load 13595 / Trailer 445 question — supersedes the 10-27 Lead note that called 445 a company trailer); "you have full permissions and authorization … we need to complete the full engines" (owner 2026-11-02 11:25 AM CT)
 scope: USMCA load 13595 only — record trailer 445 as a broker (customer) trailer through the Edit Load engine (updateDispatchLoad trailer_choice {kind:"customer", trailer_number:"445"}): one dispatch.non_owned_trailers row (counterparty = the load's customer), mdata.loads.trailer_source = 'customer'. No fleet equipment row created. No money table touched (TB identical). Evidence: Company + Driver Settlement 5816 "Trk: T148 / Trlr: 445".
 action: OWNER_AUTH_ID=AUTH-473 DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-02-claude-eng13-load-13595-broker-trailer-445.mts --apply
-rehearsal: pending — dry run on prod (rolled back) before apply; result recorded below
-result: pending
+rehearsal: 2026-11-02 ~12:10 PM CT Cursor dry run on prod — ROLLED BACK. before trailer_source NULL (1 USMCA NULL); after trailer_source=customer, trailer_number=445, counterparty=Paypa Transport, equipment_code stayed DRY_VAN, TB identical, NULL 1→0.
+result: 2026-11-02 ~12:12 PM CT Cursor APPLY COMMITTED on prod. non_owned_trailer_id=70a1fe5f-7e90-4185-83e7-08ae1e2711b7; trailer_source=customer; books identical true. verify-loads-trailer-source-recorded PASS — 194 USMCA live loads, trailer_source NULL 0, customer loads without trailer row 0.
 expires_at: 2026-11-09T00:00:00Z
-status: OPEN
+status: CLOSED

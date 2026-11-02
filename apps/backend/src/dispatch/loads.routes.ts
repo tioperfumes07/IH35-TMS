@@ -1951,7 +1951,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reply.send(result);
     } catch (error) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
-      if (error instanceof TrailerChoiceRefusedError) return reply.code(422).send({ error: error.code });
+      if (error instanceof TrailerChoiceRefusedError) {
+        return reply.code(422).send({ error: error.code, ...error.details });
+      }
       if (error instanceof LoadEditLockedError) {
         return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
       }
