@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~4:45 PM CT) — Cursor BUILD-FIRST shells wave (owner: engines first, no match)
+- **PRIOR:** #28137 Relay wallet · #28138 Fuel Home diesel fail-loud.
+- **THIS WAVE:** #28144 Fleet Covered + Roster Integrity BoardSection/U18 + RL CSV formatUsdCents · #28145 Coverage Gap + Type Catalog BoardSection/U18 · #28146 ENG-22 dry-run per-load listing + settlements/escrow/fuel CSV house money · #28148 Insurance Policies + Landing BoardSection/U18 · #28149 Faro Import (drop dark shell) + 1090 U18 back.
+- **NEXT:** more Cursor shells/engines; ENG-21 needs live rate-con; ENG-22 apply waits AUTH; Dreamline/match deferred (owner BUILD-FIRST). No match/reconcile.
+
 ## OUTBOX (11-02-2026 ~11:10 PM CT) — Cursor Relay wallet drill + deposit format guard
 - **PRIOR:** #28136 Fleet Transfers board · #28134 Factoring debtor behavior.
 - **THIS WAVE:** RelayWallet KPI→day drill · doc EntityLink/inbox links · formatUsdCents · relay-deposit-format render-call plant.
