@@ -447,6 +447,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // same URL-deep-link/staged-filter convention as customer_id/load_id above.
   const dateFromFromUrl = searchParams.get("date_from")?.trim() ?? "";
   const dateToFromUrl = searchParams.get("date_to")?.trim() ?? "";
+  /** Purchase Report debtor multi-select (comma-separated customer ids). Independent of list deep-link customer_id. */
+  const prCustomerIdsFromUrl = searchParams.get("pr_customer_ids")?.trim() ?? "";
   // 443.171 E — a purchase clicked in Payments to You opens HERE, in the Submit to Factor form, in Edit mode.
   const editPurchaseIdFromUrl = searchParams.get("edit_purchase_id")?.trim() ?? "";
 
@@ -654,7 +656,23 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     queryFn: () => listFactoringPurchaseLines(companyId, { from: deepLinkDateFrom, to: deepLinkDateTo }),
     enabled: Boolean(companyId),
   });
-  const purchaseReportLines: FactoringPurchaseReportLine[] = purchaseLinesQuery.data?.lines ?? [];
+  const purchaseReportDebtorIds = useMemo(
+    () => [...new Set(prCustomerIdsFromUrl.split(",").map((id) => id.trim()).filter(Boolean))],
+    [prCustomerIdsFromUrl],
+  );
+  const setPurchaseReportDebtors = (value: string | null) => {
+    const p = new URLSearchParams(searchParams);
+    if (value) p.set("pr_customer_ids", value);
+    else p.delete("pr_customer_ids");
+    setSearchParams(p, { replace: true });
+  };
+  const allPurchaseReportLines: FactoringPurchaseReportLine[] = purchaseLinesQuery.data?.lines ?? [];
+  // Filter-by-Debtor (FAC-09a): client filter on purchased lines — empty selection = all debtors.
+  const purchaseReportLines: FactoringPurchaseReportLine[] = useMemo(() => {
+    if (purchaseReportDebtorIds.length === 0) return allPurchaseReportLines;
+    const want = new Set(purchaseReportDebtorIds);
+    return allPurchaseReportLines.filter((l) => l.customer_id && want.has(l.customer_id));
+  }, [allPurchaseReportLines, purchaseReportDebtorIds]);
   // Summary = the SAME lines grouped by purchase (one row per Faro purchase); Detail = one row per invoice.
   const purchaseReportSummary = useMemo(() => {
     const by = new Map<string, { purchase_id: string; purchase_display_id: string; purchase_date: string; invoice_count: number; debtorSet: Set<string>; debtors: string; gross_cents: number; escrow_cents: number; cash_cents: number; fee_cents: number; net_advance_cents: number }>();
@@ -2143,15 +2161,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         })()
       ) : null}
 
-      {/* FAC-09a Purchase Report (real, this pass): built on the SAME agingRows (recourse-pipeline)
-          + feesQuery history already fetched for Aging/Fees Paid -- no new backend query. Of the
-          doc's 22 real-portal columns, 9 have a real backing field in this schema (Debtor, Date,
-          Inv #, Other Ref, Purchase, Cash Rsv, Fees, Net Adv, ChgBack); the other 13 (PO, Escrow
-          Rsv, Discount, Wire Fee, Rebate Income, Returned Item Fee, Schedule Fee, Shipping Fee,
-          Cash Advance Fee, Processing Fee, Dispatch, Receipts, Sch Fee) have no backing field at
-          all -- rendered an honest "—" in every row, never fabricated. "Display Fee Detail" /
-          "Include Non-Purchased Invoices" checkboxes and "Filter by Debtor" are not wired this
-          pass (noted in-page, not silently dropped). */}
+      {/* FAC-09a Purchase Report: purchase-lines engine + debtor multi-select (?pr_customer_ids=).
+          Columns without a backing field stay honest "—". "Include Non-Purchased Invoices" still
+          needs a non-purchased invoice source (not invented here). */}
       {show("purchase_report") ? (
         <div className="space-y-3">
         {/* ROUND 443.280 / FINAL-3 — r315/r326 panels on Purchase report as BoardSections (not always-on home chrome). */}
@@ -2176,6 +2188,17 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 Purchase report — {purchaseReportView === "summary" ? "by purchase" : "by invoice"}
               </span>
               {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
+              {companyId ? (
+                <EntityMultiSelect
+                  kind="customer"
+                  operatingCompanyId={companyId}
+                  value={prCustomerIdsFromUrl || null}
+                  onChange={setPurchaseReportDebtors}
+                  placeholder="All debtors"
+                  ariaLabel="Filter by Debtor"
+                  dataTestId="factoring-purchase-report-debtor-filter"
+                />
+              ) : null}
               {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
             </div>
           }
