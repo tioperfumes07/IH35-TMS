@@ -5,6 +5,8 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.4
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.4 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+ADDED 12:55 PM CT: you BUILD the Accounting UI register rows (the register names you owner): U1–U7, U10, U11, U13, U14, U16, U17, U21–U24, U26 — plus your verify items 7.4-A/C/D/E, CASH-T03, BANK-TIEOUT-01 measure, 4 Safety HOLDs.
+
 **7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
 
 UPDATE 12:40 PM CT: 1090 $10,446.00 CLOSED (your #27989 — legitimate). ENG-13 DONE-LIVE by Cursor — re-measure 0/194 for 7.4-E. Keep 7.4-A/C/D.

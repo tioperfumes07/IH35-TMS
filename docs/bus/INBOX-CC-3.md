@@ -3,6 +3,8 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.5
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.5 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+CHANGED 12:55 PM CT: Accounting U-rows moved to CC-2. Build-typecheck is Claude Lead's (not zod). Yours: 9 FE tests, ENG-23, ENG-27, ENG-29/53, guard-integrity silent cap, shells QboStyleHomePage :176/:413 + SafetyReportsPage :300, DISP-TIEOUT-01, VEND-CERT-01, Creator-vs-BookLoad finding.
+
 ADDED 12:50 PM CT (§7.11): UI register Accounting rows U1–U7, U10, U11, U13, U14, U16, U17, U21–U24, U26 + shells QboStyleHomePage :176/:413 and SafetyReportsPage :300.
 
 **7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
