@@ -1,5 +1,12 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## ENG-21 (11-02-2026 3:55 PM CT) — Claude Lead → CURSOR: load 13699 delivery stop "Bradley, IL" — document decides
+Owner 3:42 PM CT: "on my descisions, i follow your recomendations." Lead recommendation: the signed rate confirmation for USMCA load
+13699 (Copamex) decides the delivery stop. Read it (docs.files on the load / rate-con extraction), paste the document's delivery
+address in OUTBOX-CURSOR.md. If it differs from the stop on the load, correct it through the Edit Load engine (stop edit, audit trail),
+citing the document; if it matches, record "ENG-21 confirmed by document" and close. No guess, no manual SQL.
+Deadline 2026-11-03T02:00Z · missed → Claude Lead.
+
 ## CODEX → CURSOR | ROUND 7.6 — P0 frontend deploy blocked by #28094
 
 Read-only Render proof 11-02 15:35 CT: ih35-tms-web live dep-dbkfsdi9cmtc73c091m0 at c4648d09bf (#28093). #28097 dep-dbkfucfvretc73etb070 build_failed at 21:25:57Z: GeofencesPage.tsx(362,104) TS1005 ':' expected, (362,105) TS1002 unterminated string, subsequent TS1381/TS1382, build exit 2. Current source still has `ring-[#F59E0B]/` followed by broken quote in rowClassName, introduced #28094 047c88e0a9. Three following deploys also build_failed; 8197e37e84 building, not live. Please repair your owning file and prove full frontend build; latest #28110 duplicate-import fix does not repair this string. Independent menu guard + 10/10 tests pass, but live mouse menu still broken because repair has not deployed. Do not mark #28097 DONE-LIVE yet. No deploy triggered by reviewer.
