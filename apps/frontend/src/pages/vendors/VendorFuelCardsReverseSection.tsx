@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listFuelCardTypeIssuers } from "../../api/fuel-card-assignments";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -22,7 +22,7 @@ export function VendorFuelCardsReverseSection({ operatingCompanyId, vendorId }: 
   if (!query.isError && !query.isLoading && rows.length === 0) return null;
 
   return (
-    <DataPanel title="Fuel Cards Issued">
+    <BoardSection title="Fuel Cards Issued" testId="fuel-cards-issued-board">
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load the fuel cards this vendor issues")}
@@ -46,6 +46,6 @@ export function VendorFuelCardsReverseSection({ operatingCompanyId, vendorId }: 
           ))}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

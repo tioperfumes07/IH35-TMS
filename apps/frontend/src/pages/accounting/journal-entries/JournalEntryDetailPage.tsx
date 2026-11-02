@@ -11,7 +11,7 @@ import {
 } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { PostingGrid } from "../../../components/accounting/PostingGrid";
@@ -293,7 +293,7 @@ export function JournalEntryDetailPage() {
         }}
       />
 
-      <DataPanel title="Entry Header">
+      <BoardSection title="Entry Header" testId="entry-header-board">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
           <span className="text-xs text-gray-900">{formatDateUS(entry.entry_date)}</span>
@@ -341,9 +341,9 @@ export function JournalEntryDetailPage() {
             </span>
           </DataPanelRow>
         ) : null}
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Source links">
+      <BoardSection title="Source links" testId="source-links-board">
         {sourceLinksQuery.isError ? (
           <p className="text-xs text-red-600">Could not load source links.</p>
         ) : sourceRows.length === 0 ? (
@@ -358,11 +358,11 @@ export function JournalEntryDetailPage() {
             ))}
           </ul>
         )}
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Postings">
+      <BoardSection title="Postings" testId="postings-board">
         <PostingGrid postings={postings} storageKey="journal-entry-detail-postings" />
-      </DataPanel>
+      </BoardSection>
     </AccountingSubNavWrapper>
   );
 }

@@ -17,7 +17,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { WorkOrderCopyLinks } from "../../components/accounting/WorkOrderCopyLinks";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -353,7 +353,7 @@ export function BillDetailPage() {
         }}
       />
 
-      <DataPanel title="Bill">
+      <BoardSection title="Bill" testId="bill-board">
         {billVendorDrillId(bill) || bill.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
@@ -463,9 +463,9 @@ export function BillDetailPage() {
           <span className="text-xs font-semibold text-gray-600">Created</span>
           <span className="text-xs text-gray-900">{formatDateUS(bill.created_at)}</span>
         </DataPanelRow>
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Bill lines">
+      <BoardSection title="Bill lines" testId="bill-lines-board">
         <div data-testid="bill-detail-lines">
         <ParityTable<BillDetailLine>
           columns={lineColumns}
@@ -477,9 +477,9 @@ export function BillDetailPage() {
           storageKey="bill-detail-lines"
         />
         </div>
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Payments on this bill">
+      <BoardSection title="Payments on this bill" testId="payments-on-this-bill-board">
         <ParityTable<BillPayment>
           columns={paymentColumns}
           rows={payments}
@@ -492,9 +492,9 @@ export function BillDetailPage() {
           sortDirection={sortDirection}
           onSortChange={onSortChange}
         />
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Vendor credits">
+      <BoardSection title="Vendor credits" testId="vendor-credits-board">
         <div className="space-y-2" data-testid="bill-detail-vendor-credit-applications">
           {vendorCreditApplications.length === 0 ? (
             <p className="text-xs text-[#6B7280]">No vendor credits applied to this bill.</p>
@@ -515,7 +515,7 @@ export function BillDetailPage() {
             ))
           )}
         </div>
-      </DataPanel>
+      </BoardSection>
       <JournalPostingsPanel sourceTransactionType="bill" sourceTransactionId={id} operatingCompanyId={selectedCompanyId} />
       <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill" documentId={id} />
     </AccountingSubNavWrapper>

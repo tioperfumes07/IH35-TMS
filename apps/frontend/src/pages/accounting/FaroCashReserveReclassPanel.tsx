@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashReserveReclass, postCashReserveReclass } from "../../api/factoring-cash-reserve-reclass";
 import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsdCents } from "../../lib/money";
 
@@ -21,7 +21,7 @@ export function FaroCashReserveReclassPanel({ companyId, period }: { companyId: 
   if (!s || !s.register_bound || s.state === "no_deficit") return null;
 
   return (
-    <DataPanel title="Faro Cash Reserve deficit — presented as Due to Faro (DR 1235 / CR 2156)">
+    <BoardSection title="Faro Cash Reserve deficit — presented as Due to Faro (DR 1235 / CR 2156)" testId="faro-cash-reserve-deficit-presented-as-due-to-fa-board">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#1F2A44]" data-testid="faro-cash-reserve-reclass">
         <span className="tabular-nums">
           1235 balance at {s.period_end}: {s.balance_cents == null ? "—" : formatUsdCents(s.balance_cents)} · deficit {formatUsdCents(s.deficit_cents)} ·{" "}
@@ -60,6 +60,6 @@ export function FaroCashReserveReclassPanel({ companyId, period }: { companyId: 
         ) : null}
       </div>
       {error ? <p className="mt-2 text-xs text-red-700" role="alert">{error}</p> : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listPartsInventory } from "../../api/maintenance";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -14,7 +14,7 @@ export function VendorPartsInventoryReverseSection({ operatingCompanyId, vendorI
   // ROUND 297 audit (reverse): a voided purchase ("[VOID] " description, the parts catalog's own void marker) leaves.
   const rows = (query.data ?? []).filter((r) => !String(r.part_description ?? "").startsWith("[VOID] "));
   return (
-    <DataPanel title="Purchased Parts Inventory">
+    <BoardSection title="Purchased Parts Inventory" testId="purchased-parts-inventory-board">
       {query.isError ? <ListErrorBanner message={userFacingApiError(query.error, "Couldn't load purchased inventory for this vendor")} onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="text-xs text-gray-500">Loading purchased inventory…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No parts inventory purchases from this vendor.</p> : null}
@@ -28,6 +28,6 @@ export function VendorPartsInventoryReverseSection({ operatingCompanyId, vendorI
           ))}
         </div>
       ) : null}
-    </DataPanel>
+    </BoardSection>
   );
 }
