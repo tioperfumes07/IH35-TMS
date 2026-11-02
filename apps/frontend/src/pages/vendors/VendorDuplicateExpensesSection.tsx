@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listExpenseDuplicates } from "../../api/accounting";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -30,7 +30,7 @@ export function VendorDuplicateExpensesSection({ operatingCompanyId, vendorId }:
   if (!query.isLoading && !query.isError && groups.length === 0) return null;
 
   return (
-    <DataPanel title="Possible duplicate expenses">
+    <BoardSection title="Possible duplicate expenses" testId="possible-duplicate-expenses-board">
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load duplicate expenses for this vendor")}
@@ -65,6 +65,6 @@ export function VendorDuplicateExpensesSection({ operatingCompanyId, vendorId }:
           ))}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

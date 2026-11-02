@@ -10,7 +10,7 @@ import {
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
@@ -306,7 +306,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   );
 
   return (
-    <DataPanel title={`COI Requests · ${customerName}`}>
+    <BoardSection title={`COI Requests · ${customerName}`} testId="customer-coi-requests-board">
       {isFullPage ? (
         <div className="mb-3 flex items-center justify-between">
           <div className="text-xs text-gray-600">Track COI requests and responses per customer.</div>
@@ -543,6 +543,6 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           </div>
         </Modal>
       ) : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~2:05 PM CT) — Cursor BoardSection wave (accounting/vendors/customers)
+- **SHIPPED:** #28004 Q8 emailer null-Next; shells12 DataPanel→BoardSection across vendor reverse sections, accounting detail panels, COI/PortalUsers, BookLoad validation, pending deductions.
+- **NEXT:** remaining master-detail shells (CustomerDetail/VendorDetail/Drivers/Users/Dispatch); U12/U18/U28–U30; no match/Dreamline.
+
 ## OUTBOX (11-02-2026 ~1:50 PM CT) — Cursor Q8 emailer + BoardSection fill
 - **SHIPPED:** #28003 SubscriptionManager BoardSection; shells11 — ensureActiveSubscriptionNextScheduledAt in runDue (null-Next seed self-heal) + FE names live emailer; Insurance Claims/PaymentSchedule, FactoringDetail, ServiceLocation, ComingSoon → BoardSection.
 - **VERIFY:** vitest scheduled.test 11/11; verify-subscription-manager-delivery-banner normal+selftest; insurance claims/payment guards PASS.

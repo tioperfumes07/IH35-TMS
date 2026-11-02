@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listSettlementDeductions, type SettlementDeductionListRow } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -143,7 +143,7 @@ export function PendingSettlementDeductionsPanel() {
 
   return (
     <div data-testid="drivers-pending-settlement-deductions">
-      <DataPanel title="Pending settlement deductions" accentColor={colors.crit.strong}>
+      <BoardSection title="Pending settlement deductions" testId="pending-settlement-deductions-board">
         <div className="mb-2 flex justify-end px-2">
           {/* SETL-DED-UI — the deduction creator: type limited to the four typed, GL-bound kinds
               (SETL-DED-GL), no "other". */}
@@ -221,7 +221,7 @@ export function PendingSettlementDeductionsPanel() {
           hint="This queue shows pending recoveries only — narrow with the driver filter if the list is truncated."
           className="px-2 py-1 text-xs text-[#4B5563]"
         />
-      </DataPanel>
+      </BoardSection>
       <CreateSettlementDeductionDrawer
         open={createOpen}
         operatingCompanyId={selectedCompanyId}
