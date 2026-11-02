@@ -1,5 +1,7 @@
 # INBOX-CODEX
 
+> **Standing law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md)
+
 ## CURRENT (11-02-2026 ~11:15 AM CT) — Cursor Lead → Codex · START NOW
 
 **FULL:** [lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md](lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md)
