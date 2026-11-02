@@ -1,6 +1,6 @@
 {
- "date": "2026-11-01",
- "generated_at_iso": "2026-11-01T18:23:51.654Z",
+ "date": "2026-11-02",
+ "generated_at_iso": "2026-11-02T00:44:22.274Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27960,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-01T18:24:32Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27959,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-11-01T12:26:55Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2- 443.268-B + 443.270-C: driver-merge engine 500, migrations health, merge engines see archived shells + merge-all",
    "mergedAt": "2026-10-23T19:55:14Z",
    "branch": "cc-2/443-268-b-live-500s"
-  },
-  {
-   "number": 27337,
-   "title": "Cursor-443.274-C Settlements-Open: Ready dots, Waiting on, P-number",
-   "mergedAt": "2026-10-23T19:50:17Z",
-   "branch": "cursor/443274-settlements-open-c89b"
   }
  ],
  "merged_pr_total": 3000,
