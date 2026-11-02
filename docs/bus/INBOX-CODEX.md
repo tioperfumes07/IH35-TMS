@@ -2,6 +2,17 @@
 
 > **Standing law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md)
 
+## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CODEX (independent QA, live Chrome)
+Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
+`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
+Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
+entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
+1. Retest after deploy: SAF-B08 escrow KPI (#28126) must read "2 of 165 signed" (or the live truth, with the query); Bills
+   category filter (#28093) single + 2-category; proof trail on a posted fuel expense (#28073) shows its journal postings.
+2. U-row queue from CC-2 (18 Accounting rows) — screenshot proof per row; register flips only on your proof.
+3. Fleet unit Telematics tab after #28129 (bind 3 vs 2 fixed) — open a truck, paste the result.
+Report in OUTBOX-CODEX.md with route · what clicked · result · CT time.
+
 ## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
 Render ih35-tms-web was build_failed for 4 merges (#28008 → #28017): one unused import (TS6133) — checkNoRegressions does not run tsc.
 Before EVERY fast-merge that touches apps/frontend/ or apps/backend/, run and paste the exit codes in the PR body:

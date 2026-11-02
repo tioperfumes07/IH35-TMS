@@ -68,8 +68,30 @@ if (leftoverLive.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["mile-zero", { ...source, table: source.table.replace('stop.mile_marker == null ? "—" : Number(stop.mile_marker)', "Number(stop.mile_marker ?? 0)") }],
-    ["gallons-zero", { ...source, table: source.table.replace('gallons == null ? "—" : Number(gallons)', "Number(gallons ?? 0)") }],
+    [
+      "mile-zero",
+      {
+        ...source,
+        table: source.table.includes('stop.mile_marker == null ? "—" : formatQuantityTable(Number(stop.mile_marker)')
+          ? source.table.replace(
+              'stop.mile_marker == null ? "—" : formatQuantityTable(Number(stop.mile_marker), 0)',
+              'formatQuantityTable(Number(stop.mile_marker ?? 0), 0)',
+            )
+          : source.table.replace('stop.mile_marker == null ? "—" : Number(stop.mile_marker)', "Number(stop.mile_marker ?? 0)"),
+      },
+    ],
+    [
+      "gallons-zero",
+      {
+        ...source,
+        table: source.table.includes('gallons == null ? "—" : formatQuantityTable(Number(gallons)')
+          ? source.table.replace(
+              'gallons == null ? "—" : formatQuantityTable(Number(gallons), 1)',
+              "formatQuantityTable(Number(gallons ?? 0), 1)",
+            )
+          : source.table.replace('gallons == null ? "—" : Number(gallons)', "Number(gallons ?? 0)"),
+      },
+    ],
     ["plot-at-origin", { ...source, diagram: source.diagram.replace("if (stop.mile_marker == null) return [];", "") }],
     ["diagram-gallons-zero", { ...source, diagram: source.diagram.replace('(stop.gallons_added ?? stop.gallons) == null ? "—"', 'stop.gallons_added ?? stop.gallons ?? 0') }],
     ["distance-contract-required", { ...source, api: source.api.replace("total_distance_miles: number | null", "total_distance_miles: number") }],

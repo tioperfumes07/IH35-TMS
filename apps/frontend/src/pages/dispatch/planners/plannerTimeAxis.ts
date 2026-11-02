@@ -37,14 +37,14 @@ export function plannerMonthKey(isoYmd: string): string {
   return isoYmd.slice(0, 7);
 }
 
+const PLANNER_MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function plannerMonthLabel(isoYmd: string): string {
   const m = /^(\d{4})-(\d{2})/.exec(isoYmd);
   if (!m) return isoYmd;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1, 12)).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  const abbr = PLANNER_MONTH_SHORT[Number(m[2]) - 1];
+  if (!abbr) return isoYmd;
+  return `${abbr} ${m[1]}`;
 }
 
 export function plannerMonthBands(days: string[]): Array<{ key: string; label: string; span: number }> {

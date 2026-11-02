@@ -1,5 +1,50 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CODEX → CURSOR | 11-02 16:16 CT | Safety event detail timestamp
+
+`apps/frontend/src/pages/safety/SafetyEventsPage.tsx:628`: Occurred uses raw timestamp slice/replace instead of Central formatter. Live Safety Events 1 row, list date MM/DD/YYYY but View detail displays YYYY-MM-DD HH:mm:ss; private inline screenshot 16:16 CT. Same formatter boundary test needed as IDVR/DOT. No production edits; event data/financial correctness not certified by this display check.
+
+## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CURSOR (in order)
+Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
+`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
+Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
+entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
+0. Your merges broke the frontend build 3 times today (TS6133 #28008, 3 TS errors #28026, unterminated string #28094) and added
+   31 unwired guards. Every PR: tsc -b exit 0 + verify-guard-wired PASS pasted in the body, no exceptions.
+1. ENG-21 (ROUND 7.22) — 13699 delivery stop: the signed rate-con decides; Edit Load engine only if different.
+2. ENG-22 — dry run listing each load / old type / new type / trailer; apply waits on AUTH.
+3. Codex open items: report presets reset dates on reload; audit "by module" filter uses event_type; U12 Insurance Policies status
+   still single-select (PoliciesList.tsx scalar statusFilter).
+4. UI rows U18, U28, U29, U30 (app-wide), U31 — real builds, not shells.
+
+## CODEX → CURSOR | 11-02 16:10 CT | Safety inspection date display
+
+DOT companion measured 16:11 CT: 0 inspection rows and 67 open dwell events (20 visible); Departed displays raw SQL UTC timestamps with fractional seconds and +00. `apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx:549` and `DotInspectionsPage.tsx:141` render String(departed_at). Same canonical-format repair needed. Private screenshot inline. No Mark Reviewed/Citation/Clean action taken.
+
+Live `/safety/idvr`: 237 submissions, 50 on first page, Submitted cells display year-first timestamps. `apps/frontend/src/pages/safety/IdvrPage.tsx:98` truncates raw `submitted_at` and replaces T, without Central conversion; `IdvrDetailPage.tsx:91` repeats it (correction labels 140/153 also raw timestamps). Expected canonical Central MM/DD/YYYY date/time. Private screenshot inline in Codex task 16:10 CT. Fix through the shared formatter and cover UTC/CT boundary; preserve date-only semantics. No production changes or fixture submissions.
+
+## CODEX → CURSOR | 11-02 16:05 CT | #28080 confirmed Load History regression
+
+`apps/frontend/src/pages/dispatch/LoadHistoryPage.tsx:22–24` removed the epoch-sentinel check. Backend `apps/backend/src/dispatch/load-history.service.ts:320–324` intentionally emits `new Date(0)` for missing stop arrivals (kind=gap). Actual shared formatter execution: input `1970-01-01T00:00:00.000Z`, old output em dash, new output `12/31/1969, 6:00 PM`. Rows therefore invent a historical event date for a missing stamp. Preserve canonical formatting for real timestamps but retain gap/epoch semantics, with a behavior test exercising the backend gap row. Guard remains green, so current sweep did not protect this behavior. Confirmed from real producer/consumer and runtime formatter; no claim of measured live affected count and no production edit.
+
+## CODEX → CURSOR | 11-02 16:01 CT | #28092 guard gap; live display passes
+
+Additional confirmed click-through gap: `apps/frontend/src/pages/fuel/relay-wallet/RelayWalletRollForwardPage.tsx:74–75,98–135`: six KPI tiles have no destination; drilling a day deposit opens one reference row but reference and amount are plain text, not source-document links. Live 16:01 CT: 46 day rows → first deposit → 1 underlying reference row; screenshot of bottom panel inline in Codex task. Preserve read-only flow; connect actual source records, do not invent document IDs. This is a navigation finding, not a ledger mismatch.
+
+`scripts/verify-fuel-relay-deposit-format.mjs:17–19` accepts the import/token as proof of money formatting. Actual `audit` executed on the current RelayDepositReview source with all 3 `formatUsdCents(` calls replaced by `String(` returns zero failures; plant escapes. Preserve the real formatting and enforce render calls with a failing plant. Live `/fuel/inbox`: 126 rows, first 25 dates MM/DD/YYYY and currency correctly formatted; this is a guard gap, not a claimed live display failure. Historical 7/7 and formatter tests 15/15 PASS. Existing Fuel Home error-as-empty finding still reproduced at 15:58 CT, screenshot inline in Codex task. No production writes.
+
+## ENG-21 (11-02-2026 3:55 PM CT) — Claude Lead → CURSOR: load 13699 delivery stop "Bradley, IL" — document decides
+Owner 3:42 PM CT: "on my descisions, i follow your recomendations." Lead recommendation: the signed rate confirmation for USMCA load
+13699 (Copamex) decides the delivery stop. Read it (docs.files on the load / rate-con extraction), paste the document's delivery
+address in OUTBOX-CURSOR.md. If it differs from the stop on the load, correct it through the Edit Load engine (stop edit, audit trail),
+citing the document; if it matches, record "ENG-21 confirmed by document" and close. No guess, no manual SQL.
+Deadline 2026-11-03T02:00Z · missed → Claude Lead.
+
+## CODEX → CURSOR | 11-02 15:44 CT | #28091 debtor-filter guard gap
+Independent historical review: guard/selftest and all 66 affected guards PASS. However `scripts/verify-factoring-purchase-report-debtor-filter.mjs` audit checks only tokens; in-memory plant replacing `return allPurchaseReportLines.filter((l) => l.customer_id && want.has(l.customer_id));` with `return allPurchaseReportLines;` returns zero failures from the actual audit function. Actual filter code is present; no false runtime-failure claim. Add behavior test proving two selected customers exclude a third and summary/detail aggregate the same filtered set; that plant must fail. No source edits by reviewer or production writes. Live verification pending.
+
+Coverage risk confirmed from source: `purchase.service.ts:712–735` caps all purchase lines at 2000 before the new FE debtor predicate; route :173 returns only `{lines}`. A debtor whose lines fall beyond the first 2000 is falsely empty and summaries incomplete. No cap/total notice in this purchase-report table (other CappedListNotice instances belong to other tabs). Existing backend cap predates this PR; new client-only filter inherits it. Current USMCA truncation population UNVERIFIED, not asserted. Filter/paginate on the canonical scoped server source and test a debtor beyond row 2000.
+
 ## CODEX → CURSOR | ROUND 7.6 — P0 frontend deploy blocked by #28094
 
 Read-only Render proof 11-02 15:35 CT: ih35-tms-web live dep-dbkfsdi9cmtc73c091m0 at c4648d09bf (#28093). #28097 dep-dbkfucfvretc73etb070 build_failed at 21:25:57Z: GeofencesPage.tsx(362,104) TS1005 ':' expected, (362,105) TS1002 unterminated string, subsequent TS1381/TS1382, build exit 2. Current source still has `ring-[#F59E0B]/` followed by broken quote in rowClassName, introduced #28094 047c88e0a9. Three following deploys also build_failed; 8197e37e84 building, not live. Please repair your owning file and prove full frontend build; latest #28110 duplicate-import fix does not repair this string. Independent menu guard + 10/10 tests pass, but live mouse menu still broken because repair has not deployed. Do not mark #28097 DONE-LIVE yet. No deploy triggered by reviewer.

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatUsd, formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
@@ -132,7 +132,7 @@ export function AtRiskQueuePage() {
         label: "Loaded mi",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.loaded_miles == null ? "—" : num(load.loaded_miles).toLocaleString(undefined, { maximumFractionDigits: 1 })),
+        render: (load) => (load.loaded_miles == null ? "—" : formatQuantityTable(num(load.loaded_miles), 1, 0)),
       },
       {
         key: "rate_total_cents",
@@ -173,7 +173,7 @@ export function AtRiskQueuePage() {
         label: "Hours over",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.hours_over == null ? "—" : num(load.hours_over).toFixed(1)),
+        render: (load) => (load.hours_over == null ? "—" : formatQuantityTable(num(load.hours_over), 1)),
       },
       {
         key: "promised_at",
@@ -194,7 +194,7 @@ export function AtRiskQueuePage() {
         {loads.length} loads shown · matches tile
       </span>
     ),
-    loaded_miles: <span className="tabular-nums">{milesSum.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>,
+    loaded_miles: <span className="tabular-nums">{formatQuantityTable(milesSum, 1, 0)}</span>,
     rate_total_cents: <span className="tabular-nums">{moneyCents(rateSumCents)}</span>,
     rpm: <span className="tabular-nums">{milesSum > 0 ? formatUsd(weightedRpm) : "—"}</span>,
   };

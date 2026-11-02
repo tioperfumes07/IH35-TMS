@@ -327,6 +327,16 @@ function daysSince(dateIso: string): number {
   return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
 }
 
+/** FAC-09a — Filter-by-Debtor predicate. Empty selection = all lines; otherwise customer_id ∈ want. */
+export function filterPurchaseReportByDebtors(
+  lines: FactoringPurchaseReportLine[],
+  debtorIds: string[],
+): FactoringPurchaseReportLine[] {
+  if (debtorIds.length === 0) return lines;
+  const want = new Set(debtorIds);
+  return lines.filter((l) => l.customer_id && want.has(l.customer_id));
+}
+
 export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHomeProps = {}) {
   const location = useLocation();
   const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
@@ -668,11 +678,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   };
   const allPurchaseReportLines: FactoringPurchaseReportLine[] = purchaseLinesQuery.data?.lines ?? [];
   // Filter-by-Debtor (FAC-09a): client filter on purchased lines — empty selection = all debtors.
-  const purchaseReportLines: FactoringPurchaseReportLine[] = useMemo(() => {
-    if (purchaseReportDebtorIds.length === 0) return allPurchaseReportLines;
-    const want = new Set(purchaseReportDebtorIds);
-    return allPurchaseReportLines.filter((l) => l.customer_id && want.has(l.customer_id));
-  }, [allPurchaseReportLines, purchaseReportDebtorIds]);
+  const purchaseReportLines: FactoringPurchaseReportLine[] = useMemo(
+    () => filterPurchaseReportByDebtors(allPurchaseReportLines, purchaseReportDebtorIds),
+    [allPurchaseReportLines, purchaseReportDebtorIds],
+  );
   // Summary = the SAME lines grouped by purchase (one row per Faro purchase); Detail = one row per invoice.
   const purchaseReportSummary = useMemo(() => {
     const by = new Map<string, { purchase_id: string; purchase_display_id: string; purchase_date: string; invoice_count: number; debtorSet: Set<string>; debtors: string; gross_cents: number; escrow_cents: number; cash_cents: number; fee_cents: number; net_advance_cents: number }>();
@@ -2209,7 +2218,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {...formatQueryErrorDetail(purchaseLinesQuery.error)}
               onRetry={() => void purchaseLinesQuery.refetch()}
             />
-          ) : purchaseReportView === "summary" ? (
+          ) : (
+            <>
+          {/* Backend purchase-lines cap is 2000 (no total yet) — never silent truncation before debtor filter. */}
+          <CappedListNotice
+            shown={allPurchaseReportLines.length}
+            limit={2000}
+            hint="Narrow the date range — debtor filter only applies to the lines returned."
+          />
+          {purchaseReportView === "summary" ? (
             <div className="overflow-x-auto" data-testid="factoring-purchase-report-summary">
               <ParityTable<(typeof purchaseReportSummary)[number]>
                 columns={[
@@ -2325,6 +2342,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 }}
               />
             </div>
+          )}
+            </>
           )}
         </BoardSection>
         </div>

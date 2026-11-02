@@ -72,8 +72,9 @@ export async function loadTelematicsLinks(client: Db, oc: string, loadId: string
 }
 
 export async function unitTelematicsLinks(client: Db, oc: string, unitId: string, windowDays = 30) {
-  const args = [oc, unitId, windowDays];
-  const q = (sql: string) => client.query(sql, args).then((r) => r.rows);
+  const w3 = [oc, unitId, windowDays];
+  const w2 = [oc, unitId];
+  const q = (sql: string, p: unknown[]) => client.query(sql, p).then((r) => r.rows);
   const unit = (await q(`SELECT u.id::text, u.unit_number, u.samsara_vehicle_id,
                                 load_at_time.load_id::text AS load_now, driver_at_time.driver_id::text AS driver_now,
                                 (SELECT x.load_number FROM mdata.loads x WHERE x.id = load_at_time.load_id) AS load_now_number,
@@ -82,55 +83,55 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
                            ${loadAtTimeSql("u.id", "now()")}
                            ${driverAtTimeSql("u.id", "now()")}
                           WHERE u.id = $2::uuid AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-                            AND $3::int > 0`))[0];
+                            AND $3::int > 0`, w3))[0];
   if (!unit) return null;
   const since = `now() - make_interval(days => $3::int)`;
   return {
     unit,
     latest_position: (await q(`SELECT captured_at, lat, lng, speed_mph, odometer_mi, city, state FROM telematics.vehicle_locations
-                                WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid AND $3::int > 0 ORDER BY captured_at DESC LIMIT 1`))[0] ?? null,
+                                WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid AND $3::int > 0 ORDER BY captured_at DESC LIMIT 1`, w3))[0] ?? null,
     odometer_anchors: await q(`SELECT read_at, odometer_miles, source FROM telematics.odometer_readings
-                                WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid AND read_at >= ${since} ORDER BY read_at DESC`),
+                                WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid AND read_at >= ${since} ORDER BY read_at DESC`, w3),
     stops: await q(`SELECT e.id::text, e.started_at, e.dwell_minutes, e.city, e.state, e.odometer_mi, e.miles_since_previous_stop, e.load_id_at_time::text AS load_id, e.driver_id_at_time::text AS driver_id, ${LN("e.load_id_at_time")}, ${DL("e.driver_id_at_time")}
-                      FROM telematics.unit_stop_events e WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.started_at >= ${since} ORDER BY e.started_at DESC`),
+                      FROM telematics.unit_stop_events e WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.started_at >= ${since} ORDER BY e.started_at DESC`, w3),
     fence_crossings: await q(`SELECT c.id::text, g.label, c.geofence_kind, c.event_kind, c.occurred_at, c.odometer_mi, c.odometer_source
                                 FROM telematics.geofence_odometer_captures c JOIN geo.geofences g ON g.id = c.geofence_id
-                               WHERE c.operating_company_id = $1::uuid AND c.unit_id = $2::uuid AND c.occurred_at >= ${since} ORDER BY c.occurred_at DESC`),
+                               WHERE c.operating_company_id = $1::uuid AND c.unit_id = $2::uuid AND c.occurred_at >= ${since} ORDER BY c.occurred_at DESC`, w3),
     engine_faults: await q(`SELECT h.id::text, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text,
                                    ${faultDescriptionSql("h")} AS fault_description, fault_proposal.proposed_service_task_name, fault_proposal.proposed_labor_code_name,
                                    driver_at_time.driver_id::text AS driver_id, driver_at_time.attribution_source, ${DL("driver_at_time.driver_id")}
                               FROM maintenance.samsara_fault_code_history h
                               ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
                               ${faultProposalJoinSql("h")}
-                             WHERE h.operating_company_id = $1::uuid AND h.unit_id = $2::uuid AND h.occurred_at >= ${since} ORDER BY h.occurred_at DESC`),
+                             WHERE h.operating_company_id = $1::uuid AND h.unit_id = $2::uuid AND h.occurred_at >= ${since} ORDER BY h.occurred_at DESC`, w3),
     harsh_events: await q(`SELECT e.id::text, e.event_kind, e.event_at, e.g_force,
                                   COALESCE(e.driver_id, driver_at_time.driver_id)::text AS driver_id,
                                   CASE WHEN e.driver_id IS NOT NULL THEN 'samsara_driver' ELSE driver_at_time.attribution_source END AS attribution_source,
                                   ${DL("COALESCE(e.driver_id, driver_at_time.driver_id)")}
                              FROM safety.harsh_events e
                              ${driverAtTimeWithLoadFallbackSql("e.unit_id", "e.event_at")}
-                            WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.event_at >= ${since} ORDER BY e.event_at DESC`),
+                            WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.event_at >= ${since} ORDER BY e.event_at DESC`, w3),
     dvirs: await q(`SELECT d.id::text, d.type, d.submitted_at, d.has_major_defect, d.load_id::text, d.driver_id::text, ${LN("d.load_id")}, ${DL("d.driver_id")},
                            CASE WHEN d.unit_id = $2::uuid THEN 'tractor' ELSE 'trailer' END AS role
                       FROM safety.dvir_submissions d
                      WHERE d.operating_company_id = $1::uuid AND (d.unit_id = $2::uuid OR d.trailer_id = $2::uuid) AND d.submitted_at >= ${since}
-                     ORDER BY d.submitted_at DESC`),
+                     ORDER BY d.submitted_at DESC`, w3),
     documents: await q(`SELECT f.id::text, f.original_filename, f.document_date, fc.code AS category, f.description, f.upload_completed_at
                           FROM docs.files f JOIN docs.file_links fl ON fl.file_id = f.id AND fl.deleted_at IS NULL
                           LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
                          WHERE f.operating_company_id = $1::uuid AND f.deleted_at IS NULL AND fl.entity_type = 'unit' AND fl.entity_id = $2::uuid
-                         ORDER BY f.upload_completed_at DESC NULLS LAST LIMIT 200`),
+                         ORDER BY f.upload_completed_at DESC NULLS LAST LIMIT 200`, w2),
     samsara_fuel_reports: await q(`SELECT r.report_date, r.fuel_burned_gal, r.purchased_gal, r.purchase_count, r.distance_mi, r.efficiency_mpg,
                                           r.engine_idle_hours, r.engine_run_hours
                                      FROM integrations.samsara_fuel_reports r
                                     WHERE r.operating_company_id = $1::uuid AND r.unit_id = $2::uuid AND r.subject_kind = 'vehicle'
-                                      AND r.report_date >= (${since})::date ORDER BY r.report_date DESC`),
+                                      AND r.report_date >= (${since})::date ORDER BY r.report_date DESC`, w3),
     samsara_route_progress: await q(`SELECT p.stop_id::text, p.sequence_number, p.samsara_route_id, p.state, p.eta, p.actual_arrival_at, p.actual_departure_at,
                                              p.read_at, p.load_id::text, ${LN("p.load_id")}
                                         FROM integrations.samsara_route_stop_progress p
-                                       WHERE p.operating_company_id = $1::uuid AND p.unit_id = $2::uuid AND p.read_at >= ${since} ORDER BY p.read_at DESC`),
+                                       WHERE p.operating_company_id = $1::uuid AND p.unit_id = $2::uuid AND p.read_at >= ${since} ORDER BY p.read_at DESC`, w3),
     fuel_fills: await q(`SELECT f.id::text, f.transaction_at, f.fuel_type, f.gallons, f.total_cost, f.load_id::text, ${LN("f.load_id")}
                            FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.unit_id = $2::uuid AND f.voided_at IS NULL
-                            AND f.transaction_at >= ${since} ORDER BY f.transaction_at DESC`),
+                            AND f.transaction_at >= ${since} ORDER BY f.transaction_at DESC`, w3),
   };
 }

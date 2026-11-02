@@ -19,6 +19,7 @@ const SELFTEST = process.argv.includes("--selftest");
 const AXIS_HEAD = "apps/frontend/src/pages/dispatch/planners/PlannerAxisHead.tsx";
 const AXIS_TS = "apps/frontend/src/pages/dispatch/planners/plannerTimeAxis.ts";
 const DAY_LABEL = "apps/frontend/src/pages/dispatch/planners/plannerDayLabel.ts";
+const CAL_PAGE = "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -59,6 +60,18 @@ function assertLive(overrides = {}) {
   }
   if (!/SEPT/.test(dayLabel)) {
     problems.push("plannerDayLabel must use SEPT (4 letters) for September per owner spec");
+  }
+
+  // Week grid (/dispatch/planner) day headers — same MMM-DD rule, never Intl.toLocaleDateString.
+  const calPage = get(CAL_PAGE);
+  if (!/formatPlannerDayLabel/.test(calPage)) {
+    problems.push("PlannerCalendarPage must import formatPlannerDayLabel");
+  }
+  if (!/formatPlannerDayLabel\(day\)/.test(calPage)) {
+    problems.push("PlannerCalendarPage must call formatPlannerDayLabel(day) for week headers");
+  }
+  if (/toLocaleDateString/.test(calPage)) {
+    problems.push("PlannerCalendarPage must not use toLocaleDateString for day headers");
   }
 
   return problems;
@@ -103,7 +116,13 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED leftover axis-ts plant escaped`, axisTsHits.filter((e) => e.includes("leftover")));
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 2/2 mutations caught + leftover plant`);
+  const calOrig = read(CAL_PAGE);
+  const calMutated = calOrig.replaceAll("formatPlannerDayLabel", "__PLANTED_K5_CAL_DEFECT__");
+  if (calMutated === calOrig || !assertLive({ [CAL_PAGE]: calMutated }).length) {
+    console.error(`${LABEL} SELFTEST FAILED: PlannerCalendarPage formatPlannerDayLabel plant not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 2/2 mutations caught + leftover plant + calendar page`);
   process.exit(0);
 }
 

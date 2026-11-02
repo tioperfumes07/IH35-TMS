@@ -12,6 +12,7 @@ import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
+import { sortForUnitLockOrder } from "../../telematics/unit-lock-order.js";
 
 export type SyncStats = {
   added: number;
@@ -191,7 +192,64 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
   const vehicles = await api.listVehicles();
   const counts: Record<string, number> = {};
   let updated = 0;
+
+  // ROUND 7.18 (CC-2 2026-11-02): two-part deadlock fix.
+  //
+  // Root cause: the single UPDATE touched vin + samsara_vehicle_id (UNIQUE columns) unconditionally,
+  // causing Postgres to always escalate to FOR UPDATE. FOR UPDATE conflicts with FOR KEY SHARE taken
+  // by concurrent FK checks (auto_status_switch_worker, geofence_state_watcher INSERT → mdata.units).
+  //
+  // Fix (a): split into Phase 1 (non-unique columns → FOR NO KEY UPDATE, never conflicts with FK checks)
+  //           and Phase 2 (unique columns, only when actually empty → FOR UPDATE only for new linkages).
+  //
+  // Fix (b): sort vehicles by their local unit UUID before locking so that samsara-master-sync and any
+  //           other multi-unit transaction that takes FOR UPDATE agree on lock acquisition order.
+  //           We do a single batch pre-lookup (no per-row round trips) to obtain unit IDs, then sort.
+
+  // Batch pre-lookup: find unit IDs for all non-excluded vehicles so we can sort before locking.
+  const vinsByVehicle = new Map<string, string>(); // samsara_id -> vin
   for (const v of vehicles) {
+    const vin = str(v.raw?.vin);
+    if (vin) vinsByVehicle.set(v.id, vin);
+  }
+  const allSids = vehicles.map((v) => v.id);
+  const allVins = [...vinsByVehicle.values()];
+  type PreRow = { unit_id: string; sid: string | null; cur_vin: string; oc: string };
+  const preRes = await client.query(
+    `SELECT id::text AS unit_id,
+            samsara_vehicle_id::text AS sid,
+            COALESCE(vin, '') AS cur_vin,
+            COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc
+       FROM mdata.units
+      WHERE deactivated_at IS NULL
+        AND (samsara_vehicle_id = ANY($1::text[]) OR ($2::text[] IS NOT NULL AND vin = ANY($2::text[])))`,
+    [allSids, allVins.length > 0 ? allVins : null]
+  );
+  const preRows = preRes.rows as PreRow[];
+  // Map samsara vehicle id -> pre-fetched unit row (prefer sid match over vin match)
+  const unitByVehicleId = new Map<string, PreRow>();
+  for (const row of preRows) {
+    if (row.sid) unitByVehicleId.set(row.sid, row); // exact sid match
+  }
+  for (const row of preRows) {
+    // vin match fallback: only if not already mapped by sid
+    if (!row.sid) {
+      for (const v of vehicles) {
+        const vin = vinsByVehicle.get(v.id);
+        if (vin && row.cur_vin === vin && !unitByVehicleId.has(v.id)) {
+          unitByVehicleId.set(v.id, row);
+        }
+      }
+    }
+  }
+  // Sort by unit UUID in Postgres byte order — consistent lock acquisition order with other transactions.
+  const sortedVehicles = sortForUnitLockOrder(
+    vehicles,
+    (v) => (unitByVehicleId.get(v.id)?.unit_id ?? null) as string | null,
+    (v) => v.raw?.updatedAtMs ? new Date(v.raw.updatedAtMs as number).toISOString() : new Date(0).toISOString()
+  );
+
+  for (const v of sortedVehicles) {
     const raw = v.raw;
     const vin = str(raw.vin);
     const make = str(raw.make);
@@ -200,32 +258,52 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     await client.query("SAVEPOINT unit_row");
     try {
       // Vehicles are UNITS only -- never mdata.equipment (that wrote every truck in as a 'DryVan' trailer).
+      // Re-SELECT inside SAVEPOINT for authoritative current state (pre-lookup was read-committed, not locked).
       const found = await client.query(
-        `SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS sid
+        `SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc,
+                samsara_vehicle_id::text AS sid, COALESCE(vin, '') AS cur_vin
            FROM mdata.units
           WHERE deactivated_at IS NULL AND (samsara_vehicle_id = $1 OR ($2::text IS NOT NULL AND vin = $2))
           ORDER BY (samsara_vehicle_id = $1) DESC NULLS LAST
           LIMIT 1`,
         [v.id, vin]
       );
-      const row = found.rows[0] as { id: string; oc: string; sid: string | null } | undefined;
+      const row = found.rows[0] as { id: string; oc: string; sid: string | null; cur_vin: string } | undefined;
       if (!row) bump(counts, "no_local_record");
       else if (row.oc !== operatingCompanyId) bump(counts, "other_company");
       else if (row.sid && row.sid !== v.id) bump(counts, "linked_to_other_samsara_id");
       else {
+        // Phase 1 (fix-a): update non-unique columns only.
+        // No UNIQUE constraint on make/model/year/plate/state → Postgres takes FOR NO KEY UPDATE.
+        // FOR NO KEY UPDATE does NOT conflict with FOR KEY SHARE (the FK check lock from concurrent
+        // auto_status_switch_worker / geofence_state_watcher INSERTs). Deadlock class eliminated.
         await client.query(
           `UPDATE mdata.units
-              SET samsara_vehicle_id = COALESCE(samsara_vehicle_id, $2),
-                  vin = COALESCE(NULLIF(vin, ''), $3),
-                  make = COALESCE(NULLIF(make, ''), $4),
-                  model = COALESCE(NULLIF(model, ''), $5),
-                  year = COALESCE(year, $6::int),
-                  license_plate = COALESCE(NULLIF(license_plate, ''), $7),
-                  license_state = COALESCE(NULLIF(license_state, ''), $8),
+              SET make = COALESCE(NULLIF(make, ''), $2),
+                  model = COALESCE(NULLIF(model, ''), $3),
+                  year = COALESCE(year, $4::int),
+                  license_plate = COALESCE(NULLIF(license_plate, ''), $5),
+                  license_state = COALESCE(NULLIF(license_state, ''), $6),
                   updated_at = now()
             WHERE id = $1::uuid`,
-          [row.id, v.id, vin, make, model, yearOf(raw.year), str(raw.licensePlate), str(raw.state)]
+          [row.id, make, model, yearOf(raw.year), str(raw.licensePlate), str(raw.state)]
         );
+        // Phase 2 (fix-a): update UNIQUE columns only when they are currently empty (fill-empty semantics).
+        // vin and samsara_vehicle_id carry UNIQUE constraints → Postgres takes FOR UPDATE when touched.
+        // We skip this UPDATE entirely for already-linked vehicles, so FOR UPDATE is taken at most once
+        // per NEW linkage event (not on every sync cycle).
+        const needsSid = !row.sid;
+        const needsVin = vin ? !row.cur_vin : false;
+        if (needsSid || needsVin) {
+          await client.query(
+            `UPDATE mdata.units
+                SET samsara_vehicle_id = CASE WHEN $2::boolean THEN $3 ELSE samsara_vehicle_id END,
+                    vin = CASE WHEN $4::boolean THEN $5 ELSE vin END,
+                    updated_at = now()
+              WHERE id = $1::uuid`,
+            [row.id, needsSid, v.id, needsVin, vin]
+          );
+        }
         bump(counts, row.sid ? "already_linked" : "linked");
         updated += 1;
       }

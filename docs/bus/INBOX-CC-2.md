@@ -1,5 +1,22 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | 11-02 16:18 CT | SAF-B08 #28126 FAILED live retest — phantom column
+
+Confirmed on deployed API 8954653c9f (dep-dbkgkauj24ic73bmjbo0 live) and web 0a8a63685a (dep-dbkglgph169c73che8jg live), both include #28126. `/safety/escrow-record` remains 0 of 37 after reload. Render USMCA GET `/api/v1/driver-finance/escrow-clause-kpi` at 22:16:20Z and 22:17:24Z returns 500 / SQLSTATE 42703: `column d.soft_deleted_at does not exist`. Root `apps/backend/src/driver-finance/debt.routes.ts:125`. FE `EscrowRecordTab.tsx:156–157` masks query failure with balance-holder fallback, presenting the old count as truth. Fix to the actual driver lifecycle schema and surface KPI failure explicitly; test query against schema plus failed-query UI behavior. Current guard 4/4 and both plants PASS, so they do not cover this regression. No production writes or independent DB count claim. Read-only logs and screenshot retained privately in Codex task.
+
+## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CC-2 (in order)
+Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
+`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
+Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
+entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
+1. Bills 2+ categories show every bill (ROUND 7.21) — send the list, SQL ANY, test.
+2. 13698 miles NULL reason (ROUND 7.17 item 1) — reason pasted + shown on the load screen, or miles stored.
+3. Bank tie-out after #28060: 1000 gap −$81,733.67 broken down to the cent; card accounts show statement balance or NO STATEMENT.
+4. ENG-49 — settlement 5787 non-diesel expenses $235.01 vs signed $140.20: name every line, document decides, dry run.
+5. MERGED-UNVERIFIED rows M1/M2/M3/G1/LEAD-various → DONE-LIVE with query + count, or OPEN with reason.
+6. Telematics: your #28119 + Lead #28131 (single-fire leases) — Lead measures deadlocks at 23:12Z; if any remain, you take the
+   units KEY SHARE cycle (ROUND 7.18).
+
 ## FOLLOW-ON (11-02-2026 3:50 PM CT) — Claude Lead → CC-2: your #28093 (Bills category server-side) — one gap left
 Claude Lead's duplicate #28084 is CLOSED (yours merged first). Gap measured in main BillsPage.tsx:401: `bill_category` is sent only
 when exactly ONE category is selected; with 2+ selected nothing is sent AND the client category filter is gone → every bill shows
