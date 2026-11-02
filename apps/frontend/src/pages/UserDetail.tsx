@@ -28,7 +28,7 @@ import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCr
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";
 import { companyToday } from "../lib/businessDate";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -320,7 +320,7 @@ export function UserDetailPage() {
       ) : null}
 
       {tab === "profile" ? (
-        <DataPanel title="Profile">
+        <BoardSection title="Profile" testId="profile-board">
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <div><span className="text-xs text-gray-500">Email</span><div>{targetUser.email ?? "—"}</div></div>
             <div><span className="text-xs text-gray-500">Role</span><div>{targetUser.role}</div></div>
@@ -329,11 +329,11 @@ export function UserDetailPage() {
             <div><span className="text-xs text-gray-500">Default company</span><div>{defaultCompany?.short_name ?? defaultCompany?.code ?? entityLabel(null, targetUser.default_company_id, "Company")}</div></div>
             <div><span className="text-xs text-gray-500">Has driver record</span><div>{userDetailQuery.data?.has_driver_record ? "Yes" : "No"}</div></div>
           </div>
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {tab === "companies" ? (
-        <DataPanel title="Company Access">
+        <BoardSection title="Company Access" testId="company-access-board">
           <div className="space-y-2 text-xs">
             {(userDetailQuery.data?.accessible_companies ?? []).map((company) => (
               <div key={company.id} className="rounded-sm border border-gray-200 px-2 py-1.5">
@@ -348,7 +348,7 @@ export function UserDetailPage() {
             ))}
             {(userDetailQuery.data?.accessible_companies ?? []).length === 0 ? <div className="text-xs text-gray-500">No explicit company access rows.</div> : null}
           </div>
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {tab === "safety" && canShowSafetyTab ? (

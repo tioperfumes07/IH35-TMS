@@ -8,7 +8,7 @@ import { OpenPreSettlementsPanel } from "../components/driver-finance/OpenPreSet
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
@@ -767,14 +767,14 @@ export function DispatchPage({
           </SectionErrorBoundary>
         )
       ) : subTab === "book_load" ? (
-        <DataPanel title="Book load">
+        <BoardSection title="Book load" testId="book-load-board">
           <DataPanelRow>
             <span className="text-xs text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
             <button className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" onClick={() => openBookLoadModal()} type="button">
               + Book Load
             </button>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
       ) : subTab === "assignments" ? (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: assignments stub replaced by D2 AssignmentHistoryPage embed */
         <div data-testid="dispatch-assignments-embed">
@@ -828,7 +828,7 @@ export function DispatchPage({
       ) : (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
         <div data-testid="dispatch-settlements-quicklink">
-          <DataPanel title="Settlements">
+          <BoardSection title="Settlements" testId="settlements-board">
             <DataPanelRow>
               <span
                 className="text-xs text-gray-700"
@@ -846,7 +846,7 @@ export function DispatchPage({
                 View all settlements →
               </Link>
             </DataPanelRow>
-          </DataPanel>
+          </BoardSection>
         </div>
       )}
 

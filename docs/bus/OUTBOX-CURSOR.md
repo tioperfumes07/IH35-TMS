@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~2:20 PM CT) — Cursor master-detail BoardSection fill
+- **SHIPPED:** #28005 DataPanel wave; shells13 CustomerDetail/VendorDetail/Drivers/UserDetail/Dispatch DataPanel→BoardSection (37 opens).
+- **NEXT:** U12/U18/U28–U30 app-wide; ENG-49/17 build-only; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~2:05 PM CT) — Cursor BoardSection wave (accounting/vendors/customers)
 - **SHIPPED:** #28004 Q8 emailer null-Next; shells12 DataPanel→BoardSection across vendor reverse sections, accounting detail panels, COI/PortalUsers, BookLoad validation, pending deductions.
 - **NEXT:** remaining master-detail shells (CustomerDetail/VendorDetail/Drivers/Users/Dispatch); U12/U18/U28–U30; no match/Dreamline.
