@@ -196,6 +196,19 @@ Source: `docs/module-completion/*.json` on tip — **373 PASS · 13 not PASS** (
 
 **Shell rule, every seat:** any screen you touch that renders an empty shell, a placeholder, a "coming soon", a dead button, a list with no reverse drill, or a create without a void/reverse path is **in scope and finished in the same PR** — backend + routes + FE + forward/reverse links + pickers + guard + live proof. "Built" = live-proven (HONEST-BUILT-LAUNCH-LAW).
 
+## 7.11 — OWNER UI REGISTER + CODE SHELLS (added 12:50 PM CT — were not yet assigned)
+Source: `docs/bus/00-OWNER-UI-REGISTER-EVERY-REQUEST-NOTHING-DROPPED.md` (dated 10-03, last edited 10-26 — state may be stale) lists **28 OPEN** (U1–U14, U16–U18, U21–U31) + **2 "fixed, awaiting merge"** (U19, U20) + U15 STANDING.
+1. **CODEX (by 20:00Z = 2:00 PM CT):** measure every U-row on prod in Chrome — DONE (screenshot) or OPEN (what is wrong). Update the register's State column in a codex/ PR. A row is never closed on code-read alone.
+2. **Build owners for rows still OPEN after Codex measures** (same deadline 02:00Z):
+   - **CC-1** (money, Tier A): U8 Create Check must offer open bills (a check paying a bill IS a bill payment), U9 print-check numbering (editable, sequence continues, duplicate warns, gaps recorded), U25 Diesel→Reefer Diesel reclass (item + account + IFTA flag + trailer, hour-based), U27 P&L / Balance Sheet render like QuickBooks (backend signs correct — surface fix), U31 cleared/uncleared on every balance + both agings.
+   - **CC-3** (Accounting / FE, Tier B): U1 Accounting resizes, U2 tab bar overflow, U3 Load costs → Dispatch, U4 one Expenses tab, U5 receipt creator = expense creator, U6 checks list + filters, U7 Create Check QBO size, U10 bills sub-tabs own type only, U11 Vendor bill vs Bill (measure first), U13 remove redirect tabs, U14 rename Work orders & bills, U16 WO/unit/trailer columns + stored WO copy, U17 Expenses read-only + reclassify, U21–U24 reclassify (year in calendars, expense number, Load/Truck/Driver/Unit/Trailer/Vendor filters + column chooser, account/item/load selectors), U26 Banking filters.
+   - **CURSOR** (app-wide sweeps, Tier C/B): U12 + U28 multi-select status/account filters everywhere, U18 breadcrumb back app-wide, U29 every record cell clickable, U30 every header sorts asc/desc; U19/U20 confirm merged + live.
+3. **CODE SHELLS still rendering "not yet"** (measured on main a83ab8c3):
+   - `pages/home/QboStyleHomePage.tsx:176` card "Not yet available" + `:413` "Category breakdown not yet available" → **CC-3**: wire to the live engines.
+   - `pages/reports/SubscriptionManager.tsx:257` "Email delivery is not implemented yet" (no worker; 6 report generators) → **CURSOR**: build the delivery worker + generators, Last sent / Next populated.
+   - `pages/safety/reports/SafetyReportsPage.tsx:300` "Not yet available as a report" list → **CC-3**: build each listed report.
+   (`ComingSoonPage` routes in `routes/manifest.tsx` are fallbacks for unknown list keys only — not shells.)
+
 ## 7.7 — CLAUDE LEAD (self)
 ENG-60 table drop (rebased onto Cursor's 410 work: all three verbs SQL-free 410 stubs, migration 202616310100, guard 18917) · ENG-13 #27975 · stop-dwell #27985 · merge gate + register.
 

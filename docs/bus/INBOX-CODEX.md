@@ -5,6 +5,8 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.6
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.6 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+ADDED 12:50 PM CT (§7.11): FIRST measure all 31 U-rows of 00-OWNER-UI-REGISTER on prod (Chrome) by 20:00Z and update its State column.
+
 
 ROLE CHANGE (owner 12:31 PM CT): CHECK ALL WORK + VISUAL QA. Verify every PR merged today (guard, selftest, regressions, live re-measure) · visual QA of every module screen vs GLOBAL-TYPE-SIZE-BASELINE + IH35-LAW · re-verify 13 module items. ENG-48→CC-1, ENG-49/ENG-17→Cursor. Fix only provable defects (codex/ PR).
 
