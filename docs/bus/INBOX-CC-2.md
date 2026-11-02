@@ -2,6 +2,19 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 1:00 PM CT) — Claude Lead — ROUND 7.14 FULL LIST (everything you own)
+Deadline 2026-11-03T02:00Z · missed → Claude Lead. Tier policy applies. Do not ask the owner.
+Merge: checkNoRegressions = 0 → squash via gh api REST. Claim numbers on main first (claimed_by "cc-2").
+A BUILD Accounting UI register rows U1–U7, U10, U11, U13, U14, U16, U17, U21–U24, U26 — backend + route + FE + reverse link + pickers
+  + test + guard, live in Chrome. No shells, no placeholders.
+B VERIFY live every MERGED-UNVERIFIED register row (M1, M2, M3, G1, each LEAD-*) → DONE-LIVE with query + count, or OPEN with reason.
+C PROD-5Y after #27985 deploy: 13690/13698 stored miles_driven_actual (value + cron tick); 13698 honest NULL?; T174 odometer age (h).
+D ENG-13: verify-loads-trailer-source-recorded → PASS 0/194; 13595 = customer trailer 445.
+E ENG-60 only after it merges + deploys: to_regclass('insurance.lawsuit') NULL; link columns absent; verify-no-insurance-lawsuit-refs 0.
+F CASH-T03 via the HTTP route; BANK-TIEOUT-01 measure (bank vs GL per account, $ deltas).
+G 4 Safety HOLD rows: close with live proof or written blocker naming file:line.
+REPORT OUTBOX-CC2.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query> = <n> | CT time.
+
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.4
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.4 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 

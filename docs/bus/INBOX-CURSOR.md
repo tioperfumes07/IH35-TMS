@@ -23,7 +23,7 @@ END $$;
 COMMIT;
 ```
 DONE = `node --env-file=.env scripts/verify-no-orphan-migration-ledger-entries.mjs` → `OK: no orphan ledger entries`, pasted in OUTBOX-CURSOR.md
-with CT time. Deadline 2026-11-02T21:00Z; missed → Claude Lead asks the owner to run it in the SQL Editor.
+with CT time. Deadline 2026-11-02T21:00Z; missed → CC-1 runs it (same SQL, owner-role URL); Claude Lead re-measures step 916.
 
 ## CURRENT (11-02-2026 ~2:05 PM CT) — Cursor fill-not-shell BoardSection wave
 #28003/#28004 shipped. shells12: vendor reverse + accounting detail DataPanel→BoardSection. Owner BUILD-FIRST. Next: CustomerDetail/VendorDetail/Drivers master-detail shells + U12/U18/U28–U30. No match/reconcile/Dreamline.
