@@ -99,6 +99,15 @@ export function run(overrides = {}) {
     errors
   );
 
+  // Week-of CSV money must use formatUsd (never bare toFixed — drops $ / grouping)
+  assert(
+    homeBoard.includes("formatUsd(Number(s.gross_pay") &&
+      homeBoard.includes("formatUsd(Number(s.net_pay") &&
+      !/Number\(s\.gross_pay \?\? 0\)\.toFixed\(2\)/.test(homeBoard),
+    "SettlementsHomeBoardPanels week-of CSV must use formatUsd for money columns",
+    errors
+  );
+
   // Fill-not-shell / 443.280 — SettlementHeader uses BoardSection (not bare bordered grid card).
   assert(
     header.includes("<BoardSection") && header.includes('testId="settlement-header-board"'),
@@ -173,6 +182,13 @@ function selftest() {
     )
   ) {
     throw new Error("planted settlements week chart panel removal not detected");
+  }
+  if (
+    !run({
+      [BOARD_REL]: boardBackup.replace(/formatUsd\(Number\(s\.gross_pay \?\? 0\)\)/g, "Number(s.gross_pay ?? 0).toFixed(2)"),
+    }).some((e) => e.includes("formatUsd for money"))
+  ) {
+    throw new Error("planted week-of CSV toFixed regression not detected");
   }
   // ROUND 443.250 Company — dropping Company V3KpiTile / marker must fail.
   if (!run({ [COMPANY_REL]: companyBackup.replace(/V3KpiTile/g, "LegacyKpi") }).some((e) => e.includes("V3KpiTile"))) {

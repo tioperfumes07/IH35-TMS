@@ -58,12 +58,16 @@ if (process.argv.includes("--selftest")) {
   const fs = await import("node:fs");
   const src = fs.readFileSync(new URL("../apps/backend/src/dispatch/book-load.service.ts", import.meta.url), "utf8");
   const updateSrc = fs.readFileSync(new URL("../apps/backend/src/dispatch/update-load.service.ts", import.meta.url), "utf8");
+  const opsSrc = fs.readFileSync(new URL("../scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts", import.meta.url), "utf8");
   const cases = [
     ["clean passes", verdict([]).problems.length === 0],
     ["cancelled residual alone passes", verdict([{ load_number: "13593", status: "cancelled", booked: "DRY_VAN", equipment_number: "10219", trailer_code: "REFRIGERATED_VAN" }]).problems.length === 0],
     ["one active fails and names the load", verdict([{ load_number: "13634", status: "delivered", booked: "DRY_VAN", equipment_number: "10870", trailer_code: "REFRIGERATED_VAN" }]).problems[0]?.includes("13634") === true],
     ["Book Load refuses trailer_equipment_type_mismatch", src.includes("trailer_equipment_type_mismatch") && src.includes("PHYSICAL_TRAILER_CODES")],
     ["Edit Load syncs company trailer equipment", updateSrc.includes("ENG-22: company trailer body type is evidence")],
+    // ENG-22 dry-run listing — each load / old type / new type / trailer (apply waits AUTH)
+    ["ops dry-run emits per-load listing", opsSrc.includes("out.listing = changes.map") && opsSrc.includes("old_type:") && opsSrc.includes("new_type:") && opsSrc.includes("trailer:")],
+    ["ops dry-run lists cancelled residuals separately", opsSrc.includes("out.cancelled_residuals") && opsSrc.includes('status: "cancelled"')],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;
