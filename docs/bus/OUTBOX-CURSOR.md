@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~7:00 PM CT) — Cursor BUILD-FIRST format tip (#28184+)
+- **PRIOR:** #28179–#28184 house date/money/quantity waves across Dispatch/Fuel/Legal/Docs/boards.
+- **THIS:** Home print footers formatDateTimeUS; TaskPlannerGrid MD headers MM/DD (no locale).
+- **REMAINING intentional:** plannerTimeAxis TZ keys · hosClocks America/Chicago · calendar weekday/month chrome · BankingHomeBoard signed cents design · archived DispatchList.
+- **NEXT:** more engines/U18–U31; ENG-21 rate-con; ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~6:45 PM CT) — Cursor BUILD-FIRST format tip (#28183+)
 - **PRIOR:** #28179–#28183 house date/money waves.
 - **THIS:** Load detail tabs (BOL/settlement/stops/geofence/audit/fines/docs) + Tour miles + Relay fills gallons + QboStyleHome reconciled date.

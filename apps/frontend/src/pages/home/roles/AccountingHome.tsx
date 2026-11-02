@@ -19,6 +19,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatUsdFromCents } from "../HomeKpiCard";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import "../home-print.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -122,7 +123,7 @@ export function AccountingHome({ auth }: Props) {
       bodyHtml: `
         <h1>Accounting Home</h1>
         <div class="meta">${esc(`AR/AP snapshot (${displayName})`)} · as of ${esc(data?.as_of_date ?? "—")} · printed ${esc(
-          new Date().toLocaleString(),
+          formatDateTimeUS(new Date()),
         )}</div>
         <table>
           <tbody>

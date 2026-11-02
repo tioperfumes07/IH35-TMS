@@ -33,6 +33,9 @@ const FILES = [
   "apps/frontend/src/components/dispatch/LoadAuditTab.tsx",
   "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
   "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
+  "apps/frontend/src/pages/home/OwnerHome.tsx",
+  "apps/frontend/src/pages/home/roles/AccountingHome.tsx",
+  "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
 ];
 
 const DATE_ONLY = [
