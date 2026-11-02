@@ -16,15 +16,14 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 type Props = {
   operatingCompanyId?: string;
   policyId?: string;
 };
 
-const STATUS_FILTERS: Array<{ value: "" | PaymentScheduleStatus; label: string }> = [
-  { value: "", label: "All" },
+const STATUS_FILTERS: Array<{ value: PaymentScheduleStatus; label: string }> = [
   { value: "scheduled", label: "Scheduled" },
   { value: "reminded", label: "Reminded" },
   { value: "paid", label: "Paid" },
@@ -54,7 +53,7 @@ function canMarkPaid(schedule: InsurancePaymentSchedule): boolean {
 export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<"" | PaymentScheduleStatus>("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
 
   // INSURANCE-MONEY-F6628-PAYMENT-SCHEDULE-MARK-PAID-MUTABLE-SCOPE — markPaidMutation used to
   // submit only scheduleId and close over the LIVE operatingCompanyId/policyId props inside
@@ -70,13 +69,18 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   }, [operatingCompanyId, policyId]);
 
   const query = useQuery({
-    queryKey: ["insurance-payment-schedule", operatingCompanyId ?? "none", policyId ?? "all", statusFilter || "all"],
+    queryKey: ["insurance-payment-schedule", operatingCompanyId ?? "none", policyId ?? "all", statusFilter.join(",") || "all"],
     queryFn: () =>
       listInsurancePaymentSchedule({
         operating_company_id: operatingCompanyId!,
         policy_id: policyId,
-        status: statusFilter || undefined,
-      }).then((result) => result.payment_schedules),
+        // U12: multi-select — API accepts one status; 0/1 pass through; 2+ fetch all then filter.
+        status: statusFilter.length === 1 ? (statusFilter[0] as PaymentScheduleStatus) : undefined,
+      }).then((result) => {
+        const rows = result.payment_schedules;
+        if (statusFilter.length <= 1) return rows;
+        return rows.filter((row) => statusFilter.includes(row.status));
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -127,20 +131,19 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   return (
     <BoardSection title="Payment Schedule" testId="insurance-payment-schedule-board">
       <div className="mb-3 flex items-center gap-2 px-3 pt-3">
-        <label className="text-xs font-semibold text-gray-600">
-          Payment status filter
-          <SelectCombobox
-            className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter((event.target.value || "") as "" | PaymentScheduleStatus)}
-          >
-            {STATUS_FILTERS.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        <div className="text-xs font-semibold text-gray-600" data-testid="insurance-payment-status-filter">
+          <span className="block">Payment status filter</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={STATUS_FILTERS}
+              selected={statusFilter}
+              onChange={setStatusFilter}
+              allLabel="All statuses"
+              data-testid="insurance-payment-status-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       {query.isError ? (
