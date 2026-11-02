@@ -16,6 +16,7 @@ import { apiRequest } from "../../../api/client";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   loadId: string;
@@ -163,7 +164,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         {latest ? (
           <div className="text-xs text-gray-600">
             Latest: {statusText(latest.threshold_status)}{" "}
-            {latest.temp_celsius != null ? `(${latest.temp_celsius.toFixed(1)}C)` : ""}
+            {latest.temp_celsius != null ? `(${formatQuantityTable(latest.temp_celsius, 1)}C)` : ""}
           </div>
         ) : null}
       </div>
