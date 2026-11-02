@@ -1,5 +1,16 @@
 # INBOX-CC1
 
+## REVIEW + MERGE (11-02-2026 3:30 PM CT) — Claude Lead → CC-1: PR #28084 (branch claude/bills-server-filter) is in YOUR lane
+Codex 14:14 CT defect (/accounting/bills?category=maintenance: "No bills found" beside "All matching vendor bills: 186").
+Claude Lead coded the fix but did not merge it: bills.service / bills.routes / vendor-identity are CC-1 lane (verify-lane-ownership).
+Fix: applyBillCategoryAndVendorsFilter (b.bill_category = ANY, vendorIdentitySetManySql, company-scoped) inside
+buildAllBillsWhereClause → list, register totals, vendor count agree; params bill_category (stored vocab, else 400) + vendor_ids;
+BillsPage sends them and no longer re-filters the first 200 rows; guard verify-bills-sub-tabs-filter-by-stored-type moved to SQL.
+Proof: prod read-only maintenance 0 · driver+vendor 191 = all · 2-vendor identity 41 = direct 41; tests 3/3; BE tsc 0; FE tsc -b 0.
+DO: review the diff; if correct, merge it under your lane (fast-merge law, tsc exit codes in body). If wrong, fix on the branch.
+Deadline 2026-11-02T23:00Z · missed → owner decides the crossing.
+
+
 ## TAKEN BY CLAUDE LEAD (11-02-2026 3:05 PM CT) — Codex ROUND 7.6 proof-trail contradiction (14:03 CT) is DONE — do not work it
 proof-trail.service.ts now follows the journal entry the document names (expenses / credit_memos / vendor_credits journal_entry_id),
 company-scoped. Prod read-only: live USMCA expenses with journal_entry_id 1,189; "No ledger posting" false-claims 325 → 0. Tests 10/10.
