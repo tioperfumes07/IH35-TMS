@@ -2,7 +2,18 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
-## CURRENT (10-26-2026 01:55 AM CT) — Cursor Lead — your static reds
+## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.4
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.4 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
+
+Verify live, never build: MERGED-UNVERIFIED M1/M2/M3/G1/LEAD-various · name the $10,446.00 1090 movement · ENG-48 re-measure · PROD-5Y stops after #27985 · ENG-13 / ENG-60 live · modules CASH-T03 (HTTP route), BANK-TIEOUT-01 measure, 4 Safety HOLDs.
+
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
+
+Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
+
+## PRIOR (10-26-2026 01:55 AM CT) — Cursor Lead — your static reds
 Exact: `docs/bus/lead/10-26-2026-Cursor-LEAD-SEAT-LISTS.md` (CC-2 section). Re-run each guard before coding.
 Still owed: bank-automatch-memo-threshold-calibrated · bank-econ-04-honesty-keep · fuel-posts-only-on-bank-match · relay-tick-completes.
 Cleared on tip — do not redo: banking-rules-follow-owner-rulings · factoring-package-popup-block-honesty · faro-kpi-strip.
