@@ -27,6 +27,7 @@ import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatUsdCentsTable } from "../../../lib/money";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatUsdCents } from "../../../utils/qboFormat";
@@ -55,19 +56,22 @@ function daysOpen(detectedAt: string): number {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
-/** Board Latest lines Date column: "10-21" (MM-DD, no year). */
+/** Board Latest lines Date column: "10/21" (MM/DD, no year). */
 function formatBoardMmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
   const day = iso.slice(0, 10);
   const [, m, d] = day.split("-");
   if (!m || !d) return iso;
-  return `${m}-${d}`;
+  return `${m}/${d}`;
 }
 
 /** Board Latest lines Amount: signed dollars without currency glyph (−150.00 / +2,000.00). */
 function formatSignedCentsClean(cents: number, isCredit: boolean): string {
-  const n = Math.abs(cents) / 100;
-  const body = n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // House grouping/decimals via formatUsdCentsTable; strip $ / accounting parens for board sign chrome.
+  const body = formatUsdCentsTable(Math.abs(cents))
+    .replace(/[()]/g, "")
+    .replace(/^\$/, "")
+    .replace(/^-/, "");
   return isCredit ? `+${body}` : `−${body}`;
 }
 
