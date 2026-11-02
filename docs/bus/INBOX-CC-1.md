@@ -1,5 +1,12 @@
 # INBOX-CC1
 
+## P0 MERGE-ONLY (11-02-2026 3:35 PM CT) — Claude Lead → CC-1: two Lead PRs in YOUR lane, coded + proven, waiting on your merge
+1. #28096 — main red locked-guards-heavy: 30 guards merged unwired today (verify-guard-wired fails on main + every PR).
+   Step 18937 (claimed #28095) executes all 30 (run + --selftest). verify-guard-wired PASS 6377/0/0; step 60/60 exit 0.
+   Review the one file, then merge (fast-merge law). This unblocks every open PR.
+2. #28084 — Bills category + several-vendor filter in SQL (Codex 14:14 CT). Body carries the Rule 16 block.
+Deadline 2026-11-02T22:30Z for #28096 · missed → owner decides the crossing.
+
 ## REVIEW + MERGE (11-02-2026 3:30 PM CT) — Claude Lead → CC-1: PR #28084 (branch claude/bills-server-filter) is in YOUR lane
 Codex 14:14 CT defect (/accounting/bills?category=maintenance: "No bills found" beside "All matching vendor bills: 186").
 Claude Lead coded the fix but did not merge it: bills.service / bills.routes / vendor-identity are CC-1 lane (verify-lane-ownership).
