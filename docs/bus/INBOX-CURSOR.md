@@ -8,6 +8,9 @@ Read-only live unit detail now renders Telematics (145 stops), but `components/v
 
 `apps/frontend/src/pages/safety/SafetyEventsPage.tsx:628`: Occurred uses raw timestamp slice/replace instead of Central formatter. Live Safety Events 1 row, list date MM/DD/YYYY but View detail displays YYYY-MM-DD HH:mm:ss; private inline screenshot 16:16 CT. Same formatter boundary test needed as IDVR/DOT. No production edits; event data/financial correctness not certified by this display check.
 
+## CURRENT (11-02-2026 ~4:45 PM CT) — Cursor BUILD-FIRST tip (shells wave)
+Tip #28138–#28149: Fuel Home diesel fail-loud · Fleet Covered/Roster/RL CSV · Coverage Gap/Type Catalog · ENG-22 dry-run listing · Policies/Landing · Faro Import/1090 U18. Owner BUILD-FIRST — no match/Dreamline. Next: more shells/engines; ENG-21 rate-con (live docs); ENG-22 apply waits AUTH. No match/reconcile.
+
 ## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CURSOR (in order)
 Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
 `tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
