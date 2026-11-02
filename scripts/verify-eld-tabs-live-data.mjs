@@ -81,7 +81,7 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
     "fetchEldUnidentifiedDriving",
     'data-testid="eld-unidentified-tab"',
   ]);
-  need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty"]);
+  need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty", "BoardSection"]);
 
   need("ELD_TABS_CONFIG", tabsConfig, [
     'id: "live-duty"',
@@ -89,8 +89,11 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
     'id: "unidentified"',
     'id: "certifications"',
     'id: "settings"',
-    "not wired yet",
+    "no fake rows",
   ]);
+  if (tabsConfig.includes("not wired yet")) {
+    problems.push('ELD_TABS_CONFIG must not keep "not wired yet" titles (BoardSection honest-empty is enough)');
+  }
 
   const fakePatterns = [
     /FAKE_ELD_/i,

@@ -29,15 +29,15 @@ export const ELD_TABS_CONFIG: readonly EldTabConfig[] = [
   {
     id: "certifications",
     label: "Driver Certifications",
-    emptyTitle: "Driver log certifications — not wired yet",
+    emptyTitle: "Driver log certifications",
     emptyBody:
-      "No backend endpoint exists yet for driver daily log certifications (FMCSA certify). This tab stays reachable with an honest empty state — no fake rows. A future block will attach a real read API when ingest lands.",
+      "No certification rows for this company yet. Daily log certify events appear here when Samsara ELD ingest lands — this tab stays reachable with no fake rows.",
   },
   {
     id: "settings",
     label: "ELD Settings",
-    emptyTitle: "ELD settings — not wired yet",
+    emptyTitle: "ELD settings",
     emptyBody:
-      "No carrier-level ELD alert / exemption settings API exists yet. This tab stays reachable with an honest empty state — no fake preferences. A future block will attach config when product locks the schema.",
+      "No carrier-level ELD alert or exemption settings saved for this company yet. Preferences appear here when the ELD settings API is attached — this tab stays reachable with no fake preferences.",
   },
 ];
