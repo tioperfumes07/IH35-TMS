@@ -107,7 +107,8 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
         <div>
           <div className="dpo-card-title">Approximate load costs</div>
           <div className="dpo-card-sub">
-            Wizard charges (line haul / FSC / accessorials / detention / layover) plus costs and driver pay so far. Approximate margin — not settlement.
+            Wizard charge breakdown (line haul / FSC / accessorials / detention / layover) is separate from Approximate margin.
+            Margin is canonical net (revenue − costs so far − driver pay so far) — not settlement, and not the sum of wizard charges.
           </div>
         </div>
         <Link className="dpo-link" to="/dispatch/load-costs">Open load costs →</Link>
@@ -149,7 +150,22 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                 </>
               ),
             },
-            { key: "unit", label: "Truck", sortable: true, render: (row) => row.load.assigned_unit_number ?? "Unassigned" },
+            {
+              key: "unit",
+              label: "Truck",
+              sortable: true,
+              // U29 — a named unit opens the unit record; plain text was a dead cell.
+              render: (row) =>
+                row.load.assigned_unit_id ? (
+                  <EntityLink
+                    kind="unit"
+                    id={row.load.assigned_unit_id}
+                    label={entityLabel(row.load.assigned_unit_number, row.load.assigned_unit_id, "Unit")}
+                  />
+                ) : (
+                  <span className="ih-empty">Unassigned</span>
+                ),
+            },
             { key: "line_haul", label: "Line haul", kind: "money", render: (row) => <span data-testid="dispatch-wizard-line-haul">{formatDash(row.lineHaul)}</span> },
             { key: "fsc", label: "FSC", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-fsc">{formatDash(row.fuelSurcharge)}</span> },
             { key: "accessorials", label: "Accessorials", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</span> },
