@@ -16,7 +16,8 @@ If a sibling surface has reverse/EntityLink/ParityTable/retryable error — your
 
 ### Cursor Lead mid-wave (11-02 ~11:40 AM CT)
 - **ENG-29/53 code:** cron SAVEPOINT isolation + NULL-first due + stale-NULL-after-stop-times. Tip-proof 13690→**1731.7**; awaiting deploy `:25` tick (no AUTH). Deadhead 13690 / 13698 remain honest NULL.
-- **ENG-48:** bridge `--apply` still needs **new OPEN OWNER_AUTH_ID** (AUTH-145 CONSUMED). Do not invent. Measure+JE integrity still Codex FULL.
+- **ENG-48:** LIVE **147** fuels w/o expense. Bridge `--apply` needs **new OPEN OWNER_AUTH_ID** (AUTH-145 CONSUMED). Do not invent. Measure+JE integrity still Codex FULL.
+- **ENG-34:** exempt 123→108 (15 wired). **ENG-49:** 5787 lines ≠ $235.01 — document-first still OPEN.
 - **ENG-60 table drop:** still AUTH + route retirement; FE cutover already DONE.
 - Claude still held.
 
