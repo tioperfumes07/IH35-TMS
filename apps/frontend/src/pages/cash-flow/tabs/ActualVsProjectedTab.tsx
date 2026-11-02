@@ -9,7 +9,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -35,7 +35,8 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
 
 function formatPct(pct: number | null): string {
   if (pct === null) return "—";
-  return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+  const body = formatQuantityTable(Math.abs(pct), 1);
+  return `${pct >= 0 ? "+" : "−"}${body}%`;
 }
 
 /** D043 — owner 10-24: MM/DD/YYYY range labels (no month-name / year-less). */
