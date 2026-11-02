@@ -20,6 +20,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useToast } from "../../components/Toast";
 import { ManualJEModal } from "./components/ManualJEModal";
 import { TransferModal } from "./TransferModal";
@@ -286,7 +287,11 @@ export function BankTxCategorizationPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
-      {!companyId ? <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">Select an operating company.</div> : null}
+      {!companyId ? (
+        <BoardSection title="Bank transaction categorization" testId="bank-tx-categorization-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       {backendPending ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">

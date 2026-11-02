@@ -91,7 +91,11 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to load live duty status.</p>;
+    return (
+      <BoardSection title="Live Duty Status" testId="eld-live-duty-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load live duty status.</p>
+      </BoardSection>
+    );
   }
 
   return (
