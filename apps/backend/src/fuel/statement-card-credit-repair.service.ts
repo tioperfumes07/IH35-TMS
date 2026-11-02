@@ -83,6 +83,29 @@ const acctNet = async (c: QueryClient, companyId: string, num: string) =>
        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
        JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid AND je.voided_at IS NULL AND a.account_number = $2`, [companyId, num])).rows[0]!.net);
+// ENG-48: resolve fuel account by role (same CTE the posting SQL uses) — never a bare account_number literal.
+const acctNetByRole = async (c: QueryClient, companyId: string, role: string) => {
+  const row = (await c.query<{ account_id: string }>(
+    `SELECT COALESCE(
+      (SELECT car.account_id::text FROM accounting.chart_of_accounts_roles car
+         JOIN catalogs.accounts a ON a.id = car.account_id AND a.operating_company_id = $1::uuid
+        WHERE car.operating_company_id = $1::uuid AND car.role = $2
+          AND car.is_active = true AND a.deactivated_at IS NULL AND a.is_postable = true
+        ORDER BY car.updated_at DESC LIMIT 1),
+      (SELECT arb.account_id::text FROM catalogs.account_role_bindings arb
+         JOIN catalogs.accounts a ON a.id = arb.account_id AND a.operating_company_id = $1::uuid
+        WHERE arb.role_key = $2 AND arb.deactivated_at IS NULL
+          AND a.deactivated_at IS NULL AND a.is_postable = true
+          AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
+        ORDER BY (arb.operating_company_id IS NOT NULL) DESC LIMIT 1)
+    ) AS account_id`, [companyId, role])).rows[0]?.account_id;
+  if (!row) return 0;
+  return Number((await c.query<{ net: string }>(
+    `SELECT COALESCE(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid AND je.voided_at IS NULL AND p.account_id = $2::uuid`, [companyId, row])).rows[0]!.net);
+};
 
 /** One batch inside the caller's transaction. Throws CardCreditRepairRefused on any failed assert (→ rollback). */
 async function runBatch(c: QueryClient, input: { companyId: string; actorUserId: string; batch: number; size: number; dryRun: boolean }) {
@@ -90,7 +113,7 @@ async function runBatch(c: QueryClient, input: { companyId: string; actorUserId:
   await c.query("SAVEPOINT card_credit_batch");
   const tbBefore = await tb(c, companyId);
   if (tbBefore.net !== "0") throw new CardCreditRepairRefused(`batch ${input.batch}: TB ${tbBefore.net} before`);
-  const b5000 = await acctNet(c, companyId, "5000"), b2510 = await acctNet(c, companyId, "2510");
+  const b5000 = await acctNetByRole(c, companyId, "company_fuel_advance_expense"), b2510 = await acctNet(c, companyId, "2510");
   const jes = (await c.query<{ je: string; entry_date: string; memo: string; receipt: string; cents_5000: string; acct_5000: string; acct_2510: string }>(
     `${LIVE_STATEMENT_DISCOUNT_JES_SQL} LIMIT ${input.size}`, [companyId])).rows;
   if (!jes.length) { await c.query("ROLLBACK TO SAVEPOINT card_credit_batch"); return null; }
@@ -116,7 +139,7 @@ async function runBatch(c: QueryClient, input: { companyId: string; actorUserId:
       doc: cents > 0 ? `${marker}-CARD-DISC` : `${marker}-CARD-DIFF`, cents, receipt: j.receipt });
   }
   const tbAfter = await tb(c, companyId);
-  const d5000 = (await acctNet(c, companyId, "5000")) - b5000, d2510 = (await acctNet(c, companyId, "2510")) - b2510;
+  const d5000 = (await acctNetByRole(c, companyId, "company_fuel_advance_expense")) - b5000, d2510 = (await acctNet(c, companyId, "2510")) - b2510;
   const bad: string[] = [];
   if (d5000 !== 0) bad.push(`5000 moved ${d5000}`);
   if (d2510 !== 0) bad.push(`2510 moved ${d2510}`);
