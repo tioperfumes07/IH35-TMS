@@ -9,10 +9,10 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 | U3 | `Load costs` does not belong in Accounting; Dispatch surface renders the LIVE load set + current cost from the ledger | CC-2 | OPEN |
 | U4 | Two expense tabs — `Expenses` and `Expenses List` | CC-2 | LIVE 11-02: one Expenses top-level tab; overflow inspected, no Expenses List duplicate. Submenu/writer coverage pending; owner acceptance pending |
 | U5 | Receipt creator must BE the expense creator, one writer | CC-2 | OPEN |
-| U6 | Checks list must show all checks with full filters | CC-2 | OPEN |
-| U7 | Create Check is out of proportion — a modal, QBO size | CC-2 | OPEN |
+| U6 | Checks list must show all checks with full filters | CC-2 | LIVE partial 11-02 13:36 CT: 0 rows; search/date/type/status/bank controls present. Empty population cannot prove complete coverage/filter effect |
+| U7 | Create Check is out of proportion — a modal, QBO size | CC-2 | LIVE measured 11-02: 1280px modal at 2983px CSS viewport; screenshot private. Saved draft untouched; narrow-width sizing and owner acceptance pending |
 | U8 | **Create Check offers no open bills — a check paying a bill IS a bill payment, else the cost is DOUBLE-COUNTED** | CC-2 + CC-1 | OPEN · money |
-| U9 | Print checks lists only created-and-not-printed; number proposed at print, **editable**, sequence continues from what he types, duplicate warns, gaps recorded with a reason | CC-2 | OPEN |
+| U9 | Print checks lists only created-and-not-printed; number proposed at print, **editable**, sequence continues from what he types, duplicate warns, gaps recorded with a reason | CC-2 | OPEN: live stock next 1006 / 0 waiting checks, no numbers assigned. Local editableNumbers suite 3 FAIL at stale native-option selector; duplicate/gap assertions not reached |
 | U10 | Every bills sub-tab renders only its own type | CC-2 | LIVE 11-02: Vendor tab 186 total / 50 visible vendor rows; Driver tab 190 total / 50 visible driver rows. Other pages not exhausted; not blanket DONE |
 | U11 | Measure whether `Vendor bill` = `Bill` before removing | CC-2 | OPEN |
 | U12 | Status is a multi-selector everywhere — "right now it looks dirty" | CC-2 · CURSOR | OPEN — live Insurance Policies status is a single-value combobox; options Active/Pending/Expired/Cancelled, 11-02 13:14 CT. PoliciesList.tsx uses scalar statusFilter; remains so on main 9985b91393 |
