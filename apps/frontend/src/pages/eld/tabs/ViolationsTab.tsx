@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchEldHosViolations, type EldHosViolation } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { Button } from "../../../components/Button";
 
 type Props = { operatingCompanyId: string };
@@ -84,7 +85,8 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
   }
 
   return (
-    <div className="space-y-3" data-testid="eld-violations-tab">
+    <BoardSection title="HOS Violations" testId="eld-violations-tab-board">
+    <div className="space-y-3 p-3" data-testid="eld-violations-tab">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-xs font-semibold text-[#0F1219]">HOS Violations</div>
@@ -126,5 +128,6 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
         <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next violations</Button>
       </div> : null}
     </div>
+    </BoardSection>
   );
 }

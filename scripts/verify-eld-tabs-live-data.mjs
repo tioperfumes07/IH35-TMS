@@ -74,12 +74,13 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
     "getFleetLocationHos",
   ]);
 
-  need("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster", 'data-testid="eld-live-duty-tab"']);
-  need("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations", 'data-testid="eld-violations-tab"']);
+  need("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster", 'data-testid="eld-live-duty-tab"', "BoardSection"]);
+  need("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations", 'data-testid="eld-violations-tab"', "BoardSection"]);
   need("UnidentifiedTab", unidentified, [
     "useQuery",
     "fetchEldUnidentifiedDriving",
     'data-testid="eld-unidentified-tab"',
+    "BoardSection",
   ]);
   need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty", "BoardSection"]);
 
