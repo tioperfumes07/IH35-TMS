@@ -30,6 +30,10 @@ function assertLive(over = {}) {
   }
   if (!/ListErrorBanner/.test(page)) problems.push("missing ListErrorBanner on query failure");
   if (!/data-testid="dispatch-alerts-page"/.test(page)) problems.push("missing page testid");
+  // fill-not-shell — need-company uses BoardSection
+  if (!/testId="dispatch-alerts-need-company"/.test(page) || !/<BoardSection\b/.test(page)) {
+    problems.push("need-company empty must be BoardSection (dispatch-alerts-need-company)");
+  }
   return problems;
 }
 

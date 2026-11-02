@@ -58,7 +58,8 @@ function assertLive(overrides = {}) {
   }
 
   const driver = get(FILES.driver);
-  if (!/data-testid="dispatch-driver-planner-need-company"/.test(driver)) problems.push("S28 missing need-company");
+  if (!/data-testid="dispatch-driver-planner-need-company"|testId="dispatch-driver-planner-need-company"/.test(driver)) problems.push("S28 missing need-company");
+  if (!/<BoardSection\b/.test(driver) || !/testId="dispatch-driver-planner-need-company"/.test(driver)) problems.push("S28 need-company must be BoardSection");
   const grid = get(FILES.grid);
   if (!/ListErrorBanner/.test(grid)) problems.push("S28 grid missing ListErrorBanner");
   if (!/data-testid="dispatch-driver-planner-honest-empty"/.test(grid)) problems.push("S28 missing honest empty");
@@ -67,7 +68,8 @@ function assertLive(overrides = {}) {
   if (!/<EntityLinkOrTombstone kind="unit" id=\{unitId\} name=\{unit\} noun="Unit"/.test(grid)) problems.push("S28 grid missing canonical unit links");
 
   const loads = get(FILES.loads);
-  if (!/data-testid="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
+  if (!/data-testid="dispatch-loads-planner-need-company"|testId="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
+  if (!/<BoardSection\b/.test(loads) || !/testId="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 need-company must be BoardSection");
   if (!/data-testid="dispatch-loads-planner-honest-empty"/.test(loads)) problems.push("S29 missing honest empty");
   if (!/ListErrorBanner/.test(loads)) problems.push("S29 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(loads)) problems.push("S29 not company-gated");
@@ -75,7 +77,8 @@ function assertLive(overrides = {}) {
   if (!/<EntityLink(?:OrTombstone)? kind="load" id=\{load\.id\}/.test(loads)) problems.push("S29 load rows missing canonical load link");
 
   const timeline = get(FILES.timeline);
-  if (!/data-testid="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 missing need-company");
+  if (!/data-testid="dispatch-timeline-need-company"|testId="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 missing need-company");
+  if (!/<BoardSection\b/.test(timeline) || !/testId="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 need-company must be BoardSection");
   if (!/data-testid="dispatch-timeline-honest-empty"/.test(timeline)) problems.push("S30 missing honest empty");
   if (!/ListErrorBanner/.test(timeline)) problems.push("S30 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(timeline)) problems.push("S30 not company-gated");
@@ -97,7 +100,8 @@ function assertLive(overrides = {}) {
   if (grids === 0 || sized !== grids) problems.push(`S30 timeline grids must set rowPx={44} (${sized}/${grids})`);
 
   const truck = get(FILES.truck);
-  if (!/data-testid="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");
+  if (!/data-testid="dispatch-truck-planner-need-company"|testId="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");
+  if (!/<BoardSection\b/.test(truck) || !/testId="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 need-company must be BoardSection");
   if (!/data-testid="dispatch-truck-planner-honest-empty"/.test(truck)) problems.push("S31 missing honest empty");
   if (!/ListErrorBanner/.test(truck)) problems.push("S31 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(truck)) problems.push("S31 not company-gated");

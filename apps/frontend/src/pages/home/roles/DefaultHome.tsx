@@ -44,6 +44,7 @@ import { QuickActionsBar } from "../QuickActionsBar";
 import { HOME_QUICK_JUMPS } from "../homeQuickJumps";
 import { combineQueryIsError } from "../combineQueryIsError";
 import "../home-print.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -207,7 +208,7 @@ export function DefaultHome({ auth }: Props) {
       title: `Home snapshot — ${displayName}`,
       bodyHtml: `
         <h1>Home</h1>
-        <div class="meta">${esc(`Workspace snapshot (${displayName})`)} · printed ${esc(new Date().toLocaleString())}</div>
+        <div class="meta">${esc(`Workspace snapshot (${displayName})`)} · printed ${esc(formatDateTimeUS(new Date()))}</div>
         <h1 style="margin-top:16px">KPIs</h1>
         <table>
           <thead><tr><th>Metric</th><th>Value</th><th>Detail</th></tr></thead>

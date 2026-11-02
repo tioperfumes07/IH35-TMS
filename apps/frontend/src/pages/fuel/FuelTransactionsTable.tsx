@@ -1,5 +1,5 @@
 import { useToast } from "../../components/Toast";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, formatUsdCentsTable } from "../../lib/money";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -70,8 +70,8 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
         row.transaction_date,
         row.driver_name,
         row.station,
-        row.gallons == null ? "" : row.gallons.toFixed(2),
-        ((row.amount_cents || 0) / 100).toFixed(2),
+        row.gallons == null ? "" : formatQuantityTable(row.gallons),
+        formatUsdCents(row.amount_cents || 0),
       ]
         .map((v) => csvEscape(String(v)))
         .join(",")
@@ -215,7 +215,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
             </span>
           ),
         },
-        { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : row.gallons.toFixed(2) },
+        { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : formatQuantityTable(row.gallons, 2) },
         { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
         {
           key: "expense_number",

@@ -22,7 +22,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { Button } from "../components/Button";
 import { useToast } from "../components/Toast";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
@@ -567,8 +567,12 @@ export function VendorDetailPage() {
             forecast, equipment loans, merges, A/P aging, payment methods, bank transactions) each
             silently render nothing when companyId is empty -- same honest-message convention
             already used on the A/P tab below. */}
-        {!companyId ? <p className="text-xs text-red-600">Select an operating company to view linked records.</p> : null}
-        <DataPanel title="Vendor Profile">
+        {!companyId ? (
+          <BoardSection title="Linked records" testId="vendor-detail-linked-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view linked records.</p>
+          </BoardSection>
+        ) : null}
+        <BoardSection title="Vendor Profile" testId="vendor-profile-board">
           {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
               Distinct from QBO Mapping. */}
           {vendor.driver_id ? (
@@ -891,7 +895,7 @@ export function VendorDetailPage() {
             />
           </DataPanelRow>
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
-        </DataPanel>
+        </BoardSection>
         <VendorWorkOrdersReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         {/* Linkage law §6 (vendor row, PR #23729) — "Fuel purchases" + the fraud alerts on them. */}
         <FuelTransactionsReverseSection
@@ -944,7 +948,11 @@ export function VendorDetailPage() {
 
       {activeTab === "A/P" ? (
         <div className="space-y-2" data-testid="vendor-ap-readonly">
-          {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+          {!companyId ? (
+            <BoardSection title="Vendor" testId="vendor-detail-need-company">
+              <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+            </BoardSection>
+          ) : null}
           <div
             className="rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]"
             data-testid="vendor-record-bill-payment-disabled"
@@ -1138,9 +1146,9 @@ export function VendorDetailPage() {
       ) : null}
 
       {activeTab === "Tasks" ? (
-        <DataPanel title="Tasks">
+        <BoardSection title="Tasks" testId="tasks-board">
           <TasksTab operatingCompanyId={companyId} targetType="vendor" targetId={vendor.id} targetLabel={vendor.name} />
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {/* QBO-PARITY-VENDORS — read-only W-9 / 1099 summary. Mirrors QBO's vendor 1099 panel:
@@ -1148,7 +1156,7 @@ export function VendorDetailPage() {
           lives on the Profile tab; the W-9 FILE itself lives on the Documents tab. This tab is
           display + drill-through only (no upload, no posting). */}
       {activeTab === "W-9 / 1099" ? (
-        <DataPanel title="W-9 / 1099 Status">
+        <BoardSection title="W-9 / 1099 Status" testId="w-9-1099-status-board">
           <FlatFieldGrid
             columns={3}
             className="mb-3"
@@ -1194,7 +1202,7 @@ export function VendorDetailPage() {
               shared with 1099/IFTA filings) — confirm the actual file in the Documents tab.
             </InfoPopover>
           </p>
-        </DataPanel>
+        </BoardSection>
       ) : null}
     </div>
   );

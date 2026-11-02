@@ -9,6 +9,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 interface LayoverRow {
   uuid: string;
@@ -109,13 +110,13 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         key: "layover_started_at",
         label: "Started",
         sortable: true,
-        render: (row) => new Date(row.layover_started_at).toLocaleString(),
+        render: (row) => formatDateTimeUS(row.layover_started_at) || "—",
       },
       {
         key: "layover_ended_at",
         label: "Ended",
         sortable: true,
-        render: (row) => (row.layover_ended_at ? new Date(row.layover_ended_at).toLocaleString() : "ongoing"),
+        render: (row) => (row.layover_ended_at ? formatDateTimeUS(row.layover_ended_at) || "—" : "ongoing"),
       },
       {
         key: "duration_hours",

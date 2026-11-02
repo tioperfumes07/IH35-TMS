@@ -10,7 +10,7 @@ import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
@@ -232,7 +232,7 @@ export function PaymentDetailPage() {
         }
       />
 
-      <DataPanel title="Header">
+      <BoardSection title="Header" testId="header-board">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Customer</span>
           <span className="text-xs text-gray-900">
@@ -281,12 +281,12 @@ export function PaymentDetailPage() {
             />
           </span>
         </DataPanelRow>
-      </DataPanel>
+      </BoardSection>
 
       {/* WAVE-C-gl_je-payments-receive: forward payment -> GL JE, same shape as
           InvoiceDetailPage's "GL / Journal entries" panel — reads customer_payment source rows
           the existing poster already writes; no new GL math, no posting from this page. */}
-      <DataPanel title="GL / Journal entries">
+      <BoardSection title="GL / Journal entries" testId="gl-journal-entries-board">
         {(payment.journal_entries ?? []).length === 0 ? (
           <div className="text-xs text-gray-600" data-testid="payment-journal-entries-empty">
             No journal entries linked yet (unposted or posting reversed).
@@ -313,9 +313,9 @@ export function PaymentDetailPage() {
             ))}
           </div>
         )}
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Applications">
+      <BoardSection title="Applications" testId="applications-board">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-gray-600">Payment applications to invoices</div>
           {canApply ? (
@@ -333,12 +333,12 @@ export function PaymentDetailPage() {
           rowKey={(app) => app.id}
           emptyText="No applications yet."
         />
-      </DataPanel>
+      </BoardSection>
 
       {payment.notes ? (
-        <DataPanel title="Notes">
+        <BoardSection title="Notes" testId="notes-board">
           <div className="text-xs text-gray-700">{payment.notes}</div>
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       <div>

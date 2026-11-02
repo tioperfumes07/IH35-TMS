@@ -6,14 +6,15 @@ import {
   type RollingLedgerResult,
   type RollingLedgerRow,
 } from "../../../api/cashFlow";
-import { addDaysIso, companyToday } from "../../../lib/businessDate";
-import { formatUsdCents } from "../../../lib/money";
+import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
+import { formatDateUS } from "../../../lib/formatDate";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatCashFlowCents } from "./CashFlowKpiStrip";
-import type { CashFlowTabId } from "../CashFlowPage";
+import type { CashFlowNavOpts, CashFlowTabId } from "../CashFlowPage";
 
 // ROUND 443.280-A #7 — Cash Flow Home board (docs/design/v3/CashFlow-Home):
 // V3KpiTile strip ONLY (no layered CashFlowKpiStrip), no tab-card-theater theater,
@@ -82,21 +83,18 @@ function mondayOf(iso: string): string {
 }
 
 function weekLabel(iso: string): string {
-  const [, m, d] = iso.split("-");
-  return `${m}-${d}`;
+  // Codex Round 7.6 — matrix week headers were MM-DD; operators need MM/DD/YYYY.
+  return formatDateUS(iso) || "—";
 }
 
 function monthLabel(iso: string): string {
-  const [y, m] = iso.split("-");
-  return `${m}/${y.slice(2)}`;
+  return formatDateUS(iso) || "—";
 }
 
-function formatCompactDollars(cents: number | null): string {
-  if (cents === null || cents === 0) return "—";
-  const neg = cents < 0;
-  const dollars = Math.round(Math.abs(cents) / 100);
-  const body = dollars.toLocaleString("en-US");
-  return neg ? `-${body}` : body;
+/** Matrix cells — full $ + cents (formatUsdCents); null stays em dash, not a fabricated $0.00. */
+function formatMatrixMoney(cents: number | null): string {
+  if (cents === null) return "—";
+  return formatUsdCents(cents);
 }
 
 function sparkPoints(values: number[], width: number, height: number): string {
@@ -445,7 +443,7 @@ function CashPositionChart({
             fontWeight={700}
             fill={V3.red}
           >
-            Lowest balance {formatCompactDollars(lowest.cents)} · wk {lowest.label.replace(/^wk\s*/, "")}
+            Lowest balance {formatMatrixMoney(lowest.cents)} · wk {lowest.label.replace(/^wk\s*/, "")}
           </text>
         ) : null}
       </svg>
@@ -474,9 +472,9 @@ function Cell({
 }) {
   let text: string;
   if (unit === "pct") {
-    text = cents === 0 ? "—" : `${((cents / (ofTotal || 1)) * 100).toFixed(0)}%`;
+    text = cents === 0 ? "—" : `${formatQuantityTable((cents / (ofTotal || 1)) * 100, 0)}%`;
   } else {
-    text = formatCompactDollars(cents);
+    text = formatMatrixMoney(cents);
   }
   const style: CSSProperties = {
     textAlign: "right",
@@ -504,6 +502,73 @@ function Cell({
   return <td style={style}>{text}</td>;
 }
 
+/** Matrix row → Rolling Ledger filter provenance (TYPE_OPTIONS values + kind). */
+type MatrixRowKey =
+  | "invoice"
+  | "topup"
+  | "income_total"
+  | "finance"
+  | "driver"
+  | "diesel"
+  | "vendor"
+  | "other"
+  | "expense_total"
+  | "net"
+  | "ending";
+
+function bucketRange(bucket: WeekBucket | MonthBucket): { from: string; to: string } {
+  if ("weekStart" in bucket) {
+    return { from: bucket.weekStart, to: addDaysIso(bucket.weekStart, 6) };
+  }
+  const bounds = monthBoundsIso(bucket.monthStart);
+  return { from: bounds.start, to: bounds.end };
+}
+
+/** Map a matrix cell to Rolling Ledger URL opts. Run-rate rows open the week untyped (no fake docs). */
+function matrixDrillOpts(row: MatrixRowKey, bucket: WeekBucket | MonthBucket): CashFlowNavOpts {
+  const { from, to } = bucketRange(bucket);
+  switch (row) {
+    case "invoice":
+      return {
+        rl_from: from,
+        rl_to: to,
+        rl_kind: "income",
+        rl_types: "Invoice,Factor advance,Load (not invoiced)",
+      };
+    case "topup":
+      // Synthetic run-rate estimate — open the week income slice without inventing document types.
+      return { rl_from: from, rl_to: to, rl_kind: "income" };
+    case "income_total":
+      return { rl_from: from, rl_to: to, rl_kind: "income" };
+    case "finance":
+      return { rl_from: from, rl_to: to, rl_kind: "expenses", rl_types: "Loan payment" };
+    case "driver":
+      return {
+        rl_from: from,
+        rl_to: to,
+        rl_kind: "expenses",
+        rl_types: "Driver pay,Driver bill",
+      };
+    case "diesel":
+      // No TYPE_OPTIONS diesel value — open week expenses; committed fuel rows still appear.
+      return { rl_from: from, rl_to: to, rl_kind: "expenses" };
+    case "vendor":
+      return { rl_from: from, rl_to: to, rl_kind: "expenses", rl_types: "Bill" };
+    case "other":
+      return {
+        rl_from: from,
+        rl_to: to,
+        rl_kind: "expenses",
+        rl_types: "Expense — unmatched",
+      };
+    case "expense_total":
+      return { rl_from: from, rl_to: to, rl_kind: "expenses" };
+    case "net":
+    case "ending":
+      return { rl_from: from, rl_to: to };
+  }
+}
+
 function ThirteenWeekTable({
   columns,
   unit,
@@ -511,7 +576,7 @@ function ThirteenWeekTable({
 }: {
   columns: Array<WeekBucket | MonthBucket>;
   unit: TableUnit;
-  onOpen: (tab: Exclude<CashFlowTabId, "home">) => void;
+  onOpen: (tab: Exclude<CashFlowTabId, "home">, opts?: CashFlowNavOpts) => void;
 }) {
   const totalIncome = columns.reduce((s, w) => s + w.income_cents, 0) || 1;
   const totalExpense = columns.reduce((s, w) => s + w.expenses_cents, 0) || 1;
@@ -544,9 +609,14 @@ function ThirteenWeekTable({
     borderBottom: `1px solid ${V3.borderSoft}`,
   };
 
+  const openCell = (rowKey: MatrixRowKey, bucket: WeekBucket | MonthBucket) => {
+    onOpen("rolling_ledger", matrixDrillOpts(rowKey, bucket));
+  };
+
   const row = (
     label: ReactNode,
     pick: (w: WeekBucket | MonthBucket) => number,
+    rowKey: MatrixRowKey,
     opts?: { grey?: (w: WeekBucket | MonthBucket) => boolean; bold?: boolean; of?: number; tone?: boolean },
   ) => (
     <tr>
@@ -555,11 +625,12 @@ function ThirteenWeekTable({
       </td>
       {columns.map((w) => {
         const cents = pick(w);
+        const cellKey = "weekStart" in w ? w.weekStart : w.monthStart;
         if (opts?.tone) {
           const color = cents < 0 ? V3.red : cents > 0 ? V3.green : V3.ink;
           return (
             <td
-              key={"weekStart" in w ? w.weekStart : w.monthStart}
+              key={cellKey}
               style={{
                 textAlign: "right",
                 padding: "7px 12px",
@@ -572,20 +643,21 @@ function ThirteenWeekTable({
                 color,
                 cursor: "pointer",
               }}
-              onClick={() => onOpen("rolling_ledger")}
+              onClick={() => openCell(rowKey, w)}
+              data-testid={`cash-flow-home-matrix-${rowKey}-${cellKey}`}
             >
-              {unit === "pct" ? (cents === 0 ? "—" : `${((Math.abs(cents) / totalIncome) * 100).toFixed(0)}%`) : formatCompactDollars(cents)}
+              {unit === "pct" ? (cents === 0 ? "—" : `${formatQuantityTable((Math.abs(cents) / totalIncome) * 100, 0)}%`) : formatMatrixMoney(cents)}
             </td>
           );
         }
         return (
           <Cell
-            key={"weekStart" in w ? w.weekStart : w.monthStart}
+            key={cellKey}
             cents={cents}
             ofTotal={opts?.of ?? totalIncome}
             unit={unit}
             grey={opts?.grey?.(w)}
-            onClick={() => onOpen(opts?.of === totalExpense ? "daily_prediction" : "rolling_ledger")}
+            onClick={() => openCell(rowKey, w)}
           />
         );
       })}
@@ -611,38 +683,38 @@ function ThirteenWeekTable({
               Receipts
             </td>
           </tr>
-          {row("Customer invoices due", (w) => w.invoice_cents)}
-          {row(<span style={{ color: V3.mutedSoft }}>Run-rate top-up</span>, (w) => w.topup_cents, {
+          {row("Customer invoices due", (w) => w.invoice_cents, "invoice")}
+          {row(<span style={{ color: V3.mutedSoft }}>Run-rate top-up</span>, (w) => w.topup_cents, "topup", {
             grey: (w) => w.topup_run_rate || w.topup_cents > 0,
           })}
-          {row(<b>Total receipts</b>, (w) => w.income_cents, { bold: true })}
+          {row(<b>Total receipts</b>, (w) => w.income_cents, "income_total", { bold: true })}
           <tr>
             <td colSpan={columns.length + 1} style={group}>
               Disbursements
             </td>
           </tr>
-          {row("Finance & lease payments", (w) => w.finance_cents, { of: totalExpense })}
-          {row("Driver pay (run-rate)", (w) => w.driver_cents, {
+          {row("Finance & lease payments", (w) => w.finance_cents, "finance", { of: totalExpense })}
+          {row("Driver pay (run-rate)", (w) => w.driver_cents, "driver", {
             of: totalExpense,
             grey: (w) => w.driver_run_rate,
           })}
-          {row("Diesel (run-rate)", (w) => w.diesel_cents, {
+          {row("Diesel (run-rate)", (w) => w.diesel_cents, "diesel", {
             of: totalExpense,
             grey: (w) => w.diesel_run_rate,
           })}
-          {row("Vendor bills due", (w) => w.vendor_cents, { of: totalExpense })}
-          {row("Other operating (run-rate)", (w) => w.other_cents, {
+          {row("Vendor bills due", (w) => w.vendor_cents, "vendor", { of: totalExpense })}
+          {row("Other operating (run-rate)", (w) => w.other_cents, "other", {
             of: totalExpense,
             grey: (w) => w.other_run_rate,
           })}
-          {row(<b>Total disbursements</b>, (w) => w.expenses_cents, { bold: true, of: totalExpense })}
+          {row(<b>Total disbursements</b>, (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
           <tr>
             <td colSpan={columns.length + 1} style={group}>
               Position
             </td>
           </tr>
-          {row(<b>Net cash flow</b>, (w) => w.net_cents, { bold: true, tone: true })}
-          {row(<b>Ending balance</b>, (w) => w.ending_cash_cents ?? 0, { bold: true, tone: true })}
+          {row(<b>Net cash flow</b>, (w) => w.net_cents, "net", { bold: true, tone: true })}
+          {row(<b>Ending balance</b>, (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
         </tbody>
       </table>
     </div>
@@ -655,7 +727,7 @@ export function CashFlowHomeTab({
   showManualProjections,
 }: {
   operatingCompanyId: string;
-  onNavigateToTab: (tab: Exclude<CashFlowTabId, "home">) => void;
+  onNavigateToTab: (tab: Exclude<CashFlowTabId, "home">, opts?: CashFlowNavOpts) => void;
   showManualProjections: boolean;
 }) {
   const today = companyToday();
@@ -768,11 +840,11 @@ export function CashFlowHomeTab({
   }, [data, today]);
 
   const lowest = useMemo(() => {
-    let min: { cents: number; label: string } | null = null;
+    let min: { cents: number; label: string; weekStart: string } | null = null;
     for (const w of forecastWeeks) {
       if (w.ending_cash_cents === null) continue;
       if (min === null || w.ending_cash_cents < min.cents) {
-        min = { cents: w.ending_cash_cents, label: `wk ${w.label}` };
+        min = { cents: w.ending_cash_cents, label: `wk ${w.label}`, weekStart: w.weekStart };
       }
     }
     return min;
@@ -803,7 +875,10 @@ export function CashFlowHomeTab({
 
   // Sibling tabs reachable from Home (verify-cash-flow-home-tab + REG-031).
   // manual_daily_projections stays wired even when the flag hides the visible control.
-  const openSibling = (tab: Exclude<CashFlowTabId, "home">) => onNavigateToTab(tab);
+  const openSibling = (tab: Exclude<CashFlowTabId, "home">, opts?: CashFlowNavOpts) =>
+    onNavigateToTab(tab, opts);
+
+  const next4WeeksEnd = addDaysIso(today, 27);
 
   return (
     <div className="space-y-3" data-testid="cash-flow-home-tab" style={{ fontFamily: V3.font }}>
@@ -835,7 +910,9 @@ export function CashFlowHomeTab({
             value={data.opening_cash_cents === null ? "—" : formatUsdCents(data.opening_cash_cents)}
             sub="live · as shown in the app today"
             testId="cash-flow-home-v3-kpi-opening"
-            onClick={() => openSibling("rolling_ledger")}
+            onClick={() =>
+              openSibling("rolling_ledger", { rl_from: today, rl_to: addDaysIso(today, 13) })
+            }
           />
           <V3KpiTile
             label="Income due today"
@@ -872,7 +949,14 @@ export function CashFlowHomeTab({
               ) : undefined
             }
             testId="cash-flow-home-v3-kpi-4w"
-            onClick={() => openSibling("rolling_ledger")}
+            onClick={() =>
+              openSibling("rolling_ledger", {
+                rl_from: today,
+                rl_to: next4WeeksEnd,
+                rl_kind: "income",
+                rl_types: "Invoice,Factor advance,Load (not invoiced)",
+              })
+            }
           />
           <V3KpiTile
             label="Weekly run-rate"
@@ -911,7 +995,14 @@ export function CashFlowHomeTab({
             tone={lowest && lowest.cents < 0 ? "red" : "ink"}
             sub={lowest?.label ?? "no projected days"}
             testId="cash-flow-home-v3-kpi-lowest"
-            onClick={() => openSibling("rolling_ledger")}
+            onClick={() =>
+              openSibling(
+                "rolling_ledger",
+                lowest
+                  ? { rl_from: lowest.weekStart, rl_to: addDaysIso(lowest.weekStart, 6) }
+                  : { rl_from: today, rl_to: addDaysIso(today, 13) },
+              )
+            }
           />
         </div>
       )}

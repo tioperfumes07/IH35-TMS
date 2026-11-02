@@ -25,7 +25,7 @@ import {
 } from "../../api/accounting";
 import { listTours, type TourListRow } from "../../api/tourReadout";
 import { openPrintableDocument, openCanonicalDocument } from "../../lib/openPrintableDocument";
-import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { formatDateUS, mmmDd } from "../../lib/formatDate";
 import { settlementNumber } from "../../lib/settlementNumber";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
@@ -271,10 +271,10 @@ export function CompanySettlementsPage() {
             DASH
           ) : (
             <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>
-              {r.margin_pct.toFixed(1)}%
+              {formatQuantityTable(r.margin_pct, 1)}%
             </span>
           ),
-        exportValue: (r) => (r.margin_pct == null ? DASH : `${r.margin_pct.toFixed(1)}%`),
+        exportValue: (r) => (r.margin_pct == null ? DASH : `${formatQuantityTable(r.margin_pct, 1)}%`),
       },
       // Gear columns (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
       // the settlement period the row belongs to. Hidden by default, one click to show.
@@ -510,7 +510,7 @@ function CompanySettlementWaterfall({
             <span>
               Less · Fuel Purchases
               {report.sections.fuel_purchases.total_gallons > 0
-                ? ` (${report.sections.fuel_purchases.total_gallons.toLocaleString()} gal)`
+                ? ` (${formatQuantityTable(report.sections.fuel_purchases.total_gallons, 1, 0)} gal)`
                 : ""}
             </span>
             <span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span>
@@ -531,7 +531,7 @@ function CompanySettlementWaterfall({
           {report.sections.miles_and_mpg.total_miles > 0 ? (
             <div className="ldt-row tot">
               <span>
-                Miles {report.sections.miles_and_mpg.total_miles.toLocaleString()}
+                Miles {formatQuantityTable(report.sections.miles_and_mpg.total_miles, 0)}
                 {report.sections.miles_and_mpg.mpg !== null
                   ? ` · ${report.sections.miles_and_mpg.mpg} MPG`
                   : ""}
@@ -552,7 +552,7 @@ function CompanySettlementWaterfall({
                 <span>
                   True-cost margin · fuel consumed
                   {report.sections.fuel_consumed && report.sections.fuel_consumed.total_gallons > 0
-                    ? ` (${report.sections.fuel_consumed.total_gallons.toLocaleString()} gal)`
+                    ? ` (${formatQuantityTable(report.sections.fuel_consumed.total_gallons, 1, 0)} gal)`
                     : ""}
                 </span>
                 <span className="ldt-m">

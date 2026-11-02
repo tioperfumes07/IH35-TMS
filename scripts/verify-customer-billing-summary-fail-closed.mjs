@@ -2,17 +2,17 @@
 /**
  * verify-customer-billing-summary-fail-closed.mjs (CUST-MONEY-F6984)
  *
- * CustomerDetail.tsx's Billing & Receivables tab renders three DataPanel cards (Factoring Config,
- * Credit Terms, Detention + Layover Defaults) and a Receivables Aging card entirely from
- * billingSummaryQuery.data. React Query RETAINS `data` from the last successful fetch across a
- * FAILED refetch, so a stale billingSummary kept factoring eligibility, recourse, vendor, credit
- * terms, outstanding balance, detention/layover defaults, and A/R aging on screen -- looking
+ * CustomerDetail.tsx's Billing & Receivables tab renders three BoardSection cards (Factoring Config,
+ * Credit Terms, Detention + Layover Defaults; formerly DataPanel) and a Receivables Aging card
+ * entirely from billingSummaryQuery.data. React Query RETAINS `data` from the last successful fetch
+ * across a FAILED refetch, so a stale billingSummary kept factoring eligibility, recourse, vendor,
+ * credit terms, outstanding balance, detention/layover defaults, and A/R aging on screen -- looking
  * current -- at the same time the page's own ListErrorBanner was telling the user the load had
  * failed. Same class already fixed for this file's payment history (CUST-MONEY-F6278) and its
  * sibling FreeTimeDetentionEditor.tsx component (CUST-MONEY-F6985).
  *
  * This guard asserts, against the REAL file, that:
- *   1. the three economics DataPanels are wrapped in a `!billingSummaryQuery.isError` gate.
+ *   1. the three economics BoardSections are wrapped in a `!billingSummaryQuery.isError` gate.
  *   2. the Receivables Aging card's content is also gated on `billingSummaryQuery.isError`.
  *
  * FAIL if either gate regresses to rendering unconditionally on stale billingSummary data.
@@ -38,11 +38,15 @@ export function check(src) {
   const source = src != null ? src : (() => { try { return readReal(TARGET_FILE); } catch { return null; } })();
   if (source == null) return [`${TARGET_FILE} not found`];
 
-  // Anchor on the "Factoring Config" DataPanel itself (not the first billingSummaryQuery.isError
+  // Anchor on the "Factoring Config" BoardSection itself (not the first billingSummaryQuery.isError
   // match in the file, which is the ListErrorBanner's own unrelated conditional a few lines above).
-  const factoringPanelIdx = source.indexOf('<DataPanel title="Factoring Config">');
+  // fill-not-shell 2026-11-02: DataPanel → BoardSection; accept either open-tag shape.
+  const factoringPanelIdx = Math.max(
+    source.indexOf('<BoardSection title="Factoring Config"'),
+    source.indexOf('<DataPanel title="Factoring Config">'),
+  );
   if (factoringPanelIdx < 0) {
-    failures.push(`${TARGET_FILE}: "Factoring Config" DataPanel not found -- extractor may be stale`);
+    failures.push(`${TARGET_FILE}: "Factoring Config" BoardSection not found -- extractor may be stale`);
   } else {
     const before = source.slice(Math.max(0, factoringPanelIdx - 400), factoringPanelIdx);
     if (!/!billingSummaryQuery\.isError\s*\?/.test(before)) {
@@ -108,7 +112,7 @@ if (process.argv.includes("--selftest")) {
     ) : null}
     {!billingSummaryQuery.isError ? (
       <>
-        <DataPanel title="Factoring Config">card</DataPanel>
+        <BoardSection title="Factoring Config" testId="factoring-config-board">card</BoardSection>
         <div>Cleared: $0</div>
         <UnclearedDocumentsNote docs={[]} />
         <p className="bg-slate-100">named not cleared</p>
@@ -128,7 +132,7 @@ if (process.argv.includes("--selftest")) {
     {billingSummaryQuery.isError ? (
       <ListErrorBanner />
     ) : null}
-    <DataPanel title="Factoring Config">card</DataPanel>
+    <BoardSection title="Factoring Config" testId="factoring-config-board">card</BoardSection>
     <div>
       <div>Receivables Aging</div>
       {billingSummaryQuery.isError ? null : !hasOpenInvoices ? (
@@ -145,7 +149,7 @@ if (process.argv.includes("--selftest")) {
     ) : null}
     {!billingSummaryQuery.isError ? (
       <>
-        <DataPanel title="Factoring Config">card</DataPanel>
+        <BoardSection title="Factoring Config" testId="factoring-config-board">card</BoardSection>
       </>
     ) : null}
     <div>

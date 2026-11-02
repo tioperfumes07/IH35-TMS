@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","cash-flow","customers","dispatch","drivers","factoring","finance","fleet","insurance","legal","lists","maintenance","safety","settlements","vendors"],"cols":["subledger_tie"],"leaves":["economics.invariants"],"task":"ECON-C26-INV-3-WRAPPER"} */
+export const REQUIRES_LIVE_DB = "INV-3 subledger tieout requires a live Neon INV run via --live; static file read cannot certify subledger balance";
 import { readFileSync } from "node:fs";
 import { runInvWrapper, extractNeedles, INV_SQL } from "./lib/econ-inv-auto-check.mjs";
 

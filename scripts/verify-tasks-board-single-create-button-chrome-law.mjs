@@ -40,8 +40,8 @@ if (process.argv.includes("--selftest")) {
       '<TasksModuleTabs />\n        <CreateTaskModal open={false} operatingCompanyId="" onClose={() => {}} />',
     )],
     ["reintroduce-button", (s) => s.replace(
-      '<PageHeader title="Task Board" />\n        <TasksModuleTabs />',
-      '<PageHeader title="Task Board" actions={<button>+ Create Task</button>} />\n        <TasksModuleTabs />',
+      /<PageHeader\b[^>]*\btitle="Task Board"[^>]*\/>\s*<TasksModuleTabs\s*\/>/,
+      '<PageHeader backHref="/tasks" title="Task Board" actions={<button>+ Create Task</button>} />\n        <TasksModuleTabs />',
     )],
     ["remove-tabs", (s) => s.replace("<TasksModuleTabs />", "")],
   ];

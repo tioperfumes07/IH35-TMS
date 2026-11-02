@@ -39,6 +39,8 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
     expect(r).toEqual({ stops: 1, stop_events: 1, stops_linked: 1, fences: 1, events_written: 2 });
     const link = sql.find((q) => /UPDATE mdata\.load_stops/.test(q))!;
     expect(link).toMatch(/s\.actual_stop_event_id IS NULL/);
+    // load_stops_actual_stamp_precision_check: a 'date_only' stop must carry no event — never link onto one (PROD-5Y)
+    expect(link).toMatch(/s\.actual_stamp_precision IS DISTINCT FROM 'date_only'/);
     // never stamps a time, a source or a precision (detention reads actual_departure_at)
     for (const q of sql) expect(q).not.toMatch(/actual_(arrival|departure)_at\s*=|actual_stamp_precision\s*=|actual_(arrival|departure)_source\s*=/);
     expect(bind).toHaveBeenCalledWith(client, "co-1", "load-1", 1, { lat: 40.66, lng: -74.23 });
@@ -50,6 +52,28 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
     expect(until).toBe("2026-08-07T21:04:32.000Z");
   });
 
+  it("a 'date_only' stop is not linked (CHECK-safe) but its GPS fence and replay still run — the miles path is intact", async () => {
+    replay.mockClear(); bind.mockClear();
+    const sql: string[] = [];
+    const client = {
+      query: vi.fn(async (q: string) => {
+        sql.push(q);
+        if (/INSERT INTO telematics\.unit_stop_events/.test(q)) return { rows: [{ id: "evt-1" }] };
+        // the guarded UPDATE matches nothing for a 'date_only' stop
+        if (/UPDATE mdata\.load_stops/.test(q)) return { rows: [] };
+        if (/FROM geo\.geofence_events/.test(q)) return { rows: [{ n: "0" }] };
+        if (/SELECT vertices_json/.test(q)) return { rows: [{ vertices_json: [{ lat: 1, lng: 1 }, { lat: 1, lng: 2 }, { lat: 2, lng: 2 }] }] };
+        return { rows: [] };
+      }),
+    };
+    const r = await persistStopDwellEvidence(client, "co-1", [ev]);
+    expect(r.stops_linked).toBe(0);
+    expect(r.fences).toBe(1);
+    expect(r.events_written).toBe(2);
+    expect(bind).toHaveBeenCalledTimes(1);
+    expect(replay).toHaveBeenCalledTimes(1);
+  });
+
   it("is idempotent: an existing stop event is reused and a fence that already has crossings is not replayed again", async () => {
     replay.mockClear();
     const { client } = fakeClient({ eventsOnFence: 3, insertReturns: false });
@@ -57,6 +81,37 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
     expect(r.stop_events).toBe(0);
     expect(r.events_written).toBe(0);
     expect(replay).not.toHaveBeenCalled();
+  });
+});
+
+describe("concurrent lock order — deadlock prevention", () => {
+  it("processes stops in stop_id ascending order regardless of insertion order in the evidence array", async () => {
+    // ENG-DEADLOCK-01: both persistStopDwellEvidence and stampStopsFromGeofenceEvents update
+    // mdata.load_stops. Both must acquire row locks in the same stop_id order to avoid a deadlock.
+    // This test verifies that persistStopDwellEvidence sorts by stop_id before looping — if the
+    // sort is missing, stop-b would be updated before stop-a, creating a lock-order cycle with
+    // stampStopsFromGeofenceEvents which queries ORDER BY stop_id.
+    replay.mockClear(); bind.mockClear();
+    const updateOrder: string[] = [];
+    const client = {
+      query: vi.fn(async (q: string, values?: unknown[]) => {
+        if (/INSERT INTO telematics\.unit_stop_events/.test(q)) return { rows: [{ id: "evt-x" }] };
+        if (/UPDATE mdata\.load_stops/.test(q) && Array.isArray(values) && typeof values[0] === "string") {
+          updateOrder.push(values[0] as string);
+          return { rows: [{ id: values[0] as string }] };
+        }
+        if (/FROM geo\.geofence_events/.test(q)) return { rows: [{ n: "0" }] };
+        if (/SELECT vertices_json/.test(q)) return { rows: [{ vertices_json: [{ lat: 1, lng: 1 }, { lat: 1, lng: 2 }, { lat: 2, lng: 2 }] }] };
+        return { rows: [] };
+      }),
+    };
+    const hitB = { ...hit, started_at: "2026-08-07T18:04:48.000Z", ended_at: "2026-08-07T19:04:32.000Z" };
+    // Input order: stop-b BEFORE stop-a (reverse of sorted order)
+    const evB = { load_id: "load-1", stop_id: "stop-b", unit_id: "unit-1", sequence_number: 2, hit: hitB };
+    const evA = { load_id: "load-1", stop_id: "stop-a", unit_id: "unit-1", sequence_number: 1, hit };
+    await persistStopDwellEvidence(client, "co-1", [evB, evA]);
+    // Must process stop-a before stop-b (sorted order), not insertion order (stop-b first)
+    expect(updateOrder).toEqual(["stop-a", "stop-b"]);
   });
 });
 

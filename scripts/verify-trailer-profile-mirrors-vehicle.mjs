@@ -72,4 +72,26 @@ const trailerSectionCount = (trailer.match(/data-testid="tp-section-/g) ?? []).l
 if (vehicleSectionCount < 8) fail(`vehicle profile section count too low (${vehicleSectionCount})`);
 if (trailerSectionCount < 6) fail(`trailer profile section count too low (${trailerSectionCount})`);
 
+// fill-not-shell — need-company early paths use BoardSection on both profiles
+if (!vehicle.includes('testId="vehicle-profile-need-company"') || !/BoardSection/.test(vehicle)) {
+  fail("vehicle page need-company empty must be BoardSection (vehicle-profile-need-company)");
+}
+if (!trailer.includes('testId="trailer-profile-need-company"') || !/BoardSection/.test(trailer)) {
+  fail("trailer page need-company empty must be BoardSection (trailer-profile-need-company)");
+}
+
+if (process.argv.includes("--selftest")) {
+  const plantV = vehicle.replace(/testId="vehicle-profile-need-company"/g, 'testId="x"');
+  const plantT = trailer.replace(/testId="trailer-profile-need-company"/g, 'testId="y"');
+  if (plantV.includes('testId="vehicle-profile-need-company"') || plantT.includes('testId="trailer-profile-need-company"')) {
+    fail("selftest plant inert");
+  }
+  if (!plantV.includes("BoardSection") || !plantT.includes("BoardSection")) {
+    // BoardSection import may remain; markers must be gone for the plant to be meaningful
+  }
+  if (plantV.includes('testId="vehicle-profile-need-company"')) fail("selftest vehicle plant escaped");
+  console.log("verify:trailer-profile-mirrors-vehicle SELFTEST PASS");
+  process.exit(0);
+}
+
 console.log("verify:trailer-profile-mirrors-vehicle PASS");

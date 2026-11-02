@@ -71,8 +71,10 @@ function renderPage() {
 async function selectAllThree() {
   renderPage();
   const bank = await screen.findByRole("combobox", { name: /bank account/i });
-  await waitFor(() => expect(screen.getByRole("option", { name: "BOA Checking" })).toBeInTheDocument());
-  fireEvent.change(bank, { target: { value: "bank-1" } });
+  fireEvent.focus(bank);
+  fireEvent.click(bank);
+  const opt = await screen.findByRole("option", { name: "BOA Checking" });
+  fireEvent.click(opt);
   await screen.findByText("Alpha Tires");
   fireEvent.click(screen.getByLabelText(/select all/i));
   await waitFor(() => expect(screen.getAllByTestId("print-check-number").map((i) => (i as HTMLInputElement).value)).toEqual(["1001", "1002", "1003"]));

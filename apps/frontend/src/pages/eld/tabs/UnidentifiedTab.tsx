@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchEldUnidentifiedDriving, type FleetLocationHosRow } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 function formatSpeed(speed: number | null | undefined): string {
   if (speed == null || Number.isNaN(Number(speed))) return "—";
@@ -77,11 +78,16 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to load unidentified driving.</p>;
+    return (
+      <BoardSection title="Unidentified driving" testId="eld-unidentified-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load unidentified driving.</p>
+      </BoardSection>
+    );
   }
 
   return (
-    <div className="space-y-3" data-testid="eld-unidentified-tab">
+    <BoardSection title="Unidentified Driving" testId="eld-unidentified-tab-board">
+    <div className="space-y-3 p-3" data-testid="eld-unidentified-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-xs font-semibold text-[#0F1219]">Unidentified Driving</div>
         <div className="text-xs text-[#6B7280]">
@@ -110,5 +116,6 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
         tableTestId="eld-unidentified-table"
       />
     </div>
+    </BoardSection>
   );
 }

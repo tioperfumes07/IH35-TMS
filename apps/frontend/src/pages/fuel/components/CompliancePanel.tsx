@@ -4,6 +4,8 @@
  */
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { FuelBoardSection } from "../FuelBoardSection";
+import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   sourceAvailable: boolean;
@@ -15,7 +17,7 @@ type Props = {
 
 function pct(sourceAvailable: boolean, value: number | null): string {
   if (!sourceAvailable || value === null) return "—";
-  return `${value.toFixed(1)}%`;
+  return `${formatQuantityTable(value, 1)}%`;
 }
 
 function count(sourceAvailable: boolean, value: number | null): string {
@@ -30,7 +32,7 @@ export function CompliancePanel({
   fleetTotalRecommendations,
   driverPct,
 }: Props) {
-  const sentLabel = sentToDriverAt ? new Date(sentToDriverAt).toLocaleString() : "Not sent";
+  const sentLabel = sentToDriverAt ? formatDateTimeUS(sentToDriverAt) || "Not sent" : "Not sent";
 
   return (
     <div className="space-y-3" data-testid="fuel-compliance-panel">
@@ -76,11 +78,11 @@ export function CompliancePanel({
           <Row label="Sent to driver app" value={sentLabel} />
           <Row
             label="Recommendations followed YTD (driver)"
-            value={!sourceAvailable || driverPct === null ? "Not available" : `${driverPct.toFixed(1)}%`}
+            value={!sourceAvailable || driverPct === null ? "Not available" : `${formatQuantityTable(driverPct, 1)}%`}
           />
           <Row
             label="Recommendations followed YTD (fleet)"
-            value={!sourceAvailable || fleetPct === null ? "Not available" : `${fleetPct.toFixed(1)}%`}
+            value={!sourceAvailable || fleetPct === null ? "Not available" : `${formatQuantityTable(fleetPct, 1)}%`}
           />
           <Row
             label="Fleet recommendations tracked"

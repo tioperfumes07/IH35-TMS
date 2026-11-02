@@ -40,7 +40,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   for (const kind of ["load", "customer", "driver", "unit"]) {
-    const planted = source.replace(`kind="${kind}"`, 'kind="audit_event"');
+    // replaceAll — approval queue + board table both EntityLink; a single replace left the event.* link intact.
+    const planted = source.replaceAll(`kind="${kind}"`, 'kind="audit_event"');
     if (planted === source || !failures(planted, matrixSource, selfSource).some((failure) => failure.includes(`canonical ${kind} resolved-link/tombstone policy`))) {
       console.error(`${LABEL} SELFTEST FAIL — planted ${kind} regression escaped`);
       process.exit(1);

@@ -9,6 +9,7 @@ import type { AuthMeResponse } from "../../../types/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchAccountingRoleHome, type AccountingAgingBuckets } from "../../../api/accountingHome";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { Button } from "../../../components/Button";
 import { AccountingKpiBar } from "../../../components/home/AccountingKpiBar";
 import { AccountingPendingApprovalsPanel } from "../../../components/home/AccountingPendingApprovalsPanel";
@@ -18,6 +19,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatUsdFromCents } from "../HomeKpiCard";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import "../home-print.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -121,7 +123,7 @@ export function AccountingHome({ auth }: Props) {
       bodyHtml: `
         <h1>Accounting Home</h1>
         <div class="meta">${esc(`AR/AP snapshot (${displayName})`)} · as of ${esc(data?.as_of_date ?? "—")} · printed ${esc(
-          new Date().toLocaleString(),
+          formatDateTimeUS(new Date()),
         )}</div>
         <table>
           <tbody>
@@ -158,9 +160,9 @@ export function AccountingHome({ auth }: Props) {
       />
 
       {!companyId ? (
-        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-3 text-xs text-[#1F2A44]">
-          Select an operating company to load accounting home metrics.
-        </section>
+        <BoardSection title="Accounting home" testId="accounting-home-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load accounting home metrics.</p>
+        </BoardSection>
       ) : homeQuery.isError ? (
         <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-900">
           Failed to load accounting home data. Try refreshing.

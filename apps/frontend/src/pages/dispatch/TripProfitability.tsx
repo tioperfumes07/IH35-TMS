@@ -19,7 +19,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
 function money(cents: number) {
@@ -173,13 +173,13 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => <span className={marginClass(row.margin_pct)}>{row.margin_pct.toFixed(1)}%</span>,
+      render: (row) => <span className={marginClass(row.margin_pct)}>{formatQuantityTable(row.margin_pct, 1)}%</span>,
     },
     {
       key: "trip_closed_at",
       label: "Closed",
       sortable: true,
-      render: (row) => (row.trip_closed_at ? new Date(row.trip_closed_at).toLocaleDateString() : "Open"),
+      render: (row) => (row.trip_closed_at ? formatDateUS(row.trip_closed_at) || "—" : "Open"),
     },
   ];
 
@@ -223,7 +223,7 @@ export function TripProfitability() {
   return (
     <div className="space-y-3">
       <ReportsSubNav />
-      <PageHeader title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
+      <PageHeader backHref="/dispatch" title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
 
       {/* State messages */}
       {query.isError && (

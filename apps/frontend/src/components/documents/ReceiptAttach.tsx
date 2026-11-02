@@ -22,6 +22,10 @@ import { userFacingApiError } from "../../lib/api-error-message";
  * On a DETAIL page `entityId` is the record id. Nothing here invents a second storage path.
  *
  * Compact by design: a button + count chip + thumbnails; it fits inside a cost card field.
+ *
+ * Codex QA 11-02 — Expenses/Bills lists must NOT mount-list 200× into GET /attachments (60/min).
+ * Pass `listWhen="open"` + `initialCount` from the list row's `attachment_count` so the cell
+ * shows the count immediately and only GETs attachments when the operator opens the popover.
  */
 export type ReceiptAttachProps = {
   operatingCompanyId: string;
@@ -35,6 +39,16 @@ export type ReceiptAttachProps = {
   readOnly?: boolean;
   testId?: string;
   onCountChange?: (count: number) => void;
+  /**
+   * Parent-known count (expense/bill list `attachment_count`). Used when `listWhen="open"` so the
+   * cell can render the pill without a per-row GET.
+   */
+  initialCount?: number;
+  /**
+   * `mount` (default) — GET /attachments on mount (detail / create forms).
+   * `open` — defer GET until the operator opens the receipt popover (money list grids).
+   */
+  listWhen?: "mount" | "open";
 };
 
 async function sha256Hex(file: File) {
@@ -55,9 +69,20 @@ async function putFile(url: string, file: File, onProgress: (pct: number) => voi
   });
 }
 
-export function ReceiptAttach({ operatingCompanyId, entityType, entityId, category = "receipt", readOnly = false, testId = "receipt-attach", onCountChange }: ReceiptAttachProps) {
+export function ReceiptAttach({
+  operatingCompanyId,
+  entityType,
+  entityId,
+  category = "receipt",
+  readOnly = false,
+  testId = "receipt-attach",
+  onCountChange,
+  initialCount,
+  listWhen = "mount",
+}: ReceiptAttachProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = useState<AttachmentRow[]>([]);
+  const [listed, setListed] = useState(false);
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,13 +94,25 @@ export function ReceiptAttach({ operatingCompanyId, entityType, entityId, catego
       const result = await listAttachments({ operating_company_id: operatingCompanyId, entity_type: entityType, entity_id: entityId });
       const next = result.rows ?? [];
       setRows(next);
+      setListed(true);
       onCountChange?.(next.length);
     } catch (e) {
       setError(userFacingApiError(e, "Could not list receipts."));
     }
   }
 
-  useEffect(() => { void refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [operatingCompanyId, entityType, entityId]);
+  useEffect(() => {
+    setRows([]);
+    setListed(false);
+    setError(null);
+    if (listWhen === "mount") void refresh();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [operatingCompanyId, entityType, entityId, listWhen]);
+
+  useEffect(() => {
+    if (listWhen === "open" && open && !listed) void refresh();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [listWhen, open, listed, operatingCompanyId, entityType, entityId]);
 
   async function openFile(row: AttachmentRow) {
     try {
@@ -112,9 +149,15 @@ export function ReceiptAttach({ operatingCompanyId, entityType, entityId, catego
     setOpen(true);
   }
 
-  const count = rows.length;
+  const count = listed ? rows.length : Math.max(0, Number(initialCount ?? 0));
   return (
-    <div className="relative inline-flex flex-col gap-1" data-testid={testId} data-receipt-attach={entityType} data-receipt-count={count}>
+    <div
+      className="relative inline-flex flex-col gap-1"
+      data-testid={testId}
+      data-receipt-attach={entityType}
+      data-receipt-count={count}
+      data-receipt-list-when={listWhen}
+    >
       <div className="flex items-center gap-1">
         {!readOnly ? (
           <button
@@ -158,7 +201,8 @@ export function ReceiptAttach({ operatingCompanyId, entityType, entityId, catego
       {error ? <div className="ldt-bad-text" data-testid={`${testId}-error`}>{error}</div> : null}
       {open ? (
         <div className="ldt-pop" data-testid={`${testId}-list`} role="dialog" aria-label="Receipts">
-          {rows.length === 0 ? <div className="ldt-muted">No receipt attached. Photo or PDF, up to 25 MB.</div> : null}
+          {!listed ? <div className="ldt-muted">Loading receipts…</div> : null}
+          {listed && rows.length === 0 ? <div className="ldt-muted">No receipt attached. Photo or PDF, up to 25 MB.</div> : null}
           {rows.map((row) => (
             <div key={row.id} className="ldt-pop-row">
               {previews[row.id] ? <img src={previews[row.id]} alt="" className="ldt-thumb" /> : <span className="ldt-thumb ldt-thumb-doc">{/pdf/i.test(row.content_type) ? "PDF" : "FILE"}</span>}

@@ -12,6 +12,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -142,7 +143,11 @@ export function ApplicantsPipelinePage() {
   const applyPath = portalQ.data?.apply_path ?? "";
 
   if (!selectedCompanyId) {
-    return <div className="p-4 text-xs text-gray-600">Select an operating company to review applicants.</div>;
+    return (
+    <BoardSection title="Applicants" testId="drivers-applicants-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to review applicants.</p>
+    </BoardSection>
+  );
   }
 
   return (

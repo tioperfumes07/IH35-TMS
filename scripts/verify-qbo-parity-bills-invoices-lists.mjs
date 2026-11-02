@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["qbo_parity"],"leafRe":"^(bills\\.list|invoices\\.list)$","task":"QBO-PARITY-BILLS-INVOICES-LISTS"} */
 // verify-qbo-parity-bills-invoices-lists — locks the QBO-parity additions to the Bills and Invoices
 // list views so they cannot silently regress (§2: every fix/feature gets a static CI guard).
 //
@@ -33,8 +34,11 @@ export function check({ bills, invoices }) {
     f.push(`${BILLS}: Bills list must import listVendors for the Vendor filter`);
   // FILTER-MULTI-01 (#22497): the Vendor filter is multi-select; exactly one selection narrows the SQL
   // query (vendor_id: vendorParam, vendorParam = the single selected vendor). Either shape is accepted.
+  // ACCT-F2026110203: also accept the multi-vendor-all form (vendorFilter.length > 0 ? join(",") : undefined)
+  // which routes all selected vendors server-side — a superset of the single-vendor form.
   if (!/vendor_id:\s*vendorId\s*\|\|\s*undefined/.test(bills) &&
-      !(/const vendorParam = vendorFilter\.length === 1 \? vendorFilter\[0\] : undefined/.test(bills) && /vendor_id:\s*vendorParam/.test(bills)))
+      !(/const vendorParam = vendorFilter\.length === 1 \? vendorFilter\[0\] : undefined/.test(bills) && /vendor_id:\s*vendorParam/.test(bills)) &&
+      !(/const vendorParam = vendorFilter\.length > 0 \? vendorFilter\.join\(","\) : undefined/.test(bills) && /vendor_id:\s*vendorParam/.test(bills)))
     f.push(`${BILLS}: Bills list must wire vendor_id (vendorId) into listBills`);
   if (!/All vendors/.test(bills)) f.push(`${BILLS}: Bills list must have an "All vendors" Vendor filter option`);
   // BANK-F91070 — ORDERS chrome: BillsPage uses locked tokens (text-section-header / text-xs), not text-[11px].

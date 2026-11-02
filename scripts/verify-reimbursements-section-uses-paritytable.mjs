@@ -8,7 +8,7 @@
  * owner-greenlit DISPLAY-ONLY migration of a READ-ONLY props-fed line list (no
  * posting/mutation logic; amounts arrive precomputed via props). Columns
  * Date / Description / Receipt # / Amount, the "C. Reimbursements" heading, the
- * receipt link button, the `$…toFixed(2)` amount formatting, and the Subtotal
+ * receipt link button, canonical money formatting (formatUsd), and the Subtotal
  * footer line must be preserved 1:1.
  */
 import fs from "node:fs";
@@ -18,8 +18,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-reimbursements-section-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx";
+const EXTRA = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";
 
 const REQUIRED_LABELS = ["Date", "Receipt", "Amount"];
+
+function assertFormatUsd(src, file) {
+  const errors = [];
+  if (!/formatUsd\(/.test(src)) errors.push(`${file}: must format amounts via formatUsd`);
+  if (/\.toFixed\(2\)/.test(src)) errors.push(`${file}: must not use ad-hoc toFixed(2) money formatting`);
+  return errors;
+}
 
 function assertMigrated(src) {
   const errors = [];
@@ -49,15 +57,13 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="driver-finance-reimbursements-table"')) {
     errors.push(`${PAGE}: must set tableTestId="driver-finance-reimbursements-table"`);
   }
-  if (!/C\.\s*Reimbursements|Reimbursements<\/h2>/.test(src)) {
+  if (!/C\.\s*Reimbursements|Reimbursements<\/h2>|title="Reimbursements"/.test(src)) {
     errors.push(`${PAGE}: must keep the Reimbursements heading`);
   }
   if (!src.includes("Subtotal:")) {
     errors.push(`${PAGE}: must keep the Subtotal footer line`);
   }
-  if (!/\.toFixed\(2\)/.test(src)) {
-    errors.push(`${PAGE}: must keep the $…toFixed(2) amount formatting`);
-  }
+  errors.push(...assertFormatUsd(src, PAGE));
   return errors;
 }
 
@@ -67,14 +73,14 @@ function selftest() {
     const COLUMNS = [
       { key: "date", label: "Date" },
       { key: "receipt", label: "Receipt", render: (line) => <button>{line.receipt}</button> },
-      { key: "amount", label: "Amount", render: (line) => \`$\${Number(line.amount).toFixed(2)}\` },
+      { key: "amount", label: "Amount", render: (line) => formatUsd(line.amount) },
     ];
-    <h2>Reimbursements</h2>
+    <BoardSection title="Reimbursements" />
     <ParityTable
       storageKey="driver-finance-reimbursements-section"
       tableTestId="driver-finance-reimbursements-table"
     />
-    <div>Subtotal: \${subtotal.toFixed(2)}</div>
+    <div>Subtotal: {formatUsd(subtotal)}</div>
   `;
   const bad = `
     export function ReimbursementsSection() {
@@ -104,14 +110,15 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const extra = fs.readFileSync(path.join(ROOT, EXTRA), "utf8");
+  const errors = [...assertMigrated(src), ...assertFormatUsd(extra, EXTRA)];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} uses ParityTable; columns + heading + receipt link + subtotal preserved.`,
+    `OK ${LABEL}: ${PAGE} uses ParityTable; Reimbursements + Extra Pay use formatUsd.`,
   );
 }
 

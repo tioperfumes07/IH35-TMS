@@ -309,3 +309,68 @@ export function setPurchaseLineFaroInvoiceNumber(companyId: string, purchaseLine
     { method: "POST", body: { faro_invoice_number: faroInvoiceNumber } }
   );
 }
+
+/** ENG-17 BUILD-ONLY — Faro 1090 wire proposals (PROPOSED / AMBIGUOUS / NO_EVIDENCE). Never executes a match. */
+export type Faro1090WireProposalClass = "PROPOSED" | "AMBIGUOUS" | "NO_EVIDENCE";
+
+export type Faro1090WireCandidate = {
+  bank_transaction_id: string;
+  transaction_date: string;
+  amount_cents: number;
+  description: string | null;
+  merchant_name: string | null;
+  amount_delta_cents: number;
+  day_delta: number;
+  exact_amount: boolean;
+};
+
+export type Faro1090WireProposal = {
+  purchase_id: string;
+  display_id: string;
+  purchase_date: string;
+  factoring_advance_id: string;
+  net_to_company_cents: number;
+  days_unfunded: number;
+  classification: Faro1090WireProposalClass;
+  candidates: Faro1090WireCandidate[];
+  dry_run_accept_preview: {
+    bank_transaction_id: string | null;
+    factoring_advance_id: string;
+    net_to_company_cents: number;
+    executed: false;
+    note: string;
+  };
+};
+
+export function listFaro1090WireProposals(companyId: string, asOf?: string) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (asOf) qs.set("as_of", asOf);
+  return apiRequest<{
+    as_of: string;
+    summary: Record<Faro1090WireProposalClass, number>;
+    proposals: Faro1090WireProposal[];
+    match_execution: "deferred";
+    note: string;
+  }>(`/api/v1/factoring/1090-wire-proposals?${qs.toString()}`);
+}
+
+export function dryRunAcceptFaro1090WireProposal(body: {
+  operating_company_id: string;
+  purchase_id: string;
+  bank_transaction_id: string;
+}) {
+  return apiRequest<{
+    executed: false;
+    would_call: string;
+    purchase_id: string;
+    factoring_advance_id: string;
+    bank_transaction_id: string;
+    net_to_company_cents: number;
+    bank_amount_cents: number;
+    classification: Faro1090WireProposalClass;
+    note: string;
+  }>("/api/v1/factoring/1090-wire-proposals/dry-run-accept", {
+    method: "POST",
+    body: { ...body, execute: false },
+  });
+}

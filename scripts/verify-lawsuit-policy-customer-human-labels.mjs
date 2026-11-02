@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** LST-F124 — LawsuitsTab + PolicyDetail + Customers source_load: no UUID-slice chrome. */
+/** LST-F124 — PolicyDetail + Customers source_load: no UUID-slice chrome.
+ * ENG-60: insurance LawsuitsTab retired → /legal/lawsuits (legal.matters). Lawsuit human-label
+ * chrome is asserted on LegalMattersListPage instead of the Navigate stub.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,32 +12,42 @@ const FILES = [
   "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
   "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
   "apps/frontend/src/pages/Customers.tsx",
+  "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
 ];
 const LABEL = "verify-lawsuit-policy-customer-human-labels";
 const SELFTEST = process.argv.includes("--selftest");
 
 function assertAll(srcs) {
   const problems = [];
-  for (const [file, src] of Object.entries(srcs)) {
+  const lawsuits = srcs[FILES[0]];
+  const policy = srcs[FILES[1]];
+  const customers = srcs[FILES[2]];
+  const legalList = srcs[FILES[3]];
+
+  if (!/Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(lawsuits)) {
+    problems.push(`${FILES[0]}: must Navigate to /legal/lawsuits (ENG-60)`);
+  }
+  for (const [file, src] of Object.entries({ [FILES[1]]: policy, [FILES[2]]: customers, [FILES[3]]: legalList })) {
     if (/claim_id\.slice\(0,\s*8\)/.test(src) || /unitId\.slice\(0,\s*8\)/.test(src) || /source_load_id\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
     const usesGovernedLabel = /entityLabel\(/.test(src) || /<EntityLinkOrTombstone\b/.test(src);
-    if (!usesGovernedLabel) {
-      problems.push(`${file}: missing entityLabel`);
-    }
+    if (!usesGovernedLabel) problems.push(`${file}: missing entityLabel`);
   }
-  const lawsuits = srcs[FILES[0]];
-  const policy = srcs[FILES[1]];
-  const customers = srcs[FILES[2]];
-  const lawsuitTombstoneLink = (kind, id, name, noun) => new RegExp(`<EntityLinkOrTombstone\\s+kind="${kind}"\\s+id=\\{lawsuit\\.${id}\\}\\s+name=\\{lawsuit\\.${name}\\}\\s+noun="${noun}"`);
-  if (!lawsuitTombstoneLink("claim", "claim_id", "claim_number", "Claim").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit claim drill must consume claim_number through tombstone-safe binding`);
-  if (!lawsuitTombstoneLink("driver", "driver_id", "driver_name", "Driver").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit driver drill must consume driver_name through tombstone-safe binding`);
-  if (!lawsuitTombstoneLink("unit", "unit_id", "unit_number", "Unit").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit unit drill must consume unit_number through tombstone-safe binding`);
-  if (!/entityLabel\(unit\.unit_number,\s*unitId,\s*"Unit"\)/.test(policy)) problems.push(`${FILES[1]}: policy unit link must consume unit_number`);
+  if (!/entityLabel\(unit\.unit_number,\s*unitId,\s*"Unit"\)/.test(policy)) {
+    problems.push(`${FILES[1]}: policy unit link must consume unit_number`);
+  }
+  if (!/kind="matter"[\s\S]{0,120}row\.id/.test(policy)) {
+    problems.push(`${FILES[1]}: policy lawsuit reverse must drill to legal matter (ENG-60)`);
+  }
   const directCustomerLoadLabel = /entityLabel\(r\.source_load_number,\s*r\.source_load_id,\s*"Load"\)/.test(customers);
   const tombstoneCustomerLoadLabel = /<EntityLinkOrTombstone[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{r\.source_load_id\}[\s\S]{0,180}name=\{r\.source_load_number\}[\s\S]{0,180}noun="Load"/.test(customers);
-  if (!directCustomerLoadLabel && !tombstoneCustomerLoadLabel) problems.push(`${FILES[2]}: customer transaction link must consume source_load_number`);
+  if (!directCustomerLoadLabel && !tombstoneCustomerLoadLabel) {
+    problems.push(`${FILES[2]}: customer transaction link must consume source_load_number`);
+  }
+  if (!/entityLabel\(/.test(legalList)) {
+    problems.push(`${FILES[3]}: LegalMattersListPage must use entityLabel for matter rows`);
+  }
   return problems;
 }
 
@@ -43,11 +56,11 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 if (SELFTEST) {
   const srcs = read();
   const mutations = [
-    [FILES[0], "name={lawsuit.claim_number}", "name={null}"],
-    [FILES[0], "name={lawsuit.driver_name}", "name={null}"],
-    [FILES[0], "name={lawsuit.unit_number}", "name={null}"],
+    [FILES[0], "/legal/lawsuits", "/insurance/lawsuits"],
     [FILES[1], "unit.unit_number", "null"],
+    [FILES[1], 'kind="matter"', 'kind="claim"'],
     [FILES[2], "r.source_load_number", "null"],
+    [FILES[3], "entityLabel(", "label("],
   ];
   for (const [file, before, after] of mutations) {
     const planted = { ...srcs, [file]: srcs[file].replace(before, after) };

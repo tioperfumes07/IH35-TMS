@@ -88,7 +88,8 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { formatUsdCents } from "../../../lib/money";
+import { formatNumber, formatUsd, formatUsdCents } from "../../../lib/money";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -371,7 +372,7 @@ export function BookLoadModalV4({
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
+  const [headerTime] = useState(() => formatDateTimeUS(new Date()) || "—");
   // ROUND 443.257 / 443.280-C — Side panel (760px) | Center (1260px); remember per browser.
   const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
     try {
@@ -3176,7 +3177,7 @@ export function BookLoadModalV4({
               <div className="text-xs text-gray-500">
                 {driverBillPreview === null
                   ? `Missing ${driverBillMissing.join(" and ")} for this preview. Booking is not blocked. Driver pay on submit is loaded miles × loaded rate plus empty miles × empty rate from the active driver rate card; with no rate card the load still books and records a skipped-no-rate event instead of a driver bill.`
-                  : `${Number(milesPractical || 0).toLocaleString()} loaded miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
+                  : `${formatNumber(milesPractical || 0)} loaded miles × ${formatUsd(driverPayRatePerMile || 0)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
               </div>
             </div>
             <div className="flex gap-2">

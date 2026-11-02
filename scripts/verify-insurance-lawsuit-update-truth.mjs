@@ -1,25 +1,24 @@
 #!/usr/bin/env node
+/**
+ * ENG-60: PATCH /api/v1/insurance/lawsuits/:id must be 410 Gone (insurance.lawsuit retired).
+ * Updates go through legal.matters type=lawsuit — no UPDATE of the side table.
+ */
 import fs from "node:fs";
 
 const FILE = "apps/backend/src/insurance/lawsuit.routes.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
 function failures(candidate) {
-  const route = candidate.slice(candidate.indexOf('/api/v1/insurance/lawsuits/:id"'));
+  const routeStart = candidate.indexOf('/api/v1/insurance/lawsuits/:id"');
+  const route = routeStart < 0 ? "" : candidate.slice(routeStart);
   const checks = [
     ["mutation limiter", /lawsuits\/:id"[\s\S]{0,180}rateLimit:\s*\{\s*max:\s*120,\s*timeWindow:\s*"1 minute"/],
-    ["status lock", /SELECT status[\s\S]{0,180}FROM insurance\.lawsuit[\s\S]{0,180}operating_company_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}LIMIT 1[\s\S]{0,40}FOR UPDATE/],
-    ["company update", /UPDATE insurance\.lawsuit[\s\S]{0,180}WHERE operating_company_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}RETURNING/],
-    ["create proven row", /if \(!result\.rows\[0\]\) return \{ kind: "lawsuit_not_found" as const \}[\s\S]{0,100}const lawsuit = result\.rows\[0\]/],
-    ["update audit", /appendCrudAudit\([\s\S]{0,120}"insurance\.lawsuit\.updated"[\s\S]{0,180}resource_type: "insurance\.lawsuit"[\s\S]{0,100}resource_id: lawsuit\.id/],
-    ["company and linkage audit", /operating_company_id: query\.data\.operating_company_id[\s\S]{0,100}claim_id: body\.claim_id[\s\S]{0,100}status: body\.status/],
-    ["proven response", /row: lawsuit/],
+    ["410 gone", /\.code\(410\)\.send\(LAWSUIT_SIDE_TABLE_GONE\)/],
   ];
   const failed = checks.filter(([, pattern]) => !pattern.test(route)).map(([label]) => label);
-  // Negative: a lawsuit read or write keyed on id alone crosses carriers — every one carries the company predicate.
-  if (/FROM insurance\.lawsuit\s+WHERE id = \$|UPDATE insurance\.lawsuit\s+SET[\s\S]{0,200}?WHERE id = \$/.test(route)) failed.push("unscoped lawsuit read/write");
-  // The linked claim must be the same carrier's: its ownership lookup carries the company predicate first.
-  if (!/FROM insurance\.claim\s+WHERE operating_company_id = \$1::uuid/.test(route)) failed.push("claim link not company-checked");
+  if (!/insurance_lawsuit_retired/.test(candidate)) failed.push("retired error body");
+  if (!/redirect:\s*"\/legal\/lawsuits"/.test(candidate)) failed.push("legal redirect");
+  if (/UPDATE insurance\.lawsuit/.test(route)) failed.push("side-table update still present");
   return failed;
 }
 
@@ -31,21 +30,14 @@ if (problems.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ['{ config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },', ""],
-    ["            FOR UPDATE\n", ""],
-    ['"insurance.lawsuit.updated"', '"insurance.lawsuit.missing"'],
-    ["resource_id: lawsuit.id,\n        operating_company_id: query.data.operating_company_id", 'resource_id: "",\n        operating_company_id: query.data.operating_company_id'],
-    ["status: body.status", 'status: ""'],
-    ["row: lawsuit", "row: result.rows[0]"],
-    // company scope (ROUND 342: operating_company_id, the one company column) dropped from the lock / the update
-    ["FROM insurance.lawsuit\n            WHERE operating_company_id = $1::uuid AND id = $2::uuid", "FROM insurance.lawsuit\n            WHERE id = $2::uuid"],
-    ["FROM insurance.claim\n            WHERE operating_company_id", "FROM insurance.claim\n            WHERE true OR operating_company_id"],
-    ["WHERE operating_company_id = $1::uuid AND id = $2::uuid\n          RETURNING", "WHERE id = $2::uuid\n          RETURNING"],
+    [".code(410).send(LAWSUIT_SIDE_TABLE_GONE)", ".code(200).send({})"],
+    ["insurance_lawsuit_retired", "insurance_lawsuit_ok"],
+    ['redirect: "/legal/lawsuits"', 'redirect: "/insurance/lawsuits"'],
+    ['{ config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },', "{ config: {} },"],
   ];
   for (const [from, to] of mutations) {
-    // Plants land inside the route this guard checks (other routes in the file reuse the same SQL text).
-    const routeStart = source.indexOf('/api/v1/insurance/lawsuits/:id"');
-    const index = from === "row: lawsuit" ? source.lastIndexOf(from) : source.indexOf(from, routeStart);
+    // Prefer the PATCH occurrence (last 410) so create's 410 does not mask the mutate guard.
+    const index = from.includes("410") ? source.lastIndexOf(from) : source.indexOf(from);
     const changed = index < 0 ? source : `${source.slice(0, index)}${to}${source.slice(index + from.length)}`;
     if (changed === source || failures(changed).length === 0) {
       console.error(`verify-insurance-lawsuit-update-truth selftest mutation escaped: ${from}`);
@@ -56,4 +48,4 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-console.log("verify-insurance-lawsuit-update-truth PASS — lawsuit status transition is locked and every update is audited");
+console.log("verify-insurance-lawsuit-update-truth PASS — ENG-60 PATCH insurance lawsuits is 410 Gone");

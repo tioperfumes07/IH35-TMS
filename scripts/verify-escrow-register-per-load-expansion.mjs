@@ -45,6 +45,11 @@ const CHECKS = [
     file: PAGE,
     pattern: /t\.load_id[\s\S]{0,100}Load \${t\.load_number/,
   },
+  {
+    name: "frontend CSV money uses formatUsd (not toFixed)",
+    file: PAGE,
+    pattern: /formatUsd\(r\.balance\)/,
+  },
 ];
 
 function checkAll(readFile) {
@@ -91,6 +96,7 @@ if (process.argv.includes("--selftest")) {
       const settLabel = t.load_id
         ? \`Load \${t.load_number ?? "—"} · ...\`
         : t.settlement_id
+      formatUsd(r.balance)
     `,
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);

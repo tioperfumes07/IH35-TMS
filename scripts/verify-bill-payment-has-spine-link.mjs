@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
-// ENG-46 (443.328): every posted bill_payment on USMCA must have at least one journal_entry_postings
+// ENG-46 (443.328): every CASH posted bill_payment on USMCA must have at least one journal_entry_postings
 // row whose source_transaction_type = 'bill_payment' and source_transaction_id = bp.id.
 //
-// MEASURED LIVE (2026-10-25, USMCA, neondb_owner): 223 posted bill_payments have no such spine entry.
-// These are pre-existing gaps; the ceiling shrinks as the spine writer is wired to each payment path.
+// settlement_deduction_noncash bill payments are intentionally NOT posting-eligible (escrow/withholding
+// applications on the settlement; no independent JE). LIVE 11-02 CT: all 223 prior "unlinked" rows
+// were noncash; cash unlinked = 0. Exclude noncash from the ratchet so ad02cc37-class rows do not
+// fake a spine debt.
 //
 // Shrink-only ratchet: the ceiling can only go DOWN.
 import pg from "pg";
@@ -12,7 +14,7 @@ import pg from "pg";
 const LABEL = "verify-bill-payment-has-spine-link";
 export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-export const UNLINKED_BP_CEILING = 223; // measured 2026-10-25; shrink-only
+export const UNLINKED_BP_CEILING = 0; // LIVE 11-02 CT: cash posted BPs without spine = 0 (noncash excluded)
 
 export function evaluate(unlinked, ceiling = UNLINKED_BP_CEILING) {
   const out = [];
@@ -63,6 +65,7 @@ async function run() {
          FROM accounting.bill_payments bp
         WHERE bp.operating_company_id = $1
           AND bp.status = 'posted'
+          AND NOT COALESCE(bp.settlement_deduction_noncash, false)
           AND NOT EXISTS (
             SELECT 1 FROM accounting.journal_entry_postings jep
              WHERE jep.source_transaction_type = 'bill_payment'
@@ -77,7 +80,7 @@ async function run() {
       console.error(`${LABEL}: FAIL — ${failures.join("; ")}`);
       process.exit(1);
     }
-    console.log(`${LABEL}: LIVE PASS (ratchet, ENG-46) — ${n} posted bill_payments lack a JE spine entry (ceiling ${UNLINKED_BP_CEILING})`);
+    console.log(`${LABEL}: LIVE PASS (ratchet, ENG-46) — ${n} cash posted bill_payments lack a JE spine entry (ceiling ${UNLINKED_BP_CEILING}; noncash excluded by design)`);
   } finally {
     await client.end();
   }

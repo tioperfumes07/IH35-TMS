@@ -35,8 +35,15 @@ function assertLive(over = {}) {
   if (!/portsError|setPortsError/.test(api) || !/brokersError|setBrokersError/.test(api)) {
     problems.push("API hook swallows errors without surfacing");
   }
-  if (!/data-testid="border-crossing-need-company"/.test(page)) {
+  if (
+    !/data-testid="border-crossing-need-company"/.test(page) &&
+    !/testId="border-crossing-need-company"/.test(page)
+  ) {
     problems.push("missing need-company honest empty");
+  }
+  // fill-not-shell — need-company uses BoardSection (testId → data-testid)
+  if (!/<BoardSection\b[\s\S]*testId="border-crossing-need-company"|testId="border-crossing-need-company"[\s\S]*<\/BoardSection>/.test(page)) {
+    problems.push("need-company empty must be BoardSection");
   }
   if (!/data-testid="border-crossing-ports-honest-empty"/.test(page)) {
     problems.push("missing ports honest empty");

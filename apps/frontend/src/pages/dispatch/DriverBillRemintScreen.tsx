@@ -8,6 +8,7 @@ import {
 } from "../../api/loads";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
@@ -113,7 +114,17 @@ export function DriverBillRemintScreen() {
         className: "font-medium",
         render: (row) => <EntityLinkOrTombstone kind="load" id={row.id} name={row.load_number} noun="Load" />,
       },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "— unassigned —" },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) =>
+          row.driver_id ? (
+            <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+          ) : (
+            "— unassigned —"
+          ),
+      },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status.replace(/_/g, " ") },
       {
         key: "is_sample_data",
@@ -138,14 +149,17 @@ export function DriverBillRemintScreen() {
   if (!companyId) {
     return (
       <div className="space-y-3">
-        <PageHeader title="Driver Bill Remint" subtitle="Select a company first" />
+        <PageHeader backHref="/dispatch" title="Driver Bill Remint" subtitle="Select a company first" />
+        <BoardSection title="Driver bill remint" testId="driver-bill-remint-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Driver Bill Remint"
         subtitle={`${query.data?.real_count ?? 0} real loads (of ${query.data?.total_count ?? 0} total) delivered with no driver bill`}
         actions={

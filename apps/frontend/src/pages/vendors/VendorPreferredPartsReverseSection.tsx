@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceParts } from "../../api/maintenance";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -18,7 +18,7 @@ export function VendorPreferredPartsReverseSection({ operatingCompanyId, vendorI
   const rows = query.data?.rows ?? [];
 
   return (
-    <DataPanel title="Preferred Parts">
+    <BoardSection title="Preferred Parts" testId="preferred-parts-board">
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load preferred parts for this vendor")}
@@ -40,6 +40,6 @@ export function VendorPreferredPartsReverseSection({ operatingCompanyId, vendorI
           ))}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

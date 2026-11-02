@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest, ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import {
   SubscriptionEditor,
@@ -234,35 +235,27 @@ export function SubscriptionManager() {
       ) : null}
 
       {/*
-        Q8-SUBSCRIPTIONS-SILENT-NO-DELIVERY (2026-08-24): the CRUD API/table (reports.scheduled_subscriptions)
-        is real and correctly saves cadence/recipients, and createSubscription() does compute a real
-        next_scheduled_at -- but no backend worker anywhere in the repo ever reads this table to send an
-        email. Confirmed live on Neon: 17 of 18 rows are is_active=true, 0 have ever had last_sent_at set,
-        0 have a non-null next_scheduled_at (the oldest active row was created 2026-06-08, so this has been
-        silently true for 2.5+ months), and reports.scheduled_delivery_log has 0 rows total, ever. Even a
-        freshly-created subscription cannot deliver today: none of the 6 Q8 report_slugs (weekly-cash-position,
-        weekly-driver-settlement-preview, weekly-ar-aging-60, monthly-pnl, quarterly-ifta-preview,
-        daily-safety-alerts-digest) are in the OTHER scheduled-reports worker's report generator whitelist
-        (apps/backend/src/scheduled-reports/report-file-builder.ts LEGACY_IDS), so wiring a worker to that
-        existing delivery primitive as-is would immediately throw unsupported_report_id for every row.
-        Until a real worker + report generator ships for this table, showing "Active" with a plain "—" for
-        Last sent/Next silently misleads the Owner into believing a weekly email is going out when nothing
-        ever will. This banner makes that honest instead of silent -- it is not the full fix (that is a
-        real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
+        ROUND 7.11 / GAP-43 (2026-11-02): delivery worker is live —
+        jobs/scheduled-reports-emailer (cron every 15 min) → reports/scheduled/runner.service runDue.
+        All six Q8 slugs have generators. Seed historically left next_scheduled_at NULL so due
+        scans skipped Active rows; runDue now backfills null Next from cadence. This board names
+        the real emailer — not a "coming soon" shell.
       */}
+      <BoardSection title="Email delivery" subtitle="Scheduled report subscriptions" testId="q8-subscriptions-delivery-board">
       <div
-        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs"
-        data-testid="q8-subscriptions-delivery-not-implemented"
+        className="bg-[#F7F8FA] p-4 text-xs"
+        data-testid="q8-subscriptions-delivery-board-body"
       >
-        <p className="font-semibold text-[#1F2A44]">Email delivery is not implemented yet</p>
+        <p className="font-semibold text-[#1F2A44]">Email delivery runs on the scheduled-reports emailer</p>
         <p className="mt-1 text-[#4B5563]">
-          Subscriptions below save correctly, but no backend worker exists to send them — "Active" status
-          does not mean emails are going out.{" "}
+          Worker ticks every 15 minutes (America/Chicago). Active rows get a Next fire time from their
+          cadence; Last sent updates after a successful delivery into the log below.{" "}
           <InfoPopover label="About subscription delivery">
-            Last sent / Next will stay empty for every subscription until report delivery ships.
+            Create/Edit always sets Next. Seeded null Next values are backfilled on the next emailer tick.
           </InfoPopover>
         </p>
       </div>
+      </BoardSection>
 
       {/* LEAD 443.181 — the app's one table. A subscription has no record page of its own (it is edited in the
           SubscriptionEditor dialog via the Edit action), and a delivery-log line has none either: no row route. */}

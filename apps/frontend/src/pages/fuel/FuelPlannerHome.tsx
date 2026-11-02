@@ -20,6 +20,8 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMultiSelect";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -562,7 +564,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 savingsQuery.isPending
                   ? "…"
                   : savingsQuery.data?.source_available && savingsQuery.data.fleet_savings_ytd != null
-                    ? `$${Number(savingsQuery.data.fleet_savings_ytd).toFixed(2)}`
+                    ? formatUsd(Number(savingsQuery.data.fleet_savings_ytd))
                     : "—"
               }
               sub="planner compliance savings"
@@ -574,7 +576,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 savingsQuery.isPending
                   ? "…"
                   : savingsQuery.data?.source_available && savingsQuery.data.fleet_lost_savings_ytd != null
-                    ? `$${Number(savingsQuery.data.fleet_lost_savings_ytd).toFixed(2)}`
+                    ? formatUsd(Number(savingsQuery.data.fleet_lost_savings_ytd))
                     : "—"
               }
               sub="from non-compliance"
@@ -741,7 +743,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           <FuelBoardSection title="Loves daily prices" subtitle="Station rack prices used by the planner" testId="fuel-loves-prices-board-section">
             <div className="px-3 py-3 text-xs text-gray-700">
               <p className="text-xs text-gray-600">
-                Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
+                Last sync: {lovesSyncQuery.data?.last_synced_at ? formatDateTimeUS(String(lovesSyncQuery.data.last_synced_at)) || "n/a" : "n/a"}
               </p>
               <ActionButton className="mt-3" onClick={() => setUploadOpen(true)}>
                 Upload Loves prices
@@ -862,7 +864,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                         </span>
                       </div>
                       <p className="mt-1 text-gray-600">
-                        ETA: {rec.estimated_arrival_at ? new Date(rec.estimated_arrival_at).toLocaleString() : "n/a"} · HOS drive rem:{" "}
+                        ETA: {rec.estimated_arrival_at ? formatDateTimeUS(rec.estimated_arrival_at) || "n/a" : "n/a"} · HOS drive rem:{" "}
                         {rec.drive_remaining_min_at_arrival} min · Mile {Math.round(rec.estimated_route_mile)}
                       </p>
                       <p className="text-gray-500">{rec.note}</p>

@@ -8,7 +8,7 @@
 import { useMemo, type ReactNode } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import type {
   CompanySettlementCustomerChargeRow,
   CompanySettlementDriverPaymentRow,
@@ -187,7 +187,7 @@ function LoadGroupCard({ group, multiDriver }: { group: LoadGroup; multiDriver: 
         render={(r, i) => (
           <div className="ldt-row" key={`fuel-${i}`}>
             <span>
-              {[r.transaction_date, r.vendor, r.location, r.gallons ? `${r.gallons.toLocaleString()} gal` : null]
+              {[r.transaction_date, r.vendor, r.location, r.gallons ? `${formatQuantityTable(r.gallons, 1, 0)} gal` : null]
                 .filter(Boolean)
                 .join(" · ") || DASH}
               {r.invoice_number ? ` (inv ${r.invoice_number})` : ""}

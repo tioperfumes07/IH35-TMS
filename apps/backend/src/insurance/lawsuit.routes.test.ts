@@ -187,7 +187,7 @@ describe("insurance lawsuit routes", () => {
     ]);
   });
 
-  it("POST creates lawsuit and links claim", async () => {
+  it("POST is 410 Gone — ENG-60 insurance.lawsuit retired", async () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "POST",
@@ -204,35 +204,14 @@ describe("insurance lawsuit routes", () => {
       },
     });
 
-    expect(response.statusCode).toBe(201);
+    expect(response.statusCode).toBe(410);
     expect(response.json()).toMatchObject({
-      id: "bbbbbbbb-2222-4222-8222-222222222222",
-      case_number: "CASE-100",
-      claim_id: "11111111-1111-4111-8111-111111111111",
+      error: "insurance_lawsuit_retired",
+      redirect: "/legal/lawsuits",
     });
   });
 
-  it("POST returns 404 when claim does not exist", async () => {
-    const app = await buildApp();
-    const response = await app.inject({
-      method: "POST",
-      url: "/api/v1/insurance/lawsuits",
-      payload: {
-        operating_company_id: "11111111-1111-4111-8111-111111111111",
-        case_number: "CASE-200",
-        plaintiff: "Acme Logistics",
-        defendant: "RoadRunner Inc",
-        court_name: "Harris County District Court",
-        filed_date: "2026-05-01",
-        claim_id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
-      },
-    });
-
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toMatchObject({ error: "claim_not_found" });
-  });
-
-  it("PATCH allows valid status transition", async () => {
+  it("PATCH is 410 Gone — ENG-60 insurance.lawsuit retired", async () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "PATCH",
@@ -242,35 +221,10 @@ describe("insurance lawsuit routes", () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ status: "active" });
-  });
-
-  it("PATCH rejects invalid status transition", async () => {
-    const app = await buildApp();
-    const response = await app.inject({
-      method: "PATCH",
-      url: "/api/v1/insurance/lawsuits/77777777-7777-4777-8777-777777777777?operating_company_id=11111111-1111-4111-8111-111111111111",
-      payload: {
-        status: "active",
-      },
+    expect(response.statusCode).toBe(410);
+    expect(response.json()).toMatchObject({
+      error: "insurance_lawsuit_retired",
+      redirect: "/legal/lawsuits",
     });
-
-    expect(response.statusCode).toBe(400);
-    expect(response.json()).toMatchObject({ error: "invalid_status_transition", from: "settled", to: "active" });
-  });
-
-  it("PATCH enforces tenant isolation", async () => {
-    const app = await buildApp();
-    const response = await app.inject({
-      method: "PATCH",
-      url: "/api/v1/insurance/lawsuits/99999999-9999-4999-8999-999999999999?operating_company_id=11111111-1111-4111-8111-111111111111",
-      payload: {
-        status: "active",
-      },
-    });
-
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toMatchObject({ error: "lawsuit_not_found" });
   });
 });

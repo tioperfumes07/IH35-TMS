@@ -74,14 +74,16 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
     "getFleetLocationHos",
   ]);
 
-  need("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster", 'data-testid="eld-live-duty-tab"']);
-  need("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations", 'data-testid="eld-violations-tab"']);
+  need("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster", 'data-testid="eld-live-duty-tab"', "BoardSection", 'testId="eld-live-duty-need-company"']);
+  need("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations", 'data-testid="eld-violations-tab"', "BoardSection", 'testId="eld-violations-need-company"']);
   need("UnidentifiedTab", unidentified, [
     "useQuery",
     "fetchEldUnidentifiedDriving",
     'data-testid="eld-unidentified-tab"',
+    "BoardSection",
+    'testId="eld-unidentified-need-company"',
   ]);
-  need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty"]);
+  need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty", "BoardSection"]);
 
   need("ELD_TABS_CONFIG", tabsConfig, [
     'id: "live-duty"',
@@ -89,8 +91,11 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
     'id: "unidentified"',
     'id: "certifications"',
     'id: "settings"',
-    "not wired yet",
+    "no fake rows",
   ]);
+  if (tabsConfig.includes("not wired yet")) {
+    problems.push('ELD_TABS_CONFIG must not keep "not wired yet" titles (BoardSection honest-empty is enough)');
+  }
 
   const fakePatterns = [
     /FAKE_ELD_/i,

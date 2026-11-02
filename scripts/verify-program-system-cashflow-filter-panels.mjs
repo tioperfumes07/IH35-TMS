@@ -50,9 +50,10 @@ const SURFACES = [
     route: "/cash-flow?tab=actual_vs_projected",
   },
   {
+    // ENG-60: insurance lawsuits board redirects; filter chrome on LegalMattersListPage.
     id: "insurance-lawsuits",
-    file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
-    route: "/insurance/lawsuits",
+    file: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
+    route: "/legal/lawsuits",
   },
   {
     id: "drivers-table",
@@ -145,19 +146,19 @@ export function collectFailures(sources) {
   if (!/testIdPrefix="cash-flow-avp"/.test(cash) && !/data-cash-flow-avp-filter-toolbar/.test(cash)) {
     failures.push("cash-flow: Filters panel must be distinct from the date-range Apply control");
   }
-  // Insurance: Filters must bind to Lawsuits exact owner (not alias /insurance + UniversalListToolbar)
+  // ENG-60: insurance lawsuits chrome → Legal › Lawsuits (LegalMattersListPage).
   const insuranceReq = sources["docs/specs/scoreboard/modules/insurance.required.json"] ?? "";
   if (insuranceReq) {
-    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/insurance\/lawsuits"/.test(insuranceReq)) {
-      failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /insurance/lawsuits");
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/legal\/lawsuits"/.test(insuranceReq)) {
+      failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /legal/lawsuits (ENG-60)");
     }
-    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/insurance\/LawsuitsTab\.tsx"/.test(insuranceReq)) {
-      failures.push("insurance.required.json: chrome.toolbar_filter surface_path must be LawsuitsTab.tsx");
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/legal\/matters\/LegalMattersListPage\.tsx"/.test(insuranceReq)) {
+      failures.push("insurance.required.json: chrome.toolbar_filter surface_path must be LegalMattersListPage.tsx (ENG-60)");
     }
   }
   const lawsuits = sources[SURFACES[3].file] ?? "";
-  if (!/testIdPrefix="insurance-lawsuits"/.test(lawsuits) && !/data-insurance-lawsuits-filter-toolbar/.test(lawsuits)) {
-    failures.push("insurance-lawsuits: Filters panel must use insurance-lawsuits testId/data attribute");
+  if (!/testIdPrefix="legal-matters"/.test(lawsuits) && !/data-legal-matters-filter-toolbar/.test(lawsuits)) {
+    failures.push("insurance-lawsuits: Filters panel must use legal-matters testId/data attribute (ENG-60)");
   }
   const drivers = sources[SURFACES[4].file] ?? "";
   if (!/testIdPrefix="drivers-table"/.test(drivers) && !/data-drivers-table-filter-toolbar/.test(drivers)) {
@@ -642,7 +643,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       ...sources,
       "docs/specs/scoreboard/modules/insurance.required.json": sources[
         "docs/specs/scoreboard/modules/insurance.required.json"
-      ].replaceAll('"/insurance/lawsuits"', '"/insurance"'),
+      ].replaceAll('"/legal/lawsuits"', '"/insurance"'),
     }),
     () => ({
       ...sources,

@@ -10,8 +10,10 @@ import {
 } from "../../api/insurance";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/Combobox";
 
@@ -298,19 +300,32 @@ export function TypeCatalogAdmin() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to manage insurance type catalog.</div>;
+    return (
+      <div className="space-y-3" data-testid="type-catalog-admin-page">
+        <PageHeader
+          backHref="/insurance"
+          breadcrumb={["Insurance", "Type catalog"]}
+          title="Type Catalog Admin"
+          subtitle="Create, edit, and deactivate entries from insurance type catalog."
+        />
+        <BoardSection title="Type catalog" testId="type-catalog-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to manage insurance type catalog.</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-[#0F1219]">Type Catalog Admin</h2>
-        <p className="mt-1 text-xs text-[#4B5563]">Create, edit, and deactivate entries from insurance type catalog.</p>
-      </header>
+    <div className="space-y-3" data-testid="type-catalog-admin-page">
+      <PageHeader
+        backHref="/insurance"
+        breadcrumb={["Insurance", "Type catalog"]}
+        title="Type Catalog Admin"
+        subtitle="Create, edit, and deactivate entries from insurance type catalog."
+      />
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">+ Create type</h3>
-        <div className="mt-2 grid gap-2 md:grid-cols-5">
+      <BoardSection title="+ Create type" testId="type-catalog-create-board">
+        <div className="grid gap-2 px-3.5 py-2 md:grid-cols-5">
           <label className="text-xs font-semibold text-[#4B5563]">
             Code
             <SelectCombobox
@@ -367,7 +382,7 @@ export function TypeCatalogAdmin() {
             </Button>
           </div>
         </div>
-        <label className="mt-2 block text-xs font-semibold text-[#4B5563]">
+        <label className="block px-3.5 pb-2 text-xs font-semibold text-[#4B5563]">
           Description
           <input
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -376,27 +391,29 @@ export function TypeCatalogAdmin() {
             placeholder="Optional"
           />
         </label>
-      </section>
+      </BoardSection>
 
-      {query.isError ? (
-        <ListErrorState
-          title="Couldn't load type catalog"
-          status={0}
-          message={(query.error as Error)?.message}
-          onRetry={() => void query.refetch()}
-        />
-      ) : (
-        <ParityTable<InsuranceTypeCatalogEntry>
-          title="Insurance types"
-          columns={columns}
-          rows={orderedRows}
-          rowKey={(row) => row.id}
-          loading={query.isLoading}
-          emptyText="No type catalog entries."
-          storageKey="insurance-type-catalog-admin"
-          tableTestId="insurance-type-catalog-admin-table"
-        />
-      )}
+      <BoardSection title="Insurance types" testId="type-catalog-list-board">
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load type catalog"
+            status={0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
+          <ParityTable<InsuranceTypeCatalogEntry>
+            title="Insurance types"
+            columns={columns}
+            rows={orderedRows}
+            rowKey={(row) => row.id}
+            loading={query.isLoading}
+            emptyText="No type catalog entries."
+            storageKey="insurance-type-catalog-admin"
+            tableTestId="insurance-type-catalog-admin-table"
+          />
+        )}
+      </BoardSection>
     </div>
   );
 }

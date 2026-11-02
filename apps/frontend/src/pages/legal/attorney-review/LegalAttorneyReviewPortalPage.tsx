@@ -11,6 +11,7 @@ import {
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 export function LegalAttorneyReviewPortalPage() {
   const { token = "" } = useParams();
@@ -115,7 +116,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl p-4">
-        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="text-xs text-gray-600">Loading review…</p>
       </div>
     );
@@ -124,7 +125,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (error && !details) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-2 text-xs text-red-700">This review link is invalid, expired, or already used ({error}).</p>
       </div>
     );
@@ -135,7 +136,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (doneMessage) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-3 text-xs text-gray-800">{doneMessage}</p>
       </div>
     );
@@ -143,13 +144,13 @@ export function LegalAttorneyReviewPortalPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl space-y-4 p-4 pb-24">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Attorney Review"]}
         title="Attorney review"
         subtitle={`${details.display_name_en} · ${details.template_code} v${details.version}`}
       />
       {details.submitted_for_review_at ? (
-        <p className="-mt-2 text-xs text-gray-500">Submitted {new Date(details.submitted_for_review_at).toLocaleString()}</p>
+        <p className="-mt-2 text-xs text-gray-500">Submitted {formatDateTimeUS(details.submitted_for_review_at)}</p>
       ) : null}
 
       <section className="grid gap-4 lg:grid-cols-2">

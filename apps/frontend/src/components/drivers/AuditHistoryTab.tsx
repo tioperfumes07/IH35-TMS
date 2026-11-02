@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Props = {
   driverId: string;
@@ -19,7 +20,7 @@ type Props = {
 function formatWhen(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return formatDateTimeUS(date);
 }
 
 function payloadDiff(payload: unknown): string {

@@ -3,6 +3,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
 import { ListErrorState } from "../ListErrorState";
 import { formatUsdCents } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
 type Props = {
@@ -57,7 +58,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
               <EntityLink
                 kind="fuel_card_overage_event"
                 id={event.id}
-                label={`${new Date(event.created_at).toLocaleDateString()} · ${formatUsdCents(event.overage_cents)}`}
+                label={`${formatDateUS(event.created_at)} · ${formatUsdCents(event.overage_cents)}`}
                 className="text-xs font-semibold text-[#1F2A44] hover:underline"
               />
             </li>

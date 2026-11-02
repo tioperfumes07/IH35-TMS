@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getFleetRestoreCost } from "../../api/maintenance";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
 };
 
 function money(cents: number) {
-  return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(Number(cents || 0));
 }
 
 export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {

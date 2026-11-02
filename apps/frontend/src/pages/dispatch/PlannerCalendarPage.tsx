@@ -9,6 +9,7 @@ import {
   type PlannerLoadEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -18,6 +19,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { formatPlannerDayLabel } from "./planners/plannerDayLabel";
 
 function plannerWeekStart(input?: string): string {
   if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
@@ -191,12 +193,9 @@ export function PlannerCalendarPage() {
 
   if (!companyId) {
     return (
-      <div
-        data-testid="dispatch-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the planner calendar.
-      </div>
+      <BoardSection title="Planner calendar" testId="dispatch-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the planner calendar.</p>
+      </BoardSection>
     );
   }
 
@@ -206,7 +205,7 @@ export function PlannerCalendarPage() {
     // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- same fix as DispatchPlannersLayout.tsx: a week-at-a-
     // glance data board gets no page-level max-w[NNNpx] cap.
     <div data-testid="dispatch-planner-calendar-page" className="w-full space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Planner Calendar"
         subtitle="Week-at-a-glance driver rows with drag-drop reschedule and HOS overlay"
         actions={
@@ -267,7 +266,7 @@ export function PlannerCalendarPage() {
                   <th className="sticky left-0 z-10 bg-[#F7F8FA] px-3 py-2">Driver / Unit</th>
                   {days.map((day) => (
                     <th key={day} className="px-3 py-2">
-                      {new Date(`${day}T12:00:00.000Z`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                      {formatPlannerDayLabel(day)}
                     </th>
                   ))}
                 </tr>

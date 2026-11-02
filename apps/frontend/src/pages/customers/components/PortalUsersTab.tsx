@@ -3,7 +3,7 @@ import { formatPersonName } from "../../../lib/formatPersonName";
 import { useState } from "react";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable } from "../../../components/parity/ParityTable";
@@ -89,7 +89,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <DataPanel title="Active portal accounts">
+      <BoardSection title="Active portal accounts" testId="active-portal-accounts-board">
         {/* CUST-01 C5: with no operating company selected the query never fires (enabled gate
             above) and the table below silently rendered "No portal users yet." -- indistinguishable
             from a customer that genuinely has zero portal users. Say why instead of guessing. */}
@@ -125,7 +125,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             ]}
           />
         )}
-      </DataPanel>
+      </BoardSection>
 
       <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Create portal login">
         <form

@@ -33,14 +33,11 @@ try {
 const checks = [
   {
     name: "status filter (select/dropdown for status)",
-    // LEAD 443.99 class B (2026-10-12):
-    //   old rule: a native <select ...> carrying data-testid="driver-assigned-loads-status-filter".
-    //   new rule: a native <select> OR the shared <SelectCombobox> (the app's picker primitive) carrying that test id
-    //             and fed from STATUS_FILTER_OPTIONS.
-    //   why: Devin-A D5 (#25899, bf8280b075) moved this dropdown to SelectCombobox app-wide; the filter is intact.
-    //        Still fails if the control, its test id, or its status options disappear.
-    pass: /<(?:select|SelectCombobox)\b[\s\S]{0,600}?data-testid="driver-assigned-loads-status-filter"/.test(src) &&
-      /STATUS_FILTER_OPTIONS\.map\(/.test(src),
+    // LEAD 443.99 class B (2026-10-12) + U12 (2026-11-02):
+    //   old: native <select> / SelectCombobox single-select.
+    //   new: MultiSelectDropdown (U12 status multi-selector) with the same test id + STATUS_FILTER_OPTIONS.
+    pass: /<(?:select|SelectCombobox|MultiSelectDropdown)\b[\s\S]{0,800}?data-testid="driver-assigned-loads-status-filter"/.test(src) &&
+      /STATUS_FILTER_OPTIONS/.test(src),
   },
   {
     name: "date range picker for assigned loads (DatePicker)",

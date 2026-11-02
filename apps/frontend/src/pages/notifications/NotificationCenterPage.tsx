@@ -8,6 +8,7 @@ import {
   type NotificationPreferences,
 } from "../../hooks/useNotifications";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../lib/formatDate";
 import { SelectCombobox } from "../../components/Combobox";
 
 const TYPE_OPTIONS = [
@@ -156,7 +157,7 @@ export function NotificationCenterPage() {
                     <p className="font-medium text-gray-900">{item.title}</p>
                     {item.body ? <p className="text-xs text-gray-600">{item.body}</p> : null}
                     <p className="mt-1 text-xs text-gray-500">
-                      {item.type} · {item.severity} · {new Date(item.created_at).toLocaleString()}
+                      {item.type} · {item.severity} · {formatDateTimeUS(item.created_at) || "—"}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">

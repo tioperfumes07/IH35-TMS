@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -13,6 +14,8 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SelectCombobox } from "../../components/Combobox";
 
@@ -229,13 +232,21 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     },
   },
   // TPB-DATES-01: "gear box gains Customer · PU date · Del date · Days out · Miles · Status ·
-  // Tour · Revenue." Status already exists above (toggleable like any other column). Customer /
-  // Miles / Revenue are NOT in TripPairingBoard's current API response (verified: no such field
-  // anywhere in trip-pairing-board.service.ts) — adding them honestly needs a real backend join
-  // (mdata.customers / mdata.loads rate + distance), not built in this pass; adding fabricated
-  // values here would be inventing data. PU date / Del date / Days out / Tour ARE already real,
-  // available fields — added below, hidden by default so the visible layout is unchanged until an
-  // operator opts in via the gear.
+  // Tour · Revenue." Status already exists above. Customer / Miles / Revenue now come from real
+  // backend joins (customers + loaded_miles + rate_total_cents). Hidden by default until gear opt-in.
+  {
+    key: "customer",
+    label: "Customer",
+    defaultHidden: true,
+    sortable: true,
+    sortValue: (t) => t.customer_name ?? "",
+    render: (t) =>
+      t.customer_id ? (
+        <EntityLink kind="customer" id={t.customer_id} label={entityLabel(t.customer_name, t.customer_id, "Customer")} />
+      ) : (
+        <span className="text-[#4B5563]">{t.customer_name ?? "—"}</span>
+      ),
+  },
   {
     key: "tour",
     label: "Tour",
@@ -278,6 +289,36 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     cellClass: "text-right",
     sortValue: (t) => t.up_north_days ?? -1,
     render: (t) => (t.up_north_days != null ? `${t.up_north_days}d` : <span className="text-[#4B5563]">—</span>),
+  },
+  {
+    key: "miles_total",
+    label: "Miles",
+    defaultHidden: true,
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+    sortValue: (t) => t.miles_total ?? -1,
+    render: (t) =>
+      t.miles_total != null ? (
+        <span className="tabular-nums">{formatQuantityTable(Math.round(t.miles_total), 0)}</span>
+      ) : (
+        <span className="text-[#4B5563]">—</span>
+      ),
+  },
+  {
+    key: "rate_total_cents",
+    label: "Revenue",
+    defaultHidden: true,
+    sortable: true,
+    kind: "money",
+    cellClass: "text-right tabular-nums",
+    sortValue: (t) => t.rate_total_cents ?? -1,
+    // Booked rate_total_cents summed across tour legs — honest empty when no rate on any leg.
+    render: (t) =>
+      t.rate_total_cents != null ? (
+        <span className="tabular-nums">{formatUsdCentsTable(t.rate_total_cents)}</span>
+      ) : (
+        <span className="text-[#4B5563]">—</span>
+      ),
   },
   ];
 }
@@ -328,12 +369,9 @@ export function TripPairingBoardPage() {
 
   if (!companyId) {
     return (
-      <div
-        data-testid="dispatch-trip-pairing-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the trip pairing board.
-      </div>
+      <BoardSection title="Trip pairing" testId="dispatch-trip-pairing-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the trip pairing board.</p>
+      </BoardSection>
     );
   }
 
@@ -372,7 +410,7 @@ export function TripPairingBoardPage() {
 
   return (
     <div data-testid="dispatch-trip-pairing-page">
-      <PageHeader title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
+      <PageHeader backHref="/dispatch" title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
 
       {data ? (
         // OWNER DESIGN LAW rule 6: board tiles across (ih-kpi-row, 6 across), 78px, left-aligned figure.
@@ -462,12 +500,16 @@ export function TripPairingBoardPage() {
                 <span className="text-xs text-[#4B5563]">— no trip assigned; book a Northbound to start a tour</span>
               </div>
               <div className="flex flex-wrap gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
-                {unbooked.map((u) => (
+                {unbooked.map((u) => {
+                  const nowLabel = [u.location?.city, u.location?.state].filter(Boolean).join(", ");
+                  return (
                   <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 border-[#E5E7EB] bg-white px-2.5 py-2 text-xs">
                     <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-[#1F2A44]" />
                     <span className="text-[#4B5563]"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
-                    {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
-                    <span className="text-xs text-[#4B5563]">now: —</span>
+                    {/* C1b: live location from backend Samsara fix — honest "—" when no recent city/state. */}
+                    <span className="text-xs text-[#4B5563]" data-testid="trip-pairing-unbooked-now">
+                      now: {nowLabel || "—"}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}
@@ -476,7 +518,8 @@ export function TripPairingBoardPage() {
                       + Book NB
                     </button>
                   </div>
-                ))}
+                  );
+                })}
                 {unbooked.length === 0 ? <span className="px-1 text-xs text-[#4B5563]">None.</span> : null}
               </div>
             </section>

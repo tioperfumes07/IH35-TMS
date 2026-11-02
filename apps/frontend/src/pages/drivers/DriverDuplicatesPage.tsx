@@ -177,7 +177,7 @@ export function DriverDuplicatesPage() {
   const clusters = q.data?.pairs ?? [];
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/drivers"
         breadcrumb={["Drivers", "Duplicate profiles"]}
         title="Duplicate driver profiles"
         subtitle="One driver profile per person — that profile can hold many Samsara users. Merging never changes Samsara."

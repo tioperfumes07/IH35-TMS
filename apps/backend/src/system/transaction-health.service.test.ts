@@ -40,6 +40,7 @@ function makeClient(opts: {
   glLines?: Array<{
     doc_id: string;
     journal_entry_id: string | null;
+    journal_entry_label?: string | null;
     account_id: string | null;
     account_code: string | null;
     account_name: string | null;
@@ -322,6 +323,39 @@ describe("transaction-health.service — TXH-03 GL + links evidence", () => {
     expect(result.rows[0].gl?.balanced).toBe(true);
     expect(result.rows[0].links.find((l) => l.label === "Customer")?.state).toBe("wired");
     expect(result.rows[0].links.some((l) => l.group === "GENERAL LEDGER")).toBe(true);
+  });
+});
+
+describe("transaction-health.service — JE link label is never the raw id (LEAD 11-02)", () => {
+  it("labels the journal entry link with its readable label, and the SQL selects that label", async () => {
+    const invId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const jeId = "dc6d1877-9695-4b78-b5db-2a7e2c48fda2";
+    const line = (seq: number, side: string, code: string) => ({
+      doc_id: invId, journal_entry_id: jeId, journal_entry_label: "Fuel unit T164 Love's RELAY (def+diesel)",
+      account_id: `acct-${code}`, account_code: code, account_name: code, amount_cents: 76390, debit_or_credit: side, line_sequence: seq,
+    });
+    const client = makeClient({
+      pageRows: [row({ doc_type: "invoice", id: invId, event_at: "2026-10-29T00:00:00Z" })],
+      glLines: [line(1, "debit", "5000"), line(2, "credit", "1295")],
+    });
+    const result = await fetchTransactionHealth(client, { operatingCompanyIds: [COMPANY_A], cursor: null, limit: 50, issuesOnly: false });
+    const je = result.rows[0].links.find((l) => l.label === "Journal entry");
+    expect(je?.target_id).toBe(jeId);
+    expect(je?.target_label).toBe("Fuel unit T164 Love's RELAY (def+diesel)");
+    expect(je?.target_label).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
+    expect(client.calls.some((c) => c.sql.includes("AS journal_entry_label"))).toBe(true);
+  });
+
+  it("falls back to the plain words 'Journal entry', never the id, when no label row comes back", async () => {
+    const invId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const jeId = "ee6d1877-9695-4b78-b5db-2a7e2c48fda2";
+    const line = (seq: number, side: string) => ({
+      doc_id: invId, journal_entry_id: jeId, account_id: `a${seq}`, account_code: `${seq}`, account_name: `${seq}`,
+      amount_cents: 100, debit_or_credit: side, line_sequence: seq,
+    });
+    const client = makeClient({ pageRows: [row({ doc_type: "invoice", id: invId, event_at: "2026-10-29T00:00:00Z" })], glLines: [line(1, "debit"), line(2, "credit")] });
+    const result = await fetchTransactionHealth(client, { operatingCompanyIds: [COMPANY_A], cursor: null, limit: 50, issuesOnly: false });
+    expect(result.rows[0].links.find((l) => l.label === "Journal entry")?.target_label).toBe("Journal entry");
   });
 });
 

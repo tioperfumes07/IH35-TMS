@@ -35,6 +35,7 @@ import { QueryErrorNote } from "./QueryErrorNote";
 import { formatMoneyCents } from "../constants";
 import { derivePacketDocuments } from "./useLoadDocuments";
 import { Modal } from "../../Modal";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 // ─── .ldt-* palette (GLOBAL-TYPE-SIZE-BASELINE tokens) ────────────────────────
 
@@ -566,10 +567,10 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         {/* ── Timestamps ────────────────────────────────────────────────────── */}
         {(meta.generated_at || meta.approved_at || meta.emailed_at || meta.uploaded_at) ? (
           <div className="rounded-sm border border-gray-200 p-3 text-xs text-gray-600">
-            {meta.generated_at ? <div>Assembled: {new Date(meta.generated_at).toLocaleString()}</div> : null}
-            {meta.approved_at ? <div>Approved: {new Date(meta.approved_at).toLocaleString()}</div> : null}
-            {meta.emailed_at ? <div>Emailed to FARO: {new Date(meta.emailed_at).toLocaleString()}</div> : null}
-            {meta.uploaded_at ? <div>Uploaded to portal: {new Date(meta.uploaded_at).toLocaleString()}</div> : null}
+            {meta.generated_at ? <div>Assembled: {formatDateTimeUS(meta.generated_at)}</div> : null}
+            {meta.approved_at ? <div>Approved: {formatDateTimeUS(meta.approved_at)}</div> : null}
+            {meta.emailed_at ? <div>Emailed to FARO: {formatDateTimeUS(meta.emailed_at)}</div> : null}
+            {meta.uploaded_at ? <div>Uploaded to portal: {formatDateTimeUS(meta.uploaded_at)}</div> : null}
           </div>
         ) : null}
 
@@ -608,7 +609,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             {meta.approved_at && step === "POD" && !submitOpen ? (
               <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
                 <p className="mb-2 text-xs text-[#1F2A44]">
-                  Packet approved on {new Date(meta.approved_at).toLocaleString()}. Ready to submit to FARO.
+                  Packet approved on {formatDateTimeUS(meta.approved_at)}. Ready to submit to FARO.
                 </p>
                 <Button
                   size="sm"

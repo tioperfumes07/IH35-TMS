@@ -272,7 +272,9 @@ export async function registerManualDeliveryAuthorizationRoutes(app: FastifyInst
           load_id: string;
           load_number: string | null;
           status: string;
+          customer_id: string | null;
           customer_name: string | null;
+          invoice_id: string | null;
           invoice_display_id: string | null;
           invoice_status: string;
           factoring_status: string | null;
@@ -282,7 +284,9 @@ export async function registerManualDeliveryAuthorizationRoutes(app: FastifyInst
               l.id::text AS load_id,
               l.load_number,
               l.status::text AS status,
+              l.customer_id::text AS customer_id,
               c.customer_name,
+              i.id::text AS invoice_id,
               i.display_id AS invoice_display_id,
               i.status::text AS invoice_status,
               i.factoring_status::text AS factoring_status

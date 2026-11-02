@@ -40,7 +40,9 @@ let settlementNos = [];
  * Entry files that are NOT USMCA settlements and are never entered (Lead 443.42/443.43: every load of 5796 is
  * Transportation). --all reports them as SKIP with the reason instead of failing SETTLEMENT-EXISTS. Named, not inferred.
  */
-const NOT_USMCA_ENTRIES = new Map([["5796", "every load is Transportation — not entered in USMCA (Lead 443.42/443.43)"]]);
+// 5796 REMOVED 2026-11-02: OWNER STANDING RULING 443.167-R2 (2026-10-16 17:36 CT) — "Transportation loads were settled here in
+// usmca as 0 if they are tied to usmca settlements." 5796 is live in USMCA (P-0102, posted once) and is audited like the rest.
+const NOT_USMCA_ENTRIES = new Map();
 
 if (runAll) {
   settlementNos = readdirSync(ENTRY_DIR)

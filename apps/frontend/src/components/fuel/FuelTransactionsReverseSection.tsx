@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getFuelTransactions } from "../../api/fuelPlanner";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
@@ -110,7 +111,7 @@ export function FuelTransactionsReverseSection({
                 <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`fuel-transaction-${row.id}`}>
                   <span className="font-medium text-[#0F1219]">{row.station || "Fuel stop"}</span>
                   <span className="ml-2 text-xs text-gray-500">
-                    {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${row.gallons.toLocaleString()} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
+                    {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${formatQuantityTable(row.gallons)} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
                     {filterKey !== "driver_id" && row.driver_id ? (
                       <>
                         {" · "}

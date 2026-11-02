@@ -18,7 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { formatUsdCents, formatUsdTable } from "../../lib/money";
+import { formatUsd, formatUsdCents, formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
@@ -54,9 +54,9 @@ function exportEscrowRegisterCsv(driverName: string, rows: RegisterRow[]): void 
         formatDateUS(r.date) || "",
         r.source,
         r.type,
-        r.inAmt == null ? "" : r.inAmt.toFixed(2),
-        r.outAmt == null ? "" : r.outAmt.toFixed(2),
-        r.balance.toFixed(2),
+        r.inAmt == null ? "" : formatUsd(r.inAmt),
+        r.outAmt == null ? "" : formatUsd(r.outAmt),
+        formatUsd(r.balance),
       ]
         .map((v) => csvEscape(String(v)))
         .join(","),

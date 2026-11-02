@@ -24,10 +24,31 @@ function leftoverHits(src) {
   return hits;
 }
 
+/** fill-not-shell — Coverage Gap + Type Catalog must use BoardSection + U18 back. */
+function boardShellHits(path, src) {
+  const hits = [];
+  if (path.endsWith("CoverageGapDashboard.tsx")) {
+    if (!src.includes('from "../../components/v3/BoardSection"')) hits.push("must import BoardSection");
+    if (!src.includes('testId="coverage-gap-by-type-board"')) hits.push("coverage-gap-by-type-board BoardSection required");
+    if (!src.includes('backHref="/insurance"')) hits.push("PageHeader backHref=/insurance required");
+  }
+  if (path.endsWith("TypeCatalogAdmin.tsx")) {
+    if (!src.includes('from "../../components/v3/BoardSection"')) hits.push("must import BoardSection");
+    if (!src.includes('testId="type-catalog-list-board"')) hits.push("type-catalog-list-board BoardSection required");
+    if (!src.includes('backHref="/insurance"')) hits.push("PageHeader backHref=/insurance required");
+  }
+  if (path.endsWith("PolicyDetail.tsx")) {
+    if (!src.includes('from "../../components/v3/BoardSection"')) hits.push("must import BoardSection");
+    if (!src.includes('testId="policy-detail-units-board"')) hits.push("policy-detail-units-board BoardSection required");
+  }
+  return hits;
+}
+
 function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
+    for (const e of boardShellHits(path, src)) fails.push(`${path}: ${e}`);
   }
   return fails;
 }
@@ -43,7 +64,15 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate class plant`);
+    const boardPlant = src0
+      .replace(/from ["']\.\.\/\.\.\/components\/v3\/BoardSection["']/g, 'from "../../components/v3/Stripped"')
+      .replace(/testId="coverage-gap-by-type-board"/g, 'testId="x"')
+      .replace(/backHref="\/insurance"/g, "");
+    if (!audit([[path0, boardPlant], ...sources.slice(1)]).some((e) => e.includes(path0) && e.includes("BoardSection"))) {
+      console.error(`${LABEL} SELFTEST FAIL board-shell plant escaped`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + board-shell plants`);
     process.exit(0);
   }
 

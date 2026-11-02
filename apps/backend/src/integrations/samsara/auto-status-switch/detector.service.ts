@@ -573,6 +573,7 @@ export async function recordPositionSnapshotsForCompany(client: DbClient, operat
         p.speed_mph::text
       FROM integrations.samsara_vehicle_positions p
       WHERE p.operating_company_id = $1::uuid
+      ORDER BY p.unit_uuid
     `,
     [operatingCompanyId]
   );
@@ -613,6 +614,7 @@ export async function listActiveLoadsForAutoStatus(client: DbClient, operatingCo
         AND l.soft_deleted_at IS NULL
         AND l.status::text IN ('at_pickup', 'in_transit')
         AND l.assigned_unit_id IS NOT NULL
+      ORDER BY l.assigned_unit_id
     `,
     [operatingCompanyId]
   );

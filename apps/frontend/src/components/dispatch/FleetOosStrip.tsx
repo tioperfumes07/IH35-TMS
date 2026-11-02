@@ -8,6 +8,7 @@ import { isOperatorVisibleUnit } from "../../lib/operator-fleet-visibility";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { formatDateUS } from "../../lib/formatDate";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -45,15 +46,12 @@ const IN_SHOP_STATUSES = new Set(["InMaintenance", "OutOfService", "Damaged"]);
 
 function formatEta(value: string | null | undefined): string {
   if (!value) return "TBD";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "TBD";
-  return parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return formatDateUS(value) || "TBD";
 }
 
 function formatOosSince(value: string | null | undefined): string {
   if (!value) return "—";
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? "—" : parsed.toLocaleDateString();
+  return formatDateUS(value) || "—";
 }
 
 /** Whole days between oos_since and now. Null input (or unparseable) stays null -- never a guessed 0. */

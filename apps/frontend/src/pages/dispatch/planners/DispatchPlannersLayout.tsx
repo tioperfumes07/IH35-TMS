@@ -9,6 +9,7 @@ import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../.
 import { DEFAULT_PLANNER_RANGE_DAYS, buildPlannerRange, plannerPresetRange, type PlannerPresetKey } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { companyToday } from "../../../lib/businessDate";
+import { formatDateUS } from "../../../lib/formatDate";
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -39,8 +40,8 @@ const WEEKDAY_TOGGLES: Array<{ index: number; label: string }> = [
 ];
 
 function shortDate(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  // Round 7.6 — MM/DD/YYYY (not browser short month-day without year).
+  return formatDateUS(ymd) || "—";
 }
 
 /** LEAD 443.251 item 4 — "Show days" toggles, inside the Filters popover. */
@@ -234,7 +235,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           days.length))) already fills whatever width it's actually given -- it just needed the
           real width, not 1400px, to work with. */}
       <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
-        <PageHeader
+        <PageHeader backHref="/dispatch"
           title="Dispatch Planners"
           subtitle="Driver leave, truck availability, and load timeline — shared date range"
           actions={<PlannerExportButtons />}

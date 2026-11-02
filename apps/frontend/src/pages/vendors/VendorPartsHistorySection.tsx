@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getPartsAssignmentsPage } from "../../api/maintenance";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -35,7 +35,7 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
   const totalCount = query.data?.total_count ?? rows.length;
 
   return (
-    <DataPanel title="Parts Invoiced">
+    <BoardSection title="Parts Invoiced" testId="parts-invoiced-board">
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load parts invoiced by this vendor")}
@@ -84,6 +84,6 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
           {totalCount > PAGE_SIZE ? <div className="flex justify-end gap-2"><button type="button" disabled={page === 0 || query.isFetching} onClick={() => setPage((v) => Math.max(0, v - 1))}>Previous</button><button type="button" disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching} onClick={() => setPage((v) => v + 1)}>Next</button></div> : null}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

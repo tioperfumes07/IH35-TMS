@@ -84,4 +84,39 @@ describe("DatePicker", () => {
 
     expect(onChange).toHaveBeenCalledWith("2027-01-15");
   });
+
+  // U21 — when min and max are both in the same year the Year select renders only that one year,
+  // so the user cannot navigate to a different year in the calendar popover.
+  it("shows only the clamped year in the Year select when min and max are both in the same year (U21 fiscal-year lock)", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker value="2026-07-25" onChange={vi.fn()} aria-label="Policy expiry" min="2026-01-01" max="2026-12-31" />);
+    await user.click(screen.getByLabelText("Policy expiry calendar"));
+    const yearSelect = screen.getByLabelText("Year") as HTMLSelectElement;
+    const options = Array.from(yearSelect.options).map((o) => o.value);
+    expect(options).toEqual(["2026"]);
+  });
+
+  // U21 fix: without min/max the Year select spans multiple years so the user can navigate.
+  it("shows prior and future years in the Year select when no min/max are given (U21 cross-year fix)", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker value="2026-07-25" onChange={vi.fn()} aria-label="Policy expiry" />);
+    await user.click(screen.getByLabelText("Policy expiry calendar"));
+    const yearSelect = screen.getByLabelText("Year") as HTMLSelectElement;
+    const options = Array.from(yearSelect.options).map((o) => Number(o.value));
+    expect(options).toContain(2025);
+    expect(options).toContain(2026);
+    expect(options).toContain(2027);
+    expect(options.length).toBeGreaterThan(1);
+  });
+
+  // U21 fix: selecting a different year in the Year select fires onChange with the new year.
+  it("selecting a prior year in the Year select via keyboard fires onChange for that year (U21 cross-year navigation)", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<DatePicker value="2026-07-25" onChange={onChange} aria-label="Policy expiry" />);
+    await user.click(screen.getByLabelText("Policy expiry calendar"));
+    await user.selectOptions(screen.getByLabelText("Year"), "2025");
+    await user.click(screen.getByRole("button", { name: "2025-07-25" }));
+    expect(onChange).toHaveBeenCalledWith("2025-07-25");
+  });
 });

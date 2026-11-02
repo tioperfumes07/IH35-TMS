@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -20,7 +20,10 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
 
   return (
     // ROUND 297 audit: the server's total_count (the list is one 50-row page), not the page's length.
-    <DataPanel title={query.data?.total_count ? `Work Orders · ${query.data.total_count}` : "Work Orders"}>
+    <BoardSection
+      title={query.data?.total_count ? `Work Orders · ${query.data.total_count}` : "Work Orders"}
+      testId="vendor-work-orders-reverse-board"
+    >
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load vendor work orders")}
@@ -55,6 +58,6 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
           ))}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

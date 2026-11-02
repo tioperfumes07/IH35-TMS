@@ -38,7 +38,8 @@ function assertWiring(readSourceFn = readSource) {
     ]],
     [DOCS_HOME, home, [
       'data-testid="docs-home-upload-button"',
-      'data-testid="docs-home-need-company"',
+      // BoardSection testId → data-testid at runtime; accept either spelling in source
+      'docs-home-need-company',
       "defaultLinkEntityType",
       "operatingCompanyId={companyId}",
       "UploadModal",

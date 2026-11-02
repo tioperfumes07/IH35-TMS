@@ -16,12 +16,15 @@ import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { getDownloadUrl } from "../../../api/docs";
+import { statusOptions } from "../../../lib/statusListParams";
 import "../../../design/ih35-design-tokens.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 const CATEGORY_LABELS: Record<string, string> = {
   employment: "Employment",
@@ -39,15 +42,14 @@ function categoryLabel(key: string) {
   return CATEGORY_LABELS[key] ?? key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
-const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
-  { value: "all", label: "All statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "viewed", label: "Viewed" },
-  { value: "signed_electronically", label: "Signed" },
-  { value: "voided", label: "Voided" },
-  { value: "expired", label: "Expired" },
-];
+const STATUS_FILTER_OPTIONS = statusOptions({
+  draft: "Draft",
+  sent: "Sent",
+  viewed: "Viewed",
+  signed_electronically: "Signed",
+  voided: "Voided",
+  expired: "Expired",
+});
 
 function statusClass(status: LegalContractStatus) {
   if (status === "signed_electronically") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
@@ -73,14 +75,14 @@ export function LegalContractInstancesPage() {
   const [search, setSearch] = useState("");
   const signerTypeParam = searchParams.get("signer_type") as LegalContractSummary["signer_type"] | null;
   const signerEntityIdParam = searchParams.get("signer_entity_id") ?? undefined;
-  const [statusFilter, setStatusFilter] = useState<"all" | LegalContractStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [templateFilter, setTemplateFilter] = useState("");
   const [signerTypeFilter, setSignerTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const staged = useStagedListFilters({
     applied: { statusFilter, templateFilter, signerTypeFilter, dateFrom, dateTo },
-    empty: { statusFilter: "all" as const, templateFilter: "", signerTypeFilter: "all", dateFrom: "", dateTo: "" },
+    empty: { statusFilter: [] as string[], templateFilter: "", signerTypeFilter: "all", dateFrom: "", dateTo: "" },
     onApply: (next) => { setStatusFilter(next.statusFilter); setTemplateFilter(next.templateFilter); setSignerTypeFilter(next.signerTypeFilter); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
   });
   const linkedContractId = searchParams.get("contract_id");
@@ -101,16 +103,22 @@ export function LegalContractInstancesPage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search, signerTypeParam, signerEntityIdParam],
+    queryKey: ["legal", "contracts", operatingCompanyId, statusFilter.join(","), search, signerTypeParam, signerEntityIdParam],
     enabled: Boolean(operatingCompanyId),
-    queryFn: async () =>
-      legalContractsApi.list({
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const status = statusFilter.length === 1 ? (statusFilter[0] as LegalContractStatus) : undefined;
+      const result = await legalContractsApi.list({
         operating_company_id: operatingCompanyId,
-        status: statusFilter === "all" ? undefined : statusFilter,
+        status,
         search: search.trim() || undefined,
         signer_type: signerTypeParam ?? undefined,
         signer_entity_id: signerEntityIdParam,
-      }),
+      });
+      if (statusFilter.length <= 1) return result;
+      const contracts = (result.contracts ?? []).filter((row) => statusFilter.includes(row.status));
+      return { ...result, contracts };
+    },
     refetchInterval: 30_000,
   });
 
@@ -240,8 +248,8 @@ export function LegalContractInstancesPage() {
       },
       { key: "signer_type", label: "Type", sortable: true, render: (row) => row.signer_type },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusClass(row.status)}>{row.status}</span> },
-      { key: "sent_at", label: "Sent", sortable: true, render: (row) => (row.sent_at ? new Date(row.sent_at).toLocaleString() : "—") },
-      { key: "signed_at", label: "Signed", sortable: true, render: (row) => (row.signed_at ? new Date(row.signed_at).toLocaleString() : "—") },
+      { key: "sent_at", label: "Sent", sortable: true, render: (row) => (row.sent_at ? formatDateTimeUS(row.sent_at) : "—") },
+      { key: "signed_at", label: "Signed", sortable: true, render: (row) => (row.signed_at ? formatDateTimeUS(row.signed_at) : "—") },
       {
         key: "pdf_file_id",
         label: "PDF",
@@ -266,7 +274,7 @@ export function LegalContractInstancesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Contracts"]}
         title="Legal Contracts"
         subtitle="Instance tracking and signer workflows"
@@ -397,7 +405,7 @@ export function LegalContractInstancesPage() {
 
                 <CollapsedListFilters
                   activeFilterCount={
-                    (statusFilter !== "all" ? 1 : 0) +
+                    (statusFilter.length ? 1 : 0) +
                     (templateFilter ? 1 : 0) +
                     (signerTypeFilter !== "all" ? 1 : 0) +
                     (dateFrom ? 1 : 0) +
@@ -417,17 +425,14 @@ export function LegalContractInstancesPage() {
                   }
                 >
                   <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                    <SelectCombobox
-                      value={staged.draft.statusFilter}
-                      onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "all" | LegalContractStatus })}
-                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectCombobox>
+                    <MultiSelectDropdown
+                      label="Status"
+                      options={STATUS_FILTER_OPTIONS}
+                      selected={staged.draft.statusFilter}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                      allLabel="All statuses"
+                      data-testid="legal-contracts-status-filter"
+                    />
                     <SelectCombobox
                       value={staged.draft.templateFilter}
                       onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
@@ -509,7 +514,7 @@ export function LegalContractInstancesPage() {
                     {detailQuery.data.signatures.length === 0 ? <div className="text-xs text-gray-500">No signatures yet.</div> : null}
                     {detailQuery.data.signatures.map((signature) => (
                       <div key={signature.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
-                        {signature.signed_by_name} · {new Date(signature.signed_at).toLocaleString()} · IP {signature.signer_ip ?? "—"}
+                        {signature.signed_by_name} · {formatDateTimeUS(signature.signed_at)} · IP {signature.signer_ip ?? "—"}
                       </div>
                     ))}
                   </div>
@@ -521,7 +526,7 @@ export function LegalContractInstancesPage() {
                     {detailQuery.data.audit_log.map((entry) => (
                       <div key={entry.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
                         <div className="font-semibold">{entry.event_type}</div>
-                        <div>{new Date(entry.created_at).toLocaleString()}</div>
+                        <div>{formatDateTimeUS(entry.created_at)}</div>
                       </div>
                     ))}
                   </div>

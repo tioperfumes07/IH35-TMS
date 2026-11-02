@@ -5,7 +5,7 @@
  *
  * 0441-mod12-legal-no-reverse-drill-through (fleet + insurance + driver half):
  *  1. VehicleProfilePage mounts LegalMattersReverseSection / unit_id filter
- *  2. ClaimsTab mounts insurance_claim_id and LawsuitsTab mounts insurance_lawsuit_id reverse sections
+ *  2. ClaimsTab mounts insurance_claim_id reverse; ENG-60 LawsuitsTab Navigate→Legal (lawsuit reverse on LegalMattersListPage)
  *  3. DriverProfilePage mounts LegalMattersReverseSection / related_driver_id filter
  *     (P34/WIRING-PLAN-50 — this side of the double-linkage had real, working code on
  *     origin/main but no guard asserted it, so a future edit could silently drop the
@@ -69,13 +69,9 @@ export function check(texts) {
   }
 
   if (!texts.lawsuits) f.push(`${FILES.lawsuits}: missing`);
-  else {
-    if (!/LegalMattersReverseSection/.test(texts.lawsuits)) {
-      f.push(`${FILES.lawsuits}: must mount LegalMattersReverseSection`);
-    }
-    if (!/insurance_lawsuit_id/.test(texts.lawsuits)) {
-      f.push(`${FILES.lawsuits}: must filter by insurance_lawsuit_id`);
-    }
+  else if (!/Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(texts.lawsuits)) {
+    // ENG-60: insurance.lawsuit LawsuitsTab retired — must redirect to Legal › Lawsuits.
+    f.push(`${FILES.lawsuits}: must Navigate to /legal/lawsuits (ENG-60; insurance.lawsuit retired)`);
   }
 
   if (!texts.driver) f.push(`${FILES.driver}: missing`);
@@ -217,7 +213,7 @@ function selftest() {
   const good = {
     vehicle: `import { LegalMattersReverseSection } from "...";\nfilter={{ unit_id: id }}`,
     claims: `LegalMattersReverseSection\ninsurance_claim_id`,
-    lawsuits: `LegalMattersReverseSection\ninsurance_lawsuit_id`,
+    lawsuits: "export function LawsuitsTab(){ return <Navigate to={`/legal/lawsuits${search}`} replace />; }",
     driver: `import { LegalMattersReverseSection } from "...";\nfilter={{ related_driver_id: id }}`,
     customer: `LegalMattersReverseSection\nfilter={{ customer_id: id }}\ndata-testid="customer-profile-legal-matters"`,
     vendor: `LegalMattersReverseSection\nfilter={{ vendor_id: vendor.id }}\ndata-testid="vendor-profile-legal-matters"`,

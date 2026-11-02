@@ -1051,6 +1051,46 @@ export async function getLaneProfitability(params: {
   );
 }
 
+export type EquipmentTypeProfitabilityRow = {
+  equipment_code: string;
+  equipment_label: string;
+  load_count: number;
+  miles: number;
+  revenue_cents: number;
+  direct_cost_cents: number;
+  gross_margin_cents: number;
+  rev_per_mile_cents: number | null;
+  cost_per_mile_cents: number | null;
+  margin_per_mile_cents: number | null;
+};
+
+export type EquipmentTypeProfitabilityResponse = {
+  period: { start: string; end: string };
+  totals: {
+    load_count: number;
+    miles: number;
+    revenue_cents: number;
+    direct_cost_cents: number;
+    gross_margin_cents: number;
+    type_count: number;
+  };
+  by_type: EquipmentTypeProfitabilityRow[];
+};
+
+export async function getEquipmentTypeProfitability(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+}): Promise<EquipmentTypeProfitabilityResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  return apiRequest<EquipmentTypeProfitabilityResponse>(
+    withCompany(`/api/v1/reports/equipment-type-profitability?${q.toString()}`, params.operating_company_id),
+  );
+}
+
 // GAP-10 — Load cancellations analytics report.
 export type CancellationBucket = {
   key: string;

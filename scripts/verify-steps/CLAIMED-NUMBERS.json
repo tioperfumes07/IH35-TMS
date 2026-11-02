@@ -17249,5 +17249,45 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-26",
     "purpose": "verify-book-stop-street-or-place-required"
+  },
+  "18913": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-loads-trailer-source-recorded (ENG-13)"
+  },
+  "18917": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-no-insurance-lawsuit-refs (ENG-60)"
+  },
+  "18921": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-eng23-load-customer-matches-document (ENG-23)"
+  },
+  "18925": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-eng25b-transportation-diesel-intercompany (ENG-25b)"
+  },
+  "18930": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-11-02",
+    "purpose": "ENG-22: verify-booked-trailer-matches-company-equipment \u2014 Book/Edit refuse or re-derive when company trailer type \u2260 booked type"
+  },
+  "18932": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-11-02",
+    "purpose": "fill-not-shell: verify-profitability-hub-wired \u2014 Profitability tabs+KPI call live engines"
+  },
+  "18929": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-eng34-exempt-batch-wire (ENG-34) \u2014 batch wire 53 formerly-exempt guards into verify:pre-commit corpus"
+  },
+  "18937": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-orphan-guards-batch-wire-11-02 \u2014 wire 29 guards merged unwired on 11-02 (verify-guard-wired red on main)"
   }
 }

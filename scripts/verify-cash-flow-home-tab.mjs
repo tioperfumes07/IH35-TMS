@@ -24,6 +24,10 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
   if (!/CashFlowHomeTab/.test(pageSrc)) {
     failures.push(`${ROOT_PAGE_REL}: does not render CashFlowHomeTab -- the home tab id exists but nothing renders for it`);
   }
+  // fill-not-shell — root need-company empty uses BoardSection
+  if (!/testId="cash-flow-need-company"/.test(pageSrc) || !/<BoardSection\b/.test(pageSrc)) {
+    failures.push(`${ROOT_PAGE_REL}: need-company empty must be BoardSection (cash-flow-need-company)`);
+  }
 
   if (homeSrc === null) {
     failures.push(`${HOME_TAB_REL}: missing`);
@@ -115,6 +119,7 @@ const TABS = [
   { id: "home", label: "Home" },
   { id: "daily_prediction", label: "Projected (Auto)" },
 ];
+<BoardSection title="Cash Flow" testId="cash-flow-need-company"><p>Select a company</p></BoardSection>
 <CashFlowHomeTab operatingCompanyId={x} />
 `;
   const goodHome = `

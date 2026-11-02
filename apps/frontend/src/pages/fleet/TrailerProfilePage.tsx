@@ -35,6 +35,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
 import { quicksaveEquipmentAssignment } from "../../api/mdata";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -141,7 +142,11 @@ export function TrailerProfilePage() {
   }, [companyId, id]);
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    return (
+      <BoardSection title="Trailer profile" testId="trailer-profile-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
   if (profileQ.isError) {
     return (

@@ -30,7 +30,10 @@ function assertLive(over = {}) {
   if (!/URLSearchParams\(\{\s*operating_company_id:\s*operatingCompanyId/.test(api)) {
     problems.push("getDispatchPlannerWeek missing operating_company_id query param");
   }
-  if (!/data-testid="dispatch-planner-need-company"/.test(page)) problems.push("missing need-company");
+  if (!/data-testid="dispatch-planner-need-company"|testId="dispatch-planner-need-company"/.test(page)) problems.push("missing need-company");
+  if (!/<BoardSection\b/.test(page) || !/testId="dispatch-planner-need-company"/.test(page)) {
+    problems.push("need-company empty must be BoardSection");
+  }
   if (!/data-testid="dispatch-planner-honest-empty"/.test(page)) problems.push("missing honest empty");
   if (!/ListErrorBanner/.test(page)) problems.push("missing ListErrorBanner");
   if (!/const pickupUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,400}UPDATE mdata\.load_stops[\s\S]{0,240}AND load_id = \$3::uuid[\s\S]{0,100}RETURNING id[\s\S]{0,180}loadId[\s\S]{0,160}if \(!pickupUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "load_not_found" \}/.test(service)) {

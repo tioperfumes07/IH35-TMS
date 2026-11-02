@@ -3,8 +3,9 @@
  * Board: docs/design/v3/Banking.png (+ Banking.dc.html)
  * Sections (order): KPI strip → Accounts | Reconciliation drift (1fr 1fr) → Latest lines.
  * Engines: getMoneyMap · getBankingTiles · getDriftAlerts · getPlaidCompanyTransactions.
+ * U30: Accounts / Drift / Latest use ParityTable so every header sorts asc/desc.
  */
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -21,35 +22,33 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatUsdCentsTable } from "../../../lib/money";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatUsdCents } from "../../../utils/qboFormat";
 
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
+type AccountBoardRow = {
+  id: string;
+  name: string;
+  type: string;
+  lines: number;
+  feed: boolean;
+  tile?: BankingTile;
 };
 
-const tdStyle: CSSProperties = {
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  verticalAlign: "middle",
+type DriftBoardRow = DriftAlert & {
+  account_label: string;
+  bank_cents: number;
+  book_cents: number;
+  diff_cents: number;
+  days_open: number;
 };
 
 function daysOpen(detectedAt: string): number {
@@ -57,19 +56,22 @@ function daysOpen(detectedAt: string): number {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
-/** Board Latest lines Date column: "10-21" (MM-DD, no year). */
+/** Board Latest lines Date column: "10/21" (MM/DD, no year). */
 function formatBoardMmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
   const day = iso.slice(0, 10);
   const [, m, d] = day.split("-");
   if (!m || !d) return iso;
-  return `${m}-${d}`;
+  return `${m}/${d}`;
 }
 
 /** Board Latest lines Amount: signed dollars without currency glyph (−150.00 / +2,000.00). */
 function formatSignedCentsClean(cents: number, isCredit: boolean): string {
-  const n = Math.abs(cents) / 100;
-  const body = n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // House grouping/decimals via formatUsdCentsTable; strip $ / accounting parens for board sign chrome.
+  const body = formatUsdCentsTable(Math.abs(cents))
+    .replace(/[()]/g, "")
+    .replace(/^\$/, "")
+    .replace(/^-/, "");
   return isCredit ? `+${body}` : `−${body}`;
 }
 
@@ -306,19 +308,12 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     };
   }, [moneyMapQuery.data?.accounts, relayIds]);
 
-  const accountRows = useMemo(() => {
+  const accountRows = useMemo((): AccountBoardRow[] => {
     const mapAccounts = moneyMapQuery.data?.accounts ?? [];
     const mapById = new Map(mapAccounts.map((a) => [a.bank_account_id, a]));
     const tiles = tilesQuery.data?.tiles ?? [];
     const seen = new Set<string>();
-    const rows: Array<{
-      id: string;
-      name: string;
-      type: string;
-      lines: number;
-      feed: boolean;
-      tile?: BankingTile;
-    }> = [];
+    const rows: AccountBoardRow[] = [];
 
     // Real money-map accounts first (ordered by engine: lines desc)
     for (const a of mapAccounts) {
@@ -348,9 +343,227 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     return rows;
   }, [moneyMapQuery.data?.accounts, tilesQuery.data?.tiles, tileById]);
 
-  const driftRows: DriftAlert[] = driftQuery.data?.rows ?? [];
+  const driftRows = useMemo((): DriftBoardRow[] => {
+    return (driftQuery.data?.rows ?? []).map((alert) => {
+      const account_label =
+        [alert.institution_name, alert.account_name].filter(Boolean).join(" · ") ||
+        alert.account_name ||
+        "Account";
+      return {
+        ...alert,
+        account_label,
+        bank_cents: Number(alert.bank_balance_cents),
+        book_cents: Number(alert.book_balance_cents),
+        diff_cents: Number(alert.drift_cents),
+        days_open: daysOpen(alert.detected_at),
+      };
+    });
+  }, [driftQuery.data?.rows]);
+
   const driftCount = driftQuery.data?.total_count ?? driftRows.length;
   const latest = latestQuery.data?.transactions ?? [];
+
+  const accountColumns = useMemo((): Array<ParityColumn<AccountBoardRow>> => {
+    return [
+      {
+        key: "name",
+        label: "Account",
+        sortable: true,
+        sortValue: (row) => row.name,
+        render: (row) =>
+          row.tile?.tile_kind === "virtual" ? (
+            <button
+              type="button"
+              onClick={() => {
+                const path = virtualTilePath(row.tile);
+                navigate(path ?? `/banking/accounts/${row.id}`);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                font: "inherit",
+                color: V3.link,
+                fontWeight: 600,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              {row.name}
+            </button>
+          ) : (
+            <EntityLink kind="bank_account" id={row.id} label={row.name} />
+          ),
+      },
+      {
+        key: "type",
+        label: "Type",
+        sortable: true,
+        sortValue: (row) => row.type,
+        render: (row) => row.type,
+      },
+      {
+        key: "lines",
+        label: "Lines",
+        kind: "number",
+        sortable: true,
+        sortValue: (row) => row.lines,
+        cellClass: "text-right tabular-nums",
+        render: (row) => row.lines,
+      },
+      {
+        key: "feed",
+        label: "Feed",
+        sortable: true,
+        sortValue: (row) => (row.feed ? 1 : 0),
+        render: (row) => <FeedCell feed={row.feed} />,
+      },
+    ];
+  }, [navigate]);
+
+  const driftColumns = useMemo((): Array<ParityColumn<DriftBoardRow>> => {
+    return [
+      {
+        key: "account_label",
+        label: "Account",
+        sortable: true,
+        sortValue: (row) => row.account_label,
+        render: (row) => (
+          <EntityLink kind="bank_account" id={row.bank_account_id} label={row.account_label} />
+        ),
+      },
+      {
+        key: "bank_cents",
+        label: "Bank",
+        kind: "money",
+        sortable: true,
+        sortValue: (row) => row.bank_cents,
+        cellClass: "text-right",
+        render: (row) => (
+          <MoneyCell
+            cents={row.bank_cents}
+            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+          />
+        ),
+      },
+      {
+        key: "book_cents",
+        label: "Book",
+        kind: "money",
+        sortable: true,
+        sortValue: (row) => row.book_cents,
+        cellClass: "text-right",
+        render: (row) => (
+          <MoneyCell
+            cents={row.book_cents}
+            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+          />
+        ),
+      },
+      {
+        key: "diff_cents",
+        label: "Diff",
+        kind: "money",
+        sortable: true,
+        sortValue: (row) => row.diff_cents,
+        cellClass: "text-right",
+        render: (row) => (
+          <MoneyCell
+            cents={row.diff_cents}
+            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+          />
+        ),
+      },
+      {
+        key: "days_open",
+        label: "Days open",
+        kind: "number",
+        sortable: true,
+        sortValue: (row) => row.days_open,
+        cellClass: "text-right tabular-nums",
+        render: (row) => row.days_open,
+      },
+    ];
+  }, []);
+
+  const latestColumns = useMemo((): Array<ParityColumn<PlaidBankTransaction>> => {
+    return [
+      {
+        key: "transaction_date",
+        label: "Date",
+        sortable: true,
+        sortValue: (tx) => tx.transaction_date,
+        render: (tx) => (
+          <span style={{ whiteSpace: "nowrap" }}>{formatBoardMmDd(tx.transaction_date)}</span>
+        ),
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        sortValue: (tx) => (tx.merchant_name || tx.description || "").trim(),
+        allowWrap: true,
+        render: (tx) => {
+          const desc = (tx.merchant_name || tx.description || "—").trim() || "—";
+          return (
+            <Link
+              to={`${BANKING_TAB_PATH.transactions}?txn_id=${encodeURIComponent(tx.id)}`}
+              style={{ color: V3.ink, textDecoration: "none", fontWeight: 500 }}
+            >
+              {desc}
+            </Link>
+          );
+        },
+      },
+      {
+        key: "account_name",
+        label: "Account",
+        sortable: true,
+        sortValue: (tx) => {
+          const tile = tx.bank_account_id ? tileById.get(tx.bank_account_id) : undefined;
+          return tile?.display_name || tx.account_name || tx.institution_name || "";
+        },
+        render: (tx) => {
+          const tile = tx.bank_account_id ? tileById.get(tx.bank_account_id) : undefined;
+          const accountName =
+            tile?.display_name || tx.account_name || tx.institution_name || "Account";
+          return tx.bank_account_id ? (
+            <EntityLink kind="bank_account" id={tx.bank_account_id} label={accountName} />
+          ) : (
+            accountName
+          );
+        },
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        kind: "money",
+        sortable: true,
+        sortValue: (tx) => (tx.is_credit ? Number(tx.amount_cents) : -Number(tx.amount_cents)),
+        cellClass: "text-right",
+        render: (tx) => (
+          <MoneyCell
+            cents={Number(tx.amount_cents)}
+            format={(c) => formatSignedCentsClean(c, Boolean(tx.is_credit))}
+            drill={{ entity: { kind: "bank_transaction", id: tx.id } }}
+          />
+        ),
+      },
+      {
+        key: "linked_to",
+        label: "Linked to",
+        sortable: false,
+        allowWrap: true,
+        render: (tx) => {
+          const tile = tx.bank_account_id ? tileById.get(tx.bank_account_id) : undefined;
+          const isRelay = Boolean(
+            (tx.bank_account_id && relayIds.has(tx.bank_account_id)) || tile?.is_relay_wallet,
+          );
+          return <LinkedToCell tx={tx} accountIsRelay={isRelay} />;
+        },
+      },
+    ];
+  }, [tileById, relayIds]);
 
   const loadError =
     moneyMapQuery.isError || tilesQuery.isError || driftQuery.isError || latestQuery.isError;
@@ -422,61 +635,20 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           onViewAll={() => navigate(BANKING_TAB_PATH.bank_accounts)}
           testId="banking-home-board-accounts"
         >
-          <table className="tabular-nums" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Account</th>
-                <th style={thStyle}>Type</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Lines</th>
-                <th style={thStyle}>Feed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accountRows.length === 0 && !moneyMapQuery.isPending && !tilesQuery.isPending ? (
-                <tr>
-                  <td colSpan={4} style={{ ...tdStyle, color: V3.muted }}>
-                    No bank accounts yet.
-                  </td>
-                </tr>
-              ) : null}
-              {accountRows.map((row) => (
-                <tr key={row.id}>
-                  <td style={tdStyle}>
-                    {row.tile?.tile_kind === "virtual" ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const path = virtualTilePath(row.tile);
-                          navigate(path ?? `/banking/accounts/${row.id}`);
-                        }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                          font: "inherit",
-                          color: V3.link,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          textAlign: "left",
-                        }}
-                      >
-                        {row.name}
-                      </button>
-                    ) : (
-                      <EntityLink kind="bank_account" id={row.id} label={row.name} />
-                    )}
-                  </td>
-                  <td style={tdStyle}>{row.type}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                    {row.lines}
-                  </td>
-                  <td style={tdStyle}>
-                    <FeedCell feed={row.feed} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ParityTable<AccountBoardRow>
+            embedded
+            rows={accountRows}
+            rowKey={(row) => row.id}
+            columns={accountColumns}
+            loading={moneyMapQuery.isPending || tilesQuery.isPending}
+            emptyText="No bank accounts yet."
+            storageKey="banking-home-accounts"
+            tableTestId="banking-home-accounts-table"
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            initialPageSize={50}
+          />
         </BoardSection>
 
         <BoardSection
@@ -507,63 +679,21 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           }
           testId="banking-home-board-drift"
         >
-          <table className="tabular-nums" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Account</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Bank</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Book</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Diff</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Days open</th>
-              </tr>
-            </thead>
-            <tbody>
-              {driftRows.length === 0 && !driftQuery.isPending ? (
-                <tr>
-                  <td colSpan={5} style={{ ...tdStyle, color: V3.muted }}>
-                    No open reconciliation drift.
-                  </td>
-                </tr>
-              ) : null}
-              {driftRows.map((alert) => {
-                const label =
-                  [alert.institution_name, alert.account_name].filter(Boolean).join(" · ") ||
-                  alert.account_name ||
-                  "Account";
-                const bank = Number(alert.bank_balance_cents);
-                const book = Number(alert.book_balance_cents);
-                const diff = Number(alert.drift_cents);
-                return (
-                  <tr key={alert.id} data-testid="banking-home-drift-row">
-                    <td style={tdStyle}>
-                      <EntityLink kind="bank_account" id={alert.bank_account_id} label={label} />
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right" }}>
-                      <MoneyCell
-                        cents={bank}
-                        drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
-                      />
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right" }}>
-                      <MoneyCell
-                        cents={book}
-                        drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
-                      />
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right" }}>
-                      <MoneyCell
-                        cents={diff}
-                        drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
-                      />
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                      {daysOpen(alert.detected_at)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <ParityTable<DriftBoardRow>
+            embedded
+            rows={driftRows}
+            rowKey={(row) => row.id}
+            columns={driftColumns}
+            loading={driftQuery.isPending}
+            emptyText="No open reconciliation drift."
+            storageKey="banking-home-drift"
+            tableTestId="banking-home-drift-table"
+            rowTestId={() => "banking-home-drift-row"}
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            initialPageSize={50}
+          />
         </BoardSection>
       </div>
 
@@ -573,70 +703,21 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         footer="Nothing is matched automatically — a person links each line."
         testId="banking-home-board-latest"
       >
-        <table className="tabular-nums" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Date</th>
-              <th style={thStyle}>Description</th>
-              <th style={thStyle}>Account</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-              <th style={thStyle}>Linked to</th>
-            </tr>
-          </thead>
-          <tbody>
-            {latest.length === 0 && !latestQuery.isPending ? (
-              <tr>
-                <td colSpan={5} style={{ ...tdStyle, color: V3.muted }}>
-                  No bank lines yet.
-                </td>
-              </tr>
-            ) : null}
-            {latest.map((tx) => {
-              const tile = tx.bank_account_id ? tileById.get(tx.bank_account_id) : undefined;
-              const accountName =
-                tile?.display_name ||
-                tx.account_name ||
-                tx.institution_name ||
-                "Account";
-              const isRelay = Boolean(
-                (tx.bank_account_id && relayIds.has(tx.bank_account_id)) || tile?.is_relay_wallet,
-              );
-              const desc = (tx.merchant_name || tx.description || "—").trim() || "—";
-              return (
-                <tr key={tx.id} data-testid="banking-home-latest-row">
-                  <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
-                    {formatBoardMmDd(tx.transaction_date)}
-                  </td>
-                  <td style={tdStyle}>
-                    <Link
-                      to={`${BANKING_TAB_PATH.transactions}?txn_id=${encodeURIComponent(tx.id)}`}
-                      style={{ color: V3.ink, textDecoration: "none", fontWeight: 500 }}
-                    >
-                      {desc}
-                    </Link>
-                  </td>
-                  <td style={tdStyle}>
-                    {tx.bank_account_id ? (
-                      <EntityLink kind="bank_account" id={tx.bank_account_id} label={accountName} />
-                    ) : (
-                      accountName
-                    )}
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>
-                    <MoneyCell
-                      cents={Number(tx.amount_cents)}
-                      format={(c) => formatSignedCentsClean(c, Boolean(tx.is_credit))}
-                      drill={{ entity: { kind: "bank_transaction", id: tx.id } }}
-                    />
-                  </td>
-                  <td style={tdStyle}>
-                    <LinkedToCell tx={tx} accountIsRelay={isRelay} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <ParityTable<PlaidBankTransaction>
+          embedded
+          rows={latest}
+          rowKey={(row) => row.id}
+          columns={latestColumns}
+          loading={latestQuery.isPending}
+          emptyText="No bank lines yet."
+          storageKey="banking-home-latest"
+          tableTestId="banking-home-latest-table"
+          rowTestId={() => "banking-home-latest-row"}
+          suppressToolbarSearch
+          suppressToolbarRange
+          hidePager
+          initialPageSize={10}
+        />
       </BoardSection>
     </div>
   );

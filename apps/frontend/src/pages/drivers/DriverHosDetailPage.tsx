@@ -4,6 +4,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -47,6 +48,8 @@ export function DriverHosDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        backHref="/drivers"
+        breadcrumb={["Drivers", "HOS detail"]}
         title="Driver HOS Detail"
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}
         actions={
@@ -72,9 +75,9 @@ export function DriverHosDetailPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="border-y border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
-          Select an operating company to view HOS details.
-        </div>
+        <BoardSection title="HOS detail" testId="driver-hos-detail-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view HOS details.</p>
+      </BoardSection>
       ) : null}
 
       {hosQuery.data ? (

@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 import { ListErrorState } from "../../components/ListErrorState";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export function LegalAttorneyReviewPage() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export function LegalAttorneyReviewPage() {
         key: "submitted_for_review_at",
         label: "Submitted",
         sortable: true,
-        render: (row) => (row.submitted_for_review_at ? new Date(row.submitted_for_review_at).toLocaleString() : "—"),
+        render: (row) => (row.submitted_for_review_at ? formatDateTimeUS(row.submitted_for_review_at) : "—"),
       },
       {
         key: "actions",
@@ -53,7 +54,7 @@ export function LegalAttorneyReviewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
+      <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
       <LegalModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

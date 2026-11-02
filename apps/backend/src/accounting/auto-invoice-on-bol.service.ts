@@ -235,6 +235,7 @@ export async function listLoadsAwaitingBolInvoice(
     load_id: string;
     load_number: string | null;
     status: string;
+    customer_id: string | null;
     customer_name: string | null;
     waiting_for: "BOL";
     has_invoice: boolean;
@@ -244,6 +245,7 @@ export async function listLoadsAwaitingBolInvoice(
     load_id: string;
     load_number: string | null;
     status: string;
+    customer_id: string | null;
     customer_name: string | null;
     has_invoice: boolean;
   }>(
@@ -252,6 +254,7 @@ export async function listLoadsAwaitingBolInvoice(
         l.id::text AS load_id,
         l.load_number,
         l.status::text AS status,
+        l.customer_id::text AS customer_id,
         c.customer_name,
         EXISTS (
           SELECT 1 FROM accounting.invoices i

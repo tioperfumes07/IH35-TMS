@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReserveByCustomer, getReserveByInvoice, type ReserveByCustomerRow, type ReserveByInvoiceRow } from "../../api/factoring-reserves";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -72,7 +72,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
 
   return (
     <div className="grid gap-3">
-      <DataPanel title="Reserve by customer">
+      <BoardSection title="Reserve by customer" testId="reserve-by-customer-board">
         {query.isError ? (
           <ListErrorState
             title="Couldn't load reserve balances"
@@ -98,7 +98,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
             {query.data.ties_to_gl ? "ties to the cent" : "DOES NOT TIE — a reserve movement is missing its invoice stamp"}
           </p>
         ) : null}
-      </DataPanel>
+      </BoardSection>
       {drill ? (
         <Modal open onClose={() => setDrill(null)} title={`Reserve — ${entityLabel(drill.customer_name, drill.customer_id, "Customer")}`}>
           {invoices.isError ? (

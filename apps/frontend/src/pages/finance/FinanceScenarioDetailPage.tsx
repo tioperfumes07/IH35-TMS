@@ -36,10 +36,11 @@ export function FinanceScenarioDetailPage() {
   return (
     <div className="p-6">
       <FinanceModuleTabs />
-      <PageHeader title="Scenario" />
-      <Link to="/finance/scenarios" className="text-xs font-medium text-[#4B5563] underline">
-        ← All scenarios
-      </Link>
+      <PageHeader
+        backHref="/finance/scenarios"
+        breadcrumb={["Finance", "Scenarios", "Detail"]}
+        title="Scenario"
+      />
 
       {detailQuery.isLoading ? (
         <p className="mt-4 text-xs text-[#6B7280]">Loading…</p>

@@ -15,6 +15,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { formatMoneyCents } from "./constants";
 import { describeLoadAuditEvent, type LoadAuditContext } from "./loadAuditSentences";
 import { SelectCombobox } from "../Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Props = {
   load: LoadDetail;
@@ -26,7 +27,7 @@ const LDT_AUDIT_GRID = "160px 130px minmax(200px, 1fr) 110px 130px";
 
 function formatWhen(value: string): string {
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? value : formatDateTimeUS(d);
 }
 
 export function LoadAuditTab({ load, operatingCompanyId }: Props) {

@@ -23,6 +23,18 @@ function analyze(sources) {
       e.push(`${rel}: must not keep layered bare card (${needle})`);
     }
   }
+  const overage = sources["apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx"] ?? "";
+  if (!/formatDateUS\(event\.created_at\)/.test(overage) || /toLocaleDateString\(/.test(overage)) {
+    e.push("FuelCardOverageReverseSection: event stamp must use formatDateUS (not toLocaleDateString)");
+  }
+  const tx = sources["apps/frontend/src/components/fuel/FuelTransactionsReverseSection.tsx"] ?? "";
+  if (!/formatQuantityTable\(row\.gallons\)/.test(tx) || /gallons\.toLocaleString\(/.test(tx)) {
+    e.push("FuelTransactionsReverseSection: gallons must use formatQuantityTable");
+  }
+  const relay = sources["apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx"] ?? "";
+  if (!/formatQuantityTable\(row\.fuel_gallons\)/.test(relay) || /gallons\.toLocaleString\(/.test(relay)) {
+    e.push("RelayFillsReverseSection: gallons must use formatQuantityTable");
+  }
   return e;
 }
 
@@ -43,7 +55,17 @@ if (selftest) {
       process.exit(1);
     }
   }
-  console.log(`PASS verify-fuel-reverse-board-sections --selftest ${caught}/${FILES.length}`);
+  const datePlant = {
+    ...base,
+    "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx": base[
+      "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx"
+    ].replace(/formatDateUS\(event\.created_at\)/g, "new Date(event.created_at).toLocaleDateString()"),
+  };
+  if (!analyze(datePlant).some((msg) => msg.includes("formatDateUS"))) {
+    console.error("SELFTEST FAIL — overage date plant escaped");
+    process.exit(1);
+  }
+  console.log(`PASS verify-fuel-reverse-board-sections --selftest ${caught}/${FILES.length} + date plant`);
   process.exit(0);
 }
 

@@ -19,6 +19,8 @@ const TYPES_WITHOUT_GL = new Set<TxHealthDocType>();
 type GlRaw = {
   doc_id: string;
   journal_entry_id: string | null;
+  /** Human label of the posting's journal entry (same rule as a journal_entry row's display_label). Never the raw id. */
+  journal_entry_label?: string | null;
   account_id: string | null;
   account_code: string | null;
   account_name: string | null;
@@ -72,7 +74,12 @@ function mkLink(opts: {
   };
 }
 
-function linesToGl(raw: GlRaw[]): { gl: TxHealthGl; jeIds: string[]; accountLinks: TxHealthLink[] } {
+function linesToGl(raw: GlRaw[]): {
+  gl: TxHealthGl;
+  jeIds: string[];
+  jeLabels: Map<string, string>;
+  accountLinks: TxHealthLink[];
+} {
   const lines: TxHealthGlLine[] = raw
     .slice()
     .sort((a, b) => (a.line_sequence ?? 0) - (b.line_sequence ?? 0))
@@ -92,6 +99,12 @@ function linesToGl(raw: GlRaw[]): { gl: TxHealthGl; jeIds: string[]; accountLink
   const cr_total = lines.reduce((s, l) => s + l.cr, 0);
   const gl: TxHealthGl = { lines, dr_total, cr_total, balanced: dr_total === cr_total };
   const jeIds = [...new Set(raw.map((r) => r.journal_entry_id).filter((x): x is string => Boolean(x)))];
+  const jeLabels = new Map<string, string>();
+  for (const r of raw) {
+    if (r.journal_entry_id && r.journal_entry_label && !jeLabels.has(r.journal_entry_id)) {
+      jeLabels.set(r.journal_entry_id, r.journal_entry_label);
+    }
+  }
   const seen = new Set<string>();
   const accountLinks: TxHealthLink[] = [];
   for (const r of raw) {
@@ -109,11 +122,17 @@ function linesToGl(raw: GlRaw[]): { gl: TxHealthGl; jeIds: string[]; accountLink
       })
     );
   }
-  return { gl, jeIds, accountLinks };
+  return { gl, jeIds, jeLabels, accountLinks };
 }
 
+// LEAD 11-02: the JE link printed its raw uuid ("Journal entry — dc6d1877-…"). The label is the same rule the
+// journal_entry row uses (memo with id fragments stripped, else "Journal entry · MM/DD/YYYY"). POSIX classes only:
+// this is a JS template, never a backslash.
 const GL_LINE_SELECT = `
   p.journal_entry_uuid::text AS journal_entry_id,
+  (SELECT COALESCE(NULLIF(btrim(regexp_replace(je.memo, '[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}[0-9a-f-]*…?', '', 'gi')), ''),
+                   'Journal entry · ' || to_char(je.entry_date,'MM/DD/YYYY'))
+     FROM accounting.journal_entries je WHERE je.id = p.journal_entry_uuid) AS journal_entry_label,
   a.id::text AS account_id,
   a.account_number AS account_code,
   a.account_name,
@@ -453,6 +472,7 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
     let gl: TxHealthGl;
     let accountLinks: TxHealthLink[] = [];
     let jeIds: string[] = [];
+    let jeLabels = new Map<string, string>();
     if (withoutGl && rawLines.length === 0) {
       gl = null;
     } else {
@@ -460,6 +480,7 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
       gl = packed.gl;
       accountLinks = packed.accountLinks;
       jeIds = packed.jeIds;
+      jeLabels = packed.jeLabels;
     }
 
     const links: TxHealthLink[] = [...accountLinks];
@@ -496,7 +517,7 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
             label: "Journal entry",
             target_type: "accounting.journal_entries",
             target_id: jeId,
-            target_label: jeId,
+            target_label: jeLabels.get(jeId) ?? "Journal entry",
             required: true,
             state: "wired",
           })

@@ -21,7 +21,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 
 function asMoney(cents: number) {
@@ -266,7 +266,7 @@ export function BatchWizard() {
             <div className="border-t border-gray-200 pt-2 text-xs">
               <div className="text-xs uppercase tracking-wide text-gray-500">Rates</div>
               <div className="font-semibold text-gray-900">
-                Advance {(draftBatch.advance_rate * 100).toFixed(2)}% · Fee {(draftBatch.fee_rate * 100).toFixed(2)}%
+                Advance {formatQuantityTable(draftBatch.advance_rate * 100, 2)}% · Fee {formatQuantityTable(draftBatch.fee_rate * 100, 2)}%
               </div>
             </div>
           </div>

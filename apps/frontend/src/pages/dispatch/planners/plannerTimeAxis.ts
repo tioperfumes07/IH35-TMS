@@ -7,11 +7,13 @@ export function todayYmdAmericaChicago(now = new Date()): string {
   return now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 }
 
+const DOW_SHORT2 = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+
 export function plannerWeekdayShort(isoYmd: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoYmd.trim());
   if (!m) return "";
   const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
-  return d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }).slice(0, 2);
+  return DOW_SHORT2[d.getUTCDay()] ?? "";
 }
 
 export function plannerUtcDow(isoYmd: string): number | null {
@@ -37,14 +39,14 @@ export function plannerMonthKey(isoYmd: string): string {
   return isoYmd.slice(0, 7);
 }
 
+const PLANNER_MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function plannerMonthLabel(isoYmd: string): string {
   const m = /^(\d{4})-(\d{2})/.exec(isoYmd);
   if (!m) return isoYmd;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1, 12)).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  const abbr = PLANNER_MONTH_SHORT[Number(m[2]) - 1];
+  if (!abbr) return isoYmd;
+  return `${abbr} ${m[1]}`;
 }
 
 export function plannerMonthBands(days: string[]): Array<{ key: string; label: string; span: number }> {

@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatMoneyCents } from "../../lib/formatMoney";
+import { formatQuantityTable } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
@@ -189,7 +190,7 @@ export function FuelHomePage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.gallons,
-        render: (r) => (Number.isFinite(r.gallons) ? r.gallons.toFixed(1) : "—"),
+        render: (r) => (Number.isFinite(r.gallons) ? formatQuantityTable(r.gallons, 1) : "—"),
       },
       {
         key: "per_gal",
@@ -239,8 +240,12 @@ export function FuelHomePage() {
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
       {/* 443.280 board KPIs — period-synced with Diesel by truck (not planner Active Plans chrome). */}
       <FuelBoardKpiStrip companyId={companyId} period={period} />
+      {/* Codex QA 11-02: generic Failed-to-load sat above Diesel-by-truck empty success and looked like the diesel board failed. Name the planner source. */}
       {dashboardQuery.isError ? (
-        <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
+        <ListErrorBanner
+          message="Fuel planner dashboard (plans / Love's context) could not be loaded — Diesel by truck below uses a separate query."
+          onRetry={() => void dashboardQuery.refetch()}
+        />
       ) : null}
       {lovesSyncQuery.isError ? (
         <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
@@ -265,7 +270,6 @@ export function FuelHomePage() {
         {null}
       </MoneyListToolbar>
 
-      {dieselQuery.isError ? <ListErrorBanner onRetry={() => void dieselQuery.refetch()} /> : null}
       <FuelBoardSection
         title="Diesel by truck"
         onViewAll={() => navigate("/fuel/by-truck")}
@@ -280,17 +284,26 @@ export function FuelHomePage() {
         }
         footer="Attribution: signed settlement → its load · card truck keeps its fuel · no load → next load · not 100% sure → question with evidence."
       >
-        <ParityTable<DieselBoardRow>
-          title="Diesel by truck"
-          columns={dieselColumns}
-          rows={dieselRows}
-          rowKey={(r) => r.id}
-          loading={dieselQuery.isLoading}
-          emptyText="No diesel spend for this period."
-          suppressToolbarSearch
-          storageKey="fuel-home-diesel-by-truck"
-          tableTestId="fuel-home-diesel-table"
-        />
+        {dieselQuery.isError ? (
+          <div className="px-3 py-2" data-testid="fuel-home-diesel-error">
+            <ListErrorBanner
+              message="Diesel by truck could not be loaded — this is not an empty period."
+              onRetry={() => void dieselQuery.refetch()}
+            />
+          </div>
+        ) : (
+          <ParityTable<DieselBoardRow>
+            title="Diesel by truck"
+            columns={dieselColumns}
+            rows={dieselRows}
+            rowKey={(r) => r.id}
+            loading={dieselQuery.isLoading}
+            emptyText="No diesel spend for this period."
+            suppressToolbarSearch
+            storageKey="fuel-home-diesel-by-truck"
+            tableTestId="fuel-home-diesel-table"
+          />
+        )}
       </FuelBoardSection>
 
       <FuelBoardSection title="Relay history import" testId="fuel-home-relay-import">

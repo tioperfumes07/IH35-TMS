@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -11,9 +12,25 @@ import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const PRIORITY_DOT = ["bg-[#6B7280]", "bg-orange-500", "bg-red-600"];
 
+const MONTH_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
 function monthLabel(iso: string): string {
   const [y, m] = iso.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return iso;
+  return `${MONTH_LONG[m - 1]} ${y}`;
 }
 
 // TASK-1: Calendar — month grid of tasks by scheduled_date (was an unbuilt placeholder). Reads the
@@ -58,18 +75,18 @@ export function TasksCalendarPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
+        <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view the task calendar.
-        </div>
+        <BoardSection title="Calendar" testId="tasks-calendar-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task calendar.</p>
+        </BoardSection>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
+      <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}

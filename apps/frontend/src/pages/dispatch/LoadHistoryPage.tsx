@@ -17,12 +17,14 @@ import {
   type LoadHistoryLinkedDocument,
   type LoadHistoryLink,
 } from "../../api/loads";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime()) || d.getTime() === 0) return "—";
-  return d.toLocaleString();
+  // Backend gap rows emit Date(0) for missing stop stamps (kind=gap). Never invent 12/31/1969.
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms) || ms === 0) return "—";
+  return formatDateTimeUS(iso) || "—";
 }
 
 function kindLabel(kind: LoadHistoryRow["kind"]): string {
@@ -196,7 +198,7 @@ export default function LoadHistoryPage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="load-history-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title={`Load history · ${entityLabel(loadNumber, id, "Load")}`}
         breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "History"]}
         actions={

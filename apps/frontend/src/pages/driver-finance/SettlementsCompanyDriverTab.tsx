@@ -24,7 +24,7 @@ import {
   listCompanySettlements,
   type CompanySettlementListRow,
 } from "../../api/accounting";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, formatUsdRateTable } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
@@ -41,7 +41,7 @@ function date(value: string | null | undefined): string {
 // $/mile, four decimals (matches Load-Costs fmtRate); rate_per_mile_cents is cents-per-mile.
 function fmtRate(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return DASH;
-  return `$${(cents / 100).toFixed(4)}`;
+  return formatUsdRateTable(cents / 100, 4);
 }
 
 export function SettlementsCompanyDriverTab({
@@ -179,13 +179,60 @@ function CompanyDriverPicker({
   const rows = q.data?.rows ?? [];
   const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
-      { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
+      {
+        key: "display_id",
+        label: "Settlement/Tour",
+        alwaysVisible: true,
+        minWidth: 100,
+        sortValue: (r) => settlementLabel(r),
+        render: (r) => (
+          <EntityLink kind="settlement" id={r.settlement_id} label={settlementLabel(r)} className="ldt-mono" />
+        ),
+      },
       ...tourLoadColumns("company-driver-col", rows),
-      { key: "driver_name", label: "Driver", minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: (r) => r.driver_name ?? "", render: (r) => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
+      {
+        key: "driver_name",
+        label: "Driver",
+        minWidth: 120,
+        maxWidth: 200,
+        cellClass: "whitespace-nowrap",
+        sortValue: (r) => r.driver_name ?? "",
+        // U29 / ROUND 153 — ids already on TourListRow; plain text was a dead cell.
+        render: (r) =>
+          r.driver_id ? (
+            <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ?? DASH} className="block max-w-[200px] truncate" />
+          ) : (
+            <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span>
+          ),
+      },
+      {
+        key: "unit_number",
+        label: "Unit",
+        minWidth: 80,
+        sortValue: (r) => r.unit_number ?? "",
+        render: (r) =>
+          r.unit_id ? (
+            <EntityLink kind="unit" id={r.unit_id} label={r.unit_number ?? DASH} />
+          ) : (
+            (r.unit_number ?? DASH)
+          ),
+      },
       { key: "trip_started_at", label: "Started", sortable: true, sortValue: r => r.trip_started_at ?? "", render: r => date(r.trip_started_at) },
       { key: "trip_closed_at", label: "Closed", sortable: true, sortValue: r => r.trip_closed_at ?? "", render: r => date(r.trip_closed_at) },
       { key: "driver_net_cents", label: "Driver net", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r) => r.driver_net_cents ?? 0, render: (r) => money(r.driver_net_cents) },
-      { key: "company", label: "Company settlement", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r) => (r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn">not opened</span>) },
+      {
+        key: "company",
+        label: "Company settlement",
+        minWidth: 120,
+        maxWidth: 160,
+        cellClass: "whitespace-nowrap",
+        render: (r) =>
+          r.company_settlement_id ? (
+            <EntityLink kind="company_settlement" id={r.company_settlement_id} label={r.company_settlement_display_id ?? DASH} />
+          ) : (
+            <span className="ldt-pill warn">not opened</span>
+          ),
+      },
     ],
     [rows]
   );
@@ -292,8 +339,8 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
       { key: "pickup_date", label: "Date", minWidth: 72, maxWidth: 96, className: "whitespace-nowrap", sortValue: (l) => l.pickup_date ?? "", render: (l) => date(l.pickup_date) },
       { key: "load_number", label: "Load", minWidth: 72, sortValue: (l) => l.load_number, render: (l) => <EntityLink kind="load" id={l.load_id} label={l.load_number} /> },
       { key: "lane", label: "Route", minWidth: 140, maxWidth: 240, cellClass: "truncate", sortValue: (l) => l.lane, render: (l) => <span className="block max-w-[240px] truncate" title={l.lane}>{l.lane || DASH}</span> },
-      { key: "miles_practical", label: "Practical miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_practical ?? -Infinity, render: l => l.miles_practical == null ? DASH : l.miles_practical.toLocaleString("en-US") },
-      { key: "miles_shortest", label: "Short miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_shortest ?? -Infinity, render: l => l.miles_shortest == null ? DASH : l.miles_shortest.toLocaleString("en-US") },
+      { key: "miles_practical", label: "Practical miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_practical ?? -Infinity, render: l => l.miles_practical == null ? DASH : formatQuantityTable(l.miles_practical, 0) },
+      { key: "miles_shortest", label: "Short miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_shortest ?? -Infinity, render: l => l.miles_shortest == null ? DASH : formatQuantityTable(l.miles_shortest, 0) },
       { key: "rate", label: "Rate", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 84, maxWidth: 110, sortValue: (l) => billByLoad.get(l.load_id)?.rate_per_mile_cents ?? -1, render: (l) => fmtRate(billByLoad.get(l.load_id)?.rate_per_mile_cents) },
       { key: "linehaul", label: "Linehaul", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 96, maxWidth: 140, sortValue: (l) => billByLoad.get(l.load_id)?.loaded_pay_cents ?? l.revenue_cents, render: (l) => money(billByLoad.get(l.load_id)?.loaded_pay_cents ?? l.revenue_cents) },
     ],
@@ -409,9 +456,9 @@ function CompanySettlementCard({ readout, companyId }: { readout: TourReadout; c
             {report.sections.pl_rollup.lines.map((line) => (
               <div className="ldt-row" key={line.line_type}><span>Less · {line.label}</span><span className="ldt-m">{money(line.amount_cents)}</span></div>
             ))}
-            <div className="ldt-row"><span>Less · Fuel purchases{report.sections.fuel_purchases.total_gallons > 0 ? ` (${report.sections.fuel_purchases.total_gallons.toLocaleString()} gal)` : ""}</span><span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span></div>
+            <div className="ldt-row"><span>Less · Fuel purchases{report.sections.fuel_purchases.total_gallons > 0 ? ` (${formatQuantityTable(report.sections.fuel_purchases.total_gallons, 1, 0)} gal)` : ""}</span><span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span></div>
             <div className="ldt-row"><span>Less · Company expenses</span><span className="ldt-m">{money(report.sections.expenses.total_cents)}</span></div>
-            <div className="ldt-row big"><span>NET REVENUE{marginPct == null ? "" : ` · ${marginPct.toFixed(1)}%`}</span><span className="ldt-m">{money(report.sections.pl_rollup.net_revenue_cents)}</span></div>
+            <div className="ldt-row big"><span>NET REVENUE{marginPct == null ? "" : ` · ${formatQuantityTable(marginPct, 1)}%`}</span><span className="ldt-m">{money(report.sections.pl_rollup.net_revenue_cents)}</span></div>
           </div>
 
           {/* ROUND 16.19 — itemized per-load register UNDER the waterfall above (never replacing

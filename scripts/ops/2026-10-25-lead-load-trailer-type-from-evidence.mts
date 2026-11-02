@@ -54,6 +54,26 @@ try {
      WHERE l.operating_company_id = $1 AND l.status::text <> 'cancelled'
        AND lte.code = 'DRY_VAN' AND target.code <> 'DRY_VAN'`;
   const changes = (await client.query(evidence, [CO])).rows;
+  // ENG-22 dry-run listing (Lead ROUND 7.23): each load / old type / new type / trailer — apply waits AUTH.
+  out.listing = changes.map((r: { load_number: string; booked: string; target_code: string; equipment_number: string; trailer_type: string }) => ({
+    load: r.load_number,
+    old_type: r.booked,
+    new_type: r.target_code,
+    trailer: r.equipment_number,
+    trailer_body: r.trailer_type,
+  }));
+  const cancelledResiduals = (await client.query(
+    evidence.replace("l.status::text <> 'cancelled'", "l.status::text = 'cancelled'"),
+    [CO],
+  )).rows;
+  out.cancelled_residuals = cancelledResiduals.map((r: { load_number: string; booked: string; target_code: string; equipment_number: string; trailer_type: string }) => ({
+    load: r.load_number,
+    old_type: r.booked,
+    new_type: r.target_code,
+    trailer: r.equipment_number,
+    trailer_body: r.trailer_type,
+    status: "cancelled",
+  }));
   out.equipment_changes = changes.length;
   out.equipment_by_target = changes.reduce((m: Record<string, number>, r: { target_code: string }) => ((m[r.target_code] = (m[r.target_code] ?? 0) + 1), m), {});
   // one set-based UPDATE in id order (a per-row loop deadlocked with live crons touching mdata.loads)

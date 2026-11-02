@@ -17,8 +17,13 @@ function verify(source, mainSource) {
   if (!boundary.includes("const location = useLocation()")) {
     failures.push("route content boundary must read the current location");
   }
-  if (!boundary.includes('key={`${location.pathname}${location.search}`}')) {
-    failures.push("route content Suspense must remount for pathname/search changes");
+  // Pathname ONLY — including search remounts on every filter/preset URL write and wipes staged draft
+  // (Codex Round 7.6 P&L Last month). Path changes still remount for cold lazy destinations (DRV-F7317).
+  if (!boundary.includes("key={location.pathname}")) {
+    failures.push("route content Suspense must remount on pathname changes (key={location.pathname})");
+  }
+  if (boundary.includes("location.search")) {
+    failures.push("route content Suspense must NOT key on location.search (staged filters / report presets)");
   }
   if (!boundary.includes("fallback={<RouteFallback />}")) {
     failures.push("route content boundary must retain the visible loading fallback");
@@ -48,7 +53,8 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["remove location read", source.replace("const location = useLocation();", "const location = { pathname: '', search: '' };" ), mainSource],
-    ["remove location key", source.replace(' key={`${location.pathname}${location.search}`}', ""), mainSource],
+    ["remove location key", source.replace(" key={location.pathname}", ""), mainSource],
+    ["reintroduce search key", source.replace("key={location.pathname}", "key={`${location.pathname}${location.search}`}"), mainSource],
     ["remove fallback", source.replace(" fallback={<RouteFallback />}", ""), mainSource],
     ["restore one unkeyed wrapper", source.replace("<RouteContentBoundary>{children}</RouteContentBoundary>", "<React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>"), mainSource],
     ["restore transition-wrapped router updates", source, mainSource.replace("<BrowserRouter useTransitions={false}>", "<BrowserRouter>")],

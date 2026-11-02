@@ -8,7 +8,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
-import { formatUsd, formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
 import type { TourReadout } from "../../../api/tourReadout";
@@ -63,12 +63,12 @@ function laneLabel(row: StatementEarningsRow): string {
 
 function fmtMiles(n: number | undefined): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return n.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+  return formatQuantityTable(n, 1, 0);
 }
 
 function fmtRate(n: number | undefined): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return n.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  return formatQuantityTable(n, 4);
 }
 
 function LinkCell({ children }: { children: ReactNode }) {

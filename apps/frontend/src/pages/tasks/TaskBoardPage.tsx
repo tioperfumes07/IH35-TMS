@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { TaskPlannerGrid } from "./TaskPlannerGrid";
@@ -10,10 +11,10 @@ export function TaskBoardPage() {
   if (!companyId) {
     return (
       <div className="flex h-full flex-col overflow-hidden p-4">
-        <PageHeader title="Task Board" />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view the task board.
-        </div>
+        <PageHeader backHref="/tasks" title="Task Board" />
+        <BoardSection title="Task board" testId="task-board-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task board.</p>
+        </BoardSection>
       </div>
     );
   }
@@ -26,7 +27,7 @@ export function TaskBoardPage() {
             below) already renders the single canonical "+ Create Task" affordance shared across
             every Tasks tab (TASKS-6), so Task Board previously showed TWO independent create-task
             buttons/modals stacked on top of each other. */}
-        <PageHeader title="Task Board" />
+        <PageHeader backHref="/tasks" title="Task Board" />
         <TasksModuleTabs />
       </div>
       <div className="flex-1 overflow-hidden">
