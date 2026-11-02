@@ -143,3 +143,6 @@ LEAD 22:46Z: #28122 (1093d3f14) and #28096 (7f6d72bfc) MERGED by Lead under owne
 ## ROUND 7.25 — LEAD 2026-11-02 4:52 PM CT (22:52Z) — RE-MEASURE YOUR ROWS, THEN BUILD
 docs/bus/lead/11-02-2026-Claude-Lead-PENDING-NUMBERED.md lists 256 not-DONE rows by number. Every row with Seat = CC-1: re-measure live (prod read, bypass) and, per row, either (a) DONE-LIVE with the proof line (PR + query/screen result), or (b) still open with the measured number, then build it. CODED / MERGED-UNVERIFIED rows need only the live proof. Fast merge applies.
 DONE = your OUTBOX lists every one of your row numbers with DONE-LIVE+proof or the measured open number. Deadline 2026-11-03T02:00Z. Missed rows go to the Lead.
+
+## LEAD 2026-11-02 5:35 PM CT — row 257: 46 backend tests red on main (35 files)
+`npx vitest run --config apps/backend/vitest.config.ts` on e27c5b2c8 → 35 failed files / 46 tests. Yours (accounting): posting-engine-cash-advance, posting-engine-driver-advance, posting-engine-revrec-interlock, fuel-posting poster-class-by-unit-trailer + poster-tenant-isolation, accept-match-customer-payment-deposit-sweep, financial-today-company-tz, related-party-account-ensure/worm, auto-invoice-on-bol, finance-entity-filter-cohorts, expense-category-map tenant isolation. Root-cause each (code or test), never skip. DONE = those files 0 failed. Deadline 2026-11-03T02:00Z.
