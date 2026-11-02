@@ -21,6 +21,8 @@ If a path already fully validates through the engine, document that and leave it
 
 ## 2. Load 13595 — trailer — **source document (do not guess)**
 
+> **SUPERSEDED 2026-11-02 (owner):** "THEN IT IS A BROKER TRAILER." — Trailer 445 is the broker's (Paypa Transport) trailer, NOT a company trailer. Recorded as trailer_source='customer' + non_owned_trailers 445 under **AUTH-473** (`scripts/ops/2026-11-02-claude-eng13-load-13595-broker-trailer-445.mts`). Do not create a fleet row for 445.
+
 **Trailer actually used: company trailer `445` on truck `T148`.** Not a customer/broker trailer, and not “no trailer.”
 
 **Source documents (AlwaysTrack settlement text — read these, not the app row):**

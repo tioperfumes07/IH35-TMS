@@ -8176,3 +8176,14 @@ rehearsal: dry run on prod (rolled back): 3 trailers DryVan -> Flatbed
 result: APPLIED 2026-10-26 ~02:50 UTC. Equipment: FB-56707, FB-56711, 56702 DryVan -> Flatbed (3 rows). Loads re-derived: 10 loads -> FLATBED, trailer_type text synced 10, books_identical true, 1 load (13595) no trailer evidence left NULL.
 expires_at: 2026-10-27T00:00:00Z
 status: CLOSED
+
+## AUTH-473
+issued_at: 2026-11-02T17:30:00Z
+issued_by: Owner (Jorge), recorded by Claude (Lead)
+owner_quotes: "THEN IT IS A BROKER TRAILER." (owner 2026-11-02 ~11:14 AM CT, answering the load 13595 / Trailer 445 question — supersedes the 10-27 Lead note that called 445 a company trailer); "you have full permissions and authorization … we need to complete the full engines" (owner 2026-11-02 11:25 AM CT)
+scope: USMCA load 13595 only — record trailer 445 as a broker (customer) trailer through the Edit Load engine (updateDispatchLoad trailer_choice {kind:"customer", trailer_number:"445"}): one dispatch.non_owned_trailers row (counterparty = the load's customer), mdata.loads.trailer_source = 'customer'. No fleet equipment row created. No money table touched (TB identical). Evidence: Company + Driver Settlement 5816 "Trk: T148 / Trlr: 445".
+action: OWNER_AUTH_ID=AUTH-473 DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-02-claude-eng13-load-13595-broker-trailer-445.mts --apply
+rehearsal: pending — dry run on prod (rolled back) before apply; result recorded below
+result: pending
+expires_at: 2026-11-09T00:00:00Z
+status: OPEN
