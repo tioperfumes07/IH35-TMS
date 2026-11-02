@@ -175,3 +175,6 @@ SEAT: CC-2 | ITEM: ENG-DEADLOCK-01 | PR: #28051 | guard: vitest run stop-dwell-e
 **Items 4+5 — SAF-ORPH-05/SAF-B08 + 18 Accounting U-rows — written to INBOX-CODEX.md**
 SEAT: CC-2 | ITEM: SAF-ORPH-05 28 routes + SAF-B08 KPI + 18 U-rows Codex queue | PR: this branch (round7-inbox-codex-writes) | CT: ~8:10 PM CT 11-02-2026
 
+**U21 ReclassifyTransactionsPage year navigation fix — MERGED PR #28071**
+SEAT: CC-2 | ITEM: U21 year navigation regression | PR: #28071 | sha: 709930573d | guard: vitest src/components/forms/DatePicker.test.tsx → Test Files 1 passed (1) Tests 9 passed (9) [2 new U21 cross-year tests added]; cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b → exit 0 | live: UNVERIFIED — owner Chrome-verifies year dropdown shows 2025 at /accounting/reclassify per FINAL-3 | CT: ~2:40 PM CT 11-02-2026
+
