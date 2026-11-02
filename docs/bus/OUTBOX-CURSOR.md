@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~7:45 PM CT) — Cursor BUILD-FIRST engines tip
+- **MERGED:** #28087 CashFlow matrix→RL week/type · #28089 RL chip MM/DD/YYYY · #28091 Factoring debtor filter · #28092 Fuel Relay format · #28094 Geofences deeplink · #28097 NavyPageSubNav portal · #28100 Reimburse/ExtraPay formatUsd · #28103/#28104 disputes/payrun/deductions/floor/loan money · #28106 Settlements home week/money · #28108–#28111 Fuel savings/planner/stop/route formatUsd.
+- **HANDOFF:** Cascade InvoiceSearch/P&L + Audit date-boundary + DriverQual reports. LAW: new verify-*.mjs must claim+wire same PR (#28096).
+- **NEXT:** more Cursor shells/engines (FuelTransactions leftovers, insurance, dispatch); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~7:25 PM CT) — Cursor BUILD-FIRST engines + submenu tip
 - **MERGED:** #28087 CashFlow Home matrix → Rolling Ledger week/type (`rl_*`) · #28089 RL chip MM/DD/YYYY · #28091 Factoring Purchase Report Filter by Debtor · #28092 Fuel Relay deposit formatDateUS/formatUsdCents · #28094 Geofences deep-link pin beyond page 1 · #28097 NavyPageSubNav portal mousedown/hover keep-open.
 - **THIS WAVE:** Settlement Reimbursements + Extra Pay → formatUsd.
