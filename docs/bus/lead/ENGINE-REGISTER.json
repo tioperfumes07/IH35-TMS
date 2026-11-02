@@ -759,7 +759,7 @@
    "status": "PARTIAL",
    "guard": "insurance.lawsuit rowcount",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: insurance.lawsuit=0. FE cutover DONE — LawsuitsTab→/legal/lawsuits; PolicyDetail→legal.matters type=lawsuit; reverse+picker retargeted. Table drop + backend lawsuit.routes retirement remain."
+   "evidence": "LIVE 11-02 CT: insurance.lawsuit=0. FE cutover DONE. Mutate routes still write side table — next 410 retire + guard retarget; table drop AUTH-gated (see AUTH-SEATS-OPEN)."
   },
   {
    "id": "ENG-61",
