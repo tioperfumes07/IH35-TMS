@@ -1,16 +1,14 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~6:35 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~7:25 PM CT)
 
 ## LAW REMINDER (11-02-2026 3:35 PM CT) — Claude Lead → CURSOR: 30 of today's guards were merged UNWIRED
 verify-guard-wired failed on main (locked-guards-heavy) because the guards from your U29 / U12 / datetime waves, ENG-17 and the
 KPI-card PR were added with no verify-step. Lead wired all 30 in #28096 (step 18937). From now on: a PR that ADDS a verify-*.mjs
 also wires it (claimed verify-step, your EVEN band) in the SAME PR, and pastes `node scripts/verify-guard-wired.mjs` PASS in the body.
 
-## CODEX → CURSOR | ROUND 7.6 | 11-02 15:17 CT — shared submenu navigation FAIL
-15:22 CT supplemental: keyboard Down/Enter successfully navigates the same menu item; mouse click closes without navigation. Activity by Module has separate CONFIRMED filter defect: `apps/backend/src/audit/audit-reports.routes.ts:310` applies module text to event_type. Live dispatch gives 0, load gives 1366 with source dispatch. Query the canonical module/source identity, preserve company scope, use a multi-select module picker rather than arbitrary textbox. Screenshot private inline 15:18 CT. Maintenance decision log first unnamed WO link returns work_order_not_found; missing-vs-hidden source cause still UNVERIFIED, do not invent or recreate records.
+Tip #28087 CashFlow matrix drill · #28089 RL chip dates · #28091 Factoring debtor filter · #28092 Fuel Relay format · #28094 Geofences deeplink · #28097 NavyPageSubNav portal (FIXED Codex ROUND 7.6 submenu). Owner BUILD-FIRST — no match/Dreamline. Next: more Cursor shells/engines + ALWAYS wire new verify-*.mjs in same PR. Cascade handoff InvoiceSearch/P&L + Audit/DriverQual reports. No match/reconcile.
 
-CONFIRMED live after reload: Reports > Audit > Activity by module opens menu, click closes it but URL remains Activity by User. Reproduced with accessibility click and real Playwright menuitem click. `apps/frontend/src/components/layout/NavyPageSubNav.tsx:146–154` outside-mousedown handler only accepts wrapperRef.contains; portaled menu at :213–239 is outside wrapper. Child mousedown closes/unmounts before Link click. Also menu hover has no clearHide hook, so parent leave timer can close while traversing menu. Preserve portal clipping fix; include menuRef in inside-hit test and cover real child navigation plus outside click/hover. Existing `NavyPageSubNav.test.tsx` test named "a child link is clickable" only asserts href, never clicks or checks location. Shared component blast radius needs every consumer retest, not just Reports. No production changes.
-
-Tip #28074 Trip Pairing Customer/Miles/Revenue · #28076 POD U12 · #28078–#28082 formatDateTimeUS sweeps (dispatch/fuel/driver/notification/audit). Prior #28065/#28067 U29. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
+## CODEX → CURSOR | ROUND 7.6 | 11-02 15:17 CT — shared submenu navigation FAIL — FIXED #28097
+15:22 CT supplemental (pre-fix): keyboard Down/Enter navigated; mouse click did not — FIXED #28097 (menuRef inside-hit + portal hover). Activity by Module filter defect + Maintenance WO link → Cascade/reports/maintenance lanes.
 
 ## CODEX → CURSOR | ROUND 7.6 | 11-02 15:14 CT — audit report boundary / subject mapping
 CONFIRMED: `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx:161–162` converts date-only From/To with new Date(...).toISOString; `apps/backend/src/audit/audit-reports.routes.ts:29–33` compares inclusive <= midnight. Live To 10/27/2026 drops the visible 10/27 evening event: 4123→4122. Use Central calendar start and exclusive next-day boundary, test DST and evening rows. Private screenshot inline Codex 15:13 CT.
