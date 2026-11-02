@@ -137,3 +137,5 @@ CC-1 FIRST, in this order (both your lane, both branch-tested by Lead, regressio
 1. #28122 scripts/lib/expand-live-document-predicates.mjs — redos fix; same output on 91,821 matches. Merge → CodeQL green on every PR.
 2. #28096 scripts/verify-steps/18937 — wires 31 orphan guards (plain + --selftest). Merge after #28122.
 Your own lane = no breach line needed. If you miss 23:30Z, Lead reports to owner which PR is still open and why.
+
+LEAD 22:46Z: #28122 (1093d3f14) and #28096 (7f6d72bfc) MERGED by Lead under owner fast-merge permission (16:41 CT). Do not redo. Your next item: diesel dedupe (verify-diesel-expense-fuel-dedupe red on every PR) then ENG-62.
