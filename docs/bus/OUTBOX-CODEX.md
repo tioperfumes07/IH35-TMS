@@ -4,6 +4,11 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+16:16 CT batch 20: #28139 merged 52e610a1c74bb6db0a02fea7d8f140563c4dc0f8 after preserving concurrent Lead bus entry and rerunning 3 affected guards with 0 regressions. Attachment attempted, refused by app 100-identity limit. Round 7.23 read; priority moves to escrow KPI, Bills categories, fuel proof trail and Fleet Telematics retests.
+- SAF-B08 #28126 live retest FAIL 16:18 CT: still 0 of 37 after reload. Deployed API 8954653c9f / web 0a8a63685a contain repair. Scoped endpoint logs prove HTTP 500 / 42703 `column d.soft_deleted_at does not exist`, debt.routes.ts:125. FE fallback hides failure. Guard 4/4 and selftest 2 plants PASS but do not catch query/schema failure. Filed CC-2 with exact route, line and logs. Expected 2/165 not independently re-measured; never forced to target number.
+- Safety route continuation: Driver Scoring week and quarter both 0 rows (quarter selection visibly active); CSA Score 7 history rows and missing public metrics explicitly unavailable; DOT Compliance medical cards/background checks/reminders all 0. Both medical-card and MVR creators open canonical drawers, date calendars and driver selectors, then cancelled without save. No empty-population acceptance.
+- CSA Mitigation 0 open actions; CSA/FMCSA Trend missing/stale public source, 7 unknown categories, no source pull triggered. Safety Events 1 open row; View opens details, list date formatted but detail Occurred raw timestamp. `SafetyEventsPage.tsx:628`; screenshot private inline 16:16 CT. No event edits. Remaining route coverage, screenshots on some inspected empty pages and reverse-depth checks still incomplete.
+
 16:10 CT Safety depth continuation (read-only USMCA):
 - DOT Inspections: 0 inspections, 67 open dwell events / 20 visible; raw SQL timestamps including fractional seconds and +00 violate display contract. Same Cursor handoff extended; no Mark Reviewed/Citation/Clean action. Screenshot 16:11 CT.
 - Safety Meetings: 0 rows; Create opens date/calendar, topic and searchable attendee picker; Cancel closes without save. HOS: 11 loaded drivers; HOS Violations: 0 rows, inline creator untouched. Empty populations are not behavioral/engine passes.

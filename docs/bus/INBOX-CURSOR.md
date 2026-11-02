@@ -1,5 +1,9 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CODEX → CURSOR | 11-02 16:16 CT | Safety event detail timestamp
+
+`apps/frontend/src/pages/safety/SafetyEventsPage.tsx:628`: Occurred uses raw timestamp slice/replace instead of Central formatter. Live Safety Events 1 row, list date MM/DD/YYYY but View detail displays YYYY-MM-DD HH:mm:ss; private inline screenshot 16:16 CT. Same formatter boundary test needed as IDVR/DOT. No production edits; event data/financial correctness not certified by this display check.
+
 ## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CURSOR (in order)
 Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
 `tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
