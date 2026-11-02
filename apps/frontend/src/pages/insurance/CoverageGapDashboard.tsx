@@ -12,7 +12,9 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 /** Convert raw missing-type codes to human-readable labels using the catalog map. */
 function missingTypeLabels(codes: string[], typeNames: Map<string, string>): string {
@@ -187,100 +189,130 @@ export function CoverageGapDashboard() {
   }, [catalogCodes, typeNameByCode, requiredTypes]);
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
+    return (
+      <div className="space-y-3" data-testid="coverage-gap-page">
+        <PageHeader
+          backHref="/insurance"
+          breadcrumb={["Insurance", "Coverage gaps"]}
+          title="Tractor Coverage Gap Dashboard"
+          subtitle="Scoped to tractors — trailers are tracked separately on Fleet Covered."
+        />
+        <BoardSection title="Coverage gaps" testId="coverage-gap-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view coverage gap dashboard.</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   const failedQuery = coverageGapsQuery.isError ? coverageGapsQuery : policiesQuery.isError ? policiesQuery : typesQuery.isError ? typesQuery : null;
 
   if (failedQuery) {
     return (
-      <ListErrorState
-        title="Couldn't load coverage gap dashboard"
-        status={failedQuery.error instanceof ApiError ? failedQuery.error.status : 0}
-        message={(failedQuery.error as Error | null)?.message}
-        onRetry={() => {
-          void coverageGapsQuery.refetch();
-          void policiesQuery.refetch();
-          void typesQuery.refetch();
-        }}
-      />
+      <div className="space-y-3" data-testid="coverage-gap-page">
+        <PageHeader
+          backHref="/insurance"
+          breadcrumb={["Insurance", "Coverage gaps"]}
+          title="Tractor Coverage Gap Dashboard"
+          subtitle="Scoped to tractors — trailers are tracked separately on Fleet Covered."
+        />
+        <ListErrorState
+          title="Couldn't load coverage gap dashboard"
+          status={failedQuery.error instanceof ApiError ? failedQuery.error.status : 0}
+          message={(failedQuery.error as Error | null)?.message}
+          onRetry={() => {
+            void coverageGapsQuery.refetch();
+            void policiesQuery.refetch();
+            void typesQuery.refetch();
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-[#0F1219]">Tractor Coverage Gap Dashboard</h2>
-        <p className="mt-1 text-xs text-[#4B5563]">
-          Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked
-          separately on Fleet Covered.{" "}
+    <div className="space-y-3" data-testid="coverage-gap-page">
+      <PageHeader
+        backHref="/insurance"
+        breadcrumb={["Insurance", "Coverage gaps"]}
+        title="Tractor Coverage Gap Dashboard"
+        subtitle="Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked separately on Fleet Covered."
+      />
+
+      <BoardSection
+        title="Filters"
+        subtitle={`Gap count ${coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.`}
+        headerRight={
           <InfoPopover label="About the coverage gap dashboard">
             One column per coverage type from the catalog. Gap count{" "}
             {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
           </InfoPopover>
-        </p>
-        <CollapsedListFilters
-          activeFilterCount={unitPickerId ? 1 : 0}
-          onApply={stagedFilters.apply}
-          onReset={stagedFilters.reset}
-          onCancel={stagedFilters.cancel}
-          applyDisabled={!stagedFilters.dirty}
-          testIdPrefix="coverage-gap"
-          dataAttributes={{ "data-coverage-gap-filter-toolbar": "collapsed" }}
-          className="mt-3 max-w-sm"
-        >
-          <div data-testid="coverage-gap-filters">
-            <label className="text-xs text-[#4B5563]">
-              Unit
-              <EntityMultiSelect
-                kind="unit"
-                operatingCompanyId={companyId}
-                value={stagedFilters.draft.unitId || null}
-                onChange={(next) => stagedFilters.setDraft({ unitId: next ?? "" })}
-                placeholder="All units"
-                className="mt-1"
-                dataTestId="coverage-gap-filter-unit"
-              />
-            </label>
-          </div>
-        </CollapsedListFilters>
-      </header>
+        }
+        testId="coverage-gap-filters-board"
+      >
+        <div className="px-3.5 py-2">
+          <CollapsedListFilters
+            activeFilterCount={unitPickerId ? 1 : 0}
+            onApply={stagedFilters.apply}
+            onReset={stagedFilters.reset}
+            onCancel={stagedFilters.cancel}
+            applyDisabled={!stagedFilters.dirty}
+            testIdPrefix="coverage-gap"
+            dataAttributes={{ "data-coverage-gap-filter-toolbar": "collapsed" }}
+            className="max-w-sm"
+          >
+            <div data-testid="coverage-gap-filters">
+              <label className="text-xs text-[#4B5563]">
+                Unit
+                <EntityMultiSelect
+                  kind="unit"
+                  operatingCompanyId={companyId}
+                  value={stagedFilters.draft.unitId || null}
+                  onChange={(next) => stagedFilters.setDraft({ unitId: next ?? "" })}
+                  placeholder="All units"
+                  className="mt-1"
+                  dataTestId="coverage-gap-filter-unit"
+                />
+              </label>
+            </div>
+          </CollapsedListFilters>
+        </div>
+      </BoardSection>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading || typesQuery.isLoading ? (
         <div className="text-xs text-[#6B7280]">Loading coverage gap dashboard...</div>
       ) : null}
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 30 days</p>
-          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring30.length}</p>
-        </article>
-        <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 60 days</p>
-          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring60.length}</p>
-        </article>
-        <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 90 days</p>
-          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring90.length}</p>
-        </article>
-      </section>
+      <BoardSection title="Policy expiry window" testId="coverage-gap-expiry-kpis">
+        <div className="grid gap-3 px-3.5 py-2 md:grid-cols-3">
+          <article className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 30 days</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring30.length}</p>
+          </article>
+          <article className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 60 days</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring60.length}</p>
+          </article>
+          <article className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 90 days</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring90.length}</p>
+          </article>
+        </div>
+      </BoardSection>
 
       {summary.unitsWithoutActiveCoverage.length > 0 ? (
-        <section className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-[#0F1219]">Units without active coverage</h3>
-          <ul className="mt-2 space-y-1">
+        <BoardSection title="Units without active coverage" testId="coverage-gap-units-without">
+          <ul className="space-y-1 px-3.5 py-2">
             {summary.unitsWithoutActiveCoverage.slice(0, 10).map((row) => (
               <li key={row.unit_id} className="text-xs text-[#4B5563]">
                 <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> — {missingTypeLabels(row.missing_types, typeNameByCode)}
               </li>
             ))}
           </ul>
-        </section>
+        </BoardSection>
       ) : null}
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-[#0F1219]">Coverage by type</h3>
-        <div className="mt-2 flex flex-wrap gap-2">
+      <BoardSection title="Coverage by type" testId="coverage-gap-by-type-board">
+        <div className="flex flex-wrap gap-2 px-3.5 pt-2">
           {catalogCodes.map((code) => (
             <label key={code} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
               {insuranceTypeLabel(code, typeNameByCode.get(code))}
@@ -310,9 +342,10 @@ export function CoverageGapDashboard() {
             emptyText="No coverage-gap units."
             enableColumnResize
             enableColumnReorder
+            tableTestId="coverage-gap-by-type-table"
           />
         </div>
-      </section>
+      </BoardSection>
     </div>
   );
 }
