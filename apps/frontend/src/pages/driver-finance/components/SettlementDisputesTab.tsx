@@ -24,13 +24,14 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FILTER_CONTROL_SIZE_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS } from "../../../design/tokens";
+import { formatUsdCents } from "../../../lib/money";
 
 const EMPTY_FILTERS = {
   driverId: "",
 };
 
 function money(cents: number | null | undefined) {
-  return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 function statusBadgeClass(status: SettlementDisputeStatus) {
