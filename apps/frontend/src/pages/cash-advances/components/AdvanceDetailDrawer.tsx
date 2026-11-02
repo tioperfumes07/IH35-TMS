@@ -9,6 +9,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { DocumentsTab } from "../../../components/documents/DocumentsTab";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { formatUsdTable } from "../../../lib/money";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   open: boolean;
@@ -89,7 +90,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
             title: `Cash advance ${String(advance.display_id ?? advance.id ?? "")}`,
             bodyHtml: `
               <h1>Cash advance receipt</h1>
-              <div class="meta">${id} · printed ${esc(new Date().toLocaleString())}</div>
+              <div class="meta">${id} · printed ${esc(formatDateTimeUS(new Date()))}</div>
               <table>
                 <tbody>
                   <tr><th>Advance</th><td>${id}</td></tr>

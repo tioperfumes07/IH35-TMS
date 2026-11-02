@@ -20,6 +20,7 @@ import {
 } from "../../hooks/useMaintenanceServicesCatalog";
 import { SelectCombobox } from "../../components/Combobox";
 import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
+import { formatQuantityTable } from "../../lib/money";
 
 const APPLIES_TO = ["", "truck", "trailer", "reefer", "all"];
 const PAGE_SIZE = 50;
@@ -89,7 +90,7 @@ function statusBadge(isCritical: boolean) {
 function intervalDisplay(svc: MaintenanceService) {
   return (
     <>
-      {svc.interval_miles ? `${svc.interval_miles.toLocaleString()} mi` : ""}
+      {svc.interval_miles ? `${formatQuantityTable(svc.interval_miles, 0)} mi` : ""}
       {svc.interval_miles && svc.interval_months ? " / " : ""}
       {svc.interval_months ? `${svc.interval_months}mo` : ""}
       {svc.interval_hours ? `${svc.interval_hours}h` : ""}

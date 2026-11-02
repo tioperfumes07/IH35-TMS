@@ -1,3 +1,5 @@
+import { formatQuantityTable } from "../../lib/money";
+
 // VC-10 / VC-LIST-02 (owner "ALL PAGE SIZE"): the sentinel page size that renders EVERY row.
 // The vendor/customer rosters are fetched fully client-side (listAllVendors / listAllCustomers —
 // no server paging), so "All" is a safe client-side slice with no unbounded refetch (no REG-400).
@@ -37,7 +39,7 @@ export function SidebarPagination({
     <div className="space-y-2 text-xs text-gray-600" data-sidebar-pagination="true">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
-          {loading ? "Loading…" : `${rangeStart}-${rangeEnd} of ${totalCount.toLocaleString()}`}
+          {loading ? "Loading…" : `${rangeStart}-${rangeEnd} of ${formatQuantityTable(totalCount, 0)}`}
         </span>
         <label className="inline-flex items-center gap-1">
           <span>Page size</span>

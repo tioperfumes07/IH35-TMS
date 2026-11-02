@@ -1,4 +1,4 @@
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 export function money(cents: number | null | undefined): string {
   if (cents == null || !Number.isFinite(cents)) return "—";
@@ -13,5 +13,5 @@ export function perMile(cents: number | null | undefined): string {
 
 export function milesLabel(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
-  return Math.round(n).toLocaleString();
+  return formatQuantityTable(Math.round(n), 0);
 }

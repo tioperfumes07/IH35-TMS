@@ -2,9 +2,10 @@
  * CLOSURE-12 — ClassAllocationView: bar chart of UNIT-DRIVER vs OFFICE vs OTHER.
  */
 import type { PayrollClassAllocation } from "../../hooks/usePayrollAggregate";
+import { formatUsdCents } from "../../lib/money";
 
 function cents(n: number) {
-  return `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(n);
 }
 
 const CLASS_COLORS: Record<string, string> = {
