@@ -55,7 +55,7 @@ function assertWiring(readSourceFn = readSource) {
     [FILES.reporting, reporting, ["useCompanyContext", 'queryKey: ["driver-inbox-reporting", companyId, range.from, range.to]', "ListErrorBanner", "EntityLink", "getInboxReporting", "driver-hub-reporting-need-company", "BoardSection"]],
     [FILES.reportingApi, reportingApi, ["operating_company_id: string", "/api/v1/driver-finance/inbox-reporting?${q}"]],
     [FILES.reportingBackend, reportingBackend, ['app.get("/api/v1/driver-finance/inbox-reporting"', "reportingQuerySchema.safeParse", "withCompanyScope(user.uuid, parsed.data.operating_company_id", "getInboxReportingData(client, parsed.data.operating_company_id"]],
-    [FILES.inbox, inbox, ['<EntityLink kind="driver"', "cascadePreview", "Linkage — what posts on approve", "ListErrorBanner", "cashAdvanceRequestsOfficeApi.listPending", 'data-testid="driver-inbox-list-error"', '<SelectCombobox', 'aria-label="Pay from account"']],
+    [FILES.inbox, inbox, ['<EntityLink kind="driver"', "cascadePreview", "Linkage — what posts on approve", "ListErrorBanner", "cashAdvanceRequestsOfficeApi.listPending", 'data-testid="driver-inbox-list-error"', '<SelectCombobox', 'aria-label="Pay from account"', "BoardSection", 'testId="driver-inbox-need-company"']],
     [FILES.scheduler, scheduler, ['<EntityLink kind="driver"', "No drivers are available for this operating company.", "Select an operating company"]],
     [FILES.leaveRequests, leave, ['<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "Select an operating company to view leave requests."]],
   ]) {

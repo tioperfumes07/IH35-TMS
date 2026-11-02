@@ -148,7 +148,7 @@ render: (row) => {
 
   return (
     <div data-testid="dispatch-assignment-history-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={

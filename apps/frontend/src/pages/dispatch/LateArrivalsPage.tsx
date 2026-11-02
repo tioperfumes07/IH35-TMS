@@ -154,7 +154,7 @@ export function LateArrivalsPage() {
 
   return (
     <div data-testid="dispatch-late-arrivals-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Late arrivals"
         subtitle={`Loads past schedule + ${grace}m grace or with late ETA prediction`}
         actions={

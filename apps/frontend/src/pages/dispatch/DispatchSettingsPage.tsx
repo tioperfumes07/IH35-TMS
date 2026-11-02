@@ -103,7 +103,7 @@ export function DispatchSettingsPage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="dispatch-settings-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Dispatch settings"
         subtitle="Dispatcher defaults — landing view, sort, alert thresholds, auto-routing (B21-D11)"
         actions={

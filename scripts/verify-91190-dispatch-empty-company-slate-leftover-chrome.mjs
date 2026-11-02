@@ -73,6 +73,10 @@ function boardHits(src, testId) {
   if (!src.includes(`testId="${testId}"`)) {
     hits.push(`need-company BoardSection testId=${testId} required`);
   }
+  // U18 — leaf PageHeader back arrow stays in Dispatch module home
+  if (/<PageHeader\b/.test(src) && !/backHref="\/dispatch"/.test(src)) {
+    hits.push('PageHeader backHref must be /dispatch (U18)');
+  }
   return hits;
 }
 
@@ -109,7 +113,18 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL BoardSection plant escaped: ${boardFails.join("; ")}`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover + BoardSection plants`);
+    // Prefer a PageHeader target for U18 plant (first TARGET may lack PageHeader).
+    const headerTarget = sources.find(([, src]) => /<PageHeader\b/.test(src) && /backHref="\/dispatch"/.test(src));
+    if (headerTarget) {
+      const [hPath, hSrc, hId] = headerTarget;
+      const hrefPlant = hSrc.replace(/backHref="\/dispatch"/g, 'backHref="/elsewhere"');
+      const hrefFails = audit([[hPath, hrefPlant, hId], ...sources.filter(([p]) => p !== hPath)]);
+      if (!hrefFails.some((e) => e.includes(hPath) && e.includes("backHref"))) {
+        console.error(`${LABEL} SELFTEST FAIL U18 backHref plant escaped`);
+        process.exit(1);
+      }
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover + BoardSection + U18 plants`);
     process.exit(0);
   }
   const fails = audit(sources);

@@ -222,7 +222,7 @@ export function OcrQueuePage() {
 
   return (
     <div data-testid="dispatch-ocr-queue-page" className="mx-auto max-w-7xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="OCR queue"
         subtitle="Email-forwarded rate cons · async OCR · review · convert to Book Load"
         actions={

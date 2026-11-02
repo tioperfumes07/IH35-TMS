@@ -198,7 +198,7 @@ export default function LoadHistoryPage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="load-history-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title={`Load history · ${entityLabel(loadNumber, id, "Load")}`}
         breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "History"]}
         actions={

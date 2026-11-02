@@ -132,7 +132,7 @@ export function BorderCrossingWizardPage() {
 
   return (
     <div data-testid="border-crossing-wizard-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Border Crossing Wizard"
         subtitle="Prepare northbound and southbound crossings with eManifest V1 and CBP wait times."
         actions={

@@ -218,7 +218,7 @@ export function PodReviewPage() {
 
   return (
     <div className="p-4" data-testid="dispatch-pod-review-page">
-      <PageHeader title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
+      <PageHeader backHref="/dispatch" title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
 
       {loadId && !loadId.includes(",") ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 

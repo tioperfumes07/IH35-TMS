@@ -75,7 +75,7 @@ export function LoadsWithoutDriverBillPage() {
 
   return (
     <div data-testid="loads-without-driver-bill-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Loads without a driver bill"
         subtitle="Non-cancelled loads with zero driver_finance.driver_bills rows — including fully driverless orphans. Tile value equals this table's row count."
         actions={

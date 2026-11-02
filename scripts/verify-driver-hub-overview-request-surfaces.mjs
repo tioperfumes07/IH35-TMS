@@ -61,7 +61,18 @@ function assertWiring(readSourceFn = readSource) {
         "BoardSection",
       ],
     ],
-    [FILES.inbox, inbox, ['cashAdvanceRequestsOfficeApi.listPending', "Approve &amp; post"]],
+    [
+      FILES.inbox,
+      inbox,
+      [
+        "cashAdvanceRequestsOfficeApi.listPending",
+        "Approve &amp; post",
+        // fill-not-shell — need-company / need-role use BoardSection
+        "BoardSection",
+        'testId="driver-inbox-need-company"',
+        'testId="driver-inbox-need-role"',
+      ],
+    ],
     [FILES.leaveInbox, leave, ["driverSchedulerOfficeApi.listPending", "No pending leave requests."]],
   ]) {
     for (const needle of needles) {
@@ -103,6 +114,7 @@ function selftest() {
     [FILES.overview, "cashAdvanceRequestsOfficeApi.listPending", "cash advance alert query"],
     [FILES.overview, "getDriverMessagesInbox", "messages inbox query"],
     [FILES.hubPage, "DriverHubOverview", "overview component on hub page"],
+    [FILES.inbox, 'testId="driver-inbox-need-company"', "inbox need-company BoardSection"],
   ];
   for (const [file, needle, label] of cases) {
     const mutated = originals[file].replaceAll(needle, "");

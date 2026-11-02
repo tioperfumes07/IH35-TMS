@@ -410,7 +410,7 @@ export function TripPairingBoardPage() {
 
   return (
     <div data-testid="dispatch-trip-pairing-page">
-      <PageHeader title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
+      <PageHeader backHref="/dispatch" title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
 
       {data ? (
         // OWNER DESIGN LAW rule 6: board tiles across (ih-kpi-row, 6 across), 78px, left-aligned figure.

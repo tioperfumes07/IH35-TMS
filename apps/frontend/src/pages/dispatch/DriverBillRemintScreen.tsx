@@ -149,7 +149,7 @@ export function DriverBillRemintScreen() {
   if (!companyId) {
     return (
       <div className="space-y-3">
-        <PageHeader title="Driver Bill Remint" subtitle="Select a company first" />
+        <PageHeader backHref="/dispatch" title="Driver Bill Remint" subtitle="Select a company first" />
         <BoardSection title="Driver bill remint" testId="driver-bill-remint-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -159,7 +159,7 @@ export function DriverBillRemintScreen() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Driver Bill Remint"
         subtitle={`${query.data?.real_count ?? 0} real loads (of ${query.data?.total_count ?? 0} total) delivered with no driver bill`}
         actions={
