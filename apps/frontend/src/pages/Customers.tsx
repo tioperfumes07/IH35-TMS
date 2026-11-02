@@ -40,6 +40,15 @@ import { StagedListFilterShell } from "../components/table/StagedListFilterShell
 import { useStagedListFilters } from "../components/table/useStagedListFilters";
 import { statusOptions } from "../lib/statusListParams";
 
+const CUSTOMER_TXN_STATUS_OPTIONS = statusOptions({
+  draft: "draft",
+  sent: "sent",
+  partial: "partial",
+  paid: "paid",
+  void: "void",
+  factored: "factored",
+});
+
 const CREDIT_STATUS_FILTER_OPTIONS = statusOptions({
   active: "Active",
   inactive: "Inactive",
@@ -570,7 +579,8 @@ export function CustomersPage() {
     setSearchParams(params, { replace: true });
   };
   const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  // U12 — transaction Status is multi-select (0 = all; 1 = API; 2+ = client filter).
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the customer DETAIL
   // tabs (:186) whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, 2026-08-08).
   // One param carries the whole segment set; status and quality are derived from it so they can never
@@ -613,7 +623,7 @@ export function CustomersPage() {
   // live invoice query until Apply.
   const txFilters = useStagedListFilters({
     applied: { statusFilter, dateFrom, dateTo, categoryFilter, typeFilter },
-    empty: { statusFilter: "", dateFrom: "", dateTo: "", categoryFilter: "", typeFilter: "" },
+    empty: { statusFilter: [] as string[], dateFrom: "", dateTo: "", categoryFilter: "", typeFilter: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setDateFrom(next.dateFrom);
@@ -622,6 +632,7 @@ export function CustomersPage() {
       setTypeFilter(next.typeFilter);
     },
   });
+  const statusApiParam = statusFilter.length === 1 ? statusFilter[0] : undefined;
   const [sidebarPage, setSidebarPage] = useState(1);
   // VC-10 / VC-LIST-02 — persisted page size (survives reload); "All" is a valid stored value.
   const [sidebarPageSize, setSidebarPageSize] = useListPageSizePref("customers", 50);
@@ -1101,7 +1112,7 @@ export function CustomersPage() {
     enabled: Boolean(companyId && selectedCustomer?.id),
   });
   const invoicesQuery = useQuery({
-    queryKey: ["customers", "transactions", companyId, selectedCustomer?.id ?? "", statusFilter, dateFrom, dateTo],
+    queryKey: ["customers", "transactions", companyId, selectedCustomer?.id ?? "", statusFilter.join(","), dateFrom, dateTo],
     // VC-06: this feeds txColumns' Load #/Settlement #/Truck #/Pick-up/Delivery/Loaded-miles
     // columns below -- listAllInvoices (GET /accounting/invoices) never joins mdata.units/
     // load_stops/driver_finance.driver_settlements, so those always rendered "—". The
@@ -1109,7 +1120,7 @@ export function CustomersPage() {
     // just never called from here) -- use it instead of porting the joins into the general list.
     queryFn: () =>
       listAllCustomerInvoices(selectedCustomer!.id, companyId, {
-        status: statusFilter || undefined,
+        status: statusApiParam,
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
       }),
@@ -1121,12 +1132,12 @@ export function CustomersPage() {
   // (GET /accounting/customers/:id/activity — invoices, payments, credit memos, advances with a
   // running A/R balance) — no new backend. AB Global proof: 3 sent invoices → ≥3 invoice rows.
   const customerTxnActivityQuery = useQuery({
-    queryKey: ["customers", "txn-activity", companyId, selectedCustomer?.id ?? "", statusFilter, dateFrom, dateTo],
+    queryKey: ["customers", "txn-activity", companyId, selectedCustomer?.id ?? "", statusFilter.join(","), dateFrom, dateTo],
     queryFn: () =>
       getCustomerActivity({
         operating_company_id: companyId,
         customer_id: selectedCustomer!.id,
-        status: statusFilter || undefined,
+        status: statusApiParam,
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
       }),
@@ -1174,9 +1185,19 @@ export function CustomersPage() {
     return (invoicesQuery.data?.invoices ?? []).filter((invoice) => {
       if (typeFilter && String(invoice.invoice_type ?? "manual") !== typeFilter) return false;
       if (categoryFilter && !String(invoice.customer_notes ?? "").toLowerCase().includes(categoryFilter.toLowerCase())) return false;
+      if (statusFilter.length > 1 && !statusFilter.includes(String(invoice.status ?? ""))) return false;
       return true;
     });
-  }, [invoicesQuery.data?.invoices, typeFilter, categoryFilter]);
+  }, [invoicesQuery.data?.invoices, typeFilter, categoryFilter, statusFilter]);
+
+  const customerTxnActivityRows = useMemo(() => {
+    const rows = customerTxnActivityQuery.data?.rows ?? [];
+    if (statusFilter.length <= 1) return rows;
+    return rows.filter((row) => {
+      const st = String((row as { status?: string | null }).status ?? "");
+      return !st || statusFilter.includes(st);
+    });
+  }, [customerTxnActivityQuery.data?.rows, statusFilter]);
 
   const overdue = Number(summaryQuery.data?.aging_buckets?.bucket_91_plus ?? 0);
 
@@ -1684,7 +1705,7 @@ export function CustomersPage() {
                       <ListErrorState title="Couldn't load customer transactions" status={0} message={(customerTxnActivityQuery.error as Error)?.message} onRetry={() => void customerTxnActivityQuery.refetch()} />
                     ) : (
                       <ParityTable
-                        rows={customerTxnActivityQuery.data?.rows ?? []}
+                        rows={customerTxnActivityRows}
                         columns={customerTransactionColumns}
                         rowKey={(r) => `${r.type}-${r.id}`}
                         loading={customerTxnActivityQuery.isPending || (customerTxnActivityQuery.isFetching && !customerTxnActivityQuery.data)}
@@ -1716,7 +1737,7 @@ export function CustomersPage() {
                         {typeFilter ? `Type: ${typeFilter}` : "Type: All"}
                       </span>
                       <StagedListFilterShell
-                        activeFilterCount={(statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (categoryFilter ? 1 : 0) + (typeFilter ? 1 : 0)}
+                        activeFilterCount={statusFilter.length + (dateFrom || dateTo ? 1 : 0) + (categoryFilter ? 1 : 0) + (typeFilter ? 1 : 0)}
                         onApply={txFilters.apply}
                         onReset={txFilters.reset}
                         onCancel={txFilters.cancel}
@@ -1738,20 +1759,16 @@ export function CustomersPage() {
                           <option value="customer_adjustment">customer_adjustment</option>
                           <option value="manual">manual</option>
                         </SelectCombobox>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
-                        <SelectCombobox
-                          value={txFilters.draft.statusFilter}
-                          onChange={(event) => txFilters.setDraft({ ...txFilters.draft, statusFilter: event.target.value })}
-                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        >
-                          <option value="">All</option>
-                          <option value="draft">draft</option>
-                          <option value="sent">sent</option>
-                          <option value="partial">partial</option>
-                          <option value="paid">paid</option>
-                          <option value="void">void</option>
-                          <option value="factored">factored</option>
-                        </SelectCombobox>
+                        <div className="mb-2">
+                          <MultiSelectDropdown
+                            label="Status"
+                            options={CUSTOMER_TXN_STATUS_OPTIONS}
+                            selected={txFilters.draft.statusFilter}
+                            onChange={(next) => txFilters.setDraft({ ...txFilters.draft, statusFilter: next })}
+                            allLabel="All statuses"
+                            data-testid="customers-tx-status-filter"
+                          />
+                        </div>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                         <div className="mb-2 grid grid-cols-2 gap-2">
                           <div>
