@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getLoad } from "../../api/loads";
 
@@ -70,7 +71,9 @@ export function LoadBankingLinkagePage() {
       {companyId ? (
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "load_id", id }} />
       ) : (
-        <p className="text-xs text-gray-500">Select an operating company to load linked bank transactions.</p>
+        <BoardSection title="Linked bank transactions" testId="load-banking-linkage-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load linked bank transactions.</p>
+        </BoardSection>
       )}
     </div>
   );

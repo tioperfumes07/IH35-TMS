@@ -21,6 +21,7 @@ import {
 import { listLoadsNeedingDriverBillRemint } from "../../api/loads";
 import { DispatchLoadCostsPanel } from "../../components/dispatch/DispatchLoadCostsPanel";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import "../../design/ih35-design-tokens.css";
 import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
@@ -358,7 +359,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   if (!enabled) {
     return (
       <div className="dpo" data-testid="dispatch-overview-page">
-        <div className="dpo-state">Select an operating company.</div>
+        <BoardSection title="Dispatch overview" testId="dispatch-overview-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }

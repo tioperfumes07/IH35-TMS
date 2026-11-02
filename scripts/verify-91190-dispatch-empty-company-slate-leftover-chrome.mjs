@@ -18,6 +18,11 @@ const TARGETS = [
   ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", "in-transit-issues-need-company"],
   ["apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx", "factoring-queue-need-company"],
   ["apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx", "dispatch-alerts-need-company"],
+  ["apps/frontend/src/pages/dispatch/OwnerOverrideLogPage.tsx", "owner-override-log-need-company"],
+  ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", "load-banking-linkage-need-company"],
+  ["apps/frontend/src/pages/dispatch/RoundTrips.tsx", "round-trips-need-company"],
+  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", "dispatch-overview-need-company"],
+  ["apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx", "cargo-sensor-timeline-need-company"],
 ];
 const LABEL = "verify-91190-dispatch-empty-company-slate-leftover-chrome";
 
@@ -53,7 +58,7 @@ function leftoverHits(src) {
 
 function boardHits(src, testId) {
   const hits = [];
-  if (!src.includes('from "../../components/v3/BoardSection"') && !src.includes("from '../../components/v3/BoardSection'")) {
+  if (!/from ["'](?:\.\.\/)+components\/v3\/BoardSection["']/.test(src)) {
     hits.push("must import BoardSection");
   }
   if (!src.includes(`testId="${testId}"`)) {

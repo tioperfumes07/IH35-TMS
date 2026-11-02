@@ -34,6 +34,12 @@ const CHECKS = [
     pattern: /STATUS_OPTIONS\.map\(\(s\) => \(\s*<option key=\{s\.value\} value=\{s\.value\}>\s*\{s\.label\}/,
   },
   {
+    // Codex 11-02 — captured_at must use Central formatDateTimeUS, not raw String(ISO)
+    name: "IdentityStatusHeader captured_at formatDateTimeUS",
+    file: "apps/frontend/src/components/vehicle-profile/IdentityStatusHeader.tsx",
+    pattern: /formatDateTimeUS\(String\(latestPosition\.captured_at\)\)/,
+  },
+  {
     name: "FleetTable status filter (multi-select)",
     file: "apps/frontend/src/components/FleetTable.tsx",
     pattern: /statusOptions\.map\(\(s\) => \(\{ value: s, label: humanizeEnumLabel\(s\) \}\)\)/, // 443.349: MultiSelectDropdown options, still humanized
@@ -98,7 +104,13 @@ function selftest() {
     // Poison: replace the first humanizer call this pattern anchors on with the raw bare variable,
     // proving the guard actually distinguishes humanized from raw.
     const poisoned = real.replace(c.pattern, (m) =>
-      m.replace(/properEnumOrFilterLabel\([a-z]\)/, "$&_POISON").replace(/humanizeEnumLabel\(s\)/, "s").replace(/typeLabelByType\.get\(t\) \?\? t/, "t").replace(/ownerNoun\(t\)/, "t").replace(/\{s\.label\}/, "{s.value}")
+      m
+        .replace(/properEnumOrFilterLabel\([a-z]\)/, "$&_POISON")
+        .replace(/humanizeEnumLabel\(s\)/, "s")
+        .replace(/typeLabelByType\.get\(t\) \?\? t/, "t")
+        .replace(/ownerNoun\(t\)/, "t")
+        .replace(/\{s\.label\}/, "{s.value}")
+        .replace(/formatDateTimeUS\(String\(latestPosition\.captured_at\)\)/, "String(latestPosition.captured_at)"),
     );
     if (c.pattern.test(poisoned)) {
       failures.push(`${c.name}: poison mutation NOT caught (pattern still matches after reverting to raw)`);

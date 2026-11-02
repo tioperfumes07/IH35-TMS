@@ -46,6 +46,12 @@ const CHECKS = [
     pattern: /testId="settlement-close-need-company"/,
   },
   {
+    // fill-not-shell — escrow board need-company uses BoardSection
+    name: "SettlementsEscrowBoard need-company BoardSection",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
+    pattern: /testId="settlements-escrow-need-company"/,
+  },
+  {
     name: "SettlementCloseArrivalPage + Create driver affordance",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /\+ Create driver/,

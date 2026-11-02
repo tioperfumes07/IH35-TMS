@@ -21,6 +21,9 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
+  // Backend gap rows emit Date(0) for missing stop stamps (kind=gap). Never invent 12/31/1969.
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms) || ms === 0) return "—";
   return formatDateTimeUS(iso) || "—";
 }
 
