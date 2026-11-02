@@ -44,7 +44,7 @@ Measured on `main` `aafee241` (before ROUND 6/7 merges) — same checks red on e
 | locked-guards / -heavy | `verify-no-swallow-on-money-paths`: silent swallow at `apps/backend/src/driver-finance/settlements-load-bookended.service.ts:1201` | **CC-1** |
 | required-live-load-guard | `verify-diesel-expense-fuel-dedupe` (316 > 272 expenses; 6 > 4 duplicate pairs) → fix with ENG-48; `verify-settlement-net-matches-signed-doc` 1 failure → fix with ENG-49 | **CC-1** (dedupe) · **CURSOR** (settlement) |
 | guard-integrity | 1 NEW silent list cap (a capped list that never tells the user it capped) | **CC-3** |
-| build-typecheck / -heavy | zod `TS2418`/`TS2322` in `accounting/{invoices,payments,bills,expenses}-bulk.routes.ts`, `driver-finance/settlements-bulk.routes.ts`, `lib/strict-query.ts` (`.loose`), `docs/files.routes.ts:636` implicit any | **CC-3** |
+| build-typecheck / -heavy | **CORRECTED 12:55 PM CT:** NOT zod (that was a local-install artifact — CI build is 0 TS errors). `build-typecheck` fails only because required-live-load-guard fails; `build-typecheck-heavy` stops in verify:pre-commit → verify:arch-design at `verify-no-internal-language-in-prod-ui` (PolicyDetail.tsx:433 "Lawsuits (legal.matters)") then `verify-no-orphan-migration-ledger-entries` (3 mirror rows: 202610290000_disp01… renumbered to 202610291200; 202614000000 / 202614690000 recorded without ".sql") | **CLAUDE LEAD** (in progress) |
 | CodeQL Analyze (javascript-typescript) | read the alert list on the run, fix each real finding; a false positive gets a written reason in the PR | **CURSOR** |
 DONE = all five green on a `main` commit, run id in the PR body.
 
@@ -144,7 +144,7 @@ TO: CC-3   FROM: Claude Lead   ROUND 7.5   deadline 2026-11-03T02:00Z   missed �
       its exact missing input (no fence / no OBD / date_only stop). Backfill --apply waits AUTH.
 7.5-D ENG-27 ceiling 290 pre-10-17 bank-cat postings without load: per row document or written explanation; never
       auto-match. Ceiling shrink-only.
-7.5-F main red (7.10): build-typecheck zod drift + guard-integrity silent list cap.
+7.5-F main red (7.10): guard-integrity silent list cap (build-typecheck is Claude Lead's — not zod).
 7.5-E FINDING (measure, no behavior change): Creator maps a customer/broker trailer → POWER_ONLY_CUSTOMER_TRAILER
       (creator-trailer-choice.ts:88); Book/Edit Load keep physical type (12 live: 11 DRY_VAN, 1 REEFER). Write both + counts
       for the owner.
@@ -201,7 +201,7 @@ Source: `docs/bus/00-OWNER-UI-REGISTER-EVERY-REQUEST-NOTHING-DROPPED.md` (dated 
 1. **CODEX (by 20:00Z = 2:00 PM CT):** measure every U-row on prod in Chrome — DONE (screenshot) or OPEN (what is wrong). Update the register's State column in a codex/ PR. A row is never closed on code-read alone.
 2. **Build owners for rows still OPEN after Codex measures** (same deadline 02:00Z):
    - **CC-1** (money, Tier A): U8 Create Check must offer open bills (a check paying a bill IS a bill payment), U9 print-check numbering (editable, sequence continues, duplicate warns, gaps recorded), U25 Diesel→Reefer Diesel reclass (item + account + IFTA flag + trailer, hour-based), U27 P&L / Balance Sheet render like QuickBooks (backend signs correct — surface fix), U31 cleared/uncleared on every balance + both agings.
-   - **CC-3** (Accounting / FE, Tier B): U1 Accounting resizes, U2 tab bar overflow, U3 Load costs → Dispatch, U4 one Expenses tab, U5 receipt creator = expense creator, U6 checks list + filters, U7 Create Check QBO size, U10 bills sub-tabs own type only, U11 Vendor bill vs Bill (measure first), U13 remove redirect tabs, U14 rename Work orders & bills, U16 WO/unit/trailer columns + stored WO copy, U17 Expenses read-only + reclassify, U21–U24 reclassify (year in calendars, expense number, Load/Truck/Driver/Unit/Trailer/Vendor filters + column chooser, account/item/load selectors), U26 Banking filters.
+   - **CC-2** (Accounting surfaces — the register's own owner; 12:55 PM CT reassignment from CC-3, Tier B): U1 Accounting resizes, U2 tab bar overflow, U3 Load costs → Dispatch, U4 one Expenses tab, U5 receipt creator = expense creator, U6 checks list + filters, U7 Create Check QBO size, U10 bills sub-tabs own type only, U11 Vendor bill vs Bill (measure first), U13 remove redirect tabs, U14 rename Work orders & bills, U16 WO/unit/trailer columns + stored WO copy, U17 Expenses read-only + reclassify, U21–U24 reclassify (year in calendars, expense number, Load/Truck/Driver/Unit/Trailer/Vendor filters + column chooser, account/item/load selectors), U26 Banking filters.
    - **CURSOR** (app-wide sweeps, Tier C/B): U12 + U28 multi-select status/account filters everywhere, U18 breadcrumb back app-wide, U29 every record cell clickable, U30 every header sorts asc/desc; U19/U20 confirm merged + live.
 3. **CODE SHELLS still rendering "not yet"** (measured on main a83ab8c3):
    - `pages/home/QboStyleHomePage.tsx:176` card "Not yet available" + `:413` "Category breakdown not yet available" → **CC-3**: wire to the live engines.
