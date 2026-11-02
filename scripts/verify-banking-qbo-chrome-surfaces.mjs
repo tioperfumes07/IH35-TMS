@@ -43,6 +43,18 @@ const CHECKS = [
     pattern: /DatePicker[\s\S]*DatePicker[\s\S]*MoneyInput[\s\S]*MoneyInput/,
   },
   {
+    // fill-not-shell — need-company uses BoardSection
+    name: "BankTxCategorizationPage need-company BoardSection",
+    file: "apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
+    pattern: /testId="bank-tx-categorization-need-company"/,
+  },
+  {
+    // fill-not-shell — deposit detail need-company uses BoardSection
+    name: "DepositDetailPage need-company BoardSection",
+    file: "apps/frontend/src/pages/banking/DepositDetailPage.tsx",
+    pattern: /testId="deposit-detail-need-company"/,
+  },
+  {
     name: "ReconciliationWorkspace DatePicker + MoneyInput",
     file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx",
     pattern: /DatePicker[\s\S]*DatePicker[\s\S]*MoneyInput/,

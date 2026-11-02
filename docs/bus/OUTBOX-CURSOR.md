@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST shells tip (#28152–#28164)
+- **MERGED:** Claims · Fleet/DF · Dispatch queues+CF · Load History epoch + Identity · Planners/map/settings · Chat/Docs/DHUB · U18 home · Legal need-company BoardSection (#28152–#28164).
+- **NEXT:** more engines/U18–U31 leftovers; ENG-21 rate-con (live docs); ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~5:05 PM CT) — Cursor shells wave tip (#28152–#28160)
 - **MERGED:** #28152 Claims need-company · #28154 Fleet/DF profiles · #28157 Dispatch queues+Cash Flow · #28158 Load History epoch + Identity captured_at · #28160 Dispatch planners/map/settings BoardSection.
 - **THIS:** Chat + Driver Hub reporting + Docs Home need-company BoardSection.

@@ -12,6 +12,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { BANKING_MODULE_TABS, BANKING_SUBNAV_TAB_IDS } from "./BANKING_NAV_CONFIG";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { BANKING_TAB_PATH } from "../../router/route-manifest";
@@ -60,7 +61,9 @@ export function DepositDetailPage() {
       />
       <div className="min-h-0 flex-1 overflow-auto p-4">
         {!companyId ? (
-          <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
+          <BoardSection title="Deposit" testId="deposit-detail-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company in the shell header.</p>
+          </BoardSection>
         ) : query.isLoading ? (
           <div className="text-xs text-[#6B7280]">Loading…</div>
         ) : query.isError || !deposit ? (

@@ -81,7 +81,11 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to load HOS violations.</p>;
+    return (
+      <BoardSection title="HOS violations" testId="eld-violations-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load HOS violations.</p>
+      </BoardSection>
+    );
   }
 
   return (

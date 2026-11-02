@@ -78,7 +78,11 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to load unidentified driving.</p>;
+    return (
+      <BoardSection title="Unidentified driving" testId="eld-unidentified-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load unidentified driving.</p>
+      </BoardSection>
+    );
   }
 
   return (
