@@ -16,12 +16,14 @@ import {
 } from "../../api/milesRecommendations";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../accounting/VoidReasonModal";
+import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 const HEADER = "text-section-header font-bold uppercase tracking-[0.4px] text-gray-600";
 const SOURCE_LABEL: Record<MilesSource, string> = { historical: "Historical", google: "Google", manual: "Manual", document: "Document" };
 
-const miles = (v: number | null | undefined) => (v == null ? null : `${Math.round(v * 10) / 10 === Math.round(v) ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toLocaleString()} mi`);
-const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString() : null);
+const miles = (v: number | null | undefined) => (v == null ? null : `${formatQuantityTable(v)} mi`);
+const day = (iso: string | null | undefined) => (iso ? formatDateUS(iso) || null : null);
 
 type Props = {
   data: MilesRecommendations | null | undefined;

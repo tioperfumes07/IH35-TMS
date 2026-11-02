@@ -4,6 +4,7 @@
  * "0 mi left" or a silent em-dash. Say why.
  */
 import { formatDateUS } from "./formatDate";
+import { formatQuantityTable } from "./money";
 
 export function formatNoOdometerReading(sinceIso: string | null | undefined): string {
   const since = sinceIso ? formatDateUS(sinceIso) : "";
@@ -25,7 +26,7 @@ export function formatMilesRemainingHonest(input: {
     return formatNoOdometerReading(input.odometerReadingAt);
   }
   if (input.milesRemaining == null) return null;
-  return `${Math.max(0, input.milesRemaining).toLocaleString()} mi left`;
+  return `${formatQuantityTable(Math.max(0, input.milesRemaining), 0)} mi left`;
 }
 
 export function formatOdometerCellHonest(input: {
@@ -35,5 +36,5 @@ export function formatOdometerCellHonest(input: {
   if (input.odometerMi == null) {
     return formatNoOdometerReading(input.odometerReadingAt);
   }
-  return `${Math.round(input.odometerMi).toLocaleString()} mi`;
+  return `${formatQuantityTable(Math.round(input.odometerMi), 0)} mi`;
 }
