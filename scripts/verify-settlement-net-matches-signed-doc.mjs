@@ -47,10 +47,16 @@ const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 // IH35 TRANSPORTATION settlements, "not USMCA entries" — their old USMCA rows were purged under AUTH-400
 // (audit.record_deletions) and they are never re-entered in USMCA. They leave the USMCA set and are asserted ABSENT from
 // USMCA instead (a live USMCA row for either fails). 35 driver documents - 2 = 33; sum 49,297.42 - 1,997.50 - 379.73.
-export const NOT_USMCA_DOCS = Object.freeze(["5770", "5796"]);
-const USMCA_CUTOVER_DOCS = Array.from({ length: 35 }, (_, i) => String(5769 + i)).filter((d) => !NOT_USMCA_DOCS.includes(d)); // 5769..5803 less the 2
-const USMCA_DOC_COUNT = 33;
-const USMCA_TARGET_SUM = 46920.19;
+// SUPERSEDED FOR 5796 by OWNER STANDING RULING 443.167-R2 (2026-10-16 17:36 CT, quoted in
+// apps/backend/src/driver-finance/settlement-creator-admission.ts:36): "Transportation loads were settled here in usmca as 0
+// if they are tied to usmca settlements." 5796 (load 13541) is a USMCA settlement document: its load posts at $0 revenue and the
+// driver pay posts in USMCA. Measured prod 2026-11-02 19:10Z: P-0102 net 379.73, one posted payrun_gl_run (JE f64815ab, live).
+// So 5796 is back IN the USMCA set (34 documents, 46,920.19 + 379.73 = 47,299.92). 5770 has NO live USMCA row (measured 0) and
+// stays asserted absent until a live USMCA document for it exists.
+export const NOT_USMCA_DOCS = Object.freeze(["5770"]);
+const USMCA_CUTOVER_DOCS = Array.from({ length: 35 }, (_, i) => String(5769 + i)).filter((d) => !NOT_USMCA_DOCS.includes(d)); // 5769..5803 less 5770
+const USMCA_DOC_COUNT = 34;
+const USMCA_TARGET_SUM = 47299.92;
 
 // The known duplicate mega-row for tour 5782 (CC-2's B5 1:1 re-cut territory, not this guard's job)
 // — see r232-backfill-settlement-header-from-posted-je.mts's own header comment for the live-verified
@@ -121,7 +127,7 @@ export function payrunFailures(postedCloseRunsByDoc) {
 
 /** 443.101: a Transportation document must never have a live USMCA settlement. */
 export function notUsmcaFailures(rows) {
-  return rows.map((r) => `${r.source_document_ref} (${r.display_id}): a live USMCA settlement exists for a Transportation document (LEAD 443.43/443.50: not a USMCA entry)`);
+  return rows.map((r) => `${r.source_document_ref} (${r.display_id}): a live USMCA settlement exists for a Transportation document (LEAD 443.43: not a USMCA entry)`);
 }
 
 function selftest() {
@@ -146,7 +152,7 @@ function selftest() {
     && judgeSettlements(docs, truth, [...clean, { ...clean[13], display_id: "S-2026-0011" }]).failures.length === 0
     && payrunFailures(new Map(docs.map((d) => [d, 1]))).length === 0
     && notUsmcaFailures([]).length === 0
-    && !docs.includes("5770") && !docs.includes("5796") && docs.length === USMCA_DOC_COUNT;
+    && !docs.includes("5770") && docs.includes("5796") && docs.length === USMCA_DOC_COUNT;
   if (!cleanOk) console.error(`${LABEL} SELFTEST: clean input flagged`);
   console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
   process.exit(caught === planted.length && cleanOk ? 0 : 1);
