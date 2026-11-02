@@ -4,7 +4,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 ## Lead re-measure 2026-11-02 5:00 PM CT
 
-8 Lead rows proved DONE-LIVE (31, 32, 39, 135, 147, 170, 171, 178). Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
+16 Lead rows proved DONE-LIVE (15, 31, 32, 36, 39, 42, 106, 107, 108, 118, 135, 136, 147, 170, 171, 178). Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
 
 ## Counts by category
 
@@ -68,7 +68,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 12 | R22 | Banking | Relay: nothing stored under TRANSP; 10/09 fundings on TRANSP bank; deposit ingest stopped after 10-09; bank feed last 10-21 | CC-2 | OPEN |
 | 13 | R27 | Data | Delete USMCA test records (18 legal matters, 5 policies, 7 claims, 1 accident…) | CC-2 | CODED |
 | 14 | R28 | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | CC-1 | OPEN |
-| 15 | R29 | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | CODED |
+| 15 | R29 | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | DONE-LIVE — verify-entity-filters-multi-select PASS on main 23:00Z: 134 entity filters detected, 134 multi-select, 0 failed |
 | 16 | R114 | Process | Cursor confirmation of 443.282 (owner-authorized build exactly as specified) | Cursor | OPEN |
 | 17 | R205 | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | CODED |
 | 18 | R206 | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | CODED |
@@ -89,13 +89,13 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 33 | R227 | Settlements | OWNER 10-24: P-0123/P-0124/P-0125 duplicates deleted completely + tour-close engine never opens a settlement for a settled load | CC-1 | INPROGRESS |
 | 34 | R228 | Drivers | OWNER 10-24: driver licence data check waived (still names drivers) until owner updates driver data | LEAD | INPROGRESS |
 | 35 | R229 | Fleet | OWNER 10-24: USMCA has 16 trucks; app shows 43 leased to USMCA (13 measured with loads in 60 d) | OWNER | OPEN |
-| 36 | R230 | Banking | Bank match suggests SETS of documents by amount math (one wire = several Faro purchases); multi-select + Resolve difference; a purchase already on a deposit is not offered twice | LEAD | CODED-QUEUED |
+| 36 | R230 | Banking | Bank match suggests SETS of documents by amount math (one wire = several Faro purchases); multi-select + Resolve difference; a purchase already on a deposit is not offered twice | LEAD | DONE-LIVE — merged #27494; verify-bank-match-combinations PASS on main 23:10Z (deposit exclusion, combinations, multi-document Resolve difference) |
 | 37 | R231 | Banking | One bank line = purchase(s) + LOAN: rest of the line becomes a related-party loan document (GL + document); unmatch reverses it | LEAD | CODED-QUEUED |
 | 38 | R232 | Banking | 4 banking test files red on main; Plaid Login Required / Stale looked identical to Healthy | LEAD | CODED-QUEUED |
 | 39 | R233 | Reports | Heavy CI red since 10-23: reports guard read the moved quick-links | LEAD | DONE-LIVE — verify-reports-home-filter-leaf-ownership / -no-box-in-box / rpt-s01-s05 PASS on main 22:58Z |
 | 40 | R234 | System | Transaction Health paging dropped ~20% of documents (1,500 of 1,855); bill payments labelled by UUID; account numbers hidden by default | LEAD | CODED-QUEUED |
 | 41 | R306 | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | MERGED |
-| 42 | R307 | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | CODED-QUEUED |
+| 42 | R307 | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | DONE-LIVE — merged b87d8b2d3 (#27552); verify-legal-matter-lawsuit-linkage PASS on main 23:10Z |
 | 43 | NEW 11-02 | Owner | AUTH-474..480 owner decisions (ENG-60 drop, ENG-04 $705.97, ENG-25b, ENG-48 repair, ENG-22, ENG-54) | OWNER | OPEN |
 | 44 | NEW 11-02 | Repo | 4 Dependabot PRs (#27892 #27894 #27964 #27965) — test on branch then merge | LEAD | OPEN |
 
@@ -179,9 +179,9 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 106 | R235 | Settlements | Escrow with a balance always visible (active or inactive driver); 11 orphan TEST escrow accounts deleted; DB refuses deleting a driver/vendor that still has escrow | LEAD | CODED-QUEUED |
-| 107 | R236 | Reports | ENG-19 Company settlement report + Trip Profitability counted fuel twice (fuel fill's own expense); 61 of 81 settlements negative -> 23; net -$177,024.87 -> +$113,862.11; trips negative 66 of 92 -> 25 | LEAD | CODED-QUEUED |
-| 108 | R237 | Ledger | AUTH-461 / AUTH-462 recorded in OWNER-AUTHORIZATIONS.md with owner quotes and audit counts | LEAD | CODED-QUEUED |
+| 106 | R235 | Settlements | Escrow with a balance always visible (active or inactive driver); 11 orphan TEST escrow accounts deleted; DB refuses deleting a driver/vendor that still has escrow | LEAD | DONE-LIVE — merged 91ba4c9cd; prod: triggers trg_refuse_driver_delete_with_escrow + trg_refuse_vendor_delete_with_escrow present; 33 USMCA escrow accounts, 0 orphan holders, 0 TEST-named |
+| 107 | R236 | Reports | ENG-19 Company settlement report + Trip Profitability counted fuel twice (fuel fill's own expense); 61 of 81 settlements negative -> 23; net -$177,024.87 -> +$113,862.11; trips negative 66 of 92 -> 25 | LEAD | DONE-LIVE — ENG-19 merged; re-measured 11-02 per signed document: 21 of 87 negative, only 5778 and 5793 truly negative (docs/bus/lead/11-02-2026-Claude-Lead-ENG36-MEASURED-ENG61-FUEL-OUTSIDE-TRIP.md) |
+| 108 | R237 | Ledger | AUTH-461 / AUTH-462 recorded in OWNER-AUTHORIZATIONS.md with owner quotes and audit counts | LEAD | DONE-LIVE — merged #27520; docs/bus/OWNER-AUTHORIZATIONS.md AUTH-461 (line 8066, COMMITTED 10-24 17:10Z) and AUTH-462 (line 8076) |
 | 109 | R238 | Dispatch | Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301) | OWNER | OPEN |
 | 110 | R242 | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | PARTIAL |
 | 111 | R251 | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | PARTIAL |
@@ -191,7 +191,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 115 | R262 | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | PARTIAL |
 | 116 | R264 | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | PARTIAL |
 | 117 | R269 | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | PARTIAL |
-| 118 | R271 | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | PARTIAL |
+| 118 | R271 | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | DONE-LIVE — measured each (#28140 + addendum #28141): 21 of 87; causes routed — ENG-61 fuel outside trip (CC-3), ENG-62 unlinked Relay fills (CC-1), ENG-25b Transportation diesel; 5824/5829 signed docs not found on owner Mac stage |
 | 119 | R273 | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | OPEN |
 | 120 | R274 | Banking | M1 candidates scoped to the bank line's account | - | MERGED-UNVERIFIED |
 | 121 | R275 | Banking | M2 invoices + Faro purchases in the match union | - | MERGED-UNVERIFIED |
@@ -209,7 +209,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 133 | R300 | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | CODED-QUEUED |
 | 134 | R301 | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine | CC-3 | OPEN |
 | 135 | R303 | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | DONE-LIVE — prod ih35_migrations.applied_migrations: 202614110000, 202615210000, 202615210100 applied 2026-10-24 21:58Z |
-| 136 | R304 | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | CODED-QUEUED |
+| 136 | R304 | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | DONE-LIVE — merged 58bcea191 (#27654) + fallback regenerated d5b40b2ca 22:52Z; verify-derived-artifact-freshness PASS on main 23:10Z |
 | 137 | R309 | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities | CC-1 | PARTIAL |
 | 138 | R311 | Dispatch | ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0 | LEAD | CODED-QUEUED |
 | 139 | LEAD-ENG-21 | Dispatch | Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301) | OWNER | OPEN |
