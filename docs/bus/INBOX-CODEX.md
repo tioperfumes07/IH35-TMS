@@ -9,6 +9,9 @@
 
 **Rulings:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md)
 
+## OWNER 11-02 — BUILD FIRST (not match)
+Build engines + finish shells. No bank match / month lock / Dreamline invent. ENG-13 445=broker (customer trailer). Match later when app complete.
+
 ### HARD RULE
 **NO half work. NO shells. NO board-only / API-only / guard-only closes.**  
 Every engine = **backend + routes + FE board + routing + reverse + pickers + guards + LIVE proof + register + fast-merge.**  
