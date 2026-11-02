@@ -17269,5 +17269,10 @@
     "claimed_by": "lead",
     "claimed_at": "2026-11-02",
     "purpose": "verify-eng25b-transportation-diesel-intercompany (ENG-25b)"
+  },
+  "18930": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-11-02",
+    "purpose": "ENG-22: verify-booked-trailer-matches-company-equipment — Book/Edit refuse or re-derive when company trailer type ≠ booked type"
   }
 }
