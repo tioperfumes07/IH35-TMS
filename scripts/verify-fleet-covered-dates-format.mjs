@@ -49,6 +49,13 @@ function collect(fleetSrc, homeSrc) {
   if (/\(FLT-F428\)/.test(homeSrc) || /migration and round/.test(homeSrc)) {
     fails.push(`${FLEET_HOME}: banner must not expose FLT-F428 / migration-round developer wording`);
   }
+  // fill-not-shell — Fleet Home need-company uses BoardSection (not bare dashed div)
+  if (!/import \{ BoardSection \} from ["'].*BoardSection["']/.test(homeSrc)) {
+    fails.push(`${FLEET_HOME}: must import BoardSection`);
+  }
+  if (!/testId="fleet-need-company"/.test(homeSrc)) {
+    fails.push(`${FLEET_HOME}: need-company empty must be BoardSection (fleet-need-company)`);
+  }
   return fails;
 }
 
@@ -75,10 +82,12 @@ if (process.argv.includes("--selftest")) {
     .replace(
       /Registration, inspection, and insurance expiry dates are tracked on driver credentials today,\s*not on unit or trailer records\. Expiry tiles stay off this board until those dates live on\s*the fleet asset itself\./,
       "Registration, inspection, and insurance expiry are not on unit or trailer records yet (FLT-F428). that needs its own migration and round.",
-    );
+    )
+    .replace(/import \{ BoardSection \} from ["'][^"']+["'];\n?/, "")
+    .replace(/testId="fleet-need-company"/g, 'testId="fleet-shell"');
   const planted = collect(plantFleet, plantHome);
-  if (planted.length < 8) {
-    console.error(`${LABEL} --selftest FAIL: plant should trip ≥8 checks, got ${planted.length}`, planted);
+  if (planted.length < 10) {
+    console.error(`${LABEL} --selftest FAIL: plant should trip ≥10 checks, got ${planted.length}`, planted);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

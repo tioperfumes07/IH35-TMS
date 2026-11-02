@@ -20,6 +20,7 @@ import { KpiStrip } from "../../components/layout/KpiStrip";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { colors } from "../../design/tokens";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 /**
  * PR3 — Fleet module HOME (owner 2026-10-05).
@@ -169,12 +170,9 @@ export function FleetHomePage() {
       />
 
       {!companyId ? (
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-          data-testid="fleet-need-company"
-        >
-          Select an operating company to view the fleet.
-        </div>
+        <BoardSection title="Fleet" testId="fleet-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the fleet.</p>
+        </BoardSection>
       ) : (
         <>
           <div data-testid="fleet-kpi-strip">
