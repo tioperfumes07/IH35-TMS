@@ -16,6 +16,7 @@ import { CollapsedListFilters, MoneyListToolbar, useStagedListFilters } from "..
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
 import { formatUsdCents } from "../../../lib/money";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { Breadcrumb } from "../../../components/shared/Breadcrumb";
@@ -219,13 +220,13 @@ export function CardOverageQueuePage() {
         key: "created_at",
         label: "Detected",
         sortable: true,
-        render: (row) => new Date(row.created_at).toLocaleString(),
+        render: (row) => formatDateTimeUS(row.created_at) || "—",
       },
       {
         key: "transaction_at",
         label: "Txn at",
         sortable: true,
-        render: (row) => (row.transaction_at ? new Date(row.transaction_at).toLocaleString() : "—"),
+        render: (row) => (row.transaction_at ? formatDateTimeUS(row.transaction_at) || "—" : "—"),
       },
       {
         key: "driver_name",

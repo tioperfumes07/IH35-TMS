@@ -11,11 +11,12 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
   const cls = String(prediction.confidence_class ?? "");
-  const at = prediction.predicted_arrival_at ? new Date(String(prediction.predicted_arrival_at)).toLocaleString() : "";
+  const at = prediction.predicted_arrival_at ? formatDateTimeUS(String(prediction.predicted_arrival_at)) : "";
   const variance = prediction.variance_minutes != null ? `${prediction.variance_minutes}m variance` : "";
   return [cls, at, variance].filter(Boolean).join(" · ");
 }
@@ -32,8 +33,7 @@ function moneyCents(v: unknown): string {
 
 function fmtWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isFinite(d.getTime()) ? d.toLocaleString() : "—";
+  return formatDateTimeUS(iso) || "—";
 }
 
 function place(city?: string | null, state?: string | null): string {

@@ -4,6 +4,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 const CLOSE_TRIP_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
 
@@ -85,7 +86,7 @@ export function CloseTripPanel({
             </span>
           </InfoPopover>
         </p>
-        <p className="mt-1 text-xs text-[#4B5563]">Closed {new Date(tripClosedAt).toLocaleString()}.</p>
+        <p className="mt-1 text-xs text-[#4B5563]">Closed {formatDateTimeUS(tripClosedAt) || "—"}.</p>
         <div className="mt-2">
           <Button
             size="sm"
