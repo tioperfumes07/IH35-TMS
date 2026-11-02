@@ -15,6 +15,14 @@ const FILES = [
   "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
   "apps/frontend/src/pages/driver-finance/components/CloseTripPanel.tsx",
   "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
+  // fill-not-shell datetime wave — FactoringTab timestamps
+  "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+];
+
+const DATE_ONLY = [
+  "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
+  "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
 ];
 
 const fails = [];
@@ -28,6 +36,15 @@ for (const path of FILES) {
     fails.push(`${path}: must not new Date(...).toLocaleString()`);
   }
 }
+for (const path of DATE_ONLY) {
+  const src = fs.readFileSync(path, "utf8");
+  if (!/formatDateUS/.test(src)) {
+    fails.push(`${path}: must import/use formatDateUS`);
+  }
+  if (/toLocaleDateString\(/.test(src)) {
+    fails.push(`${path}: must not toLocaleDateString()`);
+  }
+}
 
 if (process.argv.includes("--selftest")) {
   if (fails.length) {
@@ -37,6 +54,11 @@ if (process.argv.includes("--selftest")) {
   const plant = fs.readFileSync(FILES[0], "utf8").replace(/formatDateTimeUS/g, "toLocaleString");
   if (!/toLocaleString/.test(plant) || /formatDateTimeUS/.test(plant)) {
     console.error(`${LABEL} --selftest FAIL plant weak`);
+    process.exit(1);
+  }
+  const datePlant = fs.readFileSync(DATE_ONLY[0], "utf8").replace(/formatDateUS/g, "toLocaleDateString");
+  if (!/toLocaleDateString/.test(datePlant) || /formatDateUS/.test(datePlant)) {
+    console.error(`${LABEL} --selftest FAIL date-only plant weak`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
