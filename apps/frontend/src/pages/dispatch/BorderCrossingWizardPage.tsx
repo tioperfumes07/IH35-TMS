@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CbpWaitTimesWidget } from "../../components/border-crossing/CbpWaitTimesWidget";
@@ -142,9 +143,11 @@ export function BorderCrossingWizardPage() {
       />
 
       {!selectedCompanyId ? (
-        <p className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="border-crossing-need-company">
-          Select an operating company to load entity-scoped customs brokers and submit a crossing.
-        </p>
+        <BoardSection title="Border crossing" testId="border-crossing-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to load entity-scoped customs brokers and submit a crossing.
+          </p>
+        </BoardSection>
       ) : null}
       {portsError ? (
         <ListErrorBanner message={portsError} onRetry={() => window.location.reload()} />

@@ -14,6 +14,7 @@ import { getFactoringSummary } from "../../api/factoring";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -299,9 +300,9 @@ export function FactoringQueuePage() {
 
   if (!companyId) {
     return (
-      <div className="mx-auto max-w-6xl p-4 text-xs text-gray-500">
-        Select an operating company to view the factoring queue.
-      </div>
+      <BoardSection title="Factoring queue" testId="factoring-queue-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the factoring queue.</p>
+      </BoardSection>
     );
   }
 
