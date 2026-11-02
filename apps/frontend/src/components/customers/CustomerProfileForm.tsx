@@ -472,7 +472,7 @@ function SelectField({
         {label}
         {required ? " *" : ""}
       </span>
-      <SelectCombobox
+      <select
         name={name}
         value={value}
         disabled={disabled}
@@ -485,7 +485,7 @@ function SelectField({
             {o.label}
           </option>
         ))}
-      </SelectCombobox>
+      </select>
     </label>
   );
 }

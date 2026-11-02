@@ -281,7 +281,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div>
           <h2 className="text-xs font-semibold text-gray-900">Live debt summary</h2>
           <div className="text-xs text-gray-500">
-            Recomputed at {computedAt ? formatDateTimeUS(computedAt) : "—"}
+            Recomputed at {computedAt ? formatDateTimeUS(`${computedAt}`) : "—"}
           </div>
         </div>
         <Button
