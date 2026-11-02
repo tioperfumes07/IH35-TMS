@@ -34,9 +34,18 @@ import { SegmentedControl } from "../components/SegmentedControl";
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
 import { MASTER_DETAIL } from "../design/master-detail";
 import { SelectCombobox } from "../components/Combobox";
+import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
 import { MoneyListToolbar } from "../components/table/MoneyListToolbar";
 import { StagedListFilterShell } from "../components/table/StagedListFilterShell";
 import { useStagedListFilters } from "../components/table/useStagedListFilters";
+import { statusOptions } from "../lib/statusListParams";
+
+const CREDIT_STATUS_FILTER_OPTIONS = statusOptions({
+  active: "Active",
+  inactive: "Inactive",
+  credit_hold: "Credit hold",
+  blacklist: "Blacklist",
+});
 import { CustomersBoardChrome } from "./customers/CustomersBoardChrome";
 import { CustomersDetailTabNav } from "./customers/CustomersDetailTabNav";
 import { Modal } from "../components/Modal";
@@ -596,7 +605,7 @@ export function CustomersPage() {
   // rosterCreditStatus = the business `status` field (credit_hold/blacklist), separate from the
   // Active/Inactive soft-delete tabs (deactivated_at). Both default to "" = no filter.
   const [rosterType, setRosterType] = useState<"" | "broker" | "direct_shipper">("");
-  const [rosterCreditStatus, setRosterCreditStatus] = useState<"" | "active" | "inactive" | "credit_hold" | "blacklist">("");
+  const [rosterCreditStatus, setRosterCreditStatus] = useState<string[]>([]);
   // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   // Direct state setters apply immediately, matching the pre-CHROME-04 design.
   // AUDIT 2610 / CLS-FILTER-GEAR-APPLY — Transaction List Filter panel must stage Status/Date/Category
@@ -865,7 +874,7 @@ export function CustomersPage() {
     // V8 roster filters — applied here so BOTH the sidebar (visibleCustomers) and the
     // customersSorted consumers (list view, selection) stay in sync.
     if (rosterType) all = all.filter((customer) => customer.customer_type === rosterType);
-    if (rosterCreditStatus) all = all.filter((customer) => customer.status === rosterCreditStatus);
+    if (rosterCreditStatus.length) all = all.filter((customer) => rosterCreditStatus.includes(String(customer.status ?? "")));
     // §7 RESTORE — quality segment arms, verbatim from b3690eb68.
     if (qualitySegment === "preferred") all = all.filter((c) => c.quality_overall_flag === "preferred");
     else if (qualitySegment === "watch") all = all.filter((c) => c.quality_overall_flag === "caution");
@@ -1409,18 +1418,14 @@ export function CustomersPage() {
               <option value="broker">Broker</option>
               <option value="direct_shipper">Direct shipper</option>
             </SelectCombobox>
-            <SelectCombobox
-              value={rosterCreditStatus}
-              onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              aria-label="Filter customers by credit status"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="credit_hold">Credit hold</option>
-              <option value="blacklist">Blacklist</option>
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Credit status"
+              options={CREDIT_STATUS_FILTER_OPTIONS}
+              selected={rosterCreditStatus}
+              onChange={setRosterCreditStatus}
+              allLabel="All statuses"
+              data-testid="customers-roster-credit-status"
+            />
             <div className="relative z-50" onClick={(event) => event.stopPropagation()}>
               <Button type="button" className="relative z-50" data-testid="customers-create-open" onClick={openCreate}>
                 + Create Customer
@@ -1499,12 +1504,12 @@ export function CustomersPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search customers"
         searchTestId="customers-page-search-input"
-        activeFilterCount={(rosterType ? 1 : 0) + (rosterCreditStatus ? 1 : 0)}
+        activeFilterCount={(rosterType ? 1 : 0) + (rosterCreditStatus.length ? 1 : 0)}
         testIdPrefix="customers-roster"
         onClearAll={() => {
           setSearch("");
           setRosterType("");
-          setRosterCreditStatus("");
+          setRosterCreditStatus([]);
         }}
       >
         {null}

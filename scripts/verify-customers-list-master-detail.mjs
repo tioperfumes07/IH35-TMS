@@ -73,10 +73,15 @@ export function audit(src) {
   //           new: the roster toolbar is inline (data-customers-roster-filter-toolbar="inline") with the Type and
   //                Credit-status selects bound straight to rosterType / rosterCreditStatus, and both feed the roster
   //                filter. why: K.9 (#20550, ece6191004) restored the filters inline, 0 clicks, direct state.
+  // U12 (2026-11-02): credit status is MultiSelectDropdown (onChange={setRosterCreditStatus}) + string[] includes filter.
+  const hasCreditStatusOnChange =
+    /onChange=\{\(event\) => setRosterCreditStatus\(/.test(src.customers) ||
+    /onChange=\{setRosterCreditStatus\}/.test(src.customers);
   if (!/data-customers-roster-filter-toolbar="inline"/.test(src.customers) ||
       !/value=\{rosterType\}[\s\S]{0,120}onChange=\{\(event\) => setRosterType\(/.test(src.customers) ||
-      !/onChange=\{\(event\) => setRosterCreditStatus\(/.test(src.customers) ||
-      !/if \(rosterType\) all = all\.filter\(\(customer\) => customer\.customer_type === rosterType\)/.test(src.customers)) {
+      !hasCreditStatusOnChange ||
+      !/if \(rosterType\) all = all\.filter\(\(customer\) => customer\.customer_type === rosterType\)/.test(src.customers) ||
+      !/rosterCreditStatus\.includes\(/.test(src.customers)) {
     failures.push(`${FILES.customers}: roster filters must stage canonical segment/type/status state`);
   }
   if (!/c\.quality_overall_flag === "preferred"/.test(src.customers)) {

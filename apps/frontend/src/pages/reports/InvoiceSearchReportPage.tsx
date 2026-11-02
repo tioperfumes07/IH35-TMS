@@ -16,6 +16,9 @@ import { formatUsdCents } from "../../lib/money";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
+import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 function mmmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -42,18 +45,17 @@ function invoiceStatusBadge(row: Pick<Invoice, "status" | "voided_at">) {
   return <StatusBadge variant={variant}>{row.status}</StatusBadge>;
 }
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "active", label: "Active (hide voided)" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "partial", label: "Partial" },
-  { value: "paid", label: "Paid" },
-  { value: "factored", label: "Factored" },
-  { value: "void", label: "Void" },
-];
+const STATUS_FILTER_OPTIONS = statusOptions({
+  active: "Active (hide voided)",
+  draft: "Draft",
+  sent: "Sent",
+  partial: "Partial",
+  paid: "Paid",
+  factored: "Factored",
+  void: "Void",
+});
 
-type InvoiceSearchFilters = { search: string; statusFilter: string; dateRange: string };
+type InvoiceSearchFilters = { search: string; statusFilter: string[]; dateRange: string };
 
 function dateRangeToFromTo(range: string): { from_date?: string; to_date?: string } {
   if (range === "all") return {};
@@ -77,7 +79,7 @@ export function InvoiceSearchReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const emptyFilters: InvoiceSearchFilters = { search: "", statusFilter: "active", dateRange: "all" };
+  const emptyFilters: InvoiceSearchFilters = { search: "", statusFilter: ["active"], dateRange: "all" };
   const [appliedFilters, setAppliedFilters] = useState<InvoiceSearchFilters>(emptyFilters);
   const staged = useStagedListFilters({
     applied: appliedFilters,
@@ -87,18 +89,27 @@ export function InvoiceSearchReportPage() {
 
   const dateRange = dateRangeToFromTo(appliedFilters.dateRange);
   const invoicesQ = useQuery({
-    queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter, appliedFilters.dateRange, sortKey, sortDirection],
+    queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter.join(","), appliedFilters.dateRange, sortKey, sortDirection],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () =>
-      listInvoices(operatingCompanyId, {
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch without status then filter.
+      const status = appliedFilters.statusFilter.length === 1 ? appliedFilters.statusFilter[0] : undefined;
+      const result = await listInvoices(operatingCompanyId, {
         search: appliedFilters.search || undefined,
-        status: appliedFilters.statusFilter || undefined,
+        status,
         ...dateRange,
         sort: sortKey || undefined,
         dir: sortDirection || undefined,
         limit: 100,
         offset: 0,
-      }),
+      });
+      if (appliedFilters.statusFilter.length <= 1) return result;
+      const invoices = (result.invoices ?? []).filter((row) => {
+        if (appliedFilters.statusFilter.includes("active") && !isVoidInvoice(row) && row.status !== "void") return true;
+        return appliedFilters.statusFilter.includes(row.status);
+      });
+      return { ...result, invoices, total: invoices.length };
+    },
   });
 
   const rows = invoicesQ.data?.invoices ?? [];
@@ -227,16 +238,14 @@ export function InvoiceSearchReportPage() {
             className="h-7 w-64 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-input"
           />
-          <SelectCombobox
-            value={staged.draft.statusFilter}
-            onChange={(e) => staged.setDraft((p) => ({ ...p, statusFilter: e.target.value }))}
-            className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
+          <MultiSelectDropdown
+            label="Status"
+            options={STATUS_FILTER_OPTIONS}
+            selected={staged.draft.statusFilter}
+            onChange={(next) => staged.setDraft((p) => ({ ...p, statusFilter: next }))}
+            allLabel="All statuses"
             data-testid="invoice-search-status"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </SelectCombobox>
+          />
           <SelectCombobox
             value={staged.draft.dateRange}
             onChange={(e) => staged.setDraft((p) => ({ ...p, dateRange: e.target.value }))}
