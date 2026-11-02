@@ -2,6 +2,10 @@
 
 Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re-measured since) + docs/bus/lead/ENGINE-REGISTER.json (11-02 17:12Z) + items measured today. Every non-DONE row is listed. CODED / MERGED-UNVERIFIED = code exists, live proof missing.
 
+## Lead re-measure 2026-11-02 5:00 PM CT
+
+8 Lead rows proved DONE-LIVE (31, 32, 39, 135, 147, 170, 171, 178). Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
+
 ## Counts by category
 
 | Category | Pending |
@@ -80,15 +84,15 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 28 | R221 | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | OPEN |
 | 29 | R222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | OPEN |
 | 30 | R224 | Process | CODE-COMPLETE MODE: code every row, verify at the end | ALL | IN PROGRESS |
-| 31 | R225 | Gates | Main pre-push gate red for every seat (filter-panel regex, selftest-mutates, export-business-date) | LEAD | CODED |
-| 32 | R226 | Gates | Main pre-push gate red: 10 unwired guards, row-218 panel leaf, 2 stale guards | LEAD | CODED |
+| 31 | R225 | Gates | Main pre-push gate red for every seat (filter-panel regex, selftest-mutates, export-business-date) | LEAD | DONE-LIVE — verify-export-business-date / verify-no-selftest-mutates-tracked-source / verify-program-system-cashflow-filter-panels PASS on main 22:58Z |
+| 32 | R226 | Gates | Main pre-push gate red: 10 unwired guards, row-218 panel leaf, 2 stale guards | LEAD | DONE-LIVE — verify-cc1-money-orphan-guard-registry-batch PASS (85 guards in CI, orphan census 0); step 18937 (31 guards) merged #28096 7f6d72bfc |
 | 33 | R227 | Settlements | OWNER 10-24: P-0123/P-0124/P-0125 duplicates deleted completely + tour-close engine never opens a settlement for a settled load | CC-1 | INPROGRESS |
 | 34 | R228 | Drivers | OWNER 10-24: driver licence data check waived (still names drivers) until owner updates driver data | LEAD | INPROGRESS |
 | 35 | R229 | Fleet | OWNER 10-24: USMCA has 16 trucks; app shows 43 leased to USMCA (13 measured with loads in 60 d) | OWNER | OPEN |
 | 36 | R230 | Banking | Bank match suggests SETS of documents by amount math (one wire = several Faro purchases); multi-select + Resolve difference; a purchase already on a deposit is not offered twice | LEAD | CODED-QUEUED |
 | 37 | R231 | Banking | One bank line = purchase(s) + LOAN: rest of the line becomes a related-party loan document (GL + document); unmatch reverses it | LEAD | CODED-QUEUED |
 | 38 | R232 | Banking | 4 banking test files red on main; Plaid Login Required / Stale looked identical to Healthy | LEAD | CODED-QUEUED |
-| 39 | R233 | Reports | Heavy CI red since 10-23: reports guard read the moved quick-links | LEAD | CODED-QUEUED |
+| 39 | R233 | Reports | Heavy CI red since 10-23: reports guard read the moved quick-links | LEAD | DONE-LIVE — verify-reports-home-filter-leaf-ownership / -no-box-in-box / rpt-s01-s05 PASS on main 22:58Z |
 | 40 | R234 | System | Transaction Health paging dropped ~20% of documents (1,500 of 1,855); bill payments labelled by UUID; account numbers hidden by default | LEAD | CODED-QUEUED |
 | 41 | R306 | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | MERGED |
 | 42 | R307 | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | CODED-QUEUED |
@@ -204,7 +208,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 132 | R299 | Fleet | ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks) | OWNER | OPEN |
 | 133 | R300 | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | CODED-QUEUED |
 | 134 | R301 | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine | CC-3 | OPEN |
-| 135 | R303 | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | CODED-QUEUED |
+| 135 | R303 | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | DONE-LIVE — prod ih35_migrations.applied_migrations: 202614110000, 202615210000, 202615210100 applied 2026-10-24 21:58Z |
 | 136 | R304 | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | CODED-QUEUED |
 | 137 | R309 | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities | CC-1 | PARTIAL |
 | 138 | R311 | Dispatch | ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0 | LEAD | CODED-QUEUED |
@@ -216,7 +220,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 144 | LEAD-various | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | MERGED-UNVERIFIED |
 | 145 | NEW 11-02 | Fuel | ENG-61 116 fuel rows ($40,499.46) on 42 loads outside the trip window | CC-3 | OPEN |
 | 146 | NEW 11-02 | Fuel | ENG-62 90 Relay fill expenses $38,717.03 with no linked fuel row (18 link / 48 import / 24 dedupe) | CC-1 | OPEN |
-| 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | MERGED-UNVERIFIED |
+| 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | DONE-LIVE — Render backend logs: last "deadlock detected" 21:25:35Z; 0 from 21:25:35Z to 22:53Z (88 min; 7 in the 25 min before); pg_stat_database.deadlocks flat 3825 22:49:45Z→22:52:49Z |
 
 ## F · Live findings (tie-outs)
 
@@ -244,8 +248,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 167 | R110 | Driver Profile | Angel Sosa: "No current truck assignment" while on T156 (13697); documents all "Not recorded" | CC-2 | OPEN |
 | 168 | R111 | Insurance | Insurance page renders inside the Safety header/tab shell | CC-2 | CODED |
 | 169 | R112 | Legal | Open matters 0 on page while legal.matters holds 18 rows (test records) | CC-2 | OPEN |
-| 170 | R200 | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | CODED |
-| 171 | R203 | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | PAUSED |
+| 170 | R200 | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | DONE-LIVE — prod views.ar_aging $621,076.72 / 164 open = GL 1100 $621,076.72 (322 postings) = 183 sent invoices $621,076.72; no proforma rows live |
+| 171 | R203 | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | DONE-LIVE — CI required-live-load-guard 22:20Z: verify-every-load-born-document-and-posting-traces-to-its-load — unstamped postings 0, broken walks 0, load expenses without link 0 |
 | 172 | R204 | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | CODED |
 | 173 | R211 | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | CODED |
 
@@ -257,7 +261,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 175 | R116 | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels | CC-3 | MERGED-UNVERIFIED |
 | 176 | R117 | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub | CC-3 | MERGED-UNVERIFIED |
 | 177 | R118 | Guards | verify-board-page-no-legacy-sections (new) — stops layering | Codex | CODED |
-| 178 | R119 | Guards | verify-entity-filters-multi-select (new) — fails on single-select entity filters | LEAD | CODED |
+| 178 | R119 | Guards | verify-entity-filters-multi-select (new) — fails on single-select entity filters | LEAD | DONE-LIVE — verify-entity-filters-multi-select PASS on main: 134 entity filters, 134 compliant, 0 failed |
 | 179 | NEW 11-02 | Guards | verify-diesel-expense-fuel-dedupe red on every PR (duplicate diesel expenses, live data) | CC-1 | OPEN |
 
 ## H · Screen label / data defects
