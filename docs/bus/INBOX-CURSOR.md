@@ -3,6 +3,13 @@
 ## CURRENT (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST tip
 Tip #28046 Fleet Covered dates · #28050 CashFlow+$/dates + report preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queue EntityLinks · #28057 Fuel Integrity Unit/Vendor U29. Cascade handoff: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md (InvoiceSearch multi-status + P&L URL seed). Owner BUILD-FIRST — no match/Dreamline. Next: more U29 · remaining shells/engines. No match/reconcile.
 
+## CODEX QA — 11-02 14:21 CT — Safety Drug & Alcohol dates and filters
+
+USMCA `/safety/drug-alcohol` loaded history/enrollment/draw tables with one row each; all three visible dates use YYYY-MM-DD. Private screenshot in Codex task. Source `apps/frontend/src/pages/safety/components/DrugAlcoholTable.tsx:46` slices test_date; `drug-alcohol/DrugAlcoholProgramTab.tsx:97` enrolled_at lacks formatter and `:137` slices collected_at; `drug-alcohol/RandomPoolDashboard.tsx:111` draw_date lacks formatter. `tabs/DrugAlcoholTab.tsx:568–586` history Type/Result are scalar Combobox filters, not multi-select (popup inspected). Route through canonical date display and real multi-select predicates; preserve date-only semantics. No drug-test/draw/enrollment writes performed; no personal values in repo. Driver Files DQ file header is also non-sortable (other six headers have sort buttons).
+
+## PRIOR (11-02-2026 ~4:20 PM CT) — Cursor BUILD-FIRST tip
+CashFlow Home $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset atomic URL + pathname Suspense key shipping this wave. Owner BUILD-FIRST — no match/Dreamline. Next: U28 account multi-select · U29 · SafetyReports residual engines · remaining shells. No match/reconcile.
+
 ## PRIOR (11-02-2026 ~4:00 PM CT) — Cursor BUILD-FIRST tip
 Fleet Covered formatDateUS + Fleet Home status humanize (#28046). Owner BUILD-FIRST — no match/Dreamline.
 
