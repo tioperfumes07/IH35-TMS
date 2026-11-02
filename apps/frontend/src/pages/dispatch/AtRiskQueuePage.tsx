@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatUsd, formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
@@ -146,7 +146,7 @@ export function AtRiskQueuePage() {
         label: "RPM",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.rpm == null ? "—" : num(load.rpm).toFixed(2)),
+        render: (load) => (load.rpm == null ? "—" : formatUsd(num(load.rpm))),
       },
       {
         key: "invoice_status",
@@ -196,7 +196,7 @@ export function AtRiskQueuePage() {
     ),
     loaded_miles: <span className="tabular-nums">{milesSum.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>,
     rate_total_cents: <span className="tabular-nums">{moneyCents(rateSumCents)}</span>,
-    rpm: <span className="tabular-nums">{milesSum > 0 ? weightedRpm.toFixed(2) : "—"}</span>,
+    rpm: <span className="tabular-nums">{milesSum > 0 ? formatUsd(weightedRpm) : "—"}</span>,
   };
 
   if (!companyId) {
