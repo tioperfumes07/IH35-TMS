@@ -44,6 +44,31 @@ export function vendorIdentitySetSql(companyParam: number, vendorParam: number):
   )`;
 }
 
+/**
+ * The same identity set for SEVERAL vendors at once (a multi-select filter): $arrayParam is a text[] of caller values
+ * (mdata uuid or QBO id). Company-scoped exactly like {@link vendorIdentitySetSql}. Codex QA 11-02 14:14 CT: a 2+ vendor
+ * selection used to fetch unfiltered and narrow only the first 200 rows on the client.
+ */
+export function vendorIdentitySetManySql(companyParam: number, arrayParam: number): string {
+  return `(
+    SELECT ident FROM (
+      SELECT req.ident FROM unnest($${arrayParam}::text[]) AS req(ident)
+      UNION
+      SELECT v.qbo_vendor_id
+        FROM mdata.vendors v
+       WHERE v.operating_company_id = $${companyParam}::uuid
+         AND v.id::text = ANY($${arrayParam}::text[])
+         AND v.qbo_vendor_id IS NOT NULL
+      UNION
+      SELECT v.id::text
+        FROM mdata.vendors v
+       WHERE v.operating_company_id = $${companyParam}::uuid
+         AND v.qbo_vendor_id = ANY($${arrayParam}::text[])
+    ) vendor_identity
+    WHERE ident IS NOT NULL
+  )`;
+}
+
 /** Runtime form of {@link vendorIdentitySetSql} for callers that compare in JS. */
 export async function resolveVendorIdentitySet(
   client: Queryable,

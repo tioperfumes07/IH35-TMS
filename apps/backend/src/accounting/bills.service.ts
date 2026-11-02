@@ -22,7 +22,7 @@ import {
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { insertTransferInClient, type TransferInput } from "../banking/transfers.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { vendorIdentitySetSql } from "./vendor-identity.js";
+import { vendorIdentitySetManySql, vendorIdentitySetSql } from "./vendor-identity.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import {
@@ -279,6 +279,10 @@ type ListBillsOptions = {
   agingAsOf?: string;
   /** SEARCH LAW — display_id · bill_number · vendor · amount$ · date · status · memo */
   search?: string;
+  /** Codex QA 11-02 — category multi-select, narrowed in SQL before limit/offset and in the register totals. */
+  billCategories?: readonly string[];
+  /** Codex QA 11-02 — several vendors (mdata uuid or QBO id each), OR-ed in SQL before limit/offset and in the totals. */
+  vendorIds?: readonly string[];
   /** ACCT-F5035 — claim→bill reverse list filter (accounting.bills.insurance_claim_id). */
   insuranceClaimId?: string;
   /** LINK-F5171 — legal matter→bill reverse list filter (accounting.bills.legal_matter_id). */
@@ -1093,6 +1097,7 @@ export async function listBillsByVendor(
       where.push(`b.bill_date <= $${values.length}::date`);
     }
     applyBillListStatusFilter(where, options.status);
+    applyBillCategoryAndVendorsFilter(where, values, { billCategories: options.billCategories });
     if (options.hasBalance) {
       // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
       // status 'void' can exist with revoked_at NULL (legacy/partial void) and still amount-paid > 0.
@@ -1313,6 +1318,22 @@ export async function countBillsByVendor(
  * added to one and not the other would make the total lie about what the list actually shows).
  * Excludes limit/offset — callers append those to `values` themselves after this returns.
  */
+/** Codex QA 11-02 — category / several-vendor narrowing shared by every bill list path and the register totals ($1 = company). */
+function applyBillCategoryAndVendorsFilter(
+  where: string[],
+  values: unknown[],
+  options: Pick<ListBillsOptions, "billCategories" | "vendorIds">
+): void {
+  if (options.billCategories && options.billCategories.length > 0) {
+    values.push([...options.billCategories]);
+    where.push(`b.bill_category = ANY($${values.length}::text[])`);
+  }
+  if (options.vendorIds && options.vendorIds.length > 0) {
+    values.push([...options.vendorIds]);
+    where.push(`COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetManySql(1, values.length)}`);
+  }
+}
+
 function buildAllBillsWhereClause(
   operatingCompanyId: string,
   options: Omit<ListBillsOptions, "limit" | "offset">
@@ -1328,6 +1349,7 @@ function buildAllBillsWhereClause(
     where.push(`b.bill_date <= $${values.length}::date`);
   }
   applyBillListStatusFilter(where, options.status);
+  applyBillCategoryAndVendorsFilter(where, values, options);
   if (options.hasBalance) {
     // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
     where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);

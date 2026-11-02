@@ -39,3 +39,30 @@ it("mounted register binds the full unit/load selection to both cohorts and retu
     expect(mocks.totals.mock.calls[0][2]).toMatchObject({ unitId: ids.join(","), loadId: ids.join(",") });
   } finally { await app.close(); }
 });
+
+// Codex QA 11-02 14:14 CT — /accounting/bills?category=maintenance showed "No bills found" beside "All matching vendor
+// bills: 186": the category never reached the server. Both the page rows and the totals must receive the same narrowing.
+it("register sends category + several vendors to BOTH the page query and the totals (no first-200 client filter)", async () => {
+  mocks.list.mockReset().mockResolvedValue([]);
+  mocks.totals.mockReset().mockResolvedValue({ count: 0, amount_cents: 0 });
+  mocks.query.mockReset().mockResolvedValue({ rows: [{ n: 0, count: 0, amount_cents: 0 }] });
+  const app = Fastify();
+  await registerBillsRoutes(app);
+  try {
+    const response = await app.inject({ method: "GET", url: "/api/v1/accounting/bills/register?operating_company_id=11111111-1111-4111-8111-111111111111&bill_type=vendor_bill&bill_category=maintenance,repair&vendor_ids=472,99999999-9999-4999-8999-999999999999&limit=200" });
+    expect(response.statusCode).toBe(200);
+    const want = { billCategories: ["maintenance", "repair"], vendorIds: ["472", "99999999-9999-4999-8999-999999999999"] };
+    expect(mocks.list.mock.calls[0][2]).toMatchObject(want);
+    expect(mocks.totals.mock.calls[0][2]).toMatchObject(want);
+    expect(response.json().totals.vendor_bill.count).toBe(0);
+  } finally { await app.close(); }
+});
+
+it("register rejects a category outside the stored vocabulary instead of silently ignoring it", async () => {
+  const app = Fastify();
+  await registerBillsRoutes(app);
+  try {
+    const response = await app.inject({ method: "GET", url: "/api/v1/accounting/bills/register?operating_company_id=11111111-1111-4111-8111-111111111111&bill_category=maint%27--" });
+    expect(response.statusCode).toBe(400);
+  } finally { await app.close(); }
+});

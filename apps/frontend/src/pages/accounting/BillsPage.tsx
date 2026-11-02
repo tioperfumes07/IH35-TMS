@@ -104,9 +104,8 @@ export type BillsRegisterTab = "vendor_bill" | "driver_bill";
 // U10 (owner): "every bills sub-tab renders only its own type". This used to GUESS the type from memo / vendor words
 // (/maint|shop/, /fuel|diesel|loves/, /driver|settlement/), so each sub-tab showed the wrong bills and missed the right
 // ones. The type is stored now (accounting.bills.bill_category, migration 202615370700).
-function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
-  return bill.bill_category === category;
-}
+// Codex QA 11-02: the stored-type filter now runs in SQL (bills.service applyBillCategoryAndVendorsFilter,
+// b.bill_category = ANY(...)) via the bill_category request param — before limit/offset and in the totals.
 
 function billBalanceCents(bill: VendorBill) {
   if (bill.balance_cents != null) return Number(bill.balance_cents);
@@ -361,7 +360,12 @@ export function BillsPage() {
   // LEAD 10-25 FINAL-4 — the server now ORs several statuses itself (before limit/offset, inside the same WHERE as the
   // register totals), so every selection is narrowed server-side: no 200-row page is filtered on the client any more.
   const statusParam = statusFilter.length ? statusFilter.join(",") : undefined;
+  // Codex QA 11-02 14:14 CT — category and several-vendor selections are narrowed IN SQL (before limit/offset and in the
+  // "All matching" totals). The page used to fetch unfiltered and filter only the first 200 rows here, so a category with
+  // no bills showed "No bills found" beside "All matching vendor bills: 186".
   const vendorParam = vendorFilter.length === 1 ? vendorFilter[0] : undefined;
+  const vendorIdsParam = vendorFilter.length > 1 ? vendorFilter.join(",") : undefined;
+  const categoryParam = categoryFilter.length ? categoryFilter.join(",") : undefined;
   const billsQuery = useQuery({
     queryKey: [
       "accounting",
@@ -370,6 +374,7 @@ export function BillsPage() {
       statusFilter,
       hasBalance,
       category,
+      categoryFilter,
       dateFrom,
       dateTo,
       vendorFilter,
@@ -393,6 +398,8 @@ export function BillsPage() {
         aging_bucket: agingBuckets.length ? agingBuckets : undefined,
         as_of: agingAsOf || undefined,
         vendor_id: vendorParam,
+        vendor_ids: vendorIdsParam,
+        bill_category: categoryParam,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         search: search.trim() || undefined,
@@ -434,9 +441,8 @@ export function BillsPage() {
       .map((row) => row.bill as VendorBill);
     let next = all.filter((bill) => {
       if (bill.id === deepLinkBillId) return true; // keep deep-linked bill visible regardless of filters
-      if (categoryFilter.length > 0 && !categoryFilter.some((c) => billMatchesCategory(bill, c as BillListCategory))) return false;
+      // Category and vendor are narrowed by the server (bill_category / vendor_id / vendor_ids above) — never re-filtered here.
       if (!vendorBillMatchesStatusFilter(bill, statusFilter, serverNarrowedStatus)) return false;
-      if (vendorFilter.length > 0 && !vendorFilter.includes(bill.vendor_id ?? "")) return false;
       return true;
     });
     // BILL-SEARCH-01 — server search via buildListSearchClause.

@@ -176,6 +176,21 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   unit_id: entityIdFilterSchema.optional(),
   // ACCT-F5037 — load→bill reverse via accounting.bill_lines.load_id (header has no load_id).
   load_id: entityIdFilterSchema.optional(),
+  // Codex QA 11-02 14:14 CT — category + several-vendor selections are narrowed in SQL (before limit/offset and in the
+  // register totals); the page used to fetch unfiltered and filter only the first 200 rows, while "All matching" counted all.
+  bill_category: z
+    .string()
+    .trim()
+    .max(200)
+    .regex(/^(maintenance|repair|fuel|driver|vendor)(,(maintenance|repair|fuel|driver|vendor))*$/)
+    .optional(),
+  vendor_ids: z
+    .string()
+    .trim()
+    .min(1)
+    .max(4000)
+    .refine((v) => { const ids = v.split(","); return ids.length <= 100 && ids.every((id) => id.trim().length >= 1 && id.trim().length <= 100); }, "Expected 1–100 comma-separated vendor ids")
+    .optional(),
   // ROUND 297 driver-profile audit — driver / trailer profile Bills panels sent these and the schema dropped them,
   // so a driver's Bills panel listed every bill in the company (with Pay buttons).
   driver_id: z.string().uuid().optional(),
@@ -405,6 +420,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       trailerId: query.data.trailer_id,
       sort: query.data.sort,
       dir: query.data.dir,
+      billCategories: query.data.bill_category ? [...new Set(query.data.bill_category.split(","))] : undefined,
+      vendorIds: query.data.vendor_ids ? [...new Set(query.data.vendor_ids.split(",").map((id) => id.trim()))] : undefined,
     };
     const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
       ...listOptions,
@@ -480,6 +497,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       trailerId: query.data.trailer_id,
       sort: query.data.sort,
       dir: query.data.dir,
+      billCategories: query.data.bill_category ? [...new Set(query.data.bill_category.split(","))] : undefined,
+      vendorIds: query.data.vendor_ids ? [...new Set(query.data.vendor_ids.split(",").map((id) => id.trim()))] : undefined,
     };
     const vendorRows = query.data.bill_type === "driver_bill" ? [] : await listBills(String(user.uuid), query.data.operating_company_id, {
       ...listOptions,

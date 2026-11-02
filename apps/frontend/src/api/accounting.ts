@@ -1161,6 +1161,10 @@ export function listBills(
   operatingCompanyId: string,
   params: {
     vendor_id?: string;
+    /** Codex QA 11-02 — several vendors (comma-joined); the server ORs them before limit/offset and in the totals. */
+    vendor_ids?: string;
+    /** Codex QA 11-02 — one or more bill categories (comma-joined), narrowed in SQL. */
+    bill_category?: string;
     // Backend zod schema (bills.routes.ts) accepts "active"/"all" as real, handled status
     // filter values alongside BillStatus/"unpaid" — BillsPage.tsx's own status filter uses
     // both (default "active" = hide voided, "all" = include voided). This type had drifted

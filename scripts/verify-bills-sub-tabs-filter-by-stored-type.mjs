@@ -13,9 +13,16 @@ if (process.argv.includes("--selftest")) selftest();
 const LABEL = "verify-bills-sub-tabs-filter-by-stored-type";
 const fails = [];
 const page = readFileSync("apps/frontend/src/pages/accounting/BillsPage.tsx", "utf8");
-const fn = page.slice(page.indexOf("function billMatchesCategory("), page.indexOf("function billBalanceCents("));
-if (!/return bill\.bill_category === category;/.test(fn)) fails.push("BillsPage: billMatchesCategory no longer reads the stored bill_category");
-if (/\.test\(hay\)|bill\.memo|vendor_name/.test(fn)) fails.push("BillsPage: a sub-tab guesses the bill type from memo / vendor words again");
+// Codex QA 11-02: the stored-type filter moved into SQL (before limit/offset and in the register totals).
+const svcFilter = (() => {
+  const s = readFileSync("apps/backend/src/accounting/bills.service.ts", "utf8");
+  const i = s.indexOf("function applyBillCategoryAndVendorsFilter(");
+  return i < 0 ? "" : s.slice(i, s.indexOf("\n}\n", i));
+})();
+if (!/b\.bill_category = ANY\(/.test(svcFilter)) fails.push("bills.service: category no longer filters on the stored b.bill_category in SQL");
+if (/memo|vendor_name|ILIKE/i.test(svcFilter)) fails.push("bills.service: a sub-tab guesses the bill type from memo / vendor words again");
+if (!/bill_category: categoryParam/.test(page)) fails.push("BillsPage: the category selection is no longer sent to the server");
+if (/billMatchesCategory|categoryFilter\.some\(/.test(page)) fails.push("BillsPage: category is re-filtered on the client page again (first-200-rows contradiction)");
 
 const mig = readFileSync("db/migrations/202615370700_bills_bill_category.sql", "utf8");
 for (const n of ["ADD COLUMN IF NOT EXISTS bill_category", "CREATE TRIGGER trg_bills_set_category", "v.driver_id IS NOT NULL", "code IN ('TRANSP', 'TRK')"]) {
