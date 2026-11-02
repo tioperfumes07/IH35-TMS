@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~12:55 PM CT) — Cursor
+- **MERGED:** #27990 claim 18930 · #27991 ENG-13/22 · #27993 claim 18932 · #27994 Profitability hub fill-not-shell.
+- **NEXT:** MapView BoardSection + ELD cert/settings engines; ACCT-R-04 Render UUIDs; ENG-36 re-measure; Dreamline later; no match/reconcile.
+
 ## OUTBOX (11-02-2026 ~12:45 PM CT) — Cursor fill-not-shell Profitability hub
 - **SHIPPED (this PR):** Profitability By Lane/Type/Customer/Load + KPI wired to live engines; equipment-type-profitability GET; verify-profitability-hub-wired; unavailable KPI budget 5→4.
 - **NEXT:** remaining shells (MapView tiles, ELD cert/settings backends, Banking auto-vendor); ENG-36 re-measure; ACCT-R-04 Render UUIDs; Dreamline later.
