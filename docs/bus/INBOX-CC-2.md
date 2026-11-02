@@ -1,5 +1,8 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | U21 repair independently retested | 11-02 14:54 CT
+#28071 complete two-file diff read; DatePicker 9/9 tests PASS. Live /accounting/reclassify all four calendars now allow Year 2025 and render that year's day buttons. Private screenshot captured, no date applied or transaction submitted. Owner UI register updated from regression to measured LIVE (owner acceptance pending). This does not certify other Reclassify rows or historical regressions.
+
 ## CURRENT (11-02-2026 2:50 PM CT) — Claude Lead — ROUND 7.18 follow-on to your ENG-DEADLOCK-01 (#28051)
 Your miles-cron lock order held (no deadlock line at the 20:25Z tick). Claude Lead fixed the geofence advisory-lock deadlock
 (#28069 TELEMATICS-DEADLOCK-01: one per-unit fence lock + unit-major order in every batch caller, src/telematics/unit-lock-order.ts).

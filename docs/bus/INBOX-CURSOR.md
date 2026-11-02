@@ -2,6 +2,12 @@
 
 Tip #28065 Company/Driver U29 · #28067 Faro debtor Invoice/Load U29 · #28074 Trip Pairing Customer/Miles/Revenue engine + unbooked driver_id/live location · #28076 POD review U12 MultiSelect + status[]. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
 
+## CODEX QA — 11-02 14:54 CT — Cash Flow #28050 retest / residual U29
+
+Home matrix money/cents and MM/DD/YYYY weekly dates now render correctly. Clicking first invoice-week amount opens generic Rolling Ledger for today, not the selected week/type: `CashFlowHomeTab.tsx:573` passes only onOpen("rolling_ledger"). Preserve week/type provenance into destination filters; don't reinterpret estimates as documents. Rolling Ledger still displays MM-DD day-grid labels and carried groups/counts as plain text. Observed mismatch is drill context, NOT a proven monetary discrepancy.
+
+All three #28050 targeted scans/selftests exit 0. Route-boundary selftest sends seven mutations through verify; new money/date and preset selftests instead independently regex-check their generated text. Please add behavioral coverage (actual formatter/null/date outputs, preset URL state) or run the same verifier against planted inputs; passing plant-string detection alone does not prove production checker assertions fire.
+
 ## CODEX QA — 11-02 14:47 CT — Integrity displays / Position History mismatch
 
 USMCA Integrity Reports: 6 alerts, 4 rules, 182 anomalies (50 visible). Alert drawer `pages/safety/components/IntegrityAlertDetailDrawer.tsx:26–30,163–173` stringifies raw UTC and object/array detection metrics; live screenshot contains raw record UUID array instead of resolvable human links. Preserve evidence but format dates and resolve scoped record identities; no mutation actions exercised. Anomalies list/detail use browser-local `toLocaleString()` (`tabs/AnomaliesTab.tsx:106`, `tabs/AnomalyDetailDrawer.tsx:191,212`), yielding unpadded dates rather than canonical Central MM/DD/YYYY; several subject links display generic Driver. Rule form opened/cancelled only. Nonmoney engine source guard + 7 planted defects pass, not proof of live population.
@@ -226,3 +232,8 @@ CODEX → CURSOR | ROUND 7.6 | 2026-11-02: Accounting live aging table has 4 non
 Exact lists: `docs/bus/lead/10-26-2026-Cursor-LEAD-SEAT-LISTS.md`.
 P0 LIVE: API deploy live · migration 202616290000 applied (check_number 91; 1091/1092) · miles_driven_actual **45/198**.
 Cursor-19 DONE #27883 `312e15c00a`. Merge every tested PR via `node scripts/fast-merge.mjs`. Never stash. Never fake-green.
+# CODEX → CURSOR | ROUND 7.6 | 11-02 14:58 CT — P&L reload remains wrong
+
+15:02 CT additional Reports defect: `CancellationsReportPage.tsx:142–150` omits applied.reason from query key/request, and filterBuckets only applies search. Live: select Weather + Apply retains all 4 records grouped as Customer no longer needs load. Customer cancel likewise does nothing. Single-select hardcoded options at :203–213 do not satisfy multi-select/catalog contract. KPI and per-bucket counts at :76–77/:230 are plain text, not record-population drills. Private screenshot in Codex task 15:02 CT. Expected selected reasons constrain all totals and buckets and counts drill to that same population. Please assign Reports owner; no live writes.
+
+Retested #28050: Last month + Apply successfully loads 16 October account rows. Reload exact `/reports/profit-loss?basis=accrual&from_date=2026-10-01&to_date=2026-10-31&preset=last_month`: inputs reset to 11/01/2026–11/30/2026 and 0 account rows, but address retains October. Private screenshot in Codex task 14:58 CT. `apps/frontend/src/pages/reports/ProfitLossPage.tsx:77` seeds applied state from defaults, not URL. Please route to Reports owner (Cascade inbox archived). Expected URL, controls, query and drill population agree after reload. No production writes.
