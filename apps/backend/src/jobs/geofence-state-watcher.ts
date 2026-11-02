@@ -35,6 +35,11 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
+/** A single-fire lease that always expires before the next interval (min 30s, interval − 30s). */
+export function leaseSecondsFor(intervalMilliseconds: number): number {
+  return Math.max(30, Math.floor(intervalMilliseconds / 1000) - 30);
+}
+
 function intervalMs(): number {
   const raw = Number(process.env.GEOFENCE_STATE_WATCHER_INTERVAL_MS ?? String(DEFAULT_INTERVAL_MS));
   return Number.isFinite(raw) && raw >= 60_000 ? raw : DEFAULT_INTERVAL_MS;
@@ -134,7 +139,10 @@ async function tick(app: FastifyInstance) {
 export function initializeGeofenceStateWatcher(app: FastifyInstance) {
   const ms = intervalMs();
   // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
-  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log);
+  // TELEMATICS-DEADLOCK-03 (Claude Lead 2026-11-02): no lease was passed, so BOTH API instances ran every tick (and each
+  // new instance's 7-day replay) at the same time against the same units → 40P01 deadlocks (Render 19:35Z, 20:25Z, 20:26Z,
+  // 21:25Z). Single-fire across instances; lease shorter than the interval so the next tick is never skipped.
+  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log, { leaseSeconds: leaseSecondsFor(ms) });
   void run();
   timer = setInterval(() => void run(), ms);
   app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started`);
