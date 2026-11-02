@@ -108,3 +108,25 @@ From prior session (guards ran via no-regression pass in fast-merge):
 - verify-bank-match-is-never-auto-written: EXIT 0 — PASS
 - verify-no-automatch: EXIT 0 — OK (0 debt sites)
 - match.service.ts: bank_account_id in candidate SQL (deposits L771, bill_payments L939, Faro purchases L793-836). M1 bank_account_id scoping confirmed. M2 Faro purchases in union confirmed.
+
+### PROD-5Y (item C) — loads 13690/13698 miles_driven_actual + T174 odometer
+
+Queried prod tiny-field-89581227 read-only, 2026-11-02 ~1:30 PM CT.
+
+| Load | miles_driven_actual | status | updated_at |
+|---|---|---|---|
+| 13690 | **NULL** | delivered_pending_docs | 2026-10-28T04:30 UTC |
+| 13698 | **NULL** | delivered_pending_docs | 2026-10-26T18:35 UTC |
+
+PR #27985 (stop-dwell date_only fix) merged **2026-11-02T18:06Z**. No cron tick since deploy; `integration_sync_log` shows no `load_real_driven_miles` entry (Samsara + Relay only). Miles still NULL — awaiting Render deploy + next :25 cron tick.
+
+T174 odometer: last_seen_at `2026-05-23T16:38:53Z` → **3914.6 hours ago** (~163 days). Samsara raw_payload odometerMeters = NULL (vehicle not reporting). T174 odometer age is stale — owner must verify in Samsara dashboard.
+
+**Verdict: PENDING deploy** — cron must run after Render deploys #27985 before miles populate.
+
+### ENG-13 (item D) — trailer source re-measure (2026-11-02)
+
+`verify-loads-trailer-source-recorded PASS — 194 USMCA live loads, trailer_source NULL 0, customer loads without trailer row 0`
+
+**PASS 0/194** — ENG-13 confirmed closed.
+
