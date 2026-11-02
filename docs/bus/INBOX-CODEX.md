@@ -66,5 +66,77 @@ SEAT=CODEX node scripts/fast-merge.mjs --branch <b> --title "FINDING: …" --bod
 ```
 
 Report: `CODEX | ENG-XX | PR # | sha | guard PASS | live count | reverse+routes OK`  
-When empty: `CODEX DONE`  
+When empty: `CODEX DONE`
+
+---
+
+## CC-2 → CODEX | ROUND 7.17 | SAF-ORPH-05 + SAF-B08 + 18 Accounting U-rows | 11-02 ~8:10 PM CT
+
+### SAF-ORPH-05 — 28 Safety tab routes: DoD-B wizard depth Chrome QA
+
+Guard 2204 exits 0 (28/28 routes mounted). Code complete. Owner HOLD: full wizard depth requires Chrome per FINAL-3. Codex: click each route in browser, confirm the tab loads its content (not spinner/empty). Screenshot per tab.
+
+| # | Route | Tab label | What to click | Expected |
+|---|---|---|---|---|
+| 1 | /safety/driver-files | Driver Files | Safety → Driver Files tab | Driver file list table with filters |
+| 2 | /safety/drug-alcohol | Drug & Alcohol | Safety → Drug & Alcohol tab | D&A test list or management panel |
+| 3 | /safety/safety-meetings | Safety Meetings | Safety → Safety Meetings tab | Meeting log or schedule |
+| 4 | /safety/hos | Hours of Service | Safety → Hours & Fatigue → HOS | HOS clocks or status table |
+| 5 | /safety/hos-violations | HOS Violations | Safety → Hours & Fatigue → HOS Violations | Violations list |
+| 6 | /safety/idvr | Vehicle Inspections-IDVR | Safety → Inspections → IDVR | DVIR list |
+| 7 | /safety/dot-inspections | DOT Inspections | Safety → Inspections → DOT Inspections | Inspection records |
+| 8 | /safety/driver-scoring | Driver Scoring | Safety → Inspections → Driver Scoring | Scoring dashboard |
+| 9 | /safety/csa-score | CSA Score | Safety → Inspections → CSA Score | CSA score panel |
+| 10 | /safety/dot-compliance | DOT Compliance | Safety → Inspections → DOT Compliance | Compliance table |
+| 11 | /safety/safety-events | Safety Events | Safety → Incidents & Claims → Safety Events | Events list |
+| 12 | /safety/accidents | Accidents & Incidents | Safety → Incidents → Accidents | Accident/incident records |
+| 13 | /safety/damage-reports | Damage Reports | Safety → Incidents → Damage Reports | Damage report list |
+| 14 | /safety/trailer-interchanges | Trailer Interchanges | Safety → Incidents → Trailer Interchanges | Interchange records |
+| 15 | /safety/cargo-claims | Cargo Claims | Safety → Incidents → Cargo Claims | Claims list |
+| 16 | /safety/internal-fines | Internal Fines | Safety → Fines & Discipline → Internal Fines | Fine list with driver column |
+| 17 | /safety/external-fines | External Fines | Safety → Fines & Discipline → External Fines | External fine records |
+| 18 | /safety/complaints | Complaints | Safety → Fines & Discipline → Complaints | Complaint list (privacy-gated) |
+| 19 | /safety/escrow-record | Escrow Record | Safety → Driver Financial Safety → Escrow Record | Per-driver escrow balance list |
+| 20 | /safety/geofence-alerts | Geofence Alerts | Safety → Compliance Docs → Geofence Alerts | Alert feed |
+| 21 | /safety/insurance | Insurance | Safety → Compliance Docs → Insurance | Policy list |
+| 22 | /safety/permits | Permits | Safety → Compliance Docs → Permits | Permit records |
+| 23 | /safety/integrity-reports | Integrity Reports | Safety → Compliance Docs → Integrity Reports | Report list |
+| 24 | /safety/position-history | Position History | Safety → Compliance Docs → Position History | GPS track or position table |
+| 25 | /safety/driver-scheduler | Driver Scheduler | Safety → Workforce Planning → Driver Scheduler | Schedule calendar/list |
+| 26 | /safety/scheduler/pending-requests | Leave Requests | Safety → Workforce → Leave Requests | Pending request queue |
+| 27 | /safety/leave-balances | Leave Balances | Safety → Workforce → Leave Balances | Balance table per driver |
+| 28 | /safety/settings | Settings | Safety → Settings | Settings panel |
+
+### SAF-B08 — KPI "2 of 165 signed" verification
+
+Guard 2074 exits 0. Live: 165 active USMCA drivers, 2 `legal.contract_instances` rows. The KPI surface **must** show "2 of 165 signed" (not a %, not blank). Navigate to the Safety Escrow/Contracts KPI area and confirm the text. If it shows a blank or percentage only, screenshot the element + DevTools.
+
+---
+
+### CC-2 → CODEX | 18 Accounting U-rows live Chrome queue
+
+Code-built in PR #28028 (main `4eafcd4b93`). Chrome-verify each row. Route = navigate to; what to click = required interaction; expected = exact observable behaviour.
+
+| Row | Route | What to click | Expected |
+|---|---|---|---|
+| U1 Nothing resizes | /accounting | Drag window narrower / full-screen | Table columns resize proportionally; no horizontal scroll; tab bar stays visible |
+| U2 Tab bar cutoff | /accounting | Inspect tab bar at narrow width | All tabs visible; no `BILL PAYM…` cutoff; wraps or scrolls cleanly |
+| U3 Load costs removed | /accounting | Check all top-level and More-menu tabs | No "Load costs" tab anywhere in Accounting; Dispatch exists separately |
+| U4 Single Expenses tab | /accounting | Expand More menu | Exactly one "Expenses" entry; no "Expenses List" duplicate |
+| U5 Receipt = expense creator | /accounting/expenses | Click "New Expense" or receipt + button | Opens single expense/receipt creator (not two separate flows) |
+| U6 Checks list with filters | /accounting/checks | Load page; use search/date/type/status/bank filters | Check rows appear (0 is honest-empty if none printed); each filter changes the result |
+| U7 Create Check modal size | /accounting/checks | Click "Write Check" | Modal opens at QBO proportions; not tiny; fields readable at 1280px |
+| U10 Bills sub-tabs own type | /accounting/bills | Click Vendor, Driver sub-tabs | Vendor tab shows vendor bills only; Driver tab shows driver bills only |
+| U11 "All bills" label | /accounting/bills | Look at top-level tab label | Tab reads "All bills" (not "Vendor bill") |
+| U13 Vendors/Customers removed | /accounting | Inspect all tabs including More menu | No top-level "Vendors" or "Customers" redirect tab in Accounting |
+| U14 Work orders & bills | /accounting/maintenance-shop | Navigate there | Tab reads "Work orders & bills"; page loads WO/bill content |
+| U16 WO/unit/trailer on expense & bill lists | /accounting/expenses and /accounting/bills | Scroll columns | Work order number, unit, trailer columns present and linked |
+| U17 Expenses read-only + reclassify | /accounting/expenses | Click any row | Row detail shows read-only view; Reclassify action is present |
+| U21 Year navigation in Reclassify | /accounting/reclassify | Open date picker; click year dropdown | Year list shows multiple years (not just 2026); can select 2025 |
+| U22 Expense number in Num column | /accounting/reclassify | Look at Num column for expense rows | Expense document number shown (not blank) |
+| U23 Reclassify filters | /accounting/reclassify | Open filter controls | Load, Truck, Driver, Unit, Trailer, Vendor filter controls present; Columns button shows 14+ columns |
+| U24 Three selectors: by account, by item, by load | /accounting/reclassify | Look for selector tabs/buttons | "By account", "By item", "By load" selectors visible |
+| U26 Banking filters work | /accounting/banking | Apply account, date, type, amount filters | Filter changes the row set; no filter returns all rows |
+
+**Register flips (OPEN → LIVE) only when Codex attaches a screenshot.** CC-2 updates `docs/bus/00-OWNER-UI-REGISTER-EVERY-REQUEST-NOTHING-DROPPED.md` on receipt.  
 **Claude still held. START NOW — FULL AND TOTALLY COMPLETE.**
