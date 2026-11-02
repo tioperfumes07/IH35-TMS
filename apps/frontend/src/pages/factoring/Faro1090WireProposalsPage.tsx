@@ -25,6 +25,7 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { SelectCombobox } from "../../components/Combobox";
 import { statusOptions } from "../../lib/statusListParams";
 
 const CLASS_OPTIONS = statusOptions({
@@ -123,8 +124,8 @@ export function Faro1090WireProposalsPage() {
           const selected = picked[row.purchase_id] ?? row.dry_run_accept_preview.bank_transaction_id ?? row.candidates[0]?.bank_transaction_id ?? "";
           return (
             <div className="space-y-1" data-testid={`faro-1090-candidates-${row.purchase_id}`}>
-              <select
-                className="h-8 w-full min-w-[16rem] rounded-sm border border-gray-300 px-2 text-xs"
+              <SelectCombobox
+                className="h-8 w-full min-w-[16rem] text-xs"
                 value={selected}
                 onChange={(event) => setPicked((prev) => ({ ...prev, [row.purchase_id]: event.target.value }))}
                 aria-label={`Wire candidate for ${row.display_id}`}
@@ -135,7 +136,7 @@ export function Faro1090WireProposalsPage() {
                     {c.exact_amount ? " · exact" : ` · Δ${c.amount_delta_cents}¢`} · {(c.merchant_name || c.description || "bank").slice(0, 40)}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               <div className="flex flex-wrap gap-1">
                 <Button
                   size="sm"

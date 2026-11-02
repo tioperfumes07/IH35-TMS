@@ -8,7 +8,7 @@ const SURFACES = [
   ["CollectionsPage", "apps/frontend/src/pages/accounting/CollectionsPage.tsx", ["collections-filters-board", "collections-queue-board", "collections-task-detail-board"], ["Run sync now", "EntityLink"]],
   ["VendorBalancesPage", "apps/frontend/src/pages/accounting/VendorBalancesPage.tsx", ["vendor-balances-vendors-board", "vendor-balances-bills-board", "vendor-balances-payments-board"], ["PayBillModal", "vendor-balances-select-"]],
   ["CompanyWaterfallSection", "apps/frontend/src/pages/driver-finance/components/CompanyWaterfallSection.tsx", ["settlement-company-waterfall-section"], ["waterfall-invoiced", "waterfall-net"]],
-  ["ImportFuelTransactionsModal", "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx", ["fuel-import-selected-board", "fuel-import-wex-plan-board"], ["FORM_SELECT_CLASS", "fuel-import-kind"]],
+  ["ImportFuelTransactionsModal", "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx", ["fuel-import-selected-board", "fuel-import-wex-plan-board"], ["SelectCombobox", "fuel-import-kind"]],
 ];
 const fails = [];
 for (const [id, rel, ids, keep] of SURFACES) {

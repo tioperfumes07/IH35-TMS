@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~9:25 PM CT) — Cursor SelectCombobox shrink + DF bill U18
+- **PRIOR:** #28200 System/U18 · #28201 Driver Bill Detail backHref `/driver-finance` (back-arrow green).
+- **THIS:** Faro1090 wire candidates + Fuel Import kind → SelectCombobox; verify-every-selector-multi-select BASELINE 11→10.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; ENG-21 BLOCKED; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~9:00 PM CT) — Cursor System qty + Integrations U18
 - **PRIOR:** #28198 inventory/integrations/forensic/payroll format.
 - **THIS:** SystemModule drift qty → formatQuantityTable · EDI Transaction Log backHref → /integrations/edi · Samsara driver mapping backHref → /integrations/samsara (+ FILE_MODULE map). Guard extended.
