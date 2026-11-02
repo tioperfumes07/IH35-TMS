@@ -11,6 +11,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useListState } from "../../components/list-state";
@@ -18,6 +19,7 @@ import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal"
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -128,18 +130,30 @@ export function PoliciesList() {
   ];
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view policies.</div>;
+    return (
+      <div className="space-y-3" data-testid="insurance-policies-page">
+        <PageHeader
+          backHref="/insurance"
+          breadcrumb={["Insurance", "Policies"]}
+          title="Policies"
+          subtitle="Filter and review insurance policies. Click any row to open policy details."
+        />
+        <BoardSection title="Policies" testId="insurance-policies-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view policies.</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xs font-semibold text-[#0F1219]">Policies</h2>
-            <p className="mt-1 text-xs text-[#4B5563]">Filter and review insurance policies. Click any row to open policy details.</p>
-          </div>
-          {canCreatePolicy ? (
+    <div className="space-y-3" data-testid="insurance-policies-page">
+      <PageHeader
+        backHref="/insurance"
+        breadcrumb={["Insurance", "Policies"]}
+        title="Policies"
+        subtitle="Filter and review insurance policies. Click any row to open policy details."
+        actions={
+          canCreatePolicy ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button type="button" onClick={() => setWizardOpen(true)}>
                 + Create policy
@@ -153,104 +167,112 @@ export function PoliciesList() {
                 + Create policy form
               </Button>
             </div>
-          ) : null}
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       {lastPolicyId ? (
-        <div className="flex items-center justify-between gap-3 rounded-sm border border-gray-200 bg-white px-3 py-2">
-          <span className="text-xs text-gray-600">Close an open task this policy fulfils:</span>
-          <TaskLinkPicker
-            operatingCompanyId={companyId}
-            targetType="policy"
-            targetId={lastPolicyId}
-            onLinked={() => setLastPolicyId(null)}
-          />
-        </div>
+        <BoardSection title="Link task" testId="insurance-policies-task-link">
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2">
+            <span className="text-xs text-gray-600">Close an open task this policy fulfils:</span>
+            <TaskLinkPicker
+              operatingCompanyId={companyId}
+              targetType="policy"
+              targetId={lastPolicyId}
+              onLinked={() => setLastPolicyId(null)}
+            />
+          </div>
+        </BoardSection>
       ) : null}
 
-      <CollapsedListFilters
-        activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter.length ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
-        onApply={staged.apply}
-        onReset={staged.reset}
-        onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
-        testIdPrefix="insurance-policies"
-        dataAttributes={{ "data-insurance-policies-filter-toolbar": "collapsed" }}
-        className="rounded-sm border border-gray-200 bg-white p-2"
-      >
-        <div className="grid gap-3 md:grid-cols-4">
-          <div className="text-xs font-semibold text-[#4B5563]">
-            <label htmlFor="insurance-policies-type-filter">Type</label>
-            {typesQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load coverage types"
-                status={0}
-                message="The policy type filter is unavailable."
-                onRetry={() => void typesQuery.refetch()}
-              />
-            ) : (
-              <Combobox
-                id="insurance-policies-type-filter"
-                className="mt-1 w-full"
-                value={staged.draft.typeFilter}
-                onChange={(next) => staged.setDraft({ ...staged.draft, typeFilter: next ?? "" })}
-                options={[
-                  { value: "", label: "All types" },
-                  ...(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name })),
-                ]}
-                allowClear={false}
-              />
-            )}
-          </div>
+      <BoardSection title="Filters" testId="insurance-policies-filters-board">
+        <div className="px-3.5 py-2">
+          <CollapsedListFilters
+            activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter.length ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
+            testIdPrefix="insurance-policies"
+            dataAttributes={{ "data-insurance-policies-filter-toolbar": "collapsed" }}
+          >
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="text-xs font-semibold text-[#4B5563]">
+                <label htmlFor="insurance-policies-type-filter">Type</label>
+                {typesQuery.isError ? (
+                  <ListErrorState
+                    title="Couldn't load coverage types"
+                    status={0}
+                    message="The policy type filter is unavailable."
+                    onRetry={() => void typesQuery.refetch()}
+                  />
+                ) : (
+                  <Combobox
+                    id="insurance-policies-type-filter"
+                    className="mt-1 w-full"
+                    value={staged.draft.typeFilter}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, typeFilter: next ?? "" })}
+                    options={[
+                      { value: "", label: "All types" },
+                      ...(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name })),
+                    ]}
+                    allowClear={false}
+                  />
+                )}
+              </div>
 
-          <div className="text-xs font-semibold text-[#4B5563]" data-testid="insurance-policies-status-filter">
-            <label htmlFor="insurance-policies-status-filter">Status</label>
-            <div className="mt-1" id="insurance-policies-status-filter">
-              <MultiSelectDropdown
-                label="Status"
-                options={STATUS_FILTER_OPTIONS}
-                selected={staged.draft.statusFilter}
-                onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
-                allLabel="All statuses"
-                data-testid="insurance-policies-status-multiselect"
-              />
+              <div className="text-xs font-semibold text-[#4B5563]" data-testid="insurance-policies-status-filter">
+                <label htmlFor="insurance-policies-status-filter">Status</label>
+                <div className="mt-1" id="insurance-policies-status-filter">
+                  <MultiSelectDropdown
+                    label="Status"
+                    options={STATUS_FILTER_OPTIONS}
+                    selected={staged.draft.statusFilter}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                    allLabel="All statuses"
+                    data-testid="insurance-policies-status-multiselect"
+                  />
+                </div>
+              </div>
+
+              <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-[#1F2A44]">
+                <input
+                  type="checkbox"
+                  checked={staged.draft.expiringSoonOnly}
+                  onChange={(event) => staged.setDraft({ ...staged.draft, expiringSoonOnly: event.target.checked })}
+                  className="h-4 w-4 rounded-sm border border-gray-300"
+                />
+                Expiring soon (next 30 days)
+              </label>
             </div>
-          </div>
-
-          <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-[#1F2A44]">
-            <input
-              type="checkbox"
-              checked={staged.draft.expiringSoonOnly}
-              onChange={(event) => staged.setDraft({ ...staged.draft, expiringSoonOnly: event.target.checked })}
-              className="h-4 w-4 rounded-sm border border-gray-300"
-            />
-            Expiring soon (next 30 days)
-          </label>
+          </CollapsedListFilters>
         </div>
-      </CollapsedListFilters>
+      </BoardSection>
 
       {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Filters (Type/Status/
           Expiring-soon) above feed `rows`; row-click → policy details preserved exactly. */}
-      {policiesQuery.isError ? (
-        <ListErrorState
-          title="Couldn't load list"
-          status={0}
-          message="Failed to load insurance policies."
-          onRetry={() => { void policiesQuery.refetch(); }}
-        />
-      ) : (
-        <ParityTable
-          title="Insurance policies"
-          storageKey="insurance-policies"
-          columns={columns}
-          rows={rows}
-          rowKey={(policy) => policy.id}
-          onRowClick={(policy) => navigate(`/insurance/policies/${policy.id}`)}
-          loading={listState.isLoading}
-          emptyText="No insurance policies found for this entity yet."
-        />
-      )}
+      <BoardSection title="Insurance policies" testId="insurance-policies-list-board">
+        {policiesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load list"
+            status={0}
+            message="Failed to load insurance policies."
+            onRetry={() => { void policiesQuery.refetch(); }}
+          />
+        ) : (
+          <ParityTable
+            title="Insurance policies"
+            storageKey="insurance-policies"
+            columns={columns}
+            rows={rows}
+            rowKey={(policy) => policy.id}
+            onRowClick={(policy) => navigate(`/insurance/policies/${policy.id}`)}
+            loading={listState.isLoading}
+            emptyText="No insurance policies found for this entity yet."
+            tableTestId="insurance-policies-table"
+          />
+        )}
+      </BoardSection>
 
       <PolicyCreateModal
         open={createOpen}
