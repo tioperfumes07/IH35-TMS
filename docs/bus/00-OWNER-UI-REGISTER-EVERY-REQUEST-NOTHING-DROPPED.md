@@ -29,7 +29,7 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 | U23 | Reclassify: **no filters for Load, Truck, Driver, Unit, Trailer, Vendor** + a column chooser to add them | CC-2 | LIVE partial 11-02: load/truck/driver/trailer/vendor controls and Columns(14) visible; load checkbox menu opens human labels. Filtering effect UNVERIFIED while register loading |
 | U24 | Reclassify: three selectors — by account, **by item**, by load | CC-2 | LIVE partial: account/item/load checkbox selectors present, scoped account effect proved. Combined item/load effect pending |
 | U25 | Diesel → Reefer Diesel moves item + account + **IFTA flag** + trailer linkage, hour-based | CC-2 | OPEN |
-| U26 | **Banking filters do not filter correctly** | CC-2 | OPEN · NEW |
+| U26 | **Banking filters do not filter correctly** | CC-2 | LIVE partial 11-02 16:40 CT: account/date/type union changes rows; amount-range missing Received/Spent and shared Reset leaves active filter. Private screenshots captured; OPEN repair |
 | U27 | **P&L and Balance Sheet must render like QuickBooks — no negative income or liabilities.** Backend sign math is CORRECT; the SURFACE renders a raw ledger balance | CC-2 · CURSOR | OPEN · the one he is looking at |
 | U28 | Multi-select account filters **everywhere in the app** | CURSOR | OPEN |
 | U29 | Everything clickable — every cell naming a record opens it | CURSOR | OPEN |
