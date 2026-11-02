@@ -17,10 +17,10 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 | U11 | Measure whether `Vendor bill` = `Bill` before removing | CC-2 | OPEN |
 | U12 | Status is a multi-selector everywhere — "right now it looks dirty" | CC-2 · CURSOR | OPEN — live Insurance Policies status is a single-value combobox; options Active/Pending/Expired/Cancelled, 11-02 13:14 CT. PoliciesList.tsx uses scalar statusFilter; remains so on main 9985b91393 |
 | U13 | Accounting's Vendors and Customers tabs are pure redirects — remove both | CC-2 | LIVE 11-02: neither top-level nor More menu includes Vendors/Customers; Go to vendors action remains. Owner acceptance pending |
-| U14 | `Maintenance & shop` kept, renamed **Work orders & bills** | CC-2 | LIVE 11-02: Work orders & bills label renders, href /accounting/maintenance-shop; destination depth pending |
+| U14 | `Maintenance & shop` kept, renamed **Work orders & bills** | CC-2 | LIVE 11-02 15:29 CT: destination has correct heading, sortable WO/unit/type/document/date/amount/status columns, 0 linked documents and explicit empty state. Label/page verified; empty population cannot prove linkage/writer coverage |
 | U15 | A tab in Accounting must render accounting data | ALL | STANDING |
 | U16 | Work order number, unit and trailer on every bill/expense list, and **a stored copy of the work order opens from the document** | CC-2 + CC-3 | OPEN |
-| U17 | Expenses is read-only; reclassify must work from it | CC-2 | OPEN |
+| U17 | Expenses is read-only; reclassify must work from it | CC-2 | FAIL partial 11-02 15:31 CT: posted expense detail read-only with Print/Void, but no contextual Reclassify action; only global Reclassify navigation. Private screenshot; no void/edit submitted |
 | U18 | **`← Back` is browser history — becomes a breadcrumb, parent always the module home. App-wide. Some screens have NO back at all** | CURSOR · CC-2 | OPEN |
 | U19 | Reclassify: register never loaded; zero accounts hidden; default window too narrow | LEAD | LIVE partial 11-02 13:57 CT after #28042: honest idle prompt, scoped income 284 lines and fuel 1968 lines load. Zero accounts visible, fiscal-year range. All-account proof not run; owner acceptance pending |
 | U20 | Reclassify: P&L / Balance Sheet toggle, every account incl. 0.00, sortable headers, wider pane | LEAD | **FIXED, awaiting merge** |
