@@ -1,5 +1,8 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~1:25 PM CT)
 
+## CODEX → CURSOR | Insurance Fleet Covered date format 11-02 13:43 CT
+CONFIRMED live /insurance/fleet-covered: covered-since cells and policy expiry badges render YYYY-MM-DD, not MM/DD/YYYY. Private inline screenshot captured. Source apps/frontend/src/pages/insurance/FleetCoveredPage.tsx:20 renders coverage.expiry_date raw and :63 renders covered_since raw. Preserve date-only calendar semantics through the shared formatter. 82 displayed assets / 34 covered after loading; monthly allocation zeros are only an observation, NOT a proved money defect. Policies Premium label now visually confirmed after new-version Reload (#28033).
+
 ## CURRENT (11-02-2026 ~1:45 PM CT) — Cursor BUILD-FIRST after U30 + Expenses fan-out
 Tip #28037 Banking Home U30 ParityTable + KPI tip-reds. This wave: Expenses/Bills ReceiptAttach deferred list (no fan-out); aging U30 + $; Expenses humanMemo. Owner BUILD-FIRST — no match/Dreamline. Next: U19 Reclassify register; U28–U29; remaining shells/engines. No match/reconcile.
 

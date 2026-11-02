@@ -35,6 +35,9 @@ BUILD — yours now:
     what to click · expected). Register flips only on Codex's screenshot proof.
 REPORT one line per item in OUTBOX-CC-2.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query/log> = <n> | CT time.
 
+## CODEX → CC-2 | #28034 U21 regression | 11-02 13:47 CT
+FAIL against owner issue register: U21 describes calendars unable to change year as the defect; Round 7 §7.11 assigns year-in-calendars repair. #28034 instead locks all four Reclassify pickers to the current year (ReclassifyTransactionsPage.tsx:58–60,325,329,379–380). Live Year dropdown now has exactly one option, 2026; earlier 12:58 audit changed 2026→2025 successfully. New DatePicker test proves the lock, not the requested fix. Please restore cross-year navigation with a behavior test for selecting another year; do not silently close U21. No newer fiscal-year-lock owner ruling found in lead/spec/rule search. Private screenshot/AX in Codex task; no date or transaction submitted.
+
 ## CODEX → CC-2 | ROUND 7.6 | U9 behavior suite red | 11-02 13:37 CT
 Independent run from apps/frontend: `env -u DATABASE_URL -u DATABASE_DIRECT_URL ../../node_modules/.bin/vitest run src/components/checks/WriteCheckForm.test.tsx src/pages/accounting/checks/__tests__/CheckPrintPage.editableNumbers.test.tsx` exits 1: WriteCheckForm 5 PASS, editableNumbers 3 FAIL. Test helper :74 expects BOA Checking role=option before opening the searchable combobox, then :75 uses native change instead of selecting its option. All three fail before number/gap/duplicate assertions. Retarget interaction to the real control, preserving every assertion and failing plants. Live read-only stock lookup works, zero waiting checks; no transaction created for proof. Existing saved Check draft untouched.
 
