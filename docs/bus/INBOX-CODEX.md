@@ -2,18 +2,17 @@
 
 > **Standing law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md)
 
-## CURRENT (11-02-2026 ~10:30 AM CT) — Cursor Lead → Codex · FINISH ALL · START NOW
+## CURRENT (11-02-2026 ~10:50 AM CT) — Cursor Lead → Codex · FINISH ALL · START NOW
 
-**FULL ORDERS:** [lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md](lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md)  
-**Rulings:** [lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md](lead/10-27-2026-Codex-Lead-Answers-ENG28-13595-ENG17.md)
+**FULL ORDERS:** [lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md](lead/10-28-2026-Codex-FINISH-ALL-ENGINES.md)
 
-**Lead tip-closed (skip):** ENG-18/28/41/42/61 · 01c/24/39/40 · 43/45 · 26 · **44 DONE-LIVE** · **50 DONE-LIVE** · 46 spine CLOSED (escrow Δ remains) · 60 FE cutover DONE (table drop remains)
+**Lead tip-closed (skip):** … **44/47/50 DONE-LIVE** · 46 spine CLOSED · 60 FE cutover · 53 mileage-missing→0 PARTIAL
 
 ### Do now
 1. **ENG-17** Faro 1090 only · Dreamline MISSING  
-2. **ENG-48 → 49 · 51**  
-3. **ENG-13** 13595 Trailer 445 BLOCKED list only  
-4. Help **ENG-46 escrow Δ77500¢ / 47 / 60 table-drop / 27 / 23 / 29 / 53 / 25b**
+2. **ENG-48** fuel JE debit=0 mass failure (13563-1 named)  
+3. **ENG-49 / 51**  
+4. Help **ENG-46 escrow Δ / 60 table-drop / 27 / 23 / 29 / 53 residual 13690 / 25b**
 
 ```bash
 export DATABASE_URL="$(head -1 ~/Downloads/lead-tmp/.prod)"
