@@ -137,7 +137,11 @@ export function PendingSettlementDeductionsPanel() {
   ], []);
 
   if (!selectedCompanyId) {
-    return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to view pending deductions.</p>;
+    return (
+    <BoardSection title="Pending deductions" testId="pending-settlement-deductions-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view pending deductions.</p>
+    </BoardSection>
+  );
   }
 
   return (

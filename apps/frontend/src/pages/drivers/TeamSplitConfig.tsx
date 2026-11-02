@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../components/Modal";
@@ -29,7 +30,11 @@ const RATIO_PRESETS = [
 export function TeamSplitConfigPanel() {
   const { selectedCompanyId } = useCompanyContext();
   if (!selectedCompanyId) {
-    return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to manage team split configs.</p>;
+    return (
+    <BoardSection title="Team split" testId="team-split-config-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to manage team split configs.</p>
+    </BoardSection>
+  );
   }
   return <TeamSplitConfig operatingCompanyId={selectedCompanyId} />;
 }
