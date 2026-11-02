@@ -24,6 +24,8 @@ const FILES = [
   "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx",
   "apps/frontend/src/pages/legal/attorney-review/LegalAttorneyReviewPortalPage.tsx",
   "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx",
+  "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  "apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx",
 ];
 
 const DATE_ONLY = [
@@ -37,6 +39,8 @@ const QUANTITY = [
   "apps/frontend/src/components/boards/DriverOverviewBoard.tsx",
   "apps/frontend/src/components/boards/DriverHubBoard.tsx",
   "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+  "apps/frontend/src/components/dispatch/TourLoadRows.tsx",
+  "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
 ];
 
 const fails = [];

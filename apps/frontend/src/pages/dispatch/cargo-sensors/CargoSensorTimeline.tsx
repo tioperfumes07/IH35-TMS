@@ -56,9 +56,8 @@ type TimelineResponse = {
 };
 
 function formatTick(iso: string) {
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return iso;
-  return dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // House datetime (MM/DD/YYYY h:mm AM/PM); chart ticks stay readable via angle/interval.
+  return formatDateTimeUS(iso) || iso;
 }
 
 function statusText(status: "green" | "amber" | "red") {

@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~6:30 PM CT) — Cursor BUILD-FIRST format tip (#28181+)
+- **PRIOR:** #28179–#28181 house date/money waves (Factoring/Fuel/boards/Legal/Docs).
+- **THIS:** LoadDetailDrawer + TourLoadRows miles + CargoSensorTimeline ticks → formatDateTimeUS/formatQuantityTable.
+- **NEXT:** more engines/U18–U31 leftovers; ENG-21 rate-con; ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~6:15 PM CT) — Cursor BUILD-FIRST format tip (#28180+)
 - **PRIOR:** #28179 Factoring/Fuel/MatchDrawer · #28180 Driver boards/Kanban format.
 - **THIS:** Legal/Docs/Reconciler/Settlements KPI/LegalHome/HomeFleetRestore house date+money formatters.
