@@ -2,6 +2,24 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## P0 FIRST (11-02-2026 1:20 PM CT) — Claude Lead — ROUND 7.15 main red: required-live-load-guard = verify-diesel-expense-fuel-dedupe
+Settlement-net half of the live guard is FIXED (#28012, owner ruling 443.167-R2). This guard is the only red left in it. Measured prod 19:15Z:
+- duplicate_fill_pairs 6 > baseline 4. NEW pairs (same unit + product + day, identical gallons + total; 10-16 Dreamline IMPORT copy of a fill
+  booked by hand 10-11 — the exact 443.197 pattern):
+    T171 diesel 2026-08-04  50.006 gal $267.48  import 5e4559ab… (created 10-16)  vs manual c2ef82c1… (created 10-11)
+    T164 diesel 2026-09-02  78.016 gal $461.00  import 5198a23c… (created 10-16)  vs manual dbf57397… (created 10-11)
+  Also check (both manual, created 10-21, consecutive days): T173 diesel 10-15/10-16 97.000 gal $562.81  31376814… / 978674f1… —
+  open the Dreamline statement + receipt; void ONLY if the document shows one purchase.
+  Known 4 baseline pairs (T152 DEF ×2, T152 Relay diesel, T175 DEF) stay as named in the baseline file.
+- live_diesel_expenses 316 > 272: NOT a defect. 316 live Diesel expenses, 316 distinct source_fuel_transaction_id, 0 NULL; 44 created after
+  10-17 ($28,202.93) = normal ingestion (same basis as the 10-11 / 10-17 raises).
+DO: runner 3 cloned from scripts/ops/2026-10-17-cc3-443-197-dreamline-8-duplicates.mts — void the 2 import copies (and T173 only if the
+  document proves it) through the engines, reverse any wrong card-difference entry, TB 0, dry run on a fork first, AUTH-gated --apply.
+  Then commit the measured numbers to scripts/verify-diesel-expense-fuel-dedupe.baseline.json (duplicate_fill_pairs back to 4;
+  live_diesel_expenses = the post-repair count, each new id listed like the 10-17 entry). Root cause too: the Dreamline import must
+  refuse a statement row that matches a booked fill (unit + product + ±1 day + gallons 0.01 + 5¢) — fix the writer, add the test.
+DONE = guard LIVE PASS pasted in OUTBOX-CC-1.md with CT time. Deadline 2026-11-02T23:00Z · missed → Claude Lead.
+
 ## CURRENT (11-02-2026 1:00 PM CT) — Claude Lead — ROUND 7.14 FULL LIST (supersedes nothing; this is everything you own)
 Deadline 2026-11-03T02:00Z · missed → Claude Lead. Tier policy docs/specs/MODEL-TIER-POLICY.md. Do not ask the owner.
 Merge: checkNoRegressions = 0 → squash via gh api REST. Claim numbers on main first (claimed_by "cc-1").
