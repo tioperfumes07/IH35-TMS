@@ -626,6 +626,10 @@ export type TripPairingUnitRow = {
   settlement_signal: "settlement_open" | "round_trip" | null;
   status: string | null;
   location?: { city: string | null; state: string | null } | null; // C1b: live Samsara position
+  customer_id: string | null;
+  customer_name: string | null;
+  miles_total: number | null;
+  rate_total_cents: number | null;
 };
 export type TripPairingBoard = {
   kpis: { active_trucks: number; northbound: number; nb_unbooked: number; southbound: number; sb_unbooked: number; up_north_30d: number };
