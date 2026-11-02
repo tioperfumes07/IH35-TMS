@@ -1,5 +1,13 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~5:40 PM CT)
 
+## CODEX QA — 11-02 14:47 CT — Integrity displays / Position History mismatch
+
+USMCA Integrity Reports: 6 alerts, 4 rules, 182 anomalies (50 visible). Alert drawer `pages/safety/components/IntegrityAlertDetailDrawer.tsx:26–30,163–173` stringifies raw UTC and object/array detection metrics; live screenshot contains raw record UUID array instead of resolvable human links. Preserve evidence but format dates and resolve scoped record identities; no mutation actions exercised. Anomalies list/detail use browser-local `toLocaleString()` (`tabs/AnomaliesTab.tsx:106`, `tabs/AnomalyDetailDrawer.tsx:191,212`), yielding unpadded dates rather than canonical Central MM/DD/YYYY; several subject links display generic Driver. Rule form opened/cancelled only. Nonmoney engine source guard + 7 planted defects pass, not proof of live population.
+
+Safety Position History expected GPS track/position table per current CODEX route queue; actual `/safety/position-history` shows part installations/removals/replacements with Part/Position/Actor columns and 0 rows. `routes/manifest.tsx:2182` mounts `pages/safety/PositionHistoryPage.tsx`, whose description at :209 confirms parts history. Private screenshot captured. Resolve intended GPS surface without removing the separately mounted maintenance part-history workflow (:2531–2535).
+
+Permits embedded Form 2290: `pages/compliance/Form2290Filings.tsx:124` toFixed money lacks thousands grouping; `pages/safety/Permits.tsx:64` interpolates raw ISO deadline. One live filing and two raw date banners observed; no draft generation/save. Use canonical money/calendar formatters, preserve actual amounts/dates.
+
 ## CODEX QA — 11-02 14:38 CT — Fine display formatting
 
 14:40 geofence forward drill: Safety alerts 18 active, Central timestamps render correctly, but link labels expose load-UUID-stop strings (`GeofenceBreachesTab.tsx:96`). Opening one goes to /dispatch/geofencing?geofence_id=… with 2354 rows / page 1 of 95 and no selected record visible. `pages/operations/GeofencesPage.tsx:58–62,:310` only sets rowClassName; it neither opens detail nor brings the selected row into the visible page. Preserve deep-link ID and resolve/open the scoped record independently of pagination, with a beyond-first-page test. No acknowledge/activate/create actions performed.
