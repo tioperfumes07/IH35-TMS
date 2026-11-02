@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~11:10 PM CT) — Cursor Relay wallet drill + deposit format guard
+- **PRIOR:** #28136 Fleet Transfers board · #28134 Factoring debtor behavior.
+- **THIS WAVE:** RelayWallet KPI→day drill · doc EntityLink/inbox links · formatUsdCents · relay-deposit-format render-call plant.
+- **NEXT:** ENG-21 rate-con / ENG-22 AUTH; more shells; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~10:55 PM CT) — Cursor Fleet Transfers BoardSection
 - **PRIOR:** #28134 Factoring debtor behavior · #28132 Cash Flow pct · #28130 Fuel KPI.
 - **THIS WAVE:** TransfersInProgressPage → BoardSection + ParityTable + formatDateTimeUS acks.
