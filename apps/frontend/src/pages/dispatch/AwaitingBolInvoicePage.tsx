@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { listAwaitingBolInvoice, type AwaitingBolInvoiceRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -74,9 +75,9 @@ export function AwaitingBolInvoicePage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">
-        Select an operating company.
-      </div>
+      <BoardSection title="Awaiting BOL" testId="awaiting-bol-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
     );
   }
 

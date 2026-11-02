@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DailyPredictionTab } from "./tabs/DailyPredictionTab";
@@ -74,10 +75,12 @@ export function CashFlowPage() {
     return (
       <div className="space-y-4">
         <PageHeader backHref="/cash-flow" title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
-        <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-          <TrendingUp className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-          <p className="text-xs text-gray-500">Select a company to view cash flow.</p>
-        </div>
+        <BoardSection title="Cash Flow" testId="cash-flow-need-company">
+          <div className="px-3 py-6 text-center">
+            <TrendingUp className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+            <p className="text-xs text-[#4B5563]">Select a company to view cash flow.</p>
+          </div>
+        </BoardSection>
       </div>
     );
   }

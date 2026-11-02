@@ -8,6 +8,7 @@ import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
@@ -68,7 +69,11 @@ export function AssignmentHistoryPage() {
   const rows = historyQ.data?.rows ?? [];
   const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Assignment history" testId="assignment-history-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   type AssignmentHistoryRow = (typeof rows)[number];

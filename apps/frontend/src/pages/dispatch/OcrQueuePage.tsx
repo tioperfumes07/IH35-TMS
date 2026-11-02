@@ -10,6 +10,7 @@ import {
   type OcrIntakeQueueItem,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -147,7 +148,11 @@ export function OcrQueuePage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="OCR queue" testId="ocr-queue-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   const items = queueQ.data?.items ?? [];

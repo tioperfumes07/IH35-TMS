@@ -6,6 +6,7 @@ import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { getIntransitTriageQueue } from "../../api/maintenance";
 import { getSafetyAccidents } from "../../api/safety";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -115,7 +116,11 @@ export function DispatchAlertsPage() {
   return (
     <div className="space-y-4" data-testid="dispatch-alerts-page">
       <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
-      {!companyId ? <p className="text-xs text-[#1F2A44]">Select an operating company to load counts.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Dispatch alerts" testId="dispatch-alerts-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load counts.</p>
+        </BoardSection>
+      ) : null}
       {anyQueryError ? (
         <ListErrorBanner
           message="Failed to load one or more dispatch alert counts. Retry or switch operating company."

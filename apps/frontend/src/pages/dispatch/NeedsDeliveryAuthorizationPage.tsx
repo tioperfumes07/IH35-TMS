@@ -12,6 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -145,9 +146,9 @@ export function NeedsDeliveryAuthorizationPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">
-        Select an operating company.
-      </div>
+      <BoardSection title="Needs delivery authorization" testId="needs-delivery-auth-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
     );
   }
 

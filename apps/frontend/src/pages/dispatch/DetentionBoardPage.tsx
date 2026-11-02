@@ -16,6 +16,7 @@ import {
   type DetentionBoardEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -312,7 +313,11 @@ export function DetentionBoardPage() {
   type DetentionRow = (typeof events)[number];
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Detention" testId="detention-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved

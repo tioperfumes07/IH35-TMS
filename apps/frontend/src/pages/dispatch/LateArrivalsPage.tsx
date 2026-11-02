@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -37,7 +38,11 @@ export function LateArrivalsPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Late arrivals" testId="late-arrivals-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   const loads = useMemo(
