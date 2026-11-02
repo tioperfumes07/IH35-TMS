@@ -79,6 +79,7 @@ import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EldEditHistoryTimeline } from "../../components/safety/EldEditHistoryTimeline";
 import { AuditHistoryTab } from "../../components/drivers/AuditHistoryTab";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -338,7 +339,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+    <BoardSection title="Driver profile" testId="driver-profile-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+    </BoardSection>
+  );
   }
 
   if (profileQ.isLoading) {
