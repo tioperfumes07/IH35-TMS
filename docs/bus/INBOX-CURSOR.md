@@ -4,6 +4,8 @@
 
 ## CURRENT (11-02-2026 12:40 PM CT) — Claude Lead — ROUND 7.2 (amended)
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.0-B + §7.2 + §7.10.
+
+ADDED 12:50 PM CT (§7.11): UI register app-wide U12/U28 multi-select, U18 breadcrumbs, U29 clickable cells, U30 sortable headers, U19/U20 confirm live + SubscriptionManager email delivery worker.
 **7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
 
 ENG-13 / ENG-22 prevention: CLOSED by you — thank you. ADDED: ENG-49 settlement 5787 + SETL-TIEOUT-01 (7.2-F) · ENG-17 Faro proposal engine + pick screen, BUILD ONLY, no matches (7.2-G) · CodeQL red on main (7.2-H). Still yours: 7.2-B CODED-QUEUED live proof (ENG-19/55/62, LEAD-443.319, AUTH ledger) · 7.2-D ENG-36 re-measure · module ACCT-R-04.

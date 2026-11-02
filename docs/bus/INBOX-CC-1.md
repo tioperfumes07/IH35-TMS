@@ -5,6 +5,8 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.3
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.3 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+ADDED 12:50 PM CT (§7.11): UI register money rows U8, U9, U25, U27, U31.
+
 **7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
 
 ADDED 12:40 PM CT: ENG-48 WRITER is yours (7.3-E) with the bridge (mass apply deferred — build + dry run) · main red: verify-no-swallow-on-money-paths settlements-load-bookended.service.ts:1201 (7.3-F) · dedupe guard 316>272 / 6>4.
