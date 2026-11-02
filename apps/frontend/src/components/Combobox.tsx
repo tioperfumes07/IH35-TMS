@@ -602,15 +602,25 @@ export function Combobox({
           }}
           onFocus={(event) => {
             if (!disabled) {
+              if (!open) {
+                // WIZ-46 D1: select committed label so the first keystroke replaces it rather than
+                // appending. setQuery("") is intentionally absent — it would reset an already-typed
+                // query if onFocus re-fires mid-input (SAF-B29 / MOD-04: accumulated query lost).
+                // closeListbox() already calls setQuery("") on close, so the next open always starts
+                // from a clean slate without needing a redundant reset here.
+                //
+                // SAF-B29 / RAF-GUARD: capture the value at focus time and only select if it
+                // hasn't changed. In jsdom/userEvent the rAF fires mid-type (after the first
+                // character's act() flush), which would select that char and let the next char
+                // replace it instead of appending. Skipping when the value changed preserves
+                // accumulated typing while still replacing the committed label on a fresh open.
+                const el = event.currentTarget;
+                const valueAtFocus = el.value;
+                requestAnimationFrame(() => {
+                  if (document.activeElement === el && el.value === valueAtFocus) el.select();
+                });
+              }
               setOpen(true);
-              setQuery("");
-              // WIZ-46 D1: displayValue keeps showing the committed label while query is empty, so
-              // select it — the first character typed then replaces the whole label instead of
-              // appending to it. rAF runs after the click's caret placement so the selection sticks.
-              const el = event.currentTarget;
-              requestAnimationFrame(() => {
-                if (document.activeElement === el) el.select();
-              });
             }
           }}
           onBlur={handleInputBlur}

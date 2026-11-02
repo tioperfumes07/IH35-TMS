@@ -327,9 +327,10 @@ export function PolicyDetail() {
     setEditing(true);
   };
 
-  const handleArchive = () => {
+  const handleArchive = async () => {
     if (!policyId || archiveMutation.isPending || updateMutation.isPending) return;
-    setPendingArchive({ policyId, companyId, generation: policyActionGenerationRef.current });
+    if (!window.confirm("Archive this policy? This removes the policy from active workflows while retaining its historical record and reverse links.")) return;
+    await archiveMutation.mutateAsync({ policyId, companyId, generation: policyActionGenerationRef.current });
   };
 
   const closeEditPanel = () => {
@@ -350,7 +351,7 @@ export function PolicyDetail() {
             <Button size="sm" variant="secondary" onClick={openEditPanel} disabled={archiveMutation.isPending || updateMutation.isPending}>
               Edit / Update
             </Button>
-            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive} disabled={updateMutation.isPending}>
+            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={() => void handleArchive()} disabled={updateMutation.isPending}>
               Archive
             </Button>
           </div>
@@ -361,7 +362,7 @@ export function PolicyDetail() {
         <div className="grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
           <label className="text-xs font-semibold text-[#4B5563]">
             Status
-            <SelectCombobox
+            <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={status}
               onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
@@ -371,7 +372,7 @@ export function PolicyDetail() {
               <option value="pending">Pending</option>
               <option value="expired">Expired</option>
               <option value="cancelled">Cancelled</option>
-            </SelectCombobox>
+            </select>
           </label>
           <label className="text-xs font-semibold text-[#4B5563]">
             Effective date
