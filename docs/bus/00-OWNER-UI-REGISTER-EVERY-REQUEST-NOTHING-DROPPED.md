@@ -22,18 +22,18 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 | U16 | Work order number, unit and trailer on every bill/expense list, and **a stored copy of the work order opens from the document** | CC-2 + CC-3 | OPEN |
 | U17 | Expenses is read-only; reclassify must work from it | CC-2 | OPEN |
 | U18 | **`← Back` is browser history — becomes a breadcrumb, parent always the module home. App-wide. Some screens have NO back at all** | CURSOR · CC-2 | OPEN |
-| U19 | Reclassify: register never loaded; zero accounts hidden; default window too narrow | LEAD | OPEN — live 11-02 12:58–13:00 CT transaction table remained Loading; account tree and 25 batch rows loaded. Zero balances visible. Private screenshot in Codex task |
+| U19 | Reclassify: register never loaded; zero accounts hidden; default window too narrow | LEAD | LIVE partial 11-02 13:57 CT after #28042: honest idle prompt, scoped income 284 lines and fuel 1968 lines load. Zero accounts visible, fiscal-year range. All-account proof not run; owner acceptance pending |
 | U20 | Reclassify: P&L / Balance Sheet toggle, every account incl. 0.00, sortable headers, wider pane | LEAD | **FIXED, awaiting merge** |
 | U21 | Reclassify: **calendars cannot change the YEAR** | CC-2 | REGRESSION 11-02 13:47 CT after #28034: live Year dropdown only 2026; four pickers clamped to current year. Earlier 2026→2025 worked. Reported CC-2; test currently proves lock instead of cross-year navigation |
-| U22 | Reclassify: the **expense number is missing** from Num (service resolves it — find why it renders empty) | CC-2 | OPEN |
+| U22 | Reclassify: the **expense number is missing** from Num (service resolves it — find why it renders empty) | CC-2 | LIVE partial 11-02 13:58 CT: first fuel-account page 83 expense rows, 0 missing Num. Not all pages certified; 17 fuel-event rows show generic type instead of number |
 | U23 | Reclassify: **no filters for Load, Truck, Driver, Unit, Trailer, Vendor** + a column chooser to add them | CC-2 | LIVE partial 11-02: load/truck/driver/trailer/vendor controls and Columns(14) visible; load checkbox menu opens human labels. Filtering effect UNVERIFIED while register loading |
-| U24 | Reclassify: three selectors — by account, **by item**, by load | CC-2 | OPEN |
+| U24 | Reclassify: three selectors — by account, **by item**, by load | CC-2 | LIVE partial: account/item/load checkbox selectors present, scoped account effect proved. Combined item/load effect pending |
 | U25 | Diesel → Reefer Diesel moves item + account + **IFTA flag** + trailer linkage, hour-based | CC-2 | OPEN |
 | U26 | **Banking filters do not filter correctly** | CC-2 | OPEN · NEW |
 | U27 | **P&L and Balance Sheet must render like QuickBooks — no negative income or liabilities.** Backend sign math is CORRECT; the SURFACE renders a raw ledger balance | CC-2 · CURSOR | OPEN · the one he is looking at |
 | U28 | Multi-select account filters **everywhere in the app** | CURSOR | OPEN |
 | U29 | Everything clickable — every cell naming a record opens it | CURSOR | OPEN |
-| U30 | Every column header sorts, ascending and descending | CURSOR | OPEN — live 11-02 Banking Home 14 non-sortable headers; Accounting aging 4 non-sortable headers. Source and private screenshots filed INBOX-CURSOR |
+| U30 | Every column header sorts, ascending and descending | CURSOR | LIVE retest 11-02 14:04 CT: Banking Home 14 data-header buttons, Account asc/desc works; Accounting aging 4 header buttons, Amount asc/desc works and currency symbols restored. App-wide every-column coverage remains OPEN |
 | U31 | Cleared / uncleared on every balance and both agings, with the uncleared warning | CURSOR | OPEN |
 
 ## THE RULE FOR ALL OF IT — LAW 368.3

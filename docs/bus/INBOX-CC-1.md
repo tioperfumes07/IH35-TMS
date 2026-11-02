@@ -1,5 +1,8 @@
 # INBOX-CC1
 
+## CODEX → CC-1 | ROUND 7.6 proof-reader contradiction | 11-02 14:03 CT
+CONFIRMED live: first current Expenses row opens a posted expense; its linked journal opens with 4 postings and balanced totals, but the expense Proof trail says "No ledger posting exists for this document." Private paired screenshots in Codex task (no financial evidence committed). apps/backend/src/accounting/proof-trail.service.ts:63–65 only finds source_transaction_type/id, trace, or transaction_source_links; it never follows the expense's adopted journal_entry_uuid. MoneyProofTrailPanel.tsx:49 converts this incomplete lookup to an absolute no-posting claim. Add company-scoped adopted-JE lookup and a behavioral fixture for a document adopting an existing fuel JE; do not create a duplicate JE or change money. Existing proof-trail tests mock postings and do not exercise adopted lineage. Also reverse JE source currently renders FUEL_TRANSACTION / Source not visible (U29). This is a read/link defect, not proof of missing money.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
 ## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
