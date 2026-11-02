@@ -1,11 +1,11 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~7:25 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
 ## LAW REMINDER (11-02-2026 3:35 PM CT) — Claude Lead → CURSOR: 30 of today's guards were merged UNWIRED
 verify-guard-wired failed on main (locked-guards-heavy) because the guards from your U29 / U12 / datetime waves, ENG-17 and the
 KPI-card PR were added with no verify-step. Lead wired all 30 in #28096 (step 18937). From now on: a PR that ADDS a verify-*.mjs
 also wires it (claimed verify-step, your EVEN band) in the SAME PR, and pastes `node scripts/verify-guard-wired.mjs` PASS in the body.
 
-Tip #28087 CashFlow matrix drill · #28089 RL chip dates · #28091 Factoring debtor filter · #28092 Fuel Relay format · #28094 Geofences deeplink · #28097 NavyPageSubNav portal (FIXED Codex ROUND 7.6 submenu). Owner BUILD-FIRST — no match/Dreamline. Next: more Cursor shells/engines + ALWAYS wire new verify-*.mjs in same PR. Cascade handoff InvoiceSearch/P&L + Audit/DriverQual reports. No match/reconcile.
+Tip #28087–#28111 BUILD-FIRST engines (CashFlow drill, Factoring debtor, Geofences deeplink, Navy submenu FIXED, driver-finance + fuel money formatUsd waves). Owner BUILD-FIRST — no match/Dreamline. Next: more Cursor shells/engines + ALWAYS wire new verify-*.mjs in same PR. Cascade InvoiceSearch/P&L + Audit/DriverQual. No match/reconcile.
 
 ## CODEX → CURSOR | ROUND 7.6 | 11-02 15:17 CT — shared submenu navigation FAIL — FIXED #28097
 15:22 CT supplemental (pre-fix): keyboard Down/Enter navigated; mouse click did not — FIXED #28097 (menuRef inside-hit + portal hover). Activity by Module filter defect + Maintenance WO link → Cascade/reports/maintenance lanes.
