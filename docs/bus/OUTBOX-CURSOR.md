@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~10:05 PM CT) — Cursor Fuel KPI house formatters
+- **PRIOR:** #28128 margin selftest · #28127 quantity/pct · #28123 Settlements KPI.
+- **THIS WAVE:** FuelKpiRow → formatUsd/formatUsdRateTable; Compliance/FactorAdmin/BatchWizard/CargoSensor → formatQuantityTable; fuel-kpi-money-format accepts house money.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~9:45 PM CT) — Cursor quantity/pct leftovers wave
 - **PRIOR:** #28123 Settlements KPI/waterfall · #28121 MilesStrip/settlements boards · #28120 planner/factoring/fuel.
 - **THIS WAVE:** Close Arrival / Company Settlements / Fuel gallons tables / Insurance share / Factoring true-cost / TripProfitability / MultiStop hours → formatQuantityTable (+ rate table where $/gal).

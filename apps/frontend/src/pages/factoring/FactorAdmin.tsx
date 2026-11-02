@@ -40,9 +40,10 @@ import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
 import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
+import { formatQuantityTable } from "../../lib/money";
 
 function formatPct(value: number) {
-  return `${(Number(value || 0) * 100).toFixed(2)}%`;
+  return `${formatQuantityTable(Number(value || 0) * 100, 2)}%`;
 }
 
 function todayDate() {
