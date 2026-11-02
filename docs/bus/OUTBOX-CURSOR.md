@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~8:45 PM CT) — Cursor planner/factoring/fuel format engines
+- **PRIOR:** #28118 Geofences unterminated string (deploy unblock) · #28117 planners money/dates · #28113 tip.
+- **THIS WAVE:** PlannerCalendar MMM-DD · FactoringHome formatUsd/formatDateUS · BookLoad formatDateTimeUS · Fuel transactions/KPI/trip strips formatQuantityTable/formatUsdRateTable · geofences deeplink guard ratchet (no `/` after ring color).
+- **GUARDS:** extended verify-geofences-deeplink-beyond-page + verify-k5-planner-calendar-mmm-dd (no new orphan).
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST). Cascade InvoiceSearch/P&L + Audit/DriverQual.
+
 ## OUTBOX (11-02-2026 ~7:45 PM CT) — Cursor BUILD-FIRST engines tip
 - **MERGED:** #28087 CashFlow matrix→RL week/type · #28089 RL chip MM/DD/YYYY · #28091 Factoring debtor filter · #28092 Fuel Relay format · #28094 Geofences deeplink · #28097 NavyPageSubNav portal · #28100 Reimburse/ExtraPay formatUsd · #28103/#28104 disputes/payrun/deductions/floor/loan money · #28106 Settlements home week/money · #28108–#28111 Fuel savings/planner/stop/route formatUsd.
 - **HANDOFF:** Cascade InvoiceSearch/P&L + Audit date-boundary + DriverQual reports. LAW: new verify-*.mjs must claim+wire same PR (#28096).

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { countOpenFuelAssignmentQuestions } from "../../../api/fuelAssignmentQuestions";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { formatMoneyCents } from "../../../lib/formatMoney";
+import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 
@@ -37,9 +38,9 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         ? "Unable to load fills"
         : "Loading…";
 
-  const gallonsValue = aggQuery.isError ? "—" : agg ? agg.total_gallons.toFixed(1) : "…";
+  const gallonsValue = aggQuery.isError ? "—" : agg ? formatQuantityTable(agg.total_gallons, 1) : "…";
   const avgValue =
-    aggQuery.isError ? "—" : avgPerGal != null ? `$${avgPerGal.toFixed(3)}` : agg ? "—" : "…";
+    aggQuery.isError ? "—" : avgPerGal != null ? formatUsdRateTable(avgPerGal, 3) : agg ? "—" : "…";
   const noLoadValue = aggQuery.isError ? "—" : agg ? String(agg.fills_without_load) : "…";
   const noLoadTone = agg && agg.fills_without_load === 0 ? "green" : "ink";
   const noLoadSub = agg ? `of ${agg.fill_count}` : "";
