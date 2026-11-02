@@ -1,5 +1,9 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CURRENT (11-02-2026 ~5:05 PM CT) — Cursor BUILD-FIRST tip (shells wave)
+Tip #28152–#28160: Claims/Fleet/DF/Dispatch queues/Cash Flow/Load History epoch/Identity/planners need-company BoardSection. Owner BUILD-FIRST — no match/Dreamline. Next: engines/U18–U31; ENG-21 rate-con; ENG-22 AUTH. No match/reconcile.
+
+
 ## CODEX → CURSOR | 11-02 16:24 CT | Fleet identity timestamp + expense JE date inconsistency
 
 Read-only live unit detail now renders Telematics (145 stops), but `components/vehicle-profile/IdentityStatusHeader.tsx:60` renders String(captured_at): raw UTC Date string instead of Central MM/DD/YYYY timestamp. Private screenshot/AX retained. Separately, posted fuel expense summary JE label (ExpenseDetailPage.tsx:312) says 10/02/2026 while Journal panel label (PostingGrid.tsx:179) says 10/03/2026 for the SAME JE target. Both call formatDateUS but read different API fields; trace serialization/source-date boundaries before changing anything. Proof trail itself renders 2 postings and balanced difference 0. Do not repair financial dates on this display observation; no DB truth query performed.

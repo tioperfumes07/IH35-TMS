@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -216,12 +217,9 @@ export function DriverHubReportingPage() {
       />
 
       {!companyId ? (
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
-          data-testid="driver-hub-reporting-need-company"
-        >
-          Select an operating company to view driver inbox reporting.
-        </div>
+        <BoardSection title="Driver inbox reporting" testId="driver-hub-reporting-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view driver inbox reporting.</p>
+        </BoardSection>
       ) : (
         <>
       <div className="flex justify-end rounded-sm border border-gray-200 bg-white p-3">

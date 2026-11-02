@@ -19,7 +19,12 @@ function assertLive(over = {}) {
   const src = read(PAGE, over);
   const manifest = read(MANIFEST, over);
   if (!/path="\/driver-hub\/reporting"/.test(manifest)) problems.push("route missing");
-  if (!src.includes('data-testid="driver-hub-reporting-need-company"')) problems.push("need-company");
+  if (!/data-testid="driver-hub-reporting-need-company"|testId="driver-hub-reporting-need-company"/.test(src)) {
+    problems.push("need-company");
+  }
+  if (!/<BoardSection\b/.test(src) || !/testId="driver-hub-reporting-need-company"/.test(src)) {
+    problems.push("need-company must be BoardSection");
+  }
   if (!src.includes('data-testid="driver-hub-reporting-honest-empty"')) problems.push("honest empty");
   if (!src.includes("ListErrorBanner")) problems.push("ListErrorBanner");
   if (!src.includes("EntityLink")) problems.push("EntityLink");
@@ -35,7 +40,9 @@ if (SELFTEST) {
     process.exit(1);
   }
   const orig = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const plantedPage = orig.replace(/data-testid="driver-hub-reporting-need-company"/, 'data-testid="x"');
+  const plantedPage = orig
+    .replace(/data-testid="driver-hub-reporting-need-company"/, 'data-testid="x"')
+    .replace(/testId="driver-hub-reporting-need-company"/, 'testId="x"');
   {
     if (!assertLive({ [PAGE]: plantedPage }).length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);

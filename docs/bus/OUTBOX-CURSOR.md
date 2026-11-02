@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~5:05 PM CT) — Cursor shells wave tip (#28152–#28160)
+- **MERGED:** #28152 Claims need-company · #28154 Fleet/DF profiles · #28157 Dispatch queues+Cash Flow · #28158 Load History epoch + Identity captured_at · #28160 Dispatch planners/map/settings BoardSection.
+- **THIS:** Chat + Driver Hub reporting + Docs Home need-company BoardSection.
+- **NEXT:** more engines/U18–U31; ENG-21 rate-con; ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~4:55 PM CT) — Cursor Load History epoch + Identity format + more need-company shells
 - **PRIOR:** #28157 Dispatch queues + Cash Flow BoardSection · #28154 Fleet/DF need-company · #28152 Claims need-company.
 - **THIS WAVE:** Load History formatWhen epoch/gap → em dash (no 12/31/1969) · IdentityStatusHeader captured_at formatDateTimeUS · Owner override / Load banking / Round trips / Overview / Cargo sensors / Settlements escrow BoardSection need-company.
