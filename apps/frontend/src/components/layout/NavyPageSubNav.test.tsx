@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
 // B6 (owner, 2026-09-12) — "a dot on any tab that contains data." Additive: hasData is optional so
 // every pre-existing consumer (30+ pages) that never sets it renders identically to before.
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { NavyPageSubNav } from "./NavyPageSubNav";
+
+function LocationProbe() {
+  const loc = useLocation();
+  return <div data-testid="nav-location">{loc.pathname}</div>;
+}
 
 afterEach(cleanup);
 
@@ -122,6 +127,53 @@ describe("NavyDropdown open/close (P0 2026-09-14 — mouseenter-then-click race)
     await user.click(screen.getByRole("button", { name: /Cash/ }));
     const link = screen.getByRole("menuitem", { name: "Funds Due" });
     expect(link).toHaveAttribute("href", "/factoring/funds-due");
+  });
+
+  // Codex QA 11-02 ROUND 7.6: portaled menu mousedown was treated as "outside" (wrapperRef only),
+  // closing/unmounting before the Link navigation. Prior test only checked href — never clicked.
+  it("navigates when a child menuitem is clicked (portal mousedown must not cancel)", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/factoring"]}>
+        <NavyPageSubNav
+          items={[
+            {
+              label: "Cash",
+              to: "",
+              children: [
+                { label: "Funds Due", to: "/factoring/funds-due" },
+                { label: "Payments to You", to: "/factoring/payments-to-you" },
+              ],
+            },
+          ]}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("nav-location")).toHaveTextContent("/factoring");
+    await user.click(screen.getByRole("button", { name: /Cash/ }));
+    await user.click(screen.getByRole("menuitem", { name: "Funds Due" }));
+    expect(screen.getByTestId("nav-location")).toHaveTextContent("/factoring/funds-due");
+  });
+
+  it("keeps the menu open when mousedown lands on a portaled menuitem", async () => {
+    const user = userEvent.setup();
+    renderDropdown();
+    await user.click(screen.getByRole("button", { name: /Cash/ }));
+    const item = screen.getByRole("menuitem", { name: "Funds Due" });
+    fireEvent.mouseDown(item);
+    expect(screen.getByRole("button", { name: /Cash/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("menuitem", { name: "Funds Due" })).toBeVisible();
+  });
+
+  it("closes on outside mousedown (still dismisses when clicking away)", async () => {
+    const user = userEvent.setup();
+    renderDropdown();
+    await user.click(screen.getByRole("button", { name: /Cash/ }));
+    expect(screen.getByRole("menu")).toBeVisible();
+    fireEvent.mouseDown(document.body);
+    expect(screen.getByRole("button", { name: /Cash/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 
   // P0 FOLLOW-UP #2 (owner 2026-09-14, live Chrome AFTER the click-race fix deployed): fixing the
