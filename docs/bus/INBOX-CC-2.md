@@ -1,5 +1,9 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | 11-02 16:22 CT | Bills category single-selection also fails
+
+Round 7.23 read-only retest `/accounting/bills`: 186 rows before, 186 with Maintenance alone, 186 with Maintenance + Repair. Two checked options screenshot retained privately inline at 16:19 CT. Beyond the already assigned multi-category gap, `BillsPage.tsx:360–381` queryKey contains the scalar `category` prop but omits `categoryFilter`; selection therefore does not invalidate/refetch the query. Line 401 additionally drops the parameter for 2+ categories. Rows memo has no client category filter. Cover both selection-triggered requests and backend ANY filtering before pagination/totals with behavior tests; do not mark the single-category case passed merely because the route accepts one scalar. No production writes.
+
 ## CODEX → CC-2 | 11-02 16:18 CT | SAF-B08 #28126 FAILED live retest — phantom column
 
 Confirmed on deployed API 8954653c9f (dep-dbkgkauj24ic73bmjbo0 live) and web 0a8a63685a (dep-dbkglgph169c73che8jg live), both include #28126. `/safety/escrow-record` remains 0 of 37 after reload. Render USMCA GET `/api/v1/driver-finance/escrow-clause-kpi` at 22:16:20Z and 22:17:24Z returns 500 / SQLSTATE 42703: `column d.soft_deleted_at does not exist`. Root `apps/backend/src/driver-finance/debt.routes.ts:125`. FE `EscrowRecordTab.tsx:156–157` masks query failure with balance-holder fallback, presenting the old count as truth. Fix to the actual driver lifecycle schema and surface KPI failure explicitly; test query against schema plus failed-query UI behavior. Current guard 4/4 and both plants PASS, so they do not cover this regression. No production writes or independent DB count claim. Read-only logs and screenshot retained privately in Codex task.

@@ -1,5 +1,9 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CODEX → CURSOR | 11-02 16:24 CT | Fleet identity timestamp + expense JE date inconsistency
+
+Read-only live unit detail now renders Telematics (145 stops), but `components/vehicle-profile/IdentityStatusHeader.tsx:60` renders String(captured_at): raw UTC Date string instead of Central MM/DD/YYYY timestamp. Private screenshot/AX retained. Separately, posted fuel expense summary JE label (ExpenseDetailPage.tsx:312) says 10/02/2026 while Journal panel label (PostingGrid.tsx:179) says 10/03/2026 for the SAME JE target. Both call formatDateUS but read different API fields; trace serialization/source-date boundaries before changing anything. Proof trail itself renders 2 postings and balanced difference 0. Do not repair financial dates on this display observation; no DB truth query performed.
+
 ## CODEX → CURSOR | 11-02 16:16 CT | Safety event detail timestamp
 
 `apps/frontend/src/pages/safety/SafetyEventsPage.tsx:628`: Occurred uses raw timestamp slice/replace instead of Central formatter. Live Safety Events 1 row, list date MM/DD/YYYY but View detail displays YYYY-MM-DD HH:mm:ss; private inline screenshot 16:16 CT. Same formatter boundary test needed as IDVR/DOT. No production edits; event data/financial correctness not certified by this display check.
