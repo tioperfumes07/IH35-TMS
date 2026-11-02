@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 export { listDispatchLoads, listAllDispatchLoads } from "./catalog-loads";
 
 export type DispatchV2View = "home" | "loads";
@@ -1709,11 +1710,12 @@ export type BolDocumentSummary = {
 
 export function getPodDocuments(
   operatingCompanyId: string,
-  opts?: { load_id?: string; status?: string; limit?: number }
+  opts?: { load_id?: string; status?: string | readonly string[]; limit?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (opts?.load_id) params.set("load_id", opts.load_id);
-  if (opts?.status) params.set("status", opts.status);
+  // U12 — repeated ?status=a&status=b.
+  appendStatusList(params, "status", opts?.status);
   if (opts?.limit) params.set("limit", String(opts.limit));
   return apiRequest<{ documents: PodDocumentSummary[]; count: number }>(
     `/api/v1/dispatch/pod-documents?${params.toString()}`
