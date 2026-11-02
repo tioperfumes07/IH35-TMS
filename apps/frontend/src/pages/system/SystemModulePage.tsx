@@ -25,7 +25,7 @@ import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatGlLedgerPre } from "./txHealthLedgerText";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { InfoPopover } from "../../components/shared/InfoPopover";
@@ -479,7 +479,7 @@ function LedgerHealthTab({ data }: { data: SystemData }) {
       sortable: true,
       className: "text-right",
       cellClass: "text-right tabular-nums",
-      render: (row) => (row.drift_metric_abs == null ? "—" : row.drift_metric_abs.toLocaleString("en-US")),
+      render: (row) => (row.drift_metric_abs == null ? "—" : formatQuantityTable(row.drift_metric_abs, 0)),
     },
     { key: "detected_at", label: "Detected", sortable: true, render: (row) => ctDateTime(row.detected_at) },
     { key: "last_seen_at", label: "Last seen", sortable: true, render: (row) => ctDateTime(row.last_seen_at) },
