@@ -227,6 +227,11 @@ async function fetchContainmentRows(
   return res.rows;
 }
 
+/**
+ * TELEMATICS-DEADLOCK-01: the one ordering every multi-unit caller of processGeofenceDetectionsForGpsPoint uses inside a
+ * single transaction — ascending unit, then chronological within the unit (fence transitions stay in time order per unit).
+ * Stable: ties keep their input order.
+ */
 export async function processGeofenceDetectionsForGpsPoint(
   client: DbClient,
   input: GpsPointInput,
@@ -239,6 +244,14 @@ export async function processGeofenceDetectionsForGpsPoint(
 
   const resolvedDriverId = input.driver_id ?? (await resolveDriverIdForUnit(client, input.operating_company_id, input.unit_id));
 
+  // TELEMATICS-DEADLOCK-01 (Claude Lead 2026-11-02, Render 20:25:46Z / 20:26:40Z geofence_state_watcher 40P01): the lock was
+  // per (fence, unit) and taken inside the fence loop, so ONE transaction that walks many fixes (backfill, positions sync)
+  // accumulated (fence,unit) locks in fix order, and two such transactions took them in opposite orders → deadlock.
+  // Now: ONE lock per unit, taken once before its fences. Every batch caller walks units in ascending unit_id
+  // (sortForUnitLockOrder), so any two transactions acquire unit locks in the same global order — no cycle possible.
+  // The per-unit lock is a superset of the per-(fence,unit) lock: ROUND 330.7's duplicate-"entered" race stays closed.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [`geo.fence_transition_unit:${input.unit_id}`]);
+
   let transitionsWritten = 0;
   let stopArrivalsStamped = 0;
   for (const row of rows) {
@@ -250,9 +263,7 @@ export async function processGeofenceDetectionsForGpsPoint(
     // for this fence + unit within 5 minutes either side of this fix is that transition, not a new one.
     // ROUND 330.7: that window check is a read before the insert, and only the exact-timestamp key is enforced — two
     // instances handling the location fix and the stats fix at once both missed each other's uncommitted "entered".
-    // A transaction lock per (fence, unit) makes the second wait and then see the first's row. Fences are walked in a
-    // fixed order (label, created_at, id), so two callers never take these locks in opposite orders for one unit.
-    await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [`geo.fence_transition:${row.geofence_id}:${input.unit_id}`]);
+    // The per-unit transaction lock taken above makes the second wait and then see the first's row.
     const near = await client.query(
       `SELECT 1 FROM geo.geofence_events
         WHERE operating_company_id = $1::uuid AND geofence_id = $2::uuid AND unit_id = $3::uuid AND event_kind = $4

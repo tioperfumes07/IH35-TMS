@@ -24,6 +24,7 @@
 import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding.service.js";
 import { canonicalDispatchWorkStatusClause, canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { processGeofenceDetectionsForGpsPoint } from "./geofence-detector.service.js";
+import { compareUnitLockKey } from "./unit-lock-order.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
 
@@ -142,7 +143,9 @@ export async function replayUnitHistoryForFences(
   }
   let positionsChecked = 0;
   let eventsWritten = 0;
-  for (const load of loads) {
+  // TELEMATICS-DEADLOCK-01: walk loads in ascending unit order (then load id) — the global fence-lock order.
+  const loadsInLockOrder = [...loads].sort((a, b) => compareUnitLockKey(a.unit_id, b.unit_id) || compareUnitLockKey(a.load_id, b.load_id));
+  for (const load of loadsInLockOrder) {
     const loadFences = fencesByLoad.get(load.load_id);
     if (!loadFences || !load.unit_id) continue;
     const sinceCandidates = [new Date(load.created_at).getTime() - 24 * 3600_000];
@@ -231,7 +234,9 @@ export async function backfillCompletedLoadFenceEvidence(
     [operatingCompanyId, opts.limit ?? 500, opts.loadIds ?? null]
   );
   let fencesBound = 0, positionsChecked = 0, eventsWritten = 0, skippedNoFence = 0;
-  for (const load of loads.rows) {
+  // TELEMATICS-DEADLOCK-01: the LIMIT picks which loads (by id); the walk is unit-major — the global fence-lock order.
+  const loadsInLockOrder = [...loads.rows].sort((a, b) => compareUnitLockKey(a.unit_id, b.unit_id) || compareUnitLockKey(a.load_id, b.load_id));
+  for (const load of loadsInLockOrder) {
     if (!load.first_at || !load.last_at) { skippedNoFence += 1; continue; }
     const bound = await bindLoadToGeofences(client as never, operatingCompanyId, load.load_id);
     fencesBound += bound.created;

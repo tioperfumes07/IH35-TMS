@@ -36,7 +36,7 @@ export async function backfillGeofenceEventsFromPositions(
       FROM telematics.vehicle_locations
       WHERE operating_company_id = $1::uuid
         AND captured_at >= now() - interval '7 days'
-      ORDER BY captured_at ASC, id ASC
+      ORDER BY unit_id ASC, captured_at ASC, id ASC -- TELEMATICS-DEADLOCK-01: unit-major lock order (see geofence-detector)
     `,
     [operatingCompanyId]
   );
