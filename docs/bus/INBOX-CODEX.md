@@ -14,6 +14,12 @@
 Every engine = **backend + routes + FE board + routing + reverse + pickers + guards + LIVE proof + register + fast-merge.**  
 If a sibling surface has reverse/EntityLink/ParityTable/retryable error — yours must too.
 
+### Cursor Lead mid-wave (11-02 ~11:40 AM CT)
+- **ENG-29/53 code:** cron SAVEPOINT isolation + NULL-first due + stale-NULL-after-stop-times. Tip-proof 13690→**1731.7**; awaiting deploy `:25` tick (no AUTH). Deadhead 13690 / 13698 remain honest NULL.
+- **ENG-48:** bridge `--apply` still needs **new OPEN OWNER_AUTH_ID** (AUTH-145 CONSUMED). Do not invent. Measure+JE integrity still Codex FULL.
+- **ENG-60 table drop:** still AUTH + route retirement; FE cutover already DONE.
+- Claude still held.
+
 ### Lead tip-closed (skip)
 ENG-18/28/41/42/61 · 01c/24/39/40 · 43/45 · 26 · **44/46/47/50/51 DONE-LIVE** · 60 FE · 29@149 · 53 miles-missing→0 · 34 unaccounted 0
 
