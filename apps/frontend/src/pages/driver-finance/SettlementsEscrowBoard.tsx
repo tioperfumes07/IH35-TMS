@@ -272,7 +272,11 @@ export function SettlementsEscrowBoard() {
         />
       </MoneyListToolbar>
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Escrow" testId="settlements-escrow-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       {accountsQuery.isError ? (
         <ListErrorState

@@ -17,6 +17,7 @@ import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { formatQuantityTable } from "../../../lib/money";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Props = {
   loadId: string;
@@ -103,7 +104,11 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   const latest = query.data?.rows?.[0];
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Select an operating company.</div>;
+    return (
+      <BoardSection title="Cargo sensors" testId="cargo-sensor-timeline-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   if (query.isLoading) {

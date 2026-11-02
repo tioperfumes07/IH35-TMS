@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~4:55 PM CT) — Cursor Load History epoch + Identity format + more need-company shells
+- **PRIOR:** #28157 Dispatch queues + Cash Flow BoardSection · #28154 Fleet/DF need-company · #28152 Claims need-company.
+- **THIS WAVE:** Load History formatWhen epoch/gap → em dash (no 12/31/1969) · IdentityStatusHeader captured_at formatDateTimeUS · Owner override / Load banking / Round trips / Overview / Cargo sensors / Settlements escrow BoardSection need-company.
+- **NEXT:** more Cursor shells/engines; ENG-21 rate-con; ENG-22 apply waits AUTH; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~4:45 PM CT) — Cursor BUILD-FIRST shells wave (owner: engines first, no match)
 - **PRIOR:** #28137 Relay wallet · #28138 Fuel Home diesel fail-loud.
 - **THIS WAVE:** #28144 Fleet Covered + Roster Integrity BoardSection/U18 + RL CSV formatUsdCents · #28145 Coverage Gap + Type Catalog BoardSection/U18 · #28146 ENG-22 dry-run per-load listing + settlements/escrow/fuel CSV house money · #28148 Insurance Policies + Landing BoardSection/U18 · #28149 Faro Import (drop dark shell) + 1090 U18 back.
