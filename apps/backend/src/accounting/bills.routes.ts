@@ -180,6 +180,8 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   // so a driver's Bills panel listed every bill in the company (with Pay buttons).
   driver_id: z.string().uuid().optional(),
   trailer_id: z.string().uuid().optional(),
+  // ACCT-F2026110203 — BillsPage category tab filter server-side before pagination.
+  bill_category: z.enum(["vendor", "maintenance", "repair", "fuel", "driver"]).optional(),
   // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY (see BILL_LIST_SORT_SQL).
   sort: z.string().trim().max(64).optional(),
   dir: z.enum(["asc", "desc"]).optional(),
@@ -480,6 +482,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       trailerId: query.data.trailer_id,
       sort: query.data.sort,
       dir: query.data.dir,
+      billCategory: query.data.bill_category,
     };
     const vendorRows = query.data.bill_type === "driver_bill" ? [] : await listBills(String(user.uuid), query.data.operating_company_id, {
       ...listOptions,

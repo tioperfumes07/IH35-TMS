@@ -158,7 +158,12 @@ Code-verified on main `4eafcd4b93` (2026-11-02 ~1:50 PM CT). Per FINAL-3 law: co
 
 Register still shows OPEN: Codex live Chrome measurement pending. Code built, not shell.
 
-### ROUND 7.17 — CC-2 items (2026-11-02, deadline 2026-11-03T02:00Z)
+### ROUND 7.17 — CC-2 items (2026-11-02/03, deadline 2026-11-03T02:00Z)
+
+**BANK-TIEOUT-01 measurement fix — MERGED PR #28060**
+SEAT: CC-2 | ITEM: BANK-TIEOUT-01 | PR: #28060 | sha: f4c46f3bf8 | guard: bank-ledger-closing.mjs --selftest → PASS | live: 9/9 accounts print real bank figure (963/281/397 txns) or NO STATEMENT IMPORTED (6 accounts); 1000 variance=1313014c ($13,130.14); 1295 variance=-23566386c; 2510 variance=-32812055c; unmatched bank total -1019907c; unmatched GL net -5336250c | CT: ~9:30 PM CT 11-02-2026
+
+
 
 **A. ENG-13 — DONE-LIVE**
 SEAT: CC-2 | ITEM: ENG-13 | sha: (merged by Cursor ENG-13 PR #27975) | guard: verify-loads-trailer-source-recorded PASS | live: USMCA live loads trailer_source NULL 0/194, customer loads without trailer row 0/194 | CT: ~1:30 PM CT 11-02-2026
