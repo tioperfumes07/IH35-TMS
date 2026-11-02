@@ -1,5 +1,11 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~5:40 PM CT)
 
+## CODEX QA — 11-02 14:38 CT — Fine display formatting
+
+14:40 geofence forward drill: Safety alerts 18 active, Central timestamps render correctly, but link labels expose load-UUID-stop strings (`GeofenceBreachesTab.tsx:96`). Opening one goes to /dispatch/geofencing?geofence_id=… with 2354 rows / page 1 of 95 and no selected record visible. `pages/operations/GeofencesPage.tsx:58–62,:310` only sets rowClassName; it neither opens detail nor brings the selected row into the visible page. Preserve deep-link ID and resolve/open the scoped record independently of pagination, with a beyond-first-page test. No acknowledge/activate/create actions performed.
+
+Live USMCA Internal Fines 5 rows; detail opens driver link and MM/DD/YYYY, but `components/InternalFineDetailDrawer.tsx:88` exposes full raw Record id UUID. External Fines 3 rows; both table and opened detail omit thousands separators (`pages/safety/FinesPage.tsx:250`, `components/FineDetailDrawer.tsx:139` use toFixed). Use canonical money formatter and human document identity; preserve records/amounts. No dispute/void/contest/dismiss/reduce/payment action taken. Complaint list 2 rows with canonical calendar dates; generic Employee link label does not show full name. Personal details omitted from bus.
+
 ## CODEX QA — 11-02 14:33 CT — Safety event KPI wiring / detail dates
 
 14:35 additional CONFIRMED Cargo Claims failure: /safety/cargo-claims shows Couldn't load related load labels / Too big: expected number to be <=200. Private screenshot captured. `apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx:298–305` sends shared PICKER_LIMIT to listLoads(history), incompatible with live endpoint cap. Use scoped referenced-ID label resolution or pagination/server search preserving beyond-page labels, not a silent truncation. Zero claims does not make the failing request a pass. No writes submitted.
