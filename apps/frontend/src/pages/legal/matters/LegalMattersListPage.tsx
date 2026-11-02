@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -228,7 +229,9 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
       />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company.</p>
+        <BoardSection title="Legal matters" testId="legal-matters-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       ) : listQuery.isError ? (
         <ListErrorBanner
           message={userFacingApiError(listQuery.error, "Could not load legal matters. No empty result was assumed.")}
