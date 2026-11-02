@@ -12,7 +12,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 |---|---|---|---|---|
 | 257 | Tests | Backend vitest on main e27c5b2c8: 35 test files / 46 tests FAIL (posting-engine cash/driver advance, revrec interlock, fuel poster class, migration tests 0242/qbo/samsara/reconciliation, dispatch book-load, customer routes…) — identical with and without #27965 | CC-1 (accounting) / CC-2 (dispatch, mdata) / CC-3 (migrations) | OPEN |
 | 258 | Fleet data | 9 phantom units from Samsara: 6 SAM-xxxxxxxx (VIN SAMVIN-…, 3 USMCA-leased, 3 TRANSP) + 3 gateway-serial units G497-J2K-EKM / G77P-YAB-4V7 / GPRR-ZPF-HEC (TRK); 0 loads, fuel, WOs, expenses, bills; 3 GPS pings 06/2019 — purge (Lead recommends DELETE via AUTH purge route) | CC-2 | OPEN |
-| 259 | Maintenance | Fleet health showed the SAM- phantoms — fixed #28191 e27c5b2c8 (42 → 39); live proof after deploy | LEAD | MERGED-UNVERIFIED |
+| 259 | Maintenance | Fleet health showed the SAM- phantoms — fixed #28191 e27c5b2c8 | LEAD | DONE-LIVE — live /maintenance 23:35Z: "All 39", 0 SAM- units |
 
 ## Counts by category
 
@@ -228,7 +228,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 144 | LEAD-various | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | MERGED-UNVERIFIED |
 | 145 | NEW 11-02 | Fuel | ENG-61 116 fuel rows ($40,499.46) on 42 loads outside the trip window | CC-3 | OPEN |
 | 146 | NEW 11-02 | Fuel | ENG-62 90 Relay fill expenses $38,717.03 with no linked fuel row (18 link / 48 import / 24 dedupe) | CC-1 | OPEN |
-| 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | DONE-LIVE — Render backend logs: last "deadlock detected" 21:25:35Z; 0 from 21:25:35Z to 22:53Z (88 min; 7 in the 25 min before); pg_stat_database.deadlocks flat 3825 22:49:45Z→22:52:49Z |
+| 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | DONE-LIVE — Render backend logs: last "deadlock detected" 21:25:35Z; after the deploy containing #28131 (1d1e9f18b live 22:07:24Z) 0 through 23:32:37Z (85 min); 0 from 21:25:35Z to 22:53Z (88 min; 7 in the 25 min before); pg_stat_database.deadlocks flat 3825 22:49:45Z→22:52:49Z |
 
 ## F · Live findings (tie-outs)
 
