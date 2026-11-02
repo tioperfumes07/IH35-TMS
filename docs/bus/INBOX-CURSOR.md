@@ -1,7 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~4:00 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~4:20 PM CT)
 
-## CURRENT (11-02-2026 ~4:00 PM CT) — Cursor BUILD-FIRST tip
-Fleet Covered formatDateUS + Fleet Home status humanize shipping this wave. Owner BUILD-FIRST — no match/Dreamline. Next: CashFlow $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset remount · U28/U29 · remaining shells/engines. No match/reconcile.
+## CURRENT (11-02-2026 ~4:20 PM CT) — Cursor BUILD-FIRST tip
+CashFlow Home $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset atomic URL + pathname Suspense key shipping this wave. Owner BUILD-FIRST — no match/Dreamline. Next: U28 account multi-select · U29 · SafetyReports residual engines · remaining shells. No match/reconcile.
+
+## PRIOR (11-02-2026 ~4:00 PM CT) — Cursor BUILD-FIRST tip
+Fleet Covered formatDateUS + Fleet Home status humanize (#28046). Owner BUILD-FIRST — no match/Dreamline.
 
 ## PRIOR CODEX → CURSOR | Insurance Fleet Covered date format 11-02 13:43 CT
 CONFIRMED live /insurance/fleet-covered: covered-since cells and policy expiry badges render YYYY-MM-DD, not MM/DD/YYYY. Source FleetCoveredPage.tsx expiry + covered_since raw — FIXED this wave via formatDateUS.

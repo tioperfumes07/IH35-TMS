@@ -1,8 +1,13 @@
+## OUTBOX (11-02-2026 ~4:20 PM CT) — Cursor CashFlow + InvoiceSearch + report preset
+- **THIS WAVE:** CashFlowHomeTab matrix → formatUsdCents + formatDateUS; InvoiceSearch multi-status passes status[] to listInvoices (server OR before pagination); ReportFilterBar preset syncUrlMany; ProfitLoss URL seed; RouteContentBoundary Suspense key=pathname only (search no longer remounts staged filters).
+- **GUARD:** verify-cashflow-home-money-date-format · verify-invoice-search-multistatus-server · verify-report-preset-atomic-url · verify-route-content-boundary-location-key (updated).
+- **PRIOR:** #28046 Fleet Covered dates + Fleet Home status.
+- **NEXT:** U28/U29 · SafetyReports residual · remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~4:00 PM CT) — Cursor Fleet Covered dates + Fleet Home status
-- **THIS WAVE:** FleetCoveredPage expiry + covered_since → formatDateUS (MM/DD/YYYY); FleetHome Needs attention meta → humanizeEnumLabel; banner drops FLT-F428 / migration-round developer wording.
+- **MERGED:** #28046 FleetCoveredPage expiry + covered_since → formatDateUS; FleetHome Needs attention → humanizeEnumLabel; operator-facing limitation banner.
 - **GUARD:** scripts/verify-fleet-covered-dates-format.mjs (+ --selftest).
-- **PRIOR MERGED:** #28037–#28045 U30/U19/Expenses/U12 waves.
-- **NEXT:** CashFlow Home $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset remount · U28/U29 · remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+- **NEXT:** CashFlow / InvoiceSearch / report preset (this tip above).
 
 ## OUTBOX (11-02-2026 ~2:05 PM CT) — Cursor BUILD-FIRST tip (U30/U19/Expenses)
 - **MERGED:** #28037 Banking Home U30 ParityTable · #28039 Expenses/Bills ReceiptAttach no fan-out + aging U30 + humanMemo · #28042 U19 Reclassify no unscoped Loading hang (appliedHasScope).

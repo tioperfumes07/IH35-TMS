@@ -8,6 +8,7 @@ import {
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
+import { formatDateUS } from "../../../lib/formatDate";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -82,21 +83,18 @@ function mondayOf(iso: string): string {
 }
 
 function weekLabel(iso: string): string {
-  const [, m, d] = iso.split("-");
-  return `${m}-${d}`;
+  // Codex Round 7.6 — matrix week headers were MM-DD; operators need MM/DD/YYYY.
+  return formatDateUS(iso) || "—";
 }
 
 function monthLabel(iso: string): string {
-  const [y, m] = iso.split("-");
-  return `${m}/${y.slice(2)}`;
+  return formatDateUS(iso) || "—";
 }
 
-function formatCompactDollars(cents: number | null): string {
-  if (cents === null || cents === 0) return "—";
-  const neg = cents < 0;
-  const dollars = Math.round(Math.abs(cents) / 100);
-  const body = dollars.toLocaleString("en-US");
-  return neg ? `-${body}` : body;
+/** Matrix cells — full $ + cents (formatUsdCents); null stays em dash, not a fabricated $0.00. */
+function formatMatrixMoney(cents: number | null): string {
+  if (cents === null) return "—";
+  return formatUsdCents(cents);
 }
 
 function sparkPoints(values: number[], width: number, height: number): string {
@@ -445,7 +443,7 @@ function CashPositionChart({
             fontWeight={700}
             fill={V3.red}
           >
-            Lowest balance {formatCompactDollars(lowest.cents)} · wk {lowest.label.replace(/^wk\s*/, "")}
+            Lowest balance {formatMatrixMoney(lowest.cents)} · wk {lowest.label.replace(/^wk\s*/, "")}
           </text>
         ) : null}
       </svg>
@@ -476,7 +474,7 @@ function Cell({
   if (unit === "pct") {
     text = cents === 0 ? "—" : `${((cents / (ofTotal || 1)) * 100).toFixed(0)}%`;
   } else {
-    text = formatCompactDollars(cents);
+    text = formatMatrixMoney(cents);
   }
   const style: CSSProperties = {
     textAlign: "right",
@@ -574,7 +572,7 @@ function ThirteenWeekTable({
               }}
               onClick={() => onOpen("rolling_ledger")}
             >
-              {unit === "pct" ? (cents === 0 ? "—" : `${((Math.abs(cents) / totalIncome) * 100).toFixed(0)}%`) : formatCompactDollars(cents)}
+              {unit === "pct" ? (cents === 0 ? "—" : `${((Math.abs(cents) / totalIncome) * 100).toFixed(0)}%`) : formatMatrixMoney(cents)}
             </td>
           );
         }
