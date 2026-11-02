@@ -166,9 +166,12 @@ SEAT: CC-2 | ITEM: ENG-13 | sha: (merged by Cursor ENG-13 PR #27975) | guard: ve
 **B. PROD-5Y 13690 — DONE-LIVE (cron stored)**
 SEAT: CC-2 | ITEM: PROD-5Y 13690 | sha: PR #27985 deploy | guard: cron tick confirmed | live: mdata.loads load_id=426025eb miles_driven_actual=1731.7, miles_driven_actual_computed_at=2026-11-02T19:25:03Z, source=odometer | CT: 2:25 PM CT 11-02-2026
 
-**U9 CheckPrintPage test fix — MERGED**
-SEAT: CC-2 | ITEM: U9 test suite | PR: #28047 (fork) + #28048 (cc-2) | sha: 58bda3a0e8 | guard: vitest run CheckPrintPage.editableNumbers.test.tsx 3 PASS, WriteCheckForm.test.tsx 5 PASS | live: UNVERIFIED (test-only) | CT: ~8:10 PM CT 11-02-2026
+**U9 CheckPrintPage test fix — MERGED PR #28047**
+SEAT: CC-2 | ITEM: U9 test suite | PR: #28047 | guard: vitest run CheckPrintPage.editableNumbers.test.tsx → 3/3 PASS, WriteCheckForm.test.tsx → 5/5 PASS | live: UNVERIFIED (test-only; owner Chrome-verifies stock print) | CT: ~8:10 PM CT 11-02-2026
+
+**ENG-DEADLOCK-01 load_stops lock order fix — MERGED PR #28051**
+SEAT: CC-2 | ITEM: ENG-DEADLOCK-01 | PR: #28051 | guard: vitest run stop-dwell-evidence.test.ts → 7/7 PASS (new concurrent-lock-order test); npm run build:backend → exit 0 | live: UNVERIFIED — 3 consecutive :25 Render ticks required after deploy | CT: ~8:15 PM CT 11-02-2026
 
 **Items 4+5 — SAF-ORPH-05/SAF-B08 + 18 Accounting U-rows — written to INBOX-CODEX.md**
-SEAT: CC-2 | ITEM: SAF-ORPH-05 28 routes + SAF-B08 KPI + 18 U-rows Codex queue | PR: pending | sha: pending | CT: ~8:10 PM CT 11-02-2026
+SEAT: CC-2 | ITEM: SAF-ORPH-05 28 routes + SAF-B08 KPI + 18 U-rows Codex queue | PR: this branch (round7-inbox-codex-writes) | CT: ~8:10 PM CT 11-02-2026
 
