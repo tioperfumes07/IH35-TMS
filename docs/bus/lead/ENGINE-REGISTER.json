@@ -385,7 +385,7 @@
    "status": "PARTIAL",
    "guard": "verify-guard-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 11-02 CT: active exempt=123 (was 122 + eng27 LIVE orphan wired into exempt). unaccounted=0. Remaining 123 still need wire-or-delete shrink. verify-guard-wired PASS."
+   "evidence": "LIVE 11-02 CT: active exempt 123→108 (15 static guards wired into verify-steps 18921–19089). unaccounted=0. verify-guard-wired PASS. Remaining 108 wire-or-delete."
   },
   {
    "id": "ENG-36",
@@ -638,7 +638,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: createExpenseFromFuelTransaction creatable gap remains AUTH-gated (AUTH-145 CONSUMED; need new OPEN OWNER_AUTH_ID for bridge --apply). No invented AUTH."
+   "evidence": "LIVE 11-02 CT: 147 fuels with no live expense (source_fuel_transaction_id). Bridge ready; AUTH-145 CONSUMED — need new OPEN OWNER_AUTH_ID. No invent."
   },
   {
    "id": "ENG-49",
@@ -649,7 +649,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: company settlement 5787→P-0018 closed. Settlement lines: layover 75 + reimb 22 + admin gas 10 (no 235.01 rollup on lines). Document-first recount still OPEN — claimed $235.01 vs $140.20 not found as a single line total."
+   "evidence": "LIVE 11-02 CT: 5787→P-0018 closed. Lines: layover75+reimb22+admin10 (+escrow25). Claimed $235.01 vs $140.20 NOT a live line total — document-first OPEN for Codex."
   },
   {
    "id": "ENG-50",
