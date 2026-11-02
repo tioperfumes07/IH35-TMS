@@ -30,6 +30,10 @@ import { ApiError } from "../../api/client";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { SelectCombobox } from "../../components/Combobox";
+import { CappedListNotice } from "../../components/CappedListNotice";
+
+/** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
+const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -90,14 +94,24 @@ export function PolicyDetail() {
   const lawsuitsQuery = useQuery({
     queryKey: ["legal-matters", "policy-lawsuits", companyId, policyId, [...claimIds].sort().join(",")],
     enabled: Boolean(companyId && policyId && !claimsQuery.isLoading),
+    // verify-no-silent-list-caps (main red 11-02): this used to fetch the company's first 500 lawsuits and keep the ones
+    // tied to this policy's claims on the client — lawsuit 501 silently vanished. Now one server-filtered request per
+    // claim (insurance_claim_id), each returning its own total, so a claim with more lawsuits than shown is disclosed.
     queryFn: async () => {
-      const res = await legalMattersApi.list(companyId, { type: "lawsuit", limit: 500 });
-      const matters = res.matters ?? [];
-      if (claimIds.size === 0) return [] as LegalMatterListRow[];
-      return matters.filter((m) => {
-        const claimId = m.insurance_claim_id == null ? "" : String(m.insurance_claim_id);
-        return claimId && claimIds.has(claimId);
-      });
+      if (claimIds.size === 0) return { rows: [] as LegalMatterListRow[], shown: 0, total: 0 };
+      const perClaim = await Promise.all(
+        [...claimIds].sort().map((claimId) =>
+          legalMattersApi.list(companyId, { type: "lawsuit", insurance_claim_id: claimId, limit: POLICY_LAWSUITS_PER_CLAIM_LIMIT }),
+        ),
+      );
+      const byId = new Map<string, LegalMatterListRow>();
+      let total = 0;
+      for (const res of perClaim) {
+        const matters = res.matters ?? [];
+        total += typeof res.total === "number" ? res.total : matters.length;
+        for (const m of matters) byId.set(String(m.id ?? ""), m);
+      }
+      return { rows: [...byId.values()], shown: byId.size, total };
     },
   });
 
@@ -144,7 +158,7 @@ export function PolicyDetail() {
 
   const claims = claimsQuery.data ?? [];
   const coiRows = coiQuery.data ?? [];
-  const lawsuitRows = lawsuitsQuery.data ?? [];
+  const lawsuitRows = lawsuitsQuery.data?.rows ?? [];
 
   const unitColumns = useMemo<ParityColumn<InsurancePolicyUnit>[]>(
     () => [
@@ -440,6 +454,13 @@ export function PolicyDetail() {
                 onRetry={() => void lawsuitsQuery.refetch()}
               />
             ) : (
+              <>
+              <CappedListNotice
+                shown={lawsuitsQuery.data?.shown ?? 0}
+                limit={POLICY_LAWSUITS_PER_CLAIM_LIMIT}
+                total={lawsuitsQuery.data?.total}
+                hint="Open each claim to see all of its lawsuits."
+              />
               <ParityTable
                 rows={lawsuitRows}
                 columns={lawsuitColumns}
@@ -448,6 +469,7 @@ export function PolicyDetail() {
                 storageKey="insurance-policy-lawsuits"
                 emptyText="No legal matters (type lawsuit) linked to this policy's claims."
               />
+              </>
             )}
           </div>
         </div>
