@@ -1,10 +1,10 @@
 {
-  "healthzSha": "09ff26c",
-  "generated_at": "2026-11-02T18:26:44.964Z",
+  "healthzSha": "5a6e2ce",
+  "generated_at": "2026-11-02T20:23:57.796Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "09ff26c",
+    "deployedSha": "5a6e2ce",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27992,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28059,
+      "title": "FINDING: Codex independent Safety depth and Fleet retests",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27992",
-      "sha": "9632fabcf7",
-      "committedAtIso": "2026-11-02T12:26:35-06:00"
+      "mergedAtCt": "11/02/2026, 02:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28059",
+      "sha": "dece6659d0",
+      "committedAtIso": "2026-11-02T14:23:47-06:00"
     },
     {
-      "number": 27991,
-      "title": "FINDING: ENG-13 AUTH-473 DONE-LIVE + ENG-22 trailer-type prevention (ROUND 7.2)",
+      "number": 28058,
+      "title": "FINDING: Cursor OUTBOX/INBOX tip catch-up after U29 waves",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27991",
-      "sha": "c15df254bc",
-      "committedAtIso": "2026-11-02T12:23:08-06:00"
+      "mergedAtCt": "11/02/2026, 02:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28058",
+      "sha": "c7166bbc9c",
+      "committedAtIso": "2026-11-02T14:22:19-06:00"
     },
     {
-      "number": 27990,
-      "title": "CLAIM-RESERVE: cursor 18930 (ENG-22 booked-trailer-matches-company-equipment)",
+      "number": 28057,
+      "title": "FINDING: Fuel Integrity U29 Unit/Vendor EntityLinks + bus tip",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27990",
-      "sha": "09ff26cb9f",
-      "committedAtIso": "2026-11-02T12:19:53-06:00"
+      "mergedAtCt": "11/02/2026, 02:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28057",
+      "sha": "3f82377e11",
+      "committedAtIso": "2026-11-02T14:21:47-06:00"
     },
     {
-      "number": 27975,
-      "title": "FINDING: ENG-13 load 13595 broker trailer 445 (Edit Load engine) + AUTH-473 + guard 18913",
+      "number": 28056,
+      "title": "FINDING: U29 Dispatch exception queues EntityLink customer/invoice/driver",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27975",
-      "sha": "6669a4d4ff",
-      "committedAtIso": "2026-11-02T12:07:20-06:00"
+      "mergedAtCt": "11/02/2026, 02:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28056",
+      "sha": "58018864ad",
+      "committedAtIso": "2026-11-02T14:18:31-06:00"
     },
     {
-      "number": 27989,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — ROUND 6.4 CC-2: 6.4-D + 6.4-E verified on prod",
+      "number": 28055,
+      "title": "FINDING: Codex Round 7 filtered Bills count and independent retests",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27989",
-      "sha": "30a6eaa89b",
-      "committedAtIso": "2026-11-02T12:06:28-06:00"
+      "mergedAtCt": "11/02/2026, 02:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28055",
+      "sha": "3ed7ac1bab",
+      "committedAtIso": "2026-11-02T14:17:36-06:00"
     },
     {
-      "number": 27988,
-      "title": "fill-not-shell: customer tabs + recon BoardSection (build-first)",
+      "number": 28054,
+      "title": "FINDING: Dispatch Load Costs U29 Truck link + honest margin caption",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27988",
-      "sha": "aa4e8cc0c3",
-      "committedAtIso": "2026-11-02T12:06:24-06:00"
+      "mergedAtCt": "11/02/2026, 02:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28054",
+      "sha": "4a6127be23",
+      "committedAtIso": "2026-11-02T14:14:55-06:00"
     },
     {
-      "number": 27985,
-      "title": "FINDING: stop-dwell evidence never links onto a date_only stop (PROD-5Y CHECK violation, 13698 miles)",
+      "number": 28053,
+      "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF/U-rows + OUTBOX updates",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27985",
-      "sha": "72382fc6a9",
-      "committedAtIso": "2026-11-02T12:06:21-06:00"
+      "mergedAtCt": "11/02/2026, 02:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28053",
+      "sha": "efc4c40cd6",
+      "committedAtIso": "2026-11-02T14:13:07-06:00"
     },
     {
-      "number": 27983,
-      "title": "FINDING: ROUND 7 — every pending engine + module shell assigned to all seats; fast-merge law",
+      "number": 28052,
+      "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF-ORPH-05/B08/U-rows + OUTBOX records",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27983",
-      "sha": "a0c07d09d2",
-      "committedAtIso": "2026-11-02T12:05:40-06:00"
+      "mergedAtCt": "11/02/2026, 02:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28052",
+      "sha": "ac9d009bba",
+      "committedAtIso": "2026-11-02T14:12:44-06:00"
     },
     {
-      "number": 27977,
-      "title": "CLAIM-MIGRATION: claude 202616310100 (ENG-60 retire insurance.lawsuit)",
+      "number": 28051,
+      "title": "CC-2- ENG-DEADLOCK-01 fix load_stops lock order in dwell evidence cron",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27977",
-      "sha": "f6f411ecbd",
-      "committedAtIso": "2026-11-02T12:01:42-06:00"
+      "mergedAtCt": "11/02/2026, 02:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28051",
+      "sha": "e1e98d179b",
+      "committedAtIso": "2026-11-02T14:11:53-06:00"
     },
     {
-      "number": 27987,
-      "title": "CLAIM-RESERVE: lead 18913 18917 18921 18925 (ENG-13/60/23/25b)",
+      "number": 28050,
+      "title": "FINDING: CashFlow money/date format + report preset remount (shared)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27987",
-      "sha": "f7aa20c898",
-      "committedAtIso": "2026-11-02T12:01:11-06:00"
+      "mergedAtCt": "11/02/2026, 02:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28050",
+      "sha": "c236ebf351",
+      "committedAtIso": "2026-11-02T14:11:24-06:00"
     }
   ]
 }
