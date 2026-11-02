@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~8:00 PM CT) — Cursor CRM/Drivers house format + ENG-21 BLOCKED
+- **ENG-21 (load 13699 / Copamex):** BLOCKED — live Neon measure: delivery stop already `{ city: 'Bradley', state: 'IL', facility_name: 'Copamex' }`; `docs.files` for the load only has driver-instructions PDFs; load.notes say **"rate con not on file"**. No Edit Load — signed rate-con is not in the system (do not invent). Needs rate-con upload/find before document-decides close.
+- **THIS WAVE:** CustomerDetail/VendorDetail/Drivers/UnitDriverHistory/CoiTab/PortalUsers/DocumentAlerts/Vendors+Customers SyncPanels/FMCSA modal/FreeTimeDetention/Customers+Vendors KPI miles/CreatorMilesChoicePanel → house formatDateUS/formatDateTimeUS/formatQuantityTable. Extended `verify-cursor-surfaces-datetime-format` (already wired).
+- **NEXT:** more Cursor engines/U18–U31 leftovers; ENG-22 apply waits AUTH; Dreamline/match deferred (owner BUILD-FIRST). Safety/CC-3 inbox stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~7:35 PM CT) — Cursor BUILD-FIRST format tip (#28188+)
 - **PRIOR:** #28174–#28188 shells/U18/format waves.
 - **THIS:** Archived DispatchList dates → formatDateUS/formatDateTimeUS. Cursor seat locale leftovers now only America/Chicago machine clocks (plannerTimeAxis todayYmd · hosClocks fmtLocalClock).

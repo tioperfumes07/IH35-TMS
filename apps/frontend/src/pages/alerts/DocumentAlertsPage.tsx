@@ -15,6 +15,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 function severityClass(severity: string, days: number) {
@@ -116,7 +117,7 @@ function InboxRow({
         <div>
           <p className="font-semibold">{event.detection_summary}</p>
           <p className="text-xs opacity-80">
-            {event.rule_name} · {event.days_until_expiry}d · detected {new Date(event.detected_at).toLocaleString()}
+            {event.rule_name} · {event.days_until_expiry}d · detected {formatDateTimeUS(event.detected_at)}
           </p>
         </div>
         <div className="flex gap-2">

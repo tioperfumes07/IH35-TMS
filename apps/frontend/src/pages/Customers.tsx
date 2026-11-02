@@ -6,7 +6,7 @@ import { ListErrorState } from "../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { EntityLink } from "../components/shared/EntityLink";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
-import { formatUsdCents } from "../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../lib/money";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -1238,7 +1238,7 @@ export function CustomersPage() {
       { key: "truck_no", label: "Truck #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_unit_number ?? "", render: (r) => r.linked_unit_number ?? "—" },
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_pickup_date ?? "", render: (r) => mmmDd(r.linked_pickup_date) || "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_delivery_date ?? "", render: (r) => mmmDd(r.linked_delivery_date) || "—" },
-      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? Number(r.linked_loaded_miles).toLocaleString() : "—" },
+      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? formatQuantityTable(r.linked_loaded_miles, 0) : "—" },
     ],
     [],
   );
@@ -1472,21 +1472,21 @@ export function CustomersPage() {
       >
         <V3KpiTile
           label="With transactions"
-          value={customerHomeKpis.withTransactions.toLocaleString("en-US")}
+          value={formatQuantityTable(customerHomeKpis.withTransactions, 0)}
           sub="customers with activity"
           testId="customers-kpi-with-transactions"
           onClick={() => setListTab("with_transactions")}
         />
         <V3KpiTile
           label="In the book"
-          value={customerHomeKpis.inTheBook.toLocaleString("en-US")}
+          value={formatQuantityTable(customerHomeKpis.inTheBook, 0)}
           sub="full customer roster"
           testId="customers-kpi-in-the-book"
           onClick={() => setListTab("all")}
         />
         <V3KpiTile
           label="Open invoices"
-          value={customerHomeKpis.openInvoices == null ? "—" : customerHomeKpis.openInvoices.toLocaleString("en-US")}
+          value={customerHomeKpis.openInvoices == null ? "—" : formatQuantityTable(customerHomeKpis.openInvoices, 0)}
           sub="sent/partial with balance"
           testId="customers-kpi-open-invoices"
           onClick={() => navigate("/accounting/invoices?has_balance=true")}

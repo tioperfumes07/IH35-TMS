@@ -6,12 +6,12 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return formatDateTimeUS(value) || value;
 }
 
 function buildColumns(operatingCompanyId: string): Array<ParityColumn<VehicleDriverHistoryRow>> {
@@ -60,7 +60,7 @@ function buildColumns(operatingCompanyId: string): Array<ParityColumn<VehicleDri
     key: "driven_miles",
     label: "Miles",
     sortable: true,
-    render: (row) => row.driven_miles == null ? "—" : Number(row.driven_miles).toLocaleString(undefined, { maximumFractionDigits: 1 }),
+    render: (row) => row.driven_miles == null ? "—" : formatQuantityTable(row.driven_miles),
   },
   {
     key: "started_at",

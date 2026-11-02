@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -1137,7 +1137,7 @@ export function CustomerDetailPage() {
         <MissingRequiredChip operatingCompanyId={operatingCompanyId} entityKind="customer" entityId={id} />
         {customer.fmcsa_verified_at ? (
           <button type="button" onClick={() => setFmcsaHistoryOpen(true)}>
-            <StatusBadge variant="positive">{`FMCSA Verified ${new Date(customer.fmcsa_verified_at).toLocaleDateString()}`}</StatusBadge>
+            <StatusBadge variant="positive">{`FMCSA Verified ${formatDateUS(customer.fmcsa_verified_at)}`}</StatusBadge>
           </button>
         ) : null}
         <Button size="sm" variant="secondary" onClick={() => setFmcsaModalOpen(true)}>
@@ -1148,10 +1148,10 @@ export function CustomerDetailPage() {
             Verify FMCSA
           </Button>
         ) : null}
-        {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
+        {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${formatDateTimeUS(customer.fmcsa_last_checked_at)}`}</span> : null}
         {saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
-            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${formatDateUS(saferEntity.safer_verified_at)}`}
           </StatusBadge>
         ) : saferEntity?.safer_status ? (
           <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
@@ -1420,7 +1420,7 @@ export function CustomerDetailPage() {
               <div className="text-xs font-semibold text-gray-600">Last Updated</div>
               <p className="mt-1 text-xs text-gray-800">
                 {hydratedForm.credit_limit_updated_at
-                  ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString()
+                  ? formatDateTimeUS(hydratedForm.credit_limit_updated_at)
                   : "Not set"}
               </p>
             </div>
@@ -1734,7 +1734,7 @@ export function CustomerDetailPage() {
                 {
                   label: "SAFER Status",
                   value: saferEntity?.safer_verified_at
-                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`
+                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${formatDateUS(saferEntity.safer_verified_at)}`
                     : saferEntity?.safer_status ?? "Not verified",
                 },
               ]}
@@ -1961,7 +1961,7 @@ export function CustomerDetailPage() {
                 label: "Created",
                 sortable: true,
                 cellClass: "text-right tabular-nums",
-                render: (load) => (load.created_at ? new Date(load.created_at).toLocaleDateString() : "—"),
+                render: (load) => (load.created_at ? formatDateUS(load.created_at) || "—" : "—"),
               },
             ]}
           />
@@ -2974,7 +2974,7 @@ export function CustomerDetailPage() {
                 <StatusBadge variant={lookup.authority_status === "ACTIVE" ? "positive" : "crit"}>{lookup.authority_status}</StatusBadge>
               </div>
               <div className="text-xs text-gray-600">
-                {lookup.lookup_type.toUpperCase()} {lookup.lookup_value} • {new Date(lookup.fetched_at).toLocaleString()}
+                {lookup.lookup_type.toUpperCase()} {lookup.lookup_value} • {formatDateTimeUS(lookup.fetched_at)}
               </div>
             </div>
           ))}
