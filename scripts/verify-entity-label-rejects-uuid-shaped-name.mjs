@@ -1237,9 +1237,10 @@ const SIBLINGS = [
     good: /entityLabel\(\s*claim\.claim_number\s*,\s*claim\.id\s*,\s*"Claim"\s*\)/,
   },
   {
+    // ENG-60: policy lawsuits are legal.matters — label from case_number/matter_number via entityLabel.
     rel: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
-    bad: /label=\{row\.case_number\}/,
-    good: /entityLabel\(\s*row\.case_number\s*,\s*row\.id\s*,\s*"Case"\s*\)/,
+    bad: /label=\{String\(row\.case_number/,
+    good: /entityLabel\(\s*String\(row\.case_number \?\? row\.matter_number \?\? ""\)\s*,\s*String\(row\.id \?\? ""\)\s*,\s*"Case"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
@@ -1589,9 +1590,10 @@ const SIBLINGS = [
     good: /entityLabel\(tx\.matched_journal_entry_memo \?\? null, tx\.matched_journal_entry_id, "Journal entry"\)/,
   },
   {
+    // ENG-60: LawsuitsTab is a Navigate stub; entityLabel lives on LegalMattersListPage.
     rel: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
-    bad: /\{lawsuit\.case_number\}/,
-    good: /entityLabel\(\s*lawsuit\.case_number\s*,\s*lawsuit\.id\s*,\s*"Case"\s*\)/,
+    bad: /Navigate to=\{`\/insurance\/lawsuits/,
+    good: /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",

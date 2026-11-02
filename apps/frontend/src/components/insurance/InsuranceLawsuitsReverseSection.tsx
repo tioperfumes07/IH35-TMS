@@ -2,8 +2,7 @@ import { LegalMattersReverseSection } from "../legal/LegalMattersReverseSection"
 
 /**
  * ENG-60: insurance.lawsuit side table retired (0 rows). Reverse chrome now reads legal.matters
- * (same filter keys VehicleProfile / DriverProfile already mount via LegalMattersReverseSection).
- * Kept as a named export so fleet/driver call sites do not break; renders the legal reverse once.
+ * via LegalMattersReverseSection (ListErrorState + refetch live there).
  */
 export function InsuranceLawsuitsReverseSection({
   operatingCompanyId,

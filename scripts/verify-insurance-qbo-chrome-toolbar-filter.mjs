@@ -35,8 +35,14 @@ const CHECKS = [
       /CollapsedListFilters[\s\S]*onApply=\{stagedFilters\.apply\}[\s\S]*onReset=\{stagedFilters\.reset\}[\s\S]*onCancel=\{stagedFilters\.cancel\}/,
   },
   {
-    name: "LawsuitsTab: CollapsedListFilters Apply triad + ParityTable",
+    // ENG-60: insurance LawsuitsTab Navigate→Legal; filter chrome on LegalMattersListPage.
+    name: "LawsuitsTab: ENG-60 Navigate to Legal lawsuits board",
     file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+    pattern: /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/,
+  },
+  {
+    name: "LegalMattersListPage (lawsuits board): CollapsedListFilters Apply triad",
+    file: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
     pattern:
       /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}/,
   },
