@@ -1,7 +1,8 @@
-// 18937 (Claude Lead, 2026-11-02) — 30 guards were merged on 11-02 without wiring (verify-guard-wired red on main and every
+// 18937 (Claude Lead, 2026-11-02) — 31 guards were merged on 11-02 without wiring (verify-guard-wired red on main and every
 // PR: locked-guards-heavy). Each one passes BOTH a plain run and --selftest without a database (measured on main 21:25Z),
 // so each is EXECUTED here, not merely named. Any failure fails the step with the guard's own name.
 const GUARDS = [
+  "verify-navy-subnav-portal-mousedown.mjs",
   "verify-accounting-hub-aging-u30.mjs",
   "verify-cashflow-home-matrix-drill.mjs",
   "verify-cashflow-home-money-date-format.mjs",
