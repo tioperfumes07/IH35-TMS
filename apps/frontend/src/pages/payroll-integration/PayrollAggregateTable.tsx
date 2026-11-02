@@ -6,9 +6,10 @@
  */
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import type { PayrollPerson } from "../../hooks/usePayrollAggregate";
+import { formatUsdCents } from "../../lib/money";
 
 function cents(n: number) {
-  return `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(n);
 }
 
 const COLUMNS: Array<ParityColumn<PayrollPerson>> = [

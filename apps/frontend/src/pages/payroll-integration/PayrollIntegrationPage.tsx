@@ -14,9 +14,10 @@ import { ClassAllocationView } from "./ClassAllocationView";
 import { useToast } from "../../components/Toast";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatUsdCents } from "../../lib/money";
 
 function cents(n: number) {
-  return `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(n);
 }
 
 function currentMonthRange() {

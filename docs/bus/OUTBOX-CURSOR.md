@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~8:40 PM CT) — Cursor inventory/integrations/forensic/payroll format
+- **PRIOR:** #28195 shared Cursor surfaces format.
+- **THIS:** Inventory assignments/purchases · Samsara · Forensic · Advance print · QBO sync detail/label · profitability miles · MaintServices miles · SidebarPagination · payroll money → house formatters. Guard extended.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; ENG-21 BLOCKED; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~8:20 PM CT) — Cursor shared format wave (tasks/docs/fleet/cash-advances)
 - **PRIOR:** #28192 CRM/Drivers + ENG-21 BLOCKED tip.
 - **THIS:** TasksTab/NotificationLog/ValidationPanel/UserActivity/Docs Version+Preview datetime · oos-display/MilesRec/Locations/CashAdvances dates · FleetTable/odometerHonesty/VendorFuel/Driver mph/CappedListNotice qty · SettlementsSection money. Extended cursor-surfaces datetime guard.

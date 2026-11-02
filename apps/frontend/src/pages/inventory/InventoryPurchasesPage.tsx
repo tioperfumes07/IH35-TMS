@@ -16,6 +16,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
 const STATUS_FILTER_OPTIONS = statusOptions({
   active: "Active",
@@ -23,14 +25,12 @@ const STATUS_FILTER_OPTIONS = statusOptions({
 });
 
 function formatMoneyCents(cents: number | null | undefined) {
-  return `$${(Number(cents ?? 0) / 100).toFixed(2)}`;
+  return formatUsdCents(Number(cents ?? 0));
 }
 
 function formatWhen(iso: string | null | undefined) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
+  return formatDateTimeUS(iso) || "—";
 }
 
 /**

@@ -11,16 +11,16 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 
 function formatMoney(value: number | null | undefined) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return formatUsd(Number(value ?? 0));
 }
 
 function formatWhen(iso: string | null | undefined) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
+  return formatDateTimeUS(iso) || "—";
 }
 
 /**

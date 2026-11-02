@@ -24,6 +24,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/Combobox";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const FORENSIC_AUDIT_LOG_PAGE = 100;
 
@@ -238,7 +239,7 @@ export function ForensicReviewPage() {
                     <p className="text-amber-700">Refresh error: {status.last_refresh_error}</p>
                   ) : null}
                   <p className="text-gray-500">
-                    Last refreshed: {status?.last_refreshed_at ? new Date(status.last_refreshed_at).toLocaleString() : "Never"}
+                    Last refreshed: {status?.last_refreshed_at ? formatDateTimeUS(status.last_refreshed_at) || "Never" : "Never"}
                   </p>
                   <p className="text-gray-500">
                     Refresh token expires: {expiresInDays !== null ? `${expiresInDays} day(s)` : "N/A"}
@@ -327,7 +328,7 @@ export function ForensicReviewPage() {
                     <div className="mt-1 space-y-1">
                       {live.recent_errors.map((item) => (
                         <div key={`${item.at}-${item.message}`} className="text-xs text-red-700">
-                          {new Date(item.at).toLocaleTimeString()} - {item.message}
+                          {formatDateTimeUS(item.at)} - {item.message}
                         </div>
                       ))}
                     </div>
@@ -367,7 +368,7 @@ export function ForensicReviewPage() {
                     ) : (
                       (auditLogQuery.data?.rows ?? []).map((row: ForensicAuditLogRow) => (
                         <div key={row.id} className="border-b border-gray-200 py-1 text-xs text-gray-700 last:border-b-0">
-                          <span className="font-semibold">{row.event_type}</span> · {new Date(row.occurred_at).toLocaleString()}
+                          <span className="font-semibold">{row.event_type}</span> · {formatDateTimeUS(row.occurred_at)}
                           {row.entity_type ? ` · ${row.entity_type}` : ""}
                           {row.records_processed !== null ? ` · records ${row.records_processed}` : ""}
                           {row.error_message ? ` · ${row.error_message}` : ""}

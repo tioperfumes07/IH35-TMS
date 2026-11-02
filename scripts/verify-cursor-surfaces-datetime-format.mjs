@@ -54,6 +54,13 @@ const FILES = [
   "apps/frontend/src/components/users/UserActivityTab.tsx",
   "apps/frontend/src/components/documents/VersionHistoryModal.tsx",
   "apps/frontend/src/components/documents/PreviewModal.tsx",
+  "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
+  "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
+  "apps/frontend/src/pages/integrations/SamsaraIntegrationPage.tsx",
+  "apps/frontend/src/pages/forensic/ForensicReviewPage.tsx",
+  "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx",
+  "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx",
+  "apps/frontend/src/lib/qbo-sync-last-success-label.ts",
 ];
 
 const DATE_ONLY = [
@@ -94,10 +101,17 @@ const QUANTITY = [
   "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
   "apps/frontend/src/components/driver-profile/DriverLiveOverview.tsx",
   "apps/frontend/src/components/CappedListNotice.tsx",
+  "apps/frontend/src/pages/profitability/money.ts",
+  "apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx",
+  "apps/frontend/src/components/shared/SidebarPagination.tsx",
 ];
 
 const MONEY_CENTS = [
   "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
+  "apps/frontend/src/pages/payroll-integration/PayrollIntegrationPage.tsx",
+  "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx",
+  "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx",
+  "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
 ];
 
 const MONEY = [
