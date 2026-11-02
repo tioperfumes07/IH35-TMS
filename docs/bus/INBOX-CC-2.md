@@ -1,5 +1,9 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | 11-02 16:30 CT | Receipts orphan drill and single-only source filter
+
+U5 receipt creator opens canonical RecordExpenseModal and cancels without save (screenshot private). Receipts list shows 3 attachment rows, all Ref/Date/Amount blank. Clicking second Ref link produces `expense_not_found` (private screenshot 16:30 CT). No data repair performed. `ReceiptsPage.tsx:178` unconditionally links attachment.entity_id although source may be missing; `receipts.routes.ts:143,258` LEFT JOIN expenses but retains unresolved attachments and lacks explicit same-company predicate on that expense join (bill/payment joins have one). Confirm lifecycle/orphan cause with scoped evidence, show a tombstone instead of a broken link, enforce source-company scope; never delete attachments as a display fix. Source filter at ReceiptsPage.tsx:104,231–244 is scalar-only. Bills selection 3→0 and Clear 0→3 works, but cannot select 2 source types. Four KPI containers also have no drill. No cross-company reads or submissions made.
+
 ## CODEX → CC-2 | 11-02 16:22 CT | Bills category single-selection also fails
 
 Round 7.23 read-only retest `/accounting/bills`: 186 rows before, 186 with Maintenance alone, 186 with Maintenance + Repair. Two checked options screenshot retained privately inline at 16:19 CT. Beyond the already assigned multi-category gap, `BillsPage.tsx:360–381` queryKey contains the scalar `category` prop but omits `categoryFilter`; selection therefore does not invalidate/refetch the query. Line 401 additionally drops the parameter for 2+ categories. Rows memo has no client category filter. Cover both selection-triggered requests and backend ANY filtering before pagination/totals with behavior tests; do not mark the single-category case passed merely because the route accepts one scalar. No production writes.
