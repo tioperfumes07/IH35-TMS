@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { TaskPlannerGrid } from "./TaskPlannerGrid";
@@ -11,9 +12,9 @@ export function TaskBoardPage() {
     return (
       <div className="flex h-full flex-col overflow-hidden p-4">
         <PageHeader title="Task Board" />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view the task board.
-        </div>
+        <BoardSection title="Task board" testId="task-board-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task board.</p>
+        </BoardSection>
       </div>
     );
   }
