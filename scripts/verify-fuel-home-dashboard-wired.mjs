@@ -100,6 +100,16 @@ export function computeFailures(source) {
   if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
     errors.push("FuelHome.tsx must disclose Love's sync-status failure and retry the exact query");
   }
+  // Codex QA: dieselQuery.isError must not share the success emptyText ("No diesel spend…").
+  if (!/dieselQuery\.isError[\s\S]{0,400}fuel-home-diesel-error[\s\S]{0,200}ListErrorBanner/.test(source)) {
+    errors.push("FuelHome.tsx must fail-loud diesel-by-truck (fuel-home-diesel-error + ListErrorBanner), not empty-success");
+  }
+  if (
+    /dieselQuery\.isError[\s\S]{0,200}No diesel spend for this period/.test(source) ||
+    (!/dieselQuery\.isError \? \(/.test(source) && /emptyText="No diesel spend for this period\."/.test(source) && !/fuel-home-diesel-error/.test(source))
+  ) {
+    errors.push("FuelHome.tsx must not present dieselQuery.isError as 'No diesel spend for this period'");
+  }
   // BANK-F91284 leftover refuse — FuelHome page-scoped text token ratchet
   if (source.includes("text-[11px]")) errors.push("FuelHome.tsx: leftover text-[11px]");
   if (source.includes("#8A92AB") || source.includes("#334155")) errors.push("FuelHome.tsx: leftover off-scale muted");
@@ -417,7 +427,7 @@ function selftest() {
     export function FuelHomePage() {
       getFuelDashboard(id);
       fetchDieselByTruckAggregate(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip companyId={companyId} period={period} /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")} /><ParityTable title="Diesel by truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip companyId={companyId} period={period} /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")}>{dieselQuery.isError ? (<div data-testid="fuel-home-diesel-error"><ListErrorBanner message="Diesel by truck could not be loaded — this is not an empty period." onRetry={() => void dieselQuery.refetch()} /></div>) : (<ParityTable title="Diesel by truck" emptyText="No diesel spend for this period." />)}</FuelBoardSection><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
