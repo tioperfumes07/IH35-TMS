@@ -12,6 +12,9 @@
  * This guard mutation-proves the honest banner stays present and is not gated behind a condition that
  * can quietly go false (e.g. an error-only check) — it must render unconditionally on the page, the same
  * way the defect is unconditional (no report_slug has a working generator today).
+ *
+ * fill-not-shell 2026-11-02: banner lives inside BoardSection (q8-subscriptions-delivery-board).
+ * Headline may say "not implemented yet" OR "has no worker yet" — both are honest; "coming soon" is not.
  */
 import fs from "node:fs";
 
@@ -41,24 +44,32 @@ function audit(text) {
     "the honest 'email delivery is not implemented yet' banner (data-testid=q8-subscriptions-delivery-not-implemented) must be present in SubscriptionManager.tsx"
   );
   need(
-    /Email delivery is not implemented yet/.test(stripped),
-    "the banner's headline text must say delivery is not implemented — do not soften this to \"coming soon\" or remove it while the worker genuinely does not exist"
+    /Email delivery (?:is not implemented yet|has no worker yet)/.test(stripped),
+    "the banner's headline text must say delivery is not implemented / has no worker yet — do not soften this to \"coming soon\" or remove it while the worker genuinely does not exist"
   );
   need(
     /no backend worker exists to send them/i.test(stripped),
     "the banner must explain WHY: no backend worker sends these, so Active does not mean emails go out"
   );
+  need(
+    /<BoardSection[^>]*testId="q8-subscriptions-delivery-board"/.test(stripped) ||
+      /<BoardSection[^>]*title="Email delivery"[\s\S]*?testId="q8-subscriptions-delivery-board"/.test(stripped) ||
+      /testId="q8-subscriptions-delivery-board"/.test(stripped),
+    "delivery honesty must live inside BoardSection testId=q8-subscriptions-delivery-board (fill-not-shell)"
+  );
 
   // The banner must render unconditionally — not gated inside subsQuery.isError / subsQuery.isSuccess
   // or any other conditional block, since the underlying defect is unconditional (true for every row,
   // not just on an API error or once data loads).
-  const bannerBlockMatch = stripped.match(
-    // LEAD 443.105 (2026-10-12) — old rule: the banner block was found by `border border-slate-200`; new rule: by the house
-    // border token `border border-[#E5E7EB]` (BANK-F91208 / verify-rpt-sub-slate-leftover-chrome forbid slate on this page,
-    // so the two guards could not both pass after fb17a4b687). The unconditional-banner checks below are unchanged.
-    /<div\s+className="rounded-sm border border-\[#E5E7EB\][^"]*"\s+data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?<\/div>/
-  );
-  need(bannerBlockMatch, "could not isolate the banner's own <div> block to check it is unconditional");
+  // Match either legacy bordered div OR BoardSection-wrapped inner div (fill-not-shell 2026-11-02).
+  const bannerBlockMatch =
+    stripped.match(
+      /<div\s+className="(?:rounded-sm border border-\[#E5E7EB\][^"]*|bg-\[#F7F8FA\][^"]*)"\s+data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?<\/div>/
+    ) ||
+    stripped.match(
+      /data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?Email delivery[\s\S]*?(?:not implemented yet|has no worker yet)[\s\S]*?no backend worker exists to send them/i
+    );
+  need(bannerBlockMatch, "could not isolate the banner's own block to check it is unconditional");
   if (bannerBlockMatch) {
     const before = stripped.slice(0, bannerBlockMatch.index);
     // Walk backward from the banner to the nearest unmatched conditional opener on the same JSX level.
@@ -89,7 +100,10 @@ if (process.argv.includes("--selftest")) {
     },
     {
       name: "soften the headline to hide the real defect",
-      mutate: (t) => t.replace("Email delivery is not implemented yet", "Email delivery coming soon"),
+      mutate: (t) =>
+        t
+          .replace("Email delivery has no worker yet", "Email delivery coming soon")
+          .replace("Email delivery is not implemented yet", "Email delivery coming soon"),
     },
     {
       name: "drop the 'why' explanation",
@@ -98,6 +112,14 @@ if (process.argv.includes("--selftest")) {
     {
       name: "remove the honest delivery explanation paragraph",
       mutate: (t) => t.replace(/no backend worker exists to send them[^]*?until\s+report delivery ships\./, "report delivery is active."),
+    },
+    {
+      name: "drop BoardSection wrap",
+      mutate: (t) =>
+        t
+          .replace(/<BoardSection[^>]*>\s*/, "")
+          .replace(/\s*<\/BoardSection>/, "")
+          .replace(/testId="q8-subscriptions-delivery-board"/, 'testId="removed-board"'),
     },
   ];
   let caught = 0;

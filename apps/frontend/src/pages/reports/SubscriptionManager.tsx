@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest, ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import {
   SubscriptionEditor,
@@ -250,11 +251,12 @@ export function SubscriptionManager() {
         ever will. This banner makes that honest instead of silent -- it is not the full fix (that is a
         real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
       */}
+      <BoardSection title="Email delivery" subtitle="Scheduled report subscriptions" testId="q8-subscriptions-delivery-board">
       <div
-        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs"
+        className="bg-[#F7F8FA] p-4 text-xs"
         data-testid="q8-subscriptions-delivery-not-implemented"
       >
-        <p className="font-semibold text-[#1F2A44]">Email delivery is not implemented yet</p>
+        <p className="font-semibold text-[#1F2A44]">Email delivery has no worker yet</p>
         <p className="mt-1 text-[#4B5563]">
           Subscriptions below save correctly, but no backend worker exists to send them — "Active" status
           does not mean emails are going out.{" "}
@@ -263,6 +265,7 @@ export function SubscriptionManager() {
           </InfoPopover>
         </p>
       </div>
+      </BoardSection>
 
       {/* LEAD 443.181 — the app's one table. A subscription has no record page of its own (it is edited in the
           SubscriptionEditor dialog via the Edit action), and a delivery-log line has none either: no row route. */}
