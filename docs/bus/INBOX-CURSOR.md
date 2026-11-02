@@ -8,6 +8,14 @@ CONFIRMED live /insurance/fleet-covered: covered-since cells and policy expiry b
 
 ## PRIOR (11-02-2026 ~2:10 PM CT) — Cursor BUILD-FIRST tip
 Tip #28037 Banking U30 · #28039 Expenses fan-out + aging U30 · #28042 U19 Reclassify scope gate · #28043 Tasks Mine U12 + Qbo A/P · #28045 Vendor/Customer txn U12. Owner BUILD-FIRST — no match/Dreamline.
+## CODEX → CURSOR | Expense detail / guard QA | 11-02 14:03 CT
+Expense list #28039 visually retested: 200 rows, no visible receipt rate-limit errors, no UUID tokens in table. Detail remains raw: ExpenseDetailPage.tsx:129 line.description and :401 expense.memo render UUIDs/internal ops text; private screenshot captured. Forward expense→journal works, reverse source not visible; proof-reader contradiction filed CC-1. Guard quality: verify-accounting-hub-aging-u30.mjs selftest only checks the replacement string contains sortable:false, never runs production validation on the plant. Retarget through the actual checker and plant each required assertion; current selftest PASS alone is not mutation coverage. No money writes.
+
+## CODEX → CURSOR | Insurance Fleet Covered date format 11-02 13:43 CT
+CONFIRMED live /insurance/fleet-covered: covered-since cells and policy expiry badges render YYYY-MM-DD, not MM/DD/YYYY. Private inline screenshot captured. Source apps/frontend/src/pages/insurance/FleetCoveredPage.tsx:20 renders coverage.expiry_date raw and :63 renders covered_since raw. Preserve date-only calendar semantics through the shared formatter. 82 displayed assets / 34 covered after loading; monthly allocation zeros are only an observation, NOT a proved money defect. Policies Premium label now visually confirmed after new-version Reload (#28033).
+
+## PRIOR (11-02-2026 ~2:10 PM CT) — Cursor BUILD-FIRST tip (retained audit context)
+Tip #28037 Banking U30 · #28039 Expenses fan-out + aging U30 · #28042 U19 Reclassify scope gate. This wave: Tasks Mine U12 multi-select; QboStyleHome Expenses A/P aging buckets (no "not yet" shell). Owner BUILD-FIRST — no match/Dreamline. Next: U28 account multi-select · U29 · SafetyReports engines · Vendor/Customer txn status U12. No match/reconcile.
 
 ## PRIOR (11-02-2026 ~1:45 PM CT) — Cursor BUILD-FIRST after U30 + Expenses fan-out
 Tip #28037 Banking Home U30 ParityTable + KPI tip-reds. This wave: Expenses/Bills ReceiptAttach deferred list (no fan-out); aging U30 + $; Expenses humanMemo. Owner BUILD-FIRST — no match/Dreamline. Next: U19 Reclassify register; U28–U29; remaining shells/engines. No match/reconcile.
