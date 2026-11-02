@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~1:10 PM CT) — Cursor tip
+- **MERGED:** #27990–#27997 — ENG-13 AUTH-473 DONE-LIVE · ENG-22 prevention · Profitability hub fill · MapView BoardSection · ELD cert/settings BoardSection · INBOX tip.
+- **ENG-36:** verify-18841 PASS still 21/≤21 negatives (ENG-25b fuel/expense class).
+- **NEXT:** remaining shells (Banking auto-vendor engine when product locks schema); ACCT-R-04 Render dashboard UUID values; Dreamline later; **no match / no month lock** (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~12:55 PM CT) — Cursor
 - **MERGED:** #27990 claim 18930 · #27991 ENG-13/22 · #27993 claim 18932 · #27994 Profitability hub fill-not-shell.
 - **NEXT:** MapView BoardSection + ELD cert/settings engines; ACCT-R-04 Render UUIDs; ENG-36 re-measure; Dreamline later; no match/reconcile.

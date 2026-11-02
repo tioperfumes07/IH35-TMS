@@ -14,7 +14,12 @@ See `docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md`.
 
 Superseded: every earlier CURRENT block.
 
-## CURRENT (11-02-2026 ~1:00 PM CT) — Cursor continue fill-not-shell
+## CURRENT (11-02-2026 ~1:10 PM CT) — Cursor continue fill-not-shell
+Tip ships #27990–#27997 on main. Owner BUILD-FIRST. Next: remaining module shells + ACCT-R-04 Render UUIDs. Stop ENG-60/34. Dreamline later. No bank match / month reconcile.
+
+Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 ~1:00 PM CT) — Cursor continue fill-not-shell
 ROUND 7.2 DONE: ENG-13 AUTH-473 CLOSED · ENG-22 prevention #27991 · CODED-QUEUED→DONE-LIVE. Fill: Profitability hub #27994 · MapView BoardSection #27995. Owner BUILD-FIRST (no match/reconcile/Dreamline/month-lock). Next: ELD cert/settings engines · remaining module shells · ACCT-R-04 Render UUIDs · ENG-36 re-measure.
 
 Superseded: every earlier CURRENT block.
