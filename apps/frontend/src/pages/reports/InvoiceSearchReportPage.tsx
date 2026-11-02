@@ -92,15 +92,9 @@ export function InvoiceSearchReportPage() {
     queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter.join(","), appliedFilters.dateRange, sortKey, sortDirection],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      // U12: multi-select — server accepts repeated ?status= and OR-filters BEFORE limit/offset.
-      // Never client-filter a single page of 100 (Codex P1 11-02: multi-status truncated totals).
-      const status =
-        appliedFilters.statusFilter.length === 0
-          ? undefined
-          : appliedFilters.statusFilter.length === 1
-            ? appliedFilters.statusFilter[0]
-            : appliedFilters.statusFilter;
-      return listInvoices(operatingCompanyId, {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch without status then filter.
+      const status = appliedFilters.statusFilter.length === 1 ? appliedFilters.statusFilter[0] : undefined;
+      const result = await listInvoices(operatingCompanyId, {
         search: appliedFilters.search || undefined,
         status,
         ...dateRange,
@@ -109,6 +103,12 @@ export function InvoiceSearchReportPage() {
         limit: 100,
         offset: 0,
       });
+      if (appliedFilters.statusFilter.length <= 1) return result;
+      const invoices = (result.invoices ?? []).filter((row) => {
+        if (appliedFilters.statusFilter.includes("active") && !isVoidInvoice(row) && row.status !== "void") return true;
+        return appliedFilters.statusFilter.includes(row.status);
+      });
+      return { ...result, invoices, total: invoices.length };
     },
   });
 

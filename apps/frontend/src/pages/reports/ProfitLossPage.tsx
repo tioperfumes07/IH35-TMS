@@ -39,20 +39,6 @@ function currentMonthRange() {
   return monthBoundsIso(companyToday());
 }
 
-/** Seed applied filters from shareable URL when present; else current month (Codex Round 7.6). */
-function filtersFromSearchParams(sp: URLSearchParams): {
-  start: string;
-  end: string;
-  basis: AccountingBasis;
-} {
-  const from = sp.get("from_date");
-  const to = sp.get("to_date");
-  const basisRaw = sp.get("basis");
-  const basis: AccountingBasis = basisRaw === "cash" || basisRaw === "accrual" ? basisRaw : "accrual";
-  if (from && to) return { start: from, end: to, basis };
-  return { ...currentMonthRange(), basis };
-}
-
 function sortLines(lines: AccountingProfitLossLine[]) {
   return [...lines].sort((a, b) => String(a.account_code || "").localeCompare(String(b.account_code || "")));
 }
@@ -86,9 +72,9 @@ export function ProfitLossPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
-  const [applied, setApplied] = useState(() => filtersFromSearchParams(searchParams));
+  const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
@@ -300,9 +286,10 @@ export function ProfitLossPage() {
         toDate={staged.draft.end}
         onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
         onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
-        onPresetSelect={(_preset: ReportPreset) => {
-          // ReportFilterBar.handlePreset already writes from_date/to_date/preset atomically.
-          // Keep the callback so the bar contract stays required; do not fight with a second URL write.
+        onPresetSelect={(preset: ReportPreset) => {
+          const next = new URLSearchParams(searchParams);
+          next.set("preset", preset);
+          setSearchParams(next, { replace: true });
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
