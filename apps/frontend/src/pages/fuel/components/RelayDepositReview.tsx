@@ -19,8 +19,8 @@ import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { FuelBoardSection } from "../FuelBoardSection";
-
-const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsdCents } from "../../../lib/money";
 
 const CLASS_LABEL: Record<RelayDepositClassification, string> = {
   company: "Company-funded",
@@ -137,7 +137,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         key: "settled_cents",
         label: "Settled amount",
         sortable: true,
-        render: (c) => <span className="tabular-nums">{usd(c.settled_cents)}</span>,
+        render: (c) => <span className="tabular-nums">{formatUsdCents(c.settled_cents)}</span>,
       },
       {
         key: "action",
@@ -168,7 +168,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         key: "relay_created_at",
         label: "Date",
         sortable: true,
-        render: (d) => new Date(d.relay_created_at).toLocaleDateString(),
+        render: (d) => formatDateUS(d.relay_created_at) || "—",
       },
       {
         key: "status",
@@ -184,7 +184,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         key: "total_amount_cents",
         label: "Amount",
         sortable: true,
-        render: (d) => <span className="tabular-nums">{usd(d.total_amount_cents)}</span>,
+        render: (d) => <span className="tabular-nums">{formatUsdCents(d.total_amount_cents)}</span>,
       },
       {
         key: "classification",
@@ -244,7 +244,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
           <V3KpiTile
             key={cls}
             label={CLASS_KPI_LABEL[cls]}
-            value={cls === "canceled" ? "—" : usd(settledFor(cls))}
+            value={cls === "canceled" ? "—" : formatUsdCents(settledFor(cls))}
             sub={`${countFor(cls)} deposit(s)`}
             tone={cls === "unclassified" && countFor(cls) > 0 ? "red" : "ink"}
             testId={`fuel-relay-inbox-kpi-${cls}`}
