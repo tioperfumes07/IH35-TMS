@@ -5,6 +5,10 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.4
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.4 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
+
+UPDATE 12:40 PM CT: 1090 $10,446.00 CLOSED (your #27989 — legitimate). ENG-13 DONE-LIVE by Cursor — re-measure 0/194 for 7.4-E. Keep 7.4-A/C/D.
+
 Verify live, never build: MERGED-UNVERIFIED M1/M2/M3/G1/LEAD-various · name the $10,446.00 1090 movement · ENG-48 re-measure · PROD-5Y stops after #27985 · ENG-13 / ENG-60 live · modules CASH-T03 (HTTP route), BANK-TIEOUT-01 measure, 4 Safety HOLDs.
 
 **Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
