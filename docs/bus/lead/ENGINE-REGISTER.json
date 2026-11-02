@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T16:34:36Z",
+ "generated": "2026-11-02T16:36:35Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -330,7 +330,7 @@
    "status": "PARTIAL",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "LIVE 10-28 CT: miles_driven_actual on 45/194 active USMCA loads (was 12/198). GPS-dwell cron filling; remainder dominated by manual stop times / far GPS refuse. Engine fill-from-fence still open."
+   "evidence": "LIVE 11-02 CT: missing miles_driven_actual 149/194 (was 182). Ceiling shrink 182→149. 45 filled via fences. Never estimate."
   },
   {
    "id": "ENG-30",
@@ -649,7 +649,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 11-02 CT: company settlement 5787→P-0018 closed. Settlement lines: layover 75 + reimb 22 + admin gas 10 (no 235.01 rollup on lines). Document-first recount still OPEN — claimed $235.01 vs $140.20 not found as a single line total."
   },
   {
    "id": "ENG-50",
