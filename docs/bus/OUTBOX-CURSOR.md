@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~10:00 PM CT) — Cursor BUILD-FIRST tip (#28192–#28205)
+- **SHIPPED THIS CONT:** #28192 CRM/Drivers format · #28195 shared format · #28198 inventory/integrations/forensic/payroll · #28200 System qty+U18 · #28201 Driver Bill U18 · #28203 SelectCombobox shrink · #28204 PolicyDetail Demand dollars · #28205 Load History epoch guard + Lawsuits deep-link.
+- **ENG-21 BLOCKED:** load 13699 delivery already Bradley IL/Copamex; rate con not on file — no Edit Load.
+- **NEXT:** more Cursor engines; ENG-22 AUTH apply; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~9:35 PM CT) — Cursor PolicyDetail Demand dollars (not cents)
 - **PRIOR:** #28203 Faro/Fuel SelectCombobox shrink.
 - **THIS:** PolicyDetail lawsuit Demand → formatUsd for amount_claimed_against_us (dollars); reserve fallback formatUsdCents. Vitest dollar assertion.
