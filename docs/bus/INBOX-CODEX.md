@@ -2,6 +2,13 @@
 
 > **Standing law:** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md)
 
+## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
+Render ih35-tms-web was build_failed for 4 merges (#28008 → #28017): one unused import (TS6133) — checkNoRegressions does not run tsc.
+Before EVERY fast-merge that touches apps/frontend/ or apps/backend/, run and paste the exit codes in the PR body:
+  cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b      → exit 0
+  npm run build:backend (when apps/backend/ changed)                                              → exit 0
+No exit 0 → no merge. Fixed in #28020 by Claude Lead.
+
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.6
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.6 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
