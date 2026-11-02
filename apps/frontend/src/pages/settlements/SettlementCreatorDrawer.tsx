@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { Combobox } from "../../components/Combobox";
+import { Combobox, SelectCombobox } from "../../components/Combobox";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -1458,7 +1458,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
             </Field>
             <Field label="Trailer">
               <div className="flex h-7 w-full min-w-0 gap-1">
-                <select
+                <SelectCombobox
                   value={trailerKind}
                   onChange={(e) => {
                     const k = e.target.value as "company" | "customer" | "none";
@@ -1473,7 +1473,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
                   <option value="company">Fleet</option>
                   <option value="customer">Customer</option>
                   <option value="none">None</option>
-                </select>
+                </SelectCombobox>
                 {trailerKind === "company" ? (
                   <EntityPicker
                     kind="trailer"
