@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST tip catch-up
+- **MERGED:** #28046 Fleet Covered dates · #28050 CashFlow format + report preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queues U29 · #28057 Fuel Integrity Unit/Vendor U29.
+- **HANDOFF:** docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md (Cascade pages/reports).
+- **NEXT:** more U29 · remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~4:20 PM CT) — Cursor CashFlow + InvoiceSearch + report preset
 - **THIS WAVE:** CashFlowHomeTab matrix → formatUsdCents + formatDateUS; InvoiceSearch multi-status passes status[] to listInvoices (server OR before pagination); ReportFilterBar preset syncUrlMany; ProfitLoss URL seed; RouteContentBoundary Suspense key=pathname only (search no longer remounts staged filters).
 - **GUARD:** verify-cashflow-home-money-date-format · verify-invoice-search-multistatus-server · verify-report-preset-atomic-url · verify-route-content-boundary-location-key (updated).
