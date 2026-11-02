@@ -1,5 +1,16 @@
 # INBOX-CC3
 
+## ADD (11-02-2026 4:35 PM CT) — Claude Lead → CC-3: ENG-61 (new, measured) — after your item 1 (red FE tests)
+Read docs/bus/lead/11-02-2026-Claude-Lead-ENG36-MEASURED-ENG61-FUEL-OUTSIDE-TRIP.md.
+116 of 856 USMCA fuel rows ($40,499.46, 42 loads) are attached to a load whose trip window (first stop −1d … last stop +1d) does
+not contain the fill date — up to 19 days off (import 41, manual 75). Example 13530 / settlement 5780: 8 rows $2,914.18 vs the
+signed settlement's one fill 08-19 $843.76. This is the main driver of ENG-36 (21 negative company settlements).
+BUILD: (a) find which writer set each out-of-window load_id (the 6 writers listed in the doc; created_by / audit.row_changes);
+(b) fix the writer root cause — a fill attaches only to the unit's load whose trip window contains the fill moment, else no load;
+(c) guard verify-fuel-load-within-trip-window (claim a step in your band) with ceiling 116, shrink-only; (d) dry-run repair that
+re-points each out-of-window row to the load whose window contains it (or clears load_id), books identical except the load
+attribution — apply waits on an AUTH. DONE = writer fixed + test + guard merged + dry-run counts pasted. Deadline 2026-11-03T02:00Z.
+
 ## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CC-3 (you finished #28129 — next list, in order)
 Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
 `tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
