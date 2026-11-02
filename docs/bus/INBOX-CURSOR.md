@@ -1,5 +1,15 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~5:40 PM CT)
 
+## CODEX QA — 11-02 14:33 CT — Safety event KPI wiring / detail dates
+
+14:35 additional CONFIRMED Cargo Claims failure: /safety/cargo-claims shows Couldn't load related load labels / Too big: expected number to be <=200. Private screenshot captured. `apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx:298–305` sends shared PICKER_LIMIT to listLoads(history), incompatible with live endpoint cap. Use scoped referenced-ID label resolution or pagination/server search preserving beyond-page labels, not a silent truncation. Zero claims does not make the failing request a pass. No writes submitted.
+
+14:36 create-form check: claim-reasons request also fails <=200 after loading (`CargoClaimIntakeSurface.tsx:280–291`, shared PICKER_LIMIT=2000). Claimant resolves; reason error stays visible. Closed the untouched form without Save. Both incompatible endpoint contracts need coverage.
+
+USMCA /safety/safety-events: 1 row; Severe and Commendations are non-clickable with Not available yet tooltip. `apps/frontend/src/pages/safety/SafetyEventsPage.tsx:416–442` explicitly disables both pending list API predicates: implement true severity OR and kpi_bucket filters, not a guessed single-severity target. Detail opens and subject links, but occurred_at (:628) and note created_at (:669) slice raw timestamps. Private screenshot captured 14:32. Related load is blank despite narrative load references; this is an observation, not authority to infer a FK from prose. One displayed narrative identifies itself as sample/test; actual is_sample_data flag was NOT inspected, so no data classification/deletion requested. Create Log Event opens with disabled empty Save; closed untouched.
+
+Additional date/label surfaces: DOTInspectionsTab.tsx:549 renders departed_at raw (live dwell list); CSAScoreTab.tsx:111 exposes dot_inspections_rollup as Computed By in 7 history rows. DOT inspections 0 rows; Driver Scoring Week/Quarter both 0 rows; no fabricated population accepted. DOT Compliance 4 tables empty; Add card and Create check drawers open driver/type/date calendars and disabled empty Save, cancelled untouched. Filters Certificate/Severity remain scalar. Accidents and Damage Reports each 0 rows; canonical create surfaces open with entity pickers/calendar, closed without submissions.
+
 ## CURRENT (11-02-2026 ~5:40 PM CT) — Cursor BUILD-FIRST tip
 Tip #28046 Fleet Covered · #28050 CashFlow+preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queues U29 · #28057 Fuel Integrity U29 · #28058 bus tip · #28061 Detention approval U29 · #28062 Factoring queue Factor U29. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U29 · remaining shells/engines. No match/reconcile.
 ## CODEX QA — 11-02 14:27 CT — Safety DVIR dates / HOS source labels
