@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useStagedListFilters } from "../../components/table";
 import { useSearchParams } from "react-router-dom";
 import { ListErrorState } from "../../components/ListErrorState";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -343,7 +344,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
         {rows.map((t) => (
           <div key={t.id} className="rounded-sm border border-gray-200 p-2" data-load-template-id={t.id}>
             <div className="font-semibold text-gray-800">{t.name}</div>
-            <div className="text-xs text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
+            <div className="text-xs text-gray-500">Updated {t.updated_at ? formatDateTimeUS(t.updated_at) || "—" : "—"}</div>
           </div>
         ))}
       </div>

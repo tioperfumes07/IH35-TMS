@@ -15,6 +15,7 @@ import {
 import { apiRequest } from "../../../api/client";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   loadId: string;
@@ -148,7 +149,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
                 <span>{incident.ended_at ? "Ended" : "Active"}{incident.resolved_at ? " · Resolved" : ""}</span>
               </div>
               <div className="mt-1 text-gray-700">
-                {new Date(incident.started_at).toLocaleString()} · {incident.reading_count} reading{incident.reading_count === 1 ? "" : "s"}
+                {formatDateTimeUS(incident.started_at) || "—"} · {incident.reading_count} reading{incident.reading_count === 1 ? "" : "s"}
                 {incident.duration_minutes != null ? ` · ${incident.duration_minutes} min` : ""}
                 {incident.worst_value != null ? ` · worst ${incident.worst_value}` : ""}
               </div>
