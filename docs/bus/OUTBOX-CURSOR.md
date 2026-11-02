@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~10:40 PM CT) — Cursor Factoring debtor filter behavior
+- **PRIOR:** #28132 Cash Flow pct · #28130 Fuel KPI · #28127–#28128 quantity waves.
+- **THIS WAVE:** filterPurchaseReportByDebtors extracted + behavioral exclude-third guard; CappedListNotice at purchase-lines 2000 cap.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~10:20 PM CT) — Cursor Cash Flow pct format
 - **PRIOR:** #28130 Fuel KPI house formatters · #28128/#28127 quantity waves.
 - **THIS WAVE:** CashFlowHome matrix % + ActualVsProjected formatPct → formatQuantityTable.
