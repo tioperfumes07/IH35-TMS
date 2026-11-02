@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~4:00 PM CT) — Cursor Fleet Covered dates + Fleet Home status
+- **THIS WAVE:** FleetCoveredPage expiry + covered_since → formatDateUS (MM/DD/YYYY); FleetHome Needs attention meta → humanizeEnumLabel; banner drops FLT-F428 / migration-round developer wording.
+- **GUARD:** scripts/verify-fleet-covered-dates-format.mjs (+ --selftest).
+- **PRIOR MERGED:** #28037–#28045 U30/U19/Expenses/U12 waves.
+- **NEXT:** CashFlow Home $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset remount · U28/U29 · remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~2:05 PM CT) — Cursor BUILD-FIRST tip (U30/U19/Expenses)
 - **MERGED:** #28037 Banking Home U30 ParityTable · #28039 Expenses/Bills ReceiptAttach no fan-out + aging U30 + humanMemo · #28042 U19 Reclassify no unscoped Loading hang (appliedHasScope).
 - **NEXT:** U12 residual status singles · U28 account multi-select · U29 click-through · remaining shells (QboStyleHome category breakdown, SafetyReports engines); Dreamline/match deferred (owner BUILD-FIRST).

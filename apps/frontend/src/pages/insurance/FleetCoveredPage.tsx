@@ -6,6 +6,7 @@ import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFle
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 
 const POLICY_437539_TIV_CENTS = 104_054_000;
@@ -17,7 +18,8 @@ function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType)
   if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]">N/A</span>;
   const coverage = row.coverages.find((item) => item.coverage_type === type);
   if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-800">MISSING</span>;
-  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
+  const expiry = formatDateUS(coverage.expiry_date) || "—";
+  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {expiry}</Link>;
 }
 
 export function FleetCoveredPage() {
@@ -62,7 +64,7 @@ export function FleetCoveredPage() {
     { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-xs text-[#6B7280]">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
     { key: "cost_per_thousand", label: "Cost/mo per $1,000", sortable: true, sortValue: (row) => row.insured_value_cents ? row.premium_per_month_cents / row.insured_value_cents : null, render: (row) => row.insured_value_cents ? formatMoney(Math.round(row.premium_per_month_cents * 100000 / row.insured_value_cents)) : "—" },
     { key: "deductible", label: "Deductible", render: () => "NOT STORED" },
-    { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => row.covered_since ?? "—" },
+    { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => formatDateUS(row.covered_since) || "—" },
   ], []);
 
   if (!companyId) return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view covered fleet.</div>;

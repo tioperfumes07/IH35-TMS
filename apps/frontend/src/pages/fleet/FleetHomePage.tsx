@@ -19,6 +19,7 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { colors } from "../../design/tokens";
+import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 
 /**
  * PR3 — Fleet module HOME (owner 2026-10-05).
@@ -227,15 +228,15 @@ export function FleetHomePage() {
             <NavyPageSubNav items={FLEET_HOME_TABS.map((t) => ({ label: t.label, to: t.to }))} />
           </div>
 
-          {/* FLT-F428 — gap reported, not designed around. No invented expiry tile. */}
+          {/* Honest limitation — no invented expiry tile when the column is not stored on fleet assets. */}
           <div
             className="mt-2 rounded-sm border border-[#FCD34D] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]"
             data-testid="fleet-flt-f428-banner"
             role="status"
           >
-            Registration, inspection, and insurance expiry are not on unit or trailer records yet
-            (FLT-F428). Drivers carry those dates; trucks do not. No tile is shown for a column that
-            does not exist — that needs its own migration and round.
+            Registration, inspection, and insurance expiry dates are tracked on driver credentials today,
+            not on unit or trailer records. Expiry tiles stay off this board until those dates live on
+            the fleet asset itself.
           </div>
 
           {tab === "home" ? (
@@ -246,7 +247,7 @@ export function FleetHomePage() {
                 rows={needsAttention.map((u) => ({
                   id: u.id,
                   label: u.unit_number || "Unit",
-                  meta: u.status ?? "—",
+                  meta: humanizeEnumLabel(u.status) || "—",
                   href: `/fleet/units/${u.id}`,
                 }))}
               />
