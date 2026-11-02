@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~2:05 PM CT) — Cursor BUILD-FIRST tip (U30/U19/Expenses)
+- **MERGED:** #28037 Banking Home U30 ParityTable · #28039 Expenses/Bills ReceiptAttach no fan-out + aging U30 + humanMemo · #28042 U19 Reclassify no unscoped Loading hang (appliedHasScope).
+- **NEXT:** U12 residual status singles · U28 account multi-select · U29 click-through · remaining shells (QboStyleHome category breakdown, SafetyReports engines); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~1:45 PM CT) — Cursor U30 Banking + Expenses fan-out + aging U30
 - **MERGED:** #28037 Banking Home Accounts/Drift/Latest → ParityTable (U30); DrillKpiCard shows live values with unavailable=non-navigable; tip tsc reds cleared.
 - **THIS WAVE:** Expenses/Bills ReceiptAttach `listWhen="open"` + `initialCount` from `attachment_count` (no 200× GET fan-out); Expenses memo → humanMemo; Accounting Hub aging sortable + formatUsdCents.
