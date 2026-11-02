@@ -49,6 +49,17 @@ if (/Back to policies/.test(detail)) {
   );
 }
 
+// fill-not-shell — detail panels use BoardSection (not bare bordered <section>)
+if (!/from ["']\.\.\/\.\.\/components\/v3\/BoardSection["']/.test(detail)) {
+  failures.push(`${detailPath}: must import BoardSection`);
+}
+if (!/testId="policy-detail-units-board"/.test(detail)) {
+  failures.push(`${detailPath}: Units Assigned BoardSection testId=policy-detail-units-board required`);
+}
+if (!/testId="policy-detail-claims-board"/.test(detail)) {
+  failures.push(`${detailPath}: Claims BoardSection testId=policy-detail-claims-board required`);
+}
+
 if (!/breadcrumb\b/.test(header) || !/backHref\b/.test(header)) {
   failures.push(`${headerPath}: layout PageHeader must support breadcrumb + backHref props.`);
 }
@@ -60,10 +71,11 @@ if (process.argv.includes("--selftest")) {
   const detail = readFileSync(detailPath, "utf8");
   const header = readFileSync(headerPath, "utf8");
   const plants = [
-    ["back to the retired Safety-nested list", detail.replace('backHref="/insurance/policies"', 'backHref="/safety/insurance/policies"')],
+    ["back to the retired Safety-nested list", detail.replaceAll('backHref="/insurance/policies"', 'backHref="/safety/insurance/policies"')],
     ["shared PageHeader removed", detail.split("<PageHeader").join("<div")],
     ["bespoke back button", detail + "\n// <button>Back to policies</button>"],
-    ["breadcrumb dropped", detail.replace(/breadcrumb=\{/, "crumbs={")],
+    ["breadcrumb dropped", detail.replace(/breadcrumb=\{/g, "crumbs={")],
+    ["BoardSection stripped", detail.replace(/from ["']\.\.\/\.\.\/components\/v3\/BoardSection["']/, "").replace(/testId="policy-detail-units-board"/g, 'testId="x"')],
   ];
   let ok = check(detail, header).length === 0;
   if (!ok) console.error("SELFTEST FAIL — real source does not pass");

@@ -37,6 +37,10 @@ function boardShellHits(path, src) {
     if (!src.includes('testId="type-catalog-list-board"')) hits.push("type-catalog-list-board BoardSection required");
     if (!src.includes('backHref="/insurance"')) hits.push("PageHeader backHref=/insurance required");
   }
+  if (path.endsWith("PolicyDetail.tsx")) {
+    if (!src.includes('from "../../components/v3/BoardSection"')) hits.push("must import BoardSection");
+    if (!src.includes('testId="policy-detail-units-board"')) hits.push("policy-detail-units-board BoardSection required");
+  }
   return hits;
 }
 

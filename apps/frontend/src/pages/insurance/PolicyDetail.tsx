@@ -19,6 +19,7 @@ import { legalMattersApi, type LegalMatterListRow } from "../../api/legal-matter
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
@@ -256,25 +257,49 @@ export function PolicyDetail() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view policy details.</div>;
+    return (
+      <div className="space-y-3" data-testid="policy-detail-page">
+        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <BoardSection title="Policy" testId="policy-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view policy details.</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   if (!policyId) {
-    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Missing policy ID.</div>;
+    return (
+      <div className="space-y-3" data-testid="policy-detail-page">
+        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <BoardSection title="Policy" testId="policy-detail-missing-id">
+          <p className="px-3 py-2 text-xs text-red-700">Missing policy ID.</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   if (policyQuery.isLoading) {
-    return <div className="text-xs text-[#6B7280]">Loading policy details...</div>;
+    return (
+      <div className="space-y-3" data-testid="policy-detail-page">
+        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <BoardSection title="Policy" testId="policy-detail-loading">
+          <p className="px-3 py-2 text-xs text-[#6B7280]">Loading policy details...</p>
+        </BoardSection>
+      </div>
+    );
   }
 
   if (policyQuery.isError || !policyQuery.data) {
     return (
-      <ListErrorState
-        title="Couldn't load policy details"
-        status={policyQuery.error instanceof ApiError ? policyQuery.error.status : 0}
-        message={(policyQuery.error as Error | null)?.message}
-        onRetry={() => void policyQuery.refetch()}
-      />
+      <div className="space-y-3" data-testid="policy-detail-page">
+        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <ListErrorState
+          title="Couldn't load policy details"
+          status={policyQuery.error instanceof ApiError ? policyQuery.error.status : 0}
+          message={(policyQuery.error as Error | null)?.message}
+          onRetry={() => void policyQuery.refetch()}
+        />
+      </div>
     );
   }
 
@@ -379,82 +404,74 @@ export function PolicyDetail() {
         </div>
       ) : null}
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-[#0F1219]">Units Assigned</h3>
-        <div className="mt-2">
-          <ParityTable
-            rows={policy.units}
-            columns={unitColumns}
-            rowKey={(unit) => unit.id}
-            loading={false}
-            storageKey="insurance-policy-units"
-            emptyText="No units assigned."
-          />
-        </div>
-      </section>
+      <BoardSection title="Units Assigned" testId="policy-detail-units-board">
+        <ParityTable
+          rows={policy.units}
+          columns={unitColumns}
+          rowKey={(unit) => unit.id}
+          loading={false}
+          storageKey="insurance-policy-units"
+          emptyText="No units assigned."
+          tableTestId="policy-detail-units-table"
+        />
+      </BoardSection>
 
       {/* Payment Schedule (INS-05) — shared PaymentScheduleTab panel (status filter + Mark paid action). */}
       <PaymentScheduleTab operatingCompanyId={companyId} policyId={policyId} />
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-[#0F1219]">COI History (INS-04)</h3>
-        <div className="mt-2">
-          {coiQuery.isError ? (
+      <BoardSection title="COI History (INS-04)" testId="policy-detail-coi-board">
+        {coiQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load this policy's COI history"
+            status={coiQuery.error instanceof ApiError ? coiQuery.error.status : 0}
+            message={(coiQuery.error as Error)?.message}
+            onRetry={() => void coiQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={coiRows}
+            columns={coiColumns}
+            rowKey={(row) => row.id}
+            loading={coiQuery.isPending || (coiQuery.isFetching && coiRows.length === 0)}
+            storageKey="insurance-policy-coi"
+            emptyText="No COI requests linked to this policy."
+            tableTestId="policy-detail-coi-table"
+          />
+        )}
+      </BoardSection>
+
+      <div className="grid gap-3 xl:grid-cols-2">
+        <BoardSection title="Claims (INS-06)" testId="policy-detail-claims-board">
+          {claimsQuery.isError ? (
             <ListErrorState
-              title="Couldn't load this policy's COI history"
-              status={coiQuery.error instanceof ApiError ? coiQuery.error.status : 0}
-              message={(coiQuery.error as Error)?.message}
-              onRetry={() => void coiQuery.refetch()}
+              title="Couldn't load this policy's claims"
+              status={claimsQuery.error instanceof ApiError ? claimsQuery.error.status : 0}
+              message={(claimsQuery.error as Error)?.message}
+              onRetry={() => void claimsQuery.refetch()}
             />
           ) : (
             <ParityTable
-              rows={coiRows}
-              columns={coiColumns}
-              rowKey={(row) => row.id}
-              loading={coiQuery.isPending || (coiQuery.isFetching && coiRows.length === 0)}
-              storageKey="insurance-policy-coi"
-              emptyText="No COI requests linked to this policy."
+              rows={claims}
+              columns={claimColumns}
+              rowKey={(claim) => claim.id}
+              loading={claimsQuery.isPending || (claimsQuery.isFetching && claims.length === 0)}
+              storageKey="insurance-policy-claims"
+              emptyText="No claims attached to this policy."
+              tableTestId="policy-detail-claims-table"
             />
           )}
-        </div>
-      </section>
+        </BoardSection>
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-[#0F1219]">Claims (INS-06)</h3>
-          <div className="mt-2">
-            {claimsQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load this policy's claims"
-                status={claimsQuery.error instanceof ApiError ? claimsQuery.error.status : 0}
-                message={(claimsQuery.error as Error)?.message}
-                onRetry={() => void claimsQuery.refetch()}
-              />
-            ) : (
-              <ParityTable
-                rows={claims}
-                columns={claimColumns}
-                rowKey={(claim) => claim.id}
-                loading={claimsQuery.isPending || (claimsQuery.isFetching && claims.length === 0)}
-                storageKey="insurance-policy-claims"
-                emptyText="No claims attached to this policy."
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits</h3>
-          <div className="mt-2">
-            {lawsuitsQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load this policy's lawsuits"
-                status={lawsuitsQuery.error instanceof ApiError ? lawsuitsQuery.error.status : 0}
-                message={(lawsuitsQuery.error as Error)?.message}
-                onRetry={() => void lawsuitsQuery.refetch()}
-              />
-            ) : (
-              <>
+        <BoardSection title="Lawsuits" testId="policy-detail-lawsuits-board">
+          {lawsuitsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load this policy's lawsuits"
+              status={lawsuitsQuery.error instanceof ApiError ? lawsuitsQuery.error.status : 0}
+              message={(lawsuitsQuery.error as Error)?.message}
+              onRetry={() => void lawsuitsQuery.refetch()}
+            />
+          ) : (
+            <>
               <CappedListNotice
                 shown={lawsuitsQuery.data?.shown ?? 0}
                 limit={POLICY_LAWSUITS_PER_CLAIM_LIMIT}
@@ -468,12 +485,12 @@ export function PolicyDetail() {
                 loading={lawsuitsQuery.isPending || (lawsuitsQuery.isFetching && lawsuitRows.length === 0)}
                 storageKey="insurance-policy-lawsuits"
                 emptyText="No legal matters (type lawsuit) linked to this policy's claims."
+                tableTestId="policy-detail-lawsuits-table"
               />
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+            </>
+          )}
+        </BoardSection>
+      </div>
 
       <ConfirmModal
         open={Boolean(pendingArchive)}
