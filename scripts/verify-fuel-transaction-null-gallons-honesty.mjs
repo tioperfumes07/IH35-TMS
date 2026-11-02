@@ -28,7 +28,15 @@ function failures(source) {
         source.table,
       ),
     ],
-    ["CSV exports unknown gallons as blank", source.table.includes('row.gallons == null ? "" : row.gallons.toFixed(2)')],
+    [
+      "CSV exports unknown gallons as blank via formatQuantityTable",
+      /row\.gallons == null \? "" : (?:row\.gallons\.toFixed\(2\)|formatQuantityTable\(row\.gallons\))/.test(source.table),
+    ],
+    [
+      "CSV amount uses formatUsdCents",
+      source.table.includes("formatUsdCents(row.amount_cents || 0)") &&
+        !/\(\(row\.amount_cents \|\| 0\) \/ 100\)\.toFixed\(2\)/.test(source.table),
+    ],
     ["reverse panels show unavailable gallons", source.reverse.includes('row.gallons == null ? "Gallons unavailable"')],
     ["old API zero coercion is absent", !source.route.includes("row.gallons === null ? 0")],
     ["old CSV zero coercion is absent", !source.table.includes("row.gallons || 0")],

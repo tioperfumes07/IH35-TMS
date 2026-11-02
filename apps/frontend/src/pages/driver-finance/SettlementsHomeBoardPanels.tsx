@@ -45,10 +45,10 @@ function exportWeekOfSettlementsCsv(
       return [
         s.driver_full_name || "Driver",
         settlementsWeekLoadsLabel(s),
-        Number(s.gross_pay ?? 0).toFixed(2),
-        Number(s.deductions_total ?? 0).toFixed(2),
-        settlementsDerivedReimb(s).toFixed(2),
-        Number(s.net_pay ?? 0).toFixed(2),
+        formatUsd(Number(s.gross_pay ?? 0)),
+        formatUsd(Number(s.deductions_total ?? 0)),
+        formatUsd(settlementsDerivedReimb(s)),
+        formatUsd(Number(s.net_pay ?? 0)),
         status,
       ]
         .map((v) => csvEscape(String(v)))
