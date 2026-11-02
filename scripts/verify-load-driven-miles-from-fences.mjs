@@ -3,11 +3,12 @@
  * verify-load-driven-miles-from-fences — 443.324 ENG-29 (443.330 ENG-53 related).
  *
  * MEASUREMENT (2026-10-24 on main 1d87d07bab): 12 of 194 active USMCA loads have
- * miles_driven_actual set; 182 are missing. Fill source: telematics.odometer_readings
+ * miles_driven_actual set; 182 are missing. Remeasured LIVE 11-02 CT: **149** missing
+ * (45 filled). Fill source: telematics.odometer_readings
  * (pickup departure → delivery arrival odometer delta, via geofence_visit_id).
  *
  * GUARD (SHRINK-ONLY): the count of active USMCA loads missing miles_driven_actual must
- * not exceed the baseline. Ceiling: 182. Each fence-filled backfill reduces the count.
+ * not exceed the baseline. Ceiling: 149. Each fence-filled backfill reduces the count.
  * Loads without fence evidence are listed; never estimated (miles_driven_actual stays NULL).
  *
  * Usage: node scripts/verify-load-driven-miles-from-fences.mjs [--selftest]
@@ -17,7 +18,7 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 const LABEL = "verify-load-driven-miles-from-fences";
 export const REQUIRES_LIVE_DB = "actual driven miles are a live telematics measurement — fails closed without a database";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const BASELINE = 182; // measured 2026-10-24; shrink-only
+const BASELINE = 149; // LIVE 11-02 CT; was 182; shrink-only
 
 export function shrinkFails(current) { return current > BASELINE; }
 
