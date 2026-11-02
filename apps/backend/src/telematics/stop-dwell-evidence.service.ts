@@ -44,7 +44,10 @@ export async function persistStopDwellEvidence(
   // One dwell per stop (arrival and departure resolve to the same nearest dwell).
   const byStop = new Map<string, StopDwellEvidence>();
   for (const e of evidence) if (!byStop.has(e.stop_id)) byStop.set(e.stop_id, e);
-  for (const e of byStop.values()) {
+  // Sort by stop_id ascending: consistent lock order prevents deadlock with stampStopsFromGeofenceEvents
+  // which also UPDATEs mdata.load_stops rows (in stop_id order from its DISTINCT ON query).
+  const sorted = [...byStop.values()].sort((a, b) => (a.stop_id < b.stop_id ? -1 : 1));
+  for (const e of sorted) {
     out.stops += 1;
     // 1. the dwell as a stop event (reuse the stop writer's row for the same unit + start/end)
     const ins = await client.query<{ id: string }>(
