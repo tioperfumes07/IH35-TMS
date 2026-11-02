@@ -1,10 +1,10 @@
 {
-  "healthzSha": "5a6e2ce",
-  "generated_at": "2026-11-02T20:23:57.796Z",
+  "healthzSha": "e8ee661",
+  "generated_at": "2026-11-02T22:52:42.140Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "5a6e2ce",
+    "deployedSha": "e8ee661",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28059,
-      "title": "FINDING: Codex independent Safety depth and Fleet retests",
+      "number": 28166,
+      "title": "FINDING: Banking + ELD need-company BoardSection; OUTBOX tip",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28059",
-      "sha": "dece6659d0",
-      "committedAtIso": "2026-11-02T14:23:47-06:00"
+      "mergedAtCt": "11/02/2026, 04:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28166",
+      "sha": "4c1fd0d5bc",
+      "committedAtIso": "2026-11-02T16:52:04-06:00"
     },
     {
-      "number": 28058,
-      "title": "FINDING: Cursor OUTBOX/INBOX tip catch-up after U29 waves",
+      "number": 28165,
+      "title": "CC-2-NON-FINANCIAL: OUTBOX-CC-2 record for ACCT-F2026110203-B bills 2+ category fix (PR #28155)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28058",
-      "sha": "c7166bbc9c",
-      "committedAtIso": "2026-11-02T14:22:19-06:00"
+      "mergedAtCt": "11/02/2026, 04:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28165",
+      "sha": "dc0cb1777a",
+      "committedAtIso": "2026-11-02T16:52:02-06:00"
     },
     {
-      "number": 28057,
-      "title": "FINDING: Fuel Integrity U29 Unit/Vendor EntityLinks + bus tip",
+      "number": 28164,
+      "title": "FINDING: Legal module need-company BoardSection shells",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28057",
-      "sha": "3f82377e11",
-      "committedAtIso": "2026-11-02T14:21:47-06:00"
+      "mergedAtCt": "11/02/2026, 04:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28164",
+      "sha": "4bcfb39352",
+      "committedAtIso": "2026-11-02T16:50:44-06:00"
     },
     {
-      "number": 28056,
-      "title": "FINDING: U29 Dispatch exception queues EntityLink customer/invoice/driver",
+      "number": 28163,
+      "title": "FINDING: U18 factoring/driver-bill backHref; home need-company BoardSection",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28056",
-      "sha": "58018864ad",
-      "committedAtIso": "2026-11-02T14:18:31-06:00"
+      "mergedAtCt": "11/02/2026, 04:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28163",
+      "sha": "02d03bf723",
+      "committedAtIso": "2026-11-02T16:49:24-06:00"
     },
     {
-      "number": 28055,
-      "title": "FINDING: Codex Round 7 filtered Bills count and independent retests",
+      "number": 28162,
+      "title": "BUS: numbered pending register (256) + ROUND 7.25 re-measure by seat",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28055",
-      "sha": "3ed7ac1bab",
-      "committedAtIso": "2026-11-02T14:17:36-06:00"
+      "mergedAtCt": "11/02/2026, 04:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28162",
+      "sha": "9d1826badd",
+      "committedAtIso": "2026-11-02T16:49:14-06:00"
     },
     {
-      "number": 28054,
-      "title": "FINDING: Dispatch Load Costs U29 Truck link + honest margin caption",
+      "number": 28161,
+      "title": "FINDING: Chat + Docs + Driver Hub need-company BoardSection; bus tip",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28054",
-      "sha": "4a6127be23",
-      "committedAtIso": "2026-11-02T14:14:55-06:00"
+      "mergedAtCt": "11/02/2026, 04:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28161",
+      "sha": "9eb232aa0c",
+      "committedAtIso": "2026-11-02T16:47:41-06:00"
     },
     {
-      "number": 28053,
-      "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF/U-rows + OUTBOX updates",
+      "number": 28160,
+      "title": "FINDING: Dispatch planners/map/settings need-company BoardSection",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28053",
-      "sha": "efc4c40cd6",
-      "committedAtIso": "2026-11-02T14:13:07-06:00"
+      "mergedAtCt": "11/02/2026, 04:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28160",
+      "sha": "b66f9c7538",
+      "committedAtIso": "2026-11-02T16:45:50-06:00"
     },
     {
-      "number": 28052,
-      "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF-ORPH-05/B08/U-rows + OUTBOX records",
+      "number": 28159,
+      "title": "BUS: CC-1 — #28122/#28096 merged by Lead; next diesel dedupe",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28052",
-      "sha": "ac9d009bba",
-      "committedAtIso": "2026-11-02T14:12:44-06:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28159",
+      "sha": "e8ee6611ff",
+      "committedAtIso": "2026-11-02T16:44:56-06:00"
     },
     {
-      "number": 28051,
-      "title": "CC-2- ENG-DEADLOCK-01 fix load_stops lock order in dwell evidence cron",
+      "number": 28096,
+      "title": "FIX: main red locked-guards-heavy — wire 30 guards merged unwired 11-02 (step 18937; CC-1 lane — CC-1 merges)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28051",
-      "sha": "e1e98d179b",
-      "committedAtIso": "2026-11-02T14:11:53-06:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28096",
+      "sha": "7f6d72bfc6",
+      "committedAtIso": "2026-11-02T16:44:13-06:00"
     },
     {
-      "number": 28050,
-      "title": "FINDING: CashFlow money/date format + report preset remount (shared)",
+      "number": 28122,
+      "title": "FIX: CodeQL js/redos error (blocks every PR) — unambiguous arg list in expand-live-document-predicates CALL regex",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28050",
-      "sha": "c236ebf351",
-      "committedAtIso": "2026-11-02T14:11:24-06:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28122",
+      "sha": "1093d3f148",
+      "committedAtIso": "2026-11-02T16:44:01-06:00"
     }
   ]
 }
