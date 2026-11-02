@@ -1,6 +1,6 @@
 {
  "date": "2026-11-02",
- "generated_at_iso": "2026-11-02T00:44:22.274Z",
+ "generated_at_iso": "2026-11-02T06:40:42.641Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27961,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-02T00:44:58Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27960,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-11-01T18:24:32Z",
@@ -17330,12 +17336,6 @@
    "title": "Codex-443.274-D Maintenance Home V3 board and source drill-through",
    "mergedAt": "2026-10-23T19:56:55Z",
    "branch": "codex/443267-maintenance-home"
-  },
-  {
-   "number": 27338,
-   "title": "CC-2- 443.268-B + 443.270-C: driver-merge engine 500, migrations health, merge engines see archived shells + merge-all",
-   "mergedAt": "2026-10-23T19:55:14Z",
-   "branch": "cc-2/443-268-b-live-500s"
   }
  ],
  "merged_pr_total": 3000,
