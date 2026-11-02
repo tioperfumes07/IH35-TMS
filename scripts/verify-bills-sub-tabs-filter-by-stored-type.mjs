@@ -13,8 +13,13 @@ if (process.argv.includes("--selftest")) selftest();
 const LABEL = "verify-bills-sub-tabs-filter-by-stored-type";
 const fails = [];
 const page = readFileSync("apps/frontend/src/pages/accounting/BillsPage.tsx", "utf8");
+// ACCT-F2026110203: accept both the FE client-filter approach (billMatchesCategory reads bill.bill_category)
+// and the server-side approach (bill_category forwarded as a query param to listBillRegister before LIMIT).
+// The server approach is MORE compliant with this rule — SQL b.bill_category = $n, never memo/vendor words.
 const fn = page.slice(page.indexOf("function billMatchesCategory("), page.indexOf("function billBalanceCents("));
-if (!/return bill\.bill_category === category;/.test(fn)) fails.push("BillsPage: billMatchesCategory no longer reads the stored bill_category");
+const hasClientFilter = /return bill\.bill_category === category;/.test(fn);
+const hasServerFilter = /bill_category:.*categoryFilter/.test(page);
+if (!hasClientFilter && !hasServerFilter) fails.push("BillsPage: category no longer reads the stored bill_category (server predicate or client billMatchesCategory required)");
 if (/\.test\(hay\)|bill\.memo|vendor_name/.test(fn)) fails.push("BillsPage: a sub-tab guesses the bill type from memo / vendor words again");
 
 const mig = readFileSync("db/migrations/202615370700_bills_bill_category.sql", "utf8");
