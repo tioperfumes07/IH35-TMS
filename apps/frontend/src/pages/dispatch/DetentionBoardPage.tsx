@@ -129,8 +129,16 @@ function DetentionApprovalQueue({
           const stopLabel = [row.stop_city, row.stop_state].filter(Boolean).join(", ") || "—";
           return (
             <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs text-[#0F1219]">
-              <span className="min-w-[4.5rem] font-semibold">{row.load_number ?? "—"}</span>
-              <span className="min-w-[8rem] text-[#4B5563]">{row.customer_name ?? "—"}</span>
+              <span className="min-w-[4.5rem] font-semibold">
+                <EntityLinkOrTombstone kind="load" id={row.load_id} name={row.load_number} noun="Load" />
+              </span>
+              <span className="min-w-[8rem] text-[#4B5563]">
+                {row.customer_id ? (
+                  <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+                ) : (
+                  (row.customer_name ?? "—")
+                )}
+              </span>
               <span className="min-w-[6rem] text-center">{stopLabel}</span>
               <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
               <label className="flex items-center gap-1">

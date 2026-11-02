@@ -1513,6 +1513,7 @@ export type DetentionApprovalRequest = {
   status: "pending_review" | "approved" | "rejected" | "invoiced";
   load_id: string;
   load_number?: string | null;
+  customer_id?: string | null;
   customer_name?: string | null;
   amount_cents: number;
   billable_minutes: number;
