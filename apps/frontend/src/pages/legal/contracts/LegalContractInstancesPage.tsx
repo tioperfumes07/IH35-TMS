@@ -273,7 +273,7 @@ export function LegalContractInstancesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Contracts"]}
         title="Legal Contracts"
         subtitle="Instance tracking and signer workflows"

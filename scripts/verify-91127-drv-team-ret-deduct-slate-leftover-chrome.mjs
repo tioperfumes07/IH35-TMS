@@ -54,11 +54,22 @@ function boardHits(src, testId) {
   return hits;
 }
 
+function u18Hits(path, src) {
+  const hits = [];
+  // Drivers list is module home; other PageHeader leaves back to /drivers
+  if (path.endsWith("/DriversListPage.tsx")) return hits;
+  if (/<PageHeader\b/.test(src) && !/backHref="\/drivers"/.test(src)) {
+    hits.push("PageHeader backHref must be /drivers (U18)");
+  }
+  return hits;
+}
+
 function audit(sources) {
   const fails = [];
   for (const [path, src, testId] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
     for (const e of boardHits(src, testId)) fails.push(`${path}: ${e}`);
+    for (const e of u18Hits(path, src)) fails.push(`${path}: ${e}`);
   }
   return fails;
 }
@@ -85,7 +96,17 @@ function main() {
         process.exit(1);
       }
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover + BoardSection plants`);
+    const hrefTarget = sources.find(([p, s]) => !p.endsWith("/DriversListPage.tsx") && /backHref="\/drivers"/.test(s));
+    if (hrefTarget) {
+      const [hPath, hSrc, hId] = hrefTarget;
+      const hrefPlant = hSrc.replace(/backHref="\/drivers"/g, 'backHref="/elsewhere"');
+      const hrefFails = audit([[hPath, hrefPlant, hId], ...sources.filter(([p]) => p !== hPath)]);
+      if (!hrefFails.some((e) => e.includes(hPath) && e.includes("backHref"))) {
+        console.error(`${LABEL} SELFTEST FAIL U18 backHref plant escaped`);
+        process.exit(1);
+      }
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover + BoardSection + U18 plants`);
     process.exit(0);
   }
   const fails = audit(sources);

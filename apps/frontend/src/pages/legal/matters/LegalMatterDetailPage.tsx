@@ -248,7 +248,7 @@ export function LegalMatterDetailPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Matters"]}
         title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}
         subtitle={matter ? properEnumOrFilterLabel(matter.type) : ""}

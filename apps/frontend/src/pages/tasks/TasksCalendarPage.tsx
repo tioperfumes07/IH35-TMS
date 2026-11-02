@@ -59,7 +59,7 @@ export function TasksCalendarPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
+        <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
         <TasksModuleTabs />
         <BoardSection title="Calendar" testId="tasks-calendar-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task calendar.</p>
@@ -70,7 +70,7 @@ export function TasksCalendarPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
+      <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}

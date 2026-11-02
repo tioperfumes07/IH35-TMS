@@ -62,7 +62,7 @@ export function LegalDeadlineAlertsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Alerts"]}
         title="Legal deadline alerts"
         subtitle="Statute dates, matter deadlines, signature and attorney-review expiry — silent failure is a defect"

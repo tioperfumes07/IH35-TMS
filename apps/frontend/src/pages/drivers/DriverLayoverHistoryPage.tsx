@@ -28,7 +28,7 @@ export function DriverLayoverHistoryPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/drivers"
         breadcrumb={["Drivers", "Layovers"]}
         title="Driver Layover History"
         subtitle={

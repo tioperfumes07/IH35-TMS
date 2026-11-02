@@ -28,7 +28,7 @@ export function LegalMatterNewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
+      <PageHeader backHref="/legal" breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
       <LegalModuleTabs />
       {!companyId ? (
         <BoardSection title="Create legal matter" testId="legal-matter-new-need-company">

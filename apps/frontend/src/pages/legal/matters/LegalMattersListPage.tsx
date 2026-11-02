@@ -217,7 +217,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={fixedType ? ["Legal", "Lawsuits"] : ["Legal", "Matters"]}
         title={fixedType ? "Lawsuits" : "Legal matters"}
         subtitle={fixedType ? "Lawsuits where the company is a party — reserve, driver, unit, load and claim links" : "Lawsuits, claims, and regulatory matters"}

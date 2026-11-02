@@ -133,7 +133,7 @@ export function TasksReportPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
+        <PageHeader backHref="/tasks" title="Admin Report" subtitle="Task throughput and team productivity" />
         <TasksModuleTabs />
         <BoardSection title="Admin report" testId="tasks-report-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task report.</p>
@@ -144,7 +144,7 @@ export function TasksReportPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
+      <PageHeader backHref="/tasks" title="Admin Report" subtitle="Task throughput and team productivity" />
       <TasksModuleTabs />
 
       {query.isLoading ? <div className="text-xs text-[#6B7280]">Loading report…</div> : null}
