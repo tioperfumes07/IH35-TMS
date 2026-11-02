@@ -239,8 +239,12 @@ export function FuelHomePage() {
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
       {/* 443.280 board KPIs — period-synced with Diesel by truck (not planner Active Plans chrome). */}
       <FuelBoardKpiStrip companyId={companyId} period={period} />
+      {/* Codex QA 11-02: generic Failed-to-load sat above Diesel-by-truck empty success and looked like the diesel board failed. Name the planner source. */}
       {dashboardQuery.isError ? (
-        <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
+        <ListErrorBanner
+          message="Fuel planner dashboard (plans / Love's context) could not be loaded — Diesel by truck below uses a separate query."
+          onRetry={() => void dashboardQuery.refetch()}
+        />
       ) : null}
       {lovesSyncQuery.isError ? (
         <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
