@@ -15,6 +15,7 @@ import { InlineDriverPicker } from "./InlineDriverPicker";
 import type { DispatchListProps, SortField } from "./dispatchListTypes";
 import { entityLabel } from "../../lib/entity-label";
 import { loadStatusLabel } from "../../lib/load-status";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 
 export type { DispatchListProps } from "./dispatchListTypes";
 
@@ -375,7 +376,7 @@ export function DispatchList({
                     render: (load: DispatchLoadRow) => (
                       <span className="text-xs text-gray-600">
                         {load.status === "in_transit" && load.samsara_eta_at
-                          ? new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          ? formatDateTimeUS(load.samsara_eta_at)
                           : "—"}
                       </span>
                     ),
@@ -390,7 +391,7 @@ export function DispatchList({
             {
               key: "created_at",
               label: "Created",
-              render: (load) => new Date(load.created_at).toLocaleDateString(),
+              render: (load) => formatDateUS(load.created_at) || "—",
             },
           ]}
         />
@@ -454,7 +455,7 @@ export function DispatchList({
               </div>
               {showEtaColumn && load.status === "in_transit" && load.samsara_eta_at ? (
                 <div className="mt-2">
-                  ETA {new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  ETA {formatDateTimeUS(load.samsara_eta_at)}
                 </div>
               ) : null}
             </button>

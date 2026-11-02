@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~7:35 PM CT) — Cursor BUILD-FIRST format tip (#28188+)
+- **PRIOR:** #28174–#28188 shells/U18/format waves.
+- **THIS:** Archived DispatchList dates → formatDateUS/formatDateTimeUS. Cursor seat locale leftovers now only America/Chicago machine clocks (plannerTimeAxis todayYmd · hosClocks fmtLocalClock).
+- **NEXT:** ENG-21 rate-con · ENG-22 AUTH apply · Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~7:15 PM CT) — Cursor BUILD-FIRST format tip (#28185+)
 - **PRIOR:** #28174–#28185 shells/U18/format waves (CRM/Dispatch/Tasks/Legal/Fuel/boards/LoadDetail).
 - **THIS:** BankingHomeBoard Latest lines MM/DD + signed amounts via formatUsdCentsTable (no toLocaleString).

@@ -36,6 +36,7 @@ const FILES = [
   "apps/frontend/src/pages/home/OwnerHome.tsx",
   "apps/frontend/src/pages/home/roles/AccountingHome.tsx",
   "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
+  "apps/frontend/src/components/dispatch/DispatchList.tsx",
 ];
 
 const DATE_ONLY = [
