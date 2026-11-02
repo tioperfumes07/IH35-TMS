@@ -10,6 +10,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 // DISPATCH-F6251-OWNER-OVERRIDE-LOG / OWNER-OVERRIDE-LOG — this page is the missing consumer for the critical
 // "Owner override — driver qualification (CDL / DOT medical)" notification's action_link
@@ -49,7 +50,7 @@ export function OwnerOverrideLogPage() {
   type Row = (typeof rows)[number];
 
   const columns: Array<ParityColumn<Row>> = [
-    { key: "created_at", label: "When", sortable: true, render: (row) => new Date(row.created_at).toLocaleString() },
+    { key: "created_at", label: "When", sortable: true, render: (row) => formatDateTimeUS(row.created_at) || "—" },
     { key: "override_class", label: "Blocker overridden", render: overrideClassLabel },
     {
       key: "driver_name",

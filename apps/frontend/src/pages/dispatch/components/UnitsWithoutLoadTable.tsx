@@ -4,6 +4,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import type { DataTableErrorState } from "../../../lib/tableError";
 
 type Props = {
@@ -121,7 +122,7 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           },
           render: (row) => (
             <>
-              {row.last_drop_at ? new Date(row.last_drop_at).toLocaleString() : "No prior drop"} ·
+              {row.last_drop_at ? formatDateTimeUS(row.last_drop_at) || "No prior drop" : "No prior drop"} ·
               <span className="ml-1 text-[#1F2A44]">Need Load</span>
             </>
           ),
