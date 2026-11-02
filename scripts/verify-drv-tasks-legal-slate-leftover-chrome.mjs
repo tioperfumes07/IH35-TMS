@@ -40,6 +40,10 @@ function boardHits(src, testId) {
   if (!testId) return hits;
   if (!/from ["'](?:\.\.\/)+components\/v3\/BoardSection["']/.test(src)) hits.push("must import BoardSection");
   if (!src.includes(`testId="${testId}"`)) hits.push(`need-company BoardSection testId=${testId} required`);
+  // U18 — Tasks leaf PageHeader back stays on /tasks
+  if (/<PageHeader\b/.test(src) && !/backHref="\/tasks"/.test(src)) {
+    hits.push('PageHeader backHref must be /tasks (U18)');
+  }
   return hits;
 }
 
@@ -77,7 +81,17 @@ function main() {
         process.exit(1);
       }
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover + Tasks BoardSection plants`);
+    const hrefTarget = sources.find(([, s, tid]) => tid && /<PageHeader\b/.test(s) && /backHref="\/tasks"/.test(s));
+    if (hrefTarget) {
+      const [hPath, hSrc, hId] = hrefTarget;
+      const hrefPlant = hSrc.replace(/backHref="\/tasks"/g, 'backHref="/elsewhere"');
+      const hrefFails = audit(sources.map(([p, s, tid]) => (p === hPath ? [p, hrefPlant, tid] : [p, s, tid])));
+      if (!hrefFails.some((e) => e.includes(hPath) && e.includes("backHref"))) {
+        console.error(`${LABEL} SELFTEST FAIL U18 backHref plant escaped`);
+        process.exit(1);
+      }
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover + Tasks BoardSection + U18 plants`);
     process.exit(0);
   }
   const fails = audit(sources);

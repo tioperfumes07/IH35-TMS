@@ -228,7 +228,7 @@ export function OnboardingWizardPage() {
 
   return (
     <div data-testid="onboarding-wizard-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/drivers"
         title="Driver Onboarding Wizard"
         subtitle={`${statusLabel} · ${stepLabel} · ${driverBit} · save + resume · docs module uploads`}
         actions={

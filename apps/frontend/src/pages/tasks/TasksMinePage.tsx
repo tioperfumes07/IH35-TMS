@@ -97,7 +97,7 @@ export function TasksMinePage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="My Tasks" subtitle="Tasks assigned to you" />
+        <PageHeader backHref="/tasks" title="My Tasks" subtitle="Tasks assigned to you" />
         <TasksModuleTabs />
         <BoardSection title="My tasks" testId="tasks-mine-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view your tasks.</p>
@@ -108,7 +108,7 @@ export function TasksMinePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="My Tasks" subtitle="Tasks assigned to you" />
+      <PageHeader backHref="/tasks" title="My Tasks" subtitle="Tasks assigned to you" />
       <TasksModuleTabs />
 
       <div className="grid grid-cols-3 gap-3">

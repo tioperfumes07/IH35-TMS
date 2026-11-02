@@ -197,7 +197,7 @@ export function TasksChatPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4" data-testid="tasks-chat-page">
-        <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+        <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
         <TasksModuleTabs />
         <BoardSection title="Team chat" testId="tasks-chat-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view team chat.</p>
@@ -208,7 +208,7 @@ export function TasksChatPage() {
 
   return (
     <div className="space-y-4" data-testid="tasks-chat-page">
-      <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+      <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
       <TasksModuleTabs />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">

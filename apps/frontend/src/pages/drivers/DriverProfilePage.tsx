@@ -401,7 +401,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         subtitle="Driver profile"
         breadcrumb={["Drivers", "Roster", displayName]}
         onBack={onBack}
-        backHref="/drivers/roster"
+        backHref="/drivers"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {activeTab !== "Overview" && !itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}

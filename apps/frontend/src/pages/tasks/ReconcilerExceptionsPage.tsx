@@ -82,7 +82,7 @@ export function ReconcilerExceptionsPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="Exceptions" subtitle="Records the reconciler found out of line" />
+        <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line" />
         <TasksModuleTabs />
         <BoardSection title="Exceptions" testId="reconciler-exceptions-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view its exceptions.</p>
@@ -93,7 +93,7 @@ export function ReconcilerExceptionsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
+      <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
