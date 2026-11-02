@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1b60330",
-  "generated_at": "2026-11-02T16:26:13.629Z",
+  "healthzSha": "09ff26c",
+  "generated_at": "2026-11-02T18:26:44.964Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1b60330",
+    "deployedSha": "09ff26c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 08:24 AM CT",
-      "url": "",
-      "sha": "1b603302b2",
-      "committedAtIso": "2026-11-02T14:24:54Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:30 AM CT",
-      "url": "",
-      "sha": "b82b0d5bf8",
-      "committedAtIso": "2026-11-02T12:30:36Z"
-    },
-    {
-      "number": 27963,
+      "number": 27992,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27963",
-      "sha": "5ecb36cbdf",
-      "committedAtIso": "2026-11-02T12:30:23Z"
+      "mergedAtCt": "11/02/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27992",
+      "sha": "9632fabcf7",
+      "committedAtIso": "2026-11-02T12:26:35-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27991,
+      "title": "FINDING: ENG-13 AUTH-473 DONE-LIVE + ENG-22 trailer-type prevention (ROUND 7.2)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:24 AM CT",
-      "url": "",
-      "sha": "3d2679f31b",
-      "committedAtIso": "2026-11-02T10:24:07Z"
+      "mergedAtCt": "11/02/2026, 12:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27991",
+      "sha": "c15df254bc",
+      "committedAtIso": "2026-11-02T12:23:08-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27990,
+      "title": "CLAIM-RESERVE: cursor 18930 (ENG-22 booked-trailer-matches-company-equipment)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:28 AM CT",
-      "url": "",
-      "sha": "bc9153ca8b",
-      "committedAtIso": "2026-11-02T08:28:55Z"
+      "mergedAtCt": "11/02/2026, 12:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27990",
+      "sha": "09ff26cb9f",
+      "committedAtIso": "2026-11-02T12:19:53-06:00"
     },
     {
-      "number": 27962,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 27975,
+      "title": "FINDING: ENG-13 load 13595 broker trailer 445 (Edit Load engine) + AUTH-473 + guard 18913",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27962",
-      "sha": "7614163042",
-      "committedAtIso": "2026-11-02T06:41:54Z"
+      "mergedAtCt": "11/02/2026, 12:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27975",
+      "sha": "6669a4d4ff",
+      "committedAtIso": "2026-11-02T12:07:20-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27989,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — ROUND 6.4 CC-2: 6.4-D + 6.4-E verified on prod",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:41 AM CT",
-      "url": "",
-      "sha": "9c080a8ae2",
-      "committedAtIso": "2026-11-02T06:41:03Z"
+      "mergedAtCt": "11/02/2026, 12:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27989",
+      "sha": "30a6eaa89b",
+      "committedAtIso": "2026-11-02T12:06:28-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27988,
+      "title": "fill-not-shell: customer tabs + recon BoardSection (build-first)",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 10:25 PM CT",
-      "url": "",
-      "sha": "2f512303bc",
-      "committedAtIso": "2026-11-02T04:25:22Z"
+      "mergedAtCt": "11/02/2026, 12:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27988",
+      "sha": "aa4e8cc0c3",
+      "committedAtIso": "2026-11-02T12:06:24-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27985,
+      "title": "FINDING: stop-dwell evidence never links onto a date_only stop (PROD-5Y CHECK violation, 13698 miles)",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 08:27 PM CT",
-      "url": "",
-      "sha": "adf9bc90c4",
-      "committedAtIso": "2026-11-02T02:27:55Z"
+      "mergedAtCt": "11/02/2026, 12:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27985",
+      "sha": "72382fc6a9",
+      "committedAtIso": "2026-11-02T12:06:21-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 27983,
+      "title": "FINDING: ROUND 7 — every pending engine + module shell assigned to all seats; fast-merge law",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 06:45 PM CT",
-      "url": "",
-      "sha": "c8228fe7a6",
-      "committedAtIso": "2026-11-02T00:45:04Z"
+      "mergedAtCt": "11/02/2026, 12:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27983",
+      "sha": "a0c07d09d2",
+      "committedAtIso": "2026-11-02T12:05:40-06:00"
+    },
+    {
+      "number": 27977,
+      "title": "CLAIM-MIGRATION: claude 202616310100 (ENG-60 retire insurance.lawsuit)",
+      "state": "merged",
+      "mergedAtCt": "11/02/2026, 12:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27977",
+      "sha": "f6f411ecbd",
+      "committedAtIso": "2026-11-02T12:01:42-06:00"
+    },
+    {
+      "number": 27987,
+      "title": "CLAIM-RESERVE: lead 18913 18917 18921 18925 (ENG-13/60/23/25b)",
+      "state": "merged",
+      "mergedAtCt": "11/02/2026, 12:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27987",
+      "sha": "f7aa20c898",
+      "committedAtIso": "2026-11-02T12:01:11-06:00"
     }
   ]
 }
