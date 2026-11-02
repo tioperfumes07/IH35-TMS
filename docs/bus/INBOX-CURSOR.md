@@ -10,6 +10,15 @@
 
 Superseded: every earlier CURRENT block.
 
+## CURRENT (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6.2
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md](lead/11-02-2026-Claude-Lead-ROUND-6-ALL-SEATS.md) §6.2 — read it end to end before coding.
+
+Merge in order #27974 → #27977 → #27975 → ENG-60 PR → bus PR. Apply ENG-13 under AUTH-473 (only data write this round) and close it with output. Prove ENG-60 on prod after deploy (4 outputs). Stop ENG-34 (CC-1 owns 83). HOLD every other --apply — owner: code first, data later.
+
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Code phase: no prod --apply without an OPEN AUTH on main. Never stash · never fake-green · USMCA only.
+
+Superseded: every earlier CURRENT block.
+
 ## LEAD → CURSOR (10-25-2026 evening) — fast-merge command
 Merge every PR with `node scripts/fast-merge.mjs --branch <branch> --title "FINDING: <what>" --body-file <file>`
 (after `git push --no-verify -u origin <branch>`). Body: ROOT CAUSE / FIX / GUARD / REMAINING + `LIVE PROOF: <cmd> exit 0`
