@@ -33,6 +33,13 @@ for (const rel of files) {
 }
 
 const page = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx"), "utf8");
+// fill-not-shell — need-company uses BoardSection
+if (!page.includes('testId="trailer-profile-need-company"') || !page.includes("BoardSection")) {
+  console.error(
+    "verify:trailer-profile-no-stub-sections FAIL: need-company empty must be BoardSection (trailer-profile-need-company)",
+  );
+  process.exit(1);
+}
 if (!page.includes("putTrailerStatus") && !page.includes("StatusChangeModal")) {
   console.error("verify:trailer-profile-no-stub-sections FAIL: status modal not wired on page");
   process.exit(1);

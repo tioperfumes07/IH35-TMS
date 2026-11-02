@@ -69,6 +69,7 @@ import { FuelFraudAlertsReverseSection } from "../../components/fuel/FuelFraudAl
 import { RelayFillsReverseSection } from "../../components/fuel/RelayFillsReverseSection";
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
 import { UnitDriverHistoryStrip } from "../units/UnitDriverHistoryStrip";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -294,7 +295,9 @@ export function VehicleProfilePage() {
         <p className="text-xs text-[#6B7280]">Loading company context…</p>
       ) : null}
       {!companyLoading && !companyId ? (
-        <p className="text-xs text-red-600">Select an operating company to load this unit.</p>
+        <BoardSection title="Unit profile" testId="vehicle-profile-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load this unit.</p>
+        </BoardSection>
       ) : null}
       {profileQuery.isError ? (
         <ListErrorState

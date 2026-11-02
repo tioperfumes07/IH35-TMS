@@ -953,7 +953,9 @@ export function SettlementCloseArrivalPage() {
       </div>
 
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company first.</p>
+        <BoardSection title="Settlement close" testId="settlement-close-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company first.</p>
+        </BoardSection>
       ) : (
         <div className="space-y-3" data-testid="settlement-close-panel">
           <label className="block max-w-xl">
