@@ -385,7 +385,7 @@
    "status": "PARTIAL",
    "guard": "verify-guard-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 11-02 CT: active exempt 123→108 (15 static guards wired into verify-steps 18921–19089). unaccounted=0. verify-guard-wired PASS. Remaining 108 wire-or-delete."
+   "evidence": "LIVE 11-02 CT: active exempt 123→108→83 (40 static guards wired into verify-steps). unaccounted=0. verify-guard-wired PASS. Remaining 83 wire-or-delete."
   },
   {
    "id": "ENG-36",
