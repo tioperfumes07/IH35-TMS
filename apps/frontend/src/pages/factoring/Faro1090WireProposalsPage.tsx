@@ -172,11 +172,13 @@ export function Faro1090WireProposalsPage() {
   return (
     <div className="space-y-3" data-testid="faro-1090-wire-proposals-page">
       <PageHeader
+        backHref="/factoring"
+        breadcrumb={["Factoring", "1090 wire proposals"]}
         title="Faro 1090 wire proposals"
         subtitle="ENG-17 BUILD-ONLY — propose / pick wire candidates for unmatched purchases. Matches deferred (owner BUILD-FIRST)."
         actions={
           <Link to="/factoring/payments-to-you" className="text-xs font-semibold text-[#1F2A44] hover:underline">
-            ← Payments to You
+            Payments to You →
           </Link>
         }
       />
