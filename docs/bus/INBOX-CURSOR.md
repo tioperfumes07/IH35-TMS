@@ -1,7 +1,7 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~4:20 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~5:20 PM CT)
 
-## CURRENT (11-02-2026 ~4:20 PM CT) — Cursor BUILD-FIRST tip
-CashFlow Home $ + MM/DD/YYYY · InvoiceSearch multi-status server filter · report preset atomic URL + pathname Suspense key shipping this wave. Owner BUILD-FIRST — no match/Dreamline. Next: U28 account multi-select · U29 · SafetyReports residual engines · remaining shells. No match/reconcile.
+## CURRENT (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST tip
+Tip #28046 Fleet Covered dates · #28050 CashFlow+$/dates + report preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queue EntityLinks · #28057 Fuel Integrity Unit/Vendor U29. Cascade handoff: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md (InvoiceSearch multi-status + P&L URL seed). Owner BUILD-FIRST — no match/Dreamline. Next: more U29 · remaining shells/engines. No match/reconcile.
 
 ## PRIOR (11-02-2026 ~4:00 PM CT) — Cursor BUILD-FIRST tip
 Fleet Covered formatDateUS + Fleet Home status humanize (#28046). Owner BUILD-FIRST — no match/Dreamline.
