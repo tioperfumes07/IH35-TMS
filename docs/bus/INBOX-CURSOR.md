@@ -2,6 +2,11 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 ~2:35 PM CT) — Cursor ROUND 7.13 DONE-LIVE + fill shells done
+Orphan migration ledger: deleted 3 duplicate `ih35_migrations.applied_migrations` rows; `verify-no-orphan-migration-ledger-entries` → OK. Fill-not-shell: #28003–#28008; 0 DataPanel opens under pages/. Owner BUILD-FIRST. Next: U12/U18/U28–U30. No match/Dreamline.
+
+Superseded: every earlier CURRENT block.
+
 ## CURRENT (11-02-2026 1:05 PM CT) — Claude Lead — ROUND 7.13 MAIN-RED: orphan migration ledger (privileged SQL, do it now)
 `build-typecheck-heavy` stops at step 916 `verify-no-orphan-migration-ledger-entries`. Measured on prod 18:57Z: 3 rows in
 `ih35_migrations.applied_migrations` (the mirror) are DUPLICATES. In each case the correct `.sql` row exists in BOTH ledgers with the same

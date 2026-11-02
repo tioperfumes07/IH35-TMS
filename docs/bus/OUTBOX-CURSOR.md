@@ -1,3 +1,13 @@
+## OUTBOX (11-02-2026 ~2:35 PM CT) — Cursor ROUND 7.13 orphan migration ledger DONE-LIVE
+- **APPLY:** DELETE 3 duplicate rows from `ih35_migrations.applied_migrations` (mirror) where canonical `_system._schema_migrations` already had the correct `.sql` filename:
+  - `202610290000_disp01_escrow_abandon_trigger_text_cast.sql` (canonical `202610291200_…`)
+  - `202614000000_mdata_locations_is_sample_data`
+  - `202614690000_expense_lines_item_and_account_required`
+- **ROW_COUNT:** 3 (asserted in DO block)
+- **VERIFY:** `DATABASE_URL=… node scripts/verify-no-orphan-migration-ledger-entries.mjs` → `OK: no orphan ledger entries (excluding 24h grace)` at ~2:35 PM CT
+- **ALSO SHIPPED earlier:** #28003–#28008 fill-not-shell BoardSection wave + Q8 emailer null-Next; **0** `<DataPanel` opens remain under `apps/frontend/src/pages/`.
+- **NEXT:** U12/U18/U28–U30 app-wide; ENG-49/17 build-only; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~2:20 PM CT) — Cursor master-detail BoardSection fill
 - **SHIPPED:** #28005 DataPanel wave; shells13 CustomerDetail/VendorDetail/Drivers/UserDetail/Dispatch DataPanel→BoardSection (37 opens).
 - **NEXT:** U12/U18/U28–U30 app-wide; ENG-49/17 build-only; Dreamline/match deferred.
