@@ -286,7 +286,7 @@ export function BankTxCategorizationPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
+      <PageHeader backHref="/banking" title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
       {!companyId ? (
         <BoardSection title="Bank transaction categorization" testId="bank-tx-categorization-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>

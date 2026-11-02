@@ -231,7 +231,7 @@ export function InTransitIssuesPage() {
 
   return (
     <div data-testid="dispatch-intransit-issues-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="In-Transit Issues"
         subtitle="Driver-reported and office-created in-flight problems"
         actions={

@@ -123,7 +123,7 @@ export function BorderCrossingHistoryPage() {
 
   return (
     <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Border Crossing History"
         subtitle="Past wizard completions with eManifest re-download"
         actions={

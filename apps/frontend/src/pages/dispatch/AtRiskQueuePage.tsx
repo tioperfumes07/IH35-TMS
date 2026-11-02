@@ -210,7 +210,7 @@ export function AtRiskQueuePage() {
 
   return (
     <div data-testid="dispatch-at-risk-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="At-Risk / Late Queue"
         subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal. Tile value equals this table's row count (union, not a sum)."
         actions={

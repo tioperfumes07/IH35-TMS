@@ -235,7 +235,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           days.length))) already fills whatever width it's actually given -- it just needed the
           real width, not 1400px, to work with. */}
       <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
-        <PageHeader
+        <PageHeader backHref="/dispatch"
           title="Dispatch Planners"
           subtitle="Driver leave, truck availability, and load timeline — shared date range"
           actions={<PlannerExportButtons />}

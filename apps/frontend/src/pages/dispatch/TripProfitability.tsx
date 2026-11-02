@@ -223,7 +223,7 @@ export function TripProfitability() {
   return (
     <div className="space-y-3">
       <ReportsSubNav />
-      <PageHeader title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
+      <PageHeader backHref="/dispatch" title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
 
       {/* State messages */}
       {query.isError && (

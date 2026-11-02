@@ -115,7 +115,7 @@ export function DispatchAlertsPage() {
 
   return (
     <div className="space-y-4" data-testid="dispatch-alerts-page">
-      <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
+      <PageHeader backHref="/dispatch" title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
       {!companyId ? (
         <BoardSection title="Dispatch alerts" testId="dispatch-alerts-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load counts.</p>

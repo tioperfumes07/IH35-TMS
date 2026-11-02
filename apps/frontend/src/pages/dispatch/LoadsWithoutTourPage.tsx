@@ -75,7 +75,7 @@ export function LoadsWithoutTourPage() {
 
   return (
     <div data-testid="loads-without-tour-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Loads without a tour"
         subtitle="Non-cancelled loads with presettlement_link_id IS NULL. Tile value equals this table's row count."
         actions={

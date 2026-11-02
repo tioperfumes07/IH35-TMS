@@ -411,7 +411,7 @@ export function DetentionBoardPage() {
           renders both (dispatch-queues-subnav + dispatch-breadcrumb) and its own hooks are
           self-contained, so it does not affect this page's hook order. */}
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Detention board"
         subtitle="Operational detention and stopped, unbilled customer receivables · independent of load status"
         actions={

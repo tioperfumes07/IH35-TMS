@@ -80,7 +80,7 @@ export function OwnerOverrideLogPage() {
 
   return (
     <div data-testid="dispatch-owner-override-log-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Owner Override Log"
         subtitle="Read-only WORM audit trail of every dispatch blocker overridden by an Owner (DOT / insurer / attorney visibility)"
         actions={

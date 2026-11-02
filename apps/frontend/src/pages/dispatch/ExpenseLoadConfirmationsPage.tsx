@@ -14,7 +14,7 @@ export function ExpenseLoadConfirmationsPage() {
   return (
     <div data-testid="expense-load-confirmations-page" className="mx-auto max-w-6xl space-y-4 p-4">
       {companyId ? <DispatchSubnav operatingCompanyId={companyId} /> : null}
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Expense load confirmations"
         subtitle="Every expense-to-load assignment is proposed by the engine and confirmed by a dispatcher or closer. Empty means confirmed — never hidden."
         actions={

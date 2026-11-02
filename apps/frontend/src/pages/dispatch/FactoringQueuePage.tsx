@@ -308,7 +308,7 @@ export function FactoringQueuePage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4" data-testid="factoring-queue-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Factoring Queue"
         subtitle="Loads ready to submit to FARO — track packet status from delivery to advance"
         actions={

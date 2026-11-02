@@ -155,7 +155,7 @@ export function NeedsDeliveryAuthorizationPage() {
   return (
     <div data-testid="needs-delivery-authorization-page" className="mx-auto max-w-5xl space-y-4 p-4">
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Needs delivery authorization"
         subtitle="Issued invoices on loads still rolling (dispatched / in transit). Record customer + factoring approval before delivery — same engine as FACTOR-BUT-NOT-DELIVERED."
         actions={

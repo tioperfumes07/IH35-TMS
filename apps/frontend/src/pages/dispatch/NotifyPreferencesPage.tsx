@@ -180,7 +180,7 @@ export function NotifyPreferencesPage() {
 
   return (
     <div className="p-4" data-testid="dispatch-notify-preferences-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Customer ETA notify"
         subtitle="SMS/email milestone alerts with delivery confirmations (B21-D9)"
       />

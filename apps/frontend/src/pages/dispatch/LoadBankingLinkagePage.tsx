@@ -41,7 +41,7 @@ export function LoadBankingLinkagePage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="load-banking-linkage-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Load · bank feed linkage"
         breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "Banking"]}
         actions={

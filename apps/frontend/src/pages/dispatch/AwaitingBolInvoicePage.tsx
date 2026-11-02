@@ -83,7 +83,7 @@ export function AwaitingBolInvoicePage() {
 
   return (
     <div data-testid="awaiting-bol-invoice-page" className="mx-auto max-w-5xl space-y-4 p-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Awaiting BOL for invoice"
         subtitle="Delivered loads with no BOL on file. Upload the BOL on the load Documents tab — invoice send and Faro submit fire automatically."
         actions={

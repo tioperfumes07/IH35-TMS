@@ -49,6 +49,7 @@ function assertLive() {
   if (!/<BoardSection\b/.test(settings) || !/testId="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company must be BoardSection");
   if (!/ListErrorBanner/.test(settings)) problems.push("S34 ListErrorBanner");
   if (!/useCompanyContext/.test(settings)) problems.push("S34 missing company context");
+  if (!/backHref="\/dispatch"/.test(settings)) problems.push("S34 PageHeader backHref must be /dispatch (U18)");
 
   if (!/data-testid="dispatch-settlements-need-company"|testId="dispatch-settlements-need-company"/.test(dispatch)) {
     problems.push("S35 need-company");
@@ -63,6 +64,7 @@ function assertLive() {
   if (!/data-testid="dispatch-trip-pairing-honest-empty"/.test(trip)) problems.push("S36 honest empty");
   if (!/ListErrorBanner/.test(trip)) problems.push("S36 ListErrorBanner");
   if (!/enabled:\s*Boolean\(companyId\)/.test(trip)) problems.push("S36 not company-gated");
+  if (!/backHref="\/dispatch"/.test(trip)) problems.push("S36 PageHeader backHref must be /dispatch (U18)");
   if (!/aria-label=\{`Book Southbound return for \$\{t\.unit_number/.test(trip)) {
     problems.push("S36 open-return action is not an accessible button");
   }
