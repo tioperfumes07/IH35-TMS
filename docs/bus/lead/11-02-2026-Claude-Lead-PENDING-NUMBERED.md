@@ -199,7 +199,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 115 | R262 | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | PARTIAL |
 | 116 | R264 | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | PARTIAL |
 | 117 | R269 | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | PARTIAL |
-| 118 | R271 | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | DONE-LIVE — measured each (#28140 + addendum #28141): 21 of 87; causes routed — ENG-61 fuel outside trip (CC-3), ENG-62 unlinked Relay fills (CC-1), ENG-25b Transportation diesel; 5824/5829 signed docs not found on owner Mac stage |
+| 118 | R271 | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | DONE-LIVE — measured each (#28140 + addendum #28141): 21 of 87; causes routed — ENG-64 fuel outside trip (CC-3), ENG-65 unlinked Relay fills (CC-1), ENG-25b Transportation diesel; 5824/5829 signed docs not found on owner Mac stage |
 | 119 | R273 | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | OPEN |
 | 120 | R274 | Banking | M1 candidates scoped to the bank line's account | - | MERGED-UNVERIFIED |
 | 121 | R275 | Banking | M2 invoices + Faro purchases in the match union | - | MERGED-UNVERIFIED |
@@ -226,8 +226,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 142 | M3 | Banking | M3/M5 one matcher (MatchDrawer embedded); filters live | - | MERGED-UNVERIFIED |
 | 143 | G1 | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | MERGED-UNVERIFIED |
 | 144 | LEAD-various | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | MERGED-UNVERIFIED |
-| 145 | NEW 11-02 | Fuel | ENG-61 116 fuel rows ($40,499.46) on 42 loads outside the trip window | CC-3 | OPEN |
-| 146 | NEW 11-02 | Fuel | ENG-62 90 Relay fill expenses $38,717.03 with no linked fuel row (18 link / 48 import / 24 dedupe) | CC-1 | OPEN |
+| 145 | NEW 11-02 | Fuel | ENG-64 116 fuel rows ($40,499.46) on 42 loads outside the trip window | CC-3 | OPEN |
+| 146 | NEW 11-02 | Fuel | ENG-65 90 Relay fill expenses $38,717.03 with no linked fuel row (18 link / 48 import / 24 dedupe) | CC-1 | OPEN |
 | 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | DONE-LIVE — Render backend logs: last "deadlock detected" 21:25:35Z; after the deploy containing #28131 (1d1e9f18b live 22:07:24Z) 0 through 23:32:37Z (85 min); 0 from 21:25:35Z to 22:53Z (88 min; 7 in the 25 min before); pg_stat_database.deadlocks flat 3825 22:49:45Z→22:52:49Z |
 
 ## F · Live findings (tie-outs)
