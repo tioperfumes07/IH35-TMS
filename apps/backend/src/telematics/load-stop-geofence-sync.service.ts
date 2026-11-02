@@ -287,6 +287,16 @@ export async function stampStopsFromGeofenceEvents(
     `,
     [operatingCompanyId, RETRO_DWELL_MINUTES]
   );
+  // Pre-lock all target rows in id order before the per-row UPDATEs below.
+  // Both stampStopsFromGeofenceEvents (this function) and persistStopDwellEvidence also update
+  // mdata.load_stops. Acquiring locks in the same ORDER BY id order as the DISTINCT ON query above
+  // prevents deadlocks when the two writers run concurrently in the same savepoint.
+  if (arrivals.rows.length > 0) {
+    await client.query(
+      `SELECT id FROM mdata.load_stops WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+      [arrivals.rows.map((r) => r.stop_id)]
+    );
+  }
   let stampedArrivals = 0;
   let stampedDepartures = 0;
   for (const a of arrivals.rows) {

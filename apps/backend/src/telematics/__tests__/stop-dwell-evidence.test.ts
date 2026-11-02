@@ -84,6 +84,37 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
   });
 });
 
+describe("concurrent lock order — deadlock prevention", () => {
+  it("processes stops in stop_id ascending order regardless of insertion order in the evidence array", async () => {
+    // ENG-DEADLOCK-01: both persistStopDwellEvidence and stampStopsFromGeofenceEvents update
+    // mdata.load_stops. Both must acquire row locks in the same stop_id order to avoid a deadlock.
+    // This test verifies that persistStopDwellEvidence sorts by stop_id before looping — if the
+    // sort is missing, stop-b would be updated before stop-a, creating a lock-order cycle with
+    // stampStopsFromGeofenceEvents which queries ORDER BY stop_id.
+    replay.mockClear(); bind.mockClear();
+    const updateOrder: string[] = [];
+    const client = {
+      query: vi.fn(async (q: string, values?: unknown[]) => {
+        if (/INSERT INTO telematics\.unit_stop_events/.test(q)) return { rows: [{ id: "evt-x" }] };
+        if (/UPDATE mdata\.load_stops/.test(q) && Array.isArray(values) && typeof values[0] === "string") {
+          updateOrder.push(values[0] as string);
+          return { rows: [{ id: values[0] as string }] };
+        }
+        if (/FROM geo\.geofence_events/.test(q)) return { rows: [{ n: "0" }] };
+        if (/SELECT vertices_json/.test(q)) return { rows: [{ vertices_json: [{ lat: 1, lng: 1 }, { lat: 1, lng: 2 }, { lat: 2, lng: 2 }] }] };
+        return { rows: [] };
+      }),
+    };
+    const hitB = { ...hit, started_at: "2026-08-07T18:04:48.000Z", ended_at: "2026-08-07T19:04:32.000Z" };
+    // Input order: stop-b BEFORE stop-a (reverse of sorted order)
+    const evB = { load_id: "load-1", stop_id: "stop-b", unit_id: "unit-1", sequence_number: 2, hit: hitB };
+    const evA = { load_id: "load-1", stop_id: "stop-a", unit_id: "unit-1", sequence_number: 1, hit };
+    await persistStopDwellEvidence(client, "co-1", [evB, evA]);
+    // Must process stop-a before stop-b (sorted order), not insertion order (stop-b first)
+    expect(updateOrder).toEqual(["stop-a", "stop-b"]);
+  });
+});
+
 describe("a fence crossing without a real OBD read yields to the GPS dwell", () => {
   const stop = { stop_id: "s1", load_id: "l1", unit_id: "u1", sequence_number: 1, latitude: 40.6256, longitude: -74.2307,
     arrival_at: "2026-08-07T05:00:00.000Z", departure_at: "2026-08-07T05:00:00.000Z", scheduled_arrival_at: null,
