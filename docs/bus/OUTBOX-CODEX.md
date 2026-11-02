@@ -4,6 +4,17 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+16:10 CT Safety depth continuation (read-only USMCA):
+- DOT Inspections: 0 inspections, 67 open dwell events / 20 visible; raw SQL timestamps including fractional seconds and +00 violate display contract. Same Cursor handoff extended; no Mark Reviewed/Citation/Clean action. Screenshot 16:11 CT.
+- Safety Meetings: 0 rows; Create opens date/calendar, topic and searchable attendee picker; Cancel closes without save. HOS: 11 loaded drivers; HOS Violations: 0 rows, inline creator untouched. Empty populations are not behavioral/engine passes.
+- IDVR: 237 submissions, page 1 of 5 with 50 rows. Driver/unit links render, calendar filters and settings present. FAIL submitted-date display: ISO year-first time rather than Central MM/DD/YYYY; source `IdvrPage.tsx:98`, companion detail formatter `IdvrDetailPage.tsx:91`. Private inline screenshot 16:10 CT. No correction/WO action submitted. Remaining Safety routes/deeper drills still pending.
+
+16:05 CT batch 19: batch 18 merged #28133 1d1e9f18baae097f5184518918e6f18391a0fc1e, 3 affected guards / 0 regressions; attachment refused by app 100-identity limit. No prior attachment removed.
+
+- #28080 confirmed behavioral regression despite static checks: missing-arrival gap producer emits epoch; LoadHistory formatWhen formerly displayed em dash, now actual formatter returns 12/31/1969, 6:00 PM. Producer line 321, consumer lines 22–24. Filed Cursor with reproducible input/output; live affected count UNVERIFIED.
+- UI design ratchet on 1d1e9f18ba: PASS and selftest PASS; raw font-size occurrences 128 (baseline 129), off-scale raw/semantic sizes 0, trapping-picker count 0. No baseline changed. Guard pass does not certify all visual attributes.
+- SAF-ORPH-05 partial route coverage: Driver Files loaded 11 active rows, dates MM/DD/YYYY, linked names/records, screenshot captured 16:03 CT. Drug & Alcohol loaded 1 consortium enrollment and 1 draw-history row; random pool/queries/positive queue display empty states. Schedule and manual draw not submitted. Remaining 26 routes and deeper behavior not certified.
+
 15:58 CT batch 18 in progress: batch 17 merged #28125 c8be30c7688a47ae769a67743ac5ac387518a775. No application or production changes.
 
 | PR / surface | Guard | Selftest / historical regression | Live re-measure | Verdict |
