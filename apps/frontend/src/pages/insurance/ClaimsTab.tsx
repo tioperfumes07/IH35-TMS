@@ -291,9 +291,9 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   // has to run after every hook. Hooks are unconditional above; only the RENDER is conditional.
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        Select an operating company to view claims.
-      </div>
+      <BoardSection title="Claims" testId="insurance-claims-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view claims.</p>
+      </BoardSection>
     );
   }
 
