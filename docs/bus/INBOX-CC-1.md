@@ -5,6 +5,10 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.3
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.3 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
+
+ADDED 12:40 PM CT: ENG-48 WRITER is yours (7.3-E) with the bridge (mass apply deferred — build + dry run) · main red: verify-no-swallow-on-money-paths settlements-load-bookended.service.ts:1201 (7.3-F) · dedupe guard 316>272 / 6>4.
+
 YOU ARE IDLE — START NOW. ENG-34 53→0 · ENG-25b dry-run engine + guard 18925 (AUTH-464 does not exist) · ENG-04 AUTH-gated apply path ($705.97) · ENG-48 bridge review (147 fills / $24,678.73, dry run) · modules BANK-TIEOUT-01, ACCT-TIEOUT-01, VEND-TIEOUT-01.
 
 **Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.

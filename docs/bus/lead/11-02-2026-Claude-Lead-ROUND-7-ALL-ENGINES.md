@@ -23,6 +23,31 @@ Every engine = **backend engine + routes + FE board + EntityLink forward AND rev
 
 ---
 
+## 7.0-B AMENDMENT (11-02-2026 12:40 PM CT) — read before your box
+Owner 12:30 PM CT: *"all questions have been asked and answered, cpa answers, questionnaire, etc. they can check repo, files, project, downloads and desktop folders for answers. we are fully coding and building right now, then once all work is fully completely done, then we focus on categorizing … do not pause … i want all in repo, i do not want anything pending."*
+Owner 12:31 PM CT: Codex checks all work and tests visuals to spec.
+
+1. **DO NOT ASK THE OWNER.** Answers live in: `docs/bus/00-CLOSED-ASKED-AND-ANSWERED-NEVER-REOPEN.md`, `docs/bus/00-OWNER-*`, `docs/bus/OWNER-AUTHORIZATIONS.md`, `docs/lockdown/`, `docs/specs/OWNER-QUALITY-COMPACT.md`, the CPA questionnaire / contador answers in the repo, and on the owner's Mac `~/Desktop` + `~/Downloads` (reconciliation workbooks, settlement text, Faro CSVs). Search all of them first; cite the file in the PR body. Only a fact that exists in none of them is a question — write it to your OUTBOX and keep building everything else.
+2. **ROLE CHANGE — CODEX = CHECK-ALL-WORK + VISUAL QA** (box 7.6 below is replaced). Codex build items move:
+   - ENG-48 fuel writer (ON-RECEIPT Relay path, literal "5000" at statement-card-credit-repair :93/:119, wire verify-fuel-expense-one-to-one) → **CC-1** (adds to 7.3-D: one seat owns writer + bridge).
+   - ENG-49 settlement 5787 document-first + module SETL-TIEOUT-01 → **CURSOR** (7.2-F).
+   - ENG-17 Faro 1090 (14 unmatched, PROPOSED/AMBIGUOUS + owner pick screen with Undo; 2510 BLOCKED on Dreamline statement) + module FACT-TIEOUT-01 → **CURSOR** (7.2-G).
+3. **TIERED MODELS — NO UNNECESSARY TOKENS** (owner 12:31 PM CT; law `docs/specs/MODEL-TIER-POLICY.md`): money / GL / posting / migrations / RLS / root-cause = **Tier A** (never down-tier); well-specified non-money features, guards, tests, wiring, non-trivial UI = **Tier B**; mechanical class waves, tokens/palette, docs, repetitive refactors, CI drift = **Tier C**. Stuck 2 red cycles → one tier up. Read only the files your item needs; no repo-wide sweeps without a reason; one regression-gate run per PR. Tier never lowers the proof bar.
+4. **OWNER "BUILD FIRST, MATCH LATER"** (docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md) governs every box: build engines + fill every shell; defer bank matching, Dreamline 2510, month locks (ENG-38), ENG-48 mass apply, ENG-60 table drop (owner AUTH later). Dry runs are still required proof.
+5. **CURSOR ALREADY CLOSED** (12:20 PM CT): ENG-13 AUTH-473 DONE-LIVE (13595 customer 445, NULL 0/194); ENG-22 prevention guard 18930 (mismatches 0).
+6. **CORRECTION (ENG-48):** the live guard `verify-diesel-expense-fuel-dedupe` reports duplicate_fill_pairs **6** (baseline 4) and live_diesel_expenses **316** (baseline 272) — my earlier "0 same-day duplicate groups" used a narrower definition; the guard's numbers stand. CC-2 measured the ≠net+fee delta at **$2,476.71** (not $2,622.71) and the 0-expense window to **10-29**. The 1090 $10,446.00 movement = FAC-2026-00009/10/11 factoring deposit clears (10-26) — **legitimate, closed** (CC-2 #27989).
+
+## 7.10 — MAIN IS RED (blocks everyone's green) — fix the root cause, never baseline
+Measured on `main` `aafee241` (before ROUND 6/7 merges) — same checks red on every PR since:
+| Check | Cause on main | Seat |
+|---|---|---|
+| locked-guards / -heavy | `verify-no-swallow-on-money-paths`: silent swallow at `apps/backend/src/driver-finance/settlements-load-bookended.service.ts:1201` | **CC-1** |
+| required-live-load-guard | `verify-diesel-expense-fuel-dedupe` (316 > 272 expenses; 6 > 4 duplicate pairs) → fix with ENG-48; `verify-settlement-net-matches-signed-doc` 1 failure → fix with ENG-49 | **CC-1** (dedupe) · **CURSOR** (settlement) |
+| guard-integrity | 1 NEW silent list cap (a capped list that never tells the user it capped) | **CC-3** |
+| build-typecheck / -heavy | zod `TS2418`/`TS2322` in `accounting/{invoices,payments,bills,expenses}-bulk.routes.ts`, `driver-finance/settlements-bulk.routes.ts`, `lib/strict-query.ts` (`.loose`), `docs/files.routes.ts:636` implicit any | **CC-3** |
+| CodeQL Analyze (javascript-typescript) | read the alert list on the run, fix each real finding; a false positive gets a written reason in the PR | **CURSOR** |
+DONE = all five green on a `main` commit, run id in the PR body.
+
 ## 7.2 — CURSOR (Lead merge seat + data ops)
 ```
 TO: CURSOR   FROM: Claude Lead   ROUND 7.2   deadline 2026-11-03T02:00Z   missed → Claude Lead
@@ -40,7 +65,18 @@ TO: CURSOR   FROM: Claude Lead   ROUND 7.2   deadline 2026-11-03T02:00Z   missed
 7.2-D ENG-36: re-measure negatives after ENG-19 deploy (today 21/87, named list in register). State each remaining one's
       cause class. Further fuel/expense cause → ENG-25b (CC-1).
 7.2-E STOP on ENG-60 (Claude Lead owns the table drop; your 410 mutate work is kept) and ENG-34 (CC-1 owns the 53).
-DONE = AUTH-473 CLOSED · 5 CODED-QUEUED rows DONE-LIVE (or reopened with the failing number) · ENG-22 guard merged.
+7.2-F ENG-49 (moved from Codex): settlement 5787 — signed doc $140.20 vs app non-diesel $107.00 (75 layover + 22 reimb
+      + 10 admin gas; + escrow 25) vs claimed $235.01. Line-by-line from Company_Settlement_5787.txt / Driver_Settlement_5787.txt
+      (~/Desktop/IH35-KEEP-Reconciliations-and-Settlements/.../settlement-text/); name the $235.01 source; correct through the
+      settlement engine's closed-period path (P-0018 closed). No JE. Also module SETL-TIEOUT-01 (5753 to the cent) and
+      required-live-load-guard verify-settlement-net-matches-signed-doc.
+7.2-G ENG-17 (moved from Codex) — BUILD ONLY (owner 11-02 "BUILD first, match later" — docs/bus/lead/11-02-2026-Owner-
+      BUILD-FIRST-NOT-MATCH.md): build the Faro 1090 proposal engine (each unmatched purchase → PROPOSED / AMBIGUOUS from the
+      Faro CSVs + wire candidates) and the owner pick screen with Undo through createBankDeposit, proven on a dry run.
+      DO NOT execute any match. 2510 / Dreamline deferred by owner. No balancing JE. FACT-TIEOUT-01 auto_check measured only.
+7.2-H CodeQL on main (7.10).
+DONE = AUTH-473 CLOSED · 5 CODED-QUEUED rows DONE-LIVE (or reopened with the failing number) · ENG-22 guard merged ·
+       ENG-49 / ENG-17 per above · CodeQL green.
 ```
 
 ## 7.3 — CC-1 (money / GL)  — YOU ARE IDLE: START NOW
@@ -60,7 +96,12 @@ TO: CC-1   FROM: Claude Lead   ROUND 7.3   deadline 2026-11-03T02:00Z   missed �
 7.3-C ENG-04 2170 Driver Net-Pay Clearing $2,575.96 Cr / 12 postings: AUTH-gated --apply for the 3 PROPOSE_RECLASS
       ($705.97: CA-0004 / CA-0006 / CA-0007) through the posting engine reclass + reversal. 3 NO-EVIDENCE + 6 AMBIGUOUS stay
       listed. DONE = dry run shows exactly $705.97 moving, 2170 → $1,869.99 in the rollback.
-7.3-D ENG-48 money side (with Codex): review scripts/ops/2026-09-30-cc1-r290-1-fuel-expense-bridge-backfill.ts against
+7.3-E ENG-48 WRITER (moved from Codex — you own writer + bridge): fix the ON-RECEIPT Relay path so every fill mints its own
+      expense (read accounting.posting_source_load_id 'fuel_event' branch + adoptRelayFillExpenseDocument in
+      fuel-expense-document.service.ts); literal "5000" at statement-card-credit-repair.service.ts :93/:119 → role resolver;
+      wire verify-fuel-expense-one-to-one.mjs; make verify-diesel-expense-fuel-dedupe green (316>272, 6>4 pairs) by root cause.
+7.3-F main red: verify-no-swallow-on-money-paths at settlements-load-bookended.service.ts:1201 (7.10).
+7.3-D ENG-48 money side: review scripts/ops/2026-09-30-cc1-r290-1-fuel-expense-bridge-backfill.ts against
       live: 147 Relay fills ($24,678.73, 08-03→10-16) have 0 expense — posted only via the parent fuel_event JE. The bridge
       must, per Relay parent, void the parent JE through the posting engine and mint one expense per fill, books
       net-identical per account to the cent; parent whose fills ≠ JE net → STOP + listed. Dry run only (AUTH-145 consumed).
@@ -103,27 +144,37 @@ TO: CC-3   FROM: Claude Lead   ROUND 7.5   deadline 2026-11-03T02:00Z   missed �
       its exact missing input (no fence / no OBD / date_only stop). Backfill --apply waits AUTH.
 7.5-D ENG-27 ceiling 290 pre-10-17 bank-cat postings without load: per row document or written explanation; never
       auto-match. Ceiling shrink-only.
+7.5-F main red (7.10): build-typecheck zod drift + guard-integrity silent list cap.
 7.5-E FINDING (measure, no behavior change): Creator maps a customer/broker trailer → POWER_ONLY_CUSTOMER_TRAILER
       (creator-trailer-choice.ts:88); Book/Edit Load keep physical type (12 live: 11 DRY_VAN, 1 REEFER). Write both + counts
       for the owner.
 ```
 
-## 7.6 — CODEX
+## 7.6 — CODEX — CHECK ALL WORK + VISUAL QA (replaces the earlier 7.6)
 ```
-TO: CODEX   FROM: Claude Lead   ROUND 7.6   deadline 2026-11-03T02:00Z   missed → Claude Lead
+TO: CODEX   FROM: Claude Lead   ROUND 7.6 (amended 12:40 PM CT)   deadline 2026-11-03T02:00Z   missed → Claude Lead
 
-Queue: ENG-48 → ENG-49 → ENG-17. ENG-13 / ENG-60 are Claude's. ENG-25b is CC-1's.
-7.6-A ENG-48 engine: the "JE debit=0 mass failure" line was wrong (0 live). Real: 147 Relay fills with 0 expense +
-      78 expenses ≠ net+fee. Read accounting.posting_source_load_id 'fuel_event' branch + adoptRelayFillExpenseDocument
-      (fuel-expense-document.service.ts) — fix the ON-RECEIPT writer so every Relay fill mints its own expense; wire
-      verify-fuel-expense-one-to-one.mjs into CI. Literal "5000" at statement-card-credit-repair.service.ts :93/:119 →
-      role resolver (line-29 comment is false). Repair = CC-1 7.3-D dry run.
-7.6-B ENG-49 settlement 5787: signed doc $140.20 vs app non-diesel lines $107.00 (75 layover + 22 reimb + 10 admin gas;
-      + escrow 25) vs claimed $235.01. Line-by-line table from Company_Settlement_5787.txt / Driver_Settlement_5787.txt;
-      name where $235.01 came from; correct through the settlement engine's closed-period path (P-0018 closed). No JE.
-7.6-C ENG-17: 1090 now $159,764.48 (CC-2 names the $10,446.00). 14 unmatched Faro purchases → PROPOSED / AMBIGUOUS with
-      Faro CSV row + wire candidate; owner pick screen with Undo through createBankDeposit. 2510 $187,894.21: Dreamline
-      statement MISSING → BLOCKED, measured by source. No balancing JE.
+You no longer build ENG-48/49/17 (moved: CC-1 / Cursor). You are the independent checker: you did not write this code, so
+you grade it. Verify, measure, and FIX ONLY a defect you can prove (failing guard, wrong number, broken screen) in a codex/ PR.
+
+7.6-A EVERY PR MERGED TODAY (11-02-2026) on main — for each: read the diff, run its named guard + --selftest, run the fast-merge
+      check (checkNoRegressions) on its merge commit, and confirm its LIVE PROOF line is reproducible (same query → same
+      number). Includes #27966–#27989+ (Cursor ENG-60 FE/410, ENG-46/47/50/51, ENG-34 waves, ENG-29/53 cron, CC-2 6.4) and
+      Claude Lead #27975 (ENG-13), #27977, #27983, #27985 (stop-dwell date_only), #27987. Result table in OUTBOX-CODEX.md:
+      PR | guard | selftest | regressions | live re-measure | PASS/FAIL.
+7.6-B VISUAL QA TO SPEC — open each module screen in Chrome against https://app.ih35dispatch.com (USMCA) and grade against
+      docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md (body 12px · headers 11px/700/UPPERCASE/#4B5563 · H1 22px/600 · page #F7F8FA ·
+      surface #FFFFFF · border 1px #E5E7EB · radius 4px · rail #1B2333 · green #16A34A · equal paired-field sizes ·
+      centered sortable headers) + .cursor/rules/00-IH35-LAW.mdc + 03-display-ids.mdc. For every screen: list renders real
+      rows (no empty shell / placeholder / "coming soon" / dead button), filters are multi-select comboboxes, every id is a
+      human label (no raw/truncated uuid), every row drills forward AND back (EntityLink), create opens the canonical
+      drawer/page with pickers, void/reverse exists on money docs. Screenshot each failure. Order: Accounting · Banking ·
+      Settlements · Dispatch · Fuel · Factoring · Vendors · Customers · Insurance · Legal (Lawsuits) · Safety · Fleet ·
+      Maintenance · Cash Flow · Reports · Program.
+      Run node scripts/verify-ui-design-system-ratchet.mjs and report its count.
+7.6-C MODULE ITEMS (7.9): re-run each auto_check; state PASS/FAIL with the number. Re-verify the 13 not-PASS rows.
+7.6-D Report: OUTBOX-CODEX.md — one line per PR / screen / module item, numbers not adjectives. A defect you fix → codex/ PR
+      through the fast-merge gate. A defect in another seat's lane → write it to that seat's INBOX with file:line + screenshot.
 ```
 
 ## 7.9 — MODULE SHELLS / UPGRADES NOT YET AT SPEC (all seats)

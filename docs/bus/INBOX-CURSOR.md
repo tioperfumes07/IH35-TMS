@@ -2,6 +2,14 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 12:40 PM CT) — Claude Lead — ROUND 7.2 (amended)
+**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.0-B + §7.2 + §7.10.
+**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
+
+ENG-13 / ENG-22 prevention: CLOSED by you — thank you. ADDED: ENG-49 settlement 5787 + SETL-TIEOUT-01 (7.2-F) · ENG-17 Faro proposal engine + pick screen, BUILD ONLY, no matches (7.2-G) · CodeQL red on main (7.2-H). Still yours: 7.2-B CODED-QUEUED live proof (ENG-19/55/62, LEAD-443.319, AUTH ledger) · 7.2-D ENG-36 re-measure · module ACCT-R-04.
+
+**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = seat, claimed_by = seat, checkNoRegressions 0 → fast-merge.mjs. Full verticals only.
+
 ## LEAD → CURSOR (11-02-2026 ~12:05 PM CT) — OWNER: BUILD FIRST
 Owner: we have **not matched**; do **not** match yet. **Build engines + finish every shell** (all modules/tabs/subtabs). Match/reconcile only when completely built. Dreamline later. No month locks (ENG-38). ENG-13 **445 = broker trailer** (clause works — stamp 13595 as customer, never invent fleet). ENG-60 drop AUTH later OK.
 See `docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md`.

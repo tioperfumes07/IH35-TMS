@@ -5,7 +5,10 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.6
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.6 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
-ENG-48 writer (147 Relay fills with no expense + 78 ≠ net+fee; literal "5000" at statement-card-credit-repair :93/:119) → ENG-49 5787 document-first → ENG-17 Faro 1090 (no JE) · modules FACT-TIEOUT-01, SETL-TIEOUT-01. ENG-13/60 are Claude's; ENG-25b is CC-1's.
+
+ROLE CHANGE (owner 12:31 PM CT): CHECK ALL WORK + VISUAL QA. Verify every PR merged today (guard, selftest, regressions, live re-measure) · visual QA of every module screen vs GLOBAL-TYPE-SIZE-BASELINE + IH35-LAW · re-verify 13 module items. ENG-48→CC-1, ENG-49/ENG-17→Cursor. Fix only provable defects (codex/ PR).
+
+**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
 
 **Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
 

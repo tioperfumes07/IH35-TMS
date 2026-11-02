@@ -3,6 +3,10 @@
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.5
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.5 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
+**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
+
+ADDED 12:40 PM CT: main red — build-typecheck zod TS2418 drift (*-bulk.routes.ts, strict-query.ts, files.routes.ts:636) + guard-integrity silent list cap (7.5-F, 7.10).
+
 9 FE tests red on clean main (4 files) · ENG-23 audit + guard 18921 · ENG-29/53 fence fill after #27976/#27985 · ENG-27 290 shrink · Creator vs Book Load trailer-type finding · modules DISP-TIEOUT-01, VEND-CERT-01.
 
 **Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
