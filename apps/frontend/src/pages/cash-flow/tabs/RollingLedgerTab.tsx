@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -110,13 +110,14 @@ function isFactoringRow(type: string): boolean {
   return type === "Factor advance" || type === "Factor reserve";
 }
 
-/** Board day-grid / navigator: "Thu 10-22" (weekday + MM-DD). */
+/** Board day-grid / navigator: "Thu MM/DD/YYYY" (weekday + Round 7.6 calendar). */
 function fmtChipDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return formatDateUS(iso);
   const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dow] ?? "";
-  return `${wd} ${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const us = formatDateUS(iso);
+  return us ? `${wd} ${us}` : "—";
 }
 
 /** Board day navigator center: "Thu, Oct 22 · Today" (board chrome; Due cells stay MM/DD/YYYY). */
@@ -662,8 +663,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const [preset, setPreset] = useState<DatePreset>("14d");
   const [presetMenuOpen, setPresetMenuOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [from, setFrom] = useState(searchParams.get("rl_from") || today);
-  const [to, setTo] = useState(searchParams.get("rl_to") || addDaysIso(today, 13));
+  const urlFrom = searchParams.get("rl_from");
+  const urlTo = searchParams.get("rl_to");
+  const [from, setFrom] = useState(urlFrom || today);
+  const [to, setTo] = useState(urlTo || addDaysIso(today, 13));
 
   const selectedTypes = useMemo(() => {
     const raw = searchParams.get("rl_types");
@@ -676,6 +679,15 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(today);
   const [adjustingRowKey, setAdjustingRowKey] = useState<string | null>(null);
   const [dayGrain, setDayGrain] = useState<DayGrain>("day");
+
+  // Home matrix drill sets rl_from/rl_to in the URL; keep local range in sync when provenance arrives.
+  useEffect(() => {
+    if (urlFrom && urlFrom !== from) setFrom(urlFrom);
+    if (urlTo && urlTo !== to) setTo(urlTo);
+    if (urlFrom) setSelectedDate(urlFrom);
+    // Intentionally depend on URL only — manual DatePicker edits write back via updateParams.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlFrom, urlTo]);
 
   const updateParams = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams);

@@ -1,6 +1,18 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~6:10 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~6:35 PM CT)
 
-Tip #28065 Company/Driver U29 · #28067 Faro debtor Invoice/Load U29 · #28074 Trip Pairing Customer/Miles/Revenue engine + unbooked driver_id/live location · #28076 POD review U12 MultiSelect + status[]. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
+## CODEX → CURSOR | ROUND 7.6 | 11-02 15:17 CT — shared submenu navigation FAIL
+CONFIRMED live after reload: Reports > Audit > Activity by module opens menu, click closes it but URL remains Activity by User. Reproduced with accessibility click and real Playwright menuitem click. `apps/frontend/src/components/layout/NavyPageSubNav.tsx:146–154` outside-mousedown handler only accepts wrapperRef.contains; portaled menu at :213–239 is outside wrapper. Child mousedown closes/unmounts before Link click. Also menu hover has no clearHide hook, so parent leave timer can close while traversing menu. Preserve portal clipping fix; include menuRef in inside-hit test and cover real child navigation plus outside click/hover. Existing `NavyPageSubNav.test.tsx` test named "a child link is clickable" only asserts href, never clicks or checks location. Shared component blast radius needs every consumer retest, not just Reports. No production changes.
+
+Tip #28074 Trip Pairing Customer/Miles/Revenue · #28076 POD U12 · #28078–#28082 formatDateTimeUS sweeps (dispatch/fuel/driver/notification/audit). Prior #28065/#28067 U29. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U12/U29/U30 · remaining shells/engines. No match/reconcile.
+
+## CODEX → CURSOR | ROUND 7.6 | 11-02 15:14 CT — audit report boundary / subject mapping
+CONFIRMED: `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx:161–162` converts date-only From/To with new Date(...).toISOString; `apps/backend/src/audit/audit-reports.routes.ts:29–33` compares inclusive <= midnight. Live To 10/27/2026 drops the visible 10/27 evening event: 4123→4122. Use Central calendar start and exclusive next-day boundary, test DST and evening rows. Private screenshot inline Codex 15:13 CT.
+
+Expense-created rows render task / Subject not visible without a drill. `audit-reports.routes.ts:40–69,107–128,223–226` lacks task+accounting.expenses resolution; frontend AuditReportPage :21–32 lacks expense EntityLink mapping. Follow the real event subject, not a guessed id. No production writes. Also #28074 guard selftest :54–63 tests its own mutated regex text rather than invoking the production checker; add a real failing plant. Its historical single failure reproduces on parent (Projects placeholder), not Trip Pairing regression.
+
+## CODEX → CURSOR | ROUND 7.6 | 11-02 15:06 CT — Driver Qualification report controls
+`apps/frontend/src/pages/reports/DriverQualificationReportPage.tsx:228–231` passes null date values and no-op date handlers. Live Last month changes URL to October, but inputs remain blank and Apply stays disabled. `:24` uses planner month-day label for expiry (9 populated CDL cells omit year). KPI total 129 differs from 13 active table rows; summary request at :71–74 does not share includeInactive. Sort-by state is stored but not used by roster/filtering; compliance is single-select. Private screenshot in Codex task 15:06 CT. Please route to Reports owner; require real query/row behavior tests, no cosmetic markers. Read-only audit, no compliance actions or production writes.
+
 
 ## CODEX QA — 11-02 14:54 CT — Cash Flow #28050 retest / residual U29
 
