@@ -13,8 +13,14 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  active: "Active",
+  voided: "Voided",
+});
 
 function formatMoneyCents(cents: number | null | undefined) {
   return `$${(Number(cents ?? 0) / 100).toFixed(2)}`;
@@ -40,11 +46,11 @@ export function InventoryPurchasesPage() {
   const queryClient = useQueryClient();
   const [voidTarget, setVoidTarget] = useState<PartsPurchaseRow | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "active" | "voided">("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [workOrderLinkedOnly, setWorkOrderLinkedOnly] = useState(false);
   const stagedFilters = useStagedListFilters({
     applied: { vendorFilter, statusFilter, workOrderLinkedOnly },
-    empty: { vendorFilter: "", statusFilter: "" as const, workOrderLinkedOnly: false },
+    empty: { vendorFilter: "", statusFilter: [] as string[], workOrderLinkedOnly: false },
     onApply: (next) => {
       setVendorFilter(next.vendorFilter);
       setStatusFilter(next.statusFilter);
@@ -62,8 +68,13 @@ export function InventoryPurchasesPage() {
   const activeRows = useMemo(() => rows.filter((row) => !row.voided_at), [rows]);
   const visibleRows = useMemo(() => {
     let next = rows;
-    if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
-    if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
+    // U12: multi-select — empty = all; single active/voided narrows; both selected = all.
+    const wantActive = statusFilter.length === 0 || statusFilter.includes("active");
+    const wantVoided = statusFilter.length === 0 || statusFilter.includes("voided");
+    if (!(wantActive && wantVoided)) {
+      if (statusFilter.includes("active")) next = next.filter((row) => !row.voided_at);
+      if (statusFilter.includes("voided")) next = next.filter((row) => Boolean(row.voided_at));
+    }
     if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
     return next;
   }, [rows, statusFilter, workOrderLinkedOnly]);
@@ -205,7 +216,7 @@ export function InventoryPurchasesPage() {
             exportFilename="inventory-purchase-history"
             filterBar={
               <CollapsedListFilters
-                activeFilterCount={(vendorFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (workOrderLinkedOnly ? 1 : 0)}
+                activeFilterCount={(vendorFilter ? 1 : 0) + (statusFilter.length ? 1 : 0) + (workOrderLinkedOnly ? 1 : 0)}
                 onApply={stagedFilters.apply}
                 onReset={stagedFilters.reset}
                 onCancel={stagedFilters.cancel}
@@ -226,22 +237,19 @@ export function InventoryPurchasesPage() {
                       placeholder="All vendors"
                     />
                   </label>
-                  <label className="text-xs text-[#4B5563]">
-                    Status
-                    <SelectCombobox
-                      value={stagedFilters.draft.statusFilter}
-                      onChange={(event) =>
-                        stagedFilters.setDraft((current) => ({
-                          ...current,
-                          statusFilter: event.target.value as typeof current.statusFilter,
-                        }))
-                      }
-                    >
-                      <option value="">All statuses</option>
-                      <option value="active">Active</option>
-                      <option value="voided">Voided</option>
-                    </SelectCombobox>
-                  </label>
+                  <MultiSelectDropdown
+                    label="Status"
+                    options={STATUS_FILTER_OPTIONS}
+                    selected={stagedFilters.draft.statusFilter}
+                    onChange={(next) =>
+                      stagedFilters.setDraft((current) => ({
+                        ...current,
+                        statusFilter: next,
+                      }))
+                    }
+                    allLabel="All statuses"
+                    data-testid="inventory-purchases-status-filter"
+                  />
                   <label className="inline-flex items-center gap-2 self-end pb-2 text-xs text-gray-700">
                     <input
                       type="checkbox"

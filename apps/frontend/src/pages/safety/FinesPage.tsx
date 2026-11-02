@@ -7,6 +7,7 @@ import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -15,6 +16,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { statusOptions } from "../../lib/statusListParams";
 
 type FineRow = Record<string, unknown>;
 
@@ -25,7 +27,15 @@ type Props = {
 /** A23-9: merged company violations into External Fines via record-type filter (RBC option a). */
 type RecordTypeFilter = "driver-fine" | "company-violation";
 
-const EMPTY_FILTERS = { status: "", subjectType: "", driverId: "", unitId: "" };
+const EMPTY_FILTERS = { status: [] as string[], subjectType: "", driverId: "", unitId: "" };
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  open: "Open",
+  paid: "Paid",
+  contested: "Contested",
+  dismissed: "Dismissed",
+  reduced: "Reduced",
+});
 
 export function FinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -90,7 +100,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
       "safety",
       "fines",
       operatingCompanyId,
-      applied.status,
+      applied.status.join(","),
       applied.subjectType,
       relatedLoadFromUrl,
       applied.unitId,
@@ -101,16 +111,22 @@ export function FinesPage({ operatingCompanyId }: Props) {
     ] as const;
   const finesQuery = useQuery({
     queryKey: finesQueryKey,
-    queryFn: () =>
-      getSafetyFines(operatingCompanyId, {
-        status: applied.status || undefined,
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const status = applied.status.length === 1 ? applied.status[0] : undefined;
+      const result = await getSafetyFines(operatingCompanyId, {
+        status,
         subject_type: applied.subjectType ? (applied.subjectType as "driver" | "company") : undefined,
         related_load_id: relatedLoadFromUrl || undefined,
         related_unit_id: applied.unitId.trim() || relatedUnitFromUrl || undefined,
         subject_driver_id: applied.driverId.trim() || subjectDriverFromUrl || undefined,
         limit: pageSize,
         offset: page * pageSize,
-      }),
+      });
+      if (applied.status.length <= 1) return result;
+      const fines = (result.fines ?? []).filter((row) => applied.status.includes(String(row.status ?? "")));
+      return { ...result, fines, total_count: fines.length };
+    },
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -307,18 +323,14 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 <option value="company-violation">Company Violation</option>
               </SelectCombobox>
             </div>
-            <SelectCombobox
-              value={draft.status}
-              onChange={(event) => staged.setDraft((d) => ({ ...d, status: event.target.value }))}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            >
-              <option value="">All statuses</option>
-              <option value="open">Open</option>
-              <option value="paid">Paid</option>
-              <option value="contested">Contested</option>
-              <option value="dismissed">Dismissed</option>
-              <option value="reduced">Reduced</option>
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Status"
+              options={STATUS_FILTER_OPTIONS}
+              selected={draft.status}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, status: next }))}
+              allLabel="All statuses"
+              data-testid="fines-status-filter"
+            />
             <SelectCombobox
               value={draft.subjectType}
               onChange={(event) => staged.setDraft((d) => ({ ...d, subjectType: event.target.value }))}
