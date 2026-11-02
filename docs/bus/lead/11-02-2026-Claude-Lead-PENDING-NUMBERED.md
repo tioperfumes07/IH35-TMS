@@ -12,6 +12,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 |---|---|---|---|---|
 | 257 | Tests | Backend vitest on main e27c5b2c8: 35 test files / 46 tests FAIL (posting-engine cash/driver advance, revrec interlock, fuel poster class, migration tests 0242/qbo/samsara/reconciliation, dispatch book-load, customer routes…) — identical with and without #27965 | CC-1 (accounting) / CC-2 (dispatch, mdata) / CC-3 (migrations) | OPEN |
 | 258 | Fleet data | 9 phantom units from Samsara: 6 SAM-xxxxxxxx (VIN SAMVIN-…, 3 USMCA-leased, 3 TRANSP) + 3 gateway-serial units G497-J2K-EKM / G77P-YAB-4V7 / GPRR-ZPF-HEC (TRK); 0 loads, fuel, WOs, expenses, bills; 3 GPS pings 06/2019 — purge (Lead recommends DELETE via AUTH purge route) | CC-2 | OPEN |
+| 261 | Cash Flow | Actual vs Projected projects $0 expenses every day (actual $52,955.83 out 10/26–11/02): AvP reads bills-only (0 bills due) and the snapshot stores income only — expense must come from the daily engine + snapshot column | CC-1 | OPEN |
 | 260 | Dispatch | 13692/13693/13695 delivered to Edison (GPS) but never stamped — delivery stop geocode 'range' 0.7 mi off the dock; $14,700 not invoiced; USMCA range 22 stops → 5 unstamped, NULL 8 → 8 unstamped, rooftop 373 → 0 (docs/bus/lead/11-02-2026-Claude-Lead-FINDING-RANGE-GEOCODE-MISSED-DELIVERIES-14700.md) | CC-2 | OPEN |
 | 259 | Maintenance | Fleet health showed the SAM- phantoms — fixed #28191 e27c5b2c8 | LEAD | DONE-LIVE — live /maintenance 23:35Z: "All 39", 0 SAM- units |
 
@@ -260,7 +261,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 170 | R200 | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | DONE-LIVE — prod views.ar_aging $621,076.72 / 164 open = GL 1100 $621,076.72 (322 postings) = 183 sent invoices $621,076.72; no proforma rows live |
 | 171 | R203 | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | DONE-LIVE — CI required-live-load-guard 22:20Z: verify-every-load-born-document-and-posting-traces-to-its-load — unstamped postings 0, broken walks 0, load expenses without link 0 |
 | 172 | R204 | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | CODED |
-| 173 | R211 | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | CODED |
+| 173 | R211 | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | DONE-LIVE — live /cash-flow?tab=actual_vs_projected 00:05Z: board renders (KPIs, cumulative chart, by-date table 10/26–11/01); new defect found → row 261 |
 
 ## G · Guards red
 
@@ -282,7 +283,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 182 | R122 | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | OPEN |
 | 183 | R123 | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | OPEN |
 | 184 | R124 | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | OPEN |
-| 185 | R125 | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | CODED |
+| 185 | R125 | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | DONE-LIVE — live /driver-finance/settlements 00:00Z: sub-nav "Drivers" → /driver-finance/drivers (in module); only global nav + load EntityLinks leave the module |
 | 186 | R126 | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | CODED |
 | 187 | R127 | Settlements › Navigation › Pre-Settlements | D008: Link targets `/drivers/pre-settlements` | Cursor | CODED |
 | 188 | R128 | Settlements › Navigation › Feed Gate | D009: Link targets `/feed-gate` | Cursor | CODED |
