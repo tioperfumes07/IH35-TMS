@@ -179,13 +179,60 @@ function CompanyDriverPicker({
   const rows = q.data?.rows ?? [];
   const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
-      { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
+      {
+        key: "display_id",
+        label: "Settlement/Tour",
+        alwaysVisible: true,
+        minWidth: 100,
+        sortValue: (r) => settlementLabel(r),
+        render: (r) => (
+          <EntityLink kind="settlement" id={r.settlement_id} label={settlementLabel(r)} className="ldt-mono" />
+        ),
+      },
       ...tourLoadColumns("company-driver-col", rows),
-      { key: "driver_name", label: "Driver", minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: (r) => r.driver_name ?? "", render: (r) => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
+      {
+        key: "driver_name",
+        label: "Driver",
+        minWidth: 120,
+        maxWidth: 200,
+        cellClass: "whitespace-nowrap",
+        sortValue: (r) => r.driver_name ?? "",
+        // U29 / ROUND 153 — ids already on TourListRow; plain text was a dead cell.
+        render: (r) =>
+          r.driver_id ? (
+            <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ?? DASH} className="block max-w-[200px] truncate" />
+          ) : (
+            <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span>
+          ),
+      },
+      {
+        key: "unit_number",
+        label: "Unit",
+        minWidth: 80,
+        sortValue: (r) => r.unit_number ?? "",
+        render: (r) =>
+          r.unit_id ? (
+            <EntityLink kind="unit" id={r.unit_id} label={r.unit_number ?? DASH} />
+          ) : (
+            (r.unit_number ?? DASH)
+          ),
+      },
       { key: "trip_started_at", label: "Started", sortable: true, sortValue: r => r.trip_started_at ?? "", render: r => date(r.trip_started_at) },
       { key: "trip_closed_at", label: "Closed", sortable: true, sortValue: r => r.trip_closed_at ?? "", render: r => date(r.trip_closed_at) },
       { key: "driver_net_cents", label: "Driver net", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r) => r.driver_net_cents ?? 0, render: (r) => money(r.driver_net_cents) },
-      { key: "company", label: "Company settlement", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r) => (r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn">not opened</span>) },
+      {
+        key: "company",
+        label: "Company settlement",
+        minWidth: 120,
+        maxWidth: 160,
+        cellClass: "whitespace-nowrap",
+        render: (r) =>
+          r.company_settlement_id ? (
+            <EntityLink kind="company_settlement" id={r.company_settlement_id} label={r.company_settlement_display_id ?? DASH} />
+          ) : (
+            <span className="ldt-pill warn">not opened</span>
+          ),
+      },
     ],
     [rows]
   );
