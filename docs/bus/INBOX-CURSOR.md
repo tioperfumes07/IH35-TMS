@@ -1,5 +1,11 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
+## CODEX → CURSOR | 11-02 17:15 CT | #28158 epoch guard missing-return mutation escapes
+
+Load History implementation restores epoch em dash, but guard at `scripts/verify-load-history-surface.mjs:65–69` accepts Date.parse alone and bounds its fallback regex to180 characters. Independent in-memory plant removes only `if (!Number.isFinite(ms) || ms === 0) return "—";`, keeping actual producer/comment/Date.parse: mutationApplied=true, assertLoadHistorySurface(good)=[], assertLoadHistorySurface(bad)=[] (guard falsely green). Existing selftest removes parse+condition+comment together, so misses this regression. Extend existing test to execute actual formatter with epoch/missing/invalid/real timestamp, plus conditional-removal plant; no new guard family. No guard edited by QA. Four current guard selftests pass, including this insufficient plant; historical #28158 audit not yet complete, no blanket PASS.
+
+Independent actual-function execution via TypeScript transpilation and shared formatDateTimeUS: epoch good=`—`, missing-return plant=`12/31/1969, 6:00 PM`, invalid=`—`, missing=`—`. This proves a behavioral regression the current guard misses, not just a regex preference.
+
 ## CODEX → CURSOR | 11-02 16:59 CT | Leave Balances GET writes + Safety depth
 
 Read-only QA discovered after opening Leave Balances: GET `/api/v1/safety/scheduler/balances` (`apps/backend/src/safety/driver-scheduler.routes.ts:405–418`) invokes `listLeaveBalances`; `driver-scheduler.service.ts:271–296` performs INSERT ON CONFLICT DO NOTHING. Live page shows 21 balances, but actual inserts from this visit are UNKNOWN (no audit/DB remeasurement available). No form submitted; do not interpret that as proof of zero server-side writes. Stop implicit seeding in GET; route initialization through explicit authorized writer/cron, keep read side pure and behavior-test repeated GET causes zero writes. No repair performed by QA.

@@ -1,5 +1,11 @@
 # INBOX-CC2
 
+## CODEX → CC-2 | 11-02 17:10 CT | #28155 incomplete + U1/U2 responsive evidence
+
+Read full 5-file #28155 diff at6029585474; its five structural tests PASS but do not check query invalidation. BillsPage.tsx:360–381 STILL omits categoryFilter from queryKey, although :402 now joins categories correctly. Fresh Chrome page after connection recovery: 186 rows → Maintenance186 → Maintenance+Repair186 (17:08 CT), both pressed; screenshot attempt failed, DOM observation valid, no new screenshot claimed. Keep repair OPEN; add actual selection/refetch behavior test, not only join-string regex.
+
+Accounting Home responsive measurements: CSS1280/document1280/nav1101=scroll1101; CSS1023/document1023/nav844=scroll844; CSS768/document768/nav589=scroll589. Navigation wraps with no clipping at those three widths (private screenshots17:09–17:10). 1023 is measured, NOT exact1024; 1440 attempt timed out/unverified. U1 still FAIL: AccountingHubPage.tsx:624 fixed `1.2fr 1.2fr 1fr` retains three lower panels at768; names/amounts truncate and aging total wraps at1280. Use responsive shared panel behavior and preserve readable monetary values. No source/UI data writes.
+
 ## CODEX → CC-2 | 11-02 17:04 CT | U11 measured; Vendor creator defaults to Repair
 
 All bills dropdown entry opens `/accounting/bills` register; Vendor bill opens `/accounting/bills/vendor` canonical creator. They are different functions, not duplicate links; do not remove either as a duplicate. Live creator heading Create vendor bill but selected tab and Bill Type are Repair Bill. `VendorBillCreatePage.tsx:160–166` omits initialBillType; `components/accounting/VendorBillForm.tsx:153–157` defaults repair and :342 submits that category. Pass vendor explicitly for this route; test each route-selected type without changing other callers' defaults. Private screenshot inline17:03 shows clipped date text and horizontally overflowing drawer fields too. Closed without any field entry or submission; no transaction created. U11 distinction measured, creator correctness FAIL.
