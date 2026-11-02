@@ -8,6 +8,8 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
@@ -63,8 +65,9 @@ export function FinanceScenariosPage() {
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
 
   // LV-FINANCE-SCENARIOS-FILTER-APPLY-MISSING — staged status + period_basis Filters.
-  type ScenarioListFilter = { status: "all" | ScenarioStatus; periodBasis: "all" | PeriodBasis };
-  const emptyFilter: ScenarioListFilter = { status: "all", periodBasis: "all" };
+  // U12: status is multi-select (empty = all).
+  type ScenarioListFilter = { status: string[]; periodBasis: "all" | PeriodBasis };
+  const emptyFilter: ScenarioListFilter = { status: [], periodBasis: "all" };
   const [appliedFilter, setAppliedFilter] = useState<ScenarioListFilter>(emptyFilter);
   const staged = useStagedListFilters({
     applied: appliedFilter,
@@ -72,7 +75,12 @@ export function FinanceScenariosPage() {
     onApply: setAppliedFilter,
   });
   const activeFilterCount =
-    (appliedFilter.status === "all" ? 0 : 1) + (appliedFilter.periodBasis === "all" ? 0 : 1);
+    (appliedFilter.status.length ? 1 : 0) + (appliedFilter.periodBasis === "all" ? 0 : 1);
+  const STATUS_FILTER_OPTIONS = statusOptions({
+    draft: "Draft",
+    active: "Active",
+    superseded: "Superseded",
+  });
 
   const scenariosQuery = useQuery({
     queryKey: ["finance", "scenarios", companyId],
@@ -82,7 +90,7 @@ export function FinanceScenariosPage() {
   const scenarios = useMemo(() => {
     const rows = scenariosQuery.data?.scenarios ?? [];
     return rows.filter((s) => {
-      if (appliedFilter.status !== "all" && s.status !== appliedFilter.status) return false;
+      if (appliedFilter.status.length && !appliedFilter.status.includes(s.status)) return false;
       if (appliedFilter.periodBasis !== "all" && s.period_basis !== appliedFilter.periodBasis) return false;
       return true;
     });
@@ -234,22 +242,14 @@ export function FinanceScenariosPage() {
           className="rounded-sm border border-[#E5E7EB] bg-white p-2"
         >
           <div className="flex flex-wrap gap-3">
-            <label className="text-xs font-semibold text-[#6B7280]">
-              Status
-              <SelectCombobox
-                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
-                value={staged.draft.status}
-                onChange={(e) =>
-                  staged.setDraft({ ...staged.draft, status: e.target.value as ScenarioListFilter["status"] })
-                }
-                data-testid="finance-scenarios-status-filter"
-              >
-                <option value="all">All statuses</option>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="superseded">Superseded</option>
-              </SelectCombobox>
-            </label>
+            <MultiSelectDropdown
+              label="Status"
+              options={STATUS_FILTER_OPTIONS}
+              selected={staged.draft.status}
+              onChange={(next) => staged.setDraft({ ...staged.draft, status: next })}
+              allLabel="All statuses"
+              data-testid="finance-scenarios-status-filter"
+            />
             <label className="text-xs font-semibold text-[#6B7280]">
               Period basis
               <SelectCombobox
