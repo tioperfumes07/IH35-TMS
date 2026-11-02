@@ -75,6 +75,31 @@ Root cause: credit card/liability accounts (2150/2500/2510/2520) have current_ba
 GET /api/v1/cash-flow/rolling-ledger confirmed at apps/backend/src/cash-flow/cash-flow.routes.ts:157.
 FE RollingLedgerTab (apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx) calls apiRequest(/api/v1/cash-flow/rolling-ledger) — not direct DB. Static route verification PASS. Owner browser-verifies live render per FINAL-3 law.
 
+### Safety HOLDs — live re-verification (2026-11-02 ~1:30 PM CT)
+
+Queried prod tiny-field-89581227 read-only (bypass_rls=lucia). Guards run on main tip `e3cf79e8da`.
+
+**SAF-ORPH-01** (escrow forfeiture moves balance correct direction):
+- Guard 1328 (`verify-escrow-forfeit-posting.mjs`) exit 0
+- Live: `accounting.escrow_postings` = 62 rows; `forfeiture` postings = 0 (flag deliberately off by design)
+- `apply_escrow_posting_delta()` confirmed: deposit→+amount, release/forfeiture→−amount, catch-all RAISES
+- VERDICT: **code correct, PASS**. Forfeiture flag is OFF by owner design; no live forfeiture data possible until owner enables flag.
+
+**SAF-ORPH-02** (escrow forfeiture writes canonical driver subledger in same transaction):
+- Guard 1328 exit 0. `escrow-forfeit.service.ts` writes `accounting.escrow_postings` + `driver_finance.escrow_balances` + `escrow_ledger` in one transaction (confirmed at service:162)
+- Live: `escrow_balances` 12 rows; `escrow_postings` 62 rows (all deposit/release, forfeiture 0 as flag is off)
+- VERDICT: **code correct, PASS**. Split-brain closed.
+
+**SAF-B08** (escrow KPI + signed-clause source of truth):
+- Guard 2074 exit 0
+- Live: 165 active USMCA drivers; 2 `legal.contract_instances` rows
+- BLOCKER: signed-clause density = 2/165 = owner/Legal ops campaign (LEGAL-SIGNED-CLAUSE-CAMPAIGN), NOT a code defect. Guard passes. **Owner HOLD** — requires Legal to complete signed-clause rollout with drivers before density KPI shows meaningful data.
+
+**SAF-ORPH-05** (every Safety tab passes DoD click-through):
+- Guard 2204 exit 0 — 28/28 routes mounted today
+- Guard 2206 exit 0 — leave balances driver list
+- BLOCKER: full DoD-B wizard depth on every tab (future_block) requires Chrome per FINAL-3 law. **Owner HOLD** — browser verify each tab wizard depth; code is complete.
+
 ### M1/M2/M3/G1/G9/G11/G12/G15 static guard verification
 
 From prior session (guards ran via no-regression pass in fast-merge):
@@ -83,3 +108,25 @@ From prior session (guards ran via no-regression pass in fast-merge):
 - verify-bank-match-is-never-auto-written: EXIT 0 — PASS
 - verify-no-automatch: EXIT 0 — OK (0 debt sites)
 - match.service.ts: bank_account_id in candidate SQL (deposits L771, bill_payments L939, Faro purchases L793-836). M1 bank_account_id scoping confirmed. M2 Faro purchases in union confirmed.
+
+### PROD-5Y (item C) — loads 13690/13698 miles_driven_actual + T174 odometer
+
+Queried prod tiny-field-89581227 read-only, 2026-11-02 ~1:30 PM CT.
+
+| Load | miles_driven_actual | status | updated_at |
+|---|---|---|---|
+| 13690 | **NULL** | delivered_pending_docs | 2026-10-28T04:30 UTC |
+| 13698 | **NULL** | delivered_pending_docs | 2026-10-26T18:35 UTC |
+
+PR #27985 (stop-dwell date_only fix) merged **2026-11-02T18:06Z**. No cron tick since deploy; `integration_sync_log` shows no `load_real_driven_miles` entry (Samsara + Relay only). Miles still NULL — awaiting Render deploy + next :25 cron tick.
+
+T174 odometer: last_seen_at `2026-05-23T16:38:53Z` → **3914.6 hours ago** (~163 days). Samsara raw_payload odometerMeters = NULL (vehicle not reporting). T174 odometer age is stale — owner must verify in Samsara dashboard.
+
+**Verdict: PENDING deploy** — cron must run after Render deploys #27985 before miles populate.
+
+### ENG-13 (item D) — trailer source re-measure (2026-11-02)
+
+`verify-loads-trailer-source-recorded PASS — 194 USMCA live loads, trailer_source NULL 0, customer loads without trailer row 0`
+
+**PASS 0/194** — ENG-13 confirmed closed.
+
