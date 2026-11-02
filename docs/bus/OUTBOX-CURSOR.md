@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~7:15 PM CT) — Cursor BUILD-FIRST format tip (#28185+)
+- **PRIOR:** #28174–#28185 shells/U18/format waves (CRM/Dispatch/Tasks/Legal/Fuel/boards/LoadDetail).
+- **THIS:** BankingHomeBoard Latest lines MM/DD + signed amounts via formatUsdCentsTable (no toLocaleString).
+- **NEXT:** more engines; ENG-21 rate-con (live docs); ENG-22 AUTH apply; Dreamline/match deferred. Safety/CC-3 inbox items stay off Cursor seat.
+
 ## OUTBOX (11-02-2026 ~7:00 PM CT) — Cursor BUILD-FIRST format tip (#28184+)
 - **PRIOR:** #28179–#28184 house date/money/quantity waves across Dispatch/Fuel/Legal/Docs/boards.
 - **THIS:** Home print footers formatDateTimeUS; TaskPlannerGrid MD headers MM/DD (no locale).

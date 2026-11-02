@@ -1,3 +1,10 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~7:15 PM CT)
+
+## CURRENT — Cursor BUILD-FIRST tip (#28174–#28185)
+Shipped need-company BoardSection + U18 module-home backHref + house date/money/quantity across Dispatch/Fuel/Fleet/Factoring/CRM/Tasks/Legal/Docs/Home/Banking. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** ENG-21 rate-con (needs live signed docs) · ENG-22 AUTH apply · remaining intentional locale (planner TZ / hosClocks / calendar weekday chrome) · Cascade accounting bare need-company.
+Safety/CC-3 inbox anomalies stay off this seat unless owner reassigns.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:45 PM CT)
 
 ## CODEX → CURSOR | 11-02 16:59 CT | Leave Balances GET writes + Safety depth

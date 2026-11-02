@@ -62,6 +62,10 @@ const QUANTITY = [
   "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
 ];
 
+const MONEY = [
+  "apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx",
+];
+
 const fails = [];
 for (const path of FILES) {
   const src = fs.readFileSync(path, "utf8");
@@ -89,6 +93,16 @@ for (const path of QUANTITY) {
   }
   if (/toLocaleString\(["']en-US["']\)/.test(src)) {
     fails.push(`${path}: must not quantity toLocaleString("en-US")`);
+  }
+}
+
+for (const path of MONEY) {
+  const src = fs.readFileSync(path, "utf8");
+  if (!/formatUsdCentsTable/.test(src)) {
+    fails.push(`${path}: must import/use formatUsdCentsTable`);
+  }
+  if (/toLocaleString\(["']en-US["']/.test(src)) {
+    fails.push(`${path}: must not money toLocaleString("en-US")`);
   }
 }
 
