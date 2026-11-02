@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~9:00 PM CT) — Cursor System qty + Integrations U18
+- **PRIOR:** #28198 inventory/integrations/forensic/payroll format.
+- **THIS:** SystemModule drift qty → formatQuantityTable · EDI Transaction Log backHref → /integrations/edi · Samsara driver mapping backHref → /integrations/samsara (+ FILE_MODULE map). Guard extended.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; ENG-21 BLOCKED; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~8:40 PM CT) — Cursor inventory/integrations/forensic/payroll format
 - **PRIOR:** #28195 shared Cursor surfaces format.
 - **THIS:** Inventory assignments/purchases · Samsara · Forensic · Advance print · QBO sync detail/label · profitability miles · MaintServices miles · SidebarPagination · payroll money → house formatters. Guard extended.

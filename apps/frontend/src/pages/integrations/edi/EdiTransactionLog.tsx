@@ -92,7 +92,7 @@ export function EdiTransactionLog() {
 
   return (
     <div data-testid="edi-transaction-log">
-      <PageHeader title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
+      <PageHeader backHref="/integrations/edi" title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
       <div className="space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs font-medium">Status</label>

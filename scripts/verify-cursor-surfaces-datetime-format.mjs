@@ -104,6 +104,7 @@ const QUANTITY = [
   "apps/frontend/src/pages/profitability/money.ts",
   "apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx",
   "apps/frontend/src/components/shared/SidebarPagination.tsx",
+  "apps/frontend/src/pages/system/SystemModulePage.tsx",
 ];
 
 const MONEY_CENTS = [
