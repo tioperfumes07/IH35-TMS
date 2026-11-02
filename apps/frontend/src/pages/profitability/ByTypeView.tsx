@@ -1,4 +1,15 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getEquipmentTypeProfitability,
+  type EquipmentTypeProfitabilityRow,
+} from "../../api/reports";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { money, milesLabel, perMile } from "./money";
 
 interface ByTypeViewProps {
   filters: {
@@ -8,46 +19,105 @@ interface ByTypeViewProps {
   };
 }
 
-// Static placeholder rows (no query wired yet) — the ParityTable renders the
-// same 7-column grammar the former hand-rolled markup carried, with the empty
-// state explicitly naming the unavailable feed rather than implying a successful empty query.
-type ByTypeRow = {
-  id: string;
-  equipment_type: string;
-  loads: number | null;
-  miles: number | null;
-  rev_per_mile: string | null;
-  cost_per_mile: string | null;
-  margin_per_mile: string | null;
-  total_margin: string | null;
-};
-
-const COLUMNS: Array<ParityColumn<ByTypeRow>> = [
-  { key: "equipment_type", label: "Type", sortable: true },
-  { key: "loads", label: "Loads", sortable: true, className: "text-right" },
-  { key: "miles", label: "Miles", sortable: true, className: "text-right" },
-  { key: "rev_per_mile", label: "Rev/Mi", sortable: true, className: "text-right" },
-  { key: "cost_per_mile", label: "Cost/Mi", sortable: true, className: "text-right" },
-  { key: "margin_per_mile", label: "Margin/Mi", sortable: true, className: "text-right" },
-  { key: "total_margin", label: "Total Margin", sortable: true, className: "text-right" },
-];
-
 export function ByTypeView({ filters }: ByTypeViewProps) {
-  const rows: ByTypeRow[] = [];
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const query = useQuery({
+    queryKey: ["profitability", "by-type", companyId, filters.dateFrom, filters.dateTo],
+    queryFn: () =>
+      getEquipmentTypeProfitability({
+        operating_company_id: companyId,
+        period_start: filters.dateFrom,
+        period_end: filters.dateTo,
+      }),
+    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
+    retry: false,
+  });
+
+  const columns = useMemo<Array<ParityColumn<EquipmentTypeProfitabilityRow>>>(
+    () => [
+      {
+        key: "equipment_label",
+        label: "Type",
+        sortable: true,
+        alwaysVisible: true,
+        render: (row) => row.equipment_label || row.equipment_code,
+      },
+      { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
+      {
+        key: "miles",
+        label: "Miles",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => milesLabel(row.miles),
+      },
+      {
+        key: "rev_per_mile_cents",
+        label: "Rev/Mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => perMile(row.rev_per_mile_cents),
+      },
+      {
+        key: "cost_per_mile_cents",
+        label: "Cost/Mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => perMile(row.cost_per_mile_cents),
+      },
+      {
+        key: "margin_per_mile_cents",
+        label: "Margin/Mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => perMile(row.margin_per_mile_cents),
+      },
+      {
+        key: "gross_margin_cents",
+        label: "Total Margin",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.gross_margin_cents),
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-6">
-      <h3 className="text-page-title font-semibold text-gray-900 mb-4">By Equipment Type</h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Equipment type profitability view for {filters.dateFrom} to {filters.dateTo}.
-      </p>
-      <ParityTable<ByTypeRow>
-        columns={COLUMNS}
-        rows={rows}
-        rowKey={(row) => row.id}
-        storageKey="profitability-by-type"
-        tableTestId="profitability-by-type-table"
-        emptyText="Profitability feed is not connected; no figures are available for this view."
-      />
-    </div>
+    <BoardSection
+      title="By Equipment Type"
+      subtitle={`${filters.dateFrom} → ${filters.dateTo} · load_trailer_equipment`}
+      testId="profitability-by-type-board"
+    >
+      <div className="p-4 space-y-3">
+        {!companyId ? (
+          <p className="text-xs text-[#1F2A44]">Select an operating company to load equipment-type profitability.</p>
+        ) : null}
+        {query.isError ? (
+          <ListErrorBanner
+            message={userFacingApiError(query.error, "Could not load equipment-type profitability")}
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
+        <ParityTable<EquipmentTypeProfitabilityRow>
+          columns={columns}
+          rows={query.data?.by_type ?? []}
+          rowKey={(row) => row.equipment_code}
+          storageKey="profitability-by-type"
+          tableTestId="profitability-by-type-table"
+          emptyText={
+            query.isLoading
+              ? "Loading equipment-type profitability…"
+              : "No loads with a trailer equipment type in this period."
+          }
+        />
+      </div>
+    </BoardSection>
   );
 }

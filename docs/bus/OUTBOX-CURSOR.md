@@ -1,3 +1,7 @@
+## OUTBOX (11-02-2026 ~12:45 PM CT) — Cursor fill-not-shell Profitability hub
+- **SHIPPED (this PR):** Profitability By Lane/Type/Customer/Load + KPI wired to live engines; equipment-type-profitability GET; verify-profitability-hub-wired; unavailable KPI budget 5→4.
+- **NEXT:** remaining shells (MapView tiles, ELD cert/settings backends, Banking auto-vendor); ENG-36 re-measure; ACCT-R-04 Render UUIDs; Dreamline later.
+
 ## OUTBOX (11-02-2026 ~12:20 PM CT) — Cursor ROUND 7.2
 - **SHIPPED:** ENG-13 AUTH-473 apply DONE-LIVE; ENG-22 Book/Edit prevention + guard 18930; CODED-QUEUED→DONE-LIVE (ENG-19/55/62, 443.319, AUTH ledger); AUTH-473 CLOSED.
 - **NEXT:** fill-not-shell remaining modules/tabs; ACCT-R-04 Render UUID values (operator); ENG-22 cancelled residual apply waits owner AUTH; ENG-36 re-measure; Dreamline later; no month lock.
