@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T16:33:17Z",
+ "generated": "2026-11-02T16:34:36Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -385,7 +385,7 @@
    "status": "PARTIAL",
    "guard": "verify-guard-wired.mjs",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 10-28 CT: removed 796 stale .guard-exempt.json entries already fully-wired in CI (918→122). verify-guard-wired PASS — active exempt=122, unaccounted=0. Remaining 122 still need wire-or-delete shrink. See 10-28-2026-Cursor-ENG-34-EXEMPT-SHRINK.md"
+   "evidence": "LIVE 11-02 CT: active exempt=123 (was 122 + eng27 LIVE orphan wired into exempt). unaccounted=0. Remaining 123 still need wire-or-delete shrink. verify-guard-wired PASS."
   },
   {
    "id": "ENG-36",
@@ -613,10 +613,10 @@
    "title": "ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "PARTIAL",
+   "status": "DONE-LIVE",
    "guard": "verify-bill-payment-has-spine-link.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: spine residual CLOSED — all 223 unlinked posted BPs were settlement_deduction_noncash (by design); cash unlinked=0; verify-bill-payment-has-spine-link ceiling 0. Escrow residual: driver 320000¢ vs acct 397500¢ (Δ77500¢)."
+   "evidence": "LIVE 11-02 CT: spine cash unlinked=0 (noncash excluded). Escrow Δ77500¢ NAMED = closed COA siblings 2100-00-023 (35000) + 2100-00-024 (42500); canonical driver view 320000¢. ad02cc37 noncash OK. P-0102 USMCA OK."
   },
   {
    "id": "ENG-47",
