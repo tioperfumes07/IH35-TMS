@@ -782,12 +782,11 @@ export function DispatchPage({
         </div>
       ) : subTab === "pre_settlements" ? (
         !defaultCompanyIds[0] ? (
-          <div
-            data-testid="dispatch-pre-settlements-need-company"
-            className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-          >
-            Select an operating company to load pre-settlements for that entity.
-          </div>
+          <BoardSection title="Pre-settlements" testId="dispatch-pre-settlements-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">
+              Select an operating company to load pre-settlements for that entity.
+            </p>
+          </BoardSection>
         ) : (
           <div className="space-y-2">
             {/* E11-D4 — the OPEN/accumulating cohort renders FIRST: it's the earlier stage of
@@ -819,12 +818,11 @@ export function DispatchPage({
           </div>
         )
       ) : !defaultCompanyIds[0] ? (
-        <div
-          data-testid="dispatch-settlements-need-company"
-          className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-        >
-          Select an operating company — settlement runs are entity-scoped in Driver Finance.
-        </div>
+        <BoardSection title="Settlements" testId="dispatch-settlements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company — settlement runs are entity-scoped in Driver Finance.
+          </p>
+        </BoardSection>
       ) : (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
         <div data-testid="dispatch-settlements-quicklink">

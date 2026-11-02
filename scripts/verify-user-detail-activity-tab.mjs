@@ -48,6 +48,13 @@ export function collectFailures({ userActivityTab, userDetail, auditApi, auditEv
   if (userDetail.includes(STUB_COPY)) {
     failures.push("UserDetail must not retain activity tab placeholder copy");
   }
+  // fill-not-shell — activity need-company empty uses BoardSection
+  if (!/<BoardSection\b/.test(userDetail) || !/testId="user-detail-activity-need-company"/.test(userDetail)) {
+    failures.push("UserDetail activity need-company empty must be BoardSection (user-detail-activity-need-company)");
+  }
+  if (!/Select an operating company to view activity/.test(userDetail)) {
+    failures.push("UserDetail activity tab must show company-missing terminal copy");
+  }
   if (!auditApi.includes("/api/v1/audit/events-list")) {
     failures.push("Frontend audit API must expose /api/v1/audit/events-list");
   }
@@ -84,6 +91,19 @@ function selftest() {
   });
   if (!planted.some((f) => f.includes("actor userId"))) {
     console.error(`${LABEL} SELFTEST FAIL — did not detect planted violation`);
+    process.exit(1);
+  }
+  const bareDetail = read(paths.userDetail)
+    .replace(/testId="user-detail-activity-need-company"/g, 'testId="x"')
+    .replace(/data-testid="user-detail-activity-need-company"/g, 'data-testid="x"');
+  const bare = collectFailures({
+    userActivityTab: read(paths.userActivityTab),
+    userDetail: bareDetail,
+    auditApi: read(paths.auditApi),
+    auditEventsListRoutes: read(paths.auditEventsListRoutes),
+  });
+  if (!bare.some((f) => f.includes("user-detail-activity-need-company"))) {
+    console.error(`${LABEL} SELFTEST FAIL — did not catch stripped activity need-company BoardSection`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
