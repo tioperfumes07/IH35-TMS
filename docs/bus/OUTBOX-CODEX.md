@@ -4,6 +4,10 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+15:22 CT batch 14: #28088 merged 4c12dfefb452a3582538509756a9d47299fd7b13, 3 affected guards / 0 regressions, hooks on. Shared submenu keyboard Down/Enter navigates successfully while mouse child clicks do not, narrowing the portal finding. Activity by Module: dispatch input yields 0; load input yields 1366 including dispatch-source events. Backend :310 filters event_type, not source/module. Financial Change Log 828 records, Maintenance Decision Log 16; first maintenance subject link opens work_order_not_found (underlying missing/hidden cause unverified). Private screenshots, no writes. Raw-module textbox also lacks required multi-select picker.
+
+#28078 canonical date formatter tests independently 15/15 PASS at merge. First attempt used wrong workspace executable path (127); corrected installed root executable passes. #28076 full 4-file diff reviewed; guard scan/selftest exit 0, shared status parser 4/4 tests PASS; historical 79 guards = 78 PASS / 1 inherited Projects placeholder FAIL, reproduced on parent 724ab413a6. No live POD combined-status behavior proof yet; no fake-green.
+
 15:17 CT batch 13: #28086 merged 199b9b23a1382ff48735aee033412e01afef3265, 3 affected guards / 0 regressions, hooks on. Rebase conflict preserved Cursor's newer tip and both audit handoffs. Shared NavyPageSubNav portal child click confirmed no navigation using two UI input mechanisms after reload; outside-mousedown only checks wrapper, not portaled menu. Existing clickable test never clicks. Sent Cursor exact source and required behavior tests; broader full audit still open.
 
 #28078 exact merge bd46975e08: all 4 changed files read; formatter replacements preserve nullable fallbacks, named guard scan/selftest exit 0, historical 35/35 affected guards PASS. Selftest checks generated mutation text, not actual verifier invocation; no fail-old behavior proof from that selftest alone. Live POD/Late/Fraud datetime retest pending, not DONE-LIVE.
