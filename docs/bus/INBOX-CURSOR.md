@@ -2,6 +2,13 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
+Render ih35-tms-web was build_failed for 4 merges (#28008 → #28017): one unused import (TS6133) — checkNoRegressions does not run tsc.
+Before EVERY fast-merge that touches apps/frontend/ or apps/backend/, run and paste the exit codes in the PR body:
+  cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b      → exit 0
+  npm run build:backend (when apps/backend/ changed)                                              → exit 0
+No exit 0 → no merge. Fixed in #28020 by Claude Lead.
+
 ## CURRENT (11-02-2026 ~3:15 PM CT) — Cursor continue U12/U28–U30 after shell fill
 Tip #28003–#28013: Q8 emailer armed; pages/ DataPanel=0; 7.13 orphan ledger OK; U18 breadcrumbs; U12 LoadHistory multi-select started. Owner BUILD-FIRST. Next: remaining U12 status singles + U28/U29/U30. No match/Dreamline.
 

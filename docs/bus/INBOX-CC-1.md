@@ -2,6 +2,13 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
+Render ih35-tms-web was build_failed for 4 merges (#28008 → #28017): one unused import (TS6133) — checkNoRegressions does not run tsc.
+Before EVERY fast-merge that touches apps/frontend/ or apps/backend/, run and paste the exit codes in the PR body:
+  cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b      → exit 0
+  npm run build:backend (when apps/backend/ changed)                                              → exit 0
+No exit 0 → no merge. Fixed in #28020 by Claude Lead.
+
 ## P0 FIRST (11-02-2026 1:20 PM CT) — Claude Lead — ROUND 7.15 main red: required-live-load-guard = verify-diesel-expense-fuel-dedupe
 Settlement-net half of the live guard is FIXED (#28012, owner ruling 443.167-R2). This guard is the only red left in it. Measured prod 19:15Z:
 - duplicate_fill_pairs 6 > baseline 4. NEW pairs (same unit + product + day, identical gallons + total; 10-16 Dreamline IMPORT copy of a fill
