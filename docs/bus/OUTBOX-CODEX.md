@@ -4,6 +4,24 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+15:58 CT batch 18 in progress: batch 17 merged #28125 c8be30c7688a47ae769a67743ac5ac387518a775. No application or production changes.
+
+| PR / surface | Guard | Selftest / historical regression | Live re-measure | Verdict |
+|---|---|---|---|---|
+| #28080 6fe9e43a23 | Datetime guard PASS; full 10-file diff read | 128 selected: 123 PASS, 2 failures identical on parent 29581b30c5, 3 live exclusions. Failures: deadhead-pay selftest missing mutation target; live-document predicate inline debt | Full changed-surface coverage pending | Local checked, live UNVERIFIED |
+| #28081 49986f6d1c | Dispatch datetime wave2 PASS; full 6-file diff read | Selftest PASS; 38/38 historical checks PASS. Selftest checks a string mutation rather than invoking the whole checker | Remaining changed surfaces pending | Local checked, live UNVERIFIED |
+| #28091 debtor filtering | Previously recorded guard gap and 2000-line cap risk remain | No new production tests | Live: 57 invoices unfiltered; Semares 5; add Armstrong gives 10 invoices / 7 purchases; summary 7 rows. Two selected debtor chips visible; private inline screenshot 15:53 CT | Selected two-debtor union PASS, population completeness unverified |
+| Fuel Home | Existing error-as-empty defect reconfirmed | No import, refresh-write, or money submission | 15:58 CT: four fill KPIs unavailable, error banner and No diesel spend displayed together; screenshot inline | FAIL; existing Cursor handoff remains open |
+
+Private historical logs: Downloads/codex-round7-28080-historical.log and codex-round7-28081-historical.log. Excluded live checks are not passes. Full audit remains incomplete.
+
+16:01 CT additional batch 18 measurements:
+- #28082 750b87ad8a: full 5-file diff read; datetime guard and selftest PASS. Historical 97 selected: 95 PASS, 1 DATABASE_URL-not-set failure (driver-profile-linkage), 1 live exclusion. No live population certification. Selftest only checks a replaced token, not the complete checker.
+- #28092 d9c5fe5004: both files read; Relay date/currency guard + selftest PASS; historical 7/7 PASS; formatter behavior tests 15/15 PASS at merge. Live Relay inbox: 126 deposit rows, first 25 show MM/DD/YYYY and dollar sign/comma/two-decimal amounts. No classification or card action submitted. Targeted display PASS, accounting tieout not performed.
+- #28092 guard integrity: executing its actual audit function against an in-memory fixture replacing all 3 formatUsdCents calls with String leaves 0 failures. Import survives and satisfies the guard. Confirmed missing currency-render enforcement; no application file modified.
+- Relay wallet renders 46 day rows; individual amount drill-through and totals tieout remain pending. Six KPI tiles lack click handlers in source lines 98–135 and are static containers in live AX. Currency reference table render at lines 74–75 is plain text rather than EntityLink; downstream drill requires further live check.
+- Follow-up 16:01 CT: first deposit drill opens 1 reference row, matching the clicked amount; reference/amount remain plain text with no source-document navigation. Private bottom-panel screenshot captured. Click-through defect confirmed and handed to Cursor. #28082 missing-DB guard failure reproduced identically on parent 49986f6d1c; not a new regression.
+
 15:43 CT batch 17: #28116 merged ec1a916c5d2b8aff269b7d8c1e026212febdf16b with 3 affected guards / 0 regressions. Reported frontend build defect repaired by Lead #28118 3c90258949; Render dep-dbkg64vh2prc73bhk0qg build_in_progress at 15:40 CT, not yet live. Audit PR attachment failed at the app's 100-identity limit; no historical attachment removed.
 
 | PR | Independent diff/guard | Selftest / behavior | Historical parent-to-merge regressions | Live re-measure | Verdict |
