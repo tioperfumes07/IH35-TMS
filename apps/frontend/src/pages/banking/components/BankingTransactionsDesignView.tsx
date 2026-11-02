@@ -33,6 +33,7 @@ import {
 import { PrintOrientationDialog } from "./PrintOrientationDialog";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { humanMemo } from "../../accounting/ManualJEListPage";
@@ -3988,7 +3989,8 @@ export function BankingTransactionsDesignView({
                 />
               </span>
             </div>
-            <p className="mt-2 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
+            <BoardSection title="Automation review" subtitle="Bank-feed auto-vendor" testId="banking-add-new-vendors-automation-board">
+              <div className="px-3 py-2">
             <label
               className="inline-flex items-center gap-2 text-xs text-gray-500"
               data-testid="banking-add-new-vendors-automation-not-wired"
@@ -3997,6 +3999,8 @@ export function BankingTransactionsDesignView({
               <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
               Add new vendors (automation — not wired)
             </label>
+              </div>
+            </BoardSection>
             <p className="mt-2 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
             <div className="grid grid-cols-1 gap-1 text-xs">
               <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />

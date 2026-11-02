@@ -162,11 +162,18 @@ function selftest() {
       throw new Error("planted duplicate standalone grouping control not detected");
     }
 
-    // Plant #3: drop the automation honesty checkbox from gearExtra.
+    // Plant #3: drop the automation honesty checkbox from gearExtra (BoardSection wrap 2026-11-02).
     planted = backup.replace(
-      /<p className="mt-2 text-section-header font-semibold uppercase tracking-\[0\.4px\] text-gray-500">Automation review<\/p>[\s\S]*?<\/label>\n/,
+      /<BoardSection title="Automation review"[\s\S]*?<\/BoardSection>\n/,
       ""
     );
+    if (planted === backup) {
+      // Fallback for pre-BoardSection shape.
+      planted = backup.replace(
+        /<p className="mt-2 text-section-header font-semibold uppercase tracking-\[0\.4px\] text-gray-500">Automation review<\/p>[\s\S]*?<\/label>\n/,
+        ""
+      );
+    }
     errors = run(planted);
     if (!errors.some((e) => e.includes("automation honesty checkbox"))) {
       throw new Error("planted removal of the automation honesty checkbox from gearExtra not detected");
