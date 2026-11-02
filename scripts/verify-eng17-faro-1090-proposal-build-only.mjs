@@ -37,6 +37,9 @@ function failures() {
   if (!/Faro1090WireProposalsPage/.test(page) || !/Dry-run Accept/.test(page) || !/Accept \(deferred\)/.test(page)) {
     out.push("pick screen must expose Dry-run Accept + deferred Accept");
   }
+  if (!/backHref="\/factoring"/.test(page)) {
+    out.push("pick screen PageHeader backHref must be /factoring (U18 module home)");
+  }
   if (!/listFaro1090WireProposals/.test(api) || !/dryRunAcceptFaro1090WireProposal/.test(api)) {
     out.push("FE API client missing proposal list/dry-run");
   }

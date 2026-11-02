@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
@@ -142,56 +143,69 @@ export function FaroImportPage() {
   const previewRows = useMemo(() => preview?.lines ?? [], [preview]);
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="Faro CSV Import" subtitle="Upload Faro factoring statement CSV → invoice updates + reserve movements" />
+    <div className="space-y-3" data-testid="faro-import-page">
+      <PageHeader
+        backHref="/factoring"
+        breadcrumb={["Factoring", "Faro CSV Import"]}
+        title="Faro CSV Import"
+        subtitle="Upload Faro factoring statement CSV → invoice updates + reserve movements"
+      />
 
-      <div className="rounded-sm border border-[#2A3150] bg-[#12182B] p-4 space-y-3">
-        <label className="block text-xs text-[#E5E7EB]">
-          Statement date
-          <DatePicker
-            className="mt-1 block w-full max-w-xs bg-[#0B1020]"
-            value={statementDate}
-            onChange={setStatementDate}
-          />
-        </label>
+      {!selectedCompanyId ? (
+        <BoardSection title="Faro CSV Import" testId="faro-import-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to import a Faro statement.</p>
+        </BoardSection>
+      ) : (
+        <BoardSection title="Upload" testId="faro-import-upload-board">
+          <div className="space-y-3 px-3.5 py-2">
+            <label className="block text-xs text-[#4B5563]">
+              Statement date
+              <DatePicker
+                className="mt-1 block w-full max-w-xs"
+                value={statementDate}
+                onChange={setStatementDate}
+              />
+            </label>
 
-        <label className="block text-xs text-[#E5E7EB]">
-          Faro CSV file
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            className="mt-1 block w-full max-w-md text-xs text-[#E5E7EB]"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setFileName(file.name);
-              setCsvText(await file.text());
-              setPreview(null);
-            }}
-          />
-        </label>
+            <label className="block text-xs text-[#4B5563]">
+              Faro CSV file
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="mt-1 block w-full max-w-md text-xs text-[#0F1219]"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setFileName(file.name);
+                  setCsvText(await file.text());
+                  setPreview(null);
+                }}
+              />
+            </label>
 
-        {fileName ? <p className="text-xs text-[#6B7280]">Selected: {fileName}</p> : null}
+            {fileName ? <p className="text-xs text-[#6B7280]">Selected: {fileName}</p> : null}
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            disabled={!selectedCompanyId || !csvText || mutation.isPending}
-            onClick={() => mutation.mutate(true)}
-          >
-            Preview
-          </Button>
-          {/* OWNER LAW 2026-10-02 competing-engine audit: committing created Faro fundings, chargebacks and reserve
-              movements outside the purchase engine. Faro's report is previewed and compared, never posted. */}
-          <span className="text-xs text-[#4B5563]">Preview only — purchases are created on Factoring → Submit to Factor.</span>
-        </div>
-      </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                disabled={!selectedCompanyId || !csvText || mutation.isPending}
+                onClick={() => mutation.mutate(true)}
+              >
+                Preview
+              </Button>
+              {/* OWNER LAW 2026-10-02 competing-engine audit: committing created Faro fundings, chargebacks and reserve
+                  movements outside the purchase engine. Faro's report is previewed and compared, never posted. */}
+              <span className="text-xs text-[#4B5563]">Preview only — purchases are created on Factoring → Submit to Factor.</span>
+            </div>
+          </div>
+        </BoardSection>
+      )}
 
       {preview ? (
-        <div className="rounded-sm border border-[#E5E7EB]/40 bg-[#12182B] p-4">
-          <h3 className="mb-2 text-xs font-semibold text-white">
-            Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
-          </h3>
+        <BoardSection
+          title={`Preview — ${preview.line_count} line${preview.line_count === 1 ? "" : "s"}`}
+          testId="faro-import-preview-board"
+        >
           <ParityTable
             columns={PREVIEW_COLUMNS}
             rows={previewRows}
@@ -200,7 +214,7 @@ export function FaroImportPage() {
             tableTestId="faro-import-preview-table"
             emptyText="No preview lines."
           />
-        </div>
+        </BoardSection>
       ) : null}
     </div>
   );

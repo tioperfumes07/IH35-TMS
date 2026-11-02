@@ -71,12 +71,26 @@ function assertMigrated(src) {
   ) {
     errors.push(`${PAGE}: must keep the mutation onError toast (no silent failures)`);
   }
+  // fill-not-shell — BoardSection + U18 module-home back (no dark custom shell)
+  if (!src.includes('from "../../components/v3/BoardSection"')) {
+    errors.push(`${PAGE}: must import BoardSection`);
+  }
+  if (!src.includes('testId="faro-import-preview-board"') && !src.includes('testId="faro-import-upload-board"')) {
+    errors.push(`${PAGE}: upload/preview BoardSection testIds required`);
+  }
+  if (!src.includes('backHref="/factoring"')) {
+    errors.push(`${PAGE}: PageHeader backHref must be /factoring (U18 module home)`);
+  }
+  if (src.includes("bg-[#12182B]") || src.includes("border-[#2A3150]")) {
+    errors.push(`${PAGE}: must not keep dark custom shell hex (#12182B / #2A3150)`);
+  }
   return errors;
 }
 
 function selftest() {
   const good = `
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    import { BoardSection } from "../../components/v3/BoardSection";
     const columns = [
       { key: "invoice_number", label: "Invoice" },
       { key: "customer_name", label: "Customer" },
@@ -87,7 +101,11 @@ function selftest() {
     ];
     apiRequest("/api/v1/factoring/import/faro", {});
     pushToast(error.message || "Import failed", "error");
-    <ParityTable storageKey="factoring-faro-import-preview" tableTestId="faro-import-preview-table" />
+    <PageHeader backHref="/factoring" />
+    <BoardSection testId="faro-import-upload-board" />
+    <BoardSection testId="faro-import-preview-board">
+      <ParityTable storageKey="factoring-faro-import-preview" tableTestId="faro-import-preview-table" />
+    </BoardSection>
   `;
   const bad = `
     export function FaroImportPage() {
