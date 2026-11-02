@@ -18,8 +18,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-reimbursements-section-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx";
+const EXTRA = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";
 
 const REQUIRED_LABELS = ["Date", "Receipt", "Amount"];
+
+function assertFormatUsd(src, file) {
+  const errors = [];
+  if (!/formatUsd\(/.test(src)) errors.push(`${file}: must format amounts via formatUsd`);
+  if (/\.toFixed\(2\)/.test(src)) errors.push(`${file}: must not use ad-hoc toFixed(2) money formatting`);
+  return errors;
+}
 
 function assertMigrated(src) {
   const errors = [];
@@ -55,13 +63,7 @@ function assertMigrated(src) {
   if (!src.includes("Subtotal:")) {
     errors.push(`${PAGE}: must keep the Subtotal footer line`);
   }
-  // Round 7.6 — ad-hoc toFixed is forbidden; amounts must go through formatUsd.
-  if (!/formatUsd\(/.test(src)) {
-    errors.push(`${PAGE}: must format amounts via formatUsd`);
-  }
-  if (/\.toFixed\(2\)/.test(src)) {
-    errors.push(`${PAGE}: must not use ad-hoc toFixed(2) money formatting`);
-  }
+  errors.push(...assertFormatUsd(src, PAGE));
   return errors;
 }
 

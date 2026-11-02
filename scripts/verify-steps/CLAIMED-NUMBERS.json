@@ -17289,10 +17289,5 @@
     "claimed_by": "lead",
     "claimed_at": "2026-11-02",
     "purpose": "verify-orphan-guards-batch-wire-11-02 \u2014 wire 29 guards merged unwired on 11-02 (verify-guard-wired red on main)"
-  },
-  "18934": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-11-02",
-    "purpose": "verify-settlement-reimburse-extrapay-formatusd"
   }
 }
