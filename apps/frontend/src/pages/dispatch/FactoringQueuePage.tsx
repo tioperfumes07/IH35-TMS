@@ -24,6 +24,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -67,8 +68,7 @@ const fmtM = (cents: number, currency = "USD") => {
 };
 const fmtD = (v: string | null | undefined) => {
   if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  return formatDateUS(v) || "—";
 };
 
 const STAGE_LABELS: Record<FactoringQueueRow["packet_stage"], string> = {
