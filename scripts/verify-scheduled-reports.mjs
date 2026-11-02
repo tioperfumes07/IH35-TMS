@@ -207,6 +207,18 @@ const runner = read("apps/backend/src/reports/scheduled/runner.service.ts");
 contains("apps/backend/src/reports/scheduled/runner.service.ts", runner, [
   { pattern: /enqueueEmail/, label: "enqueueEmail integration" },
   { pattern: /appendDeliveryLog/, label: "delivery log writes" },
+  {
+    pattern: /ensureActiveSubscriptionNextScheduledAt/,
+    label: "null-Next seed backfill before due scan (ROUND 7.11)",
+  },
+]);
+
+const subSvc = read("apps/backend/src/reports/scheduled/subscription.service.ts");
+contains("apps/backend/src/reports/scheduled/subscription.service.ts", subSvc, [
+  {
+    pattern: /export async function ensureActiveSubscriptionNextScheduledAt/,
+    label: "ensureActiveSubscriptionNextScheduledAt export",
+  },
 ]);
 
 read("apps/backend/src/reports/scheduled/__tests__/scheduled.test.ts");

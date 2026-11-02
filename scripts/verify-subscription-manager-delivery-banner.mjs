@@ -1,34 +1,19 @@
 #!/usr/bin/env node
 /**
- * Q8-SUBSCRIPTIONS-SILENT-NO-DELIVERY — SubscriptionManager.tsx ("Scheduled report subscriptions",
- * /reports/scheduled) shows real rows from reports.scheduled_subscriptions (a genuinely working CRUD
- * API/table) with an "Active" status pill and Last sent / Next columns, but NO backend worker anywhere
- * in the repo ever reads that table to send an email. Confirmed live on Neon: of 18 rows, 17 are
- * is_active=true, 0 have ever had last_sent_at set, 0 have a non-null next_scheduled_at, and
- * reports.scheduled_delivery_log has 0 rows total — the oldest active row was created 2026-06-08, so
- * this has been silently true for 2.5+ months. Without a visible caveat, "Active" + blank Last sent/Next
- * reads as "hasn't fired yet" rather than "will never fire" — a silent no-op that misleads the Owner.
- *
- * This guard mutation-proves the honest banner stays present and is not gated behind a condition that
- * can quietly go false (e.g. an error-only check) — it must render unconditionally on the page, the same
- * way the defect is unconditional (no report_slug has a working generator today).
- *
- * fill-not-shell 2026-11-02: banner lives inside BoardSection (q8-subscriptions-delivery-board).
- * Headline may say "not implemented yet" OR "has no worker yet" — both are honest; "coming soon" is not.
+ * Q8 scheduled subscriptions — SubscriptionManager delivery BoardSection must name the real
+ * emailer (jobs/scheduled-reports-emailer → runDue), not a "coming soon" / "no worker" shell.
+ * ROUND 7.11 closed the null-next seed gap in runner.service (ensureActiveSubscriptionNextScheduledAt).
  */
 import fs from "node:fs";
 
 const FILE = "apps/frontend/src/pages/reports/SubscriptionManager.tsx";
 const source = fs.readFileSync(FILE, "utf8");
 
-// Strip JSX/line comments before matching structural conditions, so the guard's own explanatory
-// comments (or the component's) can never satisfy its own checks — same self-shadowing class fixed in
-// verify-audit-report-page-no-double-pagination.mjs earlier this session.
 function stripComments(text) {
   return text
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, "") // JSX comments
-    .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
-    .replace(/(^|\s)\/\/.*$/gm, "$1"); // line comments
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|\s)\/\/.*$/gm, "$1");
 }
 
 function audit(text) {
@@ -40,48 +25,30 @@ function audit(text) {
   const stripped = stripComments(text);
 
   need(
-    stripped.includes('data-testid="q8-subscriptions-delivery-not-implemented"'),
-    "the honest 'email delivery is not implemented yet' banner (data-testid=q8-subscriptions-delivery-not-implemented) must be present in SubscriptionManager.tsx"
+    /testId="q8-subscriptions-delivery-board"/.test(stripped),
+    "delivery honesty must live inside BoardSection testId=q8-subscriptions-delivery-board"
   );
   need(
-    /Email delivery (?:is not implemented yet|has no worker yet)/.test(stripped),
-    "the banner's headline text must say delivery is not implemented / has no worker yet — do not soften this to \"coming soon\" or remove it while the worker genuinely does not exist"
+    stripped.includes('data-testid="q8-subscriptions-delivery-board-body"') ||
+      stripped.includes('data-testid="q8-subscriptions-delivery-not-implemented"'),
+    "delivery board body testId must be present"
   );
   need(
-    /no backend worker exists to send them/i.test(stripped),
-    "the banner must explain WHY: no backend worker sends these, so Active does not mean emails go out"
+    /scheduled-reports emailer/i.test(stripped) || /Email delivery runs on the scheduled-reports emailer/.test(stripped),
+    "banner must name the scheduled-reports emailer (real worker — not a shell)"
   );
   need(
-    /<BoardSection[^>]*testId="q8-subscriptions-delivery-board"/.test(stripped) ||
-      /<BoardSection[^>]*title="Email delivery"[\s\S]*?testId="q8-subscriptions-delivery-board"/.test(stripped) ||
-      /testId="q8-subscriptions-delivery-board"/.test(stripped),
-    "delivery honesty must live inside BoardSection testId=q8-subscriptions-delivery-board (fill-not-shell)"
+    /15 minutes/i.test(stripped),
+    "banner must disclose the */15 America/Chicago tick cadence"
   );
-
-  // The banner must render unconditionally — not gated inside subsQuery.isError / subsQuery.isSuccess
-  // or any other conditional block, since the underlying defect is unconditional (true for every row,
-  // not just on an API error or once data loads).
-  // Match either legacy bordered div OR BoardSection-wrapped inner div (fill-not-shell 2026-11-02).
-  const bannerBlockMatch =
-    stripped.match(
-      /<div\s+className="(?:rounded-sm border border-\[#E5E7EB\][^"]*|bg-\[#F7F8FA\][^"]*)"\s+data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?<\/div>/
-    ) ||
-    stripped.match(
-      /data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?Email delivery[\s\S]*?(?:not implemented yet|has no worker yet)[\s\S]*?no backend worker exists to send them/i
-    );
-  need(bannerBlockMatch, "could not isolate the banner's own block to check it is unconditional");
-  if (bannerBlockMatch) {
-    const before = stripped.slice(0, bannerBlockMatch.index);
-    // Walk backward from the banner to the nearest unmatched conditional opener on the same JSX level.
-    // Cheap heuristic: the banner must not be immediately preceded by `? (` or `&&` with no intervening
-    // `: null` / closing `)}` at the same nesting depth right before it (which would mean it is the
-    // truthy branch of a ternary/&&-guard rather than an unconditional sibling).
-    const tail = before.slice(-40).replace(/\s+/g, " ");
-    need(
-      !/[?&]\s*\(?\s*$/.test(tail) && !/&&\s*\(?\s*$/.test(tail),
-      "the banner must render unconditionally (not only inside a ?/&& guard) — the delivery gap is true for every row, not a conditional error state"
-    );
-  }
+  need(
+    !/Email delivery (?:is not implemented yet|has no worker yet|coming soon)/i.test(stripped),
+    "do not keep the retired 'no worker / coming soon' headline — the emailer + generators exist"
+  );
+  need(
+    !/no backend worker exists to send them/i.test(stripped),
+    "do not claim no backend worker exists — jobs/scheduled-reports-emailer is mounted at startup"
+  );
 
   return failures;
 }
@@ -95,31 +62,28 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     {
-      name: "remove the banner's data-testid",
-      mutate: (t) => t.replace('data-testid="q8-subscriptions-delivery-not-implemented"', 'data-testid="removed"'),
+      name: "drop BoardSection testId",
+      mutate: (t) => t.replace('testId="q8-subscriptions-delivery-board"', 'testId="removed"'),
     },
     {
-      name: "soften the headline to hide the real defect",
+      name: "restore retired no-worker headline",
       mutate: (t) =>
-        t
-          .replace("Email delivery has no worker yet", "Email delivery coming soon")
-          .replace("Email delivery is not implemented yet", "Email delivery coming soon"),
+        t.replace(
+          "Email delivery runs on the scheduled-reports emailer",
+          "Email delivery has no worker yet"
+        ),
     },
     {
-      name: "drop the 'why' explanation",
-      mutate: (t) => t.replace(/no backend worker exists to send them ?—? ?/i, ""),
-    },
-    {
-      name: "remove the honest delivery explanation paragraph",
-      mutate: (t) => t.replace(/no backend worker exists to send them[^]*?until\s+report delivery ships\./, "report delivery is active."),
-    },
-    {
-      name: "drop BoardSection wrap",
+      name: "claim no backend worker",
       mutate: (t) =>
-        t
-          .replace(/<BoardSection[^>]*>\s*/, "")
-          .replace(/\s*<\/BoardSection>/, "")
-          .replace(/testId="q8-subscriptions-delivery-board"/, 'testId="removed-board"'),
+        t.replace(
+          /Worker ticks every 15 minutes \(America\/Chicago\)\./,
+          "no backend worker exists to send them — Active status does not mean emails are going out."
+        ),
+    },
+    {
+      name: "drop cadence disclosure",
+      mutate: (t) => t.replace(/15 minutes/gi, "occasionally"),
     },
   ];
   let caught = 0;
@@ -132,4 +96,6 @@ if (process.argv.includes("--selftest")) {
   console.log(`verify-subscription-manager-delivery-banner SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
 }
 
-console.log("verify-subscription-manager-delivery-banner PASS — SubscriptionManager.tsx honestly discloses that no backend worker delivers Q8 subscriptions yet");
+console.log(
+  "verify-subscription-manager-delivery-banner PASS — SubscriptionManager names the live scheduled-reports emailer"
+);

@@ -13,7 +13,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -302,8 +302,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
     graph?.reverse.accidents.find((a) => a.id === graph.claim.accident_report_id)?.accident_at ?? null;
 
   return (
-    <DataPanel title="Claims">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <BoardSection title="Claims" testId="insurance-claims-board">
+      <div className="mb-3 flex items-center justify-between gap-2 px-3 pt-3">
         <span className="text-xs font-semibold text-gray-600">
           Statuses: {CLAIM_STATUS_FILTERS.filter((option) => option.value).map((option) => option.label).join(", ")}
         </span>
@@ -584,6 +584,6 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           await queryClient.invalidateQueries({ queryKey: ["insurance", "landing", "claims", companyId] });
         }}
       />
-    </DataPanel>
+    </BoardSection>
   );
 }
