@@ -130,3 +130,31 @@ T174 odometer: last_seen_at `2026-05-23T16:38:53Z` → **3914.6 hours ago** (~16
 
 **PASS 0/194** — ENG-13 confirmed closed.
 
+
+### ROUND 7.14-A — Accounting UI register rows U1–U7, U10, U11, U13, U14, U16, U17, U21–U24, U26
+
+Code-verified on main `4eafcd4b93` (2026-11-02 ~1:50 PM CT). Per FINAL-3 law: coding only, no Chrome, owner browser-verifies.
+
+| Row | Status | Evidence |
+|---|---|---|
+| U1 | CODE BUILT | ParityTable.tsx:1904 — U1 comment, table-fixed width share (proportional) |
+| U2 | CODE BUILT | HoverDropdownNav.css: overflow-x:visible + flex-wrap:wrap on menubar |
+| U3 | CODE BUILT | subnav-manifest.ts:92/269 — Load costs removed, redirected to Dispatch |
+| U4 | CODE BUILT | subnav-manifest.ts — single `/accounting/expenses` tab |
+| U5 | CODE BUILT | ReceiptsPage.tsx:108 — receipt creator IS the expense creator |
+| U6 | CODE BUILT | CheckListPage.tsx — multi-select kind/status/bank/date range filters |
+| U7 | CODE BUILT | WriteCheckForm.tsx:1182 — Modal sizePreset="xl" |
+| U10 | CODE BUILT | BillsPage.tsx:104 — bill_type filter per sub-tab |
+| U11 | CODE BUILT | subnav-manifest.ts:81 — relabelled "All bills" (measured: Vendor bill ≠ All bills) |
+| U13 | CODE BUILT | subnav-manifest.ts — Vendors/Customers redirect tabs removed |
+| U14 | CODE BUILT | subnav-manifest.ts — GROUP_LABELS.maint_shop = "Work orders & bills" |
+| U16 | CODE BUILT | ExpensesListPage.tsx:325 + BillsPage.tsx:700 — WO/unit/trailer EntityLink columns |
+| U17 | CODE BUILT | ExpensesListPage.tsx:576 subtitle read-only + reclassify panel line 785 |
+| U21 | CODE BUILT | DatePicker.tsx:65 yearRange + year select onChange |
+| U22 | CODE BUILT | reclassify.service.ts — COALESCE for expense number with audit fallback |
+| U23 | CODE BUILT | ReclassifyTransactionsPage.tsx:383-387 — Load/Truck/Driver/Trailer/Vendor facets |
+| U24 | CODE BUILT | ReclassifyTransactionsPage.tsx:621-627 — by item/load selectors |
+| U26 | CODE BUILT | BankingTransactionsDesignView.tsx:618/695/1007 — filter corrections |
+
+Register still shows OPEN: Codex live Chrome measurement pending. Code built, not shell.
+
