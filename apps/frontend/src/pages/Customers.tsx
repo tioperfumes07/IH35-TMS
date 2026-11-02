@@ -63,6 +63,7 @@ import { listSpineEvents, type SpineEvent } from "../api/audit";
 import { getArAgingReport, getCustomerProfitability, getDuplicateMasters, type ARAgingRow } from "../api/reports";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
 import { InfoPopover } from "../components/shared/InfoPopover";
+import { BoardSection } from "../components/v3/BoardSection";
 
 type CustomerTabId =
   | "transaction_list"
@@ -510,20 +511,12 @@ function CustomerNotesTab({ customer, onEdit }: { customer: Customer; onEdit: ()
   );
 }
 
-const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
-  projects: "Projects groups loads/invoices under a customer project. Needs a projects data source — flagged as a follow-up.",
-  opportunities: "Opportunities tracks sales pipeline for this customer. Needs a CRM opportunities source — flagged as a follow-up.",
-  conversations: "Conversations threads customer communications. Needs a conversations/messaging source — flagged as a follow-up.",
-};
-
-function CustomerTabComingState({ tab, label }: { tab: CustomerTabId; label: string }) {
+/** Unknown tab id only — projects / opportunities / conversations are wired below (no Coming-soon shells). */
+function CustomerTabUnknownState({ label }: { label: string }) {
   return (
-    <div className="rounded-sm border border-dashed border-gray-300 bg-white p-6 text-center">
-      <p className="text-xs font-semibold text-gray-700">{label}</p>
-      <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
-        {COMING_STATE_COPY[tab] ?? "No data source wired yet — flagged as a follow-up."}
-      </p>
-    </div>
+    <BoardSection title={label} testId="customer-tab-unknown">
+      <p className="px-3 py-4 text-xs text-gray-500">This detail tab is not recognized.</p>
+    </BoardSection>
   );
 }
 
@@ -1140,7 +1133,9 @@ export function CustomersPage() {
       customer: selectedCustomer?.id,
       scope: "all", // LEAD 443.206R — the customer's transaction list, every stage
     }),
-    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "transaction_list"),
+    enabled: Boolean(
+      companyId && selectedCustomer?.id && (activeTab === "transaction_list" || activeTab === "projects"),
+    ),
   });
   const statementInvoicesQuery = useQuery({
     queryKey: ["customers", "statement-invoices", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
@@ -1150,7 +1145,11 @@ export function CustomersPage() {
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
       }),
-    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "late_fees"),
+    enabled: Boolean(
+      companyId &&
+        selectedCustomer?.id &&
+        (activeTab === "late_fees" || activeTab === "opportunities"),
+    ),
   });
   const recurringQuery = useQuery({
     queryKey: ["customers", "recurring-templates", companyId, selectedCustomer?.id ?? ""],
@@ -1889,10 +1888,79 @@ export function CustomersPage() {
                     />
                   )}
                 </div>
+              ) : activeTab === "projects" ? (
+                <BoardSection
+                  title="Projects"
+                  subtitle="Customer loads (trip work) until a separate projects engine ships"
+                  testId="customer-tab-projects"
+                >
+                  {loadsQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load customer loads"
+                      status={0}
+                      message={(loadsQuery.error as Error)?.message}
+                      onRetry={() => void loadsQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable
+                      rows={loadsQuery.data?.loads ?? []}
+                      columns={loadColumns}
+                      rowKey={(load) => load.id}
+                      onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+                      loading={loadsQuery.isPending}
+                      storageKey="customer-projects-loads"
+                      emptyText="No loads for this customer."
+                    />
+                  )}
+                </BoardSection>
+              ) : activeTab === "opportunities" ? (
+                <BoardSection
+                  title="Opportunities"
+                  subtitle="Open invoices (commercial follow-up) until a CRM opportunities engine ships"
+                  testId="customer-tab-opportunities"
+                >
+                  {statementInvoicesQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load invoices"
+                      status={0}
+                      message={(statementInvoicesQuery.error as Error)?.message}
+                      onRetry={() => void statementInvoicesQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable
+                      title="Open invoices"
+                      rows={(statementInvoicesQuery.data?.invoices ?? []).filter((inv) => {
+                        if (isVoidInvoice(inv)) return false;
+                        return invoiceOpenCentsForDisplay(inv) > 0;
+                      })}
+                      columns={statementInvoiceColumns}
+                      rowKey={(r) => r.id}
+                      loading={statementInvoicesQuery.isLoading}
+                      emptyText="No open invoices for this customer."
+                      storageKey="customer-opportunities-open-invoices"
+                    />
+                  )}
+                </BoardSection>
+              ) : activeTab === "conversations" ? (
+                <div className="space-y-3" data-testid="customer-tab-conversations">
+                  <BoardSection title="Notes" subtitle="Customer notes thread">
+                    <CustomerNotesTab
+                      customer={selectedCustomer}
+                      onEdit={() => setEditDrawerCustomer(selectedCustomer)}
+                    />
+                  </BoardSection>
+                  <BoardSection title="Tasks" subtitle="Office tasks on this customer">
+                    <TasksTab
+                      operatingCompanyId={companyId}
+                      targetType="customer"
+                      targetId={selectedCustomer.id}
+                      targetLabel={selectedCustomer.name}
+                    />
+                  </BoardSection>
+                </div>
               ) : (
-                <CustomerTabComingState
-                  tab={activeTab}
-                  label={CUSTOMER_TABS.find((t) => t.id === activeTab)?.label ?? "Coming soon"}
+                <CustomerTabUnknownState
+                  label={CUSTOMER_TABS.find((t) => t.id === activeTab)?.label ?? "Detail"}
                 />
               )}
             </>

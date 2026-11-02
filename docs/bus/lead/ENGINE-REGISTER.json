@@ -187,7 +187,7 @@
    "status": "PARTIAL",
    "guard": "scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts (AUTH-470 CLOSED)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "LIVE 10-28 CT: USMCA active loads trailer_source company=181 customer=12 none=0 null=1. Residual load 13595 only. Settlement 5816 documents Trailer 445 / Truck T148, but mdata.equipment has NO 445 (any entity). Cannot invent fleet row. BLOCKED pending owner add/confirm trailer 445. See 10-27 Lead answers + 10-28 measure."
+   "evidence": "Owner 11-02: 445 is BROKER trailer — printedTrailerChoice→customer (no fleet invent). LIVE residual 13595 trailer_source=null only. Not blocked on owner fleet-add. Stamp via Edit Load/trailer-choice engine."
   },
   {
    "id": "ENG-14",
@@ -231,7 +231,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "Codex 2026-10-26 read-only batch 1: 17 posted Faro purchases; all 17 tie document net less linked bank amount to their 1090 advance ledger balance; 3 matched and cleared, 14 unmatched. OPEN / UNVERIFIED remaining settlement of residual: owner-only purchase bank matching and approved document evidence, not a balancing JE. 2510 measured by source, not repaired. See 10-26-2026-Codex-ENG17-BATCH1.md."
+   "evidence": "Codex 2026-10-26 read-only batch 1: 17 posted Faro purchases; all 17 tie document net less linked bank amount to their 1090 advance ledger balance; 3 matched and cleared, 14 unmatched. OPEN / UNVERIFIED remaining settlement of residual: owner-only purchase bank matching and approved document evidence, not a balancing JE. 2510 measured by source, not repaired. See 10-26-2026-Codex-ENG17-BATCH1.md. Owner 11-02: Dreamline later; build first, no balancing JE."
   },
   {
    "id": "ENG-18",
@@ -418,7 +418,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": null,
-   "evidence": ""
+   "evidence": "Owner 11-02: months NOT reconciled yet — do not lock periods; build engines first."
   },
   {
    "id": "M1",
@@ -638,7 +638,7 @@
    "status": "OPEN",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 11-02 CT: 147 fuels with no live expense (source_fuel_transaction_id). Bridge ready; AUTH-145 CONSUMED — need new OPEN OWNER_AUTH_ID. No invent."
+   "evidence": "Owner 11-02: build first, match later — defer mass fuel-expense apply until engines/shells complete; AUTH when matching starts. LIVE 147 still measured."
   },
   {
    "id": "ENG-49",

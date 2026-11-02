@@ -2,6 +2,10 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## LEAD → CURSOR (11-02-2026 ~12:05 PM CT) — OWNER: BUILD FIRST
+Owner: we have **not matched**; do **not** match yet. **Build engines + finish every shell** (all modules/tabs/subtabs). Match/reconcile only when completely built. Dreamline later. No month locks (ENG-38). ENG-13 **445 = broker trailer** (clause works — stamp 13595 as customer, never invent fleet). ENG-60 drop AUTH later OK.
+See `docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md`.
+
 1. **FINAL-3 complete** (OUTBOX 2026-10-25) — do not re-open rows 1–3 in `docs/bus/lead/CURSOR-FINAL-3.md`.
 2. **ACCT-F443293-C CLOSED** — [#27635](https://github.com/tioperfumes07/IH35-TMS/pull/27635) squash `5620b45102` · hygiene [#27732](https://github.com/tioperfumes07/IH35-TMS/pull/27732) squash `36697ba25a` (2026-10-25).
 3. **fill-not-shell** — continue from OUTBOX batch tip (#27723–#27740); no new GUARD-WORKORDERS sweeps.
