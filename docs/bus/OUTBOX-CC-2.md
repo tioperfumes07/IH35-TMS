@@ -183,3 +183,6 @@ SEAT: CC-2 | ITEM: SAF-ORPH-05 28 routes + SAF-B08 KPI + 18 U-rows Codex queue |
 **U21 ReclassifyTransactionsPage year navigation fix — MERGED PR #28071**
 SEAT: CC-2 | ITEM: U21 year navigation regression | PR: #28071 | sha: 709930573d | guard: vitest src/components/forms/DatePicker.test.tsx → Test Files 1 passed (1) Tests 9 passed (9) [2 new U21 cross-year tests added]; cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b → exit 0 | live: UNVERIFIED — owner Chrome-verifies year dropdown shows 2025 at /accounting/reclassify per FINAL-3 | CT: ~2:40 PM CT 11-02-2026
 
+**BillsPage category+multi-vendor server-side filter — MERGED PR #28101**
+SEAT: CC-2 | ITEM: ACCT-F2026110203 Bills category+vendor server-side filter | PR: #28101 | sha: 8d0574927a | guard: verify-bills-sub-tabs-filter-by-stored-type.mjs PASS; verify-qbo-parity-bills-invoices-lists.mjs 12/12 PASS; verify-matrix-built-tag-present.mjs PASS; vitest BillsPage.categoryFilter.test.tsx → 2/2 PASS; cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b → exit 0; npm run build:backend → exit 0 | live: UNVERIFIED — owner Chrome-verifies /accounting/bills?category=maintenance shows 186 bills not 0 per FINAL-3 | CT: ~3:15 PM CT 11-02-2026
+
