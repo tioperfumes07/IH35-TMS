@@ -117,14 +117,16 @@ export function DashcamViewerPage() {
   return (
     <div className="space-y-4 p-4" data-testid="dashcam-viewer-page">
       <PageHeader
+        backHref="/safety"
+        breadcrumb={["Safety", "Dashcam"]}
         title="Dashcam"
         subtitle="Samsara dashcam clips by unit — harsh-event and on-demand. Clips arrive when the harsh-events poll ticks."
+        actions={
+          <Link to="/safety/safety-events" className="text-xs text-[#1F2A44] underline">
+            Safety events
+          </Link>
+        }
       />
-      <div className="flex flex-wrap gap-2 text-xs">
-        <Link to="/safety/safety-events" className="text-[#1F2A44] underline">
-          Safety events
-        </Link>
-      </div>
 
       {clipsQ.isError ? (
         <ListErrorState

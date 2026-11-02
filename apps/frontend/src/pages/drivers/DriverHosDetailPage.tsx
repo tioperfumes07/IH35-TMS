@@ -47,6 +47,8 @@ export function DriverHosDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        backHref="/drivers"
+        breadcrumb={["Drivers", "HOS detail"]}
         title="Driver HOS Detail"
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}
         actions={
