@@ -254,7 +254,7 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
       key: "next",
       label: "Next",
       sortable: true,
-      sortValue: (row) => ((remainingOf(row) ?? 0) > 0 ? 1 : 0),
+      sortValue: (row) => { const rem = remainingOf(row); return rem != null && rem > 0 ? 1 : 0; },
       render: (row) => {
         const remaining = remainingOf(row);
         return remaining != null && remaining > 0 ? "Next settlement" : "—";
