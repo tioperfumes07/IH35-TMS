@@ -48,4 +48,31 @@ describe("money proof trail", () => {
     expect(proof).toMatchObject({ status: null });
     expect(query.mock.calls[0][0]).toContain("NULL::text AS status");
   });
+  // Codex QA 11-02 14:03 CT: a posted expense adopted an existing (fuel) journal entry; the trail looked only at
+  // source_transaction / trace / source links and told the operator "No ledger posting exists". Live: 325 of 1,189.
+  it("expense follows the journal entry it names (adopted JE), company-scoped, without inventing anything", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ id: "exp-9", trace_no: "9", trace_key: "", display_id: "13563-1", adopted_journal_entry_id: "je-fuel-1" }] })
+      .mockResolvedValueOnce({ rows: [
+        { posting_id: "p1", journal_entry_id: "je-fuel-1", memo: "Relay fill", debit_or_credit: "debit", amount_cents: "26946" },
+        { posting_id: "p2", journal_entry_id: "je-fuel-1", memo: "Relay fill", debit_or_credit: "credit", amount_cents: "26946" },
+      ] });
+    const proof = await getMoneyProofTrail({ query }, "company", "expense", "exp-9");
+    expect(proof).toMatchObject({ adopted_journal_entry_id: "je-fuel-1" });
+    expect(proof?.postings).toHaveLength(2);
+    expect(query.mock.calls[0][0]).toContain("journal_entry_id::text AS adopted_journal_entry_id");
+    expect(query.mock.calls[1][0]).toContain("p.journal_entry_uuid = $6::uuid");
+    expect(query.mock.calls[1][0]).toContain("p.operating_company_id = $2::uuid");
+    expect(query.mock.calls[1][1]).toEqual(["exp-9", "company", "expense", "", "expense", "je-fuel-1"]);
+  });
+
+  it("a document type without a stored journal entry passes NULL, so the adopted-JE branch can never match", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ id: "inv-1", trace_no: "1", trace_key: "IN-000001", display_id: "I-1", adopted_journal_entry_id: null }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const proof = await getMoneyProofTrail({ query }, "company", "invoice", "inv-1");
+    expect(proof).toMatchObject({ adopted_journal_entry_id: null, postings: [] });
+    expect(query.mock.calls[0][0]).toContain("NULL::text AS adopted_journal_entry_id");
+    expect(query.mock.calls[1][1][5]).toBeNull();
+  });
 });
