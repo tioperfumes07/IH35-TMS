@@ -14,7 +14,6 @@ import {
   ingestVehicleLocationEvent,
 } from "../../telematics/vehicle-locations.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../telematics/geofence-detector.service.js";
-import { sortForUnitLockOrder } from "../../telematics/unit-lock-order.js";
 import { withSavepoint } from "../../auth/db.js";
 const NO_FENCE_RESULT = { checked_geofences: 0, transitions_written: 0, stop_arrivals_stamped: 0 };
 import { parseCityState, SamsaraApiError, SamsaraClient } from "./samsara-client.js";
@@ -152,8 +151,7 @@ export async function catchUpSamsaraGpsWindow(
   let inserted = 0;
   let skippedNoUnit = 0;
   let arrivals = 0;
-  // TELEMATICS-DEADLOCK-01: unit-major, then chronological — the global fence-lock order (geofence-detector).
-  for (const fix of sortForUnitLockOrder(fixes, (x) => unitByVehicleId.get(x.id), (x) => x.captured_at)) {
+  for (const fix of fixes) {
     const unitId = unitByVehicleId.get(fix.id);
     if (!unitId) { skippedNoUnit += 1; continue; }
     const didInsert = await ingestVehicleLocationEvent(client as never, {
@@ -234,8 +232,7 @@ export async function syncSamsaraVehicleLocations(
   let skippedNoUnit = 0;
   let arrivalsTriggered = 0;
 
-  // TELEMATICS-DEADLOCK-01: unit-major, then chronological — the global fence-lock order (geofence-detector).
-  for (const location of sortForUnitLockOrder(locations, (x) => unitByVehicleId.get(x.id), (x) => x.captured_at)) {
+  for (const location of locations) {
     const unitId = unitByVehicleId.get(location.id);
     if (!unitId) {
       skippedNoUnit += 1;
@@ -488,8 +485,7 @@ export async function syncSamsaraVehicleStats(
   let driversPaired = 0;
   let skippedNoUnit = 0;
 
-  // TELEMATICS-DEADLOCK-01: unit-major, then chronological — the global fence-lock order (geofence-detector).
-  for (const stat of sortForUnitLockOrder(stats, (x) => unitByVehicleId.get(x.id), (x) => x.captured_at)) {
+  for (const stat of stats) {
     const unitId = unitByVehicleId.get(stat.id);
     if (!unitId) {
       skippedNoUnit += 1;
