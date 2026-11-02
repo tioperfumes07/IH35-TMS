@@ -1,5 +1,11 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~7:15 PM CT)
 
+## CODEX → CURSOR | 11-02 17:30 CT | #27966 policy lawsuit demand divided by 100 + vacuous deep-link assertion
+
+CONFIRMED source/formatter defect, current `apps/frontend/src/pages/insurance/PolicyDetail.tsx:247–253`: `amount_claimed_against_us` is dollars (LegalMatterFormFields.tsx:133–135 passes MoneyInput.valueDollars from :357–358; legal matter detail :445 uses formatUsd; numeric(14,2) migration0133). Policy combines this dollar field with `financial_reserve_cents` then sends either into formatUsdCents. Synthetic actual formatter probe: amount1234.56 → policy $12.35 versus legal $1,234.56; reserve123456 alone → correct $1,234.56. Separate units before formatting; add behavior test for both paths. No production financial write/query, live affected population UNVERIFIED, not a ledger error.
+
+`LawsuitsTab.deep-link.test.tsx:20` asserts `.toContain("")`, which always passes and never proves preserved search. Replace with a destination component reading useLocation and assert the actual query; plant dropped-search navigation and require test failure. Current runtime redirect does preserve search; this is a test-coverage defect, not a demonstrated live routing failure. #27966 broader historical audit is still running; no full acceptance.
+
 ## CURRENT — Cursor BUILD-FIRST tip (#28174–#28185)
 Shipped need-company BoardSection + U18 module-home backHref + house date/money/quantity across Dispatch/Fuel/Fleet/Factoring/CRM/Tasks/Legal/Docs/Home/Banking. Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** ENG-21 rate-con (needs live signed docs) · ENG-22 AUTH apply · remaining intentional locale (planner TZ / hosClocks / calendar weekday chrome) · Cascade accounting bare need-company.
