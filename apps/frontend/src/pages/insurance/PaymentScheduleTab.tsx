@@ -110,9 +110,9 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
 
   if (!operatingCompanyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        Select an operating company to view payment schedules.
-      </div>
+      <BoardSection title="Payment Schedule" testId="insurance-payment-schedule-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view payment schedules.</p>
+      </BoardSection>
     );
   }
 
