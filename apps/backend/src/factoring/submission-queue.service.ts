@@ -36,6 +36,7 @@ export type WorkqueueItem = {
   batch_number: string | null;
   factoring_status: string | null;
   submitted_at: string | null;
+  factor_vendor_id: string | null;
   factor_name: string | null;
   total_cents: number;
   advance_cents: number;
@@ -235,6 +236,7 @@ export async function listWorkqueueInvoices(
         b.batch_number,
         i.factoring_status,
         b.submitted_at::text,
+        fv.id::text                                    AS factor_vendor_id,
         fv.vendor_name                                 AS factor_name,
         i.total_cents::bigint,
         COALESCE(fa.advance_amount_cents, 0)::bigint   AS advance_cents,
@@ -284,6 +286,7 @@ export async function listWorkqueueInvoices(
     batch_number: row.batch_number ? String(row.batch_number) : null,
     factoring_status: row.factoring_status ? String(row.factoring_status) : null,
     submitted_at: row.submitted_at ? String(row.submitted_at) : null,
+    factor_vendor_id: row.factor_vendor_id ? String(row.factor_vendor_id) : null,
     factor_name: row.factor_name ? String(row.factor_name) : null,
     total_cents: toNumber(row.total_cents),
     advance_cents: toNumber(row.advance_cents),
