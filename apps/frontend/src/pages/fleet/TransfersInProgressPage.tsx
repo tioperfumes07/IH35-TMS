@@ -1,9 +1,13 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type TransferRow = {
   id: string;
@@ -29,6 +33,52 @@ export function TransfersInProgressPage() {
     enabled: Boolean(companyId),
   });
 
+  const columns = useMemo<ParityColumn<TransferRow>[]>(
+    () => [
+      {
+        key: "equipment_number",
+        label: "Trailer",
+        sortable: true,
+        render: (row) => (
+          <EntityLinkOrTombstone kind="trailer" id={row.equipment_id} name={row.equipment_number} noun="Trailer" />
+        ),
+      },
+      {
+        key: "from_driver_name",
+        label: "From",
+        sortable: true,
+        render: (row) => (
+          <EntityLinkOrTombstone kind="driver" id={row.from_driver_id} name={row.from_driver_name} noun="Driver" />
+        ),
+      },
+      {
+        key: "to_driver_name",
+        label: "To",
+        sortable: true,
+        render: (row) => (
+          <EntityLinkOrTombstone kind="driver" id={row.to_driver_id} name={row.to_driver_name} noun="Driver" />
+        ),
+      },
+      {
+        key: "dropoff_ack",
+        label: "Dropoff ack",
+        sortable: true,
+        sortValue: (row) => row.dual_ack?.dropoff_ack_at ?? "",
+        render: (row) =>
+          row.dual_ack?.dropoff_ack_at ? formatDateTimeUS(row.dual_ack.dropoff_ack_at) || "—" : "Pending",
+      },
+      {
+        key: "pickup_ack",
+        label: "Pickup ack",
+        sortable: true,
+        sortValue: (row) => row.dual_ack?.pickup_ack_at ?? "",
+        render: (row) =>
+          row.dual_ack?.pickup_ack_at ? formatDateTimeUS(row.dual_ack.pickup_ack_at) || "—" : "Pending",
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3" data-testid="transfers-in-progress-page">
       <PageHeader
@@ -38,11 +88,9 @@ export function TransfersInProgressPage() {
         subtitle="Dual confirmation — pending until both drivers acknowledge."
       />
       {!companyId ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view transfers.
-        </div>
-      ) : query.isLoading ? (
-        <div className="rounded-sm border bg-white p-4 text-xs">Loading transfers…</div>
+        <BoardSection title="Equipment transfers" testId="transfers-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view transfers.</p>
+        </BoardSection>
       ) : query.isError ? (
         <ListErrorState
           title="Couldn't load equipment transfers"
@@ -50,32 +98,22 @@ export function TransfersInProgressPage() {
           message="The transfer queue is temporarily unavailable."
           onRetry={() => void query.refetch()}
         />
-      ) : (query.data ?? []).length === 0 ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          No pending equipment transfers for this operating company.
-        </div>
       ) : (
-        (query.data ?? []).map((row) => (
-          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs space-y-1">
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
-              <span>
-                Trailer:{" "}
-                <EntityLinkOrTombstone kind="trailer" id={row.equipment_id} name={row.equipment_number} noun="Trailer" />
-              </span>
-              <span>
-                From:{" "}
-                <EntityLinkOrTombstone kind="driver" id={row.from_driver_id} name={row.from_driver_name} noun="Driver" />
-              </span>
-              <span>
-                To:{" "}
-                <EntityLinkOrTombstone kind="driver" id={row.to_driver_id} name={row.to_driver_name} noun="Driver" />
-              </span>
-            </div>
-            <div className="text-xs text-gray-600">
-              Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}
-            </div>
-          </div>
-        ))
+        <BoardSection
+          title="Pending dual confirmation"
+          subtitle="Dropoff and pickup must both acknowledge"
+          testId="transfers-in-progress-board"
+        >
+          <ParityTable<TransferRow>
+            columns={columns}
+            rows={query.data ?? []}
+            rowKey={(row) => row.id}
+            loading={query.isLoading}
+            emptyText="No pending equipment transfers for this operating company."
+            storageKey="fleet-transfers-in-progress"
+            tableTestId="transfers-in-progress-table"
+          />
+        </BoardSection>
       )}
     </div>
   );
