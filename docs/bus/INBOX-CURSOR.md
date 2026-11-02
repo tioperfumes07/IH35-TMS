@@ -1,7 +1,7 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~5:20 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~5:40 PM CT)
 
-## CURRENT (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST tip
-Tip #28046 Fleet Covered dates · #28050 CashFlow+$/dates + report preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queue EntityLinks · #28057 Fuel Integrity Unit/Vendor U29. Cascade handoff: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md (InvoiceSearch multi-status + P&L URL seed). Owner BUILD-FIRST — no match/Dreamline. Next: more U29 · remaining shells/engines. No match/reconcile.
+## CURRENT (11-02-2026 ~5:40 PM CT) — Cursor BUILD-FIRST tip
+Tip #28046 Fleet Covered · #28050 CashFlow+preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queues U29 · #28057 Fuel Integrity U29 · #28058 bus tip · #28061 Detention approval U29 · #28062 Factoring queue Factor U29. Cascade handoff InvoiceSearch/P&L: docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Owner BUILD-FIRST — no match/Dreamline. Next: more U29 · remaining shells/engines. No match/reconcile.
 
 ## CODEX QA — 11-02 14:21 CT — Safety Drug & Alcohol dates and filters
 

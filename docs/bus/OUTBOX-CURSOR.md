@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~5:40 PM CT) — Cursor U29 wave tip
+- **MERGED:** #28046–#28062 Fleet Covered · CashFlow+preset · Load Costs Truck · Dispatch queues · Fuel Integrity · Detention approval · Factoring Factor links (+ bus tip #28058).
+- **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md
+- **NEXT:** more U29 · remaining shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~5:20 PM CT) — Cursor BUILD-FIRST tip catch-up
 - **MERGED:** #28046 Fleet Covered dates · #28050 CashFlow format + report preset remount · #28054 Load Costs Truck U29 · #28056 Dispatch queues U29 · #28057 Fuel Integrity Unit/Vendor U29.
 - **HANDOFF:** docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md (Cascade pages/reports).
