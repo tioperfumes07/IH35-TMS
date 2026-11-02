@@ -19,6 +19,8 @@ export type ParsedExpenseMemo = {
 };
 
 const SETTLEMENT_TAIL = /\s*\((settlement\s+(\d+)|missing-USMCA-seed)\)\s*$/i;
+/** ENG-51 residual stubs: "[SC 5787] Dtops —" carries the settlement number in a bracket tag. */
+const SC_BRACKET = /^\[SC\s+(\d+)\]/i;
 const RECEIPT_PART = /^inv\s+([A-Za-z0-9-]+)$/i;
 const DATE_PART = /^\d{4}-\d{2}-\d{2}$/;
 const AMOUNT_PART = /^\$-?\d[\d,]*(\.\d+)?$/;
@@ -35,8 +37,14 @@ export function parseExpenseMemo(memo: string | null | undefined, vendorDocument
     settlementNumber = tail[2] ?? null;
     body = raw.slice(0, raw.length - tail[0].length).trim();
   }
+  if (!settlementNumber) {
+    const sc = raw.match(SC_BRACKET);
+    if (sc) settlementNumber = sc[1];
+  }
   const parts = body.split(/\s+—\s+|\s+—$|^—\s+/).map((p) => p.trim());
-  if (!tail && parts.length < 2) {
+  // ENG-51: [SC n] stubs (and/or trailing em-dash) are seed-shaped enough to stamp
+  // source_settlement_ref even when address/receipt are absent.
+  if (!tail && !settlementNumber && parts.length < 2) {
     return { description: raw, address: null, receiptNumber: docReceipt, settlementNumber: null, seedShape: false };
   }
   const description = parts[0] || null;
@@ -49,5 +57,11 @@ export function parseExpenseMemo(memo: string | null | undefined, vendorDocument
     if (DATE_PART.test(p) || AMOUNT_PART.test(p)) continue; // date and amount live in their own columns already
     if (address == null) address = p;
   }
-  return { description, address, receiptNumber: receiptNumber ?? docReceipt, settlementNumber, seedShape: true };
+  return {
+    description,
+    address,
+    receiptNumber: receiptNumber ?? docReceipt,
+    settlementNumber,
+    seedShape: Boolean(tail || settlementNumber || parts.length >= 2),
+  };
 }
