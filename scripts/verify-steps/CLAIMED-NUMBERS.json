@@ -17281,7 +17281,7 @@
     "purpose": "fill-not-shell: verify-profitability-hub-wired \u2014 Profitability tabs+KPI call live engines"
   },
   "18929": {
-    "claimed_by": "claude",
+    "claimed_by": "cc-1",
     "claimed_at": "2026-11-02",
     "purpose": "verify-eng34-exempt-batch-wire (ENG-34) \u2014 batch wire 53 formerly-exempt guards into verify:pre-commit corpus"
   }
