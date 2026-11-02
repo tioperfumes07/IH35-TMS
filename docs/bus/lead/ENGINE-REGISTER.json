@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T16:26:44Z",
+ "generated": "2026-11-02T16:33:17Z",
  "source": "Lead live measure 10-28 CT + prior",
  "rows": [
   {
@@ -624,10 +624,10 @@
    "title": "ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS",
    "seat": "CC-1",
    "round": "443.328",
-   "status": "PARTIAL",
+   "status": "DONE-LIVE",
    "guard": "verify-display-id-lookups-entity-scoped.mjs; verify-customers-open-balance-excludes-void.mjs; verify-usmca-seed-completeness.mjs",
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": "LIVE 10-28 CT: Tio Perfumes customer ACTIVE (kept per owner). Loads 13655/13656 invoiced. display-id entity-scoped OK; customers open-balance excludes void OK; usmca-seed-completeness PASS (USMCA hidden). Residual: archive RLS guard plants + unbilled revenue latch wording + S-13655 source_document_ref mapping audit."
+   "evidence": "LIVE 11-02 CT: customers-reverse-link-detail PASS (archive RLS plants); unbilled latch decisions PASS; source-document-ref S-13642..56 row not found live (incl S-13655); Tio kept; 13655/13656 invoiced."
   },
   {
    "id": "ENG-48",
@@ -690,10 +690,10 @@
    "title": "ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s",
    "seat": "CC-3",
    "round": "443.330",
-   "status": "OPEN",
+   "status": "PARTIAL",
    "guard": null,
    "deadline_utc": "2026-10-25T05:00:00Z",
-   "evidence": ""
+   "evidence": "LIVE 11-02 CT: missing loaded_miles=0 (was 16). 13700 stamped+miles OK. Residual 13690 miles_deadhead/miles_driven_actual NULL (no fence/time). T174 odometer UNVERIFIED."
   },
   {
    "id": "ENG-54",
