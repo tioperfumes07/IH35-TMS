@@ -497,27 +497,14 @@ function trailerEquipmentHints(
   };
 }
 
+const PHYSICAL_TRAILER_CODES = new Set(["DRY_VAN", "REFRIGERATED_VAN", "FLATBED", "LOWBOY"]);
+
 export async function resolveLoadTrailerEquipmentIdForInsert(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   explicitId?: string | null,
   hints: LoadTrailerEquipmentHints = {}
 ): Promise<string> {
-  if (explicitId) {
-    const scoped = await client.query<{ id: string }>(
-      `
-        SELECT id::text AS id
-        FROM catalogs.load_trailer_equipment
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-          AND is_active = true
-        LIMIT 1
-      `,
-      [explicitId, operatingCompanyId]
-    );
-    if (scoped.rows[0]?.id) return scoped.rows[0].id;
-    throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
-  }
   const byCode = async (code: string | null): Promise<string | null> => {
     if (!code) return null;
     const r = await client.query<{ id: string }>(
@@ -527,15 +514,77 @@ export async function resolveLoadTrailerEquipmentIdForInsert(
     );
     return r.rows[0]?.id ?? null;
   };
-  let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
-  if (!code && hints.companyTrailerId) {
-    const eq = await client.query<{ equipment_type: string | null }>(
-      `SELECT equipment_type::text AS equipment_type FROM mdata.equipment
+
+  // ENG-22: when a company trailer is chosen, its body type is evidence. A booked physical type that
+  // disagrees (historical silent DRY_VAN default on a Reefer) is refused — never booked mismatched.
+  // Matching / absent booked type → re-derive from the trailer so Book/Edit stay one rule.
+  let companyTrailerCode: string | null = null;
+  let companyTrailerNumber: string | null = null;
+  if (hints.companyTrailerId) {
+    const eq = await client.query<{ equipment_type: string | null; equipment_number: string | null }>(
+      `SELECT equipment_type::text AS equipment_type, equipment_number::text AS equipment_number
+         FROM mdata.equipment
         WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
       [hints.companyTrailerId, operatingCompanyId]
     );
-    code = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
+    companyTrailerCode = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
+    companyTrailerNumber = eq.rows[0]?.equipment_number ?? null;
   }
+
+  let explicitCode: string | null = null;
+  if (explicitId) {
+    const scoped = await client.query<{ id: string; code: string }>(
+      `
+        SELECT id::text AS id, code
+        FROM catalogs.load_trailer_equipment
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND is_active = true
+        LIMIT 1
+      `,
+      [explicitId, operatingCompanyId]
+    );
+    if (!scoped.rows[0]?.id) throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
+    explicitCode = scoped.rows[0].code;
+    if (
+      companyTrailerCode &&
+      PHYSICAL_TRAILER_CODES.has(explicitCode) &&
+      PHYSICAL_TRAILER_CODES.has(companyTrailerCode) &&
+      explicitCode !== companyTrailerCode
+    ) {
+      throw Object.assign(new Error("trailer_equipment_type_mismatch"), {
+        statusCode: 422,
+        code: "trailer_equipment_type_mismatch",
+        booked_code: explicitCode,
+        trailer_code: companyTrailerCode,
+        equipment_number: companyTrailerNumber,
+      });
+    }
+    // Company trailer evidence wins when present (re-derive / confirm); else keep the explicit pick.
+    if (companyTrailerCode) {
+      const fromTrailer = await byCode(companyTrailerCode);
+      if (fromTrailer) return fromTrailer;
+    }
+    return scoped.rows[0].id;
+  }
+
+  let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
+  if (
+    companyTrailerCode &&
+    code &&
+    PHYSICAL_TRAILER_CODES.has(code) &&
+    PHYSICAL_TRAILER_CODES.has(companyTrailerCode) &&
+    code !== companyTrailerCode
+  ) {
+    throw Object.assign(new Error("trailer_equipment_type_mismatch"), {
+      statusCode: 422,
+      code: "trailer_equipment_type_mismatch",
+      booked_code: code,
+      trailer_code: companyTrailerCode,
+      equipment_number: companyTrailerNumber,
+    });
+  }
+  if (!code && companyTrailerCode) code = companyTrailerCode;
   if (!code && hints.choiceKind === "none") code = "POWER_ONLY_NO_TRAILER";
   if (!code && hints.choiceKind === "customer") code = "POWER_ONLY_CUSTOMER_TRAILER";
   if (!code && hints.choiceKind === "interchange" && hints.nonOwnedTrailerId) {
@@ -3410,12 +3459,36 @@ export async function createLoadWithFullSideEffects(
       trailerIdForInsert = (trailerRows[0]?.id as string | undefined) ?? null;
     }
 
-    const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
-      client,
-      input.operating_company_id,
-      input.load_trailer_equipment_id,
-      trailerEquipmentHints(input, resolvedTrailerChoice ?? null, trailerIdForInsert)
-    );
+    let loadTrailerEquipmentId: string;
+    try {
+      loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
+        client,
+        input.operating_company_id,
+        input.load_trailer_equipment_id,
+        trailerEquipmentHints(input, resolvedTrailerChoice ?? null, trailerIdForInsert)
+      );
+    } catch (err) {
+      // ENG-22: Book Load refuses DRY_VAN (etc.) booked against a company Reefer/Flatbed — never silent mismatch.
+      if ((err as { code?: string; message?: string }).code === "trailer_equipment_type_mismatch"
+          || (err as Error).message === "trailer_equipment_type_mismatch") {
+        const e = err as { booked_code?: string; trailer_code?: string; equipment_number?: string };
+        return {
+          kind: "error",
+          status: 422,
+          payload: {
+            error: "trailer_equipment_type_mismatch",
+            booked_code: e.booked_code ?? null,
+            trailer_code: e.trailer_code ?? null,
+            equipment_number: e.equipment_number ?? null,
+            message: `Booked trailer type ${e.booked_code ?? "?"} does not match company trailer ${e.equipment_number ?? "?"} (${e.trailer_code ?? "?"})`,
+          },
+        };
+      }
+      if ((err as Error).message === "load_trailer_type_required") {
+        return { kind: "error", status: 422, payload: { error: "load_trailer_type_required" } };
+      }
+      throw err;
+    }
 
     // GO-10 REV-B / F4 — the assertLoadNumberAvailable() pre-check above is a fast path only; it
     // cannot close the race between the check and this INSERT. SAVEPOINT so a genuine collision
