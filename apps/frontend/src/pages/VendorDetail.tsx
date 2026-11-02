@@ -531,7 +531,7 @@ export function VendorDetailPage() {
           </StatusBadge>
         ) : saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
-            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${formatDateUS(saferEntity.safer_verified_at)}`}
           </StatusBadge>
         ) : saferEntity?.safer_status ? (
           <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>

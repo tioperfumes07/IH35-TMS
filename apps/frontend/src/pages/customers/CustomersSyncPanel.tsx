@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type CustomersSyncStatus = {
   total_local: number;
@@ -33,7 +34,7 @@ function formatRelative(iso: string | null) {
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.round(mins / 60);
   if (hours < 48) return `${hours}h ago`;
-  return new Date(iso).toLocaleString();
+  return formatDateTimeUS(iso) || iso;
 }
 
 // Decision #5 (parallel-books lock): TMS holds its own CLONE of QBO and reconciles daily — there is NO

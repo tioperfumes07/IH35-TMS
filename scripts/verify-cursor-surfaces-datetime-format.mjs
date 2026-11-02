@@ -37,6 +37,17 @@ const FILES = [
   "apps/frontend/src/pages/home/roles/AccountingHome.tsx",
   "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
   "apps/frontend/src/components/dispatch/DispatchList.tsx",
+  // CRM/Drivers/Fleet identity datetime wave
+  "apps/frontend/src/pages/CustomerDetail.tsx",
+  "apps/frontend/src/pages/Drivers.tsx",
+  "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
+  "apps/frontend/src/pages/customers/CoiTab.tsx",
+  "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
+  "apps/frontend/src/pages/alerts/DocumentAlertsPage.tsx",
+  "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
+  "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
+  "apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx",
+  "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx",
 ];
 
 const DATE_ONLY = [
@@ -47,6 +58,7 @@ const DATE_ONLY = [
   "apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx",
   "apps/frontend/src/components/dispatch/tabs/LdtDocumentsTab.tsx",
   "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
+  "apps/frontend/src/pages/VendorDetail.tsx",
 ];
 
 const QUANTITY = [
@@ -61,6 +73,10 @@ const QUANTITY = [
   "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
   "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
+  "apps/frontend/src/pages/Customers.tsx",
+  "apps/frontend/src/pages/Vendors.tsx",
+  "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
+  "apps/frontend/src/pages/settlements/CreatorMilesChoicePanel.tsx",
 ];
 
 const MONEY = [

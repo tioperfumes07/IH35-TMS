@@ -6,6 +6,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { StatusBadge } from "../layout/StatusBadge";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Props = {
   open: boolean;
@@ -163,7 +164,7 @@ export function FMCSAVerificationModal({
               <div><strong>Insurance Status:</strong> {result.insurance_status ?? "-"}</div>
               <div><strong>Safety Rating:</strong> {result.safety_rating ?? "NONE"}</div>
             </div>
-            <div className="text-xs text-gray-500">Fetched at {new Date(result.fetched_at).toLocaleString()}</div>
+            <div className="text-xs text-gray-500">Fetched at {formatDateTimeUS(result.fetched_at)}</div>
           </section>
         ) : null}
 

@@ -382,7 +382,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   key: "requested_at",
                   label: "Date",
                   sortable: true,
-                  render: (request) => new Date(request.requested_at).toLocaleString(),
+                  render: (request) => formatDateTimeUS(request.requested_at) || "—",
                 },
                 {
                   key: "requested_by",
@@ -442,7 +442,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   key: "requested_at",
                   label: "Requested",
                   sortable: true,
-                  render: (request) => new Date(request.requested_at).toLocaleString(),
+                  render: (request) => formatDateTimeUS(request.requested_at) || "—",
                 },
                 {
                   key: "status",

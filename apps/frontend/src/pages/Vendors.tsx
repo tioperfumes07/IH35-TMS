@@ -8,7 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances, listExpenses, type ExpenseListRow } from "../api/accounting";
 import { listAllVendors, listVendorPaymentMethods, getVendorRollups, getVendorRosterCounts, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
-import { formatUsdCents } from "../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
@@ -615,7 +615,7 @@ export function VendorsPage() {
       { key: "truck_no", label: "Truck #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_unit_number ?? "", render: (r) => r.linked_unit_number ?? "—" },
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_pickup_date ?? "", render: (r) => mmmDd(r.linked_pickup_date) || "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_delivery_date ?? "", render: (r) => mmmDd(r.linked_delivery_date) || "—" },
-      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? Number(r.linked_loaded_miles).toLocaleString() : "—" },
+      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? formatQuantityTable(r.linked_loaded_miles, 0) : "—" },
     ],
     [],
   );
@@ -862,14 +862,14 @@ export function VendorsPage() {
       >
         <V3KpiTile
           label="With transactions"
-          value={vendorHomeKpis.withTransactions.toLocaleString("en-US")}
+          value={formatQuantityTable(vendorHomeKpis.withTransactions, 0)}
           sub="vendors with activity"
           testId="vendors-kpi-with-transactions"
           onClick={() => setListStatus("with_transactions")}
         />
         <V3KpiTile
           label="In the book"
-          value={vendorHomeKpis.inTheBook.toLocaleString("en-US")}
+          value={formatQuantityTable(vendorHomeKpis.inTheBook, 0)}
           sub="full vendor roster"
           testId="vendors-kpi-in-the-book"
           onClick={() => setListStatus("all")}
@@ -880,7 +880,7 @@ export function VendorsPage() {
           sub={
             vendorHomeKpis.vendorsWithOpen == null
               ? "vendor open balance"
-              : `${vendorHomeKpis.vendorsWithOpen.toLocaleString("en-US")} with open balance`
+              : `${formatQuantityTable(vendorHomeKpis.vendorsWithOpen, 0)} with open balance`
           }
           testId="vendors-kpi-open-bills"
           onClick={() => navigate("/accounting/bills?status=unpaid")}

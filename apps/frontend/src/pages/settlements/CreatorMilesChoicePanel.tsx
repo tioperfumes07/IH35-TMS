@@ -11,6 +11,7 @@
 import type { MilesField, MilesRecommendations } from "../../api/milesRecommendations";
 import { MILES_FIELDS } from "../../api/milesRecommendations";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { formatQuantityTable } from "../../lib/money";
 
 export type CreatorMilesFieldChoice = { source: "document" | "historical" | "google" | "manual"; manual_value?: number | null; reason?: string | null };
 export type CreatorMilesChoice = Partial<Record<MilesField, CreatorMilesFieldChoice>>;
@@ -19,7 +20,7 @@ export type CreatorSavedMiles = Record<MilesField, { value: number | null; sourc
 const LABEL: Record<MilesField, string> = { practical: "Practical", short: "Short", empty: "Empty" };
 const td = "align-top text-xs text-gray-900";
 const sub = "text-xs text-[#4B5563]";
-const fmt = (n: number | null | undefined) => (n == null ? null : n.toLocaleString("en-US", { maximumFractionDigits: 1 }));
+const fmt = (n: number | null | undefined) => (n == null ? null : formatQuantityTable(n));
 
 type MilesFieldRow = { field: MilesField };
 

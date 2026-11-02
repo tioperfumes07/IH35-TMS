@@ -7,6 +7,7 @@ import { DataPanel } from "../layout/DataPanel";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { SelectCombobox } from "../Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type CustomerFreeTimeTerms = {
   customer_uuid: string;
@@ -32,9 +33,7 @@ type CustomerTermsHistoryRow = {
 
 function formatTimestamp(value: string | null | undefined): string {
   if (!value) return "Not set";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not set";
-  return date.toLocaleString();
+  return formatDateTimeUS(value) || "Not set";
 }
 
 const HISTORY_COLUMNS: Array<ParityColumn<CustomerTermsHistoryRow>> = [

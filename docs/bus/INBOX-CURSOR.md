@@ -1,4 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~7:15 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~8:00 PM CT)
+
+## CURRENT — Cursor BUILD-FIRST tip (CRM/Drivers format + ENG-21 BLOCKED)
+CRM/Drivers/Unit/Coi/Portal/Alerts/SyncPanels/FMCSA/FreeTime/CreatorMiles → house formatters; cursor-surfaces datetime guard extended. **ENG-21 BLOCKED:** load 13699 delivery already Bradley IL/Copamex; rate con not on file (notes + docs.files) — no Edit Load. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines/U18–U31 · ENG-22 AUTH apply · Safety/CC-3 stays off Cursor.
+
+# INBOX — CURSOR (PRIOR — 11-02-2026 ~7:15 PM CT)
 
 ## CURRENT — Cursor BUILD-FIRST tip (#28174–#28185)
 Shipped need-company BoardSection + U18 module-home backHref + house date/money/quantity across Dispatch/Fuel/Fleet/Factoring/CRM/Tasks/Legal/Docs/Home/Banking. Owner BUILD-FIRST — no match/Dreamline.

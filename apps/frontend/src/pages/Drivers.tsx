@@ -10,6 +10,7 @@ import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
 import { listTours } from "../api/tourReadout";
 import { getActiveLiabilities } from "../api/liabilities";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../lib/money";
 import {
   createDriverTeam,
@@ -100,9 +101,7 @@ function driverMatchesListSegment(status: string, segment: DriversListStatusId):
 
 function formatDate(value: string | null) {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  return formatDateUS(value) || value;
 }
 
 function formatMoney(value: number) {
@@ -554,7 +553,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       const etaVariance = Number(load.latest_eta_prediction?.variance_minutes ?? 0);
       const eta =
         load.latest_eta_prediction?.predicted_arrival_at
-          ? `${new Date(load.latest_eta_prediction.predicted_arrival_at).toLocaleDateString()} (${etaVariance}m)`
+          ? `${formatDateTimeUS(String(load.latest_eta_prediction.predicted_arrival_at))} (${etaVariance}m)`
           : "ETA n/a";
       byDriver.set(key, { driver_id: driverId, driver_name: formatPersonName(driverName), stage, route, eta });
     }
