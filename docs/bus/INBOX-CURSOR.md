@@ -2,6 +2,11 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 ~3:15 PM CT) — Cursor continue U12/U28–U30 after shell fill
+Tip #28003–#28013: Q8 emailer armed; pages/ DataPanel=0; 7.13 orphan ledger OK; U18 breadcrumbs; U12 LoadHistory multi-select started. Owner BUILD-FIRST. Next: remaining U12 status singles + U28/U29/U30. No match/Dreamline.
+
+Superseded: every earlier CURRENT block.
+
 ## CURRENT (11-02-2026 ~2:35 PM CT) — Cursor ROUND 7.13 DONE-LIVE + fill shells done
 Orphan migration ledger: deleted 3 duplicate `ih35_migrations.applied_migrations` rows; `verify-no-orphan-migration-ledger-entries` → OK. Fill-not-shell: #28003–#28008; 0 DataPanel opens under pages/. Owner BUILD-FIRST. Next: U12/U18/U28–U30. No match/Dreamline.
 

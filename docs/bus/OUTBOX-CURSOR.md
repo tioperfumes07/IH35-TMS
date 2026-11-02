@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~3:15 PM CT) — Cursor BUILD-FIRST session tip
+- **MERGED:** #28003 SubscriptionManager BoardSection · #28004 Q8 emailer null-Next + boards · #28005/#28008 DataPanel→BoardSection (0 opens left under pages/) · #28010 ROUND 7.13 orphan ledger DONE-LIVE · #28011 U18 detail breadcrumbs · #28013 U12 LoadHistory status multi-select.
+- **ENGINES:** Q8 scheduled-reports emailer self-heals seeded null Next on every tick; 6 generators already existed.
+- **SHELLS:** pages/ DataPanel grammar closed; insurance/factoring/maint/coming-soon/master-detail filled.
+- **NEXT:** U12 remaining status singles · U28 account multi-select · U29/U30 · ENG-49/17 build-only · Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~2:35 PM CT) — Cursor ROUND 7.13 orphan migration ledger DONE-LIVE
 - **APPLY:** DELETE 3 duplicate rows from `ih35_migrations.applied_migrations` (mirror) where canonical `_system._schema_migrations` already had the correct `.sql` filename:
   - `202610290000_disp01_escrow_abandon_trigger_text_cast.sql` (canonical `202610291200_…`)
