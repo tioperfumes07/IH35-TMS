@@ -59,13 +59,16 @@ export function assertLoadHistorySurface(srcs) {
     fails.push("LoadHistoryPage.tsx: must not use text-[11px] — use text-xs or text-section-header");
   }
   // Gap rows emit Date(0); formatWhen must not invent 12/31/1969 via bare formatDateTimeUS.
+  // Require the full sentinel: Date.parse + ms===0 + return "—" (a plant that drops only the
+  // return stays red — Codex 11-02 #28158 missing-return mutation escape).
   if (!/function formatWhen\(/.test(srcs.page)) {
     fails.push("LoadHistoryPage must define formatWhen for occurred_at");
   }
-  if (!/ms === 0|Date\.parse\(iso\)/.test(srcs.page)) {
+  if (!/const ms = Date\.parse\(iso\);\s*if \(!Number\.isFinite\(ms\) \|\| ms === 0\) return "—";/.test(srcs.page)) {
     fails.push("LoadHistoryPage formatWhen must treat epoch (Date(0)/ms===0) as em dash");
   }
-  if (/function formatWhen\([\s\S]{0,180}?return formatDateTimeUS\(iso\) \|\| "—"/.test(srcs.page) && !/ms === 0/.test(srcs.page)) {
+  if (/function formatWhen\([\s\S]{0,240}?return formatDateTimeUS\(iso\)/.test(srcs.page)
+      && !/ms === 0\) return "—"/.test(srcs.page)) {
     fails.push("LoadHistoryPage formatWhen must not call formatDateTimeUS on epoch gap stamps");
   }
   if (!/\/dispatch\/loads\/:id\/history/.test(srcs.manifest)) {
@@ -98,6 +101,18 @@ if (process.argv.includes("--selftest")) {
   };
   if (!assertLoadHistorySurface(epochPlant).some((f) => f.includes("epoch"))) {
     console.error(`${LABEL} SELFTEST FAIL — planted epoch-sentinel strip should fail`);
+    process.exit(1);
+  }
+  // Missing-return plant: keep Date.parse + ms===0 condition, drop only the em-dash return.
+  const missingReturnPlant = {
+    ...srcs,
+    page: srcs.page.replace(
+      /if \(!Number\.isFinite\(ms\) \|\| ms === 0\) return "—";/,
+      'if (!Number.isFinite(ms) || ms === 0) { /* no return */ }',
+    ),
+  };
+  if (!assertLoadHistorySurface(missingReturnPlant).some((f) => f.includes("epoch"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted missing epoch return should fail`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
