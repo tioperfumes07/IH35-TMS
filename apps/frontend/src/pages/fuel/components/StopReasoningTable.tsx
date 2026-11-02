@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsd } from "../../../lib/money";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   stops: RecommendedStop[];
@@ -60,7 +61,7 @@ const COLUMNS: Array<ParityColumn<StopRow>> = [
     label: "$/gal",
     sortable: true,
     sortValue: (row) => Number(row.price_per_gallon ?? 0),
-    render: (row) => `$${Number(row.price_per_gallon ?? 0).toFixed(2)}`,
+    render: (row) => formatUsd(Number(row.price_per_gallon ?? 0)),
   },
   {
     key: "gallons",
