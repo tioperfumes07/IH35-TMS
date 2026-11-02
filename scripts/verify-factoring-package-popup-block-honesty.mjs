@@ -88,6 +88,7 @@ if (process.argv.includes("--selftest")) {
     win.document.write(html);
     win.document.close();`,
       `    if (win) {
+      win.opener = null;
       win.document.write(html);
       win.document.close();
     }`,

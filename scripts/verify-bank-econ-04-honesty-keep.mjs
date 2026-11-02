@@ -180,7 +180,9 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/banking/reconciliation.routes.ts",
     "apps/frontend/src/api/banking.ts",
     "apps/frontend/src/pages/banking/BankingHome.tsx",
+    "apps/frontend/src/pages/banking/BankReconciliationPage.tsx",
     "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx",
+    "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx",
     "apps/frontend/src/routes/manifest.tsx",
   ]) {
     copyTree(rel);

@@ -25,7 +25,10 @@ const SELFTEST = process.argv.includes("--selftest");
 const FILE = "apps/backend/src/accounting/bank-recon/match.service.ts";
 
 const THRESHOLD_LINE = "const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5;";
-const GATE_LINE = "similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;";
+// Unique to the autoMatch gate (line ~1783 in match.service); "similarity >= ..." also appears in
+// the isAutoMatchCandidate helper as `input.similarity >= ...`, which is a substring match — so we
+// anchor on the preceding dateGapDays line to avoid false positives.
+const GATE_LINE = "dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&\n            similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;";
 
 function assertAll(src) {
   const problems = [];
@@ -60,18 +63,19 @@ if (SELFTEST) {
     process.exit(1);
   }
 
-  const gateIdx = src.indexOf(GATE_LINE);
-  if (gateIdx === -1) {
-    console.error(`${LABEL} SELFTEST SETUP FAILED: gate line not found in real code (guard text drifted)`);
+  // Plant: remove the three-line gate by targeting the exact multi-line expression.
+  // src.indexOf(GATE_LINE) hits an earlier occurrence (line ~302: `input.similarity >= ...`),
+  // so index-arithmetic was computing wrong line boundaries. Direct replacement is unambiguous.
+  const GATE_MULTILINE =
+    "amountGapCents <= toleranceCents &&\n            dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&\n            similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;";
+  if (!src.includes(GATE_MULTILINE)) {
+    console.error(`${LABEL} SELFTEST SETUP FAILED: gate multi-line block not found in real code (guard text drifted)`);
     process.exit(1);
   }
-  const lineStart = src.lastIndexOf("\n", gateIdx) + 1;
-  const prevLineEnd = src.lastIndexOf("\n", lineStart - 2) + 1;
-  // Remove the whole `similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;` line AND the `&&` line above it,
-  // replacing with a harmless no-op boolean so the planted source stays syntactically valid.
-  const andLineStart = src.lastIndexOf("\n", prevLineEnd - 2) + 1;
-  const droppedGate =
-    src.slice(0, andLineStart) + "          amountGapCents <= toleranceCents && dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS;\n" + src.slice(src.indexOf("\n", gateIdx) + 1);
+  const droppedGate = src.replace(
+    GATE_MULTILINE,
+    "amountGapCents <= toleranceCents && dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS;"
+  );
   const droppedProblems = assertAll(droppedGate);
   if (!droppedProblems.some((p) => p.includes("no longer gates"))) {
     console.error(`${LABEL} SELFTEST FAILED: dropping the memo gate entirely not caught\n  got: ${droppedProblems.join(" | ") || "(no problems)"}`);
