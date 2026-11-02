@@ -149,9 +149,14 @@ export function ReclassifyTransactionsPage() {
   const [toDate, setToDate] = useState(urlTo ?? today());
   const [f, setF] = useState<Filters>(() => ({ ...NO_FILTERS, accountIds: urlAccountIds }));
   const setFilter = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((cur) => ({ ...cur, [k]: v }));
-  // The register LOADS ON OPEN (every account, the default window): it used to start null, and the lines query only runs
-  // once `applied` is set, so the page opened empty until a click or Find.
-  const [applied, setApplied] = useState<({ from: string; to: string } & Filters) | null>(() => ({ from: urlFrom ?? firstOfFiscalYear(), to: urlTo ?? today(), ...NO_FILTERS, accountIds: urlAccountIds }));
+  // U19 (Codex QA 11-02): do NOT auto-run "all accounts × fiscal year" on open — that scan never
+  // finishes (register stuck on Loading while the account tree + batches already rendered).
+  // Start idle unless a TOTAL deep-link already scoped account_ids. Click an account or Find to load.
+  const [applied, setApplied] = useState<({ from: string; to: string } & Filters) | null>(() =>
+    urlAccountIds.length
+      ? { from: urlFrom ?? firstOfFiscalYear(), to: urlTo ?? today(), ...NO_FILTERS, accountIds: urlAccountIds }
+      : null,
+  );
   const [visibleCols, setVisibleCols] = useState<ColKey[]>(readColumns);
   const chooseColumns = (next: string[]) => {
     const keep = COLUMNS.filter((c) => next.includes(c.key)).map((c) => c.key);
@@ -193,6 +198,20 @@ export function ReclassifyTransactionsPage() {
   const customersQ = useQuery({ queryKey: ["reclassify-customers", companyId], queryFn: () => listCustomers({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "customer" });
   const batchesQ = useQuery({ queryKey: ["reclassify-batches", companyId], queryFn: () => listReclassifyBatches(companyId), enabled: !!companyId });
 
+  /** U19 — refuse the unscoped all-accounts fiscal-year scan (never finishes; register stuck Loading). */
+  const appliedHasScope = Boolean(
+    applied &&
+      (applied.accountIds.length > 0 ||
+        applied.types.length > 0 ||
+        applied.classIds.length > 0 ||
+        applied.itemIds.length > 0 ||
+        applied.loadIds.length > 0 ||
+        applied.truckIds.length > 0 ||
+        applied.driverIds.length > 0 ||
+        applied.trailerIds.length > 0 ||
+        applied.vendorIds.length > 0 ||
+        Boolean(applied.search.trim())),
+  );
   const linesQ = useQuery({
     queryKey: ["reclassify-lines", companyId, applied, offset, sort],
     queryFn: () => findReclassifyLines(companyId, {
@@ -201,7 +220,7 @@ export function ReclassifyTransactionsPage() {
       unit_ids: applied!.truckIds, driver_ids: applied!.driverIds, trailer_ids: applied!.trailerIds, vendor_ids: applied!.vendorIds,
       sort_key: sort.key, sort_dir: sort.dir, limit: PAGE, offset,
     }),
-    enabled: !!companyId && !!applied,
+    enabled: !!companyId && !!applied && appliedHasScope,
   });
 
   const applyMut = useMutation({
@@ -254,11 +273,35 @@ export function ReclassifyTransactionsPage() {
 
   const runFind = (overrideAccountIds?: string[]) => {
     const next = overrideAccountIds === undefined ? f : { ...f, accountIds: overrideAccountIds };
-    setApplied({ from: fromDate, to: toDate, ...next });
+    const scoped =
+      next.accountIds.length > 0 ||
+      next.types.length > 0 ||
+      next.classIds.length > 0 ||
+      next.itemIds.length > 0 ||
+      next.loadIds.length > 0 ||
+      next.truckIds.length > 0 ||
+      next.driverIds.length > 0 ||
+      next.trailerIds.length > 0 ||
+      next.vendorIds.length > 0 ||
+      Boolean(next.search.trim());
+    // U19 — unscoped Find stays idle (honest empty), never kicks the all-accounts year scan.
+    setApplied(scoped ? { from: fromDate, to: toDate, ...next } : null);
     setOffset(0); setGotoPageDraft("1"); setSelected(new Map());
   };
-  // ROUND 370 — clicking an account LOADS its transactions (it used to only highlight it; the list never ran).
-  const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };
+  // ROUND 370 — clicking an account LOADS its transactions. "All accounts" returns to the idle prompt
+  // (U19 — never auto-scan the whole GL for the fiscal year).
+  const openAccount = (id: string | null) => {
+    const ids = id ? [id] : [];
+    setFilter("accountIds", ids);
+    if (!id) {
+      setApplied(null);
+      setOffset(0);
+      setGotoPageDraft("1");
+      setSelected(new Map());
+      return;
+    }
+    runFind(ids);
+  };
   const facetOptions = (k: keyof ReclassifyFacets) => ((facetsQ.data as ReclassifyFacets | undefined)?.[k] ?? []).map((o: ReclassifyFacet) => ({ value: o.id, label: `${k === "types" ? o.label.replace(/_/g, " ") : o.label} (${o.n})` }));
   const accountOptions = useMemo(() => (accountsQ.data?.accounts ?? []).map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers }) })), [accountsQ.data, showAccountNumbers]);
   const toggleSort = (key: SortKey) => { setSort((cur) => (cur.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" })); setOffset(0); setGotoPageDraft("1"); };
@@ -406,10 +449,11 @@ export function ReclassifyTransactionsPage() {
             </div>
           ) : null}
 
-          {!applied ? (
+          {!applied || !appliedHasScope ? (
             <BoardSection title="Transactions to reclassify" testId="reclassify-empty-board">
             <div className="p-6 text-center text-xs text-[#4B5563]" data-testid="reclassify-empty">
-              Click any account on the left to open every transaction behind its balance — or set filters and Find. Then select lines and reclassify the account, class or vendor at once.
+              Click any account on the left to open every transaction behind its balance — or set at least one filter (account, type, memo…) and Find.
+              Loading every GL line for the whole year with no scope never finishes, so the register stays idle until it has a working set.
             </div>
             </BoardSection>
           ) : (

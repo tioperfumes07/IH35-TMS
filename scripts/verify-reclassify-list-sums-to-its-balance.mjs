@@ -25,11 +25,22 @@ export function check({ service, page }) {
   // three clauses fn_account_balances_as_of holds — never a re-typed copy (verify-one-ledger-membership-rule).
   if (!/LEDGER_POSTING_COUNTS_SQL/.test(where) || !/import\s*\{[^}]*LEDGER_POSTING_COUNTS_SQL[^}]*\}\s*from\s*["']\.\.\/ledger-membership\.js["']/.test(service)) f.push(`${SERVICE}: buildLineWhere must select postings through LEDGER_POSTING_COUNTS_SQL from ../ledger-membership.js (the balance function's rule)`);
   if (/reversed_by_line_id IS NULL|reversal_of_line_id IS NULL|je\.status = 'posted'/.test(where)) f.push(`${SERVICE}: buildLineWhere hides rows the balance counts (reversed / reversal / posted-only)`);
-  if (!/const openAccount = \(id: string \| null\) => \{ const ids = id \? \[id\] : \[\]; setFilter\("accountIds", ids\); runFind\(ids\); \}/.test(page)) f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
+  // U19 — openAccount(id) must runFind([id]); openAccount(null) returns to idle (never all-accounts year scan).
+  if (!/const openAccount = \(id: string \| null\) => \{/.test(page) || !/runFind\(ids\)/.test(page)) {
+    f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
+  }
+  if (!/if \(!id\) \{[\s\S]*?setApplied\(null\)/.test(page)) {
+    f.push(`${PAGE}: U19 — All accounts must setApplied(null), never auto-scan the whole GL`);
+  }
   if (!/onClick=\{\(\) => openAccount\(a\.account_id\)\}/.test(page)) f.push(`${PAGE}: the account rows must call openAccount on click`);
-  // The register loads on open, and its default window is fiscal year to date (a last-month window cannot list what an
-  // all-time-through-To-date balance counts).
-  if (/useState<\{ from: string; to: string;[^>]*\} \| null>\(null\)/.test(page)) f.push(`${PAGE}: the register must load on open — \`applied\` may not start null`);
+  // U19 (Codex QA 11-02): applied starts null unless URL deep-link scoped account_ids — the old
+  // "load every account on open" hung the register on Loading forever.
+  if (!/urlAccountIds\.length/.test(page) || !/setApplied\(null\)/.test(page)) {
+    f.push(`${PAGE}: U19 — applied must start null (or URL-scoped), never auto all-accounts`);
+  }
+  if (!/appliedHasScope/.test(page) || !/enabled: !!companyId && !!applied && appliedHasScope/.test(page)) {
+    f.push(`${PAGE}: U19 — lines query must require appliedHasScope (refuse unscoped year scan)`);
+  }
   // ROUND 433.2: a drilled TOTAL arrives with ?from_date (AmountLink "ledger"); with no URL window the default is still
   // fiscal year to date — `useState(urlFrom ?? firstOfFiscalYear())` keeps that default and nothing else may replace it.
   if (!/useState\((?:urlFrom \?\? )?firstOfFiscalYear\(\)\)/.test(page) || /firstOfPrevMonth/.test(page)) f.push(`${PAGE}: the default window must be fiscal year to date, not last month`);
@@ -43,7 +54,8 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["list hides reversed lines again", { ...real, service: real.service.replace("    LEDGER_POSTING_COUNTS_SQL,\n", "    LEDGER_POSTING_COUNTS_SQL, `p.reversed_by_line_id IS NULL`,\n") }],
     ["list posted-only again", { ...real, service: real.service.replace("    LEDGER_POSTING_COUNTS_SQL,\n", "    `je.status = 'posted'`,\n") }],
-    ["click only highlights", { ...real, page: real.page.replace('const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };', 'const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); };') }],
+    ["click only highlights", { ...real, page: real.page.replace(/runFind\(ids\);/g, "/* no find */") }],
+    ["drops U19 scope gate", { ...real, page: real.page.replace("enabled: !!companyId && !!applied && appliedHasScope", "enabled: !!companyId && !!applied") }],
   ];
   for (const [n, s] of plants) if (JSON.stringify(s) === JSON.stringify(real)) fails.push(`plant did not change the source: ${n}`); else if (!check(s).length) fails.push(`plant escaped: ${n}`);
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
