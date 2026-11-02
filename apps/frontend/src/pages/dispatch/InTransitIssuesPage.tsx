@@ -11,6 +11,7 @@ import {
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -24,6 +25,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { SelectCombobox } from "../../components/Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -183,7 +185,7 @@ export function InTransitIssuesPage() {
         key: "reported_at",
         label: "Reported",
         sortable: true,
-        render: (issue) => new Date(issue.reported_at).toLocaleString(),
+        render: (issue) => formatDateTimeUS(issue.reported_at) || "—",
       },
       {
         key: "load_number",
@@ -220,12 +222,16 @@ export function InTransitIssuesPage() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="In-transit issues" testId="in-transit-issues-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (
     <div data-testid="dispatch-intransit-issues-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="In-Transit Issues"
         subtitle="Driver-reported and office-created in-flight problems"
         actions={

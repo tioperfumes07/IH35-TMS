@@ -32,10 +32,14 @@ export const CREATOR_DEDUCTION_TYPES: SettlementDeductionSourceType[] = [
   "toll",
   "fine",
   "citation",
+  "permit",
   "equipment",
 ];
 
 export const ADMIN_FEE_LINE_RE = /^\s*admin\s*fee\b/i;
+/** ENG-12: Fine / I-94 permit descriptions must never resolve through the admin-fee (other/7200) path. */
+export const FINE_OR_PERMIT_LINE_RE = /\b(fine|i-?94|permit)\b/i;
+
 
 export type CreatorDeductionType = { deductionType: SettlementDeductionSourceType; roleKey: string; accountId: string };
 
@@ -96,6 +100,12 @@ export async function resolveCreatorDeductionType(
     throw new SettlementCreatorError("deduction_is_escrow", `Deduction "${label}": item "${item.name}" is driver escrow — enter it in the Escrow section (it credits the driver's own escrow account).`);
   }
   const deductionType = pickDeductionTypeForAccount(item.account_id, byType);
+  if (deductionType === "other" && FINE_OR_PERMIT_LINE_RE.test(label) && !ADMIN_FEE_LINE_RE.test(label)) {
+    throw new SettlementCreatorError(
+      "deduction_fine_permit_not_admin_fee",
+      `Deduction "${label}": Fine / I-94 / permit lines must use the Fine or Permit item (not Admin Fee / 7200). Rebind the item account or pick the correct item.`
+    );
+  }
   if (!deductionType) {
     throw new SettlementCreatorError(
       "deduction_type_unmapped",

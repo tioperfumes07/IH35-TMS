@@ -188,9 +188,8 @@ function kindBadgeClassName() {
 
 
 function formatWindowDay(iso: string) {
-  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  // U28 — house MM/DD/YYYY (not browser short month)
+  return formatDateUS(iso.slice(0, 10)) || iso;
 }
 
 /** ORDERS §19 / QBO Find Other Matches — default date window is bank date ±90 days. */

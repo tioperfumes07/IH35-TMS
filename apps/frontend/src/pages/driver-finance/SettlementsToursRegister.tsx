@@ -19,7 +19,7 @@ import { useToast } from "../../components/Toast";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3 } from "../../design/v3-tokens";
 import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
@@ -40,10 +40,6 @@ function isInThisPeriod(s: SettlementListRow, periodStart: Date): boolean {
 function isYtd(s: SettlementListRow, year: number): boolean {
   const end = new Date(s.period_end);
   return !Number.isNaN(end.getTime()) && end.getFullYear() === year;
-}
-
-function formatUsd(dollars: number): string {
-  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
@@ -207,9 +203,9 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   // NEW-11 (owner 2026-09-07): margin $ and margin % were "combined awkwardly in one column"; split into
   // two clean, independently-sortable columns — money here, percentage in its own column below.
   { key: "margin", label: "Margin", testId: "setl-tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
-  { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{r.margin_pct.toFixed(1)}%</span> },
-  { key: "miles_practical", label: "Practical mi", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : r.miles_practical.toLocaleString("en-US") },
-  { key: "miles_real", label: "Real mi", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US") },
+  { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{formatQuantityTable(r.margin_pct, 1)}%</span> },
+  { key: "miles_practical", label: "Practical mi", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : formatQuantityTable(r.miles_practical, 0) },
+  { key: "miles_real", label: "Real mi", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : formatQuantityTable(r.miles_real, 0) },
   ...(state === "open" ? [
     // ROUND 443.274-C board: Ready = n/6 dots; Waiting on = this row's first hard blocker.
     // Checks passed/required kept (Rule 07 — never delete) for export/gear; Ready + Waiting on are the board columns.

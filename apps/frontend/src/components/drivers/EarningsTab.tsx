@@ -14,8 +14,9 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
+import { BoardSection } from "../v3/BoardSection";
 
 type Props = {
   driverId: string;
@@ -267,9 +268,9 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
   if (!enabled) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        Select an operating company to view earnings and debt.
-      </div>
+      <BoardSection title="Earnings & debt" testId="driver-earnings-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view earnings and debt.</p>
+      </BoardSection>
     );
   }
 
@@ -279,7 +280,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div>
           <h2 className="text-xs font-semibold text-gray-900">Live debt summary</h2>
           <div className="text-xs text-gray-500">
-            Recomputed at {computedAt ? new Date(computedAt).toLocaleString() : "—"}
+            Recomputed at {computedAt ? formatDateTimeUS(computedAt) : "—"}
           </div>
         </div>
         <Button

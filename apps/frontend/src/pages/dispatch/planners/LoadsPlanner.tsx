@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -18,6 +19,7 @@ import { SettlementReferenceCell } from "../../../components/settlements/Settlem
 import { useSettlementReferences } from "../../../hooks/useSettlementReferences";
 import { useLoadCostRollups } from "../../../hooks/useLoadCostRollups";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
+import { formatQuantityTable } from "../../../lib/money";
 
 void PlannerAxisHead;
 
@@ -91,12 +93,9 @@ export function LoadsPlanner() {
 
   if (!operatingCompanyId) {
     return (
-      <div
-        data-testid="dispatch-loads-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the loads planner.
-      </div>
+      <BoardSection title="Loads planner" testId="dispatch-loads-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the loads planner.</p>
+      </BoardSection>
     );
   }
 
@@ -127,7 +126,7 @@ export function LoadsPlanner() {
             pickupDate: load.pickup_scheduled_at ? load.pickup_scheduled_at.slice(0, 10) : "—",
             deliveryDate: load.scheduled_delivery_date ?? (load.delivery_appointment_start_at ? load.delivery_appointment_start_at.slice(0, 10) : "—"),
             rate: load.rate_total_cents != null
-              ? `${load.currency_code === "MXN" ? "$" : "$"}${(load.rate_total_cents / 100).toFixed(2)}`
+              ? formatMoneyCents(load.rate_total_cents)
               : "—",
           }));
           const columns: Array<ParityColumn<LoadListRow>> = [
@@ -194,7 +193,7 @@ export function LoadsPlanner() {
               render: (row) => {
                 const r = costRollups.get(row.id);
                 if (!r) return DASH;
-                return <span className={r.net_cents < 0 ? "text-[#991B1B]" : undefined}>{formatMoneyCents(r.net_cents)}{r.margin_pct != null ? ` · ${r.margin_pct.toFixed(1)}%` : ""}</span>;
+                return <span className={r.net_cents < 0 ? "text-[#991B1B]" : undefined}>{formatMoneyCents(r.net_cents)}{r.margin_pct != null ? ` · ${formatQuantityTable(r.margin_pct, 1)}%` : ""}</span>;
               },
             },
           ];

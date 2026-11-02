@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB = "reads accounting.journal_entry_postings against accounting.transaction_source_links";
 
@@ -27,11 +28,28 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   engine: "apps/backend/src/accounting/posting-engine.service.ts",
   voidSvc: "apps/backend/src/accounting/void.service.ts",
-  writer: "apps/backend/src/accounting/posting-line-writer.ts",
+  writer: "apps/backend/src/accounting/posting-engine.service.ts",
 };
 /** COMMITTED ceiling (shrink-only): postings stranded by the AUTH-177 purge, by source type. Measured 2026-10-03. */
 export const STRANDED_CEILING = { expense: 3860, invoice: 48 };
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+// ENG-06: one full gate composes the distinct all-postings/cutoff/trigger arm
+// with the source-document/writer/net-zero arm below. Keep the population guard
+// callable for its existing verify-step; do not delete or weaken a live check.
+export function populationArmStatus(result) {
+  return !result?.error && !result?.signal && result?.status === 0 ? 0 : 1;
+}
+function runPopulationArm(selftest = false) {
+  const result = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-every-posting-has-its-spine-link.mjs"), ...(selftest ? ["--selftest"] : [])], {
+    stdio: "inherit", timeout: 60000,
+  });
+  if (populationArmStatus(result)) {
+    console.error(`${LABEL}: FAIL — population/cutoff/trigger arm failed (exit=${result.status}, signal=${result.signal ?? "none"})`);
+    return 1;
+  }
+  return 0;
+}
 
 /** ROUND 391: the ONE writer inserts the posting, then its spine row, on the caller's client — nothing in between can skip it. */
 export function writerGaps(writer) {
@@ -50,10 +68,18 @@ export function writerGaps(writer) {
 export function check({ engine, voidSvc, writer = "" }) {
   const f = [];
   const fn = engine.match(/async function insertPostingLines\([\s\S]*?\n\}\n/);
-  const viaWriter = Boolean(fn && /insertPostingLinesWithSpine\(\s*input\.client/.test(fn[0]));
+  const viaWriter = Boolean(fn && /postValidatedPostingLinesInClientTx\(\s*input\.client/.test(fn[0]));
   if (!fn) f.push(`${FILES.engine}: insertPostingLines not found`);
   else if (viaWriter) {
     f.push(...writerGaps(writer));
+    const batch = engine.match(/export async function postValidatedPostingLinesInClientTx\([\s\S]*?\n\}\n/)?.[0] ?? "";
+    if (!/for \(const line of lines\)[^\n]*await writeLine\(client, line,/.test(batch)) {
+      f.push(`${FILES.engine}: the validated batch must write every line and its spine on the same client`);
+    }
+    const reversal = engine.match(/async function executeSourceReversalOnClient\([\s\S]*?\n\}\n/)?.[0] ?? "";
+    if (!/await postValidatedPostingLinesInClientTx\([^;]*reversalWrites\)/.test(reversal)) {
+      f.push(`${FILES.engine}: the reversal path must use the validated batch and its spine writer`);
+    }
   } else {
     const body = fn[0];
     const loop = body.indexOf("for (const line of input.lines)");
@@ -67,11 +93,13 @@ export function check({ engine, voidSvc, writer = "" }) {
     }
   }
   if ((engine.match(/INSERT INTO accounting\.transaction_source_links/g) ?? []).length + (viaWriter ? 1 : 0) < 2 &&
+      !/executeSourceReversalOnClient[\s\S]*postValidatedPostingLinesInClientTx\([^;]*reversalWrites\)/.test(engine) &&
       !/reversePostedSourceTransaction[\s\S]*insertPostingLineWithSpine\(/.test(engine)) {
     f.push(`${FILES.engine}: the reversal path no longer writes its spine link`);
   }
   // ROUND 393.3: void writes each reversal leg through the writer, its spine row naming the voided entity as 'reversal_of'.
-  if (!/insertPostingLineWithSpineIfNew\(client[\s\S]{0,1400}relationship_role: "reversal_of",\s*spine_link: \{ linked_object_type: params\.entityType, linked_object_id: params\.entityId \}/.test(voidSvc)) {
+  if (!/postingLines\.push\(\{[\s\S]{0,1400}relationship_role: "reversal_of",\s*spine_link: \{ linked_object_type: params\.entityType, linked_object_id: params\.entityId \}/.test(voidSvc) ||
+      !/await postValidatedPostingLinesInClientTx\(client as never, postingLines, \{ skipOnIdempotencyConflict: true \}\)/.test(voidSvc)) {
     f.push(`${FILES.voidSvc}: each reversal leg must write its 'reversal_of' link on the same client`);
   }
   return f;
@@ -99,16 +127,39 @@ const read = () => Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k
 if (process.argv.includes("--selftest")) {
   const real = read();
   const fails = [];
+  if (runPopulationArm(true)) fails.push("population arm selftest failed");
+  const propagationCases = [
+    [{ status: 0 }, 0], [{ status: 1 }, 1], [{ status: null }, 1],
+    [{ status: 0, error: new Error("spawn failed") }, 1],
+    [{ status: 0, signal: "SIGTERM" }, 1], [undefined, 1],
+  ];
+  for (const [result, expected] of propagationCases) {
+    if (populationArmStatus(result) !== expected) fails.push("population arm failure propagation broken");
+  }
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
-  const engineNoLink = real.engine.replace(
-    /(async function insertPostingLines\([\s\S]*?)INSERT INTO accounting\.transaction_source_links/,
-    "$1INSERT INTO accounting.audit_noop"
-  );
+  // Keep testing the legacy inline branch of check(), even though the real engine
+  // now delegates to the shared writer. Replacing an INSERT in today's engine
+  // changed nothing and caused the selftest to fail before testing the defect.
+  const inlineEngine = `async function insertPostingLines(input) {
+  for (const line of input.lines) {
+    await input.client.query(\`INSERT INTO accounting.journal_entry_postings\`);
+    await input.client.query(\`INSERT INTO accounting.transaction_source_links\`);
+  }
+}
+async function reversePostedSourceTransaction() {
+  return insertPostingLineWithSpine();
+}
+`;
+  if (check({ ...real, engine: inlineEngine }).length) fails.push("valid legacy inline poster fixture rejected");
+  const engineNoLink = inlineEngine.replace("INSERT INTO accounting.transaction_source_links", "INSERT INTO accounting.audit_noop");
   const plants = [
     ["poster stops writing the link", { ...real, engine: engineNoLink }],
-    ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return insertPostingLinesWithSpine(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
+    ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return postValidatedPostingLinesInClientTx(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
     ["the writer stops writing the link", { ...real, writer: real.writer.replace(/INSERT INTO accounting\.transaction_source_links/, "INSERT INTO accounting.audit_noop") }],
     ["the writer stops refusing a sourceless line", { ...real, writer: real.writer.replace("if (!line.source_transaction_type || !line.source_transaction_id) {", "if (false) {") }],
+    ["the validated batch skips the spine writer", { ...real, engine: real.engine.replace("await writeLine(client, line,", "await writeLineWithoutSpine(client, line,") }],
+    ["the reversal bypasses the validated batch", { ...real, engine: real.engine.replace("const reversalPostingIds = await postValidatedPostingLinesInClientTx(", "const reversalPostingIds = await writeRawPostingLines(") }],
+    ["void bypasses the validated batch", { ...real, voidSvc: real.voidSvc.replace("await postValidatedPostingLinesInClientTx(client as never, postingLines", "await writeRawPostingLines(client as never, postingLines") }],
     ["void stops naming the voided entity on its spine", { ...real, voidSvc: real.voidSvc.replace('relationship_role: "reversal_of",', 'relationship_role: "source_transaction",') }],
   ];
   for (const [name, s] of plants) {
@@ -120,7 +171,7 @@ if (process.argv.includes("--selftest")) {
   if (judge([{ source_type: "bill", unlinked_doc_exists: 1, unlinked_doc_gone: 0, stranded_net_cents: 0 }]).length !== 1) fails.push("a live unlinked posting not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 3861, stranded_net_cents: 0 }]).length !== 1) fails.push("stranded growth not caught");
   if (judge([{ source_type: "expense", unlinked_doc_exists: 0, unlinked_doc_gone: 10, stranded_net_cents: 500 }]).length !== 1) fails.push("one-sided stranded balance not caught");
-  const n = plants.length + 4;
+  const n = plants.length + 5 + propagationCases.length;
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
   console.log(`${LABEL} --selftest PASS ${n}/${n}`);
   process.exit(0);
@@ -128,6 +179,9 @@ if (process.argv.includes("--selftest")) {
 
 const codeFails = check(read());
 if (codeFails.length) { console.error(`${LABEL}: FAIL\n  ${codeFails.join("\n  ")}`); process.exit(1); }
+// Run before the purge-window exit: an empty source population must not skip the
+// installed trigger / all-postings checks that the former separate gate enforced.
+if (runPopulationArm()) process.exit(1);
 if (!process.env.DATABASE_URL) { console.error(`${LABEL}: FAIL — code arm passed; the live arm needs DATABASE_URL`); process.exit(1); }
 const { default: pg } = await import("pg");
 const c = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 15000, statement_timeout: 30000 });

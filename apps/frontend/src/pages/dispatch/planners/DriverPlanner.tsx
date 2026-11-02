@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { SafetyDriverSchedulerGrid } from "./SafetyDriverSchedulerGrid";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 export function DriverPlanner() {
   const { selectedCompanyId } = useCompanyContext();
@@ -13,12 +14,9 @@ export function DriverPlanner() {
 
   if (!operatingCompanyId) {
     return (
-      <div
-        data-testid="dispatch-driver-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the driver planner.
-      </div>
+      <BoardSection title="Driver planner" testId="dispatch-driver-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the driver planner.</p>
+      </BoardSection>
     );
   }
 

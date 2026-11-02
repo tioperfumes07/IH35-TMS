@@ -83,16 +83,24 @@ async function liveCheck() {
           FROM driver_finance.driver_settlements ds
          WHERE ds.operating_company_id = $1::uuid
            AND (ds.posted_at IS NOT NULL OR ds.locked_at IS NOT NULL OR ds.status IN ('closed','locked','final','paid','approved','ready'))
-           -- P-0067 (0 lines total) and P-0069 (salary-only, no earnings/deadhead_pay line) are
-           -- pre-fix legacy settlements that were posted before this load-activity check was added.
-           -- Both were created/posted on 2026-10-11 when TMS-native dispatch was not yet fully live.
-           AND ds.display_id NOT IN ('P-0067', 'P-0069')
+           -- Lead 443.36 / 443.339: salaried load-bookended settlements close at $0 with zero
+           -- earnings lines by design — the engine counts mdata.loads with the Salaried override
+           -- as load activity (same UNION in settlement-payrun-close.service.ts). Mirror that here
+           -- so P-0067/P-0069/P-0122 (weekly_salary, Salaried loads) are not false reds.
            AND NOT EXISTS (
              SELECT 1 FROM driver_finance.settlement_lines sl
               WHERE sl.settlement_id = ds.id
                 AND sl.is_active = true
                 AND sl.line_type IN ('earnings', 'deadhead_pay')
                 AND sl.load_id IS NOT NULL
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM mdata.loads l
+              WHERE l.presettlement_link_id = ds.id
+                AND l.operating_company_id = ds.operating_company_id
+                AND l.soft_deleted_at IS NULL
+                AND l.driver_pay_rate_per_mile = 0
+                AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)'
            )
       `,
       [USMCA]

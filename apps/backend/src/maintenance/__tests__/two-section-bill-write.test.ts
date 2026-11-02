@@ -29,13 +29,13 @@ vi.mock("../../audit/crud-audit.js", () => ({
 
 import { autoCreateBillFromWO } from "../two-section-service.js";
 
-function makeClient() {
+function makeClient(woId = "wo-1") {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const query = vi.fn(async (sql: string, params?: unknown[]) => {
     calls.push({ sql, params });
     if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
     if (sql.includes("INSERT INTO accounting.bills")) return { rows: [{ id: "bill-1" }] };
-    if (sql.includes("FROM maintenance.work_orders")) return { rows: [{ operating_company_id: "oc-1" }] };
+    if (sql.includes("FROM maintenance.work_orders")) return { rows: [{ operating_company_id: "oc-1", linked_work_order_uuid: woId }] };
     if (sql.includes("FROM maintenance.work_order_lines")) {
       return {
         rows: [
@@ -67,6 +67,38 @@ function makeClient() {
 }
 
 describe("autoCreateBillFromWO — bill_lines write (Phase 1.5 bill-branch regression guard)", () => {
+  // Inspect the real shared header writer's bound values, not just column-name text. A column
+  // populated with NULL or a different work order must fail even though a static stamp scan passes.
+  const assertWorkOrderStamp = (insert: { sql: string; params?: unknown[] }, woId: string) => {
+    const match = insert.sql.match(/INSERT INTO accounting\.bills\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i);
+    expect(match, "header INSERT shape").not.toBeNull();
+    const columns = match![1]!.split(",").map(s => s.trim().replaceAll('"', ''));
+    const values = match![2]!.split(",");
+    const bound = (column: string) => {
+      const index = columns.indexOf(column);
+      expect(index, `${column} column`).toBeGreaterThanOrEqual(0);
+      const parameter = values[index]!.match(/\$(\d+)/);
+      expect(parameter, `${column} bound parameter`).not.toBeNull();
+      return insert.params?.[Number(parameter![1]) - 1];
+    };
+    expect(bound("source")).toBe("work_order");
+    expect(bound("linked_work_order_uuid")).toBe(woId);
+  };
+
+  it.each(["wo-first", "wo-second"])("binds source and exact WO link for %s", async (woId) => {
+    const { client, calls } = makeClient(woId);
+    await autoCreateBillFromWO(client, "user-1", woId);
+    const insert = calls.find(c => c.sql.includes("INSERT INTO accounting.bills"));
+    expect(insert).toBeDefined();
+    assertWorkOrderStamp(insert!, woId);
+    for (const badValue of [null, "another-work-order"]) {
+      const planted = { ...insert!, params: insert!.params!.map(value => value === woId ? badValue : value) };
+      expect(() => assertWorkOrderStamp(planted, woId)).toThrow();
+    }
+    const wrongSource = { ...insert!, params: insert!.params!.map(value => value === "work_order" ? "manual" : value) };
+    expect(() => assertWorkOrderStamp(wrongSource, woId)).toThrow();
+  });
+
   it("writes accounting.bill_lines in dollars (no amount_cents) and runs no expense-side reconciliation", async () => {
     mockResolve.mockResolvedValue({ category_kind: "maintenance", category_code: "PART", account_id: "acct-1" });
     mockAudit.mockResolvedValue(undefined);

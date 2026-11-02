@@ -47,6 +47,13 @@ function main() {
   if (!earningsTab.includes("ARCHIVE (A24-5)")) {
     failures.push("EarningsTab.tsx must archive prior placeholder with ARCHIVE (A24-5) comment");
   }
+  // fill-not-shell — need-company empty uses BoardSection; recompute stamp is US datetime
+  if (!earningsTab.includes("<BoardSection") || !earningsTab.includes('testId="driver-earnings-need-company"')) {
+    failures.push("EarningsTab.tsx need-company empty must be BoardSection (driver-earnings-need-company)");
+  }
+  if (!earningsTab.includes("formatDateTimeUS") || /toLocaleString\(/.test(earningsTab)) {
+    failures.push("EarningsTab.tsx must format recompute stamp with formatDateTimeUS (not toLocaleString)");
+  }
 
   if (!driverDetail.includes("<EarningsTab")) {
     failures.push("DriverDetail.tsx must render EarningsTab on Earnings & Debt tab");

@@ -26,7 +26,8 @@ const CHECKS = [
   ["cust", /data-testid="customer-pnl-basis"/, "P&L must name its revenue basis"],
   ["prof", /searchParams\.get\("customer_id"\)/, "profitability report must honour ?customer_id="],
   ["prof", /rows\.filter\(\(r\) => r\.customer_id === deepCustomerId\)/, "profitability report must scope to the drilled customer"],
-  ["coi", /status: statusFilter \|\| undefined,/, "COI status selector must apply on the customer tab"],
+  // U12 2026-11-02: statusFilter is string[]; single selection still hits the API status= param.
+  ["coi", /status:\s*statusFilter\.length === 1 \? \(statusFilter\[0\] as CoiRequestStatus\) : undefined,/, "COI status selector must apply on the customer tab"],
   ["vend", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, status: "active", limit: 200 \}\)/, "vendor A/P bills must be live only"],
   ["vend", /listExpenses\(companyId, \{ vendor_uuid: id, status: "active", limit: 200 \}\)/, "vendor A/P expenses must be live only"],
   ["vend", /to=\{`\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}`\}/, "Pay bills must land on this vendor's bill payments"],
@@ -36,6 +37,16 @@ const CHECKS = [
 export function audit(src) {
   const f = CHECKS.filter(([k, re]) => !re.test(src[k])).map(([k, , m]) => `${F[k]}: ${m}`);
   if (/to="\/accounting\/pay-bills"/.test(src.vend)) f.push(`${F.vend}: /accounting/pay-bills is not a route`);
+  // fill-not-shell — CRM detail need-company empties use BoardSection
+  if (!/<BoardSection\b/.test(src.cust) || !/testId="customer-detail-need-company"/.test(src.cust)) {
+    f.push(`${F.cust}: need-company empty must be BoardSection (customer-detail-need-company)`);
+  }
+  if (!/<BoardSection\b/.test(src.vend) || !/testId="vendor-detail-need-company"/.test(src.vend)) {
+    f.push(`${F.vend}: need-company empty must be BoardSection (vendor-detail-need-company)`);
+  }
+  if (!/testId="vendor-detail-linked-need-company"/.test(src.vend)) {
+    f.push(`${F.vend}: linked-records need-company must be BoardSection (vendor-detail-linked-need-company)`);
+  }
   return f;
 }
 
@@ -47,6 +58,8 @@ if (process.argv.includes("--selftest")) {
     ["voided invoices back", { ...src, cust: src.cust.replace('{ customer_id: id, status: "active" }', "{ customer_id: id }") }],
     ["dead pay-bills link", { ...src, vend: src.vend.replace("to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`}", 'to="/accounting/pay-bills"') }],
     ["report drops customer", { ...src, prof: src.prof.replace("rows.filter((r) => r.customer_id === deepCustomerId)", "rows") }],
+    ["customer need-company bare", { ...src, cust: src.cust.replace(/testId="customer-detail-need-company"/g, 'testId="x"') }],
+    ["vendor need-company bare", { ...src, vend: src.vend.replace(/testId="vendor-detail-need-company"/g, 'testId="x"') }],
   ];
   for (const [n, s] of m) if (audit(s).length === 0) { console.error(`selftest FAIL: ${n}`); process.exit(1); }
   console.log(`verify-party-tab-drills-and-reverse selftest ${m.length}/${m.length} caught`);

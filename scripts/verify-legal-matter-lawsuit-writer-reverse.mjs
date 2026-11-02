@@ -11,6 +11,7 @@ const files = {
   detail: "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx",
   reverse: "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx",
   lawsuits: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+  legalLawsuits: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -27,10 +28,13 @@ function audit(s) {
   if ((s.service.match(/LEFT JOIN insurance\.lawsuit lw ON lw\.id = m\.insurance_lawsuit_id[\s\S]{0,100}lw\.operating_company_id = m\.operating_company_id/g) ?? []).length < 2) failures.push("list/detail labels must be tenant-scoped");
   if (!/kind="lawsuit"[\s\S]{0,180}matter\.insurance_lawsuit_id[\s\S]{0,180}insurance_lawsuit_case_number/.test(s.detail)) failures.push("matter detail must drill to canonical lawsuit");
   if (!/\{ insurance_lawsuit_id: string;/.test(s.reverse)) failures.push("shared reverse section must accept lawsuit FK");
-  if (!/filter=\{\{ insurance_lawsuit_id: selectedLawsuitId \}\}[\s\S]{0,120}contextLabel="this lawsuit"/.test(s.lawsuits)) failures.push("lawsuit page must mount exact lawsuit reverse set");
-  const companyGuard = s.lawsuits.indexOf("if (!companyId)");
-  const columnsHook = s.lawsuits.indexOf("const columns = useMemo");
-  if (companyGuard < 0 || columnsHook < 0 || companyGuard < columnsHook) failures.push("lawsuit page must execute hooks before the no-company early return");
+  // ENG-60: insurance LawsuitsTab redirects; LegalMattersListPage honors ?insurance_lawsuit_id=.
+  if (!/Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(s.lawsuits)) {
+    failures.push("insurance LawsuitsTab must Navigate to /legal/lawsuits (ENG-60)");
+  }
+  if (!/insurance_lawsuit_id:\s*insuranceLawsuitId/.test(s.legalLawsuits)) {
+    failures.push("LegalMattersListPage must forward insurance_lawsuit_id filter (ENG-60 canonical board)");
+  }
   return failures;
 }
 
@@ -44,8 +48,8 @@ if (process.argv.includes("--selftest")) {
     ["route", "routes", /insurance_lawsuit_id:\s*parsed\.data\.insurance_lawsuit_id/, "insurance_lawsuit_id: undefined"],
     ["join", "service", /lw\.operating_company_id = m\.operating_company_id/g, "TRUE"],
     ["detail", "detail", /kind="lawsuit"/, 'kind="claim"'],
-    ["reverse", "lawsuits", /filter=\{\{ insurance_lawsuit_id: selectedLawsuitId \}\}/, "filter={{ insurance_claim_id: selectedLawsuitId }}"],
-    ["hook order", "lawsuits", /const columns = useMemo/, "if (!companyId) return null;\n  const columns = useMemo"],
+    ["redirect", "lawsuits", /\/legal\/lawsuits/, "/insurance/lawsuits"],
+    ["legal filter", "legalLawsuits", /insurance_lawsuit_id:\s*insuranceLawsuitId/, "insurance_lawsuit_id: undefined"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

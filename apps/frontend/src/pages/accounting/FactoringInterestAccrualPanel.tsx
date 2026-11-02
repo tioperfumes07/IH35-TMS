@@ -13,7 +13,7 @@ import {
 } from "../../api/factoring-interest-accrual";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -85,7 +85,7 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
 
   const lines = preview.data?.lines ?? [];
   return (
-    <DataPanel title="Faro default interest — month-end accrual (DR 6830 / CR 2155)">
+    <BoardSection title="Faro default interest — month-end accrual (DR 6830 / CR 2155)" testId="faro-default-interest-month-end-accrual-dr-6830--board">
       {preview.isError ? (
         <ListErrorState title="Couldn't compute the interest accrual" status={0} message={(preview.error as Error | undefined)?.message} onRetry={() => void preview.refetch()} />
       ) : (
@@ -162,6 +162,6 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
         </div>
       ) : null}
       {error ? <p className="mt-2 text-xs text-red-700" role="alert">{error}</p> : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

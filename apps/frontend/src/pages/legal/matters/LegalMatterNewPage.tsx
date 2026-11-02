@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { LegalModuleTabs } from "../LegalModuleTabs";
@@ -27,10 +28,12 @@ export function LegalMatterNewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
+      <PageHeader backHref="/legal" breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company.</p>
+        <BoardSection title="Create legal matter" testId="legal-matter-new-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       ) : (
         <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <LegalMatterFormFields form={form} setForm={setForm} mode="create" operatingCompanyId={companyId} />

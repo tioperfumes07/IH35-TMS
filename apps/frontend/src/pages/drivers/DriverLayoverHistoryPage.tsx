@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DriverLayoverHistory } from "./DriverLayoverHistory";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -27,7 +28,7 @@ export function DriverLayoverHistoryPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/drivers"
         breadcrumb={["Drivers", "Layovers"]}
         title="Driver Layover History"
         subtitle={
@@ -58,9 +59,9 @@ export function DriverLayoverHistoryPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
-          Select an operating company to view layovers.
-        </div>
+        <BoardSection title="Layovers" testId="driver-layover-history-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view layovers.</p>
+      </BoardSection>
       ) : !driverId ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
           No driver selected.

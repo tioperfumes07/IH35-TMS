@@ -1,17 +1,17 @@
-import { insertPostingLineWithSpine, insertPostingLinesWithSpine, type PostingWriterClient } from "./posting-line-writer.js";
+import { resolvePostingSourceEntity, resolvePostingSourceLoad, postingPartyClass, PostingLineIsAlreadyAReversalError, UnclassifiedPostingSourceTypeError, RelatedPartyPostingWithoutPartyError, PostingLoadOfAnotherCompanyError, PostingLineAlreadyReversedError, type PostingLineWrite, type PostingWriterClient } from "./posting-line-writer.js";
 import { withCurrentUser } from "../auth/db.js";
 import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, resolveRoleAccount } from "./coa-roles/resolver.service.js";
 import { driverReceivableFor } from "../driver-finance/driver-receivable-roles.js";
-import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
+import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/standing-latch-predicate.js";
 import { DriverAdvanceAccountError, resolveDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 import {
   assertLoadRevenueHasSourceLoad,
   InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
 } from "./invoice-linkage-guards.js";
-import { releaseBankLinesNamingDocument, resolveReversalDate, todayIso } from "./void.service.js";
+import { releaseBankLinesNamingDocument, resolveReversalDate, todayIso } from "./posting-reversal-context.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this canonical poster's own
 // createJournalEntryHeader() never populated journal_entry_type_id -- confirmed the dominant
@@ -873,7 +873,7 @@ async function insertPostingLines(input: {
   // them (fuel-posting) ever wrote the spine row, which is the whole of the 3,908 postings measured
   // with no lineage. Both statements now live in ONE writer (posting-line-writer.ts) that every door
   // calls, so a posting without its lineage row is not something a caller can choose to write.
-  return insertPostingLinesWithSpine(
+  return postValidatedPostingLinesInClientTx(
     input.client as unknown as PostingWriterClient,
     input.lines.map((line, index) => ({
       operating_company_id: input.operatingCompanyId,
@@ -3484,14 +3484,14 @@ async function executeSourceReversalOnClient(
     sourceType
   );
 
-  const reversalPostingIds: string[] = [];
+  const reversalWrites: PostingLineWrite[] = [];
   let lineSequence = 1;
   for (const row of originalLines.rows) {
     const opposite = row.debit_or_credit === "debit" ? "credit" : "debit";
     // ENG-28 — single posting door: insertPostingLineWithSpine writes the posting row, stamps
     // reversed_by_line_id on the original, and inserts the spine row in one place.
     // PostingLineAlreadyReversedError / PostingLineIsAlreadyAReversalError enforce AUTH-400 inside the writer.
-    const reversalLineId = await insertPostingLineWithSpine(client as unknown as PostingWriterClient, {
+    reversalWrites.push({
       operating_company_id: input.operating_company_id,
       journal_entry_uuid: reversalJeId,
       line_sequence: lineSequence,
@@ -3510,9 +3510,9 @@ async function executeSourceReversalOnClient(
       reversal_of_line_id: row.id,
       relationship_role: "reversal",
     });
-    reversalPostingIds.push(reversalLineId);
     lineSequence += 1;
   }
+  const reversalPostingIds = await postValidatedPostingLinesInClientTx(client as unknown as PostingWriterClient, reversalWrites);
   // LV-INVOICE-VOID-REVERSAL-HAS-NO-JE-LINKAGE — link the reversal to its original AT THE JOURNAL-ENTRY
   // level, both directions. The LINE level was already linked (reversal_of_line_id / reversed_by_line_id
   // above); the JE level was not, so the pair was discoverable only by string-parsing the memo
@@ -3704,4 +3704,282 @@ export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: A
   }
 
   return totals;
+}
+
+/** A complete entry is the minimum writable unit. Caller owns BEGIN/COMMIT. */
+export function postValidatedPostingLinesInClientTx(client: PostingWriterClient, lines: PostingLineWrite[]): Promise<string[]>;
+export function postValidatedPostingLinesInClientTx(client: PostingWriterClient, lines: PostingLineWrite[], options: { skipOnIdempotencyConflict?: boolean }): Promise<Array<string | null>>;
+export async function postValidatedPostingLinesInClientTx(
+  client: PostingWriterClient,
+  lines: PostingLineWrite[],
+  options: { skipOnIdempotencyConflict?: boolean } = {}
+): Promise<Array<string | null>> {
+  const first = lines[0];
+  if (!first) throw new Error("posting_batch_empty");
+  const sequences = new Set<number>();
+  let debit = 0n;
+  let credit = 0n;
+  for (const line of lines) {
+    if (line.operating_company_id !== first.operating_company_id || line.journal_entry_uuid !== first.journal_entry_uuid)
+      throw new Error("posting_batch_mixed_header_or_company");
+    if (!Number.isSafeInteger(line.amount_cents) || line.amount_cents < 0 ||
+        !Number.isSafeInteger(line.line_sequence) || line.line_sequence < 1 || sequences.has(line.line_sequence))
+      throw new Error("posting_batch_invalid_amount_or_sequence");
+    sequences.add(line.line_sequence);
+    if (line.debit_or_credit === "debit") debit += BigInt(line.amount_cents);
+    else if (line.debit_or_credit === "credit") credit += BigInt(line.amount_cents);
+    else throw new Error("posting_batch_invalid_side");
+    if (!line.source_transaction_type || !line.source_transaction_id) throw new Error("posting_line_requires_source");
+  }
+  if (debit <= 0n || debit !== credit) throw new PostingEngineError("UNBALANCED_ENTRY", "Posting batch must have equal positive debits and credits");
+  // The header lock serializes writers of this entry; no append can turn an already posted entry into a different one.
+  const header = await client.query<{ entry_date: string }>(
+    `SELECT entry_date::text FROM accounting.journal_entries
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [first.journal_entry_uuid, first.operating_company_id]);
+  if (!header.rows[0]) throw new Error("posting_batch_header_missing_or_cross_company");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(header.rows[0].entry_date)) throw new Error("posting_batch_header_date_invalid");
+  const existing = await client.query<Record<string, unknown>>(
+    `SELECT * FROM accounting.journal_entry_postings
+      WHERE operating_company_id = $1::uuid AND
+        (journal_entry_uuid = $2::uuid OR idempotency_key = ANY($3::text[]))`,
+    [first.operating_company_id, first.journal_entry_uuid, lines.map(l => l.idempotency_key).filter(Boolean)]);
+  if (existing.rows.length) {
+    // A retry is all-or-nothing and belongs to the SAME header. Never silently skip one leg or attach an old ID to a new JE.
+    const same = options.skipOnIdempotencyConflict && existing.rows.length === lines.length && lines.every(line => {
+      const old = existing.rows.find(row => row.idempotency_key === line.idempotency_key && Number(row.line_sequence) === line.line_sequence);
+      if (!line.idempotency_key || !old) return false;
+      const keys = ["journal_entry_uuid", "account_id", "debit_or_credit", "source_transaction_type", "source_transaction_id",
+        "source_transaction_line_id", "posting_batch_id", "class_id", "reversal_of_line_id", "location_id", "settlement_id", "description"] as const;
+      return Number(old.amount_cents) === line.amount_cents && keys.every(key => (old[key] ?? null) === (line[key] ?? null)) &&
+        (["load_id", "entity_uuid", "entity_type"] as const).every(key => line[key] == null || old[key] === line[key]);
+    });
+    if (!same) throw new Error("posting_batch_replay_conflict");
+    for (const line of lines) {
+      const old = existing.rows.find(row => row.idempotency_key === line.idempotency_key && Number(row.line_sequence) === line.line_sequence)!;
+      const spine = await client.query<{ id: string }>(
+        `SELECT journal_entry_posting_id::text AS id FROM accounting.transaction_source_links
+          WHERE operating_company_id = $1::uuid AND journal_entry_posting_id = $2::uuid
+            AND linked_object_type = $3 AND linked_object_id = $4 AND relationship_role = $5`,
+        [line.operating_company_id, old.id, line.spine_link?.linked_object_type ?? line.source_transaction_type,
+          line.spine_link?.linked_object_id ?? line.source_transaction_id, line.relationship_role ?? "source_transaction"]);
+      if (!spine.rows[0]) throw new Error("posting_batch_replay_spine_conflict");
+    }
+    return lines.map(() => null);
+  }
+  await ensureOpenPeriod(client as DbClient, first.operating_company_id, header.rows[0].entry_date);
+  const accountIds = [...new Set(lines.map(line => line.account_id))];
+  const accounts = await client.query<{ id: string; deactivated_at: unknown; is_postable: boolean }>(
+    `SELECT id::text, deactivated_at, is_postable FROM catalogs.accounts WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid
+       FOR SHARE`, [accountIds, first.operating_company_id]);
+  if (accounts.rows.length !== accountIds.length) throw new Error("posting_batch_account_missing_inactive_nonpostable_or_cross_company");
+  for (const line of lines) {
+    const account = accounts.rows.find(row => row.id === line.account_id)!;
+    let provenReversal = false;
+    if (line.reversal_of_line_id) {
+      const original = await client.query<{ account_id: string; debit_or_credit: string; amount_cents: string | number; reversal_of_line_id: string | null; reversed_by_line_id: string | null }>(
+        `SELECT account_id::text, debit_or_credit, amount_cents, reversal_of_line_id::text, reversed_by_line_id::text FROM accounting.journal_entry_postings
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          FOR UPDATE`,
+        [line.reversal_of_line_id, line.operating_company_id]);
+      const row = original.rows[0];
+      if (row?.reversal_of_line_id) throw new PostingLineIsAlreadyAReversalError(line.reversal_of_line_id);
+      if (row?.reversed_by_line_id) throw new PostingLineAlreadyReversedError(line.reversal_of_line_id);
+      provenReversal = !!row && row.account_id === line.account_id && Number(row.amount_cents) === line.amount_cents &&
+        row.debit_or_credit === (line.debit_or_credit === "debit" ? "credit" : "debit");
+      if (!provenReversal) throw new Error("posting_batch_reversal_provenance_invalid");
+    }
+    // Deactivation must not make existing money impossible to reverse. Only that exact original leg is exempt;
+    // another ordinary line on the same account still fails the normal account policy.
+    if ((account.deactivated_at != null || account.is_postable !== true) && !provenReversal)
+      throw new Error("posting_batch_account_missing_inactive_nonpostable_or_cross_company");
+  }
+  // Preserve caller transaction usability if a later source/spine/reversal check refuses a line.
+  await client.query("SAVEPOINT validated_posting_batch");
+  try {
+    const ids: string[] = [];
+    for (const line of lines) ids.push((await writeLine(client, line, { skipOnIdempotencyConflict: false }))!);
+    await client.query("RELEASE SAVEPOINT validated_posting_batch");
+    return ids;
+  } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT validated_posting_batch");
+    await client.query("RELEASE SAVEPOINT validated_posting_batch");
+    throw error;
+  }
+}
+
+async function writeLine(
+  client: PostingWriterClient,
+  line: PostingLineWrite,
+  opts: { skipOnIdempotencyConflict: boolean }
+): Promise<string | null> {
+  if (!line.source_transaction_type || !line.source_transaction_id) {
+    // Fail closed and loudly. A posting with no source cannot be traced, reversed by document, or
+    // purged — the exact condition this file exists to make impossible.
+    throw new Error(
+      `posting_line_requires_source: journal_entry ${line.journal_entry_uuid} line ${line.line_sequence} ` +
+        `was written with source_transaction_type=${String(line.source_transaction_type)} ` +
+        `source_transaction_id=${String(line.source_transaction_id)}`
+    );
+  }
+
+  // ROUND 390.1 — A REVERSAL LINE IS TERMINAL. Reversing a line that is itself a reversal re-posts the original's sign
+  // and manufactures money that is not owed (measured 2026-10-04: 60 of 60 phantom A/P lines, $2,976.63, were
+  // "Void reversal: REVERSAL: …" — the second void reversing the first void's line). Every reversal in the system is
+  // written through this function, so it is refused here, by name, before anything is written.
+  if (line.reversal_of_line_id) {
+    const target = await client.query<{ is_reversal: boolean }>(
+      `SELECT reversal_of_line_id IS NOT NULL AS is_reversal FROM accounting.journal_entry_postings WHERE id = $1::uuid`,
+      [line.reversal_of_line_id]
+    );
+    if (target.rows[0]?.is_reversal) {
+      throw new PostingLineIsAlreadyAReversalError(line.reversal_of_line_id);
+    }
+  }
+
+  // D6 — every posting names its entity: the caller's, else its source document's (see resolvePostingSourceEntity).
+  if (!line.entity_uuid) {
+    const derived = await resolvePostingSourceEntity(client, line);
+    if (derived) line = { ...line, entity_uuid: derived.entity_uuid, entity_type: derived.entity_type };
+  }
+  // LEAD 443.113 I-02 — the invariant is universal: a source type nobody classified is refused (no silent party-less
+  // poster). A PARTY_FROM_DOCUMENT document's party was stamped just above whenever the document names one.
+  if (postingPartyClass(line.source_transaction_type) === "unclassified") {
+    throw new UnclassifiedPostingSourceTypeError(String(line.source_transaction_type));
+  }
+  // RULING 443.65 #2d — a line on a "Due to / from <party>" account names its party, or it is refused.
+  if (!line.entity_uuid) {
+    const party = await client.query<{ hit: number }>(
+      `SELECT 1 AS hit FROM catalogs.accounts
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND account_name LIKE 'Due to / from %' LIMIT 1`,
+      [line.account_id, line.operating_company_id]
+    );
+    if (party.rows[0]) throw new RelatedPartyPostingWithoutPartyError(String(line.account_id), String(line.journal_entry_uuid));
+  }
+  // 443.42 #6 / 443.110 G8 — a Relay fill posting and a factoring lifecycle event carry their document's load
+  // (posting_source_load_id cannot reach them).
+  if (!line.load_id) {
+    const load = await resolvePostingSourceLoad(client, line);
+    if (load) line = { ...line, load_id: load };
+  }
+  // 443.110 G8 — a posting's load is its OWN company's load. A caller naming another company's load is refused by name.
+  if (line.load_id) {
+    // (A load that does not exist at all is refused by journal_entry_postings_load_id_fkey.)
+    const foreign = await client.query<{ foreign_load: number }>(
+      `SELECT 1 AS foreign_load FROM mdata.loads WHERE id = $1::uuid AND operating_company_id <> $2::uuid`,
+      [line.load_id, line.operating_company_id]
+    );
+    if (foreign.rows[0]?.foreign_load === 1) {
+      throw new PostingLoadOfAnotherCompanyError(String(line.load_id), String(line.operating_company_id));
+    }
+  }
+
+  const ins = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.journal_entry_postings (
+        operating_company_id,
+        journal_entry_uuid,
+        line_sequence,
+        account_id,
+        debit_or_credit,
+        amount_cents,
+        description,
+        source_transaction_type,
+        source_transaction_id,
+        source_transaction_line_id,
+        posting_batch_id,
+        idempotency_key,
+        class_id,
+        entity_uuid,
+        reversal_of_line_id,
+        location_id,
+        entity_type,
+        load_id,
+        settlement_id,
+        created_at,
+        updated_at
+      )
+      -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the
+      -- same statement, so it can never disagree with the source it was derived from. A reversal line
+      -- carries the load of the line it reverses (its document may already be gone).
+      VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid,
+              $16::uuid, $17,
+              -- 443.110 G8: a load derived from the source document stamps only when it is this company's load.
+              COALESCE($18::uuid, (SELECT sl.id FROM mdata.loads sl
+                                    WHERE sl.id = accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)
+                                      AND sl.operating_company_id = $1::uuid)),
+              $19::uuid, now(), now())
+      ${opts.skipOnIdempotencyConflict
+        ? "ON CONFLICT (operating_company_id, idempotency_key, line_sequence) WHERE idempotency_key IS NOT NULL DO NOTHING"
+        : ""}
+      RETURNING id::text
+    `,
+    [
+      line.operating_company_id,
+      line.journal_entry_uuid,
+      line.line_sequence,
+      line.account_id,
+      line.debit_or_credit,
+      line.amount_cents,
+      line.description,
+      line.source_transaction_type,
+      line.source_transaction_id,
+      line.source_transaction_line_id ?? null,
+      line.posting_batch_id ?? null,
+      line.idempotency_key ?? null,
+      line.class_id ?? null,
+      line.entity_uuid ?? null,
+      line.reversal_of_line_id ?? null,
+      line.location_id ?? null,
+      line.entity_type ?? null,
+      line.load_id ?? null,
+      line.settlement_id ?? null,
+    ]
+  );
+
+  const postingId = ins.rows[0]?.id;
+  if (!postingId) {
+    // Only the idempotent variant may come back empty: the same key + line already exists — nothing was written,
+    // so there is nothing to link.
+    if (opts.skipOnIdempotencyConflict) return null;
+    throw new Error("posting_line_insert_failed");
+  }
+
+  // AUTH-400 — BOTH DIRECTIONS, ALWAYS, HERE. A reversal line names its original (reversal_of_line_id); the original
+  // must name it back (reversed_by_line_id) in the same transaction, or every liveness check reads the original as
+  // live and the next void reverses it again. Callers no longer have to remember the second half (reclassify did not).
+  // Only an unreversed original is stamped; one already reversed by ANOTHER line refuses the whole write.
+  if (line.reversal_of_line_id) {
+    const back = await client.query<{ id: string }>(
+      `UPDATE accounting.journal_entry_postings
+          SET reversed_by_line_id = $2::uuid, updated_at = now()
+        WHERE id = $1::uuid AND (reversed_by_line_id IS NULL OR reversed_by_line_id = $2::uuid)
+          AND operating_company_id = $3::uuid
+        RETURNING id::text`,
+      [line.reversal_of_line_id, postingId, line.operating_company_id]
+    );
+    if (!back.rows[0]) throw new PostingLineAlreadyReversedError(line.reversal_of_line_id);
+  }
+
+  await client.query(
+    `
+      INSERT INTO accounting.transaction_source_links (
+        operating_company_id,
+        journal_entry_posting_id,
+        linked_object_type,
+        linked_object_id,
+        relationship_role
+      )
+      VALUES ($1::uuid, $2::uuid, $3, $4, $5)
+    `,
+    [
+      line.operating_company_id,
+      postingId,
+      line.spine_link?.linked_object_type ?? line.source_transaction_type,
+      line.spine_link?.linked_object_id ?? line.source_transaction_id,
+      line.relationship_role ?? "source_transaction",
+    ]
+  );
+
+  return postingId;
 }

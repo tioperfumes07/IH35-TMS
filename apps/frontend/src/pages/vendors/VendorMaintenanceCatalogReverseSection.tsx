@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceVendors } from "../../api/maintenance";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -14,7 +14,7 @@ export function VendorMaintenanceCatalogReverseSection({ operatingCompanyId, ven
   });
   const rows = query.data?.rows ?? [];
   return (
-    <DataPanel title="Maintenance Vendor Catalog">
+    <BoardSection title="Maintenance Vendor Catalog" testId="maintenance-vendor-catalog-board">
       {query.isError ? <ListErrorBanner message={userFacingApiError(query.error, "Couldn't load linked maintenance vendors")} onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="text-xs text-gray-500">Loading maintenance vendor links…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No maintenance vendor catalog records link to this AP vendor.</p> : null}
@@ -28,6 +28,6 @@ export function VendorMaintenanceCatalogReverseSection({ operatingCompanyId, ven
           ))}
         </div>
       ) : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

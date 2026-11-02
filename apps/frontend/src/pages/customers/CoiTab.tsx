@@ -10,7 +10,7 @@ import {
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
@@ -21,6 +21,7 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 export type CoiTabVariant = "list-preview" | "full-page";
 
@@ -57,7 +58,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   const createGenerationRef = useRef(0);
   const updateGenerationRef = useRef(0);
 
-  const [statusFilter, setStatusFilter] = useState<"" | CoiRequestStatus>("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestNotes, setRequestNotes] = useState("");
   const [requestExpiresAt, setRequestExpiresAt] = useState("");
@@ -70,14 +71,19 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   const [editExpiresAt, setEditExpiresAt] = useState("");
 
   const query = useQuery({
-    queryKey: ["insurance-coi-requests", operatingCompanyId ?? "none", customerId, statusFilter || "all", variant],
+    queryKey: ["insurance-coi-requests", operatingCompanyId ?? "none", customerId, statusFilter.join(",") || "all", variant],
     queryFn: () =>
       listInsuranceCoiRequests({
         operating_company_id: operatingCompanyId!,
         customer_id: customerId,
         // ROUND 297 audit (reverse): the status selector applies on the customer tab too (it was ignored there).
-        status: statusFilter || undefined,
-      }).then((result) => result.requests),
+        // U12: multi-select — API accepts one status; when 0/1 selected pass through; when 2+ fetch all and filter client-side.
+        status: statusFilter.length === 1 ? (statusFilter[0] as CoiRequestStatus) : undefined,
+      }).then((result) => {
+        const rows = result.requests;
+        if (statusFilter.length <= 1) return rows;
+        return rows.filter((row) => statusFilter.includes(row.status));
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -306,7 +312,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   );
 
   return (
-    <DataPanel title={`COI Requests · ${customerName}`}>
+    <BoardSection title={`COI Requests · ${customerName}`} testId="customer-coi-requests-board">
       {isFullPage ? (
         <div className="mb-3 flex items-center justify-between">
           <div className="text-xs text-gray-600">Track COI requests and responses per customer.</div>
@@ -349,21 +355,19 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
         exportFilename="customer-coi-requests"
         filterBar={
           !isFullPage ? (
-            <label className="text-xs font-semibold text-gray-600">
-              Status filter
-              <SelectCombobox
-                className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter((event.target.value || "") as "" | CoiRequestStatus)}
-              >
-                <option value="">All</option>
-                {STATUS_OPTIONS.map((status) => (
-                  <option key={status} value={status}>
-                    {statusLabel(status)}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
+            <div className="text-xs font-semibold text-gray-600" data-testid="customer-coi-status-filter">
+              <span className="block">Status filter</span>
+              <div className="mt-1">
+                <MultiSelectDropdown
+                  label="Status"
+                  options={STATUS_OPTIONS.map((status) => ({ value: status, label: statusLabel(status) }))}
+                  selected={statusFilter}
+                  onChange={setStatusFilter}
+                  allLabel="All statuses"
+                  data-testid="customer-coi-status-multiselect"
+                />
+              </div>
+            </div>
           ) : undefined
         }
         rowActions={(request) => (
@@ -543,6 +547,6 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           </div>
         </Modal>
       ) : null}
-    </DataPanel>
+    </BoardSection>
   );
 }

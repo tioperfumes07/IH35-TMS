@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -106,9 +107,11 @@ export function DispatchChatPage() {
     <div className="flex h-full flex-col" data-testid="dispatch-chat-page">
       <PageHeader title="Dispatch Chat" subtitle="Per-load driver ↔ office communication" />
       {!companyId ? (
-        <p className="p-4 text-xs text-[#4B5563]" data-testid="dispatch-chat-need-company">
-          Select an operating company to load entity-scoped chat threads.
-        </p>
+        <BoardSection title="Dispatch Chat" testId="dispatch-chat-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to load entity-scoped chat threads.
+          </p>
+        </BoardSection>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
           {threadsQuery.isError ? (

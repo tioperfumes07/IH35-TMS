@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 type MapPosition = {
@@ -68,12 +69,11 @@ export function MapView() {
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
       <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
-        <p
-          className="rounded-sm border border-dashed border-[#4B5563] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
-          data-testid="dispatch-map-need-company"
-        >
-          Select an operating company to load entity-scoped GPS positions for active loads.
-        </p>
+        <BoardSection title="Active Load Map" testId="dispatch-map-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to load entity-scoped GPS positions for active loads.
+          </p>
+        </BoardSection>
       ) : null}
       {companyId && query.isError ? (
         <ListErrorBanner
@@ -89,8 +89,9 @@ export function MapView() {
         </p>
       ) : null}
       {companyId && !mapConfigured ? (
+        <BoardSection title="Map provider" subtitle="Geographic tiles" testId="dispatch-map-not-configured-board">
         <section
-          className="rounded-sm border border-gray-200 bg-white p-6 text-center"
+          className="p-6 text-center"
           data-testid="dispatch-map-not-configured"
           data-dispatch-map-honest-empty="true"
         >
@@ -106,6 +107,7 @@ export function MapView() {
             </InfoPopover>
           </h2>
         </section>
+        </BoardSection>
       ) : null}
       {companyId && mapConfigured ? (
         <section
@@ -122,8 +124,9 @@ export function MapView() {
         </section>
       ) : null}
       {companyId && !query.isError && listRows.length > 0 ? (
+        <BoardSection title="Live positions" subtitle="Samsara GPS for active loads" testId="dispatch-map-positions-board">
         <ul
-          className="rounded-sm border border-gray-200 bg-white divide-y divide-gray-100 text-xs"
+          className="divide-y divide-gray-100 text-xs"
           data-testid="dispatch-map-positions-list"
         >
           {listRows.map((p) => {
@@ -168,6 +171,7 @@ export function MapView() {
             );
           })}
         </ul>
+        </BoardSection>
       ) : null}
       {companyId && !query.isError && !query.isLoading && positions.length === 0 ? (
         <p className="text-xs text-[#1F2A44]" data-testid="dispatch-map-positions-honest-empty">

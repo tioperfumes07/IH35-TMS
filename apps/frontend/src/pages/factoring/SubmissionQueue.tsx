@@ -209,7 +209,12 @@ export function SubmissionQueue() {
       {
         key: "factor_name",
         label: "Factor",
-        render: (item) => <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>,
+        render: (item) =>
+          item.factor_id ? (
+            <EntityLink kind="factor" id={item.factor_id} label={entityLabel(item.factor_name, item.factor_id, "Factor")} />
+          ) : (
+            <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>
+          ),
       },
       {
         key: "docs",
@@ -223,7 +228,11 @@ export function SubmissionQueue() {
   if (!companyId) {
     return (
       <div className="space-y-3 p-4">
-        <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
+        <PageHeader
+          backHref="/factoring"
+          title="Submit to Factor"
+          subtitle="Eligible invoices ready for factor submission"
+        />
         <BoardSection title="Submission queue" testId="factoring-submit-need-company">
           <div className="px-3.5 py-3 text-xs text-gray-700">
             Select an operating company to view the submission queue.
@@ -235,7 +244,11 @@ export function SubmissionQueue() {
 
   return (
     <div className="space-y-3 p-4">
-      <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
+      <PageHeader
+        backHref="/factoring"
+        title="Submit to Factor"
+        subtitle="Eligible invoices ready for factor submission"
+      />
 
       <BoardSection title="Filters" testId="factoring-submit-filters-board">
         <div className="relative flex flex-wrap items-end gap-3 px-3.5 py-2" data-testid="factoring-submit-filters">

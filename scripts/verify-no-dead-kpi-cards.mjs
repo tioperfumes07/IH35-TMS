@@ -114,17 +114,15 @@ const PLACEHOLDER_REASON = /^\s*(?:|-|—|n\/?a|tbd|todo|fixme|\?+|none|pending)
  * must never become the one-word way to re-admit a dead card. Lower this when a real drill target
  * is built; never raise it.
  *
- * At the close of C8 it is 5 render sites, every one named here so it can be argued with:
- *   1. pages/profitability/KpiStrip.tsx — the six-metric map. The Profitability module has NO data
- *      source at all (ByLane/ByType/ByCustomer/ByLoad all declare `const rows = []`); the strip used
- *      to print six hardcoded "-". Building the aggregate endpoint is a backend change.
- *   2. pages/insurance/InsuranceLanding.tsx — "Recent COI request count". COI requests are tracked
+ * At the close of C8 it was 5; Profitability KpiStrip is now wired to lane-profitability (2026-11-02),
+ * so the budget shrinks. Remaining named sites:
+ *   1. pages/insurance/InsuranceLanding.tsx — "Recent COI request count". COI requests are tracked
  *      per customer (Customers → COI tab); there is no company-wide COI list to open.
- *   3. pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx — "Open assignments". A pull
+ *   2. pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx — "Open assignments". A pull
  *      diagnostic over telematics.vehicle_driver_assignments, which has no list screen.
- *   4-5. the two local factories' pass-through renders for the three tiles above.
+ *   3-4. the two local factories' pass-through renders for the tiles above.
  */
-const UNAVAILABLE_BUDGET = 5;
+const UNAVAILABLE_BUDGET = 4;
 
 // ---------------------------------------------------------------------------------------------
 // Source scanning. JSX attribute values nest braces, template literals and quotes, so a plain

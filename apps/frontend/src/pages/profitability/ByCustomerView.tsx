@@ -1,4 +1,13 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getCustomerProfitability, type CustomerProfitabilityRow } from "../../api/reports";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { money } from "./money";
 
 interface ByCustomerViewProps {
   filters: {
@@ -8,48 +17,111 @@ interface ByCustomerViewProps {
   };
 }
 
-type CustomerProfitabilityRow = {
-  customer: string;
-  loads: string;
-  miles: string;
-  rev_per_mile: string;
-  cost_per_mile: string;
-  margin_per_mile: string;
-  total_margin: string;
-};
-
-const COLUMNS: Array<ParityColumn<CustomerProfitabilityRow>> = [
-  { key: "customer", label: "Customer" },
-  { key: "loads", label: "Loads", className: "text-right" },
-  { key: "miles", label: "Miles", className: "text-right" },
-  { key: "rev_per_mile", label: "Rev/Mi", className: "text-right" },
-  { key: "cost_per_mile", label: "Cost/Mi", className: "text-right" },
-  { key: "margin_per_mile", label: "Margin/Mi", className: "text-right" },
-  { key: "total_margin", label: "Total Margin", className: "text-right" },
-];
-
-// Stub view — no data source is wired yet (module unrouted; see stub-inventory recon).
-// The table states that its feed is unavailable instead of implying a successful zero-row query.
-// No amounts are computed.
-const ROWS: CustomerProfitabilityRow[] = [];
-
 export function ByCustomerView({ filters }: ByCustomerViewProps) {
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const query = useQuery({
+    queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo],
+    queryFn: () =>
+      getCustomerProfitability({
+        operating_company_id: companyId,
+        period_start: filters.dateFrom,
+        period_end: filters.dateTo,
+      }),
+    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
+    retry: false,
+  });
+
+  const columns = useMemo<Array<ParityColumn<CustomerProfitabilityRow>>>(
+    () => [
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        alwaysVisible: true,
+        render: (row) => (
+          <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+        ),
+      },
+      { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
+      {
+        key: "avg_revenue_per_load_cents",
+        label: "Avg Rev/Load",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.avg_revenue_per_load_cents),
+      },
+      {
+        key: "revenue_cents",
+        label: "Revenue",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.revenue_cents),
+      },
+      {
+        key: "direct_cost_cents",
+        label: "Direct Cost",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.direct_cost_cents),
+      },
+      {
+        key: "gross_margin_pct",
+        label: "Margin %",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => `${row.gross_margin_pct.toFixed(1)}%`,
+      },
+      {
+        key: "gross_margin_cents",
+        label: "Total Margin",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.gross_margin_cents),
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-6">
-      <h3 className="text-page-title font-semibold text-gray-900 mb-4">By Customer</h3>
-      <p className="text-xs text-gray-500">
-        Customer profitability view for {filters.dateFrom} to {filters.dateTo}.
-      </p>
-      <div className="mt-4">
-        <ParityTable
-          columns={COLUMNS}
-          rows={ROWS}
-          rowKey={(row) => row.customer}
+    <BoardSection
+      title="By Customer"
+      subtitle={`${filters.dateFrom} → ${filters.dateTo}`}
+      testId="profitability-by-customer-board"
+      onViewAll={() => {
+        window.location.assign("/reports/customer-profitability");
+      }}
+      viewAllLabel="Full report →"
+    >
+      <div className="p-4 space-y-3">
+        {!companyId ? (
+          <p className="text-xs text-[#1F2A44]">Select an operating company to load customer profitability.</p>
+        ) : null}
+        {query.isError ? (
+          <ListErrorBanner
+            message={userFacingApiError(query.error, "Could not load customer profitability")}
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
+        <ParityTable<CustomerProfitabilityRow>
+          columns={columns}
+          rows={query.data?.by_customer ?? []}
+          rowKey={(row) => row.customer_id}
           storageKey="profitability-by-customer"
           tableTestId="profitability-by-customer-table"
-          emptyText="Profitability feed is not connected; no figures are available for this view."
+          emptyText={
+            query.isLoading
+              ? "Loading customer profitability…"
+              : "No customers with loads in this period."
+          }
         />
       </div>
-    </div>
+    </BoardSection>
   );
 }

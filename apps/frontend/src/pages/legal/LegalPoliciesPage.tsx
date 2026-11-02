@@ -47,7 +47,7 @@ export function LegalPoliciesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
+      <PageHeader backHref="/legal" breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
       <LegalModuleTabs />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         {query.isError ? (

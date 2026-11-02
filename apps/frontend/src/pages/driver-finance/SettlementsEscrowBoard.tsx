@@ -15,7 +15,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents } from "../../lib/money";
+import { formatNumber, formatUsdCents } from "../../lib/money";
 import { V3 } from "../../design/v3-tokens";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -222,7 +222,7 @@ export function SettlementsEscrowBoard() {
           value={
             escrowHomeKpis.driversHolding == null
               ? "—"
-              : escrowHomeKpis.driversHolding.toLocaleString("en-US")
+              : formatNumber(escrowHomeKpis.driversHolding)
           }
           sub="active bonds with a balance"
           testId="escrow-kpi-drivers-holding"
@@ -272,7 +272,11 @@ export function SettlementsEscrowBoard() {
         />
       </MoneyListToolbar>
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Escrow" testId="settlements-escrow-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       {accountsQuery.isError ? (
         <ListErrorState

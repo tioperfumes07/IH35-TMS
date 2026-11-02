@@ -21,8 +21,8 @@ vi.mock("../../driver-finance/settlement-historical-attribution.service.js", () 
 vi.mock("../../banking/bank-line-release.js", () => ({ releaseBankLineMatchesWhere: vi.fn(async () => undefined) }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 vi.mock("../journal-entry-type-resolver.js", () => ({ hasJournalEntryTypeColumn: vi.fn(async () => false), resolveJournalEntryTypeId: vi.fn(async () => null) }));
-vi.mock("../posting-line-writer.js", () => ({
-  insertPostingLineWithSpineIfNew: vi.fn(async (_c: unknown, l: Record<string, unknown>) => {
+vi.mock("../posting-engine.service.js", () => ({
+  postValidatedPostingLinesInClientTx: vi.fn(async (_c: unknown, lines: Record<string, unknown>[]) => lines.map(l => {
     const id = nextId("rev-line");
     ledger.lines.push({
       id, je: String(l.journal_entry_uuid), account_id: String(l.account_id), debit_or_credit: l.debit_or_credit as "debit" | "credit",
@@ -31,7 +31,7 @@ vi.mock("../posting-line-writer.js", () => ({
       reversed_by_line_id: null,
     });
     return id;
-  }),
+  })),
 }));
 
 import { postVoidReversal } from "../void.service.js";

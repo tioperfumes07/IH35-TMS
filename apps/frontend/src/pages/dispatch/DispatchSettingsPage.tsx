@@ -7,6 +7,7 @@ import {
   type DispatchV2View,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -91,19 +92,18 @@ export function DispatchSettingsPage() {
 
   if (!selectedCompanyId) {
     return (
-      <div
-        data-testid="dispatch-settings-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company. Local dispatcher defaults apply per browser; the default landing
-        view preference saves for your user once a company context is active for Dispatch.
-      </div>
+      <BoardSection title="Dispatch settings" testId="dispatch-settings-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">
+          Select an operating company. Local dispatcher defaults apply per browser; the default landing
+          view preference saves for your user once a company context is active for Dispatch.
+        </p>
+      </BoardSection>
     );
   }
 
   return (
     <div className="space-y-4 p-4" data-testid="dispatch-settings-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Dispatch settings"
         subtitle="Dispatcher defaults — landing view, sort, alert thresholds, auto-routing (B21-D11)"
         actions={

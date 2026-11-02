@@ -55,6 +55,36 @@ const CHECKS = [
     file: "apps/backend/src/driver-finance/driver-bill-unit-trailer.ts",
     pattern: /export\s+async\s+function\s+backStampSettledDriverBillUnitAndTrailer/,
   },
+  {
+    name: "ENG-12 Fine/I-94 refuse path (deduction_fine_permit_not_admin_fee)",
+    file: "apps/backend/src/driver-finance/settlement-creator-deduction-type.ts",
+    pattern: /deduction_fine_permit_not_admin_fee/,
+  },
+  {
+    name: "ENG-12 CREATOR_DEDUCTION_TYPES includes permit",
+    file: "apps/backend/src/driver-finance/settlement-creator-deduction-type.ts",
+    pattern: /"permit"/,
+  },
+  {
+    name: "ENG-12 fine_recovery admitted in CoA role resolver",
+    file: "apps/backend/src/accounting/coa-roles/resolver.service.ts",
+    pattern: /"fine_recovery"/,
+  },
+  {
+    name: "ENG-12 permit_recovery admitted in CoA role resolver",
+    file: "apps/backend/src/accounting/coa-roles/resolver.service.ts",
+    pattern: /"permit_recovery"/,
+  },
+  {
+    name: "ENG-12 migration widens fine_recovery + permit_recovery",
+    file: "db/migrations/202616301200_coa_roles_widen_fine_and_permit_recovery.sql",
+    pattern: /fine_recovery[\s\S]*permit_recovery|permit_recovery[\s\S]*fine_recovery/,
+  },
+  {
+    name: "ENG-12 migration rebinds Fine/I-94 items off 7200",
+    file: "db/migrations/202616301201_usmca_seed_fine_permit_recovery_and_rebind_items.sql",
+    pattern: /Driver Deduction-I-94 Permit/,
+  },
 ];
 
 const args = process.argv.slice(2);

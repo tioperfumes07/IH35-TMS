@@ -20,7 +20,9 @@ type FaroDebtorLine = {
   statement_date: string | null;
   statement_reference: string | null;
   invoice_number: string | null;
+  invoice_id: string | null;
   load_id: string | null;
+  load_number: string | null;
   due_on: string | null;
   gross_amount_cents: number;
   advance_amount_cents: number | null;
@@ -33,10 +35,26 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const COLUMNS: Array<ParityColumn<FaroDebtorLine>> = [
   { key: "statement_date", label: "Statement", minWidth: 96, sortValue: (l) => l.statement_date ?? "", render: (l) => <span className="tabular-nums">{l.statement_date ? formatDateUS(l.statement_date) : "—"}</span> },
   { key: "statement_reference", label: "Reference", render: (l) => <span>{l.statement_reference ?? "—"}</span> },
-  { key: "invoice_number", label: "Invoice", render: (l) => <span>{l.invoice_number ?? "—"}</span> },
   {
-    key: "load_id", label: "Load",
-    render: (l) => (l.load_id && UUID.test(l.load_id) ? <EntityLink kind="load" id={l.load_id} label="Open load" /> : <span>{l.load_id ?? "—"}</span>),
+    key: "invoice_number",
+    label: "Invoice",
+    // U29 — Faro Inv # is the factor's number; when purchase lines stamp our invoice_id, open it.
+    render: (l) =>
+      l.invoice_id ? (
+        <EntityLink kind="invoice" id={l.invoice_id} label={l.invoice_number ?? "Invoice"} />
+      ) : (
+        <span>{l.invoice_number ?? "—"}</span>
+      ),
+  },
+  {
+    key: "load_id",
+    label: "Load",
+    render: (l) =>
+      l.load_id && UUID.test(l.load_id) ? (
+        <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} />
+      ) : (
+        <span>{l.load_number ?? "—"}</span>
+      ),
   },
   { key: "due_on", label: "Due", minWidth: 96, render: (l) => <span className="tabular-nums">{l.due_on ? formatDateUS(l.due_on) : "—"}</span> },
   { key: "gross_amount_cents", label: "Gross", kind: "money", sortValue: (l) => l.gross_amount_cents, render: (l) => <span className="tabular-nums">{formatUsdCentsTable(l.gross_amount_cents)}</span> },

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listAllLoads, type DispatchLoadRow } from "../../../api/loads";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import type { PlannerBarKind, PlannerGridBar } from "./PlannerGrid";
 
 function ymdFromIso(iso: string | null | undefined, fallback: string): string {
@@ -59,15 +60,18 @@ export function plannerBarLane(load: Pick<DispatchLoadRow, "first_pickup_city" |
  *  No practical miles = "— mi" and no $/mi (never a divide by a guess). */
 export function plannerBarMoneyDetail(load: Pick<DispatchLoadRow, "rate_total_cents" | "currency_code" | "miles_practical">): string {
   const cents = Number(load.rate_total_cents ?? 0);
-  const whole = cents % 100 === 0;
   const money =
-    load.currency_code === "USD"
-      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(cents / 100)
-      : `${load.currency_code} ${(cents / 100).toFixed(2)}`;
+    load.currency_code === "USD" || !load.currency_code
+      ? formatUsdCents(cents)
+      : `${load.currency_code} ${formatUsdCents(cents).replace(/^\$/, "")}`;
   const miles = Number(load.miles_practical ?? 0);
   if (!(miles > 0)) return `${money} · — mi`;
-  const perMile = `${load.currency_code === "USD" ? "$" : `${load.currency_code} `}${(cents / 100 / miles).toFixed(2)}/mi`;
-  return `${money} · ${Math.round(miles).toLocaleString("en-US")} mi · ${perMile}`;
+  const perMileCents = Math.round(cents / miles);
+  const perMile =
+    load.currency_code === "USD" || !load.currency_code
+      ? `${formatUsdCents(perMileCents)}/mi`
+      : `${load.currency_code} ${formatUsdCents(perMileCents).replace(/^\$/, "")}/mi`;
+  return `${money} · ${formatQuantityTable(Math.round(miles), 0)} mi · ${perMile}`;
 }
 
 export function groupPlannerBarsByKey(

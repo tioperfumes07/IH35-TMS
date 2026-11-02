@@ -112,6 +112,24 @@ export function ReportFilterBar({
     [setSearchParams],
   );
 
+  /** One setSearchParams call — three sequential syncUrl races dropped from_date under remount. */
+  const syncUrlMany = useCallback(
+    (entries: Array<[string, string | null]>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [key, value] of entries) {
+            if (value) next.set(key, value);
+            else next.delete(key);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const handleFromDateChange = useCallback(
     (next: string) => {
       onFromDateChange(next || null);
@@ -131,13 +149,17 @@ export function ReportFilterBar({
   const handlePreset = useCallback(
     (preset: ReportPreset) => {
       const { from, to } = computePresetRange(preset);
+      // Staged draft first (Apply stays explicit), then one atomic URL write for both dates + preset.
       onFromDateChange(from);
       onToDateChange(to);
       onPresetSelect(preset);
-      syncUrl("from_date", from);
-      syncUrl("to_date", to);
+      syncUrlMany([
+        ["from_date", from],
+        ["to_date", to],
+        ["preset", preset],
+      ]);
     },
-    [onFromDateChange, onToDateChange, onPresetSelect, syncUrl],
+    [onFromDateChange, onToDateChange, onPresetSelect, syncUrlMany],
   );
 
   const handleSearch = useCallback(

@@ -10,7 +10,8 @@
 //
 // node scripts/verify-engine-register-closed-by-guard.mjs
 // node scripts/verify-engine-register-closed-by-guard.mjs --selftest
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,7 +58,7 @@ const ENGINE_REGISTER = [
   },
 ];
 
-function verifyStatic(register, stepsDir) {
+function verifyStatic(register, stepsDir, root = ROOT) {
   const failures = [];
   let steps;
   try {
@@ -68,7 +69,7 @@ function verifyStatic(register, stepsDir) {
   }
 
   for (const { surface, guard } of register) {
-    const guardPath = path.join(ROOT, "scripts", guard);
+    const guardPath = path.join(root, "scripts", guard);
     if (!existsSync(guardPath)) {
       failures.push(`[${surface}] guard file missing: scripts/${guard}`);
       continue;
@@ -110,15 +111,27 @@ if (process.argv.includes("--selftest")) {
   }
 
   // Mutation 2: a guard with no verify-step wiring must be caught
-  const noStep = ENGINE_REGISTER.map((e, i) =>
-    i === 1 ? { ...e, guard: "verify-engine-register-closed-by-guard.mjs" } : e
-  );
-  const m2 = verifyStatic(noStep, STEPS_DIR);
-  // This guard itself has no step yet (being built), but the file exists — should fail on wiring
-  const m2HasWiringFail = m2.some((f) => f.includes("not wired into a verify-step") || f.includes("DOES-NOT-EXIST"));
-  if (!m2HasWiringFail) {
-    // If the guard already has a step by the time this runs, mutation 2 would pass.
-    // In that case it is fine — the real check works. Skip this mutation silently.
+  // Use an isolated, deliberately unwired guard. The real guard acquired a step,
+  // making the previous self-referential mutation silently stop testing anything.
+  const fixtureRoot = mkdtempSync(path.join(os.tmpdir(), "ih35-engine-register-"));
+  let m2HasWiringFail = false;
+  let fixtureWiredPass = false;
+  try {
+    const fixtureSteps = path.join(fixtureRoot, "scripts", "verify-steps");
+    mkdirSync(fixtureSteps, { recursive: true });
+    const sentinel = "verify-unwired-engine-sentinel.mjs";
+    writeFileSync(path.join(fixtureRoot, "scripts", sentinel), "// isolated guard fixture\n");
+    const fixtureRegister = [{ surface: "Unwired sentinel", guard: sentinel }];
+    const m2 = verifyStatic(fixtureRegister, fixtureSteps, fixtureRoot);
+    m2HasWiringFail = m2.length === 1 && m2[0].includes("not wired into a verify-step");
+    writeFileSync(path.join(fixtureSteps, `1-${sentinel}`), "// isolated step fixture\n");
+    fixtureWiredPass = verifyStatic(fixtureRegister, fixtureSteps, fixtureRoot).length === 0;
+  } finally {
+    rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+  if (!m2HasWiringFail || !fixtureWiredPass) {
+    console.error(`${LABEL} --selftest FAIL: mutation 2 must reject the unwired sentinel and accept it only after wiring`);
+    process.exit(1);
   }
 
   // Mutation 3: a bad STEPS_DIR path must trigger the directory-not-found error

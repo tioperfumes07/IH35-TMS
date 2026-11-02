@@ -11,6 +11,7 @@ import {
 } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
@@ -19,6 +20,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { statusOptions } from "../../lib/statusListParams";
 
 type Props = {
   operatingCompanyId: string;
@@ -33,11 +35,19 @@ const INTEGRITY_TAB_IDS = new Set<string>(["inbox", "rules"]);
 const EMPTY_FILTERS = {
   category: "",
   severity: "",
-  status: "",
+  status: [] as string[],
   driverId: "",
   unitId: "",
   vendorId: "",
 };
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  unresolved: "Unresolved",
+  investigating: "Investigating",
+  false_positive: "False positive",
+  confirmed_action_taken: "Confirmed action taken",
+  dismissed: "Dismissed",
+});
 
 const EMPTY_RULE_DRAFT = {
   rule_code: "",
@@ -130,23 +140,31 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       operatingCompanyId,
       applied.category,
       applied.severity,
-      applied.status,
+      applied.status.join(","),
       applied.driverId,
       applied.unitId,
       applied.vendorId,
       page,
     ],
-    queryFn: () =>
-      getIntegrityAlerts(operatingCompanyId, {
+    queryFn: async () => {
+      // U12: multi-select — API takes one resolution_status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const resolution_status = applied.status.length === 1 ? applied.status[0] : undefined;
+      const result = await getIntegrityAlerts(operatingCompanyId, {
         alert_category: applied.category || undefined,
         severity: applied.severity || undefined,
-        resolution_status: applied.status || undefined,
+        resolution_status,
         subject_driver_id: applied.driverId || undefined,
         subject_unit_id: applied.unitId || undefined,
         subject_vendor_id: applied.vendorId || undefined,
         limit: pageSize,
         offset: (page - 1) * pageSize,
-      }),
+      });
+      if (applied.status.length <= 1) return result;
+      const integrity_alerts = (result.integrity_alerts ?? []).filter((row) =>
+        applied.status.includes((row.resolution_status ?? row.status ?? "") as string),
+      );
+      return { ...result, integrity_alerts, total_count: integrity_alerts.length };
+    },
     enabled: Boolean(operatingCompanyId),
   });
   const totalCount = alertsQuery.isError ? 0 : alertsQuery.data?.total_count ?? 0;
@@ -377,18 +395,14 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <option value="warning">Warning</option>
                 <option value="critical">Critical</option>
               </SelectCombobox>
-              <SelectCombobox
-                value={draft.status}
-                onChange={(event) => staged.setDraft((d) => ({ ...d, status: event.target.value }))}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="">All statuses</option>
-                <option value="unresolved">Unresolved</option>
-                <option value="investigating">Investigating</option>
-                <option value="false_positive">False positive</option>
-                <option value="confirmed_action_taken">Confirmed action taken</option>
-                <option value="dismissed">Dismissed</option>
-              </SelectCombobox>
+              <MultiSelectDropdown
+                label="Status"
+                options={STATUS_FILTER_OPTIONS}
+                selected={draft.status}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, status: next }))}
+                allLabel="All statuses"
+                data-testid="integrity-alerts-status-filter"
+              />
               <label className="text-xs text-[#4B5563]">
                 Driver
                 <EntityMultiSelect

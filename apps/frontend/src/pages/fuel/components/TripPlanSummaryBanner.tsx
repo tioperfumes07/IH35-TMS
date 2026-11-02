@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatUsd } from "../../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../../lib/money";
 import type { FuelActiveRoute } from "../../../api/fuelPlanner";
 
 type Props = {
@@ -9,8 +9,8 @@ type Props = {
 export function TripPlanSummaryBanner({ route }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs md:grid-cols-6">
-      <Cell label="Total miles">{route?.total_distance_miles != null ? `${Number(route.total_distance_miles).toFixed(0)} mi` : "—"}</Cell>
-      <Cell label="Gallons needed">{route?.recommended_total_fuel_gallons != null ? `${Number(route.recommended_total_fuel_gallons).toFixed(1)} gal` : "—"}</Cell>
+      <Cell label="Total miles">{route?.total_distance_miles != null ? `${formatQuantityTable(route.total_distance_miles, 0)} mi` : "—"}</Cell>
+      <Cell label="Gallons needed">{route?.recommended_total_fuel_gallons != null ? `${formatQuantityTable(route.recommended_total_fuel_gallons, 1)} gal` : "—"}</Cell>
       <Cell label="Fuel stops">{route ? "Calculated" : "—"}</Cell>
       {/* FUEL-MONEY-F7387B: recommended_total_cost/station_avg_baseline_cost/savings_estimate and
           recommended_total_fuel_gallons are all independently nullable on the SQL view. An average

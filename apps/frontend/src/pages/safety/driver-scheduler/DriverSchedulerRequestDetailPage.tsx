@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../../lib/formatDate";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -72,12 +72,12 @@ export function DriverSchedulerRequestDetailPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Leave request" subtitle={req ? String(req.request_number) : "…"} />
-      <div className="mb-2">
-        <Link to="/safety/scheduler/pending-requests" className="text-xs text-[#1F2A44] hover:underline">
-          ← Pending queue
-        </Link>
-      </div>
+      <PageHeader
+        backHref="/safety/scheduler/pending-requests"
+        breadcrumb={["Safety", "Scheduler", "Leave request"]}
+        title="Leave request"
+        subtitle={req ? String(req.request_number) : "…"}
+      />
 
       {query.isLoading ? <div className="text-xs text-gray-500">Loading…</div> : null}
       {query.isError ? (

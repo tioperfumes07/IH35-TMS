@@ -13,7 +13,17 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/Combobox";
+import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../lib/statusListParams";
 import { SegmentedControl } from "../components/SegmentedControl";
+
+const VENDOR_TXN_STATUS_OPTIONS = statusOptions({
+  open: "open",
+  partial: "partial",
+  paid: "paid",
+  voided: "voided",
+  unpaid: "unpaid",
+});
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
 import { MASTER_DETAIL } from "../design/master-detail";
 import { MoneyListToolbar } from "../components/table/MoneyListToolbar";
@@ -167,7 +177,8 @@ export function VendorsPage() {
     setSearchParams(params, { replace: true });
   };
   const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  // U12 — transaction Status is multi-select (0 = all; 1 = API; 2+ = client filter).
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
   // (:74) and whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, locked 2026-08-08).
   const listStatus = parseVendorListTab(searchParams.get("listTab"));
@@ -196,7 +207,7 @@ export function VendorsPage() {
   // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category stage until Apply (same staged-filter shell law as roster).
   const txnFilters = useStagedListFilters({
     applied: { typeFilter, statusFilter, dateFrom, dateTo, txnCategoryFilter },
-    empty: { typeFilter: "", statusFilter: "", dateFrom: "", dateTo: "", txnCategoryFilter: "" },
+    empty: { typeFilter: "", statusFilter: [] as string[], dateFrom: "", dateTo: "", txnCategoryFilter: "" },
     onApply: (next) => {
       setTypeFilter(next.typeFilter);
       setStatusFilter(next.statusFilter);
@@ -205,6 +216,12 @@ export function VendorsPage() {
       setTxnCategoryFilter(next.txnCategoryFilter);
     },
   });
+  const statusApiParam =
+    statusFilter.length === 1
+      ? statusFilter[0] === "unpaid"
+        ? "unpaid"
+        : (statusFilter[0] as "open" | "partial" | "paid" | "voided")
+      : undefined;
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   const [rosterCategory, setRosterCategory] = useState("");
@@ -532,11 +549,11 @@ export function VendorsPage() {
   ]);
 
   const billsQuery = useQuery({
-    queryKey: ["vendors", "transactions", companyId, selectedVendor?.id ?? "", statusFilter, dateFrom, dateTo],
+    queryKey: ["vendors", "transactions", companyId, selectedVendor?.id ?? "", statusFilter.join(","), dateFrom, dateTo],
     queryFn: () =>
       listBills(companyId, {
         vendor_id: selectedVendor!.id,
-        status: statusFilter === "unpaid" ? "unpaid" : (statusFilter as "open" | "partial" | "paid" | "voided" | undefined),
+        status: statusApiParam,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
       }),
@@ -554,9 +571,13 @@ export function VendorsPage() {
     return (billsQuery.data?.rows ?? []).filter((bill) => {
       if (typeFilter && "bill" !== typeFilter) return false;
       if (txnCategoryFilter && !String(bill.memo ?? "").toLowerCase().includes(txnCategoryFilter.toLowerCase())) return false;
+      if (statusFilter.length > 1) {
+        const unpaidOk = statusFilter.includes("unpaid") && bill.status !== "paid" && bill.status !== "voided";
+        if (!statusFilter.includes(bill.status) && !unpaidOk) return false;
+      }
       return true;
     });
-  }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter]);
+  }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter, statusFilter]);
 
   const overdueCents = useMemo(() => {
     const today = companyToday();
@@ -1085,7 +1106,7 @@ export function VendorsPage() {
                       <StagedListFilterShell
                         activeFilterCount={
                           (typeFilter ? 1 : 0) +
-                          (statusFilter ? 1 : 0) +
+                          statusFilter.length +
                           (dateFrom || dateTo ? 1 : 0) +
                           (txnCategoryFilter ? 1 : 0)
                         }
@@ -1105,19 +1126,16 @@ export function VendorsPage() {
                           <option value="">All</option>
                           <option value="bill">bill</option>
                         </SelectCombobox>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
-                        <SelectCombobox
-                          value={txnFilters.draft.statusFilter}
-                          onChange={(event) => txnFilters.setDraft({ ...txnFilters.draft, statusFilter: event.target.value })}
-                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        >
-                          <option value="">All</option>
-                          <option value="open">open</option>
-                          <option value="partial">partial</option>
-                          <option value="paid">paid</option>
-                          <option value="voided">voided</option>
-                          <option value="unpaid">unpaid</option>
-                        </SelectCombobox>
+                        <div className="mb-2">
+                          <MultiSelectDropdown
+                            label="Status"
+                            options={VENDOR_TXN_STATUS_OPTIONS}
+                            selected={txnFilters.draft.statusFilter}
+                            onChange={(next) => txnFilters.setDraft({ ...txnFilters.draft, statusFilter: next })}
+                            allLabel="All statuses"
+                            data-testid="vendor-txn-status-filter"
+                          />
+                        </div>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                         <div className="mb-2 grid grid-cols-2 gap-2">
                           <DatePicker

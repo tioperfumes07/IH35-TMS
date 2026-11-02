@@ -7,7 +7,7 @@
  * "Void reversal: REVERSAL: …").
  *
  * STATIC (verify-step, every run):
- *   RULE 1 — posting-line-writer refuses, by name, a line whose reversal_of_line_id names a reversal
+ *   RULE 1 — the posting engine refuses, by name, a line whose reversal_of_line_id names a reversal
  *            (PostingLineIsAlreadyAReversalError, "posting_line_is_already_a_reversal") BEFORE its INSERT.
  *   RULE 2 — the two paths whose purpose is to bring reversed money back (reinstate, reclassify undo, check unvoid)
  *            use restoreReversedJournalEntry*, never voidJournalEntry / reverseJournalEntryNoFlip on the reversing JE.
@@ -25,7 +25,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-reversal-of-a-reversal";
 const SRC = "apps/backend/src/accounting";
 export const F = {
-  writer: `${SRC}/posting-line-writer.ts`,
+  writer: `${SRC}/posting-engine.service.ts`,
+  errors: `${SRC}/posting-line-writer.ts`,
   reinstate: `${SRC}/reinstate-document.service.ts`,
   checkVoid: `${SRC}/checks/check-void.service.ts`,
   reclassify: `${SRC}/reclassify/reclassify.service.ts`,
@@ -40,7 +41,7 @@ export function staticProblems(read) {
   const w = read(F.writer) ?? "";
   const check = w.indexOf("throw new PostingLineIsAlreadyAReversalError(");
   const insert = w.indexOf("INSERT INTO accounting.journal_entry_postings (", w.indexOf("async function writeLine("));
-  if (!/posting_line_is_already_a_reversal/.test(w) || check < 0 || insert < 0 || check > insert) out.push("RULE 1 posting-line-writer does not refuse a reversal of a reversal before its INSERT");
+  if (!/posting_line_is_already_a_reversal/.test(read(F.errors) ?? "") || check < 0 || insert < 0 || check > insert) out.push("RULE 1 posting engine does not refuse a reversal of a reversal before its INSERT");
   if (!/export async function restoreReversedJournalEntryInClientTx\(/.test(read(F.je) ?? "")) out.push("RULE 2 restoreReversedJournalEntryInClientTx is missing");
   const ri = read(F.reinstate) ?? "";
   const riFn = ri.slice(ri.indexOf("export async function reinstateDocumentThenVoidReversal("));
@@ -71,7 +72,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   if (process.argv.includes("--selftest")) {
     const real = (f) => (existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : null);
-    const plant = (file, from, to) => (f) => (f === file ? (real(f) ?? "").replace(from, to) : real(f));
+    const plant = (file, from, to) => (f) => (f === file ? (real(f) ?? "").replaceAll(from, to) : real(f));
     const pair = [{ id: "o", reversal_of_line_id: null }, { id: "r", reversal_of_line_id: "o" }];
     const cases = [
       ["the shipped tree passes", staticProblems(real).length === 0],

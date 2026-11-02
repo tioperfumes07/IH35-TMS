@@ -137,13 +137,6 @@ function amountOrBalanceCents(row: VendorBill) {
   return Number(row.amount_cents) - Number(row.paid_cents ?? 0);
 }
 
-function formatPlainAmount(cents: number): string {
-  return (cents / 100).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 function sharePct(part: number, total: number): string {
   if (total <= 0 || part <= 0) return "—";
   return `${((part / total) * 100).toFixed(1)}%`;
@@ -663,15 +656,43 @@ export function AccountingHubPage() {
                     rowKey={(b) => b.key}
                     emptyText="No open invoices."
                     columns={[
-                      { key: "label", label: "Bucket", sortable: false, render: (b) => b.label },
-                      { key: "invoices", label: "Invoices", sortable: false, kind: "number", render: (b) => (arAgingQ.isLoading ? "…" : b.invoices || "") },
-                      { key: "amountCents", label: "Amount", sortable: false, kind: "money", render: (b) => (arAgingQ.isLoading ? "…" : formatPlainAmount(b.amountCents)) },
-                      { key: "share", label: "Share", sortable: false, kind: "number", render: (b) => (arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)) },
+                      { key: "label", label: "Bucket", sortable: true, sortValue: (b) => b.label, render: (b) => b.label },
+                      {
+                        key: "invoices",
+                        label: "Invoices",
+                        sortable: true,
+                        kind: "number",
+                        sortValue: (b) => b.invoices,
+                        cellClass: "text-right tabular-nums",
+                        render: (b) => (arAgingQ.isLoading ? "…" : b.invoices || ""),
+                      },
+                      {
+                        key: "amountCents",
+                        label: "Amount",
+                        sortable: true,
+                        kind: "money",
+                        sortValue: (b) => b.amountCents,
+                        cellClass: "text-right tabular-nums",
+                        render: (b) => (arAgingQ.isLoading ? "…" : formatUsdCents(b.amountCents)),
+                      },
+                      {
+                        key: "share",
+                        label: "Share",
+                        sortable: true,
+                        kind: "number",
+                        sortValue: (b) => b.amountCents,
+                        cellClass: "text-right tabular-nums",
+                        render: (b) => (arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)),
+                      },
                     ]}
                     footerCells={{
                       label: <span className="font-semibold">Total</span>,
                       invoices: <span className="font-semibold">{arAgingQ.isLoading ? "…" : agingBuckets.totalInv}</span>,
-                      amountCents: <span className="font-semibold">{arAgingQ.isLoading ? "…" : formatPlainAmount(agingBuckets.totalAmt)}</span>,
+                      amountCents: (
+                        <span className="font-semibold">
+                          {arAgingQ.isLoading ? "…" : formatUsdCents(agingBuckets.totalAmt)}
+                        </span>
+                      ),
                     }}
                   />
                 </>

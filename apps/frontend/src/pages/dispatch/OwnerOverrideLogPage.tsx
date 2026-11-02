@@ -5,11 +5,13 @@ import { listOwnerOverrideLog } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 // DISPATCH-F6251-OWNER-OVERRIDE-LOG / OWNER-OVERRIDE-LOG — this page is the missing consumer for the critical
 // "Owner override — driver qualification (CDL / DOT medical)" notification's action_link
@@ -39,7 +41,11 @@ export function OwnerOverrideLogPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Owner override log" testId="owner-override-log-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   const rows = logQ.data?.overrides ?? [];
@@ -49,7 +55,7 @@ export function OwnerOverrideLogPage() {
   type Row = (typeof rows)[number];
 
   const columns: Array<ParityColumn<Row>> = [
-    { key: "created_at", label: "When", sortable: true, render: (row) => new Date(row.created_at).toLocaleString() },
+    { key: "created_at", label: "When", sortable: true, render: (row) => formatDateTimeUS(row.created_at) || "—" },
     { key: "override_class", label: "Blocker overridden", render: overrideClassLabel },
     {
       key: "driver_name",
@@ -74,7 +80,7 @@ export function OwnerOverrideLogPage() {
 
   return (
     <div data-testid="dispatch-owner-override-log-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Owner Override Log"
         subtitle="Read-only WORM audit trail of every dispatch blocker overridden by an Owner (DOT / insurer / attorney visibility)"
         actions={

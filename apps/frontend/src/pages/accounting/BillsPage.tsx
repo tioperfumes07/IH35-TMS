@@ -102,12 +102,6 @@ export function billTypeForCategory(category: BillListCategory | ""): BillListCa
 export type BillsRegisterTab = "vendor_bill" | "driver_bill";
 
 // U10 (owner): "every bills sub-tab renders only its own type". This used to GUESS the type from memo / vendor words
-// (/maint|shop/, /fuel|diesel|loves/, /driver|settlement/), so each sub-tab showed the wrong bills and missed the right
-// ones. The type is stored now (accounting.bills.bill_category, migration 202615370700).
-function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
-  return bill.bill_category === category;
-}
-
 function billBalanceCents(bill: VendorBill) {
   if (bill.balance_cents != null) return Number(bill.balance_cents);
   return Number(bill.amount_cents) - Number(bill.paid_cents ?? 0);
@@ -361,7 +355,7 @@ export function BillsPage() {
   // LEAD 10-25 FINAL-4 — the server now ORs several statuses itself (before limit/offset, inside the same WHERE as the
   // register totals), so every selection is narrowed server-side: no 200-row page is filtered on the client any more.
   const statusParam = statusFilter.length ? statusFilter.join(",") : undefined;
-  const vendorParam = vendorFilter.length === 1 ? vendorFilter[0] : undefined;
+  const vendorParam = vendorFilter.length > 0 ? vendorFilter.join(",") : undefined;
   const billsQuery = useQuery({
     queryKey: [
       "accounting",
@@ -403,6 +397,9 @@ export function BillsPage() {
         // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤200 page.
         sort: sortKey || undefined,
         dir: sortKey ? sortDirection : undefined,
+        // ACCT-F2026110203 — category and multi-vendor filtered server-side before pagination.
+        // Comma-join for 2+ values; server uses ANY($n::text[]) so all OR-ed categories pass through.
+        bill_category: categoryFilter.length > 0 ? categoryFilter.join(",") : undefined,
         limit: 200,
         bill_type: billType,
       }),
@@ -434,9 +431,7 @@ export function BillsPage() {
       .map((row) => row.bill as VendorBill);
     let next = all.filter((bill) => {
       if (bill.id === deepLinkBillId) return true; // keep deep-linked bill visible regardless of filters
-      if (categoryFilter.length > 0 && !categoryFilter.some((c) => billMatchesCategory(bill, c as BillListCategory))) return false;
       if (!vendorBillMatchesStatusFilter(bill, statusFilter, serverNarrowedStatus)) return false;
-      if (vendorFilter.length > 0 && !vendorFilter.includes(bill.vendor_id ?? "")) return false;
       return true;
     });
     // BILL-SEARCH-01 — server search via buildListSearchClause.
@@ -448,7 +443,7 @@ export function BillsPage() {
       }
     }
     return next;
-  }, [billsQuery.data?.rows, categoryFilter, statusFilter, serverNarrowedStatus, vendorFilter, deepLinkBillId]);
+  }, [billsQuery.data?.rows, statusFilter, serverNarrowedStatus, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
     const all = (billsQuery.data?.rows ?? [])
@@ -656,9 +651,18 @@ export function BillsPage() {
         key: "receipt",
         label: "Receipt",
         sortable: true,
+        sortValue: (bill) => Number(bill.attachment_count ?? 0),
         render: (bill) =>
           companyId ? (
-            <ReceiptAttach operatingCompanyId={companyId} entityType="bill" entityId={bill.id} readOnly testId={`receipt-attach-bill-${bill.id}`} />
+            <ReceiptAttach
+              operatingCompanyId={companyId}
+              entityType="bill"
+              entityId={bill.id}
+              readOnly
+              listWhen="open"
+              initialCount={Number(bill.attachment_count ?? 0)}
+              testId={`receipt-attach-bill-${bill.id}`}
+            />
           ) : null,
       },
       {

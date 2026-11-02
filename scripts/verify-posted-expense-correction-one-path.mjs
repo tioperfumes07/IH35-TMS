@@ -32,7 +32,7 @@ export function checkService(src) {
   const p = [];
   if (!/export async function correctPostedExpense\(/.test(src)) p.push(`${SERVICE}: correctPostedExpense is missing.`);
   if (!/await reverseJournalEntryNoFlip\(/.test(src)) p.push(`${SERVICE}: the live entry is not reversed through reverseJournalEntryNoFlip.`);
-  if (!/await insertPostingLineWithSpine\(/.test(src)) p.push(`${SERVICE}: the corrected entry is not re-posted through insertPostingLineWithSpine.`);
+  if (!/await postValidatedPostingLinesInClientTx\(/.test(src)) p.push(`${SERVICE}: the corrected entry is not re-posted through postValidatedPostingLinesInClientTx.`);
   if (!/:correction:r\$\{revision\}/.test(src)) p.push(`${SERVICE}: the re-post batch is not keyed <original>:correction:r<N>.`);
   if (!/EXPENSE_CORRECTED_EVENT,/.test(src) || !/EXPENSE_CORRECTED_EVENT = "expense\.posted_corrected"/.test(src)) p.push(`${SERVICE}: no expense.posted_corrected audit row.`);
   const set = src.match(/CORRECTABLE_EXPENSE_FIELDS = \[([^\]]*)\] as const/);
@@ -103,6 +103,7 @@ if (process.argv.includes("--selftest")) {
   ex("real service passes", checkService(service).length === 0);
   ex("real routes pass", checkRoutes(routes).length === 0);
   ex("in-place reversal removed is caught", checkService(service.replace("await reverseJournalEntryNoFlip(", "await noop(")).length > 0);
+  ex("repost bypasses the full engine is caught", checkService(service.replace("await postValidatedPostingLinesInClientTx(", "await noop(")).length > 0);
   ex("a money field added to the correctable set is caught",
     checkService(service.replace('["driver_id", "trailer_id", "memo"]', '["driver_id", "trailer_id", "memo", "amount_cents"]')).length > 0);
   ex("no audit row is caught", checkService(service.replaceAll("EXPENSE_CORRECTED_EVENT,", "OTHER,")).length > 0);
@@ -120,7 +121,7 @@ if (process.argv.includes("--selftest")) {
     driverOverwrites([{ path: "apps/backend/src/v.ts", src: "await q(`UPDATE accounting.expenses e SET driver_uuid = COALESCE($2, e.driver_uuid) WHERE e.id = $1`)" }]).length === 1);
   ex("the correction service itself is exempt",
     driverOverwrites([{ path: SERVICE, src: "await q(`UPDATE accounting.expenses SET driver_uuid = $3 WHERE id = $1`)" }]).length === 0);
-  console.log(ok ? `${LABEL} --selftest PASS (12/12)` : `${LABEL} --selftest FAIL`);
+  console.log(ok ? `${LABEL} --selftest PASS (13/13)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 

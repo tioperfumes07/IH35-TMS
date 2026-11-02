@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import "./dispatch/load-transition-bootstrap.js";
 import { collectGetRoutes, injectGetSweepEnabled, runInjectGetSweepAndExit } from "./lib/inject-get-sweep.js";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";

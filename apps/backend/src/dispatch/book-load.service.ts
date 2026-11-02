@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import type { DriverBillMintOutcome } from "./load-transition-hooks.js";
 import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
 import { restampDriverBillUnitAndTrailer } from "../driver-finance/driver-bill-unit-trailer.js";
@@ -496,27 +497,14 @@ function trailerEquipmentHints(
   };
 }
 
+const PHYSICAL_TRAILER_CODES = new Set(["DRY_VAN", "REFRIGERATED_VAN", "FLATBED", "LOWBOY"]);
+
 export async function resolveLoadTrailerEquipmentIdForInsert(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   explicitId?: string | null,
   hints: LoadTrailerEquipmentHints = {}
 ): Promise<string> {
-  if (explicitId) {
-    const scoped = await client.query<{ id: string }>(
-      `
-        SELECT id::text AS id
-        FROM catalogs.load_trailer_equipment
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-          AND is_active = true
-        LIMIT 1
-      `,
-      [explicitId, operatingCompanyId]
-    );
-    if (scoped.rows[0]?.id) return scoped.rows[0].id;
-    throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
-  }
   const byCode = async (code: string | null): Promise<string | null> => {
     if (!code) return null;
     const r = await client.query<{ id: string }>(
@@ -526,15 +514,77 @@ export async function resolveLoadTrailerEquipmentIdForInsert(
     );
     return r.rows[0]?.id ?? null;
   };
-  let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
-  if (!code && hints.companyTrailerId) {
-    const eq = await client.query<{ equipment_type: string | null }>(
-      `SELECT equipment_type::text AS equipment_type FROM mdata.equipment
+
+  // ENG-22: when a company trailer is chosen, its body type is evidence. A booked physical type that
+  // disagrees (historical silent DRY_VAN default on a Reefer) is refused — never booked mismatched.
+  // Matching / absent booked type → re-derive from the trailer so Book/Edit stay one rule.
+  let companyTrailerCode: string | null = null;
+  let companyTrailerNumber: string | null = null;
+  if (hints.companyTrailerId) {
+    const eq = await client.query<{ equipment_type: string | null; equipment_number: string | null }>(
+      `SELECT equipment_type::text AS equipment_type, equipment_number::text AS equipment_number
+         FROM mdata.equipment
         WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
       [hints.companyTrailerId, operatingCompanyId]
     );
-    code = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
+    companyTrailerCode = equipmentTypeToLoadTrailerCode(eq.rows[0]?.equipment_type);
+    companyTrailerNumber = eq.rows[0]?.equipment_number ?? null;
   }
+
+  let explicitCode: string | null = null;
+  if (explicitId) {
+    const scoped = await client.query<{ id: string; code: string }>(
+      `
+        SELECT id::text AS id, code
+        FROM catalogs.load_trailer_equipment
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND is_active = true
+        LIMIT 1
+      `,
+      [explicitId, operatingCompanyId]
+    );
+    if (!scoped.rows[0]?.id) throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
+    explicitCode = scoped.rows[0].code;
+    if (
+      companyTrailerCode &&
+      PHYSICAL_TRAILER_CODES.has(explicitCode) &&
+      PHYSICAL_TRAILER_CODES.has(companyTrailerCode) &&
+      explicitCode !== companyTrailerCode
+    ) {
+      throw Object.assign(new Error("trailer_equipment_type_mismatch"), {
+        statusCode: 422,
+        code: "trailer_equipment_type_mismatch",
+        booked_code: explicitCode,
+        trailer_code: companyTrailerCode,
+        equipment_number: companyTrailerNumber,
+      });
+    }
+    // Company trailer evidence wins when present (re-derive / confirm); else keep the explicit pick.
+    if (companyTrailerCode) {
+      const fromTrailer = await byCode(companyTrailerCode);
+      if (fromTrailer) return fromTrailer;
+    }
+    return scoped.rows[0].id;
+  }
+
+  let code = equipmentTypeToLoadTrailerCode(hints.trailerType);
+  if (
+    companyTrailerCode &&
+    code &&
+    PHYSICAL_TRAILER_CODES.has(code) &&
+    PHYSICAL_TRAILER_CODES.has(companyTrailerCode) &&
+    code !== companyTrailerCode
+  ) {
+    throw Object.assign(new Error("trailer_equipment_type_mismatch"), {
+      statusCode: 422,
+      code: "trailer_equipment_type_mismatch",
+      booked_code: code,
+      trailer_code: companyTrailerCode,
+      equipment_number: companyTrailerNumber,
+    });
+  }
+  if (!code && companyTrailerCode) code = companyTrailerCode;
   if (!code && hints.choiceKind === "none") code = "POWER_ONLY_NO_TRAILER";
   if (!code && hints.choiceKind === "customer") code = "POWER_ONLY_CUSTOMER_TRAILER";
   if (!code && hints.choiceKind === "interchange" && hints.nonOwnedTrailerId) {
@@ -1008,11 +1058,7 @@ export class DriverBillReassignRefusedError extends Error {
   }
 }
 
-export type DriverBillMintOutcome =
-  | { outcome: "not_applicable" }
-  | { outcome: "already_exists" }
-  | { outcome: "minted"; bill_number: string | null; unpriced?: boolean }
-  | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] }
+export type { DriverBillMintOutcome } from "./load-transition-hooks.js";
   // P1 (owner 2026-09-14, 09-14-2026-Claude-Coder-3-SHORT-MILES-NEVER-CAPTURED.md): "a
   // driver_finance.driver_bills row may not be minted from a load whose miles_shortest is NULL...
   // Refuse LOUDLY with the reason on screen. A silent no-op is a defect." Distinct from
@@ -1024,9 +1070,9 @@ export type DriverBillMintOutcome =
   // LEAD 443.220 (owner 10-21 7:34 PM CT: "why no driver bill, it should be created automatically") — a per-mile load with no
   // SHORT miles still gets its driver bill at booking: status awaiting_short_miles, $0, driver / unit / trailer / load linked,
   // visible. The same engine prices THAT row when short miles land (Edit Load, Settlement Creator, AlwaysTrack import).
-  | { outcome: "awaiting_short_miles"; bill_number: string | null; reason: string }
+  // Outcome contract: awaiting_short_miles (see the leaf type).
   // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
-  | { outcome: "not_minted_salaried"; reason: string };
+  // Outcome contract: not_minted_salaried (see the leaf type).
 
 /**
  * LEAD 443.192 — an open bill whose settled_in_settlement_id named a voided / cancelled settlement is released from that
@@ -2095,6 +2141,28 @@ function bookLoadInputPrecheck(input: BookLoadInput, source: LoadCreateSource = 
     if (source === "live_feed" || input.trailer_choice) {
       const refusal = trailerChoiceShapeRefusal(input.trailer_choice);
       if (refusal) return { kind: "error", status: 422, payload: refusal };
+    }
+    // ENG-07 / G11 (owner): a live booking refuses a city-only stop. Pickup/delivery must carry a street
+    // (address_line1) or a Google place id so geocode/fence can bind. Drafts + historical_backfill exempt
+    // (backfill may still land city-only until the resolver/sweep fills them; live Book cannot create more).
+    if (source === "live_feed") {
+      for (const s of input.stops ?? []) {
+        if (s.stop_type !== "pickup" && s.stop_type !== "delivery") continue;
+        const street = String(s.address_line1 ?? "").trim();
+        const place = String(s.google_place_id ?? "").trim();
+        if (!street && !place) {
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "stop_street_or_google_place_required",
+              message: `Stop ${s.sequence_number} (${s.stop_type}) needs a street address or Google place — city-only is refused`,
+              sequence_number: s.sequence_number,
+              stop_type: s.stop_type,
+            },
+          };
+        }
+      }
     }
   }
   return null;
@@ -3391,12 +3459,36 @@ export async function createLoadWithFullSideEffects(
       trailerIdForInsert = (trailerRows[0]?.id as string | undefined) ?? null;
     }
 
-    const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
-      client,
-      input.operating_company_id,
-      input.load_trailer_equipment_id,
-      trailerEquipmentHints(input, resolvedTrailerChoice ?? null, trailerIdForInsert)
-    );
+    let loadTrailerEquipmentId: string;
+    try {
+      loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
+        client,
+        input.operating_company_id,
+        input.load_trailer_equipment_id,
+        trailerEquipmentHints(input, resolvedTrailerChoice ?? null, trailerIdForInsert)
+      );
+    } catch (err) {
+      // ENG-22: Book Load refuses DRY_VAN (etc.) booked against a company Reefer/Flatbed — never silent mismatch.
+      if ((err as { code?: string; message?: string }).code === "trailer_equipment_type_mismatch"
+          || (err as Error).message === "trailer_equipment_type_mismatch") {
+        const e = err as { booked_code?: string; trailer_code?: string; equipment_number?: string };
+        return {
+          kind: "error",
+          status: 422,
+          payload: {
+            error: "trailer_equipment_type_mismatch",
+            booked_code: e.booked_code ?? null,
+            trailer_code: e.trailer_code ?? null,
+            equipment_number: e.equipment_number ?? null,
+            message: `Booked trailer type ${e.booked_code ?? "?"} does not match company trailer ${e.equipment_number ?? "?"} (${e.trailer_code ?? "?"})`,
+          },
+        };
+      }
+      if ((err as Error).message === "load_trailer_type_required") {
+        return { kind: "error", status: 422, payload: { error: "load_trailer_type_required" } };
+      }
+      throw err;
+    }
 
     // GO-10 REV-B / F4 — the assertLoadNumberAvailable() pre-check above is a fast path only; it
     // cannot close the race between the check and this INSERT. SAVEPOINT so a genuine collision

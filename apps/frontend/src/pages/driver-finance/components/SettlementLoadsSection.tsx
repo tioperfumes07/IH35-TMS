@@ -6,11 +6,11 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents, formatUsdRateTable } from "../../../lib/money";
 import type { TourLeg } from "../../../api/tourReadout";
 
 const DASH = "—";
-const miles = (m: number | null) => (m == null ? DASH : m.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+const miles = (m: number | null) => (m == null ? DASH : formatQuantityTable(m, 1));
 const rateFor = (leg: TourLeg) => (leg.miles_practical && leg.miles_practical > 0 ? leg.revenue_cents / leg.miles_practical / 100 : null);
 
 /**
@@ -59,7 +59,7 @@ export function SettlementLoadsSection({
       label: "Rate",
       sortable: false,
       cellClass: "text-right tabular-nums",
-      render: (l) => (rateFor(l) == null ? DASH : `$${rateFor(l)!.toFixed(4)}`),
+      render: (l) => (rateFor(l) == null ? DASH : formatUsdRateTable(rateFor(l), 4)),
     },
     {
       key: "revenue_cents",

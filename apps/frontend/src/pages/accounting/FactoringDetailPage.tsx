@@ -17,7 +17,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -253,7 +253,7 @@ export function FactoringDetailPage() {
       />
 
       <div className="grid gap-3 md:grid-cols-2">
-        <DataPanel title="Header" data-testid="factoring-advance-linkage-panel">
+        <BoardSection title="Header" testId="factoring-advance-linkage-panel">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Factor</span>
             <span className="text-xs text-gray-900">
@@ -300,9 +300,9 @@ export function FactoringDetailPage() {
             <span className="text-xs text-gray-600">Batch ref</span>
             <span className="text-xs text-gray-900">{detail.submission_batch_ref ?? "-"}</span>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
 
-        <DataPanel title="Amounts">
+        <BoardSection title="Amounts" testId="factoring-advance-amounts-board">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Invoice Total</span>
             <span className="text-xs text-gray-900">{totals?.total}</span>
@@ -327,10 +327,10 @@ export function FactoringDetailPage() {
             <span className="text-xs text-gray-600">Release</span>
             <span className="text-xs text-gray-900">{totals?.release}</span>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
       </div>
 
-      <DataPanel title="Linked invoices">
+      <BoardSection title="Linked invoices" testId="factoring-advance-invoices-board">
         <ParityTable<FactoringInvoiceRow>
           columns={invoiceColumns}
           rows={detail.invoices}
@@ -344,9 +344,9 @@ export function FactoringDetailPage() {
           sortDirection={sortDirection}
           onSortChange={onSortChange}
         />
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Reserve movements & interest (JE reverse)">
+      <BoardSection title="Reserve movements & interest (JE reverse)" testId="factoring-advance-reserve-board">
         {packetQuery.isLoading ? (
           <p className="text-xs text-[#6B7280]">Loading advance packet…</p>
         ) : packetQuery.isError ? (
@@ -412,7 +412,7 @@ export function FactoringDetailPage() {
             </div>
           </div>
         )}
-      </DataPanel>
+      </BoardSection>
 
       {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}
 

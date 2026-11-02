@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -259,12 +260,9 @@ export function UnifiedTimelinePlanner() {
 
   if (!operatingCompanyId) {
     return (
-      <div
-        data-testid="dispatch-timeline-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the unified timeline planner.
-      </div>
+      <BoardSection title="Unified timeline" testId="dispatch-timeline-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the unified timeline planner.</p>
+      </BoardSection>
     );
   }
 

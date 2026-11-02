@@ -11,12 +11,14 @@ import { useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateQboList } from "../../lib/formatDate";
+import { statusOptions } from "../../lib/statusListParams";
 
 function money(cents: number) {
   if (!cents) return "—";
@@ -47,24 +49,23 @@ type LoadsReportFilters = {
   driverId: string;
   unitId: string;
   trailerId: string;
-  status: string;
+  status: string[];
   tripType: string;
   factoringStatus: string;
 };
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "booked", label: "Booked" },
-  { value: "dispatched", label: "Dispatched" },
-  { value: "in_transit", label: "In transit" },
-  { value: "delivered", label: "Delivered" },
-  { value: "delivered_pending_docs", label: "Delivered pending docs" },
-  { value: "completed_docs_received", label: "Completed docs received" },
-  { value: "closed", label: "Closed" },
-  { value: "invoiced", label: "Invoiced" },
-  { value: "paid", label: "Paid" },
-];
+const STATUS_FILTER_OPTIONS = statusOptions({
+  draft: "Draft",
+  booked: "Booked",
+  dispatched: "Dispatched",
+  in_transit: "In transit",
+  delivered: "Delivered",
+  delivered_pending_docs: "Delivered pending docs",
+  completed_docs_received: "Completed docs received",
+  closed: "Closed",
+  invoiced: "Invoiced",
+  paid: "Paid",
+});
 
 export function LoadsReportPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -77,7 +78,7 @@ export function LoadsReportPage() {
     driverId: "",
     unitId: "",
     trailerId: "",
-    status: "",
+    status: [],
     tripType: "",
     factoringStatus: "",
   };
@@ -86,9 +87,11 @@ export function LoadsReportPage() {
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "loads", companyId, applied],
-    queryFn: () =>
-      getLoadsReport({
+    queryKey: ["reports", "loads", companyId, { ...applied, status: applied.status.join(",") }],
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const status = applied.status.length === 1 ? applied.status[0] : undefined;
+      const result = await getLoadsReport({
         operating_company_id: companyId,
         from: applied.start,
         to: applied.end,
@@ -97,10 +100,14 @@ export function LoadsReportPage() {
         driver_id: applied.driverId || undefined,
         unit_id: applied.unitId || undefined,
         trailer_id: applied.trailerId || undefined,
-        status: applied.status || undefined,
+        status,
         trip_type: applied.tripType || undefined,
         factoring_status: applied.factoringStatus || undefined,
-      }),
+      });
+      if (applied.status.length <= 1) return result;
+      const rows = (result.rows ?? []).filter((row) => applied.status.includes(String(row.status ?? "")));
+      return { ...result, rows };
+    },
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -334,20 +341,14 @@ export function LoadsReportPage() {
             className="h-7 w-full text-xs"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
-          <span className="font-semibold text-[#4B5563]">Status</span>
-          <SelectCombobox
-            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={staged.draft.status}
-            onChange={(e) => staged.setDraft((p) => ({ ...p, status: e.target.value }))}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value || "all"} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUS_FILTER_OPTIONS}
+          selected={staged.draft.status}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
+          allLabel="All statuses"
+          data-testid="loads-report-status-filter"
+        />
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Trip</span>
           <SelectCombobox

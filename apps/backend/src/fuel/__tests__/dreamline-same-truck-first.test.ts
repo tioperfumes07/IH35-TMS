@@ -15,7 +15,6 @@ vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: vi.fn(async ()
 vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
   resolveRoleAccountOptional: vi.fn(async (_c: unknown, _co: string, role: string) => (role === "fuel_card_payable_dreamline" ? "acct-2510" : null)),
 }));
-vi.mock("../../accounting/posting-line-writer.js", () => ({ insertPostingLineWithSpine: vi.fn(async () => undefined) }));
 vi.mock("../../accounting/posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting/journal-entry-type-resolver.js", () => ({ hasJournalEntryTypeColumn: vi.fn(async () => false), resolveJournalEntryTypeId: vi.fn() }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));

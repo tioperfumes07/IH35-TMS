@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { insertPostingLineWithSpine } from "../posting-line-writer.js";
+import { postBalancedSourceLine } from "../../../test-helpers/post-balanced-source-line.js";
 import { postingPartyFromDocumentSql, postingPartyTypeSql, postingPartyUuidSql } from "../posting-party.sql.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -41,7 +41,7 @@ describeIntegration("expense posting party from its document (443.112 #3, real P
 
       // Legacy shape: the posting is written while its expense does not exist yet, so the writer derives no entity.
       const legacyExpense = randomUUID();
-      const legacyPosting = await insertPostingLineWithSpine(db as never, {
+      const legacyPosting = await postBalancedSourceLine(db as never, {
         operating_company_id: opco, journal_entry_uuid: je, line_sequence: 1, account_id: account, debit_or_credit: "debit",
         amount_cents: 500, description: "TST legacy expense leg", source_transaction_type: "expense", source_transaction_id: legacyExpense,
       } as never);
@@ -57,7 +57,7 @@ describeIntegration("expense posting party from its document (443.112 #3, real P
          VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, 500, 'posted', 'posted', $4::uuid)`,
         [fwdExpense, opco, vendor, je]
       );
-      const fwdPosting = await insertPostingLineWithSpine(db as never, {
+      const fwdPosting = await postBalancedSourceLine(db as never, {
         operating_company_id: opco, journal_entry_uuid: je, line_sequence: 2, account_id: account, debit_or_credit: "credit",
         amount_cents: 500, description: "TST forward expense leg", source_transaction_type: "expense", source_transaction_id: fwdExpense,
       } as never);
@@ -66,7 +66,7 @@ describeIntegration("expense posting party from its document (443.112 #3, real P
       await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [other]);
       const foreignVendor = (await one(`INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1, 'TST 443.112 foreign vendor', 'other') RETURNING id::text AS id`, [other])).id;
       await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
-      const foreignPosting = await insertPostingLineWithSpine(db as never, {
+      const foreignPosting = await postBalancedSourceLine(db as never, {
         operating_company_id: opco, journal_entry_uuid: je, line_sequence: 3, account_id: account, debit_or_credit: "debit",
         amount_cents: 100, description: "TST foreign-doc leg", source_transaction_type: "expense", source_transaction_id: foreignExpense,
       } as never);

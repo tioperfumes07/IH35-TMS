@@ -25,7 +25,10 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
 
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("SELECT true AS ok FROM catalogs.accounts")) return { rows: [{ ok: true }] };
+      if (sql.includes("SELECT entry_date::text FROM accounting.journal_entries")) return { rows: [{ entry_date: "2026-05-22" }] };
+      if (sql.includes("FROM catalogs.accounts WHERE id = ANY")) return { rows: (values?.[0] as string[]).map(id => ({ id, is_postable: true })) };
       if (sql.includes("FROM banking.bank_transactions")) {
         return {
           rows: [

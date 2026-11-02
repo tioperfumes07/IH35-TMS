@@ -23,7 +23,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { resolveFillDriverAtTime } from "../fuel/fuel-load-at-time.js";
 import { ensureOpenPeriod } from "./posting-engine.service.js";
-import { insertPostingLineWithSpine } from "./posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js";
 import { reverseJournalEntryNoFlip } from "./journal-entries.service.js";
 
 type Queryable = {
@@ -311,9 +311,10 @@ export async function correctPostedExpense(
      RETURNING id::text`,
     [exp.journal_entry_id, co, `${original.memo ?? ""} (corrected: ${reason})`.slice(0, 500), input.actorUserId]
   )).rows[0]!;
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let seq = 1;
   for (const l of lines) {
-    await insertPostingLineWithSpine(client as never, {
+    postingLines.push({
       operating_company_id: co,
       journal_entry_uuid: newJe.id,
       line_sequence: seq++,
@@ -336,6 +337,7 @@ export async function correctPostedExpense(
       ...(l.link_type && l.link_id ? { spine_link: { linked_object_type: l.link_type, linked_object_id: l.link_id } } : {}),
     });
   }
+  await postValidatedPostingLinesInClientTx(client as never, postingLines);
   await client.query(`UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [newBatch.id, co]);
   await client.query(`UPDATE accounting.expenses SET journal_entry_id = $3::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [exp.id, co, newJe.id]);
 

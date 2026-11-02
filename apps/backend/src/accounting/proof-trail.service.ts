@@ -6,11 +6,14 @@ export const MONEY_PROOF_DOCUMENTS = {
   load: { table: "mdata.loads", sourceType: "load", labelSql: "load_number" },
   invoice: { table: "accounting.invoices", sourceType: "invoice", labelSql: "display_id" },
   bill: { table: "accounting.bills", sourceType: "bill", labelSql: "bill_number" },
-  expense: { table: "accounting.expenses", sourceType: "expense", labelSql: "expense_number" },
+  // adoptedJeColumn: the document stores the journal entry it posted through (or adopted — e.g. a Relay fill's expense adopting
+  // the fuel JE). Codex QA 11-02 14:03 CT: 325 of 1,189 live USMCA expenses with journal_entry_id were reported
+  // "No ledger posting exists" because the trail never followed this column.
+  expense: { table: "accounting.expenses", sourceType: "expense", labelSql: "expense_number", adoptedJeColumn: "journal_entry_id" },
   payment: { table: "accounting.payments", sourceType: "customer_payment", labelSql: "display_id" },
   bill_payment: { table: "accounting.bill_payments", sourceType: "bill_payment", labelSql: "COALESCE(check_number, reference_number)" },
-  credit_memo: { table: "accounting.credit_memos", sourceType: "credit_memo", labelSql: "display_id" },
-  vendor_credit: { table: "accounting.vendor_credits", sourceType: "vendor_credit", labelSql: "display_id" },
+  credit_memo: { table: "accounting.credit_memos", sourceType: "credit_memo", labelSql: "display_id", adoptedJeColumn: "journal_entry_id" },
+  vendor_credit: { table: "accounting.vendor_credits", sourceType: "vendor_credit", labelSql: "display_id", adoptedJeColumn: "journal_entry_id" },
   // LOAD-COSTS-COMPLETE item (4) (owner order 2026-09-04) -- an open driver bill has NO journal
   // entry yet by design (driver pay posts at settlement, not at bill creation); statusColumn lets
   // the frontend tell "not yet posted, expected" apart from a real posting gap.
@@ -33,9 +36,11 @@ export async function getMoneyProofTrail(
   const config = MONEY_PROOF_DOCUMENTS[documentType];
   const linkedType = "linkedType" in config ? config.linkedType : config.sourceType;
   const statusColumn = "statusColumn" in config ? config.statusColumn : null;
+  const adoptedJeColumn = "adoptedJeColumn" in config ? config.adoptedJeColumn : null;
   const document = await client.query(
     `SELECT id::text, trace_no::text, trace_key, ${config.labelSql}::text AS display_id,
-            ${statusColumn ? `${statusColumn}::text` : "NULL::text"} AS status
+            ${statusColumn ? `${statusColumn}::text` : "NULL::text"} AS status,
+            ${adoptedJeColumn ? `${adoptedJeColumn}::text` : "NULL::text"} AS adopted_journal_entry_id
        FROM ${config.table}
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1`,
@@ -44,6 +49,7 @@ export async function getMoneyProofTrail(
   if (!document.rows[0]) return null;
 
   const traceKey = String(document.rows[0].trace_key ?? "");
+  const adoptedJournalEntryId = document.rows[0].adopted_journal_entry_id == null ? null : String(document.rows[0].adopted_journal_entry_id);
   const postings = await client.query(
     `SELECT p.id::text AS posting_id, p.journal_entry_uuid::text AS journal_entry_id,
             je.memo, je.entry_date::text, je.status, p.account_id::text,
@@ -60,9 +66,11 @@ export async function getMoneyProofTrail(
       WHERE p.operating_company_id = $2::uuid
         AND ((p.source_transaction_type = $3::text AND p.source_transaction_id = $1::text)
           OR (p.source_trace_key = $4::text AND $4::text <> '')
-          OR (tsl.linked_object_type = $5::text AND tsl.linked_object_id = $1::text))
+          OR (tsl.linked_object_type = $5::text AND tsl.linked_object_id = $1::text)
+          -- the journal entry the document itself names (same company: p.operating_company_id = $2 above)
+          OR ($6::uuid IS NOT NULL AND p.journal_entry_uuid = $6::uuid))
       ORDER BY je.entry_date DESC, p.id`,
-    [documentId, operatingCompanyId, config.sourceType, traceKey, linkedType],
+    [documentId, operatingCompanyId, config.sourceType, traceKey, linkedType, adoptedJournalEntryId],
   );
 
   return {
@@ -72,6 +80,7 @@ export async function getMoneyProofTrail(
     status: document.rows[0].status == null ? null : String(document.rows[0].status),
     trace_no: String(document.rows[0].trace_no ?? ""),
     trace_key: traceKey,
+    adopted_journal_entry_id: adoptedJournalEntryId,
     postings: postings.rows.map((row) => ({
       ...row,
       amount_cents: Number(row.amount_cents ?? 0),

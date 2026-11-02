@@ -395,7 +395,9 @@ export function CashAdvanceRequestsPage() {
       ) : null}
 
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company to view requests.</p>
+        <BoardSection title="Cash advance requests" testId="cash-advance-requests-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view requests.</p>
+        </BoardSection>
       ) : pendingQuery.isError ? (
         <p className="text-xs text-red-600">Could not load requests.</p>
       ) : (

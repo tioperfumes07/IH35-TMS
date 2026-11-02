@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { InsuranceHomeBoard } from "./components/InsuranceHomeBoard";
 import { InsuranceModuleTabs } from "./InsuranceModuleTabs";
@@ -14,16 +15,23 @@ export function InsuranceLanding() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        Select an operating company to view insurance metrics.
+      <div className="min-w-0 space-y-3 overflow-x-hidden" data-testid="insurance-landing-page">
+        <PageHeader
+          breadcrumb={["Insurance"]}
+          title="Insurance"
+          subtitle="Policies, fleet coverage, claims, and lawsuits"
+        />
+        <BoardSection title="Insurance home" testId="insurance-landing-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view insurance metrics.</p>
+        </BoardSection>
       </div>
     );
   }
 
   return (
-    <div className="min-w-0 space-y-3 overflow-x-hidden">
+    <div className="min-w-0 space-y-3 overflow-x-hidden" data-testid="insurance-landing-page">
       <PageHeader
-        breadcrumb={["Insurance", "Landing"]}
+        breadcrumb={["Insurance"]}
         title="Insurance"
         subtitle="Policies, fleet coverage, claims, and lawsuits"
       />

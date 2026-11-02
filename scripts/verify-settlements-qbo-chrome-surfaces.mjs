@@ -29,9 +29,27 @@ const CHECKS = [
       /\+ Create[\s\S]*dataTestId="cash-advance-requests-filter-driver"[\s\S]*MoneyInput[\s\S]*ariaLabel="Cash advance amount"/,
   },
   {
+    // fill-not-shell — need-company early path uses BoardSection
+    name: "CashAdvanceRequestsPage need-company BoardSection",
+    file: "apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx",
+    pattern: /testId="cash-advance-requests-need-company"/,
+  },
+  {
     name: "SettlementCloseArrivalPage PaymentMethodPicker + CreateDriverModal",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /PaymentMethodPicker[\s\S]*CreateDriverModal|CreateDriverModal[\s\S]*PaymentMethodPicker/,
+  },
+  {
+    // fill-not-shell — need-company early path uses BoardSection
+    name: "SettlementCloseArrivalPage need-company BoardSection",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern: /testId="settlement-close-need-company"/,
+  },
+  {
+    // fill-not-shell — escrow board need-company uses BoardSection
+    name: "SettlementsEscrowBoard need-company BoardSection",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx",
+    pattern: /testId="settlements-escrow-need-company"/,
   },
   {
     name: "SettlementCloseArrivalPage + Create driver affordance",

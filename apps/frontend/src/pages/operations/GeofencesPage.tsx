@@ -92,6 +92,29 @@ export function GeofencesPage() {
   }, [locationKind, yardsQuery.data?.locations]);
 
   const geofences = geofencesQuery.data?.geofences ?? [];
+  // Codex QA 11-02: ?geofence_id= landed on page 1 of ~95 with only rowClassName — deep-linked
+  // record beyond page 1 was invisible. Pin the scoped row to the front so it is always on the
+  // first page, independent of default page size / sort, then scroll it into view.
+  const displayGeofences = useMemo(() => {
+    if (!highlightedGeofenceId) return geofences;
+    const idx = geofences.findIndex((g) => g.id === highlightedGeofenceId);
+    if (idx <= 0) return geofences;
+    const pinned = geofences[idx]!;
+    return [pinned, ...geofences.slice(0, idx), ...geofences.slice(idx + 1)];
+  }, [geofences, highlightedGeofenceId]);
+  const deepLinkGeofence = useMemo(
+    () => (highlightedGeofenceId ? geofences.find((g) => g.id === highlightedGeofenceId) ?? null : null),
+    [geofences, highlightedGeofenceId],
+  );
+  const [tablePage, setTablePage] = useState(1);
+  useEffect(() => {
+    if (highlightedGeofenceId) setTablePage(1);
+  }, [highlightedGeofenceId]);
+  useEffect(() => {
+    if (!highlightedGeofenceId || !deepLinkGeofence) return;
+    const el = document.querySelector(`[data-testid="geofence-row-${highlightedGeofenceId}"]`);
+    if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [highlightedGeofenceId, deepLinkGeofence, displayGeofences]);
 
   async function handleCreate() {
     if (!operatingCompanyId || !label.trim()) return;
@@ -290,6 +313,31 @@ export function GeofencesPage() {
 
       <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
         <h3 className="text-xs font-semibold text-[#0F1219]">Active geofences</h3>
+        {highlightedGeofenceId ? (
+          <div
+            className="mt-2 bg-[#F7F8FA] px-3 py-2 text-xs"
+            data-testid="geofence-deeplink-banner"
+          >
+            {deepLinkGeofence ? (
+              <p>
+                Opened from alert ·{" "}
+                <EntityLink kind="geofence" id={deepLinkGeofence.id} label={deepLinkGeofence.label} />
+                <span className="text-[#6B7280]">
+                  {" "}
+                  · {deepLinkGeofence.is_active ? "Active" : "Inactive"} ·{" "}
+                  {LOCATION_KIND_OPTIONS.find((o) => o.id === deepLinkGeofence.location_kind)?.label ??
+                    deepLinkGeofence.location_kind}
+                </span>
+              </p>
+            ) : geofencesQuery.isLoading ? (
+              <p className="text-[#6B7280]">Resolving geofence…</p>
+            ) : (
+              <p role="status" data-testid="geofence-deeplink-missing">
+                Geofence {highlightedGeofenceId} is not in this company roster (deleted or other company).
+              </p>
+            )}
+          </div>
+        ) : null}
         {geofencesQuery.isError ? (
           <ListErrorState
             title="Couldn't load geofences"
@@ -301,13 +349,18 @@ export function GeofencesPage() {
           <div className="mt-2">
             <ParityTable<Geofence>
               columns={geofenceColumns}
-              rows={geofences}
+              rows={displayGeofences}
               rowKey={(item) => item.id}
+              rowTestId={(item) => `geofence-row-${item.id}`}
               loading={geofencesQuery.isLoading}
               emptyText="No geofences configured yet. Use the form above to create one."
               storageKey="operations-geofences"
               exportFilename="geofences"
-              rowClassName={(item) => (highlightedGeofenceId === item.id ? "bg-[#F7F8FA]" : "")}
+              page={tablePage}
+              onPageChange={setTablePage}
+              rowClassName={(item) =>
+                highlightedGeofenceId === item.id ? "bg-[#FEF3C7] ring-1 ring-inset ring-[#F59E0B]" : ""
+              }
             />
           </div>
         )}

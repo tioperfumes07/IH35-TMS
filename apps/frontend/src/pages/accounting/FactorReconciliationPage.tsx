@@ -12,7 +12,7 @@ import {
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -140,7 +140,7 @@ export function FactorReconciliationPage() {
   return (
     <AccountingSubNavWrapper title="Factor reconciliation" subtitle="Statement-to-ledger reconciliation with Q11 tolerance and match-state drilldown.">
 
-      <DataPanel title="Import candidates (Faro statements)">
+      <BoardSection title="Import candidates (Faro statements)" testId="import-candidates-faro-statements-board">
         <div className="space-y-2">
           {candidatesQuery.isError ? (
             <ListErrorState
@@ -176,10 +176,10 @@ export function FactorReconciliationPage() {
             </div>
           ))}
         </div>
-      </DataPanel>
+      </BoardSection>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <DataPanel title="Recent reconciliation runs">
+        <BoardSection title="Recent reconciliation runs" testId="recent-reconciliation-runs-board">
           <div className="space-y-2">
             {runsQuery.isError ? (
               <ListErrorState
@@ -210,9 +210,9 @@ export function FactorReconciliationPage() {
               </button>
             ))}
           </div>
-        </DataPanel>
+        </BoardSection>
 
-        <DataPanel title="Run detail items">
+        <BoardSection title="Run detail items" testId="run-detail-items-board">
           {!selectedRun ? <div className="text-xs text-gray-500">Select a reconciliation run.</div> : null}
           {selectedRun ? (
             <div className="space-y-2">
@@ -241,7 +241,7 @@ export function FactorReconciliationPage() {
               ) : null}
             </div>
           ) : null}
-        </DataPanel>
+        </BoardSection>
       </div>
     </AccountingSubNavWrapper>
   );

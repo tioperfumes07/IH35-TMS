@@ -43,7 +43,6 @@ import crypto from "node:crypto";
 import { DateTime } from "luxon";
 import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { insertPostingLineWithSpine } from "../accounting/posting-line-writer.js";
 import { ensureOpenPeriod } from "../accounting/posting-engine.service.js";
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../accounting/journal-entry-type-resolver.js";
 import { FUEL_CARD_DISCOUNT_ITEM } from "../accounting/bank-recon/match.service.js";

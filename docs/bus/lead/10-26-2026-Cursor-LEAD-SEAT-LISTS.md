@@ -8,6 +8,8 @@ Merge: `node scripts/fast-merge.mjs --branch <b> --title "FINDING: …" --body-f
 3. **miles_driven_actual** — **45 / 198** (was 26/194); source=odometer; remaining NULL = manual stops / far dwell.
 
 ## CODEX (exact — remaining)
+**B1–B4 + C2 DONE** (#27882/#27885/#27886/#27889/#27895). Do not redo.
+- **ENGINE WAVE ASAP** — read `docs/bus/lead/10-26-2026-Codex-ENGINE-WAVE-ASAP.md` (WAVE 0 measure-close then WAVE 1 money).
 - **B1** Match popup type filter includes **Checks** (canonical check docs); suggested check matchable; never auto-match. Guard+selftest.
 - **B2 DONE** — #27885 typeable multi-select filter.
 - **B3 DONE** — #27886 shared modal/drawer open-order layers.

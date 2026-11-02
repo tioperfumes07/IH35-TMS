@@ -1,21 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
   const cls = String(prediction.confidence_class ?? "");
-  const at = prediction.predicted_arrival_at ? new Date(String(prediction.predicted_arrival_at)).toLocaleString() : "";
+  const at = prediction.predicted_arrival_at ? formatDateTimeUS(String(prediction.predicted_arrival_at)) : "";
   const variance = prediction.variance_minutes != null ? `${prediction.variance_minutes}m variance` : "";
   return [cls, at, variance].filter(Boolean).join(" · ");
 }
@@ -32,8 +34,7 @@ function moneyCents(v: unknown): string {
 
 function fmtWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isFinite(d.getTime()) ? d.toLocaleString() : "—";
+  return formatDateTimeUS(iso) || "—";
 }
 
 function place(city?: string | null, state?: string | null): string {
@@ -132,7 +133,7 @@ export function AtRiskQueuePage() {
         label: "Loaded mi",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.loaded_miles == null ? "—" : num(load.loaded_miles).toLocaleString(undefined, { maximumFractionDigits: 1 })),
+        render: (load) => (load.loaded_miles == null ? "—" : formatQuantityTable(num(load.loaded_miles), 1, 0)),
       },
       {
         key: "rate_total_cents",
@@ -146,7 +147,7 @@ export function AtRiskQueuePage() {
         label: "RPM",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.rpm == null ? "—" : num(load.rpm).toFixed(2)),
+        render: (load) => (load.rpm == null ? "—" : formatUsd(num(load.rpm))),
       },
       {
         key: "invoice_status",
@@ -173,7 +174,7 @@ export function AtRiskQueuePage() {
         label: "Hours over",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.hours_over == null ? "—" : num(load.hours_over).toFixed(1)),
+        render: (load) => (load.hours_over == null ? "—" : formatQuantityTable(num(load.hours_over), 1)),
       },
       {
         key: "promised_at",
@@ -194,18 +195,22 @@ export function AtRiskQueuePage() {
         {loads.length} loads shown · matches tile
       </span>
     ),
-    loaded_miles: <span className="tabular-nums">{milesSum.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>,
+    loaded_miles: <span className="tabular-nums">{formatQuantityTable(milesSum, 1, 0)}</span>,
     rate_total_cents: <span className="tabular-nums">{moneyCents(rateSumCents)}</span>,
-    rpm: <span className="tabular-nums">{milesSum > 0 ? weightedRpm.toFixed(2) : "—"}</span>,
+    rpm: <span className="tabular-nums">{milesSum > 0 ? formatUsd(weightedRpm) : "—"}</span>,
   };
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="At risk" testId="at-risk-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (
     <div data-testid="dispatch-at-risk-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="At-Risk / Late Queue"
         subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal. Tile value equals this table's row count (union, not a sum)."
         actions={

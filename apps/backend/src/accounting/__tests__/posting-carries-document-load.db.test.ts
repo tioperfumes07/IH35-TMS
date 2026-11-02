@@ -17,7 +17,8 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
-import { insertPostingLineWithSpine, PostingLoadOfAnotherCompanyError } from "../posting-line-writer.js";
+import { PostingLoadOfAnotherCompanyError } from "../posting-line-writer.js";
+import { postBalancedSourceLine } from "../../../test-helpers/post-balanced-source-line.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -96,7 +97,7 @@ describeIntegration("postings carry their source document's load (443.110 G8, re
       let seq = 0;
       const post = async (type: string, id: string, extra: Record<string, unknown> = {}) => {
         seq += 1;
-        const postingId = await insertPostingLineWithSpine(db as never, {
+        const postingId = await postBalancedSourceLine(db as never, {
           operating_company_id: opco,
           journal_entry_uuid: je,
           line_sequence: seq,

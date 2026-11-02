@@ -32,6 +32,7 @@ export type FuelTimeDerivation = {
   local_date: string;
   unit_id: string | null;
   unit_number: string | null;
+  vendor_id: string | null;
   vendor_name: string | null;
   transaction_at_derived: string | null;
   state_derived: string | null;
@@ -134,11 +135,12 @@ export async function computeFuelTimeDerivations(
     gallons: number | null;
     unit_id: string | null;
     unit_number: string | null;
+    vendor_id: string | null;
     vendor_name: string | null;
     same_stamp_count: number;
   }>(
     `SELECT ft.id::text, ft.transaction_at::text, ft.fuel_type, ft.gallons::float8 AS gallons,
-            ft.unit_id::text, u.unit_number, v.vendor_name,
+            ft.unit_id::text, u.unit_number, ft.vendor_id::text AS vendor_id, v.vendor_name,
             (SELECT count(*) FROM fuel.fuel_transactions x
               WHERE x.operating_company_id = ft.operating_company_id AND x.transaction_at = ft.transaction_at
                 AND x.voided_at IS NULL)::int AS same_stamp_count
@@ -174,6 +176,7 @@ export async function computeFuelTimeDerivations(
       local_date: localDate,
       unit_id: r.unit_id,
       unit_number: r.unit_number,
+      vendor_id: r.vendor_id,
       vendor_name: r.vendor_name,
     });
     if (unitId === "none") {

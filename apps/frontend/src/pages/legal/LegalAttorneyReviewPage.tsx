@@ -53,7 +53,7 @@ export function LegalAttorneyReviewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
+      <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
       <LegalModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

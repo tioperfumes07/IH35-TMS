@@ -31,7 +31,7 @@ function inspect(value) {
     [/kind="unit"/, "policy unit reverse drill is missing"],
     [/kind="claim"/, "policy claim reverse drill is missing"],
     [/kind="customer"/, "policy customer reverse drill is missing"],
-    [/kind="lawsuit"/, "policy lawsuit reverse drill is missing"],
+    [/kind="matter"/, "policy lawsuit reverse drill is missing"],
   ];
   for (const [pattern, message] of checks) {
     const match = value.match(pattern);

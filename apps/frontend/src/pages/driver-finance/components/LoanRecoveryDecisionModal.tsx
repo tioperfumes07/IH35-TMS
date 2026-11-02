@@ -3,6 +3,7 @@ import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { OutstandingLoanDecisionDetails } from "../../../api/driverFinance";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 /**

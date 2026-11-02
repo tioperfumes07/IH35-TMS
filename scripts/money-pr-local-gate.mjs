@@ -1142,7 +1142,9 @@ const LIVE_DOMAIN_GUARDS = [
   ["verify-driver-receivables-post-on-creation", ["db/migrations/", "apps/backend/src/", "scripts/verify-driver-receivables-post-on-creation.mjs"]],
   ["verify-driver-advance-posts-to-drivers-own-subaccount", ["apps/backend/src/", "scripts/verify-driver-advance-posts-to-drivers-own-subaccount.mjs"]],
   // ROUND 373.3 (CC-1) — every posting names its document; a posting without a spine link is refused at COMMIT.
-  ["verify-every-posting-has-its-spine-link", ["db/migrations/", "apps/backend/src/accounting/", "scripts/verify-every-posting-has-its-spine-link.mjs"]],
+  // ENG-06: canonical full gate includes BOTH live arms. Trigger coverage is the
+  // union of the former entries; no live guard or assertion is retired.
+  ["verify-every-posting-has-a-spine-link", ["db/migrations/", "apps/backend/src/accounting/", "scripts/ops/", "scripts/verify-every-posting-has-a-spine-link.mjs", "scripts/verify-every-posting-has-its-spine-link.mjs"]],
   // ROUND 380.2 (CC-1) — no migration on disk is neither applied nor held.
   ["verify-no-migration-is-neither-applied-nor-held", ["db/migrations/", "scripts/verify-no-migration-is-neither-applied-nor-held.mjs"]],
   // ROUND 380.3 (CC-1) — Samsara history is never an operational path into another company.
@@ -1531,19 +1533,6 @@ const LIVE_DOMAIN_GUARDS = [
   [
     "verify-fuel-loves-prices-daily-table-and-report-guard",
     ["apps/backend/src/fuel/", "apps/backend/src/sync/", "apps/backend/src/reports/fuel-price-variance.routes.ts"],
-  ],
-  // 00-ROOT-CAUSE-THE-SPINE (CC-2): every posting with a live document carries its spine link (ceiling 0); postings
-  // stranded by a purge (document deleted, GL kept) are a committed shrink-only ceiling that must net to zero.
-  [
-    "verify-every-posting-has-a-spine-link",
-    [
-      "apps/backend/src/accounting/posting-engine.service.ts",
-      "apps/backend/src/accounting/void.service.ts",
-      "apps/backend/src/accounting/accounting-spine-emit.ts",
-      "scripts/ops/",
-      "db/migrations/",
-      "scripts/verify-every-posting-has-a-spine-link.mjs",
-    ],
   ],
   // E1 (#22293): every directory that calls createJournalEntry(OnClient), plus the guard's baseline.
   [

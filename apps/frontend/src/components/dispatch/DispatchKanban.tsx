@@ -40,6 +40,7 @@ import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, to
 import { InlineStatusPicker } from "./InlineStatusPicker";
 import { BACKLOG_STATUSES, TERMINAL_EXIT_STATUSES } from "../../lib/load-status";
 import { FORM_LABEL_CLASS } from "../forms/inputClass"
+import { formatQuantityTable } from "../../lib/money";
 
 function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
   return (node: T | null) => {
@@ -619,7 +620,7 @@ function loadModeLabel(load: KanbanLoad): string {
 
 function formatWeight(weightLbs?: number | null): string {
   if (weightLbs == null || weightLbs <= 0) return "—";
-  return `${weightLbs.toLocaleString("en-US")} lbs`;
+  return `${formatQuantityTable(weightLbs)} lbs`;
 }
 
 // DISPATCH-UI-REFINE-2 ITEM 2 — UNIT-FIRST cards. Any load that has a unit shows the UNIT NUMBER as

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { formatUsd, formatUsdTable } from "../../../lib/money";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { forfeitEscrow, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
+import { forfeitEscrow, getEscrowClauseKpi, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
 import { useAuth } from "../../../auth/useAuth";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -69,6 +69,14 @@ export function EscrowRecordTab() {
   const escrowQuery = useQuery({
     queryKey: ["safety", "escrow-records", operatingCompanyId],
     queryFn: () => listEscrowRecords(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  // SAF-B08: KPI counts all active drivers + signed-clause count across the full roster,
+  // not just the subset with escrow balances that listEscrowRecords iterates.
+  const escrowKpiQuery = useQuery({
+    queryKey: ["safety", "escrow-clause-kpi", operatingCompanyId],
+    queryFn: () => getEscrowClauseKpi(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -142,9 +150,11 @@ export function EscrowRecordTab() {
   // SAF-ORPH-03: surface per-driver timeline failures — silent catch left the Forfeiture Audit empty forever.
   const timelineErrors = escrowQuery.data?.timeline_errors ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
-  // SAF-B08: has_signed_clause is server-derived from legal.contract_instances — surface it so
-  // operators see WHY Forfeit is blocked. Do not invent a signed row; count is from live records.
-  const signedClauseCount = useMemo(() => rows.filter((r) => r.has_signed_clause).length, [rows]);
+  // SAF-B08: KPI totals come from the full active-driver roster via escrowKpiQuery, not from the
+  // filtered table rows. The table only includes drivers with escrow balances; the KPI denominator
+  // must be all active drivers (e.g. "2 of 165 signed").
+  const kpiTotalDrivers = escrowKpiQuery.data?.total_active_drivers ?? rowsAll.length;
+  const kpiSignedCount = escrowKpiQuery.data?.signed_clause_count ?? rowsAll.filter((r) => r.has_signed_clause).length;
 
   const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
     () => [
@@ -222,9 +232,9 @@ export function EscrowRecordTab() {
     <div className="space-y-3" data-testid="escrow-record-tab">
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
-        {rows.length > 0 ? (
+        {kpiTotalDrivers > 0 ? (
           <p className="mt-1 text-xs text-[#6B7280]" data-testid="escrow-signed-clause-summary">
-            Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers, based on signed contract records.
+            Signed escrow clause on file: {kpiSignedCount} of {kpiTotalDrivers} drivers, based on signed contract records.
             Forfeit stays blocked until the clause is signed.
           </p>
         ) : null}

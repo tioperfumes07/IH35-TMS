@@ -2,7 +2,7 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 import crypto from "node:crypto";
 import { postingPartyFromDocumentSql, postingPartyTypeSql, postingPartyNameSql, postingPartyUuidSql } from "./posting-party.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -278,6 +278,7 @@ export async function createJournalEntryOnClient(
   const header = headerRes.rows[0];
   if (!header?.id) throw new Error("journal_entry_insert_failed");
 
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let lineSequence = 1;
   for (const posting of input.postings) {
     // ROUND 393.2 — the one posting-line writer: the line and its spine row together. BLOCK 2: every money insert
@@ -291,7 +292,7 @@ export async function createJournalEntryOnClient(
     // old pattern of stamping the source after the insert (afterInsertBeforeCommit) is gone; the factoring lifecycle,
     // its only user, now passes its source in. The refusal keeps this service's own error code.
     if (!sourceType || !sourceId) throw new Error("journal_entry_posting_source_required");
-    await insertPostingLineWithSpineIfNew(client, {
+    postingLines.push({
       operating_company_id: input.operating_company_id,
       journal_entry_uuid: header.id,
       line_sequence: lineSequence,
@@ -319,6 +320,7 @@ export async function createJournalEntryOnClient(
     });
     lineSequence += 1;
   }
+  await postValidatedPostingLinesInClientTx(client, postingLines, { skipOnIdempotencyConflict: true });
 
   // CODER-12 audit-spine: the immutable audit event for this posting is the appendCrudAudit
   // ("accounting.journal_entry.created") call below -> audit.audit_events (the canonical, DB-trigger

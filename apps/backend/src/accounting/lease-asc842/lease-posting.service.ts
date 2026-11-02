@@ -22,7 +22,7 @@
 //
 // FLAG GATE: LEASE_GL_POSTING_ENABLED (default OFF) -> NO-OP, zero JEs / financial rows.
 
-import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "../posting-engine.service.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -261,12 +261,13 @@ async function postLeaseJournalEntry(
   const journalEntryId = headerRes.rows[0]?.id;
   if (!journalEntryId) throw new Error("lease_journal_entry_insert_failed");
 
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let lineSequence = 1;
   for (const line of input.lines) {
     // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction:
     // source = this posting kind on its lease contract; spine = lease_contract / lease_source (as before); the shared
     // idempotency key keeps a re-post a no-op. Line-specific links below are additional cross-references.
-    const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+    postingLines.push({
       operating_company_id: input.operatingCompanyId,
       journal_entry_uuid: journalEntryId,
       line_sequence: lineSequence,
@@ -280,6 +281,11 @@ async function postLeaseJournalEntry(
       relationship_role: "lease_source",
       spine_link: { linked_object_type: "lease_contract", linked_object_id: input.leaseContractId },
     });
+    lineSequence += 1;
+  }
+  const postingIds = await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
+  for (const [index, line] of input.lines.entries()) {
+    const postingId = postingIds[index];
     if (postingId) {
       for (const link of line.links) {
         await writeTransactionSourceLink(client as never, {
@@ -291,7 +297,6 @@ async function postLeaseJournalEntry(
         });
       }
     }
-    lineSequence += 1;
   }
 
   const debitTotal = input.lines.filter((l) => l.debit_or_credit === "debit").reduce((s, l) => s + l.amount_cents, 0);

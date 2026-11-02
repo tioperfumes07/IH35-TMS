@@ -139,14 +139,17 @@ export function FaultCodeAlertsPage() {
   return (
     <div className="space-y-4 p-4" data-testid="fault-code-alerts-page">
       <PageHeader
+        backHref="/maintenance"
+        breadcrumb={["Maintenance", "Faults"]}
         title="Faults"
         subtitle="Samsara fault codes by unit and driver-at-the-time — open alerts, history, and linked auto work orders."
+        actions={
+          <Link to="/maintenance" className="text-xs text-[#4B5563] underline">
+            Maintenance home
+          </Link>
+        }
       />
       <div className="flex flex-wrap gap-2 text-xs">
-        <Link to="/maintenance" className="text-[#4B5563] underline">
-          Maintenance home
-        </Link>
-        <span className="text-gray-400">·</span>
         <Link to="/maintenance/fault-drafts" className="text-[#4B5563] underline">
           Fault drafts
         </Link>

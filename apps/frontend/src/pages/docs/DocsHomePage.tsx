@@ -5,6 +5,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getDocsFoundationDetail, getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -338,9 +339,11 @@ export function DocsHomePage() {
       />
 
       {!companyId ? (
-        <p className="text-xs text-gray-500" data-testid="docs-home-need-company">
-          Select an operating company to view documents and upload attachments.
-        </p>
+        <BoardSection title="Documents" testId="docs-home-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to view documents and upload attachments.
+          </p>
+        </BoardSection>
       ) : null}
 
       {uploadOpen && companyId ? (

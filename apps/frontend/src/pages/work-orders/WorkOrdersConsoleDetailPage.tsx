@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Modal } from "../../components/Modal";
 import {
   appendWorkOrderPhotoKey,
@@ -18,7 +18,6 @@ import {
 } from "../../api/workOrdersConsole";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
-import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { SimpleCombobox as Combobox } from "../../components/Combobox";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
@@ -29,7 +28,6 @@ import { userFacingApiError } from "../../lib/api-error-message";
 
 export function WorkOrdersConsoleDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -173,24 +171,12 @@ export function WorkOrdersConsoleDetailPage() {
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#4B5563] hover:text-[#0F1219] hover:underline"
-          onClick={() => navigate("/work-orders")}
-        >
-          <span aria-hidden="true">←</span>
-          <span>Back</span>
-        </button>
-        <Breadcrumb
-          items={[
-            { label: "Work orders", href: "/work-orders" },
-            { label: entityLabel(wo?.display_id, id, "Work order") },
-          ]}
-        />
-      </div>
-
-      <PageHeader title={title} subtitle={String(wo?.description ?? "").slice(0, 160)} />
+      <PageHeader
+        backHref="/work-orders"
+        breadcrumb={["Work orders", entityLabel(wo?.display_id, id, "Work order")]}
+        title={title}
+        subtitle={String(wo?.description ?? "").slice(0, 160)}
+      />
 
       {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">Select a company.</div> : null}
 

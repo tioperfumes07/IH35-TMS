@@ -5,8 +5,12 @@
  * WRITES (per GPS-verified stop, idempotent):
  *   1. telematics.unit_stop_events — the dwell (source 'load_stop_gps_dwell', load_id_at_time = the load); an existing row for
  *      the same unit + start/end (the stop writer's own) is reused, never duplicated (two natural-key unique indexes).
- *   2. mdata.load_stops.actual_stop_event_id — linked ONLY when NULL. The stop's actual times, its stamp source/precision and
- *      its document address are NEVER changed (detention reads actual_departure_at — dispatch/detention.service.ts).
+ *   2. mdata.load_stops.actual_stop_event_id — linked ONLY when NULL and the stop is NOT stamped 'date_only'. The stop's actual
+ *      times, its stamp source/precision and its document address are NEVER changed (detention reads actual_departure_at —
+ *      dispatch/detention.service.ts). load_stops_actual_stamp_precision_check requires a 'date_only' stop to carry NO event
+ *      (its times come from the document date, not tracking) — linking one raised that CHECK and failed the whole run
+ *      (Sentry IH35-TMS-PROD-5Y, 19 events 11-01/11-02; 326 live 'date_only' stops). Such a stop keeps its document stamp; its
+ *      GPS evidence still lives in steps 1, 3 and 4, which is what the driven-miles geofence path reads.
  *   3. geo.geofences — the stop's GPS-verified fence (load-<id>-stop-<seq>-gps) at the dwell point, through the single
  *      minter module (bindVerifiedStopFence); the document fence is left as it is.
  *   4. geo.geofence_events — the unit's stored fixes over the dwell window (+- 2 h) replayed through the canonical detector
@@ -40,7 +44,10 @@ export async function persistStopDwellEvidence(
   // One dwell per stop (arrival and departure resolve to the same nearest dwell).
   const byStop = new Map<string, StopDwellEvidence>();
   for (const e of evidence) if (!byStop.has(e.stop_id)) byStop.set(e.stop_id, e);
-  for (const e of byStop.values()) {
+  // Sort by stop_id ascending: consistent lock order prevents deadlock with stampStopsFromGeofenceEvents
+  // which also UPDATEs mdata.load_stops rows (in stop_id order from its DISTINCT ON query).
+  const sorted = [...byStop.values()].sort((a, b) => (a.stop_id < b.stop_id ? -1 : 1));
+  for (const e of sorted) {
     out.stops += 1;
     // 1. the dwell as a stop event (reuse the stop writer's row for the same unit + start/end)
     const ins = await client.query<{ id: string }>(
@@ -68,12 +75,14 @@ export async function persistStopDwellEvidence(
         [operatingCompanyId, e.unit_id, e.hit.started_at, e.hit.ended_at]
       )).rows[0]?.id ?? null;
     }
-    // 2. link the evidence on the stop, only when the stop carries none (times / source / precision untouched)
+    // 2. link the evidence on the stop, only when the stop carries none and is not a 'date_only' document stamp
+    //    (times / source / precision untouched; the precision CHECK forbids an event on a 'date_only' stop)
     if (eventId) {
       const linked = await client.query<{ id: string }>(
         `UPDATE mdata.load_stops s SET actual_stop_event_id = $2::uuid
            FROM mdata.loads l
           WHERE s.id = $1::uuid AND l.id = s.load_id AND l.operating_company_id = $3::uuid AND s.actual_stop_event_id IS NULL
+            AND s.actual_stamp_precision IS DISTINCT FROM 'date_only'
           RETURNING s.id::text`,
         [e.stop_id, eventId, operatingCompanyId]
       );

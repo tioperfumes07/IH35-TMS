@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 05:15 PM CT · CODE-COMPLETE MODE · ENGINE ENG-01..63
+# IH35-TMS — Lead pending register (USMCA) · 10-26-2026 07:30 AM CT · CODE-COMPLETE MODE · ENGINE ENG-01..63 (Lead remeasure WAVE 0 started)
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -242,79 +242,79 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 236 | ENG | Reports | ENG-19 Company settlement report + Trip Profitability counted fuel twice (fuel fill's own expense); 61 of 81 settlements negative -> 23; net -$177,024.87 -> +$113,862.11; trips negative 66 of 92 -> 25 | LEAD | 443.321 | CODED-QUEUED | 2a4fbbc2d3; parity 81/81 to the cent; guard red on old engines |
 | 237 | ENG | Ledger | AUTH-461 / AUTH-462 recorded in OWNER-AUTHORIZATIONS.md with owner quotes and audit counts | LEAD | AUTH ledger | CODED-QUEUED | claude/lead-auth-461-462-ledger |
 | 238 | ENG | Dispatch | Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301) | OWNER | ENG-21 | OPEN | owner gives the delivery street address; Lead enters it |
-| 239 | ENG | Settlements | ENG-01 P-0113/P-0117/P-0119 closed but never posted (posted_at NULL, 0 postings); ledger ratchet 1 -> live 3; blocks #27478. DB refusal: no close without posting | CC-1 | 443.322 | OPEN |  |
-| 240 | ENG | Driver pay | ENG-02 driver_pay_cents reads the accrued A/P bill, not driver_bills.gross (13574 $1,538.81 vs $957.55) | CC-1 | 443.322 | OPEN |  |
-| 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | OPEN |  |
-| 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | OPEN |  |
-| 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | OPEN |  |
-| 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | OPEN |  |
-| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | OPEN |  |
-| 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | OPEN |  |
-| 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | OPEN | reads docs/bus/lead/ENGINE-REGISTER.json |
-| 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | OPEN |  |
-| 249 | ENG | Dispatch | ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one — $30,170.00 revenue overstated in reports; rate change must replace, not add | CC-2 | 443.323 | OPEN |  |
-| 250 | ENG | Settlements | ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account | CC-2 | 443.323 | OPEN |  |
-| 251 | ENG | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | 443.323 | OPEN |  |
-| 252 | ENG | Driver pay | ENG-14 G9: 1 of 209 driver bills without a unit | CC-2 | 443.323 | OPEN |  |
-| 253 | ENG | Accounting | ENG-15 maintenance bill writer must stamp linked_work_order_uuid + source | CC-2 | 443.323 | OPEN |  |
-| 254 | ENG | Accounting | ENG-16 Check Creator not commissioned: check_number_registry 0 rows (starting number from owner) | CC-2 | 443.323 | OPEN |  |
-| 255 | ENG | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | 443.323 | OPEN |  |
-| 256 | ENG | Engine | ENG-18 prepare-commit-msg hook (amend vs new commit) | CC-2 | 443.323 | OPEN |  |
-| 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | OPEN |  |
+| 239 | ENG | Settlements | ENG-01 P-0113/P-0117/P-0119 closed but never posted (posted_at NULL, 0 postings); ledger ratchet 1 -> live 3; blocks #27478. DB refusal: no close without posting | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: closed_unposted=0; P-0113/17/19 posted |
+| 240 | ENG | Driver pay | ENG-02 driver_pay_cents reads the accrued A/P bill, not driver_bills.gross (13574 $1,538.81 vs $957.55) | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 13574 gross=95755; rollup uses gross_amount_cents |
+| 241 | ENG | Settlements | ENG-03 escrow_ledger 58 rows, 0 with load_id — writer stamps the load; back-fill | CC-1 | 443.322 | DONE-LIVE | LIVE 10-26: 62/62 load_id |
+| 242 | ENG | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | 443.322 | PARTIAL | writer never credits 2170; guard 18809; dry-run 3/12 propose_reclass ($705.97); residual until Lead applies |
+| 243 | ENG | Engine | ENG-05 swallowed DB errors grew 122 -> 125 — fix the 3 new, baseline back to 122 | CC-1 | 443.322 | DONE-LIVE | tip swallow 122/122 |
+| 244 | ENG | Engine | ENG-06 two overlapping spine guards (-has-a- / -has-its-, step claimed twice) — merge | CC-1 | 443.322 | DONE-LIVE |  |
+| 245 | ENG | Dispatch | ENG-07 G11: 8 of 410 stops without geocode precision since 10-13; Book/Edit Load must refuse a city-only stop | CC-1 | 443.322 | DONE-LIVE | book refuses city-only; guard 18802; 15 historical remain for sweep |
+| 246 | ENG | Driver pay | ENG-08 G15: prod check every lumper advance since 0f1f83233e posts as the load's lumper expense | CC-1 | 443.322 | DONE-LIVE | 0 lumper advances; 0 missing expense; guard 18553 PASS |
+| 247 | ENG | Engine | ENG-09 THE GUARANTEE: verify-engine-register-closed-by-guard — a register row is DONE only with a wired guard + evidence; wired in step 1 | CC-1 | 443.322 | DONE-LIVE | verify-engine-register-closed-by-guard PASS |
+| 248 | ENG | Fuel | ENG-10 duplicate documents regressed 11 -> 36 groups (guard RED): 31 card-discount groups; 5 >= $1 (Relay 10-11 $623.75, Relay 09-23 $527.58, LOVES $15.25 x3) | CC-2 | 443.323 | DONE-LIVE | verify-no-live-duplicate-documents 0 groups |
+| 249 | ENG | Dispatch | ENG-11 G10: 10 loads with a stale 10-11 linehaul next to the 10-16 one — $30,170.00 revenue overstated in reports; rate change must replace, not add | CC-2 | 443.323 | DONE-LIVE | Codex 10-26: 198 active linehauls / 198 loads / 0 duplicates; live guard + selftest PASS; WAVE0-EVIDENCE |
+| 250 | ENG | Settlements | ENG-12 G14: all 105 deductions typed 'other'; fine + I-94 permit posted to 7200 admin-fee account | CC-2 | 443.323 | DONE-LIVE | fine/permit roles+items off 7200; guard extended; 2 historical on closed settlements remain |
+| 251 | ENG | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | 443.323 | PARTIAL | 10-28: null=1 (13595); Settlement 5816 Trailer 445 missing from fleet |
+| 252 | ENG | Driver pay | ENG-14 G9: 1 of 209 driver bills without a unit | CC-2 | 443.323 | DONE-LIVE | Codex 10-26: 209 total / 190 live / 0 live missing unit; guard PASS + 7/7 plants; WAVE0-EVIDENCE |
+| 253 | ENG | Accounting | ENG-15 maintenance bill writer must stamp linked_work_order_uuid + source | CC-2 | 443.323 | DONE-LIVE | Existing writer stamps both; Codex added bound-value behavior tests (3/3), rejecting null/wrong WO and wrong source plants. Existing guard 5/5. UNVERIFIED live: zero WO-source bills; no fixtures written. |
+| 254 | ENG | Accounting | ENG-16 Check Creator not commissioned: check_number_registry 0 rows (starting number from owner) | CC-2 | 443.323 | DONE-LIVE | stock next=1006; guard 12141 PASS; registry 0 until first check |
+| 255 | ENG | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | 443.323 | OPEN | Codex 10-26 batch 1: 17/17 posted Faro documents tie; 3 matched/cleared, 14 unmatched. UNVERIFIED: remaining owner bank matches; no balancing JE. 2510 not repaired. See ENG17-BATCH1 evidence. |
+| 256 | ENG | Engine | ENG-18 prepare-commit-msg hook (amend vs new commit) | CC-2 | 443.323 | DONE |  |
+| 257 | ENG | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | ENG | PARTIAL |  |
 | 258 | ENG | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | ENG | OPEN |  |
-| 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | OPEN |  |
-| 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | OPEN |  |
-| 261 | ENG | Accounting | ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load | CC-3 | ENG | OPEN |  |
-| 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | OPEN |  |
-| 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | OPEN |  |
-| 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | OPEN |  |
-| 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | OPEN |  |
-| 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | OPEN |  |
-| 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | OPEN |  |
-| 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | OPEN |  |
-| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | OPEN |  |
-| 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | OPEN |  |
-| 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | OPEN |  |
-| 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | OPEN |  |
+| 259 | ENG | Settlements | ENG-24 G4/G5/G13: prod checks — Creator owed bills posted + voided on Edit; 1 Creator line without a load; Creator expenses carry load links | CC-3 | ENG | DONE-LIVE | 10-28: amend+load+expense guards PASS; active no-load lines=0 |
+| 260 | ENG | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) | CC-3 | ENG | DONE | Codex 10-26: both writers already use canonical resolver; guard strengthened to executable import + awaited call on both. 18/18 selftests including alias/shadow plants, G7 6/6, import tests 11/11. No money changes; live attribution UNVERIFIED. |
+| 261 | ENG | Accounting | ENG-26 G8: 991 of 8,057 postings without a load — factoring 155, settlement 105 (rule per load), fuel 27 / expense 24 / invoice 4 documents with no load | CC-3 | ENG | DONE-LIVE | 10-28: mig 301300+1400 RULE 2 OK 0 mismatches |
+| 262 | ENG | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | ENG | PARTIAL | 10-28: live 290; shrink ceiling; never auto-match |
+| 263 | ENG | Engine | ENG-28 posting single door: posting-line-writer.ts still inserts postings beside the engine — fold in or rule | CC-3 | ENG | DONE-LIVE |  |
+| 264 | ENG | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | ENG | PARTIAL |  |
+| 265 | ENG | UI | ENG-30 15 raw <select> left (every selector multi-select law) | Cursor | ENG | DONE |  |
+| 266 | ENG | UI | ENG-31 breadcrumbs on 10 of 999 pages | Cursor | ENG | DONE |  |
+| 267 | ENG | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | Cursor | ENG | DONE |  |
+| 268 | ENG | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | Cursor | ENG | DONE |  |
+| 269 | ENG | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | ENG | PARTIAL | exempt JSON 918→122; 122 remain to wire |
+| 270 | ENG | Engine | ENG-35 re-run the full live engine-guard set (10-03: 119 failing) and list reds | LEAD | ENG | DONE |  |
+| 271 | ENG | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | ENG | PARTIAL | 21/87 neg; fuel>rev; guard path fixed |
+| 272 | ENG | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | LEAD | ENG | DONE |  |
 | 273 | ENG | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | ENG | OPEN |  |
 | 274 | ENG | Banking | M1 candidates scoped to the bank line's account | - | 443.155 | MERGED-UNVERIFIED | 722038f896 |
 | 275 | ENG | Banking | M2 invoices + Faro purchases in the match union | - | 443.155 | MERGED-UNVERIFIED | 722038f896 add69bd031 |
 | 276 | ENG | Banking | M3/M5 one matcher (MatchDrawer embedded); filters live | - | 443.163 | MERGED-UNVERIFIED | 8a58f20d9c |
 | 277 | ENG | Banking | M4 recon idempotency on transaction_source_links, not memo; 0 session-uuid memos on prod | - | 390.3 | DONE | 9147a9a055; prod 0/0 |
 | 278 | ENG | UI | Palette: unselected boxes not pure white (0 of 1,556 files) | - | 443.284 | DONE | 75f1ed41d2; guard PASS |
-| 279 | ENG | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | G-gaps | MERGED-UNVERIFIED | 6db7585fb6 4093026783 3b90a7f77b e136e13a58 0f1f83233e |
+| 279 | ENG | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | G-gaps | DONE-LIVE | 6db7585fb6 4093026783 3b90a7f77b e136e13a58 0f1f83233e |
 | 280 | ENG | Accounting | Spine links: 0 of 8,057 postings without a spine link; TB 0 | - | 10-03 | DONE | prod measured 10-24 |
 | 281 | ENG | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | various | MERGED-UNVERIFIED | 9b5809f1c0 3312d604a6 4693704449 202615380200 202615360600 |
 | 282 | ENG | Engine | ENG-35 live sweep 10-24 3:10 PM CT: 339 live guards on a fresh prod fork — 283 PASS / 56 FAIL; split into ENG-39..53 + harness items | LEAD | ENG-35 | DONE | /tmp/live-results.txt; boxes 443.328/329/330 |
-| 283 | ENG | Settlements | ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row — writer + back-fill; ENG-01b refusal proven on fork | CC-1 | 443.322 | OPEN |  |
-| 284 | ENG | Accounting | ENG-39 P0 vendor-balance view ≠ A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) — what the close owes vs what the view assumes | CC-1 | 443.328 | OPEN |  |
-| 285 | ENG | Settlements | ENG-40 P-0067 and P-0119 closed with no company settlement | CC-1 | 443.328 | OPEN |  |
-| 286 | ENG | Settlements | ENG-41 P-0121 cancelled but still reusable | CC-1 | 443.328 | OPEN |  |
-| 287 | ENG | Settlements | ENG-42 89 active duplicate settlement-line groups | CC-1 | 443.328 | OPEN |  |
-| 288 | ENG | Settlements | ENG-43 2 posted with zero load lines; P-0112/0116/0079/0114 $0 header; line ffac5c35 miles/rate NULL; closed-unposted with voided deduction | CC-1 | 443.328 | OPEN |  |
-| 289 | ENG | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | 443.328 | OPEN |  |
-| 290 | ENG | Drivers | ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) — one profile per driver | CC-1 | 443.328 | OPEN |  |
-| 291 | ENG | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document | CC-1 | 443.328 | OPEN |  |
-| 292 | ENG | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS | CC-1 | 443.328 | OPEN |  |
+| 283 | ENG | Settlements | ENG-01c P-0119 settlement line deduction $10.00 has no driver_settlement_deductions row — writer + back-fill; ENG-01b refusal proven on fork | CC-1 | 443.322 | DONE-LIVE | 10-28: 0 orphans; P-0119 $10 VOIDED AUTH-466 |
+| 284 | ENG | Accounting | ENG-39 P0 vendor-balance view ≠ A/P GL by exactly the net pay of P-0113 (1,416.47) and P-0117 (329.51) — what the close owes vs what the view assumes | CC-1 | 443.328 | DONE-LIVE | 10-28: vendor_balances=AP 12921653¢; variance 0 |
+| 285 | ENG | Settlements | ENG-40 P-0067 and P-0119 closed with no company settlement | CC-1 | 443.328 | DONE-LIVE | 10-28: P-0067→5816 P-0119→P-0119; 0 closed w/o company |
+| 286 | ENG | Settlements | ENG-41 P-0121 cancelled but still reusable | CC-1 | 443.328 | DONE-LIVE |  |
+| 287 | ENG | Settlements | ENG-42 89 active duplicate settlement-line groups | CC-1 | 443.328 | DONE-LIVE |  |
+| 288 | ENG | Settlements | ENG-43 2 posted with zero load lines; P-0112/0116/0079/0114 $0 header; line ffac5c35 miles/rate NULL; closed-unposted with voided deduction | CC-1 | 443.328 | DONE-LIVE | 10-28: salaried zeros + tip-cleared; load-activity guard mirrors engine |
+| 289 | ENG | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | 443.328 | PARTIAL | 10-28: 13697+self-ref+stray tip OK; writer stamps due_date; residual 13690/13698 until sweep |
+| 290 | ENG | Drivers | ENG-45 2 settlement-active drivers without a Driver vendor (Carlos Mauricio Carvallo, Leonel Antonio Morales Noguez) — one profile per driver | CC-1 | 443.328 | DONE-LIVE | 10-28: cancelled-only dupes; guard PASS 0 active without vendor |
+| 291 | ENG | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document | CC-1 | 443.328 | PARTIAL | 10-28: P-0102 USMCA OK; escrow 320k/397.5k; ad02cc37 noncash no spine |
+| 292 | ENG | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS | CC-1 | 443.328 | PARTIAL | 10-28: Tio kept; 13655/56 invoiced; seed/USMCA hidden PASS; residual archive RLS |
 | 293 | ENG | Fuel | ENG-48 fuel-expense one-to-one (13563-1 JE 0¢ + 14 loads); same-day duplicate fill pairs; traceability shrink fc461eb6; literal account '5000' in statement-card-credit-repair | CC-2 | 443.329 | OPEN |  |
 | 294 | ENG | Settlements | ENG-49 settlement 5787 non-diesel expenses $235.01 vs signed $140.20 | CC-2 | 443.329 | OPEN |  |
 | 295 | ENG | Factoring | ENG-50 invoice amount_paid vs applications (9-13515 $525, 7 $350); book = Faro = AlwaysTrack 12 issues; factoring-advance-links-its-load selftest | CC-2 | 443.329 | OPEN |  |
 | 296 | ENG | Banking | ENG-51 944 composite-memo rows unbackfilled; 1 Creator load miles without source | CC-2 | 443.329 | OPEN |  |
-| 297 | ENG | Accounting | ENG-52 load-costs-board revenue not from loadCostRollupLateral (one source) | CC-2 | 443.329 | OPEN |  |
+| 297 | ENG | Accounting | ENG-52 load-costs-board revenue not from loadCostRollupLateral (one source) | CC-2 | 443.329 | DONE |  |
 | 298 | ENG | Dispatch | ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s | CC-3 | 443.330 | OPEN |  |
 | 299 | ENG | Fleet | ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks) | OWNER | ENG-54 | OPEN |  |
 | 300 | ENG | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | 443.327 | CODED-QUEUED | eb338ebe94; reconciler 42/42, popup 5/5 |
 | 301 | ENG | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine | CC-3 | 443.324 | OPEN | Lead applies under AUTH-464 |
-| 302 | ENG | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | Cursor | 443.326 | OPEN |  |
+| 302 | ENG | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | Cursor | 443.326 | DONE |  |
 | 303 | ENG | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | 443.331 | CODED-QUEUED | 1c1ea23b1e; real runner in prod mode on fresh fork: APPLY 3, SKIP 1,531, held untouched |
 | 304 | ENG | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | scoreboard | CODED-QUEUED | 7de5f80937 |
 | 305 | ENG | Engine | ENG-59 harness-only live failures (not data): pooler refused (list-apis, reports-neon-pv, loves-geofences), loopback-only fixture (invoice-header), CI-only file (no-sample-data), tsx import (recon-usmca), geocode key absent locally; rpt-s02 + invoice-copies PASS on rerun | LEAD | ENG-35 | DONE | rerun 10-24 3:25 PM CT |
 | 306 | A | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | 443.332 | MERGED | #27543 156ddaa1ec |
 | 307 | A | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | 443.334 | CODED-QUEUED | 049d20f559; guard red→green, vitest 20/20 |
 | 308 | ENG | Legal | 443.333 every USMCA coder TEST record in Legal + Insurance deleted (2 lawsuits, 18 matters, 7 claims, 3 accident reports, 5 cancelled policies; 79 rows with children); 3 real policies kept; books unchanged | LEAD | 443.333 | DONE | AUTH-465 COMMITTED; audit.record_deletions 79; 3585edaf83 |
-| 309 | ENG | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities | CC-1 | ENG-60 | OPEN |  |
-| 310 | ENG | Settlements | ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting — refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open | CC-1 | ENG-61 | OPEN | seen 10-24 on 13699/13700 stamp: settlements a41008ca, 6ba08647 |
+| 309 | ENG | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities | CC-1 | ENG-60 | PARTIAL | 10-28: lawsuit table 0 rows; FE cutover remains |  |
+| 310 | ENG | Settlements | ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting — refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open | CC-1 | ENG-61 | DONE-LIVE | seen 10-24 on 13699/13700 stamp: settlements a41008ca, 6ba08647 |
 | 311 | ENG | Dispatch | ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0 | LEAD | 443.335 | CODED-QUEUED | a74b63e99b; prod applied: 13700 dispatched→delivered_pending_docs, 13699 in_transit→delivered_pending_docs |
-| 312 | ENG | UI | ENG-63 verify-list-empty-settled (resolveListState no longer returns loading while pending) and verify-entity-label-rejects-uuid-shaped-name (HosTrackerSection must call entityLabel) fail on main 5a9f8303e9 | CC-3 | ENG-63 | OPEN |  |
+| 312 | ENG | UI | ENG-63 verify-list-empty-settled (resolveListState no longer returns loading while pending) and verify-entity-label-rejects-uuid-shaped-name (HosTrackerSection must call entityLabel) fail on main 5a9f8303e9 | CC-3 | ENG-63 | DONE-LIVE | Codex 10-26: both guards + selftests PASS on deployed 24e7c34e8c; guard-regression closure only, not browser proof; WAVE0-EVIDENCE |
 | 313 | B | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | Cursor | 443.326 #6 | OPEN |  |
 | 314 | B | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | Cursor | 443.326 #2 | OPEN |  |

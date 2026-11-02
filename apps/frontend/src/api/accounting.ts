@@ -1186,6 +1186,8 @@ export function listBills(
     /** SORT LAW — ParityTable column key; server ORDER BY via BILL_LIST_SORT_SQL. */
     sort?: string;
     dir?: "asc" | "desc";
+    /** ACCT-F2026110203 — category tab filter applied server-side before pagination. Comma-joined for 2+. */
+    bill_category?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -1215,6 +1217,7 @@ export function listBills(
   if (params.trailer_id) query.set("trailer_id", params.trailer_id);
   if (params.sort) query.set("sort", params.sort);
   if (params.dir) query.set("dir", params.dir);
+  if (params.bill_category) query.set("bill_category", params.bill_category);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
@@ -2341,6 +2344,8 @@ export const COA_ROLE_VALUES = [
   // SETL-DED-UI — bank/wire/ACH fee recovery role; see resolver.service.ts's own comment for why
   // it is added here even though the live DB CHECK constraint does not admit it yet.
   "bank_fee_recovery",
+  "fine_recovery",
+  "permit_recovery",
   // ROUND 321 (CC-1) — lease-to-own, ASC 842 lessee (migration 202615210000). Owner designates; engine refuses until bound.
   "rou_asset",
   "lease_liability",

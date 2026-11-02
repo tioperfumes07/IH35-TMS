@@ -12,6 +12,9 @@ interface FilterBarProps {
     laneKey?: string;
   };
   onChange: (filters: FilterBarProps["filters"]) => void;
+  /** Active tab CSV export — parent builds the blob from the live query. */
+  onExport?: () => void;
+  exportDisabledReason?: string;
 }
 
 const EQUIPMENT_TYPES = [
@@ -22,7 +25,7 @@ const EQUIPMENT_TYPES = [
   { label: "Step Deck", value: "step_deck" },
 ];
 
-export function FilterBar({ filters, onChange }: FilterBarProps) {
+export function FilterBar({ filters, onChange, onExport, exportDisabledReason }: FilterBarProps) {
   const staged = useStagedListFilters({
     applied: filters,
     empty: { ...filters, dateFrom: "", dateTo: "", equipmentType: undefined },
@@ -71,7 +74,15 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         </div>
       </CollapsedListFilters>
 
-      <Button type="button" variant="secondary" className="ml-auto">
+      <Button
+        type="button"
+        variant="secondary"
+        className="ml-auto"
+        disabled={!onExport}
+        title={onExport ? "Export the active profitability tab as CSV" : exportDisabledReason ?? "Export waits for the active tab feed"}
+        onClick={onExport}
+        data-testid="profitability-export"
+      >
         Export
       </Button>
     </div>

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "24507fa",
-  "generated_at": "2026-10-26T10:35:51.954Z",
+  "healthzSha": "e8ee661",
+  "generated_at": "2026-11-02T22:52:42.140Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "24507fa",
+    "deployedSha": "e8ee661",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28166,
+      "title": "FINDING: Banking + ELD need-company BoardSection; OUTBOX tip",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 03:49 AM CT",
-      "url": "",
-      "sha": "24507fa8e1",
-      "committedAtIso": "2026-10-26T08:49:03Z"
+      "mergedAtCt": "11/02/2026, 04:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28166",
+      "sha": "4c1fd0d5bc",
+      "committedAtIso": "2026-11-02T16:52:04-06:00"
     },
     {
-      "number": 27890,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28165,
+      "title": "CC-2-NON-FINANCIAL: OUTBOX-CC-2 record for ACCT-F2026110203-B bills 2+ category fix (PR #28155)",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 02:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27890",
-      "sha": "79dedc1037",
-      "committedAtIso": "2026-10-26T07:02:00Z"
+      "mergedAtCt": "11/02/2026, 04:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28165",
+      "sha": "dc0cb1777a",
+      "committedAtIso": "2026-11-02T16:52:02-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28164,
+      "title": "FINDING: Legal module need-company BoardSection shells",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 02:01 AM CT",
-      "url": "",
-      "sha": "6c0a3c9d61",
-      "committedAtIso": "2026-10-26T07:01:40Z"
+      "mergedAtCt": "11/02/2026, 04:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28164",
+      "sha": "4bcfb39352",
+      "committedAtIso": "2026-11-02T16:50:44-06:00"
     },
     {
-      "number": 27889,
-      "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
+      "number": 28163,
+      "title": "FINDING: U18 factoring/driver-bill backHref; home need-company BoardSection",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27889",
-      "sha": "3a4f44bdf6",
-      "committedAtIso": "2026-10-26T01:57:25-05:00"
+      "mergedAtCt": "11/02/2026, 04:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28163",
+      "sha": "02d03bf723",
+      "committedAtIso": "2026-11-02T16:49:24-06:00"
     },
     {
-      "number": 27888,
-      "title": "FINDING: Lead seat lists refresh — B2/B3 done, remaining B1/B4/C2 + CC reds",
+      "number": 28162,
+      "title": "BUS: numbered pending register (256) + ROUND 7.25 re-measure by seat",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27888",
-      "sha": "673f611cfa",
-      "committedAtIso": "2026-10-26T01:56:52-05:00"
+      "mergedAtCt": "11/02/2026, 04:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28162",
+      "sha": "9d1826badd",
+      "committedAtIso": "2026-11-02T16:49:14-06:00"
     },
     {
-      "number": 27887,
-      "title": "FINDING: Lead tip reds — ReportsHome gear/sort · SAVEPOINT period refresh · live_loads · OUTBOX diet",
+      "number": 28161,
+      "title": "FINDING: Chat + Docs + Driver Hub need-company BoardSection; bus tip",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27887",
-      "sha": "c4b636eef6",
-      "committedAtIso": "2026-10-26T01:55:31-05:00"
+      "mergedAtCt": "11/02/2026, 04:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28161",
+      "sha": "9eb232aa0c",
+      "committedAtIso": "2026-11-02T16:47:41-06:00"
     },
     {
-      "number": 27886,
-      "title": "FINDING: Codex B3 shared modal and drawer open-order layers",
+      "number": 28160,
+      "title": "FINDING: Dispatch planners/map/settings need-company BoardSection",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27886",
-      "sha": "52c3398569",
-      "committedAtIso": "2026-10-26T01:52:02-05:00"
+      "mergedAtCt": "11/02/2026, 04:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28160",
+      "sha": "b66f9c7538",
+      "committedAtIso": "2026-11-02T16:45:50-06:00"
     },
     {
-      "number": 27885,
-      "title": "FINDING: Codex B2 typeable multi-select bank match filter",
+      "number": 28159,
+      "title": "BUS: CC-1 — #28122/#28096 merged by Lead; next diesel dedupe",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27885",
-      "sha": "aaa271b5cf",
-      "committedAtIso": "2026-10-26T01:46:03-05:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28159",
+      "sha": "e8ee6611ff",
+      "committedAtIso": "2026-11-02T16:44:56-06:00"
     },
     {
-      "number": 27884,
-      "title": "FINDING: Lead seat lists — Cursor Lead P0 measured + exact lists per seat",
+      "number": 28096,
+      "title": "FIX: main red locked-guards-heavy — wire 30 guards merged unwired 11-02 (step 18937; CC-1 lane — CC-1 merges)",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27884",
-      "sha": "be36134485",
-      "committedAtIso": "2026-10-26T01:39:59-05:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28096",
+      "sha": "7f6d72bfc6",
+      "committedAtIso": "2026-11-02T16:44:13-06:00"
     },
     {
-      "number": 27883,
-      "title": "FINDING: Cursor-19 — hand-rolled tables → ParityTable (ReportsHome · MilesStrip · Settlements deductions)",
+      "number": 28122,
+      "title": "FIX: CodeQL js/redos error (blocks every PR) — unambiguous arg list in expand-live-document-predicates CALL regex",
       "state": "merged",
-      "mergedAtCt": "10/26/2026, 01:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27883",
-      "sha": "312e15c00a",
-      "committedAtIso": "2026-10-26T01:37:24-05:00"
+      "mergedAtCt": "11/02/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28122",
+      "sha": "1093d3f148",
+      "committedAtIso": "2026-11-02T16:44:01-06:00"
     }
   ]
 }

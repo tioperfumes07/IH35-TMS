@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -76,8 +77,9 @@ export function RosterIntegrityPage() {
   );
 
   return (
-    <div className="space-y-3 p-3">
+    <div className="space-y-3 p-3" data-testid="roster-integrity-page">
       <PageHeader
+        backHref="/fleet"
         title="Fleet roster integrity"
         subtitle="Units reconciled against Samsara, the insurance schedule, IRP and the lease — one row per mismatch"
         breadcrumb={["Fleet", "Roster integrity"]}
@@ -90,35 +92,43 @@ export function RosterIntegrityPage() {
           </div>
         }
       />
-      <p className="text-xs text-gray-600">
-        Last run: {query.data?.last_run_at ? formatDateTimeUS(query.data.last_run_at) : "not yet run for this entity"}
-        {run.data ? ` · this run: ${run.data.open} open, ${run.data.resolved} resolved` : ""}
-      </p>
-      {voiding ? (
-        <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white p-2" data-testid="roster-void-box">
-          <label className="flex flex-1 flex-col gap-1 text-xs text-gray-600">
-            Reason for voiding this finding
-            <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={voiding.reason} onChange={(e) => setVoiding({ ...voiding, reason: e.target.value })} />
-          </label>
-          <Button size="sm" disabled={voiding.reason.trim().length < 3 || voidMut.isPending} onClick={() => voidMut.mutate(voiding)}>Void finding</Button>
-          <Button size="sm" variant="secondary" onClick={() => setVoiding(null)}>Cancel</Button>
-          {voidMut.error ? <ListErrorState {...formatQueryErrorDetail(voidMut.error)} onRetry={() => voidMut.reset()} /> : null}
-        </div>
-      ) : null}
-      {query.isError ? (
-        <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
+      {!companyId ? (
+        <BoardSection title="Roster integrity" testId="roster-integrity-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view roster integrity.</p>
+        </BoardSection>
       ) : (
-        <ParityTable
+        <BoardSection
           title="Roster integrity findings"
-          rows={query.data?.findings ?? []}
-          columns={columns}
-          rowKey={(r) => r.id}
-          loading={query.isLoading}
-          storageKey="fleet-roster-integrity"
-          exportFilename="fleet-roster-integrity"
-          tableTestId="fleet-roster-integrity-table"
-          emptyText="No roster mismatches for this entity."
-        />
+          subtitle={`Last run: ${query.data?.last_run_at ? formatDateTimeUS(query.data.last_run_at) : "not yet run for this entity"}${run.data ? ` · this run: ${run.data.open} open, ${run.data.resolved} resolved` : ""}`}
+          testId="roster-integrity-board"
+        >
+          {voiding ? (
+            <div className="flex flex-wrap items-end gap-2 border-b border-gray-200 bg-white p-2" data-testid="roster-void-box">
+              <label className="flex flex-1 flex-col gap-1 text-xs text-gray-600">
+                Reason for voiding this finding
+                <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={voiding.reason} onChange={(e) => setVoiding({ ...voiding, reason: e.target.value })} />
+              </label>
+              <Button size="sm" disabled={voiding.reason.trim().length < 3 || voidMut.isPending} onClick={() => voidMut.mutate(voiding)}>Void finding</Button>
+              <Button size="sm" variant="secondary" onClick={() => setVoiding(null)}>Cancel</Button>
+              {voidMut.error ? <ListErrorState {...formatQueryErrorDetail(voidMut.error)} onRetry={() => voidMut.reset()} /> : null}
+            </div>
+          ) : null}
+          {query.isError ? (
+            <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
+          ) : (
+            <ParityTable
+              title="Roster integrity findings"
+              rows={query.data?.findings ?? []}
+              columns={columns}
+              rowKey={(r) => r.id}
+              loading={query.isLoading}
+              storageKey="fleet-roster-integrity"
+              exportFilename="fleet-roster-integrity"
+              tableTestId="fleet-roster-integrity-table"
+              emptyText="No roster mismatches for this entity."
+            />
+          )}
+        </BoardSection>
       )}
     </div>
   );

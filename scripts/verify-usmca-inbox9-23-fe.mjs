@@ -12,7 +12,11 @@ const CHECKS = [
   {
     file: "apps/frontend/src/pages/fleet/FleetHomePage.tsx",
     tests: [
-      (s) => /data-testid="fleet-need-company"/.test(s) || "fleet need-company testid",
+      (s) =>
+        /data-testid="fleet-need-company"/.test(s) ||
+        /<BoardSection[^>]*testId="fleet-need-company"/.test(s) ||
+        "fleet need-company testid",
+      (s) => /BoardSection[\s\S]*testId="fleet-need-company"|testId="fleet-need-company"[\s\S]*BoardSection/.test(s) || "fleet need-company BoardSection",
       (s) => /data-testid="fleet-create-unit"/.test(s) || "fleet + Create Unit",
       (s) => /FleetTablePage operatingCompanyId=\{companyId\}/.test(s) || "lease-scoped roster",
     ],

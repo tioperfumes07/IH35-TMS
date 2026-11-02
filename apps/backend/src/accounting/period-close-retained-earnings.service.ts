@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
+import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this retained-earnings sweep JE
@@ -236,6 +236,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
   const jeId = jeIns.rows[0]?.id;
   if (!jeId) throw new Error("closing_journal_insert_failed");
 
+  const postingLines: Parameters<typeof postValidatedPostingLinesInClientTx>[1] = [];
   let seq = 1;
   for (const ln of lines) {
     // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
@@ -244,7 +245,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
     // BLOCK 2: deterministic key per fiscal-year close so a re-run of the same year-end close is a safe no-op
     // (uq_jep_company_idempotency_line) — LOCKED DESIGN 2026-08-20: scoped by the count of REVERSED prior closes
     // (`:r{n}`, absent on the first close) so a close-after-undo never collides with the reversed close's rows.
-    await insertPostingLineWithSpineIfNew(client as never, {
+    postingLines.push({
       operating_company_id: params.operating_company_id,
       journal_entry_uuid: jeId,
       line_sequence: seq,
@@ -259,6 +260,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
     });
     seq += 1;
   }
+  await postValidatedPostingLinesInClientTx(client as never, postingLines, { skipOnIdempotencyConflict: true });
 
   // CODER-12 audit-spine: write the immutable audit event for the year-end close posting to
   // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write

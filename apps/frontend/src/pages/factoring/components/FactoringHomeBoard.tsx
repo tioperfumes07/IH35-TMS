@@ -26,7 +26,7 @@ import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { rateToPctString } from "../../../lib/factorProfile";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FACTORING_TAB_PATH } from "../../../router/route-manifest";
-import { formatUsdCents } from "../../../utils/qboFormat";
+import { formatDateUS, formatQuantityTable, formatUsd, formatUsdCents } from "../../../utils/qboFormat";
 
 /** Board card chrome (Factoring.dc.html) — not V3Panel (443.282 panels off). */
 const BOARD_CARD_BORDER = "#DDE1E7";
@@ -115,13 +115,13 @@ function cents(v: number | string | null | undefined): number {
   return Number(v ?? 0);
 }
 
-/** Register row 98: the summary API returns NUMERIC as text ("175650.000000000000"); String#toLocaleString returns the
- *  text unchanged, so the KPI printed raw digits. Coerce first; a non-number is honest "—". */
+/** Register row 98: the summary API returns NUMERIC as text ("175650.000000000000"); coerce first;
+ *  a non-number is honest "—". Canonical money via formatUsd (never hand-rolled Intl). */
 export function fmtMoneyDollars(n: number | string | null | undefined): string {
   if (n == null || n === "") return "—";
   const v = Number(n);
   if (!Number.isFinite(v)) return "—";
-  return v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsd(v);
 }
 
 /** Factoring cost of the month's purchases, percent of gross purchased; null when nothing was purchased. */
@@ -132,10 +132,7 @@ export function trueCostPercent(feeCents: number, wireFeeCents: number, grossCen
 
 function mmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const day = String(iso).slice(0, 10);
-  const [, m, d] = day.split("-");
-  if (!m || !d) return day;
-  return `${m}-${d}`;
+  return formatDateUS(String(iso).slice(0, 10)) || "—";
 }
 
 /** Mode of posted wire fees (cents) — board Terms "Wire fee" when profile has no column. */
@@ -404,7 +401,7 @@ export function FactoringHomeBoard({
               ? "—"
               : trueCostPct == null
                 ? "—"
-                : `${trueCostPct.toFixed(2)}%`
+                : `${formatQuantityTable(trueCostPct, 2)}%`
           }
           sub={
             summaryQuery.isError || purchasesQuery.isError

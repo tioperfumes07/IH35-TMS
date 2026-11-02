@@ -12,6 +12,7 @@ import { SettlementRefCell } from "../../../components/shared/SettlementRefCell"
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { mmmDd } from "../../../lib/formatDate";
+import { formatUsd } from "../../../lib/money";
 import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Line = {
@@ -83,7 +84,7 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Line>> {
   {
     key: "amount",
     label: "Amount",
-    render: (line) => <>${Number(line.amount).toFixed(2)}</>,
+    render: (line) => formatUsd(line.amount),
   },
   {
     key: "approval_status",
@@ -119,7 +120,7 @@ export function ExtraPaySection({ lines, isOpen, operatingCompanyId }: Props) {
         embedded
         hidePager
       />
-      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: ${subtotal.toFixed(2)}</div>
+      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: {formatUsd(subtotal)}</div>
     </BoardSection>
   );
 }

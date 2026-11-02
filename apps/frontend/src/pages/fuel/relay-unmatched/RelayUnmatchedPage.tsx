@@ -19,6 +19,7 @@ import { FuelBoardSection } from "../FuelBoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
+import { formatQuantityTable } from "../../../lib/money";
 import type { RelayFillRow } from "../../../api/relay-fills";
 
 const PAGE_SIZE = 50;
@@ -102,8 +103,8 @@ export function RelayUnmatchedPage() {
       sortable: true,
       render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
-    { key: "fuel_gallons", label: "Diesel gal", sortable: true, render: (row) => (row.fuel_gallons != null ? row.fuel_gallons.toFixed(1) : "—") },
-    { key: "def_gallons", label: "DEF gal", sortable: true, render: (row) => (row.def_gallons != null ? row.def_gallons.toFixed(1) : "—") },
+    { key: "fuel_gallons", label: "Diesel gal", sortable: true, render: (row) => (row.fuel_gallons != null ? formatQuantityTable(row.fuel_gallons, 1) : "—") },
+    { key: "def_gallons", label: "DEF gal", sortable: true, render: (row) => (row.def_gallons != null ? formatQuantityTable(row.def_gallons, 1) : "—") },
     {
       key: "total_amount_paid_cents",
       label: "Amount",

@@ -25,7 +25,7 @@ import { CollapsibleProfileCard } from "./CollapsibleProfileCard";
 import { NumLink } from "./partyBoardKit";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
 import { ParityTable } from "../parity/ParityTable";
 
 type Integrity = { key: string; label: string; his: number | null; fleet: number | null; worse: "higher" | "lower"; unit?: string; money?: boolean };
@@ -48,9 +48,8 @@ type Overview = {
   compliance: { cdl_expires: string | null; medical_card: string | null; mvr_review: string | null; drug_screen_last: string | null; hos_violations_90d: number };
 };
 
-const usd = (c: number) => `${c < 0 ? "-" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const money = (c: number | null | undefined) => formatUsdCentsTable(c);
-const int = (n: number) => n.toLocaleString("en-US");
+const int = (n: number) => formatQuantityTable(n);
 const day = (d: string | null | undefined) => (d ? formatDateUS(d) : "—");
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 
@@ -59,7 +58,7 @@ export const DRIVER_DETAIL_TABS = (id: string): Array<{ label: DriverProfileTab;
   DRIVER_PROFILE_STRIP_TABS.map((label) => ({ label, to: driverProfileTabHref(id, label) }));
 
 const kindTone = (k: string) => (/detention|layover|wait|late|damage/i.test(k) ? "amber" : /refus|accident/i.test(k) ? "red" : /bonus|report|mechanical/i.test(k) ? "navy" : "");
-const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.money ? usd(v) : `${v}${i.unit ?? ""}`);
+const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.money ? money(v) : `${int(v)}${i.unit ?? ""}`);
 
 function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab: DriverProfileTab }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -162,7 +161,7 @@ export function DriverOverviewBoard(props: {
   const tiles = [
     { label: "Settlement due", value: money(t.settlement_due_cents), sub: `${int(t.settlements_due)} unpaid`, to: driverProfileTabHref(o.driver.id, "Settlements") },
     { label: "Additional pay", value: money(t.additional_pay_cents), sub: `${int(t.additional_items)} items, 90 days`, to: driverProfileTabHref(o.driver.id, "Additional payments") },
-    { label: "Escrow held", value: t.escrow_held_cents == null ? "—" : usd(t.escrow_held_cents), sub: t.escrow_target_cents ? `target ${usd(t.escrow_target_cents)}` : "no target set", to: driverProfileTabHref(o.driver.id, "Pay & escrow") },
+    { label: "Escrow held", value: t.escrow_held_cents == null ? "—" : money(t.escrow_held_cents), sub: t.escrow_target_cents ? `target ${money(t.escrow_target_cents)}` : "no target set", to: driverProfileTabHref(o.driver.id, "Pay & escrow") },
     { label: "Miles, 30 days", value: t.miles_30d ? int(t.miles_30d) : "—", sub: `fleet ${int(t.fleet_miles_30d_per_driver)}`, to: driverProfileTabHref(o.driver.id, "Loads") },
     { label: "MPG, 30 days", value: t.mpg_30d == null ? "—" : String(t.mpg_30d), sub: `fleet ${t.fleet_mpg_30d ?? "—"}`, to: driverProfileTabHref(o.driver.id, "Fuel") },
     { label: "Complaints", value: int(t.complaints_90d), sub: `fleet avg ${t.fleet_complaints_avg_90d} · 90 days`, tone: t.complaints_90d > t.fleet_complaints_avg_90d && t.complaints_90d > 0 ? "amber" : "", to: driverProfileTabHref(o.driver.id, "Complaints") },
@@ -250,7 +249,7 @@ export function DriverOverviewBoard(props: {
                     { key: "miles", label: "Miles", kind: "number", minWidth: 70, render: (r) => <span className="ih-num">{r.miles ? int(r.miles) : <span className="ih-empty">—</span>}</span> },
                     // ROUND 433.2 — every amount on a settlement row opens that settlement.
                     { key: "line_haul_cents", label: "Line haul", kind: "money", render: (r) => <EntityLink kind="settlement" id={r.id} label={money(r.line_haul_cents)} /> },
-                    { key: "additional_cents", label: "Additional", kind: "money", render: (r) => (r.additional_cents ? <EntityLink kind="settlement" id={r.id} label={usd(r.additional_cents)} /> : <span className="ih-empty">—</span>) },
+                    { key: "additional_cents", label: "Additional", kind: "money", render: (r) => (r.additional_cents ? <EntityLink kind="settlement" id={r.id} label={money(r.additional_cents)} /> : <span className="ih-empty">—</span>) },
                     { key: "deductions_cents", label: "Deductions", kind: "money", render: (r) => <EntityLink kind="settlement" id={r.id} label={money(r.deductions_cents)} /> },
                     { key: "net_cents", label: "Net pay", kind: "money", render: (r) => <span className="pb-strong"><EntityLink kind="settlement" id={r.id} label={money(r.net_cents)} /></span> },
                   ]}
@@ -293,7 +292,7 @@ export function DriverOverviewBoard(props: {
                     { key: "load_number", label: "Load", render: (p) => (p.load_id ? <EntityLink kind="load" id={p.load_id} label={p.load_number ?? "—"} /> : "—") },
                     { key: "settlement", label: "Settlement", render: (p) => <button type="button" className="pb-name" onClick={() => go("settlement", p.settlement_id)}>{p.settlement ?? "—"}</button> },
                     { key: "approved_by", label: "Approved by", render: (p) => <span className="pb-muted2">{p.approved_by ?? "—"}</span> },
-                    { key: "amount_cents", label: "Amount", kind: "money", render: (p) => <span className="pb-strong">{p.settlement_id ? <EntityLink kind="settlement" id={p.settlement_id} label={usd(p.amount_cents)} /> : usd(p.amount_cents)}</span> },
+                    { key: "amount_cents", label: "Amount", kind: "money", render: (p) => <span className="pb-strong">{p.settlement_id ? <EntityLink kind="settlement" id={p.settlement_id} label={money(p.amount_cents)} /> : money(p.amount_cents)}</span> },
                   ]}
                   footerCells={{
                     at: `${int(o.additional.length)} payments, last 90 days`,
@@ -436,8 +435,8 @@ export function DriverOverviewBoard(props: {
               <div>
                 <div className="dd-kv"><span>Pay basis</span><span className="ih-num">{o.pay_terms.basis ?? "No rate card"}</span></div>
                 {/* Pay terms open the driver's Pay & escrow tab, where the rate card and escrow schedule live. */}
-                <div className="dd-kv"><span>Rate</span><span className="ih-num">{o.pay_terms.rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.rate_per_mile_cents)} / mi`}</NumLink> : o.pay_terms.flat_per_load_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.flat_per_load_cents)} / load`}</NumLink> : "—"}</span></div>
-                <div className="dd-kv"><span>Empty miles</span><span className="ih-num">{o.pay_terms.empty_rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${usd(o.pay_terms.empty_rate_per_mile_cents)} / mi`}</NumLink> : "—"}</span></div>
+                <div className="dd-kv"><span>Rate</span><span className="ih-num">{o.pay_terms.rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${money(o.pay_terms.rate_per_mile_cents)} / mi`}</NumLink> : o.pay_terms.flat_per_load_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${money(o.pay_terms.flat_per_load_cents)} / load`}</NumLink> : "—"}</span></div>
+                <div className="dd-kv"><span>Empty miles</span><span className="ih-num">{o.pay_terms.empty_rate_per_mile_cents != null ? <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{`${money(o.pay_terms.empty_rate_per_mile_cents)} / mi`}</NumLink> : "—"}</span></div>
                 <div className="dd-kv"><span>Worker class</span><span className="ih-num">{o.pay_terms.worker_class ?? "—"}</span></div>
                 <div className="dd-kv"><span>Net pay floor</span><span className="ih-num">{o.pay_terms.net_pay_floor_pct != null ? `${o.pay_terms.net_pay_floor_pct}%` : "—"}</span></div>
                 <div className="dd-kv"><span>Escrow target</span><span className="ih-num">{o.pay_terms.escrow_target_cents == null ? "—" : <NumLink to={driverProfileTabHref(o.driver.id, "Pay & escrow")}>{money(o.pay_terms.escrow_target_cents)}</NumLink>}</span></div>

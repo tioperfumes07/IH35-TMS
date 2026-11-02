@@ -305,6 +305,43 @@ export async function listDueSubscriptions(now: Date = new Date()): Promise<Sche
 }
 
 /**
+ * Q8 seed (202606080206) inserted Active rows with next_scheduled_at = NULL. listDueSubscriptions
+ * requires a non-null next, so the live emailer (jobs/scheduled-reports-emailer → runDue) never saw
+ * those rows — Active + blank Next/Last for months. Create/update already compute next; this
+ * self-heal populates any remaining nulls from cadence on every tick (no AUTH apply needed).
+ */
+export async function ensureActiveSubscriptionNextScheduledAt(now: Date = new Date()): Promise<number> {
+  return withLuciaBypass(async (client) => {
+    const res = await client.query(
+      `
+        SELECT *
+        FROM reports.scheduled_subscriptions
+        WHERE is_active = true
+          AND next_scheduled_at IS NULL
+        ORDER BY created_at ASC
+        LIMIT 500
+      `
+    );
+    let updated = 0;
+    for (const raw of res.rows) {
+      const row = raw as Record<string, unknown>;
+      const nextAt = computeNextScheduledAt(cadenceFromRow(row), now);
+      const upd = await client.query(
+        `
+          UPDATE reports.scheduled_subscriptions
+          SET next_scheduled_at = $2::timestamptz, updated_at = now()
+          WHERE uuid = $1::uuid
+            AND next_scheduled_at IS NULL
+        `,
+        [row.uuid, nextAt.toISOString()]
+      );
+      if ((upd.rowCount ?? 0) === 1) updated += 1;
+    }
+    return updated;
+  });
+}
+
+/**
  * LST-F443368 (owner 10-25-2026: "check all the outgoing mails") — every daily report reached the owner TWICE, 63-70 ms
  * apart (email.email_queue 10-19..10-25: 14 per report per 7 days): IH35-TMS runs 2 instances, both run the every-15-minute tick,
  * both listDueSubscriptions() the same rows and both deliver before either marks it sent.

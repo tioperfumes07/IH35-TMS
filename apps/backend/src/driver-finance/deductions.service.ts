@@ -33,6 +33,7 @@ export type SettlementDeductionSourceType =
   | "fine"
   | "toll"
   | "citation"
+  | "permit"
   | "other"
   // SETL-DED-GL (owner ruling 2026-09-06 01:5xZ, "Admin fee is actually either wire fee, ACH fee, or
   // gas for a company vehicle they use. Should each line carry a GL? Of course."): these four replace

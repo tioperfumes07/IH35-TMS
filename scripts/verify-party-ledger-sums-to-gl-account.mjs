@@ -35,7 +35,7 @@ const FILES = {
   routes: `${DIR}/routes.ts`,
   poster: `${DIR}/party-entry-post.service.ts`,
   create: `${DIR}/create-entry.service.ts`,
-  writer: "apps/backend/src/accounting/posting-line-writer.ts",
+  writer: "apps/backend/src/accounting/posting-engine.service.ts",
 };
 
 export function extractLedgerSql(src) {

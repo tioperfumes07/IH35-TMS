@@ -1,4 +1,5 @@
 import { EntityLink } from "../../../../components/shared/EntityLink";
+import { formatUsdCents } from "../../../../lib/money";
 import type { LoadSaveProof, ProofLink } from "./load-save-proof-types";
 
 const LINK_KIND = {
@@ -64,7 +65,7 @@ export function LoadSaveProofPanel({
           <ul className="mt-0.5 space-y-0.5">
             {proof.ledger.postings.map((p) => (
               <li key={`${p.journal_entry_id}-${p.debit_or_credit}-${p.amount_cents}`} className="text-xs text-[#4B5563]">
-                {p.debit_or_credit} {(p.amount_cents / 100).toFixed(2)} ·{" "}
+                {p.debit_or_credit} {formatUsdCents(p.amount_cents)} ·{" "}
                 <EntityLink kind="journal_entry" id={p.journal_entry_id} label="journal entry" />
               </li>
             ))}

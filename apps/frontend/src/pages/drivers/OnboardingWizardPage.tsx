@@ -13,6 +13,7 @@ import {
 } from "../../api/onboarding";
 import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { OnboardingStepCdlUpload } from "./onboarding/OnboardingStepCdlUpload";
 import { OnboardingStepDqfDocs } from "./onboarding/OnboardingStepDqfDocs";
@@ -193,7 +194,11 @@ export function OnboardingWizardPage() {
   };
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    return (
+    <BoardSection title="Onboarding" testId="drivers-onboarding-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+    </BoardSection>
+  );
   }
   if (!sessionId) {
     return <div className="rounded-sm border bg-white p-4 text-xs">Missing onboarding session.</div>;
@@ -223,7 +228,7 @@ export function OnboardingWizardPage() {
 
   return (
     <div data-testid="onboarding-wizard-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/drivers"
         title="Driver Onboarding Wizard"
         subtitle={`${statusLabel} · ${stepLabel} · ${driverBit} · save + resume · docs module uploads`}
         actions={

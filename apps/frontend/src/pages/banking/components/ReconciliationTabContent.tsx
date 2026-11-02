@@ -20,6 +20,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS, formatNumber } from "../../../utils/qboFormat";
 
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { BoardSection } from "../../../components/v3/BoardSection";
 export type ReconShellAccount = {
   id: string;
   label: string;
@@ -168,9 +169,11 @@ export function ReconciliationTabContent({
 
   return (
     <div className="space-y-3" data-c53-recon-shell="1" data-testid="banking-recon-shell">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Reconciliation</p>
+      <BoardSection
+        title="Reconciliation"
+        subtitle="Sessions + statement strip (engines unchanged)"
+        testId="banking-recon-board"
+        headerRight={
           <div className="flex flex-wrap items-center gap-2">
             <Link to="/banking/reconcile" className="text-xs font-medium text-[#1F2A44] hover:underline">
               Open Reconcile Queue
@@ -197,7 +200,9 @@ export function ReconciliationTabContent({
               + Start reconciliation
             </ActionButton>
           </div>
-        </div>
+        }
+      >
+        <div className="p-3">
 
         {neverReconciledCount === accounts.length && accounts.length > 0 ? (
           <div
@@ -570,7 +575,8 @@ export function ReconciliationTabContent({
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </BoardSection>
     </div>
   );
 }
