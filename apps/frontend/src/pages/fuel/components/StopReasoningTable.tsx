@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsd } from "../../../lib/money";
-import { formatUsd } from "../../../lib/money";
 
 type Props = {
   stops: RecommendedStop[];
