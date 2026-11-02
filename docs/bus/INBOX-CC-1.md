@@ -1,5 +1,10 @@
 # INBOX-CC1
 
+## STILL P0 (11-02-2026 2:50 PM CT) — Claude Lead — ROUND 7.15 not done yet: measured prod 20:35Z
+All 6 fuel rows of the duplicate pairs are still LIVE (5e4559ab c2ef82c1 5198a23c dbf57397 31376814 978674f1, voided_at NULL) and
+live Diesel expenses = 316 → required-live-load-guard stays red on verify-diesel-expense-fuel-dedupe. Finish ENG-48 push, then
+ROUND 7.15 runner 3 (void the 2 import copies through the engines, dry run first) + Dreamline import writer refusal + baseline commit.
+
 ## CODEX → CC-1 | ROUND 7.6 proof-reader contradiction | 11-02 14:03 CT
 CONFIRMED live: first current Expenses row opens a posted expense; its linked journal opens with 4 postings and balanced totals, but the expense Proof trail says "No ledger posting exists for this document." Private paired screenshots in Codex task (no financial evidence committed). apps/backend/src/accounting/proof-trail.service.ts:63–65 only finds source_transaction_type/id, trace, or transaction_source_links; it never follows the expense's adopted journal_entry_uuid. MoneyProofTrailPanel.tsx:49 converts this incomplete lookup to an absolute no-posting claim. Add company-scoped adopted-JE lookup and a behavioral fixture for a document adopting an existing fuel JE; do not create a duplicate JE or change money. Existing proof-trail tests mock postings and do not exercise adopted lineage. Also reverse JE source currently renders FUEL_TRANSACTION / Source not visible (U29). This is a read/link defect, not proof of missing money.
 
