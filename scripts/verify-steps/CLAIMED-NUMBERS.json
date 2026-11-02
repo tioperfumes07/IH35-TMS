@@ -17284,5 +17284,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-11-02",
     "purpose": "verify-eng34-exempt-batch-wire (ENG-34) \u2014 batch wire 53 formerly-exempt guards into verify:pre-commit corpus"
+  },
+  "18937": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-orphan-guards-batch-wire-11-02 \u2014 wire 29 guards merged unwired on 11-02 (verify-guard-wired red on main)"
   }
 }
