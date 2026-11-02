@@ -129,3 +129,11 @@ Superseded: every earlier CURRENT block.
 ## LEAD 2026-11-02 — ENG-62 (part of ENG-48) — Relay fill expenses with NULL source_fuel_transaction_id
 90 live USMCA expenses memo `Relay fuel fill <relay_fuel_transactions.id>` = $38,717.03, source_fuel_transaction_id NULL, all posted. 18 → one fuel row (backfill link), 48 → no fuel row (import it), 24 → >1 fuel row (dedupe then link). This is what makes settlements 5846/5847 measure negative (signed nets +2,696.36 / +3,885.83).
 Do: (1) writer fix — ON-RECEIPT expense must carry source_fuel_transaction_id; (2) repair engine with dry run on a Neon fork, then apply; (3) guard: zero live Relay fill expenses without a live linked fuel row. Detail: docs/bus/lead/11-02-2026-Claude-Lead-ENG36-MEASURED-ENG61-FUEL-OUTSIDE-TRIP.md (ADDENDUM).
+
+## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
+Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
+DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
+CC-1 FIRST, in this order (both your lane, both branch-tested by Lead, regressions []):
+1. #28122 scripts/lib/expand-live-document-predicates.mjs — redos fix; same output on 91,821 matches. Merge → CodeQL green on every PR.
+2. #28096 scripts/verify-steps/18937 — wires 31 orphan guards (plain + --selftest). Merge after #28122.
+Your own lane = no breach line needed. If you miss 23:30Z, Lead reports to owner which PR is still open and why.
