@@ -161,7 +161,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       });
       if (applied.status.length <= 1) return result;
       const integrity_alerts = (result.integrity_alerts ?? []).filter((row) =>
-        applied.status.includes(String(row.resolution_status ?? row.status ?? "")),
+        applied.status.includes((row.resolution_status ?? row.status ?? "") as string),
       );
       return { ...result, integrity_alerts, total_count: integrity_alerts.length };
     },
