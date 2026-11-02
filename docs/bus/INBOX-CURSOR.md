@@ -1,4 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-02-2026 ~8:00 PM CT)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~9:35 PM CT)
+
+## CURRENT — Cursor BUILD-FIRST tip (#28192–#28203+)
+House formatters + U18 + SelectCombobox shrink shipped. PolicyDetail Demand dollars fix in flight. **ENG-21 BLOCKED:** rate con not on file for 13699. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+# INBOX — CURSOR (PRIOR — 11-02-2026 ~8:00 PM CT)
 
 ## CURRENT — Cursor BUILD-FIRST tip (CRM/Drivers format + ENG-21 BLOCKED)
 CRM/Drivers/Unit/Coi/Portal/Alerts/SyncPanels/FMCSA/FreeTime/CreatorMiles → house formatters; cursor-surfaces datetime guard extended. **ENG-21 BLOCKED:** load 13699 delivery already Bradley IL/Copamex; rate con not on file (notes + docs.files) — no Edit Load. Owner BUILD-FIRST — no match/Dreamline.

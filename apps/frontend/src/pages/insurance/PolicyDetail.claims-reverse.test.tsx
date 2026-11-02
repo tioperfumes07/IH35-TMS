@@ -88,7 +88,8 @@ const legalMattersApiMocks = {
         matter_number: "LM-9001",
         status: "filed",
         type: "lawsuit",
-        amount_claimed_against_us: 500000,
+        // dollars (not cents) — PolicyDetail Demand column must use formatUsd, not formatUsdCents
+        amount_claimed_against_us: 1234.56,
         insurance_claim_id: claimId,
       },
     ],
@@ -151,6 +152,12 @@ describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
       "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
       expect.objectContaining({ type: "lawsuit" }),
     );
+  });
+
+  it("formats lawsuit Demand as dollars (amount_claimed_against_us), not cents", async () => {
+    render(wrap(<PolicyDetail />));
+    expect(await screen.findByText("$1,234.56")).toBeTruthy();
+    expect(screen.queryByText("$12.35")).toBeNull();
   });
 
   it("requests an exact policy-filtered COI reverse list and drills to its customer", async () => {

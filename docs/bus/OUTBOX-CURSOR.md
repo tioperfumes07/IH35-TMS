@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~9:35 PM CT) — Cursor PolicyDetail Demand dollars (not cents)
+- **PRIOR:** #28203 Faro/Fuel SelectCombobox shrink.
+- **THIS:** PolicyDetail lawsuit Demand → formatUsd for amount_claimed_against_us (dollars); reserve fallback formatUsdCents. Vitest dollar assertion.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; ENG-21 BLOCKED; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~9:25 PM CT) — Cursor SelectCombobox shrink + DF bill U18
 - **PRIOR:** #28200 System/U18 · #28201 Driver Bill Detail backHref `/driver-finance` (back-arrow green).
 - **THIS:** Faro1090 wire candidates + Fuel Import kind → SelectCombobox; verify-every-selector-multi-select BASELINE 11→10.
