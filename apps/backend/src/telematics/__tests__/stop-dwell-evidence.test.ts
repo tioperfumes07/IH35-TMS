@@ -39,6 +39,8 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
     expect(r).toEqual({ stops: 1, stop_events: 1, stops_linked: 1, fences: 1, events_written: 2 });
     const link = sql.find((q) => /UPDATE mdata\.load_stops/.test(q))!;
     expect(link).toMatch(/s\.actual_stop_event_id IS NULL/);
+    // load_stops_actual_stamp_precision_check: a 'date_only' stop must carry no event — never link onto one (PROD-5Y)
+    expect(link).toMatch(/s\.actual_stamp_precision IS DISTINCT FROM 'date_only'/);
     // never stamps a time, a source or a precision (detention reads actual_departure_at)
     for (const q of sql) expect(q).not.toMatch(/actual_(arrival|departure)_at\s*=|actual_stamp_precision\s*=|actual_(arrival|departure)_source\s*=/);
     expect(bind).toHaveBeenCalledWith(client, "co-1", "load-1", 1, { lat: 40.66, lng: -74.23 });
@@ -48,6 +50,28 @@ describe("persistStopDwellEvidence — stop evidence, GPS-verified fence, replay
     expect(fences[0].id).toBe("fence-gps-1");
     expect(since).toBe("2026-08-07T16:04:48.000Z");
     expect(until).toBe("2026-08-07T21:04:32.000Z");
+  });
+
+  it("a 'date_only' stop is not linked (CHECK-safe) but its GPS fence and replay still run — the miles path is intact", async () => {
+    replay.mockClear(); bind.mockClear();
+    const sql: string[] = [];
+    const client = {
+      query: vi.fn(async (q: string) => {
+        sql.push(q);
+        if (/INSERT INTO telematics\.unit_stop_events/.test(q)) return { rows: [{ id: "evt-1" }] };
+        // the guarded UPDATE matches nothing for a 'date_only' stop
+        if (/UPDATE mdata\.load_stops/.test(q)) return { rows: [] };
+        if (/FROM geo\.geofence_events/.test(q)) return { rows: [{ n: "0" }] };
+        if (/SELECT vertices_json/.test(q)) return { rows: [{ vertices_json: [{ lat: 1, lng: 1 }, { lat: 1, lng: 2 }, { lat: 2, lng: 2 }] }] };
+        return { rows: [] };
+      }),
+    };
+    const r = await persistStopDwellEvidence(client, "co-1", [ev]);
+    expect(r.stops_linked).toBe(0);
+    expect(r.fences).toBe(1);
+    expect(r.events_written).toBe(2);
+    expect(bind).toHaveBeenCalledTimes(1);
+    expect(replay).toHaveBeenCalledTimes(1);
   });
 
   it("is idempotent: an existing stop event is reused and a fence that already has crossings is not replayed again", async () => {
