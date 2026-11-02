@@ -110,14 +110,15 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const extra = fs.readFileSync(path.join(ROOT, EXTRA), "utf8");
+  const errors = [...assertMigrated(src), ...assertFormatUsd(extra, EXTRA)];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} uses ParityTable; columns + heading + receipt link + subtotal preserved.`,
+    `OK ${LABEL}: ${PAGE} uses ParityTable; Reimbursements + Extra Pay use formatUsd.`,
   );
 }
 
