@@ -21,6 +21,7 @@ export type CardRowVerdict = {
   fuel_type: string | null;
   gallons: number | null;
   total_cost_cents: number | null;
+  unit_id: string | null;
   unit_number: string | null;
   is_purchase: boolean;
   not_purchase_reason: FuelPurchaseIneligibleReason | null;
@@ -62,6 +63,7 @@ export type FuelTimeDerivation = {
   local_date: string;
   unit_id: string | null;
   unit_number: string | null;
+  vendor_id: string | null;
   vendor_name: string | null;
   transaction_at_derived: string | null;
   state_derived: string | null;

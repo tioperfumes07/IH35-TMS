@@ -23,6 +23,7 @@ export type CardRowVerdict = {
   fuel_type: string | null;
   gallons: number | null;
   total_cost_cents: number | null;
+  unit_id: string | null;
   unit_number: string | null;
   is_purchase: boolean;
   not_purchase_reason: FuelPurchaseIneligibleReason | null;
@@ -72,6 +73,7 @@ export async function computeFuelIntegrityVerdicts(
       fuel_type: e.fuel_type,
       gallons: e.gallons,
       total_cost_cents: t.total_cost == null ? null : Math.round(Number(t.total_cost) * 100),
+      unit_id: (t.unit_id as string | null) ?? null,
       unit_number: (t.unit_number as string | null) ?? null,
     };
     const reason = fuelPurchaseIneligibleReason(e, { requirePumpTime: false });

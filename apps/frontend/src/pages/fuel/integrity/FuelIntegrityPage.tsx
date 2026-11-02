@@ -74,7 +74,17 @@ export function FuelIntegrityPage() {
       label: "Date", sortable: true,
       render: (row) => formatDateTimeUS(row.transaction_at),
     },
-    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
+    {
+      key: "unit_number",
+      label: "Unit",
+      sortable: true,
+      render: (row) =>
+        row.unit_id ? (
+          <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" className={LINK} />
+        ) : (
+          (row.unit_number ?? "—")
+        ),
+    },
     { key: "fuel_type", label: "Fuel type", sortable: true, render: (row) => row.fuel_type ?? "—" },
     {
       key: "gallons",
@@ -178,8 +188,28 @@ export function FuelIntegrityPage() {
 
   const derivedCols: ParityColumn<FuelTimeDerivation>[] = [
     { key: "local_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.local_date) },
-    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
-    { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => row.vendor_name ?? "—" },
+    {
+      key: "unit_number",
+      label: "Unit",
+      sortable: true,
+      render: (row) =>
+        row.unit_id ? (
+          <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" className={LINK} />
+        ) : (
+          (row.unit_number ?? "—")
+        ),
+    },
+    {
+      key: "vendor_name",
+      label: "Vendor",
+      sortable: true,
+      render: (row) =>
+        row.vendor_id ? (
+          <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" className={LINK} />
+        ) : (
+          (row.vendor_name ?? "—")
+        ),
+    },
     {
       key: "transaction_at_derived",
       label: "Derived time", sortable: true,
