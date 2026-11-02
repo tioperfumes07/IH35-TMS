@@ -2,6 +2,7 @@
 import type { LaneMileageFillConfidence, LaneMileageReferenceRow } from "../../../../api/dispatch";
 import { useTranslation } from "../../../../hooks/useTranslation";
 import { ParityTable } from "../../../../components/parity/ParityTable";
+import { formatUsd } from "../../../../lib/money";
 
 type Props = {
   practical?: number | null;
@@ -280,7 +281,7 @@ export function MilesStrip({
         <div className={`${cell} bg-[#F7F8FA]`}>
           <div className={label}>Revenue per mile</div>
           <div className="text-right font-mono text-xs font-semibold text-[#0F1219]" data-testid="book-load-revenue-per-mile">
-            {!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(2)}` : "—"}
+            {!(ratePerMile <= 0) ? formatUsd(ratePerMile) : "—"}
           </div>
           <div className={caption}>{practical != null && practical > 0 ? `on practical ${formatMiles(practical)}` : "on practical miles"}</div>
         </div>

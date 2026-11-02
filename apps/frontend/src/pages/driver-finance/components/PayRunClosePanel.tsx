@@ -19,6 +19,7 @@ import { useToast } from "../../../components/Toast";
 import { FloorOverrideDecisionModal } from "./FloorOverrideDecisionModal";
 import { LoanRecoveryDecisionModal } from "./LoanRecoveryDecisionModal";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { formatUsdCents } from "../../../lib/money";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
 
@@ -46,7 +47,7 @@ type Props = {
 type JeLegRow = SettlementPayRunResult["je_preview"][number] & { rowKey: string };
 
 function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 function extractPayRunError(error: unknown): { code: string; message: string } {

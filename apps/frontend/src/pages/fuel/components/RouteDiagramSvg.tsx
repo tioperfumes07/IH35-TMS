@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   totalMiles: number | null;
@@ -91,7 +92,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 strokeDasharray={skipped ? "3 2" : undefined}
               />
               <text x={stop.x!} y={LINE_Y - 14} textAnchor="middle" className={`text-xs ${skipped ? "line-through fill-red-700" : "fill-gray-700"}`}>
-                ${Number(stop.price_per_gallon ?? 0).toFixed(2)}
+                {formatUsd(Number(stop.price_per_gallon ?? 0))}
               </text>
               <text x={stop.x!} y={LINE_Y + 24} textAnchor="middle" className="fill-gray-700 text-xs">
                 {String(stop.station_name ?? `Stop ${idx + 1}`).slice(0, 16)}

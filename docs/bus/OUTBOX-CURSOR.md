@@ -1,3 +1,14 @@
+## OUTBOX (11-02-2026 ~7:45 PM CT) — Cursor BUILD-FIRST engines tip
+- **MERGED:** #28087 CashFlow matrix→RL week/type · #28089 RL chip MM/DD/YYYY · #28091 Factoring debtor filter · #28092 Fuel Relay format · #28094 Geofences deeplink · #28097 NavyPageSubNav portal · #28100 Reimburse/ExtraPay formatUsd · #28103/#28104 disputes/payrun/deductions/floor/loan money · #28106 Settlements home week/money · #28108–#28111 Fuel savings/planner/stop/route formatUsd.
+- **HANDOFF:** Cascade InvoiceSearch/P&L + Audit date-boundary + DriverQual reports. LAW: new verify-*.mjs must claim+wire same PR (#28096).
+- **NEXT:** more Cursor shells/engines (FuelTransactions leftovers, insurance, dispatch); Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~7:25 PM CT) — Cursor BUILD-FIRST engines + submenu tip
+- **MERGED:** #28087 CashFlow Home matrix → Rolling Ledger week/type (`rl_*`) · #28089 RL chip MM/DD/YYYY · #28091 Factoring Purchase Report Filter by Debtor · #28092 Fuel Relay deposit formatDateUS/formatUsdCents · #28094 Geofences deep-link pin beyond page 1 · #28097 NavyPageSubNav portal mousedown/hover keep-open.
+- **THIS WAVE:** Settlement Reimbursements + Extra Pay → formatUsd.
+- **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md. Reports Audit date-boundary + DriverQualification controls → Cascade/reports lane.
+- **NEXT:** more Cursor shells/engines (driver-finance money leftovers, insurance, fuel); ACCT-R-04 Render UUIDs (operator); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~6:35 PM CT) — Cursor shell datetime + engines tip
 - **MERGED:** #28074 Trip Pairing Customer/Miles/Revenue · #28076 POD U12 · #28078–#28082 formatDateTimeUS sweeps (POD/Late/Fraud · Cursor surfaces · dispatch wave2 · Driver/Notification/Audit).
 - **PRIOR:** #28065/#28067 U29 Company-Driver · Faro debtor.

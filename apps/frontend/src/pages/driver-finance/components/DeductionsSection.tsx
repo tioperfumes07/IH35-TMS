@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { mmmDd } from "../../../lib/formatDate";
+import { formatUsd } from "../../../lib/money";
 import { BoardSection } from "../../../components/v3/BoardSection";
 
 export type DeductionRow = {
@@ -114,7 +115,7 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Deduction
     label: "Amount",
     render: (row) => (
       <span className={row.is_held ? "line-through" : ""}>
-        −${Number(row.pending_ack ? 0 : row.this_period_amount).toFixed(2)}
+        −{formatUsd(Number(row.pending_ack ? 0 : row.this_period_amount))}
       </span>
     ),
   },
@@ -227,7 +228,7 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
         embedded
         hidePager
       />
-      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Applied deductions this period: −${subtotal.toFixed(2)}</div>
+      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Applied deductions this period: −{formatUsd(subtotal)}</div>
     </BoardSection>
   );
 }

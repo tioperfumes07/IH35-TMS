@@ -359,7 +359,7 @@ export function GeofencesPage() {
               page={tablePage}
               onPageChange={setTablePage}
               rowClassName={(item) =>
-                highlightedGeofenceId === item.id ? "bg-[#FEF3C7] ring-1 ring-inset ring-[#F59E0B]/ : ""
+                highlightedGeofenceId === item.id ? "bg-[#FEF3C7] ring-1 ring-inset ring-[#F59E0B]" : ""
               }
             />
           </div>

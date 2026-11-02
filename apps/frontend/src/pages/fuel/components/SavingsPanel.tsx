@@ -3,6 +3,7 @@
  * getFuelSavingsSummary values unchanged.
  */
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { formatUsd } from "../../../lib/money";
 import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
@@ -14,7 +15,7 @@ type Props = {
   topDriverAmount: number | null;
 };
 
-const money = (value: number | null) => (value === null ? "—" : `$${value.toFixed(2)}`);
+const money = (value: number | null) => (value === null ? "—" : formatUsd(value));
 
 function kpiMoney(sourceAvailable: boolean, value: number | null): string {
   if (!sourceAvailable) return "—";

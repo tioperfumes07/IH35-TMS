@@ -143,8 +143,12 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
 
   useEffect(() => {
     if (!open) return undefined;
+    // Codex QA 11-02 ROUND 7.6: menu is createPortal'd to document.body, so wrapperRef.contains
+    // misses menuitem mousedown and closes/unmounts the portal before the Link click navigates.
     const onDown = (e: MouseEvent) => {
-      if (wrapperRef.current?.contains(e.target as Node)) return;
+      const t = e.target as Node;
+      if (wrapperRef.current?.contains(t)) return;
+      if (menuRef.current?.contains(t)) return;
       close();
     };
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -218,6 +222,10 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
               className="rounded-sm border border-gray-200 bg-white py-1 text-[11px] text-gray-700 shadow-md"
               style={menuStyle}
               onKeyDown={onMenuKeyDown}
+              // Portal is outside the trigger wrapper — keep open while pointer is over the menu,
+              // and schedule the same hide delay when leaving (Codex QA hover-gap close).
+              onMouseEnter={show}
+              onMouseLeave={scheduleHide}
               tabIndex={-1}
             >
               {children.map((child) => (

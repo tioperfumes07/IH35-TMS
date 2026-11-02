@@ -179,7 +179,7 @@ export function TripProfitability() {
       key: "trip_closed_at",
       label: "Closed",
       sortable: true,
-      render: (row) => (row.trip_closed_at ? new Date(row.trip_closed_at).toLocaleDateString() : "Open"),
+      render: (row) => (row.trip_closed_at ? formatDateUS(row.trip_closed_at) || "—" : "Open"),
     },
   ];
 

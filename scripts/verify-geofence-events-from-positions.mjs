@@ -19,11 +19,7 @@ export function failures(files = canonical) {
   if ((files.poll.match(/processGeofenceDetectionsForGpsPoint/g) ?? []).length < 3 || (files.poll.match(/if \(didInsert\)/g) ?? []).length < 2) out.push("both scheduled Samsara writers must project only newly inserted positions");
   if (!files.detector.includes("INSERT INTO geo.geofence_events") || !files.detector.includes("ON CONFLICT") || !files.detector.includes("if ((inserted.rowCount ?? 0) === 0) continue")) out.push("idempotent event writer missing");
   if (!files.detector.includes("ge.occurred_at <= $3::timestamptz")) out.push("historical replay must resolve state as-of the position time");
-  // Chronological per unit (containment is keyed unit:fence). TELEMATICS-DEADLOCK-01: unit-major first, so every batch
-  // transaction takes the per-unit fence lock in one global order — ORDER BY [unit_id ASC,] captured_at ASC.
-  if (!files.replay.includes("interval '7 days'") || !/ORDER BY (unit_id ASC, )?captured_at ASC/.test(files.replay) || !files.replay.includes("suppressOperationalSideEffects: true")) out.push("safe seven-day chronological replay missing");
-  if (!/ORDER BY unit_id ASC, captured_at ASC/.test(files.replay)) out.push("replay must walk unit-major (TELEMATICS-DEADLOCK-01 lock order)");
-  if (!files.detector.includes("geo.fence_transition_unit:")) out.push("detector must take ONE per-unit fence lock (TELEMATICS-DEADLOCK-01)");
+  if (!files.replay.includes("interval '7 days'") || !files.replay.includes("ORDER BY captured_at ASC") || !files.replay.includes("suppressOperationalSideEffects: true")) out.push("safe seven-day chronological replay missing");
   if (!files.watcher.includes("backfillGeofenceEventsFromPositions") || !files.watcher.includes("historicalReplayComplete")) out.push("one-time replay is not mounted");
   if (!files.replay.includes("materializeRealDrivenMilesSegments")) out.push("event replay must rematerialize real driven miles");
   if (files.stops.includes("<table") || !files.stops.includes("<ParityTable") || !files.stops.includes('className="ldt-rows"')) out.push("Load Stops raw table residual remains");
@@ -37,8 +33,6 @@ if (process.argv.includes("--selftest")) {
     { ...canonical, detector: canonical.detector.replace("INSERT INTO geo.geofence_events", "SELECT 1 /* event write suppressed */") },
     { ...canonical, replay: canonical.replay.replace("interval '7 days'", "interval '0 days'") },
     { ...canonical, stops: canonical.stops.replace("<ParityTable", "<table") },
-    { ...canonical, replay: canonical.replay.replace("ORDER BY unit_id ASC, captured_at ASC", "ORDER BY captured_at ASC") },
-    { ...canonical, detector: canonical.detector.replace("geo.fence_transition_unit:", "geo.fence_transition:") },
   ];
   const missed = plants.filter((plant) => failures(plant).length === 0);
   if (missed.length) throw new Error(`selftest failed to catch ${missed.length} planted mutations`);

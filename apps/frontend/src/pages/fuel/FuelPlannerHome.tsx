@@ -21,6 +21,7 @@ import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMulti
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -563,7 +564,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 savingsQuery.isPending
                   ? "…"
                   : savingsQuery.data?.source_available && savingsQuery.data.fleet_savings_ytd != null
-                    ? `$${Number(savingsQuery.data.fleet_savings_ytd).toFixed(2)}`
+                    ? formatUsd(Number(savingsQuery.data.fleet_savings_ytd))
                     : "—"
               }
               sub="planner compliance savings"
@@ -575,7 +576,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 savingsQuery.isPending
                   ? "…"
                   : savingsQuery.data?.source_available && savingsQuery.data.fleet_lost_savings_ytd != null
-                    ? `$${Number(savingsQuery.data.fleet_lost_savings_ytd).toFixed(2)}`
+                    ? formatUsd(Number(savingsQuery.data.fleet_lost_savings_ytd))
                     : "—"
               }
               sub="from non-compliance"
