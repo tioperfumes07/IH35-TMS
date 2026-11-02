@@ -141,12 +141,14 @@ export function DrillKpiCard({
   const labelClass = tile.label;
   const valueClass = `${tile.value} ${VALUE_TONE[valueTone]}`;
 
-  const displayValue = unavailable
-    ? KPI_NO_VALUE
-    : formatKpiValue(value);
-  const emptyWithoutReason = !unavailable && displayValue === KPI_NO_VALUE;
-  // C-22 — never a silent em-dash: empty tiles say why (hint, or default "No data").
-  const emptyExplain = unavailable ?? (emptyWithoutReason ? (typeof hint === "string" ? hint : "No data") : null);
+  // unavailable = non-navigable (honest third state). It must NOT blank a real value —
+  // moneyListKpiCard / filter-summary tiles pass unavailable + a live total together.
+  const displayValue = formatKpiValue(value);
+  const emptyWithoutReason = displayValue === KPI_NO_VALUE;
+  // C-22 — never a silent em-dash: empty tiles say why (unavailable reason, hint, or "No data").
+  const emptyExplain = emptyWithoutReason
+    ? (unavailable ?? (typeof hint === "string" ? hint : "No data"))
+    : null;
 
   const body = (
     <>
@@ -228,9 +230,13 @@ function BoardKpiTile(props: {
   onClick?: () => void;
   unavailable?: string;
 }) {
-  const displayValue = props.unavailable ? KPI_NO_VALUE : formatKpiValue(props.value);
-  const emptyWithoutReason = !props.unavailable && displayValue === KPI_NO_VALUE;
-  const reason = props.unavailable ?? (emptyWithoutReason ? (typeof props.hint === "string" ? props.hint : "No data") : null);
+  // unavailable = non-navigable. Keep the live figure when the caller supplied one
+  // (Codex QA 11-02 — money list KPIs were blanking every tile via a standing unavailable).
+  const displayValue = formatKpiValue(props.value);
+  const emptyWithoutReason = displayValue === KPI_NO_VALUE;
+  const reason = emptyWithoutReason
+    ? (props.unavailable ?? (typeof props.hint === "string" ? props.hint : "No data"))
+    : null;
   const cls = `ih-kpi board-kpi${props.valueTone !== "default" ? ` board-kpi--${props.valueTone}` : ""}`;
   const style = props.accent ? { borderLeft: `3px solid ${props.accent}` } : undefined;
   const body = (

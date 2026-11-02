@@ -6,9 +6,9 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
  * CLS-MONEY-KPI-FAKE-ZERO: callers must pass "—" / "Error loading" when the query failed —
  * never fabricate $0.00 from an empty default.
  *
- * Codex QA 11-02: never pass a standing `unavailable` string — DrillKpiCard treats any
- * unavailable prop as "suppress the value" (em dash), which blanked every Expenses/Bills KPI
- * even when real totals were supplied.
+ * Codex QA 11-02: these tiles summarize the already-filtered list (no separate drill).
+ * `unavailable` marks non-navigable — DrillKpiCard must still render the live value
+ * (BoardKpiTile no longer blanks a supplied figure when unavailable is set).
  */
 export function moneyListKpiCard(
   label: string,
@@ -18,12 +18,14 @@ export function moneyListKpiCard(
 ): ReactNode {
   const accent =
     tone === "danger" ? "#A32D2D" : tone === "warn" ? "#854F0B" : "#E5E7EB";
-  const unavailable =
-    value === "—" || /^error loading$/i.test(sublabel) ? sublabel : undefined;
+  const honestlyEmpty = value === "—" || /^error loading$/i.test(sublabel);
+  const unavailable = honestlyEmpty
+    ? sublabel || "Error loading"
+    : "Summary of the rows currently filtered on this page";
   return (
     <DrillKpiCard
       label={label}
-      value={unavailable ? null : value}
+      value={honestlyEmpty ? null : value}
       hint={sublabel}
       unavailable={unavailable}
       variant="board"
