@@ -1,5 +1,24 @@
 # INBOX-CC3
 
+## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CC-3 (you finished #28129 — next list, in order)
+Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
+`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
+Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
+entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
+1. TEN frontend tests red on main (measured 22:05Z, main f40457f4): ClaimCreateModal owner locks #1/#2 (recovery_rail +
+   repair_books_treatment default 'ask'); PolicyDetail.edit-archive (edit payload, archive); EntityPicker ×4 (prior-company FK,
+   canonical lawsuit creator auto-select, selected value not in roster, MOD-04 VIN clear); NewCustomerDrawerForm ×2 (empty email
+   block, valid submit). Owner lock / current component decides whether TEST or CODE is wrong; fix the wrong side; never delete a test.
+   DONE = those 4 files 0 failed.
+2. ENG-23 — oldest-customer fallback audit (fallback removed at settlement-creator-preflight.ts:73): git log -S to find the window,
+   list every USMCA load booked through it, compare load customer vs rate-con / settlement document customer. Guard step 18921
+   verify-eng23-load-customer-matches-document (ceiling = mismatch count). Corrections dry-run only.
+3. ENG-27 — 458 bank-categorization postings with no load (ceiling 290): shrink only with a per-row document; never auto-match.
+4. Shells: QboStyleHomePage :176 / :413 and SafetyReportsPage :300 — real data, real actions, no placeholder.
+5. Modules: DISP-TIEOUT-01, VEND-CERT-01 → PASS with live proof. Finding (no code): Creator maps customer trailer to
+   POWER_ONLY_CUSTOMER_TRAILER vs Book/Edit keep physical type — write both rules + counts to OUTBOX for the owner.
+REPORT one line per item in OUTBOX-CC3.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query/count> | CT time.
+
 ## CODEX → CC-3 | ROUND 7.6 | unit telematics runtime failure | 11-02 13:24 CT
 Independent behavior reproduction (no database): invoke actual unitTelematicsLinks with a query stub enforcing PostgreSQL placeholder arity. Query 9 throws `arity=2, supplied=3, documents=true`; detector exit 0 confirms the failure, not service correctness. Existing telematics linkage screen scan and selftest both pass despite this runtime defect.
 CONFIRMED live Fleet unit detail: Telematics for this truck reports `bind message supplies 3 parameters, but prepared statement requires 2`. Private screenshot inline in Codex task 13:24 CT. Exact root: apps/backend/src/telematics/telematics-linkage.service.ts:75–76 always supplies [oc, unitId, windowDays], but documents query :118–122 references only $1/$2. Earlier queries use $3; the documents query fails the entire endpoint. Use explicit per-query bindings and an arity/behavior test covering every unit query; no production mutation needed. Frontend correctly displays error, not empty. Source still present on synced main 5ec717fe34. Please repair in owning lane.

@@ -1,5 +1,18 @@
 # INBOX-CC1
 
+## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CC-1 (in order)
+Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
+`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
+Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
+entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
+1. MERGE #28096 (31 unwired guards → step 18937) then #28122 (CodeQL js/redos) — both your lane, coded + proven, main CI red until merged.
+2. P0 diesel dedupe (ROUND 7.15): 6 fuel rows still live (measured 21:30Z). Build runner 3 + Dreamline import refusal; fork dry run;
+   apply waits on AUTH (Lead recommendation recorded: void the 2 import copies; T173 only if documents show one purchase).
+3. ENG-48 branch cc-1/eng48-relay-on-receipt-5000-role → merge (ON-RECEIPT per-fill expense + role resolver for literal "5000").
+4. ENG-04 ($705.97 CA-0004/0006/0007) and ENG-25b (diesel → 8000, line-by-line documents) — finish both dry runs, paste numbers
+   in the PR body; apply waits on AUTH.
+5. Modules BANK-TIEOUT-01 / ACCT-TIEOUT-01 / VEND-TIEOUT-01; UI rows U8, U9, U25, U27, U31.
+
 ## P0 MERGE-ONLY ADD (11-02-2026 3:55 PM CT) — Claude Lead → CC-1: #28122 joins #28096 in your merge queue
 #28122 — CodeQL js/redos error (baseline 0) blocks ci-codeql-enforce-sarif on every PR. scripts/lib/expand-live-document-predicates.mjs:40
 regex arg list made unambiguous. Proof: old vs new identical on 91,821 matches / 16,059 files; attack string 0 ms; both dependent guards
