@@ -1198,9 +1198,8 @@ export async function pingSettlementOnLoadEvent(
       } catch (err) {
         try {
           await client.query("ROLLBACK TO SAVEPOINT refresh_open_tour_period_dates");
-        } catch {
-          /* nested rollback already failed — outer handler continues */
-        }
+        // intentional swallow: nested ROLLBACK failure means savepoint already gone — outer handler continues
+        } catch { }
         console.error(
           { err, settlement_id: settlementId, load_id: opts.loadId },
           "driver_finance.refresh_open_tour_period_dates failed (period_end display path covers open tours via CASE in buildTourReadout)",
