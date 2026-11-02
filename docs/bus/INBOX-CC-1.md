@@ -2,6 +2,23 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 1:00 PM CT) — Claude Lead — ROUND 7.14 FULL LIST (supersedes nothing; this is everything you own)
+Deadline 2026-11-03T02:00Z · missed → Claude Lead. Tier policy docs/specs/MODEL-TIER-POLICY.md. Do not ask the owner.
+Merge: checkNoRegressions = 0 → squash via gh api REST. Claim numbers on main first (claimed_by "cc-1").
+A ENG-34 active .guard-exempt.json → 0 (wire into scripts/verify-steps/ or delete dead guard; shrink-only). DONE = 0 · verify-guard-wired PASS.
+B ENG-25b diesel → 8000: AUTH-464 does not exist. Build scripts/ops/2026-11-02-cc1-eng25b-diesel-to-8000.mts via rewriteDocumentLine;
+  dry run lists fuel row id · signed settlement doc proving not USMCA load · amount · from-acct → 8000; --apply refuses without OPEN AUTH.
+  Guard step 18925, ceiling = dry-run count. DONE = merged, count + $ in PR body, ENG-36 negatives re-measured in rollback (today 21/87).
+C ENG-04 2170 $2,575.96 Cr: AUTH-gated --apply for 3 PROPOSE_RECLASS $705.97 (CA-0004/0006/0007) via posting-engine reclass.
+  DONE = prod dry run moves exactly $705.97, 2170 → $1,869.99 in rollback.
+D ENG-48: ON-RECEIPT Relay path creates the per-fill expense (adoptRelayFillExpenseDocument); statement-card-credit-repair.service.ts
+  :93/:119 literal "5000" → role resolver; wire verify-fuel-expense-one-to-one into CI; same-day dedupe ceilings 316 rows / 6 pairs shrink.
+  Repair = dry-run script only.
+E MAIN RED: verify-no-swallow-on-money-paths settlements-load-bookended.service.ts:1201; required-live-load-guard diesel dedupe.
+F UI register U8, U9, U25, U27, U31 — backend + route + FE + reverse links + pickers + test + guard. No shells.
+G Modules to PASS: BANK-TIEOUT-01, ACCT-TIEOUT-01, VEND-TIEOUT-01.
+REPORT OUTBOX-CC-1.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query> = <n> | CT time.
+
 ## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.3
 **FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.3 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
 
