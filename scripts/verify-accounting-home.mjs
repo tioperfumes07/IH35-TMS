@@ -106,6 +106,9 @@ contains("apps/frontend/src/pages/home/roles/AccountingHome.tsx", accountingHome
   { pattern: /UnclearedDocumentsNote/, label: "363-CUR-A uncleared documents named" },
   { pattern: /bg-\[#F7F8FA\]/, label: "363-CUR-A uncleared notice uses house page fill not amber" },
   { pattern: /not cleared/, label: "363-CUR-A not-cleared copy" },
+  // fill-not-shell — need-company uses BoardSection
+  { pattern: /testId="accounting-home-need-company"/, label: "need-company BoardSection" },
+  { pattern: /<BoardSection\b/, label: "BoardSection import/use" },
 ]);
 
 read("apps/frontend/src/components/home/AccountingKpiBar.tsx");

@@ -56,6 +56,9 @@ function assertWiring(readSourceFn = readSource) {
         'to: "/maintenance/road-service"',
         'to: "/drivers/messages"',
         'to: "/drivers/alerts"',
+        // fill-not-shell — need-company uses BoardSection
+        'testId="driver-hub-overview-need-company"',
+        "BoardSection",
       ],
     ],
     [FILES.inbox, inbox, ['cashAdvanceRequestsOfficeApi.listPending', "Approve &amp; post"]],

@@ -81,6 +81,7 @@ export function DriverBillDetailPage() {
   return (
     <div className="mx-auto max-w-5xl p-4">
       <PageHeader
+        backHref="/dispatch"
         title={`Driver bill ${label}`}
         subtitle={subtitle}
         breadcrumb={[

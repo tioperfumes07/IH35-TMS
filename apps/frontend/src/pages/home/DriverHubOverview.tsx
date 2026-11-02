@@ -7,6 +7,7 @@ import { driverSchedulerOfficeApi } from "../../api/driver-scheduler";
 import { apiRequest } from "../../api/client";
 import { DriverInbox } from "../../components/driver-inbox/DriverInbox";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DriverSchedulerRequestInboxPage } from "../safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 
 function formatCount(n: number | null, isError: boolean): string {
@@ -62,7 +63,11 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
     return <p className="text-xs text-[#4B5563]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
   }
   if (!companyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to view driver requests and alerts.</p>;
+    return (
+      <BoardSection title="Driver hub" testId="driver-hub-overview-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view driver requests and alerts.</p>
+      </BoardSection>
+    );
   }
 
   const leaveCount = leaveQ.isLoading || leaveQ.isError ? null : (leaveQ.data?.total_count ?? 0);
