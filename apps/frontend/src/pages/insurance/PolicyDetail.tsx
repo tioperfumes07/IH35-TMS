@@ -430,7 +430,7 @@ export function PolicyDetail() {
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits (legal.matters)</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits</h3>
           <div className="mt-2">
             {lawsuitsQuery.isError ? (
               <ListErrorState

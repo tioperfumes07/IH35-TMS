@@ -2,6 +2,29 @@
 
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
 
+## CURRENT (11-02-2026 1:05 PM CT) — Claude Lead — ROUND 7.13 MAIN-RED: orphan migration ledger (privileged SQL, do it now)
+`build-typecheck-heavy` stops at step 916 `verify-no-orphan-migration-ledger-entries`. Measured on prod 18:57Z: 3 rows in
+`ih35_migrations.applied_migrations` (the mirror) are DUPLICATES. In each case the correct `.sql` row exists in BOTH ledgers with the same
+applied_at. Canonical `_system._schema_migrations` is clean. Claude Lead's Neon role → `permission denied for table applied_migrations`,
+so this needs neondb_owner (Neon SQL Editor, or your `.prod` URL if it is the owner role):
+```sql
+BEGIN;
+DO $$ DECLARE n int; BEGIN
+ DELETE FROM ih35_migrations.applied_migrations m
+  WHERE m.name IN ('202610290000_disp01_escrow_abandon_trigger_text_cast.sql',
+                   '202614000000_mdata_locations_is_sample_data',
+                   '202614690000_expense_lines_item_and_account_required')
+    AND EXISTS (SELECT 1 FROM _system._schema_migrations c WHERE c.filename =
+        CASE WHEN m.name LIKE '202610290000%' THEN '202610291200_disp01_escrow_abandon_trigger_text_cast.sql'
+             WHEN m.name LIKE '%.sql' THEN m.name ELSE m.name||'.sql' END);
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 3 THEN RAISE EXCEPTION 'expected 3 deleted, got %', n; END IF;
+END $$;
+COMMIT;
+```
+DONE = `node --env-file=.env scripts/verify-no-orphan-migration-ledger-entries.mjs` → `OK: no orphan ledger entries`, pasted in OUTBOX-CURSOR.md
+with CT time. Deadline 2026-11-02T21:00Z; missed → Claude Lead asks the owner to run it in the SQL Editor.
+
 ## CURRENT (11-02-2026 ~2:05 PM CT) — Cursor fill-not-shell BoardSection wave
 #28003/#28004 shipped. shells12: vendor reverse + accounting detail DataPanel→BoardSection. Owner BUILD-FIRST. Next: CustomerDetail/VendorDetail/Drivers master-detail shells + U12/U18/U28–U30. No match/reconcile/Dreamline.
 
