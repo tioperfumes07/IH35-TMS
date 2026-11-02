@@ -113,7 +113,17 @@ export function DriverBillRemintScreen() {
         className: "font-medium",
         render: (row) => <EntityLinkOrTombstone kind="load" id={row.id} name={row.load_number} noun="Load" />,
       },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "— unassigned —" },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) =>
+          row.driver_id ? (
+            <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+          ) : (
+            "— unassigned —"
+          ),
+      },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status.replace(/_/g, " ") },
       {
         key: "is_sample_data",

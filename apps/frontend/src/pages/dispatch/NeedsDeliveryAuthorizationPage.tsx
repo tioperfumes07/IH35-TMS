@@ -89,13 +89,23 @@ export function NeedsDeliveryAuthorizationPage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (row) => row.customer_name ?? "—",
+        render: (row) =>
+          row.customer_id ? (
+            <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+          ) : (
+            (row.customer_name ?? "—")
+          ),
       },
       {
         key: "invoice_display_id",
         label: "Invoice",
         sortable: true,
-        render: (row) => row.invoice_display_id ?? "—",
+        render: (row) =>
+          row.invoice_id ? (
+            <EntityLinkOrTombstone kind="invoice" id={row.invoice_id} name={row.invoice_display_id} noun="Invoice" />
+          ) : (
+            (row.invoice_display_id ?? "—")
+          ),
       },
       {
         key: "invoice_status",
