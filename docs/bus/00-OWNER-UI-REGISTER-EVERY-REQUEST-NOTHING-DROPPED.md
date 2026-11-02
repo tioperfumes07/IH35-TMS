@@ -24,7 +24,7 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 | U18 | **`← Back` is browser history — becomes a breadcrumb, parent always the module home. App-wide. Some screens have NO back at all** | CURSOR · CC-2 | OPEN |
 | U19 | Reclassify: register never loaded; zero accounts hidden; default window too narrow | LEAD | OPEN — live 11-02 12:58–13:00 CT transaction table remained Loading; account tree and 25 batch rows loaded. Zero balances visible. Private screenshot in Codex task |
 | U20 | Reclassify: P&L / Balance Sheet toggle, every account incl. 0.00, sortable headers, wider pane | LEAD | **FIXED, awaiting merge** |
-| U21 | Reclassify: **calendars cannot change the YEAR** | CC-2 | LIVE partial PASS 11-02: account From calendar Year select changed 2026→2025; calendar rerendered, no date submitted. Remaining calendars pending |
+| U21 | Reclassify: **calendars cannot change the YEAR** | CC-2 | REGRESSION 11-02 13:47 CT after #28034: live Year dropdown only 2026; four pickers clamped to current year. Earlier 2026→2025 worked. Reported CC-2; test currently proves lock instead of cross-year navigation |
 | U22 | Reclassify: the **expense number is missing** from Num (service resolves it — find why it renders empty) | CC-2 | OPEN |
 | U23 | Reclassify: **no filters for Load, Truck, Driver, Unit, Trailer, Vendor** + a column chooser to add them | CC-2 | LIVE partial 11-02: load/truck/driver/trailer/vendor controls and Columns(14) visible; load checkbox menu opens human labels. Filtering effect UNVERIFIED while register loading |
 | U24 | Reclassify: three selectors — by account, **by item**, by load | CC-2 | OPEN |
