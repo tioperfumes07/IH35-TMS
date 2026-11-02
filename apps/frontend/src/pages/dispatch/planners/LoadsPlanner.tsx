@@ -127,7 +127,7 @@ export function LoadsPlanner() {
             pickupDate: load.pickup_scheduled_at ? load.pickup_scheduled_at.slice(0, 10) : "—",
             deliveryDate: load.scheduled_delivery_date ?? (load.delivery_appointment_start_at ? load.delivery_appointment_start_at.slice(0, 10) : "—"),
             rate: load.rate_total_cents != null
-              ? `${load.currency_code === "MXN" ? "$" : "$"}${(load.rate_total_cents / 100).toFixed(2)}`
+              ? formatMoneyCents(load.rate_total_cents)
               : "—",
           }));
           const columns: Array<ParityColumn<LoadListRow>> = [
