@@ -103,4 +103,45 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
     }
     return payload;
   });
+
+  /**
+   * SAF-B08 — escrow-clause KPI: total active drivers + count who have a signed clause.
+   * The EscrowRecordTab iterates only drivers with escrow balances, so its row count is not the
+   * full driver population. This endpoint counts both totals in a single pass so the KPI banner
+   * can say "2 of 165 signed" instead of "0 of 37 signed".
+   */
+  app.get("/api/v1/driver-finance/escrow-clause-kpi", READ_RL, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await (client.query as (sql: string, params: unknown[]) => Promise<{ rows: Array<{ total_active_drivers: string; signed_clause_count: string }> }>)(
+        `
+          SELECT
+            (SELECT COUNT(*) FROM mdata.drivers d
+              WHERE d.operating_company_id = $1::uuid
+                AND d.soft_deleted_at IS NULL) AS total_active_drivers,
+            (SELECT COUNT(DISTINCT ci.signer_entity_id)
+               FROM legal.contract_instances ci
+              WHERE ci.operating_company_id = $1::uuid
+                AND ci.signer_type = 'driver'
+                AND ci.status::text IN ('signed_electronically', 'signed_on_paper')
+                AND ci.signed_at IS NOT NULL
+                AND ci.voided_at IS NULL
+                AND (ci.status::text <> 'signed_on_paper' OR ci.signed_pdf_attachment_id IS NOT NULL)
+            ) AS signed_clause_count
+        `,
+        [query.data.operating_company_id]
+      );
+      const row = res.rows[0];
+      return {
+        total_active_drivers: Number(row?.total_active_drivers ?? 0),
+        signed_clause_count: Number(row?.signed_clause_count ?? 0),
+      };
+    });
+
+    return result;
+  });
 }
