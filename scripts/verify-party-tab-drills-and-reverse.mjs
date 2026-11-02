@@ -26,7 +26,8 @@ const CHECKS = [
   ["cust", /data-testid="customer-pnl-basis"/, "P&L must name its revenue basis"],
   ["prof", /searchParams\.get\("customer_id"\)/, "profitability report must honour ?customer_id="],
   ["prof", /rows\.filter\(\(r\) => r\.customer_id === deepCustomerId\)/, "profitability report must scope to the drilled customer"],
-  ["coi", /status: statusFilter \|\| undefined,/, "COI status selector must apply on the customer tab"],
+  // U12 2026-11-02: statusFilter is string[]; single selection still hits the API status= param.
+  ["coi", /status:\s*statusFilter\.length === 1 \? \(statusFilter\[0\] as CoiRequestStatus\) : undefined,/, "COI status selector must apply on the customer tab"],
   ["vend", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, status: "active", limit: 200 \}\)/, "vendor A/P bills must be live only"],
   ["vend", /listExpenses\(companyId, \{ vendor_uuid: id, status: "active", limit: 200 \}\)/, "vendor A/P expenses must be live only"],
   ["vend", /to=\{`\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}`\}/, "Pay bills must land on this vendor's bill payments"],
