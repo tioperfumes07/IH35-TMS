@@ -9,14 +9,18 @@ import { withCurrentUser } from "../auth/db.js";
 import { deleteObjectBytes, generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { fetchBolPayload, generateAndStoreBol, generateBolPdf } from "./bol-generator.service.js";
 import { assembleFactoringPacket } from "../factoring/packet-assemble.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const loadParamsSchema = z.object({ loadId: z.string().uuid() });
 const stopParamsSchema = z.object({ loadId: z.string().uuid(), stopId: z.string().uuid() });
 const podIdParamsSchema = z.object({ id: z.string().uuid() });
 
+const POD_LIST_STATUSES = ["pending_review", "approved", "rejected"] as const;
+
 const podListQuerySchema = companyQuerySchema.extend({
   load_id: entityIdFilterSchema.optional(),
-  status: z.enum(["pending_review", "approved", "rejected"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(POD_LIST_STATUSES),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
@@ -221,10 +225,11 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
         values.push(entityIdFilterValues(query.data.load_id));
         filters.push(`p.load_id = ANY($${values.length}::uuid[])`);
       }
-      if (query.data.status) {
-        values.push(query.data.status);
-        filters.push(`p.status = $${values.length}`);
-      }
+      const statusCond = statusListCondition("p.status", query.data.status, (v) => {
+        values.push(v);
+        return `$${values.length}`;
+      });
+      if (statusCond) filters.push(statusCond);
       const limit = query.data.limit ?? 100;
       values.push(limit);
       const res = await client.query(
