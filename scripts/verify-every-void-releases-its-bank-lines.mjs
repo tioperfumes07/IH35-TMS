@@ -129,9 +129,15 @@ export function pointerListGaps() {
   for (const col of named) {
     if (!helper.includes(col)) f.push(`POINTER has extra column ${col} not in helper`);
   }
+  // ENG-28 (#27933) removed void.service.ts's own RELEASABLE_POINTER_COLUMNS — it now delegates
+  // bank-line release to releaseBankLinesNamingDocument (posting-reversal-context.ts), which owns
+  // BANK_LINE_DOCUMENT_POINTER_COLUMNS. Guard: no inline second copy; canonical helper is used.
   const voidSrc = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/void.service.ts"), "utf8");
-  if (!voidSrc.includes("BANK_LINE_DOCUMENT_POINTER_COLUMNS")) {
-    f.push("void.service.ts RELEASABLE_POINTER_COLUMNS must be the helper list, not a second copy");
+  if (/RELEASABLE_POINTER_COLUMNS\s*=/.test(voidSrc)) {
+    f.push("void.service.ts must not define its own RELEASABLE_POINTER_COLUMNS — use releaseBankLinesNamingDocument from posting-reversal-context, which owns BANK_LINE_DOCUMENT_POINTER_COLUMNS");
+  }
+  if (!voidSrc.includes("releaseBankLinesNamingDocument")) {
+    f.push("void.service.ts must import releaseBankLinesNamingDocument from posting-reversal-context (owns BANK_LINE_DOCUMENT_POINTER_COLUMNS) — a second inline pointer list is the regression this check prevents");
   }
   return f;
 }

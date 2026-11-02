@@ -14,7 +14,7 @@ import { SettlementsToursRegister } from "./SettlementsToursRegister";
 import { SettlementsCompanyDriverTab, CompanySettlementsRegisterTab } from "./SettlementsCompanyDriverTab";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../components/v3/BoardSection";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
@@ -90,7 +90,7 @@ function settlementsDeductionBucket(type: string): "escrow" | "advances" | "fine
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
-  const money = (c: number) => (c / 100).toFixed(2);
+  const money = (c: number) => formatUsdCents(c);
   return [
     ...d.changed.map((c) => (c.field.endsWith("_cents") ? `${c.field.replace("_cents", "").replace("_", " ")}: ${money(Number(c.before))} → ${money(Number(c.after))}` : `${c.field}: ${String(c.before)} → ${String(c.after)}`)),
     ...d.added.map((l) => `+ ${l.kind.replace("_", " ")}${l.load ? ` load ${l.load}` : ""}${l.text ? ` "${l.text}"` : ""} ${money(l.amount_cents)}`),
@@ -330,11 +330,12 @@ export function SettlementsPage() {
   const driverPayThisPeriod: string = kpiBaseQuery.isError
     ? "—"
     : serverKpi != null
-      ? `$${serverKpi.driver_pay_this_period.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : `$${kpiSettlements
-          .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
-          .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)
-          .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      ? formatUsd(serverKpi.driver_pay_this_period)
+      : formatUsd(
+          kpiSettlements
+            .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
+            .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0),
+        );
 
   // ROUND 443.250 — home week chart + deductions panel from the SAME kpiSettlements rows (no second engine).
   const weekBuckets = useMemo(
@@ -562,8 +563,8 @@ export function SettlementsPage() {
                 <div className="font-semibold">
                   Settlement{" "}
                   <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : "—", row.settlement_id, "Settlement")} />
-                  {" "}— posted {Number(row.net_pay).toFixed(2)}
-                  {row.new_total_due_cents != null ? `, new TOTAL DUE ${(row.new_total_due_cents / 100).toFixed(2)}` : ""}
+                  {" "}— posted {formatUsd(Number(row.net_pay))}
+                  {row.new_total_due_cents != null ? `, new TOTAL DUE ${formatUsdCents(row.new_total_due_cents)}` : ""}
                 </div>
                 {describeSourceDiffLines(row.diff).map((line) => (
                   <div key={line} className="text-[#4B5563]">{line}</div>

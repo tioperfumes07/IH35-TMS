@@ -1,3 +1,38 @@
+## OUTBOX (11-02-2026 ~11:10 PM CT) — Cursor Relay wallet drill + deposit format guard
+- **PRIOR:** #28136 Fleet Transfers board · #28134 Factoring debtor behavior.
+- **THIS WAVE:** RelayWallet KPI→day drill · doc EntityLink/inbox links · formatUsdCents · relay-deposit-format render-call plant.
+- **NEXT:** ENG-21 rate-con / ENG-22 AUTH; more shells; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~10:55 PM CT) — Cursor Fleet Transfers BoardSection
+- **PRIOR:** #28134 Factoring debtor behavior · #28132 Cash Flow pct · #28130 Fuel KPI.
+- **THIS WAVE:** TransfersInProgressPage → BoardSection + ParityTable + formatDateTimeUS acks.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~10:40 PM CT) — Cursor Factoring debtor filter behavior
+- **PRIOR:** #28132 Cash Flow pct · #28130 Fuel KPI · #28127–#28128 quantity waves.
+- **THIS WAVE:** filterPurchaseReportByDebtors extracted + behavioral exclude-third guard; CappedListNotice at purchase-lines 2000 cap.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~10:20 PM CT) — Cursor Cash Flow pct format
+- **PRIOR:** #28130 Fuel KPI house formatters · #28128/#28127 quantity waves.
+- **THIS WAVE:** CashFlowHome matrix % + ActualVsProjected formatPct → formatQuantityTable.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~10:05 PM CT) — Cursor Fuel KPI house formatters
+- **PRIOR:** #28128 margin selftest · #28127 quantity/pct · #28123 Settlements KPI.
+- **THIS WAVE:** FuelKpiRow → formatUsd/formatUsdRateTable; Compliance/FactorAdmin/BatchWizard/CargoSensor → formatQuantityTable; fuel-kpi-money-format accepts house money.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~9:45 PM CT) — Cursor quantity/pct leftovers wave
+- **PRIOR:** #28123 Settlements KPI/waterfall · #28121 MilesStrip/settlements boards · #28120 planner/factoring/fuel.
+- **THIS WAVE:** Close Arrival / Company Settlements / Fuel gallons tables / Insurance share / Factoring true-cost / TripProfitability / MultiStop hours → formatQuantityTable (+ rate table where $/gal).
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
+## OUTBOX (11-02-2026 ~9:25 PM CT) — Cursor Settlements KPI + planner miles format
+- **PRIOR:** #28121 MilesStrip/AtRisk + settlements boards · #28120 PlannerCalendar/Factoring/Fuel.
+- **THIS WAVE:** SettlementsPage KPI/source-changed · HomeBoardPanels money · CompanyWaterfall gallons/pct · TripPairing/planner-bars/LoadsPlanner quantities.
+- **NEXT:** more Cursor shells/engines; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~9:05 PM CT) — Cursor MilesStrip + settlements format wave
 - **PRIOR:** #28120 PlannerCalendar MMM-DD + Factoring/Fuel/BookLoad formatters · #28118 Geofences syntax.
 - **THIS WAVE:** MilesStrip/AtRisk quantities · Settlements tours/pre/cash-advances/loads/company-driver/statement/escrow/workflow canonical money+miles+dates.

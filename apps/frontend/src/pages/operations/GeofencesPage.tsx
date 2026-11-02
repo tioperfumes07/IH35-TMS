@@ -315,7 +315,7 @@ export function GeofencesPage() {
         <h3 className="text-xs font-semibold text-[#0F1219]">Active geofences</h3>
         {highlightedGeofenceId ? (
           <div
-            className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs"
+            className="mt-2 bg-[#F7F8FA] px-3 py-2 text-xs"
             data-testid="geofence-deeplink-banner"
           >
             {deepLinkGeofence ? (

@@ -18,6 +18,7 @@ import { SettlementReferenceCell } from "../../../components/settlements/Settlem
 import { useSettlementReferences } from "../../../hooks/useSettlementReferences";
 import { useLoadCostRollups } from "../../../hooks/useLoadCostRollups";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
+import { formatQuantityTable } from "../../../lib/money";
 
 void PlannerAxisHead;
 
@@ -194,7 +195,7 @@ export function LoadsPlanner() {
               render: (row) => {
                 const r = costRollups.get(row.id);
                 if (!r) return DASH;
-                return <span className={r.net_cents < 0 ? "text-[#991B1B]" : undefined}>{formatMoneyCents(r.net_cents)}{r.margin_pct != null ? ` · ${r.margin_pct.toFixed(1)}%` : ""}</span>;
+                return <span className={r.net_cents < 0 ? "text-[#991B1B]" : undefined}>{formatMoneyCents(r.net_cents)}{r.margin_pct != null ? ` · ${formatQuantityTable(r.margin_pct, 1)}%` : ""}</span>;
               },
             },
           ];

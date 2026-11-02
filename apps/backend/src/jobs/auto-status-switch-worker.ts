@@ -107,7 +107,9 @@ export function initializeAutoStatusSwitchWorker(app: FastifyInstance): void {
           const summary = await runAutoStatusSwitchTick();
           app.log.info({ summary }, "[auto-status-switch-worker] tick complete");
         },
-        app.log
+        app.log,
+        // TELEMATICS-DEADLOCK-03: single-fire across both API instances (every 5 min; lease 270s < interval).
+        { leaseSeconds: 270 }
       );
     },
     {

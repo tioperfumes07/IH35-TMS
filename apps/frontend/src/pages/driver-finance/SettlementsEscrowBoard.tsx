@@ -15,7 +15,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents } from "../../lib/money";
+import { formatNumber, formatUsdCents } from "../../lib/money";
 import { V3 } from "../../design/v3-tokens";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -222,7 +222,7 @@ export function SettlementsEscrowBoard() {
           value={
             escrowHomeKpis.driversHolding == null
               ? "—"
-              : escrowHomeKpis.driversHolding.toLocaleString("en-US")
+              : formatNumber(escrowHomeKpis.driversHolding)
           }
           sub="active bonds with a balance"
           testId="escrow-kpi-drivers-holding"

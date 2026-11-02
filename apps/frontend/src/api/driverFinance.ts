@@ -446,6 +446,14 @@ export type DriverEscrowTarget = {
   accumulation_rate_pct: number | null;
 };
 
+/** SAF-B08 — total active drivers + count with a signed escrow clause for the KPI banner. */
+export function getEscrowClauseKpi(companyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  return apiRequest<{ total_active_drivers: number; signed_clause_count: number }>(
+    `/api/v1/driver-finance/escrow-clause-kpi?${qs.toString()}`
+  );
+}
+
 export function getDriverEscrowTarget(driverId: string, companyId: string, balanceCents: number) {
   const qs = new URLSearchParams({
     operating_company_id: companyId,

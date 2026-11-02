@@ -7,7 +7,7 @@ import {
   type RollingLedgerRow,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateUS } from "../../../lib/formatDate";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -472,7 +472,7 @@ function Cell({
 }) {
   let text: string;
   if (unit === "pct") {
-    text = cents === 0 ? "—" : `${((cents / (ofTotal || 1)) * 100).toFixed(0)}%`;
+    text = cents === 0 ? "—" : `${formatQuantityTable((cents / (ofTotal || 1)) * 100, 0)}%`;
   } else {
     text = formatMatrixMoney(cents);
   }
@@ -646,7 +646,7 @@ function ThirteenWeekTable({
               onClick={() => openCell(rowKey, w)}
               data-testid={`cash-flow-home-matrix-${rowKey}-${cellKey}`}
             >
-              {unit === "pct" ? (cents === 0 ? "—" : `${((Math.abs(cents) / totalIncome) * 100).toFixed(0)}%`) : formatMatrixMoney(cents)}
+              {unit === "pct" ? (cents === 0 ? "—" : `${formatQuantityTable((Math.abs(cents) / totalIncome) * 100, 0)}%`) : formatMatrixMoney(cents)}
             </td>
           );
         }

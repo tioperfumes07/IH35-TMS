@@ -223,7 +223,9 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
             }
           }
         },
-        app.log
+        app.log,
+        // TELEMATICS-DEADLOCK-03: single-fire across both API instances (every 5 min; lease 270s < interval).
+        { leaseSeconds: 270 }
       );
     },
     {

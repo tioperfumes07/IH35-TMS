@@ -63,7 +63,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { V3 } from "../../design/v3-tokens";
-import { formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
@@ -75,7 +75,7 @@ function milesDocForLeg(
   const bill = (bills ?? []).find((b) => b.load_id === leg.load_id);
   const n = bill?.miles_basis ?? leg.miles_practical;
   if (n == null || !Number.isFinite(Number(n))) return "—";
-  return Number(n).toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+  return formatQuantityTable(Number(n), 1, 0);
 }
 
 /** ROUND 443.280-A — working 7-step close (board Settlements-Close.png). Steps clickable; Back/Next advance. */
@@ -468,7 +468,7 @@ export function SettlementCloseArrivalPage() {
         delivered: "",
         miles_doc:
           grossMilesDoc > 0
-            ? grossMilesDoc.toLocaleString("en-US", { maximumFractionDigits: 1 })
+            ? formatQuantityTable(grossMilesDoc, 1, 0)
             : "—",
         pay: boardGrossPay,
         is_gross: true,

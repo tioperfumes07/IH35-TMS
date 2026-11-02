@@ -26,10 +26,13 @@ const CHECKS = [
     test: (s) => /row\.has_signed_clause \? "On file" : "Missing"/.test(s),
   },
   {
+    // SAF-B08: the KPI now comes from the escrow-clause-kpi endpoint (all active drivers,
+    // not just balance-holders). The check accepts either the old filtered-rows pattern or the
+    // new KPI-query pattern, but must have the summary testid regardless.
     id: "summary-counts-rows",
-    describe: "summary must count signedClauseCount from rows.filter(has_signed_clause)",
+    describe: "summary must surface signed clause count (kpiSignedCount or rowsAll.filter fallback) with testid",
     test: (s) =>
-      /rows\.filter\(\(r\) => r\.has_signed_clause\)/.test(s) &&
+      (/kpiSignedCount/.test(s) || /rowsAll\.filter\(\(r\) => r\.has_signed_clause\)/.test(s)) &&
       /data-testid="escrow-signed-clause-summary"/.test(s),
   },
   {

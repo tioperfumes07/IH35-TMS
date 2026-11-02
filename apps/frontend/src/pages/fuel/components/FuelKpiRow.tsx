@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import type { FuelDashboard, LovesSyncStatus } from "../../../api/fuelPlanner";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile, type V3KpiTone } from "../../../components/v3/V3KpiTile";
+import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../../lib/money";
 
 type Props = {
   dashboard: FuelDashboard | undefined;
@@ -29,7 +31,7 @@ function formatLovesSyncLabel(
   lovesSyncStatus: LovesSyncStatus | undefined
 ) {
   const syncedAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
-  if (syncedAt) return new Date(syncedAt).toLocaleTimeString();
+  if (syncedAt) return formatDateTimeUS(syncedAt) || null;
   // Undefined is unresolved/unavailable, not historical proof that a sync never occurred. Both
   // company-scoped readers must answer successfully before the card may assert "Never".
   if (dashboard === undefined || lovesSyncStatus === undefined) return null;
@@ -44,18 +46,17 @@ function metric(raw: number | null | undefined): number | null {
 }
 
 /**
- * toFixed() alone renders "$54409" — no thousands separator. Every other money figure in the product
- * is grouped ("$4,718" on Home, "−$168,722.50" on Cash Flow), so the fuel KPIs were the odd ones out
- * and a five-figure spend was genuinely hard to read at a glance. toLocaleString applies the same
- * grouping while honouring the requested precision.
+ * FUEL-F01 — money KPIs share one helper so grouping cannot drift. Delegates to house
+ * formatUsd / formatUsdRateTable (Intl grouping), never bare toFixed.
  */
-const fixed = (n: number | null, digits: number, prefix = "", suffix = "") =>
-  n === null
-    ? null
-    : `${prefix}${n.toLocaleString("en-US", {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-      })}${suffix}`;
+function fixed(n: number | null, digits: number, prefix = "", suffix = ""): string | null {
+  if (n === null) return null;
+  if (prefix === "$" && suffix === "") {
+    return digits >= 3 ? formatUsdRateTable(n, digits) : digits === 2 ? formatUsdRateTable(n, 2) : formatUsd(n);
+  }
+  if (suffix === "%") return `${formatQuantityTable(n, digits)}%`;
+  return formatQuantityTable(n, digits);
+}
 
 const display = (v: string | null) => v ?? "—";
 

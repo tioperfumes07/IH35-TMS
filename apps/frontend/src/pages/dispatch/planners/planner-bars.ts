@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listAllLoads, type DispatchLoadRow } from "../../../api/loads";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import type { PlannerBarKind, PlannerGridBar } from "./PlannerGrid";
 
 function ymdFromIso(iso: string | null | undefined, fallback: string): string {
@@ -71,7 +71,7 @@ export function plannerBarMoneyDetail(load: Pick<DispatchLoadRow, "rate_total_ce
     load.currency_code === "USD" || !load.currency_code
       ? `${formatUsdCents(perMileCents)}/mi`
       : `${load.currency_code} ${formatUsdCents(perMileCents).replace(/^\$/, "")}/mi`;
-  return `${money} · ${Math.round(miles).toLocaleString("en-US")} mi · ${perMile}`;
+  return `${money} · ${formatQuantityTable(Math.round(miles), 0)} mi · ${perMile}`;
 }
 
 export function groupPlannerBarsByKey(

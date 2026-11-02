@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatMoneyCents } from "../../../lib/formatMoney";
+import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
@@ -101,7 +102,7 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.gallons,
-        render: (r) => r.gallons.toFixed(1),
+        render: (r) => formatQuantityTable(r.gallons, 1),
       },
       {
         key: "per_gal",
@@ -110,7 +111,7 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
-        render: (r) => (r.gallons > 0 ? (r.spend_cents / 100 / r.gallons).toFixed(3) : "—"),
+        render: (r) => (r.gallons > 0 ? formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3) : "—"),
       },
       {
         key: "fill_count",

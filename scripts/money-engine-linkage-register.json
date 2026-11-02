@@ -285,21 +285,22 @@
       "stamps": [
         "operating_company_id",
         "load_id",
+        "settlement_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
         "driver_id",
         "unit_id",
         "trailer_id",
         "customer_id",
         "vendor_id",
-        "settlement_id",
-        "invoice_id",
-        "journal_entry_id",
-        "account_id",
         "item_id"
       ],
-      "missing_stamps": [],
       "reverse": "accounting/void.service.ts",
       "reverse_waived_reason": null,
-      "note": "the canonical reverse engine; it reverses itself by design \u2014 a void of a void is a re-post through the same path"
+      "note": "the canonical reverse engine; it reverses itself by design \u2014 a void of a void is a re-post through the same path. ENG-28 (#27933) moved all INSERT paths through postValidatedPostingLinesInClientTx and removed the categorization-reset SQL that carried driver_id/unit_id/trailer_id/customer_id/vendor_id/item_id. Reversal reads original GL postings and re-emits them through the posting engine \u2014 entity stamps follow from the source document, not this engine."
     },
     {
       "file": "banking/manual-je.routes.deprecated.ts",

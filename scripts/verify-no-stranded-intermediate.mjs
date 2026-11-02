@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","cash-flow","customers","dispatch","drivers","factoring","finance","fleet","insurance","legal","lists","maintenance","safety","settlements","vendors"],"cols":["lifecycle_complete"],"leaves":["economics.invariants"],"task":"ECON-C27-INV-6-WRAPPER"} */
+export const REQUIRES_LIVE_DB = "INV-6 stranded intermediate check requires a live Neon INV run via --live; static file read cannot certify lifecycle completeness";
 import { runInvWrapper } from "./lib/econ-inv-auto-check.mjs";
 await runInvWrapper({
   label: "verify-no-stranded-intermediate",

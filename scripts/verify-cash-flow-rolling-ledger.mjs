@@ -92,6 +92,8 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["TypeFilterDropdown", "type multi-select filter missing (Banking's dropdown-button-with-chevron pattern)"],
   ["ParityTable", "registers must use the shared ParityTable (gear/column-visibility/export), not a hand-written table"],
   ["exportRowsCsv", "CSV export missing"],
+  // CSV amount must use formatUsdCents (never bare (cents/100).toFixed(2) — drops $ and grouping)
+  ["formatUsdCents(r.amount_cents)", "CSV export amount must use formatUsdCents(r.amount_cents)"],
   ["useSearchParams", "controls are not URL-persisted"],
   ["AdjustPopover", "roll-over/hide click-to-adjust popover missing"],
   ["getCashFlowAdjustmentReasons", "tab does not load the real reason catalog"],
@@ -148,6 +150,10 @@ const FORBIDDEN_FRONTEND_MARKERS = [
   [
     /<CashFlowKpiStrip\b/,
     "443.280 forbids layered <CashFlowKpiStrip> on Rolling Ledger — board KPIs are V3KpiTile only",
+  ],
+  [
+    /function exportRowsCsv[\s\S]{0,600}\(r\.amount_cents\s*\/\s*100\)\.toFixed\(2\)/,
+    "CSV export must not use (amount_cents/100).toFixed(2) — use formatUsdCents",
   ],
 ];
 
@@ -288,6 +294,16 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("exportRowsCsv", "strippedNoExport"),
+      }),
+    },
+    {
+      name: "CSV amount reverted to toFixed (drops $ / grouping)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace(
+          "formatUsdCents(r.amount_cents)",
+          "(r.amount_cents / 100).toFixed(2)",
+        ),
       }),
     },
     {
