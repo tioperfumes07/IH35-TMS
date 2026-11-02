@@ -1,4 +1,5 @@
 import { entityLabel } from "../lib/entity-label";
+import { formatDateTimeUS } from "../lib/formatDate";
 import { formatPersonName } from "../lib/formatPersonName";
 import { formatPhoneAsTyped, formatPhoneDisplay } from "../lib/formatPhoneAsTyped";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -801,7 +802,7 @@ export function DriverDetailPage() {
         label: "Changed at",
         sortable: true,
         sortValue: (item) => new Date(item.created_at).getTime(),
-        render: (item) => new Date(item.created_at).toLocaleString(),
+        render: (item) => formatDateTimeUS(item.created_at) || "—",
       },
     ],
     []
@@ -1476,7 +1477,7 @@ export function DriverDetailPage() {
                 </span>
               )}
             </div>
-            <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? new Date(driver.qbo_vendor_linked_at).toLocaleString() : "-"}</span></div>
+            <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? formatDateTimeUS(driver.qbo_vendor_linked_at) || "-" : "-"}</span></div>
           </div>
           <div>
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Linkage History</h3>
@@ -1839,7 +1840,7 @@ export function DriverDetailPage() {
                           ) : null}
                           {isVoided ? (
                             <div className="rounded-sm bg-gray-200 px-2 py-1 text-xs text-gray-700">
-                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by{" "}
+                              VOIDED on {formatDateTimeUS(event.voided_at || "") || "—"} by{" "}
                               <EntityLink
                                 kind="user"
                                 id={event.voided_by_user_id}
@@ -1994,7 +1995,7 @@ export function DriverDetailPage() {
                     {company.legal_name} <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs">{company.code}</span>
                   </div>
                   <div className="text-xs text-gray-600">
-                    Authorized at: {existing?.authorized_at ? new Date(existing.authorized_at).toLocaleString() : "—"}
+                    Authorized at: {existing?.authorized_at ? formatDateTimeUS(existing.authorized_at) || "—" : "—"}
                   </div>
                 </div>
                 <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr_auto] md:items-center">
@@ -2056,7 +2057,7 @@ export function DriverDetailPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-        Last updated by <EntityLinkOrTombstone kind="user" id={driver.updated_by_user_id} name={driver.updated_by_user_label} noun="User" /> on {new Date(driver.updated_at).toLocaleString()}
+        Last updated by <EntityLinkOrTombstone kind="user" id={driver.updated_by_user_id} name={driver.updated_by_user_label} noun="User" /> on {formatDateTimeUS(driver.updated_at) || "—"}
       </div>
 
       <Modal variant="drawer" open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Create Equipment Qualification">

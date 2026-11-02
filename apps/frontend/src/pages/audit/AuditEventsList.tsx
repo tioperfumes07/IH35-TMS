@@ -10,6 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -63,7 +64,7 @@ export function AuditEventsList() {
         label: "When",
         sortable: true,
         sortValue: (row) => new Date(row.created_at).getTime(),
-        render: (row) => new Date(row.created_at).toLocaleString(),
+        render: (row) => formatDateTimeUS(row.created_at) || "—",
       },
       {
         key: "event_type",
