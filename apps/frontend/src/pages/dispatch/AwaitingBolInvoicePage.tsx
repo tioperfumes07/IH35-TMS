@@ -49,7 +49,12 @@ export function AwaitingBolInvoicePage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (row) => row.customer_name ?? "—",
+        render: (row) =>
+          row.customer_id ? (
+            <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+          ) : (
+            (row.customer_name ?? "—")
+          ),
       },
       {
         key: "waiting_for",

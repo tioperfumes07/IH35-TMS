@@ -1936,6 +1936,7 @@ export type AwaitingBolInvoiceRow = {
   load_id: string;
   load_number: string | null;
   status: string;
+  customer_id: string | null;
   customer_name: string | null;
   waiting_for: "BOL";
   has_invoice: boolean;
@@ -1956,7 +1957,9 @@ export type NeedsDeliveryAuthorizationRow = {
   load_id: string;
   load_number: string | null;
   status: string;
+  customer_id: string | null;
   customer_name: string | null;
+  invoice_id: string | null;
   invoice_display_id: string | null;
   invoice_status: string;
   factoring_status: string | null;
