@@ -110,13 +110,14 @@ function isFactoringRow(type: string): boolean {
   return type === "Factor advance" || type === "Factor reserve";
 }
 
-/** Board day-grid / navigator: "Thu 10-22" (weekday + MM-DD). */
+/** Board day-grid / navigator: "Thu MM/DD/YYYY" (weekday + Round 7.6 calendar). */
 function fmtChipDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return formatDateUS(iso);
   const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dow] ?? "";
-  return `${wd} ${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const us = formatDateUS(iso);
+  return us ? `${wd} ${us}` : "—";
 }
 
 /** Board day navigator center: "Thu, Oct 22 · Today" (board chrome; Due cells stay MM/DD/YYYY). */
