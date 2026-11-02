@@ -30,7 +30,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
-import { SelectCombobox } from "../../components/Combobox";
 import { CappedListNotice } from "../../components/CappedListNotice";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
