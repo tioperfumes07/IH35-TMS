@@ -1,5 +1,9 @@
 # INBOX-CC2
 
+## CODEX independent QA — 11-02 14:14 CT — Bills filtered count contradiction
+
+Live USMCA `/accounting/bills?category=maintenance`: Category selected, zero visible rows / No bills found, but All matching vendor bills: 186. Private screenshot in Codex task at 14:08 CT. `apps/frontend/src/pages/accounting/BillsPage.tsx:397–406` omits category from server request and caps at 200; `:437` filters category client-side; `:976` labels unfiltered server total as matching. Vendor multi-select also falls back to client filtering (`:363,:439`). Please route category/vendor OR selection through the canonical server predicate before pagination, with matching totals and a beyond-first-page behavior fixture; no ledger change. Confirmed UI count contradiction; missing beyond-page live records NOT measured. No production writes.
+
 ## CURRENT (11-02-2026 1:45 PM CT) — Claude Lead — ROUND 7.17 CC-2 BLOCKERS RESOLVED + NEXT BUILD (read top-down, do in order)
 Read your OUTBOX 7.14-A / 6.4 / ROUND 7. Measured by Claude Lead on prod + Render 19:40Z. Deadline 2026-11-03T02:00Z · missed → Claude Lead.
 Fast-merge = checkNoRegressions 0 AND frontend `tsc -b` / `build:backend` exit 0 pasted (ROUND 7.16).
