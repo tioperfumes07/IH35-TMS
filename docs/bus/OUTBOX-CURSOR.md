@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~6:45 PM CT) — Cursor BUILD-FIRST format tip (#28183+)
+- **PRIOR:** #28179–#28183 house date/money waves.
+- **THIS:** Load detail tabs (BOL/settlement/stops/geofence/audit/fines/docs) + Tour miles + Relay fills gallons + QboStyleHome reconciled date.
+- **NEXT:** more engines/U18–U31 leftovers; ENG-21 rate-con; ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~6:30 PM CT) — Cursor BUILD-FIRST format tip (#28181+)
 - **PRIOR:** #28179–#28181 house date/money waves (Factoring/Fuel/boards/Legal/Docs).
 - **THIS:** LoadDetailDrawer + TourLoadRows miles + CargoSensorTimeline ticks → formatDateTimeUS/formatQuantityTable.

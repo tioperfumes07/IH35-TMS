@@ -27,6 +27,7 @@ import { Modal } from "../../Modal";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QueryErrorNote } from "./QueryErrorNote";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -42,7 +43,7 @@ function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
+  return formatDateTimeUS(date);
 }
 
 function policyProgress(policy: AutoDeductionPolicy) {

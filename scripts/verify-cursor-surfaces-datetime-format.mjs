@@ -26,6 +26,13 @@ const FILES = [
   "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx",
   "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
   "apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx",
+  "apps/frontend/src/components/dispatch/LoadBolPanel.tsx",
+  "apps/frontend/src/components/dispatch/LoadLivePositionCell.tsx",
+  "apps/frontend/src/components/dispatch/LoadDetailGeofenceTimelineTab.tsx",
+  "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
+  "apps/frontend/src/components/dispatch/LoadAuditTab.tsx",
+  "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
+  "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
 ];
 
 const DATE_ONLY = [
@@ -33,6 +40,9 @@ const DATE_ONLY = [
   "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
   "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
   "apps/frontend/src/pages/docs/DocsHomePage.tsx",
+  "apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx",
+  "apps/frontend/src/components/dispatch/tabs/LdtDocumentsTab.tsx",
+  "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
 ];
 
 const QUANTITY = [
@@ -41,6 +51,12 @@ const QUANTITY = [
   "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
   "apps/frontend/src/components/dispatch/TourLoadRows.tsx",
   "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx",
+  "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
+  "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
+  "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
+  "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
+  "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
 ];
 
 const fails = [];

@@ -33,6 +33,7 @@ import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { formatMoneyCents } from "../../lib/formatMoney";
+import { formatDateUS } from "../../lib/formatDate";
 
 /** ROUND 443.257-D D002 — always two decimals (never omit cents on Home Overview money tiles). */
 function fmt$(cents: number): string {
@@ -534,7 +535,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <span>
             Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents ?? 0)}</span>
             {cashQuery.data.last_reconciled_at
-              ? ` · Last reconciled ${new Date(cashQuery.data.last_reconciled_at).toLocaleDateString()}`
+              ? ` · Last reconciled ${formatDateUS(cashQuery.data.last_reconciled_at)}`
               : " · Not yet reconciled"}
           </span>
         </div>
