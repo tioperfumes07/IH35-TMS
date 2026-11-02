@@ -23,7 +23,7 @@ const PRIMITIVE_PATHS = new Set([
  * Measured 2026-10-24 on main (443.325 box). Shrink-only: lowering BASELINE requires removing
  * a pinned row or converting that control; raising is forbidden.
  */
-const BASELINE = 8; // shrunk: SettlementCreatorDrawer trailer kind → SelectCombobox
+const BASELINE = 7; // shrunk: UnitPhotoUploadZone photo type → SelectCombobox
 
 /** Every allowed raw <select> outside date primitives. count = occurrences in file today. */
 const PINNED = [
@@ -32,7 +32,6 @@ const PINNED = [
   { rel: "components/DataTable.tsx", count: 1, reason: "Legacy page-size control (scalar)." },
   { rel: "components/shared/SidebarPagination.tsx", count: 1, reason: "Page size (scalar rows-per-page, VC-10 All option)." },
   { rel: "components/table/ColumnChooser.tsx", count: 1, reason: "Column visibility preset (scalar layout picker)." },
-  { rel: "components/vehicle-profile/UnitPhotoUploadZone.tsx", count: 1, reason: "Photo type enum before upload (single scalar, not entity roster)." },
 ];
 
 function stripComments(src) {
