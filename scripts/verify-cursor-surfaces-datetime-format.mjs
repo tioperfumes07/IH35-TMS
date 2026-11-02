@@ -17,12 +17,20 @@ const FILES = [
   "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   // fill-not-shell datetime wave — FactoringTab timestamps
   "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+  "apps/frontend/src/components/drivers/DriverCommunicationsTab.tsx",
+  "apps/frontend/src/components/driver-profile/DriverProfileFuelVerdictsSection.tsx",
 ];
 
 const DATE_ONLY = [
   "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx",
   "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
   "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
+];
+
+const QUANTITY = [
+  "apps/frontend/src/components/boards/DriverOverviewBoard.tsx",
+  "apps/frontend/src/components/boards/DriverHubBoard.tsx",
+  "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
 ];
 
 const fails = [];
@@ -43,6 +51,15 @@ for (const path of DATE_ONLY) {
   }
   if (/toLocaleDateString\(/.test(src)) {
     fails.push(`${path}: must not toLocaleDateString()`);
+  }
+}
+for (const path of QUANTITY) {
+  const src = fs.readFileSync(path, "utf8");
+  if (!/formatQuantityTable/.test(src)) {
+    fails.push(`${path}: must import/use formatQuantityTable`);
+  }
+  if (/toLocaleString\(["']en-US["']\)/.test(src)) {
+    fails.push(`${path}: must not quantity toLocaleString("en-US")`);
   }
 }
 

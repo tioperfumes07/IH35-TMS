@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~6:00 PM CT) — Cursor BUILD-FIRST format tip (#28179+)
+- **PRIOR:** #28173–#28177 BoardSection/U18 · #28179 Factoring/FleetOos/Fuel/MatchDrawer dates.
+- **THIS:** DriverOverview/Hub boards + DispatchKanban quantity · DriverCommunications/FuelVerdicts datetime+money.
+- **NEXT:** more engines/U18–U31 leftovers; ENG-21 rate-con; ENG-22 AUTH apply; Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~5:45 PM CT) — Cursor BUILD-FIRST shells tip (#28173–#28177)
 - **MERGED:** #28173 Drivers need-company · #28174 CRM/Dispatch BoardSection · #28175 Inbox/Earnings + Dispatch U18 · #28177 Tasks/Legal/Drivers U18.
 - **THIS:** FactoringTab/FleetOos/Fuel reverse/MatchDrawer house date+quantity formatters; cursor-surfaces + fuel-reverse guards.
