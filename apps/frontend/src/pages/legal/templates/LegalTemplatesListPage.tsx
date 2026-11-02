@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { legalTemplatesApi, type LegalTemplateDraft, type LegalTemplateSummary } from "../../../api/legal-templates";
+import { legalTemplatesApi, type LegalTemplateDraft, type LegalTemplateStatus, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -13,13 +13,17 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { statusOptions } from "../../../lib/statusListParams";
 
-const STATUS_FILTER_OPTIONS = statusOptions({
+const STATUS_LABELS: Record<LegalTemplateStatus, string> = {
   draft: "Draft",
   pending_review: "Pending review",
   approved: "Approved",
   active: "Active",
   retired: "Retired",
-});
+};
+const STATUS_FILTER_OPTIONS = statusOptions(STATUS_LABELS);
+function isLegalTemplateStatus(value: string | undefined): value is LegalTemplateStatus {
+  return value !== undefined && Object.prototype.hasOwnProperty.call(STATUS_LABELS, value);
+}
 
 function statusPillClass(status: string) {
   if (status === "active") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
@@ -53,7 +57,7 @@ export function LegalTemplatesListPage() {
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
       // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
-      const statusParam = status.length === 1 ? status[0] : undefined;
+      const statusParam = status.length === 1 && isLegalTemplateStatus(status[0]) ? status[0] : undefined;
       const res = await legalTemplatesApi.list({
         operating_company_id: operatingCompanyId,
         search: search || undefined,

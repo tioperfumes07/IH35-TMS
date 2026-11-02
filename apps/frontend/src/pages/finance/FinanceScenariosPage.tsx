@@ -24,7 +24,6 @@ import {
   type LineTemplate,
   type PeriodBasis,
   type Scenario,
-  type ScenarioStatus,
 } from "../../api/financeScenarios";
 
 // FIN-S06 follow-up: this surface previously had no data model, no backend endpoint, and no
