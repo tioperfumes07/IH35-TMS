@@ -8,6 +8,7 @@ import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal"
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatUsd } from "../../../lib/money";
 import type { DeductionRow } from "./DeductionsSection";
 
 type Props = {
@@ -51,8 +52,8 @@ export function HoldDeductionModal({
             ) : null}
             <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
               <div className="font-semibold">{deduction.description}</div>
-              <div>Balance left: ${deduction.balance_left.toFixed(2)}</div>
-              <div>This period: ${deduction.this_period_amount.toFixed(2)}</div>
+              <div>Balance left: {formatUsd(deduction.balance_left)}</div>
+              <div>This period: {formatUsd(deduction.this_period_amount)}</div>
             </div>
             <div>
               <label className="mb-1 block font-semibold">Hold until period</label>
