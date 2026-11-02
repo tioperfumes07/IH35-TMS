@@ -458,7 +458,7 @@ function CompanySettlementCard({ readout, companyId }: { readout: TourReadout; c
             ))}
             <div className="ldt-row"><span>Less · Fuel purchases{report.sections.fuel_purchases.total_gallons > 0 ? ` (${formatQuantityTable(report.sections.fuel_purchases.total_gallons, 1, 0)} gal)` : ""}</span><span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span></div>
             <div className="ldt-row"><span>Less · Company expenses</span><span className="ldt-m">{money(report.sections.expenses.total_cents)}</span></div>
-            <div className="ldt-row big"><span>NET REVENUE{marginPct == null ? "" : ` · ${marginPct.toFixed(1)}%`}</span><span className="ldt-m">{money(report.sections.pl_rollup.net_revenue_cents)}</span></div>
+            <div className="ldt-row big"><span>NET REVENUE{marginPct == null ? "" : ` · ${formatQuantityTable(marginPct, 1)}%`}</span><span className="ldt-m">{money(report.sections.pl_rollup.net_revenue_cents)}</span></div>
           </div>
 
           {/* ROUND 16.19 — itemized per-load register UNDER the waterfall above (never replacing

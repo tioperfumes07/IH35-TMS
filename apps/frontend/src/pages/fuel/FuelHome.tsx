@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatMoneyCents } from "../../lib/formatMoney";
+import { formatQuantityTable } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
@@ -189,7 +190,7 @@ export function FuelHomePage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.gallons,
-        render: (r) => (Number.isFinite(r.gallons) ? r.gallons.toFixed(1) : "—"),
+        render: (r) => (Number.isFinite(r.gallons) ? formatQuantityTable(r.gallons, 1) : "—"),
       },
       {
         key: "per_gal",

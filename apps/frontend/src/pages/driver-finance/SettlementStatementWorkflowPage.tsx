@@ -773,9 +773,9 @@ export function SettlementStatementWorkflowPage() {
         companyMarginSub={
           companyReport
             ? (companyReport.sections.revenue.invoiced_cents
-                ? `${((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100).toFixed(1)}%`
+                ? `${formatQuantityTable((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100, 1)}%`
                 : "—")
-            : (readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`)
+            : (readout?.totals?.margin_pct == null ? "—" : `${formatQuantityTable(readout.totals.margin_pct, 1)}%`)
         }
       />
       {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}

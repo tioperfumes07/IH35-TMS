@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
-import { formatUsd } from "../../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../../lib/money";
 
 type Props = {
   totalMiles: number | null;
@@ -98,7 +98,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 {String(stop.station_name ?? `Stop ${idx + 1}`).slice(0, 16)}
               </text>
               <text x={stop.x!} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-xs">
-                {String(stop.station_state ?? stop.state ?? "")} · mi {stop.mile.toFixed(0)} · {(stop.gallons_added ?? stop.gallons) == null ? "—" : Number(stop.gallons_added ?? stop.gallons).toFixed(0)} gal
+                {String(stop.station_state ?? stop.state ?? "")} · mi {formatQuantityTable(stop.mile, 0)} · {(stop.gallons_added ?? stop.gallons) == null ? "—" : formatQuantityTable(Number(stop.gallons_added ?? stop.gallons), 0)} gal
               </text>
               {strategic ? (
                 <text x={stop.x!} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-xs">
