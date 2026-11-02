@@ -17249,5 +17249,25 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-26",
     "purpose": "verify-book-stop-street-or-place-required"
+  },
+  "18913": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-loads-trailer-source-recorded (ENG-13)"
+  },
+  "18917": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-no-insurance-lawsuit-refs (ENG-60)"
+  },
+  "18921": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-eng23-load-customer-matches-document (ENG-23)"
+  },
+  "18925": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-eng25b-transportation-diesel-intercompany (ENG-25b)"
   }
 }
