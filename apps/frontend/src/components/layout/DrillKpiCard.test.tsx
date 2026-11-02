@@ -75,6 +75,19 @@ describe("DrillKpiCard — click-through", () => {
     expect(screen.getByText("No data").closest("[data-kpi-empty-reason]")).not.toBeNull();
   });
 
+  it("a non-drillable figure still SHOWS its value (unavailable = not drillable, never hide the number)", () => {
+    for (const variant of ["legacy", "board"] as const) {
+      const { unmount } = render(
+        <MemoryRouter>
+          <DrillKpiCard label="Total" value="$1,234.56" unavailable="Summary of the rows currently filtered on this page" variant={variant} />
+        </MemoryRouter>
+      );
+      expect(screen.getByText("$1,234.56")).toBeInTheDocument();
+      expect(screen.queryByText(KPI_NO_VALUE)).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
   it("renders unavailable reason under the dash (C-22)", () => {
     render(
       <MemoryRouter>
