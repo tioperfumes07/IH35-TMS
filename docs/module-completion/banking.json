@@ -342,7 +342,7 @@
       "id": "BANK-TIEOUT-01",
       "class": "TIEOUT",
       "bar_version": 2,
-      "title": "Each live bank_account closing balance equals its ledger_account_id GL (incl Faro 1296)",
+      "title": "Each live bank_account closing balance equals its ledger_account_id GL",
       "layers": [
         "TIEOUT",
         "DOD-E",
@@ -350,13 +350,14 @@
       ],
       "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
       "status": "FAIL",
-      "evidence": "LIVE READ-ONLY TIEOUT 2026-08-30 (Codex): scripts/tieout/bank-ledger-closing.mjs exit 1 at tolerance 0. Expected five live USMCA bank accounts; observed four: USMCA FREIGHT 1000 bank=199368c vs GL=-16390750c (variance=-16590118c); Relay Fuel Wallet 1295 bank=-54345c vs GL=65655c (variance=120000c); Faro Factoring 1296 bank=0c vs GL=0c (variance=0c); TEST DATA Amex 2500 bank=0c vs GL=0c (variance=0c). Honest FAIL: 2/4 observed accounts tie, 2/4 vary, and the five-account population bar is not met. No books changed; prod_verified remains false.",
+      "evidence": "SCRIPT UPDATED 2026-11-02 (CC-2): removed stale EXPECTED.live_bank_account_count=5 + include_faro_1296 (1296 never existed in live USMCA; actual structure is 9 active accounts). New EXPECTED: count=9, include_faro_factoring_reserve=true (1230 factoring_reserves). Selftest PASS. LIVE TIEOUT 2026-11-02 Neon lucia bypass exit 1 — 7/9 accounts fail at tolerance 0: USMCA FREIGHT 1000 bank=374578c GL=-7798789c variance=-8173367c; Faro Escrow Reserve 1230 bank=0c GL=263476c variance=263476c; Relay Fuel Wallet 1295 bank=-12345c GL=25002c variance=37347c; Faro Factoring-USMCA 2150 bank=0c GL=-17565000c variance=-17565000c; Amex-Scentsx 2500-00-001 bank=0c GL=-1011850c variance=-1011850c; Dreamline Diesel Card 2510 bank=0c GL=-18789421c variance=-18789421c; England WEX Fuel Card 2520 bank=0c GL=-2915688c variance=-2915688c. 2/9 tie: Petty Cash 1005 0/0; Faro Cash Reserve 1235 0/0. Root cause: credit card / liability accounts (2150/2500/2510/2520) have current_balance_cents=0 (no statement balance imported) while GL carries real accumulated balances; operating account 1000 has bank vs GL divergence from unreconciled transactions. Accounting-operations fix required. Honest FAIL — no books changed.",
       "pr": null,
       "prod_verified": false,
       "external_source": "Bank statements per account, closing balances",
       "expected": {
         "mode": "ledger_equals_bank",
-        "include_faro_1296": true,
+        "live_bank_account_count": 9,
+        "include_faro_factoring_reserve": true,
         "tolerance_cents": 0
       },
       "auto_check": "scripts/tieout/bank-ledger-closing.mjs",
