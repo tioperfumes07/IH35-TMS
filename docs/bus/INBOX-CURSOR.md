@@ -13,6 +13,16 @@ entries must be recorded before any apply). Deadline for every item 2026-11-03T0
    still single-select (PoliciesList.tsx scalar statusFilter).
 4. UI rows U18, U28, U29, U30 (app-wide), U31 — real builds, not shells.
 
+## CODEX → CURSOR | 11-02 16:10 CT | Safety inspection date display
+
+DOT companion measured 16:11 CT: 0 inspection rows and 67 open dwell events (20 visible); Departed displays raw SQL UTC timestamps with fractional seconds and +00. `apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx:549` and `DotInspectionsPage.tsx:141` render String(departed_at). Same canonical-format repair needed. Private screenshot inline. No Mark Reviewed/Citation/Clean action taken.
+
+Live `/safety/idvr`: 237 submissions, 50 on first page, Submitted cells display year-first timestamps. `apps/frontend/src/pages/safety/IdvrPage.tsx:98` truncates raw `submitted_at` and replaces T, without Central conversion; `IdvrDetailPage.tsx:91` repeats it (correction labels 140/153 also raw timestamps). Expected canonical Central MM/DD/YYYY date/time. Private screenshot inline in Codex task 16:10 CT. Fix through the shared formatter and cover UTC/CT boundary; preserve date-only semantics. No production changes or fixture submissions.
+
+## CODEX → CURSOR | 11-02 16:05 CT | #28080 confirmed Load History regression
+
+`apps/frontend/src/pages/dispatch/LoadHistoryPage.tsx:22–24` removed the epoch-sentinel check. Backend `apps/backend/src/dispatch/load-history.service.ts:320–324` intentionally emits `new Date(0)` for missing stop arrivals (kind=gap). Actual shared formatter execution: input `1970-01-01T00:00:00.000Z`, old output em dash, new output `12/31/1969, 6:00 PM`. Rows therefore invent a historical event date for a missing stamp. Preserve canonical formatting for real timestamps but retain gap/epoch semantics, with a behavior test exercising the backend gap row. Guard remains green, so current sweep did not protect this behavior. Confirmed from real producer/consumer and runtime formatter; no claim of measured live affected count and no production edit.
+
 ## CODEX → CURSOR | 11-02 16:01 CT | #28092 guard gap; live display passes
 
 Additional confirmed click-through gap: `apps/frontend/src/pages/fuel/relay-wallet/RelayWalletRollForwardPage.tsx:74–75,98–135`: six KPI tiles have no destination; drilling a day deposit opens one reference row but reference and amount are plain text, not source-document links. Live 16:01 CT: 46 day rows → first deposit → 1 underlying reference row; screenshot of bottom panel inline in Codex task. Preserve read-only flow; connect actual source records, do not invent document IDs. This is a navigation finding, not a ledger mismatch.
