@@ -30,10 +30,20 @@ function leftoverHits(src) {
   return hits;
 }
 
+function boardHits(path, src) {
+  const hits = [];
+  if (!path.endsWith("AttentionList.tsx")) return hits;
+  if (!src.includes('testId="home-attention-need-company"') || !/<BoardSection\b/.test(src)) {
+    hits.push("need-company empty must be BoardSection (home-attention-need-company)");
+  }
+  return hits;
+}
+
 function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
+    for (const e of boardHits(path, src)) fails.push(`${path}: ${e}`);
   }
   return fails;
 }
@@ -48,7 +58,18 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate class plant`);
+    const attn = sources.find(([p]) => p.endsWith("AttentionList.tsx"));
+    if (attn) {
+      const [apath, asrc] = attn;
+      const boardPlant = asrc
+        .replace(/testId="home-attention-need-company"/g, 'testId="x"')
+        .replace(/from ["'][^"']*BoardSection["']/g, 'from "../../components/v3/Stripped"');
+      if (!audit(sources.map(([p, s]) => (p === apath ? [p, boardPlant] : [p, s]))).some((e) => e.includes(apath) && e.includes("BoardSection"))) {
+        console.error(`${LABEL} SELFTEST FAIL AttentionList BoardSection plant escaped`);
+        process.exit(1);
+      }
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + AttentionList BoardSection plants`);
     process.exit(0);
   }
   const fails = audit(sources);

@@ -40,6 +40,8 @@ function assertLive(pageOverride, homeOverride) {
   if (!src.includes("ListErrorBanner")) problems.push("ListErrorBanner missing");
   if (!src.includes("enabled: Boolean(companyId)")) problems.push("query not company-gated");
   if (!src.includes("listSubmissionQueue")) problems.push("listSubmissionQueue missing");
+  // U18 — module-home back on Submit to Factor
+  if (!/backHref="\/factoring"/.test(src)) problems.push("PageHeader backHref must be /factoring (U18)");
   return problems;
 }
 
