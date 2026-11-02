@@ -84,4 +84,15 @@ describe("DatePicker", () => {
 
     expect(onChange).toHaveBeenCalledWith("2027-01-15");
   });
+
+  // U21 — when min and max are both in the same year the Year select renders only that one year,
+  // so the user cannot navigate to a different year in the calendar popover.
+  it("shows only the clamped year in the Year select when min and max are both in the same year (U21 fiscal-year lock)", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker value="2026-07-25" onChange={vi.fn()} aria-label="Policy expiry" min="2026-01-01" max="2026-12-31" />);
+    await user.click(screen.getByLabelText("Policy expiry calendar"));
+    const yearSelect = screen.getByLabelText("Year") as HTMLSelectElement;
+    const options = Array.from(yearSelect.options).map((o) => o.value);
+    expect(options).toEqual(["2026"]);
+  });
 });
