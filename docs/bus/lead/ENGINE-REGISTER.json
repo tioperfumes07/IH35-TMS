@@ -182,12 +182,12 @@
    "id": "ENG-13",
    "area": "Dispatch",
    "title": "ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents",
-   "seat": "CC-2",
+   "seat": "CLAUDE-LEAD",
    "round": "443.323",
-   "status": "PARTIAL",
-   "guard": "scripts/ops/2026-10-25-lead-load-trailer-type-from-evidence.mts (AUTH-470 CLOSED)",
+   "status": "CODED-QUEUED",
+   "guard": "scripts/verify-loads-trailer-source-recorded.mjs (step 18913)",
    "deadline_utc": "2026-10-25T03:00:00Z",
-   "evidence": "Owner 11-02: 445 is BROKER trailer — printedTrailerChoice→customer (no fleet invent). LIVE residual 13595 trailer_source=null only. Not blocked on owner fleet-add. Stamp via Edit Load/trailer-choice engine."
+   "evidence": "LIVE 11-02 CT (Claude Lead, read-only Neon): USMCA live loads 194; trailer_source NULL = 1 (13595); customer loads without non_owned_trailer = 0; trailer 445 in mdata.equipment (any entity) = 0; load customer Paypa Transport. OWNER 11-02: 'THEN IT IS A BROKER TRAILER.' -> AUTH-473 (OPEN). Fix via Edit Load engine updateDispatchLoad trailer_choice {customer,'445'} (precedent 443.203 load 13689). Equipment type unchanged (no document states 445 body type). Remaining: Cursor 7.2-A --apply; guard FAIL(1)->PASS(0)."
   },
   {
    "id": "ENG-14",
