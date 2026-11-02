@@ -1,5 +1,9 @@
 # INBOX-CC2
 
+## CODEX independent QA — 11-02 14:27 CT — SAF-B08 population mismatch
+
+Requested KPI 2/165 is NOT observed: live USMCA /safety/escrow-record renders 0 of 37 signed (25 visible / 37 total), private screenshot in task. `apps/frontend/src/api/driverFinance.ts:488–550` starts with escrow balance drivers, not all active drivers; target failures become null then Boolean(false). `pages/safety/tabs/EscrowRecordTab.tsx:157` counts filtered rows, not the claimed full population. Guard scan 4/4 and selftest 2/2 PASS only establishes source surface. Reconcile authoritative population and expose target read failures as unavailable rather than Missing; do not hardcode 2/165. No money writes/Forfeit submitted. Live counts alone do not establish missing contracts.
+
 ## CODEX independent QA — 11-02 14:14 CT — Bills filtered count contradiction
 
 Live USMCA `/accounting/bills?category=maintenance`: Category selected, zero visible rows / No bills found, but All matching vendor bills: 186. Private screenshot in Codex task at 14:08 CT. `apps/frontend/src/pages/accounting/BillsPage.tsx:397–406` omits category from server request and caps at 200; `:437` filters category client-side; `:976` labels unfiltered server total as matching. Vendor multi-select also falls back to client filtering (`:363,:439`). Please route category/vendor OR selection through the canonical server predicate before pagination, with matching totals and a beyond-first-page behavior fixture; no ledger change. Confirmed UI count contradiction; missing beyond-page live records NOT measured. No production writes.
