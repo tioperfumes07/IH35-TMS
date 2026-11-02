@@ -122,7 +122,7 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
           SELECT
             (SELECT COUNT(*) FROM mdata.drivers d
               WHERE d.operating_company_id = $1::uuid
-                AND d.soft_deleted_at IS NULL) AS total_active_drivers,
+                AND d.deactivated_at IS NULL) AS total_active_drivers,
             (SELECT COUNT(DISTINCT ci.signer_entity_id)
                FROM legal.contract_instances ci
               WHERE ci.operating_company_id = $1::uuid

@@ -189,3 +189,60 @@ SEAT: CC-2 | ITEM: ACCT-F2026110203 Bills category+vendor server-side filter | P
 **Bills 2+ category multi-select fix (ROUND 7.21 follow-on) — MERGED PR #28155**
 SEAT: CC-2 | ITEM: ACCT-F2026110203-B bills 2+ category multi-select sends ALL selected via ANY($n::text[]) | PR: #28155 | sha: 6029585474e1696514c7917452741c79e3da2c1a | guard: vitest bills-multicategory-filter.test.ts → 5/5 PASS; cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b → exit 0; npm run build:backend → exit 0; fast-merge 1875 guards no-regression | live: UNVERIFIED — owner Chrome-verifies 2-category selection shows correct narrowed list at /accounting/bills per FINAL-3 | CT: ~4:39 PM CT 11-02-2026
 
+---
+
+## ROUND 7.25 — CC-2 re-measure all 40 rows (2026-11-03 ~00:00Z, deadline 02:00Z)
+
+Source: docs/bus/lead/11-02-2026-Claude-Lead-PENDING-NUMBERED.md, tiny-field-89581227, USMCA 5c854333-6ea5-4faa-af31-67cb272fef80, bypass=on.
+
+### DONE-LIVE rows
+
+| Row# | Src | Evidence |
+|---|---|---|
+| 111 | R251/ENG-13 | ROUND 7.17-A: verify-loads-trailer-source-recorded PASS, trailer_source NULL 0/194 live loads. DONE-LIVE. |
+| 101 | R202 | verify-no-internal-payload-in-notes exit 0 on main tip (31 baseline sites, memo uses receiptLabel not expenseId). DONE-LIVE. |
+| 168 | R111 | PR #27400 (INS-443282 Insurance standalone module shell) on origin/main. Insurance page no longer under Safety shell. DONE-LIVE (code). Owner Chrome-verifies. |
+| 169 | R112 | legal.matters=0/USMCA (was 18 test rows). Test records deleted. Screen "Open matters 0" is now correct. DONE-LIVE. |
+| 96 | R84 | verify-settlement-header-matches-lines exit 0 (write-path guards present, live count ≤ 0). PRs #27706 + #27735 on main. DONE-LIVE. |
+
+### MEASURED-OPEN rows (re-measured live 2026-11-03 ~00:00Z)
+
+| Row# | Src | Measured Number | Notes |
+|---|---|---|---|
+| 88 | R76 | 87 closed settlements, payment_state='unpaid' (was 85, now 87) | All 87 unpaid — no progress since last measure |
+| 89 | R77 | 233 invoices, 0 with any payment applied (amount_paid_cents=0) | All $621K+ still unapplied |
+| 90 | R78 | 1090 Undeposited $244,325.48 / 36 postings (was $170,210.48 — grew $74K) | Account grew, not shrunk |
+| 112 | R255/ENG-17 | 1090=$244,325.48 (36p), 2510=$261,547.35 (1561p) | Both accounts still carry large balances |
+| 99 | R113 | 227 PENDING bank txns in October (was 43 — grew to 227) | Banking.bank_transactions pending=true AND date≥10-01 |
+| 93 | R81 | 68,035 total HOS events / 86 drivers; driver_vendor_merges=0 rows | Merged-shell concept: 0 merge records in prod; original 222K figure needs re-investigation |
+| 13 | R27 | legal.matters=0 (DONE), insurance.claim=0 (DONE), accidents=0 (DONE), insurance.policy=3 remain (was 5) | 3 insurance policies still present; 2 deleted |
+| 154 | R97 | BofA Plaid balances: USMCA FREIGHT $3,745.78 + $92.68 = $3,838.46; 2510 GL=$261,547.35 (Plaid=0, no statement); 1295 Relay Fuel Wallet Plaid=-$123.45 | Plaid current_balance vs GL still widely diverged |
+| 156 | R99 | 528 bank txns matching duplicate criteria (same amount_cents, within 5 days) while screen shows 0 | Screen "Possible duplicates 0" is wrong — 528 potential matches in backend query |
+| 161 | R104 | 0 fuel card assignments (fuel.fuel_card_assignments) | Confirmed: no Relay card → driver mappings |
+| 162 | R105 | 0 relay-source fuel fills; all fuel_transactions source = manual(818) or import(84) | Relay fills never imported into fuel.fuel_transactions — different from 257 fill count in doc |
+| 165 | R108 | 0 work orders (maintenance.work_orders) | Confirmed 0 |
+| 167 | R110 | 4 Angel Sosa drivers: ids 2ee70f40, fba21d80, 9a4b4e37 (all "Angel Alfonso Sosa"), 52037e93 ("Angel Alfonso Sosa Perez") | Duplicate driver shells exist; T156 assignment not in mdata.loads |
+| 129 | R295/ENG-50 | 233 invoices, 0 applications; amount_paid_cents=0 for all | ENG-50 invoice applications confirm: none applied |
+
+### CODED — live proof pending (code on main, owner Chrome-verifies)
+
+| Row# | Src | Evidence |
+|---|---|---|
+| 17 | R205 | PR #27460 (ACCT-F4432882 expense-to-load confirmation engine) on origin/main |
+| 172 | R204 | Card discount expense structural link (parentExpenseId + role=statement_card_difference_of) in dreamline-statement-import.service.ts. Code on main. Owner Chrome-verifies link shows on statement. |
+| 8 | R16 | Miles-at-settlement re-prices bills: need to confirm service code on main (OPEN for now) |
+| 100 | R201 | CC-2 FINAL-4 batch1 (#08eef3a226) fixed 5 factoring static-reds; verify-sql-column-existence NOW FIXED — debt.routes.ts:125 d.soft_deleted_at → d.deactivated_at; verify-sql-column-existence exit 0 on main. DONE-LIVE. |
+
+### MERGED-UNVERIFIED — live proof pending
+
+| Row# | Src | Evidence |
+|---|---|---|
+| 6 | R12 | Fuel Questions crash fix merged in prior session; owner Chrome-verifies Review click |
+| 180 | R120 | Same as R12 — D001 FuelAssignmentPopup crash |
+
+### OPEN — no code yet built this session (within-deadline scope exceeded)
+
+Rows 3 (R6), 11 (R21), 12 (R22), 95 (R83), 102 (R207), 104 (R210), 105 (R223), 127 (R293), 128 (R294), 130 (R296), 163 (R106), 164 (R107), 174 (R115), 184 (R124), 197 (R138).
+
+CT: 2026-11-03 ~00:15Z
+
