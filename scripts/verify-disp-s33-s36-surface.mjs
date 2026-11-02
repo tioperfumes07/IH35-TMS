@@ -40,14 +40,16 @@ function assertLive() {
   if (!/data-testid="dispatch-pre-settlements-honest-empty"/.test(panel)) problems.push("S33 honest empty");
   if (!/enabled:\s*Boolean\(defaultCompanyIds\[0\]\)/.test(dispatch)) problems.push("S33 query not company-gated");
 
-  if (!/data-testid="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company");
+  if (!/data-testid="dispatch-settings-need-company"|testId="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company");
+  if (!/<BoardSection\b/.test(settings) || !/testId="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company must be BoardSection");
   if (!/ListErrorBanner/.test(settings)) problems.push("S34 ListErrorBanner");
   if (!/useCompanyContext/.test(settings)) problems.push("S34 missing company context");
 
   if (!/data-testid="dispatch-settlements-need-company"/.test(dispatch)) problems.push("S35 need-company");
   if (!/data-testid="dispatch-settlements-honest-empty"/.test(dispatch)) problems.push("S35 honest empty");
 
-  if (!/data-testid="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company");
+  if (!/data-testid="dispatch-trip-pairing-need-company"|testId="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company");
+  if (!/<BoardSection\b/.test(trip) || !/testId="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company must be BoardSection");
   if (!/data-testid="dispatch-trip-pairing-honest-empty"/.test(trip)) problems.push("S36 honest empty");
   if (!/ListErrorBanner/.test(trip)) problems.push("S36 ListErrorBanner");
   if (!/enabled:\s*Boolean\(companyId\)/.test(trip)) problems.push("S36 not company-gated");

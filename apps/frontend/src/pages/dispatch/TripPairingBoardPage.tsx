@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -368,12 +369,9 @@ export function TripPairingBoardPage() {
 
   if (!companyId) {
     return (
-      <div
-        data-testid="dispatch-trip-pairing-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the trip pairing board.
-      </div>
+      <BoardSection title="Trip pairing" testId="dispatch-trip-pairing-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the trip pairing board.</p>
+      </BoardSection>
     );
   }
 

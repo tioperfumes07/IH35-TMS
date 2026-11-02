@@ -23,6 +23,15 @@ const TARGETS = [
   ["apps/frontend/src/pages/dispatch/RoundTrips.tsx", "round-trips-need-company"],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", "dispatch-overview-need-company"],
   ["apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx", "cargo-sensor-timeline-need-company"],
+  ["apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx", "dispatch-settings-need-company"],
+  ["apps/frontend/src/pages/dispatch/MapView.tsx", "dispatch-map-need-company"],
+  ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", "dispatch-planner-need-company"],
+  ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", "dispatch-trip-pairing-need-company"],
+  ["apps/frontend/src/pages/dispatch/planners/DriverPlanner.tsx", "dispatch-driver-planner-need-company"],
+  ["apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx", "dispatch-loads-planner-need-company"],
+  ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", "dispatch-truck-planner-need-company"],
+  ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", "dispatch-timeline-need-company"],
+  ["apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx", "driver-bill-remint-need-company"],
 ];
 const LABEL = "verify-91190-dispatch-empty-company-slate-leftover-chrome";
 

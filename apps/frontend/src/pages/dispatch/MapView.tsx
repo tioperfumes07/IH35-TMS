@@ -69,12 +69,11 @@ export function MapView() {
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
       <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
-        <p
-          className="rounded-sm border border-dashed border-[#4B5563] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
-          data-testid="dispatch-map-need-company"
-        >
-          Select an operating company to load entity-scoped GPS positions for active loads.
-        </p>
+        <BoardSection title="Active Load Map" testId="dispatch-map-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to load entity-scoped GPS positions for active loads.
+          </p>
+        </BoardSection>
       ) : null}
       {companyId && query.isError ? (
         <ListErrorBanner

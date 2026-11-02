@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -92,12 +93,9 @@ export function LoadsPlanner() {
 
   if (!operatingCompanyId) {
     return (
-      <div
-        data-testid="dispatch-loads-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the loads planner.
-      </div>
+      <BoardSection title="Loads planner" testId="dispatch-loads-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the loads planner.</p>
+      </BoardSection>
     );
   }
 

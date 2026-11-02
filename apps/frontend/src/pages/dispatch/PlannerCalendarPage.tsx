@@ -9,6 +9,7 @@ import {
   type PlannerLoadEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -192,12 +193,9 @@ export function PlannerCalendarPage() {
 
   if (!companyId) {
     return (
-      <div
-        data-testid="dispatch-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the planner calendar.
-      </div>
+      <BoardSection title="Planner calendar" testId="dispatch-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the planner calendar.</p>
+      </BoardSection>
     );
   }
 
