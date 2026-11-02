@@ -37,6 +37,13 @@ export type TripPairingUnitRow = {
   settlement_signal: "settlement_open" | "round_trip" | null;
   status: string | null;
   location: { city: string | null; state: string | null } | null; // live Samsara position (latest fix)
+  /** TPB gear Customer — from the current (earliest-pickup) leg's customer; never invented. */
+  customer_id: string | null;
+  customer_name: string | null;
+  /** Sum of loaded_miles across tour legs (null when every leg lacks miles). */
+  miles_total: number | null;
+  /** Sum of booked rate_total_cents across tour legs (null when every leg lacks a rate). */
+  rate_total_cents: number | null;
 };
 
 export type TripPairingBoard = {
@@ -48,7 +55,13 @@ export type TripPairingBoard = {
     sb_unbooked: number;
     up_north_30d: number;
   };
-  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null; location: { city: string | null; state: string | null } | null }[];
+  unbooked: {
+    unit_id: string;
+    unit_number: string | null;
+    driver_id: string | null;
+    driver_name: string | null;
+    location: { city: string | null; state: string | null } | null;
+  }[];
   tours: TripPairingUnitRow[];
   generated_at: string;
 };
@@ -127,10 +140,13 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
   };
 
   // Active trip-classified loads + their delivery stop (city/date) for the open-return display.
+  // TPB gear Customer/Miles/Revenue — join real customer + loaded_miles + rate_total_cents (never invent).
   const loadsRes = await client.query<{
     load_id: string; unit_id: string; tour_id: string | null; trip_type: "NB" | "TR" | "SB" | "LOCAL"; status: string;
     pickup_date: string | null; delivery_city: string | null; delivery_state: string | null; delivery_date: string | null;
     load_driver_id: string | null; load_driver_name: string | null;
+    customer_id: string | null; customer_name: string | null;
+    loaded_miles: string | null; rate_total_cents: string | null;
   }>(
     // FAIL-TP1 — the board used to resolve the driver ONLY from telematics.vehicle_driver_assignments
     // (below), i.e. from the Samsara ELD assignment on the UNIT. A load whose unit has no OPEN ELD
@@ -147,7 +163,14 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
             COALESCE(
               nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), ''),
               mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
-            ) AS load_driver_name
+            ) AS load_driver_name,
+            l.customer_id::text AS customer_id,
+            COALESCE(
+              c.customer_name,
+              mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)
+            ) AS customer_name,
+            l.loaded_miles::text AS loaded_miles,
+            l.rate_total_cents::text AS rate_total_cents
        FROM mdata.loads l
        LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
         AND (
@@ -161,6 +184,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
               AND trip_pairing_load_driver_dca.deactivated_at IS NULL
           )
         )
+       LEFT JOIN mdata.customers c ON c.id = l.customer_id
        LEFT JOIN LATERAL (
          SELECT scheduled_arrival_at FROM mdata.load_stops
          WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL
@@ -212,7 +236,13 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       (a, b) => (a.pickup_date ?? "\uffff").localeCompare(b.pickup_date ?? "\uffff")
     );
     if (legs.length === 0) {
-      unbooked.push({ unit_id: u.unit_id, unit_number: u.unit_number, driver_name: drv?.driver_name?.trim() || null, location: locationFor(u.unit_id) });
+      unbooked.push({
+        unit_id: u.unit_id,
+        unit_number: u.unit_number,
+        driver_id: drv?.driver_id ?? null,
+        driver_name: drv?.driver_name?.trim() || null,
+        location: locationFor(u.unit_id),
+      });
       continue;
     }
     const nb = legs.find((l) => l.trip_type === "NB") ?? null;
@@ -225,10 +255,32 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       const t = new Date(nb.pickup_date).getTime();
       if (!Number.isNaN(t)) upNorthDays = Math.max(0, Math.floor((nowMs - t) / 86_400_000));
     }
+    const unitLoadRows = loadsRes.rows.filter((r) => r.unit_id === u.unit_id);
+    const currentLeg = currentLegByUnit.get(u.unit_id) ?? null;
+    let milesSum = 0;
+    let milesAny = false;
+    let rateSum = 0;
+    let rateAny = false;
+    for (const r of unitLoadRows) {
+      if (r.loaded_miles != null && r.loaded_miles !== "") {
+        const m = Number(r.loaded_miles);
+        if (Number.isFinite(m)) {
+          milesSum += m;
+          milesAny = true;
+        }
+      }
+      if (r.rate_total_cents != null && r.rate_total_cents !== "") {
+        const c = Number(r.rate_total_cents);
+        if (Number.isFinite(c)) {
+          rateSum += c;
+          rateAny = true;
+        }
+      }
+    }
     tours.push({
       unit_id: u.unit_id, unit_number: u.unit_number,
       driver_id: drv?.driver_id ?? null, driver_name: drv?.driver_name?.trim() || null,
-      tour_id: loadsRes.rows.find((r) => r.unit_id === u.unit_id)?.tour_id ?? null,
+      tour_id: unitLoadRows[0]?.tour_id ?? null,
       legs, has_nb: hasNb, has_sb: hasSb, open_return: openReturn,
       return_city: openReturn ? lastOutbound?.delivery_city ?? null : null,
       return_avail_date: openReturn ? lastOutbound?.delivery_date ?? null : null,
@@ -236,6 +288,10 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       settlement_signal: hasSb ? "round_trip" : hasNb ? "settlement_open" : null,
       status: legs[0]?.status ?? null, // 443.206 D12 — the current (earliest-pickup) leg, not the last one
       location: locationFor(u.unit_id),
+      customer_id: currentLeg?.customer_id ?? null,
+      customer_name: currentLeg?.customer_name ?? null,
+      miles_total: milesAny ? milesSum : null,
+      rate_total_cents: rateAny ? rateSum : null,
     });
   }
 
