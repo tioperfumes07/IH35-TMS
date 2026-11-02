@@ -14,7 +14,12 @@ See `docs/bus/lead/11-02-2026-Owner-BUILD-FIRST-NOT-MATCH.md`.
 
 Superseded: every earlier CURRENT block.
 
-## CURRENT (11-02-2026 ~12:20 PM CT) — Cursor ROUND 7.2 ship
+## CURRENT (11-02-2026 ~1:00 PM CT) — Cursor continue fill-not-shell
+ROUND 7.2 DONE: ENG-13 AUTH-473 CLOSED · ENG-22 prevention #27991 · CODED-QUEUED→DONE-LIVE. Fill: Profitability hub #27994 · MapView BoardSection #27995. Owner BUILD-FIRST (no match/reconcile/Dreamline/month-lock). Next: ELD cert/settings engines · remaining module shells · ACCT-R-04 Render UUIDs · ENG-36 re-measure.
+
+Superseded: every earlier CURRENT block.
+
+## PRIOR (11-02-2026 ~12:20 PM CT) — Cursor ROUND 7.2 ship
 ENG-13 AUTH-473 CLOSED DONE-LIVE (13595 customer 445; trailer_source NULL 0/194). ENG-22 prevention: Book/Edit refuse `trailer_equipment_type_mismatch` or re-derive from company trailer; guard 18930 active mismatches 0 (cancelled 13593/13634/13635 wait AUTH). CODED-QUEUED → DONE-LIVE: ENG-19/55/62, LEAD-443.319, LEAD-AUTH ledger. Stop ENG-60/34. Next: fill-not-shell remaining module shells + ACCT-R-04 Render dashboard UUIDs (code already declares sync:false).
 
 Superseded: every earlier CURRENT block.
