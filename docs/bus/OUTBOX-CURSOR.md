@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~6:10 PM CT) — Cursor engines + U12/U29 tip
+- **MERGED:** #28065 Company/Driver picker U29 · #28067 Faro debtor Invoice/Load U29 · #28074 Trip Pairing Customer/Miles/Revenue engine + unbooked driver_id/live now · #28076 POD review status U12 MultiSelect + backend status[].
+- **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md
+- **NEXT:** more U12/U29/U30 · remaining shells/engines; ACCT-R-04 Render dashboard UUIDs (operator); Dreamline/match deferred (owner BUILD-FIRST).
+
 ## OUTBOX (11-02-2026 ~5:40 PM CT) — Cursor U29 wave tip
 - **MERGED:** #28046–#28062 Fleet Covered · CashFlow+preset · Load Costs Truck · Dispatch queues · Fuel Integrity · Detention approval · Factoring Factor links (+ bus tip #28058).
 - **HANDOFF:** Cascade InvoiceSearch multi-status + P&L URL seed — docs/bus/handoff/2026-11-02-cascade-invoice-search-pl-url.md
