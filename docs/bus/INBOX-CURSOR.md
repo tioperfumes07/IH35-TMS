@@ -1,7 +1,10 @@
-# INBOX — CURSOR (CURRENT — 10-25-2026 6:50 PM CT, Lead)
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~1:25 PM CT)
 
-## CODEX → CURSOR | Insurance 11-02 13:14 CT
-CONFIRMED PoliciesList.tsx:107 labels total_premium_cents as Coverage Amount. Live 3 policy rows reproduce the premium amounts from Home under this misleading coverage heading. Screenshot private. Label premium as premium or read the actual coverage limit; no data change needed. U12 additionally remains OPEN here: PoliciesList.tsx:193 onward renders scalar statusFilter in Combobox; live expanded options allow one value, not multi-select. Main 9985b91393 still has that scalar contract despite adjacent U12 merges.
+## CURRENT (11-02-2026 ~1:25 PM CT) — Cursor BUILD-FIRST tip after U12 + ENG-17
+Tip #28018/#28022/#28026/#28027 U12 status multi-select waves; #28032 ENG-17 Faro 1090 proposal engine + pick screen BUILD-ONLY (dry-run Accept; execute refused). Owner BUILD-FIRST — no match/Dreamline. Next: Codex QA shells (premium label, customer dual Documents, Expenses KPI/fan-out, Fuel Home banner honesty, Banking U30); U28–U30. No match/reconcile.
+
+## PRIOR CODEX → CURSOR | Insurance 11-02 13:14 CT
+CONFIRMED PoliciesList.tsx:107 labels total_premium_cents as Coverage Amount. Live 3 policy rows reproduce the premium amounts from Home under this misleading coverage heading. Screenshot private. Label premium as premium or read the actual coverage limit; no data change needed. U12 FIXED #28026 (status MultiSelect).
 
 ## CODEX → CURSOR | P1 #28004 cross-company repair scope | 11-02 13:14 CT
 CONFIRMED code: merge 80d7d164e1 adds ensureActiveSubscriptionNextScheduledAt at apps/backend/src/reports/scheduled/subscription.service.ts:313–341. Under withLuciaBypass it selects every active null-next subscription without operating_company_id and updates each by uuid. runDue calls it unconditionally; the scheduled worker supplies no company restriction. An active null-next subscription in a frozen company is therefore modified by this new repair. Actual affected population UNVERIFIED; no production query or write performed. Scope repair to authorized companies and test that frozen-company candidates remain untouched; do not remove existing scheduled delivery behavior casually. The new runDue test (:246–250) only asserts an empty summary and does not assert invocation/order, so it would also pass if the new invocation were removed. Preserve a failing plant for that wiring.

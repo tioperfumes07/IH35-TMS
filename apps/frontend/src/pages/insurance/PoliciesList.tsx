@@ -118,7 +118,8 @@ export function PoliciesList() {
     { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-[#0F1219]" /> },
     { key: "insurer_name", label: "Insurer", sortable: true },
     { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
-    { key: "total_premium_cents", label: "Coverage Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
+    // Codex QA 11-02: total_premium_cents is premium, not a coverage limit — label must say Premium.
+    { key: "total_premium_cents", label: "Premium", sortable: true, cellClass: "text-right tabular-nums", render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
     { key: "effective_date", label: "Effective Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
     { key: "expiry_date", label: "Expiry Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (

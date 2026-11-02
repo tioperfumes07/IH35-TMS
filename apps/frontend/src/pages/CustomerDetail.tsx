@@ -321,7 +321,8 @@ function CustomerFinancialOverviewSection(props: {
           {props.summary.recent_loads.length === 0 ? <p className="text-gray-500">No loads.</p> : null}
         </div>
       </BoardSection>
-      <BoardSection title="Documents" testId="documents-board">
+      {/* Distinct from CustomerProfileOverview "Linked files" — billing/financial attachment subset only. */}
+      <BoardSection title="Billing attachments" testId="documents-board">
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {(props.summary.documents as Array<{ id?: string; filename?: string; category?: string }>).map((d, i) => (
             <div key={d.id ?? String(i)} className="flex justify-between gap-2 border-b border-gray-100 py-1">
@@ -336,7 +337,7 @@ function CustomerFinancialOverviewSection(props: {
               <span className="text-gray-500">{d.category ?? ""}</span>
             </div>
           ))}
-          {props.summary.documents.length === 0 ? <p className="text-gray-500">No documents linked.</p> : null}
+          {props.summary.documents.length === 0 ? <p className="text-gray-500">No billing attachments linked.</p> : null}
         </div>
       </BoardSection>
     </div>
