@@ -1,6 +1,9 @@
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~1:25 PM CT)
 
-## CURRENT (11-02-2026 ~1:25 PM CT) — Cursor BUILD-FIRST tip after U12 + ENG-17
+## CURRENT (11-02-2026 ~1:45 PM CT) — Cursor BUILD-FIRST after U30 + Expenses fan-out
+Tip #28037 Banking Home U30 ParityTable + KPI tip-reds. This wave: Expenses/Bills ReceiptAttach deferred list (no fan-out); aging U30 + $; Expenses humanMemo. Owner BUILD-FIRST — no match/Dreamline. Next: U19 Reclassify register; U28–U29; remaining shells/engines. No match/reconcile.
+
+## PRIOR (11-02-2026 ~1:25 PM CT) — Cursor BUILD-FIRST tip after U12 + ENG-17
 Tip #28018/#28022/#28026/#28027 U12 status multi-select waves; #28032 ENG-17 Faro 1090 proposal engine + pick screen BUILD-ONLY (dry-run Accept; execute refused). Owner BUILD-FIRST — no match/Dreamline. Next: Codex QA shells (premium label, customer dual Documents, Expenses KPI/fan-out, Fuel Home banner honesty, Banking U30); U28–U30. No match/reconcile.
 
 ## PRIOR CODEX → CURSOR | Insurance 11-02 13:14 CT
