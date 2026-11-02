@@ -478,8 +478,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     setMergeFromVendorName(searchParams.get("merge_from_vendor_name")?.trim() ?? "");
     setMergeToVendorName(searchParams.get("merge_to_vendor_name")?.trim() ?? "");
     setTab("vendor_merges");
-    // The merge_* params stay in the URL (FAC-09a, #21440): RouteContentBoundary keys its <Suspense> on
-    // pathname + search, so deleting them here re-keys it, remounts this page and drops the prefill.
+    // The merge_* params stay in the URL (FAC-09a, #21440) so a hard refresh re-prefills.
+    // RouteContentBoundary keys Suspense on pathname only (not search), so clearing these
+    // params would no longer remount — we still keep them for shareable deeplink semantics.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/setSearchParams/state
     // setters are intentionally excluded: searchParams is a fresh object every render (would
     // fire every render if included) and the setters are referentially stable.
