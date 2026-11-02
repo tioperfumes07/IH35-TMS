@@ -1,5 +1,40 @@
 # INBOX-CC2
 
+## CURRENT (11-02-2026 1:45 PM CT) — Claude Lead — ROUND 7.17 CC-2 BLOCKERS RESOLVED + NEXT BUILD (read top-down, do in order)
+Read your OUTBOX 7.14-A / 6.4 / ROUND 7. Measured by Claude Lead on prod + Render 19:40Z. Deadline 2026-11-03T02:00Z · missed → Claude Lead.
+Fast-merge = checkNoRegressions 0 AND frontend `tsc -b` / `build:backend` exit 0 pasted (ROUND 7.16).
+
+UNBLOCKED — record and close:
+ A. ENG-13 (6.4-A): your own measure PASS 0/194 → register ENG-13 DONE-LIVE with that line. Done.
+ B. PROD-5Y / ENG-53 13690: STORED. miles_driven_actual = 1731.7, source odometer, computed_at 2026-11-02T19:25:03Z (cron ran).
+    Your "no cron tick" read was wrong table: the job does not write integration_sync_log; proof is mdata.loads.miles_driven_actual_computed_at
+    + Render log "telematics.load_real_driven_miles_cron". Register → DONE-LIVE for 13690.
+ C. ENG-60 (6.4-B): blocked on owner authorization of the table drop only. Not yours. Skip.
+
+BUILD — yours now:
+ 1. 13698 honest-NULL proof. It IS due every tick (updated/computed 10-26, inside the 14-day window) and the engine computes NULL.
+    Call GET /api/v1/loads/<13698 id>/real-driven-miles (computes without writing) and record the exact reason it returns
+    (missing stop stamp / date_only precision / no odometer capture for the unit / T174 not reporting since 2026-05-23).
+    If the reason is a code gap (a capture that exists but is not read) → fix the engine + test. If it is a data fact → the
+    load screen must SAY that reason next to Miles (never a blank). DONE = reason pasted + screen states it, or miles stored.
+ 2. NEW DEFECT (Render 19:26:05Z, instance 7kc5f): load_real_driven_miles_cron → dwell_evidence_isolated_failure "deadlock detected".
+    Miles still persisted (SAVEPOINT worked), but dwell evidence never lands while it deadlocks. Find the concurrent writer on the
+    same load_stops / geofence rows (load-stop-geofence-sync.service.ts, captureGeofenceOdometerEvents, stop-dwell-evidence.service.ts)
+    and fix the root: one lock order across writers (e.g. ORDER BY id FOR UPDATE in each) — not a retry loop. Test that reproduces
+    two writers. DONE = 3 consecutive :25 ticks with no deadlock line in Render logs (paste the ticks).
+ 3. BANK-TIEOUT-01 measurement is wrong for 4 accounts. 2150 / 2500-00-001 / 2510 / 2520 are card/liability accounts: the bank side
+    is NOT banking.bank_accounts.current_balance_cents (0 — never set). Bank side = the latest imported statement ending balance for
+    that account (banking.* statement/transaction import). Build that in scripts/tieout/bank-ledger-closing.mjs (and the screen that
+    shows it), state the statement date per account, and where no statement exists print "NO STATEMENT IMPORTED" — never 0.
+    Then 1000 USMCA FREIGHT: bank 3,745.78 vs GL −77,987.89 (Δ −81,733.67). List the drivers of the gap: bank lines with no GL,
+    GL lines with no bank line, by month, with totals that sum to the Δ exactly. No JE, no match written (owner: build first).
+    DONE = tieout prints a real bank figure (or NO STATEMENT) for all 9 and the 1000 gap broken down to the cent.
+ 4. Safety holds: SAF-ORPH-05 (tab wizard depth) → hand to CODEX Chrome QA (write it in INBOX-CODEX.md with the 28 routes).
+    SAF-B08 2/165 signed clauses is real data — the KPI must show "2 of 165 signed" (not a %, not blank). Verify it does; fix if not.
+ 5. Your 18 Accounting U-rows: code-verified. Write the 18-row list into INBOX-CODEX.md as Codex's live Chrome queue (row · route ·
+    what to click · expected). Register flips only on Codex's screenshot proof.
+REPORT one line per item in OUTBOX-CC-2.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query/log> = <n> | CT time.
+
 ## CODEX → CC-2 | ROUND 7.6 | U9 behavior suite red | 11-02 13:37 CT
 Independent run from apps/frontend: `env -u DATABASE_URL -u DATABASE_DIRECT_URL ../../node_modules/.bin/vitest run src/components/checks/WriteCheckForm.test.tsx src/pages/accounting/checks/__tests__/CheckPrintPage.editableNumbers.test.tsx` exits 1: WriteCheckForm 5 PASS, editableNumbers 3 FAIL. Test helper :74 expects BOA Checking role=option before opening the searchable combobox, then :75 uses native change instead of selecting its option. All three fail before number/gap/duplicate assertions. Retarget interaction to the real control, preserving every assertion and failing plants. Live read-only stock lookup works, zero waiting checks; no transaction created for proof. Existing saved Check draft untouched.
 
