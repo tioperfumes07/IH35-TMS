@@ -27,7 +27,7 @@ import {
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
@@ -652,7 +652,7 @@ export function SettlementStatementWorkflowPage() {
           value={formatUsdCents(
             readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)
           )}
-          sub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
+          sub={`${formatQuantityTable(kpi.loadedMiles, 0)} mi loaded`}
           testId="settlement-workflow-kpi-gross"
         />
         <V3KpiTile
@@ -763,7 +763,7 @@ export function SettlementStatementWorkflowPage() {
         revenueCents={companyReport ? companyReport.sections.revenue.invoiced_cents : (readout?.company_settlement?.revenue_cents ?? 0)}
         revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
         driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
-        driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
+        driverPaySub={`${formatQuantityTable(kpi.loadedMiles, 0)} mi loaded`}
         reimbursementCents={Math.round(summary.reimbTotal * 100)}
         reimbursementLines={reimbursementsWithSeq.length}
         deductionCents={Math.round(summary.deductionTotal * 100)}
@@ -885,7 +885,7 @@ export function SettlementStatementWorkflowPage() {
                   )}{" "}
                   · Role {String(split.pay_role ?? "—")} ·
                   Share {Number(split.share_pct ?? 0)}% ·
-                  Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+                  Pay {formatUsdCents(Number(split.driver_pay_cents ?? 0) || 0)}
                 </div>
               );
             })}
