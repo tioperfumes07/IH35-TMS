@@ -1,4 +1,6 @@
 import type { SettlementListRow } from "../../api/driverFinance";
+import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 
 /** ROUND 443.250 — week buckets for Settlements home "Net driver pay by week". */
 export type SettlementsWeekBucket = {
@@ -10,7 +12,7 @@ export type SettlementsWeekBucket = {
 };
 
 export function formatSettlementsUsd(dollars: number): string {
-  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsd(dollars);
 }
 
 export function settlementsWeekLoadsLabel(s: SettlementListRow): string {
@@ -50,5 +52,6 @@ export function settlementPaymentLabel(s: SettlementListRow): "Paid" | "Unpaid" 
 }
 
 export function formatWeekOfTitle(weekStart: Date): string {
-  return weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // Round 7.6 — MM/DD/YYYY (not browser "Oct 27" without year).
+  return formatDateUS(weekStart) || "—";
 }
