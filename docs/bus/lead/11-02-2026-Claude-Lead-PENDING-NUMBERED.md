@@ -4,7 +4,15 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 ## Lead re-measure 2026-11-02 5:00 PM CT
 
-16 Lead rows proved DONE-LIVE (15, 31, 32, 36, 39, 42, 106, 107, 108, 118, 135, 136, 147, 170, 171, 178). Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
+20 Lead rows proved DONE-LIVE (15, 31, 32, 36, 39, 40, 41, 42, 106, 107, 108, 118, 135, 136, 147, 170, 171, 178, 209, 211); row 44 PARTIAL. Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
+
+## NEW pending found 11-02 (Lead, measured)
+
+| # | Area | Item | Seat | Status |
+|---|---|---|---|---|
+| 257 | Tests | Backend vitest on main e27c5b2c8: 35 test files / 46 tests FAIL (posting-engine cash/driver advance, revrec interlock, fuel poster class, migration tests 0242/qbo/samsara/reconciliation, dispatch book-load, customer routes…) — identical with and without #27965 | CC-1 (accounting) / CC-2 (dispatch, mdata) / CC-3 (migrations) | OPEN |
+| 258 | Fleet data | 9 phantom units from Samsara: 6 SAM-xxxxxxxx (VIN SAMVIN-…, 3 USMCA-leased, 3 TRANSP) + 3 gateway-serial units G497-J2K-EKM / G77P-YAB-4V7 / GPRR-ZPF-HEC (TRK); 0 loads, fuel, WOs, expenses, bills; 3 GPS pings 06/2019 — purge (Lead recommends DELETE via AUTH purge route) | CC-2 | OPEN |
+| 259 | Maintenance | Fleet health showed the SAM- phantoms — fixed #28191 e27c5b2c8 (42 → 39); live proof after deploy | LEAD | MERGED-UNVERIFIED |
 
 ## Counts by category
 
@@ -93,11 +101,11 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 37 | R231 | Banking | One bank line = purchase(s) + LOAN: rest of the line becomes a related-party loan document (GL + document); unmatch reverses it | LEAD | CODED-QUEUED |
 | 38 | R232 | Banking | 4 banking test files red on main; Plaid Login Required / Stale looked identical to Healthy | LEAD | CODED-QUEUED |
 | 39 | R233 | Reports | Heavy CI red since 10-23: reports guard read the moved quick-links | LEAD | DONE-LIVE — verify-reports-home-filter-leaf-ownership / -no-box-in-box / rpt-s01-s05 PASS on main 22:58Z |
-| 40 | R234 | System | Transaction Health paging dropped ~20% of documents (1,500 of 1,855); bill payments labelled by UUID; account numbers hidden by default | LEAD | CODED-QUEUED |
-| 41 | R306 | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | MERGED |
+| 40 | R234 | System | Transaction Health paging dropped ~20% of documents (1,500 of 1,855); bill payments labelled by UUID; account numbers hidden by default | LEAD | DONE-LIVE — live /system?tab=tx-health 23:30Z: keyset "Load more" paging; bill payments labelled "Payment · <payee> · date · $"; money with $; JE link raw uuid fixed #28187 173b1b56b → "Journal entry — Fuel unit T164 Love's RELAY (def+diesel)", 0 uuids on page |
+| 41 | R306 | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | DONE-LIVE — live: /insurance/lawsuits → /legal/lawsuits (h1 "Lawsuits") 23:05Z |
 | 42 | R307 | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | DONE-LIVE — merged b87d8b2d3 (#27552); verify-legal-matter-lawsuit-linkage PASS on main 23:10Z |
 | 43 | NEW 11-02 | Owner | AUTH-474..480 owner decisions (ENG-60 drop, ENG-04 $705.97, ENG-25b, ENG-48 repair, ENG-22, ENG-54) | OWNER | OPEN |
-| 44 | NEW 11-02 | Repo | 4 Dependabot PRs (#27892 #27894 #27964 #27965) — test on branch then merge | LEAD | OPEN |
+| 44 | NEW 11-02 | Repo | 4 Dependabot PRs (#27892 #27894 #27964 #27965) — test on branch then merge | LEAD | PARTIAL — #27965 production deps: npm ci + backend/frontend/driver-pwa builds + backend vitest identical to main (35 files / 46 tests fail on BOTH) → merged 9350071e1; #27964 + #27894 lockfile drift after #27965 (rolldown 1.2.14 vs 1.2.16) → @dependabot rebase requested 23:27Z; #27892 codeql-action 4.39.1 branch updated, CI re-running |
 
 ## B · Board design (layered / chrome-only)
 
@@ -297,9 +305,9 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 206 | R149 | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | OPEN |
 | 207 | R150 | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | OPEN |
 | 208 | R151 | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | OPEN |
-| 209 | R152 | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | CODED |
+| 209 | R152 | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | DONE-LIVE — live /maintenance 23:20Z: MTD COST $0.00 (cents shown) |
 | 210 | R153 | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | CC-3 | CODED |
-| 211 | R154 | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | CODED |
+| 211 | R154 | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | DONE-LIVE — live /maintenance/active-wos 23:32Z: every header sortable incl. Load, Driver, Vendor, Bill, JE, Timing (only the select-all checkbox column has none) |
 | 212 | R155 | Safety › Hours & Fatigue › Driver roster | D036: Mixed proper-case and all-uppercase driver names | CC-3 | OPEN |
 | 213 | R156 | Safety › Hours & Fatigue › Create HOS Violation | D037: Seven visible inputs measured 38px high | CC-3 | CODED |
 | 214 | R157 | Compliance › Filings / Overview › Driver labels | D038: Mixed proper-case and uppercase driver labels in populated tables | CC-3 | OPEN |
