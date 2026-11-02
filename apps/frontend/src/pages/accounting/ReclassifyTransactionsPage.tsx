@@ -55,9 +55,6 @@ const PAGE = 100;
 // posted through the To date, so a one-month window (the old last-month-to-today default) could never list what the
 // balance counts — and USMCA's whole book (operating since 2026-08-07) sits inside the fiscal year.
 function firstOfFiscalYear() { return `${new Date().getFullYear()}-01-01`; }
-// U21 (owner): "calendars cannot change the YEAR". yearRange() in DatePicker uses min.year..max.year for the select;
-// when both are in the same year the select shows only [currentYear], effectively locking the year to the fiscal year.
-function lastOfFiscalYear() { return `${new Date().getFullYear()}-12-31`; }
 function today() { return companyToday(); }
 
 type SortKey = "date" | "type" | "num" | "name" | "memo" | "account" | "item" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
@@ -365,11 +362,11 @@ export function ReclassifyTransactionsPage() {
             <div className="mt-2 grid grid-cols-2 gap-1" data-b5-period-from-to="1" data-testid="reclassify-period-from-to">
               <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 From
-                <DatePicker value={fromDate} onChange={setFromDate} min={firstOfFiscalYear()} max={lastOfFiscalYear()} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-from" />
+                <DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-from" />
               </label>
               <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 To
-                <DatePicker value={toDate} onChange={setToDate} min={firstOfFiscalYear()} max={lastOfFiscalYear()} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-to" />
+                <DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} data-testid="reclassify-period-to" />
               </label>
             </div>
             <input type="search" aria-label={t("common.search_account_tree", "Search account tree")} value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Search account tree" className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-full rounded border border-gray-300 px-2`} data-testid="reclassify-account-filter" />
@@ -419,8 +416,8 @@ export function ReclassifyTransactionsPage() {
         <section className="min-w-0 flex-1 space-y-2">
           <BoardSection title="Find transactions" testId="reclassify-filters-board">
           <div className="flex flex-wrap items-end gap-2 p-2" data-testid="reclassify-filters">
-            <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} min={firstOfFiscalYear()} max={lastOfFiscalYear()} className={FILTER_CONTROL_SIZE_CLASS} /></label>
-            <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} min={firstOfFiscalYear()} max={lastOfFiscalYear()} className={FILTER_CONTROL_SIZE_CLASS} /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>From<DatePicker value={fromDate} onChange={setFromDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
+            <label className={FORM_LABEL_STACK_CLASS}>To<DatePicker value={toDate} onChange={setToDate} className={FILTER_CONTROL_SIZE_CLASS} /></label>
             {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
             <MultiSelectDropdown label="Account" options={accountOptions} selected={f.accountIds} onChange={(v) => setFilter("accountIds", v)} allLabel="All accounts" searchable data-testid="reclassify-filter-account" />
             <MultiSelectDropdown label="Type" options={facetOptions("types")} selected={f.types} onChange={(v) => setFilter("types", v)} allLabel="All types" data-testid="reclassify-filter-type" />
