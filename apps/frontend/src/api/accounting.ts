@@ -1186,8 +1186,8 @@ export function listBills(
     /** SORT LAW — ParityTable column key; server ORDER BY via BILL_LIST_SORT_SQL. */
     sort?: string;
     dir?: "asc" | "desc";
-    /** ACCT-F2026110203 — category tab filter applied server-side before pagination. */
-    bill_category?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
+    /** ACCT-F2026110203 — category tab filter applied server-side before pagination. Comma-joined for 2+. */
+    bill_category?: string;
     limit?: number;
     offset?: number;
   } = {}

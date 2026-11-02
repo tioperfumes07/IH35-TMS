@@ -398,7 +398,8 @@ export function BillsPage() {
         sort: sortKey || undefined,
         dir: sortKey ? sortDirection : undefined,
         // ACCT-F2026110203 — category and multi-vendor filtered server-side before pagination.
-        bill_category: categoryFilter.length === 1 ? (categoryFilter[0] as "vendor" | "maintenance" | "repair" | "fuel" | "driver") : undefined,
+        // Comma-join for 2+ values; server uses ANY($n::text[]) so all OR-ed categories pass through.
+        bill_category: categoryFilter.length > 0 ? categoryFilter.join(",") : undefined,
         limit: 200,
         bill_type: billType,
       }),

@@ -290,8 +290,8 @@ type ListBillsOptions = {
   /** ROUND 297 — driver / trailer profile reverse lists (accounting.bills.driver_id / trailer_id). */
   driverId?: string;
   trailerId?: string;
-  /** ACCT-F2026110203 — BillsPage category tab filter server-side (accounting.bills.bill_category). */
-  billCategory?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
+  /** ACCT-F2026110203 — BillsPage category tab filter server-side (accounting.bills.bill_category). One or more values OR-ed via ANY(). */
+  billCategories?: string[];
   /** ACCT-F2026110203 — multi-vendor server-side filter (comma-separated or array of vendor ids). */
   vendorIds?: string[];
   /** SORT LAW (COL-04) — allowlisted column key from BillsPage; unknown → bill_date. */
@@ -1158,9 +1158,9 @@ export async function listBillsByVendor(
       });
       if (clause) where.push(clause);
     }
-    if (options.billCategory) {
-      values.push(options.billCategory);
-      where.push(`b.bill_category = $${values.length}`);
+    if (options.billCategories && options.billCategories.length > 0) {
+      values.push(options.billCategories);
+      where.push(`b.bill_category = ANY($${values.length}::text[])`);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -1389,9 +1389,9 @@ function buildAllBillsWhereClause(
     );
   }
 
-  if (options.billCategory) {
-    values.push(options.billCategory);
-    where.push(`b.bill_category = $${values.length}`);
+  if (options.billCategories && options.billCategories.length > 0) {
+    values.push(options.billCategories);
+    where.push(`b.bill_category = ANY($${values.length}::text[])`);
   }
   if (options.vendorIds && options.vendorIds.length > 0) {
     values.push(options.vendorIds);
