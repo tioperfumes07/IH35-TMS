@@ -43,3 +43,43 @@ All 5 counts match. Delta discrepancy ($146.00) is a rounding precision differen
 ### 6.4-A — blocked on Cursor ENG-13 PR #27975 merge + deploy (trailer_source fix)
 ### 6.4-B — blocked on ENG-60 table drop (insurance.lawsuit schema drop not yet deployed)
 ### 6.4-C — blocked on :25 cron tick after ENG-29/53 #27976 deploy (miles_driven_actual)
+
+---
+
+## ROUND 7 — CC-2 verify results (2026-11-02, deadline 2026-11-03T02:00Z)
+
+### BANK-TIEOUT-01 — tieout structural fix + live measurement
+
+Scripts/tieout/bank-ledger-closing.mjs had stale EXPECTED: count=5 (actual 9 active USMCA accounts), include_faro_1296=true (1296 never existed in live). Script exited early on Faro structural check before reaching variance analysis.
+
+**FIX merged PR #28019:** Updated to count=9, check for factoring_reserves (1230) instead of 1296. Selftest PASS.
+
+**Live tieout still FAIL** — 7/9 accounts have real variances (tolerance 0):
+
+| Account | Bank (c) | GL (c) | Variance (c) |
+|---|---|---|---|
+| USMCA FREIGHT 1000 | 374,578 | -7,798,789 | -8,173,367 |
+| Petty Cash 1005 | 0 | 0 | **0 ✓** |
+| Faro Escrow Reserve 1230 | 0 | 263,476 | 263,476 |
+| Faro Cash Reserve 1235 | 0 | 0 | **0 ✓** |
+| Relay Fuel Wallet 1295 | -12,345 | 25,002 | 37,347 |
+| Faro Factoring-USMCA 2150 | 0 | -17,565,000 | -17,565,000 |
+| Amex-Scentsx 2500-00-001 | 0 | -1,011,850 | -1,011,850 |
+| Dreamline Diesel Card 2510 | 0 | -18,789,421 | -18,789,421 |
+| England WEX Fuel Card 2520 | 0 | -2,915,688 | -2,915,688 |
+
+Root cause: credit card/liability accounts (2150/2500/2510/2520) have current_balance_cents=0 (no statement balance imported) while GL carries accumulated charges. Operating account 1000 has bank/GL divergence. Accounting-operations reconciliation required for full PASS.
+
+### CASH-T03 — Rolling Ledger HTTP route confirmed (static only per FINAL-3 law)
+
+GET /api/v1/cash-flow/rolling-ledger confirmed at apps/backend/src/cash-flow/cash-flow.routes.ts:157.
+FE RollingLedgerTab (apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx) calls apiRequest(/api/v1/cash-flow/rolling-ledger) — not direct DB. Static route verification PASS. Owner browser-verifies live render per FINAL-3 law.
+
+### M1/M2/M3/G1/G9/G11/G12/G15 static guard verification
+
+From prior session (guards ran via no-regression pass in fast-merge):
+- verify-banking-suggest-matches-wired: EXIT 0 — OK
+- verify-one-match-engine-owns-this-surface: EXIT 0 — PASS
+- verify-bank-match-is-never-auto-written: EXIT 0 — PASS
+- verify-no-automatch: EXIT 0 — OK (0 debt sites)
+- match.service.ts: bank_account_id in candidate SQL (deposits L771, bill_payments L939, Faro purchases L793-836). M1 bank_account_id scoping confirmed. M2 Faro purchases in union confirmed.
