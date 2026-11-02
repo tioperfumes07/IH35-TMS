@@ -29,7 +29,6 @@ const getDriver = vi.fn();
 const getUnit = vi.fn();
 const getCustomerDetail = vi.fn();
 const listInsuranceClaims = vi.fn();
-const listInsuranceLawsuits = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listDrivers: (...args: unknown[]) => listDrivers(...args),
@@ -45,7 +44,6 @@ vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolve
 vi.mock("../../../api/insurance", () => ({
   listInsurancePolicies: vi.fn().mockResolvedValue({ policies: [] }),
   listInsuranceClaims: (...args: unknown[]) => listInsuranceClaims(...args),
-  listInsuranceLawsuits: (...args: unknown[]) => listInsuranceLawsuits(...args),
 }));
 vi.mock("../../../api/accounting", () => ({ listFactoringAdvances: vi.fn().mockResolvedValue({ rows: [] }) }));
 
@@ -64,14 +62,6 @@ vi.mock("../../insurance/PolicyCreateModal", () => ({
 vi.mock("../../insurance/ClaimCreateModal", () => ({
   ClaimCreateModal: ({ open, onCreated }: { open: boolean; onCreated: (id: string, label: string) => void }) =>
     open ? <button type="button" onClick={() => onCreated("claim-created", "CLM-CREATED")}>Complete claim create</button> : null,
-}));
-vi.mock("../../insurance/LawsuitCreateModal", () => ({
-  LawsuitCreateModal: ({ open, onCreated }: { open: boolean; onCreated: (id?: string, label?: string) => void }) =>
-    open ? (
-      <button type="button" onClick={() => onCreated("lawsuit-created", "CASE-CREATED")}>
-        Complete lawsuit create
-      </button>
-    ) : null,
 }));
 vi.mock("../InlineCreateDrawer", () => ({
   InlineCreateDrawer: ({ open, kind, onCreated }: { open: boolean; kind: string; onCreated: (record: { id: string; label: string }) => void }) =>
@@ -122,10 +112,6 @@ describe("EntityPicker (C1 picker law)", () => {
     listVendors.mockResolvedValue({ vendors: [{ id: "vendor-1", name: "Roadside Supply", vendor_type: "Shop" }] });
     listInsuranceClaims.mockReset();
     listInsuranceClaims.mockResolvedValue({ claims: [{ id: "claim-1", claim_number: "CLM-1", status: "open" }] });
-    listInsuranceLawsuits.mockReset();
-    listInsuranceLawsuits.mockResolvedValue({
-      lawsuits: [{ id: "ls-1", case_number: "CASE-1", status: "active" }],
-    });
     getDriver.mockReset();
     getDriver.mockResolvedValue({ id: "drv-archived", status: "Active", deactivated_at: null });
     getUnit.mockReset();
@@ -288,19 +274,6 @@ describe("EntityPicker (C1 picker law)", () => {
     await user.click(await screen.findByText("+ Add new policy"));
     await user.click(await screen.findByText("Complete policy create"));
     expect(onChange).toHaveBeenCalledWith("policy-created", { value: "policy-created", label: "TEST-POLICY" });
-  });
-
-  it("creates a lawsuit through the canonical creator and auto-selects the returned row", async () => {
-    const onChange = vi.fn();
-    const user = userEvent.setup();
-    wrap(<EntityPicker kind="insurance_lawsuit" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
-    await user.click(await screen.findByPlaceholderText("Select insurance lawsuit"));
-    const createRow = await screen.findByText("+ Add new insurance lawsuit");
-    const rosterRow = await screen.findByText("CASE-1");
-    expect(createRow.compareDocumentPosition(rosterRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await user.click(createRow);
-    await user.click(await screen.findByText("Complete lawsuit create"));
-    expect(onChange).toHaveBeenCalledWith("lawsuit-created", { value: "lawsuit-created", label: "CASE-CREATED" });
   });
 
   it("a TRANSACTION kind offers no create row even by default", async () => {

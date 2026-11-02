@@ -4,129 +4,19 @@ import { registerInsuranceLawsuitRoutes } from "./lawsuit.routes.js";
 
 const requireAuthState = { allowed: true };
 
-const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
-  if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
-
-  if (sql.includes("FROM insurance.lawsuit") && sql.includes("ORDER BY lawsuit.filed_date DESC")) {
-    return {
-      rows: [
-        {
-          id: "aaaaaaaa-1111-4111-8111-111111111111",
-          operating_company_id: String(values?.[0] ?? ""),
-          case_number: "CASE-001",
-          plaintiff: "Acme Logistics",
-          defendant: "RoadRunner Inc",
-          court_name: "Harris County District Court",
-          filed_date: "2026-05-01",
-          status: String(values?.[1] ?? "filed"),
-          claim_id: String(values?.[2] ?? "11111111-1111-4111-8111-111111111111"),
-          claim_number: "CLM-001",
-          driver_id: "22222222-2222-4222-8222-222222222222",
-          driver_name: "Jordan Driver",
-          unit_id: "33333333-3333-4333-8333-333333333333",
-          unit_number: "TRK-333",
-          demand_cents: 500000,
-          settlement_cents: 0,
-          attorney_name: "Taylor Counsel",
-          attorney_email: "taylor@example.com",
-          notes: "Initial filing",
-          created_at: "2026-05-05T00:00:00.000Z",
-        },
-      ],
-    };
-  }
-
-  if (sql.includes("FROM insurance.claim")) {
-    if (String(values?.[1]) === "ffffffff-ffff-4fff-8fff-ffffffffffff") return { rows: [] };
-    return { rows: [{ id: String(values?.[1]) }] };
-  }
-
-  if (sql.includes("INSERT INTO insurance.lawsuit")) {
-    return {
-      rows: [
-        {
-          id: "bbbbbbbb-2222-4222-8222-222222222222",
-          operating_company_id: String(values?.[0]),
-          case_number: String(values?.[1]),
-          plaintiff: String(values?.[2]),
-          defendant: String(values?.[3]),
-          court_name: String(values?.[4]),
-          filed_date: String(values?.[5]),
-          status: String(values?.[6]),
-          claim_id: values?.[7] ? String(values?.[7]) : null,
-          demand_cents: Number(values?.[8]),
-          settlement_cents: Number(values?.[9]),
-          attorney_name: values?.[10] ? String(values?.[10]) : null,
-          attorney_email: values?.[11] ? String(values?.[11]) : null,
-          notes: values?.[12] ? String(values?.[12]) : null,
-          created_at: "2026-05-06T00:00:00.000Z",
-        },
-      ],
-    };
-  }
-
-  if (sql.includes("SELECT status") && sql.includes("FROM insurance.lawsuit")) {
-    const lawsuitId = String(values?.[1] ?? "");
-    if (lawsuitId === "99999999-9999-4999-8999-999999999999") return { rows: [] };
-    if (lawsuitId === "77777777-7777-4777-8777-777777777777") return { rows: [{ status: "settled" }] };
-    return { rows: [{ status: "filed" }] };
-  }
-
-  if (sql.includes("UPDATE insurance.lawsuit")) {
-    const lawsuitId = String(values?.[1] ?? "");
-    if (lawsuitId === "99999999-9999-4999-8999-999999999999") return { rows: [] };
-    return {
-      rows: [
-        {
-          id: lawsuitId,
-          operating_company_id: String(values?.[0]),
-          case_number: "CASE-001",
-          plaintiff: "Acme Logistics",
-          defendant: "RoadRunner Inc",
-          court_name: "Harris County District Court",
-          filed_date: "2026-05-01",
-          status: String(values?.[2] ?? "active"),
-          claim_id: "11111111-1111-4111-8111-111111111111",
-          demand_cents: 500000,
-          settlement_cents: 0,
-          attorney_name: "Taylor Counsel",
-          attorney_email: "taylor@example.com",
-          notes: "Updated",
-          created_at: "2026-05-05T00:00:00.000Z",
-        },
-      ],
-    };
-  }
-
-  return { rows: [] };
-});
-
 vi.mock("../auth/session-middleware.js", () => ({
-  requireAuth: (_req: unknown, reply: { code: (statusCode: number) => { send: (body: unknown) => void } }) => {
-    if (requireAuthState.allowed) return true;
+  requireAuth: (req: { user?: unknown }, reply: { code: (statusCode: number) => { send: (body: unknown) => void } }) => {
+    if (requireAuthState.allowed) { req.user = { uuid: "u-1" }; return true; }
     reply.code(401).send({ error: "unauthorized" });
     return false;
   },
 }));
-
-vi.mock("../auth/db.js", () => ({
-  withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    fn({ query: queryMock }),
-}));
-
-// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
-// no-op here so these unit tests exercise route logic with pre-change behavior.
-vi.mock("../_helpers/company-membership-guard.js", () => ({
-  assertCompanyMembership: vi.fn(async () => undefined),
-}));
-
 
 describe("insurance lawsuit routes", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 
   beforeEach(() => {
     requireAuthState.allowed = true;
-    queryMock.mockClear();
   });
 
   afterEach(async () => {
@@ -146,45 +36,23 @@ describe("insurance lawsuit routes", () => {
     return app;
   }
 
-  it("GET applies status and claim filters", async () => {
+  it("GET is 410 Gone — ENG-60 insurance.lawsuit retired (no SQL; the table is dropped)", async () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "GET",
-      url: "/api/v1/insurance/lawsuits?operating_company_id=11111111-1111-4111-8111-111111111111&status=filed&claim_id=11111111-1111-4111-8111-111111111111",
+      url: "/api/v1/insurance/lawsuits?operating_company_id=11111111-1111-4111-8111-111111111111",
     });
-
-    expect(response.statusCode).toBe(200);
-    const body = response.json() as { lawsuits: Array<{ id: string; claim_number: string; driver_id: string; driver_name: string; unit_id: string; unit_number: string }> };
-    expect(body.lawsuits).toHaveLength(1);
-    expect(body.lawsuits[0]?.id).toBe("aaaaaaaa-1111-4111-8111-111111111111");
-    expect(body.lawsuits[0]).toMatchObject({
-      driver_id: "22222222-2222-4222-8222-222222222222",
-      driver_name: "Jordan Driver",
-      unit_id: "33333333-3333-4333-8333-333333333333",
-      unit_number: "TRK-333",
-      claim_number: "CLM-001",
-    });
-    const listSql = queryMock.mock.calls.find(([sql]) => String(sql).includes("ORDER BY lawsuit.filed_date DESC"))?.[0];
-    expect(listSql).toContain("LEFT JOIN insurance.claim AS claim");
-    expect(listSql).toContain("asset.unit_id::text AS unit_id");
-    expect(listSql).toContain("driver.operating_company_id = lawsuit.operating_company_id");
-    expect(listSql).toContain("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id");
+    expect(response.statusCode).toBe(410);
+    expect(response.json()).toMatchObject({ error: "insurance_lawsuit_retired", redirect: "/legal/lawsuits" });
   });
 
-  it("GET applies the exact policy reverse filter through the tenant-matched claim", async () => {
+  it("every verb still requires a session (401 before 410)", async () => {
+    requireAuthState.allowed = false;
     const app = await buildApp();
-    const response = await app.inject({
-      method: "GET",
-      url: "/api/v1/insurance/lawsuits?operating_company_id=11111111-1111-4111-8111-111111111111&policy_id=44444444-4444-4444-8444-444444444444",
-    });
-
-    expect(response.statusCode).toBe(200);
-    const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("ORDER BY lawsuit.filed_date DESC"));
-    expect(String(listCall?.[0])).toContain("claim.policy_id = $2::uuid");
-    expect(listCall?.[1]).toEqual([
-      "11111111-1111-4111-8111-111111111111",
-      "44444444-4444-4444-8444-444444444444",
-    ]);
+    for (const [method, url] of [["GET", "/api/v1/insurance/lawsuits"], ["POST", "/api/v1/insurance/lawsuits"], ["PATCH", "/api/v1/insurance/lawsuits/x"]] as const) {
+      const response = await app.inject({ method, url, payload: method === "GET" ? undefined : {} });
+      expect(response.statusCode).toBe(401);
+    }
   });
 
   it("POST is 410 Gone — ENG-60 insurance.lawsuit retired", async () => {

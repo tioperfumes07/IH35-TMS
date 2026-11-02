@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL: ENG-60 (2026-11-02) only removed references to the retired insurance.lawsuit surface from this guard; it claims no new scoreboard cell.
 /**
  * CLS-UUID-LABEL — a human-facing link must never be LABELLED with a raw or truncated uuid.
  *
@@ -173,7 +174,7 @@ function selftest() {
   for (const [name, src] of [
     ["claim", 'label={String(matter.insurance_claim_id).slice(0, 8)}'],
     ["unit", '<EntityLink kind="unit" id={String(matter.unit_id)} label={String(matter.unit_id).slice(0, 8)} />'],
-    ["lawsuit", 'label={String(matter.insurance_lawsuit_id).slice(0, 8)}'],
+    ["trailer", 'label={String(matter.equipment_id).slice(0, 8)}'],
     ["incident", "{String(matter.incident_id).slice(0, 8)}"],
   ]) {
     if (auditText(src).length === 0) failures.push(`case-${name} FAIL — a truncated uuid label was NOT caught`);

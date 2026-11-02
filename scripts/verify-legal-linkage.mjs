@@ -174,7 +174,7 @@ async function liveOrphans() {
           AND m.customer_id IS NULL AND m.vendor_id IS NULL AND m.load_id IS NULL
           AND m.related_driver_id IS NULL AND m.related_user_id IS NULL
           AND m.unit_id IS NULL AND m.equipment_id IS NULL
-          AND m.insurance_claim_id IS NULL AND m.insurance_lawsuit_id IS NULL AND m.incident_id IS NULL
+          AND m.insurance_claim_id IS NULL AND m.incident_id IS NULL
           AND position('UNLINKED_REASON:' in coalesce(m.internal_notes,'')) = 0`,
       [USMCA]
     );

@@ -18,7 +18,6 @@ const DUPLICATE_GUARDS = [
   "scripts/verify-legal-matter-trailer-linkage.mjs",
   "scripts/verify-legal-matter-driver-linkage.mjs",
   "scripts/verify-legal-matter-unit-linkage.mjs",
-  "scripts/verify-legal-matter-lawsuit-writer-reverse.mjs",
   "scripts/verify-nonmoney-exact-entity-nouns.mjs",
 ];
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
@@ -34,7 +33,6 @@ function audit(s) {
   for (const [kind, id, name, noun] of [
     ["driver", "related_driver_id", "related_driver_name", "Driver"],
     ["claim", "insurance_claim_id", "insurance_claim_number", "Claim"],
-    ["lawsuit", "insurance_lawsuit_id", "insurance_lawsuit_case_number", "Lawsuit"],
     ["unit", "unit_id", "unit_number", "Unit"],
     ["trailer", "equipment_id", "equipment_number", "Trailer"],
   ]) {
@@ -69,7 +67,6 @@ if (process.argv.includes("--selftest")) {
     ["join", "service", /ic\.operating_company_id = m\.operating_company_id/g, "TRUE"],
     ["detail-driver", "detail", /name=\{matter\.related_driver_name\}/, "name={null}"],
     ["detail-claim", "detail", /name=\{matter\.insurance_claim_number\}/, "name={null}"],
-    ["detail-lawsuit", "detail", /name=\{matter\.insurance_lawsuit_case_number\}/, "name={null}"],
     ["detail-unit", "detail", /name=\{matter\.unit_number\}/, "name={null}"],
     ["detail-trailer", "detail", /name=\{matter\.equipment_number\}/, "name={null}"],
     ["reverse", "claims", /filter=\{\{ insurance_claim_id: highlightedClaimId \}\}/, "filter={{ unit_id: highlightedClaimId }}"],

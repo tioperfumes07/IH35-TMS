@@ -333,18 +333,6 @@
       ]
     },
     {
-      "id": "insurance.modal.lawsuit_create",
-      "tab": "Modals",
-      "sub": "Modal: Lawsuit Create",
-      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx",
-      "surface_kind": "modal",
-      "surface_path": "components/insurance/LawsuitCreateModal.tsx",
-      "required": [
-        "connectivity",
-        "picker_law"
-      ]
-    },
-    {
       "id": "insurance.modal.policy_create",
       "tab": "Modals",
       "sub": "Modal: Policy Create",
@@ -382,18 +370,6 @@
         "picker_law",
         "driver",
         "unit"
-      ]
-    },
-    {
-      "id": "insurance.parity.lawsuit_create",
-      "tab": "Parity / side panels",
-      "sub": "ParityDrawer site: Lawsuit Create",
-      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx",
-      "surface_kind": "parity_site",
-      "surface_path": "components/insurance/LawsuitCreateModal.tsx",
-      "required": [
-        "connectivity",
-        "picker_law"
       ]
     },
     {

@@ -21,7 +21,6 @@ export type InsurancePolicyStatus = "active" | "expired" | "cancelled" | "pendin
 export type CoiRequestStatus = "pending" | "sent" | "received" | "expired" | "dismissed";
 export type PaymentScheduleStatus = "scheduled" | "reminded" | "paid" | "overdue" | "late_fee_applied";
 export type InsuranceClaimStatus = "open" | "investigating" | "approved" | "denied" | "paid" | "closed";
-export type InsuranceLawsuitStatus = "filed" | "active" | "settled" | "dismissed" | "judgment";
 
 /**
  * WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD-FOR-JORGE — not yet applied on prod).
@@ -321,62 +320,6 @@ export type UpdateInsuranceClaimPayload = {
   repair_books_treatment?: InsuranceClaimRepairBooksTreatment;
 };
 
-export type InsuranceLawsuit = {
-  id: string;
-  operating_company_id: string;
-  case_number: string;
-  plaintiff: string;
-  defendant: string;
-  court_name: string;
-  filed_date: string;
-  status: InsuranceLawsuitStatus;
-  claim_id: string | null;
-  claim_number: string | null;
-  /** Resolved through lawsuit.claim_id -> insurance.claim.driver_id. */
-  driver_id: string | null;
-  driver_name: string | null;
-  /** Resolved through lawsuit.claim_id -> claim.asset_id -> mdata.assets.unit_id. */
-  unit_id: string | null;
-  unit_number: string | null;
-  demand_cents: number;
-  settlement_cents: number;
-  attorney_name: string | null;
-  attorney_email: string | null;
-  notes: string | null;
-  created_at: string;
-};
-
-export type CreateInsuranceLawsuitPayload = {
-  operating_company_id: string;
-  case_number: string;
-  plaintiff: string;
-  defendant: string;
-  court_name: string;
-  filed_date: string;
-  status?: InsuranceLawsuitStatus;
-  claim_id?: string | null;
-  demand_cents?: number;
-  settlement_cents?: number;
-  attorney_name?: string | null;
-  attorney_email?: string | null;
-  notes?: string | null;
-};
-
-export type UpdateInsuranceLawsuitPayload = {
-  case_number?: string;
-  plaintiff?: string;
-  defendant?: string;
-  court_name?: string;
-  filed_date?: string;
-  status?: InsuranceLawsuitStatus;
-  claim_id?: string | null;
-  demand_cents?: number;
-  settlement_cents?: number;
-  attorney_name?: string | null;
-  attorney_email?: string | null;
-  notes?: string | null;
-};
-
 function toInsuranceQuery(params: Record<string, string | number | boolean | undefined | null>) {
   const qs = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -529,34 +472,6 @@ export const insuranceClaimsApi = {
   update(id: string, operatingCompanyId: string, payload: UpdateInsuranceClaimPayload) {
     return apiRequest<InsuranceClaim>(
       `/api/v1/insurance/claims/${id}?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`,
-      {
-        method: "PATCH",
-        body: payload,
-      }
-    );
-  },
-};
-
-export const insuranceLawsuitsApi = {
-  list(params: {
-    operating_company_id: string;
-    status?: InsuranceLawsuitStatus;
-    claim_id?: string;
-    policy_id?: string;
-    driver_id?: string;
-    unit_id?: string;
-  }) {
-    return apiRequest<{ lawsuits: InsuranceLawsuit[] }>(`/api/v1/insurance/lawsuits?${toInsuranceQuery(params)}`);
-  },
-  create(payload: CreateInsuranceLawsuitPayload) {
-    return apiRequest<InsuranceLawsuit>("/api/v1/insurance/lawsuits", {
-      method: "POST",
-      body: payload,
-    });
-  },
-  update(id: string, operatingCompanyId: string, payload: UpdateInsuranceLawsuitPayload) {
-    return apiRequest<InsuranceLawsuit>(
-      `/api/v1/insurance/lawsuits/${id}?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`,
       {
         method: "PATCH",
         body: payload,
@@ -743,25 +658,6 @@ export function createInsuranceClaim(payload: CreateInsuranceClaimPayload) {
 
 export function updateInsuranceClaim(id: string, operatingCompanyId: string, payload: UpdateInsuranceClaimPayload) {
   return insuranceClaimsApi.update(id, operatingCompanyId, payload);
-}
-
-export function listInsuranceLawsuits(params: {
-  operating_company_id: string;
-  status?: InsuranceLawsuitStatus;
-  claim_id?: string;
-  policy_id?: string;
-  driver_id?: string;
-  unit_id?: string;
-}) {
-  return insuranceLawsuitsApi.list(params);
-}
-
-export function createInsuranceLawsuit(payload: CreateInsuranceLawsuitPayload) {
-  return insuranceLawsuitsApi.create(payload);
-}
-
-export function updateInsuranceLawsuit(id: string, operatingCompanyId: string, payload: UpdateInsuranceLawsuitPayload) {
-  return insuranceLawsuitsApi.update(id, operatingCompanyId, payload);
 }
 
 export function listCoiRequests(customerId: string, params: { operating_company_id: string; status?: CoiRequestStatus }) {

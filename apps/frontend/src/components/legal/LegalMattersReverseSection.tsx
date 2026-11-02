@@ -7,16 +7,15 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 
 type Filter =
-  | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
-  | { insurance_claim_id: string; unit_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
-  | { insurance_lawsuit_id: string; insurance_claim_id?: never; unit_id?: never; related_driver_id?: never; equipment_id?: never; customer_id?: never; vendor_id?: never }
-  | { related_driver_id: string; unit_id?: never; insurance_claim_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
+  | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; customer_id?: never; vendor_id?: never }
+  | { insurance_claim_id: string; unit_id?: never; related_driver_id?: never; equipment_id?: never; customer_id?: never; vendor_id?: never }
+  | { related_driver_id: string; unit_id?: never; insurance_claim_id?: never; equipment_id?: never; customer_id?: never; vendor_id?: never }
   // Trailers are mdata.equipment rows, not mdata.units - passing a trailer id as unit_id would
   // query the wrong key space and render a permanently-empty panel that looks correctly wired.
-  | { equipment_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
+  | { equipment_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; customer_id?: never; vendor_id?: never }
   // ROUND 326 item 5 — customer / vendor profile reverse.
-  | { customer_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; vendor_id?: never }
-  | { vendor_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never };
+  | { customer_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; vendor_id?: never }
+  | { vendor_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; customer_id?: never };
 
 type Props = {
   operatingCompanyId: string;
@@ -30,7 +29,6 @@ type Props = {
 function openKindForFilter(filter: Filter): EntityKind {
   if ("unit_id" in filter && filter.unit_id) return "legal_matters_unit";
   if ("insurance_claim_id" in filter && filter.insurance_claim_id) return "legal_matters_claim";
-  if ("insurance_lawsuit_id" in filter && filter.insurance_lawsuit_id) return "legal_matters_lawsuit";
   if ("related_driver_id" in filter && filter.related_driver_id) return "legal_matters_driver";
   if ("equipment_id" in filter && filter.equipment_id) return "legal_matters_equipment";
   if ("customer_id" in filter && filter.customer_id) return "legal_matters_customer";

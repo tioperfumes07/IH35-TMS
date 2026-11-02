@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL: ENG-60 (2026-11-02) only removed references to the retired insurance.lawsuit surface from this guard; it claims no new scoreboard cell.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -16,7 +17,6 @@ const SURFACES = [
   "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx",
   "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
   "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
-  "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
   "apps/frontend/src/pages/legal/matters/LegalMatterNewPage.tsx",
   "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
 ];

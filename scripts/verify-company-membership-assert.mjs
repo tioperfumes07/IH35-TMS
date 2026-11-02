@@ -139,7 +139,6 @@ const REQUIRED_MEMBERSHIP_ASSERT_FILES = [
   "insurance/claim.routes.ts",
   "insurance/coi-request.routes.ts",
   "insurance/dispersal.routes.ts",
-  "insurance/lawsuit.routes.ts",
   "insurance/payment-schedule.routes.ts",
   "insurance/policy.routes.ts",
   "insurance/summary.routes.ts",

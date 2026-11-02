@@ -66,7 +66,6 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
   const relatedDriverId = searchParams.get("related_driver_id")?.trim() || "";
   const equipmentId = searchParams.get("equipment_id")?.trim() || "";
   const insuranceClaimId = searchParams.get("insurance_claim_id")?.trim() || "";
-  const insuranceLawsuitId = searchParams.get("insurance_lawsuit_id")?.trim() || "";
   // ROUND 297 audit (forward): the vendor / customer profile drills here with ?vendor_id= / ?customer_id=; the list
   // used to drop it and show every matter of the company.
   const partyVendorId = searchParams.get("vendor_id")?.trim() || "";
@@ -122,7 +121,6 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
       unitId,
       equipmentId,
       insuranceClaimId,
-      insuranceLawsuitId,
       partyVendorId,
       partyCustomerId,
     ],
@@ -135,7 +133,6 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
         unit_id: unitId || undefined,
         equipment_id: equipmentId || undefined,
         insurance_claim_id: insuranceClaimId || undefined,
-        insurance_lawsuit_id: insuranceLawsuitId || undefined,
         vendor_id: partyVendorId || undefined,
         customer_id: partyCustomerId || undefined,
         limit: PAGE_SIZE,

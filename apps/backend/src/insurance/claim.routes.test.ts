@@ -77,7 +77,6 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
 
   if (
     sql.includes("FROM safety.accident_reports") ||
-    sql.includes("FROM insurance.lawsuit") ||
     sql.includes("FROM legal.matters") ||
     sql.includes("FROM safety.incidents") ||
     sql.includes("FROM safety.damage_continuity_chains")

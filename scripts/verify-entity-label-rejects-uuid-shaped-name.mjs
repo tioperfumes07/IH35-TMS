@@ -1647,11 +1647,6 @@ const SIBLINGS = [
     good: /kind="insurance_claim"/,
   },
   {
-    rel: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
-    bad: /\{lawsuit\.case_number\} —/,
-    good: /kind="insurance_lawsuit"/,
-  },
-  {
     rel: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
     bad: /\{openPreSettlement\.settlement_number\}/,
     good: /entityLabel\(\s*openPreSettlement\.settlement_number\s*,\s*openPreSettlement\.settlement_id\s*,\s*"Settlement"\s*\)/,

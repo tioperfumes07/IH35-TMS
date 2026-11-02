@@ -13,7 +13,8 @@
  *                                        Commercial" / "CC3 Verify Vendor")
  *   insurance.claim    4/4 open rows   — SAMPLE-CLAIM-V4-0809, CLM-CASCADE-USMCA-01,
  *                                        LIVE-GATE-PROVE-CLAIM-CC2, CODEX-LAWSUIT-NESTED-CLM-20260816-0354
- *   insurance.lawsuit  1/1 filed row   — CODEX-LAWSUIT-20260816-0410 (plaintiff "CODEX TEST PLAINTIFF")
+ *   insurance.lawsuit  1/1 filed row   — CODEX-LAWSUIT-20260816-0410 (purged AUTH-465; table retired ENG-60 —
+ *                                        open lawsuits now count legal.matters type 'lawsuit')
  *
  * TOTAL ACTIVE POLICIES=3, POLICIES EXPIRING IN 30 DAYS=3, OPEN CLAIMS COUNT=4, OPEN LAWSUITS COUNT=1
  * on the live dashboard were therefore 100% fixture-derived — the owner had ZERO real insurance
@@ -25,7 +26,7 @@
  * "Insurance summary" card (mdata/unit-aggregate.service.ts) both treated those two real trucks as
  * INSURED when they carry no real policy — a false negative masking real risk, not just noise.
  *
- * Neither `insurance.policy`, `insurance.claim`, nor `insurance.lawsuit` has an `is_sample_data`
+ * Neither `insurance.policy` nor `insurance.claim` (nor the retired `insurance.lawsuit`) has an `is_sample_data`
  * column (unlike mdata.units/drivers/loads/equipment), and `mdata/fleet-visibility.ts`'s
  * `FLEET_DEMO_PHANTOM_PATTERNS` ('SAM-%') does NOT match 'SAMPLE-%' (no hyphen after SAM) — reusing
  * that pattern verbatim would still miss every fixture row above. This file is the insurance-schema

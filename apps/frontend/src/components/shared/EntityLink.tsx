@@ -228,7 +228,6 @@ export type EntityKind =
   | "legal_matters_unit"
   | "legal_matters_equipment"
   | "legal_matters_claim"
-  | "legal_matters_lawsuit"
   | "legal_matters_customer"
   | "legal_matters_vendor"
   | "insurance_claims_driver"
@@ -321,7 +320,7 @@ const DEFAULT_LINK_CLASSNAME =
  * "transfer" → /banking/transfers?transfer_id= (TransfersListPage highlights row)
  * "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "expense" → /accounting/expenses/:id · "matter" → /legal/matters/:id
- * "lawsuit" → /legal/lawsuits?insurance_lawsuit_id= (the Lawsuits board = legal matters locked to type lawsuit, filtered to the matters linked to that insurance lawsuit; 443.332 / 443.334)
+ * "lawsuit" → /legal/matters/:id (ENG-60: a lawsuit IS a legal matter of type lawsuit; insurance.lawsuit retired — the id is the matter id)
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
@@ -431,7 +430,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "claim":
       return `/insurance/claims?claim_id=${id}`;
     case "lawsuit":
-      return `/legal/lawsuits?insurance_lawsuit_id=${id}`;
+      return `/legal/matters/${id}`;
     case "matter":
       return `/legal/matters/${id}`;
     case "account":
@@ -693,8 +692,6 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/legal/matters?equipment_id=${id}`;
     case "legal_matters_claim":
       return `/legal/matters?insurance_claim_id=${id}`;
-    case "legal_matters_lawsuit":
-      return `/legal/matters?insurance_lawsuit_id=${id}`;
     case "legal_matters_customer":
       return `/legal/matters?customer_id=${id}`;
     case "legal_matters_vendor":

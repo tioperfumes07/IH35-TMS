@@ -49,9 +49,10 @@ const CHECKS = [
     pattern: /<ParityDrawer[\s\S]*EntityPicker[\s\S]*DatePicker[\s\S]*MoneyInput/,
   },
   {
-    name: "lawsuits.create: LawsuitCreateModal is a real ParityDrawer with DatePicker/MoneyInput/EntityPicker",
-    file: "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
-    pattern: /<ParityDrawer[\s\S]*DatePicker[\s\S]*EntityPicker[\s\S]*MoneyInput/,
+    // ENG-60: a lawsuit is created as a legal matter (type lawsuit) — LawsuitCreateModal retired with insurance.lawsuit.
+    name: "lawsuits.create: legal matter form carries DatePicker/MoneyInput/EntityPicker",
+    file: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
+    pattern: /^(?=[\s\S]*<DatePicker)(?=[\s\S]*<MoneyInput)(?=[\s\S]*<EntityPicker)/,
   },
 ];
 

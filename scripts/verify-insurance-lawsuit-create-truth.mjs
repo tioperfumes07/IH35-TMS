@@ -36,7 +36,10 @@ if (process.argv.includes("--selftest")) {
     ["insurance_lawsuit_retired", "insurance_lawsuit_ok"],
   ];
   for (const [from, to] of mutations) {
-    const changed = source.replace(from, to);
+    // Target the POST block's occurrence (ENG-60: the GET above it answers 410 too, so a first-match replace would miss POST).
+    const postAt = source.indexOf('app.post(\n    "/api/v1/insurance/lawsuits"');
+    const index = from.includes("410") ? source.indexOf(from, postAt) : source.indexOf(from);
+    const changed = index < 0 ? source : `${source.slice(0, index)}${to}${source.slice(index + from.length)}`;
     if (changed === source || failures(changed).length === 0) {
       console.error(`verify-insurance-lawsuit-create-truth selftest mutation escaped: ${from}`);
       process.exit(1);

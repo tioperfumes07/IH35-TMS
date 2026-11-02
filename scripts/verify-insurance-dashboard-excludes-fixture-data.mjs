@@ -31,7 +31,6 @@ const FILES = {
   coverageGap: "apps/backend/src/insurance/coverage-gap-units.shared.ts",
   policyList: "apps/backend/src/insurance/policy.routes.ts",
   claimList: "apps/backend/src/insurance/claim.routes.ts",
-  lawsuitList: "apps/backend/src/insurance/lawsuit.routes.ts",
   unitAggregate: "apps/backend/src/mdata/unit-aggregate.service.ts",
 };
 const LABEL = "verify-insurance-dashboard-excludes-fixture-data";
@@ -67,8 +66,9 @@ export function audit(src) {
   if (!fixtureRe("claim_number").test(src.summary)) {
     failures.push(`${FILES.summary}: open_claims count must apply excludeInsuranceFixtureSql("claim_number").`);
   }
-  if (!fixtureRe("case_number").test(src.summary)) {
-    failures.push(`${FILES.summary}: open_lawsuits count must apply excludeInsuranceFixtureSql("case_number").`);
+  // ENG-60: open_lawsuits counts legal.matters type 'lawsuit' (insurance.lawsuit retired) — fixture filter on matter_number.
+  if (!fixtureRe("matter_number").test(src.summary)) {
+    failures.push(`${FILES.summary}: open_lawsuits count must apply excludeInsuranceFixtureSql("matter_number").`);
   }
 
   // coverage-gap-units.shared.ts — the shared definition behind BOTH the coverage-gap KPI and its
@@ -100,9 +100,6 @@ export function audit(src) {
   }
   if (!fixtureRe("c.claim_number").test(src.claimList)) {
     failures.push(`${FILES.claimList}: GET /api/v1/insurance/claims must apply excludeInsuranceFixtureSql("c.claim_number").`);
-  }
-  if (!fixtureRe("lawsuit.case_number").test(src.lawsuitList)) {
-    failures.push(`${FILES.lawsuitList}: GET /api/v1/insurance/lawsuits must apply excludeInsuranceFixtureSql("lawsuit.case_number").`);
   }
 
   // unit-aggregate.service.ts — the Fleet Unit Profile "Insurance summary" card + its premium lookup.
@@ -136,7 +133,7 @@ if (process.argv.includes("--selftest")) {
     { key: "summary", from: '\n             AND ${excludeInsuranceFixtureSql("policy_number")}`\n      );\n      const policies_expiring_30d', to: "`\n      );\n      const policies_expiring_30d" },
     { key: "summary", from: '\n             AND ${excludeInsuranceFixtureSql("policy_number")}`\n      );\n      const open_claims', to: "`\n      );\n      const open_claims" },
     { key: "summary", from: '\n             AND ${excludeInsuranceFixtureSql("claim_number")}`', to: "`" },
-    { key: "summary", from: '\n             AND ${excludeInsuranceFixtureSql("case_number")}`', to: "`" },
+    { key: "summary", from: '\n             AND ${excludeInsuranceFixtureSql("matter_number")}`', to: "`" },
     { key: "coverageGap", from: '\n     AND ${excludeInsuranceFixtureSql("p.policy_number")}', to: "" },
     { key: "coverageGap", from: '\n    AND ${excludeDemoPhantomSql("u.unit_number")}', to: "" },
     { key: "coverageGap", from: '\n    AND ${excludeSampleDataSql("u.is_sample_data")}', to: "" },
@@ -144,7 +141,6 @@ if (process.argv.includes("--selftest")) {
     { key: "coverageGap", from: '\n      AND ${excludeSampleDataSql("u.is_sample_data")}', to: "" },
     { key: "policyList", from: ', excludeInsuranceFixtureSql("p.policy_number")', to: "" },
     { key: "claimList", from: ', excludeInsuranceFixtureSql("c.claim_number")', to: "" },
-    { key: "lawsuitList", from: ', excludeInsuranceFixtureSql("lawsuit.case_number")', to: "" },
     { key: "unitAggregate", from: '\n            AND ${excludeInsuranceFixtureSql("p.policy_number")}\n        `,\n        [operatingCompanyId, unitNumber, policyNumber]', to: "`,\n        [operatingCompanyId, unitNumber, policyNumber]" },
     { key: "unitAggregate", from: '\n            AND ${excludeInsuranceFixtureSql("p.policy_number")}\n          ORDER BY', to: "\n          ORDER BY" },
   ];

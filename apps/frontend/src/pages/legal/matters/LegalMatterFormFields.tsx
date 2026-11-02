@@ -28,7 +28,6 @@ export type LegalMatterFormState = {
   attorney_email: string;
   /** Linkage FKs (API-ready; schema on legal.matters). */
   insurance_claim_id: string;
-  insurance_lawsuit_id: string;
   related_driver_id: string;
   unit_id: string;
   equipment_id: string;
@@ -55,7 +54,6 @@ export const EMPTY_LEGAL_MATTER_FORM: LegalMatterFormState = {
   attorney_phone: "",
   attorney_email: "",
   insurance_claim_id: "",
-  insurance_lawsuit_id: "",
   related_driver_id: "",
   unit_id: "",
   equipment_id: "",
@@ -91,7 +89,6 @@ export function matterRowToFormState(matter: Record<string, unknown>): LegalMatt
     attorney_phone: String(matter.attorney_phone ?? ""),
     attorney_email: String(matter.attorney_email ?? ""),
     insurance_claim_id: matter.insurance_claim_id ? String(matter.insurance_claim_id) : "",
-    insurance_lawsuit_id: matter.insurance_lawsuit_id ? String(matter.insurance_lawsuit_id) : "",
     related_driver_id: matter.related_driver_id ? String(matter.related_driver_id) : "",
     unit_id: matter.unit_id ? String(matter.unit_id) : "",
     equipment_id: matter.equipment_id ? String(matter.equipment_id) : "",
@@ -144,7 +141,6 @@ export function formStateToUpdatePayload(form: LegalMatterFormState): Record<str
     attorney_phone: form.attorney_phone.trim(),
     attorney_email: form.attorney_email.trim() || null,
     insurance_claim_id: optionalUuidOrNull(form.insurance_claim_id),
-    insurance_lawsuit_id: optionalUuidOrNull(form.insurance_lawsuit_id),
     related_driver_id: optionalUuidOrNull(form.related_driver_id),
     unit_id: optionalUuidOrNull(form.unit_id),
     equipment_id: optionalUuidOrNull(form.equipment_id),
@@ -287,21 +283,6 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
             placeholder="None"
             className="w-full"
             dataField="legal-matter-insurance-claim"
-          />
-        </div>
-      </label>
-      <label className="text-xs text-gray-600" data-testid="legal-matter-insurance-lawsuit-picker">
-        Insurance lawsuit
-        <div className="mt-1">
-          <EntityPicker
-            kind="insurance_lawsuit"
-            operatingCompanyId={operatingCompanyId}
-            value={form.insurance_lawsuit_id || null}
-            onChange={(next) => setForm((f) => ({ ...f, insurance_lawsuit_id: next ?? "" }))}
-            allowCreate={false}
-            placeholder="None"
-            className="w-full"
-            dataField="legal-matter-insurance-lawsuit"
           />
         </div>
       </label>

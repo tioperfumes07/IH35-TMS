@@ -42,7 +42,6 @@ import { mergePickerOptionsByValue } from "./parity/mergePickerOptionsByValue";
 import { CreateUnitModal } from "./fleet/CreateUnitModal";
 import { PolicyCreateModal } from "./insurance/PolicyCreateModal";
 import { ClaimCreateModal } from "./insurance/ClaimCreateModal";
-import { LawsuitCreateModal } from "./insurance/LawsuitCreateModal";
 // Lazy: BookLoadModalV4 imports EntityPicker — avoid init-time circular module cycle.
 const BookLoadModalV4 = lazy(() =>
   import("../pages/dispatch/components/BookLoadModalV4").then((m) => ({ default: m.BookLoadModalV4 })),
@@ -410,15 +409,6 @@ export function EntityPicker({
 
       {createOffered && kind === "insurance_claim" ? (
         <ClaimCreateModal
-          open={createOpen}
-          operatingCompanyId={operatingCompanyId}
-          onClose={() => setCreateOpen(false)}
-          onCreated={(id, label) => (id ? handleCreated(id, label) : setCreateOpen(false))}
-        />
-      ) : null}
-
-      {createOffered && kind === "insurance_lawsuit" ? (
-        <LawsuitCreateModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}

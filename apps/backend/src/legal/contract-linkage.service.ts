@@ -74,7 +74,6 @@ export const MATTER_SUBJECT_FK_COLS = [
   "unit_id",
   "equipment_id",
   "insurance_claim_id",
-  "insurance_lawsuit_id",
   "incident_id",
 ] as const;
 
@@ -301,7 +300,7 @@ export async function listMatterLinkageOrphans(client: QueryableClient, opco: st
   const res = await client.query(
     `SELECT id::text, matter_number, internal_notes,
             customer_id, vendor_id, load_id, related_driver_id, related_user_id,
-            unit_id, equipment_id, insurance_claim_id, insurance_lawsuit_id, incident_id
+            unit_id, equipment_id, insurance_claim_id, incident_id
        FROM legal.matters
       WHERE operating_company_id = $1::uuid
       ORDER BY created_at NULLS LAST`,

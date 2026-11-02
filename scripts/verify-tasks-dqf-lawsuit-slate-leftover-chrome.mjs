@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-// BANK leftover refuse — TasksCalendarPage / DriverDqfPanel / LawsuitCreateModal
+// BANK leftover refuse — TasksCalendarPage / DriverDqfPanel (LawsuitCreateModal retired ENG-60)
 import { readFileSync } from "node:fs";
 
 const TARGETS = [
   "apps/frontend/src/pages/tasks/TasksCalendarPage.tsx",
   "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx",
-  "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
 ];
 const LABEL = "verify-tasks-dqf-lawsuit-slate-leftover-chrome";
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL: ENG-60 (2026-11-02) only removed references to the retired insurance.lawsuit surface from this guard; it claims no new scoreboard cell.
 /**
  * CHROME-01/PLUS-01 overnight burn-down (2026-07-22) — Insurance + Legal modules.
  *
@@ -9,7 +10,7 @@
  * creator through EntityPicker; filters still never create. This guard locks the absence of dirty
  * QboCombobox / raw UUID datalist regressions and locks the two structural
  * fixes actually shipped tonight:
- *   1. Insurance/legal money create shells (Policy / Claim / Lawsuit / Contract / Template /
+ *   1. Insurance/legal money create shells (Policy / Claim / Contract / Template /
  *      Lease-to-Own / Truck Lease) run on ParityDrawer (QBO side panel), not centered Modal.
  *   2. Always-on Status/Type/Severity filter strips collapse behind CollapsedListFilters.
  */
@@ -30,7 +31,6 @@ const noDirtyPickerFiles = [
   "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
   "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
   "apps/frontend/src/components/insurance/ClaimCreateModal.tsx",
-  "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
   "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
   "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
   "apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx",
@@ -51,20 +51,14 @@ for (const rel of noDirtyPickerFiles) {
   }
 }
 
-const lawsuitCreate = read("apps/frontend/src/components/insurance/LawsuitCreateModal.tsx");
-if (!/<EntityPicker[\s\S]*?kind=["']insurance_claim["'][\s\S]*?allowCreate(?:\s|=)/.test(lawsuitCreate)) {
-  failures.push("LawsuitCreateModal linked claim must use the create-enabled insurance_claim EntityPicker");
-}
-if (/<select[\s\S]*?value=\{form\.claim_id\}/.test(lawsuitCreate)) {
-  failures.push("LawsuitCreateModal linked claim must not regress to a native UUID-valued select");
-}
+// ENG-60: LawsuitCreateModal retired with insurance.lawsuit — lawsuits are created as legal matters
+// (LegalMatterNewPage / LegalMatterFormFields, both still covered by the lists above).
 
 // ── money create shells must be ParityDrawer (QBO side panel), not centered Modal ──
 const parityDrawerShells = [
   "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
   "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
   "apps/frontend/src/components/insurance/ClaimCreateModal.tsx",
-  "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
   "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
   "apps/frontend/src/pages/legal/contracts/SendContractModal.tsx",
   "apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx",

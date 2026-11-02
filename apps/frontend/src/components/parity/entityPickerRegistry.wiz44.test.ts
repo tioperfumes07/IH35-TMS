@@ -21,7 +21,6 @@ vi.mock("../../api/loads", () => ({ listLoads: vi.fn() }));
 vi.mock("../../api/maintenance", () => ({ listWorkOrders: vi.fn() }));
 vi.mock("../../api/insurance", () => ({
   listInsuranceClaims: vi.fn(),
-  listInsuranceLawsuits: vi.fn(),
   listInsurancePolicies: vi.fn(),
 }));
 vi.mock("../../api/accounting", () => ({ listFactoringAdvances: vi.fn() }));

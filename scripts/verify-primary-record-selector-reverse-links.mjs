@@ -70,7 +70,8 @@ function check(sources) {
     ["resolver", /case "load":[\s\S]{0,100}\/dispatch\/loads\//, "load resolver"],
     ["resolver", /case "work_order":[\s\S]{0,120}\/maintenance\/work-orders\//, "work-order resolver"],
     ["resolver", /case "claim":[\s\S]{0,120}claim_id=/, "claim resolver"],
-    ["resolver", /case "lawsuit":[\s\S]{0,120}lawsuit_id=/, "lawsuit resolver"],
+    // ENG-60: a lawsuit IS a legal matter — the lawsuit resolver opens the matter by id.
+    ["resolver", /case "lawsuit":[\s\S]{0,120}\/legal\/matters\//, "lawsuit resolver"],
   ];
   for (const [key, pattern, label] of expects) {
     if (!pattern.test(sources[key])) failures.push(`${FILES[key]}: missing canonical ${label} selector`);

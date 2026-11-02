@@ -1211,20 +1211,6 @@
       "leafRe": "^(matters|unit|profile|detail|create)"
     },
     {
-      "task": "LEGAL-MATTER-LAWSUIT-WRITER-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-legal-matter-lawsuit-writer-reverse.mjs",
-      "modules": [
-        "legal",
-        "insurance"
-      ],
-      "cols": [
-        "connectivity",
-        "picker_law"
-      ],
-      "leafRe": "^(matters|lawsuit|detail|create)"
-    },
-    {
       "task": "WARRANTY-CLAIM-VENDOR-UPDATE-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-warranty-claim-linkage.mjs",

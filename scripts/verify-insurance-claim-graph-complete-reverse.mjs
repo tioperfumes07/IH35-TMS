@@ -15,7 +15,7 @@ function problems(b = backend, p = page) {
     [graph.length > 0, "mounted claim graph"],
     [!graph.match(/LIMIT\s+50\b/), "all eight silent caps removed"],
     [["accidents", "lawsuits", "matters", "incidents", "damage_continuity_chains", "expenses", "bills", "work_orders"].every((key) => graph.includes(key)), "all eight reverse families"],
-    [graph.includes("accident_at DESC NULLS LAST, id ASC") && graph.includes("filed_date DESC NULLS LAST, id ASC"), "accident/lawsuit stable order"],
+    [graph.includes("accident_at DESC NULLS LAST, id ASC") && graph.includes("AND type = 'lawsuit'") && graph.includes("ORDER BY matter_number ASC, id ASC"), "accident/lawsuit stable order"],
     [graph.includes("matter_number ASC, id ASC") && graph.includes("incident_at DESC NULLS LAST, id ASC"), "matter/incident stable order"],
     [graph.includes("ORDER BY uuid ASC"), "continuity stable order"],
     [graph.includes("transaction_date DESC NULLS LAST, id ASC") && graph.includes("bill_date DESC NULLS LAST, id ASC") && graph.includes("created_at DESC NULLS LAST, id ASC"), "financial/WO stable order"],
@@ -30,7 +30,7 @@ function problems(b = backend, p = page) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     [backend.replace("accident_at DESC NULLS LAST, id ASC", "accident_at DESC LIMIT 50"), page],
-    [backend.replace("filed_date DESC NULLS LAST, id ASC", "filed_date DESC LIMIT 50"), page],
+    [backend.replace("AND type = 'lawsuit'", "AND TRUE"), page],
     [backend.replace("matter_number ASC, id ASC", "matter_number ASC LIMIT 50"), page],
     [backend.replace("incident_at DESC NULLS LAST, id ASC", "incident_at DESC LIMIT 50"), page],
     [backend.replace("ORDER BY uuid ASC", "LIMIT 50"), page],

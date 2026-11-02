@@ -28,7 +28,6 @@ const FILES = {
   claim: "apps/backend/src/insurance/claim.routes.ts",
   summary: "apps/backend/src/insurance/summary.routes.ts",
   refund: "apps/backend/src/insurance/refund-obligation.service.ts",
-  lawsuit: "apps/backend/src/insurance/lawsuit.routes.ts",
   coi: "apps/backend/src/insurance/coi.service.ts",
   schedule: "apps/backend/src/insurance/payment-schedule.routes.ts",
   typeCat: "apps/backend/src/insurance/type-catalog.routes.ts",
@@ -39,7 +38,7 @@ const FALLBACK = /COALESCE\(\s*(?:\w+\.)?operating_company_id\s*,\s*(?:\w+\.)?te
 
 export function check(src) {
   const f = [];
-  for (const key of ["helper", "policy", "claim", "summary", "refund", "lawsuit", "coi", "schedule"]) {
+  for (const key of ["helper", "policy", "claim", "summary", "refund", "coi", "schedule"]) {
     const m = FALLBACK.exec(src[key]);
     if (m) f.push(`${FILES[key]}: tenant_id fallback "${m[0]}" — operating_company_id is NOT NULL and canonical (ROUND 342)`);
   }
@@ -51,7 +50,7 @@ export function check(src) {
   if (!/const scope = `c\.operating_company_id`/.test(src.claim)) f.push(`${FILES.claim}: claim scope not on operating_company_id`);
   if (!/FROM insurance\.policy\s+WHERE operating_company_id = \$1::uuid/.test(src.summary)) f.push(`${FILES.summary}: summary policy count not scoped on operating_company_id`);
   if (!/FROM insurance\.claim\s+WHERE operating_company_id = \$1::uuid/.test(src.summary)) f.push(`${FILES.summary}: summary claim count not scoped on operating_company_id`);
-  if (!/lawsuit\.operating_company_id = \$1/.test(src.lawsuit)) f.push(`${FILES.lawsuit}: lawsuit list not scoped on operating_company_id`);
+  // ENG-60: insurance.lawsuit retired (202616310100) — no lawsuit route left to scope.
   // Rename-only tables: renamed by CC-1's 202615330400 — they scope on operating_company_id, never tenant_id.
   if (FALLBACK.test(src.typeCat) || !src.typeCat.includes('filters = ["operating_company_id = $1::uuid"]')) f.push(`${FILES.typeCat}: type_catalog must scope on operating_company_id (renamed by 202615330400)`);
   if (!/FROM insurance\.type_catalog\s+WHERE operating_company_id = \$1::uuid/.test(src.createAtomic)) f.push(`${FILES.createAtomic}: type_catalog read must scope on operating_company_id (renamed by 202615330400)`);

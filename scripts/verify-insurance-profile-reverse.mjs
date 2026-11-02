@@ -6,8 +6,10 @@ const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
   summaryRoutes: read("apps/backend/src/insurance/summary.routes.ts"),
   coverageSql: read("apps/backend/src/insurance/coverage-gap-units.shared.ts"),
-  lawsuitRoutes: read("apps/backend/src/insurance/lawsuit.routes.ts"),
-  lawsuitSchema: read("apps/backend/src/insurance/claim.shared.ts"),
+  // ENG-60: lawsuits are legal.matters type lawsuit — their filters / labels live in the matters service + routes.
+  matterRoutes: read("apps/backend/src/legal/matters.routes.ts"),
+  matterService: read("apps/backend/src/legal/matters.service.ts"),
+  matterDetail: read("apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx"),
   coveragePage: read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx"),
   insuranceSummary: read("apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx"),
   lawsuitReverse: read("apps/frontend/src/components/insurance/InsuranceLawsuitsReverseSection.tsx"),
@@ -23,12 +25,12 @@ function failures(s = files) { return [
   ["claim create returns persisted identity and refreshes list", s.claimCreator.includes("onCreated(claim.id, claim.claim_number)") && s.claimPage.includes('invalidateQueries({ queryKey: ["insurance-claims", companyId] })')],
   ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes('unit_id: entityIdFilterSchema.optional()') && s.summaryRoutes.includes("parsed.data.unit_id ? entityIdFilterValues(parsed.data.unit_id) : null") && s.coverageSql.includes("$3::uuid[] IS NULL OR u.id = ANY($3::uuid[])") && s.coverageSql.includes('a.operating_company_id = $1::uuid')],
   ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && !multiSelectFilterProblems(s.coveragePage,{file:'apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx',kind:'unit',testId:'coverage-gap-filter-unit'}).length],
-  ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
+  ["lawsuit driver/unit backend filters", s.matterRoutes.includes("related_driver_id: z.string().uuid().optional()") && s.matterRoutes.includes("unit_id: entityIdFilterSchema.optional()") && s.matterService.includes("m.related_driver_id = $${values.length}")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   // ENG-60: InsuranceLawsuitsReverseSection → LegalMattersReverseSection; LawsuitsTab → Legal redirect.
   ["exact lawsuit drill", s.lawsuitReverse.includes("LegalMattersReverseSection") && (s.lawsuitReverse.includes("related_driver_id") || s.lawsuitReverse.includes("unit_id"))],
-  ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.operating_company_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id")],
-  ["lawsuit label payload typed", ["claim_number: string | null", "driver_name: string | null", "unit_number: string | null"].every((token) => s.insuranceApi.includes(token))],
+  ["lawsuit human labels projected with entity scope", s.matterService.includes("AS related_driver_name") && s.matterService.includes("AS unit_number") && s.matterService.includes("AS insurance_claim_number") && s.matterService.includes("d.operating_company_id = m.operating_company_id") && s.matterService.includes("COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id")],
+  ["lawsuit labels consumed on the matter page", ["name={matter.related_driver_name}", "name={matter.unit_number}", "name={matter.insurance_claim_number}"].every((token) => s.matterDetail.includes(token))],
   ["lawsuit links consume human labels", /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(s.lawsuitPage)],
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -41,11 +43,11 @@ if (process.argv.includes("--selftest")) {
     failures({...files, coverageSql: files.coverageSql.replaceAll("a.operating_company_id = $1::uuid", "TRUE")}).includes("coverage gap company/unit API filter"),
     failures({...files, summaryRoutes: files.summaryRoutes.replaceAll("entityIdFilterValues(parsed.data.unit_id)", "parsed.data.unit_id")}).includes("coverage gap company/unit API filter"),
     failures({...files, insuranceSummary: files.insuranceSummary.replace('kind="insurance_coverage_gaps"', 'kind="unit"')}).includes("unit profile exact coverage target"),
-    failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
+    failures({...files, matterService: files.matterService.replace("m.related_driver_id = $${values.length}", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
     failures({...files, lawsuitReverse: files.lawsuitReverse.replaceAll("LegalMattersReverseSection", "RetiredSection")}).includes("exact lawsuit drill"),
-    failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("driver.operating_company_id = lawsuit.operating_company_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
-    failures({...files, insuranceApi: files.insuranceApi.replace("driver_name: string | null", "")}).includes("lawsuit label payload typed"),
+    failures({...files, matterService: files.matterService.replaceAll("d.operating_company_id = m.operating_company_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
+    failures({...files, matterDetail: files.matterDetail.replace("name={matter.unit_number}", "")}).includes("lawsuit labels consumed on the matter page"),
     failures({...files, lawsuitPage: files.lawsuitPage.replace("/legal/lawsuits", "/insurance/lawsuits")}).includes("lawsuit links consume human labels"),
   ];
   if (checks.some((ok)=>!ok)) { console.error(`verify-insurance-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }

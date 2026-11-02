@@ -389,20 +389,6 @@ export function LegalMatterDetailPage() {
                   )}
                 </div>
                 <div>
-                  <strong>Insurance lawsuit:</strong>{" "}
-                  {matter?.insurance_lawsuit_id ? (
-                    <EntityLinkOrTombstone
-                      kind="lawsuit"
-                      id={String(matter.insurance_lawsuit_id)}
-                      name={matter.insurance_lawsuit_case_number}
-                      noun="Lawsuit"
-                      data-testid="matter-insurance-lawsuit-link"
-                    />
-                  ) : (
-                    "—"
-                  )}
-                </div>
-                <div>
                   <strong>Unit:</strong>{" "}
                   {matter?.unit_id ? (
                     <EntityLinkOrTombstone

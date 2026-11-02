@@ -56,7 +56,6 @@ export const matterCreateSchema = z.object({
   related_user_id: z.string().uuid().optional().nullable(),
   related_driver_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
-  insurance_lawsuit_id: z.string().uuid().optional().nullable(),
   incident_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   // Trailers live in mdata.equipment, NOT mdata.units - a separate key space, so a separate column.
@@ -202,27 +201,6 @@ async function assertUnitInCompany(
   }
 }
 
-async function assertInsuranceLawsuitInCompany(
-  client: QueryableClient,
-  lawsuitId: string | null | undefined,
-  operatingCompanyId: string,
-) {
-  if (!lawsuitId) return;
-  const result = await client.query(
-    `SELECT id
-       FROM insurance.lawsuit
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
-      LIMIT 1`,
-    [lawsuitId, operatingCompanyId],
-  );
-  if (!result.rows[0]) {
-    throw Object.assign(new Error("linked_entity_not_in_operating_company"), {
-      code: "linked_entity_not_in_operating_company",
-    });
-  }
-}
-
 async function assertInsuranceClaimInCompany(
   client: QueryableClient,
   claimId: string | null | undefined,
@@ -295,7 +273,6 @@ export async function listMatters(
     unit_id?: string | undefined;
     equipment_id?: string | undefined;
     insurance_claim_id?: string | undefined;
-    insurance_lawsuit_id?: string | undefined;
     customer_id?: string | undefined;
     vendor_id?: string | undefined;
     limit?: number | undefined;
@@ -339,10 +316,6 @@ export async function listMatters(
     values.push(args.insurance_claim_id);
     where.push(`m.insurance_claim_id = $${values.length}`);
   }
-  if (args.insurance_lawsuit_id) {
-    values.push(args.insurance_lawsuit_id);
-    where.push(`m.insurance_lawsuit_id = $${values.length}`);
-  }
   if (args.customer_id) {
     values.push(args.customer_id);
     where.push(`m.customer_id = $${values.length}`);
@@ -371,8 +344,7 @@ export async function listMatters(
       NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
       u.unit_number                                          AS unit_number,
       eq.equipment_number                                    AS equipment_number,
-      ic.claim_number                                        AS insurance_claim_number,
-      lw.case_number                                         AS insurance_lawsuit_case_number`;
+      ic.claim_number                                        AS insurance_claim_number`;
   // ENTITY PREDICATE ON THE JOIN ITSELF (verify-mdata-entity-scope). The matter is scoped by
   // `m.operating_company_id = $1` in WHERE, but that does NOT scope what we join TO: a bare `d.id =
   // m.related_driver_id` would happily surface another entity's driver name or unit number if an id
@@ -387,9 +359,7 @@ export async function listMatters(
     LEFT JOIN mdata.equipment eq ON eq.id = m.equipment_id
                                 AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
-                                AND ic.operating_company_id = m.operating_company_id
-    LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
-                                  AND lw.operating_company_id = m.operating_company_id`;
+                                AND ic.operating_company_id = m.operating_company_id`;
 
   // CLS-SILENT-CAP inst.1 — this was a bare `LIMIT 500` with no offset and no total, so matter 501
   // simply vanished with nothing in the UI to say so. A cap the caller cannot see is indistinguishable
@@ -474,8 +444,7 @@ export async function getMatter(
              NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
              u.unit_number                                          AS unit_number,
              eq.equipment_number                                    AS equipment_number,
-             ic.claim_number                                        AS insurance_claim_number,
-                    lw.case_number                                         AS insurance_lawsuit_case_number
+             ic.claim_number                                        AS insurance_claim_number
       FROM legal.matters m
       -- CLS-UUID-LABEL — the DETAIL page is where the truncated uuids were rendered, so the same
       -- display joins used by listMatters must exist here too. Fixing only the list query would have
@@ -489,8 +458,6 @@ export async function getMatter(
                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
                                   AND ic.operating_company_id = m.operating_company_id
-      LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
-                                    AND lw.operating_company_id = m.operating_company_id
       WHERE m.operating_company_id = $1::uuid AND m.id = $2
       LIMIT 1
     `,
@@ -572,7 +539,6 @@ export async function createMatter(
   await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
   await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
-  await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
@@ -586,7 +552,6 @@ export async function createMatter(
     unit_id: input.unit_id,
     equipment_id: input.equipment_id,
     insurance_claim_id: input.insurance_claim_id,
-    insurance_lawsuit_id: input.insurance_lawsuit_id,
     incident_id: input.incident_id,
   };
   if (!matterHasSubjectFk(provisional) && !parseMatterUnlinkedReason(input.internal_notes ?? null)) {
@@ -618,7 +583,6 @@ export async function createMatter(
         related_user_id,
         related_driver_id,
         insurance_claim_id,
-        insurance_lawsuit_id,
         incident_id,
         unit_id,
         equipment_id,
@@ -630,8 +594,8 @@ export async function createMatter(
         COALESCE($5, 'medium'),
         COALESCE($6, 'defendant'),
         $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
-        $23, $24, $25, $26, $27,
-        $28, $28
+        $23, $24, $25, $26,
+        $27, $27
       )
       RETURNING *
     `,
@@ -659,7 +623,6 @@ export async function createMatter(
       input.related_user_id ?? null,
       input.related_driver_id ?? null,
       input.insurance_claim_id ?? null,
-      input.insurance_lawsuit_id ?? null,
       input.incident_id ?? null,
       input.unit_id ?? null,
       input.equipment_id ?? null,
@@ -704,7 +667,6 @@ export async function updateMatter(
   await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
   await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
-  await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
@@ -739,7 +701,6 @@ export async function updateMatter(
   if (input.related_user_id !== undefined) push("related_user_id", input.related_user_id);
   if (input.related_driver_id !== undefined) push("related_driver_id", input.related_driver_id);
   if (input.insurance_claim_id !== undefined) push("insurance_claim_id", input.insurance_claim_id);
-  if (input.insurance_lawsuit_id !== undefined) push("insurance_lawsuit_id", input.insurance_lawsuit_id);
   if (input.incident_id !== undefined) push("incident_id", input.incident_id);
   if (input.unit_id !== undefined) push("unit_id", input.unit_id);
   if (input.equipment_id !== undefined) push("equipment_id", input.equipment_id);

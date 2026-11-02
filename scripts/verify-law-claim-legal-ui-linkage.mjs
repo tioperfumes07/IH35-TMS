@@ -5,7 +5,7 @@
  *
  * Static guards (no migrations / no money):
  *   1. ClaimCreateModal exposes driver_id / load_id / accident_report_id and posts them
- *   2. LegalMatterFormFields has pickers for claim / lawsuit / driver / unit and payloads include them
+ *   2. LegalMatterFormFields has pickers for claim / driver / unit and payloads include them (lawsuit link retired ENG-60 — a lawsuit IS a matter)
  *   3. DriverDetail + DriverProfilePage + VehicleProfile mount InsuranceClaimsReverseSection
  *      (two live driver routes exist — /drivers/:id -> DriverDetail, /drivers/:id/profile ->
  *      DriverProfilePage — both mount the reverse section independently, so both need coverage;
@@ -51,7 +51,6 @@ export function computeFailures(sources) {
 
   for (const testId of [
     "legal-matter-insurance-claim-picker",
-    "legal-matter-insurance-lawsuit-picker",
     "legal-matter-related-driver-picker",
     "legal-matter-unit-picker",
   ]) {
@@ -61,7 +60,6 @@ export function computeFailures(sources) {
   }
   for (const [testId, kind] of [
     ["legal-matter-insurance-claim-picker", "insurance_claim"],
-    ["legal-matter-insurance-lawsuit-picker", "insurance_lawsuit"],
   ]) {
     const field = legalForm.match(new RegExp(`data-testid=["']${testId}["'][\\s\\S]{0,700}?(?=</label>)`))?.[0] ?? "";
     if (!field.includes(`<EntityPicker`) || !field.includes(`kind="${kind}"`)) {
@@ -71,7 +69,7 @@ export function computeFailures(sources) {
       errors.push(`LegalMatterFormFields ${testId} must not use capped SelectCombobox options`);
     }
   }
-  for (const field of ["insurance_claim_id", "insurance_lawsuit_id", "related_driver_id", "unit_id"]) {
+  for (const field of ["insurance_claim_id", "related_driver_id", "unit_id"]) {
     if (!new RegExp(`${field}:\\s*optionalUuidOrNull\\(form\\.${field}\\)`).test(legalForm)) {
       errors.push(`formStateToUpdatePayload must include ${field}`);
     }
@@ -142,13 +140,9 @@ function selftest() {
       data-testid="legal-matter-insurance-claim-picker"
       <EntityPicker kind="insurance_claim" />
       </label>
-      data-testid="legal-matter-insurance-lawsuit-picker"
-      <EntityPicker kind="insurance_lawsuit" />
-      </label>
       data-testid="legal-matter-related-driver-picker"
       data-testid="legal-matter-unit-picker"
       insurance_claim_id: optionalUuidOrNull(form.insurance_claim_id),
-      insurance_lawsuit_id: optionalUuidOrNull(form.insurance_lawsuit_id),
       related_driver_id: optionalUuidOrNull(form.related_driver_id),
       unit_id: optionalUuidOrNull(form.unit_id),
     `,
