@@ -11,12 +11,24 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
+import { statusOptions } from "../../../lib/statusListParams";
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  open: "Open",
+  investigating: "Investigating",
+  litigation: "Litigation",
+  settled: "Settled",
+  dismissed: "Dismissed",
+  judgment: "Judgment",
+  closed: "Closed",
+});
 
 const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -60,7 +72,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<string[]>([]);
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState<string>(fixedType ?? "");
   const relatedDriverId = searchParams.get("related_driver_id")?.trim() || "";
@@ -96,7 +108,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
   }
   const staged = useStagedListFilters({
     applied: { status, severity, type, unitId },
-    empty: { status: "", severity: "", type: fixedType ?? "", unitId: "" },
+    empty: { status: [] as string[], severity: "", type: fixedType ?? "", unitId: "" },
     onApply: (next) => {
       setStatus(next.status);
       setSeverity(next.severity);
@@ -114,7 +126,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
       "legal",
       "matters",
       companyId,
-      status,
+      status.join(","),
       severity,
       type,
       page,
@@ -126,9 +138,11 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
       partyVendorId,
       partyCustomerId,
     ],
-    queryFn: () =>
-      legalMattersApi.list(companyId, {
-        status: status || undefined,
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
+      const statusParam = status.length === 1 ? status[0] : undefined;
+      const result = await legalMattersApi.list(companyId, {
+        status: statusParam,
         severity: severity || undefined,
         type: type || undefined,
         related_driver_id: relatedDriverId || undefined,
@@ -140,7 +154,11 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
         customer_id: partyCustomerId || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
-      }),
+      });
+      if (status.length <= 1) return result;
+      const matters = (result.matters ?? []).filter((row) => status.includes(String(row.status ?? "")));
+      return { ...result, matters, total: matters.length };
+    },
     enabled: Boolean(companyId),
   });
 
@@ -272,7 +290,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
           hidePager
           filterBar={
             <CollapsedListFilters
-              activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type && !fixedType ? 1 : 0) + (unitId ? 1 : 0)}
+              activeFilterCount={(status.length ? 1 : 0) + (severity ? 1 : 0) + (type && !fixedType ? 1 : 0) + (unitId ? 1 : 0)}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="legal-matters"
               dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
@@ -289,18 +307,14 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
                     dataTestId="legal-matters-filter-unit"
                   />
                 </div>
-                <SelectCombobox
-                  className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
-                  value={staged.draft.status}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value })}
-                >
-                  <option value="">All statuses</option>
-                  {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                <MultiSelectDropdown
+                  label="Status"
+                  options={STATUS_FILTER_OPTIONS}
+                  selected={staged.draft.status}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, status: next })}
+                  allLabel="All statuses"
+                  data-testid="legal-matters-status-filter"
+                />
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
                   value={staged.draft.severity}
