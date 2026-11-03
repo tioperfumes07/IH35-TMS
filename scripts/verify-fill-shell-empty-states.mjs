@@ -73,6 +73,8 @@ const checks = [
   ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "BoardSection", "manual-je-need-company", "ManualJE need-company"],
   ["apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx", "BoardSection", "create-multiple-bills-need-company", "CreateMultipleBills need-company"],
   ["apps/frontend/src/pages/accounting/VendorBillCreatePage.tsx", "BoardSection", "vendor-bill-create-need-company", "VendorBillCreate need-company"],
+  ["apps/frontend/src/pages/system/EngineStatusBoardPage.tsx", "BoardSection", "engine-status-need-company", "EngineStatus need-company"],
+  ["apps/frontend/src/pages/system/SystemModulePage.tsx", "BoardSection", "system-module-need-company", "SystemModule need-company"],
   ["apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "BoardSection", "invoices-need-company", "Invoices need-company"],
   ["apps/frontend/src/pages/accounting/BillsPage.tsx", "BoardSection", "bills-need-company", "Bills need-company"],
   ["apps/frontend/src/pages/accounting/PaymentsListPage.tsx", "BoardSection", "payments-need-company", "Payments need-company"],
