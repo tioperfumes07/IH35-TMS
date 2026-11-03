@@ -82,3 +82,6 @@ E4 measured 17:24Z after #28330: sweep voided 51 stale pendings ($44,020.17, voi
 
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
+Lead builder is on: 164 (one MTD fuel figure Home vs Fuel board), 166 (HOS + truck planner driver columns), 167 (Angel Sosa current truck + documents). Skip them. Keep going on the rest of your list (93 first). E13 A→B→A periods fix due 23:00Z.

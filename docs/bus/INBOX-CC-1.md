@@ -190,3 +190,6 @@ Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration
 
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
+Lead builders are on: 198 (expense-category-map speed), 203 (Load Costs settlement link labels), 222 (drift alert account names), 79 80 81 82 83 84 (+14 if same work) (the five reports + catalog). Skip them. Keep going on 22 110 117 124 125 126 137 146 23 24 78 85 87 91 94 97 98 152 179.
