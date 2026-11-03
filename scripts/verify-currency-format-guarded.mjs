@@ -107,6 +107,26 @@ if (/\(r\.approved_advance_cents \/ 100\)\.toFixed\(2\)/.test(driverHub)) {
   fail("DriverHubReportingPage must not hand-roll approved_advance_cents / 100 toFixed");
 }
 
+
+const cashAdvRev = read("apps/frontend/src/components/driver-profile/DriverCashAdvancesReverseSection.tsx");
+if (!/formatUsdCents/.test(cashAdvRev) || !/formatUsd\(Number\(row\.amount/.test(cashAdvRev)) {
+  fail("DriverCashAdvancesReverseSection must use formatUsdCents for requests and formatUsd for advances");
+}
+if (/requested_amount_cents[\s\S]{0,40}toFixed\(2\)/.test(cashAdvRev)) {
+  fail("DriverCashAdvancesReverseSection must not treat requested_amount_cents as dollars via toFixed");
+}
+const settleFin = read("apps/frontend/src/components/driver-profile/DriverSettlementFinanceReverseSection.tsx");
+if (!/formatUsdCents\(d\.disputed_amount_cents\)/.test(settleFin)) fail("DriverSettlementFinanceReverseSection disputed amount must use formatUsdCents");
+if (!/formatUsd\(Number\(l\.current_balance/.test(settleFin)) fail("DriverSettlementFinanceReverseSection liability balance must use formatUsd");
+const disputeList = read("apps/frontend/src/pages/drivers/SettlementDisputeList.tsx");
+if (!/formatUsdCents\(cents \?\? 0\)/.test(disputeList)) fail("SettlementDisputeList must use formatUsdCents");
+const totals = read("apps/frontend/src/components/forms/shared/TotalsStack.tsx");
+if (!/formatUsd\(subtotal\)/.test(totals) || !/formatUsd\(total\)/.test(totals)) fail("TotalsStack must use formatUsd");
+const chat = read("apps/frontend/src/pages/chat/DispatchChatPage.tsx");
+if (!/formatUsdCents\(m\.cash_advance_amount_cents\)/.test(chat)) fail("DispatchChatPage cash advance card must use formatUsdCents");
+const costs = read("apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx");
+if (!/formatUsdRateTable\(Number\(cents\) \/ 100\)/.test(costs)) fail("LoadDetailCostsTab fmtRate must use formatUsdRateTable");
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
