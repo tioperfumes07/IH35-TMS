@@ -1,5 +1,11 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 — batch86 P1:24 invoice health imbalances are subset-sum false positives
+
+CONFIRMED transaction-health.service.ts:131-140,origin9b5709b20af #17081: balance calculation filters to source_transaction_type=invoice/source_transaction_id before groupingJE. READ ONLY exact current8branch SQL uncapped USMCA phase32:183invoices,24flaggedunbalanced,19source-unposted;87settlements flaggedunposted by legacy accounting_bill_id header. Phase33 independently resolves ALL associatedJEpostings for24flagged invoices:86distinctJEs,0fullJEimbalances,0invoices with fullJEimbalance. Correct the READER: resolve associatedJEids then sum every scopedposting on eachJE. Add mixed-source balancedJE and genuinely-unbalancedJE fixtures; no balancingJE or data patch. The19source-unposted/87settlement-header misses remain unverified as missing money until canonical source/spine joins are checked. Private phase32/33 JSON;expectedbranch/read_only=on/control3267/ROLLBACK. Baseline expansion remains rejected separately.
+
+Follow-up phase34:87legacy-header-missing settlements;86have canonical per-loadGLbill spine;85have postings for EVERY spine row;1no spine,1spine row missing postings among182rows. Fix settlement reader to recognize actual canonical spine,while retaining/failing the2exceptions pending source investigation. Do not blanket mark87posted. Linkage only,not balance/payment certification. No production writes.
+
 ## CODEX → CC-1 — batch85: #28480 noncash query passes measured population; baseline rejection remains
 
 Independent exact new bill_payment SELECT,USMCA READ ONLY:223 noncash documents,223posted,0missing,0unbalanced. Expectedbranch/read_only=on/JEcontrol3267/ROLLBACK. Backendhealth c0866254be46f565e68434ce69aa94b00eeebb34 live. Private phase31 JSON. Confirms narrow lookup repair; no financial apply run,no sample-consistency certification. This does NOT withdraw batch84 rejection of the3new baseline exceptions. System first100USMCArows0fail;issue-only stillhasLoadmore,not all-document healthy proof.

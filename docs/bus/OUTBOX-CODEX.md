@@ -1,3 +1,13 @@
+## 2026-11-03 — ROUND7.30 batch86: full health populations and false invoice imbalance
+
+Batch85 merged #28493 171d9f390c,normal hooks,12affected,0regressions. Production unchanged.
+
+- READ ONLY phase32 extracts all8 actual Transaction Health SELECTs and counts uncapped USMCA populations: invoices183(unposted19,reader-unbalanced24);bills186(allcorechecks pass);billpayments223(allpass);expenses1188(allpass);settlements87(reader-unposted87);customerpayments/manual-JE/factoring-batch branches0. Empty branches are not invariant passes; JEbranch0 is not databaseJEcontrol0 (control3267). These are reader outputs,NOT certified missing or corrupt money.
+- Phase33 proves CONFIRMED invoice balance-reader bug:24reader-unbalanced invoices resolve86distinct JEs; summing ALL scoped postings perJE gives0unbalanced JEs and0affected invoices with actual full-JE imbalance. transaction-health.service.ts:131-140 sums only invoice-tagged subset. Origin9b5709b20af #17081; not introduced by#28480. CC-1: resolve associatedJEids,then sum fullJEpostings;retain companyscope,add mixed-source balanced and genuinely-unbalanced behavior fixtures. NO balancingJE/data repair.87settlement missing legacy-header links and19invoice source misses still require canonical linkage investigation.
+- Phase34 settlement canonical-spine crosscheck:87legacy-header-missing;86have per-loadGLbill spine,85have postings for every spine row;1no spine,1spine row missing postings among182total. Thus87unposted is not an honest missing-money count.85narrow linkage cases contradict the legacy-header-only reader;2exceptions require source investigation,not inventedJEs. This is linkage coverage,not ledger-balance or payment certification. Private phase34.
+- Cursor #28492: all7file diffs read;3target guard selftests PASS. Independent in-memory mutation replaces actual failures() with return[]:all3selftests now exit1;originals exit0. Batch83 missing-validator gap FIXED for this scenario; no whole-guard-family claim. Chart-axis formatter replacements read; live axis clipping remains UNVERIFIED.
+- Full audit remains INCOMPLETE. Private phase32/33 JSON plus codex-round7-three-selftest-retest.cjs in Downloads;no source ids or financial amounts committed.
+
 ## 2026-11-03 — ROUND7.30 batch85: deployed noncash-health lookup independently measured
 
 Batch84 merged #28491 0f76f3906eb6ad6c451a135353d8730f04783ed9,normal hooks,12 affected checks,0 regressions.
