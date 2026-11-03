@@ -385,8 +385,8 @@
       "status": "PARTIAL",
       "guard": "verify-guard-wired.mjs",
       "deadline_utc": "2026-10-25T03:00:00Z",
-      "evidence": "LIVE 11-03 CT: Cursor #28256 wave5 34→29; #28271 margin qty; wave6 wire verify-sql-write-targets via 19822 → exempt 29→28. Prior: #28249 wave4 53→34 (19774–19810). unaccounted=0. Remaining ~28 LIVE/tool/statement-gated.",
-      "updated_at": "2026-11-03T17:30:00Z"
+      "evidence": "LIVE 11-03 CT Cursor: drop 11 already-selftested via 18929 staticGuards from .guard-exempt.json → exempt 28→17 (verify-unwired-guards-shrink-only PASS). Prior: #28256 wave5 34→29; wave6 19822 sql-write 29→28; #28249 wave4 53→34. unaccounted=0. Remaining ~17 LIVE/tool/statement-gated.",
+      "updated_at": "2026-11-03T21:20:00Z"
     },
     {
       "id": "ENG-36",
