@@ -87,8 +87,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 20 | R213 | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | CODED |
 | 21 | R214 | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | CODED |
 | 22 | R215 | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | PARTIAL |
-| 23 | R216 | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | IN PROGRESS — Lead builder (7.30f) |
-| 24 | R217 | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
+| 23 | R216 | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | MERGED-UNVERIFIED — #28576: one A/P bill-payment scope; vendor/driver Bill payments tab 223 settlement deductions → 0; main list already 0 active; escrow pages unchanged |
+| 24 | R217 | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | DONE-LIVE — #28583 + prod 23:35Z: P-0123/P-0124 no longer exist (owner deleted 10-24, row 33); close refusal now counts only live lines (active AND not voided); remaining $0 closed = P-0067/P-0122 Rafael weekly salary (owner ruled) |
 | 25 | R218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | MERGED-UNVERIFIED — SettlementStatementWorkflow + BoardPanels + LinkedRecords + FuelPurchases; live 5753 compare UNVERIFIED |
 | 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Dispatch Pre-Settlement/LoadDetail CTA; live UNVERIFIED |
 | 27 | R220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | MERGED-UNVERIFIED — #28518–#28543 + #28566 CreateMultipleBills/VendorBillCreate BoardSection need-company (~69 Accounting surfaces; Reclassify/match/LoadCosts skipped); fill-shell PASS; live tab inspect UNVERIFIED |
@@ -152,7 +152,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 78 | R66 | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
+| 78 | R66 | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | MERGED-UNVERIFIED — #28576 (Lead): /dispatch/load-history board (198 booked · 194 shown · 4 cancelled; empty miles 23,099.9 = 7.2%); panel = timeline + money + linked records; every cell opens its record |
 | 79 | R67 | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) | CC-1 | DONE-LIVE — #28529; Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: /reports/loads 194 loads, revenue $616,126.72, 298,186 loaded mi |
 | 80 | R68 | Reports/Dispatch | Reports › Driver settlement report (by settlement / driver, paid state) | CC-1 | DONE-LIVE — #28529; Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: 92 settlements, net $134,675.96 = prod SQL (period-year 2001 display defect → live-fails-2) |
 | 81 | R69 | Reports/Dispatch | Reports › Company settlement report (profit per closed trip) | CC-1 | DONE-LIVE — #28529; Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: 89 closed trips, margin $131,888.36 (21.4%) |
@@ -164,7 +164,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 85 | R73 | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
+| 85 | R73 | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | MERGED-UNVERIFIED — #28583 (Lead): a bill on an OPEN settlement now accrues at delivery (one skip rule for engine/stamp/sweep; line item = loaded miles). Fork br-restless-silence: 7 accruals $5,319.11, TB net 0, re-run 0. Prod posts via the 15-min sweep after deploy. 13687 was a false positive (A/P at close). 13693 skipped by name: bill $979.45 vs P-0115 $940.27 — OWNER |
 | 86 | R74 | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | MERGED-UNVERIFIED |
 | 87 | R75 | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | OPEN |
 | 88 | R76 | Settlements | 0 of 85 closed settlements marked paid ($127,897.75) | CC-2 | OPEN |
@@ -177,7 +177,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 95 | R83 | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | PARTIAL |
 | 96 | R84 | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | CODED |
 | 97 | R85 | Vendors | All 30 vendors have no category | CC-1 | OPEN |
-| 98 | R86 | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
+| 98 | R86 | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | DONE-LIVE — #28583 + Lead prod repair 23:36Z: company settlement P-0119 → 5854 (driver settlement source_document_ref 5854), audit event; P-0113 = 5852, P-0117 = 5853 already. Close now renumbers (company_settlement_number_taken refusal) |
 | 99 | R113 | Banking | 43 Plaid PENDING lines in October never replaced by their posted lines (e.g. SOUTH TX TRUCK CENTERS -460.01 pending 10-03 + posted 10-05) -> Banking Money in/out ($216,532.56 / $239,059.03) and Unexpected "possible duplicates" count them twice | CC-2 | DONE-LIVE — Lead 23:00Z prod: 248 pending lines voided (replaced_by_plaid_posted / plaid_stale_pending_sweep); 11 live pending all ≥ 10-28; South Texas Truck Centers -460.01 = 1 live line (10-05) |
 | 100 | R201 | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2 | CODED |
 | 101 | R202 | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | DONE-LIVE — prod 23:10Z: 0 journal entries / 0 expense memos contain "· session <uuid>"; static rules 0 interpolated ids in Dreamline memos; selftest 7/7 |
@@ -349,10 +349,10 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 247 | R190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | Cursor | DONE-LIVE — #28502; Lead live check 11-03 4:47–4:58 PM CT, app.ih35dispatch.com, Owner/USMCA: match drawer "Payee: Jorge Luis Infante Corona" (residual CSS uppercase on register suggestion line → live-fails-1) |
 | 248 | R191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | MERGED-UNVERIFIED — AccountTile formatUsd D072; live UNVERIFIED |
 | 249 | R192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | MERGED-UNVERIFIED — verify-cash-flow-projected-tab D073 PASS; live UNVERIFIED |
-| 250 | R193 | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms | CC-3 | PARTIAL |
+| 250 | R193 | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms | CC-3 | MERGED-UNVERIFIED — #28567 (Lead): units-without-load 3,081 → 25 ms (was a 566,392-row scan), fallback city 4,349 → 0.14 ms, one pool connection per request, units-without-load fired once (was twice). Live timing after deploy |
 | 251 | R194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | Cursor | DONE-LIVE — #28495; Lead live check 11-03 4:47–4:58 PM CT, app.ih35dispatch.com, Owner/USMCA: "P-0116 … 10/20/2026 10/26/2026" |
 | 252 | R195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | Cursor | DONE-LIVE — #28502 (Owner); Lead live check 11-03 4:47–4:58 PM CT, app.ih35dispatch.com, Owner/USMCA: closed bond "Alfonso Hidalgo Chavez … closed $0.00" |
 | 253 | R196 | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | Cursor | DONE-LIVE — #28495; Lead live check 11-03 4:47–4:58 PM CT, app.ih35dispatch.com, Owner/USMCA: "10/11/2026, 2:57 AM" |
 | 254 | R197 | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | CC-3 | DONE-LIVE — Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: Roadside WO Ticket # and Location 40px |
-| 255 | R198 | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | CC-3 | OPEN |
+| 255 | R198 | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | CC-3 | DONE-LIVE — already fixed by #27574 (shared formatCustomerProfitabilityFlagLabel); guard added #28567 |
 | 256 | R199 | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | LEAD | OPEN |
