@@ -11,6 +11,7 @@ import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visi
 // remain as informational operational-cost detail but no longer feed net_profit_cents/margin_pct.
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 import { expenseIsNotCountedFuelSql } from "../accounting/fuel-expense-not-double-counted.sql.js";
+import { loadMatchesEquipmentSql } from "../reports/equipment-type-aliases.js";
 
 export type LoadProfitabilitySnapshot = {
   load_id: string;
@@ -324,7 +325,8 @@ export async function computeTripProfitabilityReport(
   client: PoolClient,
   operatingCompanyId: string,
   from: string,
-  to: string
+  to: string,
+  equipmentAliases: string[] | null = null,
 ): Promise<TripProfitabilityResponse> {
   const res = await client.query<Record<string, unknown>>(
     `
@@ -491,9 +493,22 @@ export async function computeTripProfitabilityReport(
     LEFT JOIN quick_pay qp ON qp.settlement_id = sip.id
     LEFT JOIN fuel_cost fc ON fc.settlement_id = sip.id
     LEFT JOIN company_expenses ce ON ce.settlement_id = sip.id
+    WHERE (
+      $4::text[] IS NULL
+      OR EXISTS (
+        SELECT 1
+          FROM settlement_loads slx
+          JOIN mdata.loads lx
+            ON lx.id = slx.load_id
+           AND lx.operating_company_id = $1::uuid
+           AND lx.soft_deleted_at IS NULL
+         WHERE slx.settlement_id = sip.id
+           AND ${loadMatchesEquipmentSql("$4", "lx")}
+      )
+    )
     ORDER BY sip.period_end DESC, sip.display_id DESC
     `,
-    [operatingCompanyId, from, to]
+    [operatingCompanyId, from, to, equipmentAliases]
   );
 
   const rows: TripProfitabilityRow[] = (res.rows as Array<Record<string, unknown>>).map((r) => {

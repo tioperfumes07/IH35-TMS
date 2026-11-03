@@ -7,12 +7,15 @@ import {
   refreshLaneProfitabilityCache,
   resolveLanePeriod,
   type LaneSummary,
+  computeLaneProfitability,
 } from "./lane-profitability.service.js";
+import { resolveEquipmentTypeAliases } from "./equipment-type-aliases.js";
 
 const listQuerySchema = companyQuerySchema.extend({
   period: z.enum(["YTD", "quarter", "month", "custom"]).default("YTD"),
   start: z.string().date().optional(),
   end: z.string().date().optional(),
+  equipment_type: z.string().min(1).optional(),
 });
 
 const detailQuerySchema = companyQuerySchema.extend({
@@ -60,7 +63,7 @@ export async function registerLaneProfitabilityRoutes(app: FastifyInstance) {
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const { operating_company_id: companyId, period, start, end } = parsed.data;
+    const { operating_company_id: companyId, period, start, end, equipment_type } = parsed.data;
     if (period === "custom" && (!start || !end)) {
       return reply.status(400).send({ error: "Custom period requires start and end dates" });
     }
@@ -68,19 +71,29 @@ export async function registerLaneProfitabilityRoutes(app: FastifyInstance) {
       return dateRangeOrderError(reply, "start", "end");
     }
     const bounds = resolveLanePeriod(period, start, end);
+    const equipmentAliases = resolveEquipmentTypeAliases(equipment_type);
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const cached = await readLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
-      let lanes = cached.lanes;
+      let lanes: LaneSummary[];
       let source: "cache" | "computed" = "cache";
-      let computedAt = cached.computed_at;
+      let computedAt: string | null = null;
 
-      if (cached.stale || lanes.length === 0) {
-        await refreshLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
-        const refreshed = await readLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
-        lanes = refreshed.lanes;
+      // Equipment-scoped reads are live (never written into the unfiltered cache).
+      if (equipmentAliases) {
+        lanes = await computeLaneProfitability(client, companyId, bounds.start, bounds.end, equipmentAliases);
         source = "computed";
-        computedAt = refreshed.computed_at;
+        computedAt = new Date().toISOString();
+      } else {
+        const cached = await readLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
+        lanes = cached.lanes;
+        computedAt = cached.computed_at;
+        if (cached.stale || lanes.length === 0) {
+          await refreshLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
+          const refreshed = await readLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
+          lanes = refreshed.lanes;
+          source = "computed";
+          computedAt = refreshed.computed_at;
+        }
       }
 
       const profitable = [...lanes].sort((a, b) => b.gross_profit_cents - a.gross_profit_cents);

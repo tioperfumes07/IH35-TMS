@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { computeLoadProfitability, computeTripProfitabilityReport } from "./load-profitability.service.js";
+import { resolveEquipmentTypeAliases } from "../reports/equipment-type-aliases.js";
 
 const loadParamsSchema = z.object({ loadId: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -11,6 +12,7 @@ const tripQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   from: z.string().date(),
   to: z.string().date(),
+  equipment_type: z.string().min(1).optional(),
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -61,12 +63,13 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
 
-    const { operating_company_id, from, to } = parsed.data;
+    const { operating_company_id, from, to, equipment_type } = parsed.data;
+    const equipmentAliases = resolveEquipmentTypeAliases(equipment_type);
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
-      return computeTripProfitabilityReport(client, operating_company_id, from, to);
+      return computeTripProfitabilityReport(client, operating_company_id, from, to, equipmentAliases);
     });
 
     return reply.send(result);
