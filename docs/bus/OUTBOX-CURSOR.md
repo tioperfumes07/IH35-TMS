@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:30 PM CT) — U12 Fuel Fraud Alerts status MultiSelect
+- **PRIOR:** #28592 Cascade U12 handoff tip.
+- **THIS:** FraudAlertsListPage status pills → MultiSelectDropdown (default open; drilled scope empty=all; 0/1 API, 2+ client filter).
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:25 PM CT) — U12 Cursor wave tip; Cascade handoff Accounting lists
 - **PRIOR:** #28591 EDI U12.
 - **THIS:** Cursor U12 MultiSelect landed CardOverage/DriversTable/Fuel/Fleet/Maint/Safety/Dispatch/Termination/LoadCancel/LoadException/EDI. Residual Active-Inactive on pages/lists/accounting/** (AccountingCatalog/DetailTypes/VoidCancel) → Cascade seat surface; do not steal without SURFACE-BREACH-AUTHORIZED: Cascade.
