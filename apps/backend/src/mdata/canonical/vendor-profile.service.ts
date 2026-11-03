@@ -5,6 +5,8 @@
  * is never read or written here. Voided / revoked rows never count. Every row carries the id the screen drills to.
  */
 
+import { apBillPaymentOnlySql } from "../../accounting/ap-bill-payment-scope.sql.js";
+
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type ProfileBlock<T> = { value: T; empty_reason: string | null };
 
@@ -188,6 +190,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
          UNION ALL
          SELECT 'bill_payment', bp.id, coalesce(bp.check_number, bp.reference_number), bp.payment_date, -bp.amount_cents, bp.status
            FROM accounting.bill_payments bp WHERE bp.operating_company_id = $1::uuid AND bp.vendor_id = $2::text AND bp.voided_at IS NULL AND bp.revoked_at IS NULL
+             AND ${apBillPaymentOnlySql("bp")}
          UNION ALL
          SELECT 'expense', e.id, NULL, e.transaction_date, e.total_amount_cents, e.status
            FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.vendor_uuid = $2::uuid AND e.voided_at IS NULL

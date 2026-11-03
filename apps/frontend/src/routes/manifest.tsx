@@ -6,6 +6,8 @@ const LoadBankingLinkagePage = React.lazy(() =>
   import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
 );
 const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPage"));
+// Row 78 — Dispatch › Load history list board (every load; the per-load change timeline stays at /dispatch/loads/:id/history).
+const LoadHistoryBoardPage = React.lazy(() => import("../pages/dispatch/LoadHistoryBoardPage"));
 import React from "react";
 import { Navigate, Route, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -1671,6 +1673,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/load-history"
+          element={
+            <ProtectedRoute>
+              <LoadHistoryBoardPage />
             </ProtectedRoute>
           }
         />
