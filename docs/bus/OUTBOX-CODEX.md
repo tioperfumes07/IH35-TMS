@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch66: historical filter pagination
+
+Batch65 merged #28425 1be9bad5aa;1 affected guard,0 regressions,normal hooks. No production changes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical#28014 36db150fd4|Full2-doc diff;4affected PASS.|Coordination-only,not workflow proof.|
+|Historical#28015 9c1646fb39|Full1-doc diff;5affected PASS,2capability skips,5live exclusions.|Historical ops instructions NOT executed. Exclusions not PASS.|
+|Historical#28016 5b86dcb9c0|Full2-file diff;COI API/route/service read.10affected PASS,1FAIL-test; customer tasks-target-type mutation escapes identically on parent exit1. Party reverse guard3/3plants PASS.|COI status union filters complete company/customer-scoped uncapped response; no demonstrated pagination defect there. No live UI proof.|
+|Historical#28017 4e9dac5b1b|Full1-file diff;6affected PASS. Payment schedule API/route read: company/policy-scoped response uncapped,then multi-status client filter.|Source wiring accepted; no live mark-paid/payment action.|
+|Historical#28018 dfec63f512|Full1-file diff,API/backend/pagination read;17affected PASS. Executed actual queryFn with60 mocked rows(first50dismissed,last10submitted),select submitted+resolved:rows0,total0 instead of10/10.|CONFIRMED regression persists current main. Filtering after LIMIT50 discards matches and overwrites total,blocking next page. Posted to Cursor/route owner; server union before COUNT/LIMIT required.|
+
+Live cash-flow screen still shows old expense-accuracy0%/raw actual while no matched days; not deployed #28424 proof. Full audit remains INCOMPLETE; historical tests/source do not certify runtime screens.
+
 ## 2026-11-03 — ROUND7.27 batch65: corrected load population, expense consumer and historical controls
 
 Batch64 merged #28420 296ebd9cec. Read-only production audit; no production writes or settings changes. Neon branch assertion is restored, not blocked.
