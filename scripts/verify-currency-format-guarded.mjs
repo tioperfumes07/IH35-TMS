@@ -157,6 +157,9 @@ const deadhead = read("apps/frontend/src/components/dispatch/DeadheadOptimizerPa
 if (!/formatQuantityTable\(n\)/.test(deadhead)) fail("DeadheadOptimizerPanel miles must use formatQuantityTable");
 if (!/formatQuantityTable\(row\.score, 2\)/.test(deadhead)) fail("DeadheadOptimizerPanel score must use formatQuantityTable");
 if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand-roll miles toFixed(1)");
+const optimalDrivers = read("apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx");
+if (!/formatQuantityTable\(n, 0\)/.test(optimalDrivers)) fail("OptimalDriversPanel scores must use formatQuantityTable");
+if (/n\.toFixed\(0\)/.test(optimalDrivers)) fail("OptimalDriversPanel must not hand-roll score toFixed(0)");
 
 const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx");
 if (!/formatQuantityTable\(Number\(event\.billable_minutes/.test(detention)) {
