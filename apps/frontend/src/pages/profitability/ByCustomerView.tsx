@@ -7,7 +7,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { money } from "./money";
+import { money, pctLabel } from "./money";
 
 interface ByCustomerViewProps {
   filters: {
@@ -75,7 +75,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => `${row.gross_margin_pct.toFixed(1)}%`,
+        render: (row) => pctLabel(row.gross_margin_pct),
       },
       {
         key: "gross_margin_cents",

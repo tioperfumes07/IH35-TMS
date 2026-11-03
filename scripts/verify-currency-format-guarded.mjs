@@ -200,6 +200,31 @@ const cargoTemp = read("apps/frontend/src/components/dispatch/CargoTempBadge.tsx
 if (!/formatQuantityTable\(latest\.temp_celsius, 1\)/.test(cargoTemp)) {
   fail("CargoTempBadge temp must use formatQuantityTable");
 }
+const profitMoney = read("apps/frontend/src/pages/profitability/money.ts");
+if (!/export function pctLabel/.test(profitMoney) || !/formatQuantityTable\(n, 1\)/.test(profitMoney)) {
+  fail("profitability money.ts pctLabel must use formatQuantityTable");
+}
+const byLoad = read("apps/frontend/src/pages/profitability/ByLoadView.tsx");
+if (!/pctLabel\(row\.margin_pct\)/.test(byLoad)) fail("ByLoadView margin % must use pctLabel");
+const byCust = read("apps/frontend/src/pages/profitability/ByCustomerView.tsx");
+if (!/pctLabel\(row\.gross_margin_pct\)/.test(byCust)) fail("ByCustomerView margin % must use pctLabel");
+const forensic = read("apps/frontend/src/pages/forensic/ForensicReviewPage.tsx");
+if (!/formatUsdCents\(Number\(anomaly\.total_cents/.test(forensic)) {
+  fail("ForensicReviewPage anomaly total must use formatUsdCents");
+}
+const fleetGauge = read("apps/frontend/src/pages/home/charts/FleetUtilizationGauge.tsx");
+if (!/formatQuantityTable\(pct, 1\)/.test(fleetGauge)) fail("FleetUtilizationGauge pct must use formatQuantityTable");
+if (!/formatQuantityTable\(s \/ 3600, 1\)/.test(driverHub)) fail("DriverHubReportingPage hours must use formatQuantityTable");
+const ownerHome = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(Math\.abs\(tr\.delta_pct_vs_yesterday\), 1\)/.test(ownerHome)) {
+  fail("OwnerHome delta pct must use formatQuantityTable");
+}
+const defaultHome = read("apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+if (!/formatQuantityTable\(Math\.abs\(tr\.delta_pct_vs_yesterday\), 1\)/.test(defaultHome)) {
+  fail("DefaultHome delta pct must use formatQuantityTable");
+}
+const qboHome = read("apps/frontend/src/pages/home/QboStyleHomePage.tsx");
+if (!/formatQuantityTable\(pct, 1\)/.test(qboHome)) fail("QboStyleHomePage fmtPct must use formatQuantityTable");
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
