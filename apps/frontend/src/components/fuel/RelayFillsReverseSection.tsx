@@ -66,7 +66,7 @@ export function RelayFillsReverseSection({
         ) : null}
         {totalCount > rows.length ? (
           <p className="text-xs text-[#6B7280]" data-testid="relay-fills-reverse-range">
-            Showing {rows.length} of {totalCount}.
+            Showing {formatQuantityTable(rows.length, 0)} of {formatQuantityTable(totalCount, 0)}.
           </p>
         ) : null}
         {rows.length > 0 ? (

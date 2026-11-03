@@ -24,6 +24,7 @@ import {
 } from "../../api/program";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatQuantityTable } from "../../lib/money";
 
 const AUTO_REFRESH_MS = 60_000; // board re-polls every 60s so refreshed_at_ct stays live
 
@@ -787,7 +788,7 @@ export function ProgramBoardPage() {
               <DeltasBadge deltas={deltas} open={deltasOpen} onToggle={() => setDeltasOpen((o) => !o)} />
             </div>
             <span className="text-xs tabular-nums text-[#6B7280]">
-              Showing {activeRows.length} of {baseRows.length}
+              Showing {formatQuantityTable(activeRows.length, 0)} of {formatQuantityTable(baseRows.length, 0)}
             </span>
           </div>
 

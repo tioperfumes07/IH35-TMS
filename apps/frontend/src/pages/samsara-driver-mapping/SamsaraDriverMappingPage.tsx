@@ -17,6 +17,7 @@ import {
 } from "../../api/samsara-driver-mapping";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import "../../components/boards/party-board.css";
 import "./samsara-driver-mapping.css";
 
@@ -555,7 +556,7 @@ export function SamsaraDriverMappingPage() {
                 if (total != null && rightRows.length < total) {
                   return (
                     <div className="sdm-empty" data-testid="sdm-right-capped">
-                      Showing {rightRows.length} of {total} Samsara users — narrow the filters to see the rest.
+                      Showing {formatQuantityTable(rightRows.length, 0)} of {formatQuantityTable(total, 0)} Samsara users — narrow the filters to see the rest.
                     </div>
                   );
                 }

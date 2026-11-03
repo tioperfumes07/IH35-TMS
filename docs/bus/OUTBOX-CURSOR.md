@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:00 PM CT) — house quantity reverse/home/fleet wave
+- **PRIOR:** #28424 AvP expense matched coverage (batch64).
+- **THIS:** Relay/Fuel overage/CashForecast/Training/UserActivity/Samsara map/Program board Showing · Dispatcher loads · FleetUtil units · Owner/Default invoices_factored · CustomerProfile open invoices → formatQuantityTable(, 0); currency + reverse-preview ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:20 AM CT) — AvP expense accuracy matched coverage (batch64)
 - **PRIOR:** #28421 compliance HOS/2290 qty.
 - **THIS:** Codex batch64 — Expense accuracy KPI uses matchedExpenseAccuracyCoverage (not raw total_actual_expense); unavailable when no matched days; vitest + expense-engine-parity FE plant. ENG-21 DONE-LIVE. Dreamline/match deferred.

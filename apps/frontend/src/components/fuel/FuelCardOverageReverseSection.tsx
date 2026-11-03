@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
 import { ListErrorState } from "../ListErrorState";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
 
@@ -49,7 +49,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
         {!query.isLoading && !query.isError && events.length === 0 ? <p className="text-xs text-gray-500">No fuel card overages.</p> : null}
         {totalCount > visibleEvents.length ? (
           <p className="text-xs text-[#6B7280]" data-testid="fuel-card-overage-reverse-range">
-            Showing {visibleEvents.length} of {totalCount}. Open queue to view all.
+            Showing {formatQuantityTable(visibleEvents.length, 0)} of {formatQuantityTable(totalCount, 0)}. Open queue to view all.
           </p>
         ) : null}
         <ul className="space-y-1">

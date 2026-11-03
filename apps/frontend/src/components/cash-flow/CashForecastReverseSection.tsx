@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { listForecastEntries } from "../../api/forecast";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 type Filter =
   | { party_ref_kind: "customer" | "driver" | "vendor"; party_ref_id: string }
@@ -38,10 +38,10 @@ export function CashForecastReverseSection({ operatingCompanyId, filter }: { ope
       </ul>
       {!query.isLoading && !query.isError && entries.length > 0 ? (
         <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#4B5563]">
-          <span>Showing {preview.length} of {entries.length}</span>
+          <span>Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(entries.length, 0)}</span>
           {entries.length > preview.length ? (
             <Link className="font-semibold text-[#1F2A44] underline" to={`/cash-flow?${allParams.toString()}`}>
-              Open all {entries.length}
+              Open all {formatQuantityTable(entries.length, 0)}
             </Link>
           ) : null}
         </div>
