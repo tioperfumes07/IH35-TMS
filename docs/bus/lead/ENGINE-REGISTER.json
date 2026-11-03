@@ -385,8 +385,8 @@
       "status": "PARTIAL",
       "guard": "verify-guard-wired.mjs",
       "deadline_utc": "2026-10-25T03:00:00Z",
-      "evidence": "LIVE 11-02 CT: active exempt 123→83→53 (70 static guards wired across 3 waves). unaccounted=0. verify-guard-wired PASS. Remaining 53 wire-or-delete. | Cursor #28249 wave4 wire 19 static → exempt 53→34 (LIVE/tool 34 remain); claims 19774–19810 (#28248)",
-      "updated_at": "2026-11-03T16:25:00Z"
+      "evidence": "LIVE 11-03 CT: Cursor #28256 wave5 34→29; #28271 margin qty; wave6 wire verify-sql-write-targets via 19822 → exempt 29→28. Prior: #28249 wave4 53→34 (19774–19810). unaccounted=0. Remaining ~28 LIVE/tool/statement-gated.",
+      "updated_at": "2026-11-03T17:30:00Z"
     },
     {
       "id": "ENG-36",
