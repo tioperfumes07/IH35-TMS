@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:20 PM CT) — ROUND 7.30 batch83 + CF chart $ axis
+- **PRIOR:** #28489 factoring/fuel/dispatch count qty.
+- **THIS:** Codex batch83 — trip-pairing / POD multiselect / dispatch-fuel-datetime selftests now plant through failures(); CashFlow Home + AvP chart Y-axis drop `k` → formatUsdCents. ROUND 7.30 Cursor list in progress; Lead owns dates 183/201/205/206/219/228/245/246/251/253 + UI 241/244/247/252. Batch75 Reclassify → CC-1.
+- **NEXT:** more ROUND 7.30 CODED rows; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:00 PM CT) — factoring/fuel/dispatch count quantity
 - **PRIOR:** #28486 legal/factoring/dispatch/df day+version qty.
 - **THIS:** invoice/wire/fill/load/card/settlement/band/KPI/detention/remint/deposit/Faro line counts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
