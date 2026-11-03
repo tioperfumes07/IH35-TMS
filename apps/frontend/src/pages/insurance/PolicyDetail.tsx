@@ -31,6 +31,7 @@ import { ApiError } from "../../api/client";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { SelectCombobox } from "../../components/Combobox";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
@@ -360,7 +361,7 @@ export function PolicyDetail() {
         <div className="grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
           <label className="text-xs font-semibold text-[#4B5563]">
             Status
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={status}
               onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
@@ -370,7 +371,7 @@ export function PolicyDetail() {
               <option value="pending">Pending</option>
               <option value="expired">Expired</option>
               <option value="cancelled">Cancelled</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="text-xs font-semibold text-[#4B5563]">
             Effective date

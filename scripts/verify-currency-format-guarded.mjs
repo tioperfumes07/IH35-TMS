@@ -138,7 +138,24 @@ const liab = read("apps/frontend/src/pages/liabilities/components/LiabilitiesKpi
 if (!/formatUsd\(n\)/.test(liab) || /\$\$\{n\.toFixed\(2\)\}/.test(liab)) fail("LiabilitiesKpiRow must use formatUsd");
 const tourRates = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
 if (!/formatUsdRateTable\(rt, 3\)/.test(tourRates)) fail("TourSettlementTab leg rate must use formatUsdRateTable(..., 3)");
+if (!/formatUsdRateTable\(c \/ 100 \/ totalMiles, 3\)/.test(tourRates)) {
+  fail("TourSettlementTab waterfall p/m must use formatUsdRateTable(..., 3)");
+}
+if (!/formatDateUS\(d\)/.test(tourRates) || !/formatDateTimeUS\(t\.trip_closed_at\)/.test(tourRates)) {
+  fail("TourSettlementTab period/closed stamps must use formatDateUS/formatDateTimeUS");
+}
 
+const unitSplit = read("apps/frontend/src/components/dispatch/LoadUnitCostSplitPanel.tsx");
+if (!/formatQuantityTable\(u\.miles\)/.test(unitSplit) || !/formatQuantityTable\(data\.total_miles\)/.test(unitSplit)) {
+  fail("LoadUnitCostSplitPanel miles must use formatQuantityTable");
+}
+if (/u\.miles\.toFixed\(1\)/.test(unitSplit) || /data\.total_miles\.toFixed\(1\)/.test(unitSplit)) {
+  fail("LoadUnitCostSplitPanel must not hand-roll miles toFixed(1)");
+}
+
+const deadhead = read("apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx");
+if (!/formatQuantityTable\(n\)/.test(deadhead)) fail("DeadheadOptimizerPanel miles must use formatQuantityTable");
+if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand-roll miles toFixed(1)");
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {

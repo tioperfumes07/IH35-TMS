@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:45 AM CT) — SelectCombobox shrink + dispatch quantity/rate house format
+- **PRIOR:** #28242 ENG-21 CLOSED (owner skip rate-con) + house money wave 7.
+- **THIS:** Raw `<select>` 6→2 (CustomerProfileForm · ClaimCreateModal recovery/repair · PolicyDetail status → SelectCombobox). TourSettlementTab p/m + period/closed stamps · LoadUnitCostSplitPanel miles · DeadheadOptimizer miles → house formatters. Guards extended (selector + currency + cursor-surfaces).
+- **ENG-21 stays DONE-LIVE** (owner skip). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~9:30 AM CT) — ENG-21 CLOSED (owner skip rate-con) + house money wave 7
 - **ENG-21 DONE-LIVE:** load 13699 delivery already Copamex / 195 S Euclid Ave / Bradley IL 60915 (street+ZIP). Rate-con missing — **OWNER 11-03: skip rate-con, OK**. No Edit Load. ENGINE-REGISTER LEAD-ENG-21 → DONE-LIVE.
 - **THIS:** MarkDisbursedModal bank labels · ManualJEList Debits/Credits → house formatters. Guard extended. (BankingHome Balance left for CC-2 seat surface.)

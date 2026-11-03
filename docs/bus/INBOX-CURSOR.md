@@ -1,6 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~9:30 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~9:45 AM CT)
 
-## CURRENT — ENG-21 CLOSED (owner skip rate-con) + house money wave 7
+## CURRENT — SelectCombobox shrink + dispatch quantity/rate house format
+SelectCombobox baseline restored 6→2. TourSettlement / LoadUnitCostSplit / DeadheadOptimizer → house quantity+rate+date formatters. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+## PRIOR — ENG-21 CLOSED (owner skip rate-con) + house money wave 7
 13699 delivery street already on file; owner skipped missing rate-con. MarkDisbursed / ManualJE money → lib/money (BankingHome left for CC-2). **ENG-21 DONE-LIVE**. Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
