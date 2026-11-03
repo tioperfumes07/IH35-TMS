@@ -774,6 +774,7 @@
     "verify:no-orphan-migration-ledger-entries": "node --env-file=.env scripts/verify-no-orphan-migration-ledger-entries.mjs",
     "verify:integrity-anomaly-tenant-scope": "node scripts/verify-integrity-anomaly-tenant-scope.mjs",
     "verify:telematics-schema-references": "node scripts/verify-telematics-schema-references.mjs",
+    "verify:stops-geocoded": "node --env-file=.env scripts/verify-stops-geocoded.mjs",
     "verify:no-spurious-duplicates": "node scripts/verify-no-spurious-duplicates.mjs",
     "verify:no-bare-health-references": "node scripts/verify-no-bare-health-references.mjs",
     "verify:ledger-parity-static": "node scripts/verify-ledger-parity-static.mjs",
