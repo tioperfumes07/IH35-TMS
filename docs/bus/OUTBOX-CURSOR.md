@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:15 PM CT) — batch56 Users labels + ELD honest unavailable
+- **PRIOR:** #28392 customer/lane dead bills · #28389 Profitability hub.
+- **THIS:** Codex batch56 Cursor bits — Users detail/roster EntityLink use formatPersonName+entityLabel (no bare User); ELD cert/settings copy honest unavailable (no fake rows; not proven-empty); EldPage need-company. Docs UploadModal width → owning seat. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:00 PM CT) — customer/lane dead bills excluded
 - **PRIOR:** #28389 batch55 Profitability hub mount · #28384 qty.
 - **THIS:** customer-profitability + lane-profitability pay CTEs exclude void/voided driver bills (sibling of batch54); customer test + hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
