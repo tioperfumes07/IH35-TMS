@@ -119,6 +119,14 @@ export function verdict(files) {
   if ((laneSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/l\.status::text\s*<>\s*'cancelled'/g) || []).length < 2) {
     problems.push("lane-profitability load_scope must exclude voided/cancelled loads (compute + detail)");
   }
+  // Sibling of batch63 — trip/By-Load report joins must exclude voided/cancelled loads.
+  const tripSvc = read("apps/backend/src/dispatch/load-profitability.service.ts");
+  if ((tripSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || (tripSvc.match(/l\.status::text\s*<>\s*'cancelled'/g) || []).length < 2) {
+    problems.push("trip-profitability load joins must exclude voided/cancelled loads (rollup + northbound)");
+  }
+  if ((tripSvc.match(/lx\.voided_at\s+IS\s+NULL/g) || []).length < 1 || (tripSvc.match(/lx\.status::text\s*<>\s*'cancelled'/g) || []).length < 1) {
+    problems.push("trip-profitability equipment filter must exclude voided/cancelled loads");
+  }
   return problems;
 }
 

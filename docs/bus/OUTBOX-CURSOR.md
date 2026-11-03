@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:15 PM CT) — trip profitability excludes voided/cancelled loads
+- **PRIOR:** #28427 reverse/home/fleet qty.
+- **THIS:** Sibling of batch63 — trip/By-Load load joins (rollup + northbound + equipment filter) exclude voided/cancelled; hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:00 PM CT) — house quantity reverse/home/fleet wave
 - **PRIOR:** #28424 AvP expense matched coverage (batch64).
 - **THIS:** Relay/Fuel overage/CashForecast/Training/UserActivity/Samsara map/Program board Showing · Dispatcher loads · FleetUtil units · Owner/Default invoices_factored · CustomerProfile open invoices → formatQuantityTable(, 0); currency + reverse-preview ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
