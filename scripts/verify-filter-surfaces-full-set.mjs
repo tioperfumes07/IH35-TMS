@@ -34,14 +34,15 @@ const SURFACES = [
   // Capped routes (limit max 200): the page reads EVERY page through lib/fetchAllCatalogPages; status narrows
   // server-side on the indexed is_active; the house toolbar is the one search.
   ...[
-    ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx"],
-    ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx"],
-    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx"],
-  ].map(([name, file]) => ({
+    // U12: Fuel/Fleet status is MultiSelect → apiStatus(status) maps []/2→all, 1→scalar for the indexed is_active API.
+    ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
+    ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
+    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/],
+  ].map(([name, file, fetchMust]) => ({
     name,
     file,
     // LEAD 443.181: DataTable -> ParityTable; its own toolbar search stays the one search (never suppressed).
-    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    must: [fetchMust, /<ParityTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /limit: 200, offset: 0/, /suppressToolbarSearch/],
   })),
   {
