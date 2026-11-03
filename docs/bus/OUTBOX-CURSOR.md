@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:40 PM CT) — batch44 guard + FinanceHub/PropertyTax qty
+- **PRIOR:** #28326 AvP raw net · #28328 Tx Health filter · #28329 Settlements Drivers subnav gate plant.
+- **THIS:** FinanceHub count KPIs + PropertyTax assessed placeholder → formatQuantityTable; currency guard ratchet. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:25 PM CT) — AvP raw net + Tx Health filter
 - **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16 · need-company fill.
 - **THIS:** #28326 AvP rawActualNetFromGroups + not-captured chart null (E8 row261 Cursor half; Faro Δ house $). #28328 Transaction Health entity filter explicit all/subset/none (Codex batch42). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
