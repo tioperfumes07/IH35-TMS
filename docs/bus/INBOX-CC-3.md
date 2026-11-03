@@ -95,3 +95,6 @@ Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your
 
 ## ROUND 7.30d — LEAD — 11-03-2026 5:55 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
 E1 (row 162) is built and merged by the Lead (#28531) — drop it. Lead builders are on 250 + 255, 55 + 56, 113 + 54. Your CODED rows 210 213 215 216 217 224 230 239 254: verify live after deploy, paste measured px, mark DONE-LIVE. Then 53, 28, 114, 131, 157.
+
+## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
+91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.
