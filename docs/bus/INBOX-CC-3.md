@@ -88,3 +88,6 @@ DONE = your OUTBOX lists every one of your row numbers with DONE-LIVE+proof or t
 
 ## LEAD 2026-11-02 5:35 PM CT — row 257: backend tests red on main (your part)
 On e27c5b2c8: migrations/0242-drift-reconciliation, lib/*.migration.test.ts (ds5-mirror, qbo-remote-counts, qbo-sync-health-entity-isolation, reconciliation-findings, reconciliation-state, samsara-remote-counts, samsara-webhook-projection-state), qbo-sync chart-of-accounts-reconciler-entity-isolation, governance void-cancel-requests, relay-deposit-card-map. Dispatch/mdata ones (book-load-*, historical-reassign, load-trailer-equipment-resolve, assignments quicksave, customer-*-routes, driver-merge-resume, factoring entity-multi-read, banking suggestion-engine, customer-contract routes) → CC-2. DONE = 0 failed. Deadline 02:00Z.
+
+## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
+Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.

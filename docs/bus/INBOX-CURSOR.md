@@ -384,3 +384,6 @@ Permits: 0 permits, 1 Form2290 filing; creator opens and cancels with unit/state
 
 Integrity Reports: first four outlier tabs return 0 observations, mapping shows 0 findings without Run scan (not proof of no drift). Active Alerts has 6 rows; detail shows raw ISO created timestamp, enum codes and UUID arrays instead of linked records. `apps/frontend/src/pages/safety/components/IntegrityAlertDetailDrawer.tsx:29,130,163` stringifies metric objects and raw date/category. Private screenshot 16:52 CT. No evaluator/acknowledge/resolve executed; historical alert count is not a fresh financial finding.
 
+
+## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
+Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
