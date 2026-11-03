@@ -6,7 +6,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { ByTypeView } from "./ByTypeView";
 import { money, milesLabel, perMile } from "./money";
 
 interface ByLaneViewProps {
@@ -26,14 +25,6 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
-  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
-  if (filters.equipmentType) {
-    return <ByTypeView filters={filters} />;
-  }
-
-
-
   const query = useQuery({
     queryKey: ["profitability", "by-lane", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
@@ -42,6 +33,7 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
         period: "custom",
         start: filters.dateFrom,
         end: filters.dateTo,
+        equipment_type: filters.equipmentType,
       }),
     enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
     retry: false,
@@ -115,10 +107,12 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
     );
   }
 
+  const equipNote = filters.equipmentType ? ` · equipment ${filters.equipmentType}` : "";
+
   return (
     <BoardSection
       title="By Lane"
-      subtitle={`${filters.dateFrom} → ${filters.dateTo}${query.data?.source ? ` · ${query.data.source}` : ""}`}
+      subtitle={`${filters.dateFrom} → ${filters.dateTo}${query.data?.source ? ` · ${query.data.source}` : ""}${equipNote}`}
       testId="profitability-by-lane-board"
     >
       <div className="p-4 space-y-3">
@@ -137,7 +131,9 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
           emptyText={
             query.isLoading
               ? "Loading lane profitability…"
-              : "No lanes in this period — delivered loads with origin/destination will appear here."
+              : filters.equipmentType
+                ? "No lanes for this equipment in this period — delivered loads with origin/destination will appear here."
+                : "No lanes in this period — delivered loads with origin/destination will appear here."
           }
         />
       </div>

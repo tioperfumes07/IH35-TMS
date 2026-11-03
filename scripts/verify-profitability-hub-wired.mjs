@@ -60,12 +60,37 @@ export function verdict(files) {
     ["ByCustomerView", files.customer],
     ["ByLoadView", files.load],
   ]) {
-    if (!src.includes("return <ByTypeView filters={filters} />")) {
-      problems.push(`${name} must delegate to ByTypeView when equipmentType is set (same population as KPI)`);
+    // Codex batch61 — never early-return to ByTypeView before hooks; keep each tab's grouping.
+    if (/if\s*\(\s*filters\.equipmentType\s*\)[\s\S]{0,120}return\s*<ByTypeView/.test(src)) {
+      problems.push(`${name} must not early-return ByTypeView when equipmentType is set (hooks + retain grouping)`);
+    }
+    if (!src.includes("equipment_type: filters.equipmentType") && !src.includes("equipment_type: filters.equipmentType,")) {
+      problems.push(`${name} must pass equipment_type: filters.equipmentType into its report engine`);
+    }
+    const hookIdx = src.indexOf("useQuery(");
+    const earlyEquip = src.search(/if\s*\(\s*filters\.equipmentType\s*\)/);
+    if (hookIdx >= 0 && earlyEquip >= 0 && earlyEquip < hookIdx) {
+      problems.push(`${name} must not branch on equipmentType before useQuery (rules-of-hooks)`);
     }
   }
   if (!files.type.includes("matchesEquipmentType")) {
     problems.push("ByTypeView must apply matchesEquipmentType local filter");
+  }
+  const aliases = read("apps/backend/src/reports/equipment-type-aliases.ts");
+  if (!aliases.includes("loadMatchesEquipmentSql") || !aliases.includes("resolveEquipmentTypeAliases")) {
+    problems.push("equipment-type-aliases.ts must export resolveEquipmentTypeAliases + loadMatchesEquipmentSql");
+  }
+  const customerRoute = read("apps/backend/src/reports/customer-profitability.routes.ts");
+  if (!customerRoute.includes("equipment_type") || !customerRoute.includes("loadMatchesEquipmentSql")) {
+    problems.push("customer-profitability must accept equipment_type and filter loads via loadMatchesEquipmentSql");
+  }
+  const laneRoute = read("apps/backend/src/reports/lane-profitability.routes.ts");
+  if (!laneRoute.includes("equipment_type") || !laneRoute.includes("computeLaneProfitability")) {
+    problems.push("lane-profitability must accept equipment_type and live-compute when set");
+  }
+  const tripRoute = read("apps/backend/src/dispatch/load-profitability.routes.ts");
+  if (!tripRoute.includes("equipment_type") || !tripRoute.includes("equipmentAliases")) {
+    problems.push("trip-profitability must accept equipment_type");
   }
   if (!files.kpi.includes("getEquipmentTypeProfitability")) {
     problems.push("KpiStrip must read equipment-type engine when equipment filter is set");
@@ -80,7 +105,6 @@ export function verdict(files) {
     problems.push("equipment-type-profitability bills CTE must require db.status NOT IN ('void','voided')");
   }
 
-  const customerRoute = read("apps/backend/src/reports/customer-profitability.routes.ts");
   if (!/voided_at\s+IS\s+NULL/.test(customerRoute) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(customerRoute)) {
     problems.push("customer-profitability cost query must exclude void/voided driver bills");
   }
@@ -97,10 +121,10 @@ if (process.argv.includes("--selftest")) {
     index: "registerEquipmentTypeProfitabilityRoutes(app)",
     route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nbills AS (\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')\n),\nfuel AS",
     api: "export async function getEquipmentTypeProfitability",
-    lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
-    customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
+    lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nequipment_type: filters.equipmentType\nuseQuery(",
+    customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType\nequipment_type: filters.equipmentType\nuseQuery(",
     type: "getEquipmentTypeProfitability\nBoardSection\nfilters.equipmentType\nmatchesEquipmentType",
-    load: "getTripProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
+    load: "getTripProfitability\nBoardSection\nfilters.equipmentType\nequipment_type: filters.equipmentType\nuseQuery(",
     kpi: "getLaneProfitability\nDrillKpiCard\nfilters.equipmentType\ngetEquipmentTypeProfitability",
   };
   const cases = [
@@ -111,7 +135,8 @@ if (process.argv.includes("--selftest")) {
     ["loads.voided_at must not mask bills", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"\nbills AS (\nSELECT 1 WHERE l.voided_at IS NULL\n),\nfuel AS' }).some((p) => p.includes("db.voided_at"))],
     ["missing route mount fails", verdict({ ...good, manifest: "" }).some((p) => p.includes("/profitability"))],
     ["missing equipmentType key fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection" }).some((p) => p.includes("equipmentType"))],
-    ["missing ByType delegation fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType" }).some((p) => p.includes("ByTypeView"))],
+    ["ByType early-return fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nif (filters.equipmentType) {\n  return <ByTypeView filters={filters} />;\n}\nuseQuery(" }).some((p) => p.includes("early-return") || p.includes("rules-of-hooks"))],
+    ["missing equipment_type param fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nuseQuery(" }).some((p) => p.includes("equipment_type"))],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;

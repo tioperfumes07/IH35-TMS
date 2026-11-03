@@ -7,7 +7,6 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { ByTypeView } from "./ByTypeView";
 import { money, pctLabel } from "./money";
 
 interface ByCustomerViewProps {
@@ -22,14 +21,6 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
-  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
-  if (filters.equipmentType) {
-    return <ByTypeView filters={filters} />;
-  }
-
-
-
   const query = useQuery({
     queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
@@ -37,6 +28,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
         operating_company_id: companyId,
         period_start: filters.dateFrom,
         period_end: filters.dateTo,
+        equipment_type: filters.equipmentType,
       }),
     enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
     retry: false,
@@ -106,10 +98,12 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
     );
   }
 
+  const equipNote = filters.equipmentType ? ` · equipment ${filters.equipmentType}` : "";
+
   return (
     <BoardSection
       title="By Customer"
-      subtitle={`${filters.dateFrom} → ${filters.dateTo}`}
+      subtitle={`${filters.dateFrom} → ${filters.dateTo}${equipNote}`}
       testId="profitability-by-customer-board"
       onViewAll={() => {
         window.location.assign("/reports/customer-profitability");
@@ -132,7 +126,9 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
           emptyText={
             query.isLoading
               ? "Loading customer profitability…"
-              : "No customers with profitability in this period."
+              : filters.equipmentType
+                ? "No customers with profitability for this equipment in this period."
+                : "No customers with profitability in this period."
           }
         />
       </div>

@@ -7,7 +7,6 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { ByTypeView } from "./ByTypeView";
 import { money, pctLabel } from "./money";
 
 interface ByLoadViewProps {
@@ -24,14 +23,6 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
-  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
-  if (filters.equipmentType) {
-    return <ByTypeView filters={filters} />;
-  }
-
-
-
   const query = useQuery({
     queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
@@ -39,6 +30,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         operating_company_id: companyId,
         from: filters.dateFrom,
         to: filters.dateTo,
+        equipment_type: filters.equipmentType,
       }),
     enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
     retry: false,
@@ -140,10 +132,12 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
     );
   }
 
+  const equipNote = filters.equipmentType ? ` · equipment ${filters.equipmentType}` : "";
+
   return (
     <BoardSection
       title="By Load (trip / settlement detail)"
-      subtitle={`${filters.dateFrom} → ${filters.dateTo} · trip-profitability engine`}
+      subtitle={`${filters.dateFrom} → ${filters.dateTo} · trip-profitability engine${equipNote}`}
       testId="profitability-by-load-board"
       onViewAll={() => {
         window.location.assign("/reports/trip-profitability");
@@ -166,7 +160,9 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
           emptyText={
             query.isLoading
               ? "Loading trip profitability…"
-              : "No settlements with trip profitability in this period."
+              : filters.equipmentType
+                ? "No settlements with matching equipment loads in this period."
+                : "No settlements with trip profitability in this period."
           }
         />
       </div>

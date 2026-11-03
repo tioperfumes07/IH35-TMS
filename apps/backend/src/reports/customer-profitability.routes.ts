@@ -2,11 +2,13 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+import { loadMatchesEquipmentSql, resolveEquipmentTypeAliases } from "./equipment-type-aliases.js";
 
 const querySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
   min_revenue_cents: z.coerce.number().int().min(0).optional(),
+  equipment_type: z.string().min(1).optional(),
 });
 
 type ProfitFlag = "high_margin" | "low_margin" | "past_due" | "declining_revenue";
@@ -56,10 +58,11 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
     if (!parsed.success) return validationError(reply, parsed.error);
     if (parsed.data.period_start > parsed.data.period_end) return dateRangeOrderError(reply, "period_start", "period_end");
 
-    const { operating_company_id: companyId, period_start: pStart, period_end: pEnd, min_revenue_cents } =
+    const { operating_company_id: companyId, period_start: pStart, period_end: pEnd, min_revenue_cents, equipment_type } =
       parsed.data;
     const minRev = min_revenue_cents ?? 0;
-    const cacheKey = `${companyId}:${pStart}:${pEnd}:${minRev}`;
+    const equipmentAliases = resolveEquipmentTypeAliases(equipment_type);
+    const cacheKey = `${companyId}:${pStart}:${pEnd}:${minRev}:${equipment_type ?? ""}`;
     const hit = cache.get(cacheKey);
     if (hit) return hit;
 
@@ -84,9 +87,10 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
+            AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})
           GROUP BY l.customer_id
         `,
-        [companyId, pStart, pEnd]
+        [companyId, pStart, pEnd, equipmentAliases]
       );
 
       const prevRevRes = await client.query(
@@ -97,9 +101,10 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
+            AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})
           GROUP BY l.customer_id
         `,
-        [companyId, prevStartStr, prevEndStr]
+        [companyId, prevStartStr, prevEndStr, equipmentAliases]
       );
       const prevRevRows = prevRevRes.rows as Array<{ customer_id: string; revenue_cents: string }>;
       const prevRevMap = new Map(prevRevRows.map((r) => [String(r.customer_id), num(r.revenue_cents)]));
@@ -116,9 +121,10 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
+            AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})
           GROUP BY l.customer_id
         `,
-        [companyId, pStart, pEnd]
+        [companyId, pStart, pEnd, equipmentAliases]
       );
       const costRows = costRes.rows as Array<{ customer_id: string; cost_cents: string }>;
       const costMap = new Map(costRows.map((r) => [String(r.customer_id), num(r.cost_cents)]));
