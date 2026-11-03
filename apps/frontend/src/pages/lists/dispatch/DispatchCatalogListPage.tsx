@@ -17,10 +17,19 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { CatalogEntryModal } from "./CatalogEntryModal";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
-type StatusFilter = "active" | "inactive" | "all";
+const STATUS_MULTI_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+function apiIsActive(selected: string[]): "true" | "false" | "all" {
+  if (selected.length === 1 && selected[0] === "active") return "true";
+  if (selected.length === 1 && selected[0] === "inactive") return "false";
+  return "all";
+}
 
 type Client = {
   list: (filters: { operating_company_id: string; search?: string; is_active?: "true" | "false" | "all"; limit?: number; offset?: number }) => Promise<{
@@ -92,7 +101,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("active");
+  const [status, setStatus] = useState<string[]>(["active"]);
   const [showInactive, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<DispatchCatalogRow | null>(null);
@@ -111,12 +120,12 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   });
 
   const listQuery = useQuery({
-    queryKey: ["dispatch-catalog", catalogKey, companyId, search, status],
+    queryKey: ["dispatch-catalog", catalogKey, companyId, search, status.join(",") || "all"],
     queryFn: () =>
       client.list({
         operating_company_id: companyId,
         search: search || undefined,
-        is_active: status === "all" ? "all" : status === "active" ? "true" : "false",
+        is_active: apiIsActive(status),
         limit: 250,
         offset: 0,
       }),
@@ -202,14 +211,17 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
           {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
           <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Show
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="all">All</option>
-          </SelectCombobox>
-        </label>
+        <div className={FORM_LABEL_STACK_CLASS} data-testid="dispatch-catalog-status-filter">
+          <span>Show</span>
+          <MultiSelectDropdown
+            label="Status"
+            options={[...STATUS_MULTI_OPTIONS]}
+            selected={status}
+            onChange={setStatus}
+            allLabel="All statuses"
+            data-testid="dispatch-catalog-status-multiselect"
+          />
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">
@@ -232,7 +244,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
       ) : (
         <ParityTable
           rows={rows}
-          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          title={apiIsActive(status) === "all" ? "All entries" : apiIsActive(status) === "false" ? "Inactive entries" : "Active entries"}
           columns={COLUMNS}
           rowKey={(row) => row.id}
           loading={listQuery.isLoading}

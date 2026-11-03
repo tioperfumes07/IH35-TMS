@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:10 PM CT) — U12 Dispatch + Termination Reasons MultiSelect
+- **PRIOR:** #28588 Safety catalog U12.
+- **THIS:** DispatchCatalogListPage + TerminationReasonsListPage status → MultiSelectDropdown; filter-surfaces Termination matchesStatus retarget.
+- **NEXT:** Accounting/VoidCancel/LoadCancellation Active-Inactive (CC-1/dispatch siblings) / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:05 PM CT) — U12 Safety catalog status MultiSelect
 - **PRIOR:** #28587 Maintenance catalog U12.
 - **THIS:** CatalogStatusFilterCombobox → MultiSelectDropdown; apiStatusFromMulti in shared; SafetyGeneric + 6 scoped Safety catalog lists. filter-surfaces Safety fetchMust retargeted.

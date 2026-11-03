@@ -21,14 +21,15 @@ const SURFACES = [
   // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
   // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
   ...[
-    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /<ParityTable\b/],
-    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /<ParityTable\b/],
-    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /<ParityTable\b/],
-    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /<ParityTable\b/],
-  ].map(([name, file, table]) => ({
+    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    // U12: Termination Reasons status MultiSelect → matchesStatus(row.is_active, status)
+    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+  ].map(([name, file, filterMust]) => ({
     name,
     file,
-    must: [table, /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    must: [/<ParityTable\b/, filterMust],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /Total rows:/],
   })),
   // Capped routes (limit max 200): the page reads EVERY page through lib/fetchAllCatalogPages; status narrows
