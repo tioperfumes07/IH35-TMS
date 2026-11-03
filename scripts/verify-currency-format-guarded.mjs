@@ -815,6 +815,18 @@ const truckLineDurationQty = read("apps/frontend/src/pages/dispatch/TruckLineBoa
 if (!/formatQuantityTable\(days, 0\)/.test(truckLineDurationQty) || !/formatQuantityTable\(hours, 0\)/.test(truckLineDurationQty)) {
   fail("TruckLineBoard fmtDuration/fmtHoursMinutes must use formatQuantityTable(, 0)");
 }
+const reserveTrackerDaysQty = read("apps/frontend/src/pages/factoring/ReserveTracker.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(reserveTrackerDaysQty)) {
+  fail("ReserveTracker Next Nd labels must use formatQuantityTable(, 0)");
+}
+const plannerRangeQty = read("apps/frontend/src/pages/dispatch/planners/PlannerRangeToolbar.tsx");
+if (!/formatQuantityTable\(d, 0\)/.test(plannerRangeQty)) {
+  fail("PlannerRangeToolbar day chips must use formatQuantityTable(, 0)");
+}
+const legalTemplateDetailQty = read("apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx");
+if (!/formatQuantityTable\(template\.version, 0\)/.test(legalTemplateDetailQty)) {
+  fail("LegalTemplateDetailPage title version must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
