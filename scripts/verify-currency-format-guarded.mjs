@@ -775,6 +775,18 @@ const custProfileQty = read("apps/frontend/src/components/customers/CustomerProf
 if (!/formatQuantityTable\(a\.open_invoice_count, 0\)/.test(custProfileQty)) {
   fail("CustomerProfileOverview open_invoice_count must use formatQuantityTable(, 0)");
 }
+const submissionSelectedQty = read("apps/frontend/src/pages/factoring/SubmissionQueue.tsx");
+if (!/formatQuantityTable\(selected\.length, 0\)/.test(submissionSelectedQty)) {
+  fail("SubmissionQueue selected submit count must use formatQuantityTable(, 0)");
+}
+const submitFactorCreatedQty = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(created\.purchase\.invoice_count, 0\)/.test(submitFactorCreatedQty)) {
+  fail("SubmitToFactorTab created invoice_count must use formatQuantityTable(, 0)");
+}
+const tourLoadFooterQty = read("apps/frontend/src/components/dispatch/TourLoadRows.tsx");
+if (!/formatQuantityTable\(new Set\(v\.map\(r => r\.settlement_id\)\)\.size, 0\)/.test(tourLoadFooterQty) || !/formatQuantityTable\(v\.filter\(r => r\.load_id\)\.length, 0\)/.test(tourLoadFooterQty)) {
+  fail("TourLoadRows footer tour/load counts must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
