@@ -109,7 +109,8 @@ function sectionControlIssues(content) {
   if (/tableTestId=\{`dispatch-board-section-table-\$\{section\.key\}`\}/.test(content)) {
     issues.push("per-section tables are back — the sections must be band rows in one table");
   }
-  if (!/groupBy=\{\{[\s\S]{0,1200}orderedKeys: boardSections\.map\(\(s\) => s\.key\)/.test(content)) {
+  // Window covers renderHeader count badge (formatQuantityTable) + placeholder before orderedKeys.
+  if (!/groupBy=\{\{[\s\S]{0,1600}orderedKeys: boardSections\.map\(\(s\) => s\.key\)/.test(content)) {
     issues.push("every section (including an empty one, e.g. IN SHOP 0) must render as a band via groupBy.orderedKeys");
   }
   if (!content.includes("data-testid={`dispatch-board-section-${key}`}")) {

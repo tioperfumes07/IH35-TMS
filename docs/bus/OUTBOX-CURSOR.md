@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~12:25 AM CT) — fleet/dispatch/RL/settlement qty + CASH-T03 AdjustPopover
+- **PRIOR:** #28402 lease/map/roundtrip qty.
+- **THIS:** FleetHome trailers/units · DispatchList Showing · DispatchBoard section · LoadBol POD/BOL · Settlements live/cancelled · TourSettlement counts · RollingLedger income/expense badges → formatQuantityTable(, 0); AdjustPopover passes row into ledgerEntityKind (legacy fuel-avg); currency + cash-t03 ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Manual JE sizing → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~12:10 AM CT) — lease/map/roundtrip count house quantity
 - **PRIOR:** #28400 in-transit/settlement footer qty · #28398 equipment→ByType.
 - **THIS:** TruckLeaseCreatorModal vehicles · MapView focused · RoundTrips delivered → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.

@@ -605,6 +605,42 @@ const mapViewQty = read("apps/frontend/src/pages/dispatch/MapView.tsx");
 if (!/formatQuantityTable\(focused\.length, 0\)/.test(mapViewQty)) {
   fail("MapView focused count must use formatQuantityTable(, 0)");
 }
+const roundTripsQty = read("apps/frontend/src/pages/dispatch/RoundTrips.tsx");
+if (!/formatQuantityTable\(deliveredCount, 0\)/.test(roundTripsQty) || !/formatQuantityTable\(legs\.length, 0\)/.test(roundTripsQty)) {
+  fail("RoundTrips delivered count must use formatQuantityTable(, 0)");
+}
+
+const fleetHomeQty = read("apps/frontend/src/pages/fleet/FleetHomePage.tsx");
+if (!/formatQuantityTable\(trailers\.length, 0\)/.test(fleetHomeQty) || !/formatQuantityTable\(mdUnits\.length, 0\)/.test(fleetHomeQty)) {
+  fail("FleetHomePage trailers/units counts must use formatQuantityTable(, 0)");
+}
+const dispatchListQty = read("apps/frontend/src/components/dispatch/DispatchList.tsx");
+if ((dispatchListQty.match(/formatQuantityTable\(from, 0\)/g) || []).length < 2) {
+  fail("DispatchList Showing from-to-of must use formatQuantityTable(, 0)");
+}
+const settlementsQty = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+if (!/formatQuantityTable\(settlements\.length, 0\)/.test(settlementsQty) || !/formatQuantityTable\(cancelledHiddenCount, 0\)/.test(settlementsQty)) {
+  fail("SettlementsPage live/cancelled counts must use formatQuantityTable(, 0)");
+}
+const rollingLedgerQty = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
+if (!/formatQuantityTable\(driverBillCount, 0\)/.test(rollingLedgerQty) || !/formatQuantityTable\(incomeRows\.length, 0\)/.test(rollingLedgerQty)) {
+  fail("RollingLedgerTab income/expense count badges must use formatQuantityTable(, 0)");
+}
+if (!/ledgerEntityKind\(row\.document_kind, row\)/.test(rollingLedgerQty)) {
+  fail("RollingLedgerTab AdjustPopover must pass row into ledgerEntityKind (CASH-T03 legacy fuel-avg)");
+}
+const tourSettleQty = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
+if (!/formatQuantityTable\(bills\.length, 0\)/.test(tourSettleQty) || !/formatQuantityTable\(liveLegs\.length, 0\)/.test(tourSettleQty)) {
+  fail("TourSettlementTab bill/load counts must use formatQuantityTable(, 0)");
+}
+const dispatchBoardQty = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(dispatchBoardQty)) {
+  fail("DispatchBoard section badges must use formatQuantityTable(, 0)");
+}
+const loadBolQty = read("apps/frontend/src/components/dispatch/LoadBolPanel.tsx");
+if (!/formatQuantityTable\(pods\.length, 0\)/.test(loadBolQty) || !/formatQuantityTable\(bols\.length, 0\)/.test(loadBolQty)) {
+  fail("LoadBolPanel POD/BOL counts must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
