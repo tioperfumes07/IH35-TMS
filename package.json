@@ -1152,7 +1152,8 @@
     "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs",
     "verify:driver-net-pay-clearing-balance-zero": "node scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
     "verify:settlement-posted-withholdings-equal-deductions-total": "node scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs",
-    "verify:settlement-deduction-lines-have-deduction-rows": "node scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs"
+    "verify:settlement-deduction-lines-have-deduction-rows": "node scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs",
+    "verify:stops-geocoded": "node --env-file=.env scripts/verify-stops-geocoded.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1160.0",
@@ -1189,7 +1190,7 @@
     "opossum": "^10.0.0",
     "oslo": "^1.2.1",
     "pg": "^8.23.1",
-    "plaid": "^49.0.0",
+    "plaid": "^48.0.0",
     "puppeteer": "^25.16.0",
     "rate-limiter-flexible": "^11.2.3",
     "resend": "^6.35.0",
@@ -1201,7 +1202,7 @@
     "@axe-core/cli": "^4.14.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/luxon": "^3.7.6",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.5",
     "@types/opossum": "^8.1.9",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
