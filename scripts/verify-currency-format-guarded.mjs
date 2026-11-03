@@ -591,6 +591,12 @@ const companySettleQty = read("apps/frontend/src/pages/driver-finance/CompanySet
 if (!/formatQuantityTable\(v\.length, 0\)/.test(companySettleQty)) {
   fail("CompanySettlementsPage footer Totals must use formatQuantityTable(, 0)");
 }
+if (!/toursQuery\.isPending[\s\S]{0,80}formatQuantityTable\(allTourRows\.length, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage Closed tours KPI must show … while pending (never flash 0) — #160");
+}
+if (!/formatQuantityTable\(withCompany, 0\)/.test(companySettleQty) || !/formatQuantityTable\(notOpened, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage with-company/not-opened KPIs must use formatQuantityTable(, 0)");
+}
 const settleToursQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
 if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
   fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
