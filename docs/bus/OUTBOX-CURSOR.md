@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:35 PM CT) — Legal Policies need-company
+- **PRIOR:** #28462 bus tip #28460.
+- **THIS:** LegalPoliciesPage BoardSection need-company; fill-shell-empty-states plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:25 PM CT) — #28460 batch76 Vendors + #28458/#28446 closed
 - **PRIOR:** #28458 batch72 ENG17/ENG-34; #28446 Legal unions DONE-LIVE (Codex batch74).
 - **THIS:** #28460 Vendors multi-status comma-union before listBills LIMIT. Batch75 Reclassify date-only → CC-1. ENG-21 DONE-LIVE. Dreamline/match deferred.

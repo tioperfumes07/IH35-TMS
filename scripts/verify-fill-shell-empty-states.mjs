@@ -142,6 +142,7 @@ const checks = [
   ["apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx", "BoardSection", "legal-deadline-alerts-need-company", "Legal Deadline Alerts need-company"],
   ["apps/frontend/src/pages/legal/matters/LegalMatterNewPage.tsx", "BoardSection", "legal-matter-new-need-company", "Legal Matter New need-company"],
   ["apps/frontend/src/pages/legal/reports/LegalReportsLandingPage.tsx", "BoardSection", "legal-reports-need-company", "Legal Reports need-company"],
+  ["apps/frontend/src/pages/legal/LegalPoliciesPage.tsx", "BoardSection", "legal-policies-need-company", "Legal Policies need-company"],
   ["apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx", "BoardSection", "type-catalog-need-company", "Type Catalog need-company"],
   ["apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", "BoardSection", "insurance-payment-schedule-need-company", "Insurance Payment Schedule need-company"],
   ["apps/frontend/src/components/driver-inbox/DriverInbox.tsx", "BoardSection", "driver-inbox-need-company", "DriverInbox need-company"],
