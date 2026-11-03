@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:15 PM CT) — Legal matters severity/type U12 MultiSelect
+- **PRIOR:** #28372 notes per-consumer · #28369 share/MTD qty.
+- **THIS:** LegalMattersListPage severity + type → MultiSelectDropdown (U12; Codex batch51 Legal UI). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:00 PM CT) — notes per-consumer plants + uncleared wires qty
 - **PRIOR:** #28369 settlement share/MTD · #28367 BreakEven/fleet/factor.
 - **THIS:** Codex batch52 — notes guard requires both CustomerNotesTab onEdit mounts (+ per-consumer plants). FactoringHomeBoard unclearedWireCount → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
