@@ -546,7 +546,7 @@ function CompanySettlementWaterfall({
               <span>
                 Miles {formatQuantityTable(report.sections.miles_and_mpg.total_miles, 0)}
                 {report.sections.miles_and_mpg.mpg !== null
-                  ? ` · ${report.sections.miles_and_mpg.mpg} MPG`
+                  ? ` · ${formatQuantityTable(report.sections.miles_and_mpg.mpg, 1)} MPG`
                   : ""}
               </span>
               <span className="ldt-m">{DASH}</span>

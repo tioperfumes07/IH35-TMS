@@ -436,6 +436,47 @@ if (!/formatQuantityTable\(row\.days_until_recourse_expiry, 0\)/.test(recourseDa
   fail("CustomerFactoringRecourseReverseSection days must use formatQuantityTable(, 0)");
 }
 
+
+const factoringWires = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(purchaseEscrowTotals\.count, 0\)/.test(factoringWires)) {
+  fail("FactoringHome escrow wire count must use formatQuantityTable(, 0)");
+}
+const coSettleMpg = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(report\.sections\.miles_and_mpg\.mpg, 1\)/.test(coSettleMpg)) {
+  fail("CompanySettlementsPage MPG must use formatQuantityTable(, 1)");
+}
+const awaitingBol = read("apps/frontend/src/pages/dispatch/AwaitingBolInvoicePage.tsx");
+if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
+}
+
+
+const breakEvenDays = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
+if (!/formatQuantityTable\(model\.days, 0\)/.test(breakEvenDays)) {
+  fail("BreakEvenPage model.days must use formatQuantityTable(, 0)");
+}
+const fleetRestoreUnits = read("apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx");
+if (!/formatQuantityTable\(data\.unit_count, 0\)/.test(fleetRestoreUnits)) {
+  fail("HomeFleetRestoreCard unit_count must use formatQuantityTable(, 0)");
+}
+const factoringSettings = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.active_factor_count/.test(factoringSettings)) {
+  fail("FactoringHome active_factor_count must use formatQuantityTable");
+}
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.recourse_days/.test(factoringSettings)) {
+  fail("FactoringHome settings recourse_days must use formatQuantityTable");
+}
+
+
+const settleShare = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
+if (!/formatQuantityTable\(Number\(split\.share_pct \?\? 0\), 1\)/.test(settleShare)) {
+  fail("SettlementStatementWorkflowPage share % must use formatQuantityTable(, 1)");
+}
+const factorMtd = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(Number\(summary\.mtd_advances_count \?\? 0\), 0\)/.test(factorMtd)) {
+  fail("FactoringHomeBoard mtd_advances_count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

@@ -1794,7 +1794,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-escrow-account"
                 tableTestId="factoring-escrow-account-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   escrow_reserve_cents: fmtCents(purchaseEscrowTotals.escrow),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
@@ -1898,7 +1898,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-cash-reserve"
                 tableTestId="factoring-cash-reserve-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   cash_reserve_cents: fmtCents(purchaseEscrowTotals.cash),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
@@ -2817,12 +2817,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           <BoardSection title="Single-factor invariant status" testId="factoring-single-factor-invariant">
             <div className="space-y-1 px-3.5 py-2 text-xs text-gray-700">
               <div>
-                Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
+                Active factors: {formatQuantityTable(Number(settingsQuery.data?.current?.active_factor_count ?? 0), 0)} · Status:{" "}
                 <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-[#1F2A44]" : "text-red-700"}>
                   {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
                 </span>
               </div>
-              <div>Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 95)} days</div>
+              <div>Configured recourse period: {formatQuantityTable(Number(settingsQuery.data?.current?.recourse_days ?? 95), 0)} days</div>
             </div>
           </BoardSection>
 

@@ -509,7 +509,7 @@ export function FactoringHomeBoard({
         <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
           <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
-            {Number(summary.mtd_advances_count ?? 0)} wire
+            {formatQuantityTable(Number(summary.mtd_advances_count ?? 0), 0)} wire
             {Number(summary.mtd_advances_count ?? 0) === 1 ? "" : "s"} · {fmtMoneyDollars(summary.mtd_advanced_total)}{" "}
             &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>
