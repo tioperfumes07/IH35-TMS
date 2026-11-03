@@ -198,3 +198,6 @@ Rows 3 (R6), 11 (R21), 12 (R22), 95 (R83), 102 (R207), 104 (R210), 105 (R223), 1
 
 CT: 2026-11-03 ~00:15Z
 
+# OUTBOX-CC-2
+
+Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-2-archive-2026-10-17.md](archive/OUTBOX-CC-2-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
