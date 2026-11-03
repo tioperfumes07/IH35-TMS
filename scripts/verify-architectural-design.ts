@@ -174,7 +174,10 @@ const NAMED_SECTION_SOURCES: NamedSectionSource[] = [
   {
     module: "drivers",
     file: "apps/frontend/src/pages/Drivers.tsx",
-    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<DataPanel[^>]*\btitle="([^"]+)"/g],
+    // LEAD 11-03: #28008 (fill-not-shell) rebuilt these panels DataPanel→BoardSection; a BoardSection title is the
+    // named section on the board, same rule as FuelBoardSection above. Without it the 3 sections read "missing"
+    // and verify:arch-design failed build-typecheck-heavy on every PR.
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<DataPanel[^>]*\btitle="([^"]+)"/g, /<BoardSection[^>]*\btitle="([^"]+)"/g],
   },
   {
     module: "dispatch",

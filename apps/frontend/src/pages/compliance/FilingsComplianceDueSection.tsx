@@ -7,6 +7,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 type Props = {
   operatingCompanyId: string;
@@ -113,7 +114,11 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    return (
+      <BoardSection title="Filings & compliance due" testId="filings-compliance-due-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (

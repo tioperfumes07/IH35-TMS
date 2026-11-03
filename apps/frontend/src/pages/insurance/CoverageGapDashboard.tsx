@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { formatQuantityTable } from "../../lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -286,15 +287,15 @@ export function CoverageGapDashboard() {
         <div className="grid gap-3 px-3.5 py-2 md:grid-cols-3">
           <article className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 30 days</p>
-            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring30.length}</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{formatQuantityTable(summary.expiring30.length, 0)}</p>
           </article>
           <article className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 60 days</p>
-            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring60.length}</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{formatQuantityTable(summary.expiring60.length, 0)}</p>
           </article>
           <article className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 90 days</p>
-            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring90.length}</p>
+            <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{formatQuantityTable(summary.expiring90.length, 0)}</p>
           </article>
         </div>
       </BoardSection>

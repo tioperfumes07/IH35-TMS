@@ -61,6 +61,9 @@ export async function registerEquipmentTypeProfitabilityRoutes(app: FastifyInsta
             FROM driver_finance.driver_bills db
            WHERE db.operating_company_id = $1::uuid
              AND db.load_id IN (SELECT id FROM loads)
+             -- Live driver pay only (Codex batch54): void/voided bills are not cost.
+             AND db.voided_at IS NULL
+             AND db.status NOT IN ('void', 'voided')
            GROUP BY db.load_id
         ),
         fuel AS (

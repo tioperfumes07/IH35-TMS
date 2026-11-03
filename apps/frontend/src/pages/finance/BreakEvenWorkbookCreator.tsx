@@ -7,7 +7,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, formatUsdRateTable } from "../../lib/money";
 import {
   createScenario,
   FINANCE_HUB_SCENARIOS_FLAG,
@@ -212,7 +212,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#E5E7EB] pt-3 text-xs">
         <span>
-          Preview break-even {preview.total_cost_per_mile_cents == null ? "—" : `$${(preview.total_cost_per_mile_cents / 100).toFixed(3)}/mi`} · expenses {formatUsdCents(expenseCents)}
+          Preview break-even {preview.total_cost_per_mile_cents == null ? "—" : `${formatUsdRateTable(preview.total_cost_per_mile_cents / 100, 3)}/mi`} · expenses {formatUsdCents(expenseCents)}
         </span>
         <button
           type="button"

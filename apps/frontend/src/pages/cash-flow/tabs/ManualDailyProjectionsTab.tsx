@@ -770,7 +770,17 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           <V3KpiTile
             label="Bank balances (live TMS)"
             value={banksQuery.isError ? "—" : formatUsd(bankTotalDollars)}
-            sub="opening cash"
+            // LEAD 11-03: name the accounts this opening cash is (443.283 — the authoritative bank list; never a card
+            // or factoring tile). The #27650 rebuild dropped the list, so the total stopped saying what it sums.
+            sub={
+              realBanks.length > 0 ? (
+                <span data-testid="cash-flow-mdp-bank-accounts">
+                  opening cash · {realBanks.map((b) => b.display_name).join(" + ")}
+                </span>
+              ) : (
+                "opening cash"
+              )
+            }
             tone="ink"
             testId="cash-flow-mdp-v3-kpi-bank"
           />

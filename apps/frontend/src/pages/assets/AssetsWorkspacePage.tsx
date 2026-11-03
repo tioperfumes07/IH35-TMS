@@ -3,6 +3,7 @@ import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -143,9 +144,9 @@ export function AssetsWorkspacePage() {
       />
 
       {!companyId ? (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Select an operating company to load assets.
-        </p>
+        <BoardSection title="Assets" testId="assets-workspace-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load assets.</p>
+        </BoardSection>
       ) : null}
 
       {loadError ? (

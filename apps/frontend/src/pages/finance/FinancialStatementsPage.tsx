@@ -14,6 +14,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FINANCE_STATEMENTS_UI_FLAG } from "../../api/financeStatements";
 import {
   getProfitLossReport,
@@ -24,7 +25,7 @@ import {
   type AccountingTrialBalanceRow,
 } from "../../api/reports";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -342,7 +343,7 @@ export function FinancialStatementsPage() {
         .replace(/"/g, "&quot;");
     const showCodes = getShowAccountNumbers();
     const basisLabel = basis === "cash" ? "Cash" : "Accrual";
-    const printed = new Date().toLocaleString();
+    const printed = formatDateTimeUS(new Date().toISOString());
 
     if (tab === "pl") {
       const data = plQuery.data;
@@ -577,7 +578,11 @@ export function FinancialStatementsPage() {
       </div>
       {header}
 
-      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Financial statements" testId="financial-statements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       <div className="no-print mb-4 flex flex-wrap items-center gap-2 border-b border-[#E5E7EB]">
         {tabs.map((t) => (

@@ -26,6 +26,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/Combobox";
@@ -388,7 +389,9 @@ export function DailyTasksPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">Select an operating company first.</div>
+        <BoardSection title="Daily tasks" testId="daily-tasks-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company first.</p>
+        </BoardSection>
       ) : null}
 
       {activeQuery?.isError ? (

@@ -1,5 +1,5 @@
 import type { LoadStatus } from "../../api/loads";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 // LEAD 443.206R — load status labels + status groups live in lib/load-status.ts (loadStatusLabel / LOAD_STATUS_GROUPS).
 
 // §7 palette: the load `flag_code` used to render as a color-emoji circle (green/blue/yellow/orange/
@@ -54,9 +54,9 @@ export function formatMoneyCents(valueCents: number | null | undefined, currency
   // crashed the whole List/Table grid via the error boundary).
   if (valueCents == null || Number.isNaN(Number(valueCents))) return "—";
   const cur = currency || "USD";
-  // House USD path — MXN stays Intl (lib/money is USD-only).
+  // House path: USD → formatUsdCents; MXN → code + formatQuantityTable (lib/money is USD-symbol).
   if (cur === "MXN") {
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(valueCents) / 100);
+    return `MXN ${formatQuantityTable(Number(valueCents) / 100, 2)}`;
   }
   return formatUsdCents(valueCents);
 }
@@ -65,7 +65,7 @@ export function formatMoneyDollars(valueDollars: number | null | undefined, curr
   if (valueDollars == null || Number.isNaN(Number(valueDollars))) return "—";
   const cur = currency || "USD";
   if (cur === "MXN") {
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(valueDollars));
+    return `MXN ${formatQuantityTable(Number(valueDollars), 2)}`;
   }
   return formatUsd(valueDollars);
 }

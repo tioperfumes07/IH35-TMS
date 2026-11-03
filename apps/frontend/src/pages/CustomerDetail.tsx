@@ -1511,7 +1511,7 @@ export function CustomerDetailPage() {
                   <span className="text-xs text-gray-900">
                     {customer.layover_charge_per_day
                       ? customer.layover_currency && customer.layover_currency !== "USD"
-                        ? `${customer.layover_currency} ${Number(customer.layover_charge_per_day).toFixed(2)}`
+                        ? `${customer.layover_currency} ${formatQuantityTable(Number(customer.layover_charge_per_day), 2)}`
                         : formatUsd(Number(customer.layover_charge_per_day))
                       : "Not set"}
                   </span>
@@ -1795,7 +1795,9 @@ export function CustomerDetailPage() {
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
                     {event.dollar_impact_amount != null ? <strong className="text-xs">{formatUsd(Number(event.dollar_impact_amount))}</strong> : null}
-                    {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
+                    {typeof event.days_late === "number" ? (
+                      <span className="text-xs">Days late: {formatQuantityTable(event.days_late, 0)}</span>
+                    ) : null}
                   </div>
                   <div className={event.voided_at ? "mt-1 text-xs line-through" : "mt-1 text-xs"}>{event.summary}</div>
                   {event.reason_label ? <div className="text-xs text-gray-500">Reason: {event.reason_label}</div> : null}

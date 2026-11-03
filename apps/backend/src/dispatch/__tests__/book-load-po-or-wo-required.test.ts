@@ -15,8 +15,8 @@ function baseInput(overrides: Partial<BookLoadInput> = {}): BookLoadInput {
     status: "booked",
     charges: [],
     stops: [
-      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z" },
-      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z" },
+      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z", address_line1: "1 Pickup Way" },
+      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z", address_line1: "2 Delivery Way" },
     ],
     save_mode: "book_dispatch",
     trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice

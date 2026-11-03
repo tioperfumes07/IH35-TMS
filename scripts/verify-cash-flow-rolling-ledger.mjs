@@ -79,6 +79,8 @@ const REQUIRED_BACKEND_MARKERS = [
   ["a.seq DESC", "adjustment overlay does not order by the monotonic seq column (same-transaction ordering bug)"],
   ["is_rollover_echo: true", "roll-over does not leave a $0 echo row on the original due date"],
   ["createCashFlowRowAdjustment", "no service function to create a roll-over/hide adjustment"],
+  ["buildRollingLedgerDayGrid", "day-grid arithmetic helper missing (net = income - expenses; CASH-T03 coverage)"],
+  ["netCents = incomeDue - expensesDue", "day-grid net identity missing"],
   ["unknown_or_inactive_cash_flow_adjustment_reason_code", "reason-code resolution does not fail closed on an unknown code"],
 ];
 
@@ -201,6 +203,29 @@ export function check({
   if (!/EntityLink/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: rows must render through EntityLink, not a bare label`);
   }
+  // CASH-T03 — projected fuel is fuel_forecast provenance, never a fake expense EntityLink.
+  if (!/"fuel_forecast"/.test(backend) || !/document_kind: "fuel_forecast"/.test(backend)) {
+    f.push(`${BACKEND_FILE}: projected fuel must use document_kind fuel_forecast`);
+  }
+  if (/document_kind:\s*"expense",[\s\S]{0,120}document_id:\s*`fuel-avg/.test(backend)) {
+    f.push(`${BACKEND_FILE}: fuel-avg rows must not use document_kind expense (CASH-T03)`);
+  }
+  if (!/fuel_forecast/.test(frontend) || !/isFuelForecastRow/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: must gate fuel_forecast rows off EntityLink / roll-stop (CASH-T03)`);
+  }
+  if (!/kind === "fuel_forecast"/.test(frontend) && !/=== "fuel_forecast"/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: ledgerEntityKind must treat fuel_forecast as non-EntityLink`);
+  }
+  if (!/ledgerEntityKind\(row\.document_kind, row\)/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: ledgerEntityKind must receive row so legacy expense+fuel-avg cannot EntityLink (CASH-T03)`);
+  }
+  if (!/to="\/fuel\/history"/.test(frontend) || !/rolling-ledger-fuel-forecast-label/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: forecast rows must drill to Fuel History provenance (CASH-T03)`);
+  }
+  if (!/rolling-ledger-fuel-forecast-action/.test(frontend) || !/Forecast source/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: forecast action must offer Fuel History source link (CASH-T03)`);
+  }
+
   if (!/getRollingLedger/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: tab does not call the rolling-ledger API`);
   }
@@ -255,6 +280,20 @@ function selftest() {
       }),
     },
     {
+      name: "day-grid arithmetic helper stripped",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replaceAll("buildRollingLedgerDayGrid", "strippedNoDayGrid"),
+      }),
+    },
+    {
+      name: "day-grid net identity stripped",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replace("netCents = incomeDue - expensesDue", "netCents = incomeDue + expensesDue"),
+      }),
+    },
+    {
       name: "running cash hardcoded instead of live balance",
       mutate: () => ({
         ...good,
@@ -273,6 +312,38 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("EntityLink", "PlainSpanNotLinked"),
+      }),
+    },
+    {
+      name: "fuel_forecast provenance stripped to expense (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        backend: good.backend
+          .replaceAll('document_kind: "fuel_forecast"', 'document_kind: "expense"')
+          .replaceAll('"fuel_forecast"', '"expense_stripped"'),
+      }),
+    },
+    {
+      name: "fuel_forecast frontend gate stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend
+          .replaceAll("isFuelForecastRow", "neverFuelForecast")
+          .replaceAll("fuel_forecast", "expense"),
+      }),
+    },
+    {
+      name: "legacy fuel-avg EntityLink gate stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("ledgerEntityKind(row.document_kind, row)", "ledgerEntityKind(row.document_kind)"),
+      }),
+    },
+    {
+      name: "forecast Fuel History provenance stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll('/fuel/history', '/accounting/expenses'),
       }),
     },
     {

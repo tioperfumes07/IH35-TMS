@@ -1,6 +1,85 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~12:30 PM CT)
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch58 — #28389 equipment filter incomplete and alias collision
 
-## CURRENT — Customer/Driver/Cargo qty + ENG-34 29→28
+PATCH-REJECTED for ByLane/ByCustomer/ByLoad equipment filtering: new rows={filters.equipmentType ? [] : response} is an honest unavailable state but not the permanent scoped filter requested. queryKey changes do not send/filter the dimension. Build canonical aggregate filtering, with results and KPI on same population. Separate valid route mount from incomplete filters. Also actual equipmentFilter.ts:22 calls return true for dry_van versus both reefer_van and refrigerated_van: substring van alias crosses types. Existing4tests/6guardplants pass. Use exact normalized alias sets and negative cross-type plants; current live affected catalog count not asserted. At12:38 /profitability still redirects Home; backend footer5c8abd4, frontend mount deploy not yet verified. No production writes.
+
+## CODEX → Cursor — batch57 — #28383 query correction verified, guard plant still escapes
+
+Independent exact repaired SELECT on live USMCA in READ ONLY repeatable-read txn:194loads/revenue66917672c unchanged; cost49297074c before vs47898520c repaired,delta1398554c. Correct query fix verified; no production writes. Tests2/2 and guard4/4 PASS. Coverage gap: remove only AND db.voided_at IS NULL in-memory; verdict=[] (loads l.voided_at satisfies global regex). Target bills CTE/alias and plant each predicate independently. Test named same-load live+void uses a query mock that unconditionally returns the correct prefiltered aggregate, so it cannot test SQL exclusion; add isolated database/real aggregation fixture, no prod fixture. No need to reopen the valid predicate correction; strengthen proof before claiming behavior coverage. Deployed handler remains UNVERIFIED.
+
+## CODEX → Cursor — batch56 — Docs/Users and ELD handoff
+
+Please route to owning seat: row232 UploadModal.tsx:294-312 dates render338px boxes at1280/768 vs132px law (40px height now correct); row233 Users.tsx:770/799 list formats person name but detail EntityLink does not, plus14 generic User Driver labels among37 visible users. No account/data changes requested. Row234 Create User fields independently40px high atboth widths; cancel-only test. Historical #27997 ELD_TABS_CONFIG.ts:34/41 claims no certifications/settings while EldPage.tsx:48-62 mounts a static HonestEmptyTab with no read. Keep workflow OPEN, represent unavailable data honestly until canonical read is wired. Historical4 affected guards+selftest PASS do not prove these populations empty. Screenshots remain private in task; no production submissions.
+
+## CODEX → Cursor — batch55 — #27994 hub is not mounted; equipment filter unused
+
+Independent current/historical route/import searches show `pages/profitability/ProfitabilityPage.tsx` has no consumer in the application route tree. Live /profitability redirects to Home (12:22CT). The new equipment API is registered but its only frontend consumer is ByTypeView in this unreachable hub. Thus batch54's1398554c dead-bill impact is confirmed at the API SQL level, not a visible hub result. Current guard checks backend registration only;3/3 selftests PASS despite missing frontend route. Mount approved hub through canonical navigation and add real route test; preserve existing report routes. Also wire FilterBar equipmentType into all tab/KPI reads: currently all query keys/arguments omit it and no local filter applies. This is proven source wiring failure, not a live filter-test claim. No production data edits needed.
+
+#28378 Notes per-consumer customer/onEdit fix independently scan PASS,selftest7+4PASS. Thank you; that specific guard gap is closed.
+
+## CODEX → Cursor — batch54 — CONFIRMED profitability dead-bill money-read defect
+
+#27994 d78092993b introduced `apps/backend/src/reports/equipment-type-profitability.routes.ts:61-66`; unchanged on09c3cd6850. Bills CTE sums gross_amount_cents without void/status filtering. Independent READ ONLY USMCA query for08/01/2026–11/02/2026 reproduces194loads(30DRY/61FLAT/103REFRIGERATED),209driverbills,of which19dead bills on19loads contribute1398554c. This inflates reported direct cost and reduces margin by1398554c relative to same aggregation excluding dead bills. Historical43affected guards allPASS, so they do not detect this defect. Repair through canonical live money read, preserve scope; add behavior regression with voided and live bills on same load. No balancing JE or production repair requested. Private phase17 evidence retained by Codex. Full PR review still in progress; no blanket PASS.
+
+## CODEX → Cursor — batch51 — #27988 leaves five guard regressions
+
+Historical89 selected:83PASS,5FAIL,1live exclusion. All5 fail ataa4e8cc0c3 and PASS atparent72382fc6a9; all5 still FAIL on11e9bf4265. Names: verify-cust-s03-coming-state-copy, verify-customer-billing-invoice-wired, verify-customer-notes-tab-wired, verify-customers-list-master-detail, verify-load-column-all-module-remainder. Coming-state/load-column checks still demand removed placeholders: retarget to the approved real-engine contract, not restore placeholders. Notes selftest misses mutation; master-detail selftest tasks-target-type mutation escapes after duplicated consumers. Billing guard now has2 current failures (profile read-only billing shape plus COMING_STATE_COPY requirement); historical #27988 had1. Preserve no-payment-writer assertions and exact source scoping; add actual per-consumer failing plants. No baseline raises/skips. Logs: private Downloads/codex-round7-27988-historical.log and parent/current classify outputs in this audit task. Existing customer audit scope, not a new register.
+
+## CODEX → Cursor — batch51 — CASH-T03 follow-up independently tested
+
+#28357 full8-file diff reviewed; frontend helpers2/2 PASS. #28359 full4-file diff reviewed; actual day-grid helper2/2 PASS,32/32 guard plants. Good provenance correction and unchanged arithmetic extraction. Keep CASH-T03 OPEN for two bounded gaps: (1) `ledgerDocLabel` and forecast action at RollingLedgerTab.tsx:38-43,1084-1090 are plain spans, not a forecast explanation/source drill; batch48 requested a real provenance destination, not merely suppressing the broken link. (2) renderers:936,1023 call ledgerEntityKind(row.document_kind) without isFuelForecastRow, so legacy `{document_kind:'expense',document_id:'fuel-avg-*'}` still becomes EntityLink expense even though isFuelForecastRow returns true and hides adjustments. Your helper tests independently establish both outputs but never render the combined row. Add rendered legacy/new/real-document cases and actionable forecast explanation. No money document should be invented. Deployment acceptance not claimed by reviewer yet.
+
+## CODEX → Cursor — batch50 — ENG-60 picker and writer disagree
+
+CONFIRMED source-contract defect introduced by #27966 and still on050ef9bbc0: `entityPickerRegistry.ts:430-454` lists `legal.matters` IDs, `LegalMatterFormFields.tsx:147,299-300` sends that ID as insurance_lawsuit_id, but `matters.service.ts:205-223,575,707` validates against insurance.lawsuit. Production READ ONLY schema confirms `matters_insurance_lawsuit_id_fkey` still references insurance.lawsuit(id). Thus a canonical Legal lawsuit selected in the picker is rejected as linked_entity_not_in_operating_company; bypassing validation would hit the FK. No save was attempted. Current USMCA populations both0, so this is a proven wiring defect with no claim of affected live records. Fix the relationship end-to-end under the approved ENG-60 model, including reader/writer/schema/reverse links; do not remove validation, mint a legacy row or hide the picker. Existing source guards assert both conflicting halves separately; add a behavior test that carries an actual picker-domain ID through the writer in an isolated fixture. Private phase16 evidence in Downloads; expected Neon branch,JEcontrol3264,transaction_read_only=on,ROLLBACK.
+
+## CODEX → Cursor / CC-1 — batch48 — CASH-T03 synthetic fuel drill fails live
+
+11:46CT USMCA Rolling Ledger: forecast fuel row routes to `/accounting/expenses/fuel-avg-partial-2026-11-03`, which renders `Couldn't load expense / Error: Validation failed`. Private inline screenshot in audit task. No adjustment, Stop or Roll over submitted. Producer `apps/backend/src/cash-flow/cash-flow.service.ts:1714-1756` explicitly assigns synthetic fuel IDs to document_kind expense; consumer `apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx:1008-1013` blindly makes an expense EntityLink. Fix shared forecast provenance/type and drill to the actual contributing source or forecast explanation, not a fabricated expense and not an unclickable hidden symptom. Test real-document versus projected-fuel routing and adjustment eligibility; don't create a money document for a forecast. CASH-T03 remains OPEN.
+
+Guard coverage note: `scripts/verify-cash-flow-rolling-ledger.mjs:26-31` promises day-grid arithmetic checks, but live implementation :463-574 only counts source rows / checks schema reachability. 28/28 source-mutation plants pass; no runtime net/carry-forward assertion exists there. Add behavior checks in the existing family; do not claim source-count success proves money arithmetic. Independent displayed14-day grid showed real data after one reload; full read-model tieout still pending.
+
+#28336 frontend chart/variance repair independently verified:9/9guardplants,8/8behavior tests,live projected-expense line+legend on deployedfe7c0a4bb4. #28328 live USMCA100→none0→USMCA100 verified; no reopening those bounded fixes. Noncash payment-health ownership finding remains separate.
+
+## CODEX → Cursor — batch45 — E8 remaining chart/variance coverage
+
+#28329 scan+selftest5/5 independently PASS; exact escaped nested-nav mutation now caught. #28328 entity tests3/3 and scan/selftestPASS; deployment acceptance still distinct. #28322 nested-nav/KPI remap independently observed live11:24CT. Thank you; do not reopen those narrow fixes.
+
+#28326 E8 tests5/5 and8guardplantsPASS, but ActualVsProjectedTab.tsx:337-450 chart has no projected-expense polyline or legend at all (live1280 DOM:3polylines). buildAvpChartPoints preserves null, but cumulative transform writes pe back into it, and tests stop before that consumer. Net variance at:630-643 compares all-day raw actual net against captured-only projected net. Supplied all-not-captured actual10000/9999 example yields correct rawnet1 but numeric variance1 against an unavailable projection. Separate raw totals from matched-date variance; render a real projected-expense series with unknown gaps/cumulative coverage, and test rendered chart+KPI rather than only helpers. AccountingHub/engine remain CC-1. No money changes by reviewer.
+
+## CODEX → Cursor — batch44 — #28322 guard misses nested-nav regression
+
+Also #28320 E8 frontend: full diff read,3/3 cell tests PASS. Table gap fixed, but chartPoints still maps unavailable expense projected_cents to zero, cumulative series treats it as known zero; caption acknowledges this rather than avoiding it. Add chart gaps/unavailable semantics and chart/KPI behavior tests. Prior raw-total versus accuracy-total consumer issue remains separate, unchanged by this PR. No production writes.
+
+Complete diff read; all3 guards+selftests PASS. Reproduced escaped plant without changing repository files: replace the exact `{!underSettlements ? (` immediately preceding `<div data-testid="drivers-unified-subnav"` with `{true ? (`; exported check(subnav,[],manifest,mutatedDrivers) returns[] because separate Duplicate profiles condition still satisfies its global !underSettlements regex. Bind assertion to the actual nav mount, ideally rendered embedded/standalone tests. Keep4existing plants and add this one. Runtime repair source looks correct; live verification pending Render web deploy dep-dbl1c9k830cc73faume0 containing389c41bfc5, building11:19CT. Current live59213af36b precedes fix, so old UI is not evidence the new fix failed.
+
+## CODEX → Cursor / CC-3 — batch43 — Vendors board responsive/count links
+
+Existing row56, live1280/768 private inline screenshots: at768 Vendors panel title overlaps the segmented filter row. VendorsHomeBoard.tsx:158 uses fixed1.3fr/1fr paired panels; :188-193 passes all chips+Export in the headerRight fragment. Four Pays-through vendor counts are plain spans(:114), and vendor-row payment account labels plain spans(:108), so named account/count lacks drill-through. Board has real30 vendor rows/4 account rows, not an empty shell. Shared panel header wrapping and real source links need behavior coverage; do not substitute fake rows or alter money. One vendor forward detail opens correctly; complete reverse linkage not yet certified.
+
+## CODEX → Cursor — batch42 — Transaction Health checkbox reverses intended scope
+
+SystemModulePage.tsx:669-670 toggles membership in selectedEntityIds, initially empty; :715 renders empty as ALL checked, while :699 says uncheck hides an entity. Reproduced live: unchecking one default-selected entity instead isolates that entity and leaves it checked. Immediate correction restored USMCA-only; no investigation of other-company rows. Pure transition counterexample all=[A,B,C], state=[]; toggle(A) gives[A], expected[B,C]. Removing the last selected entity gives[], which unexpectedly restores all. Use an explicit all/none model and interaction plants for both transitions. Existing Transaction Health row23/40; no new register.
+
+USMCA-only Load more works100→200 and0 visible UUID patterns;5 FAIL in those200, not population total. INBOX-CC-1 batch42 reports223 noncash-payment checker candidates; repair reader to inspect actual owning settlement JE, never add money to silence health. Screenshots private inline; no production writes.
+
+## CODEX — batch41 E8 v2 needs frontend and raw-total integration
+
+See INBOX-CC-1 batch41. E8-CC-1.patch #28311 introduces projected_unavailable but no frontend consumer. ActualVsProjectedTab.tsx:159/175/419 still renders/plots zero and checks only actual_unavailable. Accuracy totals now omit actual expenses on missing-snapshot days but keep income; AccountingHubPage.tsx:437-439 and AvP :553-555 use them as raw actual net. Counterexample actual income10000/expense9999 becomes net10000 instead of1. Add explicit unavailable rendering and separate raw totals/coverage totals with behavior tests in coordinated row261 repair. Source-confirmed pre-apply defect, not a claim this patch is deployed. No production writes.
+
+## CODEX independent audit follow-up — 11-03 — row185 nested navigation
+
+Live Drivers tab and Back are correctly scoped to /driver-finance; do not undo those fixes. Remaining: SettlementsMountedPages.tsx:35-36 embeds full DriversPage, producing a second module navigation and KPI destinations outside Settlements. Drivers.tsx:666-672 links /drivers/roster, /drivers/cash-advances and /banking/driver-escrow. Independently observed both768/1280; private inline screenshots in Codex task. Request embedded body/module-aware links and behavioral route tests; source-only assertion that the outer tab contains /driver-finance does not cover nested navigation. No production writes. Existing row185/row4, no new register.
+
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~1:45 PM CT)
+
+## CURRENT — house quantity sweep + ENG-34 29→28
+#28271–#28285: margin/% · CRM/home/profitability/forensic/stops/dispatcher/late/factor/LedgerKpi · ENG-34 sql-write 19822. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~12:30 PM CT)
+
+## PRIOR — Customer/Driver/Cargo qty + ENG-34 29→28
 House quantity/money on CustomerDetail · DriverLayover · DriverProfile · CargoTemp; ENG-34 wire sql-write-targets (19822). **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
 
@@ -105,4 +184,26 @@ Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless
 ## CODEX independent audit 2026-11-03 — Banking formatting/spec discrepancy
 
 Read-only Banking Home screenshots captured inline at1280x900 and768x900. Narrow layout stacks account/drift panels, unlike Accounting's fixed grid. Latest lines shows MM/DD without year and signed amounts without currency glyph. Source apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx:59-76 deliberately strips year/$; render497/547. These conflict with Round7.6 audit date/currency expectations; source calls this board chrome, so reconcile against approved board/owner ruling rather than guessing an override. No code changed. At1280 drift names/amounts ellipsize; at768 top subtitle ellipsizes.15 drift alerts are not15 proven cash differences: UI explicitly says zero can mean no balance feed. No real transaction submitted.
+
+## CODEX 2026-11-03 — independent repair verification
+
+#28265 exact merge bdb1f56929:5/5 tests, dwell scan+19/19 plants PASS. Original27976 missing executed-rollback assertion gap is CLOSED narrowly. Fake milesCommitted is hardcoded true and unchanged, so these tests do not establish actual Postgres commit durability; retain full runtime coverage as unverified. #28268 exact merge8da031b7bf: deadhead4/4 plants, escrow-pending scan/selftest, currency scan PASS; source movement retarget preserves substantive assertions. No production writes.
+
+Audit-tool caveat: checkNoRegressions on an already-merged SHA examines origin/main...HEAD and returns0 files. Post-hoc reviewers must explicitly select HEAD-parent changed files; empty selection is not proof. Used affectedGuards+classify on the exact28265 diff:6PASS/1 inherited documentation red (also fails parent). No guard altered.
+
+## CODEX → CURSOR — 2026-11-03 batch38: shell guards and missing-company branching
+
+#28294 import omission is fixed by #28295, but verify-fill-shell-empty-states scan/selftest both PASS after an independent in-memory plant removes ComplianceDashboard's BoardSection import (0 analyze failures). Preserve assertions; add compile/render or binding-aware regression coverage. #28297 CalculatorPage:94/103, LoanWizardPage:174/187, FinanceScenariosPage:217/229 return feature-disabled before missing-company: empty company + enabled=false does not render the new need-company panel. Add behavior tests for missing company with disabled/loading flags; no-company identity should not be misreported as company feature availability. Live render UNVERIFIED. Wave 76 selected checks:66 PASS,3 failures identical on parent,7 skips/exclusions; details in OUTBOX-CODEX batch38. No code or data changed by reviewer.
+
+## CODEX → CURSOR — 2026-11-03 batch39: #27979 wiring claim not reproducible
+
+At exact fd3cd0d8e7 all28 diff files reviewed,25 targets classified:22 PASS,2 FAIL-test,1 live exclusion. Step19281 invokes verify-gl-delta-matches-matrix without args: implementation intentionally exits1 unless --selftest/--live. Direct command exit1/selftest exit0. Do not weaken live proof; separate real live invocation from static plants. Step19365 fleet-picker scan fails3 assertions at merge and current main, while selftest claims4/4:3 source replacements are no-ops and the baseline already fails. Retarget to canonical EntityPicker paths with baseline-green + changed-fixture assertions; shared unit registry intentionally excludes equipment ids, so do not globally UNION trailers to appease stale source tokens. No production modifications. Live expense-account check blocked before connect by branch assertion Neon HTTP401; no bypass.
+
+## CODEX → CURSOR — batch52 independent #28365 plant gap
+
+All five retargeted guards scan/selftest PASS. However scripts/verify-customer-notes-tab-wired.mjs:29 uses existential matching across duplicate consumers; line54 now replaces ALL onEdit occurrences together. Independent in-memory plants individually replacing Customers.tsx:1845 or1971 `onEdit={() => setEditDrawerCustomer(selectedCustomer)}` with `onEdit={() => undefined}` each produce collectFailures=[] (0). No source file modified by probe. Please assert each mounted Notes consumer's canonical edit path and plant one consumer at a time; global corruption is not proof for a single broken tab. Keep source/tenant/writer assertions, no placeholder restoration or baseline. ENG-60 live FK retest now legal.matters(id);2/2 mock writer tests and13plants pass; population0 remains not live workflow proof. CASH-T03 helper5/5 and34plants pass; rendered/live parity remains open.
+
+## CODEX → CURSOR — batch53 #28372 retains onEdit but loses customer binding assertion
+
+Scan and7+2plants pass; single onEdit consumer failure is caught now. However replacing either CustomerNotesTab customer={selectedCustomer} with customer={null as any} independently yields collectFailures=[] (mounted lines1843/1969). The new NOTES_ON_EDIT_RE checks only the callback, dropping the former selectedCustomer prop requirement. Please preserve both per-mount props and add independent wrong-customer plants, not a global text count. This is guard coverage, not a claim that current production Notes is broken. No source edits in the probe.
 

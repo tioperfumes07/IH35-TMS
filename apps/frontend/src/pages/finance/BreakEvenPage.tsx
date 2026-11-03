@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -10,7 +11,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, formatUsdRateTable } from "../../lib/money";
 import {
   FINANCE_BREAK_EVEN_UI_FLAG,
   getBreakEvenInputs,
@@ -27,10 +28,10 @@ import { EntityLink } from "../../components/shared/EntityLink";
 // what-if. Nothing here posts, writes, or moves money. Gated behind FINANCE_BREAK_EVEN_UI_ENABLED (OFF).
 
 const fmtCents = (c: number) => formatUsdCents(c);
-const fmtInt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n || 0));
+const fmtInt = (n: number) => formatQuantityTable(Math.round(n || 0), 0);
 // Per-mile figures are cents/mile → dollars/mile with 3 decimals (industry convention, e.g. $1.583/mi).
 const fmtPerMile = (centsPerMile: number | null) =>
-  centsPerMile == null ? "—" : `$${(centsPerMile / 100).toFixed(3)}/mi`;
+  centsPerMile == null ? "—" : `${formatUsdRateTable(centsPerMile / 100, 3)}/mi`;
 const fmtPerDay = (centsPerDay: number | null) =>
   centsPerDay == null ? "—" : `${fmtCents(centsPerDay)}/day`;
 
@@ -172,6 +173,18 @@ export function BreakEvenPage() {
     );
   }
 
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Break-Even Analysis" testId="break-even-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   const toggleClass = (code: string, current: BreakEvenClassification) => {
     staged.setDraft((prev) => ({
       ...prev,
@@ -191,8 +204,6 @@ export function BreakEvenPage() {
     <div className="p-6">
       <FinanceModuleTabs />
       {header}
-
-      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}
@@ -294,7 +305,7 @@ export function BreakEvenPage() {
 
           {/* Cost structure */}
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatTile label="Fixed cost / day" to="/accounting/expenses/list" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${model.days} day${model.days === 1 ? "" : "s"}`} />
+            <StatTile label="Fixed cost / day" to="/accounting/expenses/list" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${formatQuantityTable(model.days, 0)} day${model.days === 1 ? "" : "s"}`} />
             <StatTile label="Variable cost / mile" to="/accounting/expenses/list" value={fmtPerMile(model.variable_cost_per_mile_cents)} secondary={fmtCents(model.variable_cost_cents)} />
             <StatTile label="Contribution margin / mile" to="/finance/statements" value={fmtPerMile(model.contribution_margin_per_mile_cents)} secondary="Revenue/mi − variable/mi" />
             <StatTile label="Net profit (period)" to="/finance/statements" value={fmtCents(model.net_profit_cents)} secondary={`${fmtCents(model.revenue_cents)} rev − ${fmtCents(model.total_cost_cents)} cost`} tone={model.net_profit_cents >= 0 ? "good" : "bad"} />

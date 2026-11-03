@@ -241,7 +241,7 @@ export function BatchWizard() {
             </div>
             <div className="border-t border-gray-200 pt-2 text-xs">
               <div className="text-xs uppercase tracking-wide text-gray-500">Invoices</div>
-              <div className="font-semibold text-gray-900">{draftBatch.invoice_ids.length}</div>
+              <div className="font-semibold text-gray-900" data-testid="factoring-batch-wizard-invoice-count">{formatQuantityTable(draftBatch.invoice_ids.length, 0)}</div>
             </div>
             <div className="border-t border-gray-200 pt-2 text-xs">
               <div className="text-xs uppercase tracking-wide text-gray-500">Total Face</div>

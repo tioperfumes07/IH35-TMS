@@ -497,6 +497,7 @@ const LaunchTogglesPage = React.lazy(() => import("../pages/admin/LaunchToggles"
 const LaunchReadinessPage = React.lazy(() => import("../pages/admin/LaunchReadinessPage").then((m) => ({ default: m.LaunchReadinessPage })));
 const QboVendorLinkagePage = React.lazy(() => import("../pages/admin/QboVendorLinkagePage").then((m) => ({ default: m.QboVendorLinkagePage })));
 const TripProfitabilityPage = React.lazy(() => import("../pages/dispatch/TripProfitability").then((m) => ({ default: m.TripProfitability })));
+const ProfitabilityHubPage = React.lazy(() => import("../pages/profitability/ProfitabilityPage").then((m) => ({ default: m.ProfitabilityPage })));
 const EdiSetupWizard = React.lazy(() => import("../pages/integrations/edi/EdiSetupWizard").then((m) => ({ default: m.EdiSetupWizard })));
 const EdiTransactionLog = React.lazy(() => import("../pages/integrations/edi/EdiTransactionLog").then((m) => ({ default: m.EdiTransactionLog })));
 const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
@@ -3973,6 +3974,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SettlementSummaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profitability"
+          element={
+            <ProtectedRoute>
+              <ProfitabilityHubPage />
             </ProtectedRoute>
           }
         />

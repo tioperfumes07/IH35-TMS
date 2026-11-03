@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDriverDaySummary, type HomeDriverDaySummaryRow } from "../../api/home";
 import { companyToday } from "../../lib/businessDate";
+import { formatQuantityTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
@@ -73,13 +74,13 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
       key: "miles",
       label: "Miles",
       sortable: true,
-      render: (row) => row.miles.toFixed(1),
+      render: (row) => formatQuantityTable(row.miles, 1),
     },
     {
       key: "hours_on_duty",
       label: "On-duty hrs",
       sortable: true,
-      render: (row) => row.hours_on_duty.toFixed(2),
+      render: (row) => formatQuantityTable(row.hours_on_duty, 2),
     },
     {
       key: "fuel_stops",

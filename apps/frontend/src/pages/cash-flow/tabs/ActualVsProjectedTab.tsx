@@ -155,8 +155,8 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     label: "Projected Exp.",
     sortable: true,
     className: "text-right",
-    sortValue: (g) => g.expenses.projected_cents,
-    render: (g) => <span style={{ color: V3.ink }}>{formatCents(g.expenses.projected_cents)}</span>,
+    sortValue: (g) => (g.expenses.projected_unavailable ? -1 : g.expenses.projected_cents),
+    render: (g) => <ProjectedExpenseCell line={g.expenses} />,
   },
   {
     key: "actual_expenses",
@@ -173,7 +173,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     className: "text-right",
     sortValue: (g) => g.expenses.variance_cents,
     render: (g) =>
-      g.expenses.actual_unavailable ? (
+      g.expenses.actual_unavailable || g.expenses.projected_unavailable ? (
         <span className="text-xs" style={{ color: V3.mutedSoft }}>
           —
         </span>
@@ -203,6 +203,37 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
       ),
   },
 ];
+
+// E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0; a past
+// day read from the morning snapshot says so, like Projected Income does.
+export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
+  if (line.projected_unavailable) {
+    return (
+      <span
+        className="text-xs"
+        style={{ color: V3.mutedSoft }}
+        title="This day is before expense projections were captured — not a projected $0"
+        data-testid="cash-flow-avp-proj-exp-not-captured"
+      >
+        not captured
+      </span>
+    );
+  }
+  return (
+    <span style={{ color: V3.ink }}>
+      {formatCents(line.projected_cents)}
+      {line.projected_basis === "snapshot" && line.projected_captured_at ? (
+        <span
+          className="block text-xs"
+          style={{ color: V3.mutedSoft }}
+          title={`Frozen snapshot captured ${formatDateTimeUS(line.projected_captured_at)}`}
+        >
+          snapshot {formatDateUS(line.projected_captured_at)}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 // CASH-FLOW-01 (owner order 2026-09-06, LAW §8 "zero is a claim"): actual_unavailable means the
 // backend measured 0 categorized bank lines company-wide -- a bare $0 here would read as
@@ -237,8 +268,129 @@ type ChartPoint = {
   actualIncome: number;
   projectedIncome: number;
   actualExpenses: number;
-  projectedExpenses: number;
+  /** null = expense projection not captured that day — never treat as projected $0. */
+  projectedExpenses: number | null;
 };
+
+/** E8 row261 — chart points: not-captured expense projections stay null, never plot as $0. */
+export function buildAvpChartPoints(groups: RowGroup[]): ChartPoint[] {
+  return groups.map((g) => ({
+    date: g.date,
+    label: formatDateUS(g.date),
+    actualIncome: g.income.actual_unavailable ? 0 : g.income.actual_cents,
+    projectedIncome: g.income.projected_cents,
+    actualExpenses: g.expenses.actual_unavailable ? 0 : g.expenses.actual_cents,
+    projectedExpenses: g.expenses.projected_unavailable ? null : g.expenses.projected_cents,
+  }));
+}
+
+/**
+ * E8 row261 — raw actual net from every day with measurable actuals, independent of
+ * accuracy_summary coverage filters (backend may omit not-captured expense days from accuracy
+ * totals while keeping income — subtracting those fields as "actual net" is wrong).
+ */
+export function rawActualNetFromGroups(groups: RowGroup[]): {
+  income_cents: number;
+  expense_cents: number;
+  net_cents: number;
+} {
+  let income_cents = 0;
+  let expense_cents = 0;
+  for (const g of groups) {
+    if (g.income.actual_unavailable || g.expenses.actual_unavailable) continue;
+    income_cents += g.income.actual_cents;
+    expense_cents += g.expenses.actual_cents;
+  }
+  return { income_cents, expense_cents, net_cents: income_cents - expense_cents };
+}
+
+/** Projected net excluding days whose expense projection was never captured. */
+export function projectedNetExcludingNotCaptured(groups: RowGroup[]): number {
+  let net = 0;
+  for (const g of groups) {
+    if (g.expenses.projected_unavailable) continue;
+    net += g.income.projected_cents - g.expenses.projected_cents;
+  }
+  return net;
+}
+
+/**
+ * E8 batch45 — separate raw actual net from matched-coverage variance.
+ * Variance only over days with both measurable actuals AND a captured expense projection.
+ * matched_variance_cents is null when no such day exists (never invent variance vs an unavailable projection).
+ */
+export function matchedCoverageNets(groups: RowGroup[]): {
+  raw_actual_net_cents: number;
+  matched_actual_net_cents: number;
+  matched_projected_net_cents: number;
+  matched_variance_cents: number | null;
+  matched_days: number;
+} {
+  let raw_actual_net_cents = 0;
+  let matched_actual_net_cents = 0;
+  let matched_projected_net_cents = 0;
+  let matched_days = 0;
+  for (const g of groups) {
+    const actOk = !g.income.actual_unavailable && !g.expenses.actual_unavailable;
+    if (actOk) raw_actual_net_cents += g.income.actual_cents - g.expenses.actual_cents;
+    if (actOk && !g.expenses.projected_unavailable) {
+      matched_actual_net_cents += g.income.actual_cents - g.expenses.actual_cents;
+      matched_projected_net_cents += g.income.projected_cents - g.expenses.projected_cents;
+      matched_days += 1;
+    }
+  }
+  return {
+    raw_actual_net_cents,
+    matched_actual_net_cents,
+    matched_projected_net_cents,
+    matched_variance_cents: matched_days === 0 ? null : matched_actual_net_cents - matched_projected_net_cents,
+    matched_days,
+  };
+}
+
+/** Cumulative series: not-captured days keep projectedExpenses null (gap), never overwrite with carried pe. */
+export function buildAvpChartSeries(points: ChartPoint[], grain: ChartGrain): ChartPoint[] {
+  if (grain !== "cumulative") return points;
+  let ai = 0;
+  let pi = 0;
+  let ae = 0;
+  let pe = 0;
+  return points.map((p) => {
+    ai += p.actualIncome;
+    pi += p.projectedIncome;
+    ae += p.actualExpenses;
+    if (p.projectedExpenses != null) pe += p.projectedExpenses;
+    return {
+      ...p,
+      actualIncome: ai,
+      projectedIncome: pi,
+      actualExpenses: ae,
+      projectedExpenses: p.projectedExpenses == null ? null : pe,
+    };
+  });
+}
+
+/** SVG polyline segments for projected expenses — skips null gaps (batch45). */
+export function projectedExpensePolylineSegments(
+  series: ChartPoint[],
+  xOf: (i: number) => number,
+  yOf: (cents: number) => number,
+): string[] {
+  const segments: string[] = [];
+  let buf: string[] = [];
+  series.forEach((p, i) => {
+    if (p.projectedExpenses == null) {
+      if (buf.length) {
+        segments.push(buf.join(" "));
+        buf = [];
+      }
+      return;
+    }
+    buf.push(`${xOf(i).toFixed(1)},${yOf(p.projectedExpenses).toFixed(1)}`);
+  });
+  if (buf.length) segments.push(buf.join(" "));
+  return segments;
+}
 
 function accuracyVerb(
   projected: number,
@@ -260,23 +412,8 @@ function accuracyPct(projected: number, actual: number): number {
   return Math.round((100 * Math.min(Math.abs(projected), Math.abs(actual))) / max);
 }
 
-function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: ChartGrain }) {
-  const series = useMemo(() => {
-    let ai = 0;
-    let pi = 0;
-    let ae = 0;
-    let pe = 0;
-    return points.map((p) => {
-      if (grain === "cumulative") {
-        ai += p.actualIncome;
-        pi += p.projectedIncome;
-        ae += p.actualExpenses;
-        pe += p.projectedExpenses;
-        return { ...p, actualIncome: ai, projectedIncome: pi, actualExpenses: ae, projectedExpenses: pe };
-      }
-      return p;
-    });
-  }, [points, grain]);
+export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { points: ChartPoint[]; grain: ChartGrain; expNotCapturedDays?: number }) {
+  const series = useMemo(() => buildAvpChartSeries(points, grain), [points, grain]);
 
   const W = 1100;
   const H = 280;
@@ -288,19 +425,30 @@ function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: Chart
   const plotH = bottom - top;
   const maxAbs = Math.max(
     1,
-    ...series.flatMap((p) => [p.actualIncome, p.projectedIncome, p.actualExpenses, p.projectedExpenses]),
+    ...series.flatMap((p) => {
+      const vals = [p.actualIncome, p.projectedIncome, p.actualExpenses];
+      if (p.projectedExpenses != null) vals.push(p.projectedExpenses);
+      return vals;
+    }),
   );
   const yOf = (cents: number) => bottom - (cents / maxAbs) * plotH;
   const n = Math.max(series.length, 1);
   const xOf = (i: number) => left + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
 
-  const poly = (key: keyof ChartPoint) =>
+  const poly = (key: "actualIncome" | "projectedIncome" | "actualExpenses") =>
     series
       .map((p, i) => `${xOf(i).toFixed(1)},${yOf(Number(p[key])).toFixed(1)}`)
       .join(" ");
+  const projExpSegments = projectedExpensePolylineSegments(series, xOf, yOf);
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => Math.round(maxAbs * t));
-  const projExpensesAllZero = series.every((p) => p.projectedExpenses === 0);
+  // E8: a range made only of not-captured days is not "the engine projects none" — that note would be a false claim.
+  // Only days with a real projectedExpenses number count toward "all zero".
+  const measurableProjExp = points.filter((p) => p.projectedExpenses != null);
+  const projExpensesAllZero =
+    measurableProjExp.length > 0 &&
+    expNotCapturedDays < points.length &&
+    measurableProjExp.every((p) => p.projectedExpenses === 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -324,6 +472,18 @@ function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: Chart
         <span>
           <span style={{ display: "inline-block", width: 14, height: 2, background: V3.slate, verticalAlign: "middle", marginRight: 4 }} />
           Actual expenses (bank)
+        </span>
+        <span data-testid="cash-flow-avp-proj-exp-legend">
+          <span
+            style={{
+              display: "inline-block",
+              width: 14,
+              borderTop: `2px dashed ${V3.amber}`,
+              verticalAlign: "middle",
+              marginRight: 4,
+            }}
+          />
+          Projected expenses
         </span>
       </div>
       {projExpensesAllZero ? (
@@ -355,6 +515,19 @@ function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: Chart
           strokeDasharray="6 4"
         />
         <polyline className="cf-v3-draw" pathLength={1} points={poly("actualExpenses")} fill="none" stroke={V3.slate} strokeWidth={2} />
+        {projExpSegments.map((pts, idx) => (
+          <polyline
+            key={`proj-exp-${idx}`}
+            className="cf-v3-draw"
+            pathLength={1}
+            points={pts}
+            fill="none"
+            stroke={V3.amber}
+            strokeWidth={1.8}
+            strokeDasharray="6 4"
+            data-testid="cash-flow-avp-proj-exp-polyline"
+          />
+        ))}
         {series.map((p, i) => (
           <text key={p.date} x={xOf(i)} y={H - 12} textAnchor="middle" fontFamily={V3.font} fontSize={10} fill={V3.muted}>
             {p.label}
@@ -406,20 +579,11 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
     });
   }, [groups, applied.varianceFilter]);
   const acc = data?.accuracy_summary;
+  const expNotCapturedDays = groups.filter((g) => g.expenses.projected_unavailable).length;
   const actualsUnavailable = data?.bank_categorization_coverage.categorized_count === 0;
 
-  const chartPoints: ChartPoint[] = useMemo(
-    () =>
-      groups.map((g) => ({
-        date: g.date,
-        label: formatDateUS(g.date),
-        actualIncome: g.income.actual_unavailable ? 0 : g.income.actual_cents,
-        projectedIncome: g.income.projected_cents,
-        actualExpenses: g.expenses.actual_unavailable ? 0 : g.expenses.actual_cents,
-        projectedExpenses: g.expenses.projected_cents,
-      })),
-    [groups],
-  );
+  const chartPoints: ChartPoint[] = useMemo(() => buildAvpChartPoints(groups), [groups]);
+  const coverageNets = useMemo(() => matchedCoverageNets(groups), [groups]);
 
   return (
     <div className="space-y-4" style={{ fontFamily: V3.font }} data-testid="cash-flow-avp-v3-root">
@@ -550,18 +714,24 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             );
           })()}
           {(() => {
-            const projNet = acc.total_projected_income_cents - acc.total_projected_expense_cents;
-            const actNet = acc.total_actual_income_cents - acc.total_actual_expense_cents;
-            const netVar = actNet - projNet;
+            // E8 batch45: variance only on matched days (actuals + captured projection).
+            // Raw actual net stays separate — never invent variance vs an unavailable projection.
+            const netVar = coverageNets.matched_variance_cents;
+            const varianceUnavailable = actualsUnavailable || netVar == null;
             return (
               <V3KpiTile
                 label="Net variance"
-                value={actualsUnavailable ? "unavailable" : formatCents(netVar, { sign: true })}
-                tone={actualsUnavailable ? "muted" : netVar < 0 ? "red" : netVar > 0 ? "green" : "ink"}
+                value={varianceUnavailable ? "unavailable" : formatCents(netVar, { sign: true })}
+                tone={
+                  varianceUnavailable ? "muted" : netVar! < 0 ? "red" : netVar! > 0 ? "green" : "ink"
+                }
                 sub={
-                  <span>
-                    proj net {formatCents(projNet, { sign: true })} · act net{" "}
-                    {actualsUnavailable ? "unavailable" : formatCents(actNet, { sign: true })}
+                  <span data-testid="cash-flow-avp-v3-kpi-net-sub">
+                    matched proj {formatCents(coverageNets.matched_projected_net_cents, { sign: true })} · raw act{" "}
+                    {actualsUnavailable
+                      ? "unavailable"
+                      : formatCents(coverageNets.raw_actual_net_cents, { sign: true })}
+                    {coverageNets.matched_days === 0 ? " · no matched days" : ""}
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-net"
@@ -594,7 +764,13 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           }
           testId="cash-flow-avp-chart-panel"
         >
-          <AvpCompareChart points={chartPoints} grain={chartGrain} />
+          {expNotCapturedDays > 0 ? (
+            <p className="text-xs" style={{ color: V3.amber }} data-testid="cash-flow-avp-proj-exp-not-captured-note">
+              Projected expenses not captured on {expNotCapturedDays} earlier day{expNotCapturedDays === 1 ? "" : "s"} — those
+              days are left out of expense accuracy totals and never plotted as projected $0.
+            </p>
+          ) : null}
+          <AvpCompareChart points={chartPoints} grain={chartGrain} expNotCapturedDays={expNotCapturedDays} />
         </BoardSection>
       )}
 

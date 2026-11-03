@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../../shared/EntityLink";
 import { apiRequest } from "../../../api/client";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { ListErrorBanner } from "../../shared/ListErrorBanner";
 import { entityLabel } from "../../../lib/entity-label";
 import { Combobox } from "../../Combobox";
@@ -33,7 +34,7 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
   const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-detail-border-crossings">
-      <h3 className="text-xs font-semibold text-[#0F1219]">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
+      <h3 className="text-xs font-semibold text-[#0F1219]">Customs &amp; border crossings{rows.length ? ` (${formatQuantityTable(rows.length, 0)})` : ""}</h3>
       <div className="max-w-xs text-xs" data-testid="load-detail-customs-broker-filter">
         <label htmlFor="load-detail-customs-broker-filter-input" className="text-xs text-gray-500">
           Filter by customs broker
