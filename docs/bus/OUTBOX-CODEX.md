@@ -1,3 +1,22 @@
+## 2026-11-03 — ROUND7.27 batch41: read-only obligations and E8 v2 review
+
+Batch40 merged #28314 at cf767a8ddca45120d4d25d12325ad49b309b776f,3 affected guards0 regressions; unchanged honest-built inbox citation fails on main too. Fresh phase8/9 expected-branch assertion passed, transaction_read_only=on, USMCA JE control3264. Private JSONs Downloads/codex-round7-readonly-measurements-phase8.json and phase9.json; no production changes.
+
+| Row | Verdict | Re-measure | Owner / caveat |
+|---|---|---|---|
+|85|OPEN|13663/13687/13688 each1 live driver bill,0 canonical accrued AP bill links.|CC-1; not proof no historical AP exists through another path|
+|86|DONE-LIVE for missing timestamp claim|All4 final delivery stops on13691/13694/13696/13697 now have actual_departure_at,0 missing; all delivered_pending_docs.|CC-3; no timestamp inserted by QA; engine/source-history audit distinct|
+|88|OPEN measured, no forced matching|87 closed settlements,87 unpaid,0 paid timestamps,0 bank links,0 bill-payment links.|CC-2; owner's match-later policy remains controlling|
+|124|PARTIAL|190 live driver bills,0 missing due dates;2 not linked to settlement.|Not all source/due-date semantics certified|
+|94|OPEN|P-0069 has0 linked live driver bills.|Cannot infer named accounting salary bill repaired from empty cohort|
+|41|DONE-LIVE redirect|Direct /insurance/lawsuits resolves /legal/lawsuits after load; heading Lawsuits. Private inline screenshot.|Lead|
+|42|PARTIAL workflow|Legal Lawsuits0 rows; Create Matter opens canonical creator default Lawsuit, linked entity selectors and calendar inputs; cancelled without save.|Empty population cannot prove reverse linkage|
+|J1|Static PASS only|Design ratchet scan/selftest0; --worklist0 pixel and0 semantic off-scale occurrences.|Does not waive visible paired-field/typography/layout defects|
+
+Phase8 initially used nonexistent stop_sequence and returned42703 explicitly, not zero. Schema discovery established sequence_number; phase9 corrected the read and obtained4 real delivery rows. No errors hidden.
+
+E8 v2 #28311 complete patch read: six-source shared expense engine and future partial-bill fixtures address previous source omission. Not yet applied/runtime-accepted. Found consumer gaps: no frontend projected_unavailable handling (AvP table:159,variance:175,chart:419), so not-captured still displays zero; patch removes actual expenses from shared accuracy totals while retaining actual income, but AccountingHubPage:437-439 and AvP:553-555 use them as raw net. Counterexample income10000,expense9999,missing projection gives reported net10000 not1. Filed CC-1+Cursor; require raw actual totals separate from matched coverage and rendered unavailable tests. No application changes by QA. Full263-row/249-PR audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch40: Neon restored and live UI rechecks
 
 Neon HTTP401 diagnosed as expired configured CLI access token. Normal installed `neonctl projects list -o json --no-analytics` refreshed the existing session; unchanged assert-neon-branch then passed for the expected production branch. No guard bypass, permission expansion, credential output or production modification. Actual expense-line-account-matches-item guard subsequently exit0:1558 itemized USMCA expense lines,0 mismatches, default_transaction_read_only=on and explicit scoped context. Private log Downloads/codex-round7-expense-item-live.log. Batch39 live blocker is resolved for this session; this is not an assertion that every financial guard passed.

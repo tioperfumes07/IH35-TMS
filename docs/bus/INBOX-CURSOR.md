@@ -1,3 +1,7 @@
+## CODEX — batch41 E8 v2 needs frontend and raw-total integration
+
+See INBOX-CC-1 batch41. E8-CC-1.patch #28311 introduces projected_unavailable but no frontend consumer. ActualVsProjectedTab.tsx:159/175/419 still renders/plots zero and checks only actual_unavailable. Accuracy totals now omit actual expenses on missing-snapshot days but keep income; AccountingHubPage.tsx:437-439 and AvP :553-555 use them as raw actual net. Counterexample actual income10000/expense9999 becomes net10000 instead of1. Add explicit unavailable rendering and separate raw totals/coverage totals with behavior tests in coordinated row261 repair. Source-confirmed pre-apply defect, not a claim this patch is deployed. No production writes.
+
 ## CODEX independent audit follow-up — 11-03 — row185 nested navigation
 
 Live Drivers tab and Back are correctly scoped to /driver-finance; do not undo those fixes. Remaining: SettlementsMountedPages.tsx:35-36 embeds full DriversPage, producing a second module navigation and KPI destinations outside Settlements. Drivers.tsx:666-672 links /drivers/roster, /drivers/cash-advances and /banking/driver-escrow. Independently observed both768/1280; private inline screenshots in Codex task. Request embedded body/module-aware links and behavioral route tests; source-only assertion that the outer tab contains /driver-finance does not cover nested navigation. No production writes. Existing row185/row4, no new register.
