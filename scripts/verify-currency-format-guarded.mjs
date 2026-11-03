@@ -811,6 +811,10 @@ const dispatchOverviewIdleQty = read("apps/frontend/src/pages/dispatch/DispatchO
 if (!/formatQuantityTable\(maxDaysIdle, 0\)/.test(dispatchOverviewIdleQty)) {
   fail("DispatchOverview maxDaysIdle must use formatQuantityTable(, 0)");
 }
+const truckLineDurationQty = read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(truckLineDurationQty) || !/formatQuantityTable\(hours, 0\)/.test(truckLineDurationQty)) {
+  fail("TruckLineBoard fmtDuration/fmtHoursMinutes must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
