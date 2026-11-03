@@ -412,7 +412,7 @@ export function CompanySettlementsPage() {
                   className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
                   data-testid="company-settlements-tour-totals-label"
                 >
-                  Totals ({v.length})
+                  Totals ({formatQuantityTable(v.length, 0)})
                 </span>
               ),
               revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),

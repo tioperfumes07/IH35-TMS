@@ -582,6 +582,20 @@ if (!/formatQuantityTable\(unassignedLoads\.length, 0\)/.test(timelineQty)) {
   fail("UnifiedTimelinePlanner unassigned count must use formatQuantityTable(, 0)");
 }
 
+
+const inTransitLoad = read("apps/frontend/src/components/dispatch/LoadInTransitIssuesReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(inTransitLoad)) {
+  fail("LoadInTransitIssuesReverseSection count must use formatQuantityTable(, 0)");
+}
+const companySettleQty = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage footer Totals must use formatQuantityTable(, 0)");
+}
+const settleToursQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
+  fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
