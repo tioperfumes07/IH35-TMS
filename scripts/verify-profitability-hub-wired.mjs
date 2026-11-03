@@ -108,6 +108,9 @@ export function verdict(files) {
   if (!/voided_at\s+IS\s+NULL/.test(customerRoute) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(customerRoute)) {
     problems.push("customer-profitability cost query must exclude void/voided driver bills");
   }
+  if ((customerRoute.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 3) {
+    problems.push("customer-profitability load queries must exclude voided loads (rev/prev/cost)");
+  }
   const laneSvc = read("apps/backend/src/reports/lane-profitability.service.ts");
   if ((laneSvc.match(/voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/g) || []).length < 2) {
     problems.push("lane-profitability pay CTEs must exclude void/voided driver bills (both aggregations)");

@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:00 AM CT) — customer voided-load exclusion
+- **PRIOR:** #28418 lane live-load predicate.
+- **THIS:** customer-profitability rev/prev/cost exclude l.voided_at (sibling of batch63 lane); hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~1:45 AM CT) — lane live-load predicate + AdjustPopover plant
 - **PRIOR:** #28416 factoring/remint/fuel qty.
 - **THIS:** Codex batch63 — lane-profitability load_scope excludes voided/cancelled (compute+detail) to match equipment live population; hub guard; AdjustPopover-specific ledgerEntityKind plant (batch62). ENG-21 DONE-LIVE. Dreamline/match deferred.
