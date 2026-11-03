@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~12:10 AM CT) — lease/map/roundtrip count house quantity
+- **PRIOR:** #28400 in-transit/settlement footer qty · #28398 equipment→ByType.
+- **THIS:** TruckLeaseCreatorModal vehicles · MapView focused · RoundTrips delivered → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~12:00 AM CT) — in-transit + settlement footer house quantity
 - **PRIOR:** #28398 equipment→ByType · #28397 border/timeline qty.
 - **THIS:** Load/Unit in-transit reverse counts · CompanySettlements + SettlementsToursRegister footer Totals → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.

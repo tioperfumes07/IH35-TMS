@@ -1,3 +1,4 @@
+import { formatQuantityTable } from "../../lib/money";
 /** Linkage: mdata.loads · mdata.units · mdata.drivers · mdata.customers. Live=BLOCKED until Chrome on current healthz. */
 import { useMemo, useState } from "react";
 import { filterDispatchUnits } from "../../lib/dispatch-unit-filter";
@@ -225,7 +226,7 @@ function TourHeaderMoney({
   const tourTotalsReady = tourTotals.n === legs.length && legs.length > 0;
   return (
     <span className="text-xs text-gray-500" data-testid="round-trip-header-money">
-      {deliveredCount} of {legs.length} delivered · Invoiced {formatMoneyCents(invoicedCents, currencyCode)} · Tour{" "}
+      {formatQuantityTable(deliveredCount, 0)} of {formatQuantityTable(legs.length, 0)} delivered · Invoiced {formatMoneyCents(invoicedCents, currencyCode)} · Tour{" "}
       {formatMoneyCents(tourRevenueCents, currencyCode)}
       {tourTotalsReady ? (
         <span data-testid="round-trip-header-tour-costs">
