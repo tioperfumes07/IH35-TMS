@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:30 PM CT) — #57/#159 Settlements DONE-LIVE (Codex batch96)
+- **PRIOR:** #28579 cash-basis wire.
+- **THIS:** PENDING/ROUND #57/#159 → DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED after #28561. Non-CT browser not claimed.
+- **NEXT:** U12 residuals / more live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:25 PM CT) — ENG-34 wire cash-basis pair 19877/19879
 - **PRIOR:** #28578 batch70 static 19871/73/75.
 - **THIS:** verify-steps 19877 (cash-basis-pl-from-transactions) + 19879 (cash-basis-drill-answers); removed from .guard-exempt. LIVE leftovers stay exempt.
