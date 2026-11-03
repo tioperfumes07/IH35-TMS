@@ -206,3 +206,11 @@ Do (fast merge): on main, `npm i plaid@49.0.0` → commit package.json + package
 
 ## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
 Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
+
+## LEAD 2026-11-02 6:20 PM CT — row 162 (re-measured): Relay fills never match a driver — needs a permanent crosswalk, not name guessing
+Prod: 281 live USMCA Relay fills; **262 have no matched_driver_id** (220 of those have the unit). Every one carries relay_driver_id (18 distinct). Only 19 fills / 4 drivers ever matched.
+ROOT CAUSE: there is no relay_driver_id → mdata.drivers link anywhere (no column outside integrations.relay_fuel_transactions). Name matching cannot work: Relay names are partial ("angel sosa", "carlos mauricio", "neftali urbano") vs full names in mdata.drivers; "hugo gaytan" exact-matches **5** driver rows (1 Active, 4 Inactive, created 05-31…09-28 — duplicate driver records). Phone: 0 of 18 match exactly one driver, 3 match several.
+PERMANENT FIX (QBO payee-rule model): table integrations.relay_driver_links (operating_company_id, relay_driver_id UNIQUE per company, driver_id FK mdata.drivers, confirmed_by_user_id, confirmed_at; RLS forced + grants per 0065). Matcher resolves ONLY through the link; an unlinked relay_driver_id lands in the Relay "needs driver" queue with a driver picker (SelectCombobox, Active USMCA drivers first) — one confirmation links every past and future fill (re-run match on save). No name/phone auto-guess writes.
+Also: the 5 Hugo Gaytan rows → merge via the existing driver-merge path (CC-2 driver-merge-resume), not delete.
+GUARD: live — live Relay fills with a relay_driver_id that has a link but matched_driver_id NULL = 0; static — matcher never writes matched_driver_id from a name compare.
+DONE = links table live, 18 relay drivers confirmable in the UI, unmatched-with-link = 0. Deadline 2026-11-03T03:00Z.
