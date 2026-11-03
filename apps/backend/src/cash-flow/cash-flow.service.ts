@@ -1960,23 +1960,15 @@ export async function createCashFlowRowAdjustment(
   return result.rows[0];
 }
 
-/** Day grid: for each date in [from, to], sum rows due that day and rows carried forward from an
- * earlier due date that are still open, plus a running cash balance from the live bank total. */
-export async function getRollingLedger(
-  client: Queryable,
-  operatingCompanyId: string,
+
+/** Pure day-grid arithmetic (CASH-T03 coverage): net = income_due - expenses_due; running cash
+ *  advances by that net when opening cash is known. Carry-forward = rows with due_date < day. */
+export function buildRollingLedgerDayGrid(
+  rows: Array<Pick<RollingLedgerRow, "row_kind" | "due_date" | "amount_cents">>,
   from: string,
-  to: string
-): Promise<RollingLedgerResult> {
-  const today = companyBusinessDate();
-  const rows = await getRollingLedgerRows(client, operatingCompanyId, today);
-
-  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
-  const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, {
-    hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
-    hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
-  }).catch(() => null);
-
+  to: string,
+  openingCashCents: number | null,
+): RollingLedgerDay[] {
   const days: RollingLedgerDay[] = [];
   let running = openingCashCents;
   const start = new Date(from + "T00:00:00Z");
@@ -2008,6 +2000,27 @@ export async function getRollingLedger(
       running_cash_cents: running,
     });
   }
+  return days;
+}
+
+/** Day grid: for each date in [from, to], sum rows due that day and rows carried forward from an
+ * earlier due date that are still open, plus a running cash balance from the live bank total. */
+export async function getRollingLedger(
+  client: Queryable,
+  operatingCompanyId: string,
+  from: string,
+  to: string
+): Promise<RollingLedgerResult> {
+  const today = companyBusinessDate();
+  const rows = await getRollingLedgerRows(client, operatingCompanyId, today);
+
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
+  const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, {
+    hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+    hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+  }).catch(() => null);
+
+  const days = buildRollingLedgerDayGrid(rows, from, to, openingCashCents);
 
   return { from, to, opening_cash_cents: openingCashCents, rows, days };
 }

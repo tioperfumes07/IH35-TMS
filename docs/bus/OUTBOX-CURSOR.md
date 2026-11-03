@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:20 PM CT) — CASH-T03 day-grid arithmetic helper
+- **PRIOR:** #28357 fuel_forecast provenance · #28355 house quantity.
+- **THIS:** buildRollingLedgerDayGrid extracted + vitest net/carry/running-cash identities; rolling-ledger guard plants (Codex batch48 coverage gap). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:10 PM CT) — CASH-T03 fuel_forecast provenance
 - **PRIOR:** #28355 house quantity Age/idle/days · #28351 AvP render.
 - **THIS:** CASH-T03 batch48 — projected fuel uses document_kind fuel_forecast (not expense EntityLink); Rolling Ledger plain label + Forecast action (no roll/stop inventing money docs); guard plants + vitest. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
