@@ -1,3 +1,13 @@
+## OUTBOX (11-03-2026 ~1:00 AM CT) — kanban/presettle/home/system qty + batch61 tip
+- **PRIOR:** #28410 batch61 equipment hooks + real dimension.
+- **THIS:** DispatchKanban column badges · TourPreSettlement counts · Owner/DefaultHome cash advances · EngineStatus · Tx Health KPIs · SettlementLoads legs · ToursRegister live → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~12:45 AM CT) — batch61 equipment hooks + real dimension
+- **PRIOR:** #28404 fleet/dispatch/RL qty + CASH-T03 AdjustPopover.
+- **THIS:** Codex batch61 — remove ByType early-returns (rules-of-hooks); customer/lane/trip accept equipment_type with exact alias SQL; lane live-computes when filtered; hub guard plants. ENG-21 DONE-LIVE. Dreamline/match deferred. Manual JE → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~12:25 AM CT) — fleet/dispatch/RL/settlement qty + CASH-T03 AdjustPopover
 - **PRIOR:** #28402 lease/map/roundtrip qty.
 - **THIS:** FleetHome trailers/units · DispatchList Showing · DispatchBoard section · LoadBol POD/BOL · Settlements live/cancelled · TourSettlement counts · RollingLedger income/expense badges → formatQuantityTable(, 0); AdjustPopover passes row into ledgerEntityKind (legacy fuel-avg); currency + cash-t03 ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Manual JE sizing → CC-1.

@@ -106,7 +106,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
     {unpostedDraftExpenses.length > 0 ? (
       <div className="ldt-note warn" data-testid="presettlement-unposted-draft-expense-flag" role="status">
-        {unpostedDraftExpenses.length} draft / unposted expense{unpostedDraftExpenses.length === 1 ? "" : "s"} on this tour — post or void before close.
+        {formatQuantityTable(unpostedDraftExpenses.length, 0)} draft / unposted expense{unpostedDraftExpenses.length === 1 ? "" : "s"} on this tour — post or void before close.
       </div>
     ) : null}
 
@@ -138,12 +138,12 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
     <div className="ldt-grid2">
       {/* Costs on this tour */}
       <div className="ldt-card" data-testid="tour-costs">
-        <div className="ldt-ch"><span>Costs on this tour</span><button type="button" className="ldt-link ldt-open" data-testid="tour-entries-button" onClick={() => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> })}>{r.costs.length} entries ↗</button></div>
+        <div className="ldt-ch"><span>Costs on this tour</span><button type="button" className="ldt-link ldt-open" data-testid="tour-entries-button" onClick={() => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> })}>{formatQuantityTable(r.costs.length, 0)} entries ↗</button></div>
         <div className="ldt-rows">
           {r.costs.slice(0, 8).map((c) => <div key={`${c.kind}:${c.id}`} className="ldt-row"><span><span className="ldt-k">{c.number}</span> · {c.category ?? "no account"} · {c.vendor_name ?? "no vendor"}<span className="ldt-sub">load {c.load_number ?? DASH} · {c.kind} · {c.posting_status}{c.receipt_count ? ` · ${c.receipt_count} receipt${c.receipt_count === 1 ? "" : "s"}` : " · no receipt"}</span></span><span className="ldt-m">{money(c.amount_cents, currencyCode)}</span></div>)}
-          {r.costs.length > 8 ? <div className="ldt-row"><span className="ldt-muted">… {r.costs.length - 8} more — open ↗</span><span /></div> : null}
+          {r.costs.length > 8 ? <div className="ldt-row"><span className="ldt-muted">… {formatQuantityTable(r.costs.length - 8, 0)} more — open ↗</span><span /></div> : null}
           {r.costs.length === 0 ? <div className="ldt-row"><span className="ldt-muted">No costs on this tour yet.</span><span /></div> : null}
-          <div className="ldt-row tot"><span>{r.costs.length} entries</span><span className="ldt-m">{money(totals.costs_cents, currencyCode)}</span></div>
+          <div className="ldt-row tot"><span>{formatQuantityTable(r.costs.length, 0)} entries</span><span className="ldt-m">{money(totals.costs_cents, currencyCode)}</span></div>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
           }}
         >
           <span>Ready to close?</span>
-          <span className="ldt-open" data-testid="tour-ready-count">{okCount} of {r.ready.length}</span>
+          <span className="ldt-open" data-testid="tour-ready-count">{formatQuantityTable(okCount, 0)} of {formatQuantityTable(r.ready.length, 0)}</span>
         </button>
         <div className="grid grid-cols-[max-content_max-content] gap-x-4 px-3 py-1" data-testid="tour-ready-list">
           {r.ready.map((x) => {
@@ -256,6 +256,6 @@ function CostsPop({ r, cur }: { r: TourReadout; cur: string }) {
     </div>
     <div className="ldt-row head"><span>Number · vendor · category</span><span>Load</span><span>State</span><span className="ldt-m">Amount</span></div>
     {r.costs.map((c) => <div key={`${c.kind}:${c.id}`} className="ldt-row"><span><EntityLink kind={c.kind} id={c.id} label={c.number} /> · {c.vendor_name ?? "no vendor"} · {c.category ?? "no account"}</span><span className="ldt-k">{c.load_number ?? DASH}</span><span><span className={`ldt-pill ${c.receipt_count ? "ok" : "warn"}`}>{c.posting_status}{c.receipt_count ? "" : " · no receipt"}</span></span><span className="ldt-m">{money(c.amount_cents, cur)}</span></div>)}
-    <div className="ldt-row tot"><span>{r.costs.length} entries</span><span /><span /><span className="ldt-m">{money(r.totals?.costs_cents ?? 0, cur)}</span></div>
+    <div className="ldt-row tot"><span>{formatQuantityTable(r.costs.length, 0)} entries</span><span /><span /><span className="ldt-m">{money(r.totals?.costs_cents ?? 0, cur)}</span></div>
   </div>;
 }

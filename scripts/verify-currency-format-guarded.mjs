@@ -642,6 +642,35 @@ if (!/formatQuantityTable\(pods\.length, 0\)/.test(loadBolQty) || !/formatQuanti
   fail("LoadBolPanel POD/BOL counts must use formatQuantityTable(, 0)");
 }
 
+const kanbanQty = read("apps/frontend/src/components/dispatch/DispatchKanban.tsx");
+if ((kanbanQty.match(/formatQuantityTable\(loads\.length, 0\)/g) || []).length < 2) {
+  fail("DispatchKanban column badges must use formatQuantityTable(, 0)");
+}
+const preSettleQty = read("apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx");
+if (!/formatQuantityTable\(unpostedDraftExpenses\.length, 0\)/.test(preSettleQty) || !/formatQuantityTable\(r\.costs\.length, 0\)/.test(preSettleQty)) {
+  fail("TourPreSettlementTab draft/cost counts must use formatQuantityTable(, 0)");
+}
+const ownerHomeQty = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(ownerCashPending\.length, 0\)/.test(ownerHomeQty)) {
+  fail("OwnerHome pending cash advances must use formatQuantityTable(, 0)");
+}
+const engineStatusQty = read("apps/frontend/src/pages/system/EngineStatusBoardPage.tsx");
+if (!/formatQuantityTable\(redCount, 0\)/.test(engineStatusQty) || !/formatQuantityTable\(rows\.length, 0\)/.test(engineStatusQty)) {
+  fail("EngineStatusBoardPage counts must use formatQuantityTable(, 0)");
+}
+const txHealthQty = read("apps/frontend/src/pages/system/SystemModulePage.tsx");
+if ((txHealthQty.match(/formatQuantityTable\((?:failCount|warnCount|rows\.length), 0\)/g) || []).length < 3) {
+  fail("Transaction Health KPI counts must use formatQuantityTable(, 0)");
+}
+const settleLoadsQty = read("apps/frontend/src/pages/driver-finance/components/SettlementLoadsSection.tsx");
+if (!/formatQuantityTable\(legs\.length, 0\)/.test(settleLoadsQty)) {
+  fail("SettlementLoadsSection leg count must use formatQuantityTable(, 0)");
+}
+const toursRegQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
+if (!/formatQuantityTable\(filteredRows\.length, 0\)/.test(toursRegQty)) {
+  fail("SettlementsToursRegister live count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
