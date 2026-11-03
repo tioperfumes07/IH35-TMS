@@ -11,6 +11,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
@@ -248,7 +249,7 @@ export function LegalTemplateDetailPage() {
       <BackArrowHeader
         backTo="/legal/templates"
         breadcrumb={["Legal", "Templates", template.template_code]}
-        title={`${template.display_name_en} (v${template.version})`}
+        title={`${template.display_name_en} (v${formatQuantityTable(template.version, 0)})`}
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => navigate("/legal/templates")}>

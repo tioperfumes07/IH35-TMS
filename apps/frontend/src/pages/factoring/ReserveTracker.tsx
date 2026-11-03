@@ -42,7 +42,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useListState } from "../../components/list-state";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -272,7 +272,9 @@ export function ReserveTracker() {
         <div className="mb-3 grid grid-cols-2 gap-2 px-3.5 pt-2 sm:grid-cols-4">
           {([7, 14, 30, 60] as const).map((days) => (
             <div key={days} className="border-t border-gray-200 bg-gray-50 p-2 text-center">
-              <div className="text-section-header uppercase tracking-wide text-gray-500">Next {days}d</div>
+              <div className="text-section-header uppercase tracking-wide text-gray-500">
+                Next {formatQuantityTable(days, 0)}d
+              </div>
               <div className="mt-1 text-xs font-bold text-gray-900">
                 {fmtM(forecastByWindow[days])}
               </div>
