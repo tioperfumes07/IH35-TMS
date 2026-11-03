@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ELD_TABS_CONFIG, type EldTabId } from "./ELD_TABS_CONFIG";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { HonestEmptyTab } from "./tabs/HonestEmptyTab";
 import { LiveDutyTab } from "./tabs/LiveDutyTab";
 import { UnidentifiedTab } from "./tabs/UnidentifiedTab";
@@ -42,22 +43,31 @@ export function EldPage() {
         itemIds={ELD_TABS_CONFIG.map((tab) => tab.id)}
       />
 
-      {activeTab === "live-duty" ? <LiveDutyTab operatingCompanyId={companyId} /> : null}
-      {activeTab === "violations" ? <ViolationsTab operatingCompanyId={companyId} /> : null}
-      {activeTab === "unidentified" ? <UnidentifiedTab operatingCompanyId={companyId} /> : null}
+      {!companyId ? (
+        <BoardSection title="ELD" testId="eld-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load ELD activity.</p>
+        </BoardSection>
+      ) : null}
+      {companyId && activeTab === "live-duty" ? <LiveDutyTab operatingCompanyId={companyId} /> : null}
+      {companyId && activeTab === "violations" ? <ViolationsTab operatingCompanyId={companyId} /> : null}
+      {companyId && activeTab === "unidentified" ? <UnidentifiedTab operatingCompanyId={companyId} /> : null}
       {activeTab === "certifications" ? (
-        <HonestEmptyTab
-          title={activeConfig.emptyTitle}
-          body={activeConfig.emptyBody}
-          testId="eld-certifications-honest-empty"
-        />
+        companyId ? (
+          <HonestEmptyTab
+            title={activeConfig.emptyTitle}
+            body={activeConfig.emptyBody}
+            testId="eld-certifications-honest-empty"
+          />
+        ) : null
       ) : null}
       {activeTab === "settings" ? (
-        <HonestEmptyTab
-          title={activeConfig.emptyTitle}
-          body={activeConfig.emptyBody}
-          testId="eld-settings-honest-empty"
-        />
+        companyId ? (
+          <HonestEmptyTab
+            title={activeConfig.emptyTitle}
+            body={activeConfig.emptyBody}
+            testId="eld-settings-honest-empty"
+          />
+        ) : null
       ) : null}
     </div>
   );

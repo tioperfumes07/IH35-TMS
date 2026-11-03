@@ -10,11 +10,13 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { money, milesLabel, perMile } from "./money";
+import { matchesEquipmentType } from "./equipmentFilter";
 
 interface ByTypeViewProps {
   filters: {
     dateFrom: string;
     dateTo: string;
+    equipmentType?: string;
     customerId?: string;
   };
 }
@@ -24,7 +26,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["profitability", "by-type", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-type", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getEquipmentTypeProfitability({
         operating_company_id: companyId,
@@ -112,7 +114,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
         ) : null}
         <ParityTable<EquipmentTypeProfitabilityRow>
           columns={columns}
-          rows={query.data?.by_type ?? []}
+          rows={(query.data?.by_type ?? []).filter((row) => matchesEquipmentType(filters.equipmentType, row.equipment_code) || matchesEquipmentType(filters.equipmentType, row.equipment_label))}
           rowKey={(row) => row.equipment_code}
           storageKey="profitability-by-type"
           tableTestId="profitability-by-type-table"

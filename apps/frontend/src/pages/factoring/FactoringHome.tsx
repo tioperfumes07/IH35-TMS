@@ -2494,7 +2494,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="grid grid-cols-2 gap-2 px-3.5 py-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
               <div className="border border-gray-200 p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
-                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{formatQuantityTable(agingRows.length, 0)}</div>
               </div>
               {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => (
                 <div key={bucket} className="border border-gray-200 p-2 text-center">
@@ -3067,7 +3067,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Batches</div>
-                          <div className="mt-1 font-semibold text-gray-900">{filtered.length}</div>
+                          <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-faro-batches-count">{formatQuantityTable(filtered.length, 0)}</div>
                         </div>
                       </div>
                       <div className="mt-3 p-3" data-testid="factoring-faro-reconciliation">

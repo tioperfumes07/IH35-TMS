@@ -127,7 +127,7 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     const { onClose, invalidateSpy } = renderModal(vi.fn(), { linkedUnitId: UNIT_ID });
 
     await screen.findByRole("option", { name: "Ace Parts" });
-    await screen.findByDisplayValue("BILL-2026-00001");
+    // "Bill no. (ours)" starts BLANK (server assigns the next unused number); "Vendor invoice no." is never auto-filled.
     fireEvent.change(screen.getByTestId("vendor-reference-select"), { target: { value: VENDOR_ID } });
     await user.click(screen.getByTestId("inject-lines"));
 
@@ -139,7 +139,8 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     const [opId, body] = (createVendorBill as unknown as { mock: { calls: any[][] } }).mock.calls[0];
     expect(opId).toBe("91e0bf0a-133f-4ce8-a734-2586cfa66d96");
     expect(body.vendor_id).toBe(VENDOR_ID);
-    expect(body.bill_number).toBe("BILL-2026-00001");
+    expect(body.bill_number).toBeUndefined(); // vendor invoice no. — blank allowed, never auto-filled
+    expect(body.display_id).toBeUndefined(); // ours — blank → server assigns the next unused number
     // The bill amount is the SUM OF LINES — tax is display-only until a tax expense line with a real CoA
     // account is entered ("no invented tax GL", stated in the form itself). This expected 10825 (100.00 plus
     // 8.25% folded in), which encodes the pre-change behaviour where tax was invented into the header.

@@ -449,6 +449,9 @@ const awaitingBol = read("apps/frontend/src/pages/dispatch/AwaitingBolInvoicePag
 if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
   fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
 }
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage row count must use formatQuantityTable(, 0)");
+}
 
 
 const breakEvenDays = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
@@ -465,6 +468,132 @@ if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.active_fact
 }
 if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.recourse_days/.test(factoringSettings)) {
   fail("FactoringHome settings recourse_days must use formatQuantityTable");
+}
+
+
+const settleShare = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
+if (!/formatQuantityTable\(Number\(split\.share_pct \?\? 0\), 1\)/.test(settleShare)) {
+  fail("SettlementStatementWorkflowPage share % must use formatQuantityTable(, 1)");
+}
+const factorMtd = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(Number\(summary\.mtd_advances_count \?\? 0\), 0\)/.test(factorMtd)) {
+  fail("FactoringHomeBoard mtd_advances_count must use formatQuantityTable(, 0)");
+}
+
+
+const factorUncleared = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(unclearedWireCount, 0\)/.test(factorUncleared)) {
+  fail("FactoringHomeBoard unclearedWireCount must use formatQuantityTable(, 0)");
+}
+
+
+const legalAlertsKpi = read("apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx");
+if ((legalAlertsKpi.match(/formatQuantityTable\(summary\?\.(total|critical|warning|overdue) \?\? 0, 0\)/g) || []).length < 4) {
+  fail("LegalDeadlineAlertsPage KPIs must use formatQuantityTable(, 0)");
+}
+
+
+const tripPair = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
+if ((tripPair.match(/formatQuantityTable\(data\.kpis\.[a-z0-9_]+, 0\)/g) || []).length < 6) {
+  fail("TripPairingBoardPage KPIs must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(unbooked\.length, 0\)/.test(tripPair) || !/formatQuantityTable\(tours\.length, 0\)/.test(tripPair)) {
+  fail("TripPairingBoardPage section badges must use formatQuantityTable(, 0)");
+}
+
+const submitFactor = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(totals\.count, 0\)/.test(submitFactor)) {
+  fail("SubmitToFactorTab invoice count must use formatQuantityTable(, 0)");
+}
+
+const factorHomeQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(agingRows\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome aging total records must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome Faro batches KPI must use formatQuantityTable(, 0)");
+}
+
+const batchWizard = read("apps/frontend/src/pages/factoring/BatchWizard.tsx");
+if (!/formatQuantityTable\(draftBatch\.invoice_ids\.length, 0\)/.test(batchWizard)) {
+  fail("BatchWizard invoice count must use formatQuantityTable(, 0)");
+}
+
+const batchDetail = read("apps/frontend/src/pages/factoring/BatchDetail.tsx");
+if (!/formatQuantityTable\(detail\.invoices\.length, 0\)/.test(batchDetail)) {
+  fail("BatchDetail included invoices must use formatQuantityTable(, 0)");
+}
+
+
+const factorQueueQty = read("apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx");
+if (!/formatQuantityTable\(count, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage stage badge counts must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorQueueQty) || !/formatQuantityTable\(rows\.length, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage showing X of Y must use formatQuantityTable(, 0)");
+}
+
+
+const coverageGapQty = read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx");
+if ((coverageGapQty.match(/formatQuantityTable\(summary\.expiring(?:30|60|90)\.length, 0\)/g) || []).length < 3) {
+  fail("CoverageGapDashboard expiry KPIs must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutTour = read("apps/frontend/src/pages/dispatch/LoadsWithoutTourPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutTour)) {
+  fail("LoadsWithoutTourPage row count must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutBill = read("apps/frontend/src/pages/dispatch/LoadsWithoutDriverBillPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutBill)) {
+  fail("LoadsWithoutDriverBillPage row count must use formatQuantityTable(, 0)");
+}
+
+const atRiskQty = read("apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx");
+if ((atRiskQty.match(/formatQuantityTable\(loads\.length, 0\)/g) || []).length < 2) {
+  fail("AtRiskQueuePage footer + drill count must use formatQuantityTable(, 0)");
+}
+
+const needsAuthQty = read("apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(needsAuthQty)) {
+  fail("NeedsDeliveryAuthorizationPage count must use formatQuantityTable(, 0)");
+}
+
+const fuelGlQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
+if (!/formatQuantityTable\(mappedCount, 0\)/.test(fuelGlQty) || !/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlQty)) {
+  fail("FuelGlMappingCoverage mapped summary must use formatQuantityTable(, 0)");
+}
+
+
+const borderCrossQty = [
+  "apps/frontend/src/components/dispatch/drawer-tabs/CustomsTab.tsx",
+  "apps/frontend/src/components/dispatch/DriverBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/VendorBorderCrossingsReverseSection.tsx",
+];
+for (const rel of borderCrossQty) {
+  const src = read(rel);
+  if (!/formatQuantityTable\(rows\.length, 0\)/.test(src)) {
+    fail(`${rel} border crossing count must use formatQuantityTable(, 0)`);
+  }
+}
+const timelineQty = read("apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx");
+if (!/formatQuantityTable\(unassignedLoads\.length, 0\)/.test(timelineQty)) {
+  fail("UnifiedTimelinePlanner unassigned count must use formatQuantityTable(, 0)");
+}
+
+
+const inTransitLoad = read("apps/frontend/src/components/dispatch/LoadInTransitIssuesReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(inTransitLoad)) {
+  fail("LoadInTransitIssuesReverseSection count must use formatQuantityTable(, 0)");
+}
+const companySettleQty = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage footer Totals must use formatQuantityTable(, 0)");
+}
+const settleToursQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
+  fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
 }
 
 // The regression test exists (renders a no-load row's currency path).

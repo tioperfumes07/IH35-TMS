@@ -38,6 +38,7 @@ const MODULES: readonly ModuleDef[] = [
   { prefix: "/vendors", label: "Vendors", home: "/vendors" },
   { prefix: "/drivers", label: "Drivers", home: "/drivers" },
   { prefix: "/reports", label: "Reports", home: "/reports" },
+  { prefix: "/profitability", label: "Profitability", home: "/profitability" },
   { prefix: "/finance", label: "Finance", home: "/finance" },
   { prefix: "/inventory", label: "Inventory", home: "/inventory" },
   { prefix: "/compliance", label: "Compliance", home: "/compliance" },

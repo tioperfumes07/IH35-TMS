@@ -1,3 +1,83 @@
+## OUTBOX (11-03-2026 ~12:00 AM CT) — in-transit + settlement footer house quantity
+- **PRIOR:** #28398 equipment→ByType · #28397 border/timeline qty.
+- **THIS:** Load/Unit in-transit reverse counts · CompanySettlements + SettlementsToursRegister footer Totals → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:50 PM CT) — batch58 equipment scopes same ByType population
+- **PRIOR:** #28397 border/timeline qty · #28395 exact aliases.
+- **THIS:** Codex batch58 follow-up — lane/customer/load delegate to ByTypeView when equipmentType set so results+KPI share filtered population; hub guard plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:40 PM CT) — border/timeline count house quantity
+- **PRIOR:** #28395 equipment aliases · #28394 Users/ELD.
+- **THIS:** CustomsTab + Driver/Unit/Vendor border-crossing headers · UnifiedTimelinePlanner Unassigned → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:30 PM CT) — batch58 equipment exact aliases + batch57 bills CTE plants
+- **PRIOR:** #28394 Users/ELD · #28392 customer/lane dead bills · #28389 hub mount.
+- **THIS:** Codex batch58 — matchesEquipmentType exact alias sets (no van substring cross-type); lane/customer/load keep rows + scope note (KPI+ByType same filtered population); batch57 bills CTE plants require db.voided_at/db.status independently. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:15 PM CT) — batch56 Users labels + ELD honest unavailable
+- **PRIOR:** #28392 customer/lane dead bills · #28389 Profitability hub.
+- **THIS:** Codex batch56 Cursor bits — Users detail/roster EntityLink use formatPersonName+entityLabel (no bare User); ELD cert/settings copy honest unavailable (no fake rows; not proven-empty); EldPage need-company. Docs UploadModal width → owning seat. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:00 PM CT) — customer/lane dead bills excluded
+- **PRIOR:** #28389 batch55 Profitability hub mount · #28384 qty.
+- **THIS:** customer-profitability + lane-profitability pay CTEs exclude void/voided driver bills (sibling of batch54); customer test + hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:45 PM CT) — batch55 mount Profitability hub + equipment filter
+- **PRIOR:** #28384 coverage/dispatch/fuel qty · #28383 batch54 dead bills.
+- **THIS:** Codex batch55 — mount ProfitabilityPage at `/profitability` (manifest+ReportsSubNav+CategoryHoverNav+breadcrumb); wire FilterBar equipmentType into all tab/KPI queryKeys; ByType+Kpi local matchesEquipmentType; hub guard + equipmentFilter tests. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:30 PM CT) — coverage/dispatch/fuel count house quantity
+- **PRIOR:** #28383 batch54 dead bills · #28381 factoring/dispatch qty.
+- **THIS:** CoverageGap expiry KPIs · LoadsWithoutTour/DriverBill · AtRisk footer+drill · NeedsDeliveryAuth · FuelGlMapping coverage → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:20 PM CT) — batch54 equipment-type dead bills excluded
+- **PRIOR:** #28381 factoring/dispatch count qty · #28378 notes batch53.
+- **THIS:** Codex batch54 — equipment-type profitability bills CTE excludes void/voided (`voided_at IS NULL` + `status NOT IN ('void','voided')`); behavior test live+void same-load; profitability-hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:05 PM CT) — factoring/dispatch count house quantity
+- **PRIOR:** #28378 notes batch53 customer= plants · #28376 TripPairing KPI.
+- **THIS:** TripPairing section badges · SubmitToFactor invoice count · FactoringHome aging/batches · BatchWizard/Detail invoice counts · AwaitingBol row count · FactoringQueue stage/showing → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:50 PM CT) — notes batch53 customer= plants
+- **PRIOR:** #28376 TripPairing KPI · #28374 Legal alerts KPI.
+- **THIS:** Codex batch53 — NOTES_ON_EDIT_RE requires customer={selectedCustomer}+onEdit per mount; independent customer={null as any} plants (7/7 + 4 per-consumer). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:40 PM CT) — TripPairing KPI house quantity
+- **PRIOR:** #28374 Legal alerts KPI · #28373 Legal U12.
+- **THIS:** TripPairingBoardPage board KPIs → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:30 PM CT) — Legal alerts KPI house quantity
+- **PRIOR:** #28373 Legal U12 MultiSelect · #28372 notes per-consumer.
+- **THIS:** LegalDeadlineAlertsPage KPI counts → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:15 PM CT) — Legal matters severity/type U12 MultiSelect
+- **PRIOR:** #28372 notes per-consumer · #28369 share/MTD qty.
+- **THIS:** LegalMattersListPage severity + type → MultiSelectDropdown (U12; Codex batch51 Legal UI). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:00 PM CT) — notes per-consumer plants + uncleared wires qty
+- **PRIOR:** #28369 settlement share/MTD · #28367 BreakEven/fleet/factor.
+- **THIS:** Codex batch52 — notes guard requires both CustomerNotesTab onEdit mounts (+ per-consumer plants). FactoringHomeBoard unclearedWireCount → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~8:45 PM CT) — house qty settlement share + factor MTD wires
+- **PRIOR:** #28367 BreakEven/FleetRestore/Factor settings · #28366 wires/MPG.
+- **THIS:** SettlementStatementWorkflow share % · FactoringHomeBoard MTD advances count → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:35 PM CT) — house qty BreakEven/FleetRestore/Factor settings
 - **PRIOR:** #28366 wires/MPG/API · #28365 batch51 guards.
 - **THIS:** BreakEven days · HomeFleetRestore unit_count · FactoringHome active_factor_count/recourse settings → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

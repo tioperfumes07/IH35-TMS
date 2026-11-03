@@ -114,7 +114,7 @@ export function AwaitingBolInvoicePage() {
         />
       )}
       <p className="text-section-header text-gray-500" data-testid="awaiting-bol-invoice-count">
-        {rows.length} load{rows.length === 1 ? "" : "s"} waiting for BOL
+        {formatQuantityTable(rows.length, 0)} load{rows.length === 1 ? "" : "s"} waiting for BOL
         {queueQ.data?.count != null && queueQ.data.count !== rows.length
           ? ` (API count ${formatQuantityTable(queueQ.data.count, 0)})`
           : ""}

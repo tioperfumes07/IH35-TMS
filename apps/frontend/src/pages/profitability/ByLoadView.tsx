@@ -7,6 +7,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ByTypeView } from "./ByTypeView";
 import { money, pctLabel } from "./money";
 
 interface ByLoadViewProps {
@@ -23,8 +24,16 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
+  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
+  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
+  if (filters.equipmentType) {
+    return <ByTypeView filters={filters} />;
+  }
+
+
+
   const query = useQuery({
-    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getTripProfitability({
         operating_company_id: companyId,
@@ -157,7 +166,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
           emptyText={
             query.isLoading
               ? "Loading trip profitability…"
-              : "No settlements in this period."
+              : "No settlements with trip profitability in this period."
           }
         />
       </div>

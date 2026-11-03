@@ -1,3 +1,98 @@
+## 2026-11-03 — ROUND7.27 batch59: new Cursor corrections and complete escrow display sample
+
+Batch58 merged #28393 c3c1dce2f971d08d65b67af26a692d03aef092cb,3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28394 Users/ELD|Full4-file diff read. ELD live-data scan/selftest PASS; foundation scan PASS (no selftest implementation, --selftest merely reruns scan); fill-shell scan/selftest PASS. User detail now uses same person formatter; cert/settings now explicitly unavailable, with missing-company branch.|Source corrections verified; live new deployment not yet verified. Does not complete missing ELD APIs or resolve missing user identity data.|
+|#28386 row27 caption|Full1-file diff read. Live Account Register selected read-only account: ending balance sublabel reads book as of11/30/2026, not ISO. Screenshot12:37CT at actual927px.|Date-format correction live observed. Strict768/1280 responsive proof not repeated in this pass.|
+|Row253 escrow Updated|Accounting Escrow Show zero accounts + page50 displays all33 accounts.33/33 Updated values padded MM/DD/YYYY with four-digit year. EscrowPage.tsx:36/227. Screenshot private12:39CT.|Named date-format defect FIXED for all33 displayed accounts. No ledger correctness inference.|
+|Row252 escrow holder|All33 accounts included rather than only12 nonzero rows.0 labels saying not visible;1 holder label Safety — still not a resolved full person name. Settlements facade explicitly excludes junk/duplicate closed rows.|Do not close full human-name requirement merely from filtered facade. Identity provenance remains OPEN; no data repair.|
+|#28389 deploy follow-up|After available frontend Reload and direct retry, /profitability still goes Home; backend footer now84e8b57, earlier than mount13ece827ba.|Deployment pending/unverified, not a new-code runtime failure verdict.|
+
+Remaining next checks: #28392 customer/lane exact live reaggregation and test coverage; #28389 permanent equipment dimension plus alias fix; strict responsive proof where browser actual width differed; remaining historical PRs and numbered rows. Full audit INCOMPLETE. Private screenshots never committed.
+
+## 2026-11-03 — ROUND7.27 batch58: profitability filter patch and display retests
+
+Batch57 merged #28390;3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28389 equipment filter|Diff explicitly replaces rows with[] whenever equipmentType is set in ByLaneView,ByCustomerView,ByLoadView. Requests still omit the equipment dimension; queryKey change alone only refetches unchanged data.|PATCH-REJECTED for these3tabs: explanatory unavailable copy is honest, but blanking results is not the requested end-to-end filter. Preserve honest limitation while building real scoped aggregation. Route mounting assessed separately.|
+|#28389 alias helper|Actual matchesEquipmentType call: dry_van vs reefer_van=true; dry_van vs refrigerated_van=true. equipmentFilter.ts:22 substring matching accepts generic van alias inside both refrigerated labels. Existing tests4/4 and guard6/6 PASS.|CONFIRMED helper defect for supported aliases; no claim current catalog has affected population. Exact normalized alias equivalence plus cross-type negative tests required.|
+|#28389 deployed route|Direct /profitability at12:38CT still redirects Home. Home footer backend5c8abd4 (dead-bill repair).|Frontend route deploy UNVERIFIED; do not mislabel pre-deploy behavior a failed new deployment.|
+|Row235 Program timestamp|28 certification strings use MM/DD/YYYY time CT;0 fractional raw timestamps in rendered main.1280/768 document width equals viewport; private screenshots12:34CT.|Named timestamp defect FIXED; scenario engine completeness not inferred.|
+|Rows236-238 System health|USMCA-only filter;100 loaded rows,102 rendered padded numeric timestamps;5payment labels human-readable,0UUID link labels in rendered selection. Expense preview DR/CR has dollar signs; selected payment shows Journal entry missing and FAIL.|Bounded display sample passes. Existing5health failures remain; no repair performed. Actual narrow viewport drifted to853px, so strict768 proof remains UNVERIFIED for this pass.|
+
+Full263-row/249-PR audit remains INCOMPLETE; no scope inflation or automatic DONE promotion.
+
+## 2026-11-03 — ROUND7.27 batch57: independent profitability repair re-measure
+
+Batch56 merged #28387 84e8b579e4dcc6c2b06ed4b8edfecb4d321ac524,3affected0regressions. Production READ ONLY throughout.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28383 dead-bill repair|Full4-file diff read. Tests2/2 PASS; guard4/4 PASS. Executed exact repaired route SELECT versus same SELECT minus new predicates in one read-only repeatable-read USMCA snapshot:194loads,66917672c revenue unchanged; costs49297074c before versus47898520c repaired,delta1398554c. Branch asserted,3264JEcontrol,read_only=on.|Query correction independently verified on live data. Deployed HTTP handler version not yet verified; not full hub acceptance.|
+|#28383 guard coverage|In-memory plant removes only AND db.voided_at IS NULL; verdict remains[] because l.voided_at IS NULL satisfies global regex. Clean verdict also[]. Source untouched.|CONFIRMED missing per-CTE assertion. New mocked behavior test always returns prefiltered aggregate irrespective of SQL; proves response math, not actual same-load mixed-bill exclusion. Cursor handoff for isolated SQL fixture and targeted plant.|
+|#28000 bbe25da850|Full4-file diff and3tab consumers read;34affected PASS,eld-tabs-live-data selftest PASS. Live ELD all5tabs opened:3Duty rows(2unavailable),0Violations,1Unidentified proxy row at12:33CT.1280 screenshot retained privately.|Board wrappers render; underlying cert/settings remain unqueried. No blanket ELD workflow acceptance.|
+|#27997 current live follow-up|At768 actual Certifications and Settings show the static no-record/no-settings assertions described batch56. Screenshot12:31CT private.|Source issue reproduced live; unavailable ingestion is not proof of empty population.|
+
+Private evidence: Downloads/codex-round7-readonly-measurements-phase18.json. No money/data writes. Full audit remains INCOMPLETE.
+
+## 2026-11-03 — ROUND7.27 batch56: Docs, Users and historical map/ELD review
+
+Batch55 merged #28382 at86cf33a8f22506af8e0bf4ab4f5dcaaed6effed3. Production read-only; no form submissions. Private screenshots remain inline in audit task.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Row232 Docs Upload|At1280/768 all4 editing fields40px high; both date boxes338px wide. UploadModal.tsx:294-312 supplies w-full in two-column grid. No file selected; Cancel.|Height FIXED; width OPEN against132px date-box law.|
+|Row231 Docs driver labels|Drivers filter380 documents,16pages; first25 driver links proper-cased with no UUID label. Document width768 at narrow viewport.|First-page sample passes; remaining355 not inspected, not full-row closure.|
+|Row233 Users master-detail|37 records;14 buttons named User Driver with Invited/Inactive status. Selected record detail uses raw casing while list uses proper case. Users.tsx:770 versus799. Screenshots1280/768.|OPEN; canonical human display needed. No accounts modified.|
+|Row234 Create User|At1280/768 name/email447x40px, role inner input429x40px. Cancel closed drawer; no invite or account created.|Named editing-height defect FIXED under current40px law, not create workflow proof.|
+|#27995 e4d51450f1|Full2-file diff reviewed;11 affected checks PASS; mapview-honest and disp-s23 selftests PASS. Live /dispatch/map1280/768 renders BoardSection but Map provider not configured,0 GPS loads.|Narrow wrapper verified; map data functionality remains UNVERIFIED, not DONE-LIVE.|
+|#27997 0f4e4b4917|Full3-file diff reviewed;4 affected checks PASS; eld-tabs-live-data selftest PASS. Current EldPage.tsx:48-62 still mounts HonestEmptyTab without query for certifications/settings; ELD_TABS_CONFIG.ts:34/41 asserts no records/settings.|Cosmetic wrapper verified; source-only empty claim cannot establish zero population. Workflow OPEN. No live empty-population proof claimed.|
+|UI design ratchet|Current scan and selftest PASS; worklist0 raw off-scale files/occurrences and0 semantic off-scale files/occurrences.|Scanner clean, not blanket geometry acceptance. Date-width findings above remain.|
+
+Full263-row/249-PR audit remains INCOMPLETE. No production changes or other-company database reads.
+
+## 2026-11-03 — ROUND7.27 batch55: independent fix retests and unreachable profitability hub
+
+Batch54 merged #28380 b979cb9b6eb3e4ebcd5655a6aa78398de73ffec4,3checks0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28378 Notes binding repair|Current scan PASS; selftest7/7+4 per-consumer PASS, including individual customer={null as any} and onEdit plants.|Batch53 guard gap repaired.|
+|#28379 PM unknown state|Full2-file diff read; helper5/5 PASS. Component passes pmDue.isError/isLoading into the helper and renders unknown instead of claiming no schedule.|Repo behavior correction verified; not live fault-injection or populated-arrival proof.|
+|#27994 Profitability hub|Current and historical source searches find no import/mount of pages/profitability/ProfitabilityPage in app route tree. Live /profitability redirects to Home. Equipment API is mounted, but its sole frontend consumer is this unreachable hub. Hub guard3/3 selftests and type guard selftest PASS despite absent page route.|CONFIRMED incomplete wiring, not DONE-LIVE. Cursor handoff. Published batch54 money defect remains in the mounted API; do not misrepresent it as a visible hub total.|
+|#27994 equipment filter|FilterBar writes equipmentType but all4 tab query keys/arguments and KPI omit it; rows use raw response directly. Source remains current.|CONFIRMED source gap; fix before exposing hub. Do not claim live interaction proof on unreachable page.|
+|Row230 report-name field|Live /reports/custom at1280 and768: report-name150x40px, document scrollWidth equals viewport; private inline screenshots12:20CT.|Named height/width defect FIXED. Adjacent report_id input remains26px high (vs34 filter/40 edit law); keep that related surface issue OPEN, CustomReportBuilder.tsx:143-149.|
+|Row239 subscription timezone|Live /reports/scheduled Add subscription at1280/768: timezone447x40px both; private inline screenshots12:24CT. Cancel closed drawer, no save.|Named height defect FIXED under40px form rule. Not an email delivery proof:6 subscriptions,0 delivery-history rows.|
+
+Full263-row/249-PR audit remains INCOMPLETE. Screenshots private; no report run/save/test-send executed.
+
+## 2026-11-03 — ROUND7.27 batch54: profitability includes voided driver bills
+
+Batch53 merged #28375 at770b4b9a7d3a9995a2c0567b45cad03dfc58759c,13 affected checks0regressions. Current main09c3cd6850 inspected. Production READ ONLY, no writes.
+
+| Item | Independent evidence | Verdict |
+|---|---|---|
+|#27994 equipment-type profitability|Historical d78092993b affected scan43PASS. Current route lines61-66 sums all driver_bills without live predicate. Read-only same period08/01/2026–11/02/2026:209 included bills,19 void/voided bills on19 loads contribute1398554c to direct costs. Equipment populations30/61/103 reproduce original claim. Transaction read_only=on,expected Neon branch,3264 JE control.|CONFIRMED money-read defect: voided bill contribution inflates direct costs and reduces gross margin by1398554c versus identical aggregation excluding dead bills. Handed Cursor; full PR review still in progress, static green is not acceptance.|
+|Row210 Create Work Order|Live1280/768: editing fields40px high, modal960/736px, document width equals viewport. At768 three date boxes213.328/192/216px wide. Private inline screenshot12:15CT. No save.|Height conforms newer owner design law40px, superseding old38px target. Date-box width remains OPEN against132px owner law. No production submissions.|
+
+Private query evidence: Downloads/codex-round7-readonly-measurements-phase17.json. No personal financial evidence committed. Full263-row/249-PR audit INCOMPLETE; other fixes require independent verification.
+
+## 2026-11-03 — ROUND7.27 batch53: live Accounting and Maintenance retests
+
+Batch52 merged #28368 d59f97261f6ecffa5428a509a6ecfd725fb8e467,3 affected checks0regressions. Synced main310a86a29e. Production read-only; no forms submitted.
+
+| Item | Independent evidence | Verdict |
+|---|---|---|
+|#28364 Accounting lower panels / ACCT-F11031|Live1280 lower grid563.203px+563.203px;768 lower grid626.406px. Document scrollWidth equals viewport at both. Private inline screenshots12:13CT: full receivables amounts/total readable; narrow cash pulse and settlements stack.|Narrow layout defect LIVE VERIFIED. Not blanket Accounting acceptance.|
+|#28372 Notes guard|Scan PASS;7/7+2per-consumer plants PASS. Previously escaped single onEdit defect now rejected.|That mutation gap fixed. New diff removed customer={selectedCustomer} assertion: independently plant customer={null as any} at either Notes mount1843/1969 and collectFailures=[]; handoff Cursor.|
+|#28371 Maintenance arrivals / row70|Full2-file diff read; helper tests4/4 PASS. Schedule link targets existing create_wo/unit_id handler. Live12:14CT still shows previous4-column arrivals and old footer,0rows.|New deploy NOT verified. New pmDue error/loading silently falls back to[] and labels units No PM schedule; source defect handed Lead.|
+
+Browser connection recovered by resetting tool bindings, without touching browser profile, permissions or application data. Full263-row/249-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch52: independent Cursor fix retests
 
 Main inspected e1220db239. Production READ ONLY, no submissions or writes.
