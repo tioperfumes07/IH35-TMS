@@ -1,3 +1,10 @@
+## 2026-11-03 — ROUND7.30 batch91: chart repair LIVE; formatter guard counterexamples closed
+
+- #28535 2ac43cb0ca: functional diff and surrounding selected-week wiring reviewed. Exact merge affected43PASS/1FAIL-test; failing live-document-predicates-single-source directly rerun on parent80e8ef72ab and merge:both exit1,inline228,17identical findings. Inherited,not chart regression. Settlement honesty scan/selftest PASS. Live USMCA17:01CT:11accessible chart bars;click historical week changes week_start and Week-of;open2/closed11;Closed renders11. Enter selects another week with open1/closed6 and6rendered;Space restores prior11. Deductions and selected footer change with selection. Batch88 dead chart drill CLOSED for these actual interactions. Screenshot private inline task,not committed.
+- #28538 b984b35e95: exact merge affected3/3PASS;target scan+selftest PASS. Independent actual-validator plants separately remove row and subtotal formatUsd from each of Reimbursements/ExtraPay:4/4now rejected,clean2/2accepted. Same4plants escaped exact old#28100. Batch90 precise guard gap CLOSED;no claim that every formatting variant is covered. Private codex-round7-reimbursement-format-probe.cjs.
+- Remaining selected-week label defect: SettlementsHomeBoardPanels.tsx:222 still says Deductions this week after selecting a historical week,while value follows selected week. Cursor should label selected week. Board payment Status Open is distinct from tour Closed by explicit contract;not reported as a new data defect.
+- Production untouched. Invoice full-JE health reader and canonical settlement-spine findings remain OPEN with CC-1;no fix observed through546a1beee7. Full audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.30 batch90: settlement formatter history and reproduced guard coverage hole
 
 Batch89 merged #28524 7a47a9c51384cd82c75e2613aa9bd0614c8b1567,normal hooks,1affected,0regressions.
