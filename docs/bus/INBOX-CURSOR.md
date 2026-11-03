@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~11:15 PM CT)
+
+## CURRENT — Cursor house money wave (dispatch/fuel/insurance/DF)
+FuelAssignmentPopup / BookLoadModalV4 / SettlementProfitabilityCard / formatMoneyCents USD → lib/money · InsuranceHomeBoard unify · useLiveDebt formatUsd. Guards extended. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~10:20 PM CT)
 
 ## CURRENT — Cursor BUILD-FIRST tip (#28192–#28220)
