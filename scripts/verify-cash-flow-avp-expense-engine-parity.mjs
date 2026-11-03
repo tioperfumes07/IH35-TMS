@@ -15,6 +15,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-flow-avp-expense-engine-parity";
 const SERVICE = "apps/backend/src/cash-flow/cash-flow.service.ts";
 const CRON = "apps/backend/src/cron/cash-flow-projection-snapshot.cron.ts";
+const FE = "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx";
 
 function fnBody(src, name) {
   const start = src.indexOf(`export async function ${name}(`);
@@ -23,7 +24,7 @@ function fnBody(src, name) {
   return src.slice(start, next < 0 ? undefined : next);
 }
 
-export function findDefects(service, cron) {
+export function findDefects(service, cron, fe = "") {
   const out = [];
   const avp = fnBody(service, "getActualVsProjected");
   const daily = fnBody(service, "getDailyPrediction");
@@ -36,6 +37,14 @@ export function findDefects(service, cron) {
   if (avp && !/projected_expense_cents/.test(avp)) out.push("getActualVsProjected does not read the snapshot's projected_expense_cents for past days");
   if (avp && !/"not_captured"/.test(avp)) out.push('a past day without an expense snapshot is not marked "not_captured"');
   if (!/projected_expense_cents/.test(cron) || !/expense_subtotal_cents/.test(cron)) out.push("snapshot cron does not capture expense_subtotal_cents into projected_expense_cents");
+  // Codex batch64 — expense accuracy KPI must use matched coverage, never raw total_actual_expense_cents.
+  if (fe) {
+    if (!/matchedExpenseAccuracyCoverage/.test(fe)) out.push("ActualVsProjectedTab must derive matchedExpenseAccuracyCoverage for the expense-accuracy tile");
+    if (!/matched proj/.test(fe) || !/cash-flow-avp-v3-kpi-expense/.test(fe)) out.push("expense-accuracy KPI must label matched proj/act (not raw totals)");
+    if (/accuracyPct\(\s*acc\.total_projected_expense_cents\s*,\s*acc\.total_actual_expense_cents\s*\)/.test(fe)) {
+      out.push("expense accuracyPct still feeds raw total_actual_expense_cents (must use matched coverage)");
+    }
+  }
   return out;
 }
 
@@ -55,7 +64,12 @@ function selftest(service, cron) {
   const cronHit = findDefects(service, cron.split("expense_subtotal_cents").join("income_subtotal_cents")).length > 0;
   console.log(`${cronHit ? "ok  " : "MISS"}  plant: cron stops capturing expense`);
   if (cronHit) caught++;
-  const total = plants.length + 1;
+  const feSrc = readFileSync(path.join(ROOT, FE), "utf8");
+  const fePlant = feSrc.split("matchedExpenseAccuracyCoverage").join("brokenExpenseCoverage");
+  const feHit = findDefects(service, cron, fePlant).some((d) => d.includes("matchedExpenseAccuracyCoverage"));
+  console.log(`${feHit ? "ok  " : "MISS"}  plant: FE expense accuracy loses matchedCoverage`);
+  if (feHit) caught++;
+  const total = plants.length + 2;
   console.log(`${LABEL} SELFTEST: ${caught}/${total} planted defects caught`);
   process.exit(caught === total ? 0 : 1);
 }
@@ -63,7 +77,8 @@ function selftest(service, cron) {
 const service = readFileSync(path.join(ROOT, SERVICE), "utf8");
 const cron = readFileSync(path.join(ROOT, CRON), "utf8");
 if (process.argv.includes("--selftest")) selftest(service, cron);
-const defects = findDefects(service, cron);
+const fe = readFileSync(path.join(ROOT, FE), "utf8");
+const defects = findDefects(service, cron, fe);
 if (defects.length) {
   console.error(`${LABEL} FAIL:\n - ${defects.join("\n - ")}`);
   process.exit(1);

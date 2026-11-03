@@ -5,7 +5,9 @@ import {
   ProjectedExpenseCell,
   buildAvpChartPoints,
   buildAvpChartSeries,
+  accuracyPct,
   matchedCoverageNets,
+  matchedExpenseAccuracyCoverage,
   projectedExpensePolylineSegments,
   projectedNetExcludingNotCaptured,
   rawActualNetFromGroups,
@@ -174,6 +176,27 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
     expect(cov.matched_actual_net_cents).toBe(300);
     expect(cov.matched_projected_net_cents).toBe(250);
     expect(cov.matched_variance_cents).toBe(50);
+  });
+
+  it("batch64 expense accuracy uses matched coverage (proj10000/matchedAct10000/raw20000 → 100%, not 50%)", () => {
+    const groups = [
+      dayGroup({ date: "2026-10-05", actInc: 0, actExp: 10_000, projInc: 0, projExp: 10_000 }),
+      dayGroup({ date: "2026-10-06", actInc: 0, actExp: 10_000, projInc: 0, projExp: 0, projected_unavailable: true }),
+    ];
+    const cov = matchedExpenseAccuracyCoverage(groups);
+    expect(cov.matched_days).toBe(1);
+    expect(cov.matched_projected_expense_cents).toBe(10_000);
+    expect(cov.matched_actual_expense_cents).toBe(10_000);
+    const rawActualExpense = 20_000;
+    expect(accuracyPct(cov.matched_projected_expense_cents, rawActualExpense)).toBe(50);
+    expect(accuracyPct(cov.matched_projected_expense_cents, cov.matched_actual_expense_cents)).toBe(100);
+  });
+
+  it("batch64 expense accuracy unavailable when every day is not-captured", () => {
+    const groups = [
+      dayGroup({ date: "2026-10-05", actInc: 0, actExp: 9_999, projected_unavailable: true }),
+    ];
+    expect(matchedExpenseAccuracyCoverage(groups).matched_days).toBe(0);
   });
 
   it("renders projected-expense legend + polyline (not only income/actual lines)", () => {
