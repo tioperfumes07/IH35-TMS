@@ -303,6 +303,11 @@ if (!/formatUsdCents\(entry\.debit_total_cents/.test(manualJe) || !/formatUsdCen
   fail("ManualJEListPage Debits/Credits must use formatUsdCents");
 }
 
+const retention = read("apps/frontend/src/pages/drivers/RetentionDashboard.tsx");
+if (!/formatQuantityTable\(lateArrivalRate \* 100, 1\)/.test(retention)) {
+  fail("RetentionDashboard late arrival rate must use formatQuantityTable");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
