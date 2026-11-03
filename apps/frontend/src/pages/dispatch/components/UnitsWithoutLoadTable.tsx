@@ -5,6 +5,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import type { DataTableErrorState } from "../../../lib/tableError";
 
 type Props = {
@@ -135,7 +136,9 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           cellClass: "text-right tabular-nums",
           sortValue: (row) => row.hours_since_last_delivery,
           render: (row) => (
-            <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "—"}</span>
+            <span className={idleClass(row.hours_since_last_delivery)}>
+              {row.hours_since_last_delivery == null ? "—" : formatQuantityTable(row.hours_since_last_delivery, 0)}
+            </span>
           ),
         },
         {
@@ -150,7 +153,9 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           cellClass: "text-right tabular-nums",
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>
-              {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "—"}
+              {row.hours_since_last_delivery !== null
+                ? `${formatQuantityTable(row.hours_since_last_delivery, 0)}h idle`
+                : "—"}
             </span>
           ),
         },

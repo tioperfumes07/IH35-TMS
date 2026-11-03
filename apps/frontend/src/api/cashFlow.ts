@@ -103,7 +103,8 @@ export type RollingLedgerDocumentKind =
   | "factoring_advance"
   | "load"
   | "card_payable"
-  | "relay_topup";
+  | "relay_topup"
+  | "fuel_forecast";
 
 export type RollingLedgerRow = {
   amount_known?: boolean;

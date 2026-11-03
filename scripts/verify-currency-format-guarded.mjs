@@ -371,6 +371,53 @@ if (!/formatQuantityTable\(row\.similarity_score, 3\)/.test(vendorMap)) {
   fail("VendorMappingResolutionPage similarity score must use formatQuantityTable");
 }
 
+
+const factoringHome = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(row\.age, 0\)/.test(factoringHome)) {
+  fail("FactoringHome aging/fees Age must use formatQuantityTable(, 0)");
+}
+if ((factoringHome.match(/formatQuantityTable\(row\.age, 0\)/g) || []).length < 2) {
+  fail("FactoringHome must format Age on fees-paid and aging tables");
+}
+if (!/formatQuantityTable\(activeFactor\.recourse_days, 0\)/.test(factoringHome)) {
+  fail("FactoringHome recourse_days must use formatQuantityTable(, 0)");
+}
+const factoringBoard = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(activeFactor\.recourse_days, 0\)/.test(factoringBoard)) {
+  fail("FactoringHomeBoard recourse_days must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(Number\(summary\?\.recourse_days \?\? 95\), 0\)/.test(factoringBoard)) {
+  fail("FactoringHomeBoard summary recourse_days must use formatQuantityTable(, 0)");
+}
+const unitsNoLoad = read("apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx");
+if (!/formatQuantityTable\(row\.hours_since_last_delivery, 0\)/.test(unitsNoLoad)) {
+  fail("UnitsWithoutLoadTable hours must use formatQuantityTable(, 0)");
+}
+const dispOverview = read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+if (!/formatQuantityTable\(Math\.floor\(unit\.hours_since_last_delivery \/ 24\), 0\)/.test(dispOverview)) {
+  fail("DispatchOverview daysIdle must use formatQuantityTable(, 0)");
+}
+const dmHome = read("apps/frontend/src/pages/home/roles/DriverManagerHome.tsx");
+if (!/formatQuantityTable\(row\.days_idle, 0\)/.test(dmHome)) {
+  fail("DriverManagerHome days_idle must use formatQuantityTable(, 0)");
+}
+const fleetRestore = read("apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx");
+if (!/formatQuantityTable\(Math\.round\(data\.avg_days_open\), 0\)/.test(fleetRestore)) {
+  fail("HomeFleetRestoreCard avg_days_open must use formatQuantityTable(, 0)");
+}
+const custDetailAge = read("apps/frontend/src/pages/CustomerDetail.tsx");
+if (!/formatQuantityTable\(event\.days_late, 0\)/.test(custDetailAge)) {
+  fail("CustomerDetail quality days_late must use formatQuantityTable(, 0)");
+}
+const cardOverage = read("apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx");
+if (!/formatQuantityTable\(row\.gallons, 1\)/.test(cardOverage) || !/formatQuantityTable\(row\.gallon_limit, 1\)/.test(cardOverage)) {
+  fail("CardOverageQueuePage gallons must use formatQuantityTable");
+}
+const insHome = read("apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx");
+if (!/formatQuantityTable\(renewal\.days, 0\)/.test(insHome)) {
+  fail("InsuranceHomeBoard renewal days must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
