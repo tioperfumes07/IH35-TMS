@@ -10,7 +10,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, formatUsdRateTable } from "../../lib/money";
 import {
   FINANCE_BREAK_EVEN_UI_FLAG,
   getBreakEvenInputs,
@@ -27,10 +27,10 @@ import { EntityLink } from "../../components/shared/EntityLink";
 // what-if. Nothing here posts, writes, or moves money. Gated behind FINANCE_BREAK_EVEN_UI_ENABLED (OFF).
 
 const fmtCents = (c: number) => formatUsdCents(c);
-const fmtInt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n || 0));
+const fmtInt = (n: number) => formatQuantityTable(Math.round(n || 0), 0);
 // Per-mile figures are cents/mile → dollars/mile with 3 decimals (industry convention, e.g. $1.583/mi).
 const fmtPerMile = (centsPerMile: number | null) =>
-  centsPerMile == null ? "—" : `$${(centsPerMile / 100).toFixed(3)}/mi`;
+  centsPerMile == null ? "—" : `${formatUsdRateTable(centsPerMile / 100, 3)}/mi`;
 const fmtPerDay = (centsPerDay: number | null) =>
   centsPerDay == null ? "—" : `${fmtCents(centsPerDay)}/day`;
 
