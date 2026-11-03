@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:55 AM CT) — ENG-36 re-measure (18841 still 21/≤21)
+- **PRIOR:** #28269 OptimalDrivers quantity; #28268 deadhead guard; #28266 DF need-company.
+- **THIS:** LIVE re-run `verify-steps/18841` PASS — still 21 of ≤21 negative company settlements. ENGINE-REGISTER ENG-36 evidence stamped 11-03. No balancing JE. Further → ENG-25b.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 cancelled residual waits AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~29 remain.
+
 ## OUTBOX (11-03-2026 ~11:40 AM CT) — deadhead guard retarget + DeadheadOptimizer score quantity
 - **PRIOR:** #28266 DF board need-company.
 - **THIS:** verify-deadhead-pay-line plants retarget settlementDetailLineMaps; escrow-pending ParityTable selftest plant fixed; DeadheadOptimizer ¢/mi score → formatQuantityTable(,2).
