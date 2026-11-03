@@ -18,6 +18,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday } from "../../lib/businessDate";
 import { mmmDd } from "../../lib/formatDate";
+import { companyLabel } from "../../lib/formatCompanyName";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
@@ -425,6 +426,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   kind="customer"
                   id={row.id}
                   name={row.name}
+                  linkLabel={companyLabel(row.name, row.id, "Customer")}
                   noun="Customer"
                   className="single-line-name text-[#4B5563] hover:underline"
                 />

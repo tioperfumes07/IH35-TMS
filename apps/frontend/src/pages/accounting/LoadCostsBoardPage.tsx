@@ -14,6 +14,7 @@ import { Breadcrumb } from "../../components/shared/Breadcrumb";
 // D47 (owner): list-column dates render in the QuickBooks list format M/D/YY — banking lists alone keep MM/DD/YYYY.
 import { formatDateQboList } from "../../lib/formatDate";
 import { formatPersonName } from "../../lib/formatPersonName";
+import { formatCompanyName } from "../../lib/formatCompanyName";
 import { useDispatchLoad, listAllLoads, updateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
 import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
@@ -377,7 +378,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
         const res = await listBills(companyId, { limit: REGISTER_LIMIT });
         return (res.rows ?? []).filter(b => b.status !== "voided").map(b => {
           const parsed = parseExpenseMemo(b.memo, b.bill_number ?? null);
-          return { receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null,
+          return { receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: formatCompanyName(b.vendor_name) || "Vendor not set", loadNumber: null, loadId: null,
             detail: parsed.description ?? b.memo ?? "Bill · owed", address: parsed.address, receiptNumber: b.bill_number ?? parsed.receiptNumber, settlementNumber: parsed.settlementNumber,
             amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" };
         });
@@ -460,7 +461,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
         // non-seed expense that never had a composite memo to begin with).
         const structured = x.merchant_address != null || x.source_settlement_ref != null;
         const parsed = structured ? null : parseExpenseMemo(x.line_description ?? x.memo, x.vendor_document_number ?? null);
-        return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? (formatPersonName([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set")), loadNumber: x.load_number, loadId: x.load_id,
+        return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: formatCompanyName(x.vendor_name) || (formatPersonName([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set")), loadNumber: x.load_number, loadId: x.load_id,
           detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (structured ? (x.line_description ?? "Expense") : (parsed!.description ?? x.line_description ?? x.memo ?? "Expense")),
           address: structured ? (x.merchant_address ?? null) : parsed!.address,
           receiptNumber: structured ? (x.vendor_document_number ?? null) : parsed!.receiptNumber,

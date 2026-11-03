@@ -48,10 +48,13 @@ function verify(candidate) {
   need("frontendApi", "filters: { operating_company_id: string }", "listFiles callers must supply an explicit company id");
   need("frontendPage", "link.entity_label", "DocsHome must consume entity_label");
   need("frontendPage", "isUnresolvedEntityTombstone(rawLabel, link.entity_id, noun)", "DocsHome must tombstone unresolved or UUID-shaped entity labels");
-  // #27697 (443.257-D name fixes) routed the resolved label through the canonical entityLabel helper (person
+  // #27697 (443.257-D name fixes) routed the resolved label through the canonical entityLabel helper (row 231: via docsEntityLabel) (person
   // nouns get formatPersonName). The branch is only reached past isUnresolvedEntityTombstone, and entityLabel
   // never returns a bare id — so the contract is: EntityLink gets entityLabel(rawLabel, …), never the id.
-  need("frontendPage", "label={entityLabel(rawLabel, link.entity_id, noun)}", "DocsHome must pass only a resolved human label to EntityLink");
+  need("frontendPage", "label={docsEntityLabel(link.entity_type, rawLabel, link.entity_id, noun)}", "DocsHome must pass only a resolved human label to EntityLink");
+  // Row 231 (D055): docsEntityLabel proper-cases customer/vendor names via companyLabel (which wraps entityLabel)
+  // and sends every other entity through entityLabel — same tombstone/uuid rejection either way.
+  need("frontendPage", "return entityLabel(rawLabel, entityId, noun);", "docsEntityLabel must fall back to the canonical entityLabel helper");
   if (/<EntityLink[\s\S]{0,200}label=\{[^}]*link\.entity_id\s*\}/.test(candidate.frontendPage) ||
       /label=\{link\.entity_label \?\? link\.entity_id\}/.test(candidate.frontendPage)) {
     failures.push("DocsHome must never fall back to the raw entity id as the EntityLink label");
@@ -101,7 +104,8 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     { file: "filesRoute", token: 'filters.push("f.operating_company_id = $1::uuid")' },
     { file: "foundationRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows)" },
     { file: "frontendPage", token: "isUnresolvedEntityTombstone(rawLabel, link.entity_id, noun)" },
-    { file: "frontendPage", token: "label={entityLabel(rawLabel, link.entity_id, noun)}" },
+    { file: "frontendPage", token: "label={docsEntityLabel(link.entity_type, rawLabel, link.entity_id, noun)}" },
+    { file: "frontendPage", token: "return entityLabel(rawLabel, entityId, noun);" },
     { file: "legacyDocumentsPage", token: "return firstLink.entity_label ?" },
     { file: "completion", token: "USMCA LIVE PASS after frontend deploy #7821" },
     { file: "board", token: "FIXED DEPLOYED (Codex Live 2026-08-16):** `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`" },
@@ -112,7 +116,7 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     { file: "feed", token: '"entries": [' },
   ];
   {
-    const planted = { ...source, frontendPage: source.frontendPage.replace("label={entityLabel(rawLabel, link.entity_id, noun)}", "label={link.entity_label ?? link.entity_id}") };
+    const planted = { ...source, frontendPage: source.frontendPage.replace("label={docsEntityLabel(link.entity_type, rawLabel, link.entity_id, noun)}", "label={link.entity_label ?? link.entity_id}") };
     if (planted.frontendPage === source.frontendPage) throw new Error("self-test raw-id fallback fixture drifted");
     if (!verify(planted).some((f) => f.includes("raw entity id"))) throw new Error("self-test raw-id fallback survived");
   }
