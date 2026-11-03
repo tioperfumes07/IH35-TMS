@@ -22,6 +22,7 @@ import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../a
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
@@ -598,6 +599,13 @@ export function Form425CHome() {
       <div className="px-4 pt-4">
         <PageHeader title="Form 425C" backHref="/425c" breadcrumb={["425C"]} />
       </div>
+      {!companyId ? (
+        <div className="mx-4 mt-3">
+          <BoardSection title="Form 425C" testId="form-425c-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+          </BoardSection>
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-2 bg-[#1F2A44] px-5 py-3 text-white">
         <div>
           <div className="text-page-title font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>

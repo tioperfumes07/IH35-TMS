@@ -64,6 +64,11 @@ export type AvpLineItem = {
   // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set only for an "income" line sourced
   // from the frozen daily snapshot; null/undefined for a live-computed figure.
   projected_captured_at?: string | null;
+  // E8 11-03 (row 261) — "expenses" line: where projected_cents came from. engine = today/later, the live daily
+  // engine; snapshot = that engine's morning capture for a past day; not_captured = a past day before expense
+  // capture began (projected_unavailable true). Older servers omit both fields.
+  projected_basis?: "engine" | "snapshot" | "not_captured";
+  projected_unavailable?: boolean;
   // CASH-FLOW-01 (owner order 2026-09-06): true only when bank_categorization_coverage.categorized_count
   // is 0 company-wide — render "actuals unavailable", never a bare $0 (LAW §8 "zero is a claim").
   actual_unavailable?: boolean;
@@ -98,7 +103,8 @@ export type RollingLedgerDocumentKind =
   | "factoring_advance"
   | "load"
   | "card_payable"
-  | "relay_topup";
+  | "relay_topup"
+  | "fuel_forecast";
 
 export type RollingLedgerRow = {
   amount_known?: boolean;

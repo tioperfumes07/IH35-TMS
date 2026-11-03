@@ -68,7 +68,9 @@ export function verify(source) {
   need("customerPage", "r.source_load_id ? (", "customer transaction list must branch on the persisted invoice source_load_id");
   need("customerPage", 'kind="load"', "customer transaction list must render canonical load drill-through");
   need("customerPage", "name={r.source_load_number}", "customer transaction list must consume the API-resolved load number");
-  need("customerPage", "Projects groups loads/invoices under a customer project. Needs a projects data source", "Projects must remain an honest static placeholder until a real data source exists");
+  // fill-not-shell: Projects tab is wired to customer loads (ParityTable), not a Coming-soon placeholder.
+  need("customerPage", 'testId="customer-tab-projects"', "Projects tab must render BoardSection customer-tab-projects");
+  need("customerPage", 'storageKey="customer-projects-loads"', "Projects tab must render customer loads ParityTable");
 
   if (!legal?.leaves?.some((leaf) => leaf.id === "matters.create")) failures.push("legal:matters.create inventory leaf must remain present");
   if (required(legal, "matters.create").includes("load")) failures.push("legal:matters.create must not invent a load FK");

@@ -42,6 +42,13 @@ describe("8b: cash-flow projections wired (443.140)", () => {
     expect(SVC).toContain('"relay_topup"');
   });
 
+  it("projected fuel uses fuel_forecast document_kind (not expense)", () => {
+    expect(SVC).toContain('"fuel_forecast"');
+    expect(SVC).toContain('document_kind: "fuel_forecast"');
+    // CASH-T03 — synthetic fuel-avg ids must not masquerade as accounting.expenses
+    expect(SVC).not.toMatch(/document_kind:\s*"expense",[\s\S]{0,80}document_id:\s*`fuel-avg/);
+  });
+
   it("card payable 2510 rows have row_kind expense and correct document_kind", () => {
     expect(SVC).toContain("document_kind: \"card_payable\"");
     expect(SVC).toContain("row_kind: \"expense\"");

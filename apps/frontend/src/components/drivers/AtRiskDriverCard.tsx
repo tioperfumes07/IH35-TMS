@@ -1,3 +1,4 @@
+import { formatQuantityTable } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 type Props = {
   driverUuid: string;
@@ -24,7 +25,7 @@ export function AtRiskDriverCard({ driverUuid, driverName, operatingCompanyId, r
         </h3>
         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${tierClass(tier)}`}>{tier}</span>
       </div>
-      <p className="mt-1 text-xs text-gray-600">Risk score: {riskScore.toFixed(1)}</p>
+      <p className="mt-1 text-xs text-gray-600">Risk score: {formatQuantityTable(riskScore, 1)}</p>
       {topFactors.length > 0 ? (
         <ul className="mt-2 list-disc pl-4 text-xs text-gray-600">
           {topFactors.slice(0, 3).map((factor) => (

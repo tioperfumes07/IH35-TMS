@@ -18,6 +18,7 @@ import { listExpenseCategoryMappings } from "../../../api/accounting";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { FuelBoardSection } from "../FuelBoardSection";
+import { formatQuantityTable } from "../../../lib/money";
 
 export const FUEL_GL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc"] as const;
 export type FuelGlCategoryCode = (typeof FUEL_GL_CATEGORY_CODES)[number];
@@ -71,14 +72,14 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
       >
         <V3KpiTile
           label="Mapped"
-          value={ready ? String(mappedCount) : "—"}
+          value={ready ? formatQuantityTable(mappedCount, 0) : "—"}
           sub="active fuel categories"
           tone={ready && mappedCount === coverage.length ? "green" : "ink"}
           testId="fuel-expense-map-kpi-mapped"
         />
         <V3KpiTile
           label="Unmapped"
-          value={ready ? String(unmappedCount) : "—"}
+          value={ready ? formatQuantityTable(unmappedCount, 0) : "—"}
           sub="block fuel posting"
           tone={ready && unmappedCount > 0 ? "red" : "ink"}
           testId="fuel-expense-map-kpi-unmapped"
@@ -97,7 +98,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
         testId="fuel-expense-map-v3-panel"
         headerRight={
           <span className="text-xs font-semibold text-[#4B5563]" data-testid="fuel-gl-mapping-summary">
-            {mappedCount} of {coverage.length} categories mapped
+            {formatQuantityTable(mappedCount, 0)} of {formatQuantityTable(coverage.length, 0)} categories mapped
           </span>
         }
       >
@@ -143,7 +144,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
                   className="mt-3 border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
                   data-testid="fuel-gl-mapping-warning"
                 >
-                  {unmappedCount} fuel {unmappedCount === 1 ? "category is" : "categories are"} not mapped to a
+                  {formatQuantityTable(unmappedCount, 0)} fuel {unmappedCount === 1 ? "category is" : "categories are"} not mapped to a
                   GL account. Fuel spend in {unmappedCount === 1 ? "this category" : "these categories"} cannot
                   post until mapped. Add the mapping in the expense category map below.
                 </div>

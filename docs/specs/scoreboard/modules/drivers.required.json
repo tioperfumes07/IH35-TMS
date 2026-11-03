@@ -348,6 +348,9 @@
       "route_hint": "surface://components/drivers/CreateDriverModal.tsx",
       "surface_kind": "modal",
       "surface_path": "components/drivers/CreateDriverModal.tsx",
+      "owned_surface_paths": [
+        "components/drivers/DriverDuplicateDialog.tsx"
+      ],
       "required": [
         "connectivity",
         "driver"

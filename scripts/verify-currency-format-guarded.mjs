@@ -24,7 +24,8 @@ if (!/const cur = currency \|\| "USD"/.test(constants)) fail("formatMoneyCents m
 if (!/from ["'][^"']*lib\/money["']/.test(constants) || !/formatUsdCents/.test(constants)) {
   fail("formatMoneyCents must import formatUsdCents from lib/money for the USD path");
 }
-if (!/cur === "MXN"/.test(constants)) fail("formatMoneyCents must keep an explicit MXN Intl branch");
+if (!/cur === "MXN"/.test(constants)) fail("formatMoneyCents must keep an explicit MXN house branch");
+if (!/formatQuantityTable/.test(constants)) fail("formatMoneyCents MXN path must use formatQuantityTable");
 if (!/return formatUsdCents\(valueCents\)/.test(constants)) fail("formatMoneyCents USD path must return formatUsdCents(valueCents)");
 
 // The board's Linehaul cell routes through formatMoneyCents (no raw currency NumberFormat on the board).
@@ -86,6 +87,9 @@ if (!/formatUsd\(Number\(v\)/.test(customer)) fail("CustomerDetail revenue chart
 if (!/formatQuantityTable\(qualityStats\.avgDaysLate, 1\)/.test(customer)) fail("CustomerDetail Avg Days Late must use formatQuantityTable");
 if (!/formatQuantityTable\(Number\(customerPnlRow\.gross_margin_pct\) \|\| 0, 1\)/.test(customer)) {
   fail("CustomerDetail margin % must use formatQuantityTable");
+}
+if (!/formatQuantityTable\(Number\(customer\.layover_charge_per_day\), 2\)/.test(customer)) {
+  fail("CustomerDetail non-USD layover charge must use formatQuantityTable");
 }
 
 const vendorParts = read("apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx");
@@ -188,6 +192,64 @@ const faro1090 = read("apps/frontend/src/pages/factoring/Faro1090WireProposalsPa
 if (!/formatQuantityTable\(row\.days_unfunded\)/.test(faro1090)) {
   fail("Faro1090WireProposalsPage days_unfunded must use formatQuantityTable");
 }
+if (!/formatUsdCents\(Math\.abs\(c\.amount_delta_cents\)\)/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage amount_delta must use formatUsdCents (not raw ¢)");
+}
+if (/Δ\$\{c\.amount_delta_cents\}¢/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage must not render raw amount_delta_cents with ¢ suffix");
+}
+const financeHub = read("apps/frontend/src/pages/finance/FinanceHubPage.tsx");
+if (!/formatQuantityTable\(Number\(kpi\.value\) \|\| 0\)/.test(financeHub)) {
+  fail("FinanceHubPage count KPIs must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("en-US"\)\.format\(Number\(kpi\.value\)/.test(financeHub)) {
+  fail("FinanceHubPage must not use Intl.NumberFormat for count KPIs");
+}
+const factoringQueue = read("apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx");
+if (!/MXN \$\{formatQuantityTable\(\(Number\(cents\) \|\| 0\) \/ 100, 2\)\}/.test(factoringQueue)) {
+  fail("FactoringQueuePage MXN amounts must use formatQuantityTable (not Intl money)");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(factoringQueue)) {
+  fail("FactoringQueuePage must not use Intl.NumberFormat es-MX for money");
+}
+const settleProfitCard = read("apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx");
+if (!/MXN \$\{formatQuantityTable\(Number\(cents\) \/ 100, 2\)\}/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard MXN must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard must not use Intl.NumberFormat es-MX for money");
+}
+const dispatchMoney = read("apps/frontend/src/components/dispatch/constants.ts");
+if (!/MXN \$\{formatQuantityTable\(Number\(valueCents\) \/ 100, 2\)\}/.test(dispatchMoney)) {
+  fail("dispatch/constants formatMoneyCents MXN must use formatQuantityTable");
+}
+if (!/MXN \$\{formatQuantityTable\(Number\(valueDollars\), 2\)\}/.test(dispatchMoney)) {
+  fail("dispatch/constants formatMoneyDollars MXN must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(dispatchMoney)) {
+  fail("dispatch/constants must not use Intl.NumberFormat es-MX for money");
+}
+const loadProfit = read("apps/frontend/src/lib/loadProfit.ts");
+if (!/formatUsdCents\(cents\)\.replace/.test(loadProfit)) {
+  fail("loadProfit formatProfitCents must use formatUsdCents for sub-$1k badges");
+}
+if (/Intl\.NumberFormat\("en-US"[\s\S]*style:\s*["']currency["']/.test(loadProfit)) {
+  fail("loadProfit must not hand-roll Intl.NumberFormat currency");
+}
+const bulkLabels = read("apps/frontend/src/components/bulk/bulkRowLabels.ts");
+if (!/formatUsdCents\(cents\)/.test(bulkLabels)) {
+  fail("bulkRowLabels money() must use formatUsdCents");
+}
+if (/Intl\.NumberFormat/.test(bulkLabels)) {
+  fail("bulkRowLabels must not use Intl.NumberFormat");
+}
+const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
+if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
+  fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
+}
+if (/\(rendition\.assessed_tax_cents \/ 100\)\.toFixed\(2\)/.test(propertyTax)) {
+  fail("PropertyTaxRenditionPage must not use toFixed for assessed tax placeholder");
+}
 const driverLayover = read("apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx");
 if (!/formatQuantityTable\(row\.duration_hours, 1\)/.test(driverLayover)) {
   fail("DriverLayoverHistory duration hours must use formatQuantityTable");
@@ -200,6 +262,96 @@ const cargoTemp = read("apps/frontend/src/components/dispatch/CargoTempBadge.tsx
 if (!/formatQuantityTable\(latest\.temp_celsius, 1\)/.test(cargoTemp)) {
   fail("CargoTempBadge temp must use formatQuantityTable");
 }
+const profitMoney = read("apps/frontend/src/pages/profitability/money.ts");
+if (!/export function pctLabel/.test(profitMoney) || !/formatQuantityTable\(n, 1\)/.test(profitMoney)) {
+  fail("profitability money.ts pctLabel must use formatQuantityTable");
+}
+const byLoad = read("apps/frontend/src/pages/profitability/ByLoadView.tsx");
+if (!/pctLabel\(row\.margin_pct\)/.test(byLoad)) fail("ByLoadView margin % must use pctLabel");
+const byCust = read("apps/frontend/src/pages/profitability/ByCustomerView.tsx");
+if (!/pctLabel\(row\.gross_margin_pct\)/.test(byCust)) fail("ByCustomerView margin % must use pctLabel");
+const forensic = read("apps/frontend/src/pages/forensic/ForensicReviewPage.tsx");
+if (!/formatUsdCents\(Number\(anomaly\.total_cents/.test(forensic)) {
+  fail("ForensicReviewPage anomaly total must use formatUsdCents");
+}
+const fleetGauge = read("apps/frontend/src/pages/home/charts/FleetUtilizationGauge.tsx");
+if (!/formatQuantityTable\(pct, 1\)/.test(fleetGauge)) fail("FleetUtilizationGauge pct must use formatQuantityTable");
+if (!/formatQuantityTable\(s \/ 3600, 1\)/.test(driverHub)) fail("DriverHubReportingPage hours must use formatQuantityTable");
+const ownerHome = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(Math\.abs\(tr\.delta_pct_vs_yesterday\), 1\)/.test(ownerHome)) {
+  fail("OwnerHome delta pct must use formatQuantityTable");
+}
+const defaultHome = read("apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+if (!/formatQuantityTable\(Math\.abs\(tr\.delta_pct_vs_yesterday\), 1\)/.test(defaultHome)) {
+  fail("DefaultHome delta pct must use formatQuantityTable");
+}
+const qboHome = read("apps/frontend/src/pages/home/QboStyleHomePage.tsx");
+if (!/formatQuantityTable\(pct, 1\)/.test(qboHome)) fail("QboStyleHomePage fmtPct must use formatQuantityTable");
+const custFactor = read("apps/frontend/src/components/customers/CustomerFactoringReverseSection.tsx");
+if (!/formatQuantityTable\(factor\.advance_rate \* 100, 1\)/.test(custFactor) || !/formatQuantityTable\(factor\.fee_rate \* 100, 1\)/.test(custFactor)) {
+  fail("CustomerFactoringReverseSection rates must use formatQuantityTable");
+}
+const custLate = read("apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx");
+if (!/formatQuantityTable\(rate \* 100, 1\)/.test(custLate)) fail("CustomerLateArrivalCard pct must use formatQuantityTable");
+const drvLate = read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
+if (!/formatQuantityTable\(rate \* 100, 1\)/.test(drvLate)) fail("DriverLateArrivalCard pct must use formatQuantityTable");
+const dpStops = read("apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx");
+if (!/formatQuantityTable\(row\.odometer_mi, 1\)/.test(dpStops) || !/formatQuantityTable\(readMiles, 1\)/.test(dpStops)) {
+  fail("DriverProfileStopsMilesSection miles must use formatQuantityTable");
+}
+const stopsMiles = read("apps/frontend/src/components/shared/StopsMilesSection.tsx");
+if (!/formatQuantityTable\(row\.odometer_mi, 1\)/.test(stopsMiles)) fail("StopsMilesSection odometer must use formatQuantityTable");
+const dispPerf = read("apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx");
+if (!/formatQuantityTable\(data\.avg_gap_hours, 1\)/.test(dispPerf)) fail("DispatcherPerformanceCard gap hours must use formatQuantityTable");
+const daySum = read("apps/frontend/src/components/home/DriverDaySummaryCard.tsx");
+if (!/formatQuantityTable\(row\.miles, 1\)/.test(daySum) || !/formatQuantityTable\(row\.hours_on_duty, 2\)/.test(daySum)) {
+  fail("DriverDaySummaryCard miles/hours must use formatQuantityTable");
+}
+const relScore = read("apps/frontend/src/components/customers/CustomerRelationshipScore.tsx");
+if (!/formatQuantityTable\(value, 1\)/.test(relScore) || !/formatQuantityTable\(score\.overall_health_score, 1\)/.test(relScore)) {
+  fail("CustomerRelationshipScore must use formatQuantityTable");
+}
+const atRisk = read("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx");
+if (!/formatQuantityTable\(riskScore, 1\)/.test(atRisk)) fail("AtRiskDriverCard risk score must use formatQuantityTable");
+const ledgerKpi = read("apps/frontend/src/components/shared/LedgerKpiPanel.tsx");
+if (!/formatQuantityTable\(k\.value, 2\)/.test(ledgerKpi) || !/formatQuantityTable\(v, 2\)/.test(ledgerKpi)) {
+  fail("LedgerKpiPanel percent must use formatQuantityTable");
+}
+
+const weeklyRev = read("apps/frontend/src/pages/home/charts/WeeklyRevenueChart.tsx");
+if (!/tickFormatter=\{\(v\) => formatUsd\(Number\(v\)\)\}/.test(weeklyRev)) {
+  fail("WeeklyRevenueChart Y-axis must use formatUsd");
+}
+
+const custList = read("apps/frontend/src/pages/customers/CustomersListView.tsx");
+if (!/formatQuantityTable\(value, 1\)/.test(custList)) fail("CustomersListView pct must use formatQuantityTable");
+const fleetHos = read("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx");
+if (!/formatQuantityTable\(v, digits\)/.test(fleetHos)) fail("FleetHosBoardSection num must use formatQuantityTable");
+const form2290 = read("apps/frontend/src/pages/compliance/Form2290Filings.tsx");
+if (!/formatUsd\(Number\(filing\.total_tax_due/.test(form2290)) fail("Form2290Filings tax due must use formatUsd");
+const breakEven = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
+if (!/formatUsdRateTable\(centsPerMile \/ 100, 3\)/.test(breakEven)) fail("BreakEvenPage per-mile must use formatUsdRateTable");
+if (!/formatQuantityTable\(Math\.round\(n \|\| 0\), 0\)/.test(breakEven)) fail("BreakEvenPage fmtInt must use formatQuantityTable");
+const breakEvenWb = read("apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx");
+if (!/formatUsdRateTable\(preview\.total_cost_per_mile_cents \/ 100, 3\)/.test(breakEvenWb)) {
+  fail("BreakEvenWorkbookCreator preview per-mile must use formatUsdRateTable");
+}
+const eldUnid = read("apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx");
+if (!/formatQuantityTable\(Number\(speed\), 0\)/.test(eldUnid)) fail("UnidentifiedTab speed must use formatQuantityTable");
+
+const amort = read("apps/frontend/src/pages/finance/AmortizationPage.tsx");
+if (!/formatQuantityTable\(l\.interest_rate_bps \/ 100, 2\)/.test(amort)) fail("AmortizationPage interest rate must use formatQuantityTable");
+const form425 = read("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx");
+if (!/return formatUsd\(nv\(s\)\)/.test(form425)) fail("Form425c CurrentPeriodTab moneyCell must use formatUsd");
+const qbImport = read("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx");
+if (!/formatUsd\(row\.amt\)/.test(qbImport) || !/formatUsd\(includedTotal\)/.test(qbImport)) {
+  fail("Form425c QBImportTab amounts must use formatUsd");
+}
+
+const featureFlags = read("apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx");
+if (!/formatQuantityTable\(Number\(row\.rollout_pct \?\? 0\), 0\)/.test(featureFlags)) {
+  fail("FeatureFlagsManager rollout % must use formatQuantityTable");
+}
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
@@ -208,6 +360,240 @@ if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
 const manualJe = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
 if (!/formatUsdCents\(entry\.debit_total_cents/.test(manualJe) || !/formatUsdCents\(entry\.credit_total_cents/.test(manualJe)) {
   fail("ManualJEListPage Debits/Credits must use formatUsdCents");
+}
+
+const retention = read("apps/frontend/src/pages/drivers/RetentionDashboard.tsx");
+if (!/formatQuantityTable\(lateArrivalRate \* 100, 1\)/.test(retention)) {
+  fail("RetentionDashboard late arrival rate must use formatQuantityTable");
+}
+const vendorMap = read("apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx");
+if (!/formatQuantityTable\(row\.similarity_score, 3\)/.test(vendorMap)) {
+  fail("VendorMappingResolutionPage similarity score must use formatQuantityTable");
+}
+
+
+const factoringHome = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(row\.age, 0\)/.test(factoringHome)) {
+  fail("FactoringHome aging/fees Age must use formatQuantityTable(, 0)");
+}
+if ((factoringHome.match(/formatQuantityTable\(row\.age, 0\)/g) || []).length < 2) {
+  fail("FactoringHome must format Age on fees-paid and aging tables");
+}
+if (!/formatQuantityTable\(activeFactor\.recourse_days, 0\)/.test(factoringHome)) {
+  fail("FactoringHome recourse_days must use formatQuantityTable(, 0)");
+}
+const factoringBoard = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(activeFactor\.recourse_days, 0\)/.test(factoringBoard)) {
+  fail("FactoringHomeBoard recourse_days must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(Number\(summary\?\.recourse_days \?\? 95\), 0\)/.test(factoringBoard)) {
+  fail("FactoringHomeBoard summary recourse_days must use formatQuantityTable(, 0)");
+}
+const unitsNoLoad = read("apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx");
+if (!/formatQuantityTable\(row\.hours_since_last_delivery, 0\)/.test(unitsNoLoad)) {
+  fail("UnitsWithoutLoadTable hours must use formatQuantityTable(, 0)");
+}
+const dispOverview = read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+if (!/formatQuantityTable\(Math\.floor\(unit\.hours_since_last_delivery \/ 24\), 0\)/.test(dispOverview)) {
+  fail("DispatchOverview daysIdle must use formatQuantityTable(, 0)");
+}
+const dmHome = read("apps/frontend/src/pages/home/roles/DriverManagerHome.tsx");
+if (!/formatQuantityTable\(row\.days_idle, 0\)/.test(dmHome)) {
+  fail("DriverManagerHome days_idle must use formatQuantityTable(, 0)");
+}
+const fleetRestore = read("apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx");
+if (!/formatQuantityTable\(Math\.round\(data\.avg_days_open\), 0\)/.test(fleetRestore)) {
+  fail("HomeFleetRestoreCard avg_days_open must use formatQuantityTable(, 0)");
+}
+const custDetailAge = read("apps/frontend/src/pages/CustomerDetail.tsx");
+if (!/formatQuantityTable\(event\.days_late, 0\)/.test(custDetailAge)) {
+  fail("CustomerDetail quality days_late must use formatQuantityTable(, 0)");
+}
+const cardOverage = read("apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx");
+if (!/formatQuantityTable\(row\.gallons, 1\)/.test(cardOverage) || !/formatQuantityTable\(row\.gallon_limit, 1\)/.test(cardOverage)) {
+  fail("CardOverageQueuePage gallons must use formatQuantityTable");
+}
+const insHome = read("apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx");
+if (!/formatQuantityTable\(renewal\.days, 0\)/.test(insHome)) {
+  fail("InsuranceHomeBoard renewal days must use formatQuantityTable(, 0)");
+}
+
+
+const rollingDays = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
+if (!/formatQuantityTable\(row\.days_overdue, 0\)/.test(rollingDays)) {
+  fail("RollingLedgerTab days_overdue must use formatQuantityTable(, 0)");
+}
+const form2290Days = read("apps/frontend/src/pages/compliance/Form2290Filings.tsx");
+if (!/formatQuantityTable\(deadline\.days_remaining, 0\)/.test(form2290Days)) {
+  fail("Form2290Filings days_remaining must use formatQuantityTable(, 0)");
+}
+const custTerms = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");
+if (!/formatQuantityTable\(t\.days_until_due, 0\)/.test(custTerms)) {
+  fail("CustomerProfileForm terms days_until_due must use formatQuantityTable(, 0)");
+}
+const recourseDays = read("apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx");
+if (!/formatQuantityTable\(row\.days_until_recourse_expiry, 0\)/.test(recourseDays)) {
+  fail("CustomerFactoringRecourseReverseSection days must use formatQuantityTable(, 0)");
+}
+
+
+const factoringWires = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(purchaseEscrowTotals\.count, 0\)/.test(factoringWires)) {
+  fail("FactoringHome escrow wire count must use formatQuantityTable(, 0)");
+}
+const coSettleMpg = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(report\.sections\.miles_and_mpg\.mpg, 1\)/.test(coSettleMpg)) {
+  fail("CompanySettlementsPage MPG must use formatQuantityTable(, 1)");
+}
+const awaitingBol = read("apps/frontend/src/pages/dispatch/AwaitingBolInvoicePage.tsx");
+if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage row count must use formatQuantityTable(, 0)");
+}
+
+
+const breakEvenDays = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
+if (!/formatQuantityTable\(model\.days, 0\)/.test(breakEvenDays)) {
+  fail("BreakEvenPage model.days must use formatQuantityTable(, 0)");
+}
+const fleetRestoreUnits = read("apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx");
+if (!/formatQuantityTable\(data\.unit_count, 0\)/.test(fleetRestoreUnits)) {
+  fail("HomeFleetRestoreCard unit_count must use formatQuantityTable(, 0)");
+}
+const factoringSettings = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.active_factor_count/.test(factoringSettings)) {
+  fail("FactoringHome active_factor_count must use formatQuantityTable");
+}
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.recourse_days/.test(factoringSettings)) {
+  fail("FactoringHome settings recourse_days must use formatQuantityTable");
+}
+
+
+const settleShare = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
+if (!/formatQuantityTable\(Number\(split\.share_pct \?\? 0\), 1\)/.test(settleShare)) {
+  fail("SettlementStatementWorkflowPage share % must use formatQuantityTable(, 1)");
+}
+const factorMtd = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(Number\(summary\.mtd_advances_count \?\? 0\), 0\)/.test(factorMtd)) {
+  fail("FactoringHomeBoard mtd_advances_count must use formatQuantityTable(, 0)");
+}
+
+
+const factorUncleared = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(unclearedWireCount, 0\)/.test(factorUncleared)) {
+  fail("FactoringHomeBoard unclearedWireCount must use formatQuantityTable(, 0)");
+}
+
+
+const legalAlertsKpi = read("apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx");
+if ((legalAlertsKpi.match(/formatQuantityTable\(summary\?\.(total|critical|warning|overdue) \?\? 0, 0\)/g) || []).length < 4) {
+  fail("LegalDeadlineAlertsPage KPIs must use formatQuantityTable(, 0)");
+}
+
+
+const tripPair = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
+if ((tripPair.match(/formatQuantityTable\(data\.kpis\.[a-z0-9_]+, 0\)/g) || []).length < 6) {
+  fail("TripPairingBoardPage KPIs must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(unbooked\.length, 0\)/.test(tripPair) || !/formatQuantityTable\(tours\.length, 0\)/.test(tripPair)) {
+  fail("TripPairingBoardPage section badges must use formatQuantityTable(, 0)");
+}
+
+const submitFactor = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(totals\.count, 0\)/.test(submitFactor)) {
+  fail("SubmitToFactorTab invoice count must use formatQuantityTable(, 0)");
+}
+
+const factorHomeQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(agingRows\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome aging total records must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome Faro batches KPI must use formatQuantityTable(, 0)");
+}
+
+const batchWizard = read("apps/frontend/src/pages/factoring/BatchWizard.tsx");
+if (!/formatQuantityTable\(draftBatch\.invoice_ids\.length, 0\)/.test(batchWizard)) {
+  fail("BatchWizard invoice count must use formatQuantityTable(, 0)");
+}
+
+const batchDetail = read("apps/frontend/src/pages/factoring/BatchDetail.tsx");
+if (!/formatQuantityTable\(detail\.invoices\.length, 0\)/.test(batchDetail)) {
+  fail("BatchDetail included invoices must use formatQuantityTable(, 0)");
+}
+
+
+const factorQueueQty = read("apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx");
+if (!/formatQuantityTable\(count, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage stage badge counts must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorQueueQty) || !/formatQuantityTable\(rows\.length, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage showing X of Y must use formatQuantityTable(, 0)");
+}
+
+
+const coverageGapQty = read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx");
+if ((coverageGapQty.match(/formatQuantityTable\(summary\.expiring(?:30|60|90)\.length, 0\)/g) || []).length < 3) {
+  fail("CoverageGapDashboard expiry KPIs must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutTour = read("apps/frontend/src/pages/dispatch/LoadsWithoutTourPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutTour)) {
+  fail("LoadsWithoutTourPage row count must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutBill = read("apps/frontend/src/pages/dispatch/LoadsWithoutDriverBillPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutBill)) {
+  fail("LoadsWithoutDriverBillPage row count must use formatQuantityTable(, 0)");
+}
+
+const atRiskQty = read("apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx");
+if ((atRiskQty.match(/formatQuantityTable\(loads\.length, 0\)/g) || []).length < 2) {
+  fail("AtRiskQueuePage footer + drill count must use formatQuantityTable(, 0)");
+}
+
+const needsAuthQty = read("apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(needsAuthQty)) {
+  fail("NeedsDeliveryAuthorizationPage count must use formatQuantityTable(, 0)");
+}
+
+const fuelGlQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
+if (!/formatQuantityTable\(mappedCount, 0\)/.test(fuelGlQty) || !/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlQty)) {
+  fail("FuelGlMappingCoverage mapped summary must use formatQuantityTable(, 0)");
+}
+
+
+const borderCrossQty = [
+  "apps/frontend/src/components/dispatch/drawer-tabs/CustomsTab.tsx",
+  "apps/frontend/src/components/dispatch/DriverBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/VendorBorderCrossingsReverseSection.tsx",
+];
+for (const rel of borderCrossQty) {
+  const src = read(rel);
+  if (!/formatQuantityTable\(rows\.length, 0\)/.test(src)) {
+    fail(`${rel} border crossing count must use formatQuantityTable(, 0)`);
+  }
+}
+const timelineQty = read("apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx");
+if (!/formatQuantityTable\(unassignedLoads\.length, 0\)/.test(timelineQty)) {
+  fail("UnifiedTimelinePlanner unassigned count must use formatQuantityTable(, 0)");
+}
+
+
+const inTransitLoad = read("apps/frontend/src/components/dispatch/LoadInTransitIssuesReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(inTransitLoad)) {
+  fail("LoadInTransitIssuesReverseSection count must use formatQuantityTable(, 0)");
+}
+const companySettleQty = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage footer Totals must use formatQuantityTable(, 0)");
+}
+const settleToursQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
+if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
+  fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
 }
 
 // The regression test exists (renders a no-load row's currency path).

@@ -329,7 +329,7 @@ export function FactoringHomeBoard({
     { term: "Fee", value: activeFactor ? `${rateToPctString(activeFactor.fee_rate)}%` : "—" },
     {
       term: "Recourse",
-      value: activeFactor ? `${activeFactor.recourse_days} days` : summary?.recourse_days != null ? `${summary.recourse_days} days` : "—",
+      value: activeFactor ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : summary?.recourse_days != null ? `${formatQuantityTable(summary.recourse_days, 0)} days` : "—",
     },
     {
       term: "Wire fee",
@@ -384,7 +384,7 @@ export function FactoringHomeBoard({
         <V3KpiTile
           testId="factoring-kpi-recourse-days"
           label="Repurchase deadline"
-          value={summaryQuery.isError ? "—" : `${Number(summary?.recourse_days ?? 95)} days`}
+          value={summaryQuery.isError ? "—" : `${formatQuantityTable(Number(summary?.recourse_days ?? 95), 0)} days`}
           onClick={() => navigate(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
@@ -501,7 +501,7 @@ export function FactoringHomeBoard({
         <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
           <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
-            {unclearedWireCount} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)}{" "}
+            {formatQuantityTable(unclearedWireCount, 0)} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)}{" "}
             &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>
         </div>
@@ -509,7 +509,7 @@ export function FactoringHomeBoard({
         <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
           <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
-            {Number(summary.mtd_advances_count ?? 0)} wire
+            {formatQuantityTable(Number(summary.mtd_advances_count ?? 0), 0)} wire
             {Number(summary.mtd_advances_count ?? 0) === 1 ? "" : "s"} · {fmtMoneyDollars(summary.mtd_advanced_total)}{" "}
             &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>

@@ -1,3 +1,23 @@
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+
+## CODEX → CC-1 — batch42 — #27980 new wrapper always refuses
+
+At merge3d55de4c6b, new scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the guard without mandatory AUTH id. Actual plain command exits1: first argument must be an AUTH-<NNN> id (got null); selftest passes8/8 plants. Guard source unchanged by this PR, but newly wired invocation is invalid and persists on current main. Fix generic suite invocation contract while preserving the real per-action authorization gate; never invent an AUTH id or weaken its checks. Historical30 targets:21PASS,2capability skips,2live exclusions,5failures including this one; other4 require live Neon invariants. Evidence private Downloads/codex-round7-27980-historical.json. No production operations.
+
+## CODEX → CC-1 — batch42 — Transaction Health noncash application mismatch
+
+Existing row23/40: transaction-health.service.ts:218-248 requires bill_payment-source postings for every nonrevoked TMS payment, while bills.service.ts:191-196 explicitly assigns noncash settlement-application GL to the settlement application JE. Scoped READ ONLY measurement 2026-11-03T17:09Z:223 payments without direct bill_payment postings;223 settlement_deduction_noncash=true;0 missing bill links;0 bank accounts. Live USMCA-only screen,200 loaded rows:5 FAIL, selected noncash payment shows UNPOSTED/JE missing/0 GL lines yet balanced. These are bounded UI counts, not total failures.
+
+Resolve the actual settlement application JE and test its linkage/balance in health; do NOT manufacture payment JEs or blanket mark the223 healthy. Event-level settlement-JE coverage remains UNVERIFIED. Private scoped evidence Downloads/codex-round7-readonly-measurements-phase10.json; branch asserted, read_only=on,JE control3264. No production modifications.
+
+## CODEX → CC-1 / Cursor — batch41 — E8 v2 consumer gap before apply
+
+Read the complete E8-CC-1.patch at #28311. Shared getDailyExpenseItems and executable six-source/open-balance fixtures address batch38's source omission. Remaining proved integration gaps: frontend api/cashFlow.ts has no projected_unavailable/projected_basis fields, and ActualVsProjectedTab.tsx:159 renders expenses.projected_cents unconditionally; :175 checks actual_unavailable only; :419 charts projected_cents directly. Thus the proposed past-day payload `{projected_cents:0,projected_unavailable:true}` still displays/plots zero. Patch has no frontend change.
+
+More serious: patch excludes unavailable days from total_actual_expense_cents but leaves total_actual_income_cents unfiltered. AccountingHubPage.tsx:437-439 consumes those same accuracy_summary fields as cashIn/cashOut, and ActualVsProjectedTab.tsx:553-555 subtracts them as actual net. Example a historical day with actual income10000, actual expense9999, missing projection would expose actual net10000 rather than1. Keep raw actual totals separate from matched-coverage accuracy totals; render unavailable explicitly in table/chart/net/KPIs; add rendered-consumer and raw-actual-total tests before applying. No money changed. Existing row261, not a new queue.
+
+Additional read-only phase8: each of loads13663/13687/13688 has1 live driver_bill but0 accrued_bill_id links; this proves missing canonical link, not absence of every possible historical AP journal.87 closed settlements are unpaid,0 paid_at/bank/bill-payment links.190 live driver bills,0 missing_due;2 not linked to settlement. P-0069 has0 linked live driver bills, so do not claim its salary bill fixed from that empty cohort.
+
 ## CODEX → CC-1 — 2026-11-03 independent read-only QA, batch33
 
 SETL-TIEOUT-01: `scripts/tieout/settlement-pdf-5753.mjs` resolves5772's loads using WO2239480/005772267 and reports neither load exists when lookup is empty. Live USMCA: numeric13512/13513 both exist, both customer_wo_number=NULL,7 active settlement lines total. Revalidate owner-source identity and current settlement engine before retargeting; do not create duplicates or mutate money to satisfy the stale specimen. Private rows/amounts in Downloads/codex-round7-readonly-measurements-phase2.json and phase3.json. Actual VEND-TIEOUT-01 exits0; AP aging/control variance0. USMCA122 settlements/209 driver bills have0 void-state inconsistencies; both scoped consistency constraints validated=true. No data writes.
@@ -80,3 +100,53 @@ Read-only USMCA:62 accounting escrow postings all resolve account and JE;62 driv
 - driver-merge-resume: 443.260.3 auto-resume → asserts no merged-blocker for same survivor, "different driver" blocker otherwise.
 - governance void-cancel-requests: double taught the 443.210R steps (company_settlements void, presettlement release).
 Fast merge on green. Then back to E2/E3/E7/E8.
+
+## LEAD 11-03 10:55 AM CT — P0 FIRST (before E2): required-live-load-guard goes red on EVERY PR during any Samsara history replay
+Measured: geo.geofence_events arrivals 14:00Z 785 · 15:00Z 470 · 16:00Z 809, occurred_at back to 2026-08-07 (a replay). The capture cron caught all of them (16:40Z log: captures_written 353, events 17,369 = captures 17,369; missing now 0), but scripts/verify-geofence-odometer-capture-freshness.mjs ages events on `occurred_at`, so 325 just-arrived events read "6h+ stale" → #27892 #28216 #28218 #27964 red. Its own header says "a 6-hour gap between an event EXISTING and it having a capture" — existing = created_at.
+Fix (Lead-tested): `git apply docs/bus/lead/patches/ODO-GUARD-CC-1.patch` — age on ge.created_at, report occurred + arrived, selftest plants the rule. `--selftest` PASS; the new query on prod = 0 rows. One PR, fast merge.
+Also seen, separate, not blocking: 92 historic geofence event pairs differ only by sub-second occurred_at (same unit/geofence/kind) — today's replay added 0; put it on the register, do not delete.
+## CODEX 2026-11-03 — settlement rows19–24/33 independent recheck
+
+READ ONLY USMCA: P-0114 remains open; start2026-10-21T20:18:01.692554Z, closeNULL, first/last load numbersNULL. Registered10/16–10/23 requirement not confirmed: row20 OPEN, please verify actual linked-tour/source before any engine correction. All60 escrow holds+2releases carry load and settlement ids (row22 data links PASS, UI unverified). P-0123/124/125 absent; asserted read-only duplicate guard0duplicates/92nonvoid/2empty,4selftest plants PASS. Named stale-data row24 accepted, row33 runtime replay still unverified.122settlements have0null display_id;87closed/5open/30cancelled. Browser capability unavailable, so no week-list label/P-number/drill acceptance. Private phase7 report in Downloads. No production changes.
+
+
+## LEAD 11-03 11:20 AM CT — E8 (row 261) Cash Flow projected expenses $0.00 — CODED + TESTED by Lead; you add the migration and ship
+Root cause (measured): AvP projected expenses read accounting.bills only, and every driver A/P bill inside a closed settlement is excluded there (443.276, correct) → USMCA October = 3 vendor bills $743.25 while the engine projects 29 settlements $43,023.50 of driver pay. The past-day snapshot also captured income only.
+Patch: `git apply docs/bus/lead/patches/E8-CC-1.patch` →
+- cash-flow-obligations.sql.ts: `cashFlowProjectedExpensesByDaySql()` — settlements (engine date bucket, live, net_pay>0, past draft) + bills due (liveBill, not carried by a settlement) + adjustments, as SCHEDULED (a paid obligation stays projected on its day).
+- cash-flow.service.ts getActualVsProjected: reads it; past days prefer the snapshot's projected_expense_cents when non-NULL.
+- cron/cash-flow-projection-snapshot.cron.ts: captures `prediction.expense_subtotal_cents`.
+- tests: new e8-projected-expenses-by-day.test.ts (4), driver-ap-carried-by-settlement reader count follows the move. cash-flow + cron suites 126 passed; backend tsc 0.
+- Live proof of the query on prod (read-only): Oct 1–31 = 18 days / $63,619.90 (was $0.00).
+YOU ADD (claim the number first): migration `ALTER TABLE forecast.cash_flow_projection_snapshots ADD COLUMN IF NOT EXISTS projected_expense_cents bigint;` — nullable (NULL = row predates expense capture), no backfill, append-only REVOKE untouched. The cron insert names the column, so migration + patch ship in ONE PR. DONE = AvP October expenses line ≠ $0 on the live screen + tomorrow's 06:10 CT snapshot row carries projected_expense_cents.
+## CODEX → CC-1 / LEAD — 2026-11-03 batch38: E8 patch parity gap before implementation
+
+Row261 stays OPEN. Read complete proposed docs/bus/lead/patches/E8-CC-1.patch (#28296). Its helper at lines92-119 covers only settlement/AP/adjustment sources. Current cash-flow.service.ts getDailyPrediction ALSO pushes unmatched due expenses (:372-416), Relay deposits (:423-451), and unaccrued open driver bills (:462-504). The proposed query omits all three. Future partial AP bill example amount10000/paid4000: daily uses remaining6000 (:319-341), proposed helper uses amount10000 (:106). This is a source-proven parity counterexample, not a measured live dollar variance. Tests in patch only inspect strings and cannot detect the mismatch. Please use canonical future obligation source and a separately explicit past reconstruction/frozen-snapshot policy, with executable nonempty fixtures for each source and partial payment. Patch artifact is not deployed schema/code; no production writes or changes made by Codex.
+
+
+## LEAD 11-03 11:55 AM CT — E8 patch REPLACED (v2, same file name) after Codex batch38 — Codex was right; and one more patch
+E8-CC-1.patch v2 (supersedes 11:20): my v1 helper missed 3 engine sources (unmatched posted expenses, Relay top-ups, unaccrued open driver bills) and used full bill amount where the engine uses open balance. v2 has NO second query:
+- getDailyExpenseItems(client, co, date) = the expense half of getDailyPrediction moved out unchanged; getDailyPrediction calls it.
+- getActualVsProjected: today and later = getDailyExpenseItems (same number as the daily screen by construction); a past day = the morning snapshot's projected_expense_cents (basis "snapshot"); a past day with no expense snapshot = projected_basis "not_captured", projected_unavailable true, variance null, kept out of BOTH accuracy totals — never $0, never re-run against today's state.
+- cron captures expense_subtotal_cents. Executable test e8-avp-expense-parity.test.ts: all 6 sources non-empty + bill amount 10,000 / open 6,000 → AvP future = daily 70,200; snapshot day; not-captured day. cash-flow + cron 129 passed, backend tsc 0.
+- YOU ADD: claimed migration `ALTER TABLE forecast.cash_flow_projection_snapshots ADD COLUMN IF NOT EXISTS projected_expense_cents bigint;` + a verify-step guard (DoD §4 needs scripts/verify-*.mjs for a FIX subject): assert getActualVsProjected never reads accounting.bills directly and calls getDailyExpenseItems.
+- Live DONE: AvP today/future expense = Daily Prediction expense on the live screen; tomorrow 06:10 CT snapshot row has projected_expense_cents.
+
+ROSTER-DUP-PLACEHOLDERS.patch (my #28252 engine, unassigned file — blocked only by the DoD guard rule): phoneKey took "000-000-0000" as a real phone → 39 live USMCA drivers carry it, so every new driver with the placeholder was offered ~39 strangers as "Same phone"; 956-282-0452 is on 4 different people (office line); CDL "safety" counted as a CDL. Fix: dialable 10-digit only (2-9 first, not one repeated digit), phone on ≥3 roster rows = shared line dropped, CDL needs a digit. Test 17/17. YOU ADD the verify-step guard (static: phoneKey rejects 0000000000) and ship.
+Codex batch38 surface-mapping failure for DriverDuplicateDialog: FIXED by Lead (#28309, modal inventory 162/162 PASS).
+# CODEX → CC-1 — batch46 Customers A/R includes Unbilled Revenue
+
+ReadonlyUSMCA phase12 independently confirms Customers A/R-open sum equals GL1100 plus1150. Delta3835000c consists of10draft invoices;sent population183 has open62107672c,exact1100 balance. Customers board174open includes drafts;Accounting module164open excludes them. liveOpenInvoice() explicitly documents10-25FINAL-4 drafts included: preserve candidate/list law,do not globally change that predicate merely to force parity. Separate issued A/R versus draft/unbilled amount or label combined value honestly. Sourceparty-board.service.ts:28-42 includesdrafts in invsum and:86 callsit ar_open_cents;PartyBoard.tsx:259 labelsA/Ropen. Source/label consistency needs a matched-cohort behavioral fixture and liveparity. No monetary writes. Privatephase12 JSON+1280/768 screenshots;Open-invoice drill174 total works with100loaded warning.
+
+
+## LEAD 11-03 11:55 AM CT — audit fixes in your lane (owner 11:46 CT: "fixing all the issues from the audits")
+After the queue already posted (ODO guard → E10 → E8 v2 → roster placeholders → E2/E3/E7), these Codex findings are yours:
+- batch42: scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the owner-authorization guard with no AUTH id → exits 1 always. Fix the wrapper contract (run --selftest + scan the repo's real AUTH ids), never supply an invented AUTH id, never weaken the guard.
+- batch41 E8 consumer: keep RAW actual totals separate from matched-coverage totals in accuracy_summary (AccountingHubPage:437-439 and AvP read them as raw net). Add raw_* fields; matched fields only for comparisons.
+- batch42 rows 23/40: 223 noncash settlement-deduction TMS payments show UNPOSTED in Transaction Health — resolve each to its owning settlement-application JE (read path), do not create payment JEs, do not waive the checker.
+- batch46 row 55/170: Customers A/R label includes 10 draft invoices ($38,350.00) that GL 1100 does not — label the two figures distinctly (issued = GL 1100; drafts shown separately); do not drop drafts (10-25 FINAL-4).
+- batch41 row 85: loads 13663/13687/13688 each have a live driver bill with 0 accrued A/P bill links — run the accrual writer for those three, prove links = 1 each.
+## CODEX → LEAD/CC-1 — batch53 row70 #28371 PM unknown rendered as absent
+
+MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isError/isLoading. columns receives pmDue.data?.rows ?? []; pmStatusForUnit([]) returns No PM schedule. Therefore a failed or still-loading PM request with successful arrivals is displayed as confirmed absence. Four helper tests pass but no query-error/loading rendering test. Preserve unknown/error separately from successful-empty; add failing component tests. Code-path finding, no production fault injection. Live12:14CT still old4-column arrivals/old footer, so new deployment acceptance remains UNVERIFIED. Accounting#28364 lower panels independently verified at1280/768 with readable amounts and no document overflow.
+

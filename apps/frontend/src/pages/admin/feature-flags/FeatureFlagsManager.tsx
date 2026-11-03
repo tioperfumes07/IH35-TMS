@@ -6,6 +6,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { fetchAllFeatureFlags } from "../../../lib/feature-flags-client";
+import { formatQuantityTable } from "../../../lib/money";
 
 type OverrideRow = {
   uuid: string;
@@ -93,7 +94,7 @@ export function FeatureFlagsManager() {
           row.per_entity_only ? (
             <span className="text-xs text-gray-400">—</span>
           ) : (
-            <span className="text-xs text-gray-600">{Number(row.rollout_pct ?? 0).toFixed(0)}%</span>
+            <span className="text-xs text-gray-600">{formatQuantityTable(Number(row.rollout_pct ?? 0), 0)}%</span>
           ),
       },
       {

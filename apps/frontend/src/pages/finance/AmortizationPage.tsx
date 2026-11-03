@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import {
   FINANCE_HUB_AMORTIZATION_FLAG,
   createLoan,
@@ -15,7 +16,7 @@ import {
   type AmortLoan,
   type AmortRow,
 } from "../../api/financeAmortization";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 // GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
 // unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
@@ -148,6 +149,18 @@ export function AmortizationPage() {
       </div>
     );
 
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Amortization" testId="amortization-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   // LV-FINANCE-AMORTIZATION-CREATE-UNGATED-RAW-DATE — `type` is narrowed to "text" | "number" so
   // this helper can no longer be called with "date" at all (it used to accept any string, and the
   // one "date" call site rendered a raw native <input type="date">, evading the raw-date guard's
@@ -219,7 +232,7 @@ export function AmortizationPage() {
                     <li key={l.id}>
                       <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-[#F7F8FA]" : "hover:bg-[#F7F8FA]"}`}>
                         <span className="font-medium text-[#1F2A44]">{l.name}</span>
-                        <span className="block text-xs text-[#6B7280]">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
+                        <span className="block text-xs text-[#6B7280]">{dollars(l.original_principal_cents)} @ {formatQuantityTable(l.interest_rate_bps / 100, 2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
                       </button>
                     </li>
                   ))}

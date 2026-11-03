@@ -14,6 +14,7 @@ import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DefaultHome } from "./DefaultHome";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatQuantityTable } from "../../../lib/money";
 
 type DriverManagerRoleHomeResult = {
   kpis: {
@@ -78,7 +79,7 @@ export function DriverManagerHome({ auth }: Props) {
             {roleHomeQuery.data!.cooling_drivers.map((row) => (
               <li key={row.driver_id}>
                 <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} />
-                <span className="text-[#4B5563]"> · {row.days_idle} days idle</span>
+                <span className="text-[#4B5563]"> · {formatQuantityTable(row.days_idle, 0)} days idle</span>
               </li>
             ))}
           </ul>

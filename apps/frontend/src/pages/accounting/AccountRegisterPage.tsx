@@ -761,7 +761,8 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
         report.bank_balance_cents != null ? fmtCents(report.bank_balance_cents) : "—",
         "feed (bank connection)"
       )}
-      {kpiCard("Ending balance", `${fmtCents(report.closing_balance_cents)} ${normalLabel}`, `book · as of ${report.to_date}`)}
+      {/* Codex batch46 row 27: house date (MM/DD/YYYY), not ISO that splits across lines at 768. */}
+      {kpiCard("Ending balance", `${fmtCents(report.closing_balance_cents)} ${normalLabel}`, `book · as of ${formatDateUS(report.to_date)}`)}
       {kpiCard(
         "Reconciled through",
         report.reconciled_through ? formatDateUS(report.reconciled_through) : "—",

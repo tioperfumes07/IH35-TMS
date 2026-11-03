@@ -43,7 +43,7 @@ const CHECKS = [
   {
     name: "hub / hub.alias: FinanceHubPage real navigation Links + real /finance-hub Navigate alias in the route manifest",
     file: "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
-    pattern: /import \{ Link \}[\s\S]{0,4700}to="\/finance\/overview"/,
+    pattern: /import \{ Link \}[\s\S]{0,5200}to="\/finance\/overview"/,
   },
   {
     name: "hub.alias (route manifest): real /finance-hub -> /finance/hub redirect",

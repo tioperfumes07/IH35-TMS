@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { UnitPermitsTab } from "./UnitPermitsTab";
@@ -72,7 +73,11 @@ export function UnitDetail() {
           <EntityLink kind="unit" id={id} label={unitLabel} />
         </p>
       ) : null}
-      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Unit" testId="unit-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
       {unitQuery.isError ? (
         <ListErrorState title="Couldn't load unit identity" status={0} message={(unitQuery.error as Error)?.message} onRetry={() => void unitQuery.refetch()} />
       ) : null}

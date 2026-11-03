@@ -45,7 +45,7 @@ import {colors, FORM_FIELD_CONTROL_SIZE_CLASS, typography, FILTER_CONTROL_SIZE_C
 import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../../components/forms/inputClass";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 export const OWNER_ONLY_MESSAGE = "Only the Owner creates, closes or matches a factoring purchase.";
 
@@ -1123,7 +1123,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
         <BoardSection title="Selection totals" testId="submit-factor-totals-board">
           <dl className="grid grid-cols-2 items-center gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
             <dt className="text-[#4B5563]">Invoices</dt>
-            <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{totals.count}</dd>
+            <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{formatQuantityTable(totals.count, 0)}</dd>
             <dt className="text-[#4B5563]">Purchased (gross)</dt>
             <dd data-testid="submit-factor-total-gross">
               <MoneyInput valueCents={totals.gross} onChangeCents={(c) => editTotal("gross", c)} disabled={!selectedRows.length} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Purchased total" />

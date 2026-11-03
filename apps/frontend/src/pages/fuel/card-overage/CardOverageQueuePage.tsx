@@ -15,7 +15,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { CollapsedListFilters, MoneyListToolbar, useStagedListFilters } from "../../../components/table";
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -254,7 +254,7 @@ export function CardOverageQueuePage() {
         cellClass: "text-right",
         render: (row) =>
           row.gallons != null && row.gallon_limit != null
-            ? `${row.gallons} / ${row.gallon_limit} gal (${LIMIT_SOURCE_LABEL[row.gallon_limit_source ?? ""] ?? "limit"})`
+            ? `${formatQuantityTable(row.gallons, 1)} / ${formatQuantityTable(row.gallon_limit, 1)} gal (${LIMIT_SOURCE_LABEL[row.gallon_limit_source ?? ""] ?? "limit"})`
             : "—",
       },
       {

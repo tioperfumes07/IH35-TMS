@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
@@ -16,7 +17,7 @@ export function UnitInTransitIssuesReverseSection({ operatingCompanyId, unitId }
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-intransit-issues-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-[#0F1219]">In-Transit Issues{rows.length ? ` (${rows.length})` : ""}</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">In-Transit Issues{rows.length ? ` (${formatQuantityTable(rows.length, 0)})` : ""}</h3>
         <EntityLink kind="intransit_issues_unit" id={unitId} label="Open issue queue" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading in-transit issues…</p> : null}

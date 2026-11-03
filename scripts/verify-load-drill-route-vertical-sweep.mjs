@@ -24,7 +24,7 @@ const checks = [
   ["status", /query\.isError[\s\S]{0,420}title="Couldn't load status suggestions"[\s\S]{0,420}query\.refetch\(\)/, "status prompt GET failure exposes exact retry"],
   ["settlement", /kind="load" id=\{leg\.load_id\}/, "settlement-chain leg drills to office load detail"],
   ["settlement", /formatMoneyDollars\(settlement\.gross_pay,[\s\S]*formatMoneyDollars\(settlement\.deductions_total,[\s\S]*formatMoneyDollars\(settlement\.reimbursements_total,[\s\S]*formatMoneyDollars\(settlement\.net_pay,/, "settlement decimal-dollar fields use the dollars formatter"],
-  ["dispatchConstants", /function formatMoneyDollars\([\s\S]{0,420}\.format\(Number\(valueDollars\)\)/, "dispatch dollars formatter does not divide decimal dollars by 100"],
+  ["dispatchConstants", /function formatMoneyDollars\([\s\S]{0,520}formatQuantityTable\(Number\(valueDollars\), 2\)/, "dispatch dollars formatter does not divide decimal dollars by 100"],
   ["edi", /kind="load" id=\{selected\.related_load_uuid\}/, "EDI transaction drills to office load detail"],
   ["edi", /entityLabel\(selected\.related_load_number, selected\.related_load_uuid, "Load"\)/, "EDI load drill consumes the human load number"],
   ["ediRoute", /l\.load_number AS related_load_number/, "EDI messages project the related load number"],

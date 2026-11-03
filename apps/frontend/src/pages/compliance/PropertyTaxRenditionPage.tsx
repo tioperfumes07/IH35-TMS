@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -32,7 +33,7 @@ import {
   type RenditionStatus,
 } from "../../api/property-tax";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/Combobox";
 
 const BREADCRUMB = ["Compliance", "Business Property Tax"];
@@ -470,7 +471,11 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
             <MoneyInput
               valueDollars={assessedInput}
               onChangeDollars={setAssessedInput}
-              placeholder={rendition.assessed_tax_cents != null ? (rendition.assessed_tax_cents / 100).toFixed(2) : "0.00"}
+              placeholder={
+                rendition.assessed_tax_cents != null
+                  ? formatQuantityTable(rendition.assessed_tax_cents / 100, 2)
+                  : "0.00"
+              }
               className={`${FILTER_CONTROL_SIZE_CLASS} w-32 rounded-sm border px-2 text-xs`}
               ariaLabel="CAD-assessed tax"
             />
@@ -678,7 +683,13 @@ export function PropertyTaxRenditionPage() {
   const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const content = useMemo(() => {
-    if (!companyId) return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    if (!companyId) {
+      return (
+        <BoardSection title="Property tax rendition" testId="property-tax-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      );
+    }
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (

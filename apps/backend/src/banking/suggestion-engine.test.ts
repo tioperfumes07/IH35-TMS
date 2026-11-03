@@ -10,6 +10,8 @@ const ACC_FUEL = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 const ACC_TOLL = "cccccccc-cccc-cccc-cccc-cccccccccccc";
 
 describe("suggestion engine tiers", () => {
+  // RC1 443.341: only a rule that names a vendor and a non-9000 account is a SPECIFIC rule (high); a no-vendor rule is a
+  // catch-all fallback (low, "needs a decision") — see the catch-all case right below.
   it("rule tier yields high confidence", () => {
     const rules = [
       {
@@ -19,7 +21,7 @@ describe("suggestion engine tiers", () => {
         amount_min_cents: null,
         amount_max_cents: null,
         bank_account_filter_id: null,
-        then_vendor_id: null,
+        then_vendor_id: "5a529e97-5af6-4874-89c0-f300715101f2",
         then_account_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
         then_class_id: null,
       },
@@ -31,6 +33,16 @@ describe("suggestion engine tiers", () => {
     });
     expect(hit?.confidence).toBe("high");
     expect(hit?.source).toBe("banking_rule");
+  });
+
+  it("a rule with NO vendor is a catch-all: low confidence, source catch_all_rule (443.341)", () => {
+    const hit = suggestionFromRules(
+      [{ priority: 10, description_contains: "fuel", description_regex: null, amount_min_cents: null, amount_max_cents: null,
+         bank_account_filter_id: null, then_vendor_id: null, then_account_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", then_class_id: null }],
+      { description_normalized: "love's fuel stop #123", amount_cents: -5000, bank_account_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }
+    );
+    expect(hit?.confidence).toBe("low");
+    expect(hit?.source).toBe("catch_all_rule");
   });
 
   it("BANK-RULES-USMCA: a NULL description_normalized falls back to the raw description (live: NULL on all 364 USMCA lines)", () => {

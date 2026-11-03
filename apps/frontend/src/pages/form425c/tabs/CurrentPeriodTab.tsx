@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/Combobox";
+import { formatUsd } from "../../../lib/money";
 
 type ExhibitRow = Record<string, unknown> & { line_number?: number; explanation?: string };
 
@@ -41,12 +42,12 @@ function hasMoney(s: string) {
 
 function moneyCell(s: string) {
   if (!hasMoney(s)) return "—";
-  return `$${nv(s).toFixed(2)}`;
+  return formatUsd(nv(s));
 }
 
 function computedDiff(left: string, right: string) {
   if (!hasMoney(left) || !hasMoney(right)) return "—";
-  return `$${(nv(left) - nv(right)).toFixed(2)}`;
+  return formatUsd(nv(left) - nv(right));
 }
 
 export function CurrentPeriodTab({
@@ -78,14 +79,14 @@ export function CurrentPeriodTab({
   const netCashLabel = computedDiff(form.totalReceipts, form.totalDisbursements);
   const cashEndLabel =
     hasMoney(form.openingBalance) && hasMoney(form.totalReceipts) && hasMoney(form.totalDisbursements)
-      ? `$${(nv(form.openingBalance) + nv(form.totalReceipts) - nv(form.totalDisbursements)).toFixed(2)}`
+      ? formatUsd(nv(form.openingBalance) + nv(form.totalReceipts) - nv(form.totalDisbursements))
       : "—";
   const projNetPrevLabel = computedDiff(form.projReceiptsLast, form.projDisbLast);
   const pDRLabel = computedDiff(form.projReceiptsLast, form.totalReceipts);
   const pDDLabel = computedDiff(form.projDisbLast, form.totalDisbursements);
   const pDNLabel =
     projNetPrevLabel !== "—" && netCashLabel !== "—"
-      ? `$${(nv(form.projReceiptsLast) - nv(form.projDisbLast) - (nv(form.totalReceipts) - nv(form.totalDisbursements))).toFixed(2)}`
+      ? formatUsd(nv(form.projReceiptsLast) - nv(form.projDisbLast) - (nv(form.totalReceipts) - nv(form.totalDisbursements)))
       : "—";
   const projNetNextLabel = computedDiff(form.projReceiptsNext, form.projDisbNext);
 

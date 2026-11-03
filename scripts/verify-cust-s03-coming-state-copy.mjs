@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * CUST-S03 — remaining follow-up Customer tabs must render honest COMING_STATE_COPY
- * (named data-source gap), never a silent empty table.
+ * CUST-S03 — Customer detail tabs that used to be Coming-soon shells are now
+ * fill-not-shell real engines (loads / open invoices / notes+tasks). Guard pins
+ * the wired contract; do not restore COMING_STATE_COPY placeholders.
  *
  *   node scripts/verify-cust-s03-coming-state-copy.mjs
  *   node scripts/verify-cust-s03-coming-state-copy.mjs --selftest
@@ -15,60 +16,41 @@ const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-cust-s03-coming-state-copy";
 const FILE = "apps/frontend/src/pages/Customers.tsx";
 
-const REQUIRED = [
-  "projects",
-  "opportunities",
-  "conversations",
-];
-const NOW_WIRED = ["activity_feed", "statements", "recurring_transactions", "late_fees", "notes", "tasks"];
-
 function assert(src) {
   const problems = [];
-  if (!/const COMING_STATE_COPY/.test(src)) {
-    problems.push(`${FILE}: missing COMING_STATE_COPY map`);
+  // Placeholders retired — projects/opportunities/conversations are wired engines.
+  if (/const COMING_STATE_COPY/.test(src)) {
+    problems.push(`${FILE}: COMING_STATE_COPY must stay retired (projects/opportunities/conversations are wired)`);
   }
-  if (!/function CustomerTabComingState/.test(src)) {
-    problems.push(`${FILE}: missing CustomerTabComingState renderer`);
+  if (/function CustomerTabComingState/.test(src)) {
+    problems.push(`${FILE}: CustomerTabComingState must stay retired`);
   }
-  for (const key of REQUIRED) {
-    if (!new RegExp(`${key}\\s*:`).test(src)) {
-      problems.push(`${FILE}: COMING_STATE_COPY missing key ${key}`);
-    }
+  if (!/testId="customer-tab-projects"/.test(src) || !/storageKey="customer-projects-loads"/.test(src)) {
+    problems.push(`${FILE}: projects tab must render BoardSection + loads ParityTable (fill-not-shell)`);
   }
-  for (const key of NOW_WIRED) {
-    if (new RegExp(`${key}\\s*:`).test(src.match(/const COMING_STATE_COPY[\s\S]*?^};/m)?.[0] ?? "")) {
-      problems.push(`${FILE}: wired tab ${key} must not remain in COMING_STATE_COPY`);
-    }
+  if (!/testId="customer-tab-opportunities"/.test(src) || !/storageKey="customer-opportunities-open-invoices"/.test(src)) {
+    problems.push(`${FILE}: opportunities tab must render open-invoices ParityTable (fill-not-shell)`);
   }
-  // LEAD 443.99 class B (2026-10-12) — statements + activity anchors.
-  //   old rule: statements render the two customer-statements-invoices / -payments tables; activity_feed renders
-  //             <CustomerActivityFeed (audit events).
-  //   new rule: statements render <CounterpartyStatementView kind="customer" counterpartyId={selectedCustomer.id}
-  //             (the real statement of account, same read model as Vendors); activity_feed renders
-  //             <CustomerFinancialActivityTab (invoices + payments + credits + advances).
-  //   why: LST-F01 (#20806, 5326c4f496) replaced the two-table placeholder with the real statement and the audit
-  //        feed with financial activity; the old anchors no longer exist. Each branch is now pinned to its own
-  //        render (immediately after the ternary), tighter than the old [\s\S]* spans.
-  if (!/activeTab === "statements" \? \(\s*<CounterpartyStatementView kind="customer" counterpartyId=\{selectedCustomer\.id\}/.test(src)) problems.push(`${FILE}: statements must render the real customer statement of account`);
-  if (!/activeTab === "recurring_transactions"[\s\S]*customer-recurring-templates/.test(src)) problems.push(`${FILE}: recurring transactions must render real templates`);
-  if (!/activeTab === "late_fees"[\s\S]*customer-late-fees-overdue/.test(src)) problems.push(`${FILE}: late fees must render real overdue invoices`);
-  if (!/activeTab === "activity_feed" \? \(\s*<CustomerFinancialActivityTab\b/.test(src)) problems.push(`${FILE}: activity feed must render its real reader`);
-  if (!/activeTab === "notes"[\s\S]*<CustomerNotesTab/.test(src)) problems.push(`${FILE}: notes must render profile notes`);
-  if (!/activeTab === "tasks"[\s\S]*<TasksTab/.test(src)) problems.push(`${FILE}: tasks must render the canonical task surface`);
-  // Each copy must name the missing source / follow-up — not silent empty.
-  const block = src.match(/const COMING_STATE_COPY[\s\S]*?^};/m);
-  if (block) {
-    for (const key of REQUIRED) {
-      const m = block[0].match(new RegExp(`${key}:\\s*"([^"]+)"`));
-      if (!m || m[1].trim().length < 24) {
-        problems.push(`${FILE}: ${key} copy too short / missing`);
-      } else if (!/follow-up|needs a|flagged/i.test(m[1])) {
-        problems.push(`${FILE}: ${key} copy must honestly name the gap (follow-up / needs a …)`);
-      }
-    }
+  if (!/data-testid="customer-tab-conversations"/.test(src) || !/<CustomerNotesTab/.test(src) || !/<TasksTab/.test(src)) {
+    problems.push(`${FILE}: conversations tab must compose Notes + Tasks (fill-not-shell)`);
   }
-  if (!/CustomerTabComingState/.test(src) || !/COMING_STATE_COPY\[tab\]/.test(src)) {
-    problems.push(`${FILE}: coming tabs must render COMING_STATE_COPY[tab]`);
+  if (!/activeTab === "statements" \? \(\s*<CounterpartyStatementView kind="customer" counterpartyId=\{selectedCustomer\.id\}/.test(src)) {
+    problems.push(`${FILE}: statements must render the real customer statement of account`);
+  }
+  if (!/activeTab === "recurring_transactions"[\s\S]*customer-recurring-templates/.test(src)) {
+    problems.push(`${FILE}: recurring transactions must render real templates`);
+  }
+  if (!/activeTab === "late_fees"[\s\S]*customer-late-fees-overdue/.test(src)) {
+    problems.push(`${FILE}: late fees must render real overdue invoices`);
+  }
+  if (!/activeTab === "activity_feed" \? \(\s*<CustomerFinancialActivityTab\b/.test(src)) {
+    problems.push(`${FILE}: activity feed must render its real reader`);
+  }
+  if (!/activeTab === "notes"[\s\S]*<CustomerNotesTab/.test(src)) {
+    problems.push(`${FILE}: notes must render profile notes`);
+  }
+  if (!/activeTab === "tasks"[\s\S]*<TasksTab/.test(src)) {
+    problems.push(`${FILE}: tasks must render the canonical task surface`);
   }
   return problems;
 }
@@ -77,25 +59,30 @@ const src = readFileSync(path.join(ROOT, FILE), "utf8");
 
 if (SELFTEST) {
   const plants = [
-    ["empty coming-state copy", src.replace(/projects:\s*"[^"]+"/, 'projects: ""')],
-    ["statements back to a placeholder", src.replace(/(activeTab === "statements" \? \(\s*)<CounterpartyStatementView/, "$1<CustomerTabComingState")],
-    ["activity back to the audit feed", src.replace(/(activeTab === "activity_feed" \? \(\s*)<CustomerFinancialActivityTab/, "$1<CustomerActivityFeed")],
+    ["projects board stripped", src.replace(/testId="customer-tab-projects"/, 'testId="customer-tab-projects-stripped"')],
+    ["opportunities board stripped", src.replace(/testId="customer-tab-opportunities"/, 'testId="customer-tab-opportunities-stripped"')],
+    ["conversations compose stripped", src.replace(/data-testid="customer-tab-conversations"/, 'data-testid="customer-tab-conversations-stripped"')],
+    ["coming-state copy restored", src + '\nconst COMING_STATE_COPY = { projects: "x" };\n'],
   ];
-  const escaped = plants.filter(([, planted]) => planted === src || assert(planted).length === 0).map(([n]) => n);
+  for (const [name, mutant] of plants) {
+    if (assert(mutant).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — escaped: ${name}`);
+      process.exit(1);
+    }
+  }
   const clean = assert(src);
-  if (escaped.length || clean.length) {
-    console.error(`${LABEL} SELFTEST FAIL — escaped: ${escaped.join(", ") || "none"}; clean source flagged: ${clean.join("; ") || "none"}`);
+  if (clean.length) {
+    console.error(`${LABEL} SELFTEST FAIL — clean source flagged: ${clean.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${plants.length}/${plants.length} planted violations caught`);
+  console.log(`${LABEL} SELFTEST PASS — ${plants.length} plants rejected`);
   process.exit(0);
 }
 
 const problems = assert(src);
 if (problems.length) {
-  console.error(`${LABEL} FAIL:`);
-  for (const p of problems) console.error("  - " + p);
+  console.error(`${LABEL} FAIL`);
+  for (const p of problems) console.error(`- ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 3 honest follow-up tabs remain; 6 implemented tabs are ratcheted to real surfaces`);
-process.exit(0);
+console.log(`${LABEL} PASS — projects/opportunities/conversations fill-not-shell wired`);

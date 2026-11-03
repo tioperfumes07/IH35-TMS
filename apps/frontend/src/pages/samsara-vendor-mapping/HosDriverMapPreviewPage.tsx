@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHosDriverMapPreview, type DriverMapRow } from "../../api/telematics";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { entityLabel } from "../../lib/entity-label";
@@ -95,7 +96,9 @@ export function HosDriverMapPreviewPage() {
       />
 
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company.</p>
+        <BoardSection title="HOS Driver Map" testId="hos-driver-map-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       ) : q.isLoading ? (
         <p className="text-xs text-gray-500">Loading preview from Samsara…</p>
       ) : q.isError ? (

@@ -135,7 +135,8 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     const { onClose, invalidateSpy } = renderModal(vi.fn(), { linkedUnitId: UNIT_ID });
 
     const form = await screen.findByTestId("record-expense-form");
-    await screen.findByDisplayValue("EXP-2026-00001");
+    // "Expense no. (ours)" is a QboDocumentNumberField: it starts BLANK and says "Leave blank to use the next unused
+    // number"; the server assigns it. It is never pre-filled, so there is no display value to wait on.
     await screen.findByRole("option", { name: "Office Supplies" });
     // The account option renders as "Cash" (the picker no longer prefixes the account number, so the old
     // "1000 · Cash" name never matched), and plain text is ambiguous — "Cash" is also a payment METHOD.
@@ -160,7 +161,7 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     expect(body.payment_account_uuid).toBe(ACCT_ID);
     expect(body.amount_cents).toBe(10000);
     expect(body.vendor_uuid).toBe(VENDOR_ID);
-    expect(body.expense_number).toBe("EXP-2026-00001");
+    expect(body.expense_number).toBeUndefined(); // blank "ours" field → server assigns the next number
     expect(body.work_order_id).toBe(WO_ID);
     expect(body.unit_id).toBe(UNIT_ID);
     expect(body.memo).toContain("WO: WO-TEST");
