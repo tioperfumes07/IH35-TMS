@@ -6,7 +6,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
@@ -438,7 +438,7 @@ export function ArApAgingPage() {
       title: `${mode === "ar" ? "A/R" : "A/P"} aging as of ${appliedAsOf}`,
       bodyHtml: `
         <h1>${esc(titleKind)}</h1>
-        <div class="meta">As of ${esc(fmtDate(appliedAsOf))} · printed ${esc(new Date().toLocaleString())}</div>
+        <div class="meta">As of ${esc(fmtDate(appliedAsOf))} · printed ${esc(formatDateTimeUS(new Date().toISOString()))}</div>
         <table>
           <tbody>
             ${BUCKET_COLS.map(

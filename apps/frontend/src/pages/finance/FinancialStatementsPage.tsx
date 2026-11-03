@@ -25,7 +25,7 @@ import {
   type AccountingTrialBalanceRow,
 } from "../../api/reports";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -343,7 +343,7 @@ export function FinancialStatementsPage() {
         .replace(/"/g, "&quot;");
     const showCodes = getShowAccountNumbers();
     const basisLabel = basis === "cash" ? "Cash" : "Accrual";
-    const printed = new Date().toLocaleString();
+    const printed = formatDateTimeUS(new Date().toISOString());
 
     if (tab === "pl") {
       const data = plQuery.data;
