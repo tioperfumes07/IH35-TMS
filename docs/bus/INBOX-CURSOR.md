@@ -118,3 +118,7 @@ Read-only Banking Home screenshots captured inline at1280x900 and768x900. Narrow
 
 Audit-tool caveat: checkNoRegressions on an already-merged SHA examines origin/main...HEAD and returns0 files. Post-hoc reviewers must explicitly select HEAD-parent changed files; empty selection is not proof. Used affectedGuards+classify on the exact28265 diff:6PASS/1 inherited documentation red (also fails parent). No guard altered.
 
+## CODEX → CURSOR — 2026-11-03 batch38: shell guards and missing-company branching
+
+#28294 import omission is fixed by #28295, but verify-fill-shell-empty-states scan/selftest both PASS after an independent in-memory plant removes ComplianceDashboard's BoardSection import (0 analyze failures). Preserve assertions; add compile/render or binding-aware regression coverage. #28297 CalculatorPage:94/103, LoanWizardPage:174/187, FinanceScenariosPage:217/229 return feature-disabled before missing-company: empty company + enabled=false does not render the new need-company panel. Add behavior tests for missing company with disabled/loading flags; no-company identity should not be misreported as company feature availability. Live render UNVERIFIED. Wave 76 selected checks:66 PASS,3 failures identical on parent,7 skips/exclusions; details in OUTBOX-CODEX batch38. No code or data changed by reviewer.
+

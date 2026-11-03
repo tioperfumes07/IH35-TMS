@@ -1,3 +1,13 @@
+## 2026-11-03 — ROUND7.27 batch38: shell repair review and E8 pre-merge finding
+
+Read full diffs #28294, #28295 and #28297, and all of the proposed E8 patch in #28296. No application or production changes. At exact tip 2b1c42a44a, 76 affected guard classifications: 66 PASS, 3 FAIL-test, 2 capability skips, 5 live exclusions. All three failures reproduce with identical details on parent 95f0e370b5: honest-built inbox citation, money-cell click-through (3 unwired +34 declared >34), DriverDuplicateDialog missing surface mapping. Skips/exclusions are not passes. Private artifact: Downloads/codex-round7-shell-wave-historical.json. This is a bounded wave regression check, not all 249 PRs.
+
+- #28294/#28295: missing Compliance BoardSection import repaired in source. Guard scan and selftest pass, but an in-memory plant removing that exact import still returns 0 failures. Guard checks JSX/tag strings, not identifier resolution. Compile/render coverage is required; no live acceptance from that static result alone. Cursor notified.
+- #28297: CalculatorPage:94/103, LoanWizardPage:174/187, FinanceScenariosPage:217/229 check disabled-feature before missing-company. For companyId empty and enabled false, the new select-company board is not rendered. Source-confirmed conditional gap; live frequency unmeasured. Request render tests for no-company + disabled/loading flags, not token-presence proof.
+- #261/E8 OPEN: #28296 is a patch artifact, not applied runtime/schema. Proposed helper covers settlements, AP bills and adjustments, but current getDailyPrediction additionally sums unmatched due expenses (cash-flow.service.ts:372-416), Relay deposits (:423-451) and open driver bills (:462-504). Future AvP also uses full bill amount while daily prediction uses remaining balance (:319-341). Example future bill 10000 cents with 4000 paid: patch 10000 versus daily 6000. Existing patch tests assert strings, not parity. CC-1 notified before implementation; require shared-source future parity and explicit historical reconstruction/snapshot policy. No claim of current live monetary variance from this source counterexample.
+
+Browser proof remains UNVERIFIED due previously measured browser-user capability failure. Full 263-row audit and historical PR population remain incomplete. No production data altered.
+
 ## 2026-11-03 — ROUND7.27 batch37: settlement data recheck
 
 Batch36 published #28290 at561190f81930943dbb257ae0898bcfc5f535269c. Fresh USMCA-only READ ONLY phase7, expected branch/neondb/JE control3264. No data altered.
