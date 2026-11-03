@@ -247,16 +247,27 @@ export function ReceiptsPage() {
     </div>
   );
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper
+        title="Receipts"
+        subtitle="Uploaded receipts for expenses, bills, and customer payment proof"
+      >
+        <BoardSection title="Receipts" testId="receipts-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Receipts"
       subtitle="Uploaded receipts for expenses, bills, and customer payment proof"
       createControl={
-        operatingCompanyId ? (
-          <Button variant="primary" onClick={() => setNewReceiptOpen(true)} data-testid="receipts-new">
-            + New receipt
-          </Button>
-        ) : null
+        <Button variant="primary" onClick={() => setNewReceiptOpen(true)} data-testid="receipts-new">
+          + New receipt
+        </Button>
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="receipts-kpi-strip">

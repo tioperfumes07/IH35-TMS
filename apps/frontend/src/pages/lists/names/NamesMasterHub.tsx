@@ -13,6 +13,8 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
+import { companyLabel } from "../../../lib/formatCompanyName";
+import { formatPersonName } from "../../../lib/formatPersonName";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListsSubNav } from "../ListsSubNav";
 
@@ -42,6 +44,20 @@ function canonicalEntityRoute(row: NamesMasterRow, kind: EntityKind | undefined)
           ? `/drivers/${row.entity_id}`
           : null;
   return expected === row.link_to_module_page ? expected : null;
+}
+
+/**
+ * Register row 229 (D053) — the Name column renders proper case: people (drivers, contacts) through the
+ * shared formatPersonName, organisations (customers, vendors, companies) through formatCompanyName.
+ * Same honest fallbacks as entityLabel; display only.
+ */
+export function namesMasterLabel(row: Pick<NamesMasterRow, "entity_type" | "display_name" | "entity_id">, noun: string): string {
+  const label = entityLabel(row.display_name, row.entity_id, noun);
+  const raw = row.display_name == null ? "" : String(row.display_name).trim();
+  // Drivers already resolve through entityLabel → formatPersonName; a fallback sentence stays as-is.
+  if (row.entity_type === "driver" || label !== raw) return label;
+  if (row.entity_type === "contact") return formatPersonName(raw);
+  return companyLabel(raw, row.entity_id, noun);
 }
 
 export function NamesMasterHub() {
@@ -103,7 +119,7 @@ export function NamesMasterHub() {
                 : row.entity_type === "driver"
                   ? "Driver"
                   : "Record";
-          const label = entityLabel(row.display_name, row.entity_id, noun);
+          const label = namesMasterLabel(row, noun);
           const canonicalRoute = canonicalEntityRoute(row, kind);
           // LV-LISTS-NAMES-MASTER-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
           if (!kind || !canonicalRoute || isUnresolvedEntityTombstone(row.display_name, row.entity_id, noun)) {

@@ -1,6 +1,7 @@
 // LEAD 443.174 — Summary and Detail must be different views (owner: "it has summary and detail. but it shows the same
 // data"). Detail is one row per invoice / fee record; Summary is one row per debtor / customer with totals.
 import { EntityLink } from "../../components/shared/EntityLink";
+import { companyLabel } from "../../lib/formatCompanyName";
 import type { ParityColumn } from "../../components/parity/ParityTable";
 import type { FactoringChargebackFeeRow } from "../../api/factoring";
 
@@ -38,7 +39,7 @@ export function groupAgingByDebtor(rows: AgingInput[]): AgingByDebtorRow[] {
 
 const num = { className: "text-right", cellClass: "text-right" } as const;
 const debtorCell = (r: { customer_id: string | null; customer_name: string }) =>
-  r.customer_id ? <EntityLink kind="customer" id={r.customer_id} label={r.customer_name} /> : r.customer_name;
+  r.customer_id ? <EntityLink kind="customer" id={r.customer_id} label={companyLabel(r.customer_name, r.customer_id, "Customer")} /> : r.customer_name;
 
 export const AGING_BY_DEBTOR_COLUMNS = (money: Money): ParityColumn<AgingByDebtorRow>[] => [
   { key: "customer_name", label: "Debtor", sortable: true, render: debtorCell },

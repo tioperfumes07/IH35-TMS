@@ -110,11 +110,13 @@ export function TruckPlanner() {
       // independently confirms has no active load is unambiguously available, not reserved -- there
       // is no genuine reservation/hold source wired into this component at all. Live-confirmed: 11
       // idle units with no driver, no load and nothing that reserved them were reading "Reserved".
+      // Register row 166: a vacant (no board load) truck still has a driver — the grid now returns THE unit→driver resolver's
+      // driver (open VDA, else last-delivered primary, merged shell → survivor) instead of leaving the column "—".
       rows.set(unitId, {
         unitId,
         unitNumber,
-        driverId: null,
-        driverName: null,
+        driverId: u.driver_id ? String(u.driver_id) : null,
+        driverName: u.driver_name ? formatPersonName(String(u.driver_name)) : null,
         status: "available",
       });
     }

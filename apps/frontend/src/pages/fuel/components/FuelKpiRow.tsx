@@ -91,7 +91,8 @@ export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
       />
       <V3KpiTile
         label="Avg $/gal"
-        value={display(fixed(metric(dashboard?.avg_price_per_gallon), 2, "$"))}
+        // Register row 164 — same precision as the Fuel board strip (3 dp) so one figure reads identically on both.
+        value={display(fixed(metric(dashboard?.avg_price_per_gallon), 3, "$"))}
         testId="fuel-kpi-avg-price"
         onClick={() => navigate("/fuel/history")}
       />

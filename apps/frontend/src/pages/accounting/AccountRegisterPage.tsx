@@ -772,6 +772,16 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
     </div>
   ) : undefined;
 
+  if (!embedded && !companyId) {
+    return (
+      <AccountingSubNavWrapper title="Account Register">
+        <BoardSection title="Account Register" testId="account-register-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <Shell
       title="Account Register"

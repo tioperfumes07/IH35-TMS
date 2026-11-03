@@ -61,7 +61,7 @@ export function assertEscrowPostingEntitylinkReverse() {
   // d.operating_company_id = ea.operating_company_id left USMCA holders as "Driver — not visible"
   // when the driver row lives under another company tag.
   const drvJoinMatch = service.match(
-    /LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id([\s\S]{0,160})LEFT JOIN mdata\.vendors/,
+    /LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id([\s\S]{0,160}?)(?:--|LEFT JOIN)/,
   );
   if (!drvJoinMatch) {
     errors.push("escrow/service D076: listEscrowAccounts must LEFT JOIN mdata.drivers d ON holder_type=driver AND d.id = ea.holder_id");

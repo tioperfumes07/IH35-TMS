@@ -81,9 +81,14 @@ export async function registerBankingDriftAlertsRoutes(app: FastifyInstance) {
       const offsetParam = rangeValues.length;
       const rowsRes = await client.query(
         `
-          SELECT da.*, COALESCE(ba.display_name, ba.account_name) AS account_name, ba.account_mask, ba.institution_name
+          -- ROW 222 (D046): the account's display name, then its own name, then the linked ledger account's
+          -- name -- so a TMS-native account with blank bank-side names still carries a real label.
+          SELECT da.*,
+                 COALESCE(NULLIF(btrim(ba.display_name), ''), NULLIF(btrim(ba.account_name), ''), NULLIF(btrim(gl.account_name), '')) AS account_name,
+                 ba.account_mask, ba.institution_name
             FROM banking.reconciliation_drift_alerts da
             LEFT JOIN banking.bank_accounts ba ON ba.id = da.bank_account_id
+            LEFT JOIN catalogs.accounts gl ON gl.id = ba.ledger_account_id AND gl.operating_company_id = da.operating_company_id
            WHERE ${filters.join(" AND ")}
            ORDER BY da.detected_at DESC
            LIMIT $${limitParam} OFFSET $${offsetParam}

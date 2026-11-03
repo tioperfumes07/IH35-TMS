@@ -226,6 +226,16 @@ export function SalesTaxPage() {
     );
   }, [returnsQuery.data?.returns]);
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Sales tax handling">
+        <BoardSection title="Sales tax handling" testId="sales-tax-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Sales tax handling" subtitle="Manage sales tax agencies, prepare returns, and track filed/paid states.">
 

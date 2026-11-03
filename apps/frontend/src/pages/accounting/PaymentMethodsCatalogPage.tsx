@@ -3,6 +3,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -149,6 +150,19 @@ export function PaymentMethodsCatalogPage() {
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Void failed", "error"),
   });
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper
+        title="Payment Methods Catalog"
+        subtitle="Owner-editable list of methods the company pays drivers/vendors by, each pinned to a GL cash/bank account"
+      >
+        <BoardSection title="Payment methods" testId="payment-methods-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

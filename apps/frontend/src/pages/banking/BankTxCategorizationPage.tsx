@@ -1,6 +1,7 @@
 // @archived — Workflow-B: superseded by BankingTransactionsDesignView. Do not wire as a route. Enforced by verify-banking-workflow-b-archived.mjs.
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -450,7 +451,7 @@ export function BankTxCategorizationPage() {
                 key: "date",
                 label: "Date",
                 cellClass: "whitespace-nowrap text-gray-800",
-                render: (tx) => txDate(tx) || "—",
+                render: (tx) => formatDateUS(txDate(tx)) || "—",
               },
               {
                 key: "account",
@@ -606,7 +607,7 @@ export function BankTxCategorizationPage() {
           {selectedTx ? (
             <div className="space-y-1 text-xs text-gray-800">
               <div>
-                <span className="font-semibold">Date:</span> {txDate(selectedTx)}
+                <span className="font-semibold">Date:</span> {formatDateUS(txDate(selectedTx)) || "—"}
               </div>
               <div>
                 <span className="font-semibold">Account:</span> {txBankLabel(selectedTx)}

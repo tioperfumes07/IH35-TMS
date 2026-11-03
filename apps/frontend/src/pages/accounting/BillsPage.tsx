@@ -34,6 +34,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -915,6 +916,16 @@ export function BillsPage() {
     </div>
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Bills">
+        <BoardSection title="Bills" testId="bills-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Bills"
@@ -973,7 +984,6 @@ export function BillsPage() {
           {billsQuery.data.totals.vendor_bill.balance_cents != null ? <> · {money(billsQuery.data.totals.vendor_bill.balance_cents)} balance</> : null}
         </p>
       ) : null}
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
       {highlightedBillId ? (
         <p

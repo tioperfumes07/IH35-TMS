@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { MASTER_DETAIL } from "../../design/master-detail";
+import { formatCompanyName } from "../../lib/formatCompanyName";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
@@ -156,7 +157,7 @@ export function CustomerListSidebar({
               render: (customer) => (
                 <CardLink href={`/customers/${customer.id}`} onNavigate={() => onSelectCustomer(customer.id)} className="block truncate text-xs font-medium text-gray-900 hover:underline">
                   {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token + title for the full name. */}
-                  <span title={customer.name} className="single-line-name">{customer.name}</span>
+                  <span title={formatCompanyName(customer.name)} className="single-line-name">{formatCompanyName(customer.name)}</span>
                 </CardLink>
               ),
             },

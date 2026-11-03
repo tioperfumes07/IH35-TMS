@@ -146,14 +146,14 @@ function fmtChipDate(iso: string): string {
   return us ? `${wd} ${us}` : "—";
 }
 
-/** Board day navigator center: "Thu, Oct 22 · Today" (board chrome; Due cells stay MM/DD/YYYY). */
+/** Row 219 (D043): day navigator center "Thu, 10/22/2026" — weekday + shared MM/DD/YYYY (was "Thu, Oct 22"). */
 function fmtNavDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return formatDateUS(iso);
   const dt = new Date(Date.UTC(y, m - 1, d));
   const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getUTCDay()] ?? "";
-  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1] ?? "";
-  return `${wd}, ${mon} ${d}`;
+  const us = formatDateUS(iso);
+  return us ? `${wd}, ${us}` : "—";
 }
 
 function emptyExpenseHint(key: (typeof V3_EXPENSE_GROUPS)[number]): string {

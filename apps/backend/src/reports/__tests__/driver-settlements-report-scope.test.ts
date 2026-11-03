@@ -148,3 +148,64 @@ describe("TIEOUT: driver-settlements SQL scope", () => {
     expect(src).toContain("voided_at IS NULL");
   });
 });
+
+// Rows 80 (11-03 register) — Reports › Driver settlement report board: multi-select driver / status, paid filter,
+// cancelled excluded, whole-set totals and the paid / load-range fields the board renders.
+import { getDriversSettlementsReport } from "../driver-settlements-report.service.js";
+
+describe("driver settlements report — board fields (row 80)", () => {
+  function fakeClient(rows: Array<Record<string, unknown>>) {
+    const calls: Array<{ sql: string; values: unknown[] }> = [];
+    return {
+      calls,
+      client: { query: vi.fn(async (sql: string, values: unknown[]) => (calls.push({ sql, values }), { rows })) } as any,
+    };
+  }
+
+  it("binds multi driver ids / statuses as arrays, filters paid, excludes cancelled", async () => {
+    const { client, calls } = fakeClient([]);
+    await getDriversSettlementsReport(client, {
+      operatingCompanyId: COMPANY_ID,
+      from: "2026-01-01",
+      to: "2026-11-03",
+      driverId: "d1d1d1d1-d1d1-4111-8111-d1d1d1d1d1d1,d2d2d2d2-d2d2-4222-8222-d2d2d2d2d2d2",
+      status: "open,closed",
+      paid: "unpaid",
+      limit: 200,
+      offset: 0,
+    });
+    const { sql, values } = calls[0];
+    expect(sql).toContain("s.driver_id = ANY(");
+    expect(sql).toContain("s.status::text = ANY(");
+    expect(sql).toContain("COALESCE(s.payment_sent_at, s.paid_at) IS NULL");
+    expect(sql).toContain("s.status <> 'cancelled'");
+    expect(values).toContainEqual(["d1d1d1d1-d1d1-4111-8111-d1d1d1d1d1d1", "d2d2d2d2-d2d2-4222-8222-d2d2d2d2d2d2"]);
+    expect(values).toContainEqual(["open", "closed"]);
+  });
+
+  it("totals the whole filtered set (window sums), not one page; maps paid / load range", async () => {
+    const { client } = fakeClient([
+      {
+        settlement_id: "s1", display_id: "P-0119", settlement_number: null, driver_id: "d1", driver_name: "A B",
+        period_start: "2026-10-21", period_end: "2026-10-23", status: "closed", gross_cents: "49280", deductions_cents: "3500",
+        advances_cents: "0", escrow_withheld_cents: "0", net_cents: "45780", load_count: "1", first_load_number: "13697",
+        last_load_number: "13697", first_load_id: "l1", last_load_id: "l1", paid_at: null, _total_count: "92",
+        _total_gross_cents: "13989849", _total_deductions_cents: "747821", _total_advances_cents: "225568", _total_net_cents: "13467596",
+      },
+    ]);
+    const out = await getDriversSettlementsReport(client, { operatingCompanyId: COMPANY_ID, from: "2026-01-01", to: "2026-11-03", limit: 1, offset: 0 });
+    expect(out.totals).toMatchObject({ settlement_count: 92, gross_cents: 13989849, deductions_cents: 747821, advances_cents: 225568, net_cents: 13467596 });
+    expect(out.rows[0]).toMatchObject({ display_id: "P-0119", first_load_number: "13697", paid_at: null });
+  });
+
+  it("rejects a non-uuid driver id in the multi filter", async () => {
+    const app = Fastify();
+    await registerDriverSettlementsReportRoutes(app);
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/reports/driver-settlements?operating_company_id=${COMPANY_ID}&from=2026-10-01&to=2026-10-31&driver_id=abc,def`,
+    });
+    expect(res.statusCode).toBe(400);
+    await app.close();
+  });
+});

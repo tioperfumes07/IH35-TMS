@@ -18,7 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { formatUsd, formatUsdCents, formatUsdTable } from "../../lib/money";
+import { formatUsd, formatUsdCents, formatUsdTable, formatQuantityTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
@@ -358,7 +358,7 @@ export function EscrowRegisterPage() {
           <V3KpiTile
             label="Release"
             value={releaseDisplay}
-            sub={`${ESCROW_RELEASE_WINDOW_DAYS} days after last settlement`}
+            sub={`${formatQuantityTable(ESCROW_RELEASE_WINDOW_DAYS, 0)} days after last settlement`}
             testId="escrow-register-kpi-release"
           />
         </div>

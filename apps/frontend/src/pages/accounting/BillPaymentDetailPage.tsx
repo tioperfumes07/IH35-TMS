@@ -80,6 +80,16 @@ export function BillPaymentDetailPage() {
   const displayId = entityLabel(payment.reference_number ?? payment.check_number, payment.id, "Payment");
   const isVoided = Boolean(payment.revoked_at);
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Bill payment">
+        <BoardSection title="Bill payment" testId="bill-payment-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={payment.revoked_at} voidReason={payment.revoked_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Bill payment" />

@@ -44,7 +44,10 @@ export async function listActiveHosDriverRoster(
            )
        AND d.samsara_driver_id IS NOT NULL
        AND d.deactivated_at IS NULL
-       AND d.status = 'Active'
+       -- Register row 166: Probation drivers run loads — 3 of 16 USMCA drivers (Angel Sosa, Leonel Morales, Carlos Pena),
+       -- all with loads in the last 30 days, had 0 HOS snapshots in 24 h because only 'Active' was polled; their board HOS
+       -- cells were blank (or a 36-day-old snapshot). Poll every working status.
+       AND d.status IN ('Active', 'Probation')
        AND d.is_sample_data IS NOT TRUE
      ORDER BY d.id, a.started_at DESC NULLS LAST`,
     [operatingCompanyId]

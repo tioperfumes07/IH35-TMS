@@ -10,8 +10,9 @@ import { Button } from "../../components/Button";
 import { LeaseContractCreator } from "../../components/leases/LeaseContractCreator";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 /** ROUND 316 — every lease contract of this entity; + Create opens the Owner-only creator. */
@@ -28,14 +29,23 @@ export function LeasesPage() {
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "lessor_vendor", label: "Lessor", render: (r) => (r.lessor_vendor_id ? <EntityLink kind="vendor" id={r.lessor_vendor_id} label={r.lessor_vendor ?? r.lessor_company ?? "Vendor"} className="underline" /> : r.lessor_company ?? "—") },
       { key: "billing_mode", label: "Billing", sortable: true, render: (r) => (r.billing_mode === "one_bill_per_unit" ? "Per unit" : r.billing_mode === "one_bill_all_units" ? "All units" : "—") },
-      { key: "asset_count", label: "Units / trailers", sortable: true, sortValue: (r) => r.asset_count, render: (r) => String(r.asset_count) },
+      { key: "asset_count", label: "Units / trailers", sortable: true, sortValue: (r) => r.asset_count, render: (r) => formatQuantityTable(r.asset_count, 0) },
       { key: "payment_amount_cents", label: "Monthly", sortable: true, sortValue: (r) => r.payment_amount_cents, render: (r) => formatUsdCentsTable(r.payment_amount_cents) },
       { key: "commencement_date", label: "From", sortable: true, sortValue: (r) => r.commencement_date, render: (r) => formatDateUS(r.commencement_date) },
       { key: "end_date", label: "To", sortable: true, render: (r) => formatDateUS(r.end_date) },
-      { key: "bill_count", label: "Bills", sortable: true, render: (r) => String(r.bill_count) },
+      { key: "bill_count", label: "Bills", sortable: true, render: (r) => formatQuantityTable(r.bill_count, 0) },
     ],
     []
   );
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Leases" subtitle="Truck, trailer and lease-to-own contracts — one row per contract">
+        <BoardSection title="Leases" testId="leases-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
   return (
     <AccountingSubNavWrapper title="Leases" subtitle="Truck, trailer and lease-to-own contracts — one row per contract">
       <div className="mb-2 flex justify-end"><Button onClick={() => setCreating(true)}>+ Create lease</Button></div>

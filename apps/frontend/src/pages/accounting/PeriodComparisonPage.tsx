@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 import { formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/Combobox";
@@ -103,12 +104,18 @@ export function PeriodComparisonPage() {
     [period1Label, period2Label],
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Period comparison">
+        <BoardSection title="Period comparison" testId="period-comparison-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
-
-      {!companyId ? (
-        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before running comparison.</p>
-      ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">

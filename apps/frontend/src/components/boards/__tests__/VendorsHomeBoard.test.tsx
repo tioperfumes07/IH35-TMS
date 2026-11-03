@@ -29,6 +29,7 @@ const board = {
     {
       id: "v1", name: "LOVES", status: "active", category: "Fuel & Diesel", txns: 4, spend_cents: 100_000, avg_ticket_cents: 25_000,
       last_paid: "2026-10-18", pays_through: "Dreamline Diesel Card Payable", open_bills: 1, open_bills_cents: 5_000,
+      category_account_id: "acc-fuel", pays_through_account_id: "a1",
     },
     {
       id: "v2", name: "Idle Vendor", status: "active", category: null, txns: 0, spend_cents: 0, avg_ticket_cents: null,
@@ -61,8 +62,13 @@ describe("VendorsHomeBoard (443.280)", () => {
     // top three categories plus one rolled-up "Other" line (Parts + Misc)
     expect(screen.getByText("Other")).toBeTruthy();
     expect(screen.getByText("2 since 09/21/2026")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "LOVES" }).getAttribute("href")).toBe("/vendors/v1");
-    expect(screen.getByRole("link", { name: "Dreamline Diesel Card Payable" }).getAttribute("href")).toContain("/accounting/chart-of-accounts/register/a1");
+    expect(screen.getByRole("link", { name: "Loves" }).getAttribute("href")).toBe("/vendors/v1");
+    // the Pays through panel row and the vendor row's Pays through cell both open the account
+    for (const l of screen.getAllByRole("link", { name: "Dreamline Diesel Card Payable" })) expect(l.getAttribute("href")).toContain("/accounting/chart-of-accounts/register/a1");
+    expect(screen.getAllByRole("link", { name: "Dreamline Diesel Card Payable" }).length).toBe(2);
+    expect(screen.getByRole("link", { name: "Fuel & Diesel" }).getAttribute("href")).toContain("/accounting/chart-of-accounts/register/acc-fuel");
+    // the board calls its one data source
+    expect(vi.mocked(clientApi.apiRequest).mock.calls.some(([p]) => String(p).startsWith("/api/v1/mdata/boards/vendors?"))).toBe(true);
     expect(screen.getByTestId("party-board-note").textContent).toContain("Open bills disagree across definitions");
     // the old controls are not on the board
     expect(screen.queryByLabelText("Add category")).toBeNull();

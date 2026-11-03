@@ -371,7 +371,7 @@ function CashPositionChart({
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} data-testid="cash-flow-home-chart-svg">
         {tickCents.map((cents) => {
           const y = zeroY - (cents / maxAbs) * (zeroY - top);
-          const label = cents === 0 ? "$0" : `$${Math.round(cents / 100 / 1000)}k`;
+          const label = formatUsdCents(cents);
           return (
             <g key={cents}>
               <line x1={left} x2={right} y1={y} y2={y} stroke={cents === 0 ? V3.slate : V3.chartGrid} />

@@ -591,6 +591,12 @@ const companySettleQty = read("apps/frontend/src/pages/driver-finance/CompanySet
 if (!/formatQuantityTable\(v\.length, 0\)/.test(companySettleQty)) {
   fail("CompanySettlementsPage footer Totals must use formatQuantityTable(, 0)");
 }
+if (!/toursQuery\.isPending[\s\S]{0,80}formatQuantityTable\(allTourRows\.length, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage Closed tours KPI must show … while pending (never flash 0) — #160");
+}
+if (!/formatQuantityTable\(withCompany, 0\)/.test(companySettleQty) || !/formatQuantityTable\(notOpened, 0\)/.test(companySettleQty)) {
+  fail("CompanySettlementsPage with-company/not-opened KPIs must use formatQuantityTable(, 0)");
+}
 const settleToursQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
 if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
   fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
@@ -621,6 +627,13 @@ if ((dispatchListQty.match(/formatQuantityTable\(from, 0\)/g) || []).length < 2)
 const settlementsQty = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
 if (!/formatQuantityTable\(settlements\.length, 0\)/.test(settlementsQty) || !/formatQuantityTable\(cancelledHiddenCount, 0\)/.test(settlementsQty)) {
   fail("SettlementsPage live/cancelled counts must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(Number\(kpis\.drivers_with_debt\), 0\)/.test(settlementsQty) || !/formatQuantityTable\(Number\(kpis\.ytd_settlements \?\? 0\), 0\)/.test(settlementsQty)) {
+  fail("SettlementsPage home KPI counts must use formatQuantityTable(, 0)");
+}
+const fuelHistoryQty = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
+if (!/formatQuantityTable\(fuelHistoryTotal, 0\)/.test(fuelHistoryQty) || !/formatQuantityTable\(fuelHistoryVoidedCount, 0\)/.test(fuelHistoryQty)) {
+  fail("Fuel History KPI counts must use formatQuantityTable(, 0)");
 }
 const rollingLedgerQty = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
 if (!/formatQuantityTable\(driverBillCount, 0\)/.test(rollingLedgerQty) || !/formatQuantityTable\(incomeRows\.length, 0\)/.test(rollingLedgerQty)) {
@@ -826,6 +839,140 @@ if (!/formatQuantityTable\(d, 0\)/.test(plannerRangeQty)) {
 const legalTemplateDetailQty = read("apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx");
 if (!/formatQuantityTable\(template\.version, 0\)/.test(legalTemplateDetailQty)) {
   fail("LegalTemplateDetailPage title version must use formatQuantityTable(, 0)");
+}
+const legalDeadlineDaysQty = read("apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx");
+if (!/formatQuantityTable\(Math\.abs\(days\), 0\)/.test(legalDeadlineDaysQty) || !/formatQuantityTable\(days, 0\)/.test(legalDeadlineDaysQty)) {
+  fail("LegalDeadlineAlertsPage daysLabel must use formatQuantityTable(, 0)");
+}
+const repurchaseDaysQty = read("apps/frontend/src/pages/factoring/RepurchaseDuePanel.tsx");
+if (!/formatQuantityTable\(row\.days_since_purchase, 0\)/.test(repurchaseDaysQty)) {
+  fail("RepurchaseDuePanel days_since_purchase must use formatQuantityTable(, 0)");
+}
+const dispatchBoardDaysDownQty = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+if (!/formatQuantityTable\(unit\.days_down, 0\)/.test(dispatchBoardDaysDownQty)) {
+  fail("DispatchBoard days_down must use formatQuantityTable(, 0)");
+}
+const legalSignVersionQty = read("apps/frontend/src/pages/legal/sign/LegalSignPage.tsx");
+if (!/formatQuantityTable\(details\.template_version, 0\)/.test(legalSignVersionQty)) {
+  fail("LegalSignPage template_version must use formatQuantityTable(, 0)");
+}
+const attorneyPortalVersionQty = read("apps/frontend/src/pages/legal/attorney-review/LegalAttorneyReviewPortalPage.tsx");
+if (!/formatQuantityTable\(details\.version, 0\)/.test(attorneyPortalVersionQty)) {
+  fail("LegalAttorneyReviewPortalPage version must use formatQuantityTable(, 0)");
+}
+const unifiedContractVersionQty = read("apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx");
+if (!/formatQuantityTable\(t\.version, 0\)/.test(unifiedContractVersionQty) || !/formatQuantityTable\(selectedTemplate\.version, 0\)/.test(unifiedContractVersionQty)) {
+  fail("UnifiedContractCreatorModal version labels must use formatQuantityTable(, 0)");
+}
+const sendContractVersionQty = read("apps/frontend/src/pages/legal/contracts/SendContractModal.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(sendContractVersionQty)) {
+  fail("SendContractModal template version must use formatQuantityTable(, 0)");
+}
+const accountingHomeCloseQty = read("apps/frontend/src/pages/home/roles/AccountingHome.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(accountingHomeCloseQty)) {
+  fail("AccountingHome days_to_close must use formatQuantityTable(, 0)");
+}
+const settlementDisputesDaysQty = read("apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx");
+if (!/formatQuantityTable\(Math\.max\(0, Math\.floor\(\(Date\.now\(\) - new Date\(row\.opened_at\)\.getTime\(\)\) \/ 86400000\)\), 0\)/.test(settlementDisputesDaysQty) || !/formatQuantityTable\(openedDaysAgo, 0\)/.test(settlementDisputesDaysQty)) {
+  fail("SettlementDisputesTab opened days must use formatQuantityTable(, 0)");
+}
+const escrowBoardDaysQty = read("apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx");
+if (!/formatQuantityTable\(ESCROW_RELEASE_WINDOW_DAYS, 0\)/.test(escrowBoardDaysQty)) {
+  fail("SettlementsEscrowBoard release window days must use formatQuantityTable(, 0)");
+}
+const escrowRegisterDaysQty = read("apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx");
+if (!/formatQuantityTable\(ESCROW_RELEASE_WINDOW_DAYS, 0\)/.test(escrowRegisterDaysQty)) {
+  fail("EscrowRegisterPage release window days must use formatQuantityTable(, 0)");
+}
+const factoringHomeInvoiceQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if ((factoringHomeInvoiceQty.match(/formatQuantityTable\(row\.invoice_count, 0\)/g) || []).length < 3) {
+  fail("FactoringHome invoice_count columns must use formatQuantityTable(, 0)");
+}
+const paymentsToYouInvoiceQty = read("apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx");
+if (!/formatQuantityTable\(row\.invoice_count, 0\)/.test(paymentsToYouInvoiceQty)) {
+  fail("PaymentsToYouPanel invoice_count must use formatQuantityTable(, 0)");
+}
+const factoringCashFlowQty = read("apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx");
+if (!/formatQuantityTable\(row\.wire_count, 0\)/.test(factoringCashFlowQty) || !/formatQuantityTable\(row\.invoice_count, 0\)/.test(factoringCashFlowQty)) {
+  fail("FactoringCashFlowPanel wire/invoice counts must use formatQuantityTable(, 0)");
+}
+const fuelHomeCountQty = read("apps/frontend/src/pages/fuel/FuelHome.tsx");
+if (!/formatQuantityTable\(r\.fill_count, 0\)/.test(fuelHomeCountQty) || !/formatQuantityTable\(r\.load_count, 0\)/.test(fuelHomeCountQty)) {
+  fail("FuelHome fill/load counts must use formatQuantityTable(, 0)");
+}
+const fuelDieselCountQty = read("apps/frontend/src/pages/fuel/components/FuelDieselByTruckPanel.tsx");
+if (!/formatQuantityTable\(r\.fill_count, 0\)/.test(fuelDieselCountQty) || !/formatQuantityTable\(r\.load_count, 0\)/.test(fuelDieselCountQty)) {
+  fail("FuelDieselByTruckPanel fill/load counts must use formatQuantityTable(, 0)");
+}
+const fuelCardsCountQty = read("apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx");
+if (!/formatQuantityTable\(row\.active_card_count, 0\)/.test(fuelCardsCountQty)) {
+  fail("FuelCardsPage active_card_count must use formatQuantityTable(, 0)");
+}
+const tripProfitSettleQty = read("apps/frontend/src/pages/dispatch/TripProfitability.tsx");
+if (!/formatQuantityTable\(t\.settlement_count, 0\)/.test(tripProfitSettleQty)) {
+  fail("TripProfitability settlement_count must use formatQuantityTable(, 0)");
+}
+const dispatchBandQty = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+if (!/formatQuantityTable\(count, 0\)/.test(dispatchBandQty)) {
+  fail("DispatchBoard bandTitle count must use formatQuantityTable(, 0)");
+}
+const fuelBoardKpiQty = read("apps/frontend/src/pages/fuel/components/FuelBoardKpiStrip.tsx");
+if (!/formatQuantityTable\(agg\.fill_count, 0\)/.test(fuelBoardKpiQty) || !/formatQuantityTable\(agg\.truck_count, 0\)/.test(fuelBoardKpiQty) || !/formatQuantityTable\(agg\.fills_without_load, 0\)/.test(fuelBoardKpiQty) || !/formatQuantityTable\(openCount, 0\)/.test(fuelBoardKpiQty)) {
+  fail("FuelBoardKpiStrip counts must use formatQuantityTable(, 0)");
+}
+const factoringHomeBoardCountQty = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(invoiceCount, 0\)/.test(factoringHomeBoardCountQty) || !/formatQuantityTable\(wiresCount, 0\)/.test(factoringHomeBoardCountQty)) {
+  fail("FactoringHomeBoard invoice/wire KPI counts must use formatQuantityTable(, 0)");
+}
+const dispatchOverviewDetentionQty = read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+if (!/formatQuantityTable\(detentionQ\.data\?\.count \?\? 0, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(detentionQ\.data\.active_count, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(atRiskLateTotal, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(unitsAvailable, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(unitsNeedingReturn, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(exposureLoads\.length, 0\)/.test(dispatchOverviewDetentionQty) || !/formatQuantityTable\(dashboardQ\.data\?\.on_load \?\? 0, 0\)/.test(dispatchOverviewDetentionQty)) {
+  fail("DispatchOverview KPI counts must use formatQuantityTable(, 0)");
+}
+const remintSubtitleQty = read("apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx");
+if (!/formatQuantityTable\(query\.data\?\.real_count \?\? 0, 0\)/.test(remintSubtitleQty) || !/formatQuantityTable\(query\.data\?\.total_count \?\? 0, 0\)/.test(remintSubtitleQty)) {
+  fail("DriverBillRemintScreen subtitle counts must use formatQuantityTable(, 0)");
+}
+const relayDepositCountQty = read("apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx");
+if (!/formatQuantityTable\(countFor\(cls\), 0\)/.test(relayDepositCountQty)) {
+  fail("RelayDepositReview deposit counts must use formatQuantityTable(, 0)");
+}
+const faroImportCountQty = read("apps/frontend/src/pages/factoring/FaroImportPage.tsx");
+if (!/formatQuantityTable\(preview\.line_count, 0\)/.test(faroImportCountQty) || !/formatQuantityTable\(commit\.line_count, 0\)/.test(faroImportCountQty)) {
+  fail("FaroImportPage line/invoice/reserve counts must use formatQuantityTable(, 0)");
+}
+const driversKpiQty = read("apps/frontend/src/pages/Drivers.tsx");
+if (!/formatQuantityTable\(activeCount, 0\)/.test(driversKpiQty) || !/formatQuantityTable\(allDrivers\.length, 0\)/.test(driversKpiQty) || !/formatQuantityTable\(onLeaveCount, 0\)/.test(driversKpiQty)) {
+  fail("Drivers KPI counts must use formatQuantityTable(, 0)");
+}
+if (!/drivers-need-company/.test(driversKpiQty)) {
+  fail("Drivers page must BoardSection need-company when no company selected");
+}
+const driverHubReportQty = read("apps/frontend/src/pages/home/DriverHubReportingPage.tsx");
+if (!/formatQuantityTable\(data\.summary\.total_requests, 0\)/.test(driverHubReportQty) || !/formatQuantityTable\(data\.summary\.approved, 0\)/.test(driverHubReportQty)) {
+  fail("DriverHubReportingPage summary counts must use formatQuantityTable(, 0)");
+}
+const factorCashFlowQty = read("apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx");
+if (!/formatQuantityTable\(totals\.wires, 0\)/.test(factorCashFlowQty) || !/formatQuantityTable\(totals\.invoices, 0\)/.test(factorCashFlowQty)) {
+  fail("FactoringCashFlowPanel wire/invoice counts must use formatQuantityTable(, 0)");
+}
+const fuelGlMapQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
+if (!/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlMapQty)) {
+  fail("FuelGlMappingCoverage Categories KPI must use formatQuantityTable(, 0)");
+}
+const avpDaysQty = read("apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx");
+if (!/formatQuantityTable\(dayCountInclusive\(applied\.from, applied\.to\), 0\)/.test(avpDaysQty)) {
+  fail("ActualVsProjected Days in range must use formatQuantityTable(, 0)");
+}
+const fuelIntegrityQty = read("apps/frontend/src/pages/fuel/integrity/FuelIntegrityPage.tsx");
+if (!/formatQuantityTable\(Number\(value\), 0\)/.test(fuelIntegrityQty)) {
+  fail("FuelIntegrityPage summary KPIs must use formatQuantityTable(, 0)");
+}
+const leasesQty = read("apps/frontend/src/pages/accounting/LeasesPage.tsx");
+if (!/formatQuantityTable\(r\.asset_count, 0\)/.test(leasesQty) || !/formatQuantityTable\(r\.bill_count, 0\)/.test(leasesQty)) {
+  fail("LeasesPage asset/bill counts must use formatQuantityTable(, 0)");
+}
+if (!/leases-need-company/.test(leasesQty)) {
+  fail("LeasesPage must BoardSection need-company when no company selected");
 }
 
 // The regression test exists (renders a no-load row's currency path).

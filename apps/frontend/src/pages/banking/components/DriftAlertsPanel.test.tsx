@@ -4,6 +4,7 @@
 // the resolve API with the typed note once one is provided.
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -27,9 +28,13 @@ vi.mock("../../../api/banking", async (importOriginal) => {
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={qc}>
-      <ToastProvider>{ui}</ToastProvider>
-    </QueryClientProvider>
+    // Row 38: the account cell became a drill-through EntityLink (a router <Link>) in #27677; the harness
+    // never gained a router, so every render threw "basename of null" and the panel never mounted.
+    <MemoryRouter>
+      <QueryClientProvider client={qc}>
+        <ToastProvider>{ui}</ToastProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }
 
@@ -68,6 +73,9 @@ describe("DriftAlertsPanel", () => {
     expect(screen.getByText(/\$1,000\.00/)).toBeInTheDocument(); // bank balance
     expect(screen.getByText(/\$950\.00/)).toBeInTheDocument(); // book balance
     expect(screen.getByText(/\$50\.00/)).toBeInTheDocument(); // diff
+    // Row 222 (D046): the account link carries the account's display name, never the generic word.
+    expect(screen.getByRole("link", { name: "Operating" })).toBeInTheDocument();
+    expect(screen.queryByText(/^Account$/)).not.toBeInTheDocument();
   });
 
   it("renders nothing when there are no open alerts", async () => {

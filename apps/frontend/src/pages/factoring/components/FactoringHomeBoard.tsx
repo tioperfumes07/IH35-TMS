@@ -371,14 +371,14 @@ export function FactoringHomeBoard({
           testId="factoring-kpi-outstanding-liability"
           label="Outstanding liability"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.outstanding_liability_balance)}
-          sub={recourseQuery.isError ? "—" : `${invoiceCount} invoice${invoiceCount === 1 ? "" : "s"}`}
+          sub={recourseQuery.isError ? "—" : `${formatQuantityTable(invoiceCount, 0)} invoice${invoiceCount === 1 ? "" : "s"}`}
           onClick={() => navigate(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
           testId="factoring-kpi-advanced-mtd"
           label="Advanced MTD"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.mtd_advanced_total)}
-          sub={wiresCount == null ? "—" : `${wiresCount} wire${wiresCount === 1 ? "" : "s"}`}
+          sub={wiresCount == null ? "—" : `${formatQuantityTable(wiresCount, 0)} wire${wiresCount === 1 ? "" : "s"}`}
           onClick={() => navigate(FACTORING_TAB_PATH.payments_to_you)}
         />
         <V3KpiTile

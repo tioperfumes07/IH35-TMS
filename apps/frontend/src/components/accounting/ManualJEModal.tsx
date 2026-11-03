@@ -10,6 +10,17 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+
+/**
+ * D065 (register row 241) — ONE grid template for the Step 2 header and every line row.
+ * Every track is minmax(0, …) so no column's min-content (a picker's input, the Remove button) can
+ * widen its track past its share: equal `1fr` tracks resolve to minmax(auto, 1fr), which let the Class
+ * picker's content push into the Debit field and the row overflow the 700px drawer. `[&>*]:min-w-0`
+ * lets each grid item shrink to its track. Header and rows import this constant, so they cannot drift.
+ */
+export const MANUAL_JE_LINE_GRID_TEMPLATE =
+  "grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]";
+export const MANUAL_JE_LINE_GRID_CLASS = `grid min-w-0 ${MANUAL_JE_LINE_GRID_TEMPLATE} gap-1 [&>*]:min-w-0`;
 import { formatUsdCents } from "../../lib/money";
 import { JournalEntryTypePicker } from "./JournalEntryTypePicker";
 
@@ -241,10 +252,10 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 </>
               ) : null}
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1" data-testid="manual-je-lines">
               {/* LEAD 443.318 (D065): minmax(0,…) tracks — equal 1fr columns could not shrink below the pickers' content, so Class
                   sat on top of Debit and the row overflowed the drawer. Header and rows share one template. */}
-              <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-1 px-1.5 text-section-header font-semibold uppercase text-gray-500">
+              <div className={`${MANUAL_JE_LINE_GRID_CLASS} px-1.5 text-section-header font-semibold uppercase text-gray-500`} data-testid="manual-je-line-header">
                 <span>Account</span>
                 <span>Class</span>
                 <span>Debit</span>
@@ -252,7 +263,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 <span>Description</span>
               </div>
               {lines.map((line, idx) => (
-                <div key={idx} className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-1 rounded-sm border border-gray-200 p-1.5 [&>*]:min-w-0">
+                <div key={idx} className={`${MANUAL_JE_LINE_GRID_CLASS} rounded-sm border border-gray-200 p-1.5`} data-testid="manual-je-line-row">
                   <ReferenceSelect
                     value={line.account_id || null}
                     onChange={(next) =>

@@ -9,6 +9,7 @@ import {
 } from "../../../api/legal-sign";
 import { ApiError } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { formatQuantityTable } from "../../../lib/money";
 
 function renderTemplate(html: string, fields: Record<string, unknown>) {
   return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
@@ -230,7 +231,7 @@ export function LegalSignPage() {
       <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Sign"]}
         title={details.display_name_en}
-        subtitle={`Signer: ${details.signer_name} · Template ${details.template_code} v${details.template_version}`}
+        subtitle={`Signer: ${details.signer_name} · Template ${details.template_code} v${formatQuantityTable(details.template_version, 0)}`}
       />
 
       <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">

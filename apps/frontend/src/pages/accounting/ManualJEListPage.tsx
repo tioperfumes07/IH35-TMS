@@ -377,6 +377,16 @@ export function ManualJEListPage() {
     </MoneyListToolbar>
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Manual Journal Entries">
+        <BoardSection title="Manual Journal Entries" testId="manual-je-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Manual Journal Entries"

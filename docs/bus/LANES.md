@@ -39,6 +39,7 @@ apps/backend/src/maintenance/__tests__/work-order-linkage-e16.test.ts
 apps/backend/src/maintenance/pm-auto-engine.cron.ts
 apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
+apps/backend/src/system/transaction-health.service.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
 scripts/backfill-company-settlement-orphans.mjs

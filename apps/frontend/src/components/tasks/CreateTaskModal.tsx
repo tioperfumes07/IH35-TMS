@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../forms/DatePicker";
 import { DateTimePicker } from "../forms/DateTimePicker";
+import { FORM_INPUT_CLASS } from "../forms/inputClass";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
@@ -206,7 +207,10 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   );
 
   const labelCls = "block text-xs font-semibold uppercase tracking-wide text-gray-600";
-  const inputCls = "mt-1 h-10 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs text-gray-800 focus:border-[#E5E7EB] focus:outline-hidden";
+  // Row 204 (D028): single-line inputs take the shared FORM_INPUT_CLASS (40px) — no local height/chrome string.
+  const inputCls = `mt-1 ${FORM_INPUT_CLASS}`;
+  // Pickers own their own frame; callers pass layout only and opt into the 40px form size.
+  const pickerLayoutCls = "mt-1 w-full";
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
@@ -249,6 +253,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 setTaskTypeId(id);
                 applyProfile(profiles.find((p) => p.id === id));
               }}
+              size="sm"
               placeholder={profilesQuery.isLoading ? "Loading…" : "No profile"}
               loading={profilesQuery.isLoading}
               disabled={profilesQuery.isError}
@@ -290,6 +295,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 options={assigneeOptions}
                 value={assignedTo || null}
                 onChange={(next) => setAssignedTo(next ?? "")}
+                size="sm"
                 placeholder={usersQuery.isLoading ? "Loading…" : "Select an employee"}
                 loading={usersQuery.isLoading}
                 disabled={usersQuery.isError}
@@ -301,20 +307,21 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-date">Scheduled date</label>
-            <DatePicker id="create-task-date" className={inputCls} value={scheduledDate} onChange={setScheduledDate} />
+            <DatePicker id="create-task-date" box="field" className="mt-1" value={scheduledDate} onChange={setScheduledDate} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls} htmlFor="create-task-due">Due date</label>
-            <DatePicker id="create-task-due" className={inputCls} value={dueDate} onChange={setDueDate} />
+            <DatePicker id="create-task-due" box="field" className="mt-1" value={dueDate} onChange={setDueDate} />
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-alarm">Alarm (reminder)</label>
             <DateTimePicker
               id="create-task-alarm"
-              className={inputCls}
+              box="field"
+              className={pickerLayoutCls}
               aria-label="Alarm (reminder)"
               value={alarmAt}
               onChange={setAlarmAt}
@@ -325,7 +332,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls} htmlFor="create-task-category">Category</label>
-            <SelectCombobox id="create-task-category" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)}>
+            <SelectCombobox id="create-task-category" size="sm" className={pickerLayoutCls} value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)}>
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
@@ -333,7 +340,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-priority">Priority</label>
-            <SelectCombobox id="create-task-priority" className={inputCls} value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
+            <SelectCombobox id="create-task-priority" size="sm" className={pickerLayoutCls} value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
               {PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
@@ -347,8 +354,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
             <div>
               <label className={labelCls} htmlFor="create-task-entity-kind">Linked to</label>
               <SelectCombobox
-                id="create-task-entity-kind"
-                className={inputCls}
+                id="create-task-entity-kind" size="sm" className={pickerLayoutCls}
                 value={entityKind}
                 onChange={(e) => {
                   setEntityKind(e.target.value as TaskTargetType | "");
@@ -365,7 +371,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
               <label className={labelCls} htmlFor="create-task-entity-id">Record</label>
               <div className="mt-0" data-testid="create-task-entity-picker">
                 {!entityKind ? (
-                  <SelectCombobox id="create-task-entity-id" className={inputCls} disabled value="">
+                  <SelectCombobox id="create-task-entity-id" size="sm" className={pickerLayoutCls} disabled value="">
                     <option value="">Pick a type first</option>
                   </SelectCombobox>
                 ) : (
@@ -378,6 +384,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                     allowCreate={entityKind === "customer" || entityKind === "vendor"}
                     placeholder={`Select ${entityKind}…`}
                     dataTestId={`create-task-entity-${entityKind}`}
+                    size="sm"
                   />
                 )}
               </div>

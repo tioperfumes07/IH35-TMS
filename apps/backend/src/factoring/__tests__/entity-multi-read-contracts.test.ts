@@ -61,7 +61,8 @@ describe("mounted money read routes preserve full entity selections", () => {
     expect(cohort[1]!.values).toEqual([company, customers, loads]);
     expect(cohort[2]!.values).toEqual([company, customers, loads, 1, 2]);
     expect(cohort[2]!.sql).toContain("LIMIT $4"); expect(cohort[2]!.sql).toContain("OFFSET $5");
-    expect(db.membership).toHaveBeenCalledWith(userId, company);
+    // ROW 198: membership is probed on the scoped client (one pool checkout), before the tenant GUC.
+    expect(db.membership).toHaveBeenCalledWith(db, userId, company);
   });
 
   it("recourse uses independent scoped EXISTS predicates before its full-cohort window count and page cap", async () => {

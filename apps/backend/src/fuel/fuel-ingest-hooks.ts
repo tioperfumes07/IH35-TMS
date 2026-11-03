@@ -19,6 +19,8 @@ import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
 import { runFuelFollowsTruckSweep } from "./fuel-follows-truck-sweep.js";
 import { listRelayFillDocumentsWithoutRecords, recordAndLinkRelayFillDocument } from "./fuel-expense-document.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
+import { rematchRelayFuelDrivers } from "../integrations/relay-payments/relay-fuel-driver-rematch.service.js";
+import { isUsmcaOperatingCompany } from "../integrations/relay-payments/relay-usmca-date-floor.js";
 import {
   FUEL_FRAUD_DETECTOR_JOB,
   fuelFraudDetectorEnabled,
@@ -45,6 +47,28 @@ export async function onFuelIngestComplete(
       }
     },
     log
+  );
+
+  // E1 (row 162): every Relay fill without a driver goes through the one Relay driver matcher (Relay's own id, directly or
+  // through integrations.relay_driver_links; then the fuel row; then the load at fill time). NULL only, audited. Relay fills
+  // are stored for USMCA only (ROUND 443.15), so only USMCA is touched. Runs BEFORE the Relay fill records so a new record
+  // carries the fill's driver.
+  await wrapBackgroundJobTick(
+    "relay.fill_driver_match",
+    async () => {
+      const companies = (companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id))))
+        .filter((id) => isUsmcaOperatingCompany(id));
+      for (const id of companies) {
+        const res = await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+          return rematchRelayFuelDrivers(client as never, { operating_company_id: id, actor_user_id: SYSTEM_ACTOR_USER_ID });
+        });
+        log.info({ operating_company_id: id, ...res, source }, "[FUEL_INGEST_HOOK] relay fill driver match");
+      }
+    },
+    log,
+    { leaseSeconds: JOB_LEASE_SECONDS }
   );
 
   // ENG-65: every Relay fill document whose fill has no fuel record — the fill is recorded from its own Relay lines on the

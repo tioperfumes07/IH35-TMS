@@ -1037,6 +1037,12 @@
     "202616301200",
     "202616301201",
     "202616310100",
-    "202616320100"
-  ]
+    "202616320100",
+    "202616330100"
+  ],
+  "202616330100": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "claude",
+    "purpose": "E1 row 162: integrations.relay_driver_links (many Relay driver ids -> one driver); the Relay driver matcher reads it."
+  }
 }

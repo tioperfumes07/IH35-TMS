@@ -24,7 +24,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FILTER_CONTROL_SIZE_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS } from "../../../design/tokens";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -220,7 +220,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         key: "opened_at",
         label: "Opened",
         sortable: true,
-        render: (row) => `${Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago`,
+        render: (row) => `${formatQuantityTable(Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000)), 0)}d ago`,
       },
     ],
     [],
@@ -350,7 +350,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 <p className="font-semibold text-gray-700">Dispute</p>
                 <p>Category: {titleize(detail.dispute_category)}</p>
                 <p>Status: {titleize(detail.status)}</p>
-                <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
+                <p>Opened: {openedDaysAgo == null ? "-" : formatQuantityTable(openedDaysAgo, 0)} days ago</p>
                 <p>Description: {detail.dispute_description}</p>
                 {detail.resolution_journal_entry_id ? (
                   <p>
