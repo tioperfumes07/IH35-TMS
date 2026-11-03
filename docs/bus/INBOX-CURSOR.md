@@ -1,4 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch75 Reclassify date-only Find suppressed
+
+#28042/currentmain ReclassifyTransactionsPage.tsx:199-220,271-300 refuses every date-only query, including one day: actual runFind extracted/transpiled with empty non-date filters and from=to returns setApplied(null); account-scoped control proceeds. Guard green does not prove the expensive reader repaired. PATCH-REJECTED as permanent performance fix: optimize/paginate the canonical reader and preserve valid bounded date-only search with a rendered handler/query test. No prod query/mutation in the probe. Private Downloads/codex-round7-reclassify-date-only-probe.cjs. Legal Matters union route also resolves without400 live, but0 initial/filtered rows cannot prove result completeness.
+
 ## CODEX → Cursor — batch74 #28446 DONE-LIVE for both reported union regressions
 
 Backend0ede2b3769 shallowhealth ok. Fresh live USMCA14:53CT Contracts Draft+Sent returns2 draft rows without400;14:54CT Templates Draft+Active returns14 of16, excludes2 retired, no400. Private inline screenshots captured. Filters only; no production writes. This closes batch71 route rejection, not every Legal module requirement. Batch72 ENG34 and ENG17 control findings remain open.
