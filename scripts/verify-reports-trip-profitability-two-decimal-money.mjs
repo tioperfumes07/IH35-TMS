@@ -36,8 +36,15 @@ function analyze(root = process.cwd()) {
   if (/maximumFractionDigits:\s*0/.test(card)) {
     failures.push("SettlementProfitabilityCard must not configure zero-decimal currency formatting");
   }
-  if (!/minimumFractionDigits:\s*2/.test(card) || !/maximumFractionDigits:\s*2/.test(card)) {
-    failures.push("SettlementProfitabilityCard money() must use two decimal places (QBO cents)");
+  // House money: USD → formatUsdCents; MXN → formatQuantityTable(..., 2). Never zero-decimal Intl.
+  if (!/formatUsdCents\(cents\)/.test(card)) {
+    failures.push("SettlementProfitabilityCard money() must use formatUsdCents for USD");
+  }
+  if (!/formatQuantityTable\(Number\(cents\) \/ 100, 2\)/.test(card)) {
+    failures.push("SettlementProfitabilityCard money() must use formatQuantityTable(..., 2) for MXN");
+  }
+  if (/Intl\.NumberFormat\("es-MX"/.test(card) || /Intl\.NumberFormat\("en-US"[\s\S]*style:\s*["']currency["']/.test(card)) {
+    failures.push("SettlementProfitabilityCard must not hand-roll Intl.NumberFormat currency");
   }
   if (/formatProfitCents/.test(card)) {
     failures.push("SettlementProfitabilityCard must not use compact formatProfitCents for drawer money");
@@ -75,10 +82,10 @@ function selftest() {
     const tmpCardPath = path.join(tmpRoot, CARD);
     const cardOriginal = fs.readFileSync(tmpCardPath, "utf8");
     const badCard = cardOriginal.replace(
-      /maximumFractionDigits:\s*2/,
-      "maximumFractionDigits: 0",
+      /formatQuantityTable\(Number\(cents\) \/ 100, 2\)/,
+      'new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(cents) / 100)',
     );
-    if (badCard === cardOriginal) fail("selftest could not plant zero-decimal on SettlementProfitabilityCard");
+    if (badCard === cardOriginal) fail("selftest could not plant zero-decimal Intl on SettlementProfitabilityCard");
     fs.writeFileSync(tmpCardPath, badCard);
     const plantedCard = analyze(tmpRoot);
     if (!plantedCard.some((m) => /SettlementProfitabilityCard/.test(m))) {
