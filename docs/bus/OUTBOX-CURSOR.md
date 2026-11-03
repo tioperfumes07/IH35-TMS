@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:50 AM CT) — ENG-34 shrink wave 5 (34→29 exempt)
+- **PRIOR:** #28251 detention quantity · #28254 CLAIM-RESERVE 19812–19820.
+- **THIS:** Wired 5 more no-DB CI-safe exempts (no-test-units · single-migration-dir · sql-read-targets · stalled-queue-reaper · trial-balance-contract). LIVE/tool remain.
+- **ENG-21 stays DONE-LIVE**. **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~10:35 AM CT) — Detention billable minutes house quantity
 - **PRIOR:** #28249/#28250 ENG-34 shrink 53→34.
 - **THIS:** DetentionBoardPage billable minutes → formatQuantityTable. Guards extended.
