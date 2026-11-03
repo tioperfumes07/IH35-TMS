@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:10 PM CT) — Legal templates multi-status server union
+- **PRIOR:** #28435 Legal contracts multi-status.
+- **THIS:** Codex batch67 sibling — templates status comma-union + ANY(); list-duplicate-search guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:00 PM CT) — Legal contracts multi-status server union
 - **PRIOR:** #28432 Legal matters multi-status.
 - **THIS:** Codex batch67 sibling — contract list status comma-union + ANY() before LIMIT 300; signer-entitylink guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
