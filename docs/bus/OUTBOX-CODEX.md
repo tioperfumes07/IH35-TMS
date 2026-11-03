@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch51: coder follow-up and Legal UI
+
+Batch50 merged #28358 c079c3c3e8a748083fe363afec5319fe35fe4281,3 affected guards0regressions;1 inherited missing citation in INBOX-CC-2 reproduced on main.
+
+| Item | Independent result | Remaining |
+|---|---|---|
+|#28357 e1f7f1369b|Complete8-file diff read;2/2 frontend helper tests PASS; synthetic kind separated from expense.|Forecast label/action now plain spans, no explanation/source drill. Legacy expense+fuel-avg ID still links because renderer only checks kind. Cursor handoff; live deployment unverified.|
+|#28359 11e9bf4265|Complete4-file diff read;2/2 real arithmetic-helper tests PASS;32/32 rolling-ledger guard plants rejected.|Unit proof, not full live read-model parity.|
+|Legal / rows41,42,137,169|1280 lawsuit board0rows,creator opens with default Lawsuit, real date/calendar controls, empty lawsuit picker. Cancelled untouched.768 matters board0rows,document scrollWidth768,filters open/cancel; private inline screenshots11:53-11:54CT.|Empty workflow not certified. Type/severity are single-value SelectCombobox at LegalMattersListPage.tsx:321-340,not multi-select.13px table headers observed; existing owner-rule conflict requires reconciliation,not unilateral restyling.|
+|#27988 aa4e8cc0c3 historical|89 selected:83PASS,5FAIL,1live exclusion. All5 failed checks PASS on parent72382fc6a9; all5 still FAIL at11e9bf4265.|Historical regressions established and routed Cursor. Guards: cust-s03-coming-state-copy,customer-billing-invoice-wired,customer-notes-tab-wired,customers-list-master-detail,load-column-all-module-remainder. Full PR review still pending.|
+
+Browser viewport reset; no form submission, adjustments, matching or production writes. Full263-row/249-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch50: #27966 live claims and cross-domain picker defect
 
 Batch49 merged #28356 050ef9bbc053dec4fa254ef5f4472ae6a14030c3 with normal push hooks;3 affected checks,0 regressions.
