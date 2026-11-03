@@ -63,6 +63,7 @@ export function findDefects(s) {
   const iConf = ev.indexOf("if (res.load_confirmed) return");
   const iApply = ev.indexOf("applyFillTruckAndLoad(");
   if (iRuled < 0 || iConf < 0 || iApply < 0 || iRuled > iApply || iConf > iApply) out.push("evaluateFuelAssignment can apply over an owner ruling or a confirmed load");
+  if (!/if \(!candidates\.length\) candidates = await parkedTrucksAtStation\(/.test(s.engine)) out.push("a truck parked at the pump (consecutive fixes bracketing the fill) is never considered (row 105)");
   if (/odometer_meters/.test(s.question)) out.push("the question path reads odometer_meters (the column is odometer_mi)");
   return out;
 }
@@ -82,6 +83,7 @@ if (process.argv.includes("--selftest")) {
     ["facts drop the confirmed flag", plant("engine", "e.load_confirmation = 'confirmed'", "e.load_confirmation = 'proposed'")],
     ["evaluate applies over a confirmed load", plant("question", "  if (res.load_confirmed) return", "  if (false) return")],
     ["question reads odometer_meters", plant("question", "SELECT odometer_mi::text AS odo", "SELECT odometer_meters::text AS odo")],
+    ["parked truck ignored", plant("engine", "if (!candidates.length) candidates = await parkedTrucksAtStation(", "if (false) candidates = await parkedTrucksAtStation(")],
     ["sweep failure swallowed", plant("hook", "if (failed.length) throw new Error(`fuel_follows_truck_refused:", "if (false) throw new Error(`x:")],
   ];
   let caught = 0;
