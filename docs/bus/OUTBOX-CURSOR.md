@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:05 PM CT) — Settlements Drivers embed + ENG-34 16
+- **PRIOR:** #28300–#28318 need-company fill · ENG-34 28→16 · Retention/VendorMapping qty.
+- **THIS:** #28322 Settlements-embedded DriversPage module-aware (row185 — no nested Drivers nav / banking KPI escape). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:45 PM CT) — ENG-34 16 + need-company fill continue
 - **PRIOR:** #28300–#28317 need-company fill · Retention/VendorMapping qty · ENG-34 28→16.
 - **THIS:** ByType/ByLane/QBO/catalogs/assets/onboarding need-company; SET-RATE into 18929. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
