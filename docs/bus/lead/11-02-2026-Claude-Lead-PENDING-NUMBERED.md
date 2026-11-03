@@ -249,7 +249,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | OPEN |
 | 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | MERGED-UNVERIFIED — Week-of Closed pill = trip_closed_at OR terminal status; Status stays payment Paid/Open (v3); live USMCA UNVERIFIED |
-| 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | CODED-QUEUED |
+| 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | MERGED-UNVERIFIED — KPIs show … while toursQuery.isPending (no flash 0); live UNVERIFIED |
 | 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | OPEN — re-measured 00:15Z: fuel.fuel_card_assignments = 0 rows |
 | 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | OPEN — re-measured 00:20Z: 262 of 281 live Relay fills have no driver (220 have the unit); 18 relay_driver_ids, no crosswalk table; name match impossible (partial names, 5 duplicate "Hugo Gaytan" rows), phone 0 unique — permanent fix routed to CC-2 (relay_driver_links + picker queue) |
 | 163 | R106 | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | OPEN |
@@ -285,14 +285,14 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 183 | R123 | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | OPEN |
 | 184 | R124 | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | OPEN |
 | 185 | R125 | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | DONE-LIVE — live /driver-finance/settlements 00:00Z: sub-nav "Drivers" → /driver-finance/drivers (in module); only global nav + load EntityLinks leave the module |
-| 186 | R126 | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | CODED |
-| 187 | R127 | Settlements › Navigation › Pre-Settlements | D008: Link targets `/drivers/pre-settlements` | Cursor | CODED |
-| 188 | R128 | Settlements › Navigation › Feed Gate | D009: Link targets `/feed-gate` | Cursor | CODED |
-| 189 | R129 | Settlements › Navigation › Cash Advances | D010: Link targets `/cash-advances` | Cursor | CODED |
-| 190 | R130 | Settlements › Navigation › Liabilities | D011: Link targets `/liabilities` | Cursor | CODED |
-| 191 | R131 | Settlements › Navigation › Escrow | D012: Link targets `/accounting/escrow` | Cursor | CODED |
-| 192 | R132 | Settlements › Navigation › Pay Rate Templates | D013: Link targets `/drivers/pay-rate-templates` | Cursor | CODED |
-| 193 | R133 | Settlements › Navigation › Deductions | D014: Link targets `/drivers/deductions` | Cursor | CODED |
+| 186 | R126 | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 187 | R127 | Settlements › Navigation › Pre-Settlements | D008: Link targets `/drivers/pre-settlements` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 188 | R128 | Settlements › Navigation › Feed Gate | D009: Link targets `/feed-gate` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 189 | R129 | Settlements › Navigation › Cash Advances | D010: Link targets `/cash-advances` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 190 | R130 | Settlements › Navigation › Liabilities | D011: Link targets `/liabilities` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 191 | R131 | Settlements › Navigation › Escrow | D012: Link targets `/accounting/escrow` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV /driver-finance/escrow; ACCT-SURF-09 still cross-links /accounting/escrow; live UNVERIFIED |
+| 192 | R132 | Settlements › Navigation › Pay Rate Templates | D013: Link targets `/drivers/pay-rate-templates` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
+| 193 | R133 | Settlements › Navigation › Deductions | D014: Link targets `/drivers/deductions` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
 | 194 | R135 | Fuel › Questions › Table | D016: No column chooser in rendered DOM | Cursor | MERGED-UNVERIFIED |
 | 195 | R136 | Fuel › Questions › Table headers | D017: Headers have no sorting controls | Cursor | MERGED-UNVERIFIED |
 | 196 | R137 | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | OPEN |
