@@ -44,6 +44,11 @@ export type LegRow = {
 export type LoadRealMilesRow = {
   /** GPS-dwell boundaries this compute used (written by the cron through persistStopDwellEvidence; never by a read). */
   dwell_evidence?: StopDwellEvidence[];
+  /**
+   * E11 (ENG-29) — boundaries of this load whose time is known but whose odometer is not (no real reading the anchor rule
+   * accepts). The odometer-history backfill (odometer-history-backfill.service.ts) asks Samsara for its own reads there.
+   */
+  odometer_gaps?: BoundaryRequest[];
   load_id: string;
   unit_id: string | null;
   legs: LegRow[];
@@ -259,6 +264,7 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
     if (pick.hit) timed.push({ key, unit_id: unit, at: pick.hit.at });
   }
   const anchors = await fetchOdometerAnchors(client, operatingCompanyId, timed);
+  const timedByKey = new Map(timed.map((b) => [b.key, b]));
   const boundary = new Map<string, Boundary>();
   for (const w of wanted) boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key), dwells.get(w.key)));
   // The GPS-dwell boundaries actually used, per stop (written by the cron, never by a read).
@@ -288,7 +294,11 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
     const total = loadTotalFromLegs(legs);
     const keys = list.flatMap((st, i) => [`${st.stop_id}:arrival`, `${st.stop_id}:departure`, ...(i === 0 ? [`${st.stop_id}:prior_departure`] : [])]);
     const dwell_evidence = keys.map((k) => evidenceByKey.get(k)).filter((e): e is StopDwellEvidence => !!e);
-    out.push({ load_id: loadId, unit_id: unitId, legs, miles_driven_actual: total.miles, source: total.source, reason: total.reason, ...(dwell_evidence.length ? { dwell_evidence } : {}) });
+    const odometer_gaps = keys.map((k) => timedByKey.get(k)).filter((b): b is BoundaryRequest => !!b && !anchors.get(b.key)?.anchor);
+    out.push({
+      load_id: loadId, unit_id: unitId, legs, miles_driven_actual: total.miles, source: total.source, reason: total.reason,
+      ...(dwell_evidence.length ? { dwell_evidence } : {}), ...(odometer_gaps.length ? { odometer_gaps } : {}),
+    });
   }
   return out;
 }

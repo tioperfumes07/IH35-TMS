@@ -97,6 +97,8 @@ const LIVE_FLAG_FILES = new Map([
 // live network call; measured >8s under stripped-env pool (the fetch itself is the slow part, not
 // any database read). Declares ALLOW_OFFLINE_SKIP correctly — the hang is a false-positive from
 // the git fetch delay, not from a silent-skip pattern.
+// 443.161 E13 (CC-2 2026-11-03): candidateFiles() false-positive via "database" substring in
+// ALLOW_OFFLINE_SKIP; excluded so the 16-way spawn sweep never times it out.
 const NOT_A_CANDIDATE = new Set([
   "verify-static.mjs",
   "verify-no-silent-db-skip.mjs",

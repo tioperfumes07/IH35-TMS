@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1be9bad",
-  "generated_at": "2026-11-03T20:11:51.564Z",
+  "healthzSha": "c11fe33",
+  "generated_at": "2026-11-03T21:31:41.683Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1be9bad",
+    "deployedSha": "c11fe33",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28431,
-      "title": "BUS: tip after #28428/#28430 factoring qty + trip voided",
+      "number": 28459,
+      "title": "FINDING: Codex E13 independent live source contradiction",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28431",
-      "sha": "bbfa6447d6",
-      "committedAtIso": "2026-11-03T14:09:24-06:00"
+      "mergedAtCt": "11/03/2026, 03:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28459",
+      "sha": "76fc3cd5bd",
+      "committedAtIso": "2026-11-03T15:30:56-06:00"
     },
     {
-      "number": 28430,
-      "title": "FORMAT: factoring submit + tour footer counts house quantity",
+      "number": 28458,
+      "title": "fix(guards): batch72 ENG17 selftest + ENG-34 inline/inert holes",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28430",
-      "sha": "9d40f18f54",
-      "committedAtIso": "2026-11-03T14:07:37-06:00"
+      "mergedAtCt": "11/03/2026, 03:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28458",
+      "sha": "a4c4b14775",
+      "committedAtIso": "2026-11-03T15:29:13-06:00"
     },
     {
-      "number": 28429,
-      "title": "FINDING: Codex Relay live linkage and status-pagination evidence",
+      "number": 28457,
+      "title": "FINDING: ACCT-F11041 ENG-65 residual — every Relay fill is recorded from its own Relay lines at receipt; the Creator adopts, never writes a second set (48 fills, $16,421.01 had no record)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28429",
-      "sha": "7ec326a640",
-      "committedAtIso": "2026-11-03T14:06:03-06:00"
+      "mergedAtCt": "11/03/2026, 03:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28457",
+      "sha": "68acceee21",
+      "committedAtIso": "2026-11-03T15:27:20-06:00"
     },
     {
-      "number": 28428,
-      "title": "FIX: trip profitability excludes voided/cancelled loads",
+      "number": 28456,
+      "title": "CLAIM-RESERVE: verify-step 19841 (LEAD) — ENG-65 receipt-time Relay records guard",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28428",
-      "sha": "2e1e768316",
-      "committedAtIso": "2026-11-03T14:05:39-06:00"
+      "mergedAtCt": "11/03/2026, 03:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28456",
+      "sha": "c11fe33fe0",
+      "committedAtIso": "2026-11-03T15:22:19-06:00"
     },
     {
-      "number": 28427,
-      "title": "FORMAT: reverse/home/fleet count badges house quantity",
+      "number": 28455,
+      "title": "FINDING: Codex E13 period and gate-scope counterexamples",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28427",
-      "sha": "9fc43b03cf",
-      "committedAtIso": "2026-11-03T14:03:53-06:00"
+      "mergedAtCt": "11/03/2026, 03:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28455",
+      "sha": "ffb014f3ad",
+      "committedAtIso": "2026-11-03T15:18:13-06:00"
     },
     {
-      "number": 28426,
-      "title": "FINDING: Codex maintenance multi-status pagination audit",
+      "number": 28454,
+      "title": "FINDING: Codex Vendor filter boundary and historical audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28426",
-      "sha": "b1a1b8ae9f",
-      "committedAtIso": "2026-11-03T14:03:07-06:00"
+      "mergedAtCt": "11/03/2026, 03:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28454",
+      "sha": "27e5a65981",
+      "committedAtIso": "2026-11-03T15:10:35-06:00"
     },
     {
-      "number": 28425,
-      "title": "FINDING: Codex independent audit query and consumer corrections",
+      "number": 28453,
+      "title": "FINDING: Codex historical audit and Reclassify date-only refusal",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28425",
-      "sha": "1be9bad5aa",
-      "committedAtIso": "2026-11-03T13:59:51-06:00"
+      "mergedAtCt": "11/03/2026, 03:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28453",
+      "sha": "3c6d420b22",
+      "committedAtIso": "2026-11-03T15:07:03-06:00"
     },
     {
-      "number": 28424,
-      "title": "FIX: AvP expense-accuracy tile uses matched coverage (batch64)",
+      "number": 28452,
+      "title": "FINDING: ACCT-F443161-E13 LANE: NON-FINANCIAL — LEAD 443.161 (row 161): seed fuel.fuel_card_assignments 27 USMCA card-unit periods from Relay fill history",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28424",
-      "sha": "4dfe7f084f",
-      "committedAtIso": "2026-11-03T13:56:03-06:00"
+      "mergedAtCt": "11/03/2026, 03:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28452",
+      "sha": "df3b66b2bb",
+      "committedAtIso": "2026-11-03T15:02:21-06:00"
     },
     {
-      "number": 28423,
-      "title": "BUS: register rows 146/261; CC-1 queue after Lead shipped E8 + ENG-65",
+      "number": 28451,
+      "title": "FINDING: Codex Legal live acceptance and E9 boundary audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28423",
-      "sha": "064f4b9e0c",
-      "committedAtIso": "2026-11-03T13:55:13-06:00"
+      "mergedAtCt": "11/03/2026, 03:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28451",
+      "sha": "f241e72258",
+      "committedAtIso": "2026-11-03T15:01:22-06:00"
     },
     {
-      "number": 28422,
-      "title": "FINDING: ACCT-F11039 ENG-65 / E2 — a Relay fill document links its fuel record on every adopt (90 unlinked, $38,717.03)",
+      "number": 28450,
+      "title": "FIX: E11 / ENG-29 — real-driven-miles boundaries without an odometer read get Samsara's own reads (91 of 148 loads without miles carry the gap)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28422",
-      "sha": "dd171c394c",
-      "committedAtIso": "2026-11-03T13:53:52-06:00"
+      "mergedAtCt": "11/03/2026, 02:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28450",
+      "sha": "dfb14da20a",
+      "committedAtIso": "2026-11-03T14:57:05-06:00"
     }
   ]
 }

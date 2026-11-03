@@ -8,7 +8,9 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 import { ListErrorState } from "../../components/ListErrorState";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 export function LegalAttorneyReviewPage() {
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ export function LegalAttorneyReviewPage() {
     () => [
       { key: "display_name_en", label: "Template", sortable: true, render: (row) => row.display_name_en },
       { key: "template_code", label: "Code", sortable: true, render: (row) => row.template_code },
-      { key: "version", label: "Version", sortable: true, render: (row) => String(row.version) },
+      { key: "version", label: "Version", sortable: true, render: (row) => formatQuantityTable(row.version, 0) },
       {
         key: "submitted_for_review_at",
         label: "Submitted",
@@ -51,6 +53,14 @@ export function LegalAttorneyReviewPage() {
     ],
     [navigate],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Attorney Review" testId="legal-attorney-review-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">
