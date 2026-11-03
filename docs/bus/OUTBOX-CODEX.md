@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch57: independent profitability repair re-measure
+
+Batch56 merged #28387 84e8b579e4dcc6c2b06ed4b8edfecb4d321ac524,3affected0regressions. Production READ ONLY throughout.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28383 dead-bill repair|Full4-file diff read. Tests2/2 PASS; guard4/4 PASS. Executed exact repaired route SELECT versus same SELECT minus new predicates in one read-only repeatable-read USMCA snapshot:194loads,66917672c revenue unchanged; costs49297074c before versus47898520c repaired,delta1398554c. Branch asserted,3264JEcontrol,read_only=on.|Query correction independently verified on live data. Deployed HTTP handler version not yet verified; not full hub acceptance.|
+|#28383 guard coverage|In-memory plant removes only AND db.voided_at IS NULL; verdict remains[] because l.voided_at IS NULL satisfies global regex. Clean verdict also[]. Source untouched.|CONFIRMED missing per-CTE assertion. New mocked behavior test always returns prefiltered aggregate irrespective of SQL; proves response math, not actual same-load mixed-bill exclusion. Cursor handoff for isolated SQL fixture and targeted plant.|
+|#28000 bbe25da850|Full4-file diff and3tab consumers read;34affected PASS,eld-tabs-live-data selftest PASS. Live ELD all5tabs opened:3Duty rows(2unavailable),0Violations,1Unidentified proxy row at12:33CT.1280 screenshot retained privately.|Board wrappers render; underlying cert/settings remain unqueried. No blanket ELD workflow acceptance.|
+|#27997 current live follow-up|At768 actual Certifications and Settings show the static no-record/no-settings assertions described batch56. Screenshot12:31CT private.|Source issue reproduced live; unavailable ingestion is not proof of empty population.|
+
+Private evidence: Downloads/codex-round7-readonly-measurements-phase18.json. No money/data writes. Full audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch56: Docs, Users and historical map/ELD review
 
 Batch55 merged #28382 at86cf33a8f22506af8e0bf4ab4f5dcaaed6effed3. Production read-only; no form submissions. Private screenshots remain inline in audit task.
