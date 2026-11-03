@@ -41,13 +41,17 @@ export function verdict(files) {
   if (files.kpi.includes("unavailable={NO_FEED}") || files.kpi.includes("Profitability engine feed is not connected")) {
     problems.push("KpiStrip must not keep the unavailable NO_FEED stub");
   }
+  // Codex batch54 — void/voided driver bills must not inflate By Type direct cost.
+  if (!/voided_at\s+IS\s+NULL/.test(files.route) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(files.route)) {
+    problems.push("equipment-type-profitability bills CTE must exclude void/voided driver bills");
+  }
   return problems;
 }
 
 if (process.argv.includes("--selftest")) {
   const good = {
     index: "registerEquipmentTypeProfitabilityRoutes(app)",
-    route: 'app.get("/api/v1/reports/equipment-type-profitability"',
+    route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')",
     api: "export async function getEquipmentTypeProfitability",
     lane: "getLaneProfitability\nBoardSection",
     customer: "getCustomerProfitability\nBoardSection",
@@ -59,6 +63,7 @@ if (process.argv.includes("--selftest")) {
     ["clean passes", verdict(good).length === 0],
     ["empty stub fails", verdict({ ...good, lane: "const rows: X[] = []; BoardSection" }).some((p) => p.includes("empty static"))],
     ["missing register fails", verdict({ ...good, index: "" }).some((p) => p.includes("register"))],
+    ["missing dead-bill filter fails", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"' }).some((p) => p.includes("void/voided"))],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;
