@@ -266,7 +266,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   useEffect(() => {
     const legacySubtab = searchParams.get("subtab");
     if (!legacySubtab) return;
-    // Under Settlements embed: never bounce to /drivers/* — stay on the current in-module path.
+    // Under Settlements embed: never bounce to bare /drivers routes — stay on the current in-module path.
     if (underSettlements) {
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete("subtab");
