@@ -1,7 +1,9 @@
 /**
  * Relay fuel → mdata.drivers matcher.
  *
- * Primary key: Relay driver.integration_id = mdata.drivers.integration_id.
+ * Primary key: Relay driver.integration_id = mdata.drivers.integration_id; then integrations.relay_driver_links (E1, row 162:
+ * Relay issues one driver several ids — a single column on the driver can never hold them; 262 of 281 fills had no driver).
+ * A link to a merged driver resolves to its survivor. Still integration_id ONLY — no name / phone / Relay driver.id key.
  * Fallback (RC6 443.341): when integration_id is missing or unresolvable, derive the driver from the load
  * that was assigned to the fill's unit at fill time — exactly one assigned_primary_driver_id wins; ambiguous
  * or missing → stays unresolved. The fallback never guesses: it uses the same load-at-time window the
@@ -19,7 +21,8 @@ export type RelayDriverUnresolvedReason =
   | "relay_integration_id_missing"
   | "relay_integration_id_placeholder"
   | "no_active_driver_with_integration_id"
-  | "integration_id_matches_multiple_drivers";
+  | "integration_id_matches_multiple_drivers"
+  | "linked_driver_not_active";
 
 export type RelayDriverMatch =
   | { driver_id: string; unresolved_reason: null }
@@ -52,9 +55,40 @@ export async function resolveRelayDriverMatch(
     `,
     [operatingCompanyId, integrationId]
   );
-  if (res.rows.length === 0) return { driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" };
+  if (res.rows.length === 0) return resolveRelayDriverLink(client, operatingCompanyId, integrationId);
   // The (operating_company_id, integration_id) unique index makes this unreachable today; never pick one anyway.
   if (res.rows.length > 1) return { driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" };
+  return { driver_id: res.rows[0].id, unresolved_reason: null };
+}
+
+/**
+ * E1 (row 162) — the Relay id → driver link table: many Relay integration ids → one driver, each with its evidence.
+ * A link to a merged driver resolves to the survivor (merged_into_driver_id); a survivor that is deactivated or
+ * archived never matches (named reason, never a guess).
+ */
+export async function resolveRelayDriverLink(
+  client: DbClient,
+  operatingCompanyId: string,
+  integrationId: string
+): Promise<RelayDriverMatch> {
+  const res = await client.query<{ id: string; active: boolean }>(
+    `
+      SELECT s.id::text AS id,
+             (s.merged_into_driver_id IS NULL AND s.deactivated_at IS NULL AND s.archived_at IS NULL) AS active
+      FROM integrations.relay_driver_links l
+      JOIN mdata.drivers d ON d.id = l.driver_id
+      JOIN mdata.drivers s ON s.id = COALESCE(d.merged_into_driver_id, d.id)
+      WHERE l.operating_company_id = $1::uuid
+        AND l.relay_integration_id = $2
+        AND l.voided_at IS NULL
+      LIMIT 2
+    `,
+    [operatingCompanyId, integrationId]
+  );
+  if (res.rows.length === 0) return { driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" };
+  // relay_driver_links_live_key makes this unreachable; never pick one anyway.
+  if (res.rows.length > 1) return { driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" };
+  if (!res.rows[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active" };
   return { driver_id: res.rows[0].id, unresolved_reason: null };
 }
 
