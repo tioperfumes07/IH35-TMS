@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.30 batch92: historical formatter/revert review; timezone counterexample
+
+Batch91 merged #28555 d2ee7cc63e8fc6fad52e2593f293c314d0824fab,normal hooks,3affected,0regressions.
+
+| PR | Independent historical evidence | Remaining |
+|---|---|---|
+|#28104 367164f6d6|Both complete component sources read;formatUsdCents preserves cents input;exact affected3/3PASS|Live close-decision dialogs not triggered:read-only audit does not submit close to provoke a refusal|
+|#28106 37dd062b14|Entire helper diff/surrounding caller read;exact affected1/1PASS;money+formatDate tests24/24PASS|CONFIRMED cross-timezone caller/formatter mismatch below|
+|#28105 75fa067f48|Revert diff read;5runtime/guard files exactly match pre#28069 parent;exact affected19PASS/2live-excluded;geofence selftest4/4PASS|Rollback is not proof deadlock freedom;live exclusions not passes;removed lock-order test/helper later restored separately|
+
+CONFIRMED current and historical week-label contract gap: SettlementsPage.tsx:43-68 builds browser-local midnight Sunday,week label and week_start URL;settlementsHomeBoardHelpers.ts:formatWeekOfTitle converts that instant to Central. Independent actual-function probe at2026-10-20T12:00Z:Chicago label10-18/URL2026-10-18/title10/18;New_York andUTC same label/URL but title10/17. No browser clock emulation or prod write. Existing current one-readout41/41 and honesty selftests PASS despite counterexample. Private Downloads/codex-round7-settlement-week-timezone-probe.cjs. Route to Cursor/Lead's existing settlement/date row:one company-calendar week definition for bucketing,URL,title and filters;test CT/Eastern/UTC plus DST. Current CT live click proof from batch91 remains valid,not universal timezone certification.
+
+Latest health service history still ends #28480;invoice subset-balance and settlement legacy-link reader defects remain OPEN. Full audit INCOMPLETE;no data changes.
+
 ## 2026-11-03 — ROUND7.30 batch91: chart repair LIVE; formatter guard counterexamples closed
 
 - #28535 2ac43cb0ca: functional diff and surrounding selected-week wiring reviewed. Exact merge affected43PASS/1FAIL-test; failing live-document-predicates-single-source directly rerun on parent80e8ef72ab and merge:both exit1,inline228,17identical findings. Inherited,not chart regression. Settlement honesty scan/selftest PASS. Live USMCA17:01CT:11accessible chart bars;click historical week changes week_start and Week-of;open2/closed11;Closed renders11. Enter selects another week with open1/closed6 and6rendered;Space restores prior11. Deductions and selected footer change with selection. Batch88 dead chart drill CLOSED for these actual interactions. Screenshot private inline task,not committed.
