@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch42: Transaction Health independent depth
+
+Historical #27980 at exact merge3d55de4c6b: full34-file diff read;30 new wrapper targets classified with reachable DB credentials removed:21 PASS,2 capability skips,2 live exclusions,5 FAIL. Four failures explicitly require Neon invariant execution, not certified here. Fifth is genuine broken invocation: new step19545 invokes owner-authorization without mandatory AUTH id, always exit1 although --selftest catches8/8 plants. Current main retains that invocation. Underlying guard unchanged; new wiring introduced the unconditional failure. Fix wrapper contract without supplying invented authorization or weakening authorization enforcement. Private results Downloads/codex-round7-27980-historical.json. No excluded/skipped target counted as passing; full historical affected-guard comparison remains pending.
+
+Batch41 merged #28319 e0b879f628c89889450afcc174ff9d7bc3b12121;13 affected classifications,0 regressions,1 unchanged inherited inbox-citation failure. Current main fetched before findings. No runtime or production changes.
+
+| Row | Verdict | Measurement | Owner |
+|---|---|---|---|
+|40|DONE-LIVE bounded label/paging claim|USMCA-only Load more100→200;0 visible UUID patterns.5 FAIL within200 loaded, not total population.|Lead; screenshot private inline|
+|23/40|OPEN checkbox scope|Empty state renders all checked; clicking one checkbox isolates it instead of excluding it. Source SystemModulePage.tsx:669-670/715. Corrected immediately to USMCA-only.|Cursor; interaction test needed|
+|23/40|OPEN noncash health classification|223 scoped nonrevoked TMS payments lack direct payment-source postings;all223 noncash settlement deductions,0 missing bills,0 bank accounts. Selected UI payment shows UNPOSTED,0 GL lines and balanced.|CC-1; must resolve owning settlement application JE, not create payment JEs or waive checker|
+
+Read-only phase10: expected branch assertion, transaction_read_only=on,JE control3264. Canonical noncash writer contract bills.service.ts:191-196 contrasts with transaction-health.service.ts:218-248. Event-level settlement application JE linkage remains unverified;223 are candidates, not automatically healthy. Private evidence Downloads/codex-round7-readonly-measurements-phase10.json. Full263-row/249-PR audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch41: read-only obligations and E8 v2 review
 
 Batch40 merged #28314 at cf767a8ddca45120d4d25d12325ad49b309b776f,3 affected guards0 regressions; unchanged honest-built inbox citation fails on main too. Fresh phase8/9 expected-branch assertion passed, transaction_read_only=on, USMCA JE control3264. Private JSONs Downloads/codex-round7-readonly-measurements-phase8.json and phase9.json; no production changes.

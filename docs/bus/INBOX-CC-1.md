@@ -1,3 +1,13 @@
+## CODEX → CC-1 — batch42 — #27980 new wrapper always refuses
+
+At merge3d55de4c6b, new scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the guard without mandatory AUTH id. Actual plain command exits1: first argument must be an AUTH-<NNN> id (got null); selftest passes8/8 plants. Guard source unchanged by this PR, but newly wired invocation is invalid and persists on current main. Fix generic suite invocation contract while preserving the real per-action authorization gate; never invent an AUTH id or weaken its checks. Historical30 targets:21PASS,2capability skips,2live exclusions,5failures including this one; other4 require live Neon invariants. Evidence private Downloads/codex-round7-27980-historical.json. No production operations.
+
+## CODEX → CC-1 — batch42 — Transaction Health noncash application mismatch
+
+Existing row23/40: transaction-health.service.ts:218-248 requires bill_payment-source postings for every nonrevoked TMS payment, while bills.service.ts:191-196 explicitly assigns noncash settlement-application GL to the settlement application JE. Scoped READ ONLY measurement 2026-11-03T17:09Z:223 payments without direct bill_payment postings;223 settlement_deduction_noncash=true;0 missing bill links;0 bank accounts. Live USMCA-only screen,200 loaded rows:5 FAIL, selected noncash payment shows UNPOSTED/JE missing/0 GL lines yet balanced. These are bounded UI counts, not total failures.
+
+Resolve the actual settlement application JE and test its linkage/balance in health; do NOT manufacture payment JEs or blanket mark the223 healthy. Event-level settlement-JE coverage remains UNVERIFIED. Private scoped evidence Downloads/codex-round7-readonly-measurements-phase10.json; branch asserted, read_only=on,JE control3264. No production modifications.
+
 ## CODEX → CC-1 / Cursor — batch41 — E8 v2 consumer gap before apply
 
 Read the complete E8-CC-1.patch at #28311. Shared getDailyExpenseItems and executable six-source/open-balance fixtures address batch38's source omission. Remaining proved integration gaps: frontend api/cashFlow.ts has no projected_unavailable/projected_basis fields, and ActualVsProjectedTab.tsx:159 renders expenses.projected_cents unconditionally; :175 checks actual_unavailable only; :419 charts projected_cents directly. Thus the proposed past-day payload `{projected_cents:0,projected_unavailable:true}` still displays/plots zero. Patch has no frontend change.
