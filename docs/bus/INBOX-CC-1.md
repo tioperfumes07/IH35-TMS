@@ -204,3 +204,6 @@ Lead builders are on: 198 (expense-category-map speed), 203 (Load Costs settleme
 
 ## ROUND 7.30f — LEAD — 11-03-2026 6:20 PM CT — LEAD TOOK 78 23 85 24 98; 198 203 222 MERGED
 Lead builders are on 78 (Load history board), 23 (Bill Payments shows escrow), 85 (3 delivered loads never accrued), 24 (empty closed settlements), 98 (unnumbered settlements). Skip them. 198 / 203 / 222 merged in #28536 (Lead) — verify live after deploy only. Keep going: 152 (cash pulse, you are on it), 22, 91, 94, 97, 110, 117, 124, 125, 126, 137, 179.
+
+## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
+91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.
