@@ -211,6 +211,13 @@ if (!/MXN \$\{formatQuantityTable\(\(Number\(cents\) \|\| 0\) \/ 100, 2\)\}/.tes
 if (/Intl\.NumberFormat\("es-MX"/.test(factoringQueue)) {
   fail("FactoringQueuePage must not use Intl.NumberFormat es-MX for money");
 }
+const settleProfitCard = read("apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx");
+if (!/MXN \$\{formatQuantityTable\(Number\(cents\) \/ 100, 2\)\}/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard MXN must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard must not use Intl.NumberFormat es-MX for money");
+}
 const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
 if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
   fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
