@@ -17,6 +17,8 @@ import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs
 import { withLuciaBypass } from "../auth/db.js";
 import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
 import { runFuelFollowsTruckSweep } from "./fuel-follows-truck-sweep.js";
+import { listRelayFillDocumentsWithoutRecords, recordAndLinkRelayFillDocument } from "./fuel-expense-document.service.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import {
   FUEL_FRAUD_DETECTOR_JOB,
   fuelFraudDetectorEnabled,
@@ -43,6 +45,37 @@ export async function onFuelIngestComplete(
       }
     },
     log
+  );
+
+  // ENG-65: every Relay fill document whose fill has no fuel record — the fill is recorded from its own Relay lines on the
+  // document's load / driver / truck and the document linked, one fill per transaction. Runs BEFORE the fill engine so the
+  // new records go through it in the same pass. A fill that cannot be recorded honestly is named and fails the run.
+  await wrapBackgroundJobTick(
+    "fuel.relay_fill_records",
+    async () => {
+      const companies = companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id)));
+      const refused: string[] = [];
+      for (const id of companies) {
+        const docs = await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+          return listRelayFillDocumentsWithoutRecords(client as never, id);
+        });
+        const tally: Record<string, number> = {};
+        for (const d of docs) {
+          const r = await withLuciaBypass(async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+            return recordAndLinkRelayFillDocument(client as never, { operating_company_id: id, ...d, actor_user_uuid: SYSTEM_ACTOR_USER_ID });
+          });
+          tally[r.outcome] = (tally[r.outcome] ?? 0) + 1;
+          if (r.outcome !== "linked") refused.push(`${d.relay_fill_id}: ${r.reason}`);
+        }
+        log.info({ operating_company_id: id, documents: docs.length, ...tally, source }, "[FUEL_INGEST_HOOK] relay fill records");
+      }
+      if (refused.length) throw new Error(`relay_fill_records_refused (${refused.length}): ${refused.slice(0, 5).join(" | ")}`);
+    },
+    log,
+    { leaseSeconds: JOB_LEASE_SECONDS }
   );
 
   // E9 (ENG-64): every fill not yet through the one fill engine goes through it now (fuel follows the truck at the pump;
