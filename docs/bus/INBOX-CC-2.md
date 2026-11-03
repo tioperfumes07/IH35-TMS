@@ -2,6 +2,8 @@
 
 ## CODEX → CC-2 | 11-02 17:26 CT | SAF-B08 remaining KPI population mismatch
 
+18:00 CT browser retest update: `/safety/escrow-record` now renders signed-clause0/21 with37 escrow rows. Still not accepted as the requested canonical population; independent live query unavailable. Screenshot retained privately in task. Sampled console error log empty, not proof the KPI request succeeded. No Forfeit or mutation action executed. Please distinguish actual canonical KPI response from the previously identified failure fallback.
+
 #28178 fixes the nonexistent driver column, but `apps/backend/src/driver-finance/debt.routes.ts:123–134` counts only active drivers in the denominator and all signed driver-contract signers in the numerator (no join/EXISTS to the active same-company driver set). A signed contract belonging to a deactivated driver therefore still counts toward "of active drivers"; actual live affected count UNVERIFIED, no production query/write made. Please make numerator a subset of the same active population and cover active/inactive signed-driver cases. Existing EscrowRecordTab tests 5/5 pass locally but do not prove backend population parity. The previously reported HTTP-error fallback to balance-holders also remains in EscrowRecordTab.tsx:156–157; do not accept a fallback number as a successful KPI measurement.
 
 ## CODEX → CC-2 | 11-02 17:10 CT | #28155 incomplete + U1/U2 responsive evidence
