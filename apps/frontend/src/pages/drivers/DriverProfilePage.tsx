@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "../../hooks/useTranslation";
 import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -201,6 +202,7 @@ function DriverRelayIntegrationIdField({
   currentValue: string | null;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(currentValue ?? "");
   const [saving, setSaving] = useState(false);
@@ -212,7 +214,7 @@ function DriverRelayIntegrationIdField({
     try {
       await apiRequest(`/api/v1/mdata/drivers/${encodeURIComponent(driverId)}/relay-integration-id`, {
         method: "PATCH",
-        body: JSON.stringify({ integration_id: value.trim() || null }),
+        body: { integration_id: value.trim() || null },
       });
       setEditing(false);
       onSaved();
@@ -226,13 +228,13 @@ function DriverRelayIntegrationIdField({
   return (
     <section className="rounded border border-[#E5E7EB] bg-white px-3.5 py-3" data-testid="dp-relay-integration-id">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">Relay card ID</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{t("drivers.relay_id.label", "Relay card ID")}</span>
         {!editing && (
           <button
             className="text-xs font-semibold text-[#1F2A44] hover:underline"
             onClick={() => { setValue(currentValue ?? ""); setEditing(true); setError(""); }}
           >
-            Edit
+            {t("common.edit", "Edit")}
           </button>
         )}
       </div>
@@ -242,7 +244,7 @@ function DriverRelayIntegrationIdField({
             className="w-full rounded border border-[#E5E7EB] px-2 py-1 text-xs"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="e.g. 0000000000000001"
+            placeholder={t("drivers.relay_id.placeholder", "e.g. 0000000000000001")}
             autoFocus
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
@@ -255,12 +257,12 @@ function DriverRelayIntegrationIdField({
               {saving ? "Saving…" : "Save"}
             </button>
             <button className="text-xs text-gray-500 hover:underline" onClick={() => setEditing(false)} disabled={saving}>
-              Cancel
+              {t("common.cancel", "Cancel")}
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-[#111827]">{currentValue || <span className="text-gray-400">Not set — fill Relay card ID to enable auto-match</span>}</p>
+        <p className="text-xs text-[#111827]">{currentValue || <span className="text-gray-400">{t("drivers.relay_id.not_set", "Not set — fill Relay card ID to enable auto-match")}</span>}</p>
       )}
     </section>
   );
