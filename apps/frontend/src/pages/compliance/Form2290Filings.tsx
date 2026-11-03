@@ -11,6 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { Fragment } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 type Filing = Record<string, unknown>;
 
@@ -129,11 +130,6 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
   );
 
   if (!companyId) {
-    const empty = (
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">
-        Select an operating company.
-      </div>
-    );
     return (
       <div className={showModuleHeader ? "space-y-4 p-4" : "space-y-4"}>
         <PageHeader
@@ -143,7 +139,9 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
           subtitle="HVUT annual filing"
         />
         {embeddedBackLink}
-        {empty}
+        <BoardSection title="Form 2290 filings" testId="form-2290-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }

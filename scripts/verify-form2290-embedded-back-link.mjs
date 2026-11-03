@@ -72,9 +72,9 @@ function selftest() {
   // Offender 2: remove embeddedBackLink from the no-company branch.
   const noCompanyNeedle = [
     "        {embeddedBackLink}",
-    "        {empty}",
+    '        <BoardSection title="Form 2290 filings" testId="form-2290-need-company">',
   ].join("\n");
-  const o2 = real.replace(noCompanyNeedle, "        {empty}");
+  const o2 = real.replace(noCompanyNeedle, '        <BoardSection title="Form 2290 filings" testId="form-2290-need-company">');
   if (o2 === real) failures.push("offender-2 mutation did not change the file — guard's own slice/regex may be stale.");
   const p2 = check(o2);
   if (!p2.some((m) => m.includes("no-company-selected embedded branch"))) {

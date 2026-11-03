@@ -11,6 +11,7 @@ import { formatUsdCents } from "../../lib/money";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -546,9 +547,9 @@ export function ArApAgingPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
-          Select an operating company to view aging.
-        </div>
+        <BoardSection title="AR / AP Aging" testId="ar-ap-aging-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view aging.</p>
+        </BoardSection>
       ) : isError ? (
         <ListErrorState
           title="Couldn't load aging"

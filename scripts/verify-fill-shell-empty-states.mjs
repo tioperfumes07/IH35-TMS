@@ -32,6 +32,9 @@ const checks = [
   ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "BoardSection", "loan-wizard-need-company", "LoanWizard need-company"],
   ["apps/frontend/src/pages/finance/CalculatorPage.tsx", "BoardSection", "finance-calculator-need-company", "Calculator need-company"],
   ["apps/frontend/src/pages/finance/FinanceScenariosPage.tsx", "BoardSection", "finance-scenarios-need-company", "Scenarios need-company"],
+  ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "BoardSection", "ar-ap-aging-need-company", "ArApAging need-company"],
+  ["apps/frontend/src/pages/compliance/Form2290Filings.tsx", "BoardSection", "form-2290-need-company", "Form2290 need-company"],
+  ["apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx", "BoardSection", "filings-compliance-due-need-company", "FilingsDue need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
