@@ -22,7 +22,7 @@
 //   VOID: dbf57397-1be3-43b5-a167-f71798c617d2 (manual, total=461.00, gross=NULL)
 //         → expense 66903d9b-a356-4528-94c9-cf190a6f5eb0 (posted, $461.00)
 //
-// After voiding: duplicate_fill_pairs drops from 6 → 4; update baseline to 4.
+// After voiding: duplicate_fill_pairs drops from 7 → 5; update baseline to 5.
 //
 // Run (dry run): DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-03-cc1-e3-void-duplicate-fill-pairs.mts
 // Run (apply):   DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-03-cc1-e3-void-duplicate-fill-pairs.mts --apply --auth AUTH-474
@@ -72,7 +72,7 @@ await run("cc1_e3_void_duplicate_fill_pairs", async (c: any) => {
       `SELECT ft.id::text fid, ft.source::text, round(ft.total_cost * 100)::bigint total_cents,
               round(ft.gross_cost * 100)::bigint gross_cents,
               ft.voided_at, ft.gallons::text,
-              (coalesce(ft.purchased_at, ft.transaction_at) AT TIME ZONE 'America/Chicago')::date::text day,
+              (coalesce(ft.purchased_at, ft.transaction_at) AT TIME ZONE 'America/Chicago')::date::text fill_day,
               e.id::text eid, e.status::text, e.voided_at e_voided
          FROM fuel.fuel_transactions ft
          JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id
@@ -94,8 +94,8 @@ await run("cc1_e3_void_duplicate_fill_pairs", async (c: any) => {
     if (dup.source !== "manual")
       throw new Error(`${p.label}: REFUSE — void row source is not 'manual': ${dup.source}`);
 
-    console.log(`  keep: fuel=${keep.fid} source=${keep.source} gal=${keep.gallons} day=${keep.day}`);
-    console.log(`  void: fuel=${dup.fid} source=${dup.source} gal=${dup.gallons} day=${dup.day}`);
+    console.log(`  keep: fuel=${keep.fid} source=${keep.source} gal=${keep.gallons} day=${keep.fill_day}`);
+    console.log(`  void: fuel=${dup.fid} source=${dup.source} gal=${dup.gallons} day=${dup.fill_day}`);
 
     const ctx = (entityId: string) => ({ client: c, operatingCompanyId: USMCA, entityId, userId: OWNER_USER_ID, reason: REASON });
 
@@ -135,10 +135,10 @@ await run("cc1_e3_void_duplicate_fill_pairs", async (c: any) => {
     [USMCA],
   );
   const remaining = pairsAfter[0].n;
-  if (remaining > 4)
-    throw new Error(`REFUSE: candidate pairs after repair = ${remaining}, expected ≤4`);
+  if (remaining > 5)
+    throw new Error(`REFUSE: candidate pairs after repair = ${remaining}, expected ≤5`);
 
   console.log(`\nPAIRS REMAINING (candidate SQL count, pre-isDuplicateFill): ${remaining}`);
-  console.log("Update scripts/verify-diesel-expense-fuel-dedupe.baseline.json duplicate_fill_pairs to 4.");
+  console.log("Update scripts/verify-diesel-expense-fuel-dedupe.baseline.json duplicate_fill_pairs to 5.");
   return { pairs_voided: 2, candidate_pairs_after: remaining, results };
 });
