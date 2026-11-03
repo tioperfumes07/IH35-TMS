@@ -87,8 +87,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 20 | R213 | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | CODED |
 | 21 | R214 | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | CODED |
 | 22 | R215 | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | PARTIAL |
-| 23 | R216 | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | OPEN |
-| 24 | R217 | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | OPEN |
+| 23 | R216 | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | IN PROGRESS — Lead builder (7.30f) |
+| 24 | R217 | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
 | 25 | R218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | MERGED-UNVERIFIED — SettlementStatementWorkflow + BoardPanels + LinkedRecords + FuelPurchases; live 5753 compare UNVERIFIED |
 | 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Dispatch Pre-Settlement/LoadDetail CTA; live UNVERIFIED |
 | 27 | R220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | MERGED-UNVERIFIED — #28518–#28543 BoardSection need-company on ~67 Accounting list+detail surfaces (Reclassify/match/LoadCosts skipped); fill-shell PASS; live tab inspect UNVERIFIED |
@@ -124,8 +124,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — FactoringHomeBoard tabs-first; verify-factoring-layout-tabs-first; live UNVERIFIED |
 | 53 | R40 | Reports | Reports › Home — board verdict LAYERED | CC-3 | OPEN |
 | 54 | R41 | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | MERGED-UNVERIFIED — #28541: export now uses the screen period (Q4 screen $1,628,649.66 vs old export $3,207,785.21). Prod TB ties: Q4 162,864,966¢ Dr = Cr; YTD 319,803,521¢ |
-| 55 | R42 | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
-| 56 | R43 | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
+| 55 | R42 | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | MERGED-UNVERIFIED — #28549 (Lead): Customers Home rebuilt to V3 board from /api/v1/mdata/boards/customers. Prod YTD: 87 with transactions, 193 invoices, billed $659,426.72, A/R open $659,426.72 (68.0% past due), collected $0.00 (row 89) |
+| 56 | R43 | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | MERGED-UNVERIFIED — #28549: Vendors Home cells link (category, pays-through); 30 vendors with transactions, spend YTD $363,227.28 |
 | 57 | R44 | Settlements | Settlements › Home — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — SettlementsHomeBoardPanels Week-of/V3; live UNVERIFIED |
 | 58 | R45 | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Open V3 board; live verdict UNVERIFIED |
 | 59 | R46 | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Closed V3 board; live verdict UNVERIFIED |
@@ -152,7 +152,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 78 | R66 | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | OPEN |
+| 78 | R66 | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
 | 79 | R67 | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) | CC-1 | MERGED-UNVERIFIED — #28529 (Lead): /reports/loads board (mdata.loads + load-cost rollup); deploy pending |
 | 80 | R68 | Reports/Dispatch | Reports › Driver settlement report (by settlement / driver, paid state) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/driver-settlements; prod read-only 92 settlements net $134,675.96, 87 closed-not-paid $128,466.58 |
 | 81 | R69 | Reports/Dispatch | Reports › Company settlement report (profit per closed trip) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/company-settlements (tours engine, profit per closed trip) |
@@ -164,7 +164,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 85 | R73 | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | OPEN |
+| 85 | R73 | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
 | 86 | R74 | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | MERGED-UNVERIFIED |
 | 87 | R75 | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | OPEN |
 | 88 | R76 | Settlements | 0 of 85 closed settlements marked paid ($127,897.75) | CC-2 | OPEN |
@@ -177,11 +177,11 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 95 | R83 | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | PARTIAL |
 | 96 | R84 | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | CODED |
 | 97 | R85 | Vendors | All 30 vendors have no category | CC-1 | OPEN |
-| 98 | R86 | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | OPEN |
+| 98 | R86 | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | IN PROGRESS — Lead builder (7.30f) |
 | 99 | R113 | Banking | 43 Plaid PENDING lines in October never replaced by their posted lines (e.g. SOUTH TX TRUCK CENTERS -460.01 pending 10-03 + posted 10-05) -> Banking Money in/out ($216,532.56 / $239,059.03) and Unexpected "possible duplicates" count them twice | CC-2 | DONE-LIVE — Lead 23:00Z prod: 248 pending lines voided (replaced_by_plaid_posted / plaid_stale_pending_sweep); 11 live pending all ≥ 10-28; South Texas Truck Centers -460.01 = 1 live line (10-05) |
 | 100 | R201 | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2 | CODED |
-| 101 | R202 | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | CODED |
-| 102 | R207 | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | CC-2 | OPEN |
+| 101 | R202 | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | DONE-LIVE — prod 23:10Z: 0 journal entries / 0 expense memos contain "· session <uuid>"; static rules 0 interpolated ids in Dreamline memos; selftest 7/7 |
+| 102 | R207 | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | CC-2 | MERGED-UNVERIFIED — #28550 (Lead): guard verify-443-288-person-confirms-load (selftest 21/21). Fixed: family move on in-place confirm; the system user can no longer confirm a load (MACHINE_CANNOT_CONFIRM_LOAD, one writer); Relay fills move by Relay id. Open: 11 child expenses on another load than their receipt (AUTH-457 repair on prod) |
 | 103 | R209 | Guards | 107 main static reds outside baseline split by seat | Cursor | MERGED-UNVERIFIED — verify-static-ratchet PASS status=seeded names=378 on main; live full static suite UNVERIFIED |
 | 104 | R210 | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | CC-2 | OPEN |
 | 105 | R223 | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | MERGED-UNVERIFIED — #28482 (Lead): parked-truck rule (consecutive fixes ≤483 m bracketing the fill) + odometer_mi; applies at the 06:00 CT fill sweep |
@@ -268,7 +268,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 174 | R115 | Guards | verify-stops-are-geocoded red (13699) — live-data exception for CC-2 migration | CC-2 | OPEN |
+| 174 | R115 | Guards | verify-stops-are-geocoded red (13699) — live-data exception for CC-2 migration | CC-2 | DONE-LIVE — #28550 + prod (guard SQL, Lead builder 23:10Z): 0 active loads with an ungeocoded stop; 13699 Bradley IL now 195 S Euclid Ave 60915 geocoded. Named, expiring OWNER_ADDRESS_PENDING exception list added (empty) |
 | 175 | R116 | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels | CC-3 | MERGED-UNVERIFIED |
 | 176 | R117 | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub | CC-3 | MERGED-UNVERIFIED |
 | 177 | R118 | Guards | verify-board-page-no-legacy-sections (new) — stops layering | Codex | CODED |
