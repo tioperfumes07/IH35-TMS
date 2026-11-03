@@ -546,8 +546,22 @@ function isParityNumericColumn<T>(column: ParityColumn<T>): boolean {
   return PARITY_NUMERIC_KEY.test(String(column.key));
 }
 
+/**
+ * Row 247 (live 11-03) — a column's `className` is its HEADER class and is only a fallback for the body cell.
+ * Banking's register columns pass the header typography ("uppercase tracking-wide text-section-header") there with no
+ * cellClass, so every data cell inherited CSS text-transform:uppercase ("Suggested: LOVES TRUCK CARE (5500)…").
+ * Header-only typography never reaches a data cell; alignment / width tokens still fall through.
+ */
+const HEADER_ONLY_CELL_TOKEN = /^(?:uppercase|normal-case|text-section-header|tracking-\S+)$/;
+export function cellClassFromHeaderClass(className: string | undefined): string {
+  return String(className ?? "")
+    .split(/\s+/)
+    .filter((t) => t && !HEADER_ONLY_CELL_TOKEN.test(t))
+    .join(" ");
+}
+
 function parityMergedCellClass<T>(column: ParityColumn<T>): string {
-  const base = column.cellClass ?? column.className ?? "";
+  const base = column.cellClass ?? cellClassFromHeaderClass(column.className);
   if (!isParityNumericColumn(column)) return base;
   if (/\btext-right\b/.test(base) && /\btabular-nums\b/.test(base)) return base;
   return `${QBO_MONEY_CELL_CLASS}${base ? ` ${base}` : ""}`;

@@ -577,6 +577,9 @@ export function Combobox({
             : "border-gray-300 focus-within:border-[#E5E7EB] focus-within:ring-2 focus-within:ring-[#9CA3AF]"
         }`}
       >
+        {/* Row 241 (live 11-03): a flex-item <input> defaults to min-width:auto = its intrinsic ~20ch (~142px), so in a
+            68px Manual JE cell the Account picker drew 142px wide over the Debit field. Both input branches carry
+            min-w-0 so the trigger is width:100% of its cell; the popover is sized separately (max(trigger, 200px)). */}
         <input
           type="text"
           data-field={dataField}
@@ -643,7 +646,7 @@ export function Combobox({
                       ? "border-red-400 bg-white"
                       : "border-gray-300 bg-white"
                 }`
-              : "h-full min-h-0 w-full bg-transparent text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
+              : "h-full min-h-0 w-full min-w-0 bg-transparent text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
           }
         />
         {allowClear && value ? (

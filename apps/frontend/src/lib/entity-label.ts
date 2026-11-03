@@ -141,19 +141,33 @@ export function nounFromIdField(field: string): string {
  */
 export function userDisplayLabel(user: {
   id?: unknown;
+  display_name?: string | null;
   name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
+  role?: string | null;
 }): string {
-  const name =
-    String(user.name ?? "").trim() ||
-    [user.first_name, user.last_name].map((p) => String(p ?? "").trim()).filter(Boolean).join(" ");
+  // Row 233 (live 11-03): 14 users rendered the bare word "User" — the API fabricated name "User" (and an email
+  // local-part such as "codex.test.driver0034"). Order: display name → full name → email → "Invited user (<role>)".
+  // Never the bare word "User".
   const email = String(user.email ?? "").trim();
+  const emailLocal = email.includes("@") ? email.split("@")[0] : "";
+  const usable = (v: unknown): string => {
+    const s = String(v ?? "").trim();
+    if (!s || /^user$/i.test(s) || /^invited user \(/i.test(s)) return "";
+    if (emailLocal && s === emailLocal) return "";
+    return s;
+  };
+  const name =
+    usable(user.display_name) ||
+    usable([user.first_name, user.last_name].map((p) => String(p ?? "").trim()).filter(Boolean).join(" ")) ||
+    usable(user.name);
   if (name && !name.includes("@") && !UUID_SHAPE_RE.test(name) && !looksLikeSerializedJson(name)) {
     return formatPersonName(name);
   }
   if (email) return email;
   if (name.includes("@")) return name;
-  return entityLabel(null, user.id, "User");
+  const role = String(user.role ?? "").trim();
+  return `Invited user (${role || "no role"})`;
 }

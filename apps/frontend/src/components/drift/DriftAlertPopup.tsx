@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatIsoDatesInText } from "../../lib/formatDate";
 import { useTranslation } from "../../hooks/useTranslation";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -138,7 +138,7 @@ export function DriftAlertPopup() {
                 sortValue: (r) => r.field,
                 render: (r) => t(`topbar.driftAlert.field.${r.field}`, FIELD_LABEL[r.field] ?? r.field),
               },
-              { key: "reason", label: t("topbar.driftAlert.colFix", "What to fix"), sortable: true, allowWrap: true, render: (r) => r.reason },
+              { key: "reason", label: t("topbar.driftAlert.colFix", "What to fix"), sortable: true, allowWrap: true, render: (r) => formatIsoDatesInText(r.reason) },
             ]}
           />
         </div>
