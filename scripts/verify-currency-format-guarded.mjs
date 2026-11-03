@@ -87,6 +87,9 @@ if (!/formatQuantityTable\(qualityStats\.avgDaysLate, 1\)/.test(customer)) fail(
 if (!/formatQuantityTable\(Number\(customerPnlRow\.gross_margin_pct\) \|\| 0, 1\)/.test(customer)) {
   fail("CustomerDetail margin % must use formatQuantityTable");
 }
+if (!/formatQuantityTable\(Number\(customer\.layover_charge_per_day\), 2\)/.test(customer)) {
+  fail("CustomerDetail non-USD layover charge must use formatQuantityTable");
+}
 
 const vendorParts = read("apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx");
 if (!/formatUsd/.test(vendorParts) || /\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(vendorParts)) {
@@ -244,6 +247,10 @@ if (!/formatQuantityTable\(data\.avg_gap_hours, 1\)/.test(dispPerf)) fail("Dispa
 const daySum = read("apps/frontend/src/components/home/DriverDaySummaryCard.tsx");
 if (!/formatQuantityTable\(row\.miles, 1\)/.test(daySum) || !/formatQuantityTable\(row\.hours_on_duty, 2\)/.test(daySum)) {
   fail("DriverDaySummaryCard miles/hours must use formatQuantityTable");
+}
+const relScore = read("apps/frontend/src/components/customers/CustomerRelationshipScore.tsx");
+if (!/formatQuantityTable\(value, 1\)/.test(relScore) || !/formatQuantityTable\(score\.overall_health_score, 1\)/.test(relScore)) {
+  fail("CustomerRelationshipScore must use formatQuantityTable");
 }
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
