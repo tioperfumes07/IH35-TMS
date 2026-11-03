@@ -165,6 +165,10 @@ const gpsBorder = read("apps/frontend/src/pages/dispatch/borders/BorderCrossingH
 if (!/formatQuantityTable\(ev\.customs_clearance_minutes\)/.test(gpsBorder)) {
   fail("GPS BorderCrossingHistory customs minutes must use formatQuantityTable");
 }
+const faro1090 = read("apps/frontend/src/pages/factoring/Faro1090WireProposalsPage.tsx");
+if (!/formatQuantityTable\(row\.days_unfunded\)/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage days_unfunded must use formatQuantityTable");
+}
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
