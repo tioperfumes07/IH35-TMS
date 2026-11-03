@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:25 PM CT) — D066 z-index plant on unmatched-7d guard
+- **PRIOR:** #28561 Settlements week company-calendar ISO + deductions caption.
+- **THIS:** verify-unmatched-7d-is-an-alert selftest adds D066 z-[50]→z-[220] plant (Codex inbox gap). Scan already required z-[50].
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:15 PM CT) — Codex batch91/92 Settlements week TZ + deductions caption
 - **PRIOR:** #28557 Manual JE #241 size=sm MERGED-UNVERIFIED.
 - **THIS:** Settlements week buckets → companyWeekStartSundayIso / weekStartIso (America/Chicago); formatWeekOfTitle prefers bare ISO; deductions title `Deductions · Week of …` (batch91); honesty plants CT/caption. Live UNVERIFIED.
