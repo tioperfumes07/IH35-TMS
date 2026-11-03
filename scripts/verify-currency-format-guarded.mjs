@@ -795,6 +795,10 @@ const attorneyReviewQty = read("apps/frontend/src/pages/legal/LegalAttorneyRevie
 if (!/formatQuantityTable\(row\.version, 0\)/.test(attorneyReviewQty)) {
   fail("LegalAttorneyReviewPage version must use formatQuantityTable(, 0)");
 }
+const legalTemplatesQty = read("apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(legalTemplatesQty)) {
+  fail("LegalTemplatesListPage version must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
