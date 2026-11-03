@@ -18,6 +18,7 @@ import {
   type ExportStatement,
 } from "../../api/my-accountant";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");

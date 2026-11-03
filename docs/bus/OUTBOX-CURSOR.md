@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:40 PM CT) — hotfix MyAccountant need-company
+- **PRIOR:** #28522 tip #27 PARTIAL.
+- **THIS:** MyAccountant BoardSection need-company (fill-shell plant was red on main after #28521). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting tabs / #29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:30 PM CT) — ROUND 7.30 #27 PARTIAL tip
 - **PRIOR:** #28521 Accounting need-company wave 2.
 - **THIS:** PENDING #27 → PARTIAL (9 Accounting surfaces BoardSection need-company via #28518/#28521; more tabs remain). Remaining Cursor: #27 rest + #29 popup (+ Lead date/UI live DONE-LIVE). Batch75 Reclassify → CC-1.
