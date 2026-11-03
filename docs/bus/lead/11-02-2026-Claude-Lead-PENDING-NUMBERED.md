@@ -227,7 +227,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 141 | M2 | Banking | M2 invoices + Faro purchases in the match union | - | MERGED-UNVERIFIED |
 | 142 | M3 | Banking | M3/M5 one matcher (MatchDrawer embedded); filters live | - | MERGED-UNVERIFIED |
 | 143 | G1 | Dispatch | G1/G9/G11/G12/G15 code fixes merged (data remainders in ENG-07/08/13/14) | - | MERGED-UNVERIFIED |
-| 144 | LEAD-various | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | MERGED-UNVERIFIED |
+| 144 | LEAD-various | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | DONE-LIVE — cash-basis P&L: verify-cash-basis-pl-is-computed-from-transactions PASS + engine-determinism OK; bank-line delete/void: 28 not-dead/delete-not-under-bank-line triggers enabled in prod, verify-no-hard-delete-bank-stubs PASS; recurring worker: verify-recurring-worker-never-posts PASS; 7-day unmatched: verify-unmatched-7d-is-an-alert OK; reefer off IFTA: verify-reefer-fuel-credit PASS + verify-ifta-excludes-non-highway-fuel-types static PASS; A/P control by documents: prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement; matched-to-nothing: trg_bank_line_not_matched_to_nothing enabled, 0 live bank lines pointing at a missing/voided document, verify-match-posts-nothing PASS |
 | 145 | NEW 11-02 | Fuel | ENG-64 116 fuel rows ($40,499.46) on 42 loads outside the trip window | CC-3 | OPEN |
 | 146 | NEW 11-02 | Fuel | ENG-65 90 Relay fill expenses $38,717.03 with no linked fuel row (18 link / 48 import / 24 dedupe) | CC-1 | OPEN |
 | 147 | NEW 11-02 | Telematics | Deadlock live proof after #28131 leases (before: geofence 4, positions 6, status-switch 4) | LEAD | DONE-LIVE — Render backend logs: last "deadlock detected" 21:25:35Z; after the deploy containing #28131 (1d1e9f18b live 22:07:24Z) 0 through 23:32:37Z (85 min); 0 from 21:25:35Z to 22:53Z (88 min; 7 in the 25 min before); pg_stat_database.deadlocks flat 3825 22:49:45Z→22:52:49Z |
@@ -238,7 +238,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 |---|---|---|---|---|---|
 | 148 | R89 | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | CODED |
 | 149 | R90 | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | CODED |
-| 150 | R93 | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | OPEN |
+| 150 | R93 | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 151 | R94 | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | CODED |
 | 152 | R95 | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | OPEN |
 | 153 | R96 | Accounting | QBO sync "Not connected" | OWNER | OPEN |
@@ -246,7 +246,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 155 | R98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | CODED |
 | 156 | R99 | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | OPEN |
 | 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | OPEN |
-| 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | OPEN |
+| 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | CODED |
 | 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | CODED-QUEUED |
 | 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | OPEN |
