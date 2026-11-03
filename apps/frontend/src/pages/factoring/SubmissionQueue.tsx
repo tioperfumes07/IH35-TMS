@@ -15,7 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { BoardSection } from "../../components/v3/BoardSection";
 
 function asMoney(cents: number) {
@@ -314,7 +314,7 @@ export function SubmissionQueue() {
           headerRight={
             <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-[#6B7280]">
               <span>
-                {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
+                {formatQuantityTable(submittable.length, 0)} of {formatQuantityTable(items.length, 0)} invoice{items.length !== 1 ? "s" : ""} ready to submit
               </span>
               <label className="inline-flex items-center gap-1">
                 <input
@@ -331,7 +331,7 @@ export function SubmissionQueue() {
                     Expected reserve: {asMoney(selectedExpectedReserve)}
                   </span>
                   <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
-                    Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
+                    Submit {formatQuantityTable(selected.length, 0)} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
                   </Button>
                 </>
               ) : null}

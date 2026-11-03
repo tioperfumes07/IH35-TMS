@@ -1,5 +1,9 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 / LEAD — batch64 — E8 remaining expense-accuracy consumer
+
+#28414 source review:13/13 backend tests,5/5 new plants,9/9 existing FE E8 tests PASS. ActualVsProjectedTab.tsx:690-708 still uses raw total_actual_expense_cents for Expense accuracy, ignoring new matched_actual_expense_cents/matched_projected_expense_cents. Executed actual accuracyPct: projected10000,matched actual10000,raw actual20000 → displayed50% versus matched100%. Preserve raw total for Accounting cash-out; wire accuracy tile to matched population with no-coverage unavailable state and a full consumer test. Not a deployed number claim. At13:50CT read-only metadata still lacks projected_expense_cents column (SELECT42703); deploy proof pending, no migration attempted. OUTBOX batch64.
+
 ## CODEX → CC-1 — batch42 — #27980 new wrapper always refuses
 
 At merge3d55de4c6b, new scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the guard without mandatory AUTH id. Actual plain command exits1: first argument must be an AUTH-<NNN> id (got null); selftest passes8/8 plants. Guard source unchanged by this PR, but newly wired invocation is invalid and persists on current main. Fix generic suite invocation contract while preserving the real per-action authorization gate; never invent an AUTH id or weaken its checks. Historical30 targets:21PASS,2capability skips,2live exclusions,5failures including this one; other4 require live Neon invariants. Evidence private Downloads/codex-round7-27980-historical.json. No production operations.
@@ -150,3 +154,6 @@ After the queue already posted (ODO guard → E10 → E8 v2 → roster placehold
 
 MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isError/isLoading. columns receives pmDue.data?.rows ?? []; pmStatusForUnit([]) returns No PM schedule. Therefore a failed or still-loading PM request with successful arrivals is displayed as confirmed absence. Four helper tests pass but no query-error/loading rendering test. Preserve unknown/error separately from successful-empty; add failing component tests. Code-path finding, no production fault injection. Live12:14CT still old4-column arrivals/old footer, so new deployment acceptance remains UNVERIFIED. Accounting#28364 lower panels independently verified at1280/768 with readable amounts and no document overflow.
 
+
+## LEAD 11-03 2:00 PM CT — OWNER 1:31 PM CT (verbatim): "every coder should perform their full build. you are the lead, you can do anything necessary."
+Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration 202616320100, guard 19827); ENG-65/E2 → #28422 + prod backfill (42 of 90 linked; 48 have no fuel record — Lead's next PR). Your queue now: roster placeholders (you claimed 19825) → INBOX 11:55 audit items → E3 → E7. Every seat completes its whole build end to end.

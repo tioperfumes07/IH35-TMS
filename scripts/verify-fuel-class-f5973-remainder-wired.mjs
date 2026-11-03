@@ -81,7 +81,7 @@ export function audit(src) {
   if (!/res\.dead_letters\} rejected/.test(src.importModal) || !/res\.dead_letters > 0 \? "error" : "success"/.test(src.importModal)) {
     failures.push(`${FILES.importModal}: must expose parser-rejected rows as an error-bearing completion, never silent success`);
   }
-  if (!/data-testid="fuel-import-rejected-rows"/.test(src.importModal) || !/Showing \{result\.dead_letter_details\.length\} of \{result\.dead_letters\} rejected rows/.test(src.importModal) || !/Line \{detail\.line_number\}: \{detail\.reason\}/.test(src.importModal)) {
+  if (!/data-testid="fuel-import-rejected-rows"/.test(src.importModal) || !/Showing \{formatQuantityTable\(result\.dead_letter_details\.length, 0\)\} of \{formatQuantityTable\(result\.dead_letters, 0\)\} rejected rows/.test(src.importModal) || !/Line \{detail\.line_number\}: \{detail\.reason\}/.test(src.importModal)) {
     failures.push(`${FILES.importModal}: must retain the modal and render exact rejected line/reason remediation details`);
   }
   // 443.271 (CC-2): 443.243 also keeps the modal open while a Fuel Assignment question popped (`&& !opened`).

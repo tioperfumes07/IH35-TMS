@@ -14,7 +14,7 @@ import { SettlementsToursRegister } from "./SettlementsToursRegister";
 import { SettlementsCompanyDriverTab, CompanySettlementsRegisterTab } from "./SettlementsCompanyDriverTab";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../components/v3/BoardSection";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
@@ -800,7 +800,8 @@ export function SettlementsPage() {
 
       {cancelledHiddenCount > 0 ? (
         <p className="text-xs text-gray-500" data-testid="settlements-cancelled-count">
-          {settlements.length} live, {cancelledHiddenCount} cancelled (hidden)
+          {formatQuantityTable(settlements.length, 0)} live, {formatQuantityTable(cancelledHiddenCount, 0)} cancelled
+          (hidden)
         </p>
       ) : null}
 

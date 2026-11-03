@@ -45,8 +45,9 @@ describe("driverApBillCarriedBySettlementSql", () => {
 describe("every cash-flow reader of accounting.bills applies it (no reader double-counts settlement pay)", () => {
   const readers = billReaders(service);
 
-  it("finds the 4 readers (daily prediction, 7-day net, actual-vs-projected, rolling ledger)", () => {
-    expect(readers.length).toBe(4);
+  // E8 11-03: actual-vs-projected no longer reads bills itself — it reads the daily engine (getDailyExpenseItems).
+  it("finds the 3 readers (daily engine, 7-day net, rolling ledger)", () => {
+    expect(readers.length).toBe(3);
   });
 
   it.each(readers.map((r, i) => [i, r] as const))("reader %i excludes driver A/P carried by a settlement", (_i, sql) => {

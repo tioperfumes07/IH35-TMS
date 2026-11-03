@@ -6249,6 +6249,7 @@
       "id",
       "operating_company_id",
       "prediction_date",
+      "projected_expense_cents",
       "projected_income_cents"
     ],
     "forecast.opening_balance": [

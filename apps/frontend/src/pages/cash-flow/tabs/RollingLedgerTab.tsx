@@ -587,7 +587,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   const [note, setNote] = useState("");
   const [hide, setHide] = useState(false);
   const [hiddenReason, setHiddenReason] = useState("");
-  const ledgerKind = ledgerEntityKind(row.document_kind);
+  const ledgerKind = ledgerEntityKind(row.document_kind, row);
   const route = ledgerKind ? resolveEntityRoute(ledgerKind, row.document_id) : null;
 
   const canSave = hide ? hiddenReason.trim().length > 0 && reasonCode : reasonCode && projectedDate;
@@ -921,8 +921,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       expensesDue,
       expenseSub:
         driverBillCount > 0
-          ? `${driverBillCount} driver bill${driverBillCount === 1 ? "" : "s"}`
-          : `${expenseRowsDue.length} item${expenseRowsDue.length === 1 ? "" : "s"}`,
+          ? `${formatQuantityTable(driverBillCount, 0)} driver bill${driverBillCount === 1 ? "" : "s"}`
+          : `${formatQuantityTable(expenseRowsDue.length, 0)} item${expenseRowsDue.length === 1 ? "" : "s"}`,
       net,
       projectedClosing: day?.running_cash_cents ?? null,
       dueNext10,
@@ -1421,7 +1421,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             <V3KpiTile
               label="Income due today"
               value={formatUsdCents(boardKpis.incomeDue)}
-              sub={`${boardKpis.incomeCount} item${boardKpis.incomeCount === 1 ? "" : "s"}`}
+              sub={`${formatQuantityTable(boardKpis.incomeCount, 0)} item${boardKpis.incomeCount === 1 ? "" : "s"}`}
               testId="rolling-ledger-v3-kpi-income"
             />
             <V3KpiTile
@@ -1457,7 +1457,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             {rowKindFilter !== "expenses" && (
               <BoardSection
                 title={`Income · ${selectedLabel}`}
-                subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
+                subtitle={`${formatQuantityTable(incomeRows.length, 0)} item${incomeRows.length === 1 ? "" : "s"}`}
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-income-panel"
               >

@@ -28,7 +28,7 @@ function audit(src) {
     ["empty rate column", /key: "empty_rate", label: "Empty rate"[^\n]*render: b => rate\(b\.rate_empty_per_mile_cents\)/],
     ["empty pay column", /key: "empty_pay", label: "Empty pay"[^\n]*render: b => money\(b\.deadhead_pay_cents, currencyCode\)/],
     ["gross · escrow · recoveries · net", /data-testid="driver-gross"[\s\S]*Escrow contribution[\s\S]*Recoveries[\s\S]*data-testid="driver-net"/],
-    ["company revenue · costs · driver pay · factoring · margin", /Revenue \(\{r\.legs\.length\}[\s\S]*Costs \(\{r\.costs\.length\}[\s\S]*Driver pay[\s\S]*Factoring[\s\S]*data-testid="company-margin"/],
+    ["company revenue · costs · driver pay · factoring · margin", /Revenue \(\{(?:formatQuantityTable\()?r\.legs\.length(?:, 0\))?\}[\s\S]*Costs \(\{(?:formatQuantityTable\()?r\.costs\.length(?:, 0\))?\}[\s\S]*Driver pay[\s\S]*Factoring[\s\S]*data-testid="company-margin"/],
     ["$/mi practical row", /<span>Per practical mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_practical_cents\)\}/],
     ["$/mi real row", /<span>Per real mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_real_cents\)\}/],
     ["GL account per line", /l\.account_label \?\? <span className="ldt-pill bad">no account<\/span>/],

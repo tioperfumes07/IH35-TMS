@@ -26,6 +26,7 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { formatQuantityTable } from "../../lib/money";
 type BatchRow = {
   key: string;
   driver_id: string;
@@ -457,7 +458,7 @@ export function BatchSettlementsPage() {
                             </div>
                           ))}
                           <div className="text-[#6B7280]">
-                            {row.loads.length} load{row.loads.length === 1 ? "" : "s"} ·{" "}
+                            {formatQuantityTable(row.loads.length, 0)} load{row.loads.length === 1 ? "" : "s"} ·{" "}
                             {formatCurrencyFromCents(
                               row.loads.reduce((s, l) => s + (l.rate_total_cents ?? 0), 0),
                             )}

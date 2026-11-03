@@ -348,6 +348,27 @@ export function matchedCoverageNets(groups: RowGroup[]): {
   };
 }
 
+/**
+ * E8 batch64 — expense-accuracy tile uses matched coverage only (days with a captured projection).
+ * RAW total_actual_expense_cents stays for Accounting cash-out; never feed it into accuracyPct.
+ */
+export function matchedExpenseAccuracyCoverage(groups: RowGroup[]): {
+  matched_projected_expense_cents: number;
+  matched_actual_expense_cents: number;
+  matched_days: number;
+} {
+  let matched_projected_expense_cents = 0;
+  let matched_actual_expense_cents = 0;
+  let matched_days = 0;
+  for (const g of groups) {
+    if (g.expenses.actual_unavailable || g.expenses.projected_unavailable) continue;
+    matched_projected_expense_cents += g.expenses.projected_cents;
+    matched_actual_expense_cents += g.expenses.actual_cents;
+    matched_days += 1;
+  }
+  return { matched_projected_expense_cents, matched_actual_expense_cents, matched_days };
+}
+
 /** Cumulative series: not-captured days keep projectedExpenses null (gap), never overwrite with carried pe. */
 export function buildAvpChartSeries(points: ChartPoint[], grain: ChartGrain): ChartPoint[] {
   if (grain !== "cumulative") return points;
@@ -406,7 +427,7 @@ function accuracyVerb(
 }
 
 /** Board CashFlow-ActualVsProjected: KPI value is coverage % (proj ∩ act) / max(proj,act). */
-function accuracyPct(projected: number, actual: number): number {
+export function accuracyPct(projected: number, actual: number): number {
   const max = Math.max(Math.abs(projected), Math.abs(actual));
   if (max === 0) return 100;
   return Math.round((100 * Math.min(Math.abs(projected), Math.abs(actual))) / max);
@@ -584,6 +605,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
 
   const chartPoints: ChartPoint[] = useMemo(() => buildAvpChartPoints(groups), [groups]);
   const coverageNets = useMemo(() => matchedCoverageNets(groups), [groups]);
+  const expenseAccuracy = useMemo(() => matchedExpenseAccuracyCoverage(groups), [groups]);
 
   return (
     <div className="space-y-4" style={{ fontFamily: V3.font }} data-testid="cash-flow-avp-v3-root">
@@ -687,25 +709,29 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             );
           })()}
           {(() => {
-            const expVerb = accuracyVerb(
-              acc.total_projected_expense_cents,
-              acc.total_actual_expense_cents,
-              !!actualsUnavailable,
-            );
-            const pct = accuracyPct(acc.total_projected_expense_cents, acc.total_actual_expense_cents);
+            // Prefer API matched_* when present; else derive from day groups (batch64).
+            const matchedProj =
+              acc.matched_projected_expense_cents ?? expenseAccuracy.matched_projected_expense_cents;
+            const matchedAct =
+              acc.matched_actual_expense_cents ?? expenseAccuracy.matched_actual_expense_cents;
+            const matchedDays = expenseAccuracy.matched_days;
+            const expenseAccuracyUnavailable = !!actualsUnavailable || matchedDays === 0;
+            const expVerb = accuracyVerb(matchedProj, matchedAct, expenseAccuracyUnavailable);
+            const pct = accuracyPct(matchedProj, matchedAct);
             return (
               <V3KpiTile
                 label="Expense accuracy"
-                value={actualsUnavailable ? "unavailable" : `${pct}%`}
+                value={expenseAccuracyUnavailable ? "unavailable" : `${pct}%`}
                 tone={expVerb.tone}
                 sub={
-                  <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ display: "flex", flexDirection: "column", gap: 2 }} data-testid="cash-flow-avp-v3-kpi-expense-sub">
                     <span style={{ fontWeight: 600, color: expVerb.accent }}>
                       {expVerb.text}
                     </span>
                     <span>
-                      proj {formatCents(acc.total_projected_expense_cents)} · act{" "}
-                      {actualsUnavailable ? "unavailable" : formatCents(acc.total_actual_expense_cents)}
+                      matched proj {formatCents(matchedProj)} · matched act{" "}
+                      {expenseAccuracyUnavailable ? "unavailable" : formatCents(matchedAct)}
+                      {matchedDays === 0 ? " · no matched days" : ""}
                     </span>
                   </span>
                 }
