@@ -166,15 +166,44 @@ function resolveSignerUrl(rawToken: string) {
   return `${base}/sign/${rawToken}`;
 }
 
+const CONTRACT_INSTANCE_STATUS_VALUES = [
+  "draft",
+  "sent",
+  "viewed",
+  "signed_electronically",
+  "voided",
+  "expired",
+] as const;
+
+/** Comma-union status filter for listContractInstances (Codex batch67 sibling). */
+export function parseContractInstanceStatusFilter(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  const allow = new Set<string>(CONTRACT_INSTANCE_STATUS_VALUES);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const token of raw.split(",")) {
+    const v = token.trim();
+    if (!v || !allow.has(v) || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
 export async function listContractInstances(
   client: QueryableClient,
   args: { operatingCompanyId: string; status?: string; search?: string; signerType?: string; signerEntityId?: string }
 ) {
   const values: unknown[] = [args.operatingCompanyId];
   const where: string[] = ["ci.operating_company_id = $1::uuid"];
-  if (args.status) {
-    values.push(args.status);
+  // Codex batch67 sibling — multi-status must filter BEFORE LIMIT 300 (comma-union).
+  const statusUnion = parseContractInstanceStatusFilter(args.status);
+  if (statusUnion.length === 1) {
+    values.push(statusUnion[0]);
     where.push(`ci.status = $${values.length}::legal.contract_instance_status`);
+  } else if (statusUnion.length > 1) {
+    values.push(statusUnion);
+    where.push(`ci.status = ANY($${values.length}::legal.contract_instance_status[])`);
   }
   if (args.search) {
     values.push(`%${args.search.trim()}%`);
