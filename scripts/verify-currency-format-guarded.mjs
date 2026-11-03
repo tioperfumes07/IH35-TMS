@@ -799,6 +799,14 @@ const legalTemplatesQty = read("apps/frontend/src/pages/legal/templates/LegalTem
 if (!/formatQuantityTable\(row\.version, 0\)/.test(legalTemplatesQty)) {
   fail("LegalTemplatesListPage version must use formatQuantityTable(, 0)");
 }
+const legalContractsQty = read("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx");
+if (!/formatQuantityTable\(row\.template_version, 0\)/.test(legalContractsQty) || !/formatQuantityTable\(detailQuery\.data\.template_version, 0\)/.test(legalContractsQty)) {
+  fail("LegalContractInstancesPage template_version must use formatQuantityTable(, 0)");
+}
+const tripPairingDaysQty = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
+if (!/formatQuantityTable\(t\.up_north_days, 0\)/.test(tripPairingDaysQty)) {
+  fail("TripPairingBoardPage up_north_days must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

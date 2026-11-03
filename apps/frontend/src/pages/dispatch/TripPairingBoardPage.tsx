@@ -224,7 +224,8 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
       if (t.settlement_signal === "settlement_open") {
         return (
           <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
-            Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
+            Up north · settlement open
+            {t.up_north_days != null ? ` · ${formatQuantityTable(t.up_north_days, 0)}d` : ""}
           </span>
         );
       }
@@ -288,7 +289,12 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     defaultHidden: true,
     cellClass: "text-right",
     sortValue: (t) => t.up_north_days ?? -1,
-    render: (t) => (t.up_north_days != null ? `${t.up_north_days}d` : <span className="text-[#4B5563]">—</span>),
+    render: (t) =>
+      t.up_north_days != null ? (
+        `${formatQuantityTable(t.up_north_days, 0)}d`
+      ) : (
+        <span className="text-[#4B5563]">—</span>
+      ),
   },
   {
     key: "miles_total",

@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:00 PM CT) — contracts version + trip pairing days qty
+- **PRIOR:** #28474 Templates version qty.
+- **THIS:** LegalContractInstances template_version + TripPairingBoard up_north_days → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:50 PM CT) — Legal Templates version quantity
 - **PRIOR:** #28473 Attorney Review version qty.
 - **THIS:** LegalTemplatesListPage version → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
