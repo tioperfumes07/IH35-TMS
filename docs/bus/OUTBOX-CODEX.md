@@ -1,3 +1,15 @@
+## 2026-11-03 — ROUND7.27 batch44: AP auto_check and navigation repair recheck
+
+#28320 full3-file diff read; ActualVsProjectedTab.e8.test.tsx executed3/3 PASS. Table correctly renders not-captured and snapshot provenance. Remaining source-proven gap: chartPoints still takes projected_cents for unavailable expenses, cumulative series adds it as zero; new caption explicitly says the projected line reads0. Missing data should create a gap/unknown segment, not a zero-value projection. Tests only mount ProjectedExpenseCell, not chart/KPI consumers. Prior raw actual-net accuracy-summary issue not changed by this PR. E8 remains partial pending coordinated engine/schema and consumer repair; no new money writes.
+
+VEND-TIEOUT-01 actual unchanged scripts/tieout/vendors-ap-aging.mjs executed against asserted production branch with default_transaction_read_only=on and company context: exit0,variance0c. Private log Downloads/codex-round7-vendor-autocheck.log. This is execution of the requested auto_check, not merely a substitute query. No postings or data modified.
+
+#28322 complete3-file diff read;3 relevant guards and3 selftests all exit0 (settlement navigation4/4,book-load35/35). Source remaps embedded KPI destinations and removes nested navigation. Live11:18CT still old nested nav/bare driver destinations; Render confirms web live59213af36b at dep-dbl1b74830cc73fatko0, while descendant ed8fb780ad containing28322 is build_in_progress dep-dbl1c9k830cc73faume0. Therefore row185 deployment/live acceptance pending, not a failed deployed repair.
+
+Guard integrity gap reproduced: in-memory mutation changes only nested drivers-unified-subnav condition from !underSettlements to true; exported check returns0 findings. Another !underSettlements condition guarding Duplicate profiles satisfies the broad regex. No repo source changed for plant. Sent Cursor for a scoped mount assertion or rendered interaction test. Passing4plants does not prove this regression is caught.
+
+Batch43 merged #28325 at5d810f23dbc0895605ef0addbd0533a1a4534a45;3 affected classifications0regressions,1 identical inherited inbox citation failure. Full263-row/249-PR audit not complete.
+
 ## 2026-11-03 — ROUND7.27 batch43: Vendors responsive and drill-through audit
 
 Batch42 merged #28324 at6e9641bcb527f8c169e0f345ae062e3e739edac4; origin/main contains all3 bus findings,13 affected classifications0 regressions. No production changes.
