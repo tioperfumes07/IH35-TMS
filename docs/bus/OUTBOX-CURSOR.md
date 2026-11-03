@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:40 PM CT) — tip #27 after #28566
+- **PRIOR:** #28566 CreateMultipleBills + VendorBillCreate need-company.
+- **THIS:** PENDING/ROUND tip #27 MERGED-UNVERIFIED (~69 surfaces).
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:35 PM CT) — #27 CreateMultipleBills + VendorBillCreate need-company
 - **PRIOR:** #28564 ENG-34 live-fails wire.
 - **THIS:** CreateMultipleBillsPage + VendorBillCreatePage BoardSection need-company early return; fill-shell plants (~69). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Reclassify/match/LoadCosts still skipped.
