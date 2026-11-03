@@ -1,6 +1,6 @@
 {
  "date": "2026-11-03",
- "generated_at_iso": "2026-11-03T06:32:07.653Z",
+ "generated_at_iso": "2026-11-03T12:29:06.731Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 28240,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-03T06:33:01Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 28239,
    "title": "CC-2-FINDING: ACCT-F443260-ROW260 LANE: FINANCIAL — 443.260: range-geocode stops skip fence; 3 Edison NJ deliveries uninvoiced ($14,700)",
    "mergedAt": "2026-11-03T04:01:02Z",
@@ -17330,12 +17336,6 @@
    "title": "chore: claim verify-step 18817 CC-1 (ENG-42 renumber)",
    "mergedAt": "2026-10-25T19:03:28Z",
    "branch": "chore/claim-reserve-18817-cc1"
-  },
-  {
-   "number": 27627,
-   "title": "FINDING: 443.338 follow-up LANE: LEAD / DATA-REPAIR — P-0119 voided line 2b56ad02 had no void_reason (verify-purge-window-state) ROOT CAUSE: AUTH-466 script dea",
-   "mergedAt": "2026-10-25T19:01:05Z",
-   "branch": "claude/lead-engine-register-2412"
   }
  ],
  "merged_pr_total": 3000,
