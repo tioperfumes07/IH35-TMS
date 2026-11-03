@@ -38,3 +38,5 @@ BUILD (permanent, no guessing):
 5. **Duplicates**: "HUGO GAYTAN" = 5 mdata.drivers rows (1 Active, 4 Inactive) — link to the Active one; the merge of the 4 goes through driver-merge (not delete).
 GUARD: extend guard 1834 — static: the link route writes only integration_id and then rematches; live (shrink-only to 0): live fills whose relay_driver_integration_id equals a linked driver's integration_id but matched_driver_id IS NULL = 0.
 DONE = queue live in Chrome with 17 ids; after the owner links them, prod unmatched-with-link = 0 and the 262 fills carry drivers. Deadline 2026-11-03T02:30Z. Codex verifies.
+
+## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
