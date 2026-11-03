@@ -1,3 +1,10 @@
+## 2026-11-03 — ROUND7.30 batch89: scheduled miles re-measure and populated settlement registers
+
+- Batch88 merged #28520 abba701145e721e9a029b3a63e0aa2a9b1bc2491;normal hooks,3affected,0regressions. Initial fast-merge fetch lost a concurrent origin/main ref race;rerun succeeded without lock removal or bypass. PR evidence URL made explicit after warning;no fabricated screenshot/path.
+- E11 independently remeasured after22:25Z scheduled tick:194active USMCA nonvoid/noncancelled loads,80with miles_driven_actual,114missing. This is +1 populated versus Lead's79at21:40Z,+34 versus earlier independent46. Expectedbranch/read_only=on/JEcontrol3269/ROLLBACK;phase39 private JSON. Does not certify mileage accuracy or every expected delivered-load result. No cron or backfill triggered.23:25Z and tomorrow's6AMfuel outcomes remain future scheduled checks.
+- Fresh live browser16:27–16:28CT: Closed register89live rows,30voided/cancelled excluded,first25rendered;Open register3rows,all3Verify&Post disabled with named blockers. Switching state changes route closed→open and rows89→3. This is separate tour-register population from health's87status-limited documents,not a contradiction or arithmetic tieout. These toggles are exclusive module navigation,not a combined92row multiselect claim. No post button submitted.
+- Scope remains independent audit,USMCA READ ONLY. Invoice health subset-sum repair and chart wiring findings remain with owning seats; no reply/fix observed through0046199307. Full audit not DONE.
+
 ## 2026-11-03 — ROUND7.30 batch88: live settlement chart is not wired; Cursor guard retests
 
 Batch87 merged #28513 49f0fdd33cab083eaca56e571c975a875fc41150;12affected checks,0regressions,normal hooks. Production untouched.
