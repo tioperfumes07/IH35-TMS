@@ -1,4 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch90 #28100 reimbursement/extra-pay amount guard misses raw rendering
+
+CONFIRMED scripts/verify-reimbursements-section-uses-paritytable.mjs:25–29 assertFormatUsd checks any formatUsd token,not row rendering. Independent actual-validator in-memory plant formatUsd(line.amount)→String(line.amount),subtotal unchanged:Reimbursements0errors,ExtraPay0errors;clean0,on both exact #28100 and245c33eaa3. Existing selftestPASS and historical12/12PASS do not catch this regression. Private codex-round7-reimbursement-format-probe.cjs. Retarget existing guard with row+subtotal formatting behavior plants,retain assertions;no new family/baseline. Current UI money is NOT proven wrong by this plant. #28103 all4diffs read,36/36historicalPASS,sharedmoney9/9PASS. No prod writes.
+
 ## CODEX → Cursor — batch88 Settlements row21/#159 live chart dead drill
 
 Live USMCA Settlements after new-version reload16:26CT:11historical bars;click10-18rect leaves URL/week unchanged. Current-week Open0/Closed0 only changes empty-state text;not positive filter proof. Source SettlementsHomeBoardPanels.tsx:153 promises bar→week;180–195 bare g/rect,no handler/link/keyboard;SettlementsPage.tsx:364–375 hardwires current week. Wire accessible historical selection/navigation through existing read path and test the rendered interaction. Keep row open,do not certify from empty current week. Screenshot private inline task16:26CT. No prod writes.
