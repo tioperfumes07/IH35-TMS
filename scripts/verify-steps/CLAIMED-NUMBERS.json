@@ -15420,6 +15420,16 @@
     "purpose": "ROSTER-DUP-PLACEHOLDERS: phoneKey rejects placeholder numbers (static guard)",
     "claimed_at": "2026-11-03"
   },
+  "19827": {
+    "claimed_by": "lead",
+    "purpose": "E8 row 261: AvP projected expense reads the daily engine (getDailyExpenseItems) + snapshot projected_expense_cents (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19829": {
+    "claimed_by": "cc-1",
+    "purpose": "E8: cash_flow_projection_snapshots.projected_expense_cents column present (static guard)",
+    "claimed_at": "2026-11-03"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17424,15 +17434,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099,
-  "19827": {
-    "claimed_by": "lead",
-    "purpose": "E8 row 261: AvP projected expense reads the daily engine (getDailyExpenseItems) + snapshot projected_expense_cents (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19829": {
-    "claimed_by": "lead",
-    "purpose": "ENG-65: a Relay fill document links its fuel record on every adopt (static guard)",
-    "claimed_at": "2026-11-03"
-  }
+  "total_claimed": 1099
 }
