@@ -20,6 +20,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { getDownloadUrl } from "../../../api/docs";
 import { statusOptions } from "../../../lib/statusListParams";
@@ -268,6 +269,14 @@ export function LegalContractInstancesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [operatingCompanyId],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Legal Contracts" testId="legal-contracts-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">

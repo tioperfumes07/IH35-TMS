@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
@@ -90,6 +91,14 @@ export function LegalTemplatesListPage() {
     ],
     [],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Legal Template Library" testId="legal-templates-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">
