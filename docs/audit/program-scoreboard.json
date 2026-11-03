@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1d1e9f1",
-  "generated_at": "2026-11-02T22:10:57.271Z",
+  "healthzSha": "7cfe1ab",
+  "generated_at": "2026-11-03T00:27:05.166Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1d1e9f1",
+    "deployedSha": "7cfe1ab",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28137,
-      "title": "FINDING: Relay wallet KPI drill + deposit formatUsdCents render guard",
+      "number": 28226,
+      "title": "BUS: P0 Relay driver fix → CC-3 (owner order 6:18 PM CT); root cause integration_id never written; CC-2 note superseded",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28137",
-      "sha": "8954653c9f",
-      "committedAtIso": "2026-11-02T16:09:44-06:00"
+      "mergedAtCt": "11/02/2026, 06:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28226",
+      "sha": "55b574c34d",
+      "committedAtIso": "2026-11-02T18:23:45-06:00"
     },
     {
-      "number": 28136,
-      "title": "FINDING: Fleet Transfers in Progress BoardSection + ParityTable",
+      "number": 28225,
+      "title": "Codex: Round 7.26 independent live acceptance evidence",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28136",
-      "sha": "7babf101cb",
-      "committedAtIso": "2026-11-02T16:06:55-06:00"
+      "mergedAtCt": "11/02/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28225",
+      "sha": "7cfe1abee0",
+      "committedAtIso": "2026-11-02T18:16:27-06:00"
     },
     {
-      "number": 28135,
-      "title": "FINDING: ROUND 7.23 — all seats next lists",
+      "number": 28224,
+      "title": "FINDING: stale Plaid pending bank lines never retired ($51,296.34 live, 3 booked) → CC-2 permanent fix (rows 154/156)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28135",
-      "sha": "90f3b15a16",
-      "committedAtIso": "2026-11-02T16:06:23-06:00"
+      "mergedAtCt": "11/02/2026, 06:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28224",
+      "sha": "51422178fd",
+      "committedAtIso": "2026-11-02T18:13:20-06:00"
     },
     {
-      "number": 28134,
-      "title": "FINDING: Factoring debtor filter behavioral exclude-third + 2000-cap notice",
+      "number": 28223,
+      "title": "BUS: rows 151 165 169 DONE-LIVE; 161/162 re-measured; Relay driver crosswalk (permanent) → CC-2",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28134",
-      "sha": "d7eed1adf2",
-      "committedAtIso": "2026-11-02T16:04:55-06:00"
+      "mergedAtCt": "11/02/2026, 06:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28223",
+      "sha": "f1d2e14bea",
+      "committedAtIso": "2026-11-02T18:10:28-06:00"
     },
     {
-      "number": 28133,
-      "title": "Codex-ROUND7 independent datetime and Fuel audit batch 18",
+      "number": 28222,
+      "title": "BUS: Cursor tip #28192–#28220; SelectCombobox baseline 2; ENG-21 BLOCKED",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28133",
-      "sha": "1d1e9f18ba",
-      "committedAtIso": "2026-11-02T16:02:50-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28222",
+      "sha": "c72bdb3b4a",
+      "committedAtIso": "2026-11-02T18:08:26-06:00"
     },
     {
-      "number": 28132,
-      "title": "FINDING: Cash Flow matrix and AVP percents use formatQuantityTable",
+      "number": 28221,
+      "title": "BUS: row 144 (7 accounting rules) DONE-LIVE; A/P control ties $129,216.53 to the cent",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28132",
-      "sha": "c593523eec",
-      "committedAtIso": "2026-11-02T16:01:07-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28221",
+      "sha": "a3a3173527",
+      "committedAtIso": "2026-11-02T18:08:23-06:00"
     },
     {
-      "number": 28131,
-      "title": "FIX: TELEMATICS-DEADLOCK-03 — telematics jobs single-fire across API instances",
+      "number": 28220,
+      "title": "FINDING: UniversalListToolbar SelectCombobox; raw select baseline 2",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28131",
-      "sha": "bb76414f90",
-      "committedAtIso": "2026-11-02T16:01:01-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28220",
+      "sha": "df4d59f4de",
+      "committedAtIso": "2026-11-02T18:08:01-06:00"
     },
     {
-      "number": 28130,
-      "title": "FINDING: Fuel KPI/Compliance + Factor rates use house formatters",
+      "number": 28219,
+      "title": "BUS: ROUND 7.26 Codex independent verification + H/B live measurement; owner permanent-fix law to all seats",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 03:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28130",
-      "sha": "7d2cb02516",
-      "committedAtIso": "2026-11-02T15:59:24-06:00"
+      "mergedAtCt": "11/02/2026, 06:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28219",
+      "sha": "4762abde9e",
+      "committedAtIso": "2026-11-02T18:06:32-06:00"
     },
     {
-      "number": 28129,
-      "title": "Claude-3- fix(guards): ACCT/ENG/FE findings — REQUIRES_LIVE_DB fixes, baseline gaps, GeofencesPage parse fix",
+      "number": 28217,
+      "title": "FINDING: DataTable + ColumnChooser page size SelectCombobox; baseline 4",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 03:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28129",
-      "sha": "f40457f422",
-      "committedAtIso": "2026-11-02T15:56:03-06:00"
+      "mergedAtCt": "11/02/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28217",
+      "sha": "92e5f01639",
+      "committedAtIso": "2026-11-02T18:02:21-06:00"
     },
     {
-      "number": 28128,
-      "title": "FINDING: settlement margin-% guard selftest plants formatQuantityTable",
+      "number": 28215,
+      "title": "Codex: Round 7 escrow and Telematics independent retest",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 03:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28128",
-      "sha": "e7b288cf02",
-      "committedAtIso": "2026-11-02T15:55:42-06:00"
+      "mergedAtCt": "11/02/2026, 06:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28215",
+      "sha": "9ba2f0d432",
+      "committedAtIso": "2026-11-02T18:00:45-06:00"
     }
   ]
 }
