@@ -1,6 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~9:45 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:05 AM CT)
 
-## CURRENT — SelectCombobox shrink + dispatch quantity/rate house format
+## CURRENT — Escrow holder names + Faro dry-run labels + weekly revenue axis
+SettlementsEscrowBoard resolves holder names via escrow-visualizer when accounts omit holder_label. Faro1090 dry-run note has no UUID slices. WeeklyRevenueChart axis en-US. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+## PRIOR — SelectCombobox shrink + dispatch quantity/rate house format
 SelectCombobox baseline restored 6→2. TourSettlement / LoadUnitCostSplit / DeadheadOptimizer → house quantity+rate+date formatters. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 

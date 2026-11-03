@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:05 AM CT) — Escrow holder names + Faro dry-run labels + weekly revenue axis
+- **PRIOR:** #28245 SelectCombobox shrink + dispatch quantity/rate house format.
+- **THIS:** SettlementsEscrowBoard joins getEscrowDriverBalances names when holder_label is null (D076). Faro1090 dry-run note drops UUID slices. WeeklyRevenueChart YAxis uses en-US. Guards extended.
+- **ENG-21 stays DONE-LIVE** (owner skip). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~9:45 AM CT) — SelectCombobox shrink + dispatch quantity/rate house format
 - **PRIOR:** #28242 ENG-21 CLOSED (owner skip rate-con) + house money wave 7.
 - **THIS:** Raw `<select>` 6→2 (CustomerProfileForm · ClaimCreateModal recovery/repair · PolicyDetail status → SelectCombobox). TourSettlementTab p/m + period/closed stamps · LoadUnitCostSplitPanel miles · DeadheadOptimizer miles → house formatters. Guards extended (selector + currency + cursor-surfaces).
