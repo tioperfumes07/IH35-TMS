@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:10 PM CT) — FAILED-LIVE #241 Manual JE Class/Debit
+- **PRIOR:** #28555 Codex settlement/reimburse verify; ROUND 7.30g reopened #241.
+- **THIS:** Manual JE Step 2 Account/Class ReferenceSelect size="sm" (drop FILTER min-w-[10rem] ~142px that overlapped Debit ~27px); verify-ui4 size=sm plant; ManualJEModal vitest layout proof (no min-w-[10rem], h-10 form chrome). PENDING #241 → MERGED-UNVERIFIED. Live UNVERIFIED.
+- **NEXT:** live DONE-LIVE #241; other FAILED-LIVE are CC-3/Lead; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~12:00 AM CT) — ENG-34 wire new orphans; match still deferred
 - **PRIOR:** #28551 orphans 6→1.
 - **THIS:** verify-steps 19863/19865 wire person-confirms-load + customers-vendors-home-boards. ENG-34 orphan residual = match-vendor only.
