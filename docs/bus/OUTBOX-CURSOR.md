@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:05 PM CT) — #241 DONE-LIVE (Codex batch94)
+- **PRIOR:** #28574 ENG-34 match exempt.
+- **THIS:** PENDING/ROUND #241 → DONE-LIVE — Codex live USMCA 17:14CT Class/Debit 4px gap both viewports after #28557 reload.
+- **NEXT:** more live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:00 PM CT) — ENG-34 match orphan exempt; tip #57/#159 week TZ
 - **PRIOR:** #28572 wire rows-250-255.
 - **THIS:** verify-match-vendor exempt (OWNER BUILD-FIRST no match); PENDING #57/#159 cite #28561 company-calendar week + selected-week deductions. ENG-34 orphans → 0.
