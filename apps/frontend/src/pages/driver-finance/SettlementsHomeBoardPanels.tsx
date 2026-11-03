@@ -12,7 +12,7 @@ import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { companyToday } from "../../lib/businessDate";
-import { formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import {
   formatSettlementsUsd,
   formatWeekOfTitle,
@@ -147,7 +147,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 testId="settlements-home-week-grain"
               />
             }
-            footer={`${weekBuckets.length} weeks, not cancelled, not sample. Bar → that week's settlements.`}
+            footer={`${formatQuantityTable(weekBuckets.length, 0)} weeks, not cancelled, not sample. Bar → that week's settlements.`}
             testId="settlements-home-week-chart-panel"
           >
             <div style={{ padding: "12px 14px 8px" }}>
@@ -302,7 +302,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               </button>
             </span>
           }
-          footer={`This week · ${weekOfRows.length} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
+          footer={`This week · ${formatQuantityTable(weekOfRows.length, 0)} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
           testId="settlements-home-week-of-panel"
         >
           <div style={{ padding: "0 0 8px" }} data-testid="settlements-home-week-of-body">

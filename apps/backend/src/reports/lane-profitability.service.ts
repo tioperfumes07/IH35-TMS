@@ -10,6 +10,7 @@
  */
 import type { PoolClient } from "pg";
 import { logger } from "../observability/structured-logger.js";
+import { loadMatchesEquipmentSql } from "./equipment-type-aliases.js";
 
 /** Bound parameters per lane_profitability_cache INSERT row (excludes NOW()). */
 export const LANE_CACHE_INSERT_BINDS_PER_ROW = 19;
@@ -67,7 +68,11 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-const LANE_COMPUTE_SQL = `
+function buildLaneComputeSql(withEquipmentFilter: boolean): string {
+  const equip = withEquipmentFilter
+    ? `AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})`
+    : "";
+  return `
   WITH pickup AS (
     SELECT DISTINCT ON (ls.load_id)
       ls.load_id,
@@ -103,11 +108,14 @@ const LANE_COMPUTE_SQL = `
     JOIN delivery d ON d.load_id = l.id
     WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
+      AND l.voided_at IS NULL
+      AND l.status::text <> 'cancelled'
       AND l.created_at::date BETWEEN $2::date AND $3::date
       AND p.origin_city IS NOT NULL
       AND p.origin_state IS NOT NULL
       AND d.destination_city IS NOT NULL
       AND d.destination_state IS NOT NULL
+      ${equip}
   ),
   agg AS (
     SELECT
@@ -244,6 +252,9 @@ const LANE_COMPUTE_SQL = `
     AND fuel.destination_state = agg.destination_state
   ORDER BY gross_profit_cents DESC
 `;
+}
+
+
 
 function mapLaneRow(row: Record<string, unknown>): LaneSummary {
   return {
@@ -270,9 +281,15 @@ export async function computeLaneProfitability(
   client: PoolClient,
   operatingCompanyId: string,
   periodStart: string,
-  periodEnd: string
+  periodEnd: string,
+  equipmentAliases: string[] | null = null,
 ): Promise<LaneSummary[]> {
-  const res = await client.query(LANE_COMPUTE_SQL, [operatingCompanyId, periodStart, periodEnd]);
+  const withEquip = Boolean(equipmentAliases && equipmentAliases.length);
+  const sql = buildLaneComputeSql(withEquip);
+  const params: unknown[] = withEquip
+    ? [operatingCompanyId, periodStart, periodEnd, equipmentAliases]
+    : [operatingCompanyId, periodStart, periodEnd];
+  const res = await client.query(sql, params);
   return res.rows.map((row) => mapLaneRow(row as Record<string, unknown>));
 }
 
@@ -499,6 +516,8 @@ export async function getLaneLoadDetails(
         JOIN delivery d ON d.load_id = l.id
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
+          AND l.voided_at IS NULL
+          AND l.status::text <> 'cancelled'
           AND l.created_at::date BETWEEN $2::date AND $3::date
           AND LOWER(p.origin_city) = LOWER($4)
           AND LOWER(p.origin_state) = LOWER($5)

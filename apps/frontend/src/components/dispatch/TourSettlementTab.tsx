@@ -103,17 +103,20 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
     {unpostedDraftExpenses.length > 0 ? (
       <div className="ldt-note warn" data-testid="settlement-unposted-draft-expense-flag" role="status">
-        {unpostedDraftExpenses.length} draft / unposted expense{unpostedDraftExpenses.length === 1 ? "" : "s"} on this settlement
+        {formatQuantityTable(unpostedDraftExpenses.length, 0)} draft / unposted expense
+        {unpostedDraftExpenses.length === 1 ? "" : "s"} on this settlement
         {" — "}
         {unpostedDraftExpenses.slice(0, 4).map((c) => c.number).join(", ")}
-        {unpostedDraftExpenses.length > 4 ? ` · +${unpostedDraftExpenses.length - 4} more` : ""}
+        {unpostedDraftExpenses.length > 4
+          ? ` · +${formatQuantityTable(unpostedDraftExpenses.length - 4, 0)} more`
+          : ""}
         . Post or void before treating costs as final.
       </div>
     ) : null}
 
     <div className="ldt-grid2">
       <div className="ldt-card" data-testid="driver-settlement-card">
-        <div className="ldt-ch"><span>Driver settlement {t.is_open ? "(on close)" : ""}</span><span className="ldt-open">{bills.length} bill{bills.length === 1 ? "" : "s"}</span></div>
+        <div className="ldt-ch"><span>Driver settlement {t.is_open ? "(on close)" : ""}</span><span className="ldt-open">{formatQuantityTable(bills.length, 0)} bill{bills.length === 1 ? "" : "s"}</span></div>
         <div className="ldt-rows">
           <ParityTable rows={bills} rowKey={b => b.id} appearance="board" tableTestId="settlement-driver-bills" emptyText="No driver bill on this tour yet." columns={[
             { key: "load", label: "Load Number", sortable: true, sortValue: b => b.load_number ?? "", render: b => <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "Load"} /> },
@@ -156,10 +159,10 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           </span>
         </div>
         <div className="ldt-rows">
-          <div className="ldt-row"><span>Revenue ({r.legs.length} load{r.legs.length === 1 ? "" : "s"} so far)</span><span className="ldt-m">{money(cs.revenue_cents, currencyCode)}</span></div>
-          <div className="ldt-row"><span>Costs ({r.costs.length} entries)</span><span className="ldt-m">−{money(cs.costs_cents, currencyCode)}</span></div>
+          <div className="ldt-row"><span>Revenue ({formatQuantityTable(r.legs.length, 0)} load{r.legs.length === 1 ? "" : "s"} so far)</span><span className="ldt-m">{money(cs.revenue_cents, currencyCode)}</span></div>
+          <div className="ldt-row"><span>Costs ({formatQuantityTable(r.costs.length, 0)} entries)</span><span className="ldt-m">−{money(cs.costs_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Driver pay</span><span className="ldt-m">−{money(cs.driver_pay_cents, currencyCode)}</span></div>
-          <div className="ldt-row"><span>Factoring<span className="ldt-sub">{cs.factoring.factored_invoices ? `${cs.factoring.factored_invoices} invoice(s) factored · face ${money(cs.factoring.face_cents, currencyCode)}` : "not factored"}{cs.factoring.broker_advance_applied_cents ? ` · broker advance applied ${money(cs.factoring.broker_advance_applied_cents, currencyCode)}` : ""}</span></span><span className="ldt-m">{cs.factoring.factored_invoices ? "see Factoring tab" : "−$0.00"}</span></div>
+          <div className="ldt-row"><span>Factoring<span className="ldt-sub">{cs.factoring.factored_invoices ? `${formatQuantityTable(cs.factoring.factored_invoices, 0)} invoice(s) factored · face ${money(cs.factoring.face_cents, currencyCode)}` : "not factored"}{cs.factoring.broker_advance_applied_cents ? ` · broker advance applied ${money(cs.factoring.broker_advance_applied_cents, currencyCode)}` : ""}</span></span><span className="ldt-m">{cs.factoring.factored_invoices ? "see Factoring tab" : "−$0.00"}</span></div>
           <div className="ldt-row big"><span>Margin</span><span className="ldt-m" data-testid="company-margin">{money(cs.margin_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Margin %</span><span className="ldt-m">{tot.margin_pct == null ? DASH : `${formatQuantityTable(tot.margin_pct, 1)}%`}</span></div>
           <div className="ldt-row"><span>Per practical mile</span><span className="ldt-m">{perMile(tot.per_mile_practical_cents)}</span></div>
@@ -170,7 +173,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
     {/* REG-024 — AlwaysTrack Company Settlement parity: CUSTOMER CHARGES · FUEL + EXPENSES · REVENUE. */}
     <div className="ldt-card" data-testid="settlement-customer-charges">
-      <div className="ldt-ch"><span>Customer charges</span><span className="ldt-open">{liveLegs.length} load{liveLegs.length === 1 ? "" : "s"}</span></div>
+      <div className="ldt-ch"><span>Customer charges</span><span className="ldt-open">{formatQuantityTable(liveLegs.length, 0)} load{liveLegs.length === 1 ? "" : "s"}</span></div>
       <div className="ldt-rows">
         <ParityTable appearance="board" rows={liveLegs} rowKey={l => l.load_id} tableTestId="settlement-customer-charges-table" emptyText="No loads on this tour yet." columns={[
           { key: "load", label: "Load Number", sortable: true, sortValue: l => l.load_number ?? "", render: l => <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} /> },
@@ -189,7 +192,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
     </div>
 
     <div className="ldt-card" data-testid="settlement-fuel-expenses">
-      <div className="ldt-ch"><span>Fuel &amp; expenses</span><span className="ldt-open">{r.costs.length} entr{r.costs.length === 1 ? "y" : "ies"}</span></div>
+      <div className="ldt-ch"><span>Fuel &amp; expenses</span><span className="ldt-open">{formatQuantityTable(r.costs.length, 0)} entr{r.costs.length === 1 ? "y" : "ies"}</span></div>
       <div className="ldt-rows">
         <ParityTable appearance="board" rows={r.costs} rowKey={c => `${c.kind}:${c.id}`} tableTestId="settlement-fuel-expenses-table" emptyText="No fuel or expenses recorded on this tour." columns={[
           { key: "date", label: "Date", sortable: true, sortValue: c => c.date ?? "", render: c => fmtDate(c.date) ?? DASH },

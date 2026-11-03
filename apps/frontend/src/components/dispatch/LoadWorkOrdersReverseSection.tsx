@@ -4,6 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
+import { formatQuantityTable } from "../../lib/money";
 
 /**
  * LOAD-WO-REVERSE — the load↔work-order link existed in the database and appeared on no screen.
@@ -62,7 +63,7 @@ export function LoadWorkOrdersReverseSection({
             Work Orders
             {rows.length > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
-                ({rows.length})
+                ({formatQuantityTable(rows.length, 0)})
               </span>
             ) : null}
           </h3>

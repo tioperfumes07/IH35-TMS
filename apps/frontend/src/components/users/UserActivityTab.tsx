@@ -8,6 +8,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { SelectCombobox } from "../Combobox";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 interface UserActivityTabProps {
   operatingCompanyId: string;
@@ -265,7 +266,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
 
       {auditQuery.data && auditQuery.data.total_count > 200 ? (
         <div className="text-xs text-gray-500">
-          Showing {events.length} of {auditQuery.data.total_count} events. Refine filters to narrow results.
+          Showing {formatQuantityTable(events.length, 0)} of {formatQuantityTable(auditQuery.data.total_count, 0)} events. Refine filters to narrow results.
         </div>
       ) : null}
     </div>

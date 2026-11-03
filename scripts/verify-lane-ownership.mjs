@@ -146,6 +146,9 @@ export function checkClaimRegistryAppendOnly(seat, baseJson, headJson) {
  * LEAD 14:30Z — a violation is authorized when a SURFACE-BREACH-AUTHORIZED line in the branch's commit bodies names
  * the file's OWNING seat. A line naming another seat authorizes nothing. LEAD 14:50Z: an UNASSIGNED file (no LANES.md
  * owner to name) is authorized only by a LEAD line (`SURFACE-BREACH-AUTHORIZED: LEAD <reason>`); a seat line never.
+ * OWNER 2026-11-03 13:31 CT (verbatim): "every coder should perform their full build. you are the lead, you can do anything
+ * necessary." → a LEAD line authorizes ANY non-FORBIDDEN file, whichever seat owns it. A seat line still authorizes only
+ * files its own named seat owns.
  */
 export function authorizeViolations(violations, commitBody) {
   const seats = authorizedCanonicalSeats(commitBody);
@@ -153,7 +156,7 @@ export function authorizeViolations(violations, commitBody) {
   const unauthorized = [];
   for (const v of violations) {
     const needed = v.owner === 'UNASSIGNED' ? 'LEAD' : canonicalSeat(v.owner);
-    if (seats.has(needed)) authorized.push(v);
+    if (seats.has(needed) || seats.has('LEAD')) authorized.push(v);
     else unauthorized.push(v);
   }
   return { authorized, unauthorized };
@@ -225,7 +228,8 @@ if (process.argv.includes("--selftest")) {
   expect('owner spelled cc1 / Cursor-case still matches its LANES.md seat', authorizeViolations([{ file: 'a', owner: 'CC-1' }, { file: 'b', owner: 'CURSOR' }], 'SURFACE-BREACH-AUTHORIZED: cc1 x\nSURFACE-BREACH-AUTHORIZED: Cursor y').unauthorized.length === 0);
   expect('an UNASSIGNED file is not authorized by an UNASSIGNED / seat line', authorizeViolations(unassigned.violations, 'SURFACE-BREACH-AUTHORIZED: UNASSIGNED x\nSURFACE-BREACH-AUTHORIZED: CC-1 y').unauthorized.length === 1);
   expect('an UNASSIGNED file IS authorized by a LEAD line (LEAD 14:50Z)', authorizeViolations(unassigned.violations, 'SURFACE-BREACH-AUTHORIZED: LEAD heavy CI peel').unauthorized.length === 0);
-  expect('a LEAD line does not authorize a file another seat owns', authorizeViolations(cross.violations, 'SURFACE-BREACH-AUTHORIZED: LEAD x').unauthorized.length === 1);
+  expect('a LEAD line authorizes a file another seat owns (owner 11-03 13:31 CT: "you can do anything necessary")', authorizeViolations(cross.violations, 'SURFACE-BREACH-AUTHORIZED: LEAD x').unauthorized.length === 0);
+  expect('a seat line still does not authorize ANOTHER seat\'s file', authorizeViolations(cross.violations, 'SURFACE-BREACH-AUTHORIZED: CC-2 x').unauthorized.length === 1);
   const forbWithLine = classifyFiles(['db/migrations/.ledger.json'], 'CC-2', clean.sections);
   expect('a FORBIDDEN file stays forbidden even with a line', forbWithLine.forbidden.length === 1 && forbWithLine.violations.length === 0);
   console.log(`verify-lane-ownership SELFTEST: ${caught}/${planted} planted violations caught`);

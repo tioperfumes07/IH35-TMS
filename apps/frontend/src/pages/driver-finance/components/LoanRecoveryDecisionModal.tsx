@@ -4,6 +4,7 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { OutstandingLoanDecisionDetails } from "../../../api/driverFinance";
 import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -62,7 +63,7 @@ export function LoanRecoveryDecisionModal({ open, details, onClose, onDecide }: 
     <Modal open={open} onClose={onClose} title="Outstanding loan / advance recovery">
       <div className="space-y-3 text-xs" data-testid="loan-recovery-decision-modal">
         <p className="text-gray-700">
-          This driver carries {details.recoverable_advances.length} outstanding advance/loan row
+          This driver carries {formatQuantityTable(details.recoverable_advances.length, 0)} outstanding advance/loan row
           {details.recoverable_advances.length === 1 ? "" : "s"} totaling{" "}
           <span className="font-semibold">{formatCents(totalCents)}</span>. Closing this settlement
           requires a decision on how much to recover now — this cannot be deferred, and who decided

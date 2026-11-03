@@ -81,8 +81,14 @@ export function getTripProfitability(params: {
   operating_company_id: string;
   from: string;
   to: string;
+  equipment_type?: string;
 }) {
-  const q = new URLSearchParams(params).toString();
+  const q = new URLSearchParams({
+    operating_company_id: params.operating_company_id,
+    from: params.from,
+    to: params.to,
+  });
+  if (params.equipment_type) q.set("equipment_type", params.equipment_type);
   return apiRequest<TripProfitabilityResponse>(`/api/v1/reports/trip-profitability?${q}`);
 }
 

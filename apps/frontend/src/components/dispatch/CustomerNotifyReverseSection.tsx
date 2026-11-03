@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { getCustomerNotifyLog, getCustomerNotifyPreferences } from "../../api/dispatch";
+import { formatQuantityTable } from "../../lib/money";
 
 export function CustomerNotifyReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
   const preferences = useQuery({
@@ -26,7 +27,7 @@ export function CustomerNotifyReverseSection({ operatingCompanyId, customerId }:
     {log.isError ? <ListErrorState status={0} message="Could not load notification history for this customer." onRetry={() => void log.refetch()} /> : null}
     {!preferences.isLoading && !log.isLoading && !preferences.isError && !log.isError ? <div className="text-xs text-[#1F2A44]">
       <p>{prefs?.opt_in ? `Enabled · ${prefs.notify_email ? "Email" : ""}${prefs.notify_email && prefs.notify_sms ? " + " : ""}${prefs.notify_sms ? "SMS" : ""}` : "Notifications are not enabled."}</p>
-      <p className="text-gray-500">{entries.length ? `${entries.length} recent delivery confirmation${entries.length === 1 ? "" : "s"}.` : "No delivery confirmations logged yet."}</p>
+      <p className="text-gray-500">{entries.length ? `${formatQuantityTable(entries.length, 0)} recent delivery confirmation${entries.length === 1 ? "" : "s"}.` : "No delivery confirmations logged yet."}</p>
     </div> : null}
   </section>;
 }

@@ -13,7 +13,7 @@ import {
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
@@ -488,7 +488,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         {/* Income */}
         <BoardSection
           title="Income"
-          subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
+          subtitle={`${formatQuantityTable(incomeRows.length, 0)} item${incomeRows.length === 1 ? "" : "s"}`}
           onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
           testId="cash-flow-projected-income-panel"
         >

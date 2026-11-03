@@ -1103,7 +1103,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           <BoardSection title="Override approval — missing documents" testId="submit-factor-override-board">
             <div className="p-3 text-xs" data-testid="submit-factor-docs-override">
               <p className="mb-2 text-[#4B5563]">
-                {missingDocsRows.length} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
+                {formatQuantityTable(missingDocsRows.length, 0)} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
                 anyway with one confirm; the override is stamped on the purchase and audited.
               </p>
               {docsOverride ? (
@@ -1173,8 +1173,8 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             <span className="text-xs text-[#4B5563]">
               {missingDocsRows.length
                 ? docsOverrideOk
-                  ? `${missingDocsRows.length} invoice(s) missing docs — Owner override approved`
-                  : `${missingDocsRows.length} selected invoice(s) missing docs — Save needs an Owner override approval`
+                  ? `${formatQuantityTable(missingDocsRows.length, 0)} invoice(s) missing docs — Owner override approved`
+                  : `${formatQuantityTable(missingDocsRows.length, 0)} selected invoice(s) missing docs — Save needs an Owner override approval`
                 : "Expected split from the factor rates unless Faro's actuals are entered per invoice."}
             </span>
             {editing ? (
@@ -1222,7 +1222,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           ) : (
             <span>(not posted)</span>
           )}{" "}
-          posted — {created.purchase.invoice_count} invoice(s), gross {formatUsdCents(created.purchase.gross_cents)}, net to IH35{" "}
+          posted — {formatQuantityTable(created.purchase.invoice_count, 0)} invoice(s), gross {formatUsdCents(created.purchase.gross_cents)}, net to IH35{" "}
           {formatUsdCents(created.purchase.net_to_company_cents)}.
           {created.purchase.journal_entry_id ? (
             <>
@@ -1332,7 +1332,7 @@ function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: 
       ) : null}
       {error.kind === "feed_gate" ? (
         <>
-          <strong>{prefix}Feed Gate blocked {error.blocked.length} invoice(s) — fix these before they can enter a purchase:</strong>
+          <strong>{prefix}Feed Gate blocked {formatQuantityTable(error.blocked.length, 0)} invoice(s) — fix these before they can enter a purchase:</strong>
           <ul className="mt-1 space-y-1">
             {error.blocked.map((b) => (
               <li key={b.invoice_id}>

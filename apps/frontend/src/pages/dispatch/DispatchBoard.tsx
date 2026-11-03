@@ -8,6 +8,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
 import { readDispatchAlertTier, readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
+import { formatQuantityTable } from "../../lib/money";
 
 // ROUND 443.258-B (D021): never initials — full proper-case names (formatPersonName via entityLabel).
 // Supersedes DESIGN-CONTRACT inventory #37 initials-on-board for this round.
@@ -1684,7 +1685,8 @@ export function DispatchBoard({
                     <div className="flex items-center gap-2 text-section-header font-semibold uppercase tracking-wide" data-testid={`dispatch-board-section-${key}`} style={{ color: colors.tableHeaderText }}>
                       <span>{section?.title ?? key}</span>
                       <span className="rounded-sm px-1.5 text-xs font-bold normal-case tracking-normal" style={{ backgroundColor: colors.cardBg, color: colors.mutedText, border: `1px solid ${colors.tableColumnRule}` }}>
-                        {rows.length}{rows.length === all ? "" : ` of ${all}`}
+                        {formatQuantityTable(rows.length, 0)}
+                        {rows.length === all ? "" : ` of ${formatQuantityTable(all, 0)}`}
                       </span>
                       {section?.placeholder && rows.length === 0 ? <span className="font-normal normal-case tracking-normal text-gray-500">{section.placeholder}</span> : null}
                     </div>

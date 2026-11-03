@@ -16,6 +16,7 @@ import { useToast } from "../../components/Toast";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatQuantityTable } from "../../lib/money";
 
 // ACCT-F10164 REMINT SCREEN — LAW-FIX-INSTANTLY register item 8 (bills never auto-created: 39
 // delivered loads with zero driver_bills, ~16 real, $14,789.50). Every load listed here already
@@ -58,8 +59,8 @@ export function DriverBillRemintScreen() {
   function handleRemintAll() {
     setPendingAction("all");
     setPendingRow(null);
-    setReasonModalTitle(`Remint driver bills for all ${rows.length} loads`);
-    setReasonModalEntity(`${rows.length} loads`);
+    setReasonModalTitle(`Remint driver bills for all ${formatQuantityTable(rows.length, 0)} loads`);
+    setReasonModalEntity(`${formatQuantityTable(rows.length, 0)} loads`);
     setReasonModalOpen(true);
   }
 
@@ -164,7 +165,7 @@ export function DriverBillRemintScreen() {
         subtitle={`${query.data?.real_count ?? 0} real loads (of ${query.data?.total_count ?? 0} total) delivered with no driver bill`}
         actions={
           <Button variant="primary" size="sm" disabled={remintingAll || rows.length === 0} onClick={() => void handleRemintAll()}>
-            {remintingAll ? "Reminting all…" : `Remint all (${rows.length})`}
+            {remintingAll ? "Reminting all…" : `Remint all (${formatQuantityTable(rows.length, 0)})`}
           </Button>
         }
       />

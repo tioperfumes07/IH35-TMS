@@ -412,7 +412,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
   const panelSubtitle =
     typeof activeQ.data?.voided_count === "number"
-      ? `${filteredRows.length} live · ${activeQ.data.voided_count} voided/cancelled (not shown)`
+      ? `${formatQuantityTable(filteredRows.length, 0)} live · ${formatQuantityTable(activeQ.data.voided_count, 0)} voided/cancelled (not shown)`
       : undefined;
 
   return (

@@ -216,16 +216,18 @@ async function enrichCandidate(
     samsara = drv?.name ?? null;
     const od = (
       await client.query<{ odo: string | null }>(
-        `SELECT odometer_meters::text AS odo
+        // E9: the column is odometer_mi (202606211400_vehicle_location_odometer.sql); the meters column the old read named never existed, so every
+        // held fill's question failed with 42703 and no question was ever opened (3 held fills, 11-03).
+        `SELECT odometer_mi::text AS odo
            FROM telematics.vehicle_locations
           WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid
             AND captured_at BETWEEN $3::timestamptz - interval '30 minutes' AND $3::timestamptz + interval '30 minutes'
-            AND odometer_meters IS NOT NULL
+            AND odometer_mi IS NOT NULL
           ORDER BY abs(extract(epoch FROM captured_at - $3::timestamptz)) LIMIT 1`,
         [c.unit_id, companyId, moment]
       )
     ).rows[0];
-    if (od?.odo != null) odo = Math.round(Number(od.odo) / 1609.344);
+    if (od?.odo != null) odo = Math.round(Number(od.odo));
   }
   let loadId: string | null = null;
   if (moment) {
@@ -419,6 +421,8 @@ export async function evaluateFuelAssignment(
 ): Promise<
   | { certain: true; resolution: FillResolution; question: null; outcome?: string }
   | { certain: false; resolution: FillResolution; question: FuelAssignmentQuestionRow }
+  | { certain: false; resolution: FillResolution; question: null; owner_ruled: true }
+  | { certain: false; resolution: FillResolution; question: null; load_confirmed: true }
   | { certain: false; resolution: null; question: null; error: string }
 > {
   const table = (
@@ -428,6 +432,10 @@ export async function evaluateFuelAssignment(
 
   const res = await resolveFillTruckAndLoad(client, input.companyId, input.fuelId);
   if (!res) return { certain: false, resolution: null, question: null, error: "fuel_not_found" };
+  // E9 (ENG-64): an owner ruling recorded on the fill is final — never re-assigned by the engine, never re-asked.
+  if (res.owner_ruled) return { certain: false, resolution: res, question: null, owner_ruled: true };
+  // E9: a person confirmed this fill's load (OWNER RULING 443.288) — the engine never moves it; a person changes it on screen.
+  if (res.load_confirmed) return { certain: false, resolution: res, question: null, load_confirmed: true };
 
   if (isFillCertain(res)) {
     let outcome: string | undefined;

@@ -596,6 +596,202 @@ if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
   fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
 }
 
+
+const truckLeaseQty = read("apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx");
+if (!/formatQuantityTable\(vehicles\.length, 0\)/.test(truckLeaseQty)) {
+  fail("TruckLeaseCreatorModal vehicles count must use formatQuantityTable(, 0)");
+}
+const mapViewQty = read("apps/frontend/src/pages/dispatch/MapView.tsx");
+if (!/formatQuantityTable\(focused\.length, 0\)/.test(mapViewQty)) {
+  fail("MapView focused count must use formatQuantityTable(, 0)");
+}
+const roundTripsQty = read("apps/frontend/src/pages/dispatch/RoundTrips.tsx");
+if (!/formatQuantityTable\(deliveredCount, 0\)/.test(roundTripsQty) || !/formatQuantityTable\(legs\.length, 0\)/.test(roundTripsQty)) {
+  fail("RoundTrips delivered count must use formatQuantityTable(, 0)");
+}
+
+const fleetHomeQty = read("apps/frontend/src/pages/fleet/FleetHomePage.tsx");
+if (!/formatQuantityTable\(trailers\.length, 0\)/.test(fleetHomeQty) || !/formatQuantityTable\(mdUnits\.length, 0\)/.test(fleetHomeQty)) {
+  fail("FleetHomePage trailers/units counts must use formatQuantityTable(, 0)");
+}
+const dispatchListQty = read("apps/frontend/src/components/dispatch/DispatchList.tsx");
+if ((dispatchListQty.match(/formatQuantityTable\(from, 0\)/g) || []).length < 2) {
+  fail("DispatchList Showing from-to-of must use formatQuantityTable(, 0)");
+}
+const settlementsQty = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+if (!/formatQuantityTable\(settlements\.length, 0\)/.test(settlementsQty) || !/formatQuantityTable\(cancelledHiddenCount, 0\)/.test(settlementsQty)) {
+  fail("SettlementsPage live/cancelled counts must use formatQuantityTable(, 0)");
+}
+const rollingLedgerQty = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
+if (!/formatQuantityTable\(driverBillCount, 0\)/.test(rollingLedgerQty) || !/formatQuantityTable\(incomeRows\.length, 0\)/.test(rollingLedgerQty)) {
+  fail("RollingLedgerTab income/expense count badges must use formatQuantityTable(, 0)");
+}
+if (!/ledgerEntityKind\(row\.document_kind, row\)/.test(rollingLedgerQty)) {
+  fail("RollingLedgerTab AdjustPopover must pass row into ledgerEntityKind (CASH-T03 legacy fuel-avg)");
+}
+// Codex batch62 — AdjustPopover-specific: global ledgerEntityKind(, row) elsewhere must not mask a missing consumer arg.
+if (!/function AdjustPopover[\s\S]{0,900}ledgerEntityKind\(row\.document_kind, row\)/.test(rollingLedgerQty)) {
+  fail("AdjustPopover itself must pass row into ledgerEntityKind (not only sibling renderers)");
+}
+const tourSettleQty = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
+if (!/formatQuantityTable\(bills\.length, 0\)/.test(tourSettleQty) || !/formatQuantityTable\(liveLegs\.length, 0\)/.test(tourSettleQty)) {
+  fail("TourSettlementTab bill/load counts must use formatQuantityTable(, 0)");
+}
+const dispatchBoardQty = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(dispatchBoardQty)) {
+  fail("DispatchBoard section badges must use formatQuantityTable(, 0)");
+}
+const loadBolQty = read("apps/frontend/src/components/dispatch/LoadBolPanel.tsx");
+if (!/formatQuantityTable\(pods\.length, 0\)/.test(loadBolQty) || !/formatQuantityTable\(bols\.length, 0\)/.test(loadBolQty)) {
+  fail("LoadBolPanel POD/BOL counts must use formatQuantityTable(, 0)");
+}
+
+const kanbanQty = read("apps/frontend/src/components/dispatch/DispatchKanban.tsx");
+if ((kanbanQty.match(/formatQuantityTable\(loads\.length, 0\)/g) || []).length < 2) {
+  fail("DispatchKanban column badges must use formatQuantityTable(, 0)");
+}
+const preSettleQty = read("apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx");
+if (!/formatQuantityTable\(unpostedDraftExpenses\.length, 0\)/.test(preSettleQty) || !/formatQuantityTable\(r\.costs\.length, 0\)/.test(preSettleQty)) {
+  fail("TourPreSettlementTab draft/cost counts must use formatQuantityTable(, 0)");
+}
+const ownerHomeQty = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(ownerCashPending\.length, 0\)/.test(ownerHomeQty)) {
+  fail("OwnerHome pending cash advances must use formatQuantityTable(, 0)");
+}
+const engineStatusQty = read("apps/frontend/src/pages/system/EngineStatusBoardPage.tsx");
+if (!/formatQuantityTable\(redCount, 0\)/.test(engineStatusQty) || !/formatQuantityTable\(rows\.length, 0\)/.test(engineStatusQty)) {
+  fail("EngineStatusBoardPage counts must use formatQuantityTable(, 0)");
+}
+const txHealthQty = read("apps/frontend/src/pages/system/SystemModulePage.tsx");
+if ((txHealthQty.match(/formatQuantityTable\((?:failCount|warnCount|rows\.length), 0\)/g) || []).length < 3) {
+  fail("Transaction Health KPI counts must use formatQuantityTable(, 0)");
+}
+const settleLoadsQty = read("apps/frontend/src/pages/driver-finance/components/SettlementLoadsSection.tsx");
+if (!/formatQuantityTable\(legs\.length, 0\)/.test(settleLoadsQty)) {
+  fail("SettlementLoadsSection leg count must use formatQuantityTable(, 0)");
+}
+const toursRegQty = read("apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
+if (!/formatQuantityTable\(filteredRows\.length, 0\)/.test(toursRegQty)) {
+  fail("SettlementsToursRegister live count must use formatQuantityTable(, 0)");
+}
+
+
+const tourLegsQty = read("apps/frontend/src/components/dispatch/TourLegsCell.tsx");
+if (!/formatQuantityTable\(list\.length, 0\)/.test(tourLegsQty)) {
+  fail("TourLegsCell count must use formatQuantityTable(, 0)");
+}
+const loadTemplatesQty = read("apps/frontend/src/components/dispatch/CustomerLoadTemplatesReverseSection.tsx");
+if (!/formatQuantityTable\(preview\.length, 0\)/.test(loadTemplatesQty)) {
+  fail("CustomerLoadTemplatesReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const detentionRevQty = read("apps/frontend/src/components/dispatch/LoadDetentionReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(detentionRevQty)) {
+  fail("LoadDetentionReverseSection count must use formatQuantityTable(, 0)");
+}
+const submissionQueueQty = read("apps/frontend/src/pages/factoring/SubmissionQueue.tsx");
+if (!/formatQuantityTable\(submittable\.length, 0\)/.test(submissionQueueQty) || !/formatQuantityTable\(items\.length, 0\)/.test(submissionQueueQty)) {
+  fail("SubmissionQueue ready counts must use formatQuantityTable(, 0)");
+}
+const settleHomeQty = read("apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx");
+if (!/formatQuantityTable\(weekBuckets\.length, 0\)/.test(settleHomeQty) || !/formatQuantityTable\(weekOfRows\.length, 0\)/.test(settleHomeQty)) {
+  fail("SettlementsHomeBoardPanels week counts must use formatQuantityTable(, 0)");
+}
+const batchSettleQty = read("apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx");
+if (!/formatQuantityTable\(row\.loads\.length, 0\)/.test(batchSettleQty)) {
+  fail("BatchSettlementsPage load counts must use formatQuantityTable(, 0)");
+}
+const fleetCoveredQty = read("apps/frontend/src/pages/insurance/FleetCoveredPage.tsx");
+if (!/formatQuantityTable\(coveredRows\.length, 0\)/.test(fleetCoveredQty)) {
+  fail("FleetCoveredPage covered units must use formatQuantityTable(, 0)");
+}
+const truckPlannerQty = read("apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx");
+if (!/formatQuantityTable\(days\.length, 0\)/.test(truckPlannerQty)) {
+  fail("TruckPlanner selected days must use formatQuantityTable(, 0)");
+}
+
+
+const factoringHomeQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(fundsDueRows\.length, 0\)/.test(factoringHomeQty) || !/formatQuantityTable\(agingRows\.length, 0\)/.test(factoringHomeQty)) {
+  fail("FactoringHome footer counts must use formatQuantityTable(, 0)");
+}
+const submitFactorQty = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(missingDocsRows\.length, 0\)/.test(submitFactorQty)) {
+  fail("SubmitToFactorTab missing-docs counts must use formatQuantityTable(, 0)");
+}
+const remintQty = read("apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(remintQty)) {
+  fail("DriverBillRemintScreen load counts must use formatQuantityTable(, 0)");
+}
+const fuelImportQty = read("apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx");
+if (!/formatQuantityTable\(result\.dead_letter_details\.length, 0\)/.test(fuelImportQty)) {
+  fail("ImportFuelTransactionsModal dead-letter counts must use formatQuantityTable(, 0)");
+}
+
+const relayFillsQty = read("apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(relayFillsQty) || !/formatQuantityTable\(totalCount, 0\)/.test(relayFillsQty)) {
+  fail("RelayFillsReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const fuelOverageQty = read("apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx");
+if (!/formatQuantityTable\(visibleEvents\.length, 0\)/.test(fuelOverageQty) || !/formatQuantityTable\(totalCount, 0\)/.test(fuelOverageQty)) {
+  fail("FuelCardOverageReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const cashForecastQty = read("apps/frontend/src/components/cash-flow/CashForecastReverseSection.tsx");
+if (!/formatQuantityTable\(preview\.length, 0\)/.test(cashForecastQty) || !/formatQuantityTable\(entries\.length, 0\)/.test(cashForecastQty)) {
+  fail("CashForecastReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const trainingQty = read("apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(trainingQty) || !/formatQuantityTable\(totalCount, 0\)/.test(trainingQty)) {
+  fail("TrainingRecordsSection Showing must use formatQuantityTable(, 0)");
+}
+const userActivityQty = read("apps/frontend/src/components/users/UserActivityTab.tsx");
+if (!/formatQuantityTable\(events\.length, 0\)/.test(userActivityQty) || !/formatQuantityTable\(auditQuery\.data\.total_count, 0\)/.test(userActivityQty)) {
+  fail("UserActivityTab Showing must use formatQuantityTable(, 0)");
+}
+const samsaraMapQty = read("apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx");
+if (!/formatQuantityTable\(rightRows\.length, 0\)/.test(samsaraMapQty) || !/formatQuantityTable\(total, 0\)/.test(samsaraMapQty)) {
+  fail("SamsaraDriverMappingPage Showing must use formatQuantityTable(, 0)");
+}
+const programBoardQty = read("apps/frontend/src/pages/program/ProgramBoardPage.tsx");
+if (!/formatQuantityTable\(activeRows\.length, 0\)/.test(programBoardQty) || !/formatQuantityTable\(baseRows\.length, 0\)/.test(programBoardQty)) {
+  fail("ProgramBoardPage Showing must use formatQuantityTable(, 0)");
+}
+const dispPerfLoadsQty = read("apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx");
+if (!/formatQuantityTable\(data\.loads_counted \?\? 0, 0\)/.test(dispPerfLoadsQty)) {
+  fail("DispatcherPerformanceCard loads_counted must use formatQuantityTable(, 0)");
+}
+const fleetUtilUnitsQty = read("apps/frontend/src/pages/home/charts/FleetUtilizationGauge.tsx");
+if (!/formatQuantityTable\(d\.active_units, 0\)/.test(fleetUtilUnitsQty) || !/formatQuantityTable\(d\.total_units, 0\)/.test(fleetUtilUnitsQty)) {
+  fail("FleetUtilizationGauge unit counts must use formatQuantityTable(, 0)");
+}
+const ownerInvoicesQty = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(fb\.invoices_factored \?\? 0, 0\)/.test(ownerInvoicesQty)) {
+  fail("OwnerHome invoices_factored must use formatQuantityTable(, 0)");
+}
+const defaultInvoicesQty = read("apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+if (!/formatQuantityTable\(fb\.invoices_factored \?\? 0, 0\)/.test(defaultInvoicesQty)) {
+  fail("DefaultHome invoices_factored must use formatQuantityTable(, 0)");
+}
+const custProfileQty = read("apps/frontend/src/components/customers/CustomerProfileOverview.tsx");
+if (!/formatQuantityTable\(a\.open_invoice_count, 0\)/.test(custProfileQty)) {
+  fail("CustomerProfileOverview open_invoice_count must use formatQuantityTable(, 0)");
+}
+const submissionSelectedQty = read("apps/frontend/src/pages/factoring/SubmissionQueue.tsx");
+if (!/formatQuantityTable\(selected\.length, 0\)/.test(submissionSelectedQty)) {
+  fail("SubmissionQueue selected submit count must use formatQuantityTable(, 0)");
+}
+const submitFactorCreatedQty = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(created\.purchase\.invoice_count, 0\)/.test(submitFactorCreatedQty)) {
+  fail("SubmitToFactorTab created invoice_count must use formatQuantityTable(, 0)");
+}
+const tourLoadFooterQty = read("apps/frontend/src/components/dispatch/TourLoadRows.tsx");
+if (!/formatQuantityTable\(new Set\(v\.map\(r => r\.settlement_id\)\)\.size, 0\)/.test(tourLoadFooterQty) || !/formatQuantityTable\(v\.filter\(r => r\.load_id\)\.length, 0\)/.test(tourLoadFooterQty)) {
+  fail("TourLoadRows footer tour/load counts must use formatQuantityTable(, 0)");
+}
+const legalMattersQty = read("apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx");
+if (!/formatQuantityTable\(rangeStart, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(rangeEnd, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(total, 0\)/.test(legalMattersQty)) {
+  fail("LegalMattersListPage Showing range must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

@@ -79,7 +79,8 @@ type ListFilters = {
   operating_company_id: string;
   category?: string;
   language?: LegalTemplateLanguage;
-  status?: LegalTemplateStatus;
+  /** Single status or comma-union (Codex batch67 sibling). */
+  status?: LegalTemplateStatus | string;
   search?: string;
 };
 

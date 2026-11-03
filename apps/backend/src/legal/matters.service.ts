@@ -74,6 +74,43 @@ async function assertMatterPartyInCompany(client: QueryableClient, table: "mdata
   if (!r.rows.length) throw new Error(`legal_matter_${table.split(".")[1].replace(/s$/, "")}_not_in_company`);
 }
 
+const MATTER_STATUS_VALUES = [
+  "open",
+  "investigating",
+  "litigation",
+  "settled",
+  "dismissed",
+  "judgment",
+  "closed",
+] as const;
+const MATTER_SEVERITY_VALUES = ["low", "medium", "high", "critical"] as const;
+const MATTER_TYPE_VALUES = [
+  "lawsuit",
+  "claim",
+  "demand_letter",
+  "settlement",
+  "regulatory",
+  "other",
+] as const;
+
+/** Comma-union list filters for listMatters — allowlisted tokens only; preserves order, de-dupes. */
+export function parseMatterEnumFilter(
+  raw: string | undefined,
+  allowed: readonly string[]
+): string[] {
+  if (!raw?.trim()) return [];
+  const allow = new Set(allowed);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const token of raw.split(",")) {
+    const v = token.trim();
+    if (!v || !allow.has(v) || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
 export const matterUpdateSchema = matterCreateSchema
   .partial()
   .omit({ matter_number: true })
@@ -314,17 +351,31 @@ export async function listMatters(
     values.push(args.requesterUserId);
     where.push(`m.related_user_id = $${values.length}`);
   }
-  if (args.status) {
-    values.push(args.status);
+  // Codex batch67 — multi-status/severity/type must filter BEFORE COUNT/LIMIT (comma-union).
+  // Legacy single-value callers still work; unknown tokens are ignored (empty → no predicate).
+  const statusUnion = parseMatterEnumFilter(args.status, MATTER_STATUS_VALUES);
+  if (statusUnion.length === 1) {
+    values.push(statusUnion[0]);
     where.push(`m.status = $${values.length}`);
+  } else if (statusUnion.length > 1) {
+    values.push(statusUnion);
+    where.push(`m.status = ANY($${values.length}::text[])`);
   }
-  if (args.severity) {
-    values.push(args.severity);
+  const severityUnion = parseMatterEnumFilter(args.severity, MATTER_SEVERITY_VALUES);
+  if (severityUnion.length === 1) {
+    values.push(severityUnion[0]);
     where.push(`m.severity = $${values.length}`);
+  } else if (severityUnion.length > 1) {
+    values.push(severityUnion);
+    where.push(`m.severity = ANY($${values.length}::text[])`);
   }
-  if (args.type) {
-    values.push(args.type);
+  const typeUnion = parseMatterEnumFilter(args.type, MATTER_TYPE_VALUES);
+  if (typeUnion.length === 1) {
+    values.push(typeUnion[0]);
     where.push(`m.type = $${values.length}`);
+  } else if (typeUnion.length > 1) {
+    values.push(typeUnion);
+    where.push(`m.type = ANY($${values.length}::text[])`);
   }
   if (args.related_driver_id) {
     values.push(args.related_driver_id);

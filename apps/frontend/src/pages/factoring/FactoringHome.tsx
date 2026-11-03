@@ -1301,7 +1301,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 emptyText="No invoices currently awaiting advance -- everything submitted has already been funded."
                 storageKey="factoring-funds-due"
                 footerCells={{
-                  customer_name: `${fundsDueRows.length} invoice(s)`,
+                  customer_name: `${formatQuantityTable(fundsDueRows.length, 0)} invoice(s)`,
                   advance_amount_cents: fmtCents(fundsDueRows.reduce((sum, row) => sum + Number(row.advance_amount_cents ?? 0), 0)),
                 }}
               />
@@ -2251,7 +2251,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 emptyText="No purchases in this range."
                 storageKey="factoring-purchase-report-summary"
                 footerCells={{
-                  purchase_date: `${purchaseReportSummary.length} purchases`,
+                  purchase_date: `${formatQuantityTable(purchaseReportSummary.length, 0)} purchases`,
                   invoice_count: String(purchaseReportSummary.reduce((a, r) => a + r.invoice_count, 0)),
                   purchase: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.gross_cents, 0) / 100),
                   advance_amount: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.net_advance_cents, 0) / 100),
@@ -2333,7 +2333,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 emptyText="No purchased invoices in this range."
                 storageKey="factoring-purchase-report-lines"
                 footerCells={{
-                  customer_name: `${purchaseReportLines.length} invoices · ${new Set(purchaseReportLines.map((r) => r.purchase_id)).size} purchases`,
+                  customer_name: `${formatQuantityTable(purchaseReportLines.length, 0)} invoices · ${formatQuantityTable(new Set(purchaseReportLines.map((r) => r.purchase_id)).size, 0)} purchases`,
                   purchase: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.gross_cents), 0) / 100),
                   advance_amount: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.net_advance_cents), 0) / 100),
                   escrow_rsv: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.escrow_reserve_cents), 0) / 100),
@@ -2423,7 +2423,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   emptyText="No open invoices."
                   storageKey="factoring-fees-paid-open-invoices"
                   footerCells={{
-                    customer_name: `${feesPaidOpenInvoiceRows.length} invoices`,
+                    customer_name: `${formatQuantityTable(feesPaidOpenInvoiceRows.length, 0)} invoices`,
                     accrued_fees: fmtCurrency(feesPaidOpenInvoiceRows.reduce((sum, row) => sum + Number(row.accrued_fees ?? 0), 0)),
                   }}
                 />
@@ -2604,7 +2604,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   storageKey="factoring-aging-report"
                   tableTestId="factoring-aging-table"
                   footerCells={{
-                    settlement_display_id: `${agingRows.length} records`,
+                    settlement_display_id: `${formatQuantityTable(agingRows.length, 0)} records`,
                     b0_30: fmtCurrency(agingTotals["0-30"]),
                     b31_60: fmtCurrency(agingTotals["31-60"]),
                     b61_90: fmtCurrency(agingTotals["61-90"]),

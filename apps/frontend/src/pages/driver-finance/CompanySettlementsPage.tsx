@@ -576,7 +576,7 @@ function CompanySettlementWaterfall({
                 <span>
                   Economic margin · after downtime
                   {report.sections.downtime_ledger && report.sections.downtime_ledger.events.length > 0
-                    ? ` (${report.sections.downtime_ledger.events.length} event${report.sections.downtime_ledger.events.length === 1 ? "" : "s"})`
+                    ? ` (${formatQuantityTable(report.sections.downtime_ledger.events.length, 0)} event${report.sections.downtime_ledger.events.length === 1 ? "" : "s"})`
                     : ""}
                 </span>
                 <span className="ldt-m">

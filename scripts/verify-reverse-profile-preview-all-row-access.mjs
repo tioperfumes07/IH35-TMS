@@ -26,7 +26,8 @@ const FILES = {
 const sources = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 const checks = [
-  ["forecastReverse", /const preview = entries\.slice\(0, 5\)[\s\S]*Showing \{preview\.length\} of \{entries\.length\}[\s\S]*Open all \{entries\.length\}/, "cash projection preview discloses its exact total and all-row action"],
+  // House quantity: Showing / Open all use formatQuantityTable(, 0) around preview/entries lengths.
+  ["forecastReverse", /const preview = entries\.slice\(0, 5\)[\s\S]*Showing \{formatQuantityTable\(preview\.length, 0\)\} of \{formatQuantityTable\(entries\.length, 0\)\}[\s\S]*Open all \{formatQuantityTable\(entries\.length, 0\)\}/, "cash projection preview discloses its exact total and all-row action"],
   ["forecastReverse", /URLSearchParams\(\{ tab: "manual_daily_projections" \}\)[\s\S]*Object\.entries\(filter\)[\s\S]*allParams\.toString\(\)/, "cash projection all-row link preserves the profile filter"],
   ["forecastList", /searchParams\.get\("party_ref_kind"\)[\s\S]{0,500}searchParams\.get\("party_ref_id"\)[\s\S]{0,500}searchParams\.get\("ref_kind"\)[\s\S]{0,500}searchParams\.get\("ref_external_id"\)/, "manual projections consume every supported reverse filter"],
   ["forecastList", /queryKey: \["forecast", "entries", operatingCompanyId, reverseFilter\][\s\S]{0,160}listForecastEntries\(operatingCompanyId, undefined, undefined, reverseFilter\)/, "manual projections key and fetch the canonical filtered list"],
@@ -52,7 +53,8 @@ const checks = [
   // `query.isError ? 0 : (...)` guard (query.isError ? 0 : (query.data?.total ?? templates.length))
   // so the disclosed total goes honestly to 0 on a load failure instead of falling back to a stale
   // templates.length. Widened to tolerate the error-guard wrapper around the same real expression.
-  ["templateReverse", /const total = [\s\S]{0,60}query\.data\?\.total \?\? templates\.length[\s\S]{0,1200}Showing \{preview\.length\} of \{total\}[\s\S]{0,500}Open all \{total\}/, "customer template preview discloses total and all-row action"],
+  // House quantity: Showing uses formatQuantityTable(, 0) around preview.length / total.
+  ["templateReverse", /const total = [\s\S]{0,60}query\.data\?\.total \?\? templates\.length[\s\S]{0,1400}Showing \{formatQuantityTable\(preview\.length, 0\)\} of \{formatQuantityTable\(total, 0\)\}[\s\S]{0,500}Open all \{total\}/, "customer template preview discloses total and all-row action"],
   ["templateReverse", /\/dispatch\/planner\?panel=templates&customer_id=\$\{encodeURIComponent\(customerId\)\}/, "customer template all-row link preserves customer scope on the mounted route"],
   // Real code routes the deep-link customer_id through the governed useStagedListFilters pipeline
   // (searchParams -> deepLinkCustomerId -> customerIdFromUrl -> applied.customerId -> effectiveCustomerId)
@@ -85,14 +87,14 @@ function failures(candidate) {
 
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
-    ["forecastReverse", "Showing {preview.length} of {entries.length}", "Showing recent projections"],
+    ["forecastReverse", "Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(entries.length, 0)}", "Showing recent projections"],
     ["forecastReverse", "for (const [key, value] of Object.entries(filter))", "for (const [key, value] of Object.entries({}))"],
     ["forecastList", 'searchParams.get("party_ref_id")', 'new URLSearchParams().get("party_ref_id")'],
     ["forecastList", "listForecastEntries(operatingCompanyId, undefined, undefined, reverseFilter)", "listForecastEntries(operatingCompanyId)"],
     ["templateService", "COUNT(*) OVER() AS total_count", "1 AS total_count"],
     ["templateService", "ORDER BY name ASC, id ASC", "ORDER BY name ASC, id ASC LIMIT 500"],
     ["templateApi", "templates: LoadTemplateRow[]; total: number", "templates: LoadTemplateRow[]"],
-    ["templateReverse", "Showing {preview.length} of {total}", "Showing recent templates"],
+    ["templateReverse", "Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(total, 0)}", "Showing recent templates"],
     ["templateReverse", "/dispatch/planner?panel=templates&customer_id=", "/dispatch/planner?panel=templates&all="],
     ["templateLibrary", 'searchParams.get("customer_id")', 'new URLSearchParams().get("customer_id")'],
     ["entityLink", "/dispatch/planner?panel=templates&template_id=", "/dispatch/planning/calendar?panel=templates&template_id="],

@@ -12,7 +12,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
@@ -271,7 +271,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
             {/* Vehicles */}
             <section>
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicles ({vehicles.length})</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicles ({formatQuantityTable(vehicles.length, 0)})</h3>
                 <button type="button" onClick={() => setVehicles((p) => [...p, emptyVehicle(`v${Date.now()}`)])}
                   className="text-xs text-[#1F2A44] hover:underline">+ Add new vehicle</button>
               </div>

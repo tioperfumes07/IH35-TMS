@@ -10,6 +10,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable } from "../../lib/money";
 
 const POLICY_437539_TIV_CENTS = 104_054_000;
 const formatMoney = (cents: number | null) => cents == null ? "—" : formatUsdCents(cents);
@@ -108,7 +109,7 @@ export function FleetCoveredPage() {
             exportFilename="insurance-fleet-covered.csv"
             tableTestId="fleet-covered-table"
             footerCells={{
-              unit_number: <span className={coveredRows.length === 34 ? "text-[#0F1219]" : "text-red-700"}>Totals · {coveredRows.length} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
+              unit_number: <span className={coveredRows.length === 34 ? "text-[#0F1219]" : "text-red-700"}>Totals · {formatQuantityTable(coveredRows.length, 0)} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
               insured_value_cents: <span>{formatMoney(totals.tiv)}</span>,
               premium_per_month_cents: <span>{formatMoney(totals.premium)}</span>,
             }}
