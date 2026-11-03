@@ -45,6 +45,44 @@ if (!/formatUsdCents/.test(profit) || !/from ["'][^"']*lib\/money["']/.test(prof
 }
 if (!/cur === "MXN"/.test(profit)) fail("SettlementProfitabilityCard must keep an explicit MXN Intl branch");
 
+// Cursor house-money wave — no per-file toFixed(2) / $ template USD money on these surfaces.
+const earnings = read("apps/frontend/src/components/drivers/EarningsTab.tsx");
+if (!/formatUsd/.test(earnings) || !/from ["'][^"']*lib\/money["']/.test(earnings)) {
+  fail("EarningsTab must import formatUsd from lib/money");
+}
+if (/\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(earnings) || /`\$\$\{[^`]*toFixed\(2\)\}`/.test(earnings)) {
+  fail("EarningsTab must not hand-roll $ + toFixed(2) money");
+}
+
+const fines = read("apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx");
+if (!/formatUsd\(Math\.abs\(Number\(line\.amount\)\)\)/.test(fines)) {
+  fail("FinesDeductionsCard pre-settlement lines must use formatUsd");
+}
+if (/−\$\$\{Math\.abs/.test(fines) || /−\$\$\{/.test(fines)) {
+  fail("FinesDeductionsCard must not hand-roll −$ + toFixed money");
+}
+
+const quality = read("apps/frontend/src/components/dispatch/LoadQualityEventsReverseSection.tsx");
+if (!/formatUsd\(Number\(event\.dollar_impact_amount\)\)/.test(quality)) {
+  fail("LoadQualityEventsReverseSection must format dollar_impact via formatUsd");
+}
+
+const stops = read("apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx");
+if (!/formatUsdCents\(stop\.lumper_amount_cents\)/.test(stops)) {
+  fail("LoadStopsRecordTab lumper amount must use formatUsdCents");
+}
+
+const tourSettle = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
+if (!/formatUsdRateTable\(c \/ 100\)/.test(tourSettle)) fail("TourSettlementTab rate must use formatUsdRateTable");
+if (!/formatUsd\(c \/ 100\)\/mi/.test(tourSettle) && !/\$\{formatUsd\(c \/ 100\)\}\/mi/.test(tourSettle)) {
+  fail("TourSettlementTab perMile must use formatUsd");
+}
+
+const customer = read("apps/frontend/src/pages/CustomerDetail.tsx");
+if (!/formatUsd\(qualityStats\.totalImpact\)/.test(customer)) fail("CustomerDetail Dollar Impact KPI must use formatUsd");
+if (!/formatUsdCents\(Number\(invoice\.total_cents/.test(customer)) fail("CustomerDetail invoice total must use formatUsdCents");
+if (!/formatUsdCents\(lane\.fsc_per_mile_cents\)/.test(customer)) fail("CustomerDetail FSC/mi must use formatUsdCents");
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

@@ -326,13 +326,13 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             {fineDeductionLines.map((line) => (
               <div key={line.id} className="flex justify-between text-xs">
                 <span className="text-gray-700">{line.description}</span>
-                <span className="font-medium text-red-700">−${Math.abs(Number(line.amount)).toFixed(2)}</span>
+                <span className="font-medium text-red-700">−{formatUsd(Math.abs(Number(line.amount)))}</span>
               </div>
             ))}
             {otherDeductionLines.map((line) => (
               <div key={line.id} className="flex justify-between text-xs text-gray-500">
                 <span>{line.description}</span>
-                <span>−${Math.abs(Number(line.amount)).toFixed(2)}</span>
+                <span>−{formatUsd(Math.abs(Number(line.amount)))}</span>
               </div>
             ))}
             {fineDeductionLines.length === 0 && otherDeductionLines.length === 0 ? (

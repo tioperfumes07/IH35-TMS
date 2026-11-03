@@ -9,7 +9,7 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { CustomerProfileOverview } from "../components/customers/CustomerProfileOverview";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
-import { formatUsdCents } from "../lib/money";
+import { formatUsd, formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -1509,7 +1509,11 @@ export function CustomerDetailPage() {
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">Layover Charge per Day</span>
                   <span className="text-xs text-gray-900">
-                    {customer.layover_charge_per_day ? `${customer.layover_currency ?? "USD"} ${Number(customer.layover_charge_per_day).toFixed(2)}` : "Not set"}
+                    {customer.layover_charge_per_day
+                      ? customer.layover_currency && customer.layover_currency !== "USD"
+                        ? `${customer.layover_currency} ${Number(customer.layover_charge_per_day).toFixed(2)}`
+                        : formatUsd(Number(customer.layover_charge_per_day))
+                      : "Not set"}
                   </span>
                 </DataPanelRow>
                 <DataPanelRow>
@@ -1758,7 +1762,7 @@ export function CustomerDetailPage() {
               fields={[
                 { label: "Total Events", value: String(qualityStats.totalEvents) },
                 { label: "Severe", value: String(qualityStats.severeCount) },
-                { label: "Dollar Impact", value: `$${qualityStats.totalImpact.toFixed(2)}` },
+                { label: "Dollar Impact", value: formatUsd(qualityStats.totalImpact) },
                 { label: "Avg Days Late", value: qualityStats.avgDaysLate.toFixed(1) },
               ]}
             />
@@ -1790,7 +1794,7 @@ export function CustomerDetailPage() {
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
-                    {event.dollar_impact_amount != null ? <strong className="text-xs">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
+                    {event.dollar_impact_amount != null ? <strong className="text-xs">{formatUsd(Number(event.dollar_impact_amount))}</strong> : null}
                     {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
                   </div>
                   <div className={event.voided_at ? "mt-1 text-xs line-through" : "mt-1 text-xs"}>{event.summary}</div>
@@ -2428,14 +2432,14 @@ export function CustomerDetailPage() {
                   label: "Total",
                   sortable: true,
                   cellClass: "tabular-nums",
-                  render: (invoice) => (Number(invoice.total_cents ?? 0) / 100).toFixed(2),
+                  render: (invoice) => formatUsdCents(Number(invoice.total_cents ?? 0)),
                 },
                 {
                   key: "amount_open_cents",
                   label: "Open",
                   sortable: true,
                   cellClass: "tabular-nums",
-                  render: (invoice) => (Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2),
+                  render: (invoice) => formatUsdCents(Number(invoice.amount_open_cents ?? 0)),
                 },
               ]}
             />
@@ -2533,7 +2537,7 @@ export function CustomerDetailPage() {
                 key: "fsc_per_mile_cents",
                 label: "FSC/mi",
                 sortable: true,
-                render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`),
+                render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : formatUsdCents(lane.fsc_per_mile_cents)),
               },
               {
                 key: "status",
