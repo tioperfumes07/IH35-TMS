@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~1:25 PM CT) — house quantity sweep continuation
+- **PRIOR:** #28271 margin/% · #28273 CRM/driver/cargo · #28276 claim 19822 · #28277 ENG-34 29→28 · #28278–#28281 qty waves.
+- **THIS:** AtRiskDriverCard risk score → formatQuantityTable. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
 ## OUTBOX (11-03-2026 ~1:15 PM CT) — stops/miles + dispatcher + late/factor qty
 - **PRIOR:** #28278 profitability/home/forensic; #28279 late+factor rates; #28280 stops/dispatcher/day-summary.
 - **THIS:** Continuous house quantity sweep on Cursor/shared surfaces. ENG-34 exempt **28** (wave6 #28277). SelectCombobox baseline still 2.

@@ -252,6 +252,8 @@ const relScore = read("apps/frontend/src/components/customers/CustomerRelationsh
 if (!/formatQuantityTable\(value, 1\)/.test(relScore) || !/formatQuantityTable\(score\.overall_health_score, 1\)/.test(relScore)) {
   fail("CustomerRelationshipScore must use formatQuantityTable");
 }
+const atRisk = read("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx");
+if (!/formatQuantityTable\(riskScore, 1\)/.test(atRisk)) fail("AtRiskDriverCard risk score must use formatQuantityTable");
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
