@@ -127,6 +127,18 @@ if (!/formatUsdCents\(m\.cash_advance_amount_cents\)/.test(chat)) fail("Dispatch
 const costs = read("apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx");
 if (!/formatUsdRateTable\(Number\(cents\) \/ 100\)/.test(costs)) fail("LoadDetailCostsTab fmtRate must use formatUsdRateTable");
 
+
+const loadCosts = read("apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx");
+if (!/formatUsdRateTable\(Number\(c\) \/ 100\)/.test(loadCosts)) fail("LoadCostsBoardPage fmtRate must use formatUsdRateTable");
+const escrow = read("apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx");
+if (/\$\{Number\(driverEscrowBalance/.test(escrow) || /\$\{filteredTotal\.toFixed/.test(escrow)) {
+  fail("DriverEscrowLedgerSection balance tiles must use formatUsd");
+}
+const liab = read("apps/frontend/src/pages/liabilities/components/LiabilitiesKpiRow.tsx");
+if (!/formatUsd\(n\)/.test(liab) || /\$\$\{n\.toFixed\(2\)\}/.test(liab)) fail("LiabilitiesKpiRow must use formatUsd");
+const tourRates = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
+if (!/formatUsdRateTable\(rt, 3\)/.test(tourRates)) fail("TourSettlementTab leg rate must use formatUsdRateTable(..., 3)");
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
