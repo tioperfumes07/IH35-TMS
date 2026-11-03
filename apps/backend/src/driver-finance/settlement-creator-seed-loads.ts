@@ -480,7 +480,8 @@ export async function ensureDispatchedLoadsForCreator(
       customer_po_number: poNumber ?? undefined,
       customer_wo_number: woNumber ?? undefined,
       requested_load_number: load.load_number.trim(),
-      live_load_number: load.load_number.trim(),
+      // Row 124(d) (ACCT-F11065): live_load_number is the AlwaysTrack / legacy number — the Creator has none, and copying the
+      // load's own TMS number into it made the reference self-referential (13694 / 13695; 159 USMCA inserts). Never sent.
       assigned_primary_driver_id: draft.driver_id,
       assigned_unit_id: draft.unit_id ?? undefined,
       // LEAD 443.203 — a fleet trailer only when THIS load's choice is one; a customer / none load never takes the
