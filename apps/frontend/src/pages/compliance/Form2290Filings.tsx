@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -176,7 +176,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
                 unknown filing deadline must read as unknown. Guarded by verify-step 1500. */}
             HVUT annual filing ·{" "}
             {deadline?.deadline
-              ? `due ${deadline.deadline} (${deadline.days_remaining} days remaining)`
+              ? `due ${deadline.deadline} (${formatQuantityTable(deadline.days_remaining, 0)} days remaining)`
               : "due date unavailable — could not load the filing deadline"}
           </p>
           {/* SAF-ORPH-04 — the per-unit exceptions. Only vehicles whose own due date DIFFERS from the

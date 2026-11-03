@@ -418,6 +418,24 @@ if (!/formatQuantityTable\(renewal\.days, 0\)/.test(insHome)) {
   fail("InsuranceHomeBoard renewal days must use formatQuantityTable(, 0)");
 }
 
+
+const rollingDays = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
+if (!/formatQuantityTable\(row\.days_overdue, 0\)/.test(rollingDays)) {
+  fail("RollingLedgerTab days_overdue must use formatQuantityTable(, 0)");
+}
+const form2290Days = read("apps/frontend/src/pages/compliance/Form2290Filings.tsx");
+if (!/formatQuantityTable\(deadline\.days_remaining, 0\)/.test(form2290Days)) {
+  fail("Form2290Filings days_remaining must use formatQuantityTable(, 0)");
+}
+const custTerms = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");
+if (!/formatQuantityTable\(t\.days_until_due, 0\)/.test(custTerms)) {
+  fail("CustomerProfileForm terms days_until_due must use formatQuantityTable(, 0)");
+}
+const recourseDays = read("apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx");
+if (!/formatQuantityTable\(row\.days_until_recourse_expiry, 0\)/.test(recourseDays)) {
+  fail("CustomerFactoringRecourseReverseSection days must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
