@@ -1,6 +1,7 @@
 import type { ReportCategory } from "../../api/reports";
 import { REPORT_CATEGORY_FLYOUT_ITEMS } from "../../components/reports/CategoryHoverNav";
 import { phase6ReportHref } from "../../components/reports/phase6ReportLinks";
+import { REPORT_BOARDS } from "./boards/reportBoardCatalog";
 import { NavyPageSubNav, type NavyPageSubNavItem, type NavySubNavChild } from "../../components/layout/NavyPageSubNav";
 
 const CATEGORY_ORDER: ReportCategory[] = [
@@ -32,6 +33,10 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
   { id: "geofence-dwell", label: "Geofence dwell report" },
   { id: "loads-report", label: "Loads report" },
+  { id: "driver-settlements-report", label: "Driver settlement report" },
+  { id: "company-settlements-report", label: "Company settlement report" },
+  { id: "customer-report", label: "Customer report" },
+  { id: "vendor-report", label: "Vendor report" },
   { id: "deadhead", label: "Deadhead optimization" },
   { id: "scheduled-reports", label: "Default subscriptions" },
 ];
@@ -94,6 +99,8 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
     to: "/reports/hub",
     children: flattenReportRunLinks(),
   },
+  // Rows 79-84 (11-03) — the five report boards, in the board order (V3-Reports-*.dc.html sub-nav).
+  ...REPORT_BOARDS.map((b) => ({ label: b.tab, to: b.href })),
   { label: "Cancellations", to: "/reports/cancellations" },
   { label: "Duplicate Masters", to: "/reports/duplicate-masters" },
   { label: "Driver Qualification File", to: "/reports/driver-qualification" },
@@ -129,6 +136,10 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/maintenance-cost-per-unit" ||
     pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/loads" ||
+    pathname === "/reports/driver-settlements" ||
+    pathname === "/reports/company-settlements" ||
+    pathname === "/reports/customers" ||
+    pathname === "/reports/vendors" ||
     pathname === "/reports/deadhead" ||
     pathname === "/reports/cancellations" ||
     pathname === "/reports/duplicate-masters" ||
