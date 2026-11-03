@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.30 batch96: settlement selected-week caption LIVE acceptance
+
+Batch95 merged #28569 fb6bdb1d27597d35850027383f95ef6eec22d8ac,normal hooks,1affected/0regressions. PR body endpoint evidence corrected after advisory metadata warning;no runtime/guard bypass.
+
+- #28561 LIVE after new-version reload17:20CT: selected10/18 URL,pressedbar,roster title anddeductionscaption all10/18;Enter10/11 updatesallfourto10/11 anddeductionsamountchanges. Privateinline screenshot. Exact historical-caption finding CLOSED. Non-CT browser emulation NOTperformed;cross-timezone acceptance is the16actual-helpercases frombatch95,not claimedbrowserproof. No productionwrites.
+- #28114 a542ea3823 historicalfunctional diff+caller read:TripProfitability Closed timestamp andFactoringQueue Delivered use sharedformatDateUS;nullOpen/dash preserved,no moneywriterchange. Exact34affectedPASS;datetimeformatterguard selftestPASS. Notcertifying everylive historicalrow fromsourceinspection.
+- Remaining: invoice100/174pagination;invoice full-JE health imbalance reader;settlement legacy/zero-eligibility health reader;E13actualA-B-Arewrite;scheduledE11nexttick/fueljobproof;remaining historical/fullmodule coverage. Fullaudit INCOMPLETE. Existing healthsource still#28480,no claimeddatarepair.
+
 ## 2026-11-03 — ROUND7.30 batch95: timezone repair code proof; historical fuel chain; D066 plant
 
 Batch94 merged #28562 7844bc14de20afeaace77e56a2307255dfd59df4,normal hooks,1affected/0regressions.
