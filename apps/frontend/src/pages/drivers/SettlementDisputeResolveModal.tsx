@@ -4,6 +4,7 @@ import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 import type { SettlementDisputeRow } from "../../hooks/useSettlementDisputes";
 
 // DRV-MONEY-F7314 — the canonical review route (PATCH /api/v1/settlement-disputes/:id/review,
@@ -24,7 +25,7 @@ const OUTCOMES: Array<{ id: Outcome; label: string }> = [
 ];
 
 function money(cents: number | null | undefined) {
-  return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
+  return formatUsdCents(cents ?? 0);
 }
 
 export type ResolveDisputeInput = {

@@ -1,4 +1,5 @@
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
+import { formatUsd } from "../../../lib/money";
 
 export const LIABILITY_TABS = [
   "All Active",
@@ -30,7 +31,7 @@ function amount(kpis: Record<string, unknown> | undefined, key: string): number 
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const usd = (n: number | null) => (n === null ? null : `$${n.toFixed(2)}`);
+const usd = (n: number | null) => (n === null ? null : formatUsd(n));
 
 export function LiabilitiesKpiRow({ kpis, onSelectTab }: Props) {
   return (

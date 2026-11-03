@@ -18,6 +18,10 @@
  * allowlist (scripts/sql-read-targets-known-debt.json) that may only SHRINK; any NEW phantom read
  * fails CI. Run `--write-baseline` once to capture current debt.
  */
+// Does not require a live DB: falls back to schema-parity-baseline when DATABASE_URL is absent.
+// Money guards may NOT declare this; these guards scan code patterns against a static schema file.
+export const ALLOW_OFFLINE_SKIP = "reads schema-parity-baseline fallback when no DATABASE_URL; no live money data touched";
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

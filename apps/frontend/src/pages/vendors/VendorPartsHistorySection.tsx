@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 function formatMoney(value: number | null | undefined) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return formatUsd(value ?? 0);
 }
 
 // Reverse drill-through (inventory module Wave B): parts invoiced to this vendor via

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { formatUsd } from "../../lib/money";
 
 type Comparable = {
   fleet_avg_maintenance_per_mile_cents?: number | null;
@@ -13,7 +14,7 @@ type Comparable = {
 
 function usdPerMile(cents: number | null | undefined) {
   if (cents == null) return "—";
-  return `$${(cents / 100).toFixed(2)}/mi`;
+  return `${formatUsd(cents / 100)}/mi`;
 }
 
 type ComparisonRow = {

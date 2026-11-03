@@ -103,6 +103,16 @@ export async function postFuelFillOnReceipt(
     });
     if (doc.outcome === "refused") throw new FuelMatchPostError("fuel_fill_document_refused", `fuel_transaction ${input.fill_id}: ${doc.reason}`);
   }
+  // ENG-48 (ON-RECEIPT): Relay fills also get an expense document on receipt — same as bank-match path.
+  if (input.kind === "relay_fuel" && posted.journal_entry_id) {
+    const doc = await adoptRelayFillExpenseDocument(client as never, {
+      operating_company_id: input.operating_company_id,
+      relay_fill_id: input.fill_id,
+      journal_entry_id: posted.journal_entry_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", `on_receipt ${input.fill_id}: ${doc.reason}`);
+  }
   if (posted.result === "posted") {
     await appendCrudAudit(client as never, input.actor_user_uuid, FUEL_POSTED_ON_RECEIPT_EVENT, {
       operating_company_id: input.operating_company_id,

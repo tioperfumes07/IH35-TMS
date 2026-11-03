@@ -344,6 +344,8 @@ export function DatePicker({
           }}
         >
           <div className="mb-1 flex items-center justify-between gap-1">
+            {/* Hidden label matching pickExactDate's /^Month YYYY$/ regex — test utility uses this to detect the open calendar and read the displayed month without scraping the select values. */}
+            <span className="sr-only">{MONTHS[viewM]} {viewY}</span>
             <button type="button" className="min-h-[34px] rounded-sm px-2 hover:bg-gray-100 sm:min-h-0" onClick={prevMonth} aria-label="Previous month">
               ‹
             </button>

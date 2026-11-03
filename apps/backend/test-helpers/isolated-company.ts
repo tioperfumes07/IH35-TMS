@@ -190,10 +190,14 @@ export async function deactivateIsolatedOperatingCompany(
     );
   }
 
-  await client.query(
-    `DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid`,
-    [companyId]
-  );
+  // chart_of_accounts_roles may not exist in all test schema versions; skip gracefully if absent.
+  const coarExists = await client.query(`SELECT to_regclass('accounting.chart_of_accounts_roles')::text AS name`);
+  if (coarExists.rows[0]?.name) {
+    await client.query(
+      `DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid`,
+      [companyId]
+    );
+  }
   await client.query(
     `UPDATE org.companies
         SET is_active = false, deactivated_at = COALESCE(deactivated_at, now()), updated_at = now()

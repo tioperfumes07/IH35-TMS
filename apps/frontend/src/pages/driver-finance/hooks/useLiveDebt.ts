@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDebtSummary, type DebtSummary } from "../../../api/driverFinance";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatUsd } from "../../../lib/money";
 
 type State = {
   debt: DebtSummary | null;
@@ -69,7 +70,8 @@ export function useLiveDebt(driverId: string | null, operatingCompanyId: string 
 
   const displayDebt = useMemo(() => {
     if (state.isStale) return "?";
-    return (state.debt?.total_active_debt ?? 0).toFixed(2);
+    // total_active_debt is dollars (recompute_driver_debt), not cents.
+    return formatUsd(state.debt?.total_active_debt ?? 0);
   }, [state.debt, state.isStale]);
 
   return {

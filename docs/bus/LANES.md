@@ -76,6 +76,7 @@ apps/backend/src/leases/**
 apps/backend/src/legal/contracts.service.ts
 apps/backend/src/maintenance/fuel-integrity.service.ts
 apps/backend/src/telematics/stop-events.reads.ts
+apps/backend/src/telematics/unit-lock-order.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -88,6 +89,55 @@ apps/backend/src/accounting/daily-close**
 apps/backend/src/accounting/factor-reconciliation/**
 TABLES: factor.* · banking.* · accounting.factoring_reserve_movements · accounting.invoices
         accounting.reconciliation_runs
+#
+# **`apps/backend/src/telematics/stops-geocode-backfill.service.ts` added to CC-2 (ROUND 260, 2026-11-02).**
+# `apps/backend/src/telematics/**` has no seat -- UNASSIGNED per verify-lane-ownership.mjs. This file
+# is the geocode engine that writes the precise stop coordinate stamp required before delivery invoicing
+# fires. The 443.260 finding showed 3 Edison NJ deliveries ($14,700) were never stamped because a
+# range-precision geocode placed the fence 0.7mi from the actual dock; this file receives the root-cause
+# fix (range precision skips fence creation, delegating to the GPS-dwell engine). Splitting the fix from
+# its guard (verify-stops-geocoded.mjs) across two seats recreates the "one job two seats" problem;
+# scoped to this one filename. Owner may move it; until then it is CC-2's.
+#
+# **`package.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# Root package.json is DEPENDABOT's lane for dependabot bump branches; for all other branches it is
+# UNASSIGNED. This branch adds a single `verify:stops-geocoded` npm script entry — the runner alias for
+# the new guard — and no other changes. Scoped to this round's one-line addition. Owner may move it.
+#
+# **`scripts/verify-guard-selftests-are-real-weak-baseline.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# This baseline JSON has no seat -- UNASSIGNED per verify-lane-ownership.mjs. CC-2 added
+# `verify-stops-geocoded.mjs` to the weak-selftest allowlist as part of wiring the new guard.
+# Owner may move it; until then it is CC-2's.
+apps/backend/src/telematics/stops-geocode-backfill.service.ts
+package.json
+scripts/verify-guard-selftests-are-real-weak-baseline.json
+#
+# **`scripts/verify-delivered-load-stops-terminal.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# This guard is under CC-1's wildcard `scripts/verify-*.mjs` but was originally authored as CC-2
+# (Lead 443.51 #3, guard comment says CC-2). Commit fc3a9e9f40 moved stampStopsFromTracking and
+# settleStampedStopStatuses from settlement-creator-deliver.ts to stop-evidence-from-tracking.ts,
+# making the guard fail permanently (DELIVER constant points to the re-export barrel, not the
+# function bodies). This Round 260 fix points DELIVER at the canonical source file; the fix is
+# within CC-2's authority because the guard itself and the ops script that arms it are both CC-2.
+scripts/verify-delivered-load-stops-terminal.mjs
+#
+# **`scripts/verify-stops-geocoded.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-*.mjs` but the guard is the direct verification
+# companion of the geocode backfill service (CC-2's stops-geocode-backfill.service.ts fix).
+# Same rationale as verify-delivered-load-stops-terminal.mjs directly above. Owner may move it.
+scripts/verify-stops-geocoded.mjs
+#
+# **`scripts/verify-no-session-scoped-rls-bypass.baseline.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-*.baseline.json`. CC-2's rewrite of verify-stops-geocoded.mjs
+# eliminated its bypass pattern; this baseline change removes that entry from the bypass allowlist.
+# The edit is a direct consequence of the guard rewrite in the same round. Owner may move it.
+scripts/verify-no-session-scoped-rls-bypass.baseline.json
+#
+# **`scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-steps/**`. CC-2 wired verify-stops-geocoded.mjs into
+# CI via step 18565 (shrinks the unwired-guards count); this is the CI registration artifact
+# for the new guard. Owner may move it.
+scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs
 
 ## CC-3 — settlements and fuel
 apps/backend/src/settlements/**

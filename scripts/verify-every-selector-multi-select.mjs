@@ -23,14 +23,11 @@ const PRIMITIVE_PATHS = new Set([
  * Measured 2026-10-24 on main (443.325 box). Shrink-only: lowering BASELINE requires removing
  * a pinned row or converting that control; raising is forbidden.
  */
-const BASELINE = 6; // shrunk: SidebarPagination page size → SelectCombobox
+const BASELINE = 2; // ParityTable page-size stays native <select> (vitest + fireEvent.change contract); toolbar cleared
 
 /** Every allowed raw <select> outside date primitives. count = occurrences in file today. */
 const PINNED = [
-  { rel: "components/parity/ParityTable.tsx", count: 2, reason: "Page-size + export format pickers (scalar UI chrome, not entity roster filters)." },
-  { rel: "components/table/UniversalListToolbar.tsx", count: 2, reason: "Range popover: choose one date/amount column + QBO date preset (scalar field picker)." },
-  { rel: "components/DataTable.tsx", count: 1, reason: "Legacy page-size control (scalar)." },
-  { rel: "components/table/ColumnChooser.tsx", count: 1, reason: "Column visibility preset (scalar layout picker)." },
+  { rel: "components/parity/ParityTable.tsx", count: 2, reason: "Page-size gear + footer per-page (native select keeps fireEvent.change / option contract for 49 ParityTable tests)." },
 ];
 
 function stripComments(src) {

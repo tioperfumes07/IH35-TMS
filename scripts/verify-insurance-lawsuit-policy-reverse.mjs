@@ -28,8 +28,12 @@ function audit(s) {
   if (!/claim\.policy_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("route must apply exact policy predicate through claim");
   if (!/claim\.operating_company_id = lawsuit\.operating_company_id[\s\S]{0,80}claim\.id = lawsuit\.claim_id/.test(s.route)) failures.push("policy reverse join must retain tenant match");
   // ROUND 342 step 2c: operating_company_id is the ONE company column — stamped from the scoped $1; the legacy tenant_id is never written.
-  if (!/INSERT INTO insurance\.lawsuit \(\s*operating_company_id,[\s\S]{0,500}VALUES \(\s*\$1::uuid, \$2,/.test(s.route)) failures.push("lawsuit create must stamp the scoped company ($1) into the FORCE-RLS operating_company_id");
-  if (/INSERT INTO insurance\.lawsuit \([^)]*\btenant_id\b/.test(s.route)) failures.push("lawsuit create writes tenant_id — ROUND 342 step 2c retires it");
+  // ENG-60 (2026-11): mutate paths retired — FE creates lawsuits as legal.matters type=lawsuit; INSERT check is N/A when retired.
+  const routeRetired = /ENG-60:\s*mutate paths retired/.test(s.route);
+  if (!routeRetired) {
+    if (!/INSERT INTO insurance\.lawsuit \(\s*operating_company_id,[\s\S]{0,500}VALUES \(\s*\$1::uuid, \$2,/.test(s.route)) failures.push("lawsuit create must stamp the scoped company ($1) into the FORCE-RLS operating_company_id");
+    if (/INSERT INTO insurance\.lawsuit \([^)]*\btenant_id\b/.test(s.route)) failures.push("lawsuit create writes tenant_id — ROUND 342 step 2c retires it");
+  }
   if ((s.api.match(/policy_id\?: string;/g) ?? []).length < 7) failures.push("lawsuit API and public wrapper must expose policy filter");
   // ENG-60: PolicyDetail reads legal.matters type=lawsuit (insurance.lawsuit retired, 0 rows).
   if (!/legalMattersApi\.list\(companyId,\s*\{\s*type:\s*"lawsuit"/.test(s.policy)) {
@@ -57,8 +61,7 @@ if (process.argv.includes("--selftest")) {
     ["schema", "schema", /(listLawsuitsQuerySchema[\s\S]{0,180})policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "$1"],
     ["filter", "route", /claim\.policy_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["tenant", "route", /claim\.operating_company_id = lawsuit\.operating_company_id/, "TRUE"],
-    ["create opco stamp", "route", /(INSERT INTO insurance\.lawsuit \(\s*)operating_company_id,/, "$1opco_missing,"],
-    ["create legacy column", "route", /(INSERT INTO insurance\.lawsuit \(\s*)operating_company_id,/, "$1tenant_id, operating_company_id,"],
+    ["route retired guard bypassed", "route", /\/\/ ENG-60:\s*mutate paths retired/, "// active route"],
     ["api", "api", /policy_id\?: string;/g, ""],
     ["exact read", "policy", /legalMattersApi\.list\(companyId,\s*\{\s*type:\s*"lawsuit"/, 'legalMattersApi.list(companyId, { type: "claim"'],
     ["error", "policy", /Couldn't load this policy's lawsuits/, "Lawsuits unavailable"],

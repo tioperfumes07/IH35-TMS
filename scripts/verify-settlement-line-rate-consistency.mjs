@@ -37,6 +37,8 @@ export const REQUIRES_LIVE_DB =
 const LABEL = "verify-settlement-line-rate-consistency";
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
 const FE_FILES = [
+  // SET-RATE mapper lives here (was inlined on SettlementStatementWorkflowPage; plant targets this).
+  "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts",
   "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
   "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx",
@@ -82,12 +84,17 @@ function selftest() {
       process.exit(1);
     }
   }
-  const goodSDP = fs.readFileSync(FE_FILES[0], "utf8");
-  const regressedSDP = goodSDP.replace(
+  const mapsPath = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
+  const goodMaps = fs.readFileSync(mapsPath, "utf8");
+  if (!goodMaps.includes("miles: line.miles == null ? undefined : Number(line.miles),")) {
+    console.error(`${LABEL} SELFTEST FAIL — settlementDetailLineMaps missing honest miles mapping plant target`);
+    process.exit(1);
+  }
+  const regressedMaps = goodMaps.replace(
     "miles: line.miles == null ? undefined : Number(line.miles),",
     "miles: Number(line.miles ?? 0),"
   );
-  if (feNeverFakesZero(regressedSDP)) {
+  if (feNeverFakesZero(regressedMaps)) {
     console.error(`${LABEL} SELFTEST FAIL — reintroducing the fake-zero miles coercion was not caught`);
     process.exit(1);
   }
@@ -95,7 +102,10 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — 2/2 plants rejected`);
 }
 
-if (process.argv.includes("--selftest")) selftest();
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(0);
+}
 
 // Static half.
 const failures = [];

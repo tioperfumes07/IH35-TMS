@@ -17,7 +17,7 @@ import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLoadDocuments } from "./tabs/useLoadDocuments";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { formatQuantityTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 type Props = {
   loadId: string;
@@ -203,7 +203,7 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
       "Lumper",
       stop.lumper_required
         ? stop.lumper_amount_cents != null
-          ? `Required · $${(stop.lumper_amount_cents / 100).toFixed(2)}`
+          ? `Required · ${formatUsdCents(stop.lumper_amount_cents)}`
           : "Required"
         : "No",
     ],

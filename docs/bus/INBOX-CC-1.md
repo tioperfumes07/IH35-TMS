@@ -1,135 +1,3 @@
-# INBOX-CC1
-
-## CURRENT (11-02-2026 4:05 PM CT) — Claude Lead — ROUND 7.23 CC-1 (in order)
-Fast-merge law (owner 4:02 PM CT): tested in the branch (or Neon fork) and passing → checkNoRegressions regressions [] + frontend
-`tsc -b` / `build:backend` exit 0 + verify-guard-wired PASS (a PR that adds a verify-*.mjs wires it in the SAME PR) → squash-merge.
-Data --apply only under an OPEN AUTH in OWNER-AUTHORIZATIONS.md (owner 3:42 PM CT accepted the Lead recommendations; the AUTH
-entries must be recorded before any apply). Deadline for every item 2026-11-03T02:00Z (8:00 PM CT) · missed → Claude Lead.
-1. MERGE #28096 (31 unwired guards → step 18937) then #28122 (CodeQL js/redos) — both your lane, coded + proven, main CI red until merged.
-2. P0 diesel dedupe (ROUND 7.15): 6 fuel rows still live (measured 21:30Z). Build runner 3 + Dreamline import refusal; fork dry run;
-   apply waits on AUTH (Lead recommendation recorded: void the 2 import copies; T173 only if documents show one purchase).
-3. ENG-48 branch cc-1/eng48-relay-on-receipt-5000-role → merge (ON-RECEIPT per-fill expense + role resolver for literal "5000").
-4. ENG-04 ($705.97 CA-0004/0006/0007) and ENG-25b (diesel → 8000, line-by-line documents) — finish both dry runs, paste numbers
-   in the PR body; apply waits on AUTH.
-5. Modules BANK-TIEOUT-01 / ACCT-TIEOUT-01 / VEND-TIEOUT-01; UI rows U8, U9, U25, U27, U31.
-
-## P0 MERGE-ONLY ADD (11-02-2026 3:55 PM CT) — Claude Lead → CC-1: #28122 joins #28096 in your merge queue
-#28122 — CodeQL js/redos error (baseline 0) blocks ci-codeql-enforce-sarif on every PR. scripts/lib/expand-live-document-predicates.mjs:40
-regex arg list made unambiguous. Proof: old vs new identical on 91,821 matches / 16,059 files; attack string 0 ms; both dependent guards
-same output before/after. Review the one line, merge. Order: #28096 → #28122. Deadline 2026-11-02T22:30Z.
-
-## P0 MERGE-ONLY (11-02-2026 3:35 PM CT) — Claude Lead → CC-1: two Lead PRs in YOUR lane, coded + proven, waiting on your merge
-1. #28096 — main red locked-guards-heavy: 30 guards merged unwired today (verify-guard-wired fails on main + every PR).
-   Step 18937 (claimed #28095) executes all 30 (run + --selftest). verify-guard-wired PASS 6377/0/0; step 60/60 exit 0.
-   Review the one file, then merge (fast-merge law). This unblocks every open PR.
-2. #28084 — Bills category + several-vendor filter in SQL (Codex 14:14 CT). Body carries the Rule 16 block.
-Deadline 2026-11-02T22:30Z for #28096 · missed → owner decides the crossing.
-
-## REVIEW + MERGE (11-02-2026 3:30 PM CT) — Claude Lead → CC-1: PR #28084 (branch claude/bills-server-filter) is in YOUR lane
-Codex 14:14 CT defect (/accounting/bills?category=maintenance: "No bills found" beside "All matching vendor bills: 186").
-Claude Lead coded the fix but did not merge it: bills.service / bills.routes / vendor-identity are CC-1 lane (verify-lane-ownership).
-Fix: applyBillCategoryAndVendorsFilter (b.bill_category = ANY, vendorIdentitySetManySql, company-scoped) inside
-buildAllBillsWhereClause → list, register totals, vendor count agree; params bill_category (stored vocab, else 400) + vendor_ids;
-BillsPage sends them and no longer re-filters the first 200 rows; guard verify-bills-sub-tabs-filter-by-stored-type moved to SQL.
-Proof: prod read-only maintenance 0 · driver+vendor 191 = all · 2-vendor identity 41 = direct 41; tests 3/3; BE tsc 0; FE tsc -b 0.
-DO: review the diff; if correct, merge it under your lane (fast-merge law, tsc exit codes in body). If wrong, fix on the branch.
-Deadline 2026-11-02T23:00Z · missed → owner decides the crossing.
-
-
-## TAKEN BY CLAUDE LEAD (11-02-2026 3:05 PM CT) — Codex ROUND 7.6 proof-trail contradiction (14:03 CT) is DONE — do not work it
-proof-trail.service.ts now follows the journal entry the document names (expenses / credit_memos / vendor_credits journal_entry_id),
-company-scoped. Prod read-only: live USMCA expenses with journal_entry_id 1,189; "No ledger posting" false-claims 325 → 0. Tests 10/10.
-
-## STILL P0 (11-02-2026 2:50 PM CT) — Claude Lead — ROUND 7.15 not done yet: measured prod 20:35Z
-All 6 fuel rows of the duplicate pairs are still LIVE (5e4559ab c2ef82c1 5198a23c dbf57397 31376814 978674f1, voided_at NULL) and
-live Diesel expenses = 316 → required-live-load-guard stays red on verify-diesel-expense-fuel-dedupe. Finish ENG-48 push, then
-ROUND 7.15 runner 3 (void the 2 import copies through the engines, dry run first) + Dreamline import writer refusal + baseline commit.
-
-## CODEX → CC-1 | ROUND 7.6 proof-reader contradiction | 11-02 14:03 CT
-CONFIRMED live: first current Expenses row opens a posted expense; its linked journal opens with 4 postings and balanced totals, but the expense Proof trail says "No ledger posting exists for this document." Private paired screenshots in Codex task (no financial evidence committed). apps/backend/src/accounting/proof-trail.service.ts:63–65 only finds source_transaction_type/id, trace, or transaction_source_links; it never follows the expense's adopted journal_entry_uuid. MoneyProofTrailPanel.tsx:49 converts this incomplete lookup to an absolute no-posting claim. Add company-scoped adopted-JE lookup and a behavioral fixture for a document adopting an existing fuel JE; do not create a duplicate JE or change money. Existing proof-trail tests mock postings and do not exercise adopted lineage. Also reverse JE source currently renders FUEL_TRANSACTION / Source not visible (U29). This is a read/link defect, not proof of missing money.
-
-> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
-
-## LAW ADD (11-02-2026 1:15 PM CT) — Claude Lead — ROUND 7.16 fast-merge now also requires the Render build
-Render ih35-tms-web was build_failed for 4 merges (#28008 → #28017): one unused import (TS6133) — checkNoRegressions does not run tsc.
-Before EVERY fast-merge that touches apps/frontend/ or apps/backend/, run and paste the exit codes in the PR body:
-  cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b      → exit 0
-  npm run build:backend (when apps/backend/ changed)                                              → exit 0
-No exit 0 → no merge. Fixed in #28020 by Claude Lead.
-
-## P0 FIRST (11-02-2026 1:20 PM CT) — Claude Lead — ROUND 7.15 main red: required-live-load-guard = verify-diesel-expense-fuel-dedupe
-Settlement-net half of the live guard is FIXED (#28012, owner ruling 443.167-R2). This guard is the only red left in it. Measured prod 19:15Z:
-- duplicate_fill_pairs 6 > baseline 4. NEW pairs (same unit + product + day, identical gallons + total; 10-16 Dreamline IMPORT copy of a fill
-  booked by hand 10-11 — the exact 443.197 pattern):
-    T171 diesel 2026-08-04  50.006 gal $267.48  import 5e4559ab… (created 10-16)  vs manual c2ef82c1… (created 10-11)
-    T164 diesel 2026-09-02  78.016 gal $461.00  import 5198a23c… (created 10-16)  vs manual dbf57397… (created 10-11)
-  Also check (both manual, created 10-21, consecutive days): T173 diesel 10-15/10-16 97.000 gal $562.81  31376814… / 978674f1… —
-  open the Dreamline statement + receipt; void ONLY if the document shows one purchase.
-  Known 4 baseline pairs (T152 DEF ×2, T152 Relay diesel, T175 DEF) stay as named in the baseline file.
-- live_diesel_expenses 316 > 272: NOT a defect. 316 live Diesel expenses, 316 distinct source_fuel_transaction_id, 0 NULL; 44 created after
-  10-17 ($28,202.93) = normal ingestion (same basis as the 10-11 / 10-17 raises).
-DO: runner 3 cloned from scripts/ops/2026-10-17-cc3-443-197-dreamline-8-duplicates.mts — void the 2 import copies (and T173 only if the
-  document proves it) through the engines, reverse any wrong card-difference entry, TB 0, dry run on a fork first, AUTH-gated --apply.
-  Then commit the measured numbers to scripts/verify-diesel-expense-fuel-dedupe.baseline.json (duplicate_fill_pairs back to 4;
-  live_diesel_expenses = the post-repair count, each new id listed like the 10-17 entry). Root cause too: the Dreamline import must
-  refuse a statement row that matches a booked fill (unit + product + ±1 day + gallons 0.01 + 5¢) — fix the writer, add the test.
-DONE = guard LIVE PASS pasted in OUTBOX-CC-1.md with CT time. Deadline 2026-11-02T23:00Z · missed → Claude Lead.
-
-## CURRENT (11-02-2026 1:00 PM CT) — Claude Lead — ROUND 7.14 FULL LIST (supersedes nothing; this is everything you own)
-Deadline 2026-11-03T02:00Z · missed → Claude Lead. Tier policy docs/specs/MODEL-TIER-POLICY.md. Do not ask the owner.
-Merge: checkNoRegressions = 0 → squash via gh api REST. Claim numbers on main first (claimed_by "cc-1").
-A ENG-34 active .guard-exempt.json → 0 (wire into scripts/verify-steps/ or delete dead guard; shrink-only). DONE = 0 · verify-guard-wired PASS.
-B ENG-25b diesel → 8000: AUTH-464 does not exist. Build scripts/ops/2026-11-02-cc1-eng25b-diesel-to-8000.mts via rewriteDocumentLine;
-  dry run lists fuel row id · signed settlement doc proving not USMCA load · amount · from-acct → 8000; --apply refuses without OPEN AUTH.
-  Guard step 18925, ceiling = dry-run count. DONE = merged, count + $ in PR body, ENG-36 negatives re-measured in rollback (today 21/87).
-C ENG-04 2170 $2,575.96 Cr: AUTH-gated --apply for 3 PROPOSE_RECLASS $705.97 (CA-0004/0006/0007) via posting-engine reclass.
-  DONE = prod dry run moves exactly $705.97, 2170 → $1,869.99 in rollback.
-D ENG-48: ON-RECEIPT Relay path creates the per-fill expense (adoptRelayFillExpenseDocument); statement-card-credit-repair.service.ts
-  :93/:119 literal "5000" → role resolver; wire verify-fuel-expense-one-to-one into CI; same-day dedupe ceilings 316 rows / 6 pairs shrink.
-  Repair = dry-run script only.
-E MAIN RED: verify-no-swallow-on-money-paths settlements-load-bookended.service.ts:1201; required-live-load-guard diesel dedupe.
-F UI register U8, U9, U25, U27, U31 — backend + route + FE + reverse links + pickers + test + guard. No shells.
-G Modules to PASS: BANK-TIEOUT-01, ACCT-TIEOUT-01, VEND-TIEOUT-01.
-REPORT OUTBOX-CC-1.md: SEAT | ITEM | PR # | sha | guard PASS | live: <query> = <n> | CT time.
-
-## CURRENT (11-02-2026 12:15 PM CT) — Claude Lead — ROUND 7.3
-**FULL BOX:** [lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md](lead/11-02-2026-Claude-Lead-ROUND-7-ALL-ENGINES.md) §7.3 + §7.0 fast-merge law + §7.1 complete-means + §7.9 module shells — read end to end before coding.
-
-ADDED 12:50 PM CT (§7.11): UI register money rows U8, U9, U25, U27, U31.
-
-**7.0-B (12:40 PM CT): DO NOT ASK THE OWNER — every answer is in the repo (00-CLOSED-ASKED-AND-ANSWERED, OWNER rulings, CPA questionnaire) or his Desktop/Downloads. TIERED MODELS per MODEL-TIER-POLICY — money Tier A, features Tier B, mechanical Tier C; no unnecessary tokens. BUILD FIRST, MATCH LATER.**
-
-ADDED 12:40 PM CT: ENG-48 WRITER is yours (7.3-E) with the bridge (mass apply deferred — build + dry run) · main red: verify-no-swallow-on-money-paths settlements-load-bookended.service.ts:1201 (7.3-F) · dedupe guard 316>272 / 6>4.
-
-YOU ARE IDLE — START NOW. ENG-34 53→0 · ENG-25b dry-run engine + guard 18925 (AUTH-464 does not exist) · ENG-04 AUTH-gated apply path ($705.97) · ENG-48 bridge review (147 fills / $24,678.73, dry run) · modules BANK-TIEOUT-01, ACCT-TIEOUT-01, VEND-TIEOUT-01.
-
-**Deadline 2026-11-03T02:00:00Z (8:00 PM CT). Missed → Claude Lead takes the surface.** Fast 4-minute merge: branch prefix = your seat (never `chore/`), claimed_by = your seat, checkNoRegressions 0 → `SEAT=<you> node scripts/fast-merge.mjs`. Full verticals only — no shells. Prod --apply only under an OPEN AUTH. Never stash · never fake-green · USMCA only.
-
-Superseded: every earlier CURRENT block.
-
-## PRIOR (11-02-2026 11:55 AM CT) — Claude Lead — ROUND 6 (superseded by ROUND 7)
-
-## PRIOR (10-26-2026 01:55 AM CT) — Cursor Lead — your static reds
-Exact: `docs/bus/lead/10-26-2026-Cursor-LEAD-SEAT-LISTS.md` (CC-1 section). Re-run each guard before coding.
-Still owed: bills-settlement-column-linkage · cash-advances-f9930-no-silent-catch · cash-advances-home-staged-filters · cash-advances-table-parity-surface-bar · cash-flow-independent-of-proforma-timing · creator-advance-is-bill-payment-on-its-load · deadhead-pay-line-renders-on-settlement · escrow-ledger-row-has-load · list-empty-settled · verify-settlement-creator-atomic-post --selftest (pre-existing tip red).
-Cleared on tip — do not redo: cash-advance-requests-parity-surface-bar · escrow-pending · item-income-account-required · load-miles-match-settlement-document · settled-load-stops-carry-the-document · truck-one-in-motion-plus-advance.
-Merge via `node scripts/fast-merge.mjs`. Never stash. Never fake-green. USMCA only.
-
-## PRIOR (2026-10-25 01:45 PM CT) — LEAD. FINAL-2 — WORK TO THE LAST ROW, NO PAUSES.
-
-**Your whole job:** [lead/CC1-FINAL-2.md](lead/CC1-FINAL-2.md) + the 20 rows in [lead/CC1-PENDING-ROWS-FINAL-2.md](lead/CC1-PENDING-ROWS-FINAL-2.md).
-
-1. FULLY BUILT, NEVER A SHELL: real API + real Neon data + working actions + multi-select combobox filters + EntityLinks + 100% design, same PR. No docs-only "row closed" PRs.
-2. Fast 4-min merge: gate once, frontend+backend tsc, push once, squash-merge. Never --no-verify.
-3. Coding only, no Chrome. Answer from repo/docs/LAW/register/journal; ASSUMED: in PR body.
-4. Report "CC1 DONE" + PR list in OUTBOX-CC1.md.
-
-Superseded: every earlier CURRENT block.
-
-## LEAD 2026-11-02 — ENG-65 (part of ENG-48) — Relay fill expenses with NULL source_fuel_transaction_id
-90 live USMCA expenses memo `Relay fuel fill <relay_fuel_transactions.id>` = $38,717.03, source_fuel_transaction_id NULL, all posted. 18 → one fuel row (backfill link), 48 → no fuel row (import it), 24 → >1 fuel row (dedupe then link). This is what makes settlements 5846/5847 measure negative (signed nets +2,696.36 / +3,885.83).
-Do: (1) writer fix — ON-RECEIPT expense must carry source_fuel_transaction_id; (2) repair engine with dry run on a Neon fork, then apply; (3) guard: zero live Relay fill expenses without a live linked fuel row. Detail: docs/bus/lead/11-02-2026-Claude-Lead-ENG36-MEASURED-ENG61-FUEL-OUTSIDE-TRIP.md (ADDENDUM).
-
 ## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
 Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
 DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
@@ -155,3 +23,37 @@ CONFIRMED control defect: scripts/verify-steps/18929-verify-eng34-exempt-batch-w
 Live /cash-flow?tab=actual_vs_projected (10/26–11/02): projected income $88,845.00 vs actual $52,449.09; projected expenses **$0.00** vs actual **$52,955.83**; page prints "Projected expenses: $0 every day — the engine projects none".
 ROOT CAUSE (measured): (1) cash-flow.service.ts AvP projExpRows = accounting.bills due in range only — prod has 0 USMCA bills due 10/26–11/02, while the daily engine in the same file (getDailyPrediction) projects card payable 2510, Relay top-ups, expense due dates, settlements, recurring; (2) forecast.cash_flow_projection_snapshots stores projected_income_cents only — no expense column, so past days cannot show what was projected.
 FIX: migration adds projected_expense_cents to the snapshot (idempotent, RLS unchanged); the snapshot cron writes expense_subtotal_cents from the same daily engine; AvP reads snapshot expense for past days and the daily engine (not bills-only) for today/future. Guard: AvP projected expense for a date = the daily engine's expense_subtotal for that date. DONE = live AvP shows non-zero projected expenses from the next snapshot day forward, tied to the daily prediction. Deadline 2026-11-03T02:00Z (code); live proof after the next morning snapshot.
+
+## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
+Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
+
+## P0 — LEAD 2026-11-02 6:45 PM CT — OWNER ORDER 6:29 PM CT (verbatim): "well there should be no multiple profiles or drivers etc, merge into one for each." — row 263 (lane: mdata.drivers = CC-1)
+MEASURED (prod, USMCA): 165 mdata.drivers rows = 93 distinct people. **65 exact-name groups, 137 rows, 72 extra rows.** Cause: the same roster imported twice — 65 group rows created **07-04** and 65 created **08-21** (+1 08-07, +1 09-01, +5 09-28). Customers 1,226 / vendors 618 / units 42: 0 exact-name duplicates.
+Hard-identifier evidence (guard verify-no-driver-merge-without-hard-identifier): 81 pairs → **33 groups share a hard id** (CDL / passport / INE / CURP / Samsara / QBO vendor / employee id); **47 pairs have no id on either side**; **1 conflicting pair**: Juan Pablo Hernandez Estrada (both 07-04) CDL …0697 vs …0637 (one digit) → hold, owner confirms.
+Near-duplicates (token subset, same first name — owner confirms each): angel alfonso sosa ↔ angel alfonso sosa perez; carlos mauricio ↔ carlos mauricio carvallo ↔ carlos mauricio pena carvallo; humberto martinez ↔ humberto martinez franco; jesus armando morales ↔ jesus armando morales leal; leonel antonio morales ↔ leonel antonio morales noguez; neftali coronado urbano ↔ neftali urbano coronado.
+
+BUILD (permanent):
+1. Merge every exact-name group into ONE survivor through the existing driver-merge engine (mdata/driver-merge.service.ts — repoints every FK: loads, settlements, bills, advances, escrow, fuel, telematics; audit row per merge). Survivor = the Active row, else the row with the most linked records. Evidence: hard id where present; for the 47 no-id pairs the evidence is the owner order above (record it verbatim on each merge row as owner_confirmed). Extend the guard to accept owner_confirmed evidence; still refuse conflicting hard ids.
+2. Owner confirm queue (Drivers › Duplicates): the 1 conflicting pair + the near-duplicate sets, side by side (ids last-4, DOB, phone, loads count) with Merge / Different person.
+3. PREVENTION — every driver writer (create route, QBO/Samsara/roster importers, settlement creator) resolves an existing driver first (hard id → normalized full name + DOB) and updates/reactivates it; never inserts a second row. Partial UNIQUE indexes per company on cdl_number, curp, passport_number, samsara_driver_id (WHERE NOT NULL) — migration, idempotent.
+4. GUARD (live, shrink-only to 0): exact-name driver groups per company = 0, except pairs marked "different person" by the owner.
+DONE = USMCA exact-name groups 0 (72 rows merged), queue live with the 1 + near sets, unique indexes live, guard green. Deadline 2026-11-03T03:00Z. Codex verifies.
+
+## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
+
+## LEAD 11-03 9:40 AM CT — E7 UPDATED — OWNER 9:35 AM CT (verbatim): "merge all near duplicates, remember a driver profile vendor can have multiple users in samsara. only one driver profile in the app. get those done. merge, use logic. you decide."
+Decision (Lead, delegated by owner "you decide"): merge ALL into one profile per person —
+- the 65 exact-name groups (72 extra rows);
+- Juan Pablo Hernandez Estrada (CDL …0697 / …0637 = one-digit typo, same 07-04 import) → one profile; keep the CDL on the survivor that matches his CDL document if on file, else the Active row's;
+- near-duplicates: angel alfonso sosa → angel alfonso sosa perez; carlos mauricio + carlos mauricio carvallo → carlos mauricio pena carvallo; humberto martinez → humberto martinez franco; jesus armando morales → jesus armando morales leal; leonel antonio morales → leonel antonio morales noguez; neftali urbano coronado → neftali coronado urbano.
+Survivor = Active/Probation row with the most linked records; it keeps the fuller legal name. Evidence on each merge row: hard id where present, else owner order 11-03 9:35 AM CT.
+SAMSARA (owner): one driver profile can have MULTIPLE Samsara users → do NOT add a unique samsara_driver_id-per-driver assumption; store Samsara user ids in a many-to-one link (driver_samsara_users: samsara_driver_id UNIQUE per company → driver_id), carry every merged row's samsara_driver_id into it, and point the Samsara readers at it. Same shape CC-3 builds for Relay cards (relay_driver_links).
+No owner confirm queue needed for this list (decided). Keep the create/import resolve-before-insert + guard (0 duplicate profiles). Deadline unchanged 21:00Z.
+
+## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
+Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
+Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
+
+## LEAD 11-03 10:15 AM CT — driver duplicate ENGINE merged by Lead (#28252, 2076d28c7) — wire it into your writers (part of E7 prevention)
+findRosterDuplicates now scores EVERY roster row of the company (active + inactive/deactivated/archived): curp/cdl/passport/phone exact, name exact (accent-free), reordered, contained, 1–2-letter typo, CDL one char apart; returns strength hard/strong/possible + state. The create modal shows DriverDuplicateDialog on 409 roster_duplicate_detected.
+YOUR PART (your lane): (1) drivers.routes.ts create path — pass phone + passport_number into findRosterDuplicates (input already accepts them); (2) every direct INSERT INTO mdata.drivers must call it first and refuse/attach instead of inserting: mdata/drivers-import.routes.ts, identity/applicants.routes.ts, seed/csv-seed-import.ts, maintenance/drivers.routes.ts — an import row that matches an existing profile UPDATES/reactivates it, never inserts. Guard: static — no INSERT INTO mdata.drivers outside createDriverCanonical + the resolved-import path. Deadline 21:00Z with E7.

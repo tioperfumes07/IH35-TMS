@@ -26,10 +26,13 @@ it("cash advances and liabilities aggregate the entire selected driver cohort be
       const response = await app.inject(`/api/v1/${path}?operating_company_id=${company}&driver_id=${ids.join(",")}`);
       expect(response.statusCode).toBe(200);
       const reads = db.query.mock.calls.slice(before).filter(([sql]) => !sql.includes("set_config"));
-      expect(reads).toHaveLength(1);
-      expect(reads[0][0]).toContain("driver_id = ANY($2::uuid[])");
-      expect(reads[0][1]).toEqual([company, ids]);
-      if (path.includes("kpis")) expect(reads[0][0]).not.toContain("LIMIT");
+      expect(reads.length).toBeGreaterThanOrEqual(1);
+      // cash-advances/dashboard/kpis makes 2 queries (recovered_this_period + cohort); find the cohort one.
+      const cohortRead = reads.find(([sql]) => String(sql).includes("driver_id = ANY($2::uuid[])"))!;
+      expect(cohortRead).toBeDefined();
+      expect(cohortRead[0]).toContain("driver_id = ANY($2::uuid[])");
+      expect(cohortRead[1]).toEqual([company, ids]);
+      if (path.includes("kpis")) expect(cohortRead[0]).not.toContain("LIMIT");
     }
     const invalid = await app.inject(`/api/v1/cash-advances?operating_company_id=${company}&driver_id=${ids[0]},bad`);
     expect(invalid.statusCode).toBe(400);

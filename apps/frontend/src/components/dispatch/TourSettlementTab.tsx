@@ -5,7 +5,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
-import { formatQuantityTable } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../lib/money";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 
 // LDT-6 · Settlement (render § Settlement): while the tour is open — one sentence + the shape it will take;
 // when closed — Driver settlement (loaded × rate · empty × rate · gross · escrow · recoveries · net) and
@@ -15,8 +16,8 @@ const DASH = "—";
 // REG-033(b) (owner 2026-09-09): the settlement must be scoped to THIS tour's number AND dates.
 const fmtDate = (d: string | null | undefined): string | null => {
   if (!d) return null;
-  const [y, m, day] = d.slice(0, 10).split("-");
-  return y && m && day ? `${m}/${day}/${y}` : d.slice(0, 10);
+  const formatted = formatDateUS(d);
+  return formatted || null;
 };
 const periodLabel = (t: TourReadout["tour"]): string | null => {
   if (!t) return null;
@@ -25,8 +26,8 @@ const periodLabel = (t: TourReadout["tour"]): string | null => {
 };
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
 const miles = (m: number | null | undefined) => (m == null ? DASH : formatQuantityTable(m));
-const rate = (c: number | null | undefined) => (c == null ? DASH : `$${(c / 100).toFixed(4)}`);
-const perMile = (c: number | null | undefined) => (c == null ? "—/mi" : `$${(c / 100).toFixed(2)}/mi`);
+const rate = (c: number | null | undefined) => (c == null ? DASH : formatUsdRateTable(c / 100));
+const perMile = (c: number | null | undefined) => (c == null ? "—/mi" : `${formatUsd(c / 100)}/mi`);
 
 /** Keyed by a load (drawer) OR by a settlement (Load costs board → Settlement tab, LDT-TABS). Same readout either way. */
 export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
@@ -78,7 +79,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       c.kind === "expense" &&
       (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft")
   );
-  const pm = (c: number) => (totalMiles > 0 ? `${(c / 100 / totalMiles).toFixed(3)} p/m` : DASH);
+  const pm = (c: number) => (totalMiles > 0 ? `${formatUsdRateTable(c / 100 / totalMiles, 3)} p/m` : DASH);
   const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
   const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
   // NOTE: `name` (not `label`) deliberately -- this is a P&L waterfall line-item list, not a
@@ -96,7 +97,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
-      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
+      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? formatDateTimeUS(t.trip_closed_at) : ""}; frozen.`}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-settlement-state">{t.is_open ? "open · pre-settlement" : `${t.status}${t.paid_at ? " · paid" : ""}`}</span>
     </div>
 
@@ -176,12 +177,12 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           { key: "lane", label: "Lane", sortable: true, sortValue: l => l.lane, render: l => <span className="ldt-sub">{l.lane || DASH}</span> },
           { key: "desc", label: "Description", sortable: false, render: () => "Line haul" },
           { key: "miles", label: "Miles", sortable: true, sortValue: l => l.miles_practical ?? -Infinity, render: l => miles(l.miles_practical) },
-          { key: "rate", label: "Rate", sortable: true, sortValue: l => legRate(l) ?? -Infinity, render: l => { const rt = legRate(l); return rt == null ? DASH : `$${rt.toFixed(3)}`; } },
+          { key: "rate", label: "Rate", sortable: true, sortValue: l => legRate(l) ?? -Infinity, render: l => { const rt = legRate(l); return rt == null ? DASH : formatUsdRateTable(rt, 3); } },
           { key: "amount", label: "Amount", sortable: true, sortValue: l => l.revenue_cents, render: l => money(l.revenue_cents, currencyCode) },
         ]} footerCells={{
           load: () => <span className="ldt-sub" data-testid="customer-charges-total-label">Total line haul</span>,
           miles: () => <span data-testid="customer-charges-total-miles">{miles(chargeMiles)}</span>,
-          rate: () => <span>{chargeMiles > 0 ? `$${(invoicedCents / 100 / chargeMiles).toFixed(3)}` : DASH}</span>,
+          rate: () => <span>{chargeMiles > 0 ? formatUsdRateTable(invoicedCents / 100 / chargeMiles, 3) : DASH}</span>,
           amount: () => <span className="ldt-m" data-testid="customer-charges-total-amount">{money(invoicedCents, currencyCode)}</span>,
         }} />
       </div>

@@ -19,9 +19,12 @@ const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 function auditBoard(src) {
   const f = [];
   // Defect 4: rate is dollars-per-mile, 4 decimals; the old ¢/mi format is gone from the fmtRate body.
+  // House path: formatUsdRateTable(…/100) (default 4 fraction digits); legacy toFixed(4) still accepted.
   const rateLine = src.split("\n").find((l) => l.includes("const fmtRate =")) ?? "";
   if (/¢\/mi/.test(rateLine)) f.push(`${BOARD}: fmtRate still renders "¢/mi" — must be dollars-per-mile ($0.0000)`);
-  if (!/const fmtRate =[^\n]*toFixed\(4\)/.test(src)) f.push(`${BOARD}: fmtRate must format to four decimals (toFixed(4))`);
+  if (!/formatUsdRateTable\(Number\(c\) \/ 100\)/.test(src) && !/const fmtRate =[^\n]*toFixed\(4\)/.test(src)) {
+    f.push(`${BOARD}: fmtRate must format to four decimals (formatUsdRateTable or toFixed(4))`);
+  }
   // Defect 5: "Booked" branch for a non-departed load.
   if (!/label:\s*"Booked"/.test(src)) f.push(`${BOARD}: serviceStatus must have a "Booked" branch for loads that have not departed pickup`);
   // L.1b / DESIGN-CONTRACT §20 "a dash is not a zero": the trip-expense cost columns render a dash
@@ -96,8 +99,14 @@ function main() {
   }
 
   if (selftest) {
-    const m1 = boardSrc.replace(/const fmtRate =([^\n]*)toFixed\(4\)/, "const fmtRate =$1toFixed(2)");
-    if (auditBoard(m1).length === 0) { console.error("SELFTEST FAIL: reverting rate format did not trip"); process.exit(1); }
+    // House path uses formatUsdRateTable; legacy toFixed(4) plant kept for either shape.
+    const m1 = /formatUsdRateTable\(Number\(c\) \/ 100\)/.test(boardSrc)
+      ? boardSrc.replace(/formatUsdRateTable\(Number\(c\) \/ 100\)/g, "String(Number(c) / 100)")
+      : boardSrc.replace(/const fmtRate =([^\n]*)toFixed\(4\)/, "const fmtRate =$1toFixed(2)");
+    if (m1 === boardSrc || auditBoard(m1).length === 0) {
+      console.error("SELFTEST FAIL: reverting rate format did not trip");
+      process.exit(1);
+    }
     const m2 = boardSrc.replace(/label:\s*"Booked"/, 'label: "In transit"');
     if (auditBoard(m2).length === 0) { console.error("SELFTEST FAIL: removing Booked branch did not trip"); process.exit(1); }
     const m4 = boardSrc.replace(/render: r => fmtDash\(Number\(r\.late_fee_cents\)\)/, "render: r => fmt(Number(r.late_fee_cents))");

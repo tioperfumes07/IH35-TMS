@@ -29,6 +29,7 @@ import { SelectCombobox } from "../Combobox";
 import { StatusBadge } from "../StatusBadge";
 import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
+import { DriverDuplicateDialog, type DriverDuplicateCandidate } from "./DriverDuplicateDialog";
 import { FieldError, fieldErrorClassname } from "../forms/FieldError";
 import { FormErrorBanner } from "../forms/FormErrorBanner";
 import { SaveDropdown } from "../forms/SaveDropdown";
@@ -269,6 +270,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(true);
   const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
+  // LEAD 11-03 — roster duplicate (exact or near) found by the server: ask, never create a second profile silently.
+  const [rosterDuplicates, setRosterDuplicates] = useState<DriverDuplicateCandidate[] | null>(null);
+  const overrideDuplicateRef = useRef(false);
   const [returningCheckLoading, setReturningCheckLoading] = useState(false);
   const [returningCheckError, setReturningCheckError] = useState<unknown>(null);
   const [returningCheckRetry, setReturningCheckRetry] = useState(0);
@@ -538,6 +542,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       clearinghouse: { status: "clear" | "record_found" | "pending" | "error"; queriedAt: string; consent: boolean } | null;
     }) => createDriver(input.payload),
     onSuccess: async (created, input) => {
+      overrideDuplicateRef.current = false;
       const displayName = [input.payload.first_name, input.payload.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
 
@@ -650,6 +655,12 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     interceptApiError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
         const detectionPayload = error.data as ReturningDetectionResult & { error?: string };
+        const rosterPayload = error.data as { error?: string; duplicates?: DriverDuplicateCandidate[] };
+        if (rosterPayload?.error === "roster_duplicate_detected" && Array.isArray(rosterPayload.duplicates)) {
+          overrideDuplicateRef.current = false;
+          setRosterDuplicates(rosterPayload.duplicates);
+          return true;
+        }
         if (detectionPayload?.error === "returning_driver_detected") {
           setReturningDetection({
             returning_driver: true,
@@ -723,6 +734,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         referral_source: parsed.referral_source || undefined,
         status: parsed.status,
         override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
+        override_duplicate_warning: overrideDuplicateRef.current ? true : undefined,
         is_rehire: shouldLinkRehire ? true : undefined,
         prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
       };
@@ -1812,6 +1824,25 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     </div>
   );
 
+  const driverDuplicateDialog = (
+    <DriverDuplicateDialog
+      open={Boolean(rosterDuplicates && rosterDuplicates.length > 0)}
+      attemptedName={[form.first_name, form.last_name].filter(Boolean).join(" ").trim()}
+      candidates={rosterDuplicates ?? []}
+      onCancel={() => setRosterDuplicates(null)}
+      onOpenExisting={(driverId) => {
+        setRosterDuplicates(null);
+        onClose();
+        navigate(`/drivers/${driverId}`);
+      }}
+      onCreateAnyway={() => {
+        setRosterDuplicates(null);
+        overrideDuplicateRef.current = true;
+        void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
+      }}
+    />
+  );
+
   // CHROME-11: nested call sites (shell="drawer") stack THIS SAME creator as a right ParityDrawer —
   // never a centered Modal on top of an already-open money drawer (e.g. Bill create).
   if (shell === "drawer") {
@@ -1845,6 +1876,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         >
           {licenseClassCreateContent}
         </ParityDrawer>
+        {driverDuplicateDialog}
       </>
     );
   }
@@ -1879,6 +1911,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       >
         {licenseClassCreateContent}
       </Modal>
+      {driverDuplicateDialog}
     </>
   );
 }

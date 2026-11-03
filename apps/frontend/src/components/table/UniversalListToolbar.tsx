@@ -6,6 +6,7 @@ import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { TableSearch } from "./TableSearch";
 import { FILTER_CONTROL_SIZE_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 import { Button } from "../Button";
+import { SelectCombobox } from "../Combobox";
 
 /** QBO-style date range presets — today / this week / this month / this quarter / this year / custom. */
 export function applyUniversalDatePreset(preset: string): { from: string; to: string } | null {
@@ -208,9 +209,9 @@ export function UniversalListToolbar({
           <div className="absolute left-0 z-30 mt-1 w-[min(520px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
             <label className="block text-[11px] font-semibold text-gray-600">
               Date or amount field
-              <select
+              <SelectCombobox
                 aria-label="Range field"
-                className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
+                className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full bg-white`}
                 value={draft?.key ?? ""}
                 onChange={(event) => {
                   const next = rangeColumns.find((column) => column.key === event.target.value);
@@ -219,16 +220,16 @@ export function UniversalListToolbar({
               >
                 <option value="">Choose field…</option>
                 {rangeColumns.map((column) => <option key={column.key} value={column.key}>{column.label}</option>)}
-              </select>
+              </SelectCombobox>
             </label>
             {selected ? (
               <div className="space-y-2">
                 {selected.kind === "date" ? (
                   <label className="block text-[11px] font-semibold text-gray-600">
                     Date range (QBO)
-                    <select
+                    <SelectCombobox
                       aria-label="QBO date range preset"
-                      className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
+                      className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full bg-white`}
                       defaultValue="custom"
                       onChange={(event) => {
                         const preset = event.target.value;
@@ -241,7 +242,7 @@ export function UniversalListToolbar({
                       {QBO_DATE_PRESETS.map((p) => (
                         <option key={p.value} value={p.value}>{p.label}</option>
                       ))}
-                    </select>
+                    </SelectCombobox>
                   </label>
                 ) : null}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
