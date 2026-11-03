@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch76: Vendor page-boundary regression and historical checks
+
+Batch75 merged #28453 3c6d420b222dbd49752984361a0364256a777685;3affected guards/0regressions,normal hooks. PR live-proof wording corrected to exact endpoint/count plus explicit empty-population limitation.
+
+- #28043 full5-file diff:21affectedPASS. #28044 full4-doc diff:5PASS. #28045 full6-file diff:107PASS,6FAIL-test,2live-excluded. Failures:coming-state,billing-invoice,notes mutation,master-detail tasks-target mutation,load-column placeholder (previously observed families,not newly attributed);hold-merge classifier timed out,not a pass. #28046 full5-file diff:16PASS;date/status guard selftestPASS.
+- CONFIRMED current Vendor transaction multi-status pagination defect: actual queryFn/status expression/txRows useMemo in isolated fixture110bills (100paid followed by10open),open+partial ->0rows,expected10. Caller omits status for unions;route default100;local filtering happens afterward. Bills backend already accepts comma unions. Customer invoice sibling exhausts pages; no unproved sibling accusation. Filed Cursor with exact paths/probe; no production missing-row count asserted.
+- Backend shallowhealth now dfb14da20ad2d879dc7a6e7518a1628bb05938bb,ok=true: E11 code deployed. First scheduled miles outcome still UNVERIFIED; no cron or backfill triggered by this audit. Independent E11 tests7/7,plants7/7 remain local evidence only.
+- Full audit remains OPEN. No production writes.
+
 ## 2026-11-03 — ROUND7.27 batch75: historical execution and Reclassify date-only refusal
 
 Batch74 merged #28451 f241e7225862af5e4eaaef9e18c25289d78b70ec; normal hooks,13 affected guards,0 regressions.
