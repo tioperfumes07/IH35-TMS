@@ -110,7 +110,7 @@ if (process.argv.includes("--selftest")) {
   mk(
     BOARD,
     `import { BoardSection } from "../../components/v3/BoardSection";\n` +
-      `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\nsettlementsEscrowRegisterHref\n` +
+      `data-settlements-escrow-rebuild="1"\nlistEscrowAccounts\ngetEscrowDriverBalances\nresolveEscrowHolderName\nsettlementsEscrowRegisterHref\n` +
       `toolbar\nfooterCells\n<BoardSection\nOpen register →\n` +
       `testId="escrow-kpi-scheduled-releases"\nno schedule feed\nvalue="—"\n` +
       `testId="settlements-escrow-measured-note"\n`,
