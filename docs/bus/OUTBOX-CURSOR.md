@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:30 PM CT) — ENG-34 wire live-fails-225-229-233-241
+- **PRIOR:** #28563 D066 z-index plant.
+- **THIS:** verify-steps 19867 wires verify-live-fails-225-229-233-241 (ENG-34 orphan residual = match-vendor only).
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:25 PM CT) — D066 z-index plant on unmatched-7d guard
 - **PRIOR:** #28561 Settlements week company-calendar ISO + deductions caption.
 - **THIS:** verify-unmatched-7d-is-an-alert selftest adds D066 z-[50]→z-[220] plant (Codex inbox gap). Scan already required z-[50].
