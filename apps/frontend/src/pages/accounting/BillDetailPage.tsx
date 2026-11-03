@@ -234,12 +234,20 @@ export function BillDetailPage() {
       key: "id",
       label: "Payment",
       sortable: true,
-      sortValue: (pmt) => pmt.reference_number ?? pmt.check_number ?? "",
+      sortValue: (pmt) => pmt.reference_number ?? pmt.check_number ?? pmt.payment_date ?? "",
       render: (pmt) => (
         <EntityLink
           kind="bill_payment"
           id={pmt.id}
-          label={entityLabel(pmt.reference_number ?? pmt.check_number, pmt.id, "Payment")}
+          // D067 — payments listed on this bill are visible rows; never "Payment — not visible".
+          // Prefer ref/check; else date · amount so two linked payments stay distinct.
+          label={visibleDocumentLabel(
+            pmt.reference_number ??
+              pmt.check_number ??
+              `${formatDateUS(pmt.payment_date)} · ${money(pmt.amount_cents)}`,
+            pmt.id,
+            "Payment",
+          )}
         />
       ),
     },

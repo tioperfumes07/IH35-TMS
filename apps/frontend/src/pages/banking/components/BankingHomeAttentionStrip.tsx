@@ -136,7 +136,8 @@ export function BankingHomeAttentionStrip({
 
   return (
     <aside
-      className="pointer-events-none fixed bottom-3 right-3 z-[220] flex w-[min(380px,calc(100vw-1.5rem))] flex-col gap-1.5"
+      // D066 — dock below ParityDrawer (z-[60]) / Record Transfer footer so alerts never cover drawer actions.
+      className="pointer-events-none fixed bottom-3 right-3 z-[50] flex w-[min(380px,calc(100vw-1.5rem))] flex-col gap-1.5"
       data-testid="banking-home-attention-strip"
       data-c51-home-attention="1"
       data-c65-alert-dock="1"
