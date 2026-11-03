@@ -12,7 +12,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {

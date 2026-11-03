@@ -12,6 +12,7 @@ import {
   editDistance,
   findRosterDuplicates,
   normalizePersonName,
+  phoneKey,
   rankRosterDuplicates,
   scoreRosterCandidate,
   type RosterRow,
@@ -129,6 +130,43 @@ describe("scoreRosterCandidate — the measured shapes", () => {
     expect(
       scoreRosterCandidate({ operating_company_id: COMPANY, first_name: "Hugo", last_name: "" }, row({ driver_id: "x", first_name: "Hugo", last_name: "Gaytan" }))
     ).toEqual([]);
+  });
+});
+
+describe("placeholders are never identity (LEAD 11-03, measured on the USMCA roster)", () => {
+  it("phoneKey rejects the placeholders and keeps real numbers", () => {
+    for (const fake of ["000-000-0000", "0000000", "+10000013586", "1111111111", "+1 555"]) expect(phoneKey(fake)).toBeNull();
+    expect(phoneKey("+1 (956) 555-0101")).toBe("9565550101");
+    expect(phoneKey("526461920814")).toBe("6461920814");
+  });
+
+  it("two DIFFERENT people who both carry 000-000-0000 do not match", () => {
+    const r = scoreRosterCandidate(
+      { operating_company_id: COMPANY, first_name: "Rolando", last_name: "Fraga", phone: "000-000-0000" },
+      row({ driver_id: "x", first_name: "Hector", last_name: "Quintero Tarin", phone: "000-000-0000" })
+    );
+    expect(r).toEqual([]);
+  });
+
+  it("a placeholder CDL with no digit ('safety') is not a CDL match", () => {
+    const r = scoreRosterCandidate(
+      { operating_company_id: COMPANY, first_name: "Ana", last_name: "Lopez", cdl_number: "safety" },
+      row({ driver_id: "x", first_name: "Safety", last_name: "—", cdl_number: "safety" })
+    );
+    expect(r).toEqual([]);
+  });
+
+  it("a phone shared by 3+ roster rows (office line) is dropped as a reason; a 2-row phone still matches", () => {
+    const office = "9562820452";
+    const roster = [
+      row({ driver_id: "a", first_name: "Irving", last_name: "Flores Pulido", phone: office }),
+      row({ driver_id: "b", first_name: "Ruben Pedro", last_name: "Perez Garcia", phone: office }),
+      row({ driver_id: "c", first_name: "Manuel Mario", last_name: "Pavon Calafell", phone: office }),
+      row({ driver_id: "d", first_name: "Juan", last_name: "Hernandez", phone: "9565319846" }),
+    ];
+    expect(rankRosterDuplicates({ operating_company_id: COMPANY, first_name: "Nuevo", last_name: "Chofer", phone: office }, roster)).toEqual([]);
+    const own = rankRosterDuplicates({ operating_company_id: COMPANY, first_name: "J", last_name: "H", phone: "956-531-9846" }, roster);
+    expect(own.map((m) => [m.driver_id, m.matched_on])).toEqual([["d", "phone_exact"]]);
   });
 });
 
