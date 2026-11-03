@@ -963,6 +963,10 @@ const avpDaysQty = read("apps/frontend/src/pages/cash-flow/tabs/ActualVsProjecte
 if (!/formatQuantityTable\(dayCountInclusive\(applied\.from, applied\.to\), 0\)/.test(avpDaysQty)) {
   fail("ActualVsProjected Days in range must use formatQuantityTable(, 0)");
 }
+const fuelIntegrityQty = read("apps/frontend/src/pages/fuel/integrity/FuelIntegrityPage.tsx");
+if (!/formatQuantityTable\(Number\(value\), 0\)/.test(fuelIntegrityQty)) {
+  fail("FuelIntegrityPage summary KPIs must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

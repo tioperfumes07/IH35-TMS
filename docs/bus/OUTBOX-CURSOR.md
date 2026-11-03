@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:25 PM CT) — ROUND 7.30 Fuel Integrity qty + #76 tip
+- **PRIOR:** #28509 tip D061 #26 CF boards.
+- **THIS:** Fuel Integrity summary KPIs → formatQuantityTable; PENDING #76 Escrow Opening balance (historical) → MERGED-UNVERIFIED. Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** OPEN/PARTIAL + #25/#77; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:15 PM CT) — ROUND 7.30 tip D061 + #26 CF boards
 - **PRIOR:** #28508 tip #18 D021 D062.
 - **THIS:** PENDING D061 + #26 Settlement Close Dispatch CTA + CF Home/Projected/AvP/RL/Manual (#45-49) → MERGED-UNVERIFIED (guards/boards present; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
