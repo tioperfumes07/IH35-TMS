@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~12:05 AM CT) — Cursor house money wave 4 (Driver Hub CSV)
+- **PRIOR:** #28228–#28230 house money waves 1–3.
+- **THIS:** DriverHubReportingPage CSV approved volume → formatUsdCents. Guard extended.
+- **ENG-21 BLOCKED:** rate con not on file for 13699 — no Edit Load.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~11:50 PM CT) — Cursor house money wave 3 (parts/inventory)
 - **PRIOR:** #28228–#28229 house money waves 1–2.
 - **THIS:** VendorPartsHistory · UnitPartsHistory · InventoryPartsStock unit_cost → formatUsd. Guard extended.
