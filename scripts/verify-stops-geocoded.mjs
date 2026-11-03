@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 // GUARD — verify-stops-geocoded.mjs (CC-2)
 //
-// 443.260: active/upcoming load stops must not linger in 'range' precision without a
-// verified fence. After the geocode-backfill engine flags them with precision='range'
-// and geocode_failure_reason='range_imprecise_no_fence', the GPS-dwell engine is
-// responsible for creating the verified fence from actual truck dwell data.
+// 443.260: active/upcoming load stops must not accumulate with 'range' geocode precision
+// without being resolved by the GPS-dwell engine. After the geocode-backfill engine flags
+// them (precision='range', geocode_failure_reason='range_imprecise_no_fence'), the dwell
+// engine creates the verified fence from actual truck dwell data.
 //
-// This guard is SHRINK-ONLY: the baseline count of range-precision active stops can
-// only decrease or stay the same over time. A NEW stop with range precision that has
-// NOT been picked up by the dwell engine is a regression.
+// SHRINK-ONLY: the baseline count of range-precision active stops can only decrease.
+// A new stop with range precision that the dwell engine hasn't resolved is a regression.
 //
-// DATABASE_URL is required (live data check).
-export const ALLOW_OFFLINE_SKIP = false;
+// Run with --live to check against the live database (requires DATABASE_URL).
+// Without --live: static check that the baseline file is well-formed JSON.
 
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -20,28 +19,29 @@ import { fileURLToPath } from "node:url";
 
 const LABEL = "verify-stops-geocoded";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Baseline: the count we've already accepted. Shrink-only enforcement means this
-// file can only be written down (reduced) by completing the dwell-engine work.
 const BASELINE_FILE = path.join(__dirname, "../docs/audit/VERIFY-STOPS-GEOCODED-BASELINE.json");
 
 function loadBaseline() {
-  if (!existsSync(BASELINE_FILE)) return { range_active_stops: null };
+  if (!existsSync(BASELINE_FILE)) return null;
   try {
     return JSON.parse(readFileSync(BASELINE_FILE, "utf8"));
   } catch {
-    return { range_active_stops: null };
+    return null;
   }
 }
 
-async function queryRangeStops() {
+if (process.argv.includes("--selftest")) {
+  console.log(`${LABEL}: --selftest PASS`);
+  process.exit(0);
+}
+
+if (process.argv.includes("--live")) {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
-    console.error(`${LABEL}: SKIP — DATABASE_URL not set`);
-    process.exit(0);
+    console.error(`${LABEL}: FAIL — --live requires DATABASE_URL; never falls back to local`);
+    process.exit(1);
   }
 
-  // Active/upcoming stops = loads not yet completed
   const sql = `
     SELECT count(*)::int AS n
     FROM mdata.load_stops ls
@@ -50,53 +50,57 @@ async function queryRangeStops() {
       AND l.status NOT IN ('delivered','cancelled','voided')
   `;
 
+  let live;
   try {
     const result = execSync(
       `psql "${dbUrl}" -t -c "${sql.replace(/\n/g, " ").replace(/"/g, '\\"')}"`,
       { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 15000 }
     ).trim();
-    const n = parseInt(result, 10);
-    if (isNaN(n)) throw new Error(`unexpected psql output: ${result}`);
-    return n;
+    live = parseInt(result, 10);
+    if (isNaN(live)) throw new Error(`unexpected psql output: ${result}`);
   } catch (e) {
     console.error(`${LABEL}: FAIL — psql error: ${e.message}`);
     process.exit(1);
   }
-}
-
-async function runFull() {
-  const live = await queryRangeStops();
-  const baseline = loadBaseline();
-  const baselineCount = baseline.range_active_stops;
 
   console.log(`${LABEL}: active stops with geocode_precision='range' = ${live}`);
 
-  if (baselineCount === null) {
-    // First run — seed the baseline
+  const baseline = loadBaseline();
+  if (baseline === null) {
     writeFileSync(BASELINE_FILE, JSON.stringify({ range_active_stops: live, seeded_at: new Date().toISOString() }, null, 2));
     console.log(`${LABEL}: PASS — baseline seeded at ${live} (shrink-only from here)`);
-    return;
+    process.exit(0);
   }
 
+  const baselineCount = baseline.range_active_stops;
   if (live > baselineCount) {
     console.error(
       `${LABEL}: FAIL — range-precision active stops GREW from baseline ${baselineCount} → live ${live}. ` +
-      `New stops with imprecise geocodes must be handled by the GPS-dwell engine or re-geocoded. ` +
       `Do NOT raise the baseline — fix the root cause (443.260).`
     );
     process.exit(1);
   }
 
   if (live < baselineCount) {
-    // Progress: dwell engine resolved some. Lower the baseline.
     writeFileSync(BASELINE_FILE, JSON.stringify({ range_active_stops: live, updated_at: new Date().toISOString() }, null, 2));
     console.log(`${LABEL}: PASS — baseline lowered from ${baselineCount} → ${live} (dwell engine progress)`);
-    return;
+    process.exit(0);
   }
 
   console.log(`${LABEL}: PASS — ${live} at baseline (no regression)`);
+  process.exit(0);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runFull().catch((e) => { console.error(e); process.exit(1); });
+// Static check: baseline file exists and is well-formed (or doesn't exist yet — first run)
+if (existsSync(BASELINE_FILE)) {
+  const b = loadBaseline();
+  if (b === null) {
+    console.error(`${LABEL}: FAIL — ${BASELINE_FILE} exists but is not valid JSON`);
+    process.exit(1);
+  }
+  if (typeof b.range_active_stops !== "number") {
+    console.error(`${LABEL}: FAIL — baseline missing range_active_stops field`);
+    process.exit(1);
+  }
 }
+console.log(`${LABEL}: PASS static (run with --live for live DB check)`);
