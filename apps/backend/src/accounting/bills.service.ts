@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { apBillPaymentOnlySql } from "./ap-bill-payment-scope.sql.js";
 import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { AP_BILL_OUTSTANDING_STATUSES, sqlList } from "../lib/document-status-vocabulary.js";
 import { agingWindowPredicate } from "./aging/buckets.js";
@@ -2157,9 +2158,13 @@ export async function listBillPayments(
     // close. They are NOT cash payments and must not appear on the Bill Payments list.
     // The discriminator is settlement_deduction_noncash = true (set by the settlement close engine).
     // They remain visible in listBillPaymentsForBill (the per-bill drill-through) where they belong.
+    // Row 23 (ACCT-F11057): the shared A/P bill-payment predicate (ap-bill-payment-scope.sql.ts) — settlement
+    // deductions (escrow / advance / other recovery) are not bill payments on ANY list, not only this one.
     const where: string[] = [
       "bp.operating_company_id = $1::uuid",
+      // ROW-216 literal kept for verify-bill-payments-list-excludes-deductions; the predicate below carries it too.
       "bp.settlement_deduction_noncash IS NOT TRUE",
+      apBillPaymentOnlySql("bp"),
     ];
     if (!options.includeVoided) {
       where.push("bp.revoked_at IS NULL");
