@@ -766,7 +766,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           })()}
           <V3KpiTile
             label="Days in range"
-            value={String(dayCountInclusive(applied.from, applied.to))}
+            value={formatQuantityTable(dayCountInclusive(applied.from, applied.to), 0)}
             sub={shortRangeLabel(applied.from, applied.to)}
             tone="muted"
             testId="cash-flow-avp-v3-kpi-days"

@@ -244,7 +244,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 152 | R95 | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | OPEN |
 | 153 | R96 | Accounting | QBO sync "Not connected" | OWNER | OPEN |
 | 154 | R97 | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | OPEN — likely driven by row 156 stale pendings ($51,296.34) — CC-2 re-measures after the pending fix |
-| 155 | R98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | CODED |
+| 155 | R98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | MERGED-UNVERIFIED — fmtMoneyDollars + trueCostPercent guards PASS; live USMCA UNVERIFIED |
 | 156 | R99 | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | PARTIAL — #28330 (CC-2) + sweep 16:13Z voided 51 stale pendings $44,020.17 (0 matched); 3 left > 7d $8,000.00, all categorized → CC-2 reverses via uncategorize path |
 | 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | OPEN |
 | 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
@@ -280,7 +280,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
 | 180 | R120 | Fuel › Questions › Review | D001: Clicking Review throws undefined `load_number` in FuelAssignmentPopup; whole-app crash | CC-2 | MERGED-UNVERIFIED |
-| 181 | R121 | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | CODED |
+| 181 | R121 | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | MERGED-UNVERIFIED — verify-home-qbo D002 cents plant PASS; live UNVERIFIED |
 | 182 | R122 | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | OPEN |
 | 183 | R123 | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | OPEN |
 | 184 | R124 | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | OPEN |
@@ -317,10 +317,10 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 215 | R158 | Driver Profile › Create Driver › Identity step | D039: Fifteen visible inputs measured 38px; CDL state about 199px wide | CC-3 | CODED |
 | 216 | R159 | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high | CC-3 | CODED |
 | 217 | R160 | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high | CC-3 | CODED |
-| 218 | R161 | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | CODED |
+| 218 | R161 | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | MERGED-UNVERIFIED — verify-cash-flow-projected-tab D042 PASS; live UNVERIFIED |
 | 219 | R162 | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | OPEN |
 | 220 | R163 | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | OPEN |
-| 221 | R164 | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | CODED |
+| 221 | R164 | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | MERGED-UNVERIFIED — verify-banking-home-preview-parity D045 PASS; live UNVERIFIED |
 | 222 | R165 | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | OPEN |
 | 223 | R166 | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | OPEN |
 | 224 | R167 | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | CODED |
@@ -334,12 +334,12 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 232 | R175 | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | OPEN |
 | 233 | R176 | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | OPEN |
 | 234 | R177 | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | OPEN |
-| 235 | R178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | CODED |
-| 236 | R179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | CODED |
+| 235 | R178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | MERGED-UNVERIFIED — verify-homepage-scenario-tracker-staleness D059 PASS; live UNVERIFIED |
+| 236 | R179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | MERGED-UNVERIFIED — verify-transaction-health D060 PASS; live UNVERIFIED |
 | 237 | R180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | CODED-QUEUED |
 | 238 | R181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | CODED-QUEUED |
 | 239 | R182 | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | CODED |
-| 240 | R183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | CODED |
+| 240 | R183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | MERGED-UNVERIFIED — verify-91105 D064 PASS; live UNVERIFIED |
 | 241 | R184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | Cursor | OPEN |
 | 242 | R185 | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | Cursor | MERGED-UNVERIFIED — #28498 attention dock z-[50] below ParityDrawer; verify-unmatched-7d plant; live footer UNVERIFIED |
 | 243 | R186 | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | Cursor | MERGED-UNVERIFIED — #28498 visibleDocumentLabel(ref|check|date·$); verify-bill-detail-panel-visible-label; live USMCA UNVERIFIED |
@@ -347,8 +347,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 245 | R188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | Cursor | OPEN |
 | 246 | R189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | Cursor | OPEN |
 | 247 | R190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | Cursor | OPEN |
-| 248 | R191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | CODED-QUEUED |
-| 249 | R192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | CODED |
+| 248 | R191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | MERGED-UNVERIFIED — AccountTile formatUsd D072; live UNVERIFIED |
+| 249 | R192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | MERGED-UNVERIFIED — verify-cash-flow-projected-tab D073 PASS; live UNVERIFIED |
 | 250 | R193 | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms | CC-3 | PARTIAL |
 | 251 | R194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | Cursor | OPEN |
 | 252 | R195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | Cursor | OPEN |

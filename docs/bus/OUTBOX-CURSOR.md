@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:35 PM CT) — ROUND 7.30 qty + CODED→MERGED-UNVERIFIED
+- **PRIOR:** #28504 Week-of #159 closed pill + Fuel/Settlements qty.
+- **THIS:** DriverHub/Factoring CF/Fuel GL map/AvP day counts → formatQuantityTable; PENDING tip 155/181/218/221/235/236/240/248/249 → MERGED-UNVERIFIED (guards PASS; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more ROUND 7.30 OPEN/PARTIAL; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:20 PM CT) — ROUND 7.30 #159 Week-of closed + Fuel/Settlements qty
 - **PRIOR:** #28501 Drivers need-company + KPI quantity.
 - **THIS:** REG-102/#159 Settlements Home Week-of: settlementsRowTourClosed treats terminal status closed/paid/… when trip_closed_at null (Closed pill); Status stays payment Paid/Open (v3 board); Fuel History + Settlements KPI counts → formatQuantityTable(, 0); plants. Lead owns dates/UI cluster. Batch75 Reclassify → CC-1.

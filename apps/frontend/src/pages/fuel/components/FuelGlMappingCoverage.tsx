@@ -86,7 +86,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
         />
         <V3KpiTile
           label="Categories"
-          value={String(coverage.length)}
+          value={formatQuantityTable(coverage.length, 0)}
           sub="diesel · def · reefer · oil · misc"
           testId="fuel-expense-map-kpi-categories"
         />
