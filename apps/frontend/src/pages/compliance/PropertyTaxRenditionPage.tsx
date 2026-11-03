@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -678,7 +679,13 @@ export function PropertyTaxRenditionPage() {
   const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const content = useMemo(() => {
-    if (!companyId) return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    if (!companyId) {
+      return (
+        <BoardSection title="Property tax rendition" testId="property-tax-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      );
+    }
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (
