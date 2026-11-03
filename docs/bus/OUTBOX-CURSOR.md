@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:10 PM CT) — need-company fill wave + Retention qty
+- **PRIOR:** #28299–#28300 Coi/PortalUsers; #28302 DocumentAlerts/Samsara/QBO/profitability; #28304 Retention qty+fill; #28305 fill-shell ratchet 59.
+- **THIS:** ExpenseLoadConfirmations literal need-company; DriverInbox/EarningsTab fill-shell. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool ~28. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:35 PM CT) — finance/compliance need-company sweep
 - **PRIOR:** #28271–#28298 quantity + ENG-34 29→28 + finance/compliance need-company shells.
 - **THIS:** Continuous BUILD-FIRST: house format + BoardSection need-company across Cursor/shared finance/compliance. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool ~28. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
