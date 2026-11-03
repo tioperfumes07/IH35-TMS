@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:45 PM CT) — hotfix MyAccountant need-company landed
+- **PRIOR:** #28525 empty merge; fill-shell stayed red.
+- **THIS:** #28526 MyAccountant BoardSection need-company early return; fill-shell PASS. #27 PARTIAL. Remaining: more Accounting tabs + #29 popup (+ Lead date/UI live). Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting need-company / #29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:40 PM CT) — hotfix MyAccountant need-company
 - **PRIOR:** #28522 tip #27 PARTIAL.
 - **THIS:** MyAccountant BoardSection need-company (fill-shell plant was red on main after #28521). Lead owns dates/UI. Batch75 Reclassify → CC-1.
