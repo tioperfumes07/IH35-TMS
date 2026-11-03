@@ -412,7 +412,7 @@ function accuracyPct(projected: number, actual: number): number {
   return Math.round((100 * Math.min(Math.abs(projected), Math.abs(actual))) / max);
 }
 
-function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { points: ChartPoint[]; grain: ChartGrain; expNotCapturedDays?: number }) {
+export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { points: ChartPoint[]; grain: ChartGrain; expNotCapturedDays?: number }) {
   const series = useMemo(() => buildAvpChartSeries(points, grain), [points, grain]);
 
   const W = 1100;
