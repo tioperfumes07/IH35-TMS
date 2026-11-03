@@ -82,7 +82,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 15 | R29 | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | DONE-LIVE — verify-entity-filters-multi-select PASS on main 23:00Z: 134 entity filters detected, 134 multi-select, 0 failed |
 | 16 | R114 | Process | Cursor confirmation of 443.282 (owner-authorized build exactly as specified) | Cursor | OPEN |
 | 17 | R205 | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | CODED |
-| 18 | R206 | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | CODED |
+| 18 | R206 | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | MERGED-UNVERIFIED — ExpenseLoadConfirmationsBoard MultiSelect + bulk confirm; live UNVERIFIED |
 | 19 | R212 | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | CODED |
 | 20 | R213 | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | CODED |
 | 21 | R214 | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | CODED |
@@ -298,7 +298,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 196 | R137 | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | OPEN |
 | 197 | R138 | Fuel › Cards › Driver options request | D019: `/api/v1/mdata/drivers` 4,522 ms in audit session | CC-2 | OPEN |
 | 198 | R139 | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | OPEN |
-| 199 | R140 | Dispatch › Home › Round-trip exposure | D021: Driver names abbreviated to initials | Cursor | RE-VERIFY |
+| 199 | R140 | Dispatch › Home › Round-trip exposure | D021: Driver names abbreviated to initials | Cursor | MERGED-UNVERIFIED — driver_full_name + verify-reg038/dispatch-board-preview D021 PASS; live UNVERIFIED |
 | 200 | R141 | Dispatch › Home › Return / idle / missing-bill tables | D022: Driver names all-uppercase | CC-3 | OPEN |
 | 201 | R144 | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | OPEN |
 | 202 | R145 | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | OPEN |
@@ -337,7 +337,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 235 | R178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | MERGED-UNVERIFIED — verify-homepage-scenario-tracker-staleness D059 PASS; live UNVERIFIED |
 | 236 | R179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | MERGED-UNVERIFIED — verify-transaction-health D060 PASS; live UNVERIFIED |
 | 237 | R180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | CODED-QUEUED |
-| 238 | R181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | CODED-QUEUED |
+| 238 | R181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | MERGED-UNVERIFIED — txHealthLedgerText formatUsdCents; live UNVERIFIED |
 | 239 | R182 | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | CODED |
 | 240 | R183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | MERGED-UNVERIFIED — verify-91105 D064 PASS; live UNVERIFIED |
 | 241 | R184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | Cursor | OPEN |
