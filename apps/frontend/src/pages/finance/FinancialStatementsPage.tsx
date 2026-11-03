@@ -14,6 +14,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FINANCE_STATEMENTS_UI_FLAG } from "../../api/financeStatements";
 import {
   getProfitLossReport,
@@ -577,7 +578,11 @@ export function FinancialStatementsPage() {
       </div>
       {header}
 
-      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="Financial statements" testId="financial-statements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       <div className="no-print mb-4 flex flex-wrap items-center gap-2 border-b border-[#E5E7EB]">
         {tabs.map((t) => (
