@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:00 PM CT) — ROUND 7.30 tip #25 statement
+- **PRIOR:** #28516 tip #16 443.282.
+- **THIS:** PENDING #25 Statement 5753-format surfaces → MERGED-UNVERIFIED (workflow+board+fuel+linked records present; live 5753 compare UNVERIFIED). Remaining Cursor OPEN: #27 Accounting tabs inspect, #29 popup standard (+ Lead date/UI). Batch75 Reclassify → CC-1.
+- **NEXT:** #27/#29 or live DONE-LIVE proofs; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:55 PM CT) — ROUND 7.30 tip #16 443.282
 - **PRIOR:** #28515 tip OPEN Factoring/Fuel/Settlements boards.
 - **THIS:** PENDING #16 443.282 Factoring board-exact → MERGED-UNVERIFIED (verify-factoring-layout-tabs-first PASS; live owner confirm UNVERIFIED). Remaining Cursor code: #25 statement 5753, #27 Accounting tabs inspect, #29 popup standard (+ Lead date/UI). Batch75 Reclassify → CC-1.
