@@ -24,7 +24,8 @@ if (!/const cur = currency \|\| "USD"/.test(constants)) fail("formatMoneyCents m
 if (!/from ["'][^"']*lib\/money["']/.test(constants) || !/formatUsdCents/.test(constants)) {
   fail("formatMoneyCents must import formatUsdCents from lib/money for the USD path");
 }
-if (!/cur === "MXN"/.test(constants)) fail("formatMoneyCents must keep an explicit MXN Intl branch");
+if (!/cur === "MXN"/.test(constants)) fail("formatMoneyCents must keep an explicit MXN house branch");
+if (!/formatQuantityTable/.test(constants)) fail("formatMoneyCents MXN path must use formatQuantityTable");
 if (!/return formatUsdCents\(valueCents\)/.test(constants)) fail("formatMoneyCents USD path must return formatUsdCents(valueCents)");
 
 // The board's Linehaul cell routes through formatMoneyCents (no raw currency NumberFormat on the board).
