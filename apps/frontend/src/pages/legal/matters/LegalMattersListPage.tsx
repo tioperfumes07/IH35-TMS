@@ -14,6 +14,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -139,14 +140,11 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
       partyCustomerId,
     ],
     queryFn: async () => {
-      // U12: multi-select — API takes one value; 0/1 pass through; 2+ fetch unscoped then filter.
-      const statusParam = status.length === 1 ? status[0] : undefined;
-      const severityParam = severity.length === 1 ? severity[0] : undefined;
-      const typeParam = type.length === 1 ? type[0] : undefined;
+      // Codex batch67 — send comma-union to the server BEFORE COUNT/LIMIT (never filter a page locally).
       const result = await legalMattersApi.list(companyId, {
-        status: statusParam,
-        severity: severityParam,
-        type: typeParam,
+        status: status.length ? status.join(",") : undefined,
+        severity: severity.length ? severity.join(",") : undefined,
+        type: type.length ? type.join(",") : undefined,
         related_driver_id: relatedDriverId || undefined,
         unit_id: unitId || undefined,
         equipment_id: equipmentId || undefined,
@@ -157,12 +155,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       });
-      let matters = result.matters ?? [];
-      if (status.length > 1) matters = matters.filter((row) => status.includes(String(row.status ?? "")));
-      if (severity.length > 1) matters = matters.filter((row) => severity.includes(String(row.severity ?? "")));
-      if (type.length > 1) matters = matters.filter((row) => type.includes(String(row.type ?? "")));
-      if (status.length <= 1 && severity.length <= 1 && type.length <= 1) return result;
-      return { ...result, matters, total: matters.length };
+      return result;
     },
     enabled: Boolean(companyId),
   });
@@ -247,7 +240,9 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
             label states "showing N of M" so a capped view can never read as "that is all there is". */}
         <div className="mb-2 flex items-center justify-between text-xs text-[#4B5563]">
           <span data-testid="legal-matters-range">
-            {total === 0 ? "No matters" : `Showing ${rangeStart}\u2013${rangeEnd} of ${total}`}
+            {total === 0
+              ? "No matters"
+              : `Showing ${formatQuantityTable(rangeStart, 0)}\u2013${formatQuantityTable(rangeEnd, 0)} of ${formatQuantityTable(total, 0)}`}
             {partyVendorId || partyCustomerId ? (
               <button type="button" data-testid="legal-matters-party-scope" onClick={clearPartyScope} className="ml-2 rounded-sm border border-gray-300 px-2 py-0.5">
                 {partyVendorId ? "This vendor only" : "This customer only"} ×
