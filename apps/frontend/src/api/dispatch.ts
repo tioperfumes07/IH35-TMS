@@ -353,6 +353,17 @@ export function getDispatchDashboard(operatingCompanyId: string) {
   return apiRequest<DispatchKpis>(`/api/v1/dispatch/dashboard?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
 }
 
+/**
+ * Row 250 (D074): the ONE react-query key for GET /dispatch/units-without-load. Seven screens read this
+ * endpoint under seven different keys, so a page that mounts two of them (Dispatch › Truck Line mounts
+ * Dispatch.tsx's awaiting lane AND DispatchSubnav's badge) fired the same request twice — two concurrent
+ * copies of the slowest dispatch read. One key = react-query dedupes to one in-flight request, and the
+ * existing ["dispatch", "units-without-load"] prefix invalidations now refresh every reader.
+ */
+export function unitsWithoutLoadQueryKey(operatingCompanyId: string | null | undefined) {
+  return ["dispatch", "units-without-load", operatingCompanyId ?? null] as const;
+}
+
 export function listUnitsWithoutLoad(operatingCompanyId: string) {
   return apiRequest<{ units: UnitsWithoutLoad[] }>(
     `/api/v1/dispatch/units-without-load?operating_company_id=${encodeURIComponent(operatingCompanyId)}`

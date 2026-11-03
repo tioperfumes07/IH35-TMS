@@ -12,7 +12,7 @@ import {
   listAtRiskOrLateDispatchLoads,
   listAllDispatchLoads,
   listDispatchLoads,
-  listUnitsWithoutLoad,
+  listUnitsWithoutLoad, unitsWithoutLoadQueryKey,
   type DispatchAlertLoadRow,
   type DetentionBoardEvent,
   type DispatchLoad,
@@ -263,7 +263,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   });
 
   const unitsWithoutLoadQ = useQuery({
-    queryKey: ["dispatch", "overview", "units-without-load", operatingCompanyId],
+    queryKey: unitsWithoutLoadQueryKey(operatingCompanyId),
     queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
     enabled,
     refetchInterval: 60_000,

@@ -24,7 +24,7 @@ import {
   listDispatchAssignmentHistory,
   listLateArrivalDispatchLoads,
   listLoadTemplates,
-  listUnitsWithoutLoad,
+  listUnitsWithoutLoad, unitsWithoutLoadQueryKey,
 } from "../../api/dispatch";
 import { listLatestPositions } from "../../api/telematics";
 import "../../components/forms/shared/HoverDropdownNav.css";
@@ -581,7 +581,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
         refetchInterval: 30_000,
       },
       {
-        queryKey: ["dispatch-subnav", "unassigned", operatingCompanyId],
+        queryKey: unitsWithoutLoadQueryKey(operatingCompanyId),
         queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
         enabled,
         refetchInterval: 60_000,

@@ -14,7 +14,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban, type KanbanBookPreset } from "../components/dispatch/DispatchKanban";
-import { listUnitsWithoutLoad } from "../api/dispatch";
+import { listUnitsWithoutLoad, unitsWithoutLoadQueryKey } from "../api/dispatch";
 import { FleetOosStrip } from "../components/dispatch/FleetOosStrip";
 import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
@@ -346,7 +346,7 @@ export function DispatchPage({
 
   // Truck-derived "Awaiting assignment" lane on the Kanban (active fleet roster minus loaded trucks).
   const awaitingTrucksQuery = useQuery({
-    queryKey: ["dispatch", "units-without-load", selectedCompanyId],
+    queryKey: unitsWithoutLoadQueryKey(selectedCompanyId),
     queryFn: () => listUnitsWithoutLoad(selectedCompanyId as string),
     enabled: Boolean(selectedCompanyId),
     staleTime: 30_000,

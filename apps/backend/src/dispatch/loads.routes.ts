@@ -612,8 +612,11 @@ async function withCompanyScope<T>(
     query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
   }) => Promise<T>
 ) {
-  await assertCompanyMembership(userId, operatingCompanyId);
+  // Row 250 (D074): ONE pool checkout per request. The string overload of assertCompanyMembership opened its
+  // own withCurrentUser transaction first, so every dispatch read held the 5-connection pool twice in a row
+  // and the Dispatch page's ~15 concurrent reads queued behind each other. Same check, same client.
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client);
   });
@@ -2206,14 +2209,6 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             WHERE l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
             ORDER BY l.assigned_unit_id, ls.actual_departure_at DESC
-          ),
-          -- D074 443.265-B: set-based loc (replaces per-unit LATERAL: N scans → 1)
-          last_city_per_unit AS (
-            SELECT DISTINCT ON (g.unit_id) g.unit_id, g.city, g.state, g.formatted_location
-            FROM telematics.vehicle_locations g
-            WHERE g.operating_company_id = $1::uuid
-              AND (g.city IS NOT NULL OR g.state IS NOT NULL)
-            ORDER BY g.unit_id, g.captured_at DESC
           )
           SELECT
             u.id,
@@ -2285,8 +2280,23 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
-          -- D074 443.265-B: replaced per-unit LATERAL with CTE join (last_city_per_unit above)
-          LEFT JOIN last_city_per_unit loc ON loc.unit_id = u.id
+          -- Row 250 (D074): fallback city = the newest vehicle_locations row WITH a city, read ONLY when the
+          -- latest-position cache has none. The previous DISTINCT ON CTE over every USMCA location row
+          -- (566,392 rows, seq scan + 47 MB on-disk sort, 2,680 ms on prod) ran on every request even
+          -- though 16 of 16 units already had a cached city. The gate lives INSIDE the lateral so the
+          -- planner turns it into a One-Time Filter (a join-level ON gate still runs the subquery per row),
+          -- and the constant $1 company key lets idx_vehicle_locations_unit_time (operating_company_id,
+          -- unit_id, captured_at DESC) answer it with one index probe per unit.
+          LEFT JOIN LATERAL (
+            SELECT g.city, g.state, g.formatted_location
+              FROM telematics.vehicle_locations g
+             WHERE p.city IS NULL AND p.state IS NULL
+               AND g.operating_company_id = $1::uuid
+               AND g.unit_id = u.id
+               AND (g.city IS NOT NULL OR g.state IS NOT NULL)
+             ORDER BY g.captured_at DESC
+             LIMIT 1
+          ) loc ON true
           -- LEAD 443.231b — SAME free-unit gate as Truck Line AVAILABLE (UNIT_IN_SERVICE_SQL =
           -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
           -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/
