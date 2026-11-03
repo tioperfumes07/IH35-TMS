@@ -450,6 +450,23 @@ if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
   fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
 }
 
+
+const breakEvenDays = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
+if (!/formatQuantityTable\(model\.days, 0\)/.test(breakEvenDays)) {
+  fail("BreakEvenPage model.days must use formatQuantityTable(, 0)");
+}
+const fleetRestoreUnits = read("apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx");
+if (!/formatQuantityTable\(data\.unit_count, 0\)/.test(fleetRestoreUnits)) {
+  fail("HomeFleetRestoreCard unit_count must use formatQuantityTable(, 0)");
+}
+const factoringSettings = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.active_factor_count/.test(factoringSettings)) {
+  fail("FactoringHome active_factor_count must use formatQuantityTable");
+}
+if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.recourse_days/.test(factoringSettings)) {
+  fail("FactoringHome settings recourse_days must use formatQuantityTable");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

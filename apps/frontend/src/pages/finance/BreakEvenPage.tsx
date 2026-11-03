@@ -305,7 +305,7 @@ export function BreakEvenPage() {
 
           {/* Cost structure */}
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatTile label="Fixed cost / day" to="/accounting/expenses/list" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${model.days} day${model.days === 1 ? "" : "s"}`} />
+            <StatTile label="Fixed cost / day" to="/accounting/expenses/list" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${formatQuantityTable(model.days, 0)} day${model.days === 1 ? "" : "s"}`} />
             <StatTile label="Variable cost / mile" to="/accounting/expenses/list" value={fmtPerMile(model.variable_cost_per_mile_cents)} secondary={fmtCents(model.variable_cost_cents)} />
             <StatTile label="Contribution margin / mile" to="/finance/statements" value={fmtPerMile(model.contribution_margin_per_mile_cents)} secondary="Revenue/mi − variable/mi" />
             <StatTile label="Net profit (period)" to="/finance/statements" value={fmtCents(model.net_profit_cents)} secondary={`${fmtCents(model.revenue_cents)} rev − ${fmtCents(model.total_cost_cents)} cost`} tone={model.net_profit_cents >= 0 ? "good" : "bad"} />
