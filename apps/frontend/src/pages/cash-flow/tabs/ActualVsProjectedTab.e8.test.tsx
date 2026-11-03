@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
+  AvpCompareChart,
   ProjectedExpenseCell,
   buildAvpChartPoints,
   buildAvpChartSeries,
@@ -173,5 +174,17 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
     expect(cov.matched_actual_net_cents).toBe(300);
     expect(cov.matched_projected_net_cents).toBe(250);
     expect(cov.matched_variance_cents).toBe(50);
+  });
+
+  it("renders projected-expense legend + polyline (not only income/actual lines)", () => {
+    const groups = [
+      dayGroup({ date: "2026-10-05", actInc: 100, actExp: 50, projected_unavailable: true }),
+      dayGroup({ date: "2026-10-06", actInc: 200, actExp: 80, projInc: 180, projExp: 70 }),
+    ];
+    const points = buildAvpChartPoints(groups);
+    render(<AvpCompareChart points={points} grain="daily" expNotCapturedDays={1} />);
+    expect(screen.getByTestId("cash-flow-avp-proj-exp-legend").textContent).toMatch(/Projected expenses/i);
+    expect(screen.getAllByTestId("cash-flow-avp-proj-exp-polyline").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("cash-flow-avp-chart-svg").querySelectorAll("polyline").length).toBeGreaterThanOrEqual(4);
   });
 });
