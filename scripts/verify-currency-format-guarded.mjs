@@ -807,6 +807,10 @@ const tripPairingDaysQty = read("apps/frontend/src/pages/dispatch/TripPairingBoa
 if (!/formatQuantityTable\(t\.up_north_days, 0\)/.test(tripPairingDaysQty)) {
   fail("TripPairingBoardPage up_north_days must use formatQuantityTable(, 0)");
 }
+const dispatchOverviewIdleQty = read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+if (!/formatQuantityTable\(maxDaysIdle, 0\)/.test(dispatchOverviewIdleQty)) {
+  fail("DispatchOverview maxDaysIdle must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
