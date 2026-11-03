@@ -386,7 +386,7 @@ function CashPositionChart({
           ACTUAL
         </text>
         <text x={splitX + 6} y={top + 12} fontFamily={V3.font} fontSize={10} fontWeight={600} fill={V3.data}>
-          FORECAST · {forecastWeeks.length} WEEKS
+          FORECAST · {formatQuantityTable(forecastWeeks.length, 0)} WEEKS
         </text>
         <line x1={splitX} x2={splitX} y1={top} y2={zeroY + 53} stroke={V3.data} strokeDasharray="3 4" />
         {weeks.map((w, i) => {

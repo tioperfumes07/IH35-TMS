@@ -79,7 +79,7 @@ export function SettlementLoadsSection({
       testId="settlement-loads-section"
       headerRight={
         <span className="text-xs text-[#6B7280]">
-          {legs.length} leg{legs.length === 1 ? "" : "s"}
+          {formatQuantityTable(legs.length, 0)} leg{legs.length === 1 ? "" : "s"}
         </span>
       }
     >

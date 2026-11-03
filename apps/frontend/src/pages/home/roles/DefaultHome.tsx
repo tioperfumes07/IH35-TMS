@@ -268,7 +268,7 @@ export function DefaultHome({ auth }: Props) {
               <div className="mt-1 font-semibold">
                 {ownerCashPendingQuery.isLoading
                   ? "Loading…"
-                  : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
+                  : `${formatQuantityTable(ownerCashPending.length, 0)} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
               </div>
               <p className="mt-1 max-w-2xl text-xs text-[#1F2A44]/90">
                 Above-policy driver requests escalated from the office for your approval. Open the queue to review each request and approve or
