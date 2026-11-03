@@ -1,3 +1,13 @@
+## OUTBOX (11-03-2026 ~6:40 PM CT) — U12 Card Overage MultiSelect (re-ship after empty #28581)
+- **PRIOR:** #28581 empty squash (push flake; title only).
+- **THIS:** Re-land CardOverageQueuePage status → MultiSelectDropdown + U12 register note (code that #28581 missed).
+- **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:35 PM CT) — U12 Fuel Card Overage status MultiSelect
+- **PRIOR:** #28580 #57/#159 DONE-LIVE.
+- **THIS:** CardOverageQueuePage status pills → MultiSelectDropdown (default pending_review; 0/1 API pass-through, 2+ client filter). Owner UI register U12 note: PoliciesList already multi. (#28581 landed empty — see re-ship tip.)
+- **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:30 PM CT) — #57/#159 Settlements DONE-LIVE (Codex batch96)
 - **PRIOR:** #28579 cash-basis wire.
 - **THIS:** PENDING/ROUND #57/#159 → DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED after #28561. Non-CT browser not claimed.
