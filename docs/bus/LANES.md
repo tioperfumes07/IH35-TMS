@@ -89,6 +89,28 @@ apps/backend/src/accounting/daily-close**
 apps/backend/src/accounting/factor-reconciliation/**
 TABLES: factor.* · banking.* · accounting.factoring_reserve_movements · accounting.invoices
         accounting.reconciliation_runs
+#
+# **`apps/backend/src/telematics/stops-geocode-backfill.service.ts` added to CC-2 (ROUND 260, 2026-11-02).**
+# `apps/backend/src/telematics/**` has no seat -- UNASSIGNED per verify-lane-ownership.mjs. This file
+# is the geocode engine that writes the precise stop coordinate stamp required before delivery invoicing
+# fires. The 443.260 finding showed 3 Edison NJ deliveries ($14,700) were never stamped because a
+# range-precision geocode placed the fence 0.7mi from the actual dock; this file receives the root-cause
+# fix (range precision skips fence creation, delegating to the GPS-dwell engine). Splitting the fix from
+# its guard (verify-stops-geocoded.mjs) across two seats recreates the "one job two seats" problem;
+# scoped to this one filename. Owner may move it; until then it is CC-2's.
+#
+# **`package.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# Root package.json is DEPENDABOT's lane for dependabot bump branches; for all other branches it is
+# UNASSIGNED. This branch adds a single `verify:stops-geocoded` npm script entry — the runner alias for
+# the new guard — and no other changes. Scoped to this round's one-line addition. Owner may move it.
+#
+# **`scripts/verify-guard-selftests-are-real-weak-baseline.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# This baseline JSON has no seat -- UNASSIGNED per verify-lane-ownership.mjs. CC-2 added
+# `verify-stops-geocoded.mjs` to the weak-selftest allowlist as part of wiring the new guard.
+# Owner may move it; until then it is CC-2's.
+apps/backend/src/telematics/stops-geocode-backfill.service.ts
+package.json
+scripts/verify-guard-selftests-are-real-weak-baseline.json
 
 ## CC-3 — settlements and fuel
 apps/backend/src/settlements/**
