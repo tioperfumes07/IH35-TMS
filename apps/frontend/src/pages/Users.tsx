@@ -17,6 +17,7 @@ import {
 import { Button } from "../components/Button";
 import { CappedListNotice } from "../components/CappedListNotice";
 import { Combobox } from "../components/Combobox";
+import { FORM_INPUT_CLASS } from "../components/forms/inputClass";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
@@ -832,7 +833,7 @@ export function UsersPage() {
               onChange={(event) => setInviteName(event.target.value)}
               required
               type="text"
-              className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
+              className={FORM_INPUT_CLASS}
             />
           </div>
           <div>
@@ -842,7 +843,7 @@ export function UsersPage() {
               onChange={(event) => setInviteEmail(event.target.value)}
               required
               type="email"
-              className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
+              className={FORM_INPUT_CLASS}
             />
           </div>
           <div>
@@ -852,6 +853,7 @@ export function UsersPage() {
               value={inviteRole}
               onChange={(value) => setInviteRole((value as UserRole | "Viewer") ?? "Manager")}
               placeholder="Select role"
+              size="sm"
             />
           </div>
           <div>
@@ -885,7 +887,7 @@ export function UsersPage() {
                 onChange={(event) => setInviteInitialPassword(event.target.value)}
                 type="password"
                 autoComplete="new-password"
-                className="w-full rounded-sm border border-gray-300 h-10 px-2 text-xs"
+                className={FORM_INPUT_CLASS}
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (
