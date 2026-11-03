@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch55: independent fix retests and unreachable profitability hub
+
+Batch54 merged #28380 b979cb9b6eb3e4ebcd5655a6aa78398de73ffec4,3checks0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28378 Notes binding repair|Current scan PASS; selftest7/7+4 per-consumer PASS, including individual customer={null as any} and onEdit plants.|Batch53 guard gap repaired.|
+|#28379 PM unknown state|Full2-file diff read; helper5/5 PASS. Component passes pmDue.isError/isLoading into the helper and renders unknown instead of claiming no schedule.|Repo behavior correction verified; not live fault-injection or populated-arrival proof.|
+|#27994 Profitability hub|Current and historical source searches find no import/mount of pages/profitability/ProfitabilityPage in app route tree. Live /profitability redirects to Home. Equipment API is mounted, but its sole frontend consumer is this unreachable hub. Hub guard3/3 selftests and type guard selftest PASS despite absent page route.|CONFIRMED incomplete wiring, not DONE-LIVE. Cursor handoff. Published batch54 money defect remains in the mounted API; do not misrepresent it as a visible hub total.|
+|#27994 equipment filter|FilterBar writes equipmentType but all4 tab query keys/arguments and KPI omit it; rows use raw response directly. Source remains current.|CONFIRMED source gap; fix before exposing hub. Do not claim live interaction proof on unreachable page.|
+|Row230 report-name field|Live /reports/custom at1280 and768: report-name150x40px, document scrollWidth equals viewport; private inline screenshots12:20CT.|Named height/width defect FIXED. Adjacent report_id input remains26px high (vs34 filter/40 edit law); keep that related surface issue OPEN, CustomReportBuilder.tsx:143-149.|
+|Row239 subscription timezone|Live /reports/scheduled Add subscription at1280/768: timezone447x40px both; private inline screenshots12:24CT. Cancel closed drawer, no save.|Named height defect FIXED under40px form rule. Not an email delivery proof:6 subscriptions,0 delivery-history rows.|
+
+Full263-row/249-PR audit remains INCOMPLETE. Screenshots private; no report run/save/test-send executed.
+
 ## 2026-11-03 — ROUND7.27 batch54: profitability includes voided driver bills
 
 Batch53 merged #28375 at770b4b9a7d3a9995a2c0567b45cad03dfc58759c,13 affected checks0regressions. Current main09c3cd6850 inspected. Production READ ONLY, no writes.
