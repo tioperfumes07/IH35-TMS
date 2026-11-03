@@ -449,6 +449,9 @@ const awaitingBol = read("apps/frontend/src/pages/dispatch/AwaitingBolInvoicePag
 if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
   fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
 }
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage row count must use formatQuantityTable(, 0)");
+}
 
 
 const breakEvenDays = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
@@ -493,6 +496,41 @@ if ((legalAlertsKpi.match(/formatQuantityTable\(summary\?\.(total|critical|warni
 const tripPair = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
 if ((tripPair.match(/formatQuantityTable\(data\.kpis\.[a-z0-9_]+, 0\)/g) || []).length < 6) {
   fail("TripPairingBoardPage KPIs must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(unbooked\.length, 0\)/.test(tripPair) || !/formatQuantityTable\(tours\.length, 0\)/.test(tripPair)) {
+  fail("TripPairingBoardPage section badges must use formatQuantityTable(, 0)");
+}
+
+const submitFactor = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(totals\.count, 0\)/.test(submitFactor)) {
+  fail("SubmitToFactorTab invoice count must use formatQuantityTable(, 0)");
+}
+
+const factorHomeQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(agingRows\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome aging total records must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorHomeQty)) {
+  fail("FactoringHome Faro batches KPI must use formatQuantityTable(, 0)");
+}
+
+const batchWizard = read("apps/frontend/src/pages/factoring/BatchWizard.tsx");
+if (!/formatQuantityTable\(draftBatch\.invoice_ids\.length, 0\)/.test(batchWizard)) {
+  fail("BatchWizard invoice count must use formatQuantityTable(, 0)");
+}
+
+const batchDetail = read("apps/frontend/src/pages/factoring/BatchDetail.tsx");
+if (!/formatQuantityTable\(detail\.invoices\.length, 0\)/.test(batchDetail)) {
+  fail("BatchDetail included invoices must use formatQuantityTable(, 0)");
+}
+
+
+const factorQueueQty = read("apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx");
+if (!/formatQuantityTable\(count, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage stage badge counts must use formatQuantityTable(, 0)");
+}
+if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorQueueQty) || !/formatQuantityTable\(rows\.length, 0\)/.test(factorQueueQty)) {
+  fail("FactoringQueuePage showing X of Y must use formatQuantityTable(, 0)");
 }
 
 // The regression test exists (renders a no-load row's currency path).

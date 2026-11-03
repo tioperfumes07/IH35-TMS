@@ -496,7 +496,7 @@ export function TripPairingBoardPage() {
             <section>
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-[#1F2A44]">Unbooked / available</span>
-                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{unbooked.length}</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{formatQuantityTable(unbooked.length, 0)}</span>
                 <span className="text-xs text-[#4B5563]">— no trip assigned; book a Northbound to start a tour</span>
               </div>
               <div className="flex flex-wrap gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
@@ -529,7 +529,7 @@ export function TripPairingBoardPage() {
           <section>
             <div className="mb-1 flex items-center gap-2">
               <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-[#1F2A44]">Assigned trips</span>
-              <span className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{tours.length}</span>
+              <span className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{formatQuantityTable(tours.length, 0)}</span>
               <span className="text-xs text-[#4B5563]">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
             <ParityTable<TripPairingUnitRow> appearance="board"
