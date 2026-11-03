@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~12:20 AM CT) — Cursor house money wave 5 (driver reverse + TotalsStack)
+- **PRIOR:** #28228–#28232 house money waves 1–4.
+- **THIS:** DriverCashAdvancesReverse (FIX: requested_amount_cents was treated as dollars) · DriverSettlementFinanceReverse · SettlementDispute List/Resolve · LoadDetailCostsTab rate · DispatchChat cash-advance card · TotalsStack → lib/money. Guard + TotalsStack vitest updated.
+- **ENG-21 BLOCKED:** rate con not on file for 13699 — no Edit Load.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~12:05 AM CT) — Cursor house money wave 4 (Driver Hub CSV)
 - **PRIOR:** #28228–#28230 house money waves 1–3.
 - **THIS:** DriverHubReportingPage CSV approved volume → formatUsdCents. Guard extended.

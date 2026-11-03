@@ -1,5 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { listSettlementDisputes } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
@@ -100,7 +101,7 @@ export function DriverSettlementFinanceReverseSection({
                 <span className="ml-2 text-gray-600">
                   {d.dispute_category} — {d.status}
                   {typeof d.disputed_amount_cents === "number"
-                    ? ` — $${(d.disputed_amount_cents / 100).toFixed(2)}`
+                    ? ` — ${formatUsdCents(d.disputed_amount_cents)}`
                     : ""}
                 </span>
                 {d.resolution_journal_entry_id ? (
@@ -134,8 +135,7 @@ export function DriverSettlementFinanceReverseSection({
                     className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
-                    {String(l.display_status ?? "active")} — $
-                    {Number(l.current_balance ?? 0).toFixed(2)}
+                    {String(l.display_status ?? "active")} — {formatUsd(Number(l.current_balance ?? 0))}
                   </span>
                 </li>
               );
