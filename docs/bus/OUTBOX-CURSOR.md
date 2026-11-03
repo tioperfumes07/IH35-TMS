@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:10 PM CT) — Legal detail need-company
+- **PRIOR:** #28468 Driver Hub need-company.
+- **THIS:** LegalTemplateDetailPage + LegalMatterDetailPage BoardSection need-company; fill-shell plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:00 PM CT) — Driver Hub need-company
 - **PRIOR:** #28467 Legal templates/contracts need-company.
 - **THIS:** DriverHubPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.

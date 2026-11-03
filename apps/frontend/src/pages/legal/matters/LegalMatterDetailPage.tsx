@@ -35,6 +35,7 @@ import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { LegalMatterCostsReverseSection } from "../../../components/accounting/LegalMatterCostsReverseSection";
 import { CreateBillModal } from "../../maintenance/components/CreateBillModal";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
@@ -244,6 +245,14 @@ export function LegalMatterDetailPage() {
     const json = (await res.json()) as { download_url?: string; error?: string };
     if (!res.ok || !json.download_url) return;
     window.open(json.download_url, "_blank", "noopener,noreferrer");
+  }
+
+  if (!companyId) {
+    return (
+      <BoardSection title="Legal matter" testId="legal-matter-detail-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (
