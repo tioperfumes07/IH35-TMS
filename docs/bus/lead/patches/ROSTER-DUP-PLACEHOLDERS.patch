@@ -1,0 +1,123 @@
+diff --git a/apps/backend/src/mdata/__tests__/driver-roster-duplicate.test.ts b/apps/backend/src/mdata/__tests__/driver-roster-duplicate.test.ts
+index dc7241d11f..7c1143d59c 100644
+--- a/apps/backend/src/mdata/__tests__/driver-roster-duplicate.test.ts
++++ b/apps/backend/src/mdata/__tests__/driver-roster-duplicate.test.ts
+@@ -12,6 +12,7 @@ import {
+   editDistance,
+   findRosterDuplicates,
+   normalizePersonName,
++  phoneKey,
+   rankRosterDuplicates,
+   scoreRosterCandidate,
+   type RosterRow,
+@@ -132,6 +133,43 @@ describe("scoreRosterCandidate — the measured shapes", () => {
+   });
+ });
+ 
++describe("placeholders are never identity (LEAD 11-03, measured on the USMCA roster)", () => {
++  it("phoneKey rejects the placeholders and keeps real numbers", () => {
++    for (const fake of ["000-000-0000", "0000000", "+10000013586", "1111111111", "+1 555"]) expect(phoneKey(fake)).toBeNull();
++    expect(phoneKey("+1 (956) 555-0101")).toBe("9565550101");
++    expect(phoneKey("526461920814")).toBe("6461920814");
++  });
++
++  it("two DIFFERENT people who both carry 000-000-0000 do not match", () => {
++    const r = scoreRosterCandidate(
++      { operating_company_id: COMPANY, first_name: "Rolando", last_name: "Fraga", phone: "000-000-0000" },
++      row({ driver_id: "x", first_name: "Hector", last_name: "Quintero Tarin", phone: "000-000-0000" })
++    );
++    expect(r).toEqual([]);
++  });
++
++  it("a placeholder CDL with no digit ('safety') is not a CDL match", () => {
++    const r = scoreRosterCandidate(
++      { operating_company_id: COMPANY, first_name: "Ana", last_name: "Lopez", cdl_number: "safety" },
++      row({ driver_id: "x", first_name: "Safety", last_name: "—", cdl_number: "safety" })
++    );
++    expect(r).toEqual([]);
++  });
++
++  it("a phone shared by 3+ roster rows (office line) is dropped as a reason; a 2-row phone still matches", () => {
++    const office = "9562820452";
++    const roster = [
++      row({ driver_id: "a", first_name: "Irving", last_name: "Flores Pulido", phone: office }),
++      row({ driver_id: "b", first_name: "Ruben Pedro", last_name: "Perez Garcia", phone: office }),
++      row({ driver_id: "c", first_name: "Manuel Mario", last_name: "Pavon Calafell", phone: office }),
++      row({ driver_id: "d", first_name: "Juan", last_name: "Hernandez", phone: "9565319846" }),
++    ];
++    expect(rankRosterDuplicates({ operating_company_id: COMPANY, first_name: "Nuevo", last_name: "Chofer", phone: office }, roster)).toEqual([]);
++    const own = rankRosterDuplicates({ operating_company_id: COMPANY, first_name: "J", last_name: "H", phone: "956-531-9846" }, roster);
++    expect(own.map((m) => [m.driver_id, m.matched_on])).toEqual([["d", "phone_exact"]]);
++  });
++});
++
+ describe("rankRosterDuplicates", () => {
+   it("orders hard before strong before possible, active before inactive", () => {
+     const ranked = rankRosterDuplicates(
+diff --git a/apps/backend/src/mdata/driver-roster-duplicate.service.ts b/apps/backend/src/mdata/driver-roster-duplicate.service.ts
+index 43b5872935..3715e1dc11 100644
+--- a/apps/backend/src/mdata/driver-roster-duplicate.service.ts
++++ b/apps/backend/src/mdata/driver-roster-duplicate.service.ts
+@@ -113,11 +113,28 @@ export function normalizePersonName(first?: string | null, last?: string | null)
+   return joined.length > 0 ? joined : null;
+ }
+ 
+-function phoneKey(value: string | null | undefined): string | null {
++/**
++ * LEAD 11-03: a phone is identity only when it is a real dialable number. Measured on the USMCA roster (85 live rows):
++ * 39 carry the placeholder "000-000-0000" (→ "0000000000", which matched EVERY other placeholder as "Same phone") and
++ * one "+10000013586". A real 10-digit US/MX number never starts with 0 or 1 and is never one repeated digit.
++ */
++export function phoneKey(value: string | null | undefined): string | null {
+   const digits = (value ?? "").replace(/\D/g, "");
+-  return digits.length >= 10 ? digits.slice(-10) : null;
++  if (digits.length < 10) return null;
++  const key = digits.slice(-10);
++  if (!/^[2-9]\d{9}$/.test(key) || /^(\d)\1{9}$/.test(key)) return null;
++  return key;
++}
++
++/** A CDL value is identity only when it carries a digit (measured: the "Safety" placeholder row has CDL "safety"). */
++function cdlKey(value: string | null | undefined): string | null {
++  const v = norm(value);
++  return v && /\d/.test(v) ? v : null;
+ }
+ 
++/** LEAD 11-03: a phone on this many roster rows is a shared line (measured: 956-282-0452 on 4 different people). */
++export const SHARED_PHONE_ROWS = 3;
++
+ /** Plain Levenshtein distance, bounded — names are short. */
+ export function editDistance(a: string, b: string): number {
+   if (a === b) return 0;
+@@ -160,8 +177,8 @@ const ORDER: RosterMatchReason[] = [
+  */
+ export function scoreRosterCandidate(input: RosterDuplicateInput, row: RosterRow): RosterMatchReason[] {
+   const reasons = new Set<RosterMatchReason>();
+-  const cdlIn = norm(input.cdl_number);
+-  const cdlRow = norm(row.cdl_number);
++  const cdlIn = cdlKey(input.cdl_number);
++  const cdlRow = cdlKey(row.cdl_number);
+   const stateIn = norm(input.cdl_state);
+   const stateRow = norm(row.cdl_state);
+   if (norm(input.curp) && norm(input.curp) === norm(row.curp)) reasons.add("curp_exact");
+@@ -214,8 +231,19 @@ function stateOf(row: RosterRow): RosterDuplicateMatch["state"] {
+ export function rankRosterDuplicates(input: RosterDuplicateInput, roster: RosterRow[], limit = 10): RosterDuplicateMatch[] {
+   const rank = { hard: 0, strong: 1, possible: 2 } as const;
+   const stateRank = { active: 0, inactive: 1, deactivated: 2, archived: 3 } as const;
++  const phoneRows = new Map<string, number>();
++  for (const row of roster) {
++    const k = phoneKey(row.phone);
++    if (k) phoneRows.set(k, (phoneRows.get(k) ?? 0) + 1);
++  }
+   return roster
+-    .map((row) => ({ row, reasons: scoreRosterCandidate(input, row) }))
++    .map((row) => {
++      const reasons = scoreRosterCandidate(input, row);
++      const k = phoneKey(row.phone);
++      // A shared line (office / dispatcher number) says nothing about who the person is.
++      const shared = k !== null && (phoneRows.get(k) ?? 0) >= SHARED_PHONE_ROWS;
++      return { row, reasons: shared ? reasons.filter((r) => r !== "phone_exact") : reasons };
++    })
+     .filter((x) => x.reasons.length > 0)
+     .map(({ row, reasons }) => {
+       const digits = (row.phone ?? "").replace(/\D/g, "");
