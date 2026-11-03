@@ -53,7 +53,8 @@ function classifyIn(worktree, guardRel) {
   const code = `const m = await import(${JSON.stringify(path.join(worktree, "scripts/verify-static.mjs"))});` +
     `const r = m.classify(${JSON.stringify(path.join(worktree, guardRel))});` +
     `process.stdout.write(JSON.stringify({ kind: r.kind, detail: r.detail }));`;
-  const r = spawnSync(process.execPath, ["--input-type=module", "-e", code], { cwd: worktree, encoding: "utf8", timeout: 240_000 });
+  // Registry-batch + verify-guard-wired classify can exceed 4 minutes on a cold machine (Codex batch72).
+  const r = spawnSync(process.execPath, ["--input-type=module", "-e", code], { cwd: worktree, encoding: "utf8", timeout: 600_000 });
   try { return JSON.parse(r.stdout.trim().split("\n").pop()); } catch { return { kind: "FAIL-test", detail: (r.stderr || "classify crashed").slice(0, 200) }; }
 }
 
