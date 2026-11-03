@@ -161,6 +161,10 @@ const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx"
 if (!/formatQuantityTable\(Number\(event\.billable_minutes/.test(detention)) {
   fail("DetentionBoardPage billable minutes must use formatQuantityTable");
 }
+const gpsBorder = read("apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx");
+if (!/formatQuantityTable\(ev\.customs_clearance_minutes\)/.test(gpsBorder)) {
+  fail("GPS BorderCrossingHistory customs minutes must use formatQuantityTable");
+}
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {

@@ -36,6 +36,9 @@ const TARGETS = [
   ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", "pod-review-need-company"],
   ["apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx", "equipment-transfer-need-company"],
   ["apps/frontend/src/pages/dispatch/LoadHistoryPage.tsx", "load-history-need-company"],
+  ["apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx", "border-crossing-history-need-company"],
+  ["apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx", "gps-border-crossing-need-company"],
+  ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", "trip-profitability-need-company"],
 ];
 const LABEL = "verify-91190-dispatch-empty-company-slate-leftover-chrome";
 
