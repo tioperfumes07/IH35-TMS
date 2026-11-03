@@ -19,7 +19,9 @@ function d065Hits(path, src) {
   const hits = [];
   // g-flag required: String#match without /g returns one hit (array length 1) even when header+row both match.
   const tmpl = /grid-cols-\[minmax\(0,2fr\)_minmax\(0,1\.3fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.6fr\)\]/g;
-  if ((src.match(tmpl) || []).length < 2) {
+  // UI4 (register 241): the template lives in ONE constant (MANUAL_JE_LINE_GRID_TEMPLATE) that header + rows both use.
+  const sharedUses = (src.match(/\$\{MANUAL_JE_LINE_GRID_CLASS\}/g) || []).length;
+  if ((src.match(tmpl) || []).length < 1 || sharedUses < 2) {
     hits.push(`${path}: D065 header+rows must share minmax(0,…) 5-col grid (Class must shrink before Debit)`);
   }
   if (!/\[&>\*\]:min-w-0/.test(src)) {

@@ -314,9 +314,10 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
   if (/match-candidate-date">Date: \{String\(c\.event_date/.test(drawer) || /event_date \?\? ""\)\.slice\(0,\s*10\)/.test(drawer)) {
     p.push("drawer: match-candidate-date must not render raw YYYY-MM-DD via String(...).slice(0,10) (D070)");
   }
-  // D071 / row 190 — candidate payee labels proper-cased (ALL CAPS → Title Case; mixed case kept).
-  if (!/formatPersonName\(\s*c\.counterparty_name\s*\)/.test(drawer)) {
-    p.push("drawer: match-candidate-payee must use formatPersonName(c.counterparty_name) (D071)");
+  // D071 / row 190 / register 247 — PERSON payees proper-cased (formatPersonName), organisation names as stored.
+  // Guarded in full by scripts/verify-ui4-d065-d068-d071-d076.mjs.
+  if (!/return c\.counterparty_is_person \? formatPersonName\(name\) : name;/.test(drawer) || !/Payee: \{matchCandidatePayeeLabel\(c\)\}/.test(drawer)) {
+    p.push("drawer: match-candidate-payee must use matchCandidatePayeeLabel (formatPersonName for persons only) (D071)");
   }
   if (/Gap \(\$/.test(drawer) || />Gap</.test(drawer) || /Amount gap:/.test(drawer)) {
     p.push('drawer: "Gap" text is back — it must read Difference and Days off');
