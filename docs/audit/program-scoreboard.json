@@ -1,10 +1,10 @@
 {
-  "healthzSha": "5de3b70",
-  "generated_at": "2026-11-03T10:23:32.505Z",
+  "healthzSha": "43a2d62",
+  "generated_at": "2026-11-03T12:29:18.993Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "5de3b70",
+    "deployedSha": "43a2d62",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/03/2026, 04:23 AM CT",
+      "url": "",
+      "sha": "43a2d62fe1",
+      "committedAtIso": "2026-11-03T10:23:32Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/03/2026, 02:27 AM CT",
       "url": "",
       "sha": "5de3b70538",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "1fc21e2986",
       "committedAtIso": "2026-11-03T02:27:06Z"
-    },
-    {
-      "number": 28236,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 07:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28236",
-      "sha": "92c525bcc2",
-      "committedAtIso": "2026-11-03T01:01:41Z"
     }
   ]
 }
