@@ -83,6 +83,23 @@ if (!/formatUsd\(qualityStats\.totalImpact\)/.test(customer)) fail("CustomerDeta
 if (!/formatUsdCents\(Number\(invoice\.total_cents/.test(customer)) fail("CustomerDetail invoice total must use formatUsdCents");
 if (!/formatUsdCents\(lane\.fsc_per_mile_cents\)/.test(customer)) fail("CustomerDetail FSC/mi must use formatUsdCents");
 
+const vendorParts = read("apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx");
+if (!/formatUsd/.test(vendorParts) || /\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(vendorParts)) {
+  fail("VendorPartsHistorySection must format invoice amount via formatUsd");
+}
+const unitParts = read("apps/frontend/src/components/vehicle-profile/UnitPartsHistorySection.tsx");
+if (!/formatUsd/.test(unitParts) || /\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(unitParts)) {
+  fail("UnitPartsHistorySection must format invoice amount via formatUsd");
+}
+const stock = read("apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx");
+if (!/formatUsd\(Number\(row\.unit_cost\)\)/.test(stock)) {
+  fail("InventoryPartsStockPage unit_cost must use formatUsd");
+}
+const comparable = read("apps/frontend/src/components/vehicle-profile/ComparableUnitsWidget.tsx");
+if (!/formatUsd\(cents \/ 100\)/.test(comparable)) {
+  fail("ComparableUnitsWidget per-mile must use formatUsd");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

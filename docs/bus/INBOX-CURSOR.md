@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~11:50 PM CT)
+
+## CURRENT — Cursor house money wave 3 (parts/inventory)
+VendorPartsHistory · UnitPartsHistory · InventoryPartsStock → formatUsd. Guard extended. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~11:35 PM CT)
 
 ## CURRENT — Cursor house money wave 2 (drivers/dispatch/CRM)
