@@ -40,7 +40,7 @@
 import { listCustomers, listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { listWorkOrders } from "../../api/maintenance";
-import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } from "../../api/insurance";
+import { listInsuranceClaims, listInsurancePolicies } from "../../api/insurance";
 import { listFactoringAdvances } from "../../api/accounting";
 import { legalMattersApi } from "../../api/legal-matters";
 import { entityLabel } from "../../lib/entity-label";
@@ -429,7 +429,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
   // ENG-60: insurance.lawsuit retired (0 rows). Picker reads legal.matters type=lawsuit.
   insurance_lawsuit: {
     kind: "insurance_lawsuit",
-    label: "insurance lawsuit",
+    label: "lawsuit (legal matter)",
     readTable: "legal.matters",
     writeTable: "legal.matters",
     readEndpoint: "GET /api/v1/legal/matters?type=lawsuit",
@@ -437,15 +437,16 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/legal/matters.routes.ts (type=lawsuit; insurance.lawsuit retired ENG-60)",
     inlineCreate: {
-      available: true,
+      available: false,
+      reason: "Create lawsuits in Legal › Lawsuits (legal.matters type=lawsuit); insurance.lawsuit is retired (ENG-60).",
     },
     serverSearch: false,
     async list(operatingCompanyId) {
-      const res = await listInsuranceLawsuits({ operating_company_id: operatingCompanyId });
-      return (res.lawsuits ?? []).map((lawsuit) => {
-        const id = String(lawsuit.id ?? "");
-        const number = String(lawsuit.case_number ?? "").trim();
-        const status = String(lawsuit.status ?? "").trim();
+      const res = await legalMattersApi.list(operatingCompanyId, { type: "lawsuit", limit: 200 });
+      return (res.matters ?? []).map((matter) => {
+        const id = String(matter.id ?? "");
+        const number = String(matter.case_number ?? matter.matter_number ?? "").trim();
+        const status = String(matter.status ?? "").trim();
         return {
           value: id,
           label: entityLabel(number, id, "Case"),

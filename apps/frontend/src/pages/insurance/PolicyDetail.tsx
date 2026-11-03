@@ -326,10 +326,9 @@ export function PolicyDetail() {
     setEditing(true);
   };
 
-  const handleArchive = async () => {
+  const handleArchive = () => {
     if (!policyId || archiveMutation.isPending || updateMutation.isPending) return;
-    if (!window.confirm("Archive this policy? This removes the policy from active workflows while retaining its historical record and reverse links.")) return;
-    await archiveMutation.mutateAsync({ policyId, companyId, generation: policyActionGenerationRef.current });
+    setPendingArchive({ policyId, companyId, generation: policyActionGenerationRef.current });
   };
 
   const closeEditPanel = () => {
@@ -350,7 +349,7 @@ export function PolicyDetail() {
             <Button size="sm" variant="secondary" onClick={openEditPanel} disabled={archiveMutation.isPending || updateMutation.isPending}>
               Edit / Update
             </Button>
-            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={() => void handleArchive()} disabled={updateMutation.isPending}>
+            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive} disabled={updateMutation.isPending}>
               Archive
             </Button>
           </div>
