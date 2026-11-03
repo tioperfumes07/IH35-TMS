@@ -254,6 +254,10 @@ if (!/formatQuantityTable\(value, 1\)/.test(relScore) || !/formatQuantityTable\(
 }
 const atRisk = read("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx");
 if (!/formatQuantityTable\(riskScore, 1\)/.test(atRisk)) fail("AtRiskDriverCard risk score must use formatQuantityTable");
+const ledgerKpi = read("apps/frontend/src/components/shared/LedgerKpiPanel.tsx");
+if (!/formatQuantityTable\(k\.value, 2\)/.test(ledgerKpi) || !/formatQuantityTable\(v, 2\)/.test(ledgerKpi)) {
+  fail("LedgerKpiPanel percent must use formatQuantityTable");
+}
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
