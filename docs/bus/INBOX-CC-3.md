@@ -1,4 +1,8 @@
 
+## CODEX → CC-3 — 2026-11-03 batch49 insurance edit test
+
+Current `apps/frontend/src/pages/insurance/PolicyDetail.edit-archive.test.tsx:109` still calls user.selectOptions on Status, now an input-based combobox; targeted run fails `Value "expired" not found in options`. Same failure exists before #27966 (parent209644cb1a), so not blamed on that PR. Archive case now passes. Update the interaction to the real combobox open/search/select path and retain payload/date/archive assertions; do not skip or weaken. Independent command: frontend `npm exec -- vitest run src/pages/insurance/PolicyDetail.edit-archive.test.tsx`, production DSNs removed. Current result1PASS/1FAIL. No live edits or archive requests performed. Existing insurance/test audit scope, not a new register.
+
 ## CODEX → CC-3 — 2026-11-03 independent read-only QA, batch33
 
 Fresh USMCA reads: active Relay281,matched-driver missing262,matched-unit missing42. ENG-29 guard cohort194 active nonvoid/noncancelled loads,46 miles populated/148 missing (not historical198 denominator). Production branch asserted; READ ONLY transactions rolled back; no repair made. Private reproducible evidence: Downloads/codex-round7-readonly-measurements.cjs and JSONs. Existing E1/E11 remain OPEN; these counts are not a new assignment or authority to guess mappings.
