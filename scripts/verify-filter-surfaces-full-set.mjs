@@ -21,8 +21,8 @@ const SURFACES = [
   // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
   // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
   ...[
-    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
-    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
     // U12: Termination Reasons status MultiSelect → matchesStatus(row.is_active, status)
     ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
     ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
