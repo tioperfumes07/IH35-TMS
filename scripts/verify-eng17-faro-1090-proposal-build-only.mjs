@@ -3,6 +3,9 @@
  * ENG-17 BUILD-ONLY — Faro 1090 wire proposal engine + pick screen exist;
  * proposal service has no write SQL; dry-run-accept refuses execute=true;
  * FE Accept stays deferred.
+ *
+ * Codex batch72 — --selftest must inject fixtures into failures() (the real
+ * validator), not a separate regex that never sees the planted routes.
  */
 import fs from "node:fs";
 
@@ -14,14 +17,16 @@ const API = "apps/frontend/src/api/factoring-purchases.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const TEST = "apps/backend/src/factoring/__tests__/faro-1090-wire-proposal.service.test.ts";
 
-function failures() {
+/** @param {Record<string, string>} planted optional path→source overrides for selftest */
+export function failures(planted = {}) {
   const out = [];
-  const service = fs.readFileSync(SERVICE, "utf8");
-  const routes = fs.readFileSync(ROUTES, "utf8");
-  const page = fs.readFileSync(PAGE, "utf8");
-  const api = fs.readFileSync(API, "utf8");
-  const manifest = fs.readFileSync(MANIFEST, "utf8");
-  const test = fs.readFileSync(TEST, "utf8");
+  const read = (rel) => (Object.prototype.hasOwnProperty.call(planted, rel) ? planted[rel] : fs.readFileSync(rel, "utf8"));
+  const service = read(SERVICE);
+  const routes = read(ROUTES);
+  const page = read(PAGE);
+  const api = read(API);
+  const manifest = read(MANIFEST);
+  const test = read(TEST);
 
   if (!/PROPOSED|AMBIGUOUS|NO_EVIDENCE/.test(service)) out.push("service must classify PROPOSED/AMBIGUOUS/NO_EVIDENCE");
   if (/\b(INSERT INTO|UPDATE\s+\w+|DELETE FROM)\b/i.test(service)) out.push("proposal service must stay read-only (no write SQL)");
@@ -70,16 +75,17 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — live source already red:`, real);
     process.exit(1);
   }
-  const routes = fs.readFileSync(ROUTES, "utf8").replace("match_execution_deferred", "match_ok");
-  const plant = failures();
-  // re-read will still pass — force plant via temp check
-  if (!/match_execution_deferred/.test(routes) === false) {
-    // planted routes missing refuse token
+  const routesGood = fs.readFileSync(ROUTES, "utf8");
+  const routesPlant = routesGood
+    .replaceAll("match_execution_deferred", "match_ok")
+    .replaceAll("execute === true", "execute == true");
+  if (routesPlant === routesGood) {
+    console.error(`${LABEL} SELFTEST FAIL — could not plant dry-run-refuse tokens`);
+    process.exit(1);
   }
-  const plantedFails = [];
-  if (!/match_execution_deferred/.test(routes)) plantedFails.push("dry-run refuse planted");
-  if (!plantedFails.length) {
-    console.error(`${LABEL} SELFTEST FAIL — plant escaped`);
+  const planted = failures({ [ROUTES]: routesPlant });
+  if (!planted.some((m) => /refuse execute=true/.test(m))) {
+    console.error(`${LABEL} SELFTEST FAIL — plant escaped failures():`, planted);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

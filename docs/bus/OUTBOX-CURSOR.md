@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:00 PM CT) — batch72 ENG17 selftest + ENG-34 inline/inert holes
+- **PRIOR:** #28446 batch71 Legal route allowlisted comma-unions.
+- **THIS:** Codex batch72 — ENG17 failures() accepts planted routes (refuse execute=true plant hits real validator). ENG-34: stripYamlComments strips trailing inline #; stripInertJsGuardAssignments drops `const documentation = 'verify-….mjs'`; selftest plants; corpusCallsGuard helper retained (full call-evidence reclassify still OPEN — registry string lists). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; ENG-34 call-evidence wave; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:30 PM CT) — ENG-34 guard-wired ignores comment-only mentions (batch70)
 - **PRIOR:** #28439 bus tip Invoice Search → Cascade.
 - **THIS:** Codex batch70 — verify-guard-wired strips // block and YAML # before CI-execution includes; selftest plants comment-only sentinel. ENG-21 DONE-LIVE. Dreamline/match deferred.
