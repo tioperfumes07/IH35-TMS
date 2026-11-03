@@ -1,3 +1,13 @@
+## OUTBOX (11-03-2026 ~1:15 PM CT) — stops/miles + dispatcher + late/factor qty
+- **PRIOR:** #28278 profitability/home/forensic; #28279 late+factor rates; #28280 stops/dispatcher/day-summary.
+- **THIS:** Continuous house quantity sweep on Cursor/shared surfaces. ENG-34 exempt **28** (wave6 #28277). SelectCombobox baseline still 2.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
+## OUTBOX (11-03-2026 ~12:50 PM CT) — profitability/home/forensic quantity+money
+- **PRIOR:** #28277 ENG-34 29→28; #28273 Customer/Driver/Cargo qty.
+- **THIS:** Profitability ByLoad/ByCustomer pctLabel · Forensic anomaly $ · FleetUtilization/Owner/Default/QBO home pct · DriverHub hours → house formatters. Currency guard extended.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
 ## OUTBOX (11-03-2026 ~12:30 PM CT) — margin/% qty + Customer/Driver/Cargo qty + ENG-34 29→28
 - **PRIOR:** #28271 dispatch margin/% formatQuantityTable; #28270 ENG-36 re-measure.
 - **THIS:** CustomerDetail chart/avg-days/margin% · DriverLayover hours · DriverProfile layover hours · CargoTempBadge → formatQuantityTable/formatUsd. Currency guard extended. ENG-34 wire verify-sql-write-targets (19822) exempt **29→28**.
