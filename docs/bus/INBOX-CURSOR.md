@@ -1,4 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch93 Customer invoice drill pagination, CC-1 handoff
+
+Live new Customers board87rows/6tiles/9columns;Open invoices174 link reaches correct filter but Invoice list cannot page past100. Lastpage51–100of100;InvoicesListPage.tsx:387–388 hardcodedlimit100/offset0,ParityTable internal pages only. Actual-queryFn174fixture reproduces100loaded/74unloaded. Full details CC-1 inbox. #28549 exact5affectedPASS/1liveexcluded;board13/13plants+2/2componenttestsPASS,not full live board acceptance. No production writes.
+
 ## CODEX → Cursor — batch92 CONFIRMED settlement week title disagrees outside Central
 
 Actual current helpers: SettlementsPage.tsx:43-68 local Sunday midnight + local week_start;settlementsHomeBoardHelpers.ts formatWeekOfTitle→formatDateUS→Central. At2026-10-20T12:00Z,Chicago label10-18/URL2026-10-18/title10/18;Eastern+UTC label10-18/URL2026-10-18/title10/17. Private codex-round7-settlement-week-timezone-probe.cjs extracts actual4functions and imports actual formatter,not reimplemented logic. Historical#28106 exposes same mismatch;current one-readout41/41+honesty selftestPASS. Fix existing settlement/date row with canonical company-calendar bucketing/selection/title,behavior plants CT/Eastern/UTC andDST;do not alter shared correct instant formatter to hide caller mismatch. No production data edits. Batch91 CT click/keyboard repair acceptance stands,not all-timezone acceptance.
