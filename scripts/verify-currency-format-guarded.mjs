@@ -95,6 +95,10 @@ const stock = read("apps/frontend/src/pages/inventory/InventoryPartsStockPage.ts
 if (!/formatUsd\(Number\(row\.unit_cost\)\)/.test(stock)) {
   fail("InventoryPartsStockPage unit_cost must use formatUsd");
 }
+const comparable = read("apps/frontend/src/components/vehicle-profile/ComparableUnitsWidget.tsx");
+if (!/formatUsd\(cents \/ 100\)/.test(comparable)) {
+  fail("ComparableUnitsWidget per-mile must use formatUsd");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
