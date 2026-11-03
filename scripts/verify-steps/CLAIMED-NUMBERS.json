@@ -17449,5 +17449,10 @@
     "claimed_by": "lead",
     "purpose": "ENG-65 residual: every Relay fill is recorded from its own lines at receipt; the Creator adopts, never writes a second set (static guard)",
     "claimed_at": "2026-11-03"
+  },
+  "19851": {
+    "claimed_by": "lead",
+    "purpose": "Rows 78 + 23: Dispatch Load history board reads the loads-history hub + existing load panels; Bill Payments lists A/P bill payments only (settlement deductions/escrow excluded on every list reader) (static guard)",
+    "claimed_at": "2026-11-03"
   }
 }
