@@ -214,7 +214,7 @@ export function NotifyPreferencesPage() {
                 operatingCompanyId={companyId}
                 value={customerId || null}
                 onChange={(next) => setCustomerId(next ?? "")}
-                enabled={!saveM.isPending}
+                enabled={Boolean(companyId) && !saveM.isPending}
                 allowCreate
                 placeholder="Select customer"
               />
