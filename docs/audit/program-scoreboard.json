@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2d69ac2",
-  "generated_at": "2026-11-03T20:43:11.234Z",
+  "healthzSha": "c11fe33",
+  "generated_at": "2026-11-03T21:31:41.683Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2d69ac2",
+    "deployedSha": "c11fe33",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28444,
-      "title": "FINDING: ACCT-F11040 E9 / ENG-64 — every fill goes through the one fill engine; owner rulings and confirmed loads are never moved",
+      "number": 28459,
+      "title": "FINDING: Codex E13 independent live source contradiction",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28444",
-      "sha": "468f99dae4",
-      "committedAtIso": "2026-11-03T14:41:29-06:00"
+      "mergedAtCt": "11/03/2026, 03:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28459",
+      "sha": "76fc3cd5bd",
+      "committedAtIso": "2026-11-03T15:30:56-06:00"
     },
     {
-      "number": 28443,
-      "title": "FIX: ENG-34 guard-wired ignores comment-only CI mentions",
+      "number": 28458,
+      "title": "fix(guards): batch72 ENG17 selftest + ENG-34 inline/inert holes",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28443",
-      "sha": "7e5f318240",
-      "committedAtIso": "2026-11-03T14:39:09-06:00"
+      "mergedAtCt": "11/03/2026, 03:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28458",
+      "sha": "a4c4b14775",
+      "committedAtIso": "2026-11-03T15:29:13-06:00"
     },
     {
-      "number": 28442,
-      "title": "FINDING: Codex Legal union HTTP validation regression",
+      "number": 28457,
+      "title": "FINDING: ACCT-F11041 ENG-65 residual — every Relay fill is recorded from its own Relay lines at receipt; the Creator adopts, never writes a second set (48 fills, $16,421.01 had no record)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28442",
-      "sha": "2c0f8aae78",
-      "committedAtIso": "2026-11-03T14:38:04-06:00"
+      "mergedAtCt": "11/03/2026, 03:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28457",
+      "sha": "68acceee21",
+      "committedAtIso": "2026-11-03T15:27:20-06:00"
     },
     {
-      "number": 28441,
-      "title": "CLAIM-RESERVE: verify-step 19833 (LEAD) — E9 ENG-64 fill-engine guard",
+      "number": 28456,
+      "title": "CLAIM-RESERVE: verify-step 19841 (LEAD) — ENG-65 receipt-time Relay records guard",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28441",
-      "sha": "2d69ac249a",
-      "committedAtIso": "2026-11-03T14:37:33-06:00"
+      "mergedAtCt": "11/03/2026, 03:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28456",
+      "sha": "c11fe33fe0",
+      "committedAtIso": "2026-11-03T15:22:19-06:00"
     },
     {
-      "number": 28407,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28455,
+      "title": "FINDING: Codex E13 period and gate-scope counterexamples",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28407",
-      "sha": "c50dbe9e72",
-      "committedAtIso": "2026-11-03T20:32:39Z"
+      "mergedAtCt": "11/03/2026, 03:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28455",
+      "sha": "ffb014f3ad",
+      "committedAtIso": "2026-11-03T15:18:13-06:00"
     },
     {
-      "number": 28440,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — FIX ROSTER-DUP-PLACEHOLDERS phoneKey rejects placeholder numbers",
+      "number": 28454,
+      "title": "FINDING: Codex Vendor filter boundary and historical audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28440",
-      "sha": "fc6ad38060",
-      "committedAtIso": "2026-11-03T14:26:27-06:00"
+      "mergedAtCt": "11/03/2026, 03:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28454",
+      "sha": "27e5a65981",
+      "committedAtIso": "2026-11-03T15:10:35-06:00"
     },
     {
-      "number": 28439,
-      "title": "BUS: Legal multi-status closed; Invoice Search → Cascade",
+      "number": 28453,
+      "title": "FINDING: Codex historical audit and Reclassify date-only refusal",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28439",
-      "sha": "ff7f944242",
-      "committedAtIso": "2026-11-03T14:18:46-06:00"
+      "mergedAtCt": "11/03/2026, 03:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28453",
+      "sha": "3c6d420b22",
+      "committedAtIso": "2026-11-03T15:07:03-06:00"
     },
     {
-      "number": 28438,
-      "title": "FINDING: Codex ENG34 comment-only coverage counterexample",
+      "number": 28452,
+      "title": "FINDING: ACCT-F443161-E13 LANE: NON-FINANCIAL — LEAD 443.161 (row 161): seed fuel.fuel_card_assignments 27 USMCA card-unit periods from Relay fill history",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28438",
-      "sha": "785bfbe398",
-      "committedAtIso": "2026-11-03T14:18:03-06:00"
+      "mergedAtCt": "11/03/2026, 03:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28452",
+      "sha": "df3b66b2bb",
+      "committedAtIso": "2026-11-03T15:02:21-06:00"
     },
     {
-      "number": 28437,
-      "title": "FIX: Legal templates multi-status uses server status union",
+      "number": 28451,
+      "title": "FINDING: Codex Legal live acceptance and E9 boundary audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28437",
-      "sha": "b3440459d7",
-      "committedAtIso": "2026-11-03T14:17:11-06:00"
+      "mergedAtCt": "11/03/2026, 03:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28451",
+      "sha": "f241e72258",
+      "committedAtIso": "2026-11-03T15:01:22-06:00"
     },
     {
-      "number": 28436,
-      "title": "FINDING: Codex capped invoice and contract filter audit",
+      "number": 28450,
+      "title": "FIX: E11 / ENG-29 — real-driven-miles boundaries without an odometer read get Samsara's own reads (91 of 148 loads without miles carry the gap)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28436",
-      "sha": "694849ab32",
-      "committedAtIso": "2026-11-03T14:15:57-06:00"
+      "mergedAtCt": "11/03/2026, 02:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28450",
+      "sha": "dfb14da20a",
+      "committedAtIso": "2026-11-03T14:57:05-06:00"
     }
   ]
 }
