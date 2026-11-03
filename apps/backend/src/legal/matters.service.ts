@@ -202,6 +202,8 @@ async function assertUnitInCompany(
   }
 }
 
+// ENG-60 — insurance.lawsuit retired; canonical lawsuit = legal.matters type=lawsuit.
+// Picker emits legal.matters IDs; writer + FK must agree (never validate against insurance.lawsuit).
 async function assertInsuranceLawsuitInCompany(
   client: QueryableClient,
   lawsuitId: string | null | undefined,
@@ -210,9 +212,10 @@ async function assertInsuranceLawsuitInCompany(
   if (!lawsuitId) return;
   const result = await client.query(
     `SELECT id
-       FROM insurance.lawsuit
+       FROM legal.matters
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND type = 'lawsuit'
       LIMIT 1`,
     [lawsuitId, operatingCompanyId],
   );
@@ -372,7 +375,7 @@ export async function listMatters(
       u.unit_number                                          AS unit_number,
       eq.equipment_number                                    AS equipment_number,
       ic.claim_number                                        AS insurance_claim_number,
-      lw.case_number                                         AS insurance_lawsuit_case_number`;
+      COALESCE(NULLIF(lw.case_number, ''), lw.matter_number) AS insurance_lawsuit_case_number`;
   // ENTITY PREDICATE ON THE JOIN ITSELF (verify-mdata-entity-scope). The matter is scoped by
   // `m.operating_company_id = $1` in WHERE, but that does NOT scope what we join TO: a bare `d.id =
   // m.related_driver_id` would happily surface another entity's driver name or unit number if an id
@@ -388,8 +391,9 @@ export async function listMatters(
                                 AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
                                 AND ic.operating_company_id = m.operating_company_id
-    LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
-                                  AND lw.operating_company_id = m.operating_company_id`;
+    LEFT JOIN legal.matters lw ON lw.id = m.insurance_lawsuit_id
+                               AND lw.operating_company_id = m.operating_company_id
+                               AND lw.type = 'lawsuit'`;
 
   // CLS-SILENT-CAP inst.1 — this was a bare `LIMIT 500` with no offset and no total, so matter 501
   // simply vanished with nothing in the UI to say so. A cap the caller cannot see is indistinguishable
@@ -475,7 +479,7 @@ export async function getMatter(
              u.unit_number                                          AS unit_number,
              eq.equipment_number                                    AS equipment_number,
              ic.claim_number                                        AS insurance_claim_number,
-                    lw.case_number                                         AS insurance_lawsuit_case_number
+                    COALESCE(NULLIF(lw.case_number, ''), lw.matter_number) AS insurance_lawsuit_case_number
       FROM legal.matters m
       -- CLS-UUID-LABEL — the DETAIL page is where the truncated uuids were rendered, so the same
       -- display joins used by listMatters must exist here too. Fixing only the list query would have
@@ -489,8 +493,9 @@ export async function getMatter(
                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
                                   AND ic.operating_company_id = m.operating_company_id
-      LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
-                                    AND lw.operating_company_id = m.operating_company_id
+      LEFT JOIN legal.matters lw ON lw.id = m.insurance_lawsuit_id
+                                 AND lw.operating_company_id = m.operating_company_id
+                                 AND lw.type = 'lawsuit'
       WHERE m.operating_company_id = $1::uuid AND m.id = $2
       LIMIT 1
     `,
