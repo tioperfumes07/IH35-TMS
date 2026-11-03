@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:35 PM CT) — finance/compliance need-company sweep
+- **PRIOR:** #28271–#28298 quantity + ENG-34 29→28 + finance/compliance need-company shells.
+- **THIS:** Continuous BUILD-FIRST: house format + BoardSection need-company across Cursor/shared finance/compliance. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool ~28. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines.
+
 ## OUTBOX (11-03-2026 ~2:20 PM CT) — finance/compliance need-company wave
 - **PRIOR:** #28291–#28295 format + need-company + BoardSection import fix.
 - **THIS:** BreakEven/Hub/Amortization/Statements/Compliance/PropertyTax need-company; FeatureFlags qty; Form425c/amort money. ENG-21 DONE-LIVE. ENG-34 ~28. SelectCombobox baseline 2.
