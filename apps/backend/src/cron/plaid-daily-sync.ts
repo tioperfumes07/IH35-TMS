@@ -2,7 +2,7 @@ import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { recordBackgroundJobDisabled, JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { withLuciaBypass } from "../auth/db.js";
-import { syncTransactions, handleItemError } from "../integrations/plaid/plaid.service.js";
+import { syncTransactions, handleItemError, sweepStalePlaidPendings } from "../integrations/plaid/plaid.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 
 export const PLAID_DAILY_SYNC_JOB = "banking.plaid_daily_sync_cron";
@@ -116,6 +116,17 @@ export async function runPlaidDailySyncTick(log: FastifyBaseLogger): Promise<{ f
         "[PLAID_DAILY_SYNC] failure alert email not sent — sync tick still records success"
       );
     }
+  }
+
+  // LEAD 443.154/156: sweep stale pending lines after all syncs run (orphaned pendings
+  // that Plaid replaced with a 2nd pending are never sent as removed events).
+  try {
+    const swept = await sweepStalePlaidPendings();
+    if (swept.voided > 0 || swept.escalated > 0) {
+      log.info({ swept }, "[PLAID_STALE_PENDING_SWEEP] completed");
+    }
+  } catch (sweepErr) {
+    log.warn({ err: sweepErr }, "[PLAID_STALE_PENDING_SWEEP] sweep failed — sync tick still records success");
   }
 
   return { failure_count: failures.length };
