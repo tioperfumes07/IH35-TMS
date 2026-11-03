@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Argon2id } from "oslo/password";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { userListName } from "./user-list-name.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { findReturningDispatcherMatches } from "../mdata/dispatcher-safety-events.routes.js";
@@ -135,7 +136,7 @@ function mapIdentityUser(row: IdentityUserRow) {
   const authMethod = hasGoogle && hasPassword ? "Google + Password" : hasGoogle ? "Google" : hasPassword ? "Password" : "Invite pending";
   return {
     id: String(row.id),
-    name: fullName || (row.email ? row.email.split("@")[0] : "User"),
+    name: userListName(fullName, row.email, row.role),
     first_name: firstName || null,
     last_name: lastName || null,
     email: row.email,
@@ -168,7 +169,7 @@ function mapAssignableUser(row: AssignableUserRow) {
   const fullName = `${firstName} ${lastName}`.trim();
   return {
     id: String(row.id),
-    name: fullName || (row.email ? row.email.split("@")[0] : "User"),
+    name: userListName(fullName, row.email, row.role),
     first_name: firstName || null,
     last_name: lastName || null,
     email: row.email,

@@ -1107,7 +1107,8 @@ const SIBLINGS = [
     // item.customer_id exists — only a bare (non-prop) paint is the violation.
     rel: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
     bad: /(?<!=)\{item\.customer_name\}/,
-    good: /entityLabel\(\s*item\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    // live 11-03 row 219: companyLabel = entityLabel (same honest fallbacks) + the one org casing function.
+    good: /(?:entityLabel|companyLabel)\(\s*item\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx",
