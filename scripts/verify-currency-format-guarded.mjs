@@ -787,6 +787,10 @@ const tourLoadFooterQty = read("apps/frontend/src/components/dispatch/TourLoadRo
 if (!/formatQuantityTable\(new Set\(v\.map\(r => r\.settlement_id\)\)\.size, 0\)/.test(tourLoadFooterQty) || !/formatQuantityTable\(v\.filter\(r => r\.load_id\)\.length, 0\)/.test(tourLoadFooterQty)) {
   fail("TourLoadRows footer tour/load counts must use formatQuantityTable(, 0)");
 }
+const legalMattersQty = read("apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx");
+if (!/formatQuantityTable\(rangeStart, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(rangeEnd, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(total, 0\)/.test(legalMattersQty)) {
+  fail("LegalMattersListPage Showing range must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
