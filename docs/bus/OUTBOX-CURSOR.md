@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:25 PM CT) — ENG-34 wire cash-basis pair 19877/19879
+- **PRIOR:** #28578 batch70 static 19871/73/75.
+- **THIS:** verify-steps 19877 (cash-basis-pl-from-transactions) + 19879 (cash-basis-drill-answers); removed from .guard-exempt. LIVE leftovers stay exempt.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:20 PM CT) — ENG-34 wire batch70 static orphans 19871/73/75
 - **PRIOR:** #28577 bus-diet Cursor.
 - **THIS:** verify-steps 19871 (every-poster --selftest/static), 19873 (one-fuel-to-load-helper), 19875 (row-actions-clickable); removed from .guard-exempt. LIVE leftovers stay exempt (balanced-ledger / load-driven-miles / bus-diet global / match).
