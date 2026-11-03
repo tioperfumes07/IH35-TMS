@@ -791,6 +791,10 @@ const legalMattersQty = read("apps/frontend/src/pages/legal/matters/LegalMatters
 if (!/formatQuantityTable\(rangeStart, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(rangeEnd, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(total, 0\)/.test(legalMattersQty)) {
   fail("LegalMattersListPage Showing range must use formatQuantityTable(, 0)");
 }
+const attorneyReviewQty = read("apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(attorneyReviewQty)) {
+  fail("LegalAttorneyReviewPage version must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

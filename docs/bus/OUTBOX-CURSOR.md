@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:40 PM CT) — Attorney Review version quantity
+- **PRIOR:** #28471 expense load confirmations need-company.
+- **THIS:** LegalAttorneyReviewPage version → formatQuantityTable(, 0); currency ratchet plant. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:30 PM CT) — Expense load confirmations page need-company
 - **PRIOR:** #28470 Factoring workqueue need-company.
 - **THIS:** ExpenseLoadConfirmationsPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
