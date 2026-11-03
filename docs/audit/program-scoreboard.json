@@ -1,10 +1,10 @@
 {
-  "healthzSha": "eac08f0",
-  "generated_at": "2026-11-03T16:28:33.274Z",
+  "healthzSha": "8c65194",
+  "generated_at": "2026-11-03T18:10:52.701Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "eac08f0",
+    "deployedSha": "8c65194",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28273,
-      "title": "FILL: Customer/Driver/Cargo quantity house formatters",
+      "number": 28368,
+      "title": "FINDING: Codex independent fix retests and Notes guard gap",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28273",
-      "sha": "cd058c15e9",
-      "committedAtIso": "2026-11-03T10:27:37-06:00"
+      "mergedAtCt": "11/03/2026, 12:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28368",
+      "sha": "d59f97261f",
+      "committedAtIso": "2026-11-03T12:10:30-06:00"
     },
     {
-      "number": 28271,
-      "title": "FILL: dispatch margin/% cells use formatQuantityTable",
+      "number": 28367,
+      "title": "FORMAT: house quantity BreakEven days, fleet units, factor settings",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28271",
-      "sha": "eac08f0919",
-      "committedAtIso": "2026-11-03T10:19:06-06:00"
+      "mergedAtCt": "11/03/2026, 12:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28367",
+      "sha": "75be13e6d1",
+      "committedAtIso": "2026-11-03T12:08:52-06:00"
     },
     {
-      "number": 28270,
-      "title": "FINDING: ENG-36 re-measure 18841 still 21/≤21",
+      "number": 28366,
+      "title": "FORMAT: house quantity for wire count, MPG, API count",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28270",
-      "sha": "777a1feb16",
-      "committedAtIso": "2026-11-03T10:16:08-06:00"
+      "mergedAtCt": "11/03/2026, 12:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28366",
+      "sha": "95757f36c4",
+      "committedAtIso": "2026-11-03T12:07:21-06:00"
     },
     {
-      "number": 28269,
-      "title": "FILL: OptimalDriversPanel scores formatQuantityTable",
+      "number": 28365,
+      "title": "GUARD: retarget #27988 customer Coming-soon guards to fill-not-shell",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28269",
-      "sha": "797a4516f0",
-      "committedAtIso": "2026-11-03T10:14:27-06:00"
+      "mergedAtCt": "11/03/2026, 12:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28365",
+      "sha": "e1220db239",
+      "committedAtIso": "2026-11-03T12:05:29-06:00"
     },
     {
-      "number": 28268,
-      "title": "FIX: deadhead guard + DeadheadOptimizer score quantity",
+      "number": 28364,
+      "title": "FINDING: ACCT-F11031 Accounting Hub lower panels — money truncated at 1280, crushed at 768 (Codex batch33/40)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28268",
-      "sha": "8da031b7bf",
-      "committedAtIso": "2026-11-03T10:13:12-06:00"
+      "mergedAtCt": "11/03/2026, 12:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28364",
+      "sha": "a5e5d7ea7a",
+      "committedAtIso": "2026-11-03T12:03:35-06:00"
     },
     {
-      "number": 28267,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — CLAIM-RESERVE migration 202616310200 (CC-1)",
+      "number": 28363,
+      "title": "FIX: CASH-T03 Fuel History provenance + house days quantity",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28267",
-      "sha": "16e84b0f75",
-      "committedAtIso": "2026-11-03T10:12:56-06:00"
+      "mergedAtCt": "11/03/2026, 12:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28363",
+      "sha": "5626ead433",
+      "committedAtIso": "2026-11-03T12:02:48-06:00"
     },
     {
-      "number": 28266,
-      "title": "FILL: DF boards need-company",
+      "number": 28362,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — FIX E10 5 backend test files (Lead-tested patch)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28266",
-      "sha": "481676d6e5",
-      "committedAtIso": "2026-11-03T10:11:05-06:00"
+      "mergedAtCt": "11/03/2026, 12:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28362",
+      "sha": "8c651943b9",
+      "committedAtIso": "2026-11-03T12:00:32-06:00"
     },
     {
-      "number": 28265,
-      "title": "TEST: ENG-29/53 dwell SAVEPOINT behavior (Codex #27976)",
+      "number": 28354,
+      "title": "BUS: restore HONEST-BUILT law citation on 4 inboxes (guard red on main); Codex fix list (owner 11:46 CT); CC-1 audit fixes; CC-2 E4 closure",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28265",
-      "sha": "bdb1f56929",
-      "committedAtIso": "2026-11-03T10:09:10-06:00"
+      "mergedAtCt": "11/03/2026, 11:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28354",
+      "sha": "ed59cf16c4",
+      "committedAtIso": "2026-11-03T11:59:51-06:00"
     },
     {
-      "number": 28264,
-      "title": "Codex: escrow history and linkage audit",
+      "number": 28361,
+      "title": "FIX: ENG-60 lawsuit picker/writer agree on legal.matters",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28264",
-      "sha": "d5d06f4626",
-      "committedAtIso": "2026-11-03T10:07:32-06:00"
+      "mergedAtCt": "11/03/2026, 11:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28361",
+      "sha": "957e382c78",
+      "committedAtIso": "2026-11-03T11:59:13-06:00"
     },
     {
-      "number": 28263,
-      "title": "Codex: independent diesel verifier and snapshot audit",
+      "number": 28360,
+      "title": "FINDING: Codex ROUND7 rolling ledger retest and customer guard failures",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28263",
-      "sha": "461489fdb3",
-      "committedAtIso": "2026-11-03T10:05:17-06:00"
+      "mergedAtCt": "11/03/2026, 11:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28360",
+      "sha": "45a438a3ff",
+      "committedAtIso": "2026-11-03T11:58:26-06:00"
     }
   ]
 }
