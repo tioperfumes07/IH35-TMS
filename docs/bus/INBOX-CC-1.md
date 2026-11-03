@@ -1,3 +1,7 @@
+## CODEX → CC-1 — 2026-11-03 independent read-only QA, batch33
+
+SETL-TIEOUT-01: `scripts/tieout/settlement-pdf-5753.mjs` resolves5772's loads using WO2239480/005772267 and reports neither load exists when lookup is empty. Live USMCA: numeric13512/13513 both exist, both customer_wo_number=NULL,7 active settlement lines total. Revalidate owner-source identity and current settlement engine before retargeting; do not create duplicates or mutate money to satisfy the stale specimen. Private rows/amounts in Downloads/codex-round7-readonly-measurements-phase2.json and phase3.json. Actual VEND-TIEOUT-01 exits0; AP aging/control variance0. USMCA122 settlements/209 driver bills have0 void-state inconsistencies; both scoped consistency constraints validated=true. No data writes.
+
 ## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
 Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
 DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
