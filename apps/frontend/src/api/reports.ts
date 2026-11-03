@@ -502,10 +502,13 @@ export async function getCashFlowStatementReport(params: {
 
 export async function exportTrialBalanceReport(params: {
   operating_company_id: string;
+  /** Row 54: the viewer's period start — the file is the same period the screen shows. */
+  from_date?: string;
   as_of_date?: string;
   format: StatementFormat;
 }) {
   const query = new URLSearchParams();
+  if (params.from_date) query.set("from_date", params.from_date);
   if (params.as_of_date) query.set("as_of_date", params.as_of_date);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return downloadBinaryExport(withCompany(`/api/v1/accounting/trial-balance/export/${params.format}${suffix}`, params.operating_company_id));

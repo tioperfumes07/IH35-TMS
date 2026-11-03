@@ -66,15 +66,21 @@ export async function exportTrialBalanceStatement(input: {
   userId: string;
   operating_company_id: string;
   as_of_date: string;
+  /** Row 54 (ACCT-F11051): the viewer's period start. When present the export is the SAME period the screen
+   *  shows (from_date..as_of_date through the one trial-balance query); absent keeps the as-of (all-time) read. */
+  from_date?: string | null;
   format: StatementExportFormat;
 }): Promise<ExportResult> {
   const companyCode = await fetchCompanyCode(input.userId, input.operating_company_id);
+  const fromDate = input.from_date ?? null;
   const report = await getTrialBalanceReport({
     userId: input.userId,
     operating_company_id: input.operating_company_id,
+    from_date: fromDate ?? undefined,
     to_date: input.as_of_date,
   });
-  const periodSegment = buildAsOfSegment(input.as_of_date);
+  const periodSegment = fromDate ? buildRangeSegment(fromDate, input.as_of_date) : buildAsOfSegment(input.as_of_date);
+  const periodLabel = fromDate ? `${fromDate} to ${input.as_of_date}` : `As of ${input.as_of_date}`;
   const filename = buildStatementExportFilename({
     companyCode,
     reportKey: "trial-balance",
@@ -89,7 +95,7 @@ export async function exportTrialBalanceStatement(input: {
         ...tableStyles(),
         title: "Trial Balance",
         company_code: companyCode,
-        period_label: `As of ${input.as_of_date}`,
+        period_label: periodLabel,
         rows: report.rows.map((row) => ({
           account_code: row.account_code,
           account_name: row.account_name,
@@ -113,7 +119,7 @@ export async function exportTrialBalanceStatement(input: {
     ["Trial Balance"],
     ["Company", companyCode],
     ["Basis", "Accrual basis"],
-    ["As of", input.as_of_date],
+    fromDate ? ["Period", periodLabel] : ["As of", input.as_of_date],
     ["Balanced", yesNo(report.summary.balanced)],
     [],
     ["Account Code", "Account Name", "Account Type", "Total Debits (USD)", "Total Credits (USD)", "Net Balance (USD)"],
