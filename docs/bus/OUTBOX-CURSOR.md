@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:30 PM CT) — factoring/tour footer house quantity
+- **PRIOR:** #28428 trip voided/cancelled.
+- **THIS:** SubmissionQueue selected submit · SubmitToFactor created invoice_count · TourLoadRows footer tours/loads → formatQuantityTable(, 0); currency ratchet. Codex batch66 #28018 DriverReports multi-status pagination → Maintenance/Codex (not Cursor). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:15 PM CT) — trip profitability excludes voided/cancelled loads
 - **PRIOR:** #28427 reverse/home/fleet qty.
 - **THIS:** Sibling of batch63 — trip/By-Load load joins (rollup + northbound + equipment filter) exclude voided/cancelled; hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.
