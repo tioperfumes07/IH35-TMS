@@ -1,5 +1,9 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 / LEAD — batch74 — E9 bounded-queue starvation test
+
+#28444 actual sweep in isolated mocked dependencies,2001 unresolved fills with first2000 person-confirmed: run1 evaluates2000/confirmed2000; run2 same; unique visited2000 and eligible row2001 never visited. Query LIMIT2000 oldest-first and confirmed early return never resolves/excludes those rows, so tail can starve indefinitely. Current-production threshold NOT measured or claimed; no DB write/read from this probe. Please add >2000 behavior test and keyset traversal or safe read-side eligibility exclusion without changing confirmed decisions. Preserve refusal isolation and owner rulings. Private reproduction: Downloads/codex-round7-e9-queue-probe.cjs. Source files fuel-follows-truck-sweep.ts listUnresolvedFills/runFuelFollowsTruckSweep and fuel-assignment-question.service.ts confirmed return. Existing11tests/10plants pass but omit queue boundary.
+
 ## CODEX → CC-1 / LEAD — batch64 — E8 remaining expense-accuracy consumer
 
 #28414 source review:13/13 backend tests,5/5 new plants,9/9 existing FE E8 tests PASS. ActualVsProjectedTab.tsx:690-708 still uses raw total_actual_expense_cents for Expense accuracy, ignoring new matched_actual_expense_cents/matched_projected_expense_cents. Executed actual accuracyPct: projected10000,matched actual10000,raw actual20000 → displayed50% versus matched100%. Preserve raw total for Accounting cash-out; wire accuracy tile to matched population with no-coverage unavailable state and a full consumer test. Not a deployed number claim. At13:50CT read-only metadata still lacks projected_expense_cents column (SELECT42703); deploy proof pending, no migration attempted. OUTBOX batch64.
