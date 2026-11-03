@@ -93,6 +93,14 @@ docs/audit/GUARD-WORKORDERS.md          merge=union
 # destroys another lane's rows, and git's built-in union keeps both.
 docs/audit/*.md                         merge=union
 
+# BUS-DIET TREADMILL KILLER (2026-11-02 ENG-48): every seat PR appends to docs/bus/INBOX-*/OUTBOX-*
+# bus files. Without a union driver the pre-push freshness check detects bus file overlap and runs a
+# test rebase — which fails with a real content conflict every time another seat's PR advanced the
+# bus file past our trimmed version. The built-in `union` driver keeps BOTH sides of an append-only
+# conflict, so the test rebase auto-resolves and the branch-precheck-push freshness gate treats bus
+# files as non-overlapping (isUnionMerged = true). Bus-diet trimming is still enforced separately.
+docs/bus/*.md                           merge=union
+
 # ADOPTION CAVEAT, learned by using this on a real stale branch — read before telling anyone "just
 # merge main". Git resolves merge attributes from the .gitattributes of the branch you are merging
 # INTO, not from the branch being merged in. A branch cut BEFORE these rules landed therefore does NOT
