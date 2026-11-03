@@ -26,10 +26,23 @@ import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
-// Two Rolling Ledger document kinds (card_payable, relay_topup — added by #f8ea8f01c4) have no EntityKind / record
-// page yet: they render as plain labels instead of a link to a page that does not exist (web build TS2322 fix).
-function ledgerEntityKind(kind: RollingLedgerRow["document_kind"]): EntityKind | null {
-  return kind === "card_payable" || kind === "relay_topup" ? null : (kind as EntityKind);
+// Non-EntityLink ledger kinds: card_payable / relay_topup have no record page yet; fuel_forecast is a
+// synthetic 4-wk avg projection (CASH-T03) — never drill it as accounting.expenses (Validation failed).
+export function isFuelForecastRow(row: Pick<RollingLedgerRow, "document_kind" | "document_id">): boolean {
+  return row.document_kind === "fuel_forecast" || /^fuel-avg-/.test(row.document_id);
+}
+export function ledgerEntityKind(kind: RollingLedgerRow["document_kind"]): EntityKind | null {
+  return kind === "card_payable" || kind === "relay_topup" || kind === "fuel_forecast" ? null : (kind as EntityKind);
+}
+function ledgerDocLabel(row: RollingLedgerRow) {
+  if (isFuelForecastRow(row)) {
+    return (
+      <span title="4-week fuel average forecast — not a posted expense" data-testid="rolling-ledger-fuel-forecast-label">
+        {row.document_label}
+      </span>
+    );
+  }
+  return <span>{row.document_label}</span>;
 }
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
@@ -925,7 +938,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         const doc = kind ? (
           <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span>{row.document_label}</span>
+          ledgerDocLabel(row)
         );
         const load = row.load_id ? (
           <>
@@ -1012,7 +1025,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         const doc = kind ? (
           <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span>{row.document_label}</span>
+          ledgerDocLabel(row)
         );
         const load = row.load_id ? (
           <>
@@ -1068,6 +1081,14 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       sortable: false,
       render: (row) => {
         if (isBoardEmptyRow(row)) return null;
+        // CASH-T03 — forecast fuel is not a real money document; no roll/stop inventing adjustments.
+        if (isFuelForecastRow(row)) {
+          return (
+            <span className="text-[#6B7280]" title="Forecast — not an adjustable expense document" data-testid="rolling-ledger-fuel-forecast-action">
+              Forecast
+            </span>
+          );
+        }
         return (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <ExpenseRolloverMenu

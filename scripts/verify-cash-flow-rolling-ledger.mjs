@@ -201,6 +201,20 @@ export function check({
   if (!/EntityLink/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: rows must render through EntityLink, not a bare label`);
   }
+  // CASH-T03 — projected fuel is fuel_forecast provenance, never a fake expense EntityLink.
+  if (!/"fuel_forecast"/.test(backend) || !/document_kind: "fuel_forecast"/.test(backend)) {
+    f.push(`${BACKEND_FILE}: projected fuel must use document_kind fuel_forecast`);
+  }
+  if (/document_kind:\s*"expense",[\s\S]{0,120}document_id:\s*`fuel-avg/.test(backend)) {
+    f.push(`${BACKEND_FILE}: fuel-avg rows must not use document_kind expense (CASH-T03)`);
+  }
+  if (!/fuel_forecast/.test(frontend) || !/isFuelForecastRow/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: must gate fuel_forecast rows off EntityLink / roll-stop (CASH-T03)`);
+  }
+  if (!/kind === "fuel_forecast"/.test(frontend) && !/=== "fuel_forecast"/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: ledgerEntityKind must treat fuel_forecast as non-EntityLink`);
+  }
+
   if (!/getRollingLedger/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: tab does not call the rolling-ledger API`);
   }
@@ -273,6 +287,24 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("EntityLink", "PlainSpanNotLinked"),
+      }),
+    },
+    {
+      name: "fuel_forecast provenance stripped to expense (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        backend: good.backend
+          .replaceAll('document_kind: "fuel_forecast"', 'document_kind: "expense"')
+          .replaceAll('"fuel_forecast"', '"expense_stripped"'),
+      }),
+    },
+    {
+      name: "fuel_forecast frontend gate stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend
+          .replaceAll("isFuelForecastRow", "neverFuelForecast")
+          .replaceAll("fuel_forecast", "expense"),
       }),
     },
     {
