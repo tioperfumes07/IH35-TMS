@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
@@ -120,6 +121,21 @@ export function BorderCrossingHistoryPage() {
     } },
     { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
   ];
+
+  if (!selectedCompanyId) {
+    return (
+      <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4 p-4">
+        <PageHeader
+          backHref="/dispatch"
+          title="Border Crossing History"
+          subtitle="Past wizard completions with eManifest re-download"
+        />
+        <BoardSection title="Border crossing history" testId="border-crossing-history-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4">

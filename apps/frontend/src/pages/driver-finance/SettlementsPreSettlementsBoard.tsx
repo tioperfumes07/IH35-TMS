@@ -156,6 +156,16 @@ export function SettlementsPreSettlementsBoard() {
   const totalCents = filteredRows.reduce((sum, row) => sum + Number(row.driver_pay_cents ?? 0), 0);
   const countLabel = openToursQuery.isLoading || openToursQuery.isError ? "—" : String(filteredRows.length);
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3" data-testid="settlements-presettle-board">
+        <BoardSection title="Pre-settlements" testId="settlements-presettle-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3" data-testid="settlements-presettle-board" data-settlements-presettle-rebuild="1">
       <div

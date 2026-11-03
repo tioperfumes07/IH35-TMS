@@ -46,6 +46,12 @@ function failures() {
   if (!/backHref="\/factoring"/.test(page)) {
     out.push("pick screen PageHeader backHref must be /factoring (U18 module home)");
   }
+  if (!/testId="faro-1090-need-company"/.test(page) || !/BoardSection/.test(page)) {
+    out.push("pick screen must BoardSection need-company when operating company missing");
+  }
+  if (!/formatQuantityTable\(row\.days_unfunded\)/.test(page)) {
+    out.push("days unfunded must use formatQuantityTable");
+  }
   if (!/listFaro1090WireProposals/.test(api) || !/dryRunAcceptFaro1090WireProposal/.test(api)) {
     out.push("FE API client missing proposal list/dry-run");
   }

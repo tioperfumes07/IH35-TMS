@@ -300,6 +300,19 @@ export function CompanySettlementsPage() {
     []
   );
 
+  if (!companyId) {
+    return (
+      <SettlementsSubNavWrapper
+        title="Company Settlements"
+        subtitle="Revenue · costs · driver pay · margin per tour"
+      >
+        <BoardSection title="Company settlements" testId="company-settlements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </SettlementsSubNavWrapper>
+    );
+  }
+
   return (
     <SettlementsSubNavWrapper
       title="Company Settlements"

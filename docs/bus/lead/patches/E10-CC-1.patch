@@ -1,0 +1,140 @@
+diff --git a/apps/backend/src/dispatch/__tests__/book-load-po-or-wo-required.test.ts b/apps/backend/src/dispatch/__tests__/book-load-po-or-wo-required.test.ts
+index e2e3da15d6..56c17b5df5 100644
+--- a/apps/backend/src/dispatch/__tests__/book-load-po-or-wo-required.test.ts
++++ b/apps/backend/src/dispatch/__tests__/book-load-po-or-wo-required.test.ts
+@@ -15,8 +15,8 @@ function baseInput(overrides: Partial<BookLoadInput> = {}): BookLoadInput {
+     status: "booked",
+     charges: [],
+     stops: [
+-      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z" },
+-      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z" },
++      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z", address_line1: "1 Pickup Way" },
++      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z", address_line1: "2 Delivery Way" },
+     ],
+     save_mode: "book_dispatch",
+     trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
+diff --git a/apps/backend/src/dispatch/__tests__/book-load-trip-type-required-with-driver.test.ts b/apps/backend/src/dispatch/__tests__/book-load-trip-type-required-with-driver.test.ts
+index f7fb5f14c1..4e4b7d40f9 100644
+--- a/apps/backend/src/dispatch/__tests__/book-load-trip-type-required-with-driver.test.ts
++++ b/apps/backend/src/dispatch/__tests__/book-load-trip-type-required-with-driver.test.ts
+@@ -16,8 +16,8 @@ function baseInput(overrides: Partial<BookLoadInput> = {}): BookLoadInput {
+     status: "booked",
+     charges: [],
+     stops: [
+-      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z" },
+-      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z" },
++      { stop_type: "pickup", sequence_number: 1, scheduled_arrival_at: "2026-09-10T08:00:00Z", address_line1: "1 Pickup Way" },
++      { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z", address_line1: "2 Delivery Way" },
+     ],
+     save_mode: "book_dispatch",
+     trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
+diff --git a/apps/backend/src/dispatch/__tests__/historical-reassign-qualification.test.ts b/apps/backend/src/dispatch/__tests__/historical-reassign-qualification.test.ts
+index 7dee6b50df..bf29c88718 100644
+--- a/apps/backend/src/dispatch/__tests__/historical-reassign-qualification.test.ts
++++ b/apps/backend/src/dispatch/__tests__/historical-reassign-qualification.test.ts
+@@ -1,6 +1,8 @@
+ // FAIL-D1 (443.187) — a driver (re)assigned to an existing load on a historical backfill (Settlement Creator, settlement-
+ // document seed) runs the SAME qualification gate; a block is RECORDED as dispatch.historical_backfill_gate_exception and
+ // the reassignment proceeds (owner ruling for historical_backfill: never skipped, never silently passed).
++// ROUND 443.257: a MISSING CDL date is a pre-dispatch reminder, never a block — an EXPIRED CDL still blocks, so the
++// gate-exception case below is an expired CDL.
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+ 
+ const { audit } = vi.hoisted(() => ({ audit: vi.fn(async () => undefined) }));
+@@ -21,8 +23,9 @@ const args = { driverId: "drv-1", operatingCompanyId: "oci", loadId: "load-1", a
+ describe("FAIL-D1 — historical reassignment runs and records the qualification gate", () => {
+   beforeEach(() => audit.mockClear());
+ 
+-  it("a driver with no CDL is recorded as a historical_backfill gate exception (not blocked)", async () => {
+-    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_missing: true, cdl_expires_at: null })), args);
++  it("a driver with an EXPIRED CDL is recorded as a historical_backfill gate exception (not blocked)", async () => {
++    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_expired: true, cdl_expires_at: "2025-01-01" })), args);
++    expect(block?.reasons).toEqual(["cdl_expired"]);
+     expect(block).not.toBeNull();
+     expect(audit).toHaveBeenCalledTimes(1);
+     const [, actor, event, payload, severity] = audit.mock.calls[0] as unknown as [unknown, string, string, Record<string, unknown>, string];
+@@ -32,6 +35,12 @@ describe("FAIL-D1 — historical reassignment runs and records the qualification
+     expect(severity).toBe("warning");
+   });
+ 
++  it("a MISSING CDL date alone is a reminder (443.257): no block, no exception", async () => {
++    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_missing: true, cdl_expires_at: null })), args);
++    expect(block).toBeNull();
++    expect(audit).not.toHaveBeenCalled();
++  });
++
+   it("a qualified driver writes no exception", async () => {
+     const block = await recordHistoricalReassignQualification(clientFor(cred({})), args);
+     expect(block).toBeNull();
+diff --git a/apps/backend/src/dispatch/__tests__/load-trailer-equipment-resolve.test.ts b/apps/backend/src/dispatch/__tests__/load-trailer-equipment-resolve.test.ts
+index edbcf98ec0..759d01e8da 100644
+--- a/apps/backend/src/dispatch/__tests__/load-trailer-equipment-resolve.test.ts
++++ b/apps/backend/src/dispatch/__tests__/load-trailer-equipment-resolve.test.ts
+@@ -49,8 +49,16 @@ describe("load trailer equipment resolution — no silent Dry Van", () => {
+     expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { choiceKind: "company", companyTrailerId: "trl-flat" })).toBe("id-flat");
+   });
+ 
+-  it("the trailer-type field wins over the trailer's type", async () => {
+-    expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "dry_van", companyTrailerId: "trl-reefer" })).toBe("id-dry");
++  // ENG-22 prevention (ROUND 7.2, #27991): a booked trailer type that contradicts the company trailer that rides the load
++  // is REFUSED by name — the old "type field wins" silently booked a Reefer as Dry Van (191 such USMCA loads).
++  it("a trailer-type that contradicts the company trailer is refused (trailer_equipment_type_mismatch)", async () => {
++    await expect(
++      resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "dry_van", companyTrailerId: "trl-reefer" })
++    ).rejects.toThrow("trailer_equipment_type_mismatch");
++  });
++
++  it("a trailer-type that agrees with the company trailer books that type", async () => {
++    expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "reefer", companyTrailerId: "trl-reefer" })).toBe("id-reefer");
+   });
+ 
+   it("no trailer / customer trailer resolve to the power-only rows", async () => {
+diff --git a/apps/backend/src/governance/__tests__/void-cancel-requests.test.ts b/apps/backend/src/governance/__tests__/void-cancel-requests.test.ts
+index 20555eedd9..1304687985 100644
+--- a/apps/backend/src/governance/__tests__/void-cancel-requests.test.ts
++++ b/apps/backend/src/governance/__tests__/void-cancel-requests.test.ts
+@@ -192,6 +192,10 @@ describe("governance void/cancel — atomic driver-settlement cancellation", ()
+       { match: (s) => s.includes("banking.release_bank_line_matches"), rows: [{ n: 0 }] },
+       { match: (s) => s.includes("UPDATE banking.bank_transactions"), rows: [] },
+       { match: (s) => s.includes("UPDATE driver_finance.driver_settlements"), rows: [{ id: SETTLEMENT }] },
++      // 443.210R: the mirrored company settlement is voided alongside (none here) and loads pointing at this settlement
++      // through presettlement_link_id are released (none here, so no billing-status revert runs).
++      { match: (s) => s.includes("UPDATE accounting.company_settlements"), rows: [] },
++      { match: (s) => s.includes("UPDATE mdata.loads") && s.includes("presettlement_link_id = NULL"), rows: [] },
+       { match: (s) => s.includes("audit.append_event"), rows: [] },
+     ]);
+     const result = await executeVoidCancel("driver_settlement", {
+diff --git a/apps/backend/src/mdata/__tests__/driver-merge-resume.test.ts b/apps/backend/src/mdata/__tests__/driver-merge-resume.test.ts
+index eee2f0930c..ba9b0015fe 100644
+--- a/apps/backend/src/mdata/__tests__/driver-merge-resume.test.ts
++++ b/apps/backend/src/mdata/__tests__/driver-merge-resume.test.ts
+@@ -21,17 +21,18 @@ function fakeClient(mergedInto: string | null) {
+   };
+ }
+ 
+-describe("previewDriverMerge resume (443.45)", () => {
+-  it("an already-merged profile is blocked without resume", async () => {
+-    const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M });
+-    expect(pv.blockers).toContain("This profile is already merged.");
++describe("previewDriverMerge resume (443.45, auto-resume 443.260.3)", () => {
++  const DIFFERENT = "This profile is already merged into a different driver — re-target the survivor instead.";
++  it("a profile already pointing at THIS survivor auto-resumes (443.260.3) — no blocker, with or without resume", async () => {
++    for (const resume of [false, true]) {
++      const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M, resume });
++      expect(pv.blockers.filter((b) => /merged/i.test(b))).toEqual([]);
++    }
+   });
+-  it("resume finishes the merge into the SAME survivor", async () => {
+-    const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M, resume: true });
+-    expect(pv.blockers).not.toContain("This profile is already merged.");
+-  });
+-  it("resume never re-targets a profile merged into a different driver", async () => {
+-    const pv = await previewDriverMerge(fakeClient(X) as never, { companyId: "co", survivorId: S, mergedId: M, resume: true });
+-    expect(pv.blockers).toContain("This profile is already merged.");
++  it("a profile merged into a DIFFERENT driver is never re-targeted, with or without resume", async () => {
++    for (const resume of [false, true]) {
++      const pv = await previewDriverMerge(fakeClient(X) as never, { companyId: "co", survivorId: S, mergedId: M, resume });
++      expect(pv.blockers).toContain(DIFFERENT);
++    }
+   });
+ });

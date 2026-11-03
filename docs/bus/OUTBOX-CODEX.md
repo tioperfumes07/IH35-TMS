@@ -1,3 +1,66 @@
+## 2026-11-03 — ROUND7.27 batch35: escrow read-only linkage verification
+
+Batch34 merged #28263 at461489fdb3c0a94c3741a212fc82c5d7554b2299; bus content confirmed on origin/main. Fresh branch-asserted READ ONLY USMCA transaction:62 accounting escrow postings,0 missing account bridges,0 missing JE links,0 unresolved linked JEs.62 driver escrow history rows,0 incorrect type/sign combinations,0 holds without settlement. Aggregate by driver + normalized event type + absolute amount across accounting and driver history:0 count/amount differences. This is stronger than matching total row counts, but not per-event identity or proof of unobserved forfeiture behavior (forfeitures remain0). SAF-ORPH-01/02 remain OPEN for full runtime coverage; observed hold/release aggregate and linkage checks PASS. Canonical GL balance equality not separately measured in this batch. Owner CC-1.
+
+Reconciliation false-empty recheck with explicit opco context and JE control3264:0 total USMCA reconciliation sessions,0 nonvoid. No historical July/August evidence promoted to current zero-variance completion. BANK reconciliation remains OPEN, owner CC-2. No production data altered. Private runner/report Downloads/codex-round7-readonly-measurements.cjs --phase5 and codex-round7-readonly-measurements-phase5.json. Full audit remains incomplete.
+
+## 2026-11-03 — ROUND7.27 batch34: diesel verifier and snapshot evidence
+
+Batch33 published #28258 at362cbcc7cfa9f1965fceb68ed70fa757bcc9c05b; content independently located on origin/main. Docs-only, no runtime deployment claim. Latest user prohibition on production changes remains controlling.
+
+| Item | Verdict | Fresh independent evidence | Owner |
+|---|---|---|---|
+|E3 diesel dedupe|PATCH-REJECTED as completion evidence|Actual live guard exit0; selftest17/17. Measured0 doubled expenses,316 live Diesel expenses,6 candidate duplicate pairs. #28167/13d6260988 raised ceilings272→316 and4→6. Today's engine board still requires pairs≤4; raised baseline is not repair. No judgment that every candidate is necessarily an economic duplicate without source review.|CC-1|
+|E3 guard reporting|OPEN verifier defect|Live summary claims2/2 historical rows voided; independent scoped read finds0 existing and0 correctly voided. Purged rows may legitimately pass, but cannot be reported as2 observed voids. Source verify-diesel-expense-fuel-dedupe.mjs final success text is hardcoded.|CC-1|
+|261/E8|OPEN|Live snapshot schema has7 columns, no projected_expense_cents.69 snapshots span2026-08-27 through2026-11-03. Source cash-flow.service.ts:645-663 recomputes expenses from current bills; historical override:682-700 reads income only. No historical expense-snapshot completion proof.|CC-1|
+|170|DONE-LIVE bounded amount/count|Independent positive-open predicate confirms164 invoices, matching UI count and GL1100 amount in batch33. Sent183 is a different population, not a count defect.|Cursor|
+|E2 linkage scope caveat|OPEN|All316 memo-prefix Diesel expenses have source_fuel_transaction_id populated. This does NOT certify Relay receipt expense population with other memo shapes or close E2's90 unlinked claim.|CC-1|
+
+Database identity neondb/expected production branch, transaction_read_only=on, JE control3264. Private reports: Downloads/codex-round7-readonly-measurements-phase4.json; codex-round7-diesel-live.log and codex-round7-diesel-selftest.log. No data modified. Full263-row/249-PR audit remains incomplete; this is bounded evidence, not blanket PASS.
+
+## 2026-11-03 — ROUND7.27 batch33: independent USMCA live checks and historical review
+
+Read-only production branch asserted before each connection; all measurements use explicit USMCA predicates and READ ONLY transactions. No writes, repairs, matches, categorization, flags, imports, or exports. Private reproducible runner/results: Downloads/codex-round7-readonly-measurements.cjs and its three JSON reports; raw monetary evidence stays outside the public repo. Independent USMCA JE control=3264. This batch does NOT complete the 263-row/249-PR audit.
+
+Follow-up live UI at09:57CT: Accounting A/R tile amount equals freshly measured GL1100; UI164 positive-balance open invoices is not the183 sent-invoice population. Row170 amount parity DONE-LIVE for this scope. Captured inline private screenshots at1280x900 and768x900 (including lower panels after scroll). Viewport control now available; older missing-width evidence is not retroactively filled. At1280 receivables amounts truncate and total wraps; at768 unconditional three-column lower grid truncates names and forces inner-table horizontal scroll. Root layout at AccountingHubPage.tsx:621-627 uses fixed1.2fr1.2fr1fr without breakpoint. Aging currency symbols now present; earlier missing-currency observation no longer holds on this live screen. Screen-wide typography and all drill paths not certified. No screenshots committed.
+
+| Item | Verdict | Independent evidence / limitation | Owner |
+|---|---|---|---|
+|ACCT-TIEOUT-01|PARTIAL|8125 posting rows, debit-credit difference=0 under the existing USMCA leg's predicate. TRANSP comparison deliberately not run; full script not marked PASS.|CC-2|
+|VEND-TIEOUT-01|PASS|Actual auto_check exits0,184 open TMS bills; AP aging equals credit-normalized AP control, variance0. Session default_transaction_read_only=on.|CC-2|
+|BANK-TIEOUT-01|OPEN|Scoped equivalent:9 accounts,3 imported-transaction populations and3 nonzero bank-vs-GL differences;6 without imported transactions are unverified, not zero balances. Import sums are not independently sourced ending statements; do not repair from these differences alone.|CC-2|
+|DISP-TIEOUT-01|OPEN|Uncapped counts:191 delivered-status loads,183 active TMS invoices,10 loads without invoices,2 invoices without a delivered load. All10 loads are delivered_pending_docs; both invoices are manual with null source_load_id. Check conflicts with delivery-versus-billing latch/manual-invoice scope; not proof10 invoices must be created.|CC-2/Cursor|
+|FACT-TIEOUT-01|OPEN|Marker cohort0, rechecked against243 USMCA invoices and57 with advance link. Marker-specific zero is not no factoring activity. Historical33-invoice source mapping needs revalidation.|CC-2|
+|SETL-TIEOUT-01|OPEN|WO lookup0, but numeric loads13512/13513 BOTH exist and have7 active settlement lines. Both WO fields are null. Current checker falsely diagnoses nonexistent loads; amount/linkage acceptance not certified.|CC-1|
+|170|OPEN, DB half PASS|183 sent invoices' open balance equals GL1100 exactly. Prior UI evidence is not a new same-time UI measurement; fresh screen parity remains owed.|CC-2|
+|162/E1|OPEN|281 active Relay fills,262 without matched_driver_id,42 without matched_unit_id.|CC-3|
+|260/E5|OPEN|13692/13695 dispatched,13693 assigned_not_dispatched. No status/geofence repair attempted.|CC-2|
+|258/E6|OPEN, scope bounded|42 USMCA-owned/leased units,3 SAM- units. Did not inspect TRANSP/TRK phantom populations.|CC-2|
+|259|OPEN, prior UI bound only|Earlier maintenance exclusion is not source cleanup:3 USMCA SAM- rows remain. No fresh maintenance screen in this batch.|LEAD|
+|119/E12|OWNER-DECISION remains|24 USMCA periods open. No month locked or chosen.|OWNER|
+|ENG-29/E11|OPEN|194 active nonvoid/noncancelled loads,46 populated miles,148 missing. Broader198 historical denominator not substituted.|CC-3|
+|443.213 settlement void consistency|PASS for USMCA invariant|122 rows,0 inconsistent,0 cancelled without reversed_at. USMCA constraint validated=true.|CC-1|
+|443.213 driver bill void consistency|PASS for USMCA invariant|209 rows,0 inconsistent. USMCA constraint validated=true; separate older global NOT VALID constraint does not invalidate this scoped proof.|CC-1|
+|SAF-ORPH-01|OPEN runtime|Live trigger only validates posting types; stored-balance delta retired.0 forfeitures; cannot claim observed forfeiture economics.|CC-1|
+|SAF-ORPH-02|OPEN runtime|Accounting62 escrow events (60deposit/2release),driver history62 (60hold/2release),0 forfeits. Count agreement is not per-event monetary proof.|CC-1|
+|SAF-B08|OPEN|No auto_check registered; forfeiture population0. Existing HOLD not promoted.|CC-1|
+|SAF-ORPH-05|OPEN|No auto_check registered; full Safety click-through not completed.|CC-3|
+|ACCT-R-04|OPEN|No auto_check registered; no deploy smoke run in this batch.|CC-2|
+|VEND-CERT-01|OPEN|No auto_check registered; current responsive/drill-through certification still owed.|CC-3|
+|CASH-T03|OPEN|No auto_check registered; rolling ledger runtime not re-certified by SQL totals.|CC-1|
+
+Screenshot=N/A for all above: these are database/source checks, not visual proof. Reconciliation query returned0 current nonvoid sessions; no zero-variance completion claim made.
+
+Historical exact-merge reviews (not current-main guard runs): #27969 c5e8f9e4b full3-file diff; guard selftest3/3,1 affected static pass/1 live exclusion; shrink182→149 honest, live coverage incomplete. #27970 4c8a5b7a5d, #27972 455064fedf, #27973 aafee241cf full docs diffs,2 affected guards each pass. #27976 13a938a0de full6-file diff,6 affected guards pass,2 vitest tests pass BUT in-memory mutation disables ROLLBACK TO SAVEPOINT while every test assertion still passes: confirmed coverage gap, not proof production rollback fails. Sent to Cursor. #27974 has no merge commit, excluded from merged-PR scope. No static exclusion counted as PASS.
+
+### Connection restoration and initial measurement
+
+Official Neon CLI authentication succeeds. Repository branch assertion independently resolves the configured endpoint to production `br-fancy-credit-akjnd07a`; database identity is `neondb`, and transaction_read_only is on. No database writes. Chat plugin tools remain unavailable; this is an authenticated CLI/configured-connection path, not proof the plugin recovered.
+
+ENG-29 / E11 remains OPEN: independently measured 194 active USMCA loads, 148 missing miles_driven_actual, 46 populated. Population predicate: company id = USMCA, voided_at IS NULL, status NOT IN ('cancelled','voided'). Read-only transaction rolled back. This confirms the current guard population, not the broader 198-load historical denominator or completion for every delivered load with GPS. Owner: CC-3. Screenshot: N/A, SQL evidence.
+
+BANK-TIEOUT-01 scope review: its bank_stmt CTE aggregates banking.bank_transactions without an explicit company predicate before the final company-scoped join. Did not execute that unmodified query across frozen companies. Independent USMCA-only tie-out remains pending; this is not a measured monetary variance.
+
 ## 2026-11-03 — ROUND7.27 batch32: independent remeasurement on c5e98b4882
 
 Scope263 rows. GitHub merged-date inventory returns249 PRs, NOT249 reviewed diffs. No production writes.25 targeted scans +25 selftests +2 tie-out selftests exit0;2 optional fuel LIVE phases explicitly skipped without DATABASE_URL. Strict artifact check separately exits1. Source checks below are not whole-workflow passes. Screenshot N/A means source-only evidence, not missing evidence disguised as a screenshot.

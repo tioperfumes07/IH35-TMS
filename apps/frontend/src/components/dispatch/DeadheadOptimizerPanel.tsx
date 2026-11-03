@@ -89,7 +89,7 @@ export function DeadheadOptimizerPanel({
               <span>
                 #{index + 1} · <EntityLinkOrTombstone kind="load" id={row.load_uuid} name={row.load_number} noun="Load" /> · {row.pickup_city}, {row.pickup_state}
               </span>
-              <span className="font-mono text-xs text-[#4B5563]">{row.score.toFixed(2)} ¢/mi score</span>
+              <span className="font-mono text-xs text-[#4B5563]">{formatQuantityTable(row.score, 2)} ¢/mi score</span>
             </div>
             <div className="text-xs text-[#4B5563]">
               DH {fmtMiles(row.deadhead_miles)} mi · Loaded {fmtMiles(row.loaded_miles)} mi · Rev {fmtMoneyCents(row.est_revenue_cents)} ·

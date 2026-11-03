@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { formatQuantityTable } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -77,7 +78,7 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
   }
 
   const status = latest.threshold_status ?? (latest.out_of_range ? "red" : "green");
-  const tempLabel = latest.temp_celsius != null ? `${latest.temp_celsius.toFixed(1)}C` : "No temp";
+  const tempLabel = latest.temp_celsius != null ? `${formatQuantityTable(latest.temp_celsius, 1)}C` : "No temp";
 
   return (
     <span
