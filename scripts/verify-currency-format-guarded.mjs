@@ -564,6 +564,24 @@ if (!/formatQuantityTable\(mappedCount, 0\)/.test(fuelGlQty) || !/formatQuantity
   fail("FuelGlMappingCoverage mapped summary must use formatQuantityTable(, 0)");
 }
 
+
+const borderCrossQty = [
+  "apps/frontend/src/components/dispatch/drawer-tabs/CustomsTab.tsx",
+  "apps/frontend/src/components/dispatch/DriverBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
+  "apps/frontend/src/components/dispatch/VendorBorderCrossingsReverseSection.tsx",
+];
+for (const rel of borderCrossQty) {
+  const src = read(rel);
+  if (!/formatQuantityTable\(rows\.length, 0\)/.test(src)) {
+    fail(`${rel} border crossing count must use formatQuantityTable(, 0)`);
+  }
+}
+const timelineQty = read("apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx");
+if (!/formatQuantityTable\(unassignedLoads\.length, 0\)/.test(timelineQty)) {
+  fail("UnifiedTimelinePlanner unassigned count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

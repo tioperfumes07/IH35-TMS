@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:40 PM CT) — border/timeline count house quantity
+- **PRIOR:** #28395 equipment aliases · #28394 Users/ELD.
+- **THIS:** CustomsTab + Driver/Unit/Vendor border-crossing headers · UnifiedTimelinePlanner Unassigned → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:30 PM CT) — batch58 equipment exact aliases + batch57 bills CTE plants
 - **PRIOR:** #28394 Users/ELD · #28392 customer/lane dead bills · #28389 hub mount.
 - **THIS:** Codex batch58 — matchesEquipmentType exact alias sets (no van substring cross-type); lane/customer/load keep rows + scope note (KPI+ByType same filtered population); batch57 bills CTE plants require db.voided_at/db.status independently. ENG-21 DONE-LIVE. Dreamline/match deferred.
