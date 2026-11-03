@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:55 PM CT) — ENG-34 wire bus-diet Cursor seat 19883
+- **PRIOR:** #28597 load-driven-miles 19881.
+- **THIS:** verify-bus-diet --seat=cursor + selftest plants; verify-steps 19883; removed from .guard-exempt. Other seats' over-cap bus untouched. balanced-ledger / match / verify-static stay exempt.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:50 PM CT) — ENG-34 wire load-driven-miles 19881
 - **PRIOR:** #28595 Settlement Disputes U12.
 - **THIS:** verify-steps 19881 (load-driven-miles --selftest); removed from .guard-exempt. LIVE half stays money-pr via e7-batch2. balanced-ledger / bus-diet / match stay exempt.
