@@ -121,6 +121,9 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
           WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.revoked_at IS NULL AND b.status <> 'void'
           GROUP BY 1)
        SELECT v.id, v.vendor_name AS name, v.deactivated_at, coalesce(cat.category, v.vendor_category, v.vendor_type::text) AS category,
+              -- Rows 83 (Reports › Vendor report): the SAVED category (null = not set — the board greys the read-from-account
+              -- category) and the vendor's own 1099 flag, so "By category" / "1099" read the vendor master, never a guess.
+              v.vendor_category AS saved_category, coalesce(v.eligible_1099, false) AS eligible_1099,
               coalesce(exp.txns, 0) AS txns, coalesce(exp.spend, 0) AS spend_cents, exp.last_paid, exp.pays_through,
               coalesce(bills.open_cents, 0) AS open_bills_cents, coalesce(bills.open_bills, 0) AS open_bills
          FROM mdata.vendors v
@@ -133,6 +136,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
     )
   ).rows.map((r) => ({
     id: r.id, name: r.name, status: r.deactivated_at ? "inactive" : "active", category: r.category ?? null,
+    saved_category: (r.saved_category as string | null) ?? null, eligible_1099: r.eligible_1099 === true,
     txns: n(r.txns), spend_cents: n(r.spend_cents), avg_ticket_cents: n(r.txns) ? Math.round(n(r.spend_cents) / n(r.txns)) : null,
     last_paid: r.last_paid ?? null, pays_through: r.pays_through ?? null,
     open_bills: n(r.open_bills), open_bills_cents: n(r.open_bills_cents),

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import {
   companyQuerySchema,
   currentAuthUser,
@@ -20,8 +21,10 @@ import {
 const querySchema = companyQuerySchema.extend({
   from: z.string().date(),
   to: z.string().date(),
-  driver_id: z.string().uuid().optional(),
-  status: z.string().trim().min(1).optional(),
+  // Multi-select law (443.281): comma-separated driver ids / statuses.
+  driver_id: entityIdFilterSchema.optional(),
+  status: z.string().trim().min(1).max(200).optional(),
+  paid: z.enum(["paid", "unpaid"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -44,6 +47,7 @@ export async function registerDriverSettlementsReportRoutes(app: FastifyInstance
         to,
         driver_id: driverId,
         status,
+        paid,
         limit,
         offset,
       } = parsed.data;
@@ -55,6 +59,7 @@ export async function registerDriverSettlementsReportRoutes(app: FastifyInstance
           to,
           driverId,
           status,
+          paid,
           limit,
           offset,
         } satisfies DriversSettlementsQuery)
