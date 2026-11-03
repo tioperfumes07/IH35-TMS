@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -179,6 +180,18 @@ export function LoanWizardPage() {
           The Loan Wizard is not yet enabled for this company. (Feature flag{" "}
           <code>{FINANCE_HUB_LOAN_WIZARD_FLAG}</code> is off.)
         </div>
+      </div>
+    );
+  }
+
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Loan Wizard" testId="loan-wizard-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }

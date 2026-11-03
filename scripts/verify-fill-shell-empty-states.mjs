@@ -29,6 +29,9 @@ const checks = [
   ["apps/frontend/src/pages/finance/FinancialStatementsPage.tsx", "BoardSection", "financial-statements-need-company", "FinancialStatements need-company"],
   ["apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx", "BoardSection", "compliance-dashboard-need-company", "ComplianceDashboard need-company"],
   ["apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx", "BoardSection", "property-tax-need-company", "PropertyTax need-company"],
+  ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "BoardSection", "loan-wizard-need-company", "LoanWizard need-company"],
+  ["apps/frontend/src/pages/finance/CalculatorPage.tsx", "BoardSection", "finance-calculator-need-company", "Calculator need-company"],
+  ["apps/frontend/src/pages/finance/FinanceScenariosPage.tsx", "BoardSection", "finance-scenarios-need-company", "Scenarios need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
