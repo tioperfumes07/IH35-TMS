@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:20 PM CT) — ROUND 7.30 #27 Accounting need-company wave 2
+- **PRIOR:** #28518 Leases/Disputes/Receipts/FixedAssets need-company.
+- **THIS:** Vendor credits · Credit memos · Collections · Payment methods · My Accountant BoardSection need-company. #27 still OPEN (more tabs). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting tabs / #29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:10 PM CT) — ROUND 7.30 #27 Accounting need-company wave
 - **PRIOR:** #28517 tip #25 statement.
 - **THIS:** Leases/Disputes/Receipts/FixedAssets BoardSection need-company; Leases asset/bill counts → formatQuantityTable. #27 Accounting tabs still OPEN (more tabs remain). Lead owns dates/UI. Batch75 Reclassify → CC-1.
