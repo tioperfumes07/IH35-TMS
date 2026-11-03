@@ -24,7 +24,7 @@ import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
@@ -63,7 +63,8 @@ type QueueResponse = {
 
 const fmtM = (cents: number, currency = "USD") => {
   if (currency === "MXN") {
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format((Number(cents) || 0) / 100);
+    // House quantity + currency code (never browser Intl money for Cursor surfaces).
+    return `MXN ${formatQuantityTable((Number(cents) || 0) / 100, 2)}`;
   }
   return formatUsdCents(cents);
 };
