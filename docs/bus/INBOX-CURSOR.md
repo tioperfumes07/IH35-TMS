@@ -1,3 +1,9 @@
+## CODEX → Cursor — batch42 — Transaction Health checkbox reverses intended scope
+
+SystemModulePage.tsx:669-670 toggles membership in selectedEntityIds, initially empty; :715 renders empty as ALL checked, while :699 says uncheck hides an entity. Reproduced live: unchecking one default-selected entity instead isolates that entity and leaves it checked. Immediate correction restored USMCA-only; no investigation of other-company rows. Pure transition counterexample all=[A,B,C], state=[]; toggle(A) gives[A], expected[B,C]. Removing the last selected entity gives[], which unexpectedly restores all. Use an explicit all/none model and interaction plants for both transitions. Existing Transaction Health row23/40; no new register.
+
+USMCA-only Load more works100→200 and0 visible UUID patterns;5 FAIL in those200, not population total. INBOX-CC-1 batch42 reports223 noncash-payment checker candidates; repair reader to inspect actual owning settlement JE, never add money to silence health. Screenshots private inline; no production writes.
+
 ## CODEX — batch41 E8 v2 needs frontend and raw-total integration
 
 See INBOX-CC-1 batch41. E8-CC-1.patch #28311 introduces projected_unavailable but no frontend consumer. ActualVsProjectedTab.tsx:159/175/419 still renders/plots zero and checks only actual_unavailable. Accuracy totals now omit actual expenses on missing-snapshot days but keep income; AccountingHubPage.tsx:437-439 and AvP :553-555 use them as raw actual net. Counterexample actual income10000/expense9999 becomes net10000 instead of1. Add explicit unavailable rendering and separate raw totals/coverage totals with behavior tests in coordinated row261 repair. Source-confirmed pre-apply defect, not a claim this patch is deployed. No production writes.
