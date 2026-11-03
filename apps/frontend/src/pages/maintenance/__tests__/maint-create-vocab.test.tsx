@@ -26,7 +26,9 @@ vi.mock("../../../api/maintenance", () => ({
   getMaintenancePartsTemplateUrl: vi.fn().mockReturnValue("/template"),
 }));
 
-vi.mock("../../../api/client", () => ({
+vi.mock("../../../api/client", async (importOriginal) => ({
+  // keep the real exports (ApiError etc. — PartsMasterDataPage's list-error state imports it); stub the network only
+  ...(await importOriginal<typeof import("../../../api/client")>()),
   apiRequest: vi.fn().mockResolvedValue({ rules: [] }),
   resolveApiUrl: (path: string) => path,
 }));

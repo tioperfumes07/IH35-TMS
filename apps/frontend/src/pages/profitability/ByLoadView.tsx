@@ -7,7 +7,8 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { money } from "./money";
+import { ByTypeView } from "./ByTypeView";
+import { money, pctLabel } from "./money";
 
 interface ByLoadViewProps {
   filters: {
@@ -23,8 +24,16 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
+  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
+  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
+  if (filters.equipmentType) {
+    return <ByTypeView filters={filters} />;
+  }
+
+
+
   const query = useQuery({
-    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getTripProfitability({
         operating_company_id: companyId,
@@ -117,11 +126,19 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => `${row.margin_pct.toFixed(1)}%`,
+        render: (row) => pctLabel(row.margin_pct),
       },
     ],
     []
   );
+
+  if (!companyId) {
+    return (
+      <BoardSection title="By Load (trip / settlement detail)" testId="profitability-by-load-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load trip profitability.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <BoardSection
@@ -134,9 +151,6 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
       viewAllLabel="Full trip P&L →"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load trip profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load trip profitability")}
@@ -152,7 +166,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
           emptyText={
             query.isLoading
               ? "Loading trip profitability…"
-              : "No settlements in this period."
+              : "No settlements with trip profitability in this period."
           }
         />
       </div>

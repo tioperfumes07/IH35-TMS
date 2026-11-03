@@ -35,6 +35,7 @@ import { AttentionList } from "../AttentionList";
 import { FleetUtilizationGauge } from "../charts/FleetUtilizationGauge";
 import { WeeklyRevenueChart } from "../charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "../charts/WOStatusPieChart";
+import { formatQuantityTable } from "../../../lib/money";
 import { FactoringBalanceClearedNote, formatShortDate, formatUsdFromCents, HomeKpiCard } from "../HomeKpiCard";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { HomeKpiRangeToggle, revenueKpiLabel } from "../HomeKpiRangeToggle";
@@ -362,7 +363,7 @@ export function DefaultHome({ auth }: Props) {
                   }`}
                 >
                   {tr.delta_pct_vs_yesterday >= 0 ? "↑ " : "↓ "}
-                  {Math.abs(tr.delta_pct_vs_yesterday).toFixed(1)}% vs yesterday
+                  {formatQuantityTable(Math.abs(tr.delta_pct_vs_yesterday), 1)}% vs yesterday
                 </span>
               ) : null
             }

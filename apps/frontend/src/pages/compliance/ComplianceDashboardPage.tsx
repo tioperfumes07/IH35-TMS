@@ -20,6 +20,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
 import { HosViewerSection } from "./HosViewerSection";
 import { HosHistorySection } from "./HosHistorySection";
@@ -173,7 +174,11 @@ export function ComplianceDashboardPage() {
   const overviewQueriesFailed = summaryQ.isError || dashboardQ.isError || rulesQ.isError || logQ.isError;
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
+    return (
+      <BoardSection title="Compliance" testId="compliance-dashboard-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (

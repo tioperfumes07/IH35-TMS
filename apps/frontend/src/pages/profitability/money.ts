@@ -15,3 +15,8 @@ export function milesLabel(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return formatQuantityTable(Math.round(n), 0);
 }
+
+export function pctLabel(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return `${formatQuantityTable(n, 1)}%`;
+}

@@ -192,7 +192,7 @@ export function AtRiskQueuePage() {
   const footerCells = {
     load_number: (
       <span className="font-normal" data-testid="at-risk-footer-count">
-        {loads.length} loads shown · matches tile
+        {formatQuantityTable(loads.length, 0)} loads shown · matches tile
       </span>
     ),
     loaded_miles: <span className="tabular-nums">{formatQuantityTable(milesSum, 1, 0)}</span>,
@@ -250,7 +250,7 @@ export function AtRiskQueuePage() {
         />
       )}
       <p className="text-xs text-gray-500" data-testid="kpi-drill-row-count">
-        {loads.length} loads — must match the At-risk / late tile.
+        {formatQuantityTable(loads.length, 0)} loads — must match the At-risk / late tile.
       </p>
     </div>
   );

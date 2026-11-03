@@ -172,6 +172,19 @@ export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migr
     }
   }
 
+  // Codex batch42 — entity checkboxes use explicit all/subset/none (null/[]/[ids]), not []-means-all toggle.
+  if (tab) {
+    if (!/toggleTxHealthEntityFilter/.test(pageSrc)) {
+      failures.push(`${PAGE_FILE}: TransactionHealthTab must use toggleTxHealthEntityFilter (explicit all/none)`);
+    }
+    if (!/txHealthEntityChecked/.test(pageSrc)) {
+      failures.push(`${PAGE_FILE}: TransactionHealthTab must use txHealthEntityChecked for checkbox state`);
+    }
+    if (/selectedEntityIds\.length === 0 \|\| selectedEntityIds\.includes/.test(tab)) {
+      failures.push(`${PAGE_FILE}: forbids []-means-all checkbox pattern (Codex batch42 reverse-scope bug)`);
+    }
+  }
+
   return failures;
 }
 
@@ -291,6 +304,18 @@ function selftest() {
   const offenderH = check({ ...baseline, pageSrc: plantedH });
   if (!offenderH.some((f) => f.includes("D060"))) {
     console.error("FAIL(selftest): planted offender H (D060 ctDateTime regression) was NOT caught");
+    process.exit(1);
+  }
+
+  // Offender I (Codex batch42): drop explicit all/none helper usage.
+  const plantedI = baseline.pageSrc.replace(/toggleTxHealthEntityFilter/g, "toggleEntityBroken");
+  if (plantedI === baseline.pageSrc) {
+    console.error("FAIL(selftest): offender I plant target toggleTxHealthEntityFilter missing — selftest out of sync");
+    process.exit(1);
+  }
+  const offenderI = check({ ...baseline, pageSrc: plantedI });
+  if (!offenderI.some((f) => f.includes("toggleTxHealthEntityFilter"))) {
+    console.error("FAIL(selftest): planted offender I (entity filter helper removed) was NOT caught");
     process.exit(1);
   }
 

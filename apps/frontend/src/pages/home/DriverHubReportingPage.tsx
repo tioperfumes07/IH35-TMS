@@ -17,7 +17,7 @@ import {
   type InboxReportingDriverRow,
   type InboxReportingLoadRow,
 } from "../../api/driverInboxReporting";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 
@@ -31,7 +31,7 @@ function fmtSeconds(s: number | null): string {
   if (s == null) return "—";
   if (s < 60) return `${s}s`;
   if (s < 3600) return `${Math.round(s / 60)}m`;
-  return `${(s / 3600).toFixed(1)}h`;
+  return `${formatQuantityTable(s / 3600, 1)}h`;
 }
 function fmtCents(c: number): string {
   return formatUsdCents(c);

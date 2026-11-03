@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -10,6 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { Fragment } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 type Filing = Record<string, unknown>;
 
@@ -121,18 +123,13 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         key: "total_tax_due",
         label: "Total tax",
         sortable: true,
-        render: (filing) => `$${Number(filing.total_tax_due ?? 0).toFixed(2)}`,
+        render: (filing) => formatUsd(Number(filing.total_tax_due ?? 0)),
       },
     ],
     []
   );
 
   if (!companyId) {
-    const empty = (
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">
-        Select an operating company.
-      </div>
-    );
     return (
       <div className={showModuleHeader ? "space-y-4 p-4" : "space-y-4"}>
         <PageHeader
@@ -142,7 +139,9 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
           subtitle="HVUT annual filing"
         />
         {embeddedBackLink}
-        {empty}
+        <BoardSection title="Form 2290 filings" testId="form-2290-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }
@@ -177,7 +176,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
                 unknown filing deadline must read as unknown. Guarded by verify-step 1500. */}
             HVUT annual filing ·{" "}
             {deadline?.deadline
-              ? `due ${deadline.deadline} (${deadline.days_remaining} days remaining)`
+              ? `due ${deadline.deadline} (${formatQuantityTable(deadline.days_remaining, 0)} days remaining)`
               : "due date unavailable — could not load the filing deadline"}
           </p>
           {/* SAF-ORPH-04 — the per-unit exceptions. Only vehicles whose own due date DIFFERS from the

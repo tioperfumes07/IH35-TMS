@@ -120,7 +120,14 @@ export function audit(s) {
   // R9
   need("R9", /DRIVER_ON_LOAD_STATUSES = new Set\(ON_TRUCK_STATUSES\.map\(String\)\)/.test(s.drivers) /* 443.290: the shared on-truck set */ && /ids\.add\(String\(id\)\)/.test(s.drivers), "On Loads is not counted by driver id from dispatched / in-transit / at-stop loads");
   need("R9", /d\.status === "Active" && !onLoadDriverIds\.has\(String\(d\.id\)\)/.test(s.drivers), "Available is not Active minus on loads");
-  need("R9", /to="\/drivers\/roster\?status=all&load_state=on"/.test(s.drivers) && /to="\/drivers\/roster\?status=active&load_state=free"/.test(s.drivers) && /loadStateFilter === "on"/.test(s.drivers), "On Loads / Available do not click through to a filtered roster");
+  need(
+    "R9",
+    (/to="\/drivers\/roster\?status=all&load_state=on"/.test(s.drivers) || /to=\{\`\$\{rosterPath\}\?status=all&load_state=on\`\}/.test(s.drivers)) &&
+      (/to="\/drivers\/roster\?status=active&load_state=free"/.test(s.drivers) || /to=\{\`\$\{rosterPath\}\?status=active&load_state=free\`\}/.test(s.drivers)) &&
+      /loadStateFilter === "on"/.test(s.drivers) &&
+      /rosterPath = underSettlements \? "\/driver-finance\/drivers" : "\/drivers\/roster"/.test(s.drivers),
+    "On Loads / Available do not click through to a filtered roster",
+  );
   // R10
   need("R10", /max-w-\[min\(1260px,calc\(100vw-2rem\)\)\]/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
   need("R10", /\[&_input\]:text-right/.test(s.idBar), "the Load # number is not right-aligned in its box");

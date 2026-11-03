@@ -7,6 +7,7 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DatePicker } from "../../components/forms/DatePicker";
 import {
   FINANCE_HUB_CALCULATOR_FLAG,
@@ -98,6 +99,18 @@ export function CalculatorPage() {
         </div>
       </div>
     );
+
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Finance Calculator" testId="finance-calculator-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
     <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>

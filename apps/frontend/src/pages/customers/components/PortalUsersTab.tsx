@@ -78,6 +78,14 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
     onError: () => pushToast("Could not archive portal user", "error"),
   });
 
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Portal users" testId="portal-users-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view portal users.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -85,18 +93,13 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
           <h2 className="text-page-title font-semibold text-gray-900">Portal users</h2>
           <p className="text-xs text-gray-600">Shipper logins scoped to this customer&apos;s loads only.</p>
         </div>
-        <Button onClick={() => setOpen(true)} disabled={!operatingCompanyId} title={operatingCompanyId ? undefined : "Select an operating company first"}>
+        <Button onClick={() => setOpen(true)}>
           Create portal login
         </Button>
       </div>
 
       <BoardSection title="Active portal accounts" testId="active-portal-accounts-board">
-        {/* CUST-01 C5: with no operating company selected the query never fires (enabled gate
-            above) and the table below silently rendered "No portal users yet." -- indistinguishable
-            from a customer that genuinely has zero portal users. Say why instead of guessing. */}
-        {!operatingCompanyId ? (
-          <p className="py-4 text-center text-xs text-gray-500">Select an operating company to view portal users.</p>
-        ) : usersQuery.isError ? (
+        {usersQuery.isError ? (
           <ListErrorState
             title="Couldn't load portal users"
             status={0}

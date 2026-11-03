@@ -3,6 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { fetchHomeFleetUtilization } from "../../../api/home";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { formatQuantityTable } from "../../../lib/money";
 
 /** @internal Exported for unit tests (threshold colors + print-safe grays). */
 export function gaugeFillForUtilization(pct: number): { active: string; rest: string } {
@@ -73,7 +74,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-7 text-center">
-        <div className="text-page-title font-bold tabular-nums text-[#0F1219]">{pct.toFixed(1)}%</div>
+        <div className="text-page-title font-bold tabular-nums text-[#0F1219]">{formatQuantityTable(pct, 1)}%</div>
         <div className="text-xs text-[#4B5563]">
           {d.active_units} / {d.total_units} units
         </div>

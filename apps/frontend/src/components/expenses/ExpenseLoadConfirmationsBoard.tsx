@@ -350,7 +350,7 @@ export function ExpenseLoadConfirmationsBoard({
 
   if (!companyId) {
     return (
-      <BoardSection title="Expense load confirmations" testId={testId ?? "expense-load-confirmations-need-company"}>
+      <BoardSection title="Expense load confirmations" testId="expense-load-confirmations-need-company">
         <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
       </BoardSection>
     );

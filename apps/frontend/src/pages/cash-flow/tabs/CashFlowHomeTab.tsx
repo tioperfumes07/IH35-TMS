@@ -144,6 +144,7 @@ function expenseBucket(row: RollingLedgerRow): ExpenseBucket {
     /fuel \(projected\)|fuel est|diesel|fuel|relay|card fill|card_payable/.test(t) ||
     row.document_kind === "card_payable" ||
     row.document_kind === "relay_topup" ||
+    row.document_kind === "fuel_forecast" ||
     /^fuel-avg-/.test(row.document_id)
   ) {
     return "diesel";

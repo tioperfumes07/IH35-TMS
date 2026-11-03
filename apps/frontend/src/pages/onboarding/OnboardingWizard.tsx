@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Step1Company, type CompanyStepData } from "./Step1Company";
 import { Step2QBOConnect, type QboStepData } from "./Step2QBOConnect";
@@ -152,7 +153,11 @@ export function OnboardingWizard() {
   }
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company to begin onboarding.</div>;
+    return (
+      <BoardSection title="Onboarding" testId="onboarding-wizard-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to begin onboarding.</p>
+      </BoardSection>
+    );
   }
   if (stateQuery.isLoading) {
     return <div className="rounded-sm border bg-white p-4 text-xs">Loading onboarding…</div>;

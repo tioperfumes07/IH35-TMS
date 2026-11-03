@@ -5,6 +5,8 @@ import { registerCustomerProfitabilityRoutes } from "../customer-profitability.r
 
 const companyId = "33333333-3333-4333-8333-333333333333";
 
+const capturedSql: string[] = [];
+
 vi.mock("../shared.js", async () => {
   const actual = await vi.importActual<typeof import("../shared.js")>("../shared.js");
   return {
@@ -14,6 +16,7 @@ vi.mock("../shared.js", async () => {
       let revenueAggCalls = 0;
       const client = {
         query: vi.fn(async (sql: string) => {
+          capturedSql.push(sql);
           if (sql.includes("GROUP BY l.customer_id") && sql.includes("revenue_cents")) {
             revenueAggCalls += 1;
             if (revenueAggCalls === 1) {
@@ -52,6 +55,7 @@ vi.mock("../shared.js", async () => {
 describe("customer-profitability.routes", () => {
   let app: FastifyInstance;
   beforeEach(async () => {
+    capturedSql.length = 0;
     app = Fastify();
     await registerCustomerProfitabilityRoutes(app);
   });
@@ -71,5 +75,17 @@ describe("customer-profitability.routes", () => {
     expect(body.by_customer[0].flags).toContain("high_margin");
     expect(body.by_customer[0].flags).toContain("past_due");
     expect(body.totals.customer_count).toBe(1);
+  });
+
+  it("cost SQL excludes void/voided driver bills", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/reports/customer-profitability?operating_company_id=${companyId}&period_start=2026-05-01&period_end=2026-05-31`,
+    });
+    expect(res.statusCode).toBe(200);
+    const sql = capturedSql.find((s) => s.includes("FROM driver_finance.driver_bills"));
+    expect(sql, "expected customer cost SQL").toBeTruthy();
+    expect(sql!).toMatch(/voided_at\s+IS\s+NULL/i);
+    expect(sql!).toMatch(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/i);
   });
 });

@@ -3,7 +3,7 @@ import { getFactoringRecoursePipeline, getFactoringChargebacksFees } from "../..
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
-import { formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 
 // LINK-F5171/LINK-F5180 — factoring:home.recourse_pipeline + factoring:home.chargebacks_fees
 // reverse gaps. Both endpoints now accept an optional customer_id filter (LINK-F5180), resolved
@@ -73,7 +73,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
                     noun="Invoice"
                     className="hover:underline"
                   />
-                  {` · ${fmtDollars(row.advance_amount)} · ${row.days_until_recourse_expiry}d to expiry`}
+                  {` · ${fmtDollars(row.advance_amount)} · ${formatQuantityTable(row.days_until_recourse_expiry, 0)}d to expiry`}
                 </span>
               </li>
             ))}

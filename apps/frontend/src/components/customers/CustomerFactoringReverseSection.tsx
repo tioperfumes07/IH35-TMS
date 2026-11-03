@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCustomerFactor } from "../../api/factoring";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 
@@ -39,8 +39,8 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
             label={factor.name}
             className="font-semibold text-[#1F2A44] hover:underline"
           />{" "}
-          · advance {(factor.advance_rate * 100).toFixed(1)}% · fee{" "}
-          {(factor.fee_rate * 100).toFixed(1)}%
+          · advance {formatQuantityTable(factor.advance_rate * 100, 1)}% · fee{" "}
+          {formatQuantityTable(factor.fee_rate * 100, 1)}%
         </p>
       ) : null}
       {batches.length > 0 ? (

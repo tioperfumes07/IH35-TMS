@@ -16,6 +16,7 @@ import {
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -222,7 +223,11 @@ export function QBOSyncStatusDashboardPage() {
     <div className="space-y-4 p-4">
       <PageHeader title="QBO sync status" subtitle="Operational console · sync runs and alerts" />
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="QBO sync status" testId="qbo-sync-status-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
       {runsQuery.isError ? <ReportBlockVPendingBanner error={runsQuery.error} onRetry={() => void runsQuery.refetch()} /> : null}
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">

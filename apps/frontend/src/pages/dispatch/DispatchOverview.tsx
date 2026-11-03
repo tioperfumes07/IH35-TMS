@@ -26,6 +26,7 @@ import "../../design/ih35-design-tokens.css";
 import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { DISPATCH_API_ROLLING_STATUSES, DISPATCH_API_TRUCK_COMMITTED_STATUSES, DISPATCH_WORK_STATUSES, loadStatusLabel } from "../../lib/load-status";
+import { formatQuantityTable } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -237,7 +238,9 @@ function LastLoadCell({ unit }: { unit: UnitsWithoutLoad }) {
 
 /** Whole days since a unit's last delivery — "—" when the backend has no delivery time (never a fake 0d). */
 function daysIdle(unit: UnitsWithoutLoad): ReactNode {
-  return unit.hours_since_last_delivery == null ? DASH : `${Math.floor(unit.hours_since_last_delivery / 24)}d`;
+  return unit.hours_since_last_delivery == null
+    ? DASH
+    : `${formatQuantityTable(Math.floor(unit.hours_since_last_delivery / 24), 0)}d`;
 }
 
 export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {

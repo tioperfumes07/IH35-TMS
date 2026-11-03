@@ -618,13 +618,17 @@ export function AccountingHubPage() {
           </div>
         </BoardSection>
 
+        {/* LEAD 11-03 (Codex batch33/40 finding, AccountingHubPage lower grid): the fixed 1.2fr/1.2fr/1fr row squeezed
+            the money columns — receivables amounts truncated at 1280 and the three panels crushed at 768. Each panel
+            now keeps a readable minimum width and the row wraps instead of truncating money. */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.2fr 1.2fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))",
             gap: 12,
             alignItems: "start",
           }}
+          data-testid="accounting-hub-lower-grid"
         >
           <BoardSection
             title="Receivables aging"

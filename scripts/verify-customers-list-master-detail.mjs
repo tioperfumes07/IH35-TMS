@@ -240,7 +240,7 @@ if (process.argv.includes("--selftest")) {
     ["factored-filter", "customers", /Boolean\(c\.factoring_company_vendor_id\)/g, "false"],
     ["transaction-list-scope", "customers", /listAllCustomerInvoices\(selectedCustomer!\.id, companyId,/, "listAllInvoices(companyId, {"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
-    ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
+    ["tasks-target-type", "customers", /targetType="customer"/g, 'targetType="unit"'],
     ["coi-read-customer-id", "coi", /(listInsuranceCoiRequests\(\{[\s\S]*?)customer_id: customerId/, "$1customer_id: undefined"],
     ["coi-create-customer-id", "coi", /(createInsuranceCoiRequest\(\{[\s\S]*?)customer_id: input\.customerId/, "$1customer_id: undefined"],
     ["detail-tab-url", "customers", /params\.set\("tab", next\)/, 'params.set("panel", next)'],

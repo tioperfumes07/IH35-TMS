@@ -1,3 +1,4 @@
+import { formatQuantityTable } from "../../lib/money";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load with no tour); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -105,7 +106,7 @@ export function LoadsWithoutTourPage() {
         />
       )}
       <p className="text-xs text-gray-500" data-testid="kpi-drill-row-count">
-        {loads.length} loads — must match the "Loads without a tour" chip.
+        {formatQuantityTable(loads.length, 0)} loads — must match the "Loads without a tour" chip.
       </p>
     </div>
   );

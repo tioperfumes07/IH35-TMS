@@ -895,7 +895,7 @@ export function SettlementStatementWorkflowPage() {
                     entityLabel(driverName, driverId, "Driver")
                   )}{" "}
                   · Role {String(split.pay_role ?? "—")} ·
-                  Share {Number(split.share_pct ?? 0)}% ·
+                  Share {formatQuantityTable(Number(split.share_pct ?? 0), 1)}% ·
                   Pay {formatUsdCents(Number(split.driver_pay_cents ?? 0) || 0)}
                 </div>
               );

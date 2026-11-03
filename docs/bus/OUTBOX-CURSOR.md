@@ -1,3 +1,243 @@
+## OUTBOX (11-03-2026 ~12:00 AM CT) — in-transit + settlement footer house quantity
+- **PRIOR:** #28398 equipment→ByType · #28397 border/timeline qty.
+- **THIS:** Load/Unit in-transit reverse counts · CompanySettlements + SettlementsToursRegister footer Totals → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:50 PM CT) — batch58 equipment scopes same ByType population
+- **PRIOR:** #28397 border/timeline qty · #28395 exact aliases.
+- **THIS:** Codex batch58 follow-up — lane/customer/load delegate to ByTypeView when equipmentType set so results+KPI share filtered population; hub guard plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:40 PM CT) — border/timeline count house quantity
+- **PRIOR:** #28395 equipment aliases · #28394 Users/ELD.
+- **THIS:** CustomsTab + Driver/Unit/Vendor border-crossing headers · UnifiedTimelinePlanner Unassigned → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:30 PM CT) — batch58 equipment exact aliases + batch57 bills CTE plants
+- **PRIOR:** #28394 Users/ELD · #28392 customer/lane dead bills · #28389 hub mount.
+- **THIS:** Codex batch58 — matchesEquipmentType exact alias sets (no van substring cross-type); lane/customer/load keep rows + scope note (KPI+ByType same filtered population); batch57 bills CTE plants require db.voided_at/db.status independently. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:15 PM CT) — batch56 Users labels + ELD honest unavailable
+- **PRIOR:** #28392 customer/lane dead bills · #28389 Profitability hub.
+- **THIS:** Codex batch56 Cursor bits — Users detail/roster EntityLink use formatPersonName+entityLabel (no bare User); ELD cert/settings copy honest unavailable (no fake rows; not proven-empty); EldPage need-company. Docs UploadModal width → owning seat. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~11:00 PM CT) — customer/lane dead bills excluded
+- **PRIOR:** #28389 batch55 Profitability hub mount · #28384 qty.
+- **THIS:** customer-profitability + lane-profitability pay CTEs exclude void/voided driver bills (sibling of batch54); customer test + hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:45 PM CT) — batch55 mount Profitability hub + equipment filter
+- **PRIOR:** #28384 coverage/dispatch/fuel qty · #28383 batch54 dead bills.
+- **THIS:** Codex batch55 — mount ProfitabilityPage at `/profitability` (manifest+ReportsSubNav+CategoryHoverNav+breadcrumb); wire FilterBar equipmentType into all tab/KPI queryKeys; ByType+Kpi local matchesEquipmentType; hub guard + equipmentFilter tests. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:30 PM CT) — coverage/dispatch/fuel count house quantity
+- **PRIOR:** #28383 batch54 dead bills · #28381 factoring/dispatch qty.
+- **THIS:** CoverageGap expiry KPIs · LoadsWithoutTour/DriverBill · AtRisk footer+drill · NeedsDeliveryAuth · FuelGlMapping coverage → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:20 PM CT) — batch54 equipment-type dead bills excluded
+- **PRIOR:** #28381 factoring/dispatch count qty · #28378 notes batch53.
+- **THIS:** Codex batch54 — equipment-type profitability bills CTE excludes void/voided (`voided_at IS NULL` + `status NOT IN ('void','voided')`); behavior test live+void same-load; profitability-hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~10:05 PM CT) — factoring/dispatch count house quantity
+- **PRIOR:** #28378 notes batch53 customer= plants · #28376 TripPairing KPI.
+- **THIS:** TripPairing section badges · SubmitToFactor invoice count · FactoringHome aging/batches · BatchWizard/Detail invoice counts · AwaitingBol row count · FactoringQueue stage/showing → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:50 PM CT) — notes batch53 customer= plants
+- **PRIOR:** #28376 TripPairing KPI · #28374 Legal alerts KPI.
+- **THIS:** Codex batch53 — NOTES_ON_EDIT_RE requires customer={selectedCustomer}+onEdit per mount; independent customer={null as any} plants (7/7 + 4 per-consumer). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:40 PM CT) — TripPairing KPI house quantity
+- **PRIOR:** #28374 Legal alerts KPI · #28373 Legal U12.
+- **THIS:** TripPairingBoardPage board KPIs → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:30 PM CT) — Legal alerts KPI house quantity
+- **PRIOR:** #28373 Legal U12 MultiSelect · #28372 notes per-consumer.
+- **THIS:** LegalDeadlineAlertsPage KPI counts → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:15 PM CT) — Legal matters severity/type U12 MultiSelect
+- **PRIOR:** #28372 notes per-consumer · #28369 share/MTD qty.
+- **THIS:** LegalMattersListPage severity + type → MultiSelectDropdown (U12; Codex batch51 Legal UI). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:00 PM CT) — notes per-consumer plants + uncleared wires qty
+- **PRIOR:** #28369 settlement share/MTD · #28367 BreakEven/fleet/factor.
+- **THIS:** Codex batch52 — notes guard requires both CustomerNotesTab onEdit mounts (+ per-consumer plants). FactoringHomeBoard unclearedWireCount → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~8:45 PM CT) — house qty settlement share + factor MTD wires
+- **PRIOR:** #28367 BreakEven/FleetRestore/Factor settings · #28366 wires/MPG.
+- **THIS:** SettlementStatementWorkflow share % · FactoringHomeBoard MTD advances count → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~8:35 PM CT) — house qty BreakEven/FleetRestore/Factor settings
+- **PRIOR:** #28366 wires/MPG/API · #28365 batch51 guards.
+- **THIS:** BreakEven days · HomeFleetRestore unit_count · FactoringHome active_factor_count/recourse settings → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~8:25 PM CT) — house qty wires/MPG/API count
+- **PRIOR:** #28365 batch51 guards · #28363 CASH-T03 follow-up.
+- **THIS:** FactoringHome escrow wire count · CompanySettlements MPG · AwaitingBolInvoice API count → formatQuantityTable; currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~8:15 PM CT) — batch51 #27988 guard retargets
+- **PRIOR:** #28363 CASH-T03 follow-up · #28361 ENG-60 · #28355 qty.
+- **THIS:** Codex batch51 — retarget verify-cust-s03 / load-column-remainder / billing-invoice / notes-tab / customers-list-master-detail to fill-not-shell real engines (no Coming-soon restore). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~7:55 PM CT) — CASH-T03 follow-up + house days qty
+- **PRIOR:** #28361 ENG-60 picker/writer · #28357/#28359 CASH-T03.
+- **THIS:** CASH-T03 batch51 — Fuel History provenance drill; ledgerEntityKind(row) blocks legacy expense+fuel-avg EntityLink; 5 vitest + 34 guard plants. House quantity days_overdue/Form2290/terms/recourse. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; batch51 #27988 guard retargets; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~7:40 PM CT) — ENG-60 picker/writer contract (batch50)
+- **PRIOR:** #28357/#28359 CASH-T03 fuel_forecast + day-grid · #28355 house quantity.
+- **THIS:** ENG-60 — insurance_lawsuit_id FK retarget legal.matters; writer validates type=lawsuit; list/detail self-join; writer-reverse guard + vitest picker-domain ID through createMatter. Table DROP still AUTH. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~7:20 PM CT) — CASH-T03 day-grid arithmetic helper
+- **PRIOR:** #28357 fuel_forecast provenance · #28355 house quantity.
+- **THIS:** buildRollingLedgerDayGrid extracted + vitest net/carry/running-cash identities; rolling-ledger guard plants (Codex batch48 coverage gap). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~7:10 PM CT) — CASH-T03 fuel_forecast provenance
+- **PRIOR:** #28355 house quantity Age/idle/days · #28351 AvP render.
+- **THIS:** CASH-T03 batch48 — projected fuel uses document_kind fuel_forecast (not expense EntityLink); Rolling Ledger plain label + Forecast action (no roll/stop inventing money docs); guard plants + vitest. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:55 PM CT) — house quantity Age/idle/days wave
+- **PRIOR:** #28351 AvP chart render test · #28339–#28348 MXN/Intl house money.
+- **THIS:** FactoringHome Age+recourse · UnitsWithoutLoad/DispatchOverview idle · DriverManager/HomeFleetRestore/CustomerDetail days · CardOverage gal · Insurance renewal days → formatQuantityTable(,0/1); currency guard ratchet. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1. Safety lists → CC-3.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:35 PM CT) — AvP render test + house money wave
+- **PRIOR:** #28336 AvP batch45 helpers · #28339–#28348 MXN/Intl house money.
+- **THIS:** #28351 AvP chart render test (legend + proj-exp polyline DOM). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1. Safety lists → CC-3.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:25 PM CT) — house money Intl sweep continue
+- **PRIOR:** #28339–#28344 MXN · #28346 formatProfitCents.
+- **THIS:** #28347 bulkRowLabels → formatUsdCents · #28348 currency-guard ratchet. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1. Safety lists → CC-3.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:15 PM CT) — house money Intl sweep
+- **PRIOR:** #28339–#28344 MXN house format (FactoringQueue/SettlementProfit/dispatch constants).
+- **THIS:** #28346 formatProfitCents → formatUsdCents/formatQuantityTable (Kanban badge). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~6:05 PM CT) — MXN house format complete
+- **PRIOR:** #28339 FactoringQueue · #28342 SettlementProfitabilityCard MXN.
+- **THIS:** #28344 dispatch formatMoneyCents/Dollars MXN house formatQuantityTable + dollars-not-divide guard retargets. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:50 PM CT) — MXN house format wave
+- **PRIOR:** #28336 AvP batch45 · #28339 FactoringQueue MXN.
+- **THIS:** #28342 SettlementProfitabilityCard MXN house format + trip-profit money guard retarget. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:35 PM CT) — #28336–#28339 continue
+- **PRIOR:** #28326–#28334 AvP/TxHealth/subnav/FinanceHub/print · #28336 AvP batch45 · #28337 tip.
+- **THIS:** #28339 FactoringQueue MXN → house formatQuantityTable. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:20 PM CT) — #28336 AvP batch45 + prior wave
+- **PRIOR:** #28326–#28334 AvP/TxHealth/subnav/FinanceHub/print.
+- **THIS:** #28336 AvP projected-expense polyline gaps + matchedCoverageNets variance (Codex batch45). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:05 PM CT) — #28326–#28334 Cursor wave
+- **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16.
+- **THIS:** #28326 AvP raw net/chart (E8 row261) · #28328 Tx Health filter (batch42) · #28329 Settlements subnav gate (batch44) · #28331 FinanceHub/PropertyTax qty · #28332 OUTBOX tip · #28334 Finance print formatDateTimeUS. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:50 PM CT) — #28326–#28331 Cursor wave
+- **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16.
+- **THIS:** #28326 AvP raw net + not-captured chart (E8 row261 Cursor half) · #28328 Tx Health all/subset/none (batch42) · #28329 Settlements subnav gate plant (batch44) · #28331 FinanceHub/PropertyTax house quantity. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:40 PM CT) — batch44 guard + FinanceHub/PropertyTax qty
+- **PRIOR:** #28326 AvP raw net · #28328 Tx Health filter · #28329 Settlements Drivers subnav gate plant.
+- **THIS:** FinanceHub count KPIs + PropertyTax assessed placeholder → formatQuantityTable; currency guard ratchet. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:25 PM CT) — AvP raw net + Tx Health filter
+- **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16 · need-company fill.
+- **THIS:** #28326 AvP rawActualNetFromGroups + not-captured chart null (E8 row261 Cursor half; Faro Δ house $). #28328 Transaction Health entity filter explicit all/subset/none (Codex batch42). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:05 PM CT) — Settlements Drivers embed + ENG-34 16
+- **PRIOR:** #28300–#28318 need-company fill · ENG-34 28→16 · Retention/VendorMapping qty.
+- **THIS:** #28322 Settlements-embedded DriversPage module-aware (row185 — no nested Drivers nav / banking KPI escape). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:45 PM CT) — ENG-34 16 + need-company fill continue
+- **PRIOR:** #28300–#28317 need-company fill · Retention/VendorMapping qty · ENG-34 28→16.
+- **THIS:** ByType/ByLane/QBO/catalogs/assets/onboarding need-company; SET-RATE into 18929. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:25 PM CT) — ENG-34 28→17 + fill/qty wave
+- **PRIOR:** #28300–#28308 need-company fill + Retention qty + VendorMapping qty.
+- **THIS:** #28310 ENG-34 drop 11 already-18929-selftested from .guard-exempt → **17** remain (LIVE/tool). ENG-21 DONE-LIVE. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:10 PM CT) — need-company fill wave + Retention qty
+- **PRIOR:** #28299–#28300 Coi/PortalUsers; #28302 DocumentAlerts/Samsara/QBO/profitability; #28304 Retention qty+fill; #28305 fill-shell ratchet 59.
+- **THIS:** ExpenseLoadConfirmations literal need-company; DriverInbox/EarningsTab fill-shell. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool ~28. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:35 PM CT) — finance/compliance need-company sweep
+- **PRIOR:** #28271–#28298 quantity + ENG-34 29→28 + finance/compliance need-company shells.
+- **THIS:** Continuous BUILD-FIRST: house format + BoardSection need-company across Cursor/shared finance/compliance. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool ~28. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines.
+
+## OUTBOX (11-03-2026 ~2:20 PM CT) — finance/compliance need-company wave
+- **PRIOR:** #28291–#28295 format + need-company + BoardSection import fix.
+- **THIS:** BreakEven/Hub/Amortization/Statements/Compliance/PropertyTax need-company; FeatureFlags qty; Form425c/amort money. ENG-21 DONE-LIVE. ENG-34 ~28. SelectCombobox baseline 2.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
+## OUTBOX (11-03-2026 ~2:05 PM CT) — finance need-company + Form425c/amort qty
+- **PRIOR:** #28288 customers/HOS/break-even/ELD · #28291 amort+Form425c money.
+- **THIS:** BreakEven / FinanceHub / Amortization BoardSection need-company; FeatureFlags rollout qty. fill-shell + currency guards.
+- **ENG-21 stays DONE-LIVE**. **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 ~28.
+
+## OUTBOX (11-03-2026 ~1:55 PM CT) — customers/HOS/break-even/ELD qty
+- **PRIOR:** #28271–#28287 quantity + ENG-34 29→28.
+- **THIS:** #28288 CustomersListView % · FleetHos nums · Form2290 tax · BreakEven per-mile · ELD speed. ENG-21 DONE-LIVE. SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
+## OUTBOX (11-03-2026 ~1:45 PM CT) — qty sweep high-water
+- **PRIOR:** #28271 margin/% · #28273–#28285 house quantity + ENG-34 wave6 (29→28 via 19822).
+- **THIS:** LedgerKpiPanel percent body #28285; RelationshipScore/AtRisk bodies #28283. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:35 PM CT) — qty sweep + #28283 body finish
+- **PRIOR:** #28271–#28282 quantity/ENG-34 waves.
+- **THIS:** #28283 finished CustomerRelationshipScore + AtRiskDriverCard bodies to match currency guard. ENG-21 DONE-LIVE. ENG-34 ~28 LIVE/tool. SelectCombobox baseline 2.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
+## OUTBOX (11-03-2026 ~1:25 PM CT) — house quantity sweep continuation
+- **PRIOR:** #28271 margin/% · #28273 CRM/driver/cargo · #28276 claim 19822 · #28277 ENG-34 29→28 · #28278–#28281 qty waves.
+- **THIS:** AtRiskDriverCard risk score → formatQuantityTable. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
+## OUTBOX (11-03-2026 ~1:15 PM CT) — stops/miles + dispatcher + late/factor qty
+- **PRIOR:** #28278 profitability/home/forensic; #28279 late+factor rates; #28280 stops/dispatcher/day-summary.
+- **THIS:** Continuous house quantity sweep on Cursor/shared surfaces. ENG-34 exempt **28** (wave6 #28277). SelectCombobox baseline still 2.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
+## OUTBOX (11-03-2026 ~12:50 PM CT) — profitability/home/forensic quantity+money
+- **PRIOR:** #28277 ENG-34 29→28; #28273 Customer/Driver/Cargo qty.
+- **THIS:** Profitability ByLoad/ByCustomer pctLabel · Forensic anomaly $ · FleetUtilization/Owner/Default/QBO home pct · DriverHub hours → house formatters. Currency guard extended.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
 ## OUTBOX (11-03-2026 ~12:30 PM CT) — margin/% qty + Customer/Driver/Cargo qty + ENG-34 29→28
 - **PRIOR:** #28271 dispatch margin/% formatQuantityTable; #28270 ENG-36 re-measure.
 - **THIS:** CustomerDetail chart/avg-days/margin% · DriverLayover hours · DriverProfile layover hours · CargoTempBadge → formatQuantityTable/formatUsd. Currency guard extended. ENG-34 wire verify-sql-write-targets (19822) exempt **29→28**.

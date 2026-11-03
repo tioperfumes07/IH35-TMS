@@ -27,6 +27,13 @@ import { companyToday, ctDateTime } from "../../lib/businessDate";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatGlLedgerPre } from "./txHealthLedgerText";
+import {
+  toggleTxHealthEntityFilter,
+  txHealthEntityChecked,
+  txHealthEntityFilterActive,
+  txHealthEntityIdsForApi,
+  type TxHealthEntityFilter,
+} from "./txHealthEntityFilter";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
@@ -629,16 +636,36 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
 function TransactionHealthTab() {
   const [showAccountNumbers] = useShowAccountNumbers();
   const [issuesOnly, setIssuesOnly] = useState(false);
-  const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]); // empty = every active entity
+  // null = all companies; [] = none; [ids] = only those (Codex batch42 — never use [] for "all").
+  const [entityFilter, setEntityFilter] = useState<TxHealthEntityFilter>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [rows, setRows] = useState<TxHealthRow[]>([]);
   const [entities, setEntities] = useState<TxHealthResponse["entities"]>([]);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
+  const entityFilterKey = entityFilter === null ? "ALL" : entityFilter.join(",");
+  const noneSelected = entityFilter !== null && entityFilter.length === 0;
+
   const query = useQuery<TxHealthResponse>({
-    queryKey: ["system", "tx-health", issuesOnly, selectedEntityIds, cursor],
-    queryFn: () => getTransactionHealth({ issuesOnly, operatingCompanyIds: selectedEntityIds, cursor, limit: 100 }),
+    queryKey: ["system", "tx-health", issuesOnly, entityFilterKey, cursor],
+    queryFn: async () => {
+      // API empty operating_company_id list means ALL — short-circuit explicit none.
+      if (noneSelected) {
+        return {
+          rows: [],
+          next_cursor: null,
+          entities,
+          generated_at: generatedAt ?? new Date().toISOString(),
+        };
+      }
+      return getTransactionHealth({
+        issuesOnly,
+        operatingCompanyIds: txHealthEntityIdsForApi(entityFilter),
+        cursor,
+        limit: 100,
+      });
+    },
     retry: false,
     staleTime: 15_000,
   });
@@ -648,7 +675,7 @@ function TransactionHealthTab() {
     setRows([]);
     setSelectedKey(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [issuesOnly, selectedEntityIds.join(",")]);
+  }, [issuesOnly, entityFilterKey]);
 
   useEffect(() => {
     if (!query.data) return;
@@ -667,7 +694,8 @@ function TransactionHealthTab() {
   }, [rows, selectedKey]);
 
   const toggleEntity = (id: string) => {
-    setSelectedEntityIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    const allIds = entities.map((e) => e.id);
+    setEntityFilter((prev) => toggleTxHealthEntityFilter(prev, id, allIds));
   };
 
   const failCount = rows.filter((r) => r.status === "FAIL").length;
@@ -696,10 +724,12 @@ function TransactionHealthTab() {
         <Row label="Generated">{txHealthDateTime(generatedAt)}</Row>
       </Card>
 
-      <Card title="Filters" sub="Default is every active company and every status. Uncheck an entity to hide it. Yesterday-morning dates usually mean TRANSPORTATION is the only chip still on — USMCA has today's TEST docs.">
-        {selectedEntityIds.length > 0 ? (
+      <Card title="Filters" sub="Default is every active company and every status. Uncheck an entity to hide it. Unchecking the last leaves none selected (empty list), not all. Yesterday-morning dates usually mean TRANSPORTATION is the only chip still on — USMCA has today's TEST docs.">
+        {txHealthEntityFilterActive(entityFilter) ? (
           <p className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-1 py-2 text-xs font-semibold text-[#0F1219]" role="status">
-            Entity filter is ON ({selectedEntityIds.length} company). Newest rows are for those companies only — not a stale API.
+            {noneSelected
+              ? "Entity filter is ON (0 companies). No rows until you check at least one company."
+              : `Entity filter is ON (${entityFilter!.length} company). Newest rows are for those companies only — not a stale API.`}
           </p>
         ) : null}
         <label className="flex items-center gap-2 border-t border-gray-200 py-[7px] text-xs first:border-t-0">
@@ -712,7 +742,7 @@ function TransactionHealthTab() {
               <label key={e.id} className="flex items-center gap-1.5 text-[#4B5563]">
                 <input
                   type="checkbox"
-                  checked={selectedEntityIds.length === 0 || selectedEntityIds.includes(e.id)}
+                  checked={txHealthEntityChecked(entityFilter, e.id)}
                   onChange={() => toggleEntity(e.id)}
                 />
                 {e.code}

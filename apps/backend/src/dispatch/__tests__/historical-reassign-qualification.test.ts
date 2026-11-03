@@ -1,6 +1,8 @@
 // FAIL-D1 (443.187) — a driver (re)assigned to an existing load on a historical backfill (Settlement Creator, settlement-
 // document seed) runs the SAME qualification gate; a block is RECORDED as dispatch.historical_backfill_gate_exception and
 // the reassignment proceeds (owner ruling for historical_backfill: never skipped, never silently passed).
+// ROUND 443.257: a MISSING CDL date is a pre-dispatch reminder, never a block — an EXPIRED CDL still blocks, so the
+// gate-exception case below is an expired CDL.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { audit } = vi.hoisted(() => ({ audit: vi.fn(async () => undefined) }));
@@ -21,8 +23,9 @@ const args = { driverId: "drv-1", operatingCompanyId: "oci", loadId: "load-1", a
 describe("FAIL-D1 — historical reassignment runs and records the qualification gate", () => {
   beforeEach(() => audit.mockClear());
 
-  it("a driver with no CDL is recorded as a historical_backfill gate exception (not blocked)", async () => {
-    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_missing: true, cdl_expires_at: null })), args);
+  it("a driver with an EXPIRED CDL is recorded as a historical_backfill gate exception (not blocked)", async () => {
+    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_expired: true, cdl_expires_at: "2025-01-01" })), args);
+    expect(block?.reasons).toEqual(["cdl_expired"]);
     expect(block).not.toBeNull();
     expect(audit).toHaveBeenCalledTimes(1);
     const [, actor, event, payload, severity] = audit.mock.calls[0] as unknown as [unknown, string, string, Record<string, unknown>, string];
@@ -30,6 +33,12 @@ describe("FAIL-D1 — historical reassignment runs and records the qualification
     expect(event).toBe("dispatch.historical_backfill_gate_exception");
     expect(payload).toMatchObject({ load_id: "load-1", gate: "driver_qualification", on: "driver_reassign", via: "settlement_creator", driver_id: "drv-1", historical_backfill_gate_exception: true });
     expect(severity).toBe("warning");
+  });
+
+  it("a MISSING CDL date alone is a reminder (443.257): no block, no exception", async () => {
+    const block = await recordHistoricalReassignQualification(clientFor(cred({ cdl_missing: true, cdl_expires_at: null })), args);
+    expect(block).toBeNull();
+    expect(audit).not.toHaveBeenCalled();
   });
 
   it("a qualified driver writes no exception", async () => {

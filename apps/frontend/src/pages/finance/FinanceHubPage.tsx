@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
@@ -21,7 +22,7 @@ const fmtCents = (c: number) => formatUsdCents(c);
 
 function kpiDisplay(kpi: FinanceHubKpi): string {
   if (kpi.value_kind === "money_cents") return fmtCents(Number(kpi.value) || 0);
-  if (kpi.value_kind === "count") return new Intl.NumberFormat("en-US").format(Number(kpi.value) || 0);
+  if (kpi.value_kind === "count") return formatQuantityTable(Number(kpi.value) || 0);
   return String(kpi.value ?? "—");
 }
 
@@ -107,12 +108,22 @@ export function FinanceHubPage() {
     );
   }
 
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Finance Hub" testId="finance-hub-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <FinanceModuleTabs />
       {header}
-
-      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
       {overviewQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
       {overviewQuery.isError ? (

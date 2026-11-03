@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,7 +14,7 @@ import {
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute, type EntityKind } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
@@ -26,10 +26,36 @@ import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
-// Two Rolling Ledger document kinds (card_payable, relay_topup — added by #f8ea8f01c4) have no EntityKind / record
-// page yet: they render as plain labels instead of a link to a page that does not exist (web build TS2322 fix).
-function ledgerEntityKind(kind: RollingLedgerRow["document_kind"]): EntityKind | null {
-  return kind === "card_payable" || kind === "relay_topup" ? null : (kind as EntityKind);
+// Non-EntityLink ledger kinds: card_payable / relay_topup have no record page yet; fuel_forecast is a
+// synthetic 4-wk avg projection (CASH-T03) — never drill it as accounting.expenses (Validation failed).
+// Legacy rows may still arrive as document_kind:"expense" + fuel-avg-* id until all producers cut over.
+export function isFuelForecastRow(row: Pick<RollingLedgerRow, "document_kind" | "document_id">): boolean {
+  return row.document_kind === "fuel_forecast" || /^fuel-avg-/.test(row.document_id);
+}
+export function ledgerEntityKind(
+  kind: RollingLedgerRow["document_kind"],
+  row?: Pick<RollingLedgerRow, "document_kind" | "document_id">,
+): EntityKind | null {
+  if (row && isFuelForecastRow(row)) return null;
+  return kind === "card_payable" || kind === "relay_topup" || kind === "fuel_forecast" ? null : (kind as EntityKind);
+}
+/** Forecast provenance: 4-wk fuel avg → Fuel History (contributing source), never a fake expense. */
+export function ledgerDocLabel(row: RollingLedgerRow) {
+  if (isFuelForecastRow(row)) {
+    return (
+      <Link
+        to="/fuel/history"
+        title="4-week fuel average forecast from Fuel History — not a posted expense"
+        data-testid="rolling-ledger-fuel-forecast-label"
+        className="text-[#1F2A44] underline-offset-2 hover:underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {row.document_label}
+        <span className="ml-1 text-[#6B7280] no-underline">(forecast · Fuel History)</span>
+      </Link>
+    );
+  }
+  return <span>{row.document_label}</span>;
 }
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
@@ -921,11 +947,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "load",
       label: "Doc / load",
       render: (row) => {
-        const kind = ledgerEntityKind(row.document_kind);
+        const kind = ledgerEntityKind(row.document_kind, row);
         const doc = kind ? (
           <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span>{row.document_label}</span>
+          ledgerDocLabel(row)
         );
         const load = row.load_id ? (
           <>
@@ -960,7 +986,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         if (isFactoringRow(row.type)) {
           return <span>—</span>;
         }
-        return <span>{row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`}</span>;
+        return <span>{row.days_overdue > 0 ? `${formatQuantityTable(row.days_overdue, 0)}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${formatQuantityTable(-row.days_overdue, 0)}d`}</span>;
       },
       sortValue: (row) => row.due_date,
     },
@@ -972,7 +998,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     {
       key: "days",
       label: "Days",
-      render: (row) => (row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`),
+      render: (row) => (row.days_overdue > 0 ? `${formatQuantityTable(row.days_overdue, 0)}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${formatQuantityTable(-row.days_overdue, 0)}d`),
     },
     {
       key: "status",
@@ -1008,11 +1034,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Doc / load",
       render: (row) => {
         if (isBoardEmptyRow(row)) return null;
-        const kind = ledgerEntityKind(row.document_kind);
+        const kind = ledgerEntityKind(row.document_kind, row);
         const doc = kind ? (
           <EntityLink kind={kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span>{row.document_label}</span>
+          ledgerDocLabel(row)
         );
         const load = row.load_id ? (
           <>
@@ -1043,7 +1069,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "due_date",
       label: "Due",
       sortable: true,
-      render: (row) => (isBoardEmptyRow(row) ? null : <span>{row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`}</span>),
+      render: (row) => (isBoardEmptyRow(row) ? null : <span>{row.days_overdue > 0 ? `${formatQuantityTable(row.days_overdue, 0)}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${formatQuantityTable(-row.days_overdue, 0)}d`}</span>),
       sortValue: (row) => row.due_date,
     },
     {
@@ -1059,7 +1085,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Days",
       render: (row) => {
         if (isBoardEmptyRow(row)) return null;
-        return row.days_overdue > 0 ? `${row.days_overdue}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${-row.days_overdue}d`;
+        return row.days_overdue > 0 ? `${formatQuantityTable(row.days_overdue, 0)}d overdue` : row.days_overdue === 0 ? "Due today" : `In ${formatQuantityTable(-row.days_overdue, 0)}d`;
       },
     },
     {
@@ -1068,6 +1094,20 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       sortable: false,
       render: (row) => {
         if (isBoardEmptyRow(row)) return null;
+        // CASH-T03 — forecast fuel is not a real money document; no roll/stop inventing adjustments.
+        if (isFuelForecastRow(row)) {
+          return (
+            <Link
+              to="/fuel/history"
+              className="text-[#1F2A44] underline-offset-2 hover:underline"
+              title="Open Fuel History — forecast source (4-week average); not an adjustable expense"
+              data-testid="rolling-ledger-fuel-forecast-action"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Forecast source
+            </Link>
+          );
+        }
         return (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <ExpenseRolloverMenu
