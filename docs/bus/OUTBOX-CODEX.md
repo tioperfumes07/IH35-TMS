@@ -1,3 +1,15 @@
+## 2026-11-03 — ROUND7.30 batch84: Fuel Review live and baseline-growth rejection
+
+Batch83 merged #28487,normal hooks,3 affected checks,0 regressions. No production writes.
+
+| Row | Verdict | Independent evidence |
+|---|---|---|
+|6|DONE-LIVE for the reported crash|Live USMCA Fuel Questions has1row;Review opens populated Fuel Assignment drawer with1evidence row and proposed load,without the undefined-load_number crash;Cancel closes it. Screenshot private inline15:57CT. Guard scan0/selftest14 regressions caught. No confirmation,assignment or financial action submitted.|
+|180|DUPLICATE-OF #6|Same D001 Review crash; same live proof. This does not certify every assignment-engine branch.|
+
+- #28480 c0866254be PATCH-REJECTED for baseline growth: full6-file diff reviewed. docs/audit/VERIFY-STATIC-BASELINE.json raises375→378 and adds bus-diet-outbox-cap,no-swallowed-db-error-in-transaction,odometer-ledger-has-one-writer. Executed the actual assertShrinkOnly with exactparent/newJSON in memory:throws baseline GREW naming all3. Inherited reds do not authorize baseline expansion; restore old allowance and fix root causes. No gate/guard modified by Codex. CC-1 handoff posted; noncash-health query requires separate live coverage before acceptance; accrual apply script NOT run.
+- Fuel Home now honestly says diesel could not load/not an empty period,improving old error-as-empty display;fill-loading failure itself persists. Full audit still INCOMPLETE. Current user read-only production restriction remains in force.
+
 ## 2026-11-03 — ROUND7.30 batch83: adopted-expense coverage and selftest counterexamples
 
 Batch82 merged #28484 92a5cc21f9 with normal hooks,13 affected checks,0 regressions. ROUND7.30 read; production-write instructions are NOT exercised because the owner's current direct request is read-only production auditing.
