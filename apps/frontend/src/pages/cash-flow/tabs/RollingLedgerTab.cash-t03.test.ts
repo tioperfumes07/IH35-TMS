@@ -19,6 +19,8 @@ describe("CASH-T03 fuel forecast provenance", () => {
     const legacy = { document_kind: "expense" as const, document_id: "fuel-avg-partial-2026-11-03" };
     expect(isFuelForecastRow(legacy)).toBe(true);
     expect(ledgerEntityKind(legacy.document_kind, legacy)).toBeNull();
+    // Without the row arg, kind alone looks like a real expense — AdjustPopover must pass row.
+    expect(ledgerEntityKind(legacy.document_kind)).toBe("expense");
   });
 
   it("combined row: new fuel_forecast never EntityLinks", () => {
