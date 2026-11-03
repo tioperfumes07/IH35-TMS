@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:20 PM CT) — Factoring workqueue need-company + qty days
+- **PRIOR:** #28469 Legal detail need-company.
+- **THIS:** SubmissionWorkqueue BoardSection need-company; recourse days formatQuantityTable; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:10 PM CT) — Legal detail need-company
 - **PRIOR:** #28468 Driver Hub need-company.
 - **THIS:** LegalTemplateDetailPage + LegalMatterDetailPage BoardSection need-company; fill-shell plants. ENG-21 DONE-LIVE. Dreamline/match deferred.

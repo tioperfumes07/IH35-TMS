@@ -5,9 +5,10 @@ import { listWorkqueue, type WorkqueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 function asMoney(cents: number) {
   return formatUsdCents(cents);
@@ -38,9 +39,10 @@ function RecourseRisk({ item }: { item: WorkqueueItem }) {
   const days = item.days_until_recourse_expiry;
   if (days == null) return <span className="text-[#6B7280]">—</span>;
   if (days < 0) return <span className="font-semibold text-red-600">Expired</span>;
-  if (days <= 14) return <span className="font-semibold text-red-500">{days}d</span>;
-  if (days <= 30) return <span className="font-semibold text-[#4B5563]">{days}d</span>;
-  return <span className="text-[#6B7280]">{days}d</span>;
+  const label = `${formatQuantityTable(days, 0)}d`;
+  if (days <= 14) return <span className="font-semibold text-red-500">{label}</span>;
+  if (days <= 30) return <span className="font-semibold text-[#4B5563]">{label}</span>;
+  return <span className="text-[#6B7280]">{label}</span>;
 }
 
 export function SubmissionWorkqueue() {
@@ -152,6 +154,14 @@ export function SubmissionWorkqueue() {
     ],
     [],
   );
+
+  if (!companyId) {
+    return (
+      <BoardSection title="Factoring workqueue" testId="factoring-submission-workqueue-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   if (workqueueQuery.isError) {
     return (
