@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch47: deployed repairs and independent 1090 remeasurement
+
+Batch46 merged #28341 e1a1bb366de92ef392baeecf59c6c4c2c07e3b57 after sync, normal hooks,14 affected guards0 regressions,1 inherited citation red. No production mutation.
+
+| Item | Independent result | Remaining |
+|---|---|---|
+|#28336 cb8f79c8f4|Full4-file diff reviewed; AvP guard scan0,selftest9/9; E8 behavior tests8/8. Live web dep-dbl1kdatnucc73fqv7r0 atfe7c0a4bb4 includes fix. At1280, projected-expense legend and7-point polyline render; matched-coverage net variance visible. Private inline screenshot11:38CT.|Narrow frontend repair verified; gap-day/cumulative and mixed-cohort cases unit-tested,not invented on prod. Backend row261 stillOPEN:7 captured rows all zero projected expenses.|
+|#27989 1090 claim|Independent READ ONLY transaction on expected Neon branch; JE discriminator3264.3 claimed journals resolve posted,2 legs each,0 balance each; combined1090credit1044600c matches author claim.|Document legitimacy/source matching and separate fuel assertions not certified by arithmetic. No balancing JE or matching action.|
+|#28328 633a1cf265 / row40|Live entity-filter repair: USMCA-only100rows; uncheck last→0companies/0rows,not all; restoreUSMCA→100rows. Private inline screenshot11:41CT. Earlier3/3behavior tests+guardPASS retained.|Narrow selection defect CLOSED.223 noncash health classification candidates remain separateOPEN. Default all-company selection appears on first navigation; restricted immediately for audit.|
+|Customer creator / row55|Create opens canonical form with parent/default income/factoring pickers; cancelled untouched.|No save or workflow completion claimed.|
+
+Private query evidence: Downloads/codex-round7-readonly-measurements-phase13.json. Database transaction_read_only=on; explicit USMCA predicates; ROLLBACK. Screenshots stay private inline. Full263-row/249historical-PR audit remains INCOMPLETE; these bounded results do not certify all rows.
+
 ## 2026-11-03 — ROUND7.27 batch46: Reports/Customers and historical checks
 
 Batch45 merged #28333 through normal hooks and fast-merge,3 affected guards0 regressions. No application or production changes.
