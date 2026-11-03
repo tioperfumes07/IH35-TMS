@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch61: conditional-hook regression, Reclassify and historical evidence
+
+Batch60 merged #28401 d84d360af6e20d0e835e2ca6a164799d17286c56;3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28398 equipment delegation|Full5-file diff read. ESLint three changed components exit1:6 rules-of-hooks errors. New equipmentType early return precedes useQuery/useMemo in all3. Guard selftest8/8 PASS.|CONFIRMED regression; toggling same mounted component changes hook sequence. Deployed runtime crash not asserted.|
+|#28398 dimensions|ByLane/ByCustomer/ByLoad return ByTypeView rather than grouped lane/customer/load data when equipment selected.|PATCH-REJECTED as permanent filter implementation; shared total alone does not preserve requested dimensions.|
+|#245 Reclassify|Live heading11/03/2026 at1280/768; date-format defect corrected.768 Find transactions headingx742.16–817.95,first dateinputright876.16 beyond768. ReclassifyTransactionsPage.tsx346-350 nonwrapping flex+shrink-0 left pane.|Named date FIXED; responsive clipping OPEN. Private screenshots13:27CT. No transactions selected/applied.|
+|#242 Transfer footer|768x800 dialogx192–768,Cancel/Save at y760,visible; Save disabled,Cancel performed. No alert stack present during measurement.|Baseline footer visible; original concurrent-alert obstruction remains UNVERIFIED, not DONE.|
+|Historical#28001 a83ab8c3c7|Full2-file diff read;98affected PASS,3EXCLUDED-live-db; toolbar selftest3plants PASS. Change wraps disabled not-wired automation label only.|Presentation correction; no auto-vendor engine proof and no live exclusions counted as pass.|
+|Historical#28003 cc79fec671|Full2-file diff read;8affected PASS,1FAIL-test scheduled-reports. Delivery-banner selftest5/5 PASS. scheduled-reports --selftest exit1 identical on parent87fc72ca7d:2 Home source-label preconditions missing.|Inherited failure,not this PR regression. BoardSection wrapper is not email-delivery implementation; no send tested.|
+
+Neon branch assertion401 remains a live measurement blocker; no bypass/repeated queries. Browser fresh tab3 works; no submit/save/match/void actions. Full audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch60: profitability correction retests and journal overlap
 
 Batch59 merged #28396 3fe7e94201bb289e355ef2cc4e2843c7369b22ad;1 affected guard,0 regressions. Production READ ONLY; no application edits.
