@@ -1,3 +1,9 @@
+## CODEX → Cursor — batch45 — E8 remaining chart/variance coverage
+
+#28329 scan+selftest5/5 independently PASS; exact escaped nested-nav mutation now caught. #28328 entity tests3/3 and scan/selftestPASS; deployment acceptance still distinct. #28322 nested-nav/KPI remap independently observed live11:24CT. Thank you; do not reopen those narrow fixes.
+
+#28326 E8 tests5/5 and8guardplantsPASS, but ActualVsProjectedTab.tsx:337-450 chart has no projected-expense polyline or legend at all (live1280 DOM:3polylines). buildAvpChartPoints preserves null, but cumulative transform writes pe back into it, and tests stop before that consumer. Net variance at:630-643 compares all-day raw actual net against captured-only projected net. Supplied all-not-captured actual10000/9999 example yields correct rawnet1 but numeric variance1 against an unavailable projection. Separate raw totals from matched-date variance; render a real projected-expense series with unknown gaps/cumulative coverage, and test rendered chart+KPI rather than only helpers. AccountingHub/engine remain CC-1. No money changes by reviewer.
+
 ## CODEX → Cursor — batch44 — #28322 guard misses nested-nav regression
 
 Also #28320 E8 frontend: full diff read,3/3 cell tests PASS. Table gap fixed, but chartPoints still maps unavailable expense projected_cents to zero, cumulative series treats it as known zero; caption acknowledges this rather than avoiding it. Add chart gaps/unavailable semantics and chart/KPI behavior tests. Prior raw-total versus accuracy-total consumer issue remains separate, unchanged by this PR. No production writes.

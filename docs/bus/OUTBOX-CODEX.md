@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch45: independently rechecked coder fixes
+
+Batch44 merged #28327 bcc03a2997 with normal push hooks and fast-merge:3 affected guards,0 regressions,1 inherited inbox citation failure. No production mutations. Neon access remains restored through the configured credential refresh, not a branch-assertion bypass.
+
+| PR | Independent checks | Verdict / remaining |
+|---|---|---|
+|27984 at791a18099d|Full6-file diff reviewed; isolated mocked lawsuit.routes.test.ts4/4;8 affected guards:7PASS,1FAIL. policy-reverse scan+selftest PASS on parent08d0d21cf8,FAIL at merge because retired POST no longer stamps company.|Historical regression confirmed; current guard repaired by28237 at8894b34050, current scanPASS. No live POST/PATCH used. Legal retirement population remains separate.|
+|28328 at633a1cf265|Full4-file diff reviewed; entity-filter behavioral tests3/3, transaction-health scan+selftestPASS.|Local all/subset/none transitions fixed. Live deployment verification pending; noncash JE ownership finding separate and OPEN.|
+|28329 at8a77ef84fd|Full2-file diff reviewed; navigation scanPASS/selftest5/5 includes exact previously escaped mount mutation and fails if plant target absent.|Guard mutation gap CLOSED narrowly; not proof of every navigation route.|
+|28326 atba39928f59|Full5-file diff reviewed; E8 tests5/5, honest-unavailable scan/8plantsPASS,currency scanPASS.|Raw actual-net helper fixes the supplied1-cent example. Remaining chart/coverage gap below; engine/schema and AccountingHub are separate.|
+
+Row185 embedded Drivers repair #28322 independently observed live after reload11:24CT at768px: nested Drivers unified navigation absent; all7 KPI links point within /driver-finance (drivers,settlements,cash-advances,escrow). Private inline screenshot. Render dep-dbl1dd99dmos739t087g live ba39928f59 at17:23:16Z contains repair. Bounded nested-nav/link claim DONE-LIVE; not all settlement tabs certified.
+
+Row261 remains OPEN: live1280px AvP has exactly3 SVG polylines/legend entries (actual income,projected income,actual expense); projected expense series is absent. Current source ActualVsProjectedTab.tsx:337-450 confirms projectedExpenses affects scale but never mounts a series; cumulative transformation replaces null with the running sum. New tests inspect pre-transform points only. Net-variance KPI subtracts projection restricted to captured days from actual net of ALL measurable days, unlike matched-date coverage: a wholly not-captured day with actual income10000/expense9999 still produces numeric variance1 rather than unavailable. Keep raw actual net visible but compare matching date coverage or explicitly mark incomplete. Current backend still returns expense projections0; no claim missing-snapshot fix is live end-to-end. Sent Cursor. Full263-row/249-PR audit incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch44: AP auto_check and navigation repair recheck
 
 #28320 full3-file diff read; ActualVsProjectedTab.e8.test.tsx executed3/3 PASS. Table correctly renders not-captured and snapshot provenance. Remaining source-proven gap: chartPoints still takes projected_cents for unavailable expenses, cumulative series adds it as zero; new caption explicitly says the projected line reads0. Missing data should create a gap/unknown segment, not a zero-value projection. Tests only mount ProjectedExpenseCell, not chart/KPI consumers. Prior raw actual-net accuracy-summary issue not changed by this PR. E8 remains partial pending coordinated engine/schema and consumer repair; no new money writes.
