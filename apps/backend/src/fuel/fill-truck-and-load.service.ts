@@ -54,7 +54,15 @@ export type FillFacts = {
   station: string;
 };
 
-export type GpsCandidate = { unit_id: string; unit_number: string; distance_m: number | null; minutes_off: number };
+export type GpsCandidate = { unit_id: string; unit_number: string; distance_m: number | null; minutes_off: number; parked?: boolean };
+
+/**
+ * ROW 105 (LEAD 11-03) — a truck PARKED at the pump sends no fixes while its engine is off, so the ±20-min window found
+ * no truck ("held_no_gps_at_station" while the truck sat at the pump). The parked span is a measurement, not a guess:
+ * the truck's last fix before the fill and its first fix after it are CONSECUTIVE fixes (nothing in between), both within
+ * FILL_GPS_RADIUS_M of the station, within FILL_PARKED_SPAN_MAX_HOURS of the moment — the truck never left the pump.
+ */
+export const FILL_PARKED_SPAN_MAX_HOURS = 24;
 
 export type FillResolution = FillFacts & {
   truck_unit_id: string | null;
@@ -174,14 +182,50 @@ export async function gpsTrucksAtStation(
   )).rows;
 }
 
+/** ROW 105 — trucks whose consecutive fixes bracket the fill moment, both at the station (needs station coordinates). */
+export async function parkedTrucksAtStation(
+  client: DbClient,
+  input: { companyId: string; at: string; lat: number | null; lng: number | null }
+): Promise<GpsCandidate[]> {
+  if (input.lat == null || input.lng == null) return [];
+  const d = (t: string) => `6371000 * 2 * asin(sqrt(power(sin(radians((${t}.lat::float8 - $3::float8) / 2)), 2)
+                 + cos(radians($3::float8)) * cos(radians(${t}.lat::float8)) * power(sin(radians((${t}.lng::float8 - $4::float8) / 2)), 2)))`;
+  return (await client.query<GpsCandidate>(
+    `WITH b AS (
+       SELECT DISTINCT ON (v.unit_id) v.unit_id, v.captured_at, v.lat, v.lng
+         FROM telematics.vehicle_locations v
+        WHERE v.operating_company_id = $1::uuid AND v.lat IS NOT NULL AND v.lng IS NOT NULL
+          AND v.captured_at <= $2::timestamptz AND v.captured_at >= $2::timestamptz - make_interval(hours => $6)
+        ORDER BY v.unit_id, v.captured_at DESC),
+     a AS (
+       SELECT DISTINCT ON (v.unit_id) v.unit_id, v.captured_at, v.lat, v.lng
+         FROM telematics.vehicle_locations v
+        WHERE v.operating_company_id = $1::uuid AND v.lat IS NOT NULL AND v.lng IS NOT NULL
+          AND v.captured_at > $2::timestamptz AND v.captured_at <= $2::timestamptz + make_interval(hours => $6)
+        ORDER BY v.unit_id, v.captured_at ASC)
+     SELECT b.unit_id::text, u.unit_number,
+            round(GREATEST(${d("b")}, ${d("a")}))::int AS distance_m,
+            round(LEAST(extract(epoch FROM $2::timestamptz - b.captured_at), extract(epoch FROM a.captured_at - $2::timestamptz)) / 60)::int AS minutes_off,
+            true AS parked
+       FROM b JOIN a ON a.unit_id = b.unit_id
+       JOIN mdata.units u ON u.id = b.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+      WHERE ${d("b")} <= $5 AND ${d("a")} <= $5
+      ORDER BY distance_m`,
+    [input.companyId, input.at, input.lat, input.lng, FILL_GPS_RADIUS_M, FILL_PARKED_SPAN_MAX_HOURS]
+  )).rows;
+}
+
 /** THE one resolver: truck at the pump + the load it was running (or drove to). Writes nothing. */
 export async function resolveFillTruckAndLoad(client: DbClient, companyId: string, fuelId: string): Promise<FillResolution | null> {
   const f = await loadFillFacts(client, companyId, fuelId);
   if (!f) return null;
   const base = { ...f, truck_unit_id: null, truck_unit: null, candidates: [] as GpsCandidate[], engine_load_id: null, engine_load_number: null };
   if (!f.moment) return { ...base, truck_resolution: "held_time_unknown", load_resolution: "held_time_unknown" };
-  const candidates = await gpsTrucksAtStation(client, { companyId, at: f.moment, lat: f.station_lat, lng: f.station_lng, city: f.city, state: f.state });
-  const pick = pickFillTruck(candidates, f.card_unit_id);
+  let candidates = await gpsTrucksAtStation(client, { companyId, at: f.moment, lat: f.station_lat, lng: f.station_lng, city: f.city, state: f.state });
+  // ROW 105: no moving/pinging truck in the window → the truck parked at the pump (consecutive fixes bracketing the moment).
+  if (!candidates.length) candidates = await parkedTrucksAtStation(client, { companyId, at: f.moment, lat: f.station_lat, lng: f.station_lng });
+  const picked = pickFillTruck(candidates, f.card_unit_id);
+  const pick = picked.unit?.parked ? { ...picked, resolution: `${picked.resolution}_parked` } : picked;
   if (!pick.unit) return { ...base, candidates, truck_resolution: pick.resolution, load_resolution: pick.resolution };
   const load = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: companyId, unitId: pick.unit.unit_id, driverId: null, at: f.moment });
   let loadResolution = "held_no_load";
