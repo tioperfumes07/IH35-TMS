@@ -157,6 +157,11 @@ const deadhead = read("apps/frontend/src/components/dispatch/DeadheadOptimizerPa
 if (!/formatQuantityTable\(n\)/.test(deadhead)) fail("DeadheadOptimizerPanel miles must use formatQuantityTable");
 if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand-roll miles toFixed(1)");
 
+const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx");
+if (!/formatQuantityTable\(Number\(event\.billable_minutes/.test(detention)) {
+  fail("DetentionBoardPage billable minutes must use formatQuantityTable");
+}
+
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");
