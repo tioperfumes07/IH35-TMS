@@ -34,6 +34,7 @@ import { getBankingTiles } from "../../api/banking";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { formatMoneyCents } from "../../lib/formatMoney";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 /** ROUND 443.257-D D002 — always two decimals (never omit cents on Home Overview money tiles). */
 function fmt$(cents: number): string {
@@ -57,7 +58,7 @@ export function formatTodayRevenueDisplay(input: {
 function fmtPct(pct: number | null | undefined): string {
   if (pct == null) return "";
   const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(1)}%`;
+  return `${sign}${formatQuantityTable(pct, 1)}%`;
 }
 
 type BusinessFeedCard = {

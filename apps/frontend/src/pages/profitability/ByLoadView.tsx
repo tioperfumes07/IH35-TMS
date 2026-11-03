@@ -7,7 +7,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { money } from "./money";
+import { money, pctLabel } from "./money";
 
 interface ByLoadViewProps {
   filters: {
@@ -117,7 +117,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => `${row.margin_pct.toFixed(1)}%`,
+        render: (row) => pctLabel(row.margin_pct),
       },
     ],
     []
