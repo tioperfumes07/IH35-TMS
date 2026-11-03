@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch64: E8 expense accuracy consumer and historical reviews
+
+Batch63 merged #28415 41319bd8cb;3 affected guards,0 regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28414 736ed1220d E8|Full8-file diff reviewed. Backend E8+driver-AP tests13/13 PASS; new guard scan PASS/plants5/5. Existing FE E8 tests9/9 PASS with frontend jsdom config. Initial root invocation lacked document and failed4 render tests; corrected workspace invocation passes.|Shared expense engine and raw/matched API separation accepted in source. Tests are mocked, not live SQL parity.|
+|E8 expense accuracy consumer|ActualVsProjectedTab.tsx:690-708 still passes total_actual_expense_cents into accuracyVerb/accuracyPct and displays it next to matched projected total; neither new matched_* field consumed. Executed actual accuracyPct helper: projected10000,matched actual10000,raw actual20000 yields50% instead of100% for covered days.|CONFIRMED remaining consumer mismatch. Keep raw total for Accounting cash-out, but expense-accuracy tile must use matched coverage and say unavailable when none exists. Existing E8 render tests cover cell/chart,not whole accuracy tile.|
+|E8 deployment|13:50CT expected-branch/read-only USMCA control3264JE. information_schema returns0 projected_expense_cents columns; subsequent SELECT returns42703, safely rolled back to savepoint then transaction rollback.|Migration/deployed expense snapshot UNVERIFIED; do not claim live parity or execute a migration for audit. Private phase21 JSON.|
+|Historical#28006 d752e71aef|Full3-file docs diff reviewed;4affected PASS,1live exclusion.|Coordination-only; no runtime fix credit or live-exclusion pass.|
+|Historical#28007 650539674b|Full2-file diff reviewed;19affected PASS,1selftest failure. Insurance lawsuit scoped-create plant fails identically on parent(exit1). Only application change removes internal legal.matters label.|No new affected failure demonstrated. Historical bus contains DELETE instructions; reviewer did not execute them.|
+|Historical#28008 57782f2b10|Full8-file diff reviewed;234affected PASS,3FAIL-test,3live exclusions. Billing-summary guard scan/plants7/7 PASS.2 failures identical parent; billing-invoice guard adds1 failure over its inherited1.|New stale bounded-source assertion: canonical payment link→disabled marker distance3938→4058 exceeds4000 regex after BoardSection testIds. Read-only marker/link retained,no writer mounted. Retarget bound without dropping behavior assertions; not proof of broken payment navigation.|
+
+Full audit remains INCOMPLETE. No money, email, migration, matching or production settings modified. Phase21 result was initially saved under the private runner's generic filename because suffix recognition stopped at20; preserved as phase21 and suffix parser corrected, no production reread required.
+
 ## 2026-11-03 — ROUND7.27 batch63: Neon restored, profitability live remeasurement
 
 Read-only audit on edbecd844b. Configured Neon CLI refreshed its expired local session through `neon me`; unchanged branch assertion now PASS. No production settings/data changed. All SQL measurements used REPEATABLE READ READ ONLY, explicit USMCA scope and ROLLBACK; expected branch br-fancy-credit-akjnd07a,3264 journal-entry control.
