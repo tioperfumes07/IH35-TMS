@@ -95,18 +95,31 @@ function ciRunsPreCommit(wfCorpus) {
 }
 
 /**
+ * Codex batch70 — comment-only mentions are NOT execution. Strip line/block comments and YAML
+ * hashes so `stepsCorpus.includes(guard)` / workflow path includes cannot greenwash a sentinel.
+ */
+export function stripCodeComments(src) {
+  return String(src || "")
+    .replace(/\/\*[\s\S]*?\*\//g, "\n")
+    .replace(/(^|[^:\\])\/\/[^\n]*/gm, "$1")
+    .replace(/(^|\n)[ \t]*#[^\n]*/g, "$1");
+}
+
+/**
  * True when CI will execute this guard:
- * - workflow mentions the .mjs path, OR
+ * - workflow mentions the .mjs path (non-comment), OR
  * - workflow runs an npm script that points at it, OR
- * - it is imported/referenced from verify-steps AND ci.yml runs verify:pre-commit
+ * - it is imported/referenced from verify-steps (non-comment) AND ci.yml runs verify:pre-commit
  */
 function isExecutedInCi(guard, npmNames, wfCorpus, stepsCorpus, preCommitInCi) {
-  if (wfCorpus.includes(guard)) return true;
+  const wf = stripCodeComments(wfCorpus);
+  const steps = stripCodeComments(stepsCorpus);
+  if (wf.includes(guard)) return true;
   for (const name of npmNames) {
     // npm run verify:foo  /  run: npm run verify:foo
-    if (new RegExp(String.raw`\bnpm run ${escapeRegExp(name)}\b`).test(wfCorpus)) return true;
+    if (new RegExp(String.raw`\bnpm run ${escapeRegExp(name)}\b`).test(wf)) return true;
   }
-  if (preCommitInCi && stepsCorpus.includes(guard)) return true;
+  if (preCommitInCi && steps.includes(guard)) return true;
   return false;
 }
 
@@ -277,6 +290,28 @@ if (isMain && process.argv.includes("--selftest")) {
       npmNames: [],
       guard: "verify-f.mjs",
       wf: "",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "orphan",
+    },
+    {
+      name: "comment-only verify-steps mention is NOT wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-comment-only.mjs",
+      wf: "run: npm run verify:pre-commit\n",
+      steps: "// reserved: scripts/verify-comment-only.mjs\n/* also scripts/verify-comment-only.mjs */\n",
+      preCommit: true,
+      exempt: false,
+      want: "orphan",
+    },
+    {
+      name: "YAML-comment workflow path is NOT wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-yaml-comment.mjs",
+      wf: "# run: node scripts/verify-yaml-comment.mjs\nrun: echo ok\n",
       steps: "",
       preCommit: false,
       exempt: false,

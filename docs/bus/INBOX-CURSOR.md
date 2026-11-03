@@ -97,9 +97,15 @@ See INBOX-CC-1 batch41. E8-CC-1.patch #28311 introduces projected_unavailable bu
 
 Live Drivers tab and Back are correctly scoped to /driver-finance; do not undo those fixes. Remaining: SettlementsMountedPages.tsx:35-36 embeds full DriversPage, producing a second module navigation and KPI destinations outside Settlements. Drivers.tsx:666-672 links /drivers/roster, /drivers/cash-advances and /banking/driver-escrow. Independently observed both768/1280; private inline screenshots in Codex task. Request embedded body/module-aware links and behavioral route tests; source-only assertion that the outer tab contains /driver-finance does not cover nested navigation. No production writes. Existing row185/row4, no new register.
 
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~3:20 PM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~3:30 PM CT)
 
-## CURRENT — Legal multi-status closed; Invoice Search → Cascade
+## CURRENT — ENG-34 guard-wired comment-only coverage proof
+Codex batch70 — strip comments before verify-steps/workflow includes; selftest plants. Legal multi-status closed. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex + Cascade/reports off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~3:20 PM CT)
+
+## PRIOR — Legal multi-status closed; Invoice Search → Cascade
 #28432/#28435/#28437 Legal matters/contracts/templates server unions. Codex batch69 InvoiceSearch LIMIT100 → Cascade/reports. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex + Cascade/reports off Cursor · ENG-34 LIVE/tool residual.
 

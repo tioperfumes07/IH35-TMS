@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:30 PM CT) — ENG-34 guard-wired ignores comment-only mentions (batch70)
+- **PRIOR:** #28439 bus tip Invoice Search → Cascade.
+- **THIS:** Codex batch70 — verify-guard-wired strips // block and YAML # before CI-execution includes; selftest plants comment-only sentinel. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:20 PM CT) — Legal multi-status family closed; Invoice Search → Cascade
 - **PRIOR:** #28437 Legal templates multi-status.
 - **THIS:** Cursor Legal half of Codex batch67/69 closed (matters #28432 · contracts #28435 · templates #28437). InvoiceSearchReportPage multi-status LIMIT100 → Cascade/reports. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.
