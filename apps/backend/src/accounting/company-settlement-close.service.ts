@@ -103,6 +103,18 @@ export async function closeCompanySettlementAlongsideDriverSettlement(
     );
   }
 
+  // Rows 98 (R86) — a header born while its driver settlement was an OPEN tour carries that tour's P-number (R-200: "its
+  // P-number while the tour is open"). The pay-run close then assigns the AlwaysTrack number (443.292-A) and calls here,
+  // but this function only ever reused the existing link — the header kept "P-0119" while its driver settlement became
+  // 5854 (prod 11-03: company settlement a188e47a). Owner ROUND 167/224: a closed settlement never shows a P-series id.
+  // At close the header takes its driver settlement's number; a number already held by another live header is refused
+  // by name, never merged or duplicated (uq_company_settlements_display_id).
+  await renumberCompanySettlementToDriverNumber(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    companySettlementId,
+    driverSettlementId: input.driverSettlementId,
+  });
+
   const beforeRes = await client.query<{ status: string; voided_at: string | null }>(
     `SELECT status, voided_at::text FROM accounting.company_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
     [companySettlementId, input.operatingCompanyId]
@@ -143,4 +155,50 @@ export async function closeCompanySettlementAlongsideDriverSettlement(
     status: closed.status,
     already_closed: wasAlreadyClosed,
   };
+}
+
+export type RenumberCompanySettlementResult = { renumbered: boolean; from: string | null; to: string | null };
+
+/**
+ * Rows 98 (R86): the company settlement header carries its driver settlement's number. Renumbers ONLY a header that
+ * still carries THIS driver settlement's P-number (display_id = the driver settlement's display_id) once the driver
+ * settlement holds its real number (source_document_ref). Never touches a header named by any other number.
+ */
+export async function renumberCompanySettlementToDriverNumber(
+  client: DbClient,
+  input: { operatingCompanyId: string; companySettlementId: string; driverSettlementId: string }
+): Promise<RenumberCompanySettlementResult> {
+  const row = (
+    await client.query<{ header_number: string | null; p_number: string | null; real_number: string | null; voided: boolean }>(
+      `SELECT cs.display_id AS header_number, ds.display_id AS p_number, ds.source_document_ref AS real_number,
+              (cs.voided_at IS NOT NULL) AS voided
+         FROM accounting.company_settlements cs
+         JOIN accounting.company_settlement_driver_settlements link ON link.company_settlement_id = cs.id
+         JOIN driver_finance.driver_settlements ds ON ds.id = link.driver_settlement_id AND ds.operating_company_id = cs.operating_company_id
+        WHERE cs.id = $1::uuid AND cs.operating_company_id = $2::uuid AND ds.id = $3::uuid
+        LIMIT 1`,
+      [input.companySettlementId, input.operatingCompanyId, input.driverSettlementId]
+    )
+  ).rows[0];
+  if (!row || row.voided || !row.real_number || !row.p_number) return { renumbered: false, from: row?.header_number ?? null, to: null };
+  if (row.header_number !== row.p_number || row.header_number === row.real_number) {
+    return { renumbered: false, from: row.header_number, to: null };
+  }
+  const taken = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.company_settlements
+      WHERE operating_company_id = $1::uuid AND display_id = $2 AND id <> $3::uuid LIMIT 1`,
+    [input.operatingCompanyId, row.real_number, input.companySettlementId]
+  );
+  if (taken.rows[0]) {
+    throw Object.assign(new Error("company_settlement_number_taken"), {
+      code: "company_settlement_number_taken",
+      message_for_user: `Company settlement ${row.header_number} cannot take number ${row.real_number}: another company settlement already carries it.`,
+    });
+  }
+  await client.query(
+    `UPDATE accounting.company_settlements SET display_id = $3, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND display_id = $4 AND voided_at IS NULL`,
+    [input.companySettlementId, input.operatingCompanyId, row.real_number, row.header_number]
+  );
+  return { renumbered: true, from: row.header_number, to: row.real_number };
 }

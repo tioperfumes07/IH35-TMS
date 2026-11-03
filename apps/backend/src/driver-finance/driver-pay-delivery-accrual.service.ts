@@ -11,7 +11,8 @@
  * escrow and net pay to that same bill and never posts the pay again; pay above the accrual and reimbursements post at close
  * on a supplement. A settlement void reverses only what the close did — the delivery-accrued bill stays open on A/P.
  *
- * Idempotent: a bill already accrued, settled, voided or not yet delivered is skipped, never posted twice. A team bill (one
+ * Idempotent: a bill already accrued, on a settlement whose close has posted, voided or not yet delivered is skipped, never
+ * posted twice (rows 85: a bill on an OPEN, unposted settlement accrues — deliveryAccrualSkipReasonSql). A team bill (one
  * row for two drivers) posts one A/P bill per driver for that driver's share of the load's team split (LEAD 443.128 C):
  * accrued_bill_id = driver_id's, accrued_team_bill_id = team_driver_id's; each driver's settlement applies to its own.
  */
@@ -24,7 +25,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolvePayComponentItem } from "./pay-component-items.js";
 import { resolveTeamSplitForLoad } from "../settlements/team-splits/apply.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
-import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
+import { activeSettlementLine, liveSettlement } from "../accounting/live-document-predicates.sql.js";
 import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/additional-only-driver-pay.js";
 
 export class DriverPayAccrualError extends Error {
@@ -62,8 +63,41 @@ export function teamShareCents(grossCents: number, driverRatio: number): { drive
   return { driverCents, teamDriverCents: grossCents - driverCents };
 }
 
-/** Accrued once, never on a bill that sits on any settlement. */
-const UNACCRUED_UNSETTLED_SQL = "db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL";
+/**
+ * Rows 85 (R73) — why a delivered load's driver bill does NOT accrue at delivery, as ONE SQL expression (NULL = accrue).
+ * Root cause it closes: a driver bill created AFTER its load delivered (13663 delivered 10-08, bill 10-16; 13688 delivered
+ * 10-19, bill 10-21) fires no delivery latch, and the bookended settlement Creator links it to the tour's OPEN settlement at
+ * once. The engine and the sweep skipped EVERY bill with settled_in_settlement_id set, so the pay sat off A/P until the
+ * close (8 bills on 7 open settlements on prod 11-03). A bill on an OPEN settlement whose close has not posted is still
+ * incurred at delivery: it accrues through the one poster, and the close (settlement-ap-chain.service.ts) then applies to
+ * that same A/P bill (accruedBillId) and never posts the pay again. Never accrued (named, not silent):
+ *   already_accrued · settlement_posted (the close posted the pay — a second bill would double A/P) ·
+ *   team_bill_on_open_settlement (the split belongs to the close) · settlement_pays_less_than_bill (the settlement's
+ *   active earnings for this bill are below its gross — the close would refuse PAY_BELOW_DELIVERY_ACCRUAL; restate first).
+ * A bill "settled" in a voided / cancelled / reversed settlement is settled in nothing and accrues.
+ */
+export function deliveryAccrualSkipReasonSql(alias = "db"): string {
+  const db = alias;
+  const onLive = `driver_finance.driver_settlements s_acc
+                   WHERE s_acc.id = ${db}.settled_in_settlement_id AND s_acc.operating_company_id = ${db}.operating_company_id
+                     AND ${liveSettlement("s_acc")}`;
+  return `(CASE
+      WHEN ${db}.accrued_bill_id IS NOT NULL OR ${db}.accrued_team_bill_id IS NOT NULL THEN 'already_accrued'
+      WHEN ${db}.settled_in_settlement_id IS NULL THEN NULL
+      WHEN NOT EXISTS (SELECT 1 FROM ${onLive}) THEN NULL
+      WHEN EXISTS (SELECT 1 FROM ${onLive}
+                     AND (s_acc.posted_at IS NOT NULL OR EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs g_acc
+                                                                  WHERE g_acc.settlement_id = s_acc.id AND g_acc.operating_company_id = s_acc.operating_company_id)))
+        THEN 'settlement_posted'
+      WHEN ${db}.team_driver_id IS NOT NULL THEN 'team_bill_on_open_settlement'
+      WHEN COALESCE((SELECT round(sum(sl_acc.amount) * 100) FROM driver_finance.settlement_lines sl_acc
+                       JOIN driver_finance.driver_settlements sl_s ON sl_s.id = sl_acc.settlement_id AND sl_s.operating_company_id = sl_acc.operating_company_id
+                      WHERE sl_acc.settlement_id = ${db}.settled_in_settlement_id AND sl_acc.operating_company_id = ${db}.operating_company_id
+                        AND sl_acc.source_driver_bill_id = ${db}.id AND sl_acc.line_type = 'earnings'
+                        AND ${activeSettlementLine("sl_acc", "sl_s")}), 0) < COALESCE(${db}.gross_amount_cents, 0)
+        THEN 'settlement_pays_less_than_bill'
+      ELSE NULL END)`;
+}
 /** LEAD 443.269-B restate only: THAT one bill, unaccrued, on an OPEN pre-settlement nobody has closed, posted or voided. */
 const RESTATE_ON_OPEN_PRESETTLEMENT_SQL = `db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (
                 SELECT 1 FROM driver_finance.driver_settlements s
@@ -108,16 +142,17 @@ export async function accrueDriverPayAtDeliveryInClientTx(
     [opco, input.loadId, deliveryDate]
   );
 
-  const bills = (
-    await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null; quicksave_pending_fields?: Record<string, unknown> }>(
+  let bills = (
+    await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null; skip_reason: string | null; quicksave_pending_fields?: Record<string, unknown> }>(
       `SELECT db.id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.driver_id::text, db.team_driver_id::text,
+              ${restate ? `CASE WHEN ${RESTATE_ON_OPEN_PRESETTLEMENT_SQL} THEN NULL ELSE ${deliveryAccrualSkipReasonSql("db")} END` : deliveryAccrualSkipReasonSql("db")} AS skip_reason,
               db.gross_amount_cents::int AS gross, db.loaded_pay_cents::int AS loaded, db.deadhead_pay_cents::int AS deadhead, l.quicksave_pending_fields,
               COALESCE(db.unit_id, ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")})::text AS unit_id
          FROM driver_finance.driver_bills db
          JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
         WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid
           AND db.voided_at IS NULL AND db.status <> 'void'
-          AND (${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR (${RESTATE_ON_OPEN_PRESETTLEMENT_SQL})` : UNACCRUED_UNSETTLED_SQL})
+          AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL
           AND COALESCE(db.gross_amount_cents, 0) > 0
         ORDER BY db.created_at, db.id
         FOR UPDATE OF db`,
@@ -125,6 +160,8 @@ export async function accrueDriverPayAtDeliveryInClientTx(
     )
   ).rows;
   const out: DriverPayAccrualOutcome = { load_id: input.loadId, delivery_date: deliveryDate, accrued: [], skipped: [] };
+  for (const b of bills) if (b.skip_reason) out.skipped.push({ driver_bill_id: b.id, reason: b.skip_reason });
+  bills = bills.filter((b) => !b.skip_reason);
   if (!bills.length) return out;
 
   const payAccount = await resolveRoleAccountOptional(client as never, opco, "driver_pay_expense");
@@ -169,7 +206,10 @@ export async function accrueDriverPayAtDeliveryInClientTx(
       const lines: Array<{ accountId: string; amountCents: number; loadId: string; description: string; itemId?: string; quantity?: number; rateCents?: number; unitOfMeasure?: string }> = additionalLines?.map(l => ({ accountId: l.account_id, amountCents: l.amount_cents, loadId: input.loadId,
         description: `Load ${b.load_number} — ${l.description}`, itemId: l.item_id, quantity: 1, rateCents: l.amount_cents, unitOfMeasure: "each" })) ?? [];
       for (const l of additionalLines ? [] : share.lines) {
-        const itemId = l.component ? await resolvePayComponentItem(client as never, opco, l.component) : null;
+        // Rows 85 (fork proof 11-03): a single-line bill (components do not tie, or a team share) named NO item, and
+        // accounting.enforce_line_categorization refuses an item-less line on 6890 ("line_item_required") — so the accrual
+        // threw for every such bill. RULING 443.67 #1e, THE ONE MAP: a per-load pay line is earnings -> the loaded item.
+        const itemId = await resolvePayComponentItem(client as never, opco, l.component ?? "loaded");
         lines.push({
           accountId: payAccount, amountCents: l.cents, loadId: input.loadId,
           description: `Load ${b.load_number} — driver pay${l.component === "empty" ? " (empty miles)" : l.component === "loaded" ? " (loaded miles)" : ""}${b.team_driver_id ? " (team share)" : ""}, delivered ${deliveryDate}`,
@@ -207,10 +247,10 @@ export async function accrueDriverPayAtDeliveryInClientTx(
     const primary = posted.find((x) => x.column === "accrued_bill_id")?.billId ?? null;
     const team = posted.find((x) => x.column === "accrued_team_bill_id")?.billId ?? null;
     const stamped = await client.query(
-      `UPDATE driver_finance.driver_bills SET accrued_bill_id = $3::uuid, accrued_team_bill_id = $5::uuid, due_date = $4::date, due_date_basis = 'delivered'
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid${restate && b.id === input.restateDriverBillId
-          ? " AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL"
-          : " AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL"}`,
+      `UPDATE driver_finance.driver_bills db SET accrued_bill_id = $3::uuid, accrued_team_bill_id = $5::uuid, due_date = $4::date, due_date_basis = 'delivered'
+        WHERE db.id = $1::uuid AND db.operating_company_id = $2::uuid${restate && b.id === input.restateDriverBillId
+          ? " AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL"
+          : ` AND ${deliveryAccrualSkipReasonSql("db")} IS NULL`}`,
       [b.id, opco, primary, deliveryDate, team]
     );
     if (stamped.rowCount !== 1) throw new DriverPayAccrualError("ACCRUAL_RACED", `Driver bill for load ${b.load_number} changed while its pay was accrued`, { driver_bill_id: b.id });
