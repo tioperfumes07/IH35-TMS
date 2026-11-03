@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
+import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
@@ -31,16 +32,29 @@ type DriverEscrowRow = {
   progressPct: number;
 };
 
+/** Prefer the escrow-visualizer driver_name when listEscrowAccounts leaves holder_label null (D076). */
+function resolveEscrowHolderName(
+  row: EscrowAccount,
+  namesByDriverId: Map<string, string>,
+): string {
+  const fromAccounts = entityLabel(row.holder_label ?? null, row.holder_id, "Driver");
+  if (!fromAccounts.includes("— not visible")) return formatDisplayName(fromAccounts);
+  const joined = namesByDriverId.get(row.holder_id);
+  if (joined) return formatDisplayName(entityLabel(joined, row.holder_id, "Driver"));
+  return formatDisplayName(fromAccounts);
+}
 
-function aggregateDriverEscrowRows(accountRows: EscrowAccount[]): DriverEscrowRow[] {
+function aggregateDriverEscrowRows(
+  accountRows: EscrowAccount[],
+  namesByDriverId: Map<string, string> = new Map(),
+): DriverEscrowRow[] {
   const byHolder = new Map<string, { name: string; heldCents: number }>();
   for (const row of accountRows) {
     // OWNER 10-24-2026 12:16 PM CT: "an account that has a negative or positive number must always be visible ... only when
     // there is no balance can it be not visible." Any non-zero balance shows — negative, closed account, inactive driver or
     // an unresolved name included. Only $0 drops out.
     if (row.holder_type !== "driver" || (row.balance_cents ?? 0) === 0) continue;
-    const rawLabel = entityLabel(row.holder_label ?? null, row.holder_id, "Driver");
-    const name = formatDisplayName(rawLabel);
+    const name = resolveEscrowHolderName(row, namesByDriverId);
     const prev = byHolder.get(row.holder_id);
     if (prev) {
       prev.heldCents += row.balance_cents;
@@ -111,12 +125,30 @@ export function SettlementsEscrowBoard() {
     enabled: Boolean(companyId),
   });
 
+  // Same name source Banking › Escrow Visualizer already uses — fills holder_label gaps on accounts.
+  const balancesQuery = useQuery({
+    queryKey: ["settlements-escrow-board", "driver-balances", companyId],
+    queryFn: () => getEscrowDriverBalances(companyId),
+    enabled: Boolean(companyId),
+  });
+
   const accountRows = useMemo(
     () => (accountsQuery.data?.rows ?? []) as EscrowAccount[],
     [accountsQuery.data?.rows],
   );
 
-  const allDriverRows = useMemo(() => aggregateDriverEscrowRows(accountRows), [accountRows]);
+  const namesByDriverId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of balancesQuery.data?.drivers ?? []) {
+      if (d.driver_id && d.driver_name) map.set(d.driver_id, d.driver_name);
+    }
+    return map;
+  }, [balancesQuery.data?.drivers]);
+
+  const allDriverRows = useMemo(
+    () => aggregateDriverEscrowRows(accountRows, namesByDriverId),
+    [accountRows, namesByDriverId],
+  );
 
   const driverFilterOptions = useMemo(
     () =>

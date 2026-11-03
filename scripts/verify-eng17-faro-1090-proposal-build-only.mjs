@@ -37,6 +37,12 @@ function failures() {
   if (!/Faro1090WireProposalsPage/.test(page) || !/Dry-run Accept/.test(page) || !/Accept \(deferred\)/.test(page)) {
     out.push("pick screen must expose Dry-run Accept + deferred Accept");
   }
+  if (/bank_transaction_id\.slice\(0,\s*8\)/.test(page) || /factoring_advance_id\.slice\(0,\s*8\)/.test(page)) {
+    out.push("dry-run note must not show UUID slices as labels");
+  }
+  if (!/selected bank transaction/.test(page) || !/factoring advance/.test(page)) {
+    out.push("dry-run note must name bank transaction + factoring advance in words");
+  }
   if (!/backHref="\/factoring"/.test(page)) {
     out.push("pick screen PageHeader backHref must be /factoring (U18 module home)");
   }

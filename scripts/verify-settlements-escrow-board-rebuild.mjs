@@ -40,6 +40,10 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
   if (!board.includes("listEscrowAccounts")) {
     failures.push(`${BOARD}: must use listEscrowAccounts (engine unchanged)`);
   }
+  // D076 — when accounts leave holder_label null, join escrow-visualizer driver_name (never leave "Driver — not visible" when the name is known).
+  if (!board.includes("getEscrowDriverBalances") || !board.includes("resolveEscrowHolderName")) {
+    failures.push(`${BOARD}: must join getEscrowDriverBalances names when holder_label is missing`);
+  }
   if (!board.includes("settlementsEscrowRegisterHref")) {
     failures.push(`${BOARD}: driver links must use settlementsEscrowRegisterHref`);
   }
