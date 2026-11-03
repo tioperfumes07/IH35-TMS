@@ -967,6 +967,13 @@ const fuelIntegrityQty = read("apps/frontend/src/pages/fuel/integrity/FuelIntegr
 if (!/formatQuantityTable\(Number\(value\), 0\)/.test(fuelIntegrityQty)) {
   fail("FuelIntegrityPage summary KPIs must use formatQuantityTable(, 0)");
 }
+const leasesQty = read("apps/frontend/src/pages/accounting/LeasesPage.tsx");
+if (!/formatQuantityTable\(r\.asset_count, 0\)/.test(leasesQty) || !/formatQuantityTable\(r\.bill_count, 0\)/.test(leasesQty)) {
+  fail("LeasesPage asset/bill counts must use formatQuantityTable(, 0)");
+}
+if (!/leases-need-company/.test(leasesQty)) {
+  fail("LeasesPage must BoardSection need-company when no company selected");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
