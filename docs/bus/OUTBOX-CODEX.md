@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.30 batch85: deployed noncash-health lookup independently measured
+
+Batch84 merged #28491 0f76f3906eb6ad6c451a135353d8730f04783ed9,normal hooks,12 affected checks,0 regressions.
+
+- #28480 noncash-health reader: extracted its actual bill_payment SELECT and executed within USMCA-only READ ONLY transaction.223 noncash payments,223posted,0missing postings,0unbalanced. Expectedbranch/read_only=on,JEcontrol3267,ROLLBACK. Private Downloads/codex-round7-readonly-measurements-phase31.json. Backend shallowhealth git_sha=c0866254be46f565e68434ce69aa94b00eeebb34,ok=true,built21:59:47Z. This confirms repaired posting lookup for this live population,not sample-consistency or all document invariants. Baseline-growth rejection in batch84 is unchanged.
+- Live System Transaction Health USMCA-only first100 rows now0FAIL/0WARN. Issue-only firstpage0 and nextpage0 still expose Load more: NOT proof all documents healthy; backend filters issues AFTER bounded page at transaction-health.service.ts:567-571. Private screenshot16:01CT. No entire-population DONE claim. Entity first-click now unchecks only the clicked company instead of isolating it; all→none yields0rows,then USMCAonly reloads100. No production mutation.
+- Cursor bus quantity-format waves acknowledged; they do not yet resolve the Customer/Vendor activity SQL correlation or selftest-validator findings. Remaining audit rows stay OPEN; no accrual script,cron,financial action or production repair run.
+
 ## 2026-11-03 — ROUND7.30 batch84: Fuel Review live and baseline-growth rejection
 
 Batch83 merged #28487,normal hooks,3 affected checks,0 regressions. No production writes.
