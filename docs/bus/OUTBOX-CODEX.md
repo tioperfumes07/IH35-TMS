@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch77: E13 counterexamples and historical verification
+
+Batch76 merged #28454 27e5a65981077a9543d84fd6680d3515d5642ddd; normal hooks,3affected guards,0regressions.
+
+- E13 #28452 PATCH-REJECTED as permanent assignment-history fix: exact seed SQL executed on isolated PostgreSQL16 with synthetic card A→B→A history yields2periods instead of3 and assigns the final A fill to B. Transaction rolled back and isolated server stopped. No production query/write or seed execution. Source groups all history by card/unit before LEAD, losing repeat contiguous periods. File scripts/ops/seed-fuel-card-assignments-e13.mjs:49-96. Private reproduction Downloads/codex-round7-e13-period-probe.cjs. Reported27production assignments NOT independently certified by this test.
+- E13 gate exceptions are not actually one-PR-bound: evaluated all6 exact new IfStatement expressions with changedFiles=[scripts/money-pr-local-gate.mjs]; all6 returntrue without the seed file, PR identity, AUTH or expiry. Thus later gate-only edits can reuse these skips. Private reproduction Downloads/codex-round7-e13-gate-scope-probe.cjs. This is a measured scope defect, not an assertion that the original inherited findings were caused by E13. Do not weaken or bypass guards to repair it.
+- #28047 actual historical frontend tests8/8PASS;0affected guards. #28048 exact tree equals47,0affected;not a second implementation. #28049 full4-doc diff,6PASS/2capability-skips/5live-excluded. #28050 full10-file diff,381PASS/4FAIL-test/4live-excluded;failed additive-only,cust-verify-01,load-column-all-module-remainder,scheduled-reports require parent comparison before attribution. #28051 full3-file diff,7/7mock tests and3affectedPASS;mock order test is not two-connection concurrency or3clean live cron ticks. #28052 full2-doc diff,2PASS/1live-excluded;#28053 identical tree to52,0affected. #28054 full4-file diff,4PASS/1capability-skip/1live-excluded. No excluded check called PASS.
+- Full audit remains OPEN. Production untouched; no ledger, assignment, or money repair performed.
+
 ## 2026-11-03 — ROUND7.27 batch76: Vendor page-boundary regression and historical checks
 
 Batch75 merged #28453 3c6d420b222dbd49752984361a0364256a777685;3affected guards/0regressions,normal hooks. PR live-proof wording corrected to exact endpoint/count plus explicit empty-population limitation.
