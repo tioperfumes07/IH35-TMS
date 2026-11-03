@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:30 PM CT) — coverage/dispatch/fuel count house quantity
+- **PRIOR:** #28383 batch54 dead bills · #28381 factoring/dispatch qty.
+- **THIS:** CoverageGap expiry KPIs · LoadsWithoutTour/DriverBill · AtRisk footer+drill · NeedsDeliveryAuth · FuelGlMapping coverage → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:20 PM CT) — batch54 equipment-type dead bills excluded
 - **PRIOR:** #28381 factoring/dispatch count qty · #28378 notes batch53.
 - **THIS:** Codex batch54 — equipment-type profitability bills CTE excludes void/voided (`voided_at IS NULL` + `status NOT IN ('void','voided')`); behavior test live+void same-load; profitability-hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

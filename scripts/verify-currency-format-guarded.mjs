@@ -533,6 +533,37 @@ if (!/formatQuantityTable\(filtered\.length, 0\)/.test(factorQueueQty) || !/form
   fail("FactoringQueuePage showing X of Y must use formatQuantityTable(, 0)");
 }
 
+
+const coverageGapQty = read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx");
+if ((coverageGapQty.match(/formatQuantityTable\(summary\.expiring(?:30|60|90)\.length, 0\)/g) || []).length < 3) {
+  fail("CoverageGapDashboard expiry KPIs must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutTour = read("apps/frontend/src/pages/dispatch/LoadsWithoutTourPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutTour)) {
+  fail("LoadsWithoutTourPage row count must use formatQuantityTable(, 0)");
+}
+
+const loadsWithoutBill = read("apps/frontend/src/pages/dispatch/LoadsWithoutDriverBillPage.tsx");
+if (!/formatQuantityTable\(loads\.length, 0\)/.test(loadsWithoutBill)) {
+  fail("LoadsWithoutDriverBillPage row count must use formatQuantityTable(, 0)");
+}
+
+const atRiskQty = read("apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx");
+if ((atRiskQty.match(/formatQuantityTable\(loads\.length, 0\)/g) || []).length < 2) {
+  fail("AtRiskQueuePage footer + drill count must use formatQuantityTable(, 0)");
+}
+
+const needsAuthQty = read("apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(needsAuthQty)) {
+  fail("NeedsDeliveryAuthorizationPage count must use formatQuantityTable(, 0)");
+}
+
+const fuelGlQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
+if (!/formatQuantityTable\(mappedCount, 0\)/.test(fuelGlQty) || !/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlQty)) {
+  fail("FuelGlMappingCoverage mapped summary must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
