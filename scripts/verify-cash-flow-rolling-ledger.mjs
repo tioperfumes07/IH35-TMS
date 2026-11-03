@@ -79,6 +79,8 @@ const REQUIRED_BACKEND_MARKERS = [
   ["a.seq DESC", "adjustment overlay does not order by the monotonic seq column (same-transaction ordering bug)"],
   ["is_rollover_echo: true", "roll-over does not leave a $0 echo row on the original due date"],
   ["createCashFlowRowAdjustment", "no service function to create a roll-over/hide adjustment"],
+  ["buildRollingLedgerDayGrid", "day-grid arithmetic helper missing (net = income - expenses; CASH-T03 coverage)"],
+  ["netCents = incomeDue - expensesDue", "day-grid net identity missing"],
   ["unknown_or_inactive_cash_flow_adjustment_reason_code", "reason-code resolution does not fail closed on an unknown code"],
 ];
 
@@ -266,6 +268,20 @@ function selftest() {
       mutate: () => ({
         ...good,
         backend: good.backend.replace("row.due_date < dateStr", "false /* stripped */"),
+      }),
+    },
+    {
+      name: "day-grid arithmetic helper stripped",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replaceAll("buildRollingLedgerDayGrid", "strippedNoDayGrid"),
+      }),
+    },
+    {
+      name: "day-grid net identity stripped",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replace("netCents = incomeDue - expensesDue", "netCents = incomeDue + expensesDue"),
       }),
     },
     {
