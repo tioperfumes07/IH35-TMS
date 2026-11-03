@@ -56,3 +56,9 @@ From now Codex FIXES what it finds in SHARED surfaces (apps/frontend/**, docs/**
 5. Rows 23/40 System module entity filter (batch42): empty state renders all checked; clicking one checkbox isolates instead of excluding — SystemModulePage.tsx:669-670/715 (#28328 fixed the subset/none path; verify this first-click path, add the interaction test).
 6. #28297 (batch38): CalculatorPage:94/103, LoanWizardPage:174/187, FinanceScenariosPage:217/229 check disabled-feature before missing-company → add the no-company branch first + render tests.
 Each PR: before/after measurement in the body, owning row number, screen named. Re-verify in your next batch.
+
+## LEAD 11-03 12:45 PM CT — fix list items 3 + 4 DONE by Lead (do not duplicate); re-verify them live
+- Item 3 Account Register caption → #28386 (ACCT-F11036): "Ending balance · book · as of" uses formatDateUS.
+- Item 4 Customers collected zero → #28388 (ACCT-F11037): collected cell renders money(collected_cents), $0.00 not "—".
+- Also live-verify after deploy: #28371 + #28379 (Maintenance arrivals: Issues, PM with Checking/unavailable states, Schedule WO), #28377 (vehicle profile Create WO → /maintenance?create_wo=1&unit_id=).
+Your items 1, 2, 5, 6 stay yours.
