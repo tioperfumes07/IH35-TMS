@@ -402,6 +402,8 @@ export async function computeTripProfitabilityReport(
         ON l.id = sl.load_id
        AND l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL
+       AND l.voided_at IS NULL
+       AND l.status::text <> 'cancelled'
        AND l.is_sample_data = false
       ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       GROUP BY sl.settlement_id
@@ -476,6 +478,8 @@ export async function computeTripProfitabilityReport(
         ON l.id = sl.load_id
        AND l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL
+       AND l.voided_at IS NULL
+       AND l.status::text <> 'cancelled'
        AND l.is_sample_data = false
       LEFT JOIN LATERAL (
         SELECT MIN(COALESCE(st.appointment_start_at, st.scheduled_arrival_at)) AS pickup_at
@@ -502,6 +506,8 @@ export async function computeTripProfitabilityReport(
             ON lx.id = slx.load_id
            AND lx.operating_company_id = $1::uuid
            AND lx.soft_deleted_at IS NULL
+           AND lx.voided_at IS NULL
+           AND lx.status::text <> 'cancelled'
          WHERE slx.settlement_id = sip.id
            AND ${loadMatchesEquipmentSql("$4", "lx")}
       )
