@@ -239,7 +239,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 148 | R89 | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | CODED |
 | 149 | R90 | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | CODED |
 | 150 | R93 | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
-| 151 | R94 | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | CODED |
+| 151 | R94 | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | DONE-LIVE — prod 00:15Z: 0 proforma invoices; views.ar_aging $621,076.72 / 164 = GL 1100 $621,076.72 |
 | 152 | R95 | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | OPEN |
 | 153 | R96 | Accounting | QBO sync "Not connected" | OWNER | OPEN |
 | 154 | R97 | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | OPEN |
@@ -249,15 +249,15 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | CODED |
 | 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | CODED-QUEUED |
-| 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | OPEN |
-| 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | OPEN |
+| 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | OPEN — re-measured 00:15Z: fuel.fuel_card_assignments = 0 rows |
+| 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | OPEN — re-measured 00:20Z: 262 of 281 live Relay fills have no driver (220 have the unit); 18 relay_driver_ids, no crosswalk table; name match impossible (partial names, 5 duplicate "Hugo Gaytan" rows), phone 0 unique — permanent fix routed to CC-2 (relay_driver_links + picker queue) |
 | 163 | R106 | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | OPEN |
 | 164 | R107 | Fuel | Home MTD spend $91,539 vs Fuel board figure; Avg $/gal $5.44 | CC-2 | OPEN |
-| 165 | R108 | Maintenance | All 43 trucks "PM reading unavailable"; 0 work orders; MTD cost $0.00 | CC-2 | OPEN |
+| 165 | R108 | Maintenance | All 43 trucks "PM reading unavailable"; 0 work orders; MTD cost $0.00 | CC-2 | DONE-LIVE — live /maintenance 23:35Z: PM states shown ("No PM clock" + "Start PM clock →", never a false OK — verify-fleet-health-no-false-ok); prod: USMCA maintenance.work_orders = 0 (true empty), MTD $0.00 true |
 | 166 | R109 | Dispatch | Load board HOS columns blank for most trucks; Truck planner driver column "—" for trucks with drivers | CC-3 | OPEN |
 | 167 | R110 | Driver Profile | Angel Sosa: "No current truck assignment" while on T156 (13697); documents all "Not recorded" | CC-2 | OPEN |
 | 168 | R111 | Insurance | Insurance page renders inside the Safety header/tab shell | CC-2 | CODED |
-| 169 | R112 | Legal | Open matters 0 on page while legal.matters holds 18 rows (test records) | CC-2 | OPEN |
+| 169 | R112 | Legal | Open matters 0 on page while legal.matters holds 18 rows (test records) | CC-2 | DONE-LIVE — prod 00:15Z: legal.matters USMCA = 0 rows (the 18 test rows are gone) — "Open matters 0" is the true count |
 | 170 | R200 | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | DONE-LIVE — prod views.ar_aging $621,076.72 / 164 open = GL 1100 $621,076.72 (322 postings) = 183 sent invoices $621,076.72; no proforma rows live |
 | 171 | R203 | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | DONE-LIVE — CI required-live-load-guard 22:20Z: verify-every-load-born-document-and-posting-traces-to-its-load — unstamped postings 0, broken walks 0, load expenses without link 0 |
 | 172 | R204 | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | CODED |
