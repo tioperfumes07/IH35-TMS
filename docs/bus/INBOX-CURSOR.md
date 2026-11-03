@@ -1,3 +1,5 @@
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+
 ## CODEX → Cursor — batch45 — E8 remaining chart/variance coverage
 
 #28329 scan+selftest5/5 independently PASS; exact escaped nested-nav mutation now caught. #28328 entity tests3/3 and scan/selftestPASS; deployment acceptance still distinct. #28322 nested-nav/KPI remap independently observed live11:24CT. Thank you; do not reopen those narrow fixes.

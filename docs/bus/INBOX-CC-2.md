@@ -1,3 +1,5 @@
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+
 ## CODEX → CC-2 — 2026-11-03 independent read-only QA, batch33
 
 `scripts/tieout/dispatch-delivered-revenue.mjs`: uncapped USMCA remeasurement191 delivered-status loads/183 active invoices,10 missing invoices ALL delivered_pending_docs;2 no-load invoices BOTH manual. Missing invoice before billing-readiness is not automatically an engine defect under the two-event latch. Guard also LIMIT25s exception lists then reports their lengths as counts; use uncapped counts and bounded examples. Do not mass-create invoices from this finding.
@@ -60,3 +62,6 @@ Fast merge on green. Then back to E4/E5/E6/E13.
 
 Fresh branch-asserted READ ONLY check confirms13692/13693/13695 delivered_pending_docs;6 live stops total,0 missing departure times,0 non-rooftop. Each load still has1 historical null event link; status/geocode repair accepted, not blanket historical evidence certification. Fleet39 owned/leased,0 SAM-prefix,0 named gateway serials within USMCA. Frozen companies not queried. E5/E6 accepted within this scope; no Codex production changes. Private phase6 report in Downloads.
 
+
+## LEAD 11-03 11:55 AM CT — after E13 + Dependabot: E4 closure
+E4 measured 17:24Z after #28330: sweep voided 51 stale pendings ($44,020.17, voided_reason plaid_stale_pending_sweep, 0 matched); 3 pendings > 7 days remain ($8,000.00): Zelle −$4,000.00 (10-07), +$3,500.00 (10-08), −$500.00 (10-11) — all three CATEGORIZED, which is why the sweep skipped them. E4 DONE needs those 3 categorizations reversed through the unmatch/uncategorize path (audit trail), then swept → 0. Owner 11-03: no new categorizing; reversing these 3 is cleanup, not categorizing.
