@@ -91,3 +91,18 @@ On e27c5b2c8: migrations/0242-drift-reconciliation, lib/*.migration.test.ts (ds5
 
 ## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
 Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
+
+## P0 — LEAD 2026-11-02 6:35 PM CT — OWNER ORDER 6:18 PM CT (verbatim): "fix the driver issue now." — Relay fills with no driver (row 162). Drop what you are on; this first.
+Supersedes the CC-2 note of 6:20 PM (that guessed a new table — the measured root cause below needs none). Lane: fuel/relay = CC-3; the one mdata.drivers write is the designed integration_id key.
+
+MEASURED (prod, USMCA): 281 live Relay fills; **262 have matched_driver_id NULL** (220 of them have the unit). Relay sends `driver.integration_id` on every fill (17 distinct ids, 1 fill with none). `mdata.drivers.integration_id` (migration 202607110000, UNIQUE (operating_company_id, integration_id)) is **NULL for every driver** — 0 of 17 ids exist on any driver in any company. Nothing writes it: no UI field, no route (grep: only the column DDL + the matcher read it). The matcher (`relay-fuel-driver-match.ts`, integration_id ONLY — guard 1834 `verify-relay-fuel-driver-match-fallbacks` forbids name/phone) therefore can never match; `rematchRelayFuelDrivers` runs only from a manual Owner POST, never on a schedule.
+Relay's own words (guard 1834 header): "use the integration_id to match transactions as thats the value we store on the driver profile that is visible to the users."
+
+BUILD (permanent, no guessing):
+1. **Link queue** on /fuel Relay — unmatched (RelayUnmatchedPage, new FuelBoardSection "Link Relay drivers"): one row per unlinked Relay integration_id — Relay name, id last 4, fills, last fill, unit(s); optional "suggested" driver = the truck's load driver at the latest fill (resolveRelayDriverFromLoad), shown as a suggestion only; DriverPickerWithCreate (active USMCA roster) + Save.
+2. **Route** `GET /api/v1/fuel/relay-driver-links/unlinked` + `POST /api/v1/fuel/relay-driver-links {operating_company_id, relay_integration_id, driver_id}` — Owner/Administrator; driver must be live in that company; refuse 409 if the driver already has a different integration_id or the id is on another driver (never overwrite). Write `mdata.drivers.integration_id`, then run `rematchRelayFuelDrivers({operating_company_id})` in the same transaction → every past fill for that id matches; new fills match at ingest.
+3. **Driver Profile**: show + edit "Relay integration ID" (visible per Relay) through the existing driver PATCH (CC-1 owns drivers.routes.ts — coordinate or note the lane cross with the Lead line).
+4. **Scheduled rematch**: run rematchRelayFuelDrivers per company on the existing job lease (wrapBackgroundJobTick) daily, so a link made anywhere heals all fills.
+5. **Duplicates**: "HUGO GAYTAN" = 5 mdata.drivers rows (1 Active, 4 Inactive) — link to the Active one; the merge of the 4 goes through driver-merge (not delete).
+GUARD: extend guard 1834 — static: the link route writes only integration_id and then rematches; live (shrink-only to 0): live fills whose relay_driver_integration_id equals a linked driver's integration_id but matched_driver_id IS NULL = 0.
+DONE = queue live in Chrome with 17 ids; after the owner links them, prod unmatched-with-link = 0 and the 262 fills carry drivers. Deadline 2026-11-03T02:30Z. Codex verifies.

@@ -222,3 +222,5 @@ ROOT CAUSE (code, plaid.service.ts): (1) the `removed` loop only appends notes '
 PERMANENT FIX: (a) `removed` → void the row (void_reason 'plaid_removed', audit row) unless financially linked → then the existing escalation path (never silently keep, never hard delete); (b) daily sweep: live pending older than 5 business days → re-ask Plaid (/transactions/get for that account+date window); retire those Plaid no longer returns; (c) the 3 booked stale pendings: reverse via the normal unmatch/uncategorize engine, then void; (d) re-measure BofA reconciliation drift (row 154: bank $1,808.13 vs book −$88,433.89) after (a)–(c).
 GUARD (live, shrink-only to 0): live pending bank lines older than 10 days = 0; static: the removed handler issues a void, not a note.
 DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Deadline 2026-11-03T03:00Z.
+
+## LEAD 2026-11-02 6:35 PM CT — row 162 (Relay drivers) MOVED to CC-3 (fuel/relay lane; root cause = mdata.drivers.integration_id never written — no new table). Do NOT build relay_driver_links. Your banking items (stale Plaid pendings, rows 154/156) stand.
