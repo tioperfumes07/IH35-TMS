@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -121,7 +122,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         key: "total_tax_due",
         label: "Total tax",
         sortable: true,
-        render: (filing) => `$${Number(filing.total_tax_due ?? 0).toFixed(2)}`,
+        render: (filing) => formatUsd(Number(filing.total_tax_due ?? 0)),
       },
     ],
     []

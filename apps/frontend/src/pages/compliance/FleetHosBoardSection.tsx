@@ -16,6 +16,7 @@ import { formatClockTimeCT } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatPersonName } from "../../lib/formatPersonName";
+import { formatQuantityTable } from "../../lib/money";
 
 const EMPTY_FILTERS = {
   unitId: "",
@@ -34,7 +35,7 @@ function hmm(min: number | null): string {
 export function num(n: number | string | null | undefined, digits = 0): string {
   if (n == null || n === "") return "—";
   const v = typeof n === "number" ? n : Number(n);
-  return Number.isFinite(v) ? Number(v).toFixed(digits) : "—";
+  return Number.isFinite(v) ? formatQuantityTable(v, digits) : "—";
 }
 
 const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber

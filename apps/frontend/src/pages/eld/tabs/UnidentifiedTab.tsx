@@ -6,10 +6,11 @@ import { fetchEldUnidentifiedDriving, type FleetLocationHosRow } from "../../../
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { formatQuantityTable } from "../../../lib/money";
 
 function formatSpeed(speed: number | null | undefined): string {
   if (speed == null || Number.isNaN(Number(speed))) return "—";
-  return `${Number(speed).toFixed(0)} mph`;
+  return `${formatQuantityTable(Number(speed), 0)} mph`;
 }
 
 type Props = { operatingCompanyId: string };

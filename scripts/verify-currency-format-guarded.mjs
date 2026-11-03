@@ -264,6 +264,22 @@ if (!/tickFormatter=\{\(v\) => formatUsd\(Number\(v\)\)\}/.test(weeklyRev)) {
   fail("WeeklyRevenueChart Y-axis must use formatUsd");
 }
 
+const custList = read("apps/frontend/src/pages/customers/CustomersListView.tsx");
+if (!/formatQuantityTable\(value, 1\)/.test(custList)) fail("CustomersListView pct must use formatQuantityTable");
+const fleetHos = read("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx");
+if (!/formatQuantityTable\(v, digits\)/.test(fleetHos)) fail("FleetHosBoardSection num must use formatQuantityTable");
+const form2290 = read("apps/frontend/src/pages/compliance/Form2290Filings.tsx");
+if (!/formatUsd\(Number\(filing\.total_tax_due/.test(form2290)) fail("Form2290Filings tax due must use formatUsd");
+const breakEven = read("apps/frontend/src/pages/finance/BreakEvenPage.tsx");
+if (!/formatUsdRateTable\(centsPerMile \/ 100, 3\)/.test(breakEven)) fail("BreakEvenPage per-mile must use formatUsdRateTable");
+if (!/formatQuantityTable\(Math\.round\(n \|\| 0\), 0\)/.test(breakEven)) fail("BreakEvenPage fmtInt must use formatQuantityTable");
+const breakEvenWb = read("apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx");
+if (!/formatUsdRateTable\(preview\.total_cost_per_mile_cents \/ 100, 3\)/.test(breakEvenWb)) {
+  fail("BreakEvenWorkbookCreator preview per-mile must use formatUsdRateTable");
+}
+const eldUnid = read("apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx");
+if (!/formatQuantityTable\(Number\(speed\), 0\)/.test(eldUnid)) fail("UnidentifiedTab speed must use formatQuantityTable");
+
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");
