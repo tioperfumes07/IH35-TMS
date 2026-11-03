@@ -629,6 +629,10 @@ if (!/formatQuantityTable\(driverBillCount, 0\)/.test(rollingLedgerQty) || !/for
 if (!/ledgerEntityKind\(row\.document_kind, row\)/.test(rollingLedgerQty)) {
   fail("RollingLedgerTab AdjustPopover must pass row into ledgerEntityKind (CASH-T03 legacy fuel-avg)");
 }
+// Codex batch62 — AdjustPopover-specific: global ledgerEntityKind(, row) elsewhere must not mask a missing consumer arg.
+if (!/function AdjustPopover[\s\S]{0,900}ledgerEntityKind\(row\.document_kind, row\)/.test(rollingLedgerQty)) {
+  fail("AdjustPopover itself must pass row into ledgerEntityKind (not only sibling renderers)");
+}
 const tourSettleQty = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
 if (!/formatQuantityTable\(bills\.length, 0\)/.test(tourSettleQty) || !/formatQuantityTable\(liveLegs\.length, 0\)/.test(tourSettleQty)) {
   fail("TourSettlementTab bill/load counts must use formatQuantityTable(, 0)");

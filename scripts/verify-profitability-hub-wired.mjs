@@ -112,6 +112,10 @@ export function verdict(files) {
   if ((laneSvc.match(/voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/g) || []).length < 2) {
     problems.push("lane-profitability pay CTEs must exclude void/voided driver bills (both aggregations)");
   }
+  // Codex batch63 — lane load_scope must match equipment-type live population (no cancelled/voided loads).
+  if ((laneSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/l\.status::text\s*<>\s*'cancelled'/g) || []).length < 2) {
+    problems.push("lane-profitability load_scope must exclude voided/cancelled loads (compute + detail)");
+  }
   return problems;
 }
 
