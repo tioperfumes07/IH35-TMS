@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:20 PM CT) — U12 EDI Transaction Log status MultiSelect
+- **PRIOR:** #28590 Load cancel/exception U12.
+- **THIS:** EdiTransactionLog status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Shared integrations surface.
+- **NEXT:** Accounting list Active-Inactive need SURFACE-BREACH Cascade/CC-1; live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:15 PM CT) — U12 Load Cancellation + Exception Reasons MultiSelect
 - **PRIOR:** #28589 Dispatch/Termination U12.
 - **THIS:** LoadCancellationReasonsListPage + LoadExceptionReasonsListPage status → MultiSelectDropdown; filter-surfaces matchesStatus retarget.
