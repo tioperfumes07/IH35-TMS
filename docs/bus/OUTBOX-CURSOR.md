@@ -1,7 +1,7 @@
-## OUTBOX (11-03-2026 ~3:20 PM CT) — batch76 Vendors multi-status server union
-- **PRIOR:** #28458 batch72 ENG17/ENG-34 holes.
-- **THIS:** Codex batch76 — Vendors txn statusFilter.join(',') → listBills; drop page-100 client filter; multiselect + connectivity guards. ENG-21 DONE-LIVE. Dreamline/match deferred. Reclassify date-only → CC-1.
-- **NEXT:** more Cursor engines; no match/Dreamline.
+## OUTBOX (11-03-2026 ~3:25 PM CT) — #28460 batch76 Vendors + #28458/#28446 closed
+- **PRIOR:** #28458 batch72 ENG17/ENG-34; #28446 Legal unions DONE-LIVE (Codex batch74).
+- **THIS:** #28460 Vendors multi-status comma-union before listBills LIMIT. Batch75 Reclassify date-only → CC-1. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; ENG-34 call-evidence residual; no match/Dreamline.
 
 ## OUTBOX (11-03-2026 ~3:00 PM CT) — batch72 ENG17 selftest + ENG-34 inline/inert holes
 - **PRIOR:** #28446 batch71 Legal route allowlisted comma-unions.
