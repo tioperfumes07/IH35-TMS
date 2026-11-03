@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:10 PM CT) — DispatchOverview idle days quantity
+- **PRIOR:** #28475 contracts/trip pairing qty.
+- **THIS:** DispatchOverview maxDaysIdle → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:00 PM CT) — contracts version + trip pairing days qty
 - **PRIOR:** #28474 Templates version qty.
 - **THIS:** LegalContractInstances template_version + TripPairingBoard up_north_days → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
