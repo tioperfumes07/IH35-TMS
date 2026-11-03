@@ -385,8 +385,8 @@
       "status": "PARTIAL",
       "guard": "verify-guard-wired.mjs",
       "deadline_utc": "2026-10-25T03:00:00Z",
-      "evidence": "LIVE 11-03 CT Cursor: drop 11 already-selftested via 18929 staticGuards from .guard-exempt.json → exempt 28→17 (verify-unwired-guards-shrink-only PASS). Prior: #28256 wave5 34→29; wave6 19822 sql-write 29→28; #28249 wave4 53→34. unaccounted=0. Remaining ~17 LIVE/tool/statement-gated.",
-      "updated_at": "2026-11-03T21:20:00Z"
+      "evidence": "LIVE 11-03 CT Cursor: #28310 drop 11 already-18929-selftested → 28→17; SET-RATE verify-settlement-line-rate-consistency moved into 18929 staticGuards → exempt 17→16. Prior wave5/6 34→29→28. unaccounted=0. Remaining ~16 LIVE/tool/statement-gated.",
+      "updated_at": "2026-11-03T21:35:00Z"
     },
     {
       "id": "ENG-36",
