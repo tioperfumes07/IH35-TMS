@@ -55,6 +55,15 @@ export function verdict(files) {
       problems.push(`${name} queryKey/filter must include filters.equipmentType`);
     }
   }
+  for (const [name, src] of [
+    ["ByLaneView", files.lane],
+    ["ByCustomerView", files.customer],
+    ["ByLoadView", files.load],
+  ]) {
+    if (!src.includes("return <ByTypeView filters={filters} />")) {
+      problems.push(`${name} must delegate to ByTypeView when equipmentType is set (same population as KPI)`);
+    }
+  }
   if (!files.type.includes("matchesEquipmentType")) {
     problems.push("ByTypeView must apply matchesEquipmentType local filter");
   }
@@ -88,10 +97,10 @@ if (process.argv.includes("--selftest")) {
     index: "registerEquipmentTypeProfitabilityRoutes(app)",
     route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nbills AS (\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')\n),\nfuel AS",
     api: "export async function getEquipmentTypeProfitability",
-    lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType",
-    customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType",
+    lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
+    customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
     type: "getEquipmentTypeProfitability\nBoardSection\nfilters.equipmentType\nmatchesEquipmentType",
-    load: "getTripProfitability\nBoardSection\nfilters.equipmentType",
+    load: "getTripProfitability\nBoardSection\nfilters.equipmentType\nreturn <ByTypeView filters={filters} />",
     kpi: "getLaneProfitability\nDrillKpiCard\nfilters.equipmentType\ngetEquipmentTypeProfitability",
   };
   const cases = [
@@ -102,6 +111,7 @@ if (process.argv.includes("--selftest")) {
     ["loads.voided_at must not mask bills", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"\nbills AS (\nSELECT 1 WHERE l.voided_at IS NULL\n),\nfuel AS' }).some((p) => p.includes("db.voided_at"))],
     ["missing route mount fails", verdict({ ...good, manifest: "" }).some((p) => p.includes("/profitability"))],
     ["missing equipmentType key fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection" }).some((p) => p.includes("equipmentType"))],
+    ["missing ByType delegation fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType" }).some((p) => p.includes("ByTypeView"))],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;

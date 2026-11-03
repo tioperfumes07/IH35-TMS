@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:50 PM CT) — batch58 equipment scopes same ByType population
+- **PRIOR:** #28397 border/timeline qty · #28395 exact aliases.
+- **THIS:** Codex batch58 follow-up — lane/customer/load delegate to ByTypeView when equipmentType set so results+KPI share filtered population; hub guard plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:40 PM CT) — border/timeline count house quantity
 - **PRIOR:** #28395 equipment aliases · #28394 Users/ELD.
 - **THIS:** CustomsTab + Driver/Unit/Vendor border-crossing headers · UnifiedTimelinePlanner Unassigned → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
