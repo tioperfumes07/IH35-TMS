@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch67: live ENG-65 progress and related multi-status defects
+
+Batch66 merged#28426 b1a1b8ae9f;3affected guards,0regressions,normal hooks. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28422 dd171c394c ENG-65|Full4-file diff read;link/adopt context inspected. Guard scan PASS,3/3plants PASS,focused backend4/4tests PASS.|Existing-document source-pointer writer added with fill-once behavior. Mock tests do not constitute production backfill proof; audit did not call writer.|
+|ENG-65 live remeasurement|Privatephase24 READ ONLY,expectedbranch br-fancy-credit-akjnd07a,USMCA3264JE control.249 distinct live document/fill pairs;48without source pointer;0of those48 has a live nonarchived fuel record. ExplicitUSMCA predicates on all joined sources,ROLLBACK.|Progress confirmed versus prior90unlinked report;48remain OPEN due missing source fuel records. No balancing/relink/backfill performed by audit.|
+|#28022 related pagination|Full4-frontend-file diff read. Current Fines/Integrity/Legal queryFn executed independently with60mockrows,first50outside selectedstatuses,last10inside. Each returns0rows,total0 versus expected10/10. Backend equality+COUNT/LIMIT read.|CONFIRMED same post-page filtering defect on3surfaces; Legal also applies this pattern to severity/type. Posted to Cursor/Safety/Legal owners. Full historical affected suite still pending,not claimed PASS.|
+|Historical#28020 80c8fabc4c|Full1-line diff removes unused colors import;11affected PASS.|Narrow compile-cleanup accepted; full historical frontend build not rerun,not claimed.|
+
+All source/fixture evidence is distinct from deployed UI evidence. Full audit remains INCOMPLETE; no bank matching,production data/settings changes or emails.
+
 ## 2026-11-03 — ROUND7.27 batch66: historical filter pagination
 
 Batch65 merged #28425 1be9bad5aa;1 affected guard,0 regressions,normal hooks. No production changes.
