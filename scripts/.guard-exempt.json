@@ -19,11 +19,8 @@
   "verify-balanced-ledger.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 package.json-only; only verify-steps hit was a comment analogy. Wire a claimed verify-step or keep exempt until LIVE/DB path is decided.",
   "verify-cash-basis-drill-answers-in-cash-basis.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 package.json-only; comment-strip proof removed false CI wiring. Wire a claimed verify-step.",
   "verify-cash-basis-pl-is-computed-from-transactions.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 package.json-only; comment-strip proof removed false CI wiring. Wire a claimed verify-step.",
-  "verify-row-actions-column-is-clickable.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 package.json-only; comment-strip proof removed false CI wiring. Wire a claimed verify-step.",
   "verify-static.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 package.json-only runner; workflow/steps mentions were comments. Executed via its own job path; keep exempt until a non-comment CI registration is claimed.",
-  "verify-bus-diet-outbox-cap.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; only verify-steps mention was a comment. Wire a claimed verify-step.",
-  "verify-every-poster-resolves-by-role-not-by-name-or-number.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; comment-only prior CI credit. Wire a claimed verify-step.",
-  "verify-load-driven-miles-from-fences.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; comment-only prior CI credit. Wire a claimed verify-step.",
-  "verify-one-fuel-to-load-helper.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; only verify-steps mention was a comment (ENG-25 note). Wire a claimed verify-step.",
+  "verify-bus-diet-outbox-cap.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; only verify-steps mention was a comment. Wire a claimed verify-step. Other seats' hot bus still over OUTBOX/INBOX caps (not Cursor-owned); keep exempt until global diet or Cursor-only scope.",
+  "verify-load-driven-miles-from-fences.mjs": "added 2026-11-03 Cursor ENG-34/batch70 \u2014 orphan; comment-only prior CI credit. LIVE/DB measure; keep exempt until LIVE path is decided (CI has no prod DATABASE_URL).",
   "verify-match-vendor-joins-company-scoped.mjs": "added 2026-11-03 Cursor \u2014 OWNER BUILD-FIRST: no match/reconcile this session. Match-surface guard; wiring would claim CI for a deferred engine. Exempt until match lane reopens; do not invent match."
 }
