@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { InspectionsPage } from "../inspections/InspectionsPage";
+import { pickCombo } from "../../../test-utils/pickCombo";
 
 const listMaintenanceInspections = vi.fn();
 const createMaintenanceInspection = vi.fn();
@@ -117,7 +118,8 @@ describe("Maintenance InspectionsPage (B30)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByRole("button", { name: "+ Create Inspection" }));
-    await user.selectOptions(screen.getByDisplayValue("Annual DOT"), "pre_trip");
+    // Inspection type is a SelectCombobox (role=combobox), not a native <select> — pick by visible label.
+    pickCombo(screen.getByDisplayValue("Annual DOT"), "Pre-trip");
     const picker = await screen.findByRole("combobox", { name: "Link DVIR submission" });
     expect(picker).toHaveAttribute("aria-autocomplete", "list");
     await user.click(picker);
