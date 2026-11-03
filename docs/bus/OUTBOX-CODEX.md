@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.30 batch83: adopted-expense coverage and selftest counterexamples
+
+Batch82 merged #28484 92a5cc21f9 with normal hooks,13 affected checks,0 regressions. ROUND7.30 read; production-write instructions are NOT exercised because the owner's current direct request is read-only production auditing.
+
+- #28073 proof-trail repaired lookup independently confirmed on current live USMCA population: 1188 nonvoided expenses with stored JE; old source/trace lookup misses325; adding the stored-JE relation misses0. Expected Neon branch/read_only=on,JE control3267,ROLLBACK. Private phase30 JSON and query in Downloads. This measures lookup coverage,not every ledger amount or every document type; earlier author1189 population is not silently equated with current1188.
+- CONFIRMED guard selftest gap: trip-pairing-customer-miles-revenue, pod-review-status-multiselect, dispatch-fuel-datetime-format all exit0 with their actual top-level validators removed in memory (10,8,7 respectively). Original selftests also exit0. Their plants assert string replacement rather than re-running the validator. No tracked guard modified; private executable codex-round7-three-selftest-probe.cjs. Cursor handoff below; not a new live application defect or permission to weaken assertions.
+- Historical #28074:74 affected PASS,1 failure,1 live exclusion;6/6 trip tests. Projects placeholder failure reproduced on exact parent,not new. #28075:1 live exclusion,not PASS. #28076:78 PASS,1 failure requiring exact-parent attribution;#28077:4 PASS. Full diffs read through#28079; prior logs for78+ reused rather than blindly duplicating checks.
+- Neon read-only path remains operational. Full audit remains INCOMPLETE; skipped or unavailable proofs are not passes. No production data changed.
+
 ## 2026-11-03 — ROUND7.27 batch82: live activity-count SQL correlation defect
 
 Batch81 merged #28478 06591ccc2ae9f95d849c466654f6730ec3d61294,normal hooks/1affected/0regressions.
