@@ -202,6 +202,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            -- Legacy bill linkage is a fallback only; it cannot override a continued tour's identity.
            SELECT linked.id AS load_id, ds.source_document_ref AS settlement_display_id,
                   ds.id::text AS settlement_id,
+                  -- ROW 203 (D027): the settlement's OWN state travels with its id + number, so the
+                  -- Settlement/Tour link label is resolved from the settlement itself (number, else
+                  -- PENDING while the tour is open) -- never guessed from the LOAD's status, which is
+                  -- what left linked-but-unnumbered tours labelled with a bare em dash. Same open test
+                  -- as the tour readout (tour-readout.routes.ts closedAlready).
+                  ds.status::text AS settlement_status,
+                  (ds.trip_closed_at IS NULL AND ds.status::text = 'open') AS settlement_is_open,
                   -- SETTLEMENT-NUMBER-SWEEP correction (owner 2026-09-11): removed the blunt
                   -- settlement-timestamp/status short-circuit branch (checking ds directly, no
                   -- load-level signal at all) that PR #21692 (ACCT-F6350/REG-040) added here.
@@ -321,7 +328,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 dpd.rate_empty_cents::text AS rate_empty_cents,
                 COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
-                si.settlement_display_id, si.settlement_id,
+                si.settlement_display_id, si.settlement_id, si.settlement_status, si.settlement_is_open,
                 COALESCE(si.is_resettlement, false) AS is_resettlement,
                 lcr.is_invoiced,
                 -- 443.257-C fuel source: posted (source_fuel_transaction_id) + unposted fills

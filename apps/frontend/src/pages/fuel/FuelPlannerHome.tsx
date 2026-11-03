@@ -224,16 +224,21 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
     setTab(fuelTabFromPath(location.pathname) as FuelTabId);
   }, [location.pathname]);
 
+  // ROW 198 (D020) — every board query below used to fire on EVERY tab (enabled: Boolean(companyId)), so
+  // opening Expense mapping fanned out 7 requests into a 5-connection backend pool and the one request that
+  // tab needs (GET /api/v1/accounting/expense-category-map, 0.67 ms of SQL on prod) queued 8,831 ms. Each
+  // query now fetches only on the tab that renders it. Guard: scripts/verify-cc1-rows-198-203-222.mjs.
+  const onPlanner = tab === "planner";
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
     queryFn: () => getFuelDashboard(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && onPlanner,
   });
 
   const lovesSyncQuery = useQuery({
     queryKey: ["fuel", "loves-sync", "status", companyId],
     queryFn: () => getLovesSyncStatus(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (onPlanner || tab === "loves_prices"),
     refetchInterval: 60_000,
   });
   const activeRoutesQuery = useQuery({
@@ -242,12 +247,12 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       limit: activeRoutePageSize,
       offset: (activeRoutePage - 1) * activeRoutePageSize,
     }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (onPlanner || tab === "compliance"),
   });
   const settingsQuery = useQuery({
     queryKey: ["fuel", "planner", "settings", companyId],
     queryFn: () => getFuelPlannerSettings(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (onPlanner || tab === "settings"),
   });
   const complianceDriverId =
     activeRoutesQuery.data?.routes?.find((route) => route.id === selectedActiveRouteId)?.driver_id ??
@@ -256,12 +261,12 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const complianceQuery = useQuery({
     queryKey: ["fuel", "planner", "compliance", companyId, complianceDriverId],
     queryFn: () => getFuelComplianceSummary(companyId, complianceDriverId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (onPlanner || tab === "compliance"),
   });
   const savingsQuery = useQuery({
     queryKey: ["fuel", "planner", "savings", companyId],
     queryFn: () => getFuelSavingsSummary(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (onPlanner || tab === "history"),
   });
   // FUEL-4: History tab real data — GET /api/v1/fuel/transactions (already existed on the
   // backend; the tab previously hardcoded `rows={[]}`). Only fetched while the History tab is active.
@@ -324,7 +329,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const detailQuery = useQuery({
     queryKey: ["fuel", "planner", "recommendation-detail", companyId, activeRoute?.id ?? ""],
     queryFn: () => getFuelRecommendationDetail(activeRoute!.id, companyId),
-    enabled: Boolean(companyId && activeRoute?.id),
+    enabled: Boolean(companyId && activeRoute?.id) && onPlanner,
   });
 
   const sendRecommendationMutation = useMutation({

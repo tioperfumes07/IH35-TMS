@@ -69,6 +69,10 @@ type BoardRow = {
    * booking time, SET-01/SET-02) -- null only for a load with no driver bill yet (e.g. unassigned). */
   settlement_display_id: string | null;
   settlement_id: string | null;
+  /** ROW 203 (D027): the linked settlement's own status / open flag (load-costs-board.routes.ts
+   *  settlement_info) -- the label is resolved from the settlement, never from the load's status. */
+  settlement_status?: string | null;
+  settlement_is_open?: boolean | null;
   /** Issued invoice supplies revenue, independently of open cost collection. */
   is_invoiced: boolean;
   is_resettlement?: boolean;
@@ -115,6 +119,15 @@ const isClosed = (r: BoardRow) => CLOSED.includes(r.status);
 // This secondary register groups issued/nonmoving rows and explicit resettlements, but does
 // not remove them from current costs. R443.139: only actual closure, checked by the server,
 // finishes current costs; a status label or issued invoice alone cannot do that.
+/** ROW 203 (D027) -- the ONE Settlement/Tour link label on this page (board column + every register).
+ *  The number when the settlement has one; PENDING while the tour is open; never a bare em dash and never
+ *  a generic word when the row has a settlement destination. Status comes from the SETTLEMENT (API field
+ *  settlement_status / settlement_is_open), not from the load. */
+function settlementLinkLabel(s: { number: string | null | undefined; status?: string | null; is_open?: boolean | null }): string {
+  const lbl = settlementLabel({ source_document_ref: s.number ?? null, status: s.status ?? undefined, is_open: s.is_open ?? undefined, is_presettlement: !s.number && s.is_open !== false });
+  return lbl === DASH ? (s.status ? s.status.toUpperCase() : "PENDING") : lbl;
+}
+
 const isResettlement = (r: BoardRow) =>
   r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status) && !MOTION.includes(r.status));
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
@@ -272,7 +285,7 @@ const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "loaded_rate", label: "Loaded rate", testId: "reg-col-loaded_rate", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedRateCents == null ? -Infinity : Number(r.loadedRateCents), render: r => fmtRate(r.loadedRateCents ?? null) },
   { key: "empty_miles", label: "Empty miles", testId: "reg-col-empty_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.emptyMiles == null ? -Infinity : Number(r.emptyMiles), render: r => fmtMiles(r.emptyMiles ?? null) },
   { key: "empty_rate", label: "Empty rate", testId: "reg-col-empty_rate", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.emptyRateCents == null ? -Infinity : Number(r.emptyRateCents), render: r => fmtRate(r.emptyRateCents ?? null) },
-  { key: "settlement_number", label: "Settlement/Tour", testId: "reg-col-settlement", sortable: true, sortValue: r => r.settlementNumber ?? "", render: r => r.settlementId ? <EntityLink kind="settlement" id={r.settlementId} label={r.settlementNumber ?? "Settlement"} /> : r.settlementNumber ?? DASH },
+  { key: "settlement_number", label: "Settlement/Tour", testId: "reg-col-settlement", sortable: true, sortValue: r => r.settlementNumber ?? "", render: r => r.settlementId ? <EntityLink kind="settlement" id={r.settlementId} label={settlementLinkLabel({ number: r.settlementNumber })} /> : r.settlementNumber ?? DASH },
   { key: "gross", label: "Gross", testId: "reg-col-gross", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.grossCents ?? 0, render: r => r.grossCents == null ? DASH : fmt(r.grossCents) },
   { key: "status", label: "Status", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.status, render: r => statusPill(r.status) },
 ];
@@ -482,12 +495,16 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
     : REGISTER_COLUMNS;
   const canonicalSettlement = (row: RegisterRow) => {
     const load = row.loadId ? settlementsByLoad.get(row.loadId) : undefined;
-    return row.settlementId ? { id: row.settlementId, number: row.settlementNumber } : { id: load?.settlement_id, number: load?.settlement_display_id };
+    // ROW 203 (D027): status/open travel with the id so the label is the settlement's own (number or PENDING).
+    const sameAsLoad = load && (!row.settlementId || row.settlementId === load.settlement_id);
+    return row.settlementId
+      ? { id: row.settlementId, number: row.settlementNumber ?? (sameAsLoad ? load?.settlement_display_id : null), status: sameAsLoad ? load?.settlement_status : null, is_open: sameAsLoad ? load?.settlement_is_open : null }
+      : { id: load?.settlement_id, number: load?.settlement_display_id, status: load?.settlement_status, is_open: load?.settlement_is_open };
   };
   const columns: ParityColumn<RegisterRow>[] = [...baseColumns.filter(col => !(tab === "driver_pay" && col.key === "settlement_number")), {
     key: "canonical_settlement", label: "Settlement/Tour", testId: "reg-col-settlement", sortable: true, alwaysVisible: true,
     sortValue: row => canonicalSettlement(row).number ?? "",
-    render: row => { const settlement = canonicalSettlement(row); return settlement.id ? <EntityLink kind="settlement" id={settlement.id} label={settlement.number ?? "Settlement"} /> : DASH; },
+    render: row => { const settlement = canonicalSettlement(row); return settlement.id ? <EntityLink kind="settlement" id={settlement.id} label={settlementLinkLabel(settlement)} /> : DASH; },
   }];
   // DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw colSpan=5 footer — the
   // "Totals (N)" label now lives in the leftmost column's cell, the money total stays keyed to
@@ -827,7 +844,7 @@ export function LoadCostsBoardPage() {
     // document (source_document_ref, already what settlement_display_id carries from the backend CTE),
     // rendered through the ONE settlementLabel() helper — "Open" while unsettled, a dash when closed-
     // unnumbered, NEVER the retired S-YYYY-NNNN display_id counter. alwaysVisible, beside every load number.
-    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status, is_presettlement: !!(r.settlement_id && !r.settlement_display_id) }); return r.settlement_id ? <Link className="font-semibold text-[#1F2A44] underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
+    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLinkLabel({ number: r.settlement_display_id, status: r.settlement_status, is_open: r.settlement_is_open }); return r.settlement_id ? <Link className="font-semibold text-[#1F2A44] underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
     // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
     // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older

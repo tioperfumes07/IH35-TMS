@@ -343,12 +343,17 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     return rows;
   }, [moneyMapQuery.data?.accounts, tilesQuery.data?.tiles, tileById]);
 
+  // ROW 222 (D046) — the drift account label resolves from the alert's own joined name first, then from the
+  // accounts list THIS page already loaded (Accounts table rows, same bank_account_id), then the mask —
+  // never the generic word "Account" for an alert that carries a bank_account_id.
+  const accountNameById = useMemo(() => new Map(accountRows.map((r) => [r.id, r.name])), [accountRows]);
   const driftRows = useMemo((): DriftBoardRow[] => {
     return (driftQuery.data?.rows ?? []).map((alert) => {
+      const ownName = alert.account_name || accountNameById.get(alert.bank_account_id) || null;
       const account_label =
-        [alert.institution_name, alert.account_name].filter(Boolean).join(" · ") ||
-        alert.account_name ||
-        "Account";
+        [alert.institution_name, ownName].filter(Boolean).join(" · ") ||
+        (alert.account_mask ? `••${alert.account_mask}` : "") ||
+        `Bank account ${String(alert.bank_account_id).slice(0, 8)}`;
       return {
         ...alert,
         account_label,
@@ -358,7 +363,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         days_open: daysOpen(alert.detected_at),
       };
     });
-  }, [driftQuery.data?.rows]);
+  }, [driftQuery.data?.rows, accountNameById]);
 
   const driftCount = driftQuery.data?.total_count ?? driftRows.length;
   const latest = latestQuery.data?.transactions ?? [];
