@@ -825,17 +825,57 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
 
       for (const transaction of syncRes.data.removed) {
        await runRow(async () => {
-        const update = await client.query(
+        // LEAD 443.154/156 (2026-11-03): void unlinked removed rows; escalate financially-linked ones.
+        const linked = await client.query<{ id: string; financially_linked: boolean }>(
           `
-            UPDATE banking.bank_transactions
-            SET
-              notes = trim(BOTH ';' FROM concat_ws(';', notes, 'removed_by_plaid_sync')),
-              updated_at = now()
+            SELECT
+              id,
+              (
+                matched_journal_entry_id IS NOT NULL
+                OR reconciled_obligation_id IS NOT NULL
+                OR categorization_gl_account_id IS NOT NULL
+              ) AS financially_linked
+            FROM banking.bank_transactions
             WHERE plaid_transaction_id = $1
+              AND voided_at IS NULL
+            LIMIT 1
           `,
           [transaction.transaction_id]
         );
-        counts.removed += Number(update.rowCount ?? 0);
+        const row = linked.rows[0];
+        if (!row) return;
+        if (row.financially_linked) {
+          // Escalate: mark the note so an operator can review, but do not void.
+          await client.query(
+            `
+              UPDATE banking.bank_transactions
+              SET
+                notes = trim(BOTH ';' FROM concat_ws(';', notes, 'removed_by_plaid_sync:financially_linked')),
+                updated_at = now()
+              WHERE id = $1
+            `,
+            [row.id]
+          );
+        } else {
+          const update = await client.query(
+            `
+              UPDATE banking.bank_transactions
+              SET
+                voided_at = now(),
+                voided_reason = 'plaid_removed',
+                dedup_hash = NULL,
+                updated_at = now()
+              WHERE id = $1
+                AND voided_at IS NULL
+                AND matched_journal_entry_id IS NULL
+                AND reconciled_obligation_id IS NULL
+                AND categorization_gl_account_id IS NULL
+              RETURNING id
+            `,
+            [row.id]
+          );
+          counts.removed += Number(update.rowCount ?? 0);
+        }
        });
       }
     });
@@ -1031,4 +1071,86 @@ export async function handleItemError(itemId: string, errorCode: string) {
     },
     "warning"
   );
+}
+
+/**
+ * LEAD 443.154/156 (2026-11-03): void unlinked live pending bank lines older than STALE_PENDING_DAYS
+ * business days. These are orphaned pendings that Plaid replaced with a second pending — the
+ * pending→posted retirement (retirePlaidPendingPredecessor) only resolves ONE predecessor; the first
+ * pending stays live forever. Daily sync's removed events do not fire for them.
+ * Guard: live pending older than 10 days → 0.
+ */
+export const STALE_PENDING_BUSINESS_DAYS = 5;
+
+export async function sweepStalePlaidPendings(): Promise<{ voided: number; escalated: number }> {
+  return withLuciaBypass(async (client) => {
+    // Find pending lines older than STALE_PENDING_BUSINESS_DAYS business days (approx: calendar days × 7/5).
+    const calendarDays = Math.ceil(STALE_PENDING_BUSINESS_DAYS * 7 / 5);
+    const candidates = await client.query<{
+      id: string;
+      financially_linked: boolean;
+      plaid_transaction_id: string | null;
+    }>(
+      `
+        SELECT
+          id,
+          plaid_transaction_id,
+          (
+            matched_journal_entry_id IS NOT NULL
+            OR reconciled_obligation_id IS NOT NULL
+            OR categorization_gl_account_id IS NOT NULL
+          ) AS financially_linked
+        FROM banking.bank_transactions
+        WHERE pending = true
+          AND voided_at IS NULL
+          AND created_at < now() - ($1 || ' days')::interval
+      `,
+      [calendarDays]
+    );
+
+    let voided = 0;
+    let escalated = 0;
+    for (const row of candidates.rows) {
+      if (row.financially_linked) {
+        await client.query(
+          `
+            UPDATE banking.bank_transactions
+            SET
+              notes = trim(BOTH ';' FROM concat_ws(';', notes, 'stale_pending_sweep:financially_linked')),
+              updated_at = now()
+            WHERE id = $1
+          `,
+          [row.id]
+        );
+        escalated++;
+      } else {
+        const res = await client.query(
+          `
+            UPDATE banking.bank_transactions
+            SET
+              voided_at = now(),
+              voided_reason = 'plaid_stale_pending_sweep',
+              dedup_hash = NULL,
+              updated_at = now()
+            WHERE id = $1
+              AND voided_at IS NULL
+              AND matched_journal_entry_id IS NULL
+              AND reconciled_obligation_id IS NULL
+              AND categorization_gl_account_id IS NULL
+            RETURNING id
+          `,
+          [row.id]
+        );
+        voided += Number(res.rowCount ?? 0);
+      }
+    }
+    if (voided > 0 || escalated > 0) {
+      await appendSystemAudit(
+        "banking.plaid.stale_pending_sweep",
+        { voided, escalated, threshold_calendar_days: calendarDays },
+        "info"
+      );
+    }
+    return { voided, escalated };
+  });
 }
