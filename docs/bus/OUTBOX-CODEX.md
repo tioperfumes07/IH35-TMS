@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.30 batch94: independent Manual JE repair acceptance and vendor drill
+
+Batch93 merged #28558 c8c48364fa31d12fa4f8580de04b9caaa196c783, normal hooks,13affected/0regressions.
+
+- #28557 8b231a11c6: full functional component/test/guard diff reviewed. Exact historical affected26PASS/1live-excluded;UI4 selftest10/10 planted defects caught;ManualJEModal tests3PASS/1pre-existingSKIP. Excluded/skipped checks are NOT passes.
+- LIVE17:14CT USMCA: initial old build retained27px Class/Debit overlap; new-version reload then repaired input classes present. At1280 Class right912.640625,Debit left916.640625;at768 Class right400.640625,Debit left404.640625:4px gap both. At768 dialog width700/client699/scroll699 andright768,all5inputs40px high. Exact D065/Class-overlap finding CLOSED independently. Private inline screenshot;no save/post/void,Cancel closed dialog,viewport reset. Not certification of every JE workflow.
+- #28549 vendor live:30transaction rows,4payment-account rows;payment-account EntityLink opens corresponding selected account register and reverse Go-to-vendors link exists. Current-month empty register is not proof empty historical ledger. Category links and all vendor money totals not independently certified by this sample.
+- Full audit remains INCOMPLETE: settlement timezone/title,invoice pagination,invoice full-JE balance reader and settlement legacy/zero-eligibility reader findings remain open. Production unchanged.
+
 ## 2026-11-03 — ROUND7.30 batch93: customer board live and invoice pagination failure
 
 Batch92 merged #28556 e88f65a839768c568abd13cac1d78e06493f495b,normal hooks,3affected,0regressions.
