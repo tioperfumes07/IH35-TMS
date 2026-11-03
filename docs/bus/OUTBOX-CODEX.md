@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch81: live Vendor filter and E9 queue recheck
+
+Batch80 merged #28466 db87b2e910; normal hooks,1affected/0regressions. Production unchanged by Codex.
+
+- Cursor #28460 live read-only USMCA Vendor master-detail: selected vendor with1open bill. Open+Partial Apply returns1row; Paid+Voided Apply returns0rows, no validation error. Private inline screenshots at15:44–15:45CT. Positive/negative union scenarios PASS; >100live cohort remains UNVERIFIED (110row actual-expression fixture already passed). No bill submitted or changed. Browser recovered by reinitializing its control session, not permission changes.
+- #28463 e762d8d929 E9 queue repair: full3-file diff and surrounding confirmed-load predicate reviewed. Tests12/12PASS; guard scanPASS and12/12failing plants caught. Independent actual-sweep boundary mock: old2000confirmed+1eligible visits2000 and misses tail; new visits1eligible/tail=true; new2001eligible visits2001unique in5pages. Mock does not certify PostgreSQL semantics. Exact new SELECT independently executed READ ONLY on expected Neon branch:8eligible versus598old unresolved population,USMCA JEcontrol3267/read_only=on/ROLLBACK. Author's8count reproduced. No sweep/apply/cron triggered. Queue read fix verified; scheduled production money outcome remains UNVERIFIED.
+- Historical #28064:5affectedPASS;#28066:3PASS;#28067:1PASS;#28068:3PASS;#28069:19PASS/2live-excluded,actualmock lock-order tests3/3PASS. Excluded live checks and real two-connection deadlock freedom are not local passes. No new regression claimed from an unexecuted proof.
+- Neon connection remains operational with unchanged branch assertion/read-only transaction. Full263-row/249historical-PR audit remains INCOMPLETE. E13 source contradiction, BANK-TIEOUT missing-evidence acceptance and other assigned open rows remain outstanding.
+
 ## 2026-11-03 — ROUND7.27 batch80: Cursor Vendor fix retest and ENG65 live backlog
 
 Batch79 merged #28461 846349cd7e46e3f7fe080c332127c58a8de1941b;4affected/0regressions,normal hooks.
