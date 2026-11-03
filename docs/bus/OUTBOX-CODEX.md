@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch62: scheduled delivery semantics and CASH-T03 regression plant
+
+Read-only audit; main c7e397c407 (#28404). No production writes or email sends. Batch61 merged #28403.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical #28004 80d7d164e1|Full13-file diff and runner/queue/cadence read. Scheduled tests11/11 PASS from repository root; delivery-banner selftest4/4 PASS. Affected guards102 PASS,2 FAIL. Both failures identical on parent cc79fec671: PolicyDetail legal.matters internal label; scheduled-reports Home source-label preconditions.|No new affected-guard regression demonstrated. Initial workspace-relative test invocation had2 ENOENT errors; corrected repository-root invocation passes all11. No live delivery inference.|
+|#28004 delivery claim, still on current main|SubscriptionManager.tsx:252 says Last sent follows successful delivery. runner.service.ts:330-349 awaits enqueueEmail then immediately stamps last_sent_at and success. queue.service.ts:29-80 only inserts status queued; email/cron.ts:199-280 performs provider.send later and can fail. These files unchanged between historical merge and current main.|CONFIRMED misleading delivery state. A successful enqueue followed by provider failure still appears Last sent/success. Existing queue-before-provider behavior predates PR; PR adds an inaccurate delivery assurance. Backend owner must link queue outcome to subscription outcome or distinguish queued/sent/failed; no real send performed for proof.|
+|#28404 CASH-T03|Full changed application/guard diff read. RollingLedgerTab.cash-t03 tests5/5 PASS. AdjustPopover now passes row into ledgerEntityKind; named source correction accepted.|Source/test correction verified, deployed popover behavior UNVERIFIED.|
+|#28404 guard coverage|In-memory plant removes row argument ONLY inside AdjustPopover. Actual verify-currency-format-guarded script still PASS;2 other matching calls satisfy global regex. No tracked files changed by plant. Script has no --selftest branch; invocation with that flag only scans.|CONFIRMED missed regression plant. Require consumer-specific assertion or render test that fails on AdjustPopover regression; helper test alone cannot detect a missing consumer argument.|
+|#28404 sibling guards|verify-dispatch-board-sections-and-columns selftest30/30; verify-ldt-6-settlement-frozen selftest11/11 PASS.|Named retargeted assertions verified; not a complete live screen certification.|
+
+Prior #28398 conditional-hooks finding remains unresolved on this tip. Neon branch assertion401 remains unresolved; no bypass or repeated production reads. Full263-row/249-historical-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch61: conditional-hook regression, Reclassify and historical evidence
 
 Batch60 merged #28401 d84d360af6e20d0e835e2ca6a164799d17286c56;3affected0regressions. No production writes.
