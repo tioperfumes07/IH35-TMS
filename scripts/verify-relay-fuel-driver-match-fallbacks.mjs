@@ -31,7 +31,7 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
 }
 
-export function check({ match, ingest, rematch, csvRoute, routes, index, step }) {
+export function check({ match, ingest, rematch, csvRoute, routes, index, step, driverRoutes }) {
   const f = [];
   const m = stripComments(match);
   if (!/export async function resolveRelayDriverMatch\s*\(/.test(m)) f.push("matcher must export resolveRelayDriverMatch");
@@ -72,6 +72,9 @@ export function check({ match, ingest, rematch, csvRoute, routes, index, step })
   if (!routes.includes("/api/integrations/relay/fuel/rematch-drivers")) f.push("rematch route path missing");
   if (!index.includes("registerRelayFuelDriverRematchRoute")) f.push("rematch route not mounted in index");
   if (!step.includes(LABEL)) f.push("verify-step 1834 not wired");
+  if (driverRoutes && !driverRoutes.includes("relay-integration-id")) {
+    f.push("driver routes must expose PATCH relay-integration-id writer route");
+  }
   return f;
 }
 
@@ -84,6 +87,7 @@ function load() {
     routes: read("apps/backend/src/integrations/relay-payments/relay-fuel-driver-rematch.routes.ts"),
     index: read("apps/backend/src/index.ts"),
     step: read("scripts/verify-steps/1834-verify-relay-fuel-driver-match-fallbacks.mjs"),
+    driverRoutes: read("apps/backend/src/mdata/drivers.routes.ts"),
   };
 }
 
@@ -98,11 +102,12 @@ function selftest() {
     ["ingest passes phone hint", { ...real, ingest: real.ingest + "\nconst h = { phone: tx.driver?.phone ?? null };\n" }],
     ["CSV borrows driver id", { ...real, csvRoute: real.csvRoute.replace("integration_id: null", "integration_id: relayDriverId") }],
     ["rematch reads name", { ...real, rematch: real.rematch.replace("relay_driver_integration_id,\n        matched_unit_id", "relay_driver_integration_id,\n        relay_driver_first_name,\n        matched_unit_id") }],
+    ["driver writer route missing", { ...real, driverRoutes: "// no writer route here" }],
   ];
   for (const [name, planted] of plants) {
     if (check(planted).length === 0) throw new Error(`planted regression not caught: ${name}`);
   }
-  console.log(`${LABEL}: selftest PASS — ${plants.length} planted fallbacks caught`);
+  console.log(`${LABEL}: selftest PASS — ${plants.length} planted regressions caught`);
 }
 
 try {
