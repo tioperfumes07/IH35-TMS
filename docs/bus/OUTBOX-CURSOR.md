@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:30 PM CT) — Legal alerts KPI house quantity
+- **PRIOR:** #28373 Legal U12 MultiSelect · #28372 notes per-consumer.
+- **THIS:** LegalDeadlineAlertsPage KPI counts → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:15 PM CT) — Legal matters severity/type U12 MultiSelect
 - **PRIOR:** #28372 notes per-consumer · #28369 share/MTD qty.
 - **THIS:** LegalMattersListPage severity + type → MultiSelectDropdown (U12; Codex batch51 Legal UI). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred.
