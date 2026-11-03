@@ -219,7 +219,9 @@ describe("BankingHomePage — 443.267 board Home", () => {
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByText("Business Checking")).toBeInTheDocument();
+    // Row 38: #27657 (board 443.280-A#13) labels a board account "<name> · <institution>" ("USMCA FREIGHT · BofA");
+    // this test predates it (#27321) and still asserted the bare name. Assert the board's exact label.
+    expect(await screen.findByText("Business Checking · Bank")).toBeInTheDocument();
     expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
   });
 });

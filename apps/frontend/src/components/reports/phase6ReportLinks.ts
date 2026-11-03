@@ -14,6 +14,11 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "maintenance-cost-per-unit": "/reports/maintenance-cost-per-unit",
   "dispatch-margin": "/reports/dispatch-margin",
   "loads-report": "/reports/loads",
+  // Rows 80-83 (11-03) — the report boards (pages/reports/boards/reportBoardCatalog.ts).
+  "driver-settlements-report": "/reports/driver-settlements",
+  "company-settlements-report": "/reports/company-settlements",
+  "customer-report": "/reports/customers",
+  "vendor-report": "/reports/vendors",
   "geofence-dwell": "/reports/geofence-dwell",
   deadhead: "/reports/deadhead",
   "scheduled-reports": "/reports/scheduled",

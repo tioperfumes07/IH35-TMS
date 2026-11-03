@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/account-type-catalog";
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
@@ -98,6 +99,16 @@ export function AccountTypeCatalogPage() {
   }, [data, search]);
 
   const groups = useMemo(() => groupBy(filtered), [filtered]);
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Account Type Catalog">
+        <BoardSection title="Account Type Catalog" testId="account-type-catalog-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

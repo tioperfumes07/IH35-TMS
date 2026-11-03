@@ -26,9 +26,9 @@ const SEV: Record<string, string> = {
 };
 
 function daysLabel(days: number): string {
-  if (days < 0) return `${Math.abs(days)}d overdue`;
+  if (days < 0) return `${formatQuantityTable(Math.abs(days), 0)}d overdue`;
   if (days === 0) return "due today";
-  return `${days}d`;
+  return `${formatQuantityTable(days, 0)}d`;
 }
 
 function dueDay(iso: string | null | undefined): string {

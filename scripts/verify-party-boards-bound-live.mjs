@@ -53,7 +53,7 @@ if (!partySvc.includes("payment_applications") || !partySvc.includes("collected 
 }
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
 for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel", "Spend by category", "Pays through", "Avg ticket", "Last paid", "Measured",
-  "Open balance", "Factored", "This year", "All ages", "Regular", "Master-detail", "Export", "Choose columns", "hidden is not missing", "Category"]) {
+  "Open balance", "Factored", "Possible duplicates", "Print", "not due", "1–30 late", "Status", "Regular", "Export", "Category"]) {
   if (!ui.includes(label)) fails.push(`board control/label missing: "${label}"`);
 }
 for (const snapshot of ["381,916.72", "366,409.12", "15,507.60", "185,914.44", "20,942.94", "177,911.29", "1,249", "99.2%"]) {

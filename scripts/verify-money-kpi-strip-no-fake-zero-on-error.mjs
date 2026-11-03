@@ -258,13 +258,13 @@ function checkSafetyEventsPage(src) {
 }
 
 function checkDispatchOverview(src) {
-  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)')) {
+  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : formatQuantityTable(dashboardQ.data?.on_load ?? 0, 0)')) {
     fail(`${DISPATCH_OVERVIEW}: Active loads KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
   }
-  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)')) {
+  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : formatQuantityTable(dashboardQ.data?.delivered ?? 0, 0)')) {
     fail(`${DISPATCH_OVERVIEW}: Delivered — pending docs KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
   }
-  if (!src.includes('atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal')) {
+  if (!src.includes('atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : formatQuantityTable(atRiskLateTotal, 0)')) {
     fail(`${DISPATCH_OVERVIEW}: At-risk / late KPI must branch on the canonical combined atRiskLateQ loading/error state.`);
   }
   if (!src.includes("unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? \"—\"")) {
@@ -545,8 +545,8 @@ function selftest() {
   {
     const original = fs.readFileSync(DISPATCH_OVERVIEW, "utf8");
     const mutated = original.replace(
-      /dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.on_load \?\? 0\)/,
-      'dashboardQ.isLoading ? "—" : (dashboardQ.data?.on_load ?? 0)'
+      /dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : formatQuantityTable\(dashboardQ\.data\?\.on_load \?\? 0, 0\)/,
+      'dashboardQ.isLoading ? "—" : formatQuantityTable(dashboardQ.data?.on_load ?? 0, 0)'
     );
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: DispatchOverview dashboardQ.isError pattern not found.");
@@ -573,8 +573,8 @@ function selftest() {
   {
     const original = fs.readFileSync(DISPATCH_OVERVIEW, "utf8");
     const mutated = original.replace(
-      'atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal',
-      'atRiskLateQ.isLoading ? "—" : atRiskLateTotal'
+      'atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : formatQuantityTable(atRiskLateTotal, 0)',
+      'atRiskLateQ.isLoading ? "—" : formatQuantityTable(atRiskLateTotal, 0)'
     );
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: DispatchOverview atRiskLateQ.isError pattern not found.");

@@ -16,7 +16,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
-import { formatNumber, formatUsdCents } from "../../lib/money";
+import { formatNumber, formatUsdCents, formatQuantityTable } from "../../lib/money";
 import { V3 } from "../../design/v3-tokens";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -268,7 +268,7 @@ export function SettlementsEscrowBoard() {
         />
         <V3KpiTile
           label="Release window"
-          value={`${ESCROW_RELEASE_WINDOW_DAYS} days`}
+          value={`${formatQuantityTable(ESCROW_RELEASE_WINDOW_DAYS, 0)} days`}
           sub="after last settlement"
           testId="escrow-kpi-release-window"
         />

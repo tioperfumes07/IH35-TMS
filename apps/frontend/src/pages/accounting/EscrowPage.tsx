@@ -397,6 +397,16 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
 
   if (settlementsMount) return body;
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Escrow">
+        <BoardSection title="Escrow" testId="accounting-escrow-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Escrow"

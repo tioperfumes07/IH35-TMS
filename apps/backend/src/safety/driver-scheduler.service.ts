@@ -1,3 +1,4 @@
+import { unitCurrentDriverSql } from "../dispatch/unit-current-driver.js";
 import { z } from "zod";
 import { canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
 import { UNIT_IN_SERVICE_SQL } from "../dispatch/unit-in-service.js";
@@ -1129,8 +1130,14 @@ export async function getFleetSchedule(
 
   const vacantRes = await client.query(
     `
-      SELECT u.id::text AS unit_id, u.unit_number
+      SELECT u.id::text AS unit_id, u.unit_number,
+             -- Register row 166: the truck's driver = THE unit→driver resolver (open VDA, else last-delivered primary,
+             -- merged shell → survivor). Prod 11-03: 0 board-set (open_dispatch) loads, so every truck was "vacant" and the
+             -- Truck planner's Driver column read "—" for all 16 in-service trucks although 13 resolve to a driver.
+             ud.id::text AS driver_id,
+             NULLIF(CONCAT_WS(' ', ud.first_name, ud.last_name), '') AS driver_name
       FROM mdata.units u
+      ${unitCurrentDriverSql("u", "$1::uuid")}
       -- LEAD 23:45Z parity (every working truck — T174, T156, T148 ... — listed as vacant): vacant = THE board unit gate and NO
       -- board-set load on the truck (the load service). mdata.units.assigned_driver_id is NULL on every prod row, so the old
       -- "assigned_driver_id IS NULL" test called every truck vacant.

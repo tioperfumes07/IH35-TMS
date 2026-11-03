@@ -16,6 +16,9 @@
  *
  * Use as a derived table:  FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
  */
+/** The E-25 load-stop fence label shape, as a SQL regex literal body (no quotes). */
+export const STOP_FENCE_LABEL_RE_SQL = "^load-[0-9a-f-]{36}-stop-[0-9]+$";
+
 export const STOP_ARRIVAL_EVENTS_SQL = `
   SELECT DISTINCT ON (ls.id, ge.unit_id)
          ge.id,
@@ -33,7 +36,7 @@ export const STOP_ARRIVAL_EVENTS_SQL = `
              AND x.event_kind = 'exited' AND x.occurred_at > ge.occurred_at) AS departed_at
     FROM geo.geofence_events ge
     JOIN geo.geofences g ON g.id = ge.geofence_id
-     AND g.label ~ '^load-[0-9a-f-]{36}-stop-[0-9]+$'
+     AND g.label ~ '${STOP_FENCE_LABEL_RE_SQL}'
     JOIN mdata.load_stops ls
       ON ls.load_id = substring(g.label FROM '^load-([0-9a-f-]{36})-stop-')::uuid
      AND ls.sequence_number = substring(g.label FROM '-stop-([0-9]+)$')::int

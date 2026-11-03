@@ -16,7 +16,7 @@ const FILES = {
   routes: "apps/backend/src/reports/loads-report.routes.ts",
   index: "apps/backend/src/reports/index.ts",
   api: "apps/frontend/src/api/reports.ts",
-  page: "apps/frontend/src/pages/reports/LoadsReportPage.tsx",
+  page: "apps/frontend/src/pages/reports/boards/LoadsReportBoard.tsx",
   manifest: "apps/frontend/src/routes/manifest.tsx",
   rollup: "apps/backend/src/accounting/load-cost-rollup.sql.ts",
 };

@@ -395,6 +395,16 @@ export function BillPaymentsListPage() {
     </div>
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Bill Payments">
+        <BoardSection title="Bill Payments" testId="bill-payments-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Bill Payments"

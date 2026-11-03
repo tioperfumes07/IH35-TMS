@@ -502,10 +502,13 @@ export async function getCashFlowStatementReport(params: {
 
 export async function exportTrialBalanceReport(params: {
   operating_company_id: string;
+  /** Row 54: the viewer's period start — the file is the same period the screen shows. */
+  from_date?: string;
   as_of_date?: string;
   format: StatementFormat;
 }) {
   const query = new URLSearchParams();
+  if (params.from_date) query.set("from_date", params.from_date);
   if (params.as_of_date) query.set("as_of_date", params.as_of_date);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return downloadBinaryExport(withCompany(`/api/v1/accounting/trial-balance/export/${params.format}${suffix}`, params.operating_company_id));
@@ -1569,4 +1572,145 @@ export function setReeferFuelTrailer(operatingCompanyId: string, body: { source:
     method: "POST",
     body: { operating_company_id: operatingCompanyId, ...body },
   });
+}
+
+// ── Rows 79-84 (11-03 register) — the five report boards' data, read from the EXISTING report / board services ──
+
+export type DriverSettlementsReportRow = {
+  settlement_id: string;
+  display_id: string | null;
+  settlement_number: string | null;
+  driver_id: string;
+  driver_name: string;
+  period_start: string;
+  period_end: string;
+  status: string;
+  gross_cents: number;
+  deductions_cents: number;
+  advances_cents: number;
+  escrow_withheld_cents: number;
+  net_cents: number;
+  load_count: number;
+  first_load_number: string | null;
+  last_load_number: string | null;
+  first_load_id: string | null;
+  last_load_id: string | null;
+  paid_at: string | null;
+};
+
+export type DriverSettlementsReportResponse = {
+  period: { start: string; end: string };
+  pagination: { limit: number; offset: number; total: number };
+  totals: {
+    settlement_count: number;
+    gross_cents: number;
+    deductions_cents: number;
+    advances_cents: number;
+    escrow_withheld_cents: number;
+    net_cents: number;
+  };
+  rows: DriverSettlementsReportRow[];
+};
+
+/**
+ * GET /api/v1/reports/driver-settlements (driver_finance.driver_settlements) — every page until `total` rows are in
+ * hand (the route serves 200 a page); a short page before then throws, never a silent partial.
+ */
+export async function getDriverSettlementsReport(params: {
+  operating_company_id: string;
+  from: string;
+  to: string;
+  driver_id?: string;
+  status?: string;
+  paid?: "paid" | "unpaid";
+}): Promise<DriverSettlementsReportResponse> {
+  const q = new URLSearchParams({ from: params.from, to: params.to, limit: "200" });
+  if (params.driver_id) q.set("driver_id", params.driver_id);
+  if (params.status) q.set("status", params.status);
+  if (params.paid) q.set("paid", params.paid);
+  const base = `/api/v1/reports/driver-settlements?${q.toString()}`;
+  const first = await apiRequest<DriverSettlementsReportResponse>(withCompany(`${base}&offset=0`, params.operating_company_id));
+  const rows = [...first.rows];
+  while (rows.length < first.pagination.total) {
+    const page = await apiRequest<DriverSettlementsReportResponse>(
+      withCompany(`${base}&offset=${rows.length}`, params.operating_company_id)
+    );
+    if (page.rows.length === 0) throw new Error("The settlement list is incomplete. Refresh to try again.");
+    rows.push(...page.rows);
+  }
+  return { ...first, rows };
+}
+
+export type PartyBoardRange = "ytd" | "12m" | "all";
+
+export type CustomerBoardReportRow = {
+  id: string;
+  name: string;
+  status: string;
+  factored: string | null;
+  invoices: number;
+  billed_cents: number;
+  collected_cents: number;
+  open_cents: number;
+  paid_invoices: number;
+  last_invoice: string | null;
+  aging: { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number };
+};
+
+export type CustomerBoardReport = {
+  range: PartyBoardRange;
+  range_from: string;
+  kpis: {
+    with_transactions: number;
+    in_the_book: number;
+    open_invoices: number;
+    billed_cents: number;
+    ar_open_cents: number;
+    collected_cents: number;
+    invoices: number;
+    invoices_with_payment: number;
+  };
+  rows: CustomerBoardReportRow[];
+};
+
+/** GET /api/v1/mdata/boards/customers — the canonical Customers board engine (party-board.service.ts, invoices). */
+export function getCustomerBoardReport(companyId: string, range: PartyBoardRange): Promise<CustomerBoardReport> {
+  return apiRequest<CustomerBoardReport>(withCompany(`/api/v1/mdata/boards/customers?range=${range}`, companyId));
+}
+
+export type VendorBoardReportRow = {
+  id: string;
+  name: string;
+  status: string;
+  category: string | null;
+  saved_category?: string | null;
+  eligible_1099?: boolean;
+  txns: number;
+  spend_cents: number;
+  avg_ticket_cents: number | null;
+  last_paid: string | null;
+  pays_through: string | null;
+  open_bills: number;
+  open_bills_cents: number;
+};
+
+export type VendorBoardReport = {
+  range: PartyBoardRange;
+  range_from: string;
+  kpis: {
+    with_transactions: number;
+    in_the_book: number;
+    spend_cents: number;
+    fuel_share_pct: number | null;
+    fuel_cents: number;
+    open_bills_cents: number | null;
+    transactions: number;
+  };
+  by_category: Array<{ account_id: string | null; category: string; spend_cents: number }>;
+  rows: VendorBoardReportRow[];
+};
+
+/** GET /api/v1/mdata/boards/vendors — the canonical Vendors board engine (party-board.service.ts, expenses + bills). */
+export function getVendorBoardReport(companyId: string, range: PartyBoardRange): Promise<VendorBoardReport> {
+  return apiRequest<VendorBoardReport>(withCompany(`/api/v1/mdata/boards/vendors?range=${range}`, companyId));
 }

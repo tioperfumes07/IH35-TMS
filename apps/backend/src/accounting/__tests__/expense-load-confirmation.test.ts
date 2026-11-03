@@ -18,6 +18,7 @@ vi.mock("../reclassify/reclassify.service.js", () => ({
 }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 
+import { markExpenseLoadConfirmedBy, withExpenseLoadConfirmedBy } from "../expense-load-confirm-actor.js";
 import {
   confirmExpenseLoadsInClientTx, ExpenseLoadConfirmRefused, proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement,
 } from "../expense-load-confirmation.service.js";
@@ -28,7 +29,7 @@ const L1 = "11111111-1111-4111-8111-111111111111";
 const L2 = "22222222-2222-4222-8222-222222222222";
 
 type Row = { id: string; load_id: string | null; parent: string | null; fill: string | null; number: string | null };
-function client(expense: Row | undefined, confirmedIds: string[] = ["exp-1"]) {
+function client(expense: Row | undefined, confirmedIds: string[] = ["exp-1"], relayOf: string | null = null) {
   const calls: Array<{ sql: string; values: unknown[] }> = [];
   return {
     calls,
@@ -37,6 +38,7 @@ function client(expense: Row | undefined, confirmedIds: string[] = ["exp-1"]) {
       if (/FROM accounting\.expenses WHERE id = \$1::uuid AND operating_company_id = \$2::uuid AND voided_at IS NULL FOR UPDATE/.test(sql)) return { rows: expense ? [expense] : [] };
       if (/FROM mdata\.loads WHERE id = \$1::uuid/.test(sql)) return { rows: [{ load_number: "13700" }] };
       if (/UPDATE accounting\.expenses SET load_confirmation = 'confirmed'/.test(sql)) return { rows: confirmedIds.map((id) => ({ id })) };
+      if (/SELECT relay_fuel_transaction_id::text AS relay_id FROM fuel\.fuel_transactions/.test(sql)) return { rows: [{ relay_id: relayOf }] };
       return { rows: [] };
     },
   };
@@ -108,5 +110,49 @@ describe("a settlement cannot close while an expense on its loads is proposed (4
     expect(calls[0]!.sql).toMatch(/sl\.is_active = true AND sl\.voided_at IS NULL/);
     expect(calls[0]!.values).toEqual([OC, "set-1"]);
     expect(proposedExpenseLoadsMessage(rows)).toMatch(/1 expense on this settlement's loads is still proposed \(13600-2\)/);
+  });
+});
+
+describe("row 102 — OWNER RULING 443.288 invariants the confirm engine had not enforced", () => {
+  beforeEach(() => vi.clearAllMocks());
+  const MACHINE = "00000000-0000-4000-8000-000000000001";
+
+  it("(b) a machine never confirms a load: the background-job actor is refused by name everywhere the actor is set", async () => {
+    const c = client({ id: "exp-1", load_id: L1, parent: null, fill: null, number: null });
+    await expect(confirmExpenseLoadsInClientTx(c as never, { operatingCompanyId: OC, actorUserId: MACHINE, items: [{ expenseId: "exp-1" }] }))
+      .rejects.toMatchObject({ code: "MACHINE_CANNOT_CONFIRM_LOAD", statusCode: 409 });
+    await expect(markExpenseLoadConfirmedBy(c as never, MACHINE)).rejects.toMatchObject({ code: "MACHINE_CANNOT_CONFIRM_LOAD" });
+    await expect(withExpenseLoadConfirmedBy(c as never, MACHINE, async () => 1)).rejects.toMatchObject({ code: "MACHINE_CANNOT_CONFIRM_LOAD" });
+    expect(actorWrites(c).filter(Boolean)).toEqual([]); // the machine id never reached the setting
+    expect(c.calls.some((x) => /SET load_confirmation = 'confirmed'/.test(x.sql))).toBe(false);
+    await markExpenseLoadConfirmedBy(c as never, PERSON); // a person still marks
+    expect(actorWrites(c).at(-1)).toBe(PERSON);
+  });
+
+  it("(a)/(d) confirming a receipt in place brings a drifted child onto the confirmed load (family follows, not only on change)", async () => {
+    const c = client({ id: "exp-1", load_id: L1, parent: null, fill: null, number: "13504-9" });
+    await confirmExpenseLoadsInClientTx(c as never, { operatingCompanyId: OC, actorUserId: PERSON, items: [{ expenseId: "exp-1" }] });
+    expect(engines.moveExpenseFamilyToLoad).toHaveBeenCalledWith(c, expect.objectContaining({ parentExpenseIds: ["exp-1"], toLoadId: L1 }));
+    const fam = c.calls.length; // the family move runs before the confirm, so the children are confirmed on the load
+    expect(fam).toBeGreaterThan(0);
+  });
+
+  it("(d) a Relay fill changes load by its Relay id, so the ledger and every sibling fuel row move together", async () => {
+    engines.carryFuelReceiptToLoad.mockImplementationOnce(async () => "not_posted");
+    const c = client({ id: "exp-1", load_id: L1, parent: null, fill: "ft-1", number: "13600-1" }, ["exp-1"], "relay-9");
+    await confirmExpenseLoadsInClientTx(c as never, { operatingCompanyId: OC, actorUserId: PERSON, items: [{ expenseId: "exp-1", loadId: L2 }] });
+    expect(engines.carryFuelReceiptToLoad).toHaveBeenNthCalledWith(2, c, expect.objectContaining({ fillKind: "relay_fuel", fillId: "relay-9", toLoadId: L2 }));
+    expect(engines.moveFuelReceiptDocumentToLoad).not.toHaveBeenCalled(); // carried by the engine, not a document-only move
+  });
+
+  it("(d) an unposted Relay fill moves its document by the Relay id (every sibling row), never by the one row", async () => {
+    engines.carryFuelReceiptToLoad.mockImplementation(async () => "not_posted");
+    try {
+      const c = client({ id: "exp-1", load_id: L1, parent: null, fill: "ft-1", number: "13600-1" }, ["exp-1"], "relay-9");
+      await confirmExpenseLoadsInClientTx(c as never, { operatingCompanyId: OC, actorUserId: PERSON, items: [{ expenseId: "exp-1", loadId: L2 }] });
+      expect(engines.moveFuelReceiptDocumentToLoad).toHaveBeenCalledWith(c, OC, expect.objectContaining({ fillId: "relay-9", loadId: L2 }));
+    } finally {
+      engines.carryFuelReceiptToLoad.mockImplementation(async () => "reattributed");
+    }
   });
 });

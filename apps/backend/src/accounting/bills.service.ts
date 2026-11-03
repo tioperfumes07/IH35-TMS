@@ -1214,14 +1214,14 @@ export async function listBillsByVendor(
                  l.empty_miles,
                  NULLIF(TRIM(CONCAT_WS(', ', NULLIF(TRIM(pickup.city), ''), NULLIF(TRIM(pickup.state), ''))), '') AS origin_label,
                  NULLIF(TRIM(CONCAT_WS(', ', NULLIF(TRIM(delivery.city), ''), NULLIF(TRIM(delivery.state), ''))), '') AS destination_label,
-                 COALESCE(eq_direct.equipment_number, tr_hist.equipment_number) AS trailer_number
+                 tr_hist.equipment_number AS trailer_number
           FROM accounting.bill_lines bl
           JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
-          LEFT JOIN mdata.equipment eq_direct
-            ON eq_direct.id = l.load_trailer_equipment_id
-           AND COALESCE(eq_direct.currently_leased_to_company_id, eq_direct.owner_company_id) = l.operating_company_id
-          -- DISPATCH-PRIMARY-TRAILER-REVERSE — assignment-history trailer when FK blank.
+          -- Row 113 (ENG-22 G2): mdata.loads.load_trailer_equipment_id is the trailer TYPE (FK
+          -- catalogs.load_trailer_equipment), never a trailer — joining it to mdata.equipment matched 0 of 198
+          -- USMCA loads. The trailer that rode the load is the assignment history's new_trailer_id, read below.
+          -- DISPATCH-PRIMARY-TRAILER-REVERSE — assignment-history trailer.
           LEFT JOIN LATERAL (
             SELECT eq.equipment_number
             FROM dispatch.load_assignment_history lah

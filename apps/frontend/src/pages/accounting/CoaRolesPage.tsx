@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { listCoaAccountsForJe, listCoaRoles, type CoaRole, type CoaRoleRow, COA_ROLE_VALUES, upsertCoaRole, validateCoaRoles } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -204,6 +205,16 @@ export function CoaRolesPage() {
       },
     },
   ];
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="CoA Roles">
+        <BoardSection title="CoA Roles" testId="coa-roles-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

@@ -3,7 +3,9 @@
  * PlannerGrid plannerBarLabelTier must tier labels for short bars.
  * PLAN-03-PLANNER-SHORT-BAR-LABELS guard — protects the 3-tier drop:
  * full → last-2-segments → last-segment → empty.
- * PLN-03 — HosTracker + DriverScheduler day headers use formatPlannerDayLabel (Aug 21, not 08-21).
+ * PLN-03 — HosTracker day headers use formatPlannerDayLabel (Aug 21, not 08-21).
+ * Row 206 / D030 (LEAD 11-03, owner ruling 10-24 "09/14/2026 everywhere"): DriverScheduler grid day headers are
+ * MM/DD/YYYY through the shared formatDateUS — no longer formatPlannerDayLabel (MON-DD was the D030 defect).
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -54,7 +56,7 @@ function pln03DayLabelIssues(fileSources) {
   if (!helperSrc.includes("export function formatPlannerDayLabel")) {
     issues.push("plannerDayLabel.ts must export formatPlannerDayLabel (PLN-03)");
   }
-  for (const rel of PLN03_FILES) {
+  for (const rel of [PLN03_FILES[0]]) {
     const fileSrc = fileSources?.[rel] ?? readFileSync(path.join(root, rel), "utf8");
     if (!/formatPlannerDayLabel\s*\(/.test(fileSrc)) {
       issues.push(`${rel}: must call formatPlannerDayLabel(isoYmd) for day headers (PLN-03)`);
@@ -68,7 +70,7 @@ function pln03DayLabelIssues(fileSources) {
 
 /**
  * D030 (443.257-D row 149) — Driver Scheduler range subtitle MM/DD/YYYY via formatDateUS.
- * Grid day headers stay formatPlannerDayLabel (MMM-DD) per GLB-08 / PLN-03 (not numeric MM/DD/YYYY).
+ * Row 206 (D030): grid day headers are formatDateUS(d) too — MON-DD (formatPlannerDayLabel) is the defect.
  */
 function d030SubtitleIssues(fileSources) {
   const issues = [];
@@ -79,6 +81,12 @@ function d030SubtitleIssues(fileSources) {
   }
   if (!/formatDateUS\(\s*range\.start\s*\)/.test(fileSrc) || !/formatDateUS\(\s*range\.end\s*\)/.test(fileSrc)) {
     issues.push(`${rel}: D030 subtitle must use formatDateUS(range.start/end) (MM/DD/YYYY)`);
+  }
+  if (!/\{formatDateUS\(d\)\}/.test(fileSrc) || /formatPlannerDayLabel\s*\(/.test(fileSrc)) {
+    issues.push(`${rel}: D030 grid day headers must render {formatDateUS(d)} (MM/DD/YYYY), not formatPlannerDayLabel (MON-DD)`);
+  }
+  if (/\.slice\(5\)/.test(fileSrc)) {
+    issues.push(`${rel}: D030 must not render YYYY-MM-DD via .slice(5)`);
   }
   // Raw ISO in the range subtitle (the defect) — forbid embedding bare range.start/end without formatDateUS.
   if (/subtitle=\{`\$\{range\.start\}/.test(fileSrc) || /subtitle=\{`\$\{range\.end\}/.test(fileSrc)) {
@@ -146,6 +154,11 @@ if (process.argv.includes("--selftest")) {
   };
   if (!d030SubtitleIssues(d030Mutant).some((m) => m.includes("D030"))) {
     console.error("selftest: D030 subtitle mutation escaped");
+    process.exit(1);
+  }
+  const d030GridMutant = { [PLN03_FILES[1]]: schedSrc.replace("{formatDateUS(d)}", "{formatPlannerDayLabel(d)}") };
+  if (d030GridMutant[PLN03_FILES[1]] === schedSrc || !d030SubtitleIssues(d030GridMutant).some((m) => m.includes("grid day headers"))) {
+    console.error("selftest: D030 grid MON-DD mutation escaped");
     process.exit(1);
   }
   console.log("verify-planner-bar-label-tier selftest: bar-label + PLN-03 + PLN-04 + D030 defects caught");

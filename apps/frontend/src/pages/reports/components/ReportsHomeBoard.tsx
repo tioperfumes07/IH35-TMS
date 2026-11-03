@@ -23,6 +23,7 @@ import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { mmmDd } from "../../../lib/formatDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ScheduledReportsPanel } from "../ScheduledReportsPanel";
+import { REPORT_BOARDS } from "../boards/reportBoardCatalog";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 // ── Sidebar categories (v3 design) ──────────────────────────────────────────
@@ -46,6 +47,11 @@ const ACCOUNTING_FINANCIAL_ROWS = [
   ["balance-sheet", "Balance sheet", "As of any date", true],
   ["cash-flow-statement", "Cash flow statement", "Operating · investing · financing", true],
   ["settlement-summary", "Settlement summary", "Driver pay by week", true],
+  // Rows 80-83 (11-03) — the report boards (catalog: pages/reports/boards/reportBoardCatalog.ts).
+  ["driver-settlements-report", "Driver settlement report", "Every driver statement — gross, deductions, net, paid", true],
+  ["company-settlements-report", "Company settlement report", "Profit per closed trip", true],
+  ["customer-report", "Customer report", "Sales, open, aging, statement", true],
+  ["vendor-report", "Vendor report", "Spend, open bills, category, 1099", true],
   ["customer-profitability", "Customer profitability", "Revenue − direct cost", true],
   ["profit-per-truck", "Per-truck CPM dashboard", "Cost per mile by unit", true],
   ["fuel-reconciliation", "Fuel reconciliation", "Cards vs fills vs loads", true],
@@ -70,7 +76,8 @@ const BASIS_AWARE = new Set(["trial-balance", "profit-loss", "balance-sheet"]);
 // ── Non-financial category report rows ────────────────────────────────────────
 const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label: string; shows: string }[]>> = {
   operations: [
-    { id: "loads-report", label: "Loads report", shows: "All loads with status and P&L" },
+    // Rows 79-84 (11-03) — the five report boards lead the Operations catalog.
+    ...REPORT_BOARDS.map((b) => ({ id: b.id, label: b.label, shows: b.shows })),
     { id: "deadhead", label: "Deadhead report", shows: "Empty miles by unit and lane" },
     { id: "lane-profitability", label: "Lane profitability", shows: "Revenue and cost by lane" },
     { id: "geofence-dwell", label: "Geofence dwell", shows: "Dwell time at customer fences" },
@@ -78,6 +85,8 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
   ],
   drivers: [
     { id: "settlement-summary", label: "Settlement summary", shows: "Driver pay by week" },
+    { id: "driver-settlements-report", label: "Driver settlement report", shows: "Every driver statement — gross, deductions, net, paid" },
+    { id: "company-settlements-report", label: "Company settlement report", shows: "Profit per closed trip" },
   ],
   fleet: [
     { id: "profit-per-truck", label: "Per-truck CPM dashboard", shows: "Cost per mile by unit" },

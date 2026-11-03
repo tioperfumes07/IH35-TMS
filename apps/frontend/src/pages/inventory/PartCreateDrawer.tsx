@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { EntityPicker } from "../../components/EntityPicker";
 import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
@@ -112,7 +113,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">Name *</label>
               <input
                 required
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`mt-1 ${FORM_INPUT_CLASS}`}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -120,7 +121,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             <div>
               <label className="block text-xs font-medium">SKU</label>
               <input
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`mt-1 ${FORM_INPUT_CLASS}`}
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
               />
@@ -136,7 +137,8 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             <SelectCombobox
               id="inv-part-category"
               required
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+              size="sm"
+              className="mt-1 w-full"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               aria-label="Part category"
@@ -163,6 +165,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
                 allowCreate
                 allowClear
                 enabled={isOpen}
+                size="sm"
               />
             </div>
           </div>
@@ -171,7 +174,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">On-hand qty</label>
               <input
                 type="number"
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`mt-1 ${FORM_INPUT_CLASS}`}
                 value={formData.on_hand_qty}
                 onChange={(e) => setFormData({ ...formData, on_hand_qty: e.target.value })}
               />
@@ -180,7 +183,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               <label className="block text-xs font-medium">Reorder point</label>
               <input
                 type="number"
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className={`mt-1 ${FORM_INPUT_CLASS}`}
                 value={formData.reorder_point}
                 onChange={(e) => setFormData({ ...formData, reorder_point: e.target.value })}
               />
@@ -200,7 +203,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
           <div>
             <label className="block text-xs font-medium">Location/Bin</label>
             <input
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+              className={`mt-1 ${FORM_INPUT_CLASS}`}
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />

@@ -9,6 +9,7 @@ import { listRelayDepositCategorizedMatchHints } from "../accounting/bank-recon/
 import { listRelatedPartyPairSuggestions } from "../accounting/bank-recon/related-party-pair-suggestions.service.js";
 import { confirmRelatedPartyPair } from "../accounting/bank-recon/related-party-pair-confirm.service.js";
 import { findCandidates, MATCH_WINDOW_STEPS } from "../accounting/bank-recon/match.service.js";
+import { applyCounterpartyPersonFlag, resolvePersonCounterpartyIds } from "./match-candidate-person-payee.js";
 import { suggestRelayWalletLine } from "../accounting/bank-recon/relay-wallet-suggest.service.js";
 import { suggestDreamlineCardLine } from "../accounting/bank-recon/dreamline-card-suggest.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
@@ -248,9 +249,19 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     // LINK-F5190: the response never echoed which bank_transaction_id these candidates are FOR --
     // callers (MatchDrawer.tsx) had to rely entirely on the id they already threaded in as a prop,
     // with no authoritative confirmation from the response itself. Small, real completeness fix.
+    // D071 — person vs organisation payee, so the drawer proper-cases people and keeps org names as stored.
+    const personIds = await withCompanyScope(user.uuid, operatingCompanyId, (client) =>
+      resolvePersonCounterpartyIds(
+        client,
+        operatingCompanyId,
+        result.candidates.map((c) => c.counterparty_id ?? "").filter(Boolean),
+      ),
+    );
+    const candidates = applyCounterpartyPersonFlag(result.candidates, personIds);
+
     return {
-      candidates: result.candidates,
-      match_candidates_count: result.candidates.length,
+      candidates,
+      match_candidates_count: candidates.length,
       window: result.window,
       bank_amount_cents: result.bank_amount_cents,
       // LEAD 443.304 — sets of documents that add up to this bank line (several purchases on one wire, purchase + loan, …).

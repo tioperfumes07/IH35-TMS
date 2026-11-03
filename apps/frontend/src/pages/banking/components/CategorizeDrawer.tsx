@@ -14,6 +14,7 @@ import { ManualJEForm } from "./forms/ManualJEForm";
 import { SplitTransactionModal } from "./forms/SplitTransactionModal";
 import { TransferForm } from "./forms/TransferForm";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatDateUS } from "../../../lib/formatDate";
 
 const ACTIONS = [
   ["create_expense", "Create Expense"],
@@ -95,7 +96,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
       <ParityDrawer open={open} onClose={onClose} title="Categorize Transaction" footer={footer} size="regular">
         <section className="mb-3 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
           <div className="font-semibold">Transaction Detail</div>
-          <div className="mt-1">Date: {String(transaction.txn_date ?? "")}</div>
+          <div className="mt-1">Date: {formatDateUS(transaction.txn_date) || "—"}</div>
           <div>Description: {String(transaction.description ?? "")}</div>
           <div>Amount: ${Number(transaction.amount ?? 0).toFixed(2)}</div>
         </section>

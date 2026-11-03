@@ -88,6 +88,18 @@ function blankResolveRow(bankDate: string): ResolveDiffRow {
 /** ROUND 189 Resolve — named difference accounts only (never a generic "adjustment").
  * Match by account_name (not account_number) so the Account-Numbers-Hidden law stays green.
  */
+/**
+ * D071 (register row 247) — candidate payee label. Person payees (driver vendors / drivers — the server's
+ * counterparty_is_person) render in proper case via formatPersonName; organisation names render exactly
+ * as stored (no shared formatCompanyName exists in lib/ yet, and re-casing "LLC"/"BBVA" as a person
+ * would corrupt them). Never blank: an unnamed payee reads "—".
+ */
+export function matchCandidatePayeeLabel(c: Pick<BankMatchCandidate, "counterparty_name" | "counterparty_is_person">): string {
+  const name = c.counterparty_name?.trim().replace(/\s+/g, " ") ?? "";
+  if (!name) return "—";
+  return c.counterparty_is_person ? formatPersonName(name) : name;
+}
+
 const NAMED_RESOLVE_QUICK_PICKS: ReadonlyArray<{ label: string; account_name: string; testId: string }> = [
   { label: "Reserve Deposit", account_name: "Faro Cash Reserve", testId: "reserve-deposit" },
   { label: "Factoring Fees", account_name: "Factoring Fees", testId: "factoring-fees" },
@@ -1197,11 +1209,8 @@ export function MatchDrawer({
                   <span data-testid="match-candidate-date">
                     Date: {formatDateUS(c.event_date) || "—"}
                   </span>
-                  {/* D071 — proper case when feed/source is ALL CAPS; mixed-case org names kept */}
-                  <span data-testid="match-candidate-payee">
-                    Payee:{" "}
-                    {c.counterparty_name?.trim() ? formatPersonName(c.counterparty_name) : "—"}
-                  </span>
+                  {/* D071 — people in proper case; organisation names exactly as stored (owner 443.266-A) */}
+                  <span data-testid="match-candidate-payee">Payee: {matchCandidatePayeeLabel(c)}</span>
                   <span data-testid="match-candidate-difference">Difference: {formatMoneyCents(c.amount_gap_cents)}</span>
                   <span data-testid="match-candidate-days-off">Days off: {c.date_gap_days}</span>
                   <span data-testid="match-candidate-open-balance">

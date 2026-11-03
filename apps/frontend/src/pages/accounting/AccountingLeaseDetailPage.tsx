@@ -15,6 +15,7 @@ import { formatUsdCentsTable } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 /**
  * ROUND 316 — one lease contract: terms, its units / trailers (each with its monthly amount), every monthly
@@ -103,6 +104,16 @@ export function AccountingLeaseDetailPage() {
   const l = query.data?.lease;
   const assetLabels = new Map((query.data?.assets ?? []).map((a) => [a.id, String((a as Record<string, unknown>).unit_number ?? (a as Record<string, unknown>).equipment_number ?? "—")]));
   const monthly = (query.data?.assets ?? []).reduce((s, a) => s + (a.monthly_amount_cents ?? 0), 0);
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Lease">
+        <BoardSection title="Lease" testId="accounting-lease-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title={l ? `Lease ${l.display_id ?? ""}`.trim() : "Lease"} subtitle="Lease contract — units / trailers, monthly bills, signing and close">

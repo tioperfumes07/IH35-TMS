@@ -29,7 +29,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
 
 const LINK = "text-[#1F2A44] hover:underline";
 
@@ -278,7 +278,7 @@ export function FuelIntegrityPage() {
                 <V3KpiTile
                   key={key}
                   label={humanizeSummaryKey(key)}
-                  value={String(value)}
+                  value={formatQuantityTable(Number(value), 0)}
                   onClick={scrollTo(key.startsWith("relay_") ? relaySectionRef : cardSectionRef)}
                   testId={`fuel-integrity-kpi-${key}`}
                 />

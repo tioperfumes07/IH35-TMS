@@ -11,9 +11,15 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
  * scripts/verify-service-code-no-route-helper-import.mjs.
  */
 
+// ROW 198 (D020) — ONE pool checkout per scoped request. The membership probe used to run through the
+// (userId, companyId) overload, which opens its OWN withCurrentUser transaction: two pool.connect() +
+// two BEGIN/SET ROLE/COMMIT round-trips per request. On a 5-connection pool a page that fans out 6-7
+// requests (Fuel board) queued ~14 checkouts, and GET /api/v1/accounting/expense-category-map — 0.67 ms
+// of SQL on prod — waited 8,831 ms for a connection. The probe now runs on the SAME client, inside the
+// same transaction, under the same app.current_user_id GUC (fleet/shared.ts pattern), before any tenant SQL.
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {
-  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client);
   });

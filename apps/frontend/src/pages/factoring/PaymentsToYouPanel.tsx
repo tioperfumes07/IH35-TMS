@@ -226,7 +226,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
       label: "Invoices",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => String(row.invoice_count),
+      render: (row) => formatQuantityTable(row.invoice_count, 0),
     },
     {
       key: "gross_cents",

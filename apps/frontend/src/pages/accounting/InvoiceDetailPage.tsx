@@ -315,6 +315,16 @@ export function InvoiceDetailPage() {
     },
   ];
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Invoice">
+        <BoardSection title="Invoice" testId="invoice-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={invoice.voided_at} voidReason={invoice.void_reason} voidedByUserId={invoice.voided_by_user_id} documentLabel="Invoice" />

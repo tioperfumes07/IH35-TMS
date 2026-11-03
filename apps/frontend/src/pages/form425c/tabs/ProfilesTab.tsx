@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { FORM_INPUT_CLASS } from "../../../components/forms/inputClass";
 import type { CompanyKey, CompanyProfiles } from "../types";
 import { QUESTIONNAIRE } from "../lib/constants";
 
@@ -47,7 +48,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
             <DatePicker
               value={profile.petitionDate ?? ""}
               onChange={(value) => onChange(activeCompany, (draft) => ({ ...draft, petitionDate: value }))}
-              className="w-full"
+              box="field"
               data-testid="form425c-petition-date"
             />
           </div>
@@ -66,7 +67,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
             {label}
             <input
-              className="mt-1 h-10 w-full rounded-sm border px-2 text-xs font-normal normal-case"
+              className={`mt-1 ${FORM_INPUT_CLASS} font-normal normal-case tracking-normal`}
               value={String((profile as Record<string, unknown>)[key] ?? "")}
               onChange={(e) => onChange(activeCompany, (draft) => ({ ...draft, [key]: e.target.value }))}
             />
@@ -94,7 +95,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           {profile.bankAccounts.map((account, idx) => (
             <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_2fr_1fr_auto]">
               <input
-                className="h-10 rounded-sm border px-2 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={account.id}
                 placeholder="Account code"
                 onChange={(e) =>
@@ -106,7 +107,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 }
               />
               <input
-                className="h-10 rounded-sm border px-2 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={account.label}
                 placeholder="Label"
                 onChange={(e) =>
@@ -118,7 +119,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 }
               />
               <input
-                className="h-10 rounded-sm border px-2 text-xs"
+                className={FORM_INPUT_CLASS}
                 value={account.number}
                 placeholder="Last digits"
                 onChange={(e) =>

@@ -131,3 +131,29 @@ export function nounFromIdField(field: string): string {
   const last = base.split(" ").filter(Boolean).pop() ?? base;
   return last.charAt(0).toUpperCase() + last.slice(1);
 }
+
+/**
+ * Register row 233 (D057) — one label for a user everywhere on Users: the person's proper-cased full
+ * name (name, else first + last); when there is no name, the email exactly as stored (an email is never
+ * proper-cased: "jorge@ih35.com" must not become "Jorge@ih35.com"); only when neither exists the honest
+ * entityLabel fallback. A blank-string name ("") no longer short-circuits `name ?? email` into the
+ * repeated generic "User — not visible" label.
+ */
+export function userDisplayLabel(user: {
+  id?: unknown;
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}): string {
+  const name =
+    String(user.name ?? "").trim() ||
+    [user.first_name, user.last_name].map((p) => String(p ?? "").trim()).filter(Boolean).join(" ");
+  const email = String(user.email ?? "").trim();
+  if (name && !name.includes("@") && !UUID_SHAPE_RE.test(name) && !looksLikeSerializedJson(name)) {
+    return formatPersonName(name);
+  }
+  if (email) return email;
+  if (name.includes("@")) return name;
+  return entityLabel(null, user.id, "User");
+}

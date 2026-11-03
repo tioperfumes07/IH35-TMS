@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { approveAbandonmentChargeback, listAbandonmentChargebacks, type AbandonmentChargebackRow, type AbandonmentStatusFilter } from "../../api/abandonment";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -128,11 +130,21 @@ export function AbandonmentQueuePage() {
     [approveMut],
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Abandonment queue">
+        <BoardSection title="Abandonment queue" testId="abandonment-queue-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment chargebacks" subtitle={subtitle} />
 
-      {!companyId ? <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">Select a company.</div> : null}
+      
 
       {!listQuery.isLoading && listQuery.isError ? (
         <ListErrorState

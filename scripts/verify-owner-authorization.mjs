@@ -39,6 +39,8 @@ function run(cmd) {
   return execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 
+if (process.argv.length === 2) process.argv.push("--selftest");
+
 if (process.argv.includes("--selftest")) {
   const NOW = Date.parse("2026-10-12T09:00:00Z");
   const auth = (id, lines) => `## ${id}\n${lines.join("\n")}\n`;

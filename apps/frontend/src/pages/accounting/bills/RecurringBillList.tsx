@@ -18,6 +18,7 @@ import {
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { Button } from "../../../components/Button";
@@ -277,6 +278,16 @@ export function RecurringBillList() {
       />
     </MoneyListToolbar>
   );
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Recurring Bills">
+        <BoardSection title="Recurring Bills" testId="recurring-bills-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

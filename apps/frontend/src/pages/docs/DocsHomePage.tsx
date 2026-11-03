@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { companyLabel } from "../../lib/formatCompanyName";
 import { formatDateUS } from "../../lib/formatDate";
 
 type DocsEntityTabId = FileEntityType | "all";
@@ -62,6 +63,15 @@ function docsEntityNoun(entityType: FileEntityType | string): string {
     default:
       return "Record";
   }
+}
+
+/**
+ * Register row 231 (D055) — entity names on Docs render proper case: drivers via entityLabel →
+ * formatPersonName, customers / vendors via formatCompanyName; unit / equipment numbers stay as stored.
+ */
+export function docsEntityLabel(entityType: string, rawLabel: unknown, entityId: unknown, noun: string): string {
+  if (entityType === "customer" || entityType === "vendor") return companyLabel(rawLabel, entityId, noun);
+  return entityLabel(rawLabel, entityId, noun);
 }
 
 const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
@@ -138,7 +148,7 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
                 key={`${link.entity_type}:${link.entity_id}`}
                 kind={kind}
                 id={link.entity_id}
-                label={entityLabel(rawLabel, link.entity_id, noun)}
+                label={docsEntityLabel(link.entity_type, rawLabel, link.entity_id, noun)}
                 className="truncate"
                 data-testid="docs-entity-link"
               />

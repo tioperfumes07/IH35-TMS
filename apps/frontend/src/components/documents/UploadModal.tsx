@@ -258,6 +258,7 @@ export function UploadModal({
             loading={categoriesQuery.isLoading}
             placeholder="Select category"
             dataTestId="docs-upload-category-combobox"
+                size="sm"
           />
         </div>
 
@@ -276,6 +277,7 @@ export function UploadModal({
                 placeholder="None — standalone document"
                 allowClear
                 dataTestId="docs-upload-link-entity-type"
+                size="sm"
               />
             </div>
             {linkEntityType ? (
@@ -286,6 +288,7 @@ export function UploadModal({
                 onChange={setLinkEntityId}
                 placeholder={`Select ${linkEntityType} to link`}
                 dataTestId={`docs-upload-link-${linkEntityType}-picker`}
+                size="sm"
               />
             ) : null}
           </div>
@@ -297,7 +300,7 @@ export function UploadModal({
             <DatePicker
               value={documentDate}
               onChange={(next) => setDocumentDate(next)}
-              className="h-10 w-full"
+              box="field"
             />
           </div>
           <div className="space-y-1">
@@ -307,7 +310,7 @@ export function UploadModal({
             <DatePicker
               value={expirationDate}
               onChange={setExpirationDate}
-              className="h-10 w-full"
+              box="field"
             />
           </div>
         </div>

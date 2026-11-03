@@ -342,6 +342,19 @@ export function VendorCreditsPage() {
     </div>
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper
+        title="Vendor credits"
+        subtitle="Open vendor credits reduce A/P when applied to bills (data-only until GL flags advance)"
+      >
+        <BoardSection title="Vendor credits" testId="vendor-credits-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Vendor credits"

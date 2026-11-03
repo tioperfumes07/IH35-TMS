@@ -325,31 +325,41 @@ export function CompanySettlementsPage() {
         >
           <V3KpiTile
             label="Closed tours"
-            value={toursQuery.isError ? "—" : String(allTourRows.length)}
+            value={
+              toursQuery.isError
+                ? "—"
+                : toursQuery.isPending
+                  ? "…"
+                  : formatQuantityTable(allTourRows.length, 0)
+            }
             sub="listTours closed"
             testId="company-settlements-kpi-total"
           />
           <V3KpiTile
             label="With company settlement"
-            value={toursQuery.isError ? "—" : String(withCompany)}
+            value={
+              toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatQuantityTable(withCompany, 0)
+            }
             sub="company_settlement_id set"
             testId="company-settlements-kpi-with-company"
           />
           <V3KpiTile
             label="Not opened"
-            value={toursQuery.isError ? "—" : String(notOpened)}
+            value={
+              toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatQuantityTable(notOpened, 0)
+            }
             sub="amber · no company settlement yet"
             testId="company-settlements-kpi-not-opened"
           />
           <V3KpiTile
             label="Total margin"
-            value={toursQuery.isError ? "—" : formatUsdCents(totalMargin)}
+            value={toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatUsdCents(totalMargin)}
             sub="sum of tour margin"
             testId="company-settlements-kpi-margin"
           />
           <V3KpiTile
             label="Net Revenue"
-            value={toursQuery.isError ? "—" : formatUsdCents(netRevenue)}
+            value={toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatUsdCents(netRevenue)}
             sub="sum of tour revenue"
             testId="company-settlements-kpi-net-revenue"
           />

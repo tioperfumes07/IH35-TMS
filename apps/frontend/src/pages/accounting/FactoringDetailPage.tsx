@@ -190,6 +190,16 @@ export function FactoringDetailPage() {
     { key: "factoring_status", label: "Factoring Status", sortable: true },
   ];
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Factoring">
+        <BoardSection title="Factoring" testId="factoring-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       {detail.matched_bank_transaction_id && selectedCompanyId ? (

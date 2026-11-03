@@ -33,6 +33,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { Modal } from "../../components/Modal";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 function money(cents: number | null | undefined) {
   if (cents == null || !Number.isFinite(Number(cents))) return TABLE_MISSING;
@@ -650,7 +651,9 @@ export function DisputesHubPage() {
         title="Disputes"
         subtitle="Driver · Customer · Vendor — separate objects, separate money directions"
       >
-        <p className="text-xs text-red-600">Select operating company.</p>
+        <BoardSection title="Disputes" testId="disputes-hub-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </AccountingSubNavWrapper>
     );
   }

@@ -135,6 +135,10 @@ export function findErrors(src) {
       "ALERT",
     ])
   );
+  // D066 — attention dock must sit below ParityDrawer z-[60] so Record Transfer footer stays clickable.
+  if (/z-\[220\]/.test(strip) || !/z-\[50\]/.test(strip)) {
+    errors.push(`${FILES.strip}: D066 attention dock must use z-[50] (below drawers), not z-[220]`);
+  }
   errors.push(
     ...assertNeedles(rules, FILES.rules, [
       "unmatched-7d-alert",

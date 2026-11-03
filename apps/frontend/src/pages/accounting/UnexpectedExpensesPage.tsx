@@ -110,6 +110,16 @@ export function UnexpectedExpensesPage() {
 
   const goBanking = () => navigate("/banking?type=uncategorized");
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Unexpected expenses">
+        <BoardSection title="Unexpected expenses" testId="unexpected-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Unexpected expenses"

@@ -69,7 +69,7 @@ if (process.argv.includes("--selftest")) {
       name: "list loses the Accounting crumb",
       list: (t) =>
         t.includes("AccountingSubNavWrapper")
-          ? t.replace('title="Recurring Bills"', 'title="Recurring Bills X"')
+          ? t.replaceAll('title="Recurring Bills"', 'title="Recurring Bills X"')
           : t.replace(/<Link to="\/accounting" /, '<Link to="/home" '),
     },
     { name: "create goes back through history", create: (t) => t.replace('const goBack = () => navigate("/accounting/bills/recurring");', "const goBack = () => navigate(-1);") },
