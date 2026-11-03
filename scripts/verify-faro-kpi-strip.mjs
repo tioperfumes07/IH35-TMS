@@ -175,7 +175,7 @@ function selftest() {
     ["an eleventh tab", mut("manifest", (s) => s.replace(/(export const FARO_TABS\b[\s\S]*?)(\n\];?)/, '$1\n  { id: "extra", label: "Extra" },$2'))],
     ["a renamed tab", mut("manifest", (s) => s.replace('label: "Reserve"', 'label: "Reserves"'))],
     ["a duplicate label", mut("cashFlow", (s) => s.replace('label="Posted wires"', 'label="Net cash received"'))],
-    ["a duplicate value", mut("cashFlow", (s) => s.replace('value={String(totals.wires)}', 'value={String(totals.invoices)}'))],
+    ["a duplicate value", mut("cashFlow", (s) => s.replace('value={formatQuantityTable(totals.wires, 0)}', 'value={formatQuantityTable(totals.invoices, 0)}'))],
     ["a client reserve balance tile", mut("home", (s) => s.replace('value={recourseQuery.isError ? null : String((recourseQuery.data?.invoices ?? []).length)}', 'value={engineReserve?.escrow}'))],
     ["a hint", mut("home", (s) => s.replace('label="Active advances"', 'label="Active advances"\n              hint="12 advances"'))],
     ["a second tile size", mut("cashFlow", (s) => s.replace('size="md"', 'size="sm"'))],

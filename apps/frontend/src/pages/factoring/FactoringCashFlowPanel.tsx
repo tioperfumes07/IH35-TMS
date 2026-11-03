@@ -256,14 +256,14 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
         <DrillKpiCard
           testId="factoring-home-kpi-wires"
           label="Posted wires"
-          value={String(totals.wires)}
+          value={formatQuantityTable(totals.wires, 0)}
           to={FACTORING_TAB_PATH.payments_to_you}
           size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-invoices"
           label="Invoices on wires"
-          value={String(totals.invoices)}
+          value={formatQuantityTable(totals.invoices, 0)}
           to={FACTORING_TAB_PATH.payments_to_you}
           size="md"
         />

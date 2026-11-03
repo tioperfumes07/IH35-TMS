@@ -250,9 +250,9 @@ export function DriverHubReportingPage() {
       ) : data ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
-            <Card label="Total requests" value={String(data.summary.total_requests)} to="/driver-finance/cash-advance-requests" />
-            <Card label="Approved" value={String(data.summary.approved)} to="/driver-finance/cash-advance-requests" />
-            <Card label="Denied" value={String(data.summary.denied)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Total requests" value={formatQuantityTable(data.summary.total_requests, 0)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Approved" value={formatQuantityTable(data.summary.approved, 0)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Denied" value={formatQuantityTable(data.summary.denied, 0)} to="/driver-finance/cash-advance-requests" />
             <Card label="Approval rate" value={fmtPct(data.summary.approval_rate_pct)} to="/driver-finance/cash-advance-requests" />
             <Card label="Avg time-to-view" value={fmtSeconds(data.summary.avg_time_to_view_seconds)} to="/driver-finance/cash-advance-requests" />
             <Card label="Avg time-to-approve" value={fmtSeconds(data.summary.avg_time_to_approve_seconds)} to="/driver-finance/cash-advance-requests" />

@@ -941,6 +941,22 @@ if (!/formatQuantityTable\(activeCount, 0\)/.test(driversKpiQty) || !/formatQuan
 if (!/drivers-need-company/.test(driversKpiQty)) {
   fail("Drivers page must BoardSection need-company when no company selected");
 }
+const driverHubReportQty = read("apps/frontend/src/pages/home/DriverHubReportingPage.tsx");
+if (!/formatQuantityTable\(data\.summary\.total_requests, 0\)/.test(driverHubReportQty) || !/formatQuantityTable\(data\.summary\.approved, 0\)/.test(driverHubReportQty)) {
+  fail("DriverHubReportingPage summary counts must use formatQuantityTable(, 0)");
+}
+const factorCashFlowQty = read("apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx");
+if (!/formatQuantityTable\(totals\.wires, 0\)/.test(factorCashFlowQty) || !/formatQuantityTable\(totals\.invoices, 0\)/.test(factorCashFlowQty)) {
+  fail("FactoringCashFlowPanel wire/invoice counts must use formatQuantityTable(, 0)");
+}
+const fuelGlMapQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
+if (!/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlMapQty)) {
+  fail("FuelGlMappingCoverage Categories KPI must use formatQuantityTable(, 0)");
+}
+const avpDaysQty = read("apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx");
+if (!/formatQuantityTable\(dayCountInclusive\(applied\.from, applied\.to\), 0\)/.test(avpDaysQty)) {
+  fail("ActualVsProjected Days in range must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
