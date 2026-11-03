@@ -150,6 +150,7 @@ const checks = [
   ["apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx", "BoardSection", "legal-template-detail-need-company", "Legal Template Detail need-company"],
   ["apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx", "BoardSection", "legal-matter-detail-need-company", "Legal Matter Detail need-company"],
   ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", "BoardSection", "factoring-submission-workqueue-need-company", "Factoring Submission Workqueue need-company"],
+  ["apps/frontend/src/pages/dispatch/ExpenseLoadConfirmationsPage.tsx", "BoardSection", "expense-load-confirmations-page-need-company", "Expense Load Confirmations page need-company"],
   ["apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx", "BoardSection", "type-catalog-need-company", "Type Catalog need-company"],
   ["apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", "BoardSection", "insurance-payment-schedule-need-company", "Insurance Payment Schedule need-company"],
   ["apps/frontend/src/components/driver-inbox/DriverInbox.tsx", "BoardSection", "driver-inbox-need-company", "DriverInbox need-company"],
