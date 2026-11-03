@@ -17,6 +17,7 @@ const FILES = [
   "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   // fill-not-shell datetime wave — FactoringTab timestamps
   "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+  "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/drivers/DriverCommunicationsTab.tsx",
   "apps/frontend/src/components/driver-profile/DriverProfileFuelVerdictsSection.tsx",
   "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx",
@@ -64,6 +65,7 @@ const FILES = [
 ];
 
 const DATE_ONLY = [
+  "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx",
   "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
   "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
@@ -91,6 +93,8 @@ const QUANTITY = [
   "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
   "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
   "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
+  "apps/frontend/src/components/dispatch/LoadUnitCostSplitPanel.tsx",
+  "apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx",
   "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
   "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
   "apps/frontend/src/pages/Customers.tsx",

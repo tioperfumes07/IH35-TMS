@@ -6,6 +6,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
 import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../lib/money";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 
 // LDT-6 · Settlement (render § Settlement): while the tour is open — one sentence + the shape it will take;
 // when closed — Driver settlement (loaded × rate · empty × rate · gross · escrow · recoveries · net) and
@@ -15,8 +16,8 @@ const DASH = "—";
 // REG-033(b) (owner 2026-09-09): the settlement must be scoped to THIS tour's number AND dates.
 const fmtDate = (d: string | null | undefined): string | null => {
   if (!d) return null;
-  const [y, m, day] = d.slice(0, 10).split("-");
-  return y && m && day ? `${m}/${day}/${y}` : d.slice(0, 10);
+  const formatted = formatDateUS(d);
+  return formatted || null;
 };
 const periodLabel = (t: TourReadout["tour"]): string | null => {
   if (!t) return null;
@@ -78,7 +79,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       c.kind === "expense" &&
       (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft")
   );
-  const pm = (c: number) => (totalMiles > 0 ? `${(c / 100 / totalMiles).toFixed(3)} p/m` : DASH);
+  const pm = (c: number) => (totalMiles > 0 ? `${formatUsdRateTable(c / 100 / totalMiles, 3)} p/m` : DASH);
   const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
   const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
   // NOTE: `name` (not `label`) deliberately -- this is a P&L waterfall line-item list, not a
@@ -96,7 +97,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
-      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
+      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? formatDateTimeUS(t.trip_closed_at) : ""}; frozen.`}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-settlement-state">{t.is_open ? "open · pre-settlement" : `${t.status}${t.paid_at ? " · paid" : ""}`}</span>
     </div>
 

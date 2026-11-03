@@ -4,6 +4,7 @@ import { getLoadUnitCostSplit } from "../../api/accounting";
 import { useNavigate } from "react-router-dom";
 import type { UnitCostShare } from "../../api/accounting";
 import { formatMoneyCents } from "./constants";
+import { formatQuantityTable } from "../../lib/money";
 import { ParityTable } from "../parity/ParityTable";
 
 /**
@@ -83,14 +84,14 @@ export function LoadUnitCostSplitPanel({
             label: "Miles", sortable: true,
             cellClass: "text-right tabular-nums",
             sortValue: (u) => u.miles,
-            render: (u) => (u.miles > 0 ? u.miles.toFixed(1) : "—"),
+            render: (u) => (u.miles > 0 ? formatQuantityTable(u.miles) : "—"),
           },
           {
             key: "share",
             label: "Share",
             cellClass: "text-right tabular-nums",
             sortValue: (u) => u.miles_pct,
-            render: (u) => <span data-testid="load-unit-cost-split-pct">{u.miles_pct.toFixed(1)}%</span>,
+            render: (u) => <span data-testid="load-unit-cost-split-pct">{formatQuantityTable(u.miles_pct)}%</span>,
           },
           {
             key: "cost",
@@ -104,7 +105,7 @@ export function LoadUnitCostSplitPanel({
           multi
             ? {
                 truck: "Total",
-                miles: data.total_miles > 0 ? data.total_miles.toFixed(1) : "—",
+                miles: data.total_miles > 0 ? formatQuantityTable(data.total_miles) : "—",
                 share: "100.0%",
                 cost: <span data-testid="load-unit-cost-split-total">{formatMoneyCents(data.pool_cents, currency)}</span>,
               }
