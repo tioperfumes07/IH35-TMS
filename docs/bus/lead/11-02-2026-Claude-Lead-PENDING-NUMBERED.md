@@ -153,12 +153,12 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
 | 78 | R66 | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | OPEN |
-| 79 | R67 | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) | CC-1 | OPEN |
-| 80 | R68 | Reports/Dispatch | Reports › Driver settlement report (by settlement / driver, paid state) | CC-1 | OPEN |
-| 81 | R69 | Reports/Dispatch | Reports › Company settlement report (profit per closed trip) | CC-1 | OPEN |
-| 82 | R70 | Reports/Dispatch | Reports › Customer report (sales, open, aging, statement) | CC-1 | OPEN |
-| 83 | R71 | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) | CC-1 | OPEN |
-| 84 | R72 | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages | CC-1 | OPEN |
+| 79 | R67 | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) | CC-1 | MERGED-UNVERIFIED — #28529 (Lead): /reports/loads board (mdata.loads + load-cost rollup); deploy pending |
+| 80 | R68 | Reports/Dispatch | Reports › Driver settlement report (by settlement / driver, paid state) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/driver-settlements; prod read-only 92 settlements net $134,675.96, 87 closed-not-paid $128,466.58 |
+| 81 | R69 | Reports/Dispatch | Reports › Company settlement report (profit per closed trip) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/company-settlements (tours engine, profit per closed trip) |
+| 82 | R70 | Reports/Dispatch | Reports › Customer report (sales, open, aging, statement) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/customers (party board + GL 1100 aging); 193 invoices YTD $659,426.72 |
+| 83 | R71 | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) | CC-1 | MERGED-UNVERIFIED — #28529: /reports/vendors (party board + A/P aging); 1099 rule not written anywhere (0 vendors flagged) — owner |
+| 84 | R72 | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages | CC-1 | MERGED-UNVERIFIED — #28529: 5 reports in catalog/home/sub-nav; LoadsReportPage deleted. LoadHistoryPage KEPT: it is routed (/dispatch/loads/:id/history, the load change timeline) — the row text was wrong |
 
 ## E · Money defects (engines)
 
@@ -184,7 +184,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 102 | R207 | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | CC-2 | OPEN |
 | 103 | R209 | Guards | 107 main static reds outside baseline split by seat | Cursor | IN PROGRESS |
 | 104 | R210 | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | CC-2 | OPEN |
-| 105 | R223 | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | OPEN |
+| 105 | R223 | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | MERGED-UNVERIFIED — #28482 (Lead): parked-truck rule (consecutive fixes ≤483 m bracketing the fill) + odometer_mi; applies at the 06:00 CT fill sweep |
 
 ## ENG · Engine register
 
@@ -251,12 +251,12 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | MERGED-UNVERIFIED — Week-of Closed pill = trip_closed_at OR terminal status; Status stays payment Paid/Open (v3); live USMCA UNVERIFIED |
 | 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | MERGED-UNVERIFIED — KPIs show … while toursQuery.isPending (no flash 0); live UNVERIFIED |
 | 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | OPEN — re-measured 00:15Z: fuel.fuel_card_assignments = 0 rows |
-| 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | OPEN — re-measured 00:20Z: 262 of 281 live Relay fills have no driver (220 have the unit); 18 relay_driver_ids, no crosswalk table; name match impossible (partial names, 5 duplicate "Hugo Gaytan" rows), phone 0 unique — permanent fix routed to CC-2 (relay_driver_links + picker queue) |
+| 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | MERGED-UNVERIFIED — #28531 (Lead, 22:50Z): integrations.relay_driver_links (17 links, 15 drivers) + matcher reads it + rematch in the fuel ingest hook. Fork br-solitary-cloud-akbd7y9h: fills with driver 19 → 280/281 (1 has no Relay id). Prod: migration at deploy, rematch at 06:00 CT |
 | 163 | R106 | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | OPEN |
-| 164 | R107 | Fuel | Home MTD spend $91,539 vs Fuel board figure; Avg $/gal $5.44 | CC-2 | OPEN |
+| 164 | R107 | Fuel | Home MTD spend $91,539 vs Fuel board figure; Avg $/gal $5.44 | CC-2 | MERGED-UNVERIFIED — #28530 (Lead): one reader readFuelPeriodSpend for Home + board (live rows, CT month, spend ÷ gallons). Prod Oct: old Home $91,539.16 incl. 24 voided/archived $15,190.03 → $76,349.13, $5.494/gal |
 | 165 | R108 | Maintenance | All 43 trucks "PM reading unavailable"; 0 work orders; MTD cost $0.00 | CC-2 | DONE-LIVE — live /maintenance 23:35Z: PM states shown ("No PM clock" + "Start PM clock →", never a false OK — verify-fleet-health-no-false-ok); prod: USMCA maintenance.work_orders = 0 (true empty), MTD $0.00 true |
-| 166 | R109 | Dispatch | Load board HOS columns blank for most trucks; Truck planner driver column "—" for trucks with drivers | CC-3 | OPEN |
-| 167 | R110 | Driver Profile | Angel Sosa: "No current truck assignment" while on T156 (13697); documents all "Not recorded" | CC-2 | OPEN |
+| 166 | R109 | Dispatch | Load board HOS columns blank for most trucks; Truck planner driver column "—" for trucks with drivers | CC-3 | MERGED-UNVERIFIED — #28530: planner names driver via the truck→driver lookup (prod 0 → 13 of 16 trucks); HOS poll covers Probation + reader follows merged rows (82 → 83 drivers with HOS) |
+| 167 | R110 | Driver Profile | Angel Sosa: "No current truck assignment" while on T156 (13697); documents all "Not recorded" | CC-2 | MERGED-UNVERIFIED — #28530: profile accepts any open pairing (0 of 809 had source samsara_webhook) → T156; CDL TAMP220307 shown from merged duplicate (display only) |
 | 168 | R111 | Insurance | Insurance page renders inside the Safety header/tab shell | CC-2 | CODED |
 | 169 | R112 | Legal | Open matters 0 on page while legal.matters holds 18 rows (test records) | CC-2 | DONE-LIVE — prod 00:15Z: legal.matters USMCA = 0 rows (the 18 test rows are gone) — "Open matters 0" is the true count |
 | 170 | R200 | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | DONE-LIVE — prod views.ar_aging $621,076.72 / 164 open = GL 1100 $621,076.72 (322 postings) = 183 sent invoices $621,076.72; no proforma rows live |
@@ -281,9 +281,9 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 |---|---|---|---|---|---|
 | 180 | R120 | Fuel › Questions › Review | D001: Clicking Review throws undefined `load_number` in FuelAssignmentPopup; whole-app crash | CC-2 | MERGED-UNVERIFIED |
 | 181 | R121 | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | MERGED-UNVERIFIED — verify-home-qbo D002 cents plant PASS; live UNVERIFIED |
-| 182 | R122 | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | OPEN |
-| 183 | R123 | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | OPEN |
-| 184 | R124 | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | OPEN |
+| 182 | R122 | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 183 | R123 | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 184 | R124 | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | MERGED-UNVERIFIED — #28503 (set-based endpoints; driver-day-summary 11,247 → 265 ms on prod) — Lead builder, deploy pending; live check next |
 | 185 | R125 | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | DONE-LIVE — live /driver-finance/settlements 00:00Z: sub-nav "Drivers" → /driver-finance/drivers (in module); only global nav + load EntityLinks leave the module |
 | 186 | R126 | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
 | 187 | R127 | Settlements › Navigation › Pre-Settlements | D008: Link targets `/drivers/pre-settlements` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
@@ -295,64 +295,64 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 193 | R133 | Settlements › Navigation › Deductions | D014: Link targets `/drivers/deductions` | Cursor | MERGED-UNVERIFIED — SETTLEMENTS_SUBNAV under /driver-finance/; verify-settlements-subnav PASS; live UNVERIFIED |
 | 194 | R135 | Fuel › Questions › Table | D016: No column chooser in rendered DOM | Cursor | MERGED-UNVERIFIED |
 | 195 | R136 | Fuel › Questions › Table headers | D017: Headers have no sorting controls | Cursor | MERGED-UNVERIFIED |
-| 196 | R137 | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | OPEN |
-| 197 | R138 | Fuel › Cards › Driver options request | D019: `/api/v1/mdata/drivers` 4,522 ms in audit session | CC-2 | OPEN |
-| 198 | R139 | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | OPEN |
+| 196 | R137 | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
+| 197 | R138 | Fuel › Cards › Driver options request | D019: `/api/v1/mdata/drivers` 4,522 ms in audit session | CC-2 | MERGED-UNVERIFIED — #28503 (set-based endpoints; driver-day-summary 11,247 → 265 ms on prod) — Lead builder, deploy pending; live check next |
+| 198 | R139 | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | IN PROGRESS — Lead builder (7.30c) |
 | 199 | R140 | Dispatch › Home › Round-trip exposure | D021: Driver names abbreviated to initials | Cursor | MERGED-UNVERIFIED — driver_full_name + verify-reg038/dispatch-board-preview D021 PASS; live UNVERIFIED |
-| 200 | R141 | Dispatch › Home › Return / idle / missing-bill tables | D022: Driver names all-uppercase | CC-3 | OPEN |
-| 201 | R144 | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | OPEN |
-| 202 | R145 | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | OPEN |
-| 203 | R146 | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | OPEN |
-| 204 | R147 | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | OPEN |
-| 205 | R148 | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | OPEN |
-| 206 | R149 | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | OPEN |
-| 207 | R150 | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | OPEN |
-| 208 | R151 | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | OPEN |
+| 200 | R141 | Dispatch › Home › Return / idle / missing-bill tables | D022: Driver names all-uppercase | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 201 | R144 | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 202 | R145 | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 203 | R146 | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | IN PROGRESS — Lead builder (7.30c) |
+| 204 | R147 | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
+| 205 | R148 | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 206 | R149 | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 207 | R150 | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 208 | R151 | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
 | 209 | R152 | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | DONE-LIVE — live /maintenance 23:20Z: MTD COST $0.00 (cents shown) |
 | 210 | R153 | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | CC-3 | CODED |
 | 211 | R154 | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | DONE-LIVE — live /maintenance/active-wos 23:32Z: every header sortable incl. Load, Driver, Vendor, Bill, JE, Timing (only the select-all checkbox column has none) |
-| 212 | R155 | Safety › Hours & Fatigue › Driver roster | D036: Mixed proper-case and all-uppercase driver names | CC-3 | OPEN |
+| 212 | R155 | Safety › Hours & Fatigue › Driver roster | D036: Mixed proper-case and all-uppercase driver names | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
 | 213 | R156 | Safety › Hours & Fatigue › Create HOS Violation | D037: Seven visible inputs measured 38px high | CC-3 | CODED |
-| 214 | R157 | Compliance › Filings / Overview › Driver labels | D038: Mixed proper-case and uppercase driver labels in populated tables | CC-3 | OPEN |
+| 214 | R157 | Compliance › Filings / Overview › Driver labels | D038: Mixed proper-case and uppercase driver labels in populated tables | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
 | 215 | R158 | Driver Profile › Create Driver › Identity step | D039: Fifteen visible inputs measured 38px; CDL state about 199px wide | CC-3 | CODED |
 | 216 | R159 | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high | CC-3 | CODED |
 | 217 | R160 | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high | CC-3 | CODED |
 | 218 | R161 | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | MERGED-UNVERIFIED — verify-cash-flow-projected-tab D042 PASS; live UNVERIFIED |
-| 219 | R162 | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | OPEN |
-| 220 | R163 | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | OPEN |
+| 219 | R162 | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 220 | R163 | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
 | 221 | R164 | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | MERGED-UNVERIFIED — verify-banking-home-preview-parity D045 PASS; live UNVERIFIED |
-| 222 | R165 | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | OPEN |
-| 223 | R166 | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | OPEN |
+| 222 | R165 | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | IN PROGRESS — Lead builder (7.30c) |
+| 223 | R166 | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
 | 224 | R167 | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | CODED |
-| 225 | R168 | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | OPEN |
-| 226 | R169 | Inventory › Create part › Unit cost | D050: Money input measures 28px high | CC-3 | OPEN |
-| 227 | R170 | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high | CC-3 | OPEN |
-| 228 | R171 | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | Cursor | OPEN |
-| 229 | R172 | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names | CC-3 | OPEN |
+| 225 | R168 | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 226 | R169 | Inventory › Create part › Unit cost | D050: Money input measures 28px high | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
+| 227 | R170 | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
+| 228 | R171 | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 229 | R172 | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
 | 230 | R173 | Reports › Custom report builder › Report name | D054: Input measures 26.67px high and 1156.38px wide | CC-3 | CODED |
-| 231 | R174 | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names | CC-3 | OPEN |
-| 232 | R175 | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | OPEN |
-| 233 | R176 | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | OPEN |
-| 234 | R177 | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | OPEN |
+| 231 | R174 | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 232 | R175 | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
+| 233 | R176 | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | MERGED-UNVERIFIED — #28500 (names proper case: formatPersonName / new formatCompanyName) — Lead builder, deploy pending; live check next |
+| 234 | R177 | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | MERGED-UNVERIFIED — #28494 (shared field height 40px: SelectCombobox size=sm, DatePicker box=field) — Lead builder, deploy pending; live check next |
 | 235 | R178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | MERGED-UNVERIFIED — verify-homepage-scenario-tracker-staleness D059 PASS; live UNVERIFIED |
 | 236 | R179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | MERGED-UNVERIFIED — verify-transaction-health D060 PASS; live UNVERIFIED |
 | 237 | R180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | MERGED-UNVERIFIED — TXH display_label payee·date·$ / memo strip UUID; live UNVERIFIED |
 | 238 | R181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | MERGED-UNVERIFIED — txHealthLedgerText formatUsdCents; live UNVERIFIED |
 | 239 | R182 | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | CODED |
 | 240 | R183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | MERGED-UNVERIFIED — verify-91105 D064 PASS; live UNVERIFIED |
-| 241 | R184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | Cursor | OPEN |
+| 241 | R184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | Cursor | MERGED-UNVERIFIED — #28502 (UI4) — Lead builder, deploy pending; live check next |
 | 242 | R185 | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | Cursor | MERGED-UNVERIFIED — #28498 attention dock z-[50] below ParityDrawer; verify-unmatched-7d plant; live footer UNVERIFIED |
 | 243 | R186 | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | Cursor | MERGED-UNVERIFIED — #28498 visibleDocumentLabel(ref|check|date·$); verify-bill-detail-panel-visible-label; live USMCA UNVERIFIED |
-| 244 | R187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | Cursor | OPEN |
-| 245 | R188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | Cursor | OPEN |
-| 246 | R189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | Cursor | OPEN |
-| 247 | R190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | Cursor | OPEN |
+| 244 | R187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | Cursor | MERGED-UNVERIFIED — #28502 (UI4) — Lead builder, deploy pending; live check next |
+| 245 | R188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 246 | R189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 247 | R190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | Cursor | MERGED-UNVERIFIED — #28502 (UI4) — Lead builder, deploy pending; live check next |
 | 248 | R191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | MERGED-UNVERIFIED — AccountTile formatUsd D072; live UNVERIFIED |
 | 249 | R192 | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | MERGED-UNVERIFIED — verify-cash-flow-projected-tab D073 PASS; live UNVERIFIED |
 | 250 | R193 | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms | CC-3 | PARTIAL |
-| 251 | R194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | Cursor | OPEN |
-| 252 | R195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | Cursor | OPEN |
-| 253 | R196 | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | Cursor | OPEN |
+| 251 | R194 | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
+| 252 | R195 | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | Cursor | MERGED-UNVERIFIED — #28502 (UI4) — Lead builder, deploy pending; live check next |
+| 253 | R196 | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | Cursor | MERGED-UNVERIFIED — #28495 (dates MM/DD/YYYY through the shared formatter) — Lead builder, deploy pending; live check next |
 | 254 | R197 | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | CC-3 | CODED |
 | 255 | R198 | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | CC-3 | OPEN |
 | 256 | R199 | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | LEAD | OPEN |

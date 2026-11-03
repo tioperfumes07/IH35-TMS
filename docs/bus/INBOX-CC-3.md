@@ -92,3 +92,6 @@ Lead takes the uppercase-names cluster (rows 182 200 202 207 212 214 220 223 225
 
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30d — LEAD — 11-03-2026 5:55 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
+E1 (row 162) is built and merged by the Lead (#28531) — drop it. Lead builders are on 250 + 255, 55 + 56, 113 + 54. Your CODED rows 210 213 215 216 217 224 230 239 254: verify live after deploy, paste measured px, mark DONE-LIVE. Then 53, 28, 114, 131, 157.
