@@ -14,7 +14,7 @@ Owner law 11-02 6:04 PM CT: "only finall permanent fixes, no patches." · Owner 
 | E6 | Samsara phantom units (row 258) | **6 SAM-** units (+3 gateway-serial G… units), 0 references | CC-2 | purged via AUTH purge route, guard 0 | 17:00 |
 | E7 | Duplicate drivers (row 263) | **165 rows / 93 people / 72 extra** | CC-1 | 0 exact-name groups; owner queue for Juan Pablo Hernandez Estrada (CDL …0697 vs …0637) + near-duplicate sets; importers resolve-before-insert; unique hard-id indexes | 20:00 |
 | E8 | Cash Flow projected expenses (row 261) | AvP projected expenses **$0.00** every day | CC-1 | snapshot projected_expense_cents + AvP reads the daily engine | 20:00 |
-| E9 | ENG-64 fuel outside trip window | **110 rows / $38,937.29 / 41 loads** | CC-3 | each row re-attached to the load whose window holds its fill moment (or none) → 0 | 20:00 |
+| E9 | ENG-64 fuel on the wrong load | **re-measured against the owner's rule (running load, else next load): 2 fills ($557.49) wrong of 856**; the ±1-day measure (110 rows) contradicted owner ruling 10-22 (13530) | LEAD (#28444) | engine sweep on every unresolved fill, daily 06:00 CT; owner rulings (176) + person-confirmed loads (590) never moved | SHIPPED — prod applies 11-04 06:00 CT |
 | E10 | Backend tests red on main (row 257) | 35 files / 46 tests (11-02 baseline) | CC-1 / CC-2 / CC-3 per INBOX | 0 failed | 20:00 |
 | E11 | ENG-29 real driven miles | **46 of 198** loads have miles_driven_actual | CC-3 | every delivered load with GPS has real miles | 22:00 |
 | E12 | ENG-38 periods | 24 of 24 open — owner 11-03: not categorizing yet → no month is final; stays open by design until bookkeeping starts | — | NOT AN ENGINE TODAY | — |
