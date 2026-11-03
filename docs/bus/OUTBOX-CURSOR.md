@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:55 PM CT) — ROUND 7.30 tip #16 443.282
+- **PRIOR:** #28515 tip OPEN Factoring/Fuel/Settlements boards.
+- **THIS:** PENDING #16 443.282 Factoring board-exact → MERGED-UNVERIFIED (verify-factoring-layout-tabs-first PASS; live owner confirm UNVERIFIED). Remaining Cursor code: #25 statement 5753, #27 Accounting tabs inspect, #29 popup standard (+ Lead date/UI). Batch75 Reclassify → CC-1.
+- **NEXT:** #25/#27/#29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:45 PM CT) — ROUND 7.30 tip #77 Factoring/Fuel/Settlements OPEN boards
 - **PRIOR:** #28512 tip rebuilt PARTIAL boards.
 - **THIS:** PENDING #77 statement drills + #52 Factoring Home + #57 Settlements Home + #62 Close + #66 Escrow + #68-69 Fuel + #4 nav N1-N10 → MERGED-UNVERIFIED (boards present; live UNVERIFIED). Remaining: #25 statement format, #16 process, #27/#29 broad OPEN. Lead owns dates/UI. Batch75 Reclassify → CC-1.
