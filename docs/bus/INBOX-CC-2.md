@@ -214,3 +214,11 @@ PERMANENT FIX (QBO payee-rule model): table integrations.relay_driver_links (ope
 Also: the 5 Hugo Gaytan rows → merge via the existing driver-merge path (CC-2 driver-merge-resume), not delete.
 GUARD: live — live Relay fills with a relay_driver_id that has a link but matched_driver_id NULL = 0; static — matcher never writes matched_driver_id from a name compare.
 DONE = links table live, 18 relay drivers confirmable in the UI, unmatched-with-link = 0. Deadline 2026-11-03T03:00Z.
+
+## LEAD 2026-11-02 6:30 PM CT — rows 156 + 154: stale Plaid PENDING lines never retired — $51,296.34 live, 3 booked (permanent fix)
+Prod (USMCA, live, pending=true): **64** pending bank lines; **53 older than 7 days = $51,296.34**, oldest 09-12; **3 of those are booked** (matched/categorized → GL).
+Example (one card purchase, $460.01, South TX Truck Centers 10/02): K7jqaM8MkyTj pending, created 10-03, **still live**; PYJk9EmEr0I6 pending, created 10-04, voided 10-07 when the posted line arrived; bYQVXrZryEIx posted 10-07 (CHECKCARD 1002). Same for $155.86 on 10/06. Pattern PURCHASE MM/DD + CHECKCARD MMDD: 17 live pairs, $7,614.84 counted twice.
+ROOT CAUSE (code, plaid.service.ts): (1) the `removed` loop only appends notes 'removed_by_plaid_sync' — it never voids; (2) pending→posted retirement retires ONE predecessor (the posted line's pending_transaction_id); a pending that Plaid replaced with a second pending is orphaned forever.
+PERMANENT FIX: (a) `removed` → void the row (void_reason 'plaid_removed', audit row) unless financially linked → then the existing escalation path (never silently keep, never hard delete); (b) daily sweep: live pending older than 5 business days → re-ask Plaid (/transactions/get for that account+date window); retire those Plaid no longer returns; (c) the 3 booked stale pendings: reverse via the normal unmatch/uncategorize engine, then void; (d) re-measure BofA reconciliation drift (row 154: bank $1,808.13 vs book −$88,433.89) after (a)–(c).
+GUARD (live, shrink-only to 0): live pending bank lines older than 10 days = 0; static: the removed handler issues a void, not a note.
+DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Deadline 2026-11-03T03:00Z.
