@@ -827,6 +827,50 @@ const legalTemplateDetailQty = read("apps/frontend/src/pages/legal/templates/Leg
 if (!/formatQuantityTable\(template\.version, 0\)/.test(legalTemplateDetailQty)) {
   fail("LegalTemplateDetailPage title version must use formatQuantityTable(, 0)");
 }
+const legalDeadlineDaysQty = read("apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx");
+if (!/formatQuantityTable\(Math\.abs\(days\), 0\)/.test(legalDeadlineDaysQty) || !/formatQuantityTable\(days, 0\)/.test(legalDeadlineDaysQty)) {
+  fail("LegalDeadlineAlertsPage daysLabel must use formatQuantityTable(, 0)");
+}
+const repurchaseDaysQty = read("apps/frontend/src/pages/factoring/RepurchaseDuePanel.tsx");
+if (!/formatQuantityTable\(row\.days_since_purchase, 0\)/.test(repurchaseDaysQty)) {
+  fail("RepurchaseDuePanel days_since_purchase must use formatQuantityTable(, 0)");
+}
+const dispatchBoardDaysDownQty = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+if (!/formatQuantityTable\(unit\.days_down, 0\)/.test(dispatchBoardDaysDownQty)) {
+  fail("DispatchBoard days_down must use formatQuantityTable(, 0)");
+}
+const legalSignVersionQty = read("apps/frontend/src/pages/legal/sign/LegalSignPage.tsx");
+if (!/formatQuantityTable\(details\.template_version, 0\)/.test(legalSignVersionQty)) {
+  fail("LegalSignPage template_version must use formatQuantityTable(, 0)");
+}
+const attorneyPortalVersionQty = read("apps/frontend/src/pages/legal/attorney-review/LegalAttorneyReviewPortalPage.tsx");
+if (!/formatQuantityTable\(details\.version, 0\)/.test(attorneyPortalVersionQty)) {
+  fail("LegalAttorneyReviewPortalPage version must use formatQuantityTable(, 0)");
+}
+const unifiedContractVersionQty = read("apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx");
+if (!/formatQuantityTable\(t\.version, 0\)/.test(unifiedContractVersionQty) || !/formatQuantityTable\(selectedTemplate\.version, 0\)/.test(unifiedContractVersionQty)) {
+  fail("UnifiedContractCreatorModal version labels must use formatQuantityTable(, 0)");
+}
+const sendContractVersionQty = read("apps/frontend/src/pages/legal/contracts/SendContractModal.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(sendContractVersionQty)) {
+  fail("SendContractModal template version must use formatQuantityTable(, 0)");
+}
+const accountingHomeCloseQty = read("apps/frontend/src/pages/home/roles/AccountingHome.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(accountingHomeCloseQty)) {
+  fail("AccountingHome days_to_close must use formatQuantityTable(, 0)");
+}
+const settlementDisputesDaysQty = read("apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx");
+if (!/formatQuantityTable\(Math\.max\(0, Math\.floor\(\(Date\.now\(\) - new Date\(row\.opened_at\)\.getTime\(\)\) \/ 86400000\)\), 0\)/.test(settlementDisputesDaysQty) || !/formatQuantityTable\(openedDaysAgo, 0\)/.test(settlementDisputesDaysQty)) {
+  fail("SettlementDisputesTab opened days must use formatQuantityTable(, 0)");
+}
+const escrowBoardDaysQty = read("apps/frontend/src/pages/driver-finance/SettlementsEscrowBoard.tsx");
+if (!/formatQuantityTable\(ESCROW_RELEASE_WINDOW_DAYS, 0\)/.test(escrowBoardDaysQty)) {
+  fail("SettlementsEscrowBoard release window days must use formatQuantityTable(, 0)");
+}
+const escrowRegisterDaysQty = read("apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx");
+if (!/formatQuantityTable\(ESCROW_RELEASE_WINDOW_DAYS, 0\)/.test(escrowRegisterDaysQty)) {
+  fail("EscrowRegisterPage release window days must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
