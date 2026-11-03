@@ -712,8 +712,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                         Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}
                       </p>
                       <p className="text-xs text-gray-600">
-                        Balance: $
-                        {Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
+                        Balance:{" "}
+                        {formatUsd(Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100))}
                       </p>
                       <p className="text-xs text-gray-600">
                         Uncategorized: {Number(tile?.uncategorized_count ?? 0) || "—"}

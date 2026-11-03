@@ -41,10 +41,10 @@
    "title": "Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301)",
    "seat": "OWNER",
    "round": "ENG-21",
-   "status": "OPEN",
+   "status": "DONE-LIVE",
    "guard": null,
    "deadline_utc": null,
-   "evidence": "owner gives the delivery street address; Lead enters it"
+   "evidence": "LIVE 11-03 CT Cursor: delivery stop already Copamex / 195 S Euclid Ave / Bradley IL 60915 (street+ZIP present); status delivered_pending_docs. Rate-con document missing (notes + docs.files) — OWNER 11-03: skip rate-con, OK. No Edit Load. Close ENG-21 without document confirm."
   },
   {
    "id": "ENG-01",

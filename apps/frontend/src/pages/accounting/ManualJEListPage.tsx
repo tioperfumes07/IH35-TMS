@@ -273,8 +273,8 @@ export function ManualJEListPage() {
           </span>
         ),
       },
-      { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
-      { key: "credit_total_cents", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.credit_total_cents ?? 0) / 100).toFixed(2)}` },
+      { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => formatUsdCents(entry.debit_total_cents ?? 0) },
+      { key: "credit_total_cents", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => formatUsdCents(entry.credit_total_cents ?? 0) },
       {
         key: "matched_bank_transaction_id",
         label: "Bank",
@@ -469,7 +469,7 @@ export function ManualJEListPage() {
         title="Void Journal Entry"
         entityRef={
           voidTarget
-            ? `JE ${formatDateUS(voidTarget.entry_date)} · $${((voidTarget.debit_total_cents ?? 0) / 100).toFixed(2)}`
+            ? `JE ${formatDateUS(voidTarget.entry_date)} · ${formatUsdCents(voidTarget.debit_total_cents ?? 0)}`
             : undefined
         }
         minLength={3}
