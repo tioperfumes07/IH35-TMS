@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch49: historical failure attribution and current retests
+
+Batch48 merged #28353 c3b53cde0ff33da2fd1116a2fb8514779fe0d786 through normal hooks. No production writes.
+
+| Item | Independent measurement | Verdict |
+|---|---|---|
+|#27966 4f98a320b1|102 affected checks:99 PASS,2 live exclusions,1 registry FAIL. Exact unaccounted verify-eng27-bank-cat-pre-1017-no-load-ceiling failure also occurs on parent209644cb1a, exit1.|Inherited registry failure, not a new regression. Full35-file review remains in progress.|
+|#27966 insurance behavior|Four test files:7 PASS,2 FAIL. Both edit/archive failures reproduce on parent209644cb1a. Current main retest:archive PASS;edit still FAIL at PolicyDetail.edit-archive.test.tsx:109, selectOptions used on a custom combobox input.|OPEN test hygiene, CC-3; no production edit/archive attempted.|
+|#28205 7bce45d119 deep-link repair|Current LawsuitsTab.deep-link tests3/3 PASS:exact destination search asserted plus dropped-search plant. Earlier empty-string assertion no longer present.|Narrow test gap CLOSED; not a new finding.|
+|#28351 dee7054b64|Complete2-file diff reviewed; AvP tests9/9 PASS including rendered projected-expense legend and polyline; current guard scan PASS,9/9 plants rejected.|Local test repair PASS. Unit execution is not live proof; prior deployed chart observation remains separately recorded.|
+
+Current combined targeted run:13 passed,1 failed across3files; optional production DSNs removed and loopback PG configured. No skipped check promoted to PASS. Full263-row/249-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch48: trailer invariant and Rolling Ledger failure
 
 Batch47 merged #28350 00881832a41d62484e1e4aa037b1e1f46ec17d1a,normal hooks,1affected guard0regressions.
