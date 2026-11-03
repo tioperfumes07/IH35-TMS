@@ -1,4 +1,5 @@
 import { assignmentInCompanySql } from "../maintenance/driver-attribution.js";
+import { survivorDriverIdSql } from "../mdata/driver-merge-resolution.js";
 
 /**
  * LEAD 443.231b — ONE driver read for a unit on every board view.
@@ -69,8 +70,9 @@ export function unitLastDeliveredDriverLateralSql(unitAlias: string, companyPara
  */
 export function unitCurrentDriverJoinSql(companyParam: string): string {
   return `
+    -- Register row 166: a pairing / load recorded on a merged shell names its survivor (merged_into_driver_id).
     LEFT JOIN mdata.drivers ud
-      ON ud.id = COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)
+      ON ud.id = ${survivorDriverIdSql("COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)")}
      AND (
        ud.operating_company_id = ${companyParam}
        OR EXISTS (

@@ -45,6 +45,7 @@ function cell(cents: number) {
 }
 
 const TB_GEAR_TEST_ID = "trial-balance-column-gear";
+const EXPORT_ACCRUAL_ONLY_TITLE = "Export is the accrual trial balance — switch to Accrual to export this period.";
 
 const SYNTHETIC_ACCOUNT_IDS = new Set(["cash-basis-ar-row", "cash-basis-ap-row"]);
 
@@ -146,6 +147,10 @@ export function TrialBalancePage() {
   }, [query.data?.rows, sortDir, sortKey, reportSearch, applied.basis]);
 
   const summary = query.data?.summary;
+  // Row 54 (ACCT-F11051): the export file is the accrual trial balance for exactly the applied period (from..to,
+  // the same getTrialBalanceReport query this screen reads). A cash-basis screen has no matching file, so the
+  // export buttons wait for Accrual instead of handing over numbers that are not the ones on screen.
+  const exportMatchesScreen = applied.basis === "accrual";
 
   // Measured A/R note (443.248 / 443.282 / 443.280) — computed live: GL account 1100 net from this TB vs the
   // A/R invoice list (aging) total. No hardcoded dollars; every figure clicks through.
@@ -335,12 +340,14 @@ export function TrialBalancePage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId || exportAction.pending}
+              disabled={!companyId || exportAction.pending || !exportMatchesScreen}
+              title={exportMatchesScreen ? undefined : EXPORT_ACCRUAL_ONLY_TITLE}
               onClick={() =>
                 void exportAction.run(
                   () =>
                     exportTrialBalanceReport({
                       operating_company_id: companyId,
+                      from_date: applied.start,
                       as_of_date: applied.end,
                       format: "pdf",
                     }),
@@ -353,12 +360,14 @@ export function TrialBalancePage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId || exportAction.pending}
+              disabled={!companyId || exportAction.pending || !exportMatchesScreen}
+              title={exportMatchesScreen ? undefined : EXPORT_ACCRUAL_ONLY_TITLE}
               onClick={() =>
                 void exportAction.run(
                   () =>
                     exportTrialBalanceReport({
                       operating_company_id: companyId,
+                      from_date: applied.start,
                       as_of_date: applied.end,
                       format: "xlsx",
                     }),

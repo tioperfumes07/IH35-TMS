@@ -376,7 +376,7 @@ function renderInShopDetails(load: BoardLoad): ReactNode {
       <span><span className="font-semibold">Shop</span> {unit.shop_or_vendor}</span>
       <span><span className="font-semibold">Opened</span> {opened}</span>
       <span><span className="font-semibold">ETA</span> {eta}</span>
-      <span><span className="font-semibold">Days down</span> {unit.days_down}</span>
+      <span><span className="font-semibold">Days down</span> {formatQuantityTable(unit.days_down, 0)}</span>
     </div>
   );
 }
@@ -562,7 +562,7 @@ function AssignmentBand({ title, children }: { title: string; children: ReactNod
   );
 }
 
-const bandTitle = (title: string, count: number) => `${title} · ${count}`;
+const bandTitle = (title: string, count: number) => `${title} · ${formatQuantityTable(count, 0)}`;
 
 export function DispatchBoard({
   selectedUnitId,

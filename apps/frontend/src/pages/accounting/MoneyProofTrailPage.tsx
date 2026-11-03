@@ -3,10 +3,21 @@ import { type MoneyProofDocumentType } from "../../api/accounting";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 export function MoneyProofTrailPage() {
   const { documentType = "", id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Proof trail">
+        <BoardSection title="Proof trail" testId="proof-trail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Proof trail" subtitle="Document → ledger → accounts → linked records">
       {selectedCompanyId && id ? (

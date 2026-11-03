@@ -373,7 +373,12 @@ const InvoiceSearchReportPage = React.lazy(() => import("../pages/reports/Invoic
 const FuelReconciliationPage = React.lazy(() => import("../pages/reports/FuelReconciliationPage").then((m) => ({ default: m.FuelReconciliationPage })));
 const MaintenanceCostPerUnitPage = React.lazy(() => import("../pages/reports/MaintenanceCostPerUnitPage").then((m) => ({ default: m.MaintenanceCostPerUnitPage })));
 const DispatchMarginPage = React.lazy(() => import("../pages/reports/DispatchMarginPage").then((m) => ({ default: m.DispatchMarginPage })));
-const LoadsReportPage = React.lazy(() => import("../pages/reports/LoadsReportPage").then((m) => ({ default: m.LoadsReportPage })));
+// Rows 79-84 (11-03) — the five report boards (docs/design/v3/V3-Reports-*.dc.html); LoadsReportPage replaced by the Loads board.
+const LoadsReportBoard = React.lazy(() => import("../pages/reports/boards/LoadsReportBoard").then((m) => ({ default: m.LoadsReportBoard })));
+const DriverSettlementsReportBoard = React.lazy(() => import("../pages/reports/boards/DriverSettlementsReportBoard").then((m) => ({ default: m.DriverSettlementsReportBoard })));
+const CompanySettlementsReportBoard = React.lazy(() => import("../pages/reports/boards/CompanySettlementsReportBoard").then((m) => ({ default: m.CompanySettlementsReportBoard })));
+const CustomerReportBoard = React.lazy(() => import("../pages/reports/boards/CustomerReportBoard").then((m) => ({ default: m.CustomerReportBoard })));
+const VendorReportBoard = React.lazy(() => import("../pages/reports/boards/VendorReportBoard").then((m) => ({ default: m.VendorReportBoard })));
 const SubscriptionManager = React.lazy(() => import("../pages/reports/SubscriptionManager").then((m) => ({ default: m.SubscriptionManager })));
 const GeofenceDwellReport = React.lazy(() => import("../pages/reports/GeofenceDwellReport").then((m) => ({ default: m.GeofenceDwellReport })));
 const GeofenceReconciliationReport = React.lazy(() => import("../pages/reports/GeofenceReconciliationReport").then((m) => ({ default: m.GeofenceReconciliationReport })));
@@ -4093,7 +4098,39 @@ export const ROUTES = React.Children.toArray(
           path="/reports/loads"
           element={
             <ProtectedRoute>
-              <LoadsReportPage />
+              <LoadsReportBoard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/driver-settlements"
+          element={
+            <ProtectedRoute>
+              <DriverSettlementsReportBoard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/company-settlements"
+          element={
+            <ProtectedRoute>
+              <CompanySettlementsReportBoard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/customers"
+          element={
+            <ProtectedRoute>
+              <CustomerReportBoard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/vendors"
+          element={
+            <ProtectedRoute>
+              <VendorReportBoard />
             </ProtectedRoute>
           }
         />

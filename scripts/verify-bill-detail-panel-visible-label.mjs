@@ -26,7 +26,8 @@ import path from "node:path";
 import process from "node:process";
 
 const repoRoot = process.cwd();
-const FILE = "apps/frontend/src/pages/accounting/BillDetailPanel.tsx";
+const PANEL = "apps/frontend/src/pages/accounting/BillDetailPanel.tsx";
+const PAGE = "apps/frontend/src/pages/accounting/BillDetailPage.tsx";
 
 const NOT_VISIBLE_CALL_RE = /bill\.bill_number\s*\?\?\s*entityLabel\(null,\s*bill\.id,\s*"Bill"\)/;
 // LST-F421: ACCT-F6401 (e4250c06a8) leads with the human display_id.
@@ -36,20 +37,36 @@ const IMPORTS_HELPER_RE = /import\s*\{[^}]*\bvisibleDocumentLabel\b[^}]*\}\s*fro
 export function checkBillDetailPanelVisibleLabel(src) {
   const offenders = [];
   if (!IMPORTS_HELPER_RE.test(src)) {
-    offenders.push(`${FILE}: does not import visibleDocumentLabel from ../../lib/entity-label — ACCT-F6301-class regression.`);
+    offenders.push(`${PANEL}: does not import visibleDocumentLabel from ../../lib/entity-label — ACCT-F6301-class regression.`);
   }
   if (NOT_VISIBLE_CALL_RE.test(src)) {
-    offenders.push(`${FILE}: the Bill # field still calls entityLabel(null, bill.id, "Bill") — any bill with a null bill_number will render "Bill — not visible" again.`);
+    offenders.push(`${PANEL}: the Bill # field still calls entityLabel(null, bill.id, "Bill") — any bill with a null bill_number will render "Bill — not visible" again.`);
   }
   if (!VISIBLE_LABEL_CALL_RE.test(src)) {
-    offenders.push(`${FILE}: the Bill # field is not wired to visibleDocumentLabel(bill.bill_number ?? bill.vendor_name, bill.id, "Bill").`);
+    offenders.push(`${PANEL}: the Bill # field is not wired to visibleDocumentLabel(bill.bill_number ?? bill.vendor_name, bill.id, "Bill").`);
+  }
+  return offenders;
+}
+
+/** D067 — Payments on this bill are visible rows; never entityLabel → "Payment — not visible". */
+export function checkBillDetailPaymentsVisibleLabel(src) {
+  const offenders = [];
+  if (!IMPORTS_HELPER_RE.test(src)) {
+    offenders.push(`${PAGE}: must import visibleDocumentLabel`);
+  }
+  if (/entityLabel\(pmt\.reference_number \?\? pmt\.check_number,\s*pmt\.id,\s*"Payment"\)/.test(src)) {
+    offenders.push(`${PAGE}: Payments column must not use entityLabel(ref ?? check) — yields Payment — not visible (D067)`);
+  }
+  if (!/visibleDocumentLabel\(/.test(src) || !/pmt\.reference_number/.test(src) || !/formatDateUS\(pmt\.payment_date\)/.test(src)) {
+    offenders.push(`${PAGE}: Payments column must use visibleDocumentLabel(ref ?? check ?? date · amount) (D067)`);
   }
   return offenders;
 }
 
 export function run() {
-  const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
-  const offenders = checkBillDetailPanelVisibleLabel(src);
+  const panel = fs.readFileSync(path.join(repoRoot, PANEL), "utf8");
+  const page = fs.readFileSync(path.join(repoRoot, PAGE), "utf8");
+  const offenders = [...checkBillDetailPanelVisibleLabel(panel), ...checkBillDetailPaymentsVisibleLabel(page)];
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -58,16 +75,29 @@ if (process.argv.includes("--selftest")) {
     import { entityLabel } from "../../lib/entity-label";
     const label = bill.bill_number ?? entityLabel(null, bill.id, "Bill");
   `;
-  const fixed = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
+  const fixedPanel = fs.readFileSync(path.join(repoRoot, PANEL), "utf8");
+  const fixedPage = fs.readFileSync(path.join(repoRoot, PAGE), "utf8");
 
   const buggyOffenders = checkBillDetailPanelVisibleLabel(buggy);
-  const fixedOffenders = checkBillDetailPanelVisibleLabel(fixed);
+  const fixedOffenders = checkBillDetailPanelVisibleLabel(fixedPanel);
+  const pageClean = checkBillDetailPaymentsVisibleLabel(fixedPage);
+  const pagePlanted = checkBillDetailPaymentsVisibleLabel(
+    fixedPage.replace(
+      /visibleDocumentLabel\([\s\S]*?pmt\.id,\s*"Payment",\s*\)/,
+      'entityLabel(pmt.reference_number ?? pmt.check_number, pmt.id, "Payment")',
+    ),
+  );
 
-  if (buggyOffenders.length >= 2 && fixedOffenders.length === 0) {
+  if (buggyOffenders.length >= 2 && fixedOffenders.length === 0 && pageClean.length === 0 && pagePlanted.length > 0) {
     console.log("verify-bill-detail-panel-visible-label selftest OK");
     process.exit(0);
   }
-  console.error("verify-bill-detail-panel-visible-label selftest FAILED", { buggyOffenders, fixedOffenders });
+  console.error("verify-bill-detail-panel-visible-label selftest FAILED", {
+    buggyOffenders,
+    fixedOffenders,
+    pageClean,
+    pagePlanted,
+  });
   process.exit(1);
 }
 
@@ -80,6 +110,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   console.log(
-    "verify-bill-detail-panel-visible-label OK — the Bill detail panel's Bill # field uses visibleDocumentLabel(), never entityLabel's not-visible tombstone",
+    "verify-bill-detail-panel-visible-label OK — Bill # + Payments on this bill use visibleDocumentLabel(), never entityLabel's not-visible tombstone",
   );
 }

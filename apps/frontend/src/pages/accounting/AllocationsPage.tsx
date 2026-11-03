@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -225,6 +226,16 @@ export function AllocationsPage() {
       </span>
     </div>
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Allocations">
+        <BoardSection title="Allocations" testId="allocations-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="Allocations" subtitle="Multi-unit cost allocation across bills (FH-7 §3.14)">

@@ -15,6 +15,7 @@ import { ApiError, apiRequest } from "../../api/client";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile, V3Panel, V3Segmented } from "../v3";
 import { EntityLink } from "../shared/EntityLink";
+import { formatCompanyName } from "../../lib/formatCompanyName";
 import { ListErrorState } from "../ListErrorState";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { MeasuredNote, NumLink, PartyHomeHeader, PartyTable, SpendBar, day, int, outlineButton, usd, type PartyCol } from "./partyBoardKit";
@@ -22,6 +23,8 @@ import { MeasuredNote, NumLink, PartyHomeHeader, PartyTable, SpendBar, day, int,
 type VendorRow = {
   id: string; name: string; status: string; category: string | null; txns: number; spend_cents: number;
   avg_ticket_cents: number | null; last_paid: string | null; pays_through: string | null; open_bills: number; open_bills_cents: number;
+  /** Rows 55/56 — the GL accounts behind the Category and Pays through cells (null = not an account / none recorded). */
+  category_account_id?: string | null; pays_through_account_id?: string | null;
 };
 export type VendorBoard = {
   kpis: {
@@ -93,7 +96,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   const cols: Array<PartyCol<VendorRow>> = [
     { key: "name", label: "Vendor", sort: (r) => r.name, cell: (r) => r.name },
-    { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => <span>{r.category ?? "—"}</span> },
+    { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
     {
       key: "txns", label: "Transactions", num: true, width: 100, sort: (r) => r.txns,
       cell: (r) => (r.txns ? <NumLink to={`/vendors/${r.id}`}>{int(r.txns)}</NumLink> : <span>—</span>),
@@ -105,7 +108,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
     { key: "bar", label: "", width: 130, sortable: false, sort: (r) => r.spend_cents, cell: (r) => <SpendBar pct={(r.spend_cents / maxSpend) * 100} width={110} /> },
     { key: "avg", label: "Avg ticket", num: true, width: 110, sort: (r) => r.avg_ticket_cents ?? 0, cell: (r) => (r.avg_ticket_cents == null ? <span>—</span> : <NumLink to={`/vendors/${r.id}`}>{usd(r.avg_ticket_cents)}</NumLink>) },
     { key: "last", label: "Last paid", width: 104, sort: (r) => r.last_paid ?? "", cell: (r) => <span>{day(r.last_paid)}</span> },
-    { key: "pays", label: "Pays through", width: 190, sort: (r) => r.pays_through ?? "", cell: (r) => <span>{r.pays_through ?? "—"}</span> },
+    { key: "pays", label: "Pays through", width: 190, sort: (r) => r.pays_through ?? "", cell: (r) => (r.pays_through && r.pays_through_account_id ? <EntityLink kind="account" id={r.pays_through_account_id} label={r.pays_through} /> : <span>{r.pays_through ?? "—"}</span>) },
   ];
 
   const paysRows: PaysRow[] = b ? b.pays_through.map((p) => ({ ...p, id: p.account_id ?? "none" })) : [];
@@ -195,7 +198,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             {q.isLoading ? <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>{"Loading vendors…"}</div> : (
               <PartyTable<VendorRow> storageKey="party-board-vendors-table" testId="party-board-table" cols={cols} rows={rows} exportRef={exportRef}
                 exportName="vendors.csv" emptyText="Nothing matches this filter."
-                renderFirst={(r) => <EntityLink kind="vendor" id={r.id} label={r.name} />} />
+                renderFirst={(r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} />} />
             )}
           </V3Panel>
         )}

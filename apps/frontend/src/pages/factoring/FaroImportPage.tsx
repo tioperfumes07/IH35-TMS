@@ -12,7 +12,7 @@ import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../lib/money";
 
 type PreviewLine = {
   invoice_number: string;
@@ -130,7 +130,7 @@ export function FaroImportPage() {
         return;
       }
       const commit = data as CommitResponse;
-      pushToast(`Imported ${commit.line_count} lines (${commit.invoices_updated} invoices, ${commit.reserve_movements} reserves)`, "success");
+      pushToast(`Imported ${formatQuantityTable(commit.line_count, 0)} lines (${formatQuantityTable(commit.invoices_updated, 0)} invoices, ${formatQuantityTable(commit.reserve_movements, 0)} reserves)`, "success");
       setPreview(null);
       setCsvText("");
       setFileName("");
@@ -203,7 +203,7 @@ export function FaroImportPage() {
 
       {preview ? (
         <BoardSection
-          title={`Preview — ${preview.line_count} line${preview.line_count === 1 ? "" : "s"}`}
+          title={`Preview — ${formatQuantityTable(preview.line_count, 0)} line${preview.line_count === 1 ? "" : "s"}`}
           testId="faro-import-preview-board"
         >
           <ParityTable

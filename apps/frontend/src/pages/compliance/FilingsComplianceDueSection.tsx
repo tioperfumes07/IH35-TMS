@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { fetchFilingsDashboard, type FilingItem, type FilingStatus } from "../../api/compliance";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -40,6 +41,22 @@ const STATUS_TILES: Array<{ key: FilingStatus; label: string }> = [
  * permits, IRP, driver CDL/medical/drug-test/Clearinghouse/MVR, and a business-property-tax placeholder.
  * Each row drills through to that program's own home — nothing here is the source of record.
  */
+/** Driver-owned filing programs: their Detail reads "<DRIVER NAME> — <what>" (filings-aggregate.service). */
+const DRIVER_FILING_CATEGORIES = new Set(["cdl", "medical_card", "drug_test_cycle", "driver_clearinghouse", "driver_mvr"]);
+
+/**
+ * Register row 214 (D038) — the Detail of a driver filing leads with the stored driver name, which arrives
+ * ALL CAPS ("HUGO GAYTAN — CDL"). Display-only: the leading name is proper-cased through the shared
+ * formatPersonName; the rest of the text and the payload are untouched.
+ */
+export function filingDetailLabel(row: Pick<FilingItem, "category" | "detail" | "drill_through">): string {
+  const detail = String(row.detail ?? "");
+  const isDriver = DRIVER_FILING_CATEGORIES.has(row.category) || String(row.drill_through ?? "").startsWith("/drivers/");
+  const sep = detail.indexOf(" — ");
+  if (!isDriver || sep <= 0) return detail;
+  return `${formatPersonName(detail.slice(0, sep))}${detail.slice(sep)}`;
+}
+
 export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilingStatus | "">("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -83,7 +100,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
     () => [
       { key: "program", label: "Program", sortable: true },
       { key: "entity_code", label: "Entity", sortable: true, render: (row) => row.entity_code || "—" },
-      { key: "detail", label: "Detail", sortable: true },
+      { key: "detail", label: "Detail", sortable: true, render: (row) => filingDetailLabel(row) },
       {
         key: "due_date",
         label: "Due Date",

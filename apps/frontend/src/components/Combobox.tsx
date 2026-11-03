@@ -693,6 +693,8 @@ type SimpleComboboxProps = {
   id?: string;
   ariaLabel?: string;
   dataTestId?: string;
+  /** Forwarded to Combobox `size`: "sm" = FORM_FIELD_CONTROL_SIZE_CLASS (40px form field), default "md" = 34px filter. */
+  size?: "md" | "sm";
 };
 
 export function SimpleCombobox({
@@ -709,6 +711,7 @@ export function SimpleCombobox({
   loading,
   ariaLabel,
   dataTestId,
+  size,
 }: SimpleComboboxProps) {
   const mapped: ComboboxOption[] = options.map((option) => ({
     value: option.value,
@@ -728,6 +731,7 @@ export function SimpleCombobox({
       loading={loading}
       ariaLabel={ariaLabel}
       dataTestId={dataTestId}
+      size={size}
       allowAddNew={
         allowAddNew && onAddNew
           ? {
@@ -747,7 +751,7 @@ export function SimpleCombobox({
 // ONE module. Logic is verbatim unchanged; JSX below calls SimpleCombobox explicitly (not the bare
 // Combobox engine -- different, incompatible prop shape) exactly as the original did via its own
 // `import { SimpleCombobox as Combobox } from "../Combobox"` aliasing.
-type SelectComboboxProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value" | "defaultValue"> & {
+type SelectComboboxProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value" | "defaultValue" | "size"> & {
   value?: string | number | readonly string[];
   defaultValue?: string | number | readonly string[];
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
@@ -755,6 +759,13 @@ type SelectComboboxProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChan
   // SelectHTMLAttributes does not itself declare data-testid (it is a JSX-level allowance, not a
   // typed HTML attribute) -- declared explicitly so it can be captured and forwarded below.
   "data-testid"?: string;
+  /**
+   * ROWS 196/204/226 (D018/D028/D050): a SelectCombobox used as a FORM field could never reach the 40px
+   * field height — it had no size prop, so it always painted the 34px FILTER box no matter what `h-10`
+   * the caller put on the outer wrapper. "sm" = FORM_FIELD_CONTROL_SIZE_CLASS (40px, owner design law
+   * rule 2); default "md" keeps every filter-bar call site unchanged.
+   */
+  size?: "md" | "sm";
 };
 
 type SelectComboboxOptionRow = {
@@ -818,6 +829,7 @@ export function SelectCombobox({
   onBlur,
   "aria-label": ariaLabel,
   "data-testid": dataTestId,
+  size,
 }: SelectComboboxProps) {
   const controlled = value !== undefined;
   const [internalValue, setInternalValue] = useState<string | null>(() => normalizeSelectComboboxValue(defaultValue));
@@ -848,6 +860,7 @@ export function SelectCombobox({
         id={id}
         ariaLabel={ariaLabel}
         dataTestId={dataTestId}
+        size={size}
         options={options
           .filter((opt) => !opt.disabled)
           .map((opt) => ({

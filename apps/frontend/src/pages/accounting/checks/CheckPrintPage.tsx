@@ -8,6 +8,7 @@ import { FORM_INPUT_CLASS } from "../../../components/forms/inputClass";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -288,6 +289,16 @@ export function CheckPrintPage() {
     },
     { key: "memo", label: "Memo", sortable: true, render: (row) => row.memo ?? "—" },
   ];
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Print checks">
+        <BoardSection title="Print checks" testId="check-print-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

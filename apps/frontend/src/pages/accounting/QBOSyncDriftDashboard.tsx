@@ -5,6 +5,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -176,6 +177,16 @@ export function QBOSyncDriftDashboard() {
         ),
     },
   ];
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="QBO Sync Drift">
+        <BoardSection title="QBO Sync Drift" testId="qbo-sync-drift-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="QBO Sync Drift" subtitle="Daily reconciliation health across master data entities (clone-and-reconcile, not two-way sync)">

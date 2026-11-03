@@ -214,6 +214,16 @@ export function MonthClosePage() {
     },
   ];
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Month close wizard">
+        <BoardSection title="Month close wizard" testId="month-close-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 

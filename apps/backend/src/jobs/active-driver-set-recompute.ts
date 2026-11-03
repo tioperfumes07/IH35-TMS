@@ -10,7 +10,7 @@
  * GAP-25 — Active Driver Set Recompute Worker
  *
  * Runs every 15 minutes for each active operating company with Samsara enabled.
- * Recomputes the active-driver set at threshold_days 7, 14, and 30 so all
+ * Recomputes the active-driver set at threshold_days 7, 14, 15 and 30 so all
  * SafetyHome filter options have a warm cache entry.
  *
  * Uses lucia bypass so RLS does not block cross-company iteration.
@@ -26,7 +26,10 @@ import { tryXactSingleFlight } from "../lib/single-flight.js";
 
 const WORKER_NAME = "samsara.active_driver_set_recompute";
 const DEFAULT_INTERVAL = "*/15 * * * *"; // every 15 minutes
-const THRESHOLD_DAYS_LIST = [7, 14, 30] as const;
+// 15 = the Rule 49 roster window GET /api/v1/mdata/drivers?status=Active reads (getActiveDrivers(…, 15, 15)).
+// Without it that cache row was never warm (last 15-day snapshot measured 11-03 00:34 UTC vs 22:00 for 7/14/30),
+// so every movement-Active roster read recomputed + INSERTed + pruned synchronously inside the request (ROW 197).
+const THRESHOLD_DAYS_LIST = [7, 14, 15, 30] as const;
 
 let initialized = false;
 

@@ -20,7 +20,7 @@ import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 
 const CLASS_LABEL: Record<RelayDepositClassification, string> = {
   company: "Company-funded",
@@ -245,7 +245,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
             key={cls}
             label={CLASS_KPI_LABEL[cls]}
             value={cls === "canceled" ? "—" : formatUsdCents(settledFor(cls))}
-            sub={`${countFor(cls)} deposit(s)`}
+            sub={`${formatQuantityTable(countFor(cls), 0)} deposit(s)`}
             tone={cls === "unclassified" && countFor(cls) > 0 ? "red" : "ink"}
             testId={`fuel-relay-inbox-kpi-${cls}`}
           />

@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as accountingApi from "../../../api/accounting";
 import { ToastProvider } from "../../Toast";
-import { ManualJEModal } from "../ManualJEModal";
+import { MANUAL_JE_LINE_GRID_TEMPLATE, ManualJEModal } from "../ManualJEModal";
 
 vi.mock("../../../api/accounting", () => ({
   listCoaAccountsForJe: vi.fn(),
@@ -83,6 +83,37 @@ describe("ManualJEModal (accounting 2-step)", () => {
 
     await user.clear(screen.getByLabelText(/^Journal date$/i));
     expect(continueBtn).toBeDisabled();
+  });
+
+  // D065 (register row 241): header + every line row share ONE fixed minmax(0,…) template so the Class
+  // picker can never overlap Debit and the row can never push the 700px drawer into a horizontal scroll.
+  it("D065 step 2 header and line rows use the fixed minmax(0,…) grid template with shrinkable items", async () => {
+    const user = userEvent.setup();
+    render(wrap(<ManualJEModal open operatingCompanyId={companyId} onClose={vi.fn()} onSaved={vi.fn()} />));
+    await user.click(screen.getByRole("button", { name: /Continue to Lines/i }));
+    await waitFor(() => expect(screen.getAllByTestId("manual-je-line-row").length).toBeGreaterThanOrEqual(2));
+
+    expect(MANUAL_JE_LINE_GRID_TEMPLATE).toBe(
+      "grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]",
+    );
+    // Every track floors at 0 — a bare `1fr` (min auto) track is what let Class overflow into Debit.
+    const tracks = MANUAL_JE_LINE_GRID_TEMPLATE.slice("grid-cols-[".length, -1).split("_");
+    expect(tracks).toHaveLength(5);
+    for (const t of tracks) expect(t).toMatch(/^minmax\(0,[0-9.]+fr\)$/);
+
+    const header = screen.getByTestId("manual-je-line-header");
+    const rows = screen.getAllByTestId("manual-je-line-row");
+    for (const el of [header, ...rows]) {
+      const cls = el.className.split(/\s+/);
+      expect(cls).toContain("grid");
+      expect(cls).toContain(MANUAL_JE_LINE_GRID_TEMPLATE);
+      expect(cls).toContain("[&>*]:min-w-0");
+      expect(cls).toContain("min-w-0");
+      expect(el.children).toHaveLength(5);
+    }
+    expect(screen.getByTestId("manual-je-lines").className).toContain("min-w-0");
+    // Header labels align 1:1 with row controls: Account · Class · Debit · Credit · Description.
+    expect([...header.children].map((c) => c.textContent)).toEqual(["Account", "Class", "Debit", "Credit", "Description"]);
   });
 
   it("step 2 keeps Save disabled until debits equal credits", async () => {

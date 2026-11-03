@@ -50,6 +50,27 @@ describe("DriverDaySummaryCard", () => {
     expect(screen.getByText("120.4")).toBeInTheDocument();
   });
 
+  it("row 182 / D003 — ALL CAPS driver name renders proper case (HUGO GAYTAN → Hugo Gaytan)", async () => {
+    fetchDriverDaySummary.mockResolvedValueOnce({
+      date: "2026-06-02",
+      has_data: true,
+      rows: [
+        {
+          driver_id: "33333333-3333-4333-8333-333333333333",
+          driver_name: "HUGO GAYTAN",
+          miles: 10,
+          hours_on_duty: 1,
+          fuel_stops: 0,
+          on_time_arrivals: 0,
+          late_arrivals: 0,
+        },
+      ],
+    });
+    renderCard();
+    expect(await screen.findByRole("link", { name: "Hugo Gaytan" })).toBeInTheDocument();
+    expect(screen.queryByText("HUGO GAYTAN")).toBeNull();
+  });
+
   it("renders ParityTable toolbar empty state when has_data=false (no red error styling)", async () => {
     fetchDriverDaySummary.mockResolvedValueOnce({
       date: "2026-06-02",

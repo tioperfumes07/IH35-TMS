@@ -174,6 +174,16 @@ export function PaymentDetailPage() {
     );
   if (!payment) return <div className="text-xs text-red-600">Payment not found.</div>;
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Payment">
+        <BoardSection title="Payment" testId="payment-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={payment.voided_at} voidReason={payment.void_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Payment" />

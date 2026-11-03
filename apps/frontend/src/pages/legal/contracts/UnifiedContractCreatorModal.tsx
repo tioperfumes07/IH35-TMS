@@ -18,6 +18,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { normalizePickedEntityPhoneToE164 } from "../../../lib/phone-format";
 import { LegalTemplateNewModal } from "../templates/LegalTemplateNewModal";
+import { formatQuantityTable } from "../../../lib/money";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
 // Flow: doc category -> template+version (active) -> EN/ES -> fill from variable_schema
@@ -266,7 +267,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                 onChange={(next) => setTemplateCode(next ?? "")}
                 options={templatesInCategory.map((t) => ({
                   value: t.template_code,
-                  label: `${t.display_name_en} (v${t.version}${t.requires_witness ? " · witness" : ""})`,
+                  label: `${t.display_name_en} (v${formatQuantityTable(t.version, 0)}${t.requires_witness ? " · witness" : ""})`,
                 }))}
                 placeholder="Select a template…"
                 loading={templatesQuery.isLoading}
@@ -316,7 +317,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         {step === 2 && (
           <div className="space-y-3">
             <div className="text-xs text-[#6B7280]">
-              {selectedTemplate?.display_name_en} · v{selectedTemplate?.version}
+              {selectedTemplate?.display_name_en} · v{selectedTemplate != null ? formatQuantityTable(selectedTemplate.version, 0) : ""}
             </div>
             {Object.keys(fields).length === 0 ? (
               <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#4B5563]">

@@ -256,7 +256,7 @@ export function TripProfitability() {
       {t && (
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
           {[
-            { label: "Settlements", value: String(t.settlement_count) },
+            { label: "Settlements", value: formatQuantityTable(t.settlement_count, 0) },
             { label: "Revenue", value: money(t.revenue_cents) },
             { label: "Quick pay", value: money(t.quick_pay_cents) },
             { label: "Driver pay", value: money(t.driver_pay_cents + t.additional_driver_pay_cents) },

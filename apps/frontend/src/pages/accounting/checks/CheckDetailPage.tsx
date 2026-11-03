@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
@@ -75,6 +76,16 @@ export function CheckDetailPage() {
       render: (line) => formatMoneyCents(line.amount_cents),
     },
   ];
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Check">
+        <BoardSection title="Check" testId="check-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

@@ -9,6 +9,7 @@ import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, t
 import { useToast } from "../../components/Toast";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -97,10 +98,18 @@ export function CashForecastPage() {
     },
   ];
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="13-week cash forecast">
+        <BoardSection title="13-week cash forecast" testId="cash-forecast-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="13-week cash forecast" subtitle="Rolling cash projection with AR/AP, factoring, and configurable recurring outflows.">
-
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="rounded-sm border border-gray-200 bg-white p-3">

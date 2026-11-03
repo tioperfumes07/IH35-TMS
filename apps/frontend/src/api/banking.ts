@@ -629,6 +629,8 @@ export type BankMatchCandidate = {
   counterparty_kind?: "vendor" | "customer" | null;
   counterparty_id?: string | null;
   counterparty_name?: string | null;
+  /** D071 — true when the payee is a person (driver vendor / driver), resolved server-side from mdata. */
+  counterparty_is_person?: boolean;
   reference?: string | null;
   description?: string | null;
   open_balance_cents?: number | null;

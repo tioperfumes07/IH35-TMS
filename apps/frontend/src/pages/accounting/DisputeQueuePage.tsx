@@ -20,6 +20,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { statusPill } from "../../components/shared/statusPill";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
@@ -334,8 +335,10 @@ export function DisputeQueuePage() {
 
   if (!companyId) {
     return (
-      <AccountingSubNavWrapper title="Settlement dispute queue" subtitle="Office workflows for P6 settlement disputes">
-        <p className="text-xs text-red-600">Select operating company.</p>
+      <AccountingSubNavWrapper title="Settlement dispute queue">
+        <BoardSection title="Settlement dispute queue" testId="dispute-queue-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </AccountingSubNavWrapper>
     );
   }

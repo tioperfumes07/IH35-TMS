@@ -156,7 +156,14 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
           ea.created_at::text,
           ea.updated_at::text,
           CASE ea.holder_type
-            WHEN 'driver' THEN NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '')
+            -- D076 (register row 252): prefer the SAME-COMPANY name. A holder row that lives under another
+            -- entity was merged (mdata.drivers.merged_into_driver_id) into this company's driver — the
+            -- survivor's name is the canonical one. Only when neither resolves does the raw holder row speak.
+            WHEN 'driver' THEN COALESCE(
+              mdata.resolve_driver_label_same_company(ea.holder_id, ea.operating_company_id),
+              NULLIF(TRIM(COALESCE(ds.first_name, '') || ' ' || COALESCE(ds.last_name, '')), ''),
+              NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '')
+            )
             WHEN 'vendor' THEN v.vendor_name
             WHEN 'factor' THEN v.vendor_name
             ELSE NULL
@@ -168,6 +175,11 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
         LEFT JOIN mdata.drivers d
           ON ea.holder_type = 'driver'
          AND d.id = ea.holder_id
+        -- D076: the merge survivor in THIS company (USMCA escrow 3d527c58 holds TRANSPORTATION driver dcd683f5, merged
+        -- into USMCA driver 40823a77) — its name is the holder's same-company name.
+        LEFT JOIN mdata.drivers ds
+          ON ds.id = d.merged_into_driver_id
+         AND ds.operating_company_id = ea.operating_company_id
         LEFT JOIN mdata.vendors v
           ON ea.holder_type IN ('vendor', 'factor')
          AND v.id = ea.holder_id

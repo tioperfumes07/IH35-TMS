@@ -120,7 +120,7 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.fill_count,
-        render: (r) => String(r.fill_count),
+        render: (r) => formatQuantityTable(r.fill_count, 0),
       },
       {
         key: "load_count",
@@ -129,7 +129,7 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.load_count,
-        render: (r) => String(r.load_count),
+        render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
     [],

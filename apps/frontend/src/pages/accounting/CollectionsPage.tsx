@@ -116,11 +116,18 @@ export function CollectionsPage() {
     onError: (error) => pushToast(userFacingApiError(error, "Resolve failed"), "error"),
   });
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
+        <BoardSection title="Collections" testId="collections-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
-
-      {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before managing collections.</p> : null}
-
       <BoardSection title="Collections filters" testId="collections-filters-board">
       <div className="grid gap-3 p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">

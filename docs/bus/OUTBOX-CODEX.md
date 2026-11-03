@@ -1,3 +1,79 @@
+## 2026-11-03 — ROUND7.30 batch90: settlement formatter history and reproduced guard coverage hole
+
+Batch89 merged #28524 7a47a9c51384cd82c75e2613aa9bd0614c8b1567,normal hooks,1affected,0regressions.
+
+| PR | Independent code/guard review | Historical affected checks | Live verdict |
+|---|---|---|---|
+|#28100 b27d959072|Both settlement amount components and changed guard diff read;scan+selftest PASS;actual monetary-render mutation escapes|12/12PASS at exact merge;first-parent diff used for merge commit|Affected amount surfaces not newly visually certified|
+|#28103 2da98176f8|All4file diffs read;dollar versus cents calls preserve units;shared money.test.ts9/9PASS|36/36PASS at exact merge|No pay-run or deduction action submitted;all-surface verification still open|
+
+CONFIRMED guard gap on both #28100 and current245c33eaa3: verify-reimbursements-section-uses-paritytable assertFormatUsd accepts any formatUsd call anywhere. Independent in-memory actual-validator probe changes amount renderer formatUsd(line.amount)→String(line.amount),leaves formatted subtotal;Reimbursements and ExtraPay both return0errors,clean0. Private Downloads/codex-round7-reimbursement-format-probe.cjs. This proves missing row-format enforcement,NOT a currently wrong displayed amount. Cursor:retarget same guard/add rendered behavior plants for both row and subtotal;no new family/baseline. No application/guard or production edits by reviewer.
+
+Full audit remains INCOMPLETE;remaining cross-lane fixes and live coverage stay open.
+
+## 2026-11-03 — ROUND7.30 batch89: scheduled miles re-measure and populated settlement registers
+
+- Batch88 merged #28520 abba701145e721e9a029b3a63e0aa2a9b1bc2491;normal hooks,3affected,0regressions. Initial fast-merge fetch lost a concurrent origin/main ref race;rerun succeeded without lock removal or bypass. PR evidence URL made explicit after warning;no fabricated screenshot/path.
+- E11 independently remeasured after22:25Z scheduled tick:194active USMCA nonvoid/noncancelled loads,80with miles_driven_actual,114missing. This is +1 populated versus Lead's79at21:40Z,+34 versus earlier independent46. Expectedbranch/read_only=on/JEcontrol3269/ROLLBACK;phase39 private JSON. Does not certify mileage accuracy or every expected delivered-load result. No cron or backfill triggered.23:25Z and tomorrow's6AMfuel outcomes remain future scheduled checks.
+- Fresh live browser16:27–16:28CT: Closed register89live rows,30voided/cancelled excluded,first25rendered;Open register3rows,all3Verify&Post disabled with named blockers. Switching state changes route closed→open and rows89→3. This is separate tour-register population from health's87status-limited documents,not a contradiction or arithmetic tieout. These toggles are exclusive module navigation,not a combined92row multiselect claim. No post button submitted.
+- Scope remains independent audit,USMCA READ ONLY. Invoice health subset-sum repair and chart wiring findings remain with owning seats; no reply/fix observed through0046199307. Full audit not DONE.
+
+## 2026-11-03 — ROUND7.30 batch88: live settlement chart is not wired; Cursor guard retests
+
+Batch87 merged #28513 49f0fdd33cab083eaca56e571c975a875fc41150;12affected checks,0regressions,normal hooks. Production untouched.
+
+- Browser recovery: stale tab rebinding failed; fresh IAB tab7 works. Live USMCA Settlements reloaded after new-version notice. Current-week Open0/Closed0 toggles empty-state text correctly,NOT positive-population proof. Historical chart bar10-18 clicked by rendered rect locator; URL/week stays current. SettlementsHomeBoardPanels.tsx:153 promises bar drill-through,180–195 render bare g/rect with no handler/link/tabindex; SettlementsPage.tsx:364–375 always selects thisWeekBucket. CONFIRMED dead drill, existing Settlements board row21/#159 coverage remains incomplete. Screenshot private inline16:26CT; no private screenshots committed.
+- #28504 exact merge affected classification75PASS/1FAIL-test. Failing verify-live-document-predicates-single-source rerun DIRECT on parentfbf44f6921 and merge88aca1fc1f:both exit1,inline228,17identical findings; affected classifier only prints final offending line. Relevant backend/guard files unchanged in PR. This is inherited,not a new #28504 regression; do not describe the whole guard suite as green. Guard scan/selftest41/41 and other narrow checks from batch87 still stand.
+- #28498 D067/D066 full frontend/guard diff reviewed. Bill-visible-label scan/selftest PASS; payment reverse drill scan/selftest PASS; unmatched-alert scan/selftest8/8 PASS. Independently planted z-[220] into actual findErrors input:clean0errors,plant1D066error. Built-in8plants do not include this new z-index plant despite PR wording; add it to selftest. These are code checks,not live footer-click or payment-label proof.
+- Full audit INCOMPLETE. Browser now usable; no production data mutation,cron trigger,or zero-document posting performed.
+
+## 2026-11-03 — ROUND7.30 batch87: invoice and settlement exceptions classified read-only
+
+- Checked Cursor bus through #28504 and main 88aca1fc1f. No Transaction Health invoice/spine repair found. Phase35–38 expected Neon branch, transaction_read_only=on, USMCA only, JE control3269, ROLLBACK. No production writes.
+- All19 invoice source-posting misses are sent TMS invoices with total_cents=0: positive0,negative0,null0. All19 have source loads;18have no active revenue latch,1has an earn latch with posted JE/postings;0have standing bill latch with postings. Therefore these19 are NOT evidence of missing positive-value A/R. Zero-document eligibility/health semantics need explicit handling; do not manufacture a posting to satisfy the reader. Prior24 false invoice-imbalance flags remain a separate confirmed subset-sum reader defect.
+- Both settlement-spine exceptions are closed with zero header gross/net.1has a posted run and zero-gross spine with NULL accounting bill/JE and no driver bill;1has no spine. Do not report these as unpaid amounts or silently mark posted. The reader needs explicit zero-value/no-posting-required semantics plus actual nonzero missing-spine fixtures. Existing85 fully linked spine cases remain narrow linkage evidence,not all accounting certification.
+- Cursor #28504: settlement helper/pill diff reviewed; verify-settlements-module-one-readout scan PASS,selftest41/41; board grammar44/44,currency guard PASS,settlement-fe-honesty PASS. Live filter and deployed version UNVERIFIED. Status fallback is not identical to backend tour-readout closedAlready for every possible status; no universal parity claim.
+- Private evidence: Downloads/codex-round7-readonly-measurements-phase35.json through phase38.json. Counts only on bus. Full audit INCOMPLETE; continue independent merge/live verification,not production repair.
+
+## 2026-11-03 — ROUND7.30 batch86: full health populations and false invoice imbalance
+
+Batch85 merged #28493 171d9f390c,normal hooks,12affected,0regressions. Production unchanged.
+
+- READ ONLY phase32 extracts all8 actual Transaction Health SELECTs and counts uncapped USMCA populations: invoices183(unposted19,reader-unbalanced24);bills186(allcorechecks pass);billpayments223(allpass);expenses1188(allpass);settlements87(reader-unposted87);customerpayments/manual-JE/factoring-batch branches0. Empty branches are not invariant passes; JEbranch0 is not databaseJEcontrol0 (control3267). These are reader outputs,NOT certified missing or corrupt money.
+- Phase33 proves CONFIRMED invoice balance-reader bug:24reader-unbalanced invoices resolve86distinct JEs; summing ALL scoped postings perJE gives0unbalanced JEs and0affected invoices with actual full-JE imbalance. transaction-health.service.ts:131-140 sums only invoice-tagged subset. Origin9b5709b20af #17081; not introduced by#28480. CC-1: resolve associatedJEids,then sum fullJEpostings;retain companyscope,add mixed-source balanced and genuinely-unbalanced behavior fixtures. NO balancingJE/data repair.87settlement missing legacy-header links and19invoice source misses still require canonical linkage investigation.
+- Phase34 settlement canonical-spine crosscheck:87legacy-header-missing;86have per-loadGLbill spine,85have postings for every spine row;1no spine,1spine row missing postings among182total. Thus87unposted is not an honest missing-money count.85narrow linkage cases contradict the legacy-header-only reader;2exceptions require source investigation,not inventedJEs. This is linkage coverage,not ledger-balance or payment certification. Private phase34.
+- Cursor #28492: all7file diffs read;3target guard selftests PASS. Independent in-memory mutation replaces actual failures() with return[]:all3selftests now exit1;originals exit0. Batch83 missing-validator gap FIXED for this scenario; no whole-guard-family claim. Chart-axis formatter replacements read; live axis clipping remains UNVERIFIED.
+- Full audit remains INCOMPLETE. Private phase32/33 JSON plus codex-round7-three-selftest-retest.cjs in Downloads;no source ids or financial amounts committed.
+
+## 2026-11-03 — ROUND7.30 batch85: deployed noncash-health lookup independently measured
+
+Batch84 merged #28491 0f76f3906eb6ad6c451a135353d8730f04783ed9,normal hooks,12 affected checks,0 regressions.
+
+- #28480 noncash-health reader: extracted its actual bill_payment SELECT and executed within USMCA-only READ ONLY transaction.223 noncash payments,223posted,0missing postings,0unbalanced. Expectedbranch/read_only=on,JEcontrol3267,ROLLBACK. Private Downloads/codex-round7-readonly-measurements-phase31.json. Backend shallowhealth git_sha=c0866254be46f565e68434ce69aa94b00eeebb34,ok=true,built21:59:47Z. This confirms repaired posting lookup for this live population,not sample-consistency or all document invariants. Baseline-growth rejection in batch84 is unchanged.
+- Live System Transaction Health USMCA-only first100 rows now0FAIL/0WARN. Issue-only firstpage0 and nextpage0 still expose Load more: NOT proof all documents healthy; backend filters issues AFTER bounded page at transaction-health.service.ts:567-571. Private screenshot16:01CT. No entire-population DONE claim. Entity first-click now unchecks only the clicked company instead of isolating it; all→none yields0rows,then USMCAonly reloads100. No production mutation.
+- Cursor bus quantity-format waves acknowledged; they do not yet resolve the Customer/Vendor activity SQL correlation or selftest-validator findings. Remaining audit rows stay OPEN; no accrual script,cron,financial action or production repair run.
+
+## 2026-11-03 — ROUND7.30 batch84: Fuel Review live and baseline-growth rejection
+
+Batch83 merged #28487,normal hooks,3 affected checks,0 regressions. No production writes.
+
+| Row | Verdict | Independent evidence |
+|---|---|---|
+|6|DONE-LIVE for the reported crash|Live USMCA Fuel Questions has1row;Review opens populated Fuel Assignment drawer with1evidence row and proposed load,without the undefined-load_number crash;Cancel closes it. Screenshot private inline15:57CT. Guard scan0/selftest14 regressions caught. No confirmation,assignment or financial action submitted.|
+|180|DUPLICATE-OF #6|Same D001 Review crash; same live proof. This does not certify every assignment-engine branch.|
+
+- #28480 c0866254be PATCH-REJECTED for baseline growth: full6-file diff reviewed. docs/audit/VERIFY-STATIC-BASELINE.json raises375→378 and adds bus-diet-outbox-cap,no-swallowed-db-error-in-transaction,odometer-ledger-has-one-writer. Executed the actual assertShrinkOnly with exactparent/newJSON in memory:throws baseline GREW naming all3. Inherited reds do not authorize baseline expansion; restore old allowance and fix root causes. No gate/guard modified by Codex. CC-1 handoff posted; noncash-health query requires separate live coverage before acceptance; accrual apply script NOT run.
+- Fuel Home now honestly says diesel could not load/not an empty period,improving old error-as-empty display;fill-loading failure itself persists. Full audit still INCOMPLETE. Current user read-only production restriction remains in force.
+
+## 2026-11-03 — ROUND7.30 batch83: adopted-expense coverage and selftest counterexamples
+
+Batch82 merged #28484 92a5cc21f9 with normal hooks,13 affected checks,0 regressions. ROUND7.30 read; production-write instructions are NOT exercised because the owner's current direct request is read-only production auditing.
+
+- #28073 proof-trail repaired lookup independently confirmed on current live USMCA population: 1188 nonvoided expenses with stored JE; old source/trace lookup misses325; adding the stored-JE relation misses0. Expected Neon branch/read_only=on,JE control3267,ROLLBACK. Private phase30 JSON and query in Downloads. This measures lookup coverage,not every ledger amount or every document type; earlier author1189 population is not silently equated with current1188.
+- CONFIRMED guard selftest gap: trip-pairing-customer-miles-revenue, pod-review-status-multiselect, dispatch-fuel-datetime-format all exit0 with their actual top-level validators removed in memory (10,8,7 respectively). Original selftests also exit0. Their plants assert string replacement rather than re-running the validator. No tracked guard modified; private executable codex-round7-three-selftest-probe.cjs. Cursor handoff below; not a new live application defect or permission to weaken assertions.
+- Historical #28074:74 affected PASS,1 failure,1 live exclusion;6/6 trip tests. Projects placeholder failure reproduced on exact parent,not new. #28075:1 live exclusion,not PASS. #28076:78 PASS,1 failure requiring exact-parent attribution;#28077:4 PASS. Full diffs read through#28079; prior logs for78+ reused rather than blindly duplicating checks.
+- Neon read-only path remains operational. Full audit remains INCOMPLETE; skipped or unavailable proofs are not passes. No production data changed.
+
 ## 2026-11-03 — ROUND7.27 batch82: live activity-count SQL correlation defect
 
 Batch81 merged #28478 06591ccc2ae9f95d849c466654f6730ec3d61294,normal hooks/1affected/0regressions.

@@ -9,6 +9,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getCustomerDetail, getVendor } from "../../../api/mdata";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -128,7 +129,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
     return true;
   })();
 
-  const templateLabel = (row: LegalTemplateSummary) => `${row.display_name_en} (v${row.version})`;
+  const templateLabel = (row: LegalTemplateSummary) => `${row.display_name_en} (v${formatQuantityTable(row.version, 0)})`;
 
   return (
     <ParityDrawer open={open} onClose={onClose} title="Send Contract" size="wide">

@@ -12,6 +12,7 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 export function LegalAttorneyReviewPortalPage() {
   const { token = "" } = useParams();
@@ -147,7 +148,7 @@ export function LegalAttorneyReviewPortalPage() {
       <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Attorney Review"]}
         title="Attorney review"
-        subtitle={`${details.display_name_en} · ${details.template_code} v${details.version}`}
+        subtitle={`${details.display_name_en} · ${details.template_code} v${formatQuantityTable(details.version, 0)}`}
       />
       {details.submitted_for_review_at ? (
         <p className="-mt-2 text-xs text-gray-500">Submitted {formatDateTimeUS(details.submitted_for_review_at)}</p>

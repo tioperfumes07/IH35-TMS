@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { getQboReconciliation, type ReconFinding, type ReconObject } from "../../api/qbo-recon";
@@ -215,7 +216,17 @@ export function QboReconciliationPage() {
     [],
   );
 
-  if (!flagLoading && !enabled) {
+    if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="TMS ↔ QBO Reconciliation">
+        <BoardSection title="TMS ↔ QBO Reconciliation" testId="qbo-recon-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
+if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="TMS ↔ QBO Reconciliation" subtitle="Daily count & balance agreement between TMS and QuickBooks">
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">

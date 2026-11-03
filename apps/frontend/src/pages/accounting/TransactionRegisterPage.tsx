@@ -8,6 +8,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateQboList } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DateRangePresets } from "../../components/forms/DateRangePresets";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -226,6 +227,16 @@ export function TransactionRegisterPage() {
     a.download = `transaction-register-page-${page + 1}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="All Transactions">
+        <BoardSection title="All Transactions" testId="transaction-register-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
   }
 
   return (

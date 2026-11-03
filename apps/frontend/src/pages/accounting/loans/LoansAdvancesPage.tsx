@@ -6,6 +6,8 @@
  * computes GL.
  */
 import { useMemo, useState } from "react";
+import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useQuery } from "@tanstack/react-query";
 import {
   listRelatedPartyLoanFacilities,
@@ -135,6 +137,16 @@ export function LoansAdvancesPage() {
     void partiesQuery.refetch();
     if (ledgerAccountId) void ledgerQuery.refetch();
   };
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Loans & Advances">
+        <BoardSection title="Loans & Advances" testId="loans-advances-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <div className="p-4">

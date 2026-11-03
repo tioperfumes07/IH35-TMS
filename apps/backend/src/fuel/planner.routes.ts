@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { recommendFuelStopsForRecommendation } from "../telematics/fuel-stop-planner.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { companyMonthToDateRange, readFuelPeriodSpend } from "./fuel-period-spend.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -93,6 +94,12 @@ async function hasColumn(
   return Boolean(res.rows[0]?.ok);
 }
 
+const fuelSpendSummaryQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 export async function registerFuelPlannerRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/planner/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -116,17 +123,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `,
         [companyId]
       ) : null;
-      const spendRes = await client.query<{ spend: number; avg_price: number }>(
-        `
-          SELECT
-            COALESCE(sum(total_cost), 0)::numeric AS spend,
-            COALESCE(avg(price_per_gallon), 0)::numeric AS avg_price
-          FROM fuel.fuel_transactions
-          WHERE operating_company_id = $1::uuid
-            AND purchased_at >= date_trunc('month', now())
-        `,
-        [companyId]
-      );
+      // Register row 164 — MTD spend + avg $/gal come from THE shared fuel spend reader (fuel-period-spend.ts), the same one
+      // the Fuel board strip reads (GET /fuel/spend-summary): live rows only, company business month, volume-weighted $/gal.
+      const mtdRange = companyMonthToDateRange();
+      const mtd = await readFuelPeriodSpend(client, companyId, mtdRange.from, mtdRange.to);
       // FUEL-PLANNER-DASHBOARD-SPEND-QUERY-FAILS-AS-ZERO: a failed spend query must not become
       // authoritative $0 / $0. Genuine empty month is COALESCE(sum)=0 from a successful query.
       const savingsRes = plannerSourceAvailable ? await client.query<{ savings: number }>(
@@ -172,8 +172,8 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         planner_source_available: plannerSourceAvailable,
         compliance_source_available: complianceSourceAvailable,
         active_plans: plannerSourceAvailable ? Number(activeRes?.rows[0]?.count ?? 0) : null,
-        mtd_spend: Number(spendRes.rows[0]?.spend ?? 0),
-        avg_price_per_gallon: Number(spendRes.rows[0]?.avg_price ?? 0),
+        mtd_spend: mtd.spend,
+        avg_price_per_gallon: mtd.avg_price_per_gallon,
         mtd_savings: plannerSourceAvailable ? Number(savingsRes?.rows[0]?.savings ?? 0) : null,
         compliance_pct: complianceSourceAvailable ? Number(complianceRes?.rows[0]?.pct ?? 0) : null,
         fleet_mpg: plannerSourceAvailable ? Number(mpgRes?.rows[0]?.mpg ?? 0) : null,
@@ -182,6 +182,16 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     });
 
     return payload;
+  });
+
+  // Register row 164 — the Fuel board strip's spend / gallons / avg $/gal: THE shared reader, same rule as Fuel Home MTD.
+  app.get("/api/v1/fuel/spend-summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const query = fuelSpendSummaryQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const { operating_company_id: companyId, from, to } = query.data;
+    return withCompanyScope(authUser.uuid, companyId, (client) => readFuelPeriodSpend(client, companyId, from, to));
   });
 
   app.get("/api/v1/fuel/planner/active-routes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
