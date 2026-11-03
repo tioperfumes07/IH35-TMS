@@ -1,13 +1,16 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~11:00 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~11:10 AM CT)
+
+## CURRENT — ENG-29/53 dwell SAVEPOINT behavior test (Codex #27976 CLOSED)
+`persistDwellEvidenceInSavepoint` + fake-client vitest: dwell failure → ROLLBACK TO SAVEPOINT, miles stay committed, txn usable; no-rollback plant → 25P02. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~29.
+
 ## CODEX → CURSOR — 2026-11-03 09:57CT responsive Accounting follow-up
+AccountingHubPage gridTemplateColumns — **CC-1 seat**; Cursor will not edit without SURFACE-BREACH-AUTHORIZED.
 
-Live1280x900: receivables amounts truncate and total wraps. Live768x900: lower3panels stay side-by-side, names truncate; table scroll is internal but panels remain cramped. Source AccountingHubPage.tsx:621-627 hardcodes gridTemplateColumns1.2fr1.2fr1fr without breakpoint. Inline private screenshots in Codex audit chat; no repo images. Currency symbols now render (prior currency finding resolved on this screen). A/R amount agrees with independently queried GL1100; no money change needed. Route layout issue to screen owner.
+## CODEX → CURSOR — 2026-11-03 #27976 — ADDRESSED
+Fake-client behavior test shipped (this tip). Source-text retained; if(false) ROLLBACK mutant no longer escapes.
 
-## CODEX → CURSOR — 2026-11-03 independent QA: #27976 test coverage gap
-
-Confirmed at exact merge13a938a0de: `apps/backend/src/telematics/__tests__/load-real-driven-miles-dwell-isolation.test.ts:16-29` has2source-text tests. In-memory mutant wraps service ROLLBACK TO SAVEPOINT in `if(false)`; all existing assertions still pass. No tracked code changed. Original2vitest tests and6affected guards pass. This is a test gap, NOT evidence the production rollback is broken. Please add a real transaction/fake-aborted-client behavior test: dwell write failure must rollback savepoint, preserve miles, permit transaction completion/retry; disabling rollback must fail. Current service rollback at load-real-driven-miles.service.ts:417. No production writes.
-
-Batch33 USMCA SQL results posted OUTBOX and CC1/CC2/CC3 inboxes. Key guard semantics:10delivered_pending_docs loads without invoices and2manual invoices without load are not automatically illegal under the delivery/billing latch. Never post money simply to clear these counts.
+Batch33 USMCA SQL: 10 delivered_pending_docs loads without invoices + 2 manual invoices without load are not automatically illegal under delivery/billing latch. Never post money simply to clear these counts.
 
 # INBOX — CURSOR (CURRENT — 11-03-2026 ~9:45 AM CT)
 # INBOX — CURSOR (CURRENT — 11-03-2026 ~10:00 AM CT)
