@@ -68,7 +68,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 1 | R3 | Dispatch | Kanban: truck cards drag to assign/book/availability | LEAD | MERGED-UNVERIFIED |
 | 2 | R5 | All | Names proper-case automatically (people), org casing kept (ACME) | CC-3 | PARTIAL |
 | 3 | R6 | Driver/Fleet | Driver photo from uploaded IDs; unit photos | CC-2 | OPEN |
-| 4 | R8 | Settlements | Navigation defects N1-N10 (tabs leave module, escrow dupes, $2575.96, initials) | Cursor | PARTIAL |
+| 4 | R8 | Settlements | Navigation defects N1-N10 (tabs leave module, escrow dupes, $2575.96, initials) | Cursor | MERGED-UNVERIFIED — D007-D014 SETTLEMENTS_SUBNAV in-module; residual money/initials live UNVERIFIED |
 | 5 | R9 | Dispatch | Truck Line status opens searchable dropdown | Cursor | MERGED-UNVERIFIED |
 | 6 | R12 | Fuel | Fuel Questions Review crash (load_number undefined) | CC-2 | MERGED-UNVERIFIED |
 | 7 | R15 | Settlements | Pre-Settlements: Load #, Entries, Ready-to-close, Close, clickable, responsive, miles DB+Google | CC-3 | MERGED-UNVERIFIED |
@@ -121,24 +121,24 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 49 | R35 | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — ManualDailyProjectionsTab; live board verdict UNVERIFIED |
 | 50 | R37 | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — UnexpectedExpensesPage board; live verdict UNVERIFIED |
 | 51 | R38 | Banking | Banking › Home — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — BankingHomeBoard BoardSection/ParityTable; live verdict UNVERIFIED |
-| 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | OPEN |
+| 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — FactoringHomeBoard tabs-first; verify-factoring-layout-tabs-first; live UNVERIFIED |
 | 53 | R40 | Reports | Reports › Home — board verdict LAYERED | CC-3 | OPEN |
 | 54 | R41 | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | PARTIAL |
 | 55 | R42 | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
 | 56 | R43 | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
-| 57 | R44 | Settlements | Settlements › Home — board verdict LAYERED | Cursor | OPEN |
+| 57 | R44 | Settlements | Settlements › Home — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — SettlementsHomeBoardPanels Week-of/V3; live UNVERIFIED |
 | 58 | R45 | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Open V3 board; live verdict UNVERIFIED |
 | 59 | R46 | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Closed V3 board; live verdict UNVERIFIED |
 | 60 | R47 | Settlements | Settlements › Statement — board verdict LAYERED | Cursor | MERGED-UNVERIFIED |
 | 61 | R48 | Settlements | Settlements › Pre-Settlements — board verdict LAYERED | Cursor | MERGED-UNVERIFIED |
-| 62 | R49 | Settlements | Settlements › Close — board verdict LAYERED | Cursor | OPEN |
+| 62 | R49 | Settlements | Settlements › Close — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Settlements subnav; live UNVERIFIED |
 | 63 | R50 | Settlements | Settlements › Company — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — CompanySettlementsPage listTours board; live verdict UNVERIFIED |
 | 64 | R51 | Settlements | Settlements › Deductions — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED |
 | 65 | R52 | Settlements | Settlements › Cash Advances — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED |
-| 66 | R53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | Cursor | OPEN |
+| 66 | R53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED — SettlementsEscrowBoard; live UNVERIFIED |
 | 67 | R54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — EscrowRegisterPage Opening balance + ParityTable; live verdict UNVERIFIED |
-| 68 | R55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | Cursor | OPEN |
-| 69 | R56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | Cursor | OPEN |
+| 68 | R55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED — FuelPlannerHome / FuelBoardKpiStrip; live UNVERIFIED |
+| 69 | R56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED — FUEL_SUBNAV + FuelPlannerHome tabs; live UNVERIFIED |
 | 70 | R58 | Maintenance | Maintenance › Home — board verdict PARTIAL | LEAD | CODED |
 | 71 | R59 | Maintenance | Maintenance › In Shop — board verdict LAYERED | LEAD | CODED-QUEUED |
 | 72 | R60 | Driver Profile | Driver Profile › Board — board verdict NOT STARTED | LEAD | CODED |
@@ -146,7 +146,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 74 | R62 | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | MERGED-UNVERIFIED |
 | 75 | R64 | Insurance | Insurance › Home — board verdict REBUILT | LEAD | CODED |
 | 76 | R313 | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | Cursor | MERGED-UNVERIFIED — EscrowRegisterPage Opening balance (historical) first line; live UNVERIFIED |
-| 77 | R314 | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | Cursor | OPEN |
+| 77 | R314 | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | Cursor | MERGED-UNVERIFIED — SettlementStatementLinkedRecordsPanel n fills → + Bank line →; live UNVERIFIED |
 
 ## C · Reports & Load history builds
 
