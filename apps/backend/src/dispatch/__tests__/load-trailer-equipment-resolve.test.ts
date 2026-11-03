@@ -49,8 +49,16 @@ describe("load trailer equipment resolution — no silent Dry Van", () => {
     expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { choiceKind: "company", companyTrailerId: "trl-flat" })).toBe("id-flat");
   });
 
-  it("the trailer-type field wins over the trailer's type", async () => {
-    expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "dry_van", companyTrailerId: "trl-reefer" })).toBe("id-dry");
+  // ENG-22 prevention (ROUND 7.2, #27991): a booked trailer type that contradicts the company trailer that rides the load
+  // is REFUSED by name — the old "type field wins" silently booked a Reefer as Dry Van (191 such USMCA loads).
+  it("a trailer-type that contradicts the company trailer is refused (trailer_equipment_type_mismatch)", async () => {
+    await expect(
+      resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "dry_van", companyTrailerId: "trl-reefer" })
+    ).rejects.toThrow("trailer_equipment_type_mismatch");
+  });
+
+  it("a trailer-type that agrees with the company trailer books that type", async () => {
+    expect(await resolveLoadTrailerEquipmentIdForInsert(fakeClient(), CO, null, { trailerType: "reefer", companyTrailerId: "trl-reefer" })).toBe("id-reefer");
   });
 
   it("no trailer / customer trailer resolve to the power-only rows", async () => {

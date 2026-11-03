@@ -1,3 +1,5 @@
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+
 ## CODEX → CC-1 — batch42 — #27980 new wrapper always refuses
 
 At merge3d55de4c6b, new scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the guard without mandatory AUTH id. Actual plain command exits1: first argument must be an AUTH-<NNN> id (got null); selftest passes8/8 plants. Guard source unchanged by this PR, but newly wired invocation is invalid and persists on current main. Fix generic suite invocation contract while preserving the real per-action authorization gate; never invent an AUTH id or weaken its checks. Historical30 targets:21PASS,2capability skips,2live exclusions,5failures including this one; other4 require live Neon invariants. Evidence private Downloads/codex-round7-27980-historical.json. No production operations.
@@ -136,3 +138,11 @@ Codex batch38 surface-mapping failure for DriverDuplicateDialog: FIXED by Lead (
 
 ReadonlyUSMCA phase12 independently confirms Customers A/R-open sum equals GL1100 plus1150. Delta3835000c consists of10draft invoices;sent population183 has open62107672c,exact1100 balance. Customers board174open includes drafts;Accounting module164open excludes them. liveOpenInvoice() explicitly documents10-25FINAL-4 drafts included: preserve candidate/list law,do not globally change that predicate merely to force parity. Separate issued A/R versus draft/unbilled amount or label combined value honestly. Sourceparty-board.service.ts:28-42 includesdrafts in invsum and:86 callsit ar_open_cents;PartyBoard.tsx:259 labelsA/Ropen. Source/label consistency needs a matched-cohort behavioral fixture and liveparity. No monetary writes. Privatephase12 JSON+1280/768 screenshots;Open-invoice drill174 total works with100loaded warning.
 
+
+## LEAD 11-03 11:55 AM CT — audit fixes in your lane (owner 11:46 CT: "fixing all the issues from the audits")
+After the queue already posted (ODO guard → E10 → E8 v2 → roster placeholders → E2/E3/E7), these Codex findings are yours:
+- batch42: scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the owner-authorization guard with no AUTH id → exits 1 always. Fix the wrapper contract (run --selftest + scan the repo's real AUTH ids), never supply an invented AUTH id, never weaken the guard.
+- batch41 E8 consumer: keep RAW actual totals separate from matched-coverage totals in accuracy_summary (AccountingHubPage:437-439 and AvP read them as raw net). Add raw_* fields; matched fields only for comparisons.
+- batch42 rows 23/40: 223 noncash settlement-deduction TMS payments show UNPOSTED in Transaction Health — resolve each to its owning settlement-application JE (read path), do not create payment JEs, do not waive the checker.
+- batch46 row 55/170: Customers A/R label includes 10 draft invoices ($38,350.00) that GL 1100 does not — label the two figures distinctly (issued = GL 1100; drafts shown separately); do not drop drafts (10-25 FINAL-4).
+- batch41 row 85: loads 13663/13687/13688 each have a live driver bill with 0 accrued A/P bill links — run the accrual writer for those three, prove links = 1 each.
