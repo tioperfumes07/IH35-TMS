@@ -188,6 +188,16 @@ export function MyAccountantPage() {
     [operatingCompanyId],
   );
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
+        <BoardSection title="My Accountant" testId="my-accountant-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
