@@ -42,7 +42,9 @@ export function serviceResolvesRealCustomerName(src) {
 }
 
 export function tabHasHonestDaysLabels(src) {
-  const overdueLabel = /row\.days_overdue > 0 \? `\$\{row\.days_overdue\}d overdue` : row\.days_overdue === 0 \? "Due today" : `In \$\{-row\.days_overdue\}d`/g;
+  // House quantity: days_overdue may be wrapped in formatQuantityTable(..., 0).
+  const overdueLabel =
+    /row\.days_overdue > 0 \? `\$\{(?:formatQuantityTable\(row\.days_overdue, 0\)|row\.days_overdue)\}d overdue` : row\.days_overdue === 0 \? "Due today" : `In \$\{(?:formatQuantityTable\(-row\.days_overdue, 0\)|-row\.days_overdue)\}d`/g;
   const matches = src.match(overdueLabel) ?? [];
   return matches.length >= 2 && !/`\+\$\{row\.days_overdue\}d`/.test(src);
 }
@@ -95,8 +97,8 @@ function StatusPill({ row }) {
     return <span>—</span>;
   }
 }
-      render: (row) => (row.days_overdue > 0 ? \`\${row.days_overdue}d overdue\` : row.days_overdue === 0 ? "Due today" : \`In \${-row.days_overdue}d\`),
-      render: (row) => (row.days_overdue > 0 ? \`\${row.days_overdue}d overdue\` : row.days_overdue === 0 ? "Due today" : \`In \${-row.days_overdue}d\`),
+      render: (row) => (row.days_overdue > 0 ? \`\${formatQuantityTable(row.days_overdue, 0)}d overdue\` : row.days_overdue === 0 ? "Due today" : \`In \${formatQuantityTable(-row.days_overdue, 0)}d\`),
+      render: (row) => (row.days_overdue > 0 ? \`\${formatQuantityTable(row.days_overdue, 0)}d overdue\` : row.days_overdue === 0 ? "Due today" : \`In \${formatQuantityTable(-row.days_overdue, 0)}d\`),
     {
       key: "invoice_date",
       label: "Invoice date",
@@ -104,7 +106,7 @@ function StatusPill({ row }) {
     },
 `;
   if (!tabHasHonestDaysLabels(goodTab)) failures.push("tabHasHonestDaysLabels false-negative");
-  if (tabHasHonestDaysLabels(goodTab.replace(/render: \(row\) => \(row\.days_overdue > 0 \? `\$\{row\.days_overdue\}d overdue`[\s\S]*?`In \$\{-row\.days_overdue\}d`\),\n {6}render/, "render: (row) => (row.days_overdue > 0 ? `+${row.days_overdue}d` : \"x\"),\n      render")))
+  if (tabHasHonestDaysLabels(goodTab.replace(/render: \(row\) => \(row\.days_overdue > 0 \? `\$\{formatQuantityTable\(row\.days_overdue, 0\)\}d overdue`[\s\S]*?`In \$\{formatQuantityTable\(-row\.days_overdue, 0\)\}d`\),\n {6}render/, "render: (row) => (row.days_overdue > 0 ? `+${row.days_overdue}d` : \"x\"),\n      render")))
     failures.push("tabHasHonestDaysLabels false-positive when the old backwards +Nd sign returns on one column");
 
   if (!tabDefaultsSelectedDateToToday(goodTab)) failures.push("tabDefaultsSelectedDateToToday false-negative");

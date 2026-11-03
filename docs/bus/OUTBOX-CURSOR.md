@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:55 PM CT) — CASH-T03 follow-up + house days qty
+- **PRIOR:** #28361 ENG-60 picker/writer · #28357/#28359 CASH-T03.
+- **THIS:** CASH-T03 batch51 — Fuel History provenance drill; ledgerEntityKind(row) blocks legacy expense+fuel-avg EntityLink; 5 vitest + 34 guard plants. House quantity days_overdue/Form2290/terms/recourse. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; batch51 #27988 guard retargets; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:40 PM CT) — ENG-60 picker/writer contract (batch50)
 - **PRIOR:** #28357/#28359 CASH-T03 fuel_forecast + day-grid · #28355 house quantity.
 - **THIS:** ENG-60 — insurance_lawsuit_id FK retarget legal.matters; writer validates type=lawsuit; list/detail self-join; writer-reverse guard + vitest picker-domain ID through createMatter. Table DROP still AUTH. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

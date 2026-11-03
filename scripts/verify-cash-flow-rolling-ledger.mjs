@@ -216,6 +216,15 @@ export function check({
   if (!/kind === "fuel_forecast"/.test(frontend) && !/=== "fuel_forecast"/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: ledgerEntityKind must treat fuel_forecast as non-EntityLink`);
   }
+  if (!/ledgerEntityKind\(row\.document_kind, row\)/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: ledgerEntityKind must receive row so legacy expense+fuel-avg cannot EntityLink (CASH-T03)`);
+  }
+  if (!/to="\/fuel\/history"/.test(frontend) || !/rolling-ledger-fuel-forecast-label/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: forecast rows must drill to Fuel History provenance (CASH-T03)`);
+  }
+  if (!/rolling-ledger-fuel-forecast-action/.test(frontend) || !/Forecast source/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: forecast action must offer Fuel History source link (CASH-T03)`);
+  }
 
   if (!/getRollingLedger/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: tab does not call the rolling-ledger API`);
@@ -321,6 +330,20 @@ function selftest() {
         frontend: good.frontend
           .replaceAll("isFuelForecastRow", "neverFuelForecast")
           .replaceAll("fuel_forecast", "expense"),
+      }),
+    },
+    {
+      name: "legacy fuel-avg EntityLink gate stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("ledgerEntityKind(row.document_kind, row)", "ledgerEntityKind(row.document_kind)"),
+      }),
+    },
+    {
+      name: "forecast Fuel History provenance stripped (CASH-T03)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll('/fuel/history', '/accounting/expenses'),
       }),
     },
     {
