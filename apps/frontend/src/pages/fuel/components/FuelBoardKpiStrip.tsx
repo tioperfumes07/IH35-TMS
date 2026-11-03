@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { countOpenFuelAssignmentQuestions } from "../../../api/fuelAssignmentQuestions";
+import { getFuelSpendSummary } from "../../../api/fuelPlanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { formatMoneyCents } from "../../../lib/formatMoney";
-import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../../lib/money";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 
@@ -27,20 +27,26 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
     refetchInterval: 60_000,
   });
 
+  // Register row 164 — spend / gallons / avg $/gal read THE shared fuel spend reader (GET /fuel/spend-summary), the same
+  // backend function Fuel Home's MTD Spend + Avg $/gal read. The per-truck aggregate below only feeds counts (trucks, no-load).
+  const spendQuery = useQuery({
+    queryKey: ["fuel", "spend-summary", companyId, range.from, range.to],
+    queryFn: () => getFuelSpendSummary(companyId, range.from, range.to),
+    enabled: Boolean(companyId),
+  });
   const agg = aggQuery.data;
-  const avgPerGal =
-    agg && agg.total_gallons > 0 ? agg.total_spend_cents / 100 / agg.total_gallons : null;
-  const spendValue = aggQuery.isError ? "—" : agg ? formatMoneyCents(agg.total_spend_cents) : "…";
+  const spend = spendQuery.data;
+  const spendValue = spendQuery.isError ? "—" : spend ? formatUsd(spend.spend) : "…";
   const spendSub =
-    agg && !aggQuery.isError
-      ? `${formatQuantityTable(agg.fill_count, 0)} fills · ${formatQuantityTable(agg.truck_count, 0)} trucks`
-      : aggQuery.isError
+    spend && !spendQuery.isError
+      ? `${formatQuantityTable(spend.fill_count, 0)} fills${agg ? ` · ${formatQuantityTable(agg.truck_count, 0)} trucks` : ""}`
+      : spendQuery.isError
         ? "Unable to load fills"
         : "Loading…";
 
-  const gallonsValue = aggQuery.isError ? "—" : agg ? formatQuantityTable(agg.total_gallons, 1) : "…";
+  const gallonsValue = spendQuery.isError ? "—" : spend ? formatQuantityTable(spend.gallons, 1) : "…";
   const avgValue =
-    aggQuery.isError ? "—" : avgPerGal != null ? formatUsdRateTable(avgPerGal, 3) : agg ? "—" : "…";
+    spendQuery.isError ? "—" : spend ? (spend.avg_price_per_gallon != null ? formatUsdRateTable(spend.avg_price_per_gallon, 3) : "—") : "…";
   const noLoadValue = aggQuery.isError ? "—" : agg ? formatQuantityTable(agg.fills_without_load, 0) : "…";
   const noLoadTone = agg && agg.fills_without_load === 0 ? "green" : "ink";
   const noLoadSub = agg ? `of ${formatQuantityTable(agg.fill_count, 0)}` : "";

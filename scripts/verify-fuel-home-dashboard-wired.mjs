@@ -41,8 +41,9 @@ export function computePlannerFailures(plannerSource) {
       "planner.routes.ts must not coerce a failed fuel.fuel_transactions spend query to { spend: 0, avg_price: 0 }",
     );
   }
-  if (!/FROM fuel\.fuel_transactions/.test(plannerSource)) {
-    errors.push("planner.routes.ts must keep the MTD spend query on fuel.fuel_transactions");
+  // Register row 164: the MTD spend now reads THE shared fuel spend reader (fuel-period-spend.ts, FROM fuel.fuel_transactions).
+  if (!/FROM fuel\.fuel_transactions/.test(plannerSource) && !/readFuelPeriodSpend\(/.test(plannerSource)) {
+    errors.push("planner.routes.ts must keep the MTD spend query on fuel.fuel_transactions (directly or via readFuelPeriodSpend)");
   }
   if (SEND_TO_DRIVER_DB_ERROR_AS_404_RE.test(plannerSource)) {
     errors.push(

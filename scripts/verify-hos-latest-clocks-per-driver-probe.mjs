@@ -25,7 +25,8 @@ export function audit(s) {
   const f = [];
   const fn = s.svc.slice(s.svc.indexOf("export async function getLatestHosClocksByDriver"), s.svc.indexOf("return out;", s.svc.indexOf("export async function getLatestHosClocksByDriver")));
   if (/DISTINCT ON \(driver_uuid\)/.test(fn)) f.push("R1: latest HOS clocks scan the whole snapshot history with DISTINCT ON");
-  if (!/CROSS JOIN LATERAL \([\s\S]*?h\.driver_uuid = d\.id[\s\S]*?ORDER BY h\.polled_at DESC\s*LIMIT 1/.test(fn)) f.push("R1: latest HOS clocks are not one index probe per driver");
+  // Register row 166: the probe may be keyed per id of (driver + merged shells) — h.driver_uuid = ids.id — still one index probe.
+  if (!/CROSS JOIN LATERAL \([\s\S]*?h\.driver_uuid = (?:d|ids)\.id[\s\S]*?ORDER BY h\.polled_at DESC\s*LIMIT 1/.test(fn)) f.push("R1: latest HOS clocks are not one index probe per driver");
   return f;
 }
 const src = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
@@ -34,7 +35,7 @@ if (process.argv.includes("--selftest")) {
   const cases = [
     ["clean sources pass", audit(src).length === 0],
     ["DISTINCT ON history scan FAILS", plant("svc", "SELECT d.id::text AS driver_uuid,", "SELECT DISTINCT ON (driver_uuid) d.id::text AS driver_uuid,")],
-    ["no LIMIT 1 probe FAILS", plant("svc", "ORDER BY h.polled_at DESC\n          LIMIT 1", "ORDER BY h.polled_at DESC")],
+    ["no LIMIT 1 probe FAILS", plant("svc", "ORDER BY h.polled_at DESC\n              LIMIT 1", "ORDER BY h.polled_at DESC")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) { console.log(`  ${ok ? "✓" : "✗"} ${n}${ok === null ? " (plant anchor missing)" : ""}`); if (!ok) bad += 1; }

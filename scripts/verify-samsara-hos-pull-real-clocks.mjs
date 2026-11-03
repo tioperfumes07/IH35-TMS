@@ -89,8 +89,9 @@ for (const [alias, source] of dcaSources) {
 // Optional LEFT JOIN on OPEN assignment supplies unit_id when paired — do NOT require pairing to poll.
 if (!/LEFT JOIN telematics\.vehicle_driver_assignments[\s\S]{0,220}ended_at IS NULL/.test(roster))
   fail("hos pull must LEFT JOIN open vehicle assignment for optional unit_id — Active+samsara drivers must poll without pairing");
-if (!/d\.status = 'Active'/.test(roster))
-  fail("hos pull roster must filter to status='Active' drivers with samsara_driver_id");
+// Register row 166: Probation drivers run loads (3 of 16 USMCA drivers) — the roster polls the working statuses.
+if (!/d\.status = 'Active'|d\.status IN \('Active', 'Probation'\)/.test(roster))
+  fail("hos pull roster must filter to working-status ('Active' / 'Probation') drivers with samsara_driver_id");
 if (!/mdata\.drivers[\s\S]{0,700}samsara_driver_id IS NOT NULL/.test(roster))
   fail("hos pull must resolve active drivers via mdata.drivers.samsara_driver_id (the board-proven key)");
 if (!/\ba\.operating_company_id = \$1::uuid/.test(roster))
