@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:35 PM CT) — #27 CreateMultipleBills + VendorBillCreate need-company
+- **PRIOR:** #28564 ENG-34 live-fails wire.
+- **THIS:** CreateMultipleBillsPage + VendorBillCreatePage BoardSection need-company early return; fill-shell plants (~69). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Reclassify/match/LoadCosts still skipped.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:30 PM CT) — ENG-34 wire live-fails-225-229-233-241
 - **PRIOR:** #28563 D066 z-index plant.
 - **THIS:** verify-steps 19867 wires verify-live-fails-225-229-233-241 (ENG-34 orphan residual = match-vendor only).
