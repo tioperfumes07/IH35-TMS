@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:00 AM CT) — SET-RATE selftest plant retargets settlementDetailLineMaps
+- **PRIOR:** #28256 ENG-34 wave 5 (34→29).
+- **THIS:** verify-settlement-line-rate-consistency --selftest plant now mutates settlementDetailLineMaps (mapper moved off SettlementStatementWorkflowPage); --selftest exits before LIVE half.
+- **ENG-21 stays DONE-LIVE**. **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~10:50 AM CT) — ENG-34 shrink wave 5 (34→29 exempt)
 - **PRIOR:** #28251 detention quantity · #28254 CLAIM-RESERVE 19812–19820.
 - **THIS:** Wired 5 more no-DB CI-safe exempts (no-test-units · single-migration-dir · sql-read-targets · stalled-queue-reaper · trial-balance-contract). LIVE/tool remain.

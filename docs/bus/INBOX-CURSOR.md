@@ -1,4 +1,8 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:50 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~11:00 AM CT)
+
+## CURRENT — SET-RATE selftest plant retargets settlementDetailLineMaps
+verify-settlement-line-rate-consistency selftest fixed (mapper path). **ENG-21 DONE-LIVE**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
 ## CURRENT — ENG-34 shrink wave 5 (34→29 exempt)
 Wired 5 more no-DB CI-safe exempts via 19812–19820. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
