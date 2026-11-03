@@ -139,6 +139,16 @@ if (!/formatUsd\(n\)/.test(liab) || /\$\$\{n\.toFixed\(2\)\}/.test(liab)) fail("
 const tourRates = read("apps/frontend/src/components/dispatch/TourSettlementTab.tsx");
 if (!/formatUsdRateTable\(rt, 3\)/.test(tourRates)) fail("TourSettlementTab leg rate must use formatUsdRateTable(..., 3)");
 
+
+const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
+if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
+  fail("MarkDisbursedModal bank txn labels must use formatUsdCents");
+}
+const manualJe = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
+if (!/formatUsdCents\(entry\.debit_total_cents/.test(manualJe) || !/formatUsdCents\(entry\.credit_total_cents/.test(manualJe)) {
+  fail("ManualJEListPage Debits/Credits must use formatUsdCents");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

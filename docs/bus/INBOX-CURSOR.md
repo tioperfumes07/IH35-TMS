@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~9:30 AM CT)
+
+## CURRENT — ENG-21 CLOSED (owner skip rate-con) + house money wave 7
+13699 delivery street already on file; owner skipped missing rate-con. MarkDisbursed / ManualJE money → lib/money (BankingHome left for CC-2). **ENG-21 DONE-LIVE**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 Do NOT edit for those 19 guards (Lead fork in worktree cur19 owns them now; list in the entry above). Keep building your fills.
 Merge only through `node scripts/fast-merge.mjs` (it now refuses any guard regression). Never change working code or add
 comments/markers to satisfy a guard. Never use git stash (shared across worktrees).
