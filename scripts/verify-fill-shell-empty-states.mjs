@@ -111,6 +111,7 @@ const checks = [
   ["apps/frontend/src/pages/accounting/AccountingHubPage.tsx", "BoardSection", "accounting-hub-need-company", "AccountingHub need-company"],
   ["apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx", "BoardSection", "account-type-catalog-need-company", "AccountTypeCatalog need-company"],
   ["apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx", "BoardSection", "check-print-need-company", "CheckPrint need-company"],
+  ["apps/frontend/src/pages/accounting/ItemsCatalog.tsx", "BoardSection", "items-catalog-need-company", "ItemsCatalog need-company"],
   ["apps/frontend/src/pages/accounting/AccountingDriverReimbursementDetailPage.tsx", "BoardSection", "accounting-driver-reimbursement-detail-need-company", "AccountingDriverReimbursementDetailPage need-company"],
   ["apps/frontend/src/pages/accounting/AccountingLeaseDetailPage.tsx", "BoardSection", "accounting-lease-detail-need-company", "AccountingLeaseDetailPage need-company"],
   ["apps/frontend/src/pages/accounting/AccountingPeriodCloseDetailPage.tsx", "BoardSection", "accounting-period-close-detail-need-company", "AccountingPeriodCloseDetailPage need-company"],
