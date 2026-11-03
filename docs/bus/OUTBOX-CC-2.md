@@ -1,8 +1,3 @@
-## ROUND 7 — CC-2 verify results (2026-11-02, deadline 2026-11-03T02:00Z)
-
-### BANK-TIEOUT-01 — tieout structural fix + live measurement
-
-Scripts/tieout/bank-ledger-closing.mjs had stale EXPECTED: count=5 (actual 9 active USMCA accounts), include_faro_1296=true (1296 never existed in live). Script exited early on Faro structural check before reaching variance analysis.
 
 **FIX merged PR #28019:** Updated to count=9, check for factoring_reserves (1230) instead of 1296. Selftest PASS.
 
@@ -198,3 +193,6 @@ Rows 3 (R6), 11 (R21), 12 (R22), 95 (R83), 102 (R207), 104 (R210), 105 (R223), 1
 
 CT: 2026-11-03 ~00:15Z
 
+# OUTBOX-CC-2
+
+Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-2-archive-2026-10-17.md](archive/OUTBOX-CC-2-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
