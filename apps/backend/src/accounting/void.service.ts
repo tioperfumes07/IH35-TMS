@@ -15,6 +15,7 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
 import { BANK_TX_UNMATCH_RESET_SQL, resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
 export { resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // Re-exported so verify-every-void-releases-its-bank-lines.mjs can assert this module uses the
 // canonical helper column list rather than an independent copy.
 export { BANK_LINE_DOCUMENT_POINTER_COLUMNS } from "../banking/bank-line-match-pointer.js";
@@ -770,7 +771,7 @@ export async function postVoidReversal(
   const originalDateIso = assertIsoDay(params.originalDate, `${params.entityType}.originalDate`);
 
   const cutoff = await closedPeriodCutoff(client, params.operatingCompanyId);
-  const currentDate = params.currentDate ?? todayIso();
+  const currentDate = params.currentDate ?? companyBusinessDate();
   const reversalDate = resolveReversalDate(originalDateIso, cutoff, currentDate);
   const closedPeriod = isClosedPeriodReversal(originalDateIso, reversalDate);
 
