@@ -469,14 +469,14 @@ export function SettlementsPage() {
       >
         <V3KpiTile
           label="Total unpaid"
-          value={String(kpis.total_unpaid)}
+          value={formatQuantityTable(Number(kpis.total_unpaid ?? 0), 0)}
           sub="settlements not yet paid"
           testId="settlements-kpi-total-unpaid"
           onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
         />
         <V3KpiTile
           label="This period"
-          value={String(kpis.this_period)}
+          value={formatQuantityTable(Number(kpis.this_period ?? 0), 0)}
           sub="period end ≥ this week"
           testId="settlements-kpi-this-period"
           onClick={() => navigate("/driver-finance/settlements")}
@@ -510,7 +510,9 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="Drivers w/ debt"
-          value={String(kpis.drivers_with_debt)}
+          value={
+            kpis.drivers_with_debt == null ? "—" : formatQuantityTable(Number(kpis.drivers_with_debt), 0)
+          }
           sub={focusFilter === "debt" ? "filter on" : "live debt balance"}
           tone={typeof kpis.drivers_with_debt === "number" && kpis.drivers_with_debt > 0 ? "red" : "ink"}
           testId="settlements-kpi-debt"
@@ -518,14 +520,14 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="YTD settlements"
-          value={String(kpis.ytd_settlements)}
+          value={formatQuantityTable(Number(kpis.ytd_settlements ?? 0), 0)}
           sub={`${ytdYear} calendar year`}
           testId="settlements-kpi-ytd"
           onClick={() => navigate("/driver-finance/settlements")}
         />
         <V3KpiTile
           label="Open driver bills"
-          value={String(kpis.open_driver_bills)}
+          value={formatQuantityTable(Number(kpis.open_driver_bills ?? 0), 0)}
           sub="unsettled driver pay"
           testId="settlements-kpi-open-bills"
           onClick={() => navigate("/driver-finance/settlements?tab=payments")}
@@ -705,7 +707,7 @@ export function SettlementsPage() {
       >
         <V3KpiTile
           label="Pending Acks"
-          value={String(kpis.pending_acks)}
+          value={formatQuantityTable(Number(kpis.pending_acks ?? 0), 0)}
           sub={focusFilter === "pending_acks" ? "filter on" : "click to filter"}
           tone={focusFilter === "pending_acks" ? "amber" : "ink"}
           testId="settlements-payments-kpi-pending-acks"
@@ -713,7 +715,7 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="Held Deductions"
-          value={String(kpis.held_deductions)}
+          value={formatQuantityTable(Number(kpis.held_deductions ?? 0), 0)}
           sub={focusFilter === "held" ? "filter on" : "click to filter"}
           tone={focusFilter === "held" ? "amber" : "ink"}
           testId="settlements-payments-kpi-held"
