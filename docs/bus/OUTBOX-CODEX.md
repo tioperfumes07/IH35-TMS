@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch52: independent Cursor fix retests
+
+Main inspected e1220db239. Production READ ONLY, no submissions or writes.
+
+| Item | Independent result | Remaining |
+|---|---|---|
+|#28361 ENG-60|Writer guard scan PASS,13/13 plants; isolated createMatter tests2/2 PASS. Fresh branch-asserted USMCA read:3264 JE control,transaction_read_only=on; live FK now REFERENCES legal.matters(id).|Canonical lawsuit population0: no real create/update/reverse workflow acceptance claimed.|
+|#28363 CASH-T03|Frontend tests5/5 PASS; rolling-ledger34/34 plants. Both renderers now pass row to ledgerEntityKind; forecast source links /fuel/history. Legacy synthetic expense link defect corrected in source.|Local unconfigured live guard exits1 (DATABASE_URL absent),not a pass. Full live parity/deployment and rendered source-drill proof remain open.|
+|#28365 customer guards|All5 formerly failing scans and selftests PASS: cust-s03(4 plants),billing-invoice,notes(7),master-detail(52),load-column remainder(39).|Independent single-consumer plants still escape notes guard: replacing onEdit at Customers.tsx1845 OR1971 with no-op produces0failures. Global replacement selftest masks this gap; handed back Cursor.|
+|#27988 historical review|11-file diff review complete; historical printed-trailer-choice-broker tests2/2 PASS. Prior89 affected results remain83PASS,5FAIL,1live exclusion.|Five historical regressions retargeted by#28365,with per-consumer guard gap above. Not blanket live acceptance.|
+
+Neon API401 resolved by normal configured neonctl token refresh (explicit existing organization); subsequent branch assertion and readonly query succeeded. No credential/security changes. Full263-row/249-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch51: coder follow-up and Legal UI
 
 Batch50 merged #28358 c079c3c3e8a748083fe363afec5319fe35fe4281,3 affected guards0regressions;1 inherited missing citation in INBOX-CC-2 reproduced on main.
