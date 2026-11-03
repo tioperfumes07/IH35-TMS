@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch70: ENG-34 wiring counterexample
+
+Batch69 merged #28436 694849ab32 with three affected guards / zero regressions. No production writes.
+
+- #28028 5ec717fe34 full documentation diff read:18 CODE BUILT claims explicitly retain live OPEN state; one affected live exclusion, not PASS. #28029 ad59817eea full registry diff read:one reservation plus Unicode serialization changes; no runtime implementation claimed.
+- #28031 1c344f0906 full wrapper read: executed its actual body with execFileSync intercepted (no commands run). Historical33 selftest invocations,20 comment-only guard names,0 comment names invoked. Current main34 invocations,19 comment-only names,0 invoked. This proves wrapper coverage only; other execution paths have not been ruled out.
+- Executed actual current verify-guard-wired.mjs isExecutedInCi function: nonexistent sentinel present only as a comment returns true; empty corpus returns false. Thus zero-exempt/fully-wired count is NOT executable coverage proof. Root: stepsCorpus.includes(guard) accepts comments. Requires executable registration/call-graph evidence and a deliberately unwired comment-only sentinel that fails; preserve live checks, no baseline or bypass. ENG-34 completion claim rejected at coverage-proof level, not a new production imbalance claim.
+- Follow-up #28026 insurance guard selftest:3/3 plants PASS. #28432 Legal Matters parser tests:3/3 PASS independently. Database pagination and deployed behavior remain unverified.
+
 ## 2026-11-03 — ROUND7.27 batch69: capped multi-status readers
 
 Batch68 merged #28434 faa731acfe, normal push, one affected guard / zero regressions. Initial merge raced a base update; retry preserved the same audited body. No production writes.
