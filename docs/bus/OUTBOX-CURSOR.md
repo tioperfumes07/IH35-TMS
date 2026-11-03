@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:25 PM CT) — AvP raw net + Tx Health filter
+- **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16 · need-company fill.
+- **THIS:** #28326 AvP rawActualNetFromGroups + not-captured chart null (E8 row261 Cursor half; Faro Δ house $). #28328 Transaction Health entity filter explicit all/subset/none (Codex batch42). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:05 PM CT) — Settlements Drivers embed + ENG-34 16
 - **PRIOR:** #28300–#28318 need-company fill · ENG-34 28→16 · Retention/VendorMapping qty.
 - **THIS:** #28322 Settlements-embedded DriversPage module-aware (row185 — no nested Drivers nav / banking KPI escape). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH.
