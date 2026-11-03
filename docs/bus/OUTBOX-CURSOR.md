@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:05 PM CT) — ROUND 7.30 tip #18 D021 D062
+- **PRIOR:** #28507 Company Settlements #160 pending KPIs + D007-D014 tip.
+- **THIS:** PENDING #18 expense confirm MultiSelect/bulk, D021 round-trip full names, D062 TXH wiring $ → MERGED-UNVERIFIED (guards PASS; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more ROUND 7.30 OPEN/PARTIAL; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:50 PM CT) — ROUND 7.30 #160 Company Settlements pending + D007-D014 tip
 - **PRIOR:** #28505 qty wave + CODED format tip.
 - **THIS:** Company Settlements KPIs show … while toursQuery.isPending (no flash 0) + formatQuantityTable; PENDING D007-D014 + #160 → MERGED-UNVERIFIED (subnav guard PASS; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
