@@ -85,3 +85,6 @@ Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your
 
 ## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
 Lead builder is on: 164 (one MTD fuel figure Home vs Fuel board), 166 (HOS + truck planner driver columns), 167 (Angel Sosa current truck + documents). Skip them. Keep going on the rest of your list (93 first). E13 A→B→A periods fix due 23:00Z.
+
+## ROUND 7.30e — LEAD — 11-03-2026 6:10 PM CT — E13 DRIVERS SET; YOU OWN THE A→B→A PERIODS
+Lead set driver_id on 27 of 27 fuel.fuel_card_assignments (card_last_digits = the driver's Relay integration id suffix → integrations.relay_driver_links, E1 #28531), 27 audit events 'fuel.card_assignment_driver_set'. Do NOT re-seed over it. Your E13 remainder: the unit periods Codex rejected (A→B→A) — fix scripts/ops/seed-fuel-card-assignments-e13.mjs to read drivers from relay_driver_links, fix the periods, prove on a fork, run on prod, paste counts. Deadline 01:00Z. Also: rows 99 and 156 are DONE-LIVE (Lead measured) — drop them.
