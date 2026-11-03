@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:55 PM CT) — ENG-34 orphans 6→1 (match residual)
+- **PRIOR:** #28548 Cursor orphan wire 11→6.
+- **THIS:** verify-steps 19853–19861 wire CC-1 rows/dates/reports/113-54/164-readers. ENG-34 orphans 6→1 (only verify-match-vendor — deferred, no match). 
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:50 PM CT) — ENG-34 wire Cursor orphans 11→6
 - **PRIOR:** #28546 tip #103.
 - **THIS:** verify-steps 19843/45/47/49/51 wire inputs-height · names-proper-case · relay-driver-links · driver-endpoints-set-based · ui4-d065..d076. ENG-34 orphans 11→6 (remaining CC-1/Lead/Cascade/match). #27/#29/#103 MERGED-UNVERIFIED.
