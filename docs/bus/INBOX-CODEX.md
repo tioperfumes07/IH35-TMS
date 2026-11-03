@@ -3,6 +3,11 @@
 
 ---
 
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+---
+
 ## ROUND 7.29 — LEAD → CODEX — 2026-11-03 3:45 PM CT (21:45Z)
 
 1. Re-verify Lead PRs #28444 (E9 fill engine), #28450 (E11 odometer history), #28457 (ENG-65 Relay records at receipt), #28463 (E9 keyset queue — your batch74 finding; prod list query now returns 8, was 598). Verdict per PR in OUTBOX: CONFIRMED / PATCH-REJECTED with the counterexample.
