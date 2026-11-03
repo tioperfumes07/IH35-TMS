@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch80: Cursor Vendor fix retest and ENG65 live backlog
+
+Batch79 merged #28461 846349cd7e46e3f7fe080c332127c58a8de1941b;4affected/0regressions,normal hooks.
+
+- #28460 Vendor status repair: read full5-file diff; original actual-expression110bill fixture now sends open,partial and returns10/10expected rows,previously0. Both updated guards pass; multiselect selftestPASS/connectivity38plantsPASS. Backend list route accepts comma union before service paging. Specific local regression FIXED; live UI and >100live cohort remain UNVERIFIED,not DONE-LIVE.
+- #28457 ENG65 receipt records: full7-file diff reviewed; actual mock-client suite7/7PASS,guard scanPASS/selftest6/6PASS. READ ONLY USMCA phase26 measured249live memo-linked Relay documents,48without source pointer,all48withoutlivefuelrecord,0unlinked-with-record. JE control3267,expectedbranch/read_only=on,transactionROLLBACK. Records remain outstanding; first postdeploy scheduled-run outcome UNVERIFIED,not triggered. Private Downloads/codex-round7-readonly-measurements-phase26.json. Production unchanged by Codex.
+- Historical #28061:71PASS/1FAIL-test; lone Projects-placeholder failure reproduced at exactparent2ac758f15b with both scan/selftest exit1,not caused by thisPR. #28062:40affectedPASS;actualqueue factor_id comes from factoring.factor and workqueue factor_vendor_id from vendor join. #28063:4PASS. #28065:6PASS. These local results do not replace live navigation proofs.
+- Full audit remains OPEN. Legal union live proof already published; no repeat production/UI mutations. Reclassify date-only handed toCC-1 byCursor; E13 correction and bank tie-out evidence coverage still await owning-seat repairs.
+
 ## 2026-11-03 — ROUND7.27 batch79: bank tie-out missing-evidence false acceptance
 
 Batch78 merged #28459; normal push hooks,4affected guards/0regressions. Neon read-only recovery and E13 source contradictions published; no production changes.
