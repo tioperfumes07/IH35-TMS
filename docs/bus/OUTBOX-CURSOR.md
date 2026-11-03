@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:20 PM CT) — finance/compliance need-company wave
+- **PRIOR:** #28291–#28295 format + need-company + BoardSection import fix.
+- **THIS:** BreakEven/Hub/Amortization/Statements/Compliance/PropertyTax need-company; FeatureFlags qty; Form425c/amort money. ENG-21 DONE-LIVE. ENG-34 ~28. SelectCombobox baseline 2.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
 ## OUTBOX (11-03-2026 ~2:05 PM CT) — finance need-company + Form425c/amort qty
 - **PRIOR:** #28288 customers/HOS/break-even/ELD · #28291 amort+Form425c money.
 - **THIS:** BreakEven / FinanceHub / Amortization BoardSection need-company; FeatureFlags rollout qty. fill-shell + currency guards.

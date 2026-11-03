@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -221,6 +222,18 @@ export function FinanceScenariosPage() {
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#6B7280]" data-testid="finance-scenarios-not-available">
           Scenario planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is off.)
         </div>
+      </div>
+    );
+  }
+
+  if (!companyId) {
+    return (
+      <div className="p-6" data-testid="finance-scenarios-page">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Scenarios" testId="finance-scenarios-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       </div>
     );
   }
