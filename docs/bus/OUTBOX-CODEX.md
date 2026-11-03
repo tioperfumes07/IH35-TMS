@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch58: profitability filter patch and display retests
+
+Batch57 merged #28390;3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28389 equipment filter|Diff explicitly replaces rows with[] whenever equipmentType is set in ByLaneView,ByCustomerView,ByLoadView. Requests still omit the equipment dimension; queryKey change alone only refetches unchanged data.|PATCH-REJECTED for these3tabs: explanatory unavailable copy is honest, but blanking results is not the requested end-to-end filter. Preserve honest limitation while building real scoped aggregation. Route mounting assessed separately.|
+|#28389 alias helper|Actual matchesEquipmentType call: dry_van vs reefer_van=true; dry_van vs refrigerated_van=true. equipmentFilter.ts:22 substring matching accepts generic van alias inside both refrigerated labels. Existing tests4/4 and guard6/6 PASS.|CONFIRMED helper defect for supported aliases; no claim current catalog has affected population. Exact normalized alias equivalence plus cross-type negative tests required.|
+|#28389 deployed route|Direct /profitability at12:38CT still redirects Home. Home footer backend5c8abd4 (dead-bill repair).|Frontend route deploy UNVERIFIED; do not mislabel pre-deploy behavior a failed new deployment.|
+|Row235 Program timestamp|28 certification strings use MM/DD/YYYY time CT;0 fractional raw timestamps in rendered main.1280/768 document width equals viewport; private screenshots12:34CT.|Named timestamp defect FIXED; scenario engine completeness not inferred.|
+|Rows236-238 System health|USMCA-only filter;100 loaded rows,102 rendered padded numeric timestamps;5payment labels human-readable,0UUID link labels in rendered selection. Expense preview DR/CR has dollar signs; selected payment shows Journal entry missing and FAIL.|Bounded display sample passes. Existing5health failures remain; no repair performed. Actual narrow viewport drifted to853px, so strict768 proof remains UNVERIFIED for this pass.|
+
+Full263-row/249-PR audit remains INCOMPLETE; no scope inflation or automatic DONE promotion.
+
 ## 2026-11-03 — ROUND7.27 batch57: independent profitability repair re-measure
 
 Batch56 merged #28387 84e8b579e4dcc6c2b06ed4b8edfecb4d321ac524,3affected0regressions. Production READ ONLY throughout.
