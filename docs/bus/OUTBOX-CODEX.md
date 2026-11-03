@@ -1,3 +1,15 @@
+## 2026-11-03 — ROUND7.27 batch53: live Accounting and Maintenance retests
+
+Batch52 merged #28368 d59f97261f6ecffa5428a509a6ecfd725fb8e467,3 affected checks0regressions. Synced main310a86a29e. Production read-only; no forms submitted.
+
+| Item | Independent evidence | Verdict |
+|---|---|---|
+|#28364 Accounting lower panels / ACCT-F11031|Live1280 lower grid563.203px+563.203px;768 lower grid626.406px. Document scrollWidth equals viewport at both. Private inline screenshots12:13CT: full receivables amounts/total readable; narrow cash pulse and settlements stack.|Narrow layout defect LIVE VERIFIED. Not blanket Accounting acceptance.|
+|#28372 Notes guard|Scan PASS;7/7+2per-consumer plants PASS. Previously escaped single onEdit defect now rejected.|That mutation gap fixed. New diff removed customer={selectedCustomer} assertion: independently plant customer={null as any} at either Notes mount1843/1969 and collectFailures=[]; handoff Cursor.|
+|#28371 Maintenance arrivals / row70|Full2-file diff read; helper tests4/4 PASS. Schedule link targets existing create_wo/unit_id handler. Live12:14CT still shows previous4-column arrivals and old footer,0rows.|New deploy NOT verified. New pmDue error/loading silently falls back to[] and labels units No PM schedule; source defect handed Lead.|
+
+Browser connection recovered by resetting tool bindings, without touching browser profile, permissions or application data. Full263-row/249-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch52: independent Cursor fix retests
 
 Main inspected e1220db239. Production READ ONLY, no submissions or writes.
