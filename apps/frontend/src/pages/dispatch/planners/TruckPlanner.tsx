@@ -24,6 +24,7 @@ import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, plannerBarLane, plannerBarMoneyDetail, usePlannerLoads } from "./planner-bars";
 import { PlannerAction, PlannerActionDisabled } from "./PlannerRowActions";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
+import { formatQuantityTable } from "../../../lib/money";
 
 void PlannerAxisHead;
 
@@ -225,7 +226,7 @@ export function TruckPlanner() {
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xs font-bold">Truck planner — {days.length} selected days</h2><Link to="/dispatch/loads" className="text-xs">View all loads →</Link></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xs font-bold">Truck planner — {formatQuantityTable(days.length, 0)} selected days</h2><Link to="/dispatch/loads" className="text-xs">View all loads →</Link></div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!isLoading && !isError && excludedUnitCount > 0 ? (
           <span className="text-xs text-[#6B7280]" data-testid="dispatch-truck-planner-excluded-count">

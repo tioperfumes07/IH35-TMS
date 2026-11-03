@@ -29,6 +29,7 @@ import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   loadId: string;
@@ -278,7 +279,7 @@ export function LdtDocumentsTab({ loadId, operatingCompanyId, loadNumber, canEdi
       {/* ONE table: Date · Type · Name · Size · Linked to · Open */}
       <div className="ldt-card">
         <div className="ldt-ch">
-          <span>Documents ({rows.length})</span>
+          <span>Documents ({formatQuantityTable(rows.length, 0)})</span>
           <span className="ldt-open">shared read: useLoadDocuments</span>
         </div>
         {docsError ? (

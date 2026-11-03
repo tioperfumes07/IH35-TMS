@@ -3,6 +3,7 @@ import { ListErrorState } from "../ListErrorState";
 import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { listLoadTemplates } from "../../api/dispatch";
+import { formatQuantityTable } from "../../lib/money";
 
 export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
   const query = useQuery({
@@ -33,7 +34,7 @@ export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, custom
       </ul>
       {!query.isLoading && !query.isError && total > 0 ? (
         <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#4B5563]">
-          <span>Showing {preview.length} of {total}</span>
+          <span>Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(total, 0)}</span>
           {total > preview.length ? (
             <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/planner?panel=templates&customer_id=${encodeURIComponent(customerId)}`}>
               Open all {total}

@@ -671,6 +671,40 @@ if (!/formatQuantityTable\(filteredRows\.length, 0\)/.test(toursRegQty)) {
   fail("SettlementsToursRegister live count must use formatQuantityTable(, 0)");
 }
 
+
+const tourLegsQty = read("apps/frontend/src/components/dispatch/TourLegsCell.tsx");
+if (!/formatQuantityTable\(list\.length, 0\)/.test(tourLegsQty)) {
+  fail("TourLegsCell count must use formatQuantityTable(, 0)");
+}
+const loadTemplatesQty = read("apps/frontend/src/components/dispatch/CustomerLoadTemplatesReverseSection.tsx");
+if (!/formatQuantityTable\(preview\.length, 0\)/.test(loadTemplatesQty)) {
+  fail("CustomerLoadTemplatesReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const detentionRevQty = read("apps/frontend/src/components/dispatch/LoadDetentionReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(detentionRevQty)) {
+  fail("LoadDetentionReverseSection count must use formatQuantityTable(, 0)");
+}
+const submissionQueueQty = read("apps/frontend/src/pages/factoring/SubmissionQueue.tsx");
+if (!/formatQuantityTable\(submittable\.length, 0\)/.test(submissionQueueQty) || !/formatQuantityTable\(items\.length, 0\)/.test(submissionQueueQty)) {
+  fail("SubmissionQueue ready counts must use formatQuantityTable(, 0)");
+}
+const settleHomeQty = read("apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx");
+if (!/formatQuantityTable\(weekBuckets\.length, 0\)/.test(settleHomeQty) || !/formatQuantityTable\(weekOfRows\.length, 0\)/.test(settleHomeQty)) {
+  fail("SettlementsHomeBoardPanels week counts must use formatQuantityTable(, 0)");
+}
+const batchSettleQty = read("apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx");
+if (!/formatQuantityTable\(row\.loads\.length, 0\)/.test(batchSettleQty)) {
+  fail("BatchSettlementsPage load counts must use formatQuantityTable(, 0)");
+}
+const fleetCoveredQty = read("apps/frontend/src/pages/insurance/FleetCoveredPage.tsx");
+if (!/formatQuantityTable\(coveredRows\.length, 0\)/.test(fleetCoveredQty)) {
+  fail("FleetCoveredPage covered units must use formatQuantityTable(, 0)");
+}
+const truckPlannerQty = read("apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx");
+if (!/formatQuantityTable\(days\.length, 0\)/.test(truckPlannerQty)) {
+  fail("TruckPlanner selected days must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

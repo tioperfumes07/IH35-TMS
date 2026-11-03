@@ -21,6 +21,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 const ACTION = `${FORM_INPUT_CLASS} disabled:opacity-50`;
 
@@ -116,7 +117,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
 
   return (
     <BoardSection
-      title={`Repurchase deadline — ${rows.length} awaiting your decision`}
+      title={`Repurchase deadline — ${formatQuantityTable(rows.length, 0)} awaiting your decision`}
       testId="factoring-repurchase-due-board"
     >
       <p className="mb-2 text-xs text-[#1F2A44]">
