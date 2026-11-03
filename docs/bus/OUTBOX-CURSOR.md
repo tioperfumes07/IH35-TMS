@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:40 PM CT) — U12 Settlement Disputes status MultiSelect
+- **PRIOR:** #28594 U12 register tip.
+- **THIS:** SettlementDisputesTab status SelectCombobox → MultiSelectDropdown; API still open|all with client narrow for other statuses.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:30 PM CT) — U12 Fuel Fraud Alerts status MultiSelect
 - **PRIOR:** #28592 Cascade U12 handoff tip.
 - **THIS:** FraudAlertsListPage status pills → MultiSelectDropdown (default open; drilled scope empty=all; 0/1 API, 2+ client filter).
