@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:45 PM CT) — Legal matters multi-status server union (batch67)
+- **PRIOR:** #28430 factoring/tour qty · #28431 bus tip.
+- **THIS:** Codex batch67 — LegalMatters list sends status/severity/type comma-unions; listMatters ANY() before COUNT/LIMIT; no client page-filter; enum-comboboxes guard + vitest; Showing house quantity. Fines/Integrity/DriverReports → Safety/CC-3 + Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:30 PM CT) — factoring/tour footer house quantity
 - **PRIOR:** #28428 trip voided/cancelled.
 - **THIS:** SubmissionQueue selected submit · SubmitToFactor created invoice_count · TourLoadRows footer tours/loads → formatQuantityTable(, 0); currency ratchet. Codex batch66 #28018 DriverReports multi-status pagination → Maintenance/Codex (not Cursor). ENG-21 DONE-LIVE. Dreamline/match deferred.
