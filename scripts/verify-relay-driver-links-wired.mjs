@@ -20,6 +20,7 @@ const F = {
   match: "apps/backend/src/integrations/relay-payments/relay-fuel-driver-match.ts",
   rematch: "apps/backend/src/integrations/relay-payments/relay-fuel-driver-rematch.service.ts",
   hook: "apps/backend/src/fuel/fuel-ingest-hooks.ts",
+  route: "apps/backend/src/integrations/relay-payments/relay-fuel-driver-rematch.routes.ts",
 };
 
 export function findDefects(s) {
@@ -45,6 +46,8 @@ export function findDefects(s) {
   const iStep = s.hook.indexOf('"relay.fill_driver_match"');
   if (iStep < 0 || iStep > s.hook.indexOf('"fuel.relay_fill_records"')) out.push("the ingest hook does not match drivers before recording Relay fills");
   if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(s.hook)) out.push("the driver match touches companies other than USMCA (frozen)");
+  if (!/!isUsmcaOperatingCompany\(operatingCompanyId\)/.test(s.route)) out.push("the rematch route can run over every company (frozen entities)");
+  if (!/actor_user_id: actorUserId/.test(s.route)) out.push("the rematch route audits a person's run as the system");
   return out;
 }
 
@@ -59,6 +62,8 @@ if (process.argv.includes("--selftest")) {
     ["inactive matched", plant("match", 'if (!res.rows[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active" };', "")],
     ["fuel row before Relay id", { ...src, rematch: src.rematch.replace("const intMatch = await resolveRelayDriverMatch(", "/*x*/").replace("// 3. RC6", "const intMatch = await resolveRelayDriverMatch(\n// 3. RC6") }],
     ["audit dropped", plant("rematch", "SYSTEM_ACTOR_USER_ID, \"relay.fill_driver_matched\"", "SYSTEM_ACTOR_USER_ID, \"x\"")],
+    ["route runs all companies", plant("route", "!operatingCompanyId || !isUsmcaOperatingCompany(operatingCompanyId)", "false")],
+    ["route drops the actor", plant("route", "actor_user_id: actorUserId,", "")],
     ["hook touches frozen companies", plant("hook", ".filter((id) => isUsmcaOperatingCompany(id))", "")],
   ];
   let caught = 0;
