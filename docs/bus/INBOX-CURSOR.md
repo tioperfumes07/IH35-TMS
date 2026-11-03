@@ -1,6 +1,12 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~12:30 PM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~1:45 PM CT)
 
-## CURRENT — Customer/Driver/Cargo qty + ENG-34 29→28
+## CURRENT — house quantity sweep + ENG-34 29→28
+#28271–#28285: margin/% · CRM/home/profitability/forensic/stops/dispatcher/late/factor/LedgerKpi · ENG-34 sql-write 19822. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~12:30 PM CT)
+
+## PRIOR — Customer/Driver/Cargo qty + ENG-34 29→28
 House quantity/money on CustomerDetail · DriverLayover · DriverProfile · CargoTemp; ENG-34 wire sql-write-targets (19822). **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
 

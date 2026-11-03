@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~1:45 PM CT) — qty sweep high-water
+- **PRIOR:** #28271 margin/% · #28273–#28285 house quantity + ENG-34 wave6 (29→28 via 19822).
+- **THIS:** LedgerKpiPanel percent body #28285; RelationshipScore/AtRisk bodies #28283. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28. Dreamline/match deferred. ENG-22 AUTH.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~1:35 PM CT) — qty sweep + #28283 body finish
 - **PRIOR:** #28271–#28282 quantity/ENG-34 waves.
 - **THIS:** #28283 finished CustomerRelationshipScore + AtRiskDriverCard bodies to match currency guard. ENG-21 DONE-LIVE. ENG-34 ~28 LIVE/tool. SelectCombobox baseline 2.

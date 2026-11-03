@@ -259,6 +259,11 @@ if (!/formatQuantityTable\(k\.value, 2\)/.test(ledgerKpi) || !/formatQuantityTab
   fail("LedgerKpiPanel percent must use formatQuantityTable");
 }
 
+const weeklyRev = read("apps/frontend/src/pages/home/charts/WeeklyRevenueChart.tsx");
+if (!/tickFormatter=\{\(v\) => formatUsd\(Number\(v\)\)\}/.test(weeklyRev)) {
+  fail("WeeklyRevenueChart Y-axis must use formatUsd");
+}
+
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");
