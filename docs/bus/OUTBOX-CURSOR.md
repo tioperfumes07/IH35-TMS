@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:35 AM CT) — Detention billable minutes house quantity
+- **PRIOR:** #28249/#28250 ENG-34 shrink 53→34.
+- **THIS:** DetentionBoardPage billable minutes → formatQuantityTable. Guards extended.
+- **ENG-21 stays DONE-LIVE**. **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~10:25 AM CT) — ENG-34 shrink wave 4 (53→34 exempt)
 - **PRIOR:** #28247 escrow names / Faro labels / weekly revenue; #28248 CLAIM-RESERVE 19774–19810.
 - **THIS:** Wired 19 static/selftest-passing exempts into verify-steps 19774–19810 (accident-wizard · coa-roles · double-entry · escrow-sign · item-line · LDT-3/D · master-data · no-sample · one-source · purge-exemption · scheduler · seed-doc · service-location · settlement-close-gl · statement-export · task-link · truck-line · wizard-section). LIVE/tool exempts left (canonical cust/vend, party-boards, eng27 ceiling, feed-day, faro repurchase, etc.).

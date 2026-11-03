@@ -95,6 +95,7 @@ const QUANTITY = [
   "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/dispatch/LoadUnitCostSplitPanel.tsx",
   "apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx",
+  "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
   "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
   "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
   "apps/frontend/src/pages/Customers.tsx",
