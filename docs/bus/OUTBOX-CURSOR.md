@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:00 PM CT) — Legal contracts multi-status server union
+- **PRIOR:** #28432 Legal matters multi-status.
+- **THIS:** Codex batch67 sibling — contract list status comma-union + ANY() before LIMIT 300; signer-entitylink guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:45 PM CT) — Legal matters multi-status server union (batch67)
 - **PRIOR:** #28430 factoring/tour qty · #28431 bus tip.
 - **THIS:** Codex batch67 — LegalMatters list sends status/severity/type comma-unions; listMatters ANY() before COUNT/LIMIT; no client page-filter; enum-comboboxes guard + vitest; Showing house quantity. Fines/Integrity/DriverReports → Safety/CC-3 + Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.

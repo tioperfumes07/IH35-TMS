@@ -53,6 +53,16 @@ function analyze(planted = {}) {
   if (!/ci\.signer_type,\s*\n\s*ci\.signer_entity_id,/.test(svc)) {
     failures.push("listContractInstances SELECT must include ci.signer_entity_id after signer_type");
   }
+  // Codex batch67 sibling — multi-status must hit the server before LIMIT 300.
+  if (!page.includes('statusFilter.length ? statusFilter.join(",") : undefined')) {
+    failures.push("list queryFn must send statusFilter comma-union to the API");
+  }
+  if (/statusFilter\.length <= 1[\s\S]{0,200}statusFilter\.includes\(row\.status\)/.test(page) || /statusFilter\.length === 1[\s\S]{0,220}statusFilter\.includes\(row\.status\)/.test(page)) {
+    failures.push("list queryFn must not client-filter a LIMIT 300 page for multi-status");
+  }
+  if (!svc.includes("parseContractInstanceStatusFilter") || !svc.includes("ci.status = ANY($${values.length}::legal.contract_instance_status[])")) {
+    failures.push("listContractInstances must apply status ANY() via parseContractInstanceStatusFilter before LIMIT");
+  }
   return failures;
 }
 
@@ -95,6 +105,30 @@ function selftest() {
     }
   } finally {
     // in-memory plant only
+  }
+
+  const pageBadUnion = analyze({
+    [PAGE]: original.replace('statusFilter.length ? statusFilter.join(",") : undefined', "statusFilter.length === 1 ? statusFilter[0] : undefined"),
+  });
+  if (!pageBadUnion.some((m) => /comma-union/.test(m))) {
+    fail(`selftest expected comma-union fail; got: ${pageBadUnion.join("; ")}`);
+  }
+  const pageClientFilter = analyze({
+    [PAGE]:
+      original +
+      '\nif (statusFilter.length <= 1) return result;\nconst contracts = (result.contracts ?? []).filter((row) => statusFilter.includes(row.status));\n',
+  });
+  if (!pageClientFilter.some((m) => /client-filter|LIMIT 300/.test(m))) {
+    fail(`selftest expected client-filter fail; got: ${pageClientFilter.join("; ")}`);
+  }
+  const svcNoAny = analyze({
+    [SVC]: svcOriginal.replaceAll(
+      "ci.status = ANY($${values.length}::legal.contract_instance_status[])",
+      "ci.status = $REMOVED"
+    ),
+  });
+  if (!svcNoAny.some((m) => /ANY\(\)/.test(m))) {
+    fail(`selftest expected status ANY fail; got: ${svcNoAny.join("; ")}`);
   }
 
   const good = analyze();

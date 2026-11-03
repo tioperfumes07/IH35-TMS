@@ -120,7 +120,14 @@ export type LeaseToOwnFleetUnit = {
 };
 
 export const legalContractsApi = {
-  list(input: { operating_company_id: string; status?: LegalContractStatus; search?: string; signer_type?: LegalSignerType; signer_entity_id?: string }) {
+  list(input: {
+    operating_company_id: string;
+    /** Single status or comma-union (Codex batch67 — filter before LIMIT). */
+    status?: LegalContractStatus | string;
+    search?: string;
+    signer_type?: LegalSignerType;
+    signer_entity_id?: string;
+  }) {
     const params = new URLSearchParams();
     params.set("operating_company_id", input.operating_company_id);
     if (input.status) params.set("status", input.status);

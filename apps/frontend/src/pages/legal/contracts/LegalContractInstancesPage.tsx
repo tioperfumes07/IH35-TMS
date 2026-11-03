@@ -107,18 +107,14 @@ export function LegalContractInstancesPage() {
     queryKey: ["legal", "contracts", operatingCompanyId, statusFilter.join(","), search, signerTypeParam, signerEntityIdParam],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
-      const status = statusFilter.length === 1 ? (statusFilter[0] as LegalContractStatus) : undefined;
-      const result = await legalContractsApi.list({
+      // Codex batch67 sibling — send comma-union before LIMIT 300 (never filter a capped page locally).
+      return legalContractsApi.list({
         operating_company_id: operatingCompanyId,
-        status,
+        status: statusFilter.length ? statusFilter.join(",") : undefined,
         search: search.trim() || undefined,
         signer_type: signerTypeParam ?? undefined,
         signer_entity_id: signerEntityIdParam,
       });
-      if (statusFilter.length <= 1) return result;
-      const contracts = (result.contracts ?? []).filter((row) => statusFilter.includes(row.status));
-      return { ...result, contracts };
     },
     refetchInterval: 30_000,
   });
