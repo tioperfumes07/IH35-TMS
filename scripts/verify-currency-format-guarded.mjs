@@ -225,6 +225,14 @@ if (!/formatQuantityTable\(Math\.abs\(tr\.delta_pct_vs_yesterday\), 1\)/.test(de
 }
 const qboHome = read("apps/frontend/src/pages/home/QboStyleHomePage.tsx");
 if (!/formatQuantityTable\(pct, 1\)/.test(qboHome)) fail("QboStyleHomePage fmtPct must use formatQuantityTable");
+const custFactor = read("apps/frontend/src/components/customers/CustomerFactoringReverseSection.tsx");
+if (!/formatQuantityTable\(factor\.advance_rate \* 100, 1\)/.test(custFactor) || !/formatQuantityTable\(factor\.fee_rate \* 100, 1\)/.test(custFactor)) {
+  fail("CustomerFactoringReverseSection rates must use formatQuantityTable");
+}
+const custLate = read("apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx");
+if (!/formatQuantityTable\(rate \* 100, 1\)/.test(custLate)) fail("CustomerLateArrivalCard pct must use formatQuantityTable");
+const drvLate = read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
+if (!/formatQuantityTable\(rate \* 100, 1\)/.test(drvLate)) fail("DriverLateArrivalCard pct must use formatQuantityTable");
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
