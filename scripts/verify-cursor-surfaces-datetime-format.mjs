@@ -63,6 +63,9 @@ const FILES = [
   "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx",
   "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx",
   "apps/frontend/src/lib/qbo-sync-last-success-label.ts",
+  // Finance print headers — never browser toLocaleString for "printed …"
+  "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx",
+  "apps/frontend/src/pages/finance/ArApAgingPage.tsx",
 ];
 
 const DATE_ONLY = [
