@@ -9,6 +9,7 @@ const FILES = [
   "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
   "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
   "apps/frontend/src/pages/dispatch/LoadHistoryPage.tsx",
+  "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx",
   "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
   "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
   "apps/frontend/src/pages/fuel/components/CompliancePanel.tsx",

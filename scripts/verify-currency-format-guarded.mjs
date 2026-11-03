@@ -82,6 +82,11 @@ const customer = read("apps/frontend/src/pages/CustomerDetail.tsx");
 if (!/formatUsd\(qualityStats\.totalImpact\)/.test(customer)) fail("CustomerDetail Dollar Impact KPI must use formatUsd");
 if (!/formatUsdCents\(Number\(invoice\.total_cents/.test(customer)) fail("CustomerDetail invoice total must use formatUsdCents");
 if (!/formatUsdCents\(lane\.fsc_per_mile_cents\)/.test(customer)) fail("CustomerDetail FSC/mi must use formatUsdCents");
+if (!/formatUsd\(Number\(v\)/.test(customer)) fail("CustomerDetail revenue chart tooltip must use formatUsd");
+if (!/formatQuantityTable\(qualityStats\.avgDaysLate, 1\)/.test(customer)) fail("CustomerDetail Avg Days Late must use formatQuantityTable");
+if (!/formatQuantityTable\(Number\(customerPnlRow\.gross_margin_pct\) \|\| 0, 1\)/.test(customer)) {
+  fail("CustomerDetail margin % must use formatQuantityTable");
+}
 
 const vendorParts = read("apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx");
 if (!/formatUsd/.test(vendorParts) || /\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(vendorParts)) {
@@ -155,11 +160,45 @@ if (/u\.miles\.toFixed\(1\)/.test(unitSplit) || /data\.total_miles\.toFixed\(1\)
 
 const deadhead = read("apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx");
 if (!/formatQuantityTable\(n\)/.test(deadhead)) fail("DeadheadOptimizerPanel miles must use formatQuantityTable");
+if (!/formatQuantityTable\(row\.score, 2\)/.test(deadhead)) fail("DeadheadOptimizerPanel score must use formatQuantityTable");
 if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand-roll miles toFixed(1)");
+const optimalDrivers = read("apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx");
+if (!/formatQuantityTable\(n, 0\)/.test(optimalDrivers)) fail("OptimalDriversPanel scores must use formatQuantityTable");
+if (/n\.toFixed\(0\)/.test(optimalDrivers)) fail("OptimalDriversPanel must not hand-roll score toFixed(0)");
+if (!/formatQuantityTable\(\(c \/ invoicedCents\) \* 100, 2\)/.test(tourSettle)) fail("TourSettlementTab pct must use formatQuantityTable");
+if (!/formatQuantityTable\(tot\.margin_pct, 1\)/.test(tourSettle)) fail("TourSettlementTab margin % must use formatQuantityTable");
+const tourPre = read("apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx");
+if (!/formatQuantityTable\(p, 1\)/.test(tourPre)) fail("TourPreSettlementTab pct must use formatQuantityTable");
+const loadDetailCosts = read("apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx");
+if (!/formatQuantityTable\(\(margin \/ revenue\) \* 100, 1\)/.test(loadDetailCosts)) fail("LoadDetailCostsTab margin % must use formatQuantityTable");
+const tourLoadRows = read("apps/frontend/src/components/dispatch/TourLoadRows.tsx");
+if (!/formatQuantityTable\(r\.load_margin_pct, 1\)/.test(tourLoadRows)) fail("TourLoadRows margin % must use formatQuantityTable");
+const settleProfit = read("apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx");
+if (!/formatQuantityTable\(d\.margin_pct, 1\)/.test(settleProfit)) fail("SettlementProfitabilityCard margin % must use formatQuantityTable");
 
 const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx");
 if (!/formatQuantityTable\(Number\(event\.billable_minutes/.test(detention)) {
   fail("DetentionBoardPage billable minutes must use formatQuantityTable");
+}
+const gpsBorder = read("apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx");
+if (!/formatQuantityTable\(ev\.customs_clearance_minutes\)/.test(gpsBorder)) {
+  fail("GPS BorderCrossingHistory customs minutes must use formatQuantityTable");
+}
+const faro1090 = read("apps/frontend/src/pages/factoring/Faro1090WireProposalsPage.tsx");
+if (!/formatQuantityTable\(row\.days_unfunded\)/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage days_unfunded must use formatQuantityTable");
+}
+const driverLayover = read("apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx");
+if (!/formatQuantityTable\(row\.duration_hours, 1\)/.test(driverLayover)) {
+  fail("DriverLayoverHistory duration hours must use formatQuantityTable");
+}
+const driverProfile = read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx");
+if (!/formatQuantityTable\(totalHours, 1\)/.test(driverProfile)) {
+  fail("DriverProfilePage layover total hours must use formatQuantityTable");
+}
+const cargoTemp = read("apps/frontend/src/components/dispatch/CargoTempBadge.tsx");
+if (!/formatQuantityTable\(latest\.temp_celsius, 1\)/.test(cargoTemp)) {
+  fail("CargoTempBadge temp must use formatQuantityTable");
 }
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");

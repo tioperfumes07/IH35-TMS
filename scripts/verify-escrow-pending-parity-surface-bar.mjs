@@ -35,11 +35,7 @@ async function selftest() {
     (good) => {
   const planted = good
     .replace(/import \{ ParityTable[\s\S]*?\} from "[^"]+";\n/, "")
-    .replace(/const columns = useMemo[\s\S]*?\],\s*\[\],\s*\);\n\n/, "")
-    .replace(
-      /\/\/ ACCT-F3534:[\s\S]*?\/>\n\s*\) : null\}/,
-      `<div><table className="min-w-full text-left text-sm"><tbody /></table></div>`,
-    );
+    .replace(/<ParityTable[\s\S]*?\/>/, `<table className="min-w-full text-left text-sm"><tbody /></table>`);
   assert(planted.includes("<table"), "selftest plant must include raw table");
   assert(!planted.includes("ParityTable"), "selftest plant must remove ParityTable");
       return planted;

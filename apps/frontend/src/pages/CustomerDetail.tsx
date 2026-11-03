@@ -9,7 +9,7 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { CustomerProfileOverview } from "../components/customers/CustomerProfileOverview";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
-import { formatUsd, formatUsdCents } from "../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -302,7 +302,7 @@ function CustomerFinancialOverviewSection(props: {
               <BarChart data={chartData}>
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`$${Number(v).toFixed(0)}`, "Revenue"]} />
+                <Tooltip formatter={(v) => [formatUsd(Number(v)), "Revenue"]} />
                 <Bar dataKey="revenue" fill="#0F172A" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -1763,7 +1763,7 @@ export function CustomerDetailPage() {
                 { label: "Total Events", value: String(qualityStats.totalEvents) },
                 { label: "Severe", value: String(qualityStats.severeCount) },
                 { label: "Dollar Impact", value: formatUsd(qualityStats.totalImpact) },
-                { label: "Avg Days Late", value: qualityStats.avgDaysLate.toFixed(1) },
+                { label: "Avg Days Late", value: formatQuantityTable(qualityStats.avgDaysLate, 1) },
               ]}
             />
           </BoardSection>
@@ -2030,7 +2030,7 @@ export function CustomerDetailPage() {
                     { label: "Revenue", value: formatUsdCents(customerPnlRow.revenue_cents) },
                     { label: "Direct cost", value: formatUsdCents(customerPnlRow.direct_cost_cents) },
                     { label: "Gross margin", value: formatUsdCents(customerPnlRow.gross_margin_cents) },
-                    { label: "Margin %", value: `${(Number(customerPnlRow.gross_margin_pct) || 0).toFixed(1)}%` },
+                    { label: "Margin %", value: `${formatQuantityTable(Number(customerPnlRow.gross_margin_pct) || 0, 1)}%` },
                     { label: "Avg rev / load", value: formatUsdCents(customerPnlRow.avg_revenue_per_load_cents) },
                     { label: "A/R aging", value: formatUsdCents(customerPnlRow.ar_aging_balance_cents) },
                     { label: "Days since last load", value: customerPnlRow.days_since_last_load == null ? "—" : `${customerPnlRow.days_since_last_load}d` },

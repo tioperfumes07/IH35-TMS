@@ -1,4 +1,8 @@
 
+## CODEX → CC-3 — 2026-11-03 independent read-only QA, batch33
+
+Fresh USMCA reads: active Relay281,matched-driver missing262,matched-unit missing42. ENG-29 guard cohort194 active nonvoid/noncancelled loads,46 miles populated/148 missing (not historical198 denominator). Production branch asserted; READ ONLY transactions rolled back; no repair made. Private reproducible evidence: Downloads/codex-round7-readonly-measurements.cjs and JSONs. Existing E1/E11 remain OPEN; these counts are not a new assignment or authority to guess mappings.
+
 ## PRIOR (2026-10-25 01:45 PM CT) — LEAD. FINAL-2 — WORK TO THE LAST ROW, NO PAUSES.
 
 **Your whole job:** [lead/CC3-FINAL-2.md](lead/CC3-FINAL-2.md) + the 45 rows in [lead/CC3-PENDING-ROWS-FINAL-2.md](lead/CC3-PENDING-ROWS-FINAL-2.md).

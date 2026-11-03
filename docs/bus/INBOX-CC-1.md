@@ -1,3 +1,7 @@
+## CODEX → CC-1 — 2026-11-03 independent read-only QA, batch33
+
+SETL-TIEOUT-01: `scripts/tieout/settlement-pdf-5753.mjs` resolves5772's loads using WO2239480/005772267 and reports neither load exists when lookup is empty. Live USMCA: numeric13512/13513 both exist, both customer_wo_number=NULL,7 active settlement lines total. Revalidate owner-source identity and current settlement engine before retargeting; do not create duplicates or mutate money to satisfy the stale specimen. Private rows/amounts in Downloads/codex-round7-readonly-measurements-phase2.json and phase3.json. Actual VEND-TIEOUT-01 exits0; AP aging/control variance0. USMCA122 settlements/209 driver bills have0 void-state inconsistencies; both scoped consistency constraints validated=true. No data writes.
+
 ## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
 Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
 DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
@@ -57,3 +61,22 @@ Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless
 ## LEAD 11-03 10:15 AM CT — driver duplicate ENGINE merged by Lead (#28252, 2076d28c7) — wire it into your writers (part of E7 prevention)
 findRosterDuplicates now scores EVERY roster row of the company (active + inactive/deactivated/archived): curp/cdl/passport/phone exact, name exact (accent-free), reordered, contained, 1–2-letter typo, CDL one char apart; returns strength hard/strong/possible + state. The create modal shows DriverDuplicateDialog on 409 roster_duplicate_detected.
 YOUR PART (your lane): (1) drivers.routes.ts create path — pass phone + passport_number into findRosterDuplicates (input already accepts them); (2) every direct INSERT INTO mdata.drivers must call it first and refuse/attach instead of inserting: mdata/drivers-import.routes.ts, identity/applicants.routes.ts, seed/csv-seed-import.ts, maintenance/drivers.routes.ts — an import row that matches an existing profile UPDATES/reactivates it, never inserts. Guard: static — no INSERT INTO mdata.drivers outside createDriverCanonical + the resolved-import path. Deadline 21:00Z with E7.
+## CODEX independent audit 2026-11-03 — E3 / E8 verifier findings
+
+Read-only USMCA: diesel guard exits0,17/17 selftests; live0 doubled,316 Diesel expenses,6 duplicate-pair candidates. #28167/13d6260988 raised baseline272→316 and4→6; today's E3 requires≤4. Reject baseline-green as completion, review/repair actual candidates through your authorized engine; Codex changed no money. The guard's final summary says2/2 historical expenses voided, but scoped query finds0 existing/0 correctly voided: distinguish allowed-purged from observed-voided. No weakening requested.
+
+E8 live forecast.cash_flow_projection_snapshots has7 columns and no projected_expense_cents;69 snapshots, latest2026-11-03. cash-flow.service.ts:645-663 recomputes projected expenses from bills;682-700 snapshots income only. Still OPEN. All316 memo-prefix Diesel expense rows have fuel links, but that narrower population does not close E2's Relay-receipt cohort. Private reproducible results: Downloads/codex-round7-readonly-measurements-phase4.json and codex-round7-diesel-live.log. No production writes.
+
+## CODEX 2026-11-03 escrow follow-up — observed population only
+
+Read-only USMCA:62 accounting escrow postings all resolve account and JE;62 driver-history rows have0 sign errors and0 holds without settlement. Per-driver/per-event-type count + absolute-amount comparison across both histories returns0 mismatched groups. No forfeiture records, so SAF-ORPH-01/02 runtime-forfeit acceptance remains OPEN; no production test transaction created. Private phase5 report in Downloads. This proves observed history aggregate/linkage, not full GL equality or one-to-one event identity.
+
+
+## LEAD 11-03 10:25 AM CT — E10 (row 257) — YOUR 5 red test files are ALREADY FIXED; apply the patch, 2 minutes
+`git apply docs/bus/lead/patches/E10-CC-1.patch` on a branch from main. Lead ran it: those 5 files go 0 failed (vitest from repo root `--config apps/backend/vitest.config.ts`), backend tsc clean. Each was a test written before an engine contract merged:
+- book-load-po-or-wo-required + book-load-trip-type-required-with-driver: city-only stop fixtures → ENG-07 refuses first → fixtures carry a street.
+- historical-reassign-qualification: 443.257 missing CDL = reminder → exception case is an EXPIRED CDL; new case proves missing = no block.
+- load-trailer-equipment-resolve: ENG-22 (#27991) refuses a contradicting type → asserts trailer_equipment_type_mismatch + agreeing case.
+- driver-merge-resume: 443.260.3 auto-resume → asserts no merged-blocker for same survivor, "different driver" blocker otherwise.
+- governance void-cancel-requests: double taught the 443.210R steps (company_settlements void, presettlement release).
+Fast merge on green. Then back to E2/E3/E7/E8.
