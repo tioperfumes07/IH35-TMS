@@ -436,6 +436,20 @@ if (!/formatQuantityTable\(row\.days_until_recourse_expiry, 0\)/.test(recourseDa
   fail("CustomerFactoringRecourseReverseSection days must use formatQuantityTable(, 0)");
 }
 
+
+const factoringWires = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(purchaseEscrowTotals\.count, 0\)/.test(factoringWires)) {
+  fail("FactoringHome escrow wire count must use formatQuantityTable(, 0)");
+}
+const coSettleMpg = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
+if (!/formatQuantityTable\(report\.sections\.miles_and_mpg\.mpg, 1\)/.test(coSettleMpg)) {
+  fail("CompanySettlementsPage MPG must use formatQuantityTable(, 1)");
+}
+const awaitingBol = read("apps/frontend/src/pages/dispatch/AwaitingBolInvoicePage.tsx");
+if (!/formatQuantityTable\(queueQ\.data\.count, 0\)/.test(awaitingBol)) {
+  fail("AwaitingBolInvoicePage API count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

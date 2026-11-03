@@ -1,5 +1,6 @@
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load still waiting for its BOL); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
+import { formatQuantityTable } from "../../lib/money";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { listAwaitingBolInvoice, type AwaitingBolInvoiceRow } from "../../api/dispatch";
@@ -115,7 +116,7 @@ export function AwaitingBolInvoicePage() {
       <p className="text-section-header text-gray-500" data-testid="awaiting-bol-invoice-count">
         {rows.length} load{rows.length === 1 ? "" : "s"} waiting for BOL
         {queueQ.data?.count != null && queueQ.data.count !== rows.length
-          ? ` (API count ${queueQ.data.count})`
+          ? ` (API count ${formatQuantityTable(queueQ.data.count, 0)})`
           : ""}
         .
       </p>

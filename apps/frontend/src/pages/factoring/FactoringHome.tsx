@@ -1794,7 +1794,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-escrow-account"
                 tableTestId="factoring-escrow-account-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   escrow_reserve_cents: fmtCents(purchaseEscrowTotals.escrow),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
@@ -1898,7 +1898,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-cash-reserve"
                 tableTestId="factoring-cash-reserve-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   cash_reserve_cents: fmtCents(purchaseEscrowTotals.cash),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
