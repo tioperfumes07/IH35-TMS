@@ -170,7 +170,7 @@ function StopsDesignCards({ data }: { data: StopsRecordResponse }) {
               <div className="ldt-row" data-testid="stops-no-odometer" style={{ gridTemplateColumns: "72px 14px 1fr" }}>
                 <span className="ldt-k ldt-muted">{DASH}</span>
                 <span aria-hidden="true" style={{ display: "inline-block", width: 9, height: 9, borderRadius: 9, marginTop: 4, background: "var(--ldt-rule)" }} />
-                <span className="ldt-muted">No odometer captured — real driven miles unavailable for this load ({geofence_event_count} fence events · {geocoded} of {stops.length} stops geocoded)</span>
+                <span className="ldt-muted">No odometer captured — real driven miles unavailable for this load ({formatQuantityTable(geofence_event_count, 0)} fence events · {formatQuantityTable(geocoded, 0)} of {formatQuantityTable(stops.length, 0)} stops geocoded)</span>
               </div>
             ) : null}
           </div>

@@ -25,6 +25,7 @@ import { getDownloadUrl } from "../../../api/docs";
 import { statusOptions } from "../../../lib/statusListParams";
 import "../../../design/ih35-design-tokens.css";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 const CATEGORY_LABELS: Record<string, string> = {
   employment: "Employment",
@@ -323,7 +324,7 @@ export function LegalContractInstancesPage() {
             <section key={sectionKey} className="space-y-1" data-testid={`legal-contracts-category-${sectionKey}`}>
               {categorySections.length > 1 || sectionKey !== "all" ? (
                 <h2 className="ih-hd">
-                  {label} <span className="font-normal normal-case text-gray-500">({sectionRows.length})</span>
+                  {label} <span className="font-normal normal-case text-gray-500">({formatQuantityTable(sectionRows.length, 0)})</span>
                 </h2>
               ) : null}
             <ParityTable

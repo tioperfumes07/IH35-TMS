@@ -4,6 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsd } from "../../lib/money";
 import { StatusBadge } from "../layout/StatusBadge";
 import { ListErrorState } from "../ListErrorState";
+import { formatQuantityTable } from "../../lib/money";
 
 /**
  * DISP-F6445 — LINK-F5171 group (b): `mdata.customers` quality events carry a real
@@ -50,7 +51,7 @@ export function LoadQualityEventsReverseSection({
       <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-reverse-quality-events">
         <h3 className="text-xs font-semibold text-[#0F1219]">
           Quality Events
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
+          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({formatQuantityTable(rows.length, 0)})</span> : null}
         </h3>
         {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
         {query.isError ? (
