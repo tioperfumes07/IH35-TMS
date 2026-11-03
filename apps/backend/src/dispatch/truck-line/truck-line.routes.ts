@@ -15,7 +15,9 @@
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
+import { currentAuthUser } from "../../accounting/shared.js";
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
+import { withCurrentUser } from "../../auth/db.js";
 import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
 import { canonicalDispatchWorkWhereClause } from "../canonical-active-load-set.js";
 import { assertCanonicalSubset, DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
@@ -135,7 +137,10 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const { operating_company_id } = parsed.data;
 
-    const payload = await withCompanyScope(user.uuid, operating_company_id, async (client) => {
+    // Row 250 (D074): ONE pool checkout (membership + company GUC on the same client). withCompanyScope
+    // checked membership on a second, separate checkout first.
+    const payload = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, operating_company_id);
       const reasonsTableRes = await client.query(
         `SELECT to_regclass('catalogs.load_exception_reasons') IS NOT NULL AS ok`
       );
@@ -214,12 +219,16 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           : ""}
         LEFT JOIN telematics.vehicle_latest_position p
           ON p.unit_id = u.id AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+        -- Row 250 (D074): the "no cached city" gate sits INSIDE the lateral (One-Time Filter). As a join-level
+        -- ON gate Postgres still ran the subquery for every row and discarded it (measured on prod: 16 loops,
+        -- 590k buffers, 4,349 ms). Same company key as the cache join, read from the unit.
         LEFT JOIN LATERAL (
           SELECT g.city, g.state, g.formatted_location FROM telematics.vehicle_locations g
-          WHERE g.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+          WHERE p.city IS NULL AND p.state IS NULL
+            AND g.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
             AND g.unit_id = u.id AND (g.city IS NOT NULL OR g.state IS NOT NULL)
           ORDER BY g.captured_at DESC LIMIT 1
-        ) loc ON (p.city IS NULL AND p.state IS NULL)
+        ) loc ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.assigned_unit_id IS NOT NULL
@@ -234,7 +243,8 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         // row per free HOS driver whose last truck happened to be this unit).
         client.query(
         `
-        WITH latest_hos AS (
+        -- Row 250 (D074): MATERIALIZED — inlined, this CTE re-ran once per unit (13 loops x 3,705 rows on prod).
+        WITH latest_hos AS MATERIALIZED (
           SELECT DISTINCT ON (driver_uuid) driver_uuid, driving_hours_remaining, cycle_hours_remaining, polled_at
           FROM samsara.hos_snapshots
           WHERE operating_company_id = $1::uuid

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams } from "../../../api/mdata";
 import { listAllLoads } from "../../../api/loads";
-import { listUnitsWithoutLoad } from "../../../api/dispatch";
+import { listUnitsWithoutLoad, unitsWithoutLoadQueryKey } from "../../../api/dispatch";
 import { driverLoadsFromBoard, rankDriverOptions } from "./book-load-v4/driverPickerRanking";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -76,7 +76,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     staleTime: 60_000,
   });
   const freeUnitsQuery = useQuery({
-    queryKey: ["dispatch", "units-without-load", operatingCompanyId],
+    queryKey: unitsWithoutLoadQueryKey(operatingCompanyId),
     queryFn: () => listUnitsWithoutLoad(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,

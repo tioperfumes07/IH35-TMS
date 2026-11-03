@@ -17,6 +17,7 @@ import { formatPersonName } from "../../lib/formatPersonName";
 import { formatCompanyName } from "../../lib/formatCompanyName";
 import { useDispatchLoad, listAllLoads, updateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
+import { unitsWithoutLoadQueryKey } from "../../api/dispatch";
 import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
@@ -608,7 +609,7 @@ export function LoadCostsBoardPage() {
   // computed data Dispatch Home's "Units Needing Return" / round-trip pairing already produce --
   // never a second copy of the hours-since-delivery math or the NB/TR/SB pairing logic.
   const unitsWithoutLoadQuery = useQuery({
-    queryKey: ["load-costs-board", "units-without-load", companyId],
+    queryKey: unitsWithoutLoadQueryKey(companyId),
     queryFn: () => listUnitsWithoutLoad(companyId),
     enabled: Boolean(companyId),
   });
