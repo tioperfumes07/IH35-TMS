@@ -197,3 +197,6 @@ Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your
 
 ## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
 Lead builders are on: 198 (expense-category-map speed), 203 (Load Costs settlement link labels), 222 (drift alert account names), 79 80 81 82 83 84 (+14 if same work) (the five reports + catalog). Skip them. Keep going on 22 110 117 124 125 126 137 146 23 24 78 85 87 91 94 97 98 152 179.
+
+## ROUND 7.30f — LEAD — 11-03-2026 6:20 PM CT — LEAD TOOK 78 23 85 24 98; 198 203 222 MERGED
+Lead builders are on 78 (Load history board), 23 (Bill Payments shows escrow), 85 (3 delivered loads never accrued), 24 (empty closed settlements), 98 (unnumbered settlements). Skip them. 198 / 203 / 222 merged in #28536 (Lead) — verify live after deploy only. Keep going: 152 (cash pulse, you are on it), 22, 91, 94, 97, 110, 117, 124, 125, 126, 137, 179.
