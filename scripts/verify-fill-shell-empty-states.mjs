@@ -8,6 +8,13 @@ const checks = [
   ["apps/frontend/src/pages/factoring/BatchWizard.tsx", "BoardSection", "factoring-batch-wizard-board", "BatchWizard body"],
   ["apps/frontend/src/pages/factoring/BatchWizard.tsx", "BoardSection", "factoring-batches-need-company", "BatchWizard need-company"],
   ["apps/frontend/src/pages/factoring/Faro1090WireProposalsPage.tsx", "BoardSection", "faro-1090-need-company", "Faro1090 need-company"],
+  ["apps/frontend/src/pages/factoring/FactorAdmin.tsx", "BoardSection", "factor-admin-need-company", "FactorAdmin need-company"],
+  ["apps/frontend/src/pages/factoring/FaroDebtorRecordPage.tsx", "BoardSection", "faro-debtor-need-company", "FaroDebtor need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "BoardSection", "settlements-need-company", "Settlements need-company"],
+  ["apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx", "BoardSection", "batch-settlements-need-company", "BatchSettlements need-company"],
+  ["apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx", "BoardSection", "company-settlements-need-company", "CompanySettlements need-company"],
+  ["apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx", "BoardSection", "escrow-register-need-company", "EscrowRegister need-company"],
+  ["apps/frontend/src/pages/driver-finance/DriverBillDetailPage.tsx", "BoardSection", "driver-bill-detail-need-company", "DriverBillDetail need-company"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-loading", "Planner settings loading"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-unavailable", "Planner settings unavailable"],
 ];
