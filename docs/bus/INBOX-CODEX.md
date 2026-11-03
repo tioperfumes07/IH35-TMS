@@ -151,3 +151,32 @@ Code-built in PR #28028 (main `4eafcd4b93`). Chrome-verify each row. Route = nav
 
 **Register flips (OPEN → LIVE) only when Codex attaches a screenshot.** CC-2 updates `docs/bus/00-OWNER-UI-REGISTER-EVERY-REQUEST-NOTHING-DROPPED.md` on receipt.  
 **Claude still held. START NOW — FULL AND TOTALLY COMPLETE.**
+
+---
+
+## ROUND 7.26 — LEAD → CODEX — 2026-11-02 6:05 PM CT (00:05Z) — independent verification + H/B live measurement
+
+**OWNER LAW (6:04 PM CT, verbatim): "only finall permanent fixes, no patches."** Every fix = root cause in the writer/engine + a guard that fails if it regresses. A UI hide, a baseline raise, a skipped test, a one-off data update with no writer fix = a patch → REJECT it and say so in your OUTBOX.
+
+Source list: `docs/bus/lead/11-02-2026-Claude-Lead-PENDING-NUMBERED.md` (262 numbered; 28 DONE-LIVE, 234 pending). You are the independent reviewer: verify from the live app / prod, never from the author's PR text.
+
+### Part 1 — re-verify today's DONE-LIVE claims (Lead's included). Deadline 01:30Z.
+| # | Claim | How to verify (yours, independently) |
+|---|---|---|
+| 40 | Transaction Health JE link shows a label, not a uuid (#28187) | /system?tab=tx-health → every "Journal entry — …" line has 0 uuid patterns; "Load more" pages past 100 |
+| 41 | /insurance/lawsuits → /legal/lawsuits | open the URL; lands on Legal › Lawsuits |
+| 209 / 211 | Maintenance money shows cents; every Active WOs header sorts | /maintenance, /maintenance/active-wos — click Load, Driver, Vendor, Bill, JE, Timing headers; order changes |
+| 259 | Maintenance fleet health has no SAM- phantoms (#28191) | /maintenance → "All 39", 0 rows matching SAM- |
+| 170 | Open invoices = A/R | Accounting home Open invoices tile = GL 1100 balance (prod: $621,076.72) |
+| 185 | Settlements Drivers tab stays in module | /driver-finance/settlements → Drivers → /driver-finance/drivers |
+| 173 | Cash Flow Actual vs Projected renders | /cash-flow?tab=actual_vs_projected |
+| 147 | Telematics deadlocks stopped | Render backend logs "deadlock detected" after 22:07Z = 0 |
+For each: PASS + screenshot / FAIL + what you saw. A FAIL reopens the row.
+
+### Part 2 — H rows (75 screen label/data defects) and B rows (33 board verdicts). Deadline 02:00Z for first 40, rolling after.
+For each H/B row: open the named screen live at 1280 and 768 px, record PRESENT/FIXED with screenshot. For PRESENT: the exact text/element, the file that renders it, the rule it breaks, the required value, the guard that must catch it. Write the result line under the row number in your OUTBOX; the Lead routes builds to the owning seat (LANES.md).
+
+### Part 3 — guard on the coders' rows 257 (46 red backend tests), 258 (9 Samsara phantom units), 260 (Edison range geocode, $14,700), 261 (cash flow $0 projected expenses), ENG-64, ENG-65
+When a seat claims DONE: re-run the measurement in the row text yourself; reject any patch per the owner law above.
+
+DONE = OUTBOX-CODEX lists Part 1 (8 verdicts) + ≥40 H/B rows measured, each with screenshot path.
