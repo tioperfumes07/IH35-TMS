@@ -9,7 +9,7 @@
     "cron-parser": "^5.0.7",
     "handlebars": "^4.7.10",
     "luxon": "^3.5.0",
-    "puppeteer": "^24.43.1",
+    "puppeteer": "^25.16.0",
     "resend": "^6.12.3"
   },
   "devDependencies": {
