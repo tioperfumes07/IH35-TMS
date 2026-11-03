@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatQuantityTable } from "../../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { legalMattersApi, type LegalDeadlineAlert } from "../../../api/legal-matters";
@@ -83,10 +84,10 @@ export function LegalDeadlineAlertsPage() {
       ) : (
         <>
           <div className="grid gap-2 md:grid-cols-4">
-            <DrillKpiCard size="md" label="Open alerts" value={summary?.total ?? 0} to="/legal/alerts" />
-            <DrillKpiCard size="md" label="Critical" value={summary?.critical ?? 0} to="/legal/alerts" />
-            <DrillKpiCard size="md" label="Warning" value={summary?.warning ?? 0} to="/legal/alerts" />
-            <DrillKpiCard size="md" label="Overdue" value={summary?.overdue ?? 0} to="/legal/alerts" />
+            <DrillKpiCard size="md" label="Open alerts" value={formatQuantityTable(summary?.total ?? 0, 0)} to="/legal/alerts" />
+            <DrillKpiCard size="md" label="Critical" value={formatQuantityTable(summary?.critical ?? 0, 0)} to="/legal/alerts" />
+            <DrillKpiCard size="md" label="Warning" value={formatQuantityTable(summary?.warning ?? 0, 0)} to="/legal/alerts" />
+            <DrillKpiCard size="md" label="Overdue" value={formatQuantityTable(summary?.overdue ?? 0, 0)} to="/legal/alerts" />
           </div>
 
           <div className="flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-2">

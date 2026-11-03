@@ -1,3 +1,18 @@
+## OUTBOX (11-03-2026 ~9:40 PM CT) — TripPairing KPI house quantity
+- **PRIOR:** #28374 Legal alerts KPI · #28373 Legal U12.
+- **THIS:** TripPairingBoardPage board KPIs → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:30 PM CT) — Legal alerts KPI house quantity
+- **PRIOR:** #28373 Legal U12 MultiSelect · #28372 notes per-consumer.
+- **THIS:** LegalDeadlineAlertsPage KPI counts → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~9:15 PM CT) — Legal matters severity/type U12 MultiSelect
+- **PRIOR:** #28372 notes per-consumer · #28369 share/MTD qty.
+- **THIS:** LegalMattersListPage severity + type → MultiSelectDropdown (U12; Codex batch51 Legal UI). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:00 PM CT) — notes per-consumer plants + uncleared wires qty
 - **PRIOR:** #28369 settlement share/MTD · #28367 BreakEven/fleet/factor.
 - **THIS:** Codex batch52 — notes guard requires both CustomerNotesTab onEdit mounts (+ per-consumer plants). FactoringHomeBoard unclearedWireCount → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

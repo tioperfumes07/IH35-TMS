@@ -483,6 +483,18 @@ if (!/formatQuantityTable\(unclearedWireCount, 0\)/.test(factorUncleared)) {
   fail("FactoringHomeBoard unclearedWireCount must use formatQuantityTable(, 0)");
 }
 
+
+const legalAlertsKpi = read("apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx");
+if ((legalAlertsKpi.match(/formatQuantityTable\(summary\?\.(total|critical|warning|overdue) \?\? 0, 0\)/g) || []).length < 4) {
+  fail("LegalDeadlineAlertsPage KPIs must use formatQuantityTable(, 0)");
+}
+
+
+const tripPair = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
+if ((tripPair.match(/formatQuantityTable\(data\.kpis\.[a-z0-9_]+, 0\)/g) || []).length < 6) {
+  fail("TripPairingBoardPage KPIs must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
