@@ -1,3 +1,13 @@
+## OUTBOX (11-03-2026 ~1:30 AM CT) — factoring/remint/fuel count house quantity
+- **PRIOR:** #28413 reverse/factoring/settlements qty.
+- **THIS:** FactoringHome footers · SubmitToFactor missing-docs/feed-gate · PaymentsToYou · DriverBillRemint · Fuel import dead-letters · CompanySettlements downtime · LoanRecovery · CompanyDriverTab · TourPreSettlement close → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:15 AM CT) — reverse/factoring/settlements count house quantity
+- **PRIOR:** #28412 kanban/presettle/home/system qty.
+- **THIS:** TourLegs · reverse sections · TruckPlanner · SubmissionQueue · RepurchaseDue · SettlementsHome weeks · BatchSettlements · FleetCovered · LeaseToOwn · LegalContracts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. batch61 shipped #28410.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~1:00 AM CT) — kanban/presettle/home/system qty + batch61 tip
 - **PRIOR:** #28410 batch61 equipment hooks + real dimension.
 - **THIS:** DispatchKanban column badges · TourPreSettlement counts · Owner/DefaultHome cash advances · EngineStatus · Tx Health KPIs · SettlementLoads legs · ToursRegister live → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.

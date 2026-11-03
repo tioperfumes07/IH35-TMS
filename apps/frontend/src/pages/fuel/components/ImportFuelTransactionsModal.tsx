@@ -15,6 +15,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
 import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 import { SelectCombobox } from "../../../components/Combobox";
+import { formatQuantityTable } from "../../../lib/money";
 
 type ImportKind = "fleet" | "wex";
 
@@ -225,7 +226,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
               {result.dead_letters} row{result.dead_letters === 1 ? "" : "s"} rejected — correct the source file and import it again.
             </div>
             <div>
-              Showing {result.dead_letter_details.length} of {result.dead_letters} rejected rows.
+              Showing {formatQuantityTable(result.dead_letter_details.length, 0)} of {formatQuantityTable(result.dead_letters, 0)} rejected rows.
             </div>
             <ul className="max-h-40 list-disc space-y-1 overflow-y-auto pl-5">
               {result.dead_letter_details.map((detail, index) => (

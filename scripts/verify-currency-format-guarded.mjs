@@ -705,6 +705,24 @@ if (!/formatQuantityTable\(days\.length, 0\)/.test(truckPlannerQty)) {
   fail("TruckPlanner selected days must use formatQuantityTable(, 0)");
 }
 
+
+const factoringHomeQty = read("apps/frontend/src/pages/factoring/FactoringHome.tsx");
+if (!/formatQuantityTable\(fundsDueRows\.length, 0\)/.test(factoringHomeQty) || !/formatQuantityTable\(agingRows\.length, 0\)/.test(factoringHomeQty)) {
+  fail("FactoringHome footer counts must use formatQuantityTable(, 0)");
+}
+const submitFactorQty = read("apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx");
+if (!/formatQuantityTable\(missingDocsRows\.length, 0\)/.test(submitFactorQty)) {
+  fail("SubmitToFactorTab missing-docs counts must use formatQuantityTable(, 0)");
+}
+const remintQty = read("apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(remintQty)) {
+  fail("DriverBillRemintScreen load counts must use formatQuantityTable(, 0)");
+}
+const fuelImportQty = read("apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx");
+if (!/formatQuantityTable\(result\.dead_letter_details\.length, 0\)/.test(fuelImportQty)) {
+  fail("ImportFuelTransactionsModal dead-letter counts must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
