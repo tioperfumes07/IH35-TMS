@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~11:35 PM CT)
+
+## CURRENT — Cursor house money wave 2 (drivers/dispatch/CRM)
+EarningsTab · FinesDeductions · LoadQuality · LoadStops lumper · TourSettlement rate/mi · CustomerDetail quality/invoice/FSC → lib/money. Guard extended. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~11:15 PM CT)
 
 ## CURRENT — Cursor house money wave (dispatch/fuel/insurance/DF)

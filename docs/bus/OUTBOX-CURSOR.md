@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~11:35 PM CT) — Cursor house money wave 2 (drivers/dispatch/CRM)
+- **PRIOR:** #28228 FuelAssignment/BookLoad/SettlementProfitability/formatMoneyCents/InsuranceHome/useLiveDebt.
+- **THIS:** EarningsTab · FinesDeductionsCard · LoadQualityEvents · LoadStopsRecord lumper · TourSettlement rate/perMile · CustomerDetail quality/invoice/FSC → lib/money. Extended verify-currency-format-guarded.
+- **ENG-21 BLOCKED:** rate con not on file for 13699 — no Edit Load.
+- **NEXT:** more Cursor engines; ENG-22 AUTH apply; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~11:15 PM CT) — Cursor house money (dispatch/fuel/insurance/DF)
 - **PRIOR:** #28192–#28220 SelectCombobox baseline 2 · ENG-21 BLOCKED tip (#28222).
 - **THIS:** FuelAssignmentPopup · BookLoadModalV4 · SettlementProfitabilityCard · dispatch formatMoneyCents/Dollars USD → formatUsdCents/formatUsd (MXN Intl kept) · InsuranceHomeBoard unify lib/money · useLiveDebt displayDebt → formatUsd. Extended verify-currency-format-guarded + verify-fuel-assignment-popup.

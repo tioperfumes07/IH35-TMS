@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listCustomerQualityEvents, type CustomerQualityEvent } from "../../api/mdata";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { StatusBadge } from "../layout/StatusBadge";
 import { ListErrorState } from "../ListErrorState";
 
@@ -69,7 +70,7 @@ export function LoadQualityEventsReverseSection({
                 <span className="text-xs uppercase tracking-wide text-gray-600">{event.event_type.replaceAll("_", " ")}</span>
                 <div className={event.voided_at ? "text-gray-500 line-through" : ""}>{event.summary}</div>
                 {event.dollar_impact_amount != null ? (
-                  <span className="text-xs text-gray-600">${Number(event.dollar_impact_amount).toFixed(2)}</span>
+                  <span className="text-xs text-gray-600">{formatUsd(Number(event.dollar_impact_amount))}</span>
                 ) : null}
                 {event.voided_at ? <span className="ml-2 text-xs text-gray-500">Voided</span> : null}
               </li>

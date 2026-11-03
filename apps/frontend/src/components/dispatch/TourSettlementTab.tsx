@@ -5,7 +5,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
-import { formatQuantityTable } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../lib/money";
 
 // LDT-6 · Settlement (render § Settlement): while the tour is open — one sentence + the shape it will take;
 // when closed — Driver settlement (loaded × rate · empty × rate · gross · escrow · recoveries · net) and
@@ -25,8 +25,8 @@ const periodLabel = (t: TourReadout["tour"]): string | null => {
 };
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
 const miles = (m: number | null | undefined) => (m == null ? DASH : formatQuantityTable(m));
-const rate = (c: number | null | undefined) => (c == null ? DASH : `$${(c / 100).toFixed(4)}`);
-const perMile = (c: number | null | undefined) => (c == null ? "—/mi" : `$${(c / 100).toFixed(2)}/mi`);
+const rate = (c: number | null | undefined) => (c == null ? DASH : formatUsdRateTable(c / 100));
+const perMile = (c: number | null | undefined) => (c == null ? "—/mi" : `${formatUsd(c / 100)}/mi`);
 
 /** Keyed by a load (drawer) OR by a settlement (Load costs board → Settlement tab, LDT-TABS). Same readout either way. */
 export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
