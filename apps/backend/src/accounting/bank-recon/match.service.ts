@@ -832,7 +832,7 @@ async function fetchLedgerCandidates(
             FROM open_fp fp
             JOIN (SELECT purchase_date, count(*) AS n, sum(net_to_company_cents) AS total FROM open_fp GROUP BY purchase_date) w
               ON w.purchase_date = fp.purchase_date
-            LEFT JOIN mdata.vendors v ON v.id = fp.factoring_company_vendor_id
+            LEFT JOIN mdata.vendors v ON v.id = fp.factoring_company_vendor_id AND v.operating_company_id = $1::uuid
            WHERE ($4::text IS NULL OR lower(COALESCE(fp.display_id, '') || ' faro purchase ' || COALESCE(v.vendor_name, '')) LIKE $4)
            LIMIT $5
         `,
@@ -916,7 +916,7 @@ async function fetchLedgerCandidates(
                  COALESCE(NULLIF(bp.check_number, ''), bp.reference_number)::text AS reference,
                  bp.memo::text AS description, NULL::int AS open_balance_cents
             FROM accounting.bill_payments bp
-            LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id
+            LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id AND v.operating_company_id = bp.operating_company_id
            WHERE bp.operating_company_id = $1::uuid
              AND bp.payment_date BETWEEN $2::date AND $3::date
              AND bp.revoked_at IS NULL
@@ -966,7 +966,7 @@ async function fetchLedgerCandidates(
             (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open_balance_cents,
             COALESCE(NULLIF(b.bill_number, ''), b.display_id, b.memo)::text AS memo
           FROM accounting.bills b
-          LEFT JOIN mdata.vendors v ON v.id::text = COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id)
+          LEFT JOIN mdata.vendors v ON v.id::text = COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id) AND v.operating_company_id = b.operating_company_id
           WHERE b.operating_company_id = $1::uuid
             AND b.bill_date BETWEEN $2::date AND $4::date
             AND b.revoked_at IS NULL
@@ -998,7 +998,7 @@ async function fetchLedgerCandidates(
             e.memo::text AS description,
             NULL::int AS open_balance_cents
           FROM accounting.expenses e
-          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid
             AND e.transaction_date BETWEEN $2::date AND $3::date
             AND e.is_active = true
