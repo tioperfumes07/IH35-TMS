@@ -8187,3 +8187,11 @@ rehearsal: 2026-11-02 ~12:10 PM CT Cursor dry run on prod — ROLLED BACK. befor
 result: 2026-11-02 ~12:12 PM CT Cursor APPLY COMMITTED on prod. non_owned_trailer_id=70a1fe5f-7e90-4185-83e7-08ae1e2711b7; trailer_source=customer; books identical true. verify-loads-trailer-source-recorded PASS — 194 USMCA live loads, trailer_source NULL 0, customer loads without trailer row 0.
 expires_at: 2026-11-09T00:00:00Z
 status: CLOSED
+
+## AUTH-474
+issued_at: 2026-11-03T20:55:00Z
+issued_by: CC-1, delegated by LEAD E3 directive (INBOX-CC-1 2026-11-03) + owner standing auth ("you have full permissions and authorization … we need to complete the full engines", AUTH-473 quotes, 2026-11-02 11:25 AM CT)
+scope: USMCA fuel.fuel_transactions + accounting.expenses — 2 manual duplicate rows only: c2ef82c1-300c-4410-8595-874959c1937b (fuel) + 9b3feabb-d716-4051-bc4a-e314d3080e77 (expense) and dbf57397-1be3-43b5-a167-f71798c617d2 (fuel) + 66903d9b-a356-4528-94c9-cf190a6f5eb0 (expense). Each is a manual receipt entry that duplicates a Dreamline/Relay import row for the same fill. The import rows (5e4559ab / 5198a23c) are kept. No money creation; voids create reversing JEs through executeVoidCancel, net GL effect = 0 for the voided pair's load.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-03-cc1-e3-void-duplicate-fill-pairs.mts --apply --auth AUTH-474
+expires_at: 2026-11-10T00:00:00Z
+status: OPEN
