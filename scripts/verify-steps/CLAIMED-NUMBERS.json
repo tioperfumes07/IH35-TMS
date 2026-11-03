@@ -17289,5 +17289,10 @@
     "claimed_by": "lead",
     "claimed_at": "2026-11-02",
     "purpose": "verify-orphan-guards-batch-wire-11-02 \u2014 wire 29 guards merged unwired on 11-02 (verify-guard-wired red on main)"
+  },
+  "18941": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-avp-projected-expense-uses-engine (ROW-261) \u2014 AvP projected expense snapshot column exists"
   }
 }
