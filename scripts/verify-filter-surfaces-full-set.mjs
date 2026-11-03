@@ -37,7 +37,7 @@ const SURFACES = [
     // U12: Fuel/Fleet status is MultiSelect → apiStatus(status) maps []/2→all, 1→scalar for the indexed is_active API.
     ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
     ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
-    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/],
+    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
   ].map(([name, file, fetchMust]) => ({
     name,
     file,

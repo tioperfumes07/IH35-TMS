@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:00 PM CT) — U12 Maintenance catalog status MultiSelect
+- **PRIOR:** #28586 Fuel+Fleet catalog U12.
+- **THIS:** MaintenanceCatalogListPage Active/Inactive → MultiSelectDropdown + apiStatus; filter-surfaces retarget; U12 register residual → Safety CatalogStatusFilterCombobox.
+- **NEXT:** Safety catalog shared Combobox → MultiSelect; live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:55 PM CT) — U12 Fuel+Fleet catalog status MultiSelect + bus-diet
 - **PRIOR:** #28584 DriversTable U12.
 - **THIS:** FuelCatalogListPage + FleetCatalogListPage Active/Inactive → MultiSelectDropdown (API maps 0/2→all, 1→scalar); Show voided syncs both. Also archived older OUTBOX tips under post-28584-diet.
