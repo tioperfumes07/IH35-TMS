@@ -65,8 +65,11 @@ describe("equipment-type-profitability — dead bills excluded from direct cost"
     expect(res.statusCode).toBe(200);
     const sql = capturedSql.find((s) => s.includes("driver_finance.driver_bills"));
     expect(sql, "expected equipment-type bills CTE SQL").toBeTruthy();
-    expect(sql!).toMatch(/voided_at\s+IS\s+NULL/i);
-    expect(sql!).toMatch(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/i);
+    const billsCte = (sql!.match(/bills\s+AS\s*\([\s\S]*?\)\s*,\s*fuel\s+AS/i) || [])[0] ?? "";
+    expect(billsCte, "expected bills CTE slice").toMatch(/bills\s+AS/i);
+    // Codex batch57 — each predicate must live on the bills alias, not only loads.voided_at.
+    expect(billsCte).toMatch(/\bdb\.voided_at\s+IS\s+NULL/i);
+    expect(billsCte).toMatch(/\bdb\.status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/i);
   });
 
   it("same-load live+void fixture: margin uses only live bill + fuel (void gross ignored)", async () => {

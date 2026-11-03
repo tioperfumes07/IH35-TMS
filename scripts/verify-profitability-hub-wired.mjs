@@ -62,8 +62,13 @@ export function verdict(files) {
     problems.push("KpiStrip must read equipment-type engine when equipment filter is set");
   }
   // Codex batch54 — void/voided driver bills must not inflate By Type direct cost.
-  if (!/voided_at\s+IS\s+NULL/.test(files.route) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(files.route)) {
-    problems.push("equipment-type-profitability bills CTE must exclude void/voided driver bills");
+  // Codex batch57 — plant each bills-CTE predicate independently (loads.voided_at must not mask bills).
+  const billsCte = (files.route.match(/bills\s+AS\s*\([\s\S]*?\)\s*,\s*fuel\s+AS/i) || [])[0] || "";
+  if (!/\bdb\.voided_at\s+IS\s+NULL/.test(billsCte)) {
+    problems.push("equipment-type-profitability bills CTE must require db.voided_at IS NULL");
+  }
+  if (!/\bdb\.status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(billsCte)) {
+    problems.push("equipment-type-profitability bills CTE must require db.status NOT IN ('void','voided')");
   }
 
   const customerRoute = read("apps/backend/src/reports/customer-profitability.routes.ts");
@@ -81,7 +86,7 @@ if (process.argv.includes("--selftest")) {
   const good = {
     manifest: 'path="/profitability" ProfitabilityHubPage',
     index: "registerEquipmentTypeProfitabilityRoutes(app)",
-    route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')",
+    route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nbills AS (\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')\n),\nfuel AS",
     api: "export async function getEquipmentTypeProfitability",
     lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType",
     customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType",
@@ -93,7 +98,8 @@ if (process.argv.includes("--selftest")) {
     ["clean passes", verdict(good).length === 0],
     ["empty stub fails", verdict({ ...good, lane: "const rows: X[] = []; BoardSection" }).some((p) => p.includes("empty static"))],
     ["missing register fails", verdict({ ...good, index: "" }).some((p) => p.includes("register"))],
-    ["missing dead-bill filter fails", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"' }).some((p) => p.includes("void/voided"))],
+    ["missing dead-bill filter fails", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"\nbills AS (\nSELECT 1\n),\nfuel AS' }).some((p) => p.includes("bills CTE"))],
+    ["loads.voided_at must not mask bills", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"\nbills AS (\nSELECT 1 WHERE l.voided_at IS NULL\n),\nfuel AS' }).some((p) => p.includes("db.voided_at"))],
     ["missing route mount fails", verdict({ ...good, manifest: "" }).some((p) => p.includes("/profitability"))],
     ["missing equipmentType key fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection" }).some((p) => p.includes("equipmentType"))],
   ];

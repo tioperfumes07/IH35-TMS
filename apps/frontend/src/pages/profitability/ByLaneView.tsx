@@ -113,6 +113,11 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
       testId="profitability-by-lane-board"
     >
       <div className="p-4 space-y-3">
+        {filters.equipmentType ? (
+          <p className="text-xs text-[#4B5563]" data-testid="profitability-equipment-scope-note">
+            Equipment filter scopes By Type + KPIs on the same population. This tab has no equipment dimension yet — clear Equipment or open By Type for the filtered aggregate.
+          </p>
+        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load lane profitability")}
@@ -121,16 +126,14 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
         ) : null}
         <ParityTable<LaneProfitabilityLane>
           columns={columns}
-          rows={filters.equipmentType ? [] : (query.data?.lanes ?? [])}
+          rows={query.data?.lanes ?? []}
           rowKey={laneKey}
           storageKey="profitability-by-lane"
           tableTestId="profitability-by-lane-table"
           emptyText={
             query.isLoading
               ? "Loading lane profitability…"
-              : filters.equipmentType
-                ? "Lane view has no equipment dimension — clear Equipment or open By Type."
-                : "No lanes in this period — delivered loads with origin/destination will appear here."
+              : "No lanes in this period — delivered loads with origin/destination will appear here."
           }
         />
       </div>

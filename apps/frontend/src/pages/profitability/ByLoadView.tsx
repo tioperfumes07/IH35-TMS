@@ -142,6 +142,11 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
       viewAllLabel="Full trip P&L →"
     >
       <div className="p-4 space-y-3">
+        {filters.equipmentType ? (
+          <p className="text-xs text-[#4B5563]" data-testid="profitability-equipment-scope-note">
+            Equipment filter scopes By Type + KPIs on the same population. This tab has no equipment dimension yet — clear Equipment or open By Type for the filtered aggregate.
+          </p>
+        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load trip profitability")}
@@ -150,16 +155,14 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         ) : null}
         <ParityTable<TripProfitabilityRow>
           columns={columns}
-          rows={filters.equipmentType ? [] : (query.data?.rows ?? [])}
+          rows={query.data?.rows ?? []}
           rowKey={(row) => row.settlement_id}
           storageKey="profitability-by-load"
           tableTestId="profitability-by-load-table"
           emptyText={
             query.isLoading
               ? "Loading trip profitability…"
-              : filters.equipmentType
-                ? "Load view has no equipment dimension — clear Equipment or open By Type."
-                : "No settlements with trip profitability in this period."
+              : "No settlements with trip profitability in this period."
           }
         />
       </div>

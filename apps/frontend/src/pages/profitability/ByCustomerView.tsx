@@ -108,6 +108,11 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
       viewAllLabel="Full report →"
     >
       <div className="p-4 space-y-3">
+        {filters.equipmentType ? (
+          <p className="text-xs text-[#4B5563]" data-testid="profitability-equipment-scope-note">
+            Equipment filter scopes By Type + KPIs on the same population. This tab has no equipment dimension yet — clear Equipment or open By Type for the filtered aggregate.
+          </p>
+        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load customer profitability")}
@@ -116,16 +121,14 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
         ) : null}
         <ParityTable<CustomerProfitabilityRow>
           columns={columns}
-          rows={filters.equipmentType ? [] : (query.data?.by_customer ?? [])}
+          rows={query.data?.by_customer ?? []}
           rowKey={(row) => row.customer_id}
           storageKey="profitability-by-customer"
           tableTestId="profitability-by-customer-table"
           emptyText={
             query.isLoading
               ? "Loading customer profitability…"
-              : filters.equipmentType
-                ? "Customer view has no equipment dimension — clear Equipment or open By Type."
-                : "No customers with profitability in this period."
+              : "No customers with profitability in this period."
           }
         />
       </div>
