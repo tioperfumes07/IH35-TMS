@@ -1,6 +1,6 @@
 ## OUTBOX (11-03-2026 ~9:30 AM CT) — ENG-21 CLOSED (owner skip rate-con) + house money wave 7
 - **ENG-21 DONE-LIVE:** load 13699 delivery already Copamex / 195 S Euclid Ave / Bradley IL 60915 (street+ZIP). Rate-con missing — **OWNER 11-03: skip rate-con, OK**. No Edit Load. ENGINE-REGISTER LEAD-ENG-21 → DONE-LIVE.
-- **THIS:** MarkDisbursedModal bank labels · BankingHome inspect Balance · ManualJEList Debits/Credits → house formatters. Guard extended.
+- **THIS:** MarkDisbursedModal bank labels · ManualJEList Debits/Credits → house formatters. Guard extended. (BankingHome Balance left for CC-2 seat surface.)
 - **NEXT:** more Cursor engines; ENG-22 residual cancelled apply waits AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
 
 ## OUTBOX (11-02-2026 ~12:45 AM CT) — Load Costs rate selftest plant (formatUsdRateTable)

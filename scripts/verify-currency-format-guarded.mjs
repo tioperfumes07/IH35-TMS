@@ -144,10 +144,6 @@ const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisb
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");
 }
-const bankingHome = read("apps/frontend/src/pages/banking/BankingHome.tsx");
-if (!/formatUsd\(Number\(tile\?\.current_balance/.test(bankingHome)) {
-  fail("BankingHome inspect Balance must use formatUsd");
-}
 const manualJe = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
 if (!/formatUsdCents\(entry\.debit_total_cents/.test(manualJe) || !/formatUsdCents\(entry\.credit_total_cents/.test(manualJe)) {
   fail("ManualJEListPage Debits/Credits must use formatUsdCents");
