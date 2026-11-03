@@ -24,7 +24,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getTripProfitability({
         operating_company_id: companyId,
@@ -150,14 +150,16 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         ) : null}
         <ParityTable<TripProfitabilityRow>
           columns={columns}
-          rows={query.data?.rows ?? []}
+          rows={filters.equipmentType ? [] : (query.data?.rows ?? [])}
           rowKey={(row) => row.settlement_id}
           storageKey="profitability-by-load"
           tableTestId="profitability-by-load-table"
           emptyText={
             query.isLoading
               ? "Loading trip profitability…"
-              : "No settlements in this period."
+              : filters.equipmentType
+                ? "Load view has no equipment dimension — clear Equipment or open By Type."
+                : "No settlements with trip profitability in this period."
           }
         />
       </div>

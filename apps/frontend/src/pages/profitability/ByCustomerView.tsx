@@ -22,7 +22,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getCustomerProfitability({
         operating_company_id: companyId,
@@ -116,14 +116,16 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
         ) : null}
         <ParityTable<CustomerProfitabilityRow>
           columns={columns}
-          rows={query.data?.by_customer ?? []}
+          rows={filters.equipmentType ? [] : (query.data?.by_customer ?? [])}
           rowKey={(row) => row.customer_id}
           storageKey="profitability-by-customer"
           tableTestId="profitability-by-customer-table"
           emptyText={
             query.isLoading
               ? "Loading customer profitability…"
-              : "No customers with loads in this period."
+              : filters.equipmentType
+                ? "Customer view has no equipment dimension — clear Equipment or open By Type."
+                : "No customers with profitability in this period."
           }
         />
       </div>

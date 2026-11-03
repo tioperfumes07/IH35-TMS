@@ -16,6 +16,9 @@ function read(rel) {
 
 export function verdict(files) {
   const problems = [];
+  if (!files.manifest.includes('path="/profitability"') || !files.manifest.includes("ProfitabilityHubPage")) {
+    problems.push("routes/manifest.tsx must mount ProfitabilityHubPage at /profitability");
+  }
   if (!files.index.includes("registerEquipmentTypeProfitabilityRoutes")) {
     problems.push("reports/index.ts must register equipment-type-profitability routes");
   }
@@ -41,6 +44,23 @@ export function verdict(files) {
   if (files.kpi.includes("unavailable={NO_FEED}") || files.kpi.includes("Profitability engine feed is not connected")) {
     problems.push("KpiStrip must not keep the unavailable NO_FEED stub");
   }
+  for (const [name, src] of [
+    ["ByLaneView", files.lane],
+    ["ByCustomerView", files.customer],
+    ["ByTypeView", files.type],
+    ["ByLoadView", files.load],
+    ["KpiStrip", files.kpi],
+  ]) {
+    if (!src.includes("filters.equipmentType")) {
+      problems.push(`${name} queryKey/filter must include filters.equipmentType`);
+    }
+  }
+  if (!files.type.includes("matchesEquipmentType")) {
+    problems.push("ByTypeView must apply matchesEquipmentType local filter");
+  }
+  if (!files.kpi.includes("getEquipmentTypeProfitability")) {
+    problems.push("KpiStrip must read equipment-type engine when equipment filter is set");
+  }
   // Codex batch54 — void/voided driver bills must not inflate By Type direct cost.
   if (!/voided_at\s+IS\s+NULL/.test(files.route) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(files.route)) {
     problems.push("equipment-type-profitability bills CTE must exclude void/voided driver bills");
@@ -50,20 +70,23 @@ export function verdict(files) {
 
 if (process.argv.includes("--selftest")) {
   const good = {
+    manifest: 'path="/profitability" ProfitabilityHubPage',
     index: "registerEquipmentTypeProfitabilityRoutes(app)",
     route: "app.get(\"/api/v1/reports/equipment-type-profitability\"\nAND db.voided_at IS NULL\nAND db.status NOT IN ('void', 'voided')",
     api: "export async function getEquipmentTypeProfitability",
-    lane: "getLaneProfitability\nBoardSection",
-    customer: "getCustomerProfitability\nBoardSection",
-    type: "getEquipmentTypeProfitability\nBoardSection",
-    load: "getTripProfitability\nBoardSection",
-    kpi: "getLaneProfitability\nDrillKpiCard",
+    lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType",
+    customer: "getCustomerProfitability\nBoardSection\nfilters.equipmentType",
+    type: "getEquipmentTypeProfitability\nBoardSection\nfilters.equipmentType\nmatchesEquipmentType",
+    load: "getTripProfitability\nBoardSection\nfilters.equipmentType",
+    kpi: "getLaneProfitability\nDrillKpiCard\nfilters.equipmentType\ngetEquipmentTypeProfitability",
   };
   const cases = [
     ["clean passes", verdict(good).length === 0],
     ["empty stub fails", verdict({ ...good, lane: "const rows: X[] = []; BoardSection" }).some((p) => p.includes("empty static"))],
     ["missing register fails", verdict({ ...good, index: "" }).some((p) => p.includes("register"))],
     ["missing dead-bill filter fails", verdict({ ...good, route: 'app.get("/api/v1/reports/equipment-type-profitability"' }).some((p) => p.includes("void/voided"))],
+    ["missing route mount fails", verdict({ ...good, manifest: "" }).some((p) => p.includes("/profitability"))],
+    ["missing equipmentType key fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection" }).some((p) => p.includes("equipmentType"))],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;
@@ -72,6 +95,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 const files = {
+  manifest: read("apps/frontend/src/routes/manifest.tsx"),
   index: read("apps/backend/src/reports/index.ts"),
   route: read("apps/backend/src/reports/equipment-type-profitability.routes.ts"),
   api: read("apps/frontend/src/api/reports.ts"),
