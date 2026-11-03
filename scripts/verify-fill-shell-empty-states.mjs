@@ -144,6 +144,9 @@ const checks = [
   ["apps/frontend/src/pages/legal/reports/LegalReportsLandingPage.tsx", "BoardSection", "legal-reports-need-company", "Legal Reports need-company"],
   ["apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx", "BoardSection", "type-catalog-need-company", "Type Catalog need-company"],
   ["apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", "BoardSection", "insurance-payment-schedule-need-company", "Insurance Payment Schedule need-company"],
+  ["apps/frontend/src/components/driver-inbox/DriverInbox.tsx", "BoardSection", "driver-inbox-need-company", "DriverInbox need-company"],
+  ["apps/frontend/src/components/drivers/EarningsTab.tsx", "BoardSection", "driver-earnings-need-company", "EarningsTab need-company"],
+  ["apps/frontend/src/components/expenses/ExpenseLoadConfirmationsBoard.tsx", "BoardSection", "expense-load-confirmations-need-company", "ExpenseLoadConfirmations need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
