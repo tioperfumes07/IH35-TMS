@@ -15,7 +15,7 @@ import {
   type AmortLoan,
   type AmortRow,
 } from "../../api/financeAmortization";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 // GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
 // unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
@@ -219,7 +219,7 @@ export function AmortizationPage() {
                     <li key={l.id}>
                       <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-[#F7F8FA]" : "hover:bg-[#F7F8FA]"}`}>
                         <span className="font-medium text-[#1F2A44]">{l.name}</span>
-                        <span className="block text-xs text-[#6B7280]">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
+                        <span className="block text-xs text-[#6B7280]">{dollars(l.original_principal_cents)} @ {formatQuantityTable(l.interest_rate_bps / 100, 2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
                       </button>
                     </li>
                   ))}

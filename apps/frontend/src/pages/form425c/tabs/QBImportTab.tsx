@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsd } from "../../../lib/money";
 import { MONTHS, YEARS } from "../lib/constants";
 import { parseQBText, qbDateInPeriod } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
@@ -94,7 +95,7 @@ export function QBImportTab({
         sortable: true,
         className: "text-right",
         sortValue: (row) => row.amt,
-        render: (row) => <span className={mutedClass(row)}>${row.amt.toFixed(2)}</span>,
+        render: (row) => <span className={mutedClass(row)}>{formatUsd(row.amt)}</span>,
       },
     ],
     [],
@@ -169,7 +170,7 @@ export function QBImportTab({
             );
           }}
         >
-          Apply ${includedTotal.toFixed(2)} to Line 20
+          Apply {formatUsd(includedTotal)} to Line 20
         </button>
       </div>
 

@@ -280,6 +280,15 @@ if (!/formatUsdRateTable\(preview\.total_cost_per_mile_cents \/ 100, 3\)/.test(b
 const eldUnid = read("apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx");
 if (!/formatQuantityTable\(Number\(speed\), 0\)/.test(eldUnid)) fail("UnidentifiedTab speed must use formatQuantityTable");
 
+const amort = read("apps/frontend/src/pages/finance/AmortizationPage.tsx");
+if (!/formatQuantityTable\(l\.interest_rate_bps \/ 100, 2\)/.test(amort)) fail("AmortizationPage interest rate must use formatQuantityTable");
+const form425 = read("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx");
+if (!/return formatUsd\(nv\(s\)\)/.test(form425)) fail("Form425c CurrentPeriodTab moneyCell must use formatUsd");
+const qbImport = read("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx");
+if (!/formatUsd\(row\.amt\)/.test(qbImport) || !/formatUsd\(includedTotal\)/.test(qbImport)) {
+  fail("Form425c QBImportTab amounts must use formatUsd");
+}
+
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");

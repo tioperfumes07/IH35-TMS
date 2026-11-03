@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~1:55 PM CT) — customers/HOS/break-even/ELD qty
+- **PRIOR:** #28271–#28287 quantity + ENG-34 29→28.
+- **THIS:** #28288 CustomersListView % · FleetHos nums · Form2290 tax · BreakEven per-mile · ELD speed. ENG-21 DONE-LIVE. SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
 ## OUTBOX (11-03-2026 ~1:45 PM CT) — qty sweep high-water
 - **PRIOR:** #28271 margin/% · #28273–#28285 house quantity + ENG-34 wave6 (29→28 via 19822).
 - **THIS:** LedgerKpiPanel percent body #28285; RelationshipScore/AtRisk bodies #28283. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28. Dreamline/match deferred. ENG-22 AUTH.
