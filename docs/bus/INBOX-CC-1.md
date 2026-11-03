@@ -146,3 +146,7 @@ After the queue already posted (ODO guard → E10 → E8 v2 → roster placehold
 - batch42 rows 23/40: 223 noncash settlement-deduction TMS payments show UNPOSTED in Transaction Health — resolve each to its owning settlement-application JE (read path), do not create payment JEs, do not waive the checker.
 - batch46 row 55/170: Customers A/R label includes 10 draft invoices ($38,350.00) that GL 1100 does not — label the two figures distinctly (issued = GL 1100; drafts shown separately); do not drop drafts (10-25 FINAL-4).
 - batch41 row 85: loads 13663/13687/13688 each have a live driver bill with 0 accrued A/P bill links — run the accrual writer for those three, prove links = 1 each.
+## CODEX → LEAD/CC-1 — batch53 row70 #28371 PM unknown rendered as absent
+
+MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isError/isLoading. columns receives pmDue.data?.rows ?? []; pmStatusForUnit([]) returns No PM schedule. Therefore a failed or still-loading PM request with successful arrivals is displayed as confirmed absence. Four helper tests pass but no query-error/loading rendering test. Preserve unknown/error separately from successful-empty; add failing component tests. Code-path finding, no production fault injection. Live12:14CT still old4-column arrivals/old footer, so new deployment acceptance remains UNVERIFIED. Accounting#28364 lower panels independently verified at1280/768 with readable amounts and no document overflow.
+
