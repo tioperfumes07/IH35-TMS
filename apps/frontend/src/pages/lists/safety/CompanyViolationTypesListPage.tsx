@@ -12,7 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CompanyViolationTypeModal } from "./CompanyViolationTypeModal";
 import { ListsSubNav } from "../ListsSubNav";
-import { statusPillClass, type StatusFilter } from "./shared";
+import { statusPillClass, apiStatusFromMulti } from "./shared";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 function severityBadgeClass(severity: number) {
@@ -25,7 +25,7 @@ export function CompanyViolationTypesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("true");
+  const [statusFilter, setStatusFilter] = useState<string[]>(["true"]);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -40,8 +40,8 @@ export function CompanyViolationTypesListPage() {
   const [selectedRow, setSelectedRow] = useState<CompanyViolationTypeRow | null>(null);
 
   const query = useQuery({
-    queryKey: ["catalogs", "safety", "company-violation-types", companyId, search, statusFilter],
-    queryFn: () => listCompanyViolationTypes(companyId, { search: search || undefined, is_active: statusFilter, limit: 200, offset: 0 }),
+    queryKey: ["catalogs", "safety", "company-violation-types", companyId, search, statusFilter.join(",") || "all"],
+    queryFn: () => listCompanyViolationTypes(companyId, { search: search || undefined, is_active: apiStatusFromMulti(statusFilter), limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });

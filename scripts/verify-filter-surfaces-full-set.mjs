@@ -54,7 +54,8 @@ const SURFACES = [
   {
     name: "Safety catalogs (8 lists, one generic page)",
     file: "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
-    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    // U12: status MultiSelect → apiStatusFromMulti(status) for indexed is_active API.
+    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatusFromMulti\(status\) \}\)/, /<ParityTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /limit: 200,\s*offset: 0/],
   },
   // Server-paged (route max 200): every filter runs on the server; the house toolbar's search drives `q`; "N of M" =

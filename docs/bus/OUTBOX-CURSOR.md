@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:05 PM CT) — U12 Safety catalog status MultiSelect
+- **PRIOR:** #28587 Maintenance catalog U12.
+- **THIS:** CatalogStatusFilterCombobox → MultiSelectDropdown; apiStatusFromMulti in shared; SafetyGeneric + 6 scoped Safety catalog lists. filter-surfaces Safety fetchMust retargeted.
+- **NEXT:** remaining list Active/Inactive singles / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:00 PM CT) — U12 Maintenance catalog status MultiSelect
 - **PRIOR:** #28586 Fuel+Fleet catalog U12.
 - **THIS:** MaintenanceCatalogListPage Active/Inactive → MultiSelectDropdown + apiStatus; filter-surfaces retarget; U12 register residual → Safety CatalogStatusFilterCombobox.

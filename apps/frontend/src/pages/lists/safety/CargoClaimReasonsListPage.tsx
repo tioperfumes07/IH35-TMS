@@ -12,7 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CargoClaimReasonModal } from "./CargoClaimReasonModal";
 import { ListsSubNav } from "../ListsSubNav";
-import { statusPillClass, type StatusFilter } from "./shared";
+import { statusPillClass, apiStatusFromMulti } from "./shared";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 const CATEGORY_LABELS: Record<CargoClaimCategory, string> = {
@@ -31,7 +31,7 @@ export function CargoClaimReasonsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("true");
+  const [statusFilter, setStatusFilter] = useState<string[]>(["true"]);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -46,8 +46,8 @@ export function CargoClaimReasonsListPage() {
   const [selectedRow, setSelectedRow] = useState<CargoClaimReasonRow | null>(null);
 
   const query = useQuery({
-    queryKey: ["catalogs", "safety", "cargo-claim-reasons", companyId, search, statusFilter],
-    queryFn: () => listCargoClaimReasons(companyId, { search: search || undefined, is_active: statusFilter, limit: 200, offset: 0 }),
+    queryKey: ["catalogs", "safety", "cargo-claim-reasons", companyId, search, statusFilter.join(",") || "all"],
+    queryFn: () => listCargoClaimReasons(companyId, { search: search || undefined, is_active: apiStatusFromMulti(statusFilter), limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
