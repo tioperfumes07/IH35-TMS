@@ -23,6 +23,9 @@ const checks = [
   ["apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx", "BoardSection", "settlement-workflow-need-company", "SettlementWorkflow need-company"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-loading", "Planner settings loading"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-unavailable", "Planner settings unavailable"],
+  ["apps/frontend/src/pages/finance/BreakEvenPage.tsx", "BoardSection", "break-even-need-company", "BreakEven need-company"],
+  ["apps/frontend/src/pages/finance/FinanceHubPage.tsx", "BoardSection", "finance-hub-need-company", "FinanceHub need-company"],
+  ["apps/frontend/src/pages/finance/AmortizationPage.tsx", "BoardSection", "amortization-need-company", "Amortization need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
