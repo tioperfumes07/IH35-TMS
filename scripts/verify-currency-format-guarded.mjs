@@ -229,6 +229,13 @@ if (!/MXN \$\{formatQuantityTable\(Number\(valueDollars\), 2\)\}/.test(dispatchM
 if (/Intl\.NumberFormat\("es-MX"/.test(dispatchMoney)) {
   fail("dispatch/constants must not use Intl.NumberFormat es-MX for money");
 }
+const loadProfit = read("apps/frontend/src/lib/loadProfit.ts");
+if (!/formatUsdCents\(cents\)\.replace/.test(loadProfit)) {
+  fail("loadProfit formatProfitCents must use formatUsdCents for sub-$1k badges");
+}
+if (/Intl\.NumberFormat\("en-US"[\s\S]*style:\s*["']currency["']/.test(loadProfit)) {
+  fail("loadProfit must not hand-roll Intl.NumberFormat currency");
+}
 const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
 if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
   fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
