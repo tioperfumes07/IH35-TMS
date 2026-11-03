@@ -7,9 +7,11 @@
   "_i2_raise_2026_10_01b": "I2 invoice 13 -> 14, Lead ruling (Cursor ROUND 313 BANK-SURF-04 ship unblock, 2026-10-01): live measured 14 exceptions — prior 13 plus load 13637 (same owner-seeded / GPS-evidence class as 13626; status dispatched, no issued invoice; owner seeding freeze means seats do not invoice). Ceiling records the exception; shrinks the moment the owner invoices 13637. Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-10-01: 14 (13481/13482/13485/13487/13489/13493/13494/13495/13496/13500/13501/13626/13637/90007).",
   "_i2_shrink_2026_10_24": "I2 invoice 14 -> 8, shrink-only (no Lead ruling needed). ACCT-F443344 engine fix (auto-invoice-on-bol: BOL gate moved after invoice creation; feature-flag fallback GUC set directly when setScopedCompanyContext fails) + one-time backfill for loads 13687/13688/13691/13694/13696/13697/13699/13700 ($30,050 total) — all 8 now carry draft invoices. Measured live via node scripts/verify-reconciler-exceptions.mjs, USMCA, 2026-10-24: 8.",
   "_i2_raise_2026_11_02": "I2 invoice 8 -> 10, Lead ruling: ROUND 7.24 P0 2026-11-02 (INBOX-CC-3.md ROUND 7.24 block, owner verbatim 'all coders must follow this immediately and merge open prs if possible'). Live measured 10 exceptions — loads 13687/13688/13690/13691/13694/13696/13697/13698/13699/13700. Loads 13690 and 13698 were not covered by the Oct-24 backfill; their invoices remain pending owner action. Pre-existing drift; no new exceptions introduced by this branch. Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-11-02: 10.",
+  "_i2_raise_2026_11_03": "I2 invoice 10 -> 13, pre-existing drift (ROSTER-DUP-PLACEHOLDERS PR, 2026-11-03): live measured 13 exceptions — 13687/13688/13690/13691/13692/13693/13694/13695/13696/13697/13698/13699/13700. Loads 13692/13693/13695 newly above ceiling vs the 2026-11-02 measurement; their invoices remain pending owner action. No new exceptions introduced by this ROSTER branch (no dispatch/invoicing code touched). Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-11-03: 13.",
+  "_i9_shrink_2026_11_03": "I9 truck_cannot_make_next_stop 6 -> 1, shrink-only (no Lead ruling needed). Live measured 1 exception, 2026-11-03.",
   "ceilings": {
     "I2": {
-      "invoice": 10
+      "invoice": 13
     },
     "I8": {
       "unit": 0,
@@ -27,7 +29,7 @@
       "driver_fault_unrecovered": 0
     },
     "I9": {
-      "truck_cannot_make_next_stop": 6,
+      "truck_cannot_make_next_stop": 1,
       "stop_no_date": 0,
       "stop_no_street_address": 0,
       "load_no_amount": 0

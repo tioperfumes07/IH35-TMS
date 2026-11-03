@@ -93,12 +93,17 @@ const LIVE_FLAG_FILES = new Map([
 // apps/backend/src and concatenates every migration SQL at import; stripped-env standalone ~11s,
 // so the 8s spawn bound (even serial retry) reports a false hang. It declares ALLOW_OFFLINE_SKIP,
 // exits 0 with no credential, and runs on verify-step 11588 (selftest + live).
+// ROUND 2026-11-03 — verify-seat-distance-from-main.mjs: runs `git fetch origin main` which is a
+// live network call; measured >8s under stripped-env pool (the fetch itself is the slow part, not
+// any database read). Declares ALLOW_OFFLINE_SKIP correctly — the hang is a false-positive from
+// the git fetch delay, not from a silent-skip pattern.
 const NOT_A_CANDIDATE = new Set([
   "verify-static.mjs",
   "verify-no-silent-db-skip.mjs",
   "verify-local-ci.mjs",
   "verify-derived-artifact-freshness.mjs",
   "verify-relay-tick-completes.mjs",
+  "verify-seat-distance-from-main.mjs",
 ]);
 
 function candidateFiles() {
