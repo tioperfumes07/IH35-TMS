@@ -1,4 +1,5 @@
 import type { CustomerRelationshipScore } from "../../api/mdata";
+import { formatQuantityTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 
 type Props = {

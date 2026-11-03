@@ -1511,7 +1511,7 @@ export function CustomerDetailPage() {
                   <span className="text-xs text-gray-900">
                     {customer.layover_charge_per_day
                       ? customer.layover_currency && customer.layover_currency !== "USD"
-                        ? `${customer.layover_currency} ${Number(customer.layover_charge_per_day).toFixed(2)}`
+                        ? `${customer.layover_currency} ${formatQuantityTable(Number(customer.layover_charge_per_day), 2)}`
                         : formatUsd(Number(customer.layover_charge_per_day))
                       : "Not set"}
                   </span>
