@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.27 batch78: Neon recovered and E13 live source contradiction
+
+Batch77 merged #28455 ffb014f3ad95e0136fe16b4f895aa1fb703403d0;14affected guards,0regressions,normal hooks.
+
+- Neon401 recovered with ordinary existing-session `neon me --output json`; no new credential/login/settings/guard change. Mandatory branch assertion then passed. Private audit helper now refreshes that session once only for401, reruns the unchanged branch assertion, and still refuses on failure or mismatch. READ ONLY repeatable-read transaction confirmed neondb/br-fancy-credit-akjnd07a/read_only=on;USMCA JE control3264;ROLLBACK.
+- E13 live independent remeasurement:27assignments,27live,27missing created_by_user_id.239source fills under seed's own scoped eligibility;0without a period,59whose active assignment unit differs from matched_unit_id on the fill,0multiple periods.27card/unit pairs include10returning pairs and40contiguous periods. Confirms live source contradiction; does not independently certify the fill unit as final owner-approved assignment or authorize automatic repair. Exact private SQL/result Downloads/codex-round7-readonly-measurements-phase25.json. No identifiers/card digits/money evidence in repo.
+- #28055 full2-doc diff:4affectedPASS. #28056 full7-file diff:61PASS/2FAIL-test/1live-excluded;failures load-column-placeholder and canonical-active-load inline predicate require exact-parent comparison before new attribution. All live-excluded checks remain UNVERIFIED.
+- Cursor bus checked on c11fe33fe0: no new E13/Vendor/date-only repair yet. #28456 is a claim reservation, not ENG65 implementation. Full audit remains OPEN; production unchanged.
+
 ## 2026-11-03 — ROUND7.27 batch77: E13 counterexamples and historical verification
 
 Batch76 merged #28454 27e5a65981077a9543d84fd6680d3515d5642ddd; normal hooks,3affected guards,0regressions.
