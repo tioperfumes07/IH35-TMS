@@ -20,6 +20,11 @@ describe("pmStatusForUnit", () => {
     expect(pmStatusForUnit([row({ miles_remaining: 4200.4 }), row({ pm_type: "brake", miles_remaining: 1200 })], "u1").text).toBe("Brake in 1,200 mi");
     expect(pmStatusForUnit([row({ pm_type: "dot_inspection", days_remaining: 12 })], "u1").text).toBe("DOT in 12 d");
   });
+  it("an unread PM source is never 'No PM schedule' (Codex batch53)", () => {
+    expect(pmStatusForUnit([], "u1", "loading").text).toBe("Checking PM…");
+    expect(pmStatusForUnit([], "u1", "error").text).toBe("PM unavailable");
+    expect(pmStatusForUnit([], "u1", "ready").text).toBe("No PM schedule");
+  });
   it("a schedule with neither miles nor days remaining says it has no reading", () => {
     expect(pmStatusForUnit([row({})], "u1").text).toBe("Schedule has no reading");
   });
