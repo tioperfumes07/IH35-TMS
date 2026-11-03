@@ -791,6 +791,42 @@ const legalMattersQty = read("apps/frontend/src/pages/legal/matters/LegalMatters
 if (!/formatQuantityTable\(rangeStart, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(rangeEnd, 0\)/.test(legalMattersQty) || !/formatQuantityTable\(total, 0\)/.test(legalMattersQty)) {
   fail("LegalMattersListPage Showing range must use formatQuantityTable(, 0)");
 }
+const attorneyReviewQty = read("apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(attorneyReviewQty)) {
+  fail("LegalAttorneyReviewPage version must use formatQuantityTable(, 0)");
+}
+const legalTemplatesQty = read("apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx");
+if (!/formatQuantityTable\(row\.version, 0\)/.test(legalTemplatesQty)) {
+  fail("LegalTemplatesListPage version must use formatQuantityTable(, 0)");
+}
+const legalContractsQty = read("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx");
+if (!/formatQuantityTable\(row\.template_version, 0\)/.test(legalContractsQty) || !/formatQuantityTable\(detailQuery\.data\.template_version, 0\)/.test(legalContractsQty)) {
+  fail("LegalContractInstancesPage template_version must use formatQuantityTable(, 0)");
+}
+const tripPairingDaysQty = read("apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx");
+if (!/formatQuantityTable\(t\.up_north_days, 0\)/.test(tripPairingDaysQty)) {
+  fail("TripPairingBoardPage up_north_days must use formatQuantityTable(, 0)");
+}
+const dispatchOverviewIdleQty = read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+if (!/formatQuantityTable\(maxDaysIdle, 0\)/.test(dispatchOverviewIdleQty)) {
+  fail("DispatchOverview maxDaysIdle must use formatQuantityTable(, 0)");
+}
+const truckLineDurationQty = read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(truckLineDurationQty) || !/formatQuantityTable\(hours, 0\)/.test(truckLineDurationQty)) {
+  fail("TruckLineBoard fmtDuration/fmtHoursMinutes must use formatQuantityTable(, 0)");
+}
+const reserveTrackerDaysQty = read("apps/frontend/src/pages/factoring/ReserveTracker.tsx");
+if (!/formatQuantityTable\(days, 0\)/.test(reserveTrackerDaysQty)) {
+  fail("ReserveTracker Next Nd labels must use formatQuantityTable(, 0)");
+}
+const plannerRangeQty = read("apps/frontend/src/pages/dispatch/planners/PlannerRangeToolbar.tsx");
+if (!/formatQuantityTable\(d, 0\)/.test(plannerRangeQty)) {
+  fail("PlannerRangeToolbar day chips must use formatQuantityTable(, 0)");
+}
+const legalTemplateDetailQty = read("apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx");
+if (!/formatQuantityTable\(template\.version, 0\)/.test(legalTemplateDetailQty)) {
+  fail("LegalTemplateDetailPage title version must use formatQuantityTable(, 0)");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

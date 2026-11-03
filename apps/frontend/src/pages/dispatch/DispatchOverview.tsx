@@ -420,7 +420,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           />
           <KpiCard
             label="Days since last delivery"
-            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : maxDaysIdle == null ? "—" : `${maxDaysIdle}d`}
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : maxDaysIdle == null ? "—" : `${formatQuantityTable(maxDaysIdle, 0)}d`}
             hint={maxDaysIdle == null ? "no idle unit with a delivery" : "longest idle unit, no return booked"}
             to="/dispatch#days-since-last-delivery"
           />

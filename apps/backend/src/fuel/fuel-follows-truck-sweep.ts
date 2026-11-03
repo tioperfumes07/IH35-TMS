@@ -29,24 +29,47 @@ export type FuelFollowsTruckSweepSummary = {
   failures: Array<{ fuel_id: string; error: string }>;
 };
 
+/**
+ * Every live fill not yet through the engine, oldest first, read in keyset pages until exhausted (no cap — Codex batch74:
+ * a LIMIT 2000 list whose first 2000 rows were person-confirmed and never stamped starved every fill after them).
+ * Fills the engine never moves are excluded on the read side, exactly as the engine reads them (loadFillFacts):
+ * a recorded owner ruling, or a person-confirmed load on the fill or a Relay sibling row (OWNER RULING 443.288).
+ */
 export async function listUnresolvedFills(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   companyId: string,
-  limit = 2000
+  pageSize = 500
 ): Promise<string[]> {
-  return (
-    await client.query<{ id: string }>(
-      `SELECT f.id::text
-         FROM fuel.fuel_transactions f
-        WHERE f.operating_company_id = $1::uuid
-          AND f.voided_at IS NULL AND f.archived_at IS NULL
-          AND f.resolved_at IS NULL
-          AND COALESCE(f.truck_resolution, '') NOT LIKE 'owner_ruling:%'
-        ORDER BY f.transaction_at, f.id
-        LIMIT $2`,
-      [companyId, limit]
-    )
-  ).rows.map((r) => r.id);
+  const out: string[] = [];
+  let after: { at: string; id: string } | null = null;
+  for (;;) {
+    const page: Array<{ id: string; at: string }> = (
+      await client.query<{ id: string; at: string }>(
+        `SELECT f.id::text, COALESCE(f.transaction_at, 'epoch'::timestamptz)::text AS at
+           FROM fuel.fuel_transactions f
+          WHERE f.operating_company_id = $1::uuid
+            AND f.voided_at IS NULL AND f.archived_at IS NULL
+            AND f.resolved_at IS NULL
+            AND COALESCE(f.truck_resolution, '') NOT LIKE 'owner_ruling:%'
+            AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
+                             WHERE e.operating_company_id = f.operating_company_id AND e.voided_at IS NULL
+                               AND e.load_confirmation = 'confirmed'
+                               AND (e.source_fuel_transaction_id = f.id
+                                    OR (f.relay_fuel_transaction_id IS NOT NULL AND e.source_fuel_transaction_id IN (
+                                          SELECT s.id FROM fuel.fuel_transactions s
+                                           WHERE s.operating_company_id = f.operating_company_id
+                                             AND s.relay_fuel_transaction_id = f.relay_fuel_transaction_id AND s.voided_at IS NULL))))
+            AND ($3::timestamptz IS NULL OR (COALESCE(f.transaction_at, 'epoch'::timestamptz), f.id) > ($3::timestamptz, $4::uuid))
+          ORDER BY COALESCE(f.transaction_at, 'epoch'::timestamptz), f.id
+          LIMIT $2`,
+        [companyId, pageSize, after?.at ?? null, after?.id ?? null]
+      )
+    ).rows;
+    for (const r of page) out.push(r.id);
+    if (page.length < pageSize) return out;
+    const last = page[page.length - 1]!;
+    after = { at: last.at, id: last.id };
+  }
 }
 
 export async function runFuelFollowsTruckSweep(companyId: string, actorUserId: string = SYSTEM_ACTOR_USER_ID): Promise<FuelFollowsTruckSweepSummary> {

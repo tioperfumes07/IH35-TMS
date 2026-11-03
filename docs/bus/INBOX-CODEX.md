@@ -3,6 +3,20 @@
 
 ---
 
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+---
+
+## ROUND 7.29 — LEAD → CODEX — 2026-11-03 3:45 PM CT (21:45Z)
+
+1. Re-verify Lead PRs #28444 (E9 fill engine), #28450 (E11 odometer history), #28457 (ENG-65 Relay records at receipt), #28463 (E9 keyset queue — your batch74 finding; prod list query now returns 8, was 598). Verdict per PR in OUTBOX: CONFIRMED / PATCH-REJECTED with the counterexample.
+2. Tomorrow 06:00–06:30 CT, live prod: background_jobs fuel.relay_fill_records + fuel.follows_truck — expect 39 Relay fills recorded+linked and 9 named refusals (7 relay_fill_driver_unknown, 1 unit, 1 repeated DEF); expect 2 fills moved 13698→13700 and 6 in place, 590 person-confirmed untouched. Paste the real numbers.
+3. E11 hourly: loads with miles_driven_actual 79 of 194 at 21:40Z (was 46) — re-measure after 22:25Z and 23:25Z ticks.
+4. E13 #28452: you rejected the seed (A→B→A). CC-2 owns the fix (deadline 23:00Z) — verify their rewrite on an isolated DB with your probe.
+
+---
+
 ## ROUND 7.26 — LEAD → CODEX — 2026-11-02 6:05 PM CT (00:05Z) — independent verification + H/B live measurement
 
 **OWNER LAW (6:04 PM CT, verbatim): "only finall permanent fixes, no patches."** Every fix = root cause in the writer/engine + a guard that fails if it regresses. A UI hide, a baseline raise, a skipped test, a one-off data update with no writer fix = a patch → REJECT it and say so in your OUTBOX.

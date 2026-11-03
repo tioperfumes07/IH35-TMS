@@ -74,6 +74,9 @@
 
 import { relayFillUnitIdSql } from "./relay-fill-unit.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
+import { ensureRelayFillFuelRecords, RelayFillFuelRowsError } from "./relay-fill-fuel-rows.js";
+import { resolveFillDriverAtTime } from "./fuel-load-at-time.js";
 import {
   CompanyDirectCredit,
   loadFuelTxnCreditSignals,
@@ -835,6 +838,106 @@ export async function linkRelayFillExpenseToFuelRow(
   return primary.id;
 }
 
+/**
+ * ENG-65 — record a Relay fill at receipt (ensureRelayFillFuelRecords) inside a savepoint: a refusal (lines that do not foot,
+ * a product repeated, no Relay time) is audited by name and leaves the transaction usable; it is never swallowed silently.
+ */
+export async function recordRelayFillAtReceipt(
+  client: QueryableClient,
+  input: { operating_company_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; actor_user_uuid: string | null },
+): Promise<{ written: boolean; refused: string | null }> {
+  // TRANSACTION-LINKAGE-LAW TIER1: a working truck's fill carries its driver. When neither the document nor Relay named one,
+  // the one fill-driver rule (card assignment → the truck's one driver assignment → the load's driver) at Relay's moment.
+  let unitId = input.unit_id;
+  if (!unitId && input.load_id) {
+    unitId = (await client.query<{ u: string | null }>(
+      `SELECT assigned_unit_id::text AS u FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.load_id, input.operating_company_id],
+    )).rows[0]?.u ?? null;
+  }
+  if (!unitId) {
+    const reason = "relay_fill_unit_unknown: no truck on the document, from Relay, or on its load (TIER1: a fill carries its truck)";
+    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
+      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
+    }, "warning", "ENG-65");
+    return { written: false, refused: reason };
+  }
+  let driverId = input.driver_id;
+  if (!driverId) {
+    const at = (await client.query<{ at: string | null }>(
+      `SELECT relay_created_at::text AS at FROM integrations.relay_fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.relay_fill_id, input.operating_company_id],
+    )).rows[0]?.at ?? null;
+    if (at) {
+      driverId = (await resolveFillDriverAtTime(client as never, {
+        operatingCompanyId: input.operating_company_id, matchedDriverId: null, unitId, at, loadId: input.load_id,
+      }))?.driver_id ?? null;
+    }
+  }
+  if (!driverId) {
+    const reason = "relay_fill_driver_unknown: no driver on the document or from Relay, and no card / truck assignment or load names one at the fill time (TIER1: a working truck's fill carries its driver)";
+    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
+      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
+    }, "warning", "ENG-65");
+    return { written: false, refused: reason };
+  }
+  await client.query("SAVEPOINT relay_fill_record_at_receipt");
+  try {
+    const r = await ensureRelayFillFuelRecords(client as never, {
+      operatingCompanyId: input.operating_company_id,
+      relayFillId: input.relay_fill_id,
+      loadId: input.load_id,
+      driverId,
+      unitId,
+      actorUserId: input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID,
+      notes: "ENG-65: Relay fill recorded at receipt from its own Relay lines",
+    });
+    await client.query("RELEASE SAVEPOINT relay_fill_record_at_receipt");
+    return { written: r.written, refused: null };
+  } catch (err) {
+    await client.query("ROLLBACK TO SAVEPOINT relay_fill_record_at_receipt");
+    await client.query("RELEASE SAVEPOINT relay_fill_record_at_receipt");
+    const reason = err instanceof RelayFillFuelRowsError ? `${err.code}: ${err.message}` : String((err as Error)?.message ?? err);
+    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
+      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
+    }, "warning", "ENG-65");
+    return { written: false, refused: reason };
+  }
+}
+
+/**
+ * ENG-65 — every live Relay fill document whose fill has no fuel record: record the fill (on the document's own load /
+ * driver / truck — a load a person confirmed stays the person's) and link the document. One fill at a time by the caller.
+ */
+export async function listRelayFillDocumentsWithoutRecords(client: QueryableClient, operatingCompanyId: string): Promise<Array<{ expense_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null }>> {
+  return (await client.query<{ expense_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null }>(
+    `SELECT e.id::text AS expense_id, r.id::text AS relay_fill_id, e.load_id::text, e.driver_uuid::text AS driver_id, e.unit_id::text
+       FROM accounting.expenses e
+       JOIN integrations.relay_fuel_transactions r
+         ON r.operating_company_id = e.operating_company_id
+        AND r.id::text = (regexp_match(e.memo, '^Relay fuel fill ([0-9a-f-]{36})'))[1]
+      WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.source_fuel_transaction_id IS NULL
+        AND r.voided_at IS NULL AND r.is_active
+        AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions f
+                         WHERE f.operating_company_id = e.operating_company_id AND f.relay_fuel_transaction_id = r.id
+                           AND f.voided_at IS NULL AND f.archived_at IS NULL)
+      ORDER BY r.relay_created_at, r.id`,
+    [operatingCompanyId],
+  )).rows;
+}
+
+export async function recordAndLinkRelayFillDocument(
+  client: QueryableClient,
+  input: { operating_company_id: string; expense_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; actor_user_uuid: string },
+): Promise<{ outcome: "linked" | "refused" | "not_linked"; reason: string | null }> {
+  const rec = await recordRelayFillAtReceipt(client, { ...input });
+  if (rec.refused) return { outcome: "refused", reason: rec.refused };
+  const linked = await linkRelayFillExpenseToFuelRow(client, {
+    operating_company_id: input.operating_company_id, expense_id: input.expense_id, relay_fill_id: input.relay_fill_id, actor_user_uuid: input.actor_user_uuid,
+  });
+  return linked ? { outcome: "linked", reason: null } : { outcome: "not_linked", reason: "no free fuel record of the fill" };
+}
+
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
   input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null; driver_id?: string | null },
@@ -892,7 +995,7 @@ export async function adoptRelayFillExpenseDocument(
   if (relay.rows.length !== 1) return { outcome: "refused", reason: `expected exactly one active Relay vendor, found ${relay.rows.length}` };
 
   // The fill's own purchase record(s): the attribution (load / driver / unit) and the fuel-transaction pointer.
-  const fills = await client.query<{ id: string; load_id: string | null; load_exemption_reason: string | null; driver_id: string | null; unit_id: string | null; trailer_id: string | null; total_cost: string | null; txn_date: string | null; taken: boolean }>(
+  const readFills = () => client.query<{ id: string; load_id: string | null; load_exemption_reason: string | null; driver_id: string | null; unit_id: string | null; trailer_id: string | null; total_cost: string | null; txn_date: string | null; taken: boolean }>(
     `SELECT ft.id::text, ft.load_id::text, ft.load_exemption_reason, ft.driver_id::text, ft.unit_id::text, ft.trailer_id::text, ft.total_cost::text,
             coalesce(ft.purchased_at, ft.transaction_at)::date::text AS txn_date,
             EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL) AS taken
@@ -901,6 +1004,7 @@ export async function adoptRelayFillExpenseDocument(
       ORDER BY ft.total_cost DESC NULLS LAST, ft.id`,
     [company, input.relay_fill_id],
   );
+  let fills = await readFills();
   // 443.192 — the unit by the poster's one rule (fuel/relay-fill-unit.sql.ts): matched_unit_id, else the printed number
   // when exactly one active unit carries it. Reading matched_unit_id alone left the document unit-less where the JE had one.
   const relayRow = await client.query<{ matched_driver_id: string | null; matched_unit_id: string | null }>(
@@ -908,6 +1012,20 @@ export async function adoptRelayFillExpenseDocument(
       WHERE r.id::text = $1 AND r.operating_company_id = $2::uuid`,
     [input.relay_fill_id, company],
   );
+  // ENG-65 (LEAD 11-03): a fill adopted on receipt with no fuel record yet gets its records now (ensureRelayFillFuelRecords,
+  // the one Relay record writer) on its posting's load — so the document points at a record from birth. A fill whose lines
+  // cannot be recorded honestly is refused by name and audited; the document is still adopted (the money is already posted).
+  if (!fills.rows.length) {
+    const recorded = await recordRelayFillAtReceipt(client, {
+      operating_company_id: company,
+      relay_fill_id: input.relay_fill_id,
+      load_id: debits.find((d) => d.load_id)?.load_id ?? null,
+      driver_id: relayRow.rows[0]?.matched_driver_id ?? input.driver_id ?? null,
+      unit_id: relayRow.rows[0]?.matched_unit_id ?? null,
+      actor_user_uuid: input.requesting_user_uuid ?? null,
+    });
+    if (recorded.written) fills = await readFills();
+  }
   const primary = fills.rows.find((f) => !f.taken) ?? null;
   const loadId = primary?.load_id ?? fills.rows[0]?.load_id ?? debits.find((d) => d.load_id)?.load_id ?? null;
   // 443.116 #1 — a fill received before any settlement row names its driver takes the driver of the load it was bought for.

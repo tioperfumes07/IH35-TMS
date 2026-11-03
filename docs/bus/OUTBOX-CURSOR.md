@@ -1,3 +1,78 @@
+## OUTBOX (11-03-2026 ~5:30 PM CT) — reserve/planner/template detail quantity
+- **PRIOR:** #28479 Truck Line duration qty.
+- **THIS:** ReserveTracker Next Nd · PlannerRangeToolbar chips · LegalTemplateDetail title version → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:20 PM CT) — Truck Line duration quantity
+- **PRIOR:** #28476 DispatchOverview idle days.
+- **THIS:** TruckLineBoard fmtDuration/fmtHoursMinutes → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Codex #28478 Vendor live Open+Partial ACK.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:10 PM CT) — DispatchOverview idle days quantity
+- **PRIOR:** #28475 contracts/trip pairing qty.
+- **THIS:** DispatchOverview maxDaysIdle → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:00 PM CT) — contracts version + trip pairing days qty
+- **PRIOR:** #28474 Templates version qty.
+- **THIS:** LegalContractInstances template_version + TripPairingBoard up_north_days → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:50 PM CT) — Legal Templates version quantity
+- **PRIOR:** #28473 Attorney Review version qty.
+- **THIS:** LegalTemplatesListPage version → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:40 PM CT) — Attorney Review version quantity
+- **PRIOR:** #28471 expense load confirmations need-company.
+- **THIS:** LegalAttorneyReviewPage version → formatQuantityTable(, 0); currency ratchet plant. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:30 PM CT) — Expense load confirmations page need-company
+- **PRIOR:** #28470 Factoring workqueue need-company.
+- **THIS:** ExpenseLoadConfirmationsPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:20 PM CT) — Factoring workqueue need-company + qty days
+- **PRIOR:** #28469 Legal detail need-company.
+- **THIS:** SubmissionWorkqueue BoardSection need-company; recourse days formatQuantityTable; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:10 PM CT) — Legal detail need-company
+- **PRIOR:** #28468 Driver Hub need-company.
+- **THIS:** LegalTemplateDetailPage + LegalMatterDetailPage BoardSection need-company; fill-shell plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~4:00 PM CT) — Driver Hub need-company
+- **PRIOR:** #28467 Legal templates/contracts need-company.
+- **THIS:** DriverHubPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:50 PM CT) — Legal templates/contracts need-company
+- **PRIOR:** #28465 Attorney Review need-company.
+- **THIS:** LegalTemplatesListPage + LegalContractInstancesPage BoardSection need-company; fill-shell plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:40 PM CT) — Legal Attorney Review need-company
+- **PRIOR:** #28464 Legal Policies need-company.
+- **THIS:** LegalAttorneyReviewPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:35 PM CT) — Legal Policies need-company
+- **PRIOR:** #28462 bus tip #28460.
+- **THIS:** LegalPoliciesPage BoardSection need-company; fill-shell-empty-states plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:25 PM CT) — #28460 batch76 Vendors + #28458/#28446 closed
+- **PRIOR:** #28458 batch72 ENG17/ENG-34; #28446 Legal unions DONE-LIVE (Codex batch74).
+- **THIS:** #28460 Vendors multi-status comma-union before listBills LIMIT. Batch75 Reclassify date-only → CC-1. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; ENG-34 call-evidence residual; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:00 PM CT) — batch72 ENG17 selftest + ENG-34 inline/inert holes
+- **PRIOR:** #28446 batch71 Legal route allowlisted comma-unions.
+- **THIS:** Codex batch72 — ENG17 failures() accepts planted routes (refuse execute=true plant hits real validator). ENG-34: stripYamlComments strips trailing inline #; stripInertJsGuardAssignments drops `const documentation = 'verify-….mjs'`; selftest plants; corpusCallsGuard helper retained (full call-evidence reclassify still OPEN — registry string lists). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; ENG-34 call-evidence wave; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:30 PM CT) — ENG-34 guard-wired ignores comment-only mentions (batch70)
 - **PRIOR:** #28439 bus tip Invoice Search → Cascade.
 - **THIS:** Codex batch70 — verify-guard-wired strips // block and YAML # before CI-execution includes; selftest plants comment-only sentinel. ENG-21 DONE-LIVE. Dreamline/match deferred.

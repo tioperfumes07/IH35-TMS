@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
@@ -13,6 +14,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { statusOptions } from "../../../lib/statusListParams";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 const STATUS_LABELS: Record<LegalTemplateStatus, string> = {
   draft: "Draft",
@@ -82,7 +84,7 @@ export function LegalTemplatesListPage() {
   const columns = useMemo<ParityColumn<LegalTemplateSummary>[]>(
     () => [
       { key: "template_code", label: "Code", sortable: true, render: (row) => <span className="font-mono text-xs">{row.template_code}</span> },
-      { key: "version", label: "Version", sortable: true, render: (row) => String(row.version) },
+      { key: "version", label: "Version", sortable: true, render: (row) => formatQuantityTable(row.version, 0) },
       { key: "display_name_en", label: "Display Name (EN)", sortable: true, render: (row) => row.display_name_en },
       { key: "category", label: "Category", sortable: true, render: (row) => row.category },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusPillClass(row.status)}>{row.status}</span> },
@@ -90,6 +92,14 @@ export function LegalTemplatesListPage() {
     ],
     [],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Legal Template Library" testId="legal-templates-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">

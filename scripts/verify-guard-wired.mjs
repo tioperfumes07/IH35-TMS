@@ -84,8 +84,69 @@ export function stripJsComments(src) {
   return s;
 }
 
+/**
+ * Strip YAML # comments, including trailing inline comments after code
+ * (Codex batch72 — `run: echo ok # node scripts/verify-….mjs` is NOT execution).
+ * Does not strip `#` inside single/double quotes.
+ */
 export function stripYamlComments(src) {
-  return String(src || "").replace(/(^|\n)[ \t]*#[^\n]*/g, "$1");
+  return String(src || "")
+    .split("\n")
+    .map((line) => {
+      if (/^[ \t]*#/.test(line)) return "";
+      if (!line.includes("#")) return line;
+      let out = "";
+      let inSingle = false;
+      let inDouble = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === "'" && !inDouble) {
+          inSingle = !inSingle;
+          out += c;
+          continue;
+        }
+        if (c === '"' && !inSingle) {
+          inDouble = !inDouble;
+          out += c;
+          continue;
+        }
+        if (c === "#" && !inSingle && !inDouble) break;
+        out += c;
+      }
+      return out;
+    })
+    .join("\n");
+}
+
+/**
+ * Codex batch72 — inert `const documentation = 'verify-….mjs'` is NOT execution.
+ * Strips simple verify-*.mjs string assignments (not path.join/resolve constructions).
+ */
+export function stripInertJsGuardAssignments(src) {
+  return String(src || "").replace(
+    /\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*(['"`])verify-[\w.-]+\.mjs\1\s*;?/g,
+    "",
+  );
+}
+
+/**
+ * Codex batch72 helper — call/import/spawn/path evidence (ENG-34 residual toward
+ * full executable registration). Not yet the sole classify gate (registry string
+ * lists still need a wiring wave); selftests lock the counterexamples below.
+ */
+export function corpusCallsGuard(corpus, guard) {
+  const g = escapeRegExp(guard);
+  const src = String(corpus || "");
+  const patterns = [
+    new RegExp(String.raw`\b(?:node|tsx)\b[^\n]{0,220}${g}`),
+    new RegExp(String.raw`ctx\.run\([\s\S]{0,260}?${g}`),
+    new RegExp(String.raw`(?:spawn(?:Sync)?|execFile(?:Sync)?)\([\s\S]{0,300}?${g}`),
+    new RegExp(String.raw`\bimport\s+(?:[\s\S]{0,160}?from\s*)?["'\`][^"'\`\n]*${g}["'\`]`),
+    new RegExp(String.raw`\brequire\s*\(\s*["'\`][^"'\`\n]*${g}["'\`]`),
+    new RegExp(String.raw`\b(?:path\.)?(?:join|resolve)\([\s\S]{0,300}?${g}`),
+    new RegExp(String.raw`(^|\n)[ \t]*scripts/${g}(?:\s|\\|$)`),
+  ];
+  return patterns.some((re) => re.test(src));
 }
 
 /** @deprecated use stripJsComments / stripYamlComments — kept for call sites/tests */
@@ -124,22 +185,22 @@ function ciRunsPreCommit(wfCorpus) {
  * - workflow runs an npm script that points at it, OR
  * - it is imported/referenced from verify-steps (non-comment) AND ci.yml runs verify:pre-commit
  */
-function isExecutedInCi(guard, npmNames, wfCorpus, stepsCorpus, preCommitInCi) {
-  // Corpora from workflowCorpus/verifyStepsCorpus are already comment-stripped per file.
-  // Selftest still passes raw snippets — strip again so comment-only plants stay red.
-  const wf = stripYamlComments(wfCorpus);
-  const steps = stripJsComments(stepsCorpus);
-  if (wf.includes(guard)) return true;
-  for (const name of npmNames) {
-    // npm run verify:foo  /  run: npm run verify:foo
-    if (new RegExp(String.raw`\bnpm run ${escapeRegExp(name)}\b`).test(wf)) return true;
-  }
-  if (preCommitInCi && steps.includes(guard)) return true;
-  return false;
-}
-
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Corpora must already be comment/inert-stripped (classifyGuards strips once;
+ * --selftest strips its small plants before calling).
+ */
+function isExecutedInCi(guard, npmNames, wfCorpus, stepsCorpus, preCommitInCi) {
+  if (wfCorpus.includes(guard)) return true;
+  for (const name of npmNames) {
+    // npm run verify:foo  /  run: npm run verify:foo
+    if (new RegExp(String.raw`\bnpm run ${escapeRegExp(name)}\b`).test(wfCorpus)) return true;
+  }
+  if (preCommitInCi && stepsCorpus.includes(guard)) return true;
+  return false;
 }
 
 /**
@@ -149,8 +210,9 @@ function escapeRegExp(s) {
 export function classifyGuards() {
   const guards = listGuards();
   const pkgMap = packageScriptsByGuard(guards);
+  // Strip once — never per-guard (Codex batch72: inert/inline strip must stay cheap).
   const wfCorpus = workflowCorpus();
-  const stepsCorpus = verifyStepsCorpus();
+  const stepsCorpus = stripInertJsGuardAssignments(verifyStepsCorpus());
   const preCommitInCi = ciRunsPreCommit(wfCorpus);
   const exemptSet = loadExempt();
 
@@ -332,11 +394,57 @@ if (isMain && process.argv.includes("--selftest")) {
       exempt: false,
       want: "orphan",
     },
+    {
+      name: "inline YAML trailing comment is NOT wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-audit-sentinel.mjs",
+      wf: "run: echo ok # node scripts/verify-audit-sentinel.mjs\n",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "orphan",
+    },
+    {
+      name: "inert JS documentation string is NOT wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-audit-sentinel.mjs",
+      wf: "run: npm run verify:pre-commit\n",
+      steps: "const documentation = 'verify-audit-sentinel.mjs';\n",
+      preCommit: true,
+      exempt: false,
+      want: "orphan",
+    },
+    {
+      name: "in-process import { run } from guard IS wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-inprocess.mjs",
+      wf: "run: npm run verify:pre-commit\n",
+      steps: 'import { run } from "../verify-inprocess.mjs";\n',
+      preCommit: true,
+      exempt: false,
+      want: "fully",
+    },
+    {
+      name: "run-required-guards argv continuation line IS wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-required-arg.mjs",
+      wf: "run: |\n  node scripts/lib/run-required-guards.mjs \\\n    scripts/verify-required-arg.mjs \\\n",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "fully",
+    },
   ];
 
   const checks = [];
   for (const c of cases) {
-    const inCi = isExecutedInCi(c.guard, c.npmNames, c.wf, c.steps, c.preCommit);
+    const wf = stripYamlComments(c.wf);
+    const steps = stripInertJsGuardAssignments(stripJsComments(c.steps));
+    const inCi = isExecutedInCi(c.guard, c.npmNames, wf, steps, c.preCommit);
     let got;
     if (inCi) got = "fully";
     else if (c.exempt) got = "exempt";

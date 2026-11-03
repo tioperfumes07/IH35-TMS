@@ -20,6 +20,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { getDownloadUrl } from "../../../api/docs";
 import { statusOptions } from "../../../lib/statusListParams";
@@ -214,7 +215,9 @@ export function LegalContractInstancesPage() {
         render: (row) => (
           <>
             <div className="font-medium">{row.display_name_en ?? row.template_code}</div>
-            <div className="text-xs text-gray-500">{row.template_code} · v{row.template_version}</div>
+            <div className="text-xs text-gray-500">
+              {row.template_code} · v{formatQuantityTable(row.template_version, 0)}
+            </div>
           </>
         ),
       },
@@ -268,6 +271,14 @@ export function LegalContractInstancesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [operatingCompanyId],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Legal Contracts" testId="legal-contracts-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -496,7 +507,15 @@ export function LegalContractInstancesPage() {
                 <div><span className="font-semibold">Signer:</span>{" "}{signerKind(detailQuery.data.signer_type) ? (
                   <EntityLink kind={signerKind(detailQuery.data.signer_type)!} id={detailQuery.data.signer_entity_id} label={detailQuery.data.signer_name} />
                 ) : detailQuery.data.signer_name}</div>
-                <div><span className="font-semibold">Template:</span>{" "}<EntityLink className="text-[#4B5563] underline" kind="legal_template" id={detailQuery.data.template_id} label={`${detailQuery.data.template_code} v${detailQuery.data.template_version}`} /></div>
+                <div>
+                  <span className="font-semibold">Template:</span>{" "}
+                  <EntityLink
+                    className="text-[#4B5563] underline"
+                    kind="legal_template"
+                    id={detailQuery.data.template_id}
+                    label={`${detailQuery.data.template_code} v${formatQuantityTable(detailQuery.data.template_version, 0)}`}
+                  />
+                </div>
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>
