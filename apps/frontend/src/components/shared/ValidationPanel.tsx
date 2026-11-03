@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { ParityTable } from "../parity/ParityTable";
+import { OverrideButton } from "../override/OverrideButton";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
 export type ValidationSeverity = "block" | "warn" | "info";
@@ -36,9 +37,11 @@ type Props = {
   allowBlockOverride?: boolean;
   canOwnerOverride?: boolean;
   blockOverrides?: Record<string, BlockOverrideRecord>;
-  rowReasons?: Record<string, string>;
-  onRowReasonChange?: (ruleId: string, reason: string) => void;
-  onOverrideBlocker?: (ruleId: string) => void;
+  /**
+   * Row 28 (443.294) — the ONE override: the row's Override is the shared <OverrideButton context="load_wizard">;
+   * the reason is the catalog pick (Owner / Accountant just confirm), handed over as the catalog line — never typed.
+   */
+  onOverrideBlocker?: (ruleId: string, reason: string) => void;
 };
 
 const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; icon: string; iconBg: string; label: string }> = {
@@ -129,8 +132,6 @@ export function ValidationPanel({
   allowBlockOverride = false,
   canOwnerOverride = false,
   blockOverrides = {},
-  rowReasons = {},
-  onRowReasonChange,
   onOverrideBlocker,
 }: Props) {
   // LEAD 443.181: the blocker table renders through ParityTable (controlled sort, same default: rule code asc).
@@ -173,8 +174,8 @@ export function ValidationPanel({
   return (
     <div className="space-y-1.5">
       {allowBlockOverride && result.blockers.length > 0 ? (
-        // A blocker is a rule result, not a record: no row route. The override reason input + button live in the
-        // Override cell, same behaviour as before.
+        // A blocker is a rule result, not a record: no row route. The Override cell is the shared OverrideButton
+        // (row 28): Owner / Accountant confirm; everyone else picks a catalog reason. Nothing is typed.
         <ParityTable<ValidationItem>
           tableTestId="pre-dispatch-blocker-override-table"
           storageKey="ih35.dispatch.pre-dispatch-blockers.v1"
@@ -202,31 +203,20 @@ export function ValidationPanel({
               minWidth: 240,
               render: (item) => {
                 const rec = blockOverrides[item.rule_id];
-                const reason = rowReasons[item.rule_id] ?? "";
                 return rec ? (
                   <span data-testid={`blocker-overridden-${item.rule_id}`}>
                     Overridden {formatDateTimeUS(rec.at)} — {rec.reason.slice(0, 48)}
                     {rec.reason.length > 48 ? "…" : ""}
                   </span>
                 ) : canOwnerOverride ? (
-                  <div className="flex min-w-[14rem] flex-col gap-1">
-                    <input
-                      data-testid={`blocker-override-reason-${item.rule_id}`}
-                      value={reason}
-                      onChange={(e) => onRowReasonChange?.(item.rule_id, e.target.value)}
-                      placeholder="Reason (min 10 chars)"
-                      className="h-9 w-full rounded-sm border border-red-300 px-1 text-xs"
-                    />
-                    <button
-                      type="button"
-                      data-testid={`blocker-override-${item.rule_id}`}
-                      disabled={reason.trim().length < 10 || !onOverrideBlocker}
-                      onClick={() => onOverrideBlocker?.(item.rule_id)}
-                      className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
-                    >
-                      Override
-                    </button>
-                  </div>
+                  <OverrideButton
+                    context="load_wizard"
+                    size="sm"
+                    label="Override"
+                    disabled={!onOverrideBlocker}
+                    testId={`blocker-override-${item.rule_id}`}
+                    onConfirm={(_code, choice) => onOverrideBlocker?.(item.rule_id, choice.text)}
+                  />
                 ) : (
                   <span className="text-red-600">Owner only</span>
                 );

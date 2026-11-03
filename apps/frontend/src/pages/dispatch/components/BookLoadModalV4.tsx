@@ -9,6 +9,7 @@
  * this file is quietly drawer-ised, and it will fail if this annotation is removed or the file is
  * renamed without moving the exception with it.
  */
+import { OverrideButton } from "../../../components/override/OverrideButton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
@@ -1123,7 +1124,7 @@ export function BookLoadModalV4({
 
   const canOverrideHardBlock = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
-  const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
+  const canOverrideCreditLimit = ["Owner", "Accountant", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
   const canOwnerLockOverride = canOverrideHardBlock;
 
   const editLockQuery = useQuery({
@@ -1249,7 +1250,9 @@ export function BookLoadModalV4({
     ? editLoadId ?? null
     : saveAck?.id ?? saveProofCreated?.id ?? null;
 
-  async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
+  /** Row 28 — `overrideReasonText` is the catalog line the shared OverrideButton just confirmed (state lags a render). */
+  type SubmitOpts = { override?: boolean; overrideReasonText?: string };
+  async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: SubmitOpts) {
     if (submitInFlightRef.current) return;
     submitInFlightRef.current = true;
     try {
@@ -1260,7 +1263,7 @@ export function BookLoadModalV4({
     }
   }
 
-  async function submitLoadInner(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
+  async function submitLoadInner(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: SubmitOpts) {
     setGateBanner(null);
     setSubmitErrorMessage(null);
     setSaveAck(null);
@@ -1277,15 +1280,16 @@ export function BookLoadModalV4({
         ? [{ rule_code: "unit_repair_active_wo", reason: repairOverrideReason.trim(), subject: "unit" }]
         : []),
     ];
+    const overrideReasonInput = (opts?.overrideReasonText ?? overrideReason).trim();
     const primaryOverrideReason = applyOverrides
-      ? overrideReason.trim().length >= 10
-        ? overrideReason.trim()
+      ? overrideReasonInput.length >= 10
+        ? overrideReasonInput
         : (recordedOverrides[0]?.[1]?.reason ?? (repairOverrideApplied ? repairOverrideReason.trim() : undefined))
       : undefined;
     // D-H0 — locked load + Owner/Admin: require override_reason even when no qualification override fired.
     const lockOverrideReason =
-      isEditMode && loadIsEditLocked && canOwnerLockOverride && overrideReason.trim().length >= 10
-        ? overrideReason.trim()
+      isEditMode && loadIsEditLocked && canOwnerLockOverride && overrideReasonInput.length >= 10
+        ? overrideReasonInput
         : undefined;
     const effectiveOverrideReason = lockOverrideReason ?? primaryOverrideReason;
 
@@ -2100,12 +2104,23 @@ export function BookLoadModalV4({
                 {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
               </p>
               {canOverrideCreditLimit ? (
-                <label className="mt-1.5 inline-flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={overrideCreditLimit} onChange={(e) => setOverrideCreditLimit(e.target.checked)} />
-                  <span className="text-[#4B5563]">Override — I acknowledge this customer is over their credit limit</span>
-                </label>
+                // Row 28 (443.294): the ONE override — Owner / Accountant confirm; everyone else picks a catalog reason.
+                overrideCreditLimit ? (
+                  <p className="mt-1.5 font-semibold text-[#1F2A44]" data-testid="book-load-credit-limit-override-approved">
+                    Override approved — this customer is over their credit limit.
+                  </p>
+                ) : (
+                  <div className="mt-1.5">
+                    <OverrideButton
+                      context="load_wizard"
+                      size="sm"
+                      testId="book-load-credit-limit-override"
+                      onConfirm={() => setOverrideCreditLimit(true)}
+                    />
+                  </div>
+                )
               ) : (
-                <p className="mt-1 text-[#6B7280]">Contact an Owner or Manager to override.</p>
+                <p className="mt-1 text-[#6B7280]">Contact an Owner, Accountant or Manager to override.</p>
               )}
             </div>
           ) : null}
@@ -2136,21 +2151,22 @@ export function BookLoadModalV4({
                   ? ` — ${editLockQuery.data.lock.reference_display_id}`
                   : ""}
                 . {canOwnerLockOverride
-                  ? "Every field stays editable. Enter a reason (10+ characters) to save — invoice re-derives only while draft; paid/synced invoices must be voided and reissued."
+                  ? "Every field stays editable. Override to save — invoice re-derives only while draft; paid/synced invoices must be voided and reissued."
                   : "Only Owner or Administrator can override."}
               </p>
               {canOwnerLockOverride ? (
-                <label className="mt-2 block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">Override reason</span>
-                  <textarea
-                    className="mt-1 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#0F1219]"
-                    rows={2}
-                    value={overrideReason}
-                    onChange={(e) => setOverrideReason(e.target.value)}
-                    placeholder="Why this locked load must change (min 10 characters)"
-                    data-testid="owner-lock-override-reason"
-                  />
-                </label>
+                <div className="mt-2 flex items-center gap-2" data-testid="owner-lock-override-reason">
+                  {overrideReason ? (
+                    <span className="text-xs font-semibold text-[#1F2A44]">Override approved — {overrideReason}</span>
+                  ) : (
+                    <OverrideButton
+                      context="load_wizard"
+                      size="sm"
+                      testId="owner-lock-override-button"
+                      onConfirm={(_code, choice) => setOverrideReason(choice.text)}
+                    />
+                  )}
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -2250,45 +2266,25 @@ export function BookLoadModalV4({
               ) : null}
               {(gateBanner.type === "hard_block" || gateBanner.type === "hos_block") ? (
                 <div className="mt-2 space-y-2">
-                  <textarea
-                    value={overrideReason}
-                    onChange={(event) => setOverrideReason(event.target.value)}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                    rows={3}
-                    placeholder="Override reason (min 10 chars)"
-                  />
+                  {/* Row 28 (443.294): the ONE override — no reason box. Owner / Accountant confirm; everyone else picks
+                      a catalog reason; the booking re-submits carrying that catalog line. */}
                   <div className="flex gap-2">
-                    {gateBanner.type === "hard_block" && canOverrideHardBlock ? (
-                      <Button
-                        type="button"
+                    {(gateBanner.type === "hard_block" && canOverrideHardBlock) || (gateBanner.type === "hos_block" && canOverrideHos) ? (
+                      <OverrideButton
+                        context="load_wizard"
                         size="sm"
-                        variant="secondary"
-                        onClick={form.handleSubmit(async (values) => {
-                          if (overrideReason.trim().length < 10) {
-                            pushToast("Override reason must be at least 10 characters", "error");
-                            return;
-                          }
-                          await submitLoad(values, "book_dispatch", { override: true });
-                        }, onInvalidSubmit)}
-                      >
-                        Override (Owner only)
-                      </Button>
-                    ) : null}
-                    {gateBanner.type === "hos_block" && canOverrideHos ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={form.handleSubmit(async (values) => {
-                          if (overrideReason.trim().length < 10) {
-                            pushToast("Override reason must be at least 10 characters", "error");
-                            return;
-                          }
-                          await submitLoad(values, "book_dispatch", { override: true });
-                        }, onInvalidSubmit)}
-                      >
-                        Override
-                      </Button>
+                        label={gateBanner.type === "hard_block" ? "Override (Owner only)" : "Override"}
+                        testId={`book-load-gate-override-${gateBanner.type}`}
+                        onConfirm={async (_code, choice) => {
+                          setOverrideReason(choice.text);
+                          await form.handleSubmit(
+                            async (values) => {
+                              await submitLoad(values, "book_dispatch", { override: true, overrideReasonText: choice.text });
+                            },
+                            onInvalidSubmit
+                          )();
+                        }}
+                      />
                     ) : null}
                     {gateBanner.type === "hard_block" && !canOverrideHardBlock ? <span>Contact Owner to override.</span> : null}
                     {gateBanner.type === "hos_block" && !canOverrideHos ? <span>Manager+ role required for HOS override.</span> : null}
@@ -3037,10 +3033,7 @@ export function BookLoadModalV4({
                   canOwnerOverride={canOverrideHardBlock}
                   onOwnerOverride={() => {
                     void form.handleSubmit(async (values) => {
-                      if (overrideReason.trim().length < 10) {
-                        pushToast("Override reason must be at least 10 characters", "error");
-                        return;
-                      }
+                      if (overrideReason.trim().length < 10) return;
                       await submitLoad(values, "book_dispatch", { override: true });
                     }, onInvalidSubmit)();
                   }}
