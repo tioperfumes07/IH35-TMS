@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:10 AM CT) — compliance HOS/2290 house quantity
+- **PRIOR:** #28419 customer voided loads.
+- **THIS:** FleetHosBoardSection + Form2290Filings counts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~2:00 AM CT) — customer voided-load exclusion
 - **PRIOR:** #28418 lane live-load predicate.
 - **THIS:** customer-profitability rev/prev/cost exclude l.voided_at (sibling of batch63 lane); hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.

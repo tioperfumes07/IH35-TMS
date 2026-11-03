@@ -186,7 +186,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
           {perUnit.length > 0 ? (
             <p className="mt-1 text-xs text-[#4B5563]">
               <span className="font-semibold text-[#0F1219]">
-                {perUnit.length} vehicle{perUnit.length === 1 ? "" : "s"} due on a different date
+                {formatQuantityTable(perUnit.length, 0)} vehicle{perUnit.length === 1 ? "" : "s"} due on a different date
               </span>{" "}
               (first used outside July) ·{" "}
               {perUnit
@@ -208,7 +208,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
           {missingFirstUse.length > 0 ? (
             <p className="mt-1 text-xs text-[#4B5563]">
               <span className="font-semibold text-[#0F1219]">
-                {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
+                {formatQuantityTable(missingFirstUse.length, 0)} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
               </span>{" "}
               — due date cannot be computed ·{" "}
               {missingFirstUse.slice(0, 6).map((unit, idx) => (
