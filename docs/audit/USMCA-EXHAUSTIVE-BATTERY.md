@@ -92,11 +92,11 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts:186` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:637` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:638` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/disputes` | `apps/backend/src/accounting/invoice-disputes.routes.ts:107` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:61` | — | — | — |
-| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1423` | — | — | — |
-| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:865` | — | — | — |
+| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1424` | — | — | — |
+| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:866` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
 | create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:101` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:143` | — | — | — |
@@ -481,14 +481,14 @@ after creation; a GL/posting failure goes to CC-1.
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | nested | `/api/v1/legal/attorney-review/:token/request-changes` | `apps/backend/src/legal/attorney-review.routes.ts:45` | — | — | — |
-| create | `/api/v1/legal/contracts` | `apps/backend/src/legal/contracts.routes.ts:288` | — | — | — |
-| nested | `/api/v1/legal/contracts/:id/pdf-file` | `apps/backend/src/legal/contracts.routes.ts:224` | — | — | — |
-| create | `/api/v1/legal/contracts/draft-preview` | `apps/backend/src/legal/contracts.routes.ts:257` | — | — | — |
-| create | `/api/v1/legal/contracts/lease-to-own/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:418` | — | — | — |
-| create | `/api/v1/legal/contracts/sync-linkage` | `apps/backend/src/legal/contracts.routes.ts:128` | — | — | — |
-| nested | `/api/v1/legal/contracts/templates/:code/ensure` | `apps/backend/src/legal/contracts.routes.ts:377` | — | — | — |
-| create | `/api/v1/legal/contracts/truck-lease/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:362` | — | — | — |
-| create | `/api/v1/legal/linkage/backfill-from-sources` | `apps/backend/src/legal/contracts.routes.ts:145` | — | — | — |
+| create | `/api/v1/legal/contracts` | `apps/backend/src/legal/contracts.routes.ts:302` | — | — | — |
+| nested | `/api/v1/legal/contracts/:id/pdf-file` | `apps/backend/src/legal/contracts.routes.ts:238` | — | — | — |
+| create | `/api/v1/legal/contracts/draft-preview` | `apps/backend/src/legal/contracts.routes.ts:271` | — | — | — |
+| create | `/api/v1/legal/contracts/lease-to-own/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:432` | — | — | — |
+| create | `/api/v1/legal/contracts/sync-linkage` | `apps/backend/src/legal/contracts.routes.ts:142` | — | — | — |
+| nested | `/api/v1/legal/contracts/templates/:code/ensure` | `apps/backend/src/legal/contracts.routes.ts:391` | — | — | — |
+| create | `/api/v1/legal/contracts/truck-lease/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:376` | — | — | — |
+| create | `/api/v1/legal/linkage/backfill-from-sources` | `apps/backend/src/legal/contracts.routes.ts:159` | — | — | — |
 | create | `/api/v1/legal/matters` | `apps/backend/src/legal/matters.routes.ts:206` | — | — | — |
 | nested | `/api/v1/legal/matters/:id/deadlines` | `apps/backend/src/legal/matters.routes.ts:456` | — | — | — |
 | nested | `/api/v1/legal/matters/:id/documents` | `apps/backend/src/legal/matters.routes.ts:411` | — | — | — |
@@ -497,11 +497,11 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/legal/matters/:id/recovery` | `apps/backend/src/legal/matters.routes.ts:363` | — | — | — |
 | nested | `/api/v1/legal/matters/:id/reserve` | `apps/backend/src/legal/matters.routes.ts:300` | — | — | — |
 | nested | `/api/v1/legal/sign/:token/verify/confirm` | `apps/backend/src/legal/sign.routes.ts:58` | — | — | — |
-| create | `/api/v1/legal/templates` | `apps/backend/src/legal/templates.routes.ts:147` | — | — | — |
-| nested | `/api/v1/legal/templates/:id/attorney-review-link` | `apps/backend/src/legal/templates.routes.ts:259` | — | — | — |
-| nested | `/api/v1/legal/templates/:id/new-version` | `apps/backend/src/legal/templates.routes.ts:215` | — | — | — |
-| nested | `/api/v1/legal/templates/:id/retire` | `apps/backend/src/legal/templates.routes.ts:332` | — | — | — |
-| create | `/api/v1/legal/templates/library/ensure` | `apps/backend/src/legal/templates.routes.ts:196` | — | — | — |
+| create | `/api/v1/legal/templates` | `apps/backend/src/legal/templates.routes.ts:161` | — | — | — |
+| nested | `/api/v1/legal/templates/:id/attorney-review-link` | `apps/backend/src/legal/templates.routes.ts:273` | — | — | — |
+| nested | `/api/v1/legal/templates/:id/new-version` | `apps/backend/src/legal/templates.routes.ts:229` | — | — | — |
+| nested | `/api/v1/legal/templates/:id/retire` | `apps/backend/src/legal/templates.routes.ts:346` | — | — | — |
+| create | `/api/v1/legal/templates/library/ensure` | `apps/backend/src/legal/templates.routes.ts:210` | — | — | — |
 
 ### driver — 18 create-surface(s)
 
