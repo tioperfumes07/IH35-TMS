@@ -307,6 +307,10 @@ const retention = read("apps/frontend/src/pages/drivers/RetentionDashboard.tsx")
 if (!/formatQuantityTable\(lateArrivalRate \* 100, 1\)/.test(retention)) {
   fail("RetentionDashboard late arrival rate must use formatQuantityTable");
 }
+const vendorMap = read("apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx");
+if (!/formatQuantityTable\(row\.similarity_score, 3\)/.test(vendorMap)) {
+  fail("VendorMappingResolutionPage similarity score must use formatQuantityTable");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

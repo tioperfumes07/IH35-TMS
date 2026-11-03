@@ -15,6 +15,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { formatQuantityTable } from "../../lib/money";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -262,7 +263,7 @@ export function VendorMappingResolutionPage() {
         label: "Score",
         sortable: true,
         sortValue: (row) => row.similarity_score,
-        render: (row) => row.similarity_score.toFixed(3),
+        render: (row) => formatQuantityTable(row.similarity_score, 3),
       },
       {
         key: "action",
@@ -305,7 +306,7 @@ export function VendorMappingResolutionPage() {
       };
     }
     return {
-      before: `Name mismatch remains visible (score ${draft.similarity_score.toFixed(3)})`,
+      before: `Name mismatch remains visible (score ${formatQuantityTable(draft.similarity_score, 3)})`,
       after: `Owner confirmation will be recorded for vendor ${draft.qbo_vendor_name || "(required)"}`,
     };
   }, [draft, vendorOptions]);
