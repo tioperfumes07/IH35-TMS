@@ -1,3 +1,13 @@
+## 2026-11-03 — ROUND7.27 batch39: #27979 historical guard wiring
+
+Batch38 merged #28301 at b16befe9d307353ce2e38a3649dbff50052530c2. Reviewed all28 files of #27979 at exact fd3cd0d8e7. Loaded all25 step modules and captured their actual command arguments; classified25 target guards:22 PASS,2 FAIL-test,1 live exclusion. Private artifact Downloads/codex-round7-27979-historical.json. This is not 25 executed passing wrappers or full CI proof.
+
+- 19281 calls verify-gl-delta-matches-matrix with no arguments. Its implementation deliberately exits1 without --selftest/--live; direct no-argument run exit1 and selftest exit0 confirmed. Thus the stated all25 static-passing claim is not reproducible. Keep live invariant fail-closed; correct static/live execution wiring rather than weakening it. Wrapper unchanged on current main.
+- 19365 fleet-picker scan fails3 assertions at historical merge and current main. Selftest claims4/4, but3 mutations are byte-identical to baseline because targets vanished; baseline already has3 failures. This is a confirmed false-green selftest. Current wizard delegates to EntityPicker kind=unit; shared registry deliberately excludes equipment ids for FK safety. Retarget tests to actual canonical paths with clean-baseline and mutation-change assertions; do not indiscriminately add trailers to the shared unit picker. Full insurance coverage semantics require independent route/writer verification.
+- 19221 expense-line-account-matches-item is a live guard, not a static check; its pure green/red fixtures pass. Live execution this pass BLOCKED before any connection: assert-neon-branch returned1, Neon API HTTP401 for configured project. Normal configured URL recheck returned the same401. No bypass and no production query/write attempted after refusal. Prior live evidence is dated, not refreshed.
+
+Cursor receives wiring/selftest findings; latest database access blocker recorded here for Lead. Full audit remains incomplete; production unchanged.
+
 ## 2026-11-03 — ROUND7.27 batch38: shell repair review and E8 pre-merge finding
 
 Read full diffs #28294, #28295 and #28297, and all of the proposed E8 patch in #28296. No application or production changes. At exact tip 2b1c42a44a, 76 affected guard classifications: 66 PASS, 3 FAIL-test, 2 capability skips, 5 live exclusions. All three failures reproduce with identical details on parent 95f0e370b5: honest-built inbox citation, money-cell click-through (3 unwired +34 declared >34), DriverDuplicateDialog missing surface mapping. Skips/exclusions are not passes. Private artifact: Downloads/codex-round7-shell-wave-historical.json. This is a bounded wave regression check, not all 249 PRs.
