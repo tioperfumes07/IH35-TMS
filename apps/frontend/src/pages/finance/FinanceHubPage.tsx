@@ -7,7 +7,7 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
@@ -22,7 +22,7 @@ const fmtCents = (c: number) => formatUsdCents(c);
 
 function kpiDisplay(kpi: FinanceHubKpi): string {
   if (kpi.value_kind === "money_cents") return fmtCents(Number(kpi.value) || 0);
-  if (kpi.value_kind === "count") return new Intl.NumberFormat("en-US").format(Number(kpi.value) || 0);
+  if (kpi.value_kind === "count") return formatQuantityTable(Number(kpi.value) || 0);
   return String(kpi.value ?? "—");
 }
 
