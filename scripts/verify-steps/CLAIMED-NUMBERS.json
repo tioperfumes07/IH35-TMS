@@ -17444,5 +17444,10 @@
     "claimed_by": "lead",
     "purpose": "E11 ENG-29: boundaries the odometer anchor could not measure get Samsara's own reads, fetched outside a DB transaction, measured only (static guard)",
     "claimed_at": "2026-11-03"
+  },
+  "19841": {
+    "claimed_by": "lead",
+    "purpose": "ENG-65 residual: every Relay fill is recorded from its own lines at receipt; the Creator adopts, never writes a second set (static guard)",
+    "claimed_at": "2026-11-03"
   }
 }
