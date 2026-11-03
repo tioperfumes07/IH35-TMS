@@ -378,43 +378,43 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <div className="dpo-kpis">
           <KpiCard
             label="Active loads"
-            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)}
-            hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit · trucks with a load out` : undefined}
+            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : formatQuantityTable(dashboardQ.data?.on_load ?? 0, 0)}
+            hint={dashboardQ.data ? `${formatQuantityTable(dashboardQ.data.in_transit, 0)} in transit · trucks with a load out` : undefined}
             to={ACTIVE_LOAD_DRILL_HREF}
           />
           <KpiCard
             label="Delivered — pending docs"
-            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)}
+            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : formatQuantityTable(dashboardQ.data?.delivered ?? 0, 0)}
             hint="delivered — factoring / billing queue"
             to={DELIVERED_DRILL_HREF}
           />
           <KpiCard
             label="At-risk / late"
-            value={atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal}
+            value={atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : formatQuantityTable(atRiskLateTotal, 0)}
             hint="each load once; detention is its own tile"
             to="/dispatch/at-risk"
           />
           <KpiCard
             label="Detention"
-            value={detentionQ.isLoading || detentionQ.isError ? "—" : (detentionQ.data?.count ?? 0)}
-            hint={detentionQ.data ? `${detentionQ.data.active_count} actively accruing` : undefined}
+            value={detentionQ.isLoading || detentionQ.isError ? "—" : formatQuantityTable(detentionQ.data?.count ?? 0, 0)}
+            hint={detentionQ.data ? `${formatQuantityTable(detentionQ.data.active_count, 0)} actively accruing` : undefined}
             to="/dispatch/detention"
           />
           <KpiCard
             label="Units available"
-            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsAvailable}
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : formatQuantityTable(unitsAvailable, 0)}
             hint="idle, no active load"
             to="/dispatch#unassigned-units"
           />
           <KpiCard
             label="Units needing return"
-            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsNeedingReturn}
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : formatQuantityTable(unitsNeedingReturn, 0)}
             hint="recent drop, no return booked"
             to="/dispatch#units-needing-return"
           />
           <KpiCard
             label="Round-trip exposure"
-            value={exposureLoadsQ.isLoading || exposureLoadsQ.isError ? "—" : exposureLoads.length}
+            value={exposureLoadsQ.isLoading || exposureLoadsQ.isError ? "—" : formatQuantityTable(exposureLoads.length, 0)}
             hint="out on the road, no return leg confirmed"
             to="/dispatch#round-trip-exposure"
           />

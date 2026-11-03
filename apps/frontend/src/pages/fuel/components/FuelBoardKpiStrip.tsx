@@ -33,7 +33,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
   const spendValue = aggQuery.isError ? "—" : agg ? formatMoneyCents(agg.total_spend_cents) : "…";
   const spendSub =
     agg && !aggQuery.isError
-      ? `${agg.fill_count} fills · ${agg.truck_count} trucks`
+      ? `${formatQuantityTable(agg.fill_count, 0)} fills · ${formatQuantityTable(agg.truck_count, 0)} trucks`
       : aggQuery.isError
         ? "Unable to load fills"
         : "Loading…";
@@ -41,12 +41,12 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
   const gallonsValue = aggQuery.isError ? "—" : agg ? formatQuantityTable(agg.total_gallons, 1) : "…";
   const avgValue =
     aggQuery.isError ? "—" : avgPerGal != null ? formatUsdRateTable(avgPerGal, 3) : agg ? "—" : "…";
-  const noLoadValue = aggQuery.isError ? "—" : agg ? String(agg.fills_without_load) : "…";
+  const noLoadValue = aggQuery.isError ? "—" : agg ? formatQuantityTable(agg.fills_without_load, 0) : "…";
   const noLoadTone = agg && agg.fills_without_load === 0 ? "green" : "ink";
-  const noLoadSub = agg ? `of ${agg.fill_count}` : "";
+  const noLoadSub = agg ? `of ${formatQuantityTable(agg.fill_count, 0)}` : "";
 
   const openCount = openQQuery.data?.count;
-  const openValue = openQQuery.isError ? "—" : openCount !== undefined ? String(openCount) : "…";
+  const openValue = openQQuery.isError ? "—" : openCount !== undefined ? formatQuantityTable(openCount, 0) : "…";
 
   return (
     <div

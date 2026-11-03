@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:00 PM CT) — factoring/fuel/dispatch count quantity
+- **PRIOR:** #28486 legal/factoring/dispatch/df day+version qty.
+- **THIS:** invoice/wire/fill/load/card/settlement/band/KPI/detention/remint/deposit/Faro line counts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:45 PM CT) — legal/factoring/dispatch/df quantity wave
 - **PRIOR:** #28481 reserve/planner/template detail qty.
 - **THIS:** Legal deadline days · repurchase days · DispatchBoard days_down · legal sign/portal/creator/send versions · AccountingHome close days · dispute/escrow days → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.

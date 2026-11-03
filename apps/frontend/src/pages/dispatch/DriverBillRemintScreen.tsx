@@ -162,7 +162,7 @@ export function DriverBillRemintScreen() {
     <div className="space-y-3">
       <PageHeader backHref="/dispatch"
         title="Driver Bill Remint"
-        subtitle={`${query.data?.real_count ?? 0} real loads (of ${query.data?.total_count ?? 0} total) delivered with no driver bill`}
+        subtitle={`${formatQuantityTable(query.data?.real_count ?? 0, 0)} real loads (of ${formatQuantityTable(query.data?.total_count ?? 0, 0)} total) delivered with no driver bill`}
         actions={
           <Button variant="primary" size="sm" disabled={remintingAll || rows.length === 0} onClick={() => void handleRemintAll()}>
             {remintingAll ? "Reminting all…" : `Remint all (${formatQuantityTable(rows.length, 0)})`}
