@@ -34,6 +34,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { companyWallClockToIso, companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
+import { formatQuantityTable } from "../../../lib/money";
 
 const LINK = "text-[#1F2A44] hover:underline";
 
@@ -218,7 +219,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
           <span className="text-gray-400">Not designated</span>
         ),
     },
-    { key: "active_card_count", label: "Cards", sortable: true, render: (row) => String(row.active_card_count) },
+    { key: "active_card_count", label: "Cards", sortable: true, render: (row) => formatQuantityTable(row.active_card_count, 0) },
   ];
   return (
     <FuelBoardSection

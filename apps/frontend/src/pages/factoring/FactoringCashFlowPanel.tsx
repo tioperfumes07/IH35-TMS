@@ -11,7 +11,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 
 function cents(v: number | string | null | undefined): number {
@@ -157,13 +157,13 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
       key: "wire_count",
       label: "Wires",
       cellClass: "text-right tabular-nums",
-      render: (row) => (row.kind === "posted" ? String(row.wire_count) : "—"),
+      render: (row) => (row.kind === "posted" ? formatQuantityTable(row.wire_count, 0) : "—"),
     },
     {
       key: "invoice_count",
       label: "Invoices",
       cellClass: "text-right tabular-nums",
-      render: (row) => String(row.invoice_count),
+      render: (row) => formatQuantityTable(row.invoice_count, 0),
     },
     {
       key: "gross_cents",

@@ -1372,7 +1372,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 { key: "customer_name", label: "Debtor (Customer)", sortable: true, render: (row) => (
                   <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) },
-                { key: "invoice_count", label: "Invoices", sortable: true, render: (row) => String(row.invoice_count) },
+                { key: "invoice_count", label: "Invoices", sortable: true, render: (row) => formatQuantityTable(row.invoice_count, 0) },
                 { key: "total_invoice", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_invoice) },
                 { key: "total_advance", label: "Advance", sortable: true, render: (row) => fmtCurrency(row.total_advance) },
                 { key: "total_reserve", label: "Reserve", sortable: true, render: (row) => fmtCurrency(row.total_reserve) },
@@ -1756,7 +1756,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     key: "invoice_count",
                     label: "Invoices",
                     cellClass: "text-right tabular-nums",
-                    render: (row) => String(row.invoice_count),
+                    render: (row) => formatQuantityTable(row.invoice_count, 0),
                   },
                   {
                     key: "escrow_reserve_cents",
@@ -1860,7 +1860,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     key: "invoice_count",
                     label: "Invoices",
                     cellClass: "text-right tabular-nums",
-                    render: (row) => String(row.invoice_count),
+                    render: (row) => formatQuantityTable(row.invoice_count, 0),
                   },
                   {
                     key: "cash_reserve_cents",

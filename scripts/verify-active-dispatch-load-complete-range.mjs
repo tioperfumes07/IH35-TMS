@@ -41,8 +41,8 @@ function verify(s) {
     // LEAD 443.206R (register B11) — the drill set is the shared DISPATCH_WORK_STATUSES (lib/load-status.ts), never a copied literal.
     ["active tile uses exact on-load drill", /const ACTIVE_LOAD_DRILL_STATUSES = DISPATCH_WORK_STATUSES;[\s\S]*?const ACTIVE_LOAD_DRILL_HREF = `\/dispatch\/loads\?statuses=\$\{ACTIVE_LOAD_DRILL_STATUSES\.join\(","\)\}`;[\s\S]*?label="Active loads"[\s\S]*?to=\{ACTIVE_LOAD_DRILL_HREF\}/.test(s.dispatch)],
     ["active drill excludes delivered_pending_docs", !/const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.dispatch)],
-    ["active tile bound to on_load, not active_loads", /value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.on_load \?\? 0\)\}/.test(s.dispatch)],
-    ["delivered tile drills into factoring queue", /const DELIVERED_DRILL_HREF = "\/dispatch\/factoring-queue";[\s\S]*?label="Delivered — pending docs"[\s\S]*?value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.delivered \?\? 0\)\}[\s\S]*?to=\{DELIVERED_DRILL_HREF\}/.test(s.dispatch)],
+    ["active tile bound to on_load, not active_loads", /value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : formatQuantityTable\(dashboardQ\.data\?\.on_load \?\? 0, 0\)\}/.test(s.dispatch)],
+    ["delivered tile drills into factoring queue", /const DELIVERED_DRILL_HREF = "\/dispatch\/factoring-queue";[\s\S]*?label="Delivered — pending docs"[\s\S]*?value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : formatQuantityTable\(dashboardQ\.data\?\.delivered \?\? 0, 0\)\}[\s\S]*?to=\{DELIVERED_DRILL_HREF\}/.test(s.dispatch)],
     // 443.290: LEAD 443.244 (owner 10-22) — "on load" is the load IN MOTION; assigned_not_dispatched is an advance booking.
     ["on-load tile and service share exact statuses", /export const DISPATCH_ON_LOAD_STATUSES = \[\s*"dispatched",\s*"at_pickup",\s*"in_transit",\s*"at_delivery",\s*\] as const;/.test(s.activeCounts)],
     ["on-load service set excludes delivered_pending_docs", !/DISPATCH_ON_LOAD_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.activeCounts)],
