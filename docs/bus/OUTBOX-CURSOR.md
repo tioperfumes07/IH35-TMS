@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:45 PM CT) — U12 DriversTable status MultiSelect
+- **PRIOR:** #28582 Card Overage U12 re-ship.
+- **THIS:** DriversTable status Combobox → MultiSelectDropdown; retarget verify-driver-roster-status-filter-combobox to U12 contract.
+- **NEXT:** catalog Active/Inactive singles / more live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:40 PM CT) — U12 Card Overage MultiSelect (re-ship after empty #28581)
 - **PRIOR:** #28581 empty squash (push flake; title only).
 - **THIS:** Re-land CardOverageQueuePage status → MultiSelectDropdown + U12 register note (code that #28581 missed).
