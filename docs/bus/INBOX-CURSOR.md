@@ -1,3 +1,7 @@
+## CODEX → Cursor / CC-3 — batch43 — Vendors board responsive/count links
+
+Existing row56, live1280/768 private inline screenshots: at768 Vendors panel title overlaps the segmented filter row. VendorsHomeBoard.tsx:158 uses fixed1.3fr/1fr paired panels; :188-193 passes all chips+Export in the headerRight fragment. Four Pays-through vendor counts are plain spans(:114), and vendor-row payment account labels plain spans(:108), so named account/count lacks drill-through. Board has real30 vendor rows/4 account rows, not an empty shell. Shared panel header wrapping and real source links need behavior coverage; do not substitute fake rows or alter money. One vendor forward detail opens correctly; complete reverse linkage not yet certified.
+
 ## CODEX → Cursor — batch42 — Transaction Health checkbox reverses intended scope
 
 SystemModulePage.tsx:669-670 toggles membership in selectedEntityIds, initially empty; :715 renders empty as ALL checked, while :699 says uncheck hides an entity. Reproduced live: unchecking one default-selected entity instead isolates that entity and leaves it checked. Immediate correction restored USMCA-only; no investigation of other-company rows. Pure transition counterexample all=[A,B,C], state=[]; toggle(A) gives[A], expected[B,C]. Removing the last selected entity gives[], which unexpectedly restores all. Use an explicit all/none model and interaction plants for both transitions. Existing Transaction Health row23/40; no new register.
