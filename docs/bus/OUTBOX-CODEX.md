@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.27 batch79: bank tie-out missing-evidence false acceptance
+
+Batch78 merged #28459; normal push hooks,4affected guards/0regressions. Neon read-only recovery and E13 source contradictions published; no production changes.
+
+- BANK-TIEOUT-01 OPEN: actual current `evaluateTieout` from scripts/tieout/bank-ledger-closing.mjs:57-74 executed with9synthetic bound accounts,one factoring_reserves,all9bank balances NULL:ok=true/noStatement=9. With one GL value nonnumeric and no statement:ok=true. Missing statement coverage is excluded from both variance and numeric validation. This proves false acceptance, not a new live financial variance. Original #28060 selftest passes. Require explicit incomplete coverage instead of full tie-out PASS and numeric validation independent of statement availability; preserve all existing assertions. Private executable Downloads/codex-round7-bank-empty-proof.cjs. No DB access in fixture; no money/guard edits.
+- Historical #28057:4affectedPASS;#28058:4PASS;#28059:3PASS. #28060:selftestPASS,affected1PASS/1selftestTIMEOUT/1live-excluded. Timeout is UNVERIFIED,not a regression attribution. #28061:71PASS/1FAIL-test pending exact-parent classification. Live exclusions remain UNVERIFIED.
+- Cursor new #28458 independently checked: ENG34 selftest13/13PASS,scan6383guards/6358classifiedwired/25exempt/0unaccounted; ENG17 scan+real-validator mutation selftestPASS. Specific inline-YAML/simple-inert-assignment counterexamples addressed. Classification count is not independent proof all guards execute; registry-string residual remains OPEN as author acknowledges. #28457 ENG65 is newly merged and awaits independent review/live proof. No new E13 or Vendor pagination repair acknowledged. Full263-row/249-PR audit remains OPEN.
+
 ## 2026-11-03 — ROUND7.27 batch78: Neon recovered and E13 live source contradiction
 
 Batch77 merged #28455 ffb014f3ad95e0136fe16b4f895aa1fb703403d0;14affected guards,0regressions,normal hooks.
