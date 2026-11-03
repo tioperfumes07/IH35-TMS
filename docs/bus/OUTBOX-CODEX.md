@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.27 batch82: live activity-count SQL correlation defect
+
+Batch81 merged #28478 06591ccc2ae9f95d849c466654f6730ec3d61294,normal hooks/1affected/0regressions.
+
+- CONFIRMED Customers/Vendors legacy activity list/count defects: unqualified id in shared EXISTS binds to inner document,not outer party. READ ONLY phase28 vendor0→51 and phase29 customer0→87 with qualified outer ids under identical eligibility plus explicit USMCA source scopes. JEcontrol3267/read_only=on/ROLLBACK. Vendor live With transactions0 contradicts its own selected1openbill. Current shared predicate guard scanPASS/12plantsPASS requires bad call shape. CC-1 inbox has files/lines/history and real-SQL fixture requirements; no backend,guard or production edits by Codex. These are counts under this predicate,not proof of parity with other definitions.
+- Historical #28070:7affectedPASS/2capabilityskips/5liveexcluded;#28071:13PASS/2liveexcluded and9/9DatePicker tests;#28072:3PASS;#28073:6PASS/2capabilityskips/5liveexcluded and10/10proof-trail tests. Complete diffs read through#28075; execution through#28073. Local mock tests do not replace live adopted-JE coverage or actual engine invariants.
+- Neon read-only access is functioning; no skipped guard called PASS. Full audit remains INCOMPLETE. No production writes.
+
 ## 2026-11-03 — ROUND7.27 batch81: live Vendor filter and E9 queue recheck
 
 Batch80 merged #28466 db87b2e910; normal hooks,1affected/0regressions. Production unchanged by Codex.
