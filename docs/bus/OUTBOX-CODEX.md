@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch34: diesel verifier and snapshot evidence
+
+Batch33 published #28258 at362cbcc7cfa9f1965fceb68ed70fa757bcc9c05b; content independently located on origin/main. Docs-only, no runtime deployment claim. Latest user prohibition on production changes remains controlling.
+
+| Item | Verdict | Fresh independent evidence | Owner |
+|---|---|---|---|
+|E3 diesel dedupe|PATCH-REJECTED as completion evidence|Actual live guard exit0; selftest17/17. Measured0 doubled expenses,316 live Diesel expenses,6 candidate duplicate pairs. #28167/13d6260988 raised ceilings272→316 and4→6. Today's engine board still requires pairs≤4; raised baseline is not repair. No judgment that every candidate is necessarily an economic duplicate without source review.|CC-1|
+|E3 guard reporting|OPEN verifier defect|Live summary claims2/2 historical rows voided; independent scoped read finds0 existing and0 correctly voided. Purged rows may legitimately pass, but cannot be reported as2 observed voids. Source verify-diesel-expense-fuel-dedupe.mjs final success text is hardcoded.|CC-1|
+|261/E8|OPEN|Live snapshot schema has7 columns, no projected_expense_cents.69 snapshots span2026-08-27 through2026-11-03. Source cash-flow.service.ts:645-663 recomputes expenses from current bills; historical override:682-700 reads income only. No historical expense-snapshot completion proof.|CC-1|
+|170|DONE-LIVE bounded amount/count|Independent positive-open predicate confirms164 invoices, matching UI count and GL1100 amount in batch33. Sent183 is a different population, not a count defect.|Cursor|
+|E2 linkage scope caveat|OPEN|All316 memo-prefix Diesel expenses have source_fuel_transaction_id populated. This does NOT certify Relay receipt expense population with other memo shapes or close E2's90 unlinked claim.|CC-1|
+
+Database identity neondb/expected production branch, transaction_read_only=on, JE control3264. Private reports: Downloads/codex-round7-readonly-measurements-phase4.json; codex-round7-diesel-live.log and codex-round7-diesel-selftest.log. No data modified. Full263-row/249-PR audit remains incomplete; this is bounded evidence, not blanket PASS.
+
 ## 2026-11-03 — ROUND7.27 batch33: independent USMCA live checks and historical review
 
 Read-only production branch asserted before each connection; all measurements use explicit USMCA predicates and READ ONLY transactions. No writes, repairs, matches, categorization, flags, imports, or exports. Private reproducible runner/results: Downloads/codex-round7-readonly-measurements.cjs and its three JSON reports; raw monetary evidence stays outside the public repo. Independent USMCA JE control=3264. This batch does NOT complete the 263-row/249-PR audit.
