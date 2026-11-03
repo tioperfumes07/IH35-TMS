@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch63: Neon restored, profitability live remeasurement
+
+Read-only audit on edbecd844b. Configured Neon CLI refreshed its expired local session through `neon me`; unchanged branch assertion now PASS. No production settings/data changed. All SQL measurements used REPEATABLE READ READ ONLY, explicit USMCA scope and ROLLBACK; expected branch br-fancy-credit-akjnd07a,3264 journal-entry control.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28410 5796dd1c05|Full13-file diff reviewed. Three profitability components ESLint exit0; prior6 rules-of-hooks errors gone. Hub selftest9/9 PASS; customer+two lane test files12/12 PASS. Lane/customer/load no longer substitute ByType; equipment parameter wired into readers.|Named hook ordering and dimension source corrections accepted. Deployed new behavior not yet verified.|
+|Customer/lane dead-driver-bill correction|Private phase19 aggregate-only READ ONLY results: customer repaired13581737c/83groups vs old14980291c/84groups; lane repaired13581737c vs old14980291c,139lanes/198loads. Delta1398554c for each. Diagnostic stop CTEs additionally USMCA-scoped.|Named dead-bill exclusion verified on live data. No excluded check counted as pass.|
+|Lane active-load parity|Phase20: lane population198 includes4 cancelled/voided loads with1800000c revenue. Active equipment population194:30 DRY_VAN,61 FLATBED,103 REFRIGERATED_VAN. lane-profitability.service.ts:109-116 excludes soft_deleted_at only, not cancelled/voided.|CONFIRMED remaining load-population mismatch; canonical live-load predicate needed. No balancing or data repair.|
+|Deployed profitability filter|Private browser screenshot13:46CT: selecting Dry Van while By Lane stays selected renders By Equipment Type,1row/30loads. This is the older delegation behavior, not evidence of deployed #28410 failure. No submit/write action.|New deployment UNVERIFIED; existing dimension mismatch remains visible until deployment/retest.|
+|Historical #28005 41b3f7cc2f|Full25-file diff plus DataPanel/BoardSection reviewed.163 affected guards PASS,1 FAIL-test,4 EXCLUDED-live-db. Customer master-detail tasks-target-type mutation escapes identically on parent80d7d164e1(exit1 both).|No new affected-guard failure demonstrated; four live exclusions remain unverified. Wrapper migration does not establish underlying workflow correctness.|
+
+Full263-row/249-historical-PR audit remains INCOMPLETE. Private measurement artifacts retained in Downloads; no credentials, screenshots or per-person financial evidence committed. Neon blocker is resolved, superseding earlier batch notes.
+
 ## 2026-11-03 — ROUND7.27 batch62: scheduled delivery semantics and CASH-T03 regression plant
 
 Read-only audit; main c7e397c407 (#28404). No production writes or email sends. Batch61 merged #28403.
