@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:00 PM CT) — notes per-consumer plants + uncleared wires qty
+- **PRIOR:** #28369 settlement share/MTD · #28367 BreakEven/fleet/factor.
+- **THIS:** Codex batch52 — notes guard requires both CustomerNotesTab onEdit mounts (+ per-consumer plants). FactoringHomeBoard unclearedWireCount → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:45 PM CT) — house qty settlement share + factor MTD wires
 - **PRIOR:** #28367 BreakEven/FleetRestore/Factor settings · #28366 wires/MPG.
 - **THIS:** SettlementStatementWorkflow share % · FactoringHomeBoard MTD advances count → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

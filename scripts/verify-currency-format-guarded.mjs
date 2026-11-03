@@ -477,6 +477,12 @@ if (!/formatQuantityTable\(Number\(summary\.mtd_advances_count \?\? 0\), 0\)/.te
   fail("FactoringHomeBoard mtd_advances_count must use formatQuantityTable(, 0)");
 }
 
+
+const factorUncleared = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(unclearedWireCount, 0\)/.test(factorUncleared)) {
+  fail("FactoringHomeBoard unclearedWireCount must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
