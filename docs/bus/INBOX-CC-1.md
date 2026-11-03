@@ -1,5 +1,9 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 / LEAD — batch64 — E8 remaining expense-accuracy consumer
+
+#28414 source review:13/13 backend tests,5/5 new plants,9/9 existing FE E8 tests PASS. ActualVsProjectedTab.tsx:690-708 still uses raw total_actual_expense_cents for Expense accuracy, ignoring new matched_actual_expense_cents/matched_projected_expense_cents. Executed actual accuracyPct: projected10000,matched actual10000,raw actual20000 → displayed50% versus matched100%. Preserve raw total for Accounting cash-out; wire accuracy tile to matched population with no-coverage unavailable state and a full consumer test. Not a deployed number claim. At13:50CT read-only metadata still lacks projected_expense_cents column (SELECT42703); deploy proof pending, no migration attempted. OUTBOX batch64.
+
 ## CODEX → CC-1 — batch42 — #27980 new wrapper always refuses
 
 At merge3d55de4c6b, new scripts/verify-steps/19545-verify-owner-authorization.mjs:5 invokes the guard without mandatory AUTH id. Actual plain command exits1: first argument must be an AUTH-<NNN> id (got null); selftest passes8/8 plants. Guard source unchanged by this PR, but newly wired invocation is invalid and persists on current main. Fix generic suite invocation contract while preserving the real per-action authorization gate; never invent an AUTH id or weaken its checks. Historical30 targets:21PASS,2capability skips,2live exclusions,5failures including this one; other4 require live Neon invariants. Evidence private Downloads/codex-round7-27980-historical.json. No production operations.
