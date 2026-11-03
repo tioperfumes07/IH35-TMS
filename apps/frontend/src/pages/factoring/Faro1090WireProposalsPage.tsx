@@ -21,7 +21,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -104,7 +104,7 @@ export function Faro1090WireProposalsPage() {
         label: "Days unfunded",
         sortable: true,
         cellClass: "text-right",
-        render: (row) => String(row.days_unfunded),
+        render: (row) => formatQuantityTable(row.days_unfunded),
       },
       {
         key: "classification",
@@ -169,6 +169,22 @@ export function Faro1090WireProposalsPage() {
   );
 
   const summary = query.data?.summary;
+
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-4" data-testid="faro-1090-wire-proposals-page">
+        <PageHeader
+          backHref="/factoring"
+          breadcrumb={["Factoring", "1090 wire proposals"]}
+          title="Faro 1090 wire proposals"
+          subtitle="ENG-17 BUILD-ONLY — propose / pick wire candidates for unmatched purchases. Matches deferred (owner BUILD-FIRST)."
+        />
+        <BoardSection title="Faro 1090 wire proposals" testId="faro-1090-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3" data-testid="faro-1090-wire-proposals-page">

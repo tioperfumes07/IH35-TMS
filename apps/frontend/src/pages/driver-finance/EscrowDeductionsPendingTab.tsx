@@ -192,6 +192,16 @@ export function EscrowDeductionsPendingTab() {
   const kpiPending = pendingQuery.isError ? "—" : String(rows.length);
   const kpiProposed = pendingQuery.isError ? "—" : formatMoney(proposedTotalCents);
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3">
+        <BoardSection title="Escrow deductions pending" testId="escrow-deductions-pending-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div

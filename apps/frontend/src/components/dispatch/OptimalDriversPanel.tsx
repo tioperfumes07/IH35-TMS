@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { getDispatchOptimalDrivers, type OptimalDriverRow } from "../../api/dispatch";
 import { readDispatchLocalSettings, type DispatchLocalSettings } from "../../lib/dispatch-local-settings";
 import { entityLabel } from "../../lib/entity-label";
+import { formatQuantityTable } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 
@@ -27,7 +28,7 @@ export type OptimalDriversPanelProps = {
 };
 
 function fmtScore(n: number) {
-  return Number.isFinite(n) ? n.toFixed(0) : "—";
+  return Number.isFinite(n) ? formatQuantityTable(n, 0) : "—";
 }
 
 export function OptimalDriversPanel({

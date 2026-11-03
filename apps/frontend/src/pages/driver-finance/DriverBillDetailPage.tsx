@@ -53,6 +53,17 @@ export function DriverBillDetailPage() {
       ),
   });
 
+  if (!selectedCompanyId) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-3 p-4">
+        <PageHeader backHref="/driver-finance" title="Driver bill" breadcrumb={[{ label: "Driver Finance", href: "/driver-finance" }, { label: "Driver bill" }]} />
+        <BoardSection title="Driver bill" testId="driver-bill-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   if (!enabled || query.isLoading) {
     return <div className="p-6 text-xs text-gray-500">Loading driver bill…</div>;
   }

@@ -16,6 +16,7 @@ import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadP
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -183,6 +184,22 @@ export function TripProfitability() {
     },
   ];
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-4" data-testid="trip-profitability-page">
+        <ReportsSubNav />
+        <PageHeader
+          backHref="/dispatch"
+          title="Company Settlements"
+          subtitle="One settlement period, every linked load, P&L tied to the cent"
+        />
+        <BoardSection title="Company settlements" testId="trip-profitability-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={period.start || period.end ? 1 : 0}
@@ -221,7 +238,7 @@ export function TripProfitability() {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="trip-profitability-page">
       <ReportsSubNav />
       <PageHeader backHref="/dispatch" title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
 

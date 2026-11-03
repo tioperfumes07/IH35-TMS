@@ -19,7 +19,7 @@ import { formatQuantityTable } from "../../lib/money";
 // checklist in English, and "Close tour → Settlement (human confirms)". No tour → the tab says WHY.
 const DASH = "—";
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
-const pct = (p: number | null | undefined) => (p == null ? DASH : `${p.toFixed(1)}%`);
+const pct = (p: number | null | undefined) => (p == null ? DASH : `${formatQuantityTable(p, 1)}%`);
 const miles = (m: number | null | undefined) => (m == null ? DASH : formatQuantityTable(m));
 // REG-033(b) (owner 2026-09-09): the pre-settlement must be scoped to THIS tour's number AND dates.
 // Format a date-only / timestamp string as MM/DD/YYYY without a Date() timezone shift.

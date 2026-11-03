@@ -533,6 +533,16 @@ export function SettlementsPage() {
       </div>
     ) : undefined;
 
+  if (!companyId) {
+    return (
+      <SettlementsSubNavWrapper title="Driver Settlements" subtitle="List + detail settlement workflow">
+        <BoardSection title="Driver settlements" testId="settlements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </SettlementsSubNavWrapper>
+    );
+  }
+
   return (
     <SettlementsSubNavWrapper
       title="Driver Settlements"
