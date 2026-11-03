@@ -501,7 +501,7 @@ export function FactoringHomeBoard({
         <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
           <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
-            {unclearedWireCount} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)}{" "}
+            {formatQuantityTable(unclearedWireCount, 0)} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)}{" "}
             &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>
         </div>
