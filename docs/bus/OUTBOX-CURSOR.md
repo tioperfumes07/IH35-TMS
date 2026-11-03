@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:25 PM CT) — U12 QBO Sync Status MultiSelect
+- **PRIOR:** #28600 Driver/Teams/Brokers U12.
+- **THIS:** QBOSyncStatusDashboardPage status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Accounting lists still Cascade.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:15 PM CT) — U12 Driver catalog + Teams + Brokers MultiSelect
 - **PRIOR:** #28599 balanced-ledger 19885 + CLOSE-ALL sync.
 - **THIS:** DriverCatalogListPage + DriverTeamsPage + BrokersListPage status → MultiSelectDropdown (apiStatus/apiIsActive). Accounting lists still Cascade.
