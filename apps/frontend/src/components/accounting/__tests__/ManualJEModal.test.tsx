@@ -87,6 +87,8 @@ describe("ManualJEModal (accounting 2-step)", () => {
 
   // D065 (register row 241): header + every line row share ONE fixed minmax(0,…) template so the Class
   // picker can never overlap Debit and the row can never push the 700px drawer into a horizontal scroll.
+  // Layout proof: Account/Class Combobox shells must NOT carry FILTER min-w-[10rem] (live Class was
+  // 142px into a ~115px track → ~27px Debit overlap). size="sm" uses FORM_FIELD chrome (no min-width).
   it("D065 step 2 header and line rows use the fixed minmax(0,…) grid template with shrinkable items", async () => {
     const user = userEvent.setup();
     render(wrap(<ManualJEModal open operatingCompanyId={companyId} onClose={vi.fn()} onSaved={vi.fn()} />));
@@ -114,6 +116,24 @@ describe("ManualJEModal (accounting 2-step)", () => {
     expect(screen.getByTestId("manual-je-lines").className).toContain("min-w-0");
     // Header labels align 1:1 with row controls: Account · Class · Debit · Credit · Description.
     expect([...header.children].map((c) => c.textContent)).toEqual(["Account", "Class", "Debit", "Credit", "Description"]);
+
+    // Layout proof (jsdom cannot measure px overlap): every Account/Class combobox shell must omit
+    // FILTER min-w-[10rem], which was the live Class→Debit overflow source at 1280/768.
+    for (const row of rows) {
+      const accountCell = row.children[0] as HTMLElement;
+      const classCell = row.children[1] as HTMLElement;
+      for (const cell of [accountCell, classCell]) {
+        const shells = cell.querySelectorAll("[class*='min-w-']");
+        for (const shell of shells) {
+          expect((shell as HTMLElement).className).not.toMatch(/min-w-\[10rem\]/);
+        }
+        // size="sm" form chrome paints h-10 on the input (same as MoneyInput), not the md filter shell.
+        const input = cell.querySelector('input[role="combobox"]') as HTMLInputElement | null;
+        expect(input).toBeTruthy();
+        expect(input!.className).toMatch(/\bh-10\b/);
+        expect(input!.className).toMatch(/\bmin-w-0\b/);
+      }
+    }
   });
 
   it("step 2 keeps Save disabled until debits equal credits", async () => {
