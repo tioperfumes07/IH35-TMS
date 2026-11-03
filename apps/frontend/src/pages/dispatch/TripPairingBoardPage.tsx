@@ -417,12 +417,12 @@ export function TripPairingBoardPage() {
         <div className="ih-kpi-row mb-3" data-testid="trip-pairing-kpis">
           {/* C8: each KPI selects the board segment holding the rows it counted — the board below IS
               the drill target, so a click filters instead of navigating away. */}
-          <DrillKpiCard variant="board" label="Active trucks" value={data.kpis.active_trucks} onClick={() => setSegment("All")} active={segment === "All"} />
-          <DrillKpiCard variant="board" label="Northbound" value={data.kpis.northbound} accent={TRIP_COLOR.NB} onClick={() => setSegment("NB")} active={segment === "NB"} />
-          <DrillKpiCard variant="board" label="NB unbooked" value={data.kpis.nb_unbooked} onClick={() => setSegment("NB")} active={segment === "NB"} />
-          <DrillKpiCard variant="board" label="Southbound" value={data.kpis.southbound} accent={TRIP_COLOR.SB} onClick={() => setSegment("SB")} active={segment === "SB"} />
-          <DrillKpiCard variant="board" label="SB unbooked" value={data.kpis.sb_unbooked} onClick={() => setSegment("open")} active={segment === "open"} />
-          <DrillKpiCard variant="board" label="Up north 30d+" value={data.kpis.up_north_30d} onClick={() => setSegment("upnorth")} active={segment === "upnorth"} />
+          <DrillKpiCard variant="board" label="Active trucks" value={formatQuantityTable(data.kpis.active_trucks, 0)} onClick={() => setSegment("All")} active={segment === "All"} />
+          <DrillKpiCard variant="board" label="Northbound" value={formatQuantityTable(data.kpis.northbound, 0)} accent={TRIP_COLOR.NB} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard variant="board" label="NB unbooked" value={formatQuantityTable(data.kpis.nb_unbooked, 0)} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard variant="board" label="Southbound" value={formatQuantityTable(data.kpis.southbound, 0)} accent={TRIP_COLOR.SB} onClick={() => setSegment("SB")} active={segment === "SB"} />
+          <DrillKpiCard variant="board" label="SB unbooked" value={formatQuantityTable(data.kpis.sb_unbooked, 0)} onClick={() => setSegment("open")} active={segment === "open"} />
+          <DrillKpiCard variant="board" label="Up north 30d+" value={formatQuantityTable(data.kpis.up_north_30d, 0)} onClick={() => setSegment("upnorth")} active={segment === "upnorth"} />
         </div>
       ) : null}
 

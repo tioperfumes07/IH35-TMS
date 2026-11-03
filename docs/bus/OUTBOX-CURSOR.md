@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:40 PM CT) — TripPairing KPI house quantity
+- **PRIOR:** #28374 Legal alerts KPI · #28373 Legal U12.
+- **THIS:** TripPairingBoardPage board KPIs → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:30 PM CT) — Legal alerts KPI house quantity
 - **PRIOR:** #28373 Legal U12 MultiSelect · #28372 notes per-consumer.
 - **THIS:** LegalDeadlineAlertsPage KPI counts → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
