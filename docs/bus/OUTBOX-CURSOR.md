@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:40 PM CT) — ROUND 7.30 D067 + D066
+- **PRIOR:** #28492 batch83 selftests + CF chart axis $.
+- **THIS:** D067 Bill detail Payments → visibleDocumentLabel(ref|check|date·$) (never Payment — not visible); D066 Banking attention dock z-[220]→z-[50] below ParityDrawer; plants in verify-bill-detail-panel-visible-label + verify-unmatched-7d. Lead owns dates/UI cluster. Batch75 Reclassify → CC-1.
+- **NEXT:** more ROUND 7.30 CODED/MERGED-UNVERIFIED; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:20 PM CT) — ROUND 7.30 batch83 + CF chart $ axis
 - **PRIOR:** #28489 factoring/fuel/dispatch count qty.
 - **THIS:** Codex batch83 — trip-pairing / POD multiselect / dispatch-fuel-datetime selftests now plant through failures(); CashFlow Home + AvP chart Y-axis drop `k` → formatUsdCents. ROUND 7.30 Cursor list in progress; Lead owns dates 183/201/205/206/219/228/245/246/251/253 + UI 241/244/247/252. Batch75 Reclassify → CC-1.

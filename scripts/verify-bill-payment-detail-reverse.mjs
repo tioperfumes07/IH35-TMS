@@ -81,7 +81,15 @@ function billPaymentDetailReverseErrors(sources = {}) {
     if (!/kind=["']bill_payment["']/.test(source)) {
       errors.push(`${surface}: payment rows must reverse-drill to canonical bill-payment detail`);
     }
-    if (!/entityLabel\([^)]*(?:reference_number|check_number)[^)]*\.id[^)]*["']Payment["']/.test(source.replace(/\n/g, " "))) {
+    // D067 — visibleDocumentLabel(ref|check|date·$) is the honest on-bill fallback (never "Payment — not visible").
+    const flat = source.replace(/\n/g, " ");
+    const hasEntityLabel = /entityLabel\([^)]*(?:reference_number|check_number)[^)]*\.id[^)]*["']Payment["']/.test(flat);
+    const hasVisibleLabel =
+      /visibleDocumentLabel\(/.test(flat) &&
+      /pmt\.reference_number/.test(flat) &&
+      /["']Payment["']/.test(flat) &&
+      /formatDateUS\(pmt\.payment_date\)/.test(flat);
+    if (!hasEntityLabel && !hasVisibleLabel) {
       errors.push(`${surface}: payment drill must show a human reference/check label with honest fallback`);
     }
   }
