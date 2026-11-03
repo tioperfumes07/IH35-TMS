@@ -215,21 +215,50 @@ const BRANCHES: string[] = [
       'Payment · ' || COALESCE((SELECT v.vendor_name FROM mdata.vendors v
                                  WHERE v.id::text = bp.vendor_id::text AND v.operating_company_id = bp.operating_company_id), 'vendor')
         || ' · ' || to_char(bp.payment_date,'MM/DD/YYYY') || ' · $' || to_char(bp.amount_cents / 100.0, 'FM999,999,999,990.00')), bp.created_at::text, bp.is_sample_data,
-    EXISTS (
-      SELECT 1 FROM accounting.journal_entry_postings p
-      WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
-        AND p.operating_company_id = bp.operating_company_id
-    ),
-    NOT EXISTS (
-      SELECT 1 FROM (
-        SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
-        FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+    -- ROUND 2026-11-03: noncash settlement-application payments (settlement_deduction_noncash=true)
+    -- have NO bill_payment-source postings by design — their GL is owned by the settlement deduction JE
+    -- (source_transaction_type='driver_settlement') linked via driver_settlement_gl_runs.deduction_journal_entry_id.
+    -- For cash payments: check bill_payment-source postings as before.
+    CASE WHEN bp.settlement_deduction_noncash = true THEN
+      EXISTS (
+        SELECT 1
+        FROM driver_finance.driver_settlement_gl_bills glb
+        JOIN driver_finance.driver_settlement_gl_runs glr ON glr.id = glb.run_id AND glr.operating_company_id = bp.operating_company_id
+        JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = glr.deduction_journal_entry_id AND p.operating_company_id = bp.operating_company_id
+        WHERE glb.accounting_bill_id = bp.bill_id AND glb.operating_company_id = bp.operating_company_id
+      )
+    ELSE
+      EXISTS (
+        SELECT 1 FROM accounting.journal_entry_postings p
         WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
           AND p.operating_company_id = bp.operating_company_id
-        GROUP BY je.id
-      ) x WHERE x.diff <> 0
-    ),
+      )
+    END,
+    CASE WHEN bp.settlement_deduction_noncash = true THEN
+      NOT EXISTS (
+        SELECT 1 FROM (
+          SELECT glr.deduction_journal_entry_id AS id,
+                 SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
+          FROM driver_finance.driver_settlement_gl_bills glb
+          JOIN driver_finance.driver_settlement_gl_runs glr ON glr.id = glb.run_id AND glr.operating_company_id = bp.operating_company_id
+          JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = glr.deduction_journal_entry_id AND p.operating_company_id = bp.operating_company_id
+          WHERE glb.accounting_bill_id = bp.bill_id AND glb.operating_company_id = bp.operating_company_id
+            AND glr.deduction_journal_entry_id IS NOT NULL
+          GROUP BY glr.deduction_journal_entry_id
+        ) x WHERE x.diff <> 0
+      )
+    ELSE
+      NOT EXISTS (
+        SELECT 1 FROM (
+          SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
+          FROM accounting.journal_entry_postings p
+          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+          WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
+            AND p.operating_company_id = bp.operating_company_id
+          GROUP BY je.id
+        ) x WHERE x.diff <> 0
+      )
+    END,
     -- linked: a bill payment must reference the bill it pays.
     (bp.bill_id IS NOT NULL),
     CASE WHEN bp.is_sample_data IS NULL THEN NULL ELSE (
