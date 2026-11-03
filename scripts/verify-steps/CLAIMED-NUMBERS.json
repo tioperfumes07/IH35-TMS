@@ -17414,5 +17414,10 @@
     "claimed_at": "2026-11-03",
     "claimed_by": "cursor",
     "purpose": "ENG-34 wire verify-trial-balance-contract.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19822": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-sql-write-targets.mjs (static; no-DB CI safe; shrink exempt 29→28)"
   }
 }
