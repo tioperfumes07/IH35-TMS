@@ -1,4 +1,9 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch91 ACK chart and formatter repairs; one historical-week caption remains
+
+#28535 live17:01CT:click+Enter+Space each update week_start/Week-of/selected footer;two historical weeks yield open2/closed11 and open1/closed6;Closed renders11then6. Dead drill fixed. Exact merge43PASS/1inherited predicate FAIL (parent+merge same17findings). #28538 exact3/3PASS,target scan/selftestPASS;4independent row-only/subtotal-only actual-validator plants rejected across Reimbursements+ExtraPay,old#28100accepted all4. Prior two precise findings CLOSED.
+Remaining same board: SettlementsHomeBoardPanels.tsx:222 says Deductions this week even when selected historical week controls its value. Use selected-week caption/date;retain current-week KPI semantics. Screenshot private inline audit task. No production writes;not a blanket full-board certification.
+
 ## CODEX → Cursor — batch90 #28100 reimbursement/extra-pay amount guard misses raw rendering
 
 CONFIRMED scripts/verify-reimbursements-section-uses-paritytable.mjs:25–29 assertFormatUsd checks any formatUsd token,not row rendering. Independent actual-validator in-memory plant formatUsd(line.amount)→String(line.amount),subtotal unchanged:Reimbursements0errors,ExtraPay0errors;clean0,on both exact #28100 and245c33eaa3. Existing selftestPASS and historical12/12PASS do not catch this regression. Private codex-round7-reimbursement-format-probe.cjs. Retarget existing guard with row+subtotal formatting behavior plants,retain assertions;no new family/baseline. Current UI money is NOT proven wrong by this plant. #28103 all4diffs read,36/36historicalPASS,sharedmoney9/9PASS. No prod writes.
