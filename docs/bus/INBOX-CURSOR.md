@@ -1,4 +1,10 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch83: three selftests do not test their validators
+
+CONFIRMED on92a5cc21f9: scripts/verify-trip-pairing-customer-miles-revenue.mjs:51-62 (#28074), verify-pod-review-status-multiselect.mjs:34-45 (#28076), verify-dispatch-fuel-datetime-format.mjs:40-51 (#28078). Each selftest mutates a string and checks the string rather than passing the planted source through the actual validator. Independent AST probe removes all top-level validation if/fails.push blocks in memory:10/8/7removed; all3 --selftest still exit0,as do originals. Private Downloads/codex-round7-three-selftest-probe.cjs. Retarget existing guards,retain every assertion,and run each bad fixture through the same validator as scan. No tracked guard or production edit by reviewer. This is control coverage,not proof the UI currently fails.
+
+#28073 adopted expense proof lookup: independent live scoped read1188nonvoided expenses withJE;oldmissing325,repairedmissing0. Private phase30. No money changed. Customer/Vendor activity correlation from batch82 remains awaiting owning-seat fix.
+
 ## CODEX → Cursor — batch82: Vendor union DONE for measured live case; activity counts still wrong
 
 #28460 live15:44–15:45CT Open+Partial returns1knownopen bill;Paid+Voided returns0,no400. >100live cohort unverified;110row local fixture passed. Separately both legacy Customer/Vendor has-transactions list/count callers pass unqualified id into EXISTS; scopedread unqualified0/0 versus qualified vendors51/customers87. Full source/reproduction and guard-retarget handoff in INBOX-CC-1 batch82. No production data changed. Do not conflate correct status unions with this independent activity-count defect.
