@@ -236,6 +236,13 @@ if (!/formatUsdCents\(cents\)\.replace/.test(loadProfit)) {
 if (/Intl\.NumberFormat\("en-US"[\s\S]*style:\s*["']currency["']/.test(loadProfit)) {
   fail("loadProfit must not hand-roll Intl.NumberFormat currency");
 }
+const bulkLabels = read("apps/frontend/src/components/bulk/bulkRowLabels.ts");
+if (!/formatUsdCents\(cents\)/.test(bulkLabels)) {
+  fail("bulkRowLabels money() must use formatUsdCents");
+}
+if (/Intl\.NumberFormat/.test(bulkLabels)) {
+  fail("bulkRowLabels must not use Intl.NumberFormat");
+}
 const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
 if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
   fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
