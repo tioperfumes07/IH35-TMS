@@ -13,6 +13,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatCompanyName } from "../../lib/formatCompanyName";
 import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import { VendorsHomeBoard } from "./VendorsHomeBoard";
@@ -205,7 +206,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       && (aging === "all" || (r.aging[agingKey] ?? 0) > 0));
     const sum = (k: "invoices" | "billed_cents" | "collected_cents" | "open_cents") => rows.reduce((s, r) => s + r[k], 0);
     const cols: Array<Col<CustomerRow>> = [
-      { key: "name", label: "Customer", sort: (r) => r.name, cell: (r) => r.name },
+      { key: "name", label: "Customer", sort: (r) => r.name, cell: (r) => formatCompanyName(r.name) },
       { key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices, cell: (r) => (r.invoices ? int(r.invoices) : <span className="ih-empty">—</span>), foot: int(sum("invoices")) },
       { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => money(r.billed_cents), foot: money(sum("billed_cents")) },
       { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => money(r.collected_cents), foot: money(sum("collected_cents")) },

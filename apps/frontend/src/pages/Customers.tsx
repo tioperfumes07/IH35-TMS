@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { formatPersonName } from "../lib/formatPersonName";
+import { formatCompanyName } from "../lib/formatCompanyName";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
@@ -185,7 +186,7 @@ function CustomerDetailsTab({
       <div className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
         <div>
           <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Contact info</h4>
-          <DetailRow label="Customer" value={dash(customer.name)} />
+          <DetailRow label="Customer" value={dash(formatCompanyName(customer.name))} />
           <DetailRow label="Type" value={customerTypeLabel(customer.customer_type)} />
           <DetailRow label="Email" value={dash(customer.email)} />
           <DetailRow label="Phone" value={dash(customer.phone)} />
@@ -1286,7 +1287,7 @@ export function CustomersPage() {
         render: (load) => <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
       },
       { key: "status", label: "Status", sortable: true, render: (load) => load.status ?? "—" },
-      { key: "customer", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
+      { key: "customer", label: "Customer", sortable: true, render: (load) => formatCompanyName(load.customer_name) || "—" },
       { key: "pickup", label: "Pickup", sortable: true, render: (load) => mmmDd(load.pickup_scheduled_at) || "—" },
       {
         key: "delivery",
@@ -1595,7 +1596,7 @@ export function CustomersPage() {
                 <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
                   <div className="mb-2 flex items-center justify-between">
                     <div>
-                      <h2 className="text-page-title font-semibold text-gray-900">{selectedCustomer.name}</h2>
+                      <h2 className="text-page-title font-semibold text-gray-900">{formatCompanyName(selectedCustomer.name)}</h2>
                       <p className="text-xs text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
                       {/* VC-DETAIL-01 — Status = active/inactive (deactivated_at); the quality chip is
                           its own separate chip, never the Status value. */}

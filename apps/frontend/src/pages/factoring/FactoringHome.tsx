@@ -8,6 +8,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
+import { companyLabel } from "../../lib/formatCompanyName";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
@@ -281,7 +282,7 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
     // honest raw-QBO-id fallback (not a bare "-") when it doesn't, since the id itself is real data.
     render: (row) =>
       row.from_vendor_id ? (
-        <EntityLinkOrTombstone kind="vendor" id={row.from_vendor_id} name={row.from_vendor_name} noun="Vendor" />
+        <EntityLinkOrTombstone kind="vendor" id={row.from_vendor_id} name={row.from_vendor_name} linkLabel={companyLabel(row.from_vendor_name, row.from_vendor_id, "Vendor")} noun="Vendor" />
       ) : (
         row.from_qbo_vendor_id
       ),
@@ -292,7 +293,7 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
     sortable: true,
     render: (row) =>
       row.to_vendor_id ? (
-        <EntityLinkOrTombstone kind="vendor" id={row.to_vendor_id} name={row.to_vendor_name} noun="Vendor" />
+        <EntityLinkOrTombstone kind="vendor" id={row.to_vendor_id} name={row.to_vendor_name} linkLabel={companyLabel(row.to_vendor_name, row.to_vendor_id, "Vendor")} noun="Vendor" />
       ) : (
         row.to_qbo_vendor_id
       ),
@@ -1282,7 +1283,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     label: "Debtor",
                     sortable: true,
                     render: (row: (typeof fundsDueRows)[number]) =>
-                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : (row.customer_name ?? "—"),
+                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} /> : (row.customer_name ?? "—"),
                   },
                   {
                     key: "display_id",
@@ -1370,7 +1371,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               }
               const debtorColumns: Array<ParityColumn<(typeof rows)[number]>> = [
                 { key: "customer_name", label: "Debtor (Customer)", sortable: true, render: (row) => (
-                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                  <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) },
                 { key: "invoice_count", label: "Invoices", sortable: true, render: (row) => String(row.invoice_count) },
                 { key: "total_invoice", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_invoice) },
@@ -1419,7 +1420,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               const receiptColumns: Array<ParityColumn<FactoringDebtorReceipt>> = [
                 { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
-                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                  <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
                 { key: "invoice_display_id", label: "Invoice", render: (row) => row.invoice_id ? (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
@@ -1487,7 +1488,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.invoice_reference ?? row.factoring_advance_id} />
                 ) },
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
-                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                  <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
                 { key: "invoice_id", label: "Invoice", render: (row) => row.invoice_id ? (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_reference, row.invoice_id, "Invoice")} />
@@ -1537,7 +1538,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               const unappliedColumns: Array<ParityColumn<FactoringUnappliedCashRow>> = [
                 { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
-                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                  <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
                 { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCents(row.amount_cents) },
                 { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCents(row.amount_applied_cents) },
@@ -1614,7 +1615,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
                 ) },
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
-                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                  <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
                 { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
               ];
@@ -2270,7 +2271,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     key: "customer_name",
                     label: "Debtor",
                     sortable: true,
-                    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />,
+                    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />,
                   },
                   { key: "purchase_date", label: "Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
                   {
@@ -2399,7 +2400,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       key: "customer_name",
                       label: "Debtor",
                       render: (row: (typeof feesPaidOpenInvoiceRows)[number]) =>
-                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
                     },
                     {
                       key: "invoice_reference",
@@ -2454,7 +2455,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     key: "customer_name",
                     label: "Debtor",
                     render: (row: ChargebackFeeRow) =>
-                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
                   },
                   {
                     key: "invoice_display_id",
@@ -2563,7 +2564,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       label: "Debtor",
                       sortable: true,
                       render: (row: (typeof agingRows)[number]) =>
-                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
                     },
                     { key: "po_ref", label: "PO", render: () => "—" },
                     { key: "other_ref", label: "Other Ref", render: () => "—" },

@@ -39,8 +39,7 @@ import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { formatDateTimeUS } from "../lib/formatDate";
-import { entityLabel } from "../lib/entity-label";
-import { formatPersonName } from "../lib/formatPersonName";
+import { userDisplayLabel } from "../lib/entity-label";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
@@ -303,7 +302,7 @@ export function UsersPage() {
         .filter((user) => user.id !== roleModalUser?.id && user.id !== auth.user?.uuid)
         .map((user) => ({
           value: user.id,
-          label: `${entityLabel(user.name ?? user.email, user.id, "User")} — ${ROLE_LABEL[user.role as UserRole] ?? user.role}`,
+          label: `${userDisplayLabel(user)} — ${ROLE_LABEL[user.role as UserRole] ?? user.role}`,
         })),
     [allUsers, roleModalUser?.id, auth.user?.uuid]
   );
@@ -339,7 +338,8 @@ export function UsersPage() {
             data-testid="user-roster-record-link"
             kind="user"
             id={row.id}
-            name={formatPersonName(row.name ?? row.email ?? "") || entityLabel(row.name ?? row.email, row.id, "User")}
+            name={userDisplayLabel(row)}
+            linkLabel={userDisplayLabel(row)}
             noun="User"
             onClick={(event) => event.stopPropagation()}
           />
@@ -388,7 +388,7 @@ export function UsersPage() {
                 type="button"
                 disabled={!isOwnerOrAdmin}
                 title={permReason ?? "Change this user's role"}
-                aria-label={`Change role for ${row.name}`}
+                aria-label={`Change role for ${userDisplayLabel(row)}`}
                 className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-[#4B5563] hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -404,7 +404,7 @@ export function UsersPage() {
                 title={
                   permReason ?? (isDeactivated ? "User is already deactivated" : "Deactivate this user")
                 }
-                aria-label={`Deactivate ${row.name}`}
+                aria-label={`Deactivate ${userDisplayLabel(row)}`}
                 className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-[#4B5563] hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -767,7 +767,7 @@ export function UsersPage() {
                       }`}
                       onClick={() => setSelectedUserId(user.id)}
                     >
-                      <span className="font-semibold text-[#0F1219]">{formatPersonName(user.name ?? user.email ?? "") || entityLabel(user.name ?? user.email, user.id, "User")}</span>
+                      <span className="font-semibold text-[#0F1219]">{userDisplayLabel(user)}</span>
                       <span className="mt-0.5 block text-center text-[#6B7280]">
                         {ROLE_LABEL[user.role as UserRole] ?? user.role} · {userStatus(user)}
                       </span>
@@ -796,7 +796,7 @@ export function UsersPage() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
                   <dt className="text-[#6B7280]">Name</dt>
                   <dd className="text-center font-medium text-[#0F1219]">
-                    <EntityLink kind="user" id={selected.id} label={formatPersonName(selected.name ?? selected.email ?? "") || entityLabel(selected.name ?? selected.email, selected.id, "User")} />
+                    <EntityLink kind="user" id={selected.id} label={userDisplayLabel(selected)} />
                   </dd>
                   <dt className="text-[#6B7280]">Email</dt>
                   <dd className="text-center text-[#0F1219]">{selected.email ?? "—"}</dd>

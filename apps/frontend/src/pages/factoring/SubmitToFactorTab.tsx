@@ -44,6 +44,7 @@ import { TableSearch } from "../../components/table/TableSearch";
 import {colors, FORM_FIELD_CONTROL_SIZE_CLASS, typography, FILTER_CONTROL_SIZE_CLASS} from "../../design/tokens";
 import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../../components/forms/inputClass";
 import { entityLabel } from "../../lib/entity-label";
+import { companyLabel } from "../../lib/formatCompanyName";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
@@ -662,7 +663,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       key: "customer_name",
       label: "Customer",
       sortable: true,
-      render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} />,
+      render: (r) => <EntityLink kind="customer" id={r.customer_id} label={companyLabel(r.customer_name, r.customer_id, "Customer")} />,
     },
     {
       key: "customer_po_number",
@@ -1253,7 +1254,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             {(directPayQuery.data ?? []).map((d) => (
               <li key={d.invoice_id} className="flex flex-wrap items-center gap-2">
                 <EntityLink kind="invoice" id={d.invoice_id} label={entityLabel(d.invoice_display_id, d.invoice_id, "Invoice")} />
-                <EntityLink kind="customer" id={d.customer_id} label={entityLabel(d.customer_name, d.customer_id, "Customer")} />
+                <EntityLink kind="customer" id={d.customer_id} label={companyLabel(d.customer_name, d.customer_id, "Customer")} />
                 <span>{formatUsdCents(d.total_cents)}</span>
                 <span className="text-[#6B7280]">{d.reason}</span>
                 <Button
