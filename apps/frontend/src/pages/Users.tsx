@@ -339,7 +339,7 @@ export function UsersPage() {
             data-testid="user-roster-record-link"
             kind="user"
             id={row.id}
-            name={row.name}
+            name={formatPersonName(row.name ?? row.email ?? "") || entityLabel(row.name ?? row.email, row.id, "User")}
             noun="User"
             onClick={(event) => event.stopPropagation()}
           />
@@ -767,7 +767,7 @@ export function UsersPage() {
                       }`}
                       onClick={() => setSelectedUserId(user.id)}
                     >
-                      <span className="font-semibold text-[#0F1219]">{formatPersonName(user.name ?? user.email ?? "User")}</span>
+                      <span className="font-semibold text-[#0F1219]">{formatPersonName(user.name ?? user.email ?? "") || entityLabel(user.name ?? user.email, user.id, "User")}</span>
                       <span className="mt-0.5 block text-center text-[#6B7280]">
                         {ROLE_LABEL[user.role as UserRole] ?? user.role} · {userStatus(user)}
                       </span>
@@ -796,7 +796,7 @@ export function UsersPage() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
                   <dt className="text-[#6B7280]">Name</dt>
                   <dd className="text-center font-medium text-[#0F1219]">
-                    <EntityLink kind="user" id={selected.id} label={selected.name ?? selected.email ?? "User"} />
+                    <EntityLink kind="user" id={selected.id} label={formatPersonName(selected.name ?? selected.email ?? "") || entityLabel(selected.name ?? selected.email, selected.id, "User")} />
                   </dd>
                   <dt className="text-[#6B7280]">Email</dt>
                   <dd className="text-center text-[#0F1219]">{selected.email ?? "—"}</dd>
