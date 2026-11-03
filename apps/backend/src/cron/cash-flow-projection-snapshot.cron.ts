@@ -33,6 +33,8 @@ export async function insertCashFlowProjectionSnapshot(
     operating_company_id: string;
     prediction_date: string;
     projected_income_cents: number;
+    /** E8 11-03: the engine's expense_subtotal_cents for the day (driver pay + bills due + adjustments). */
+    projected_expense_cents: number;
     cash_follows_eta: boolean;
   }
 ): Promise<void> {
@@ -41,11 +43,11 @@ export async function insertCashFlowProjectionSnapshot(
   await client.query(
     `
       INSERT INTO forecast.cash_flow_projection_snapshots
-        (operating_company_id, prediction_date, projected_income_cents, cash_follows_eta)
-      VALUES ($1::uuid, $2::date, $3, $4)
+        (operating_company_id, prediction_date, projected_income_cents, projected_expense_cents, cash_follows_eta)
+      VALUES ($1::uuid, $2::date, $3, $4, $5)
       ON CONFLICT (operating_company_id, prediction_date) DO NOTHING
     `,
-    [args.operating_company_id, args.prediction_date, args.projected_income_cents, args.cash_follows_eta]
+    [args.operating_company_id, args.prediction_date, args.projected_income_cents, args.projected_expense_cents, args.cash_follows_eta]
   );
 }
 
@@ -64,13 +66,13 @@ export async function runCashFlowProjectionSnapshotCronTick(deps?: {
   for (const operatingCompanyId of companyIds) {
     assertTenantContext(operatingCompanyId, CRON_NAME);
     try {
-      const { cashFollowsEta, incomeCents } = await withLuciaBypassImpl(async (client) => {
+      const { cashFollowsEta, incomeCents, expenseCents } = await withLuciaBypassImpl(async (client) => {
         const flagEnabled = await isEnabled(client as never, "CASH_FOLLOWS_ETA_ENABLED", {
           operating_company_id: operatingCompanyId,
           user_uuid: SYSTEM_ACTOR_ID,
         });
         const prediction = await getDailyPredictionImpl(client, operatingCompanyId, predictionDate, flagEnabled);
-        return { cashFollowsEta: flagEnabled, incomeCents: prediction.income_subtotal_cents };
+        return { cashFollowsEta: flagEnabled, incomeCents: prediction.income_subtotal_cents, expenseCents: prediction.expense_subtotal_cents };
       });
 
       await withLuciaBypassImpl(async (client) =>
@@ -78,6 +80,7 @@ export async function runCashFlowProjectionSnapshotCronTick(deps?: {
           operating_company_id: operatingCompanyId,
           prediction_date: predictionDate,
           projected_income_cents: incomeCents,
+          projected_expense_cents: expenseCents,
           cash_follows_eta: cashFollowsEta,
         })
       );

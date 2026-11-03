@@ -85,6 +85,9 @@ export type ActualVsProjectedResult = {
     income_variance_pct: number | null;
     total_projected_expense_cents: number;
     total_actual_expense_cents: number;
+    /** E8: matched-coverage comparison (days with a projection); total_actual_expense_cents stays RAW. Optional for older servers. */
+    matched_projected_expense_cents?: number;
+    matched_actual_expense_cents?: number;
     expense_variance_pct: number | null;
   };
 };
