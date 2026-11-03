@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch48: trailer invariant and Rolling Ledger failure
+
+Batch47 merged #28350 00881832a41d62484e1e4aa037b1e1f46ec17d1a,normal hooks,1affected guard0regressions.
+
+| Item | Independent result | Verdict |
+|---|---|---|
+|#27975 / row111 ENG-13|Full6-file diff read; historical selftest4/4;5affected checks:2PASS,2live exclusions,1missing-AUTH-argumentFAIL identical on parent30a6eaa89b (guard SHA256 identical). Current unchanged live guard exit0:194loads,0NULLsource,0missingcustomerIDs. Extra same-company join finds0unresolvedtrailers.13595 customer trailer445 resolves samecompany.|Recorded-trailer invariant DONE-LIVE; equipment body type separateENG-22,not guessed. No ops writer executed.|
+|#27977 f6f411ecbd|Full1-file migration reservation diff;2affectedchecksPASS.|Claim-only checked; no migration/apply implied.|
+|CASH-T03 / Rolling Ledger|Live14daygrid and carried-obligation groups render after1reload. Forecastfuel link opens invalid synthetic expense URL and Validation failed. Source cash-flow.service.ts:1714-1756 / RollingLedgerTab.tsx:1008-1013.|OPEN; Cursor/CC-1 handoff. Private inline screenshot11:46CT. No Save/Stop/Rollover.|
+|Rolling Ledger guard|28/28plantsPASS;4-fixes scanPASS+selftest10/10+plant. Main guard withoutDSN fails closed,notPASS. Live implementation is source-count/schema checks,not promised day-grid arithmetic.|Coverage gap routed; no blanket money parity claim.|
+
+Private phase14 read-only JSON and trailer-autocheck.log in Downloads. No production data changed. #27966 diff review started but truncated; NOT counted complete. Full263-row/249-PR audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch47: deployed repairs and independent 1090 remeasurement
 
 Batch46 merged #28341 e1a1bb366de92ef392baeecf59c6c4c2c07e3b57 after sync, normal hooks,14 affected guards0 regressions,1 inherited citation red. No production mutation.
