@@ -93,7 +93,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Dispatch Pre-Settlement/LoadDetail CTA; live UNVERIFIED |
 | 27 | R220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | PARTIAL — #28518/#28521/#28528/#28532/#28534 + wave6 need-company (~46→~54 Accounting surfaces); more detail remain |
 | 28 | R221 | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | OPEN |
-| 29 | R222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | OPEN |
+| 29 | R222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | MERGED-UNVERIFIED — verify-popups-one-format overlays=0; FuelAssignmentPopup sizePreset md 720 (443.295); verify-fuel-assignment-popup PASS; live owner walk UNVERIFIED |
 | 30 | R224 | Process | CODE-COMPLETE MODE: code every row, verify at the end | ALL | IN PROGRESS |
 | 31 | R225 | Gates | Main pre-push gate red for every seat (filter-panel regex, selftest-mutates, export-business-date) | LEAD | DONE-LIVE — verify-export-business-date / verify-no-selftest-mutates-tracked-source / verify-program-system-cashflow-filter-panels PASS on main 22:58Z |
 | 32 | R226 | Gates | Main pre-push gate red: 10 unwired guards, row-218 panel leaf, 2 stale guards | LEAD | DONE-LIVE — verify-cc1-money-orphan-guard-registry-batch PASS (85 guards in CI, orphan census 0); step 18937 (31 guards) merged #28096 7f6d72bfc |
