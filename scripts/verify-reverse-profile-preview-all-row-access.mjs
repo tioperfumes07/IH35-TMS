@@ -52,7 +52,8 @@ const checks = [
   // `query.isError ? 0 : (...)` guard (query.isError ? 0 : (query.data?.total ?? templates.length))
   // so the disclosed total goes honestly to 0 on a load failure instead of falling back to a stale
   // templates.length. Widened to tolerate the error-guard wrapper around the same real expression.
-  ["templateReverse", /const total = [\s\S]{0,60}query\.data\?\.total \?\? templates\.length[\s\S]{0,1200}Showing \{preview\.length\} of \{total\}[\s\S]{0,500}Open all \{total\}/, "customer template preview discloses total and all-row action"],
+  // House quantity: Showing uses formatQuantityTable(, 0) around preview.length / total.
+  ["templateReverse", /const total = [\s\S]{0,60}query\.data\?\.total \?\? templates\.length[\s\S]{0,1400}Showing \{formatQuantityTable\(preview\.length, 0\)\} of \{formatQuantityTable\(total, 0\)\}[\s\S]{0,500}Open all \{total\}/, "customer template preview discloses total and all-row action"],
   ["templateReverse", /\/dispatch\/planner\?panel=templates&customer_id=\$\{encodeURIComponent\(customerId\)\}/, "customer template all-row link preserves customer scope on the mounted route"],
   // Real code routes the deep-link customer_id through the governed useStagedListFilters pipeline
   // (searchParams -> deepLinkCustomerId -> customerIdFromUrl -> applied.customerId -> effectiveCustomerId)
