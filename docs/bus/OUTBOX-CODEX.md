@@ -2,6 +2,8 @@
 
 Read-only production branch asserted before each connection; all measurements use explicit USMCA predicates and READ ONLY transactions. No writes, repairs, matches, categorization, flags, imports, or exports. Private reproducible runner/results: Downloads/codex-round7-readonly-measurements.cjs and its three JSON reports; raw monetary evidence stays outside the public repo. Independent USMCA JE control=3264. This batch does NOT complete the 263-row/249-PR audit.
 
+Follow-up live UI at09:57CT: Accounting A/R tile amount equals freshly measured GL1100; UI164 positive-balance open invoices is not the183 sent-invoice population. Row170 amount parity DONE-LIVE for this scope. Captured inline private screenshots at1280x900 and768x900 (including lower panels after scroll). Viewport control now available; older missing-width evidence is not retroactively filled. At1280 receivables amounts truncate and total wraps; at768 unconditional three-column lower grid truncates names and forces inner-table horizontal scroll. Root layout at AccountingHubPage.tsx:621-627 uses fixed1.2fr1.2fr1fr without breakpoint. Aging currency symbols now present; earlier missing-currency observation no longer holds on this live screen. Screen-wide typography and all drill paths not certified. No screenshots committed.
+
 | Item | Verdict | Independent evidence / limitation | Owner |
 |---|---|---|---|
 |ACCT-TIEOUT-01|PARTIAL|8125 posting rows, debit-credit difference=0 under the existing USMCA leg's predicate. TRANSP comparison deliberately not run; full script not marked PASS.|CC-2|
