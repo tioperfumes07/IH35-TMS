@@ -208,7 +208,9 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       { key: "name", label: "Customer", sort: (r) => r.name, cell: (r) => r.name },
       { key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices, cell: (r) => (r.invoices ? int(r.invoices) : <span className="ih-empty">—</span>), foot: int(sum("invoices")) },
       { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => money(r.billed_cents), foot: money(sum("billed_cents")) },
-      { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => (r.collected_cents ? usd(r.collected_cents) : <span className="ih-empty">—</span>), foot: money(sum("collected_cents")) },
+      { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => money(r.collected_cents), foot: money(sum("collected_cents")) },
+      // ^ Codex batch46 row 55: collected is a MEASURED sum (like Billed beside it) — a real $0.00 renders as $0.00,
+      //   never "—" (the KPI above already shows the measured 0; the row said "unknown").
       { key: "open", label: "Open balance", num: true, width: 130, sort: (r) => r.open_cents, cell: (r) => <span className="pb-strong"><MoneyCell cents={r.open_cents} format={money} drill={{ entity: { kind: "customer", id: r.id } }} /></span>, foot: money(sum("open_cents")) },
       { key: "last_invoice_date", label: "Last invoice", num: true, width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span className="pb-muted">{day(r.last_invoice)}</span> },
       { key: "factored", label: "Factored", width: 108, sort: (r) => r.factored ?? "", cell: (r) => <span className="pb-muted2">{r.factored ?? "—"}</span> },
