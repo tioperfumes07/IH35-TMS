@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.27 batch73: Legal correction and E9 independent tests
+
+Batch72 merged #28445 21877a9b63, normal hooks and three affected guards/zero regressions.
+
+- #28446 1e0046584f Legal status-route correction: both actual route changes and new Fastify inject tests read. Independent vitest12/12 PASS, both extended guard selftests PASS. Valid multi-status reaches service ANY(); invalid and mixed-invalid statuses reject. Source-level batch71 defect corrected; deployed filter behavior remains UNVERIFIED until fresh live recheck. Earlier private route probe mocks every service method with an empty array and is now invalid for the newly imported parser; its resulting400 is NOT evidence against this correction. Use the real-parser HTTP tests, not that obsolete stub result.
+- #28444 468f99dae4 E9/ENG64: all four engine/hook diffs, new11-test suite and new10-plant guard read. Independently11/11 tests PASS, guard scan PASS,10/10 plants caught. No production sweep invoked. Production success/fork totals in author PR have NOT been independently remeasured; keep live outcome OPEN. Additional queue-completeness review pending: listUnresolvedFills has2000 limit and confirmed unresolved fills return without setting resolved_at; need boundary test before claiming every future unresolved row is eventually visited. No current-production starvation count claimed.
+- #28032 Faro classifier independently4/4 tests PASS. Its four historical affected failures still require causality classification; no skipped/live-excluded check becomes PASS. Entire audit remains OPEN, production untouched.
+
 ## 2026-11-03 — ROUND7.27 batch72: independent recheck of guard coverage fix
 
 - #28442 merged 2c0f8aae78: Legal union route failure published. Current bus still calls the Legal family closed; no route fix present at this check.
