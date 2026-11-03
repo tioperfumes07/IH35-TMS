@@ -119,24 +119,24 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 47 | R33 | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — AvP BoardSection/V3 + formatUsdCents axis; live board verdict UNVERIFIED |
 | 48 | R34 | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — RollingLedgerTab ParityTable; live board verdict UNVERIFIED |
 | 49 | R35 | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — ManualDailyProjectionsTab; live board verdict UNVERIFIED |
-| 50 | R37 | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | PARTIAL |
-| 51 | R38 | Banking | Banking › Home — board verdict REBUILT | Cursor | PARTIAL |
+| 50 | R37 | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — UnexpectedExpensesPage board; live verdict UNVERIFIED |
+| 51 | R38 | Banking | Banking › Home — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — BankingHomeBoard BoardSection/ParityTable; live verdict UNVERIFIED |
 | 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | OPEN |
 | 53 | R40 | Reports | Reports › Home — board verdict LAYERED | CC-3 | OPEN |
 | 54 | R41 | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | PARTIAL |
 | 55 | R42 | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
 | 56 | R43 | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | OPEN |
 | 57 | R44 | Settlements | Settlements › Home — board verdict LAYERED | Cursor | OPEN |
-| 58 | R45 | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | PARTIAL |
-| 59 | R46 | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | PARTIAL |
+| 58 | R45 | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Open V3 board; live verdict UNVERIFIED |
+| 59 | R46 | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — SettlementsToursRegister Closed V3 board; live verdict UNVERIFIED |
 | 60 | R47 | Settlements | Settlements › Statement — board verdict LAYERED | Cursor | MERGED-UNVERIFIED |
 | 61 | R48 | Settlements | Settlements › Pre-Settlements — board verdict LAYERED | Cursor | MERGED-UNVERIFIED |
 | 62 | R49 | Settlements | Settlements › Close — board verdict LAYERED | Cursor | OPEN |
-| 63 | R50 | Settlements | Settlements › Company — board verdict REBUILT | Cursor | PARTIAL |
+| 63 | R50 | Settlements | Settlements › Company — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — CompanySettlementsPage listTours board; live verdict UNVERIFIED |
 | 64 | R51 | Settlements | Settlements › Deductions — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED |
 | 65 | R52 | Settlements | Settlements › Cash Advances — board verdict CHROME-ONLY | Cursor | MERGED-UNVERIFIED |
 | 66 | R53 | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | Cursor | OPEN |
-| 67 | R54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | Cursor | PARTIAL |
+| 67 | R54 | Settlements | Settlements › Escrow Register — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — EscrowRegisterPage Opening balance + ParityTable; live verdict UNVERIFIED |
 | 68 | R55 | Fuel | Fuel › Home — board verdict CHROME-ONLY | Cursor | OPEN |
 | 69 | R56 | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | Cursor | OPEN |
 | 70 | R58 | Maintenance | Maintenance › Home — board verdict PARTIAL | LEAD | CODED |
