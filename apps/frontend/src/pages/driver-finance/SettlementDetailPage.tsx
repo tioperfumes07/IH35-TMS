@@ -248,6 +248,17 @@ export function SettlementDetailPage() {
     }
   }
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3">
+        <SettlementsSurfaceHeader title="Settlement statement" subtitle="Select an operating company" />
+        <BoardSection title="Settlement statement" testId="settlement-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   if (!settlementId) {
     return (
       <div className="space-y-3">
