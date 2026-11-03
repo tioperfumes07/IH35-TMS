@@ -1,3 +1,4 @@
+import { survivorDriverIdSql } from "./driver-merge-resolution.js";
 import { withSavepoint } from "../auth/db.js";
 import { loadServiceMembershipSql } from "../dispatch/load-service.js";
 import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.service.js";
@@ -411,7 +412,8 @@ export async function buildUnitAggregate(
     `
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
-      JOIN mdata.drivers d ON d.id = vda.driver_id
+      -- Register row 167: a pairing recorded on a merged shell names the survivor.
+      JOIN mdata.drivers d ON d.id = ${survivorDriverIdSql("vda.driver_id")}
                           AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
                             SELECT 1 FROM mdata.driver_company_authorizations aggregate_current_dca
                              WHERE aggregate_current_dca.driver_id = d.id
@@ -421,7 +423,8 @@ export async function buildUnitAggregate(
                           ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
-        AND vda.source = 'samsara_webhook'
+        -- Register row 167: 809 of 809 prod VDA rows are source='reconciled' — the samsara_webhook-only filter hid every
+        -- open pairing. An open pairing is the current driver whatever writer recorded it.
         AND vda.ended_at IS NULL
       ORDER BY vda.started_at DESC
       LIMIT 1

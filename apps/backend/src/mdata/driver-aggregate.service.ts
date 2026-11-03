@@ -5,6 +5,7 @@ import { getCurrentClocks, type HosDutyStatus } from "../telematics/hos-clocks.s
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { loadDriverReferenceFkEnrichment } from "./driver-reference-fk.service.js";
+import { driverAndShellIdsSql, loadMergedShellCredentials, overlayShellCredentials } from "./driver-merge-resolution.js";
 import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
 
 const DRIVER_PHOTO_FILE_PREFIX = "file:";
@@ -78,6 +79,13 @@ export async function buildDriverAggregate(
   );
   const driver = driverRes.rows[0];
   if (!driver) return null;
+  // Register row 167 — a merged survivor's credentials can sit only on a shell (Angel Sosa: CDL exp 2029-09-22 on shell
+  // fba21d80, survivor blank → every document read "Not recorded"). Read through the shells; never written back.
+  const shellCredentialFields = overlayShellCredentials(
+    driver as Record<string, unknown>,
+    await loadMergedShellCredentials(client, driverId, operatingCompanyId)
+  );
+  (driver as Record<string, unknown>).credentials_from_merged_shell = shellCredentialFields;
 
   // Resolve file: references to signed download URLs so the frontend can render directly
   const rawPhotoUrl = driver.photo_url as string | null | undefined;
@@ -129,7 +137,7 @@ export async function buildDriverAggregate(
         `
       SELECT expiry_date::text, card_number, notes
       FROM safety.medical_cards
-      WHERE driver_id = $1::uuid
+      WHERE driver_id = ANY(${driverAndShellIdsSql("$1", "$2")})
         AND operating_company_id = $2::uuid
         AND voided_at IS NULL
       ORDER BY expiry_date DESC
@@ -263,7 +271,7 @@ export async function buildDriverAggregate(
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.units u ON u.id = vda.unit_id
                          AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)
-      WHERE vda.driver_id = $1::uuid
+      WHERE vda.driver_id = ANY(${driverAndShellIdsSql("$1", "$2")})
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
         AND vda.ended_at IS NULL
@@ -278,9 +286,11 @@ export async function buildDriverAggregate(
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.units u ON u.id = vda.unit_id
                          AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)
-      WHERE vda.driver_id = $1::uuid
+      -- Register row 167: every VDA row on prod is source='reconciled' (809 of 809, 0 'samsara_webhook'), so the old
+      -- source = 'samsara_webhook' filter made this read empty for every driver (Angel Sosa open on T156 since 10-31 →
+      -- "No current truck assignment"). An OPEN pairing is the current truck whatever writer recorded it; merged shells count.
+      WHERE vda.driver_id = ANY(${driverAndShellIdsSql("$1", "$2")})
         AND vda.operating_company_id = $2::uuid
-        AND vda.source = 'samsara_webhook'
         AND vda.ended_at IS NULL
       ORDER BY vda.started_at DESC
       LIMIT 1
@@ -522,7 +532,7 @@ export async function buildDriverAggregate(
   // unit profiles remain mutually reachable instead of rendering a false em dash.
   const currentTruck = mapTruck(currentTruckRes.rows[0] ?? loadRes.rows[0], {
     samsara_logged_in_at: currentTruckRes.rows[0]?.samsara_logged_in_at ?? null,
-    source: currentTruckRes.rows[0] ? "samsara_webhook" : loadRes.rows[0] ? "dispatch_load" : null,
+    source: currentTruckRes.rows[0] ? "vehicle_driver_assignment" : loadRes.rows[0] ? "dispatch_load" : null,
   });
 
   const fastExp = driver.fast_card_expiration as string | null;

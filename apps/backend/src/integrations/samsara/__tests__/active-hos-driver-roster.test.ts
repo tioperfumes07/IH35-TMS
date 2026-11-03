@@ -15,7 +15,8 @@ describe("active HOS driver roster tenant scope", () => {
     expect(sql).toContain("dca.is_authorized = true");
     expect(sql).toContain("dca.deactivated_at IS NULL");
     expect(sql).toContain("LEFT JOIN telematics.vehicle_driver_assignments");
-    expect(sql).toContain("d.status = 'Active'");
+    // Register row 166: Probation drivers run loads — polled with Active.
+    expect(sql).toContain("d.status IN ('Active', 'Probation')");
     expect(sql).toContain("a.ended_at IS NULL");
   });
 });

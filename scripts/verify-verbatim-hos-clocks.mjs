@@ -27,7 +27,7 @@ if (!/\[cycle, drive, shift\]\.some\(\(v\) => v != null && v <= 0\)/.test(svc))
   fail("violation must be derived ONLY from Samsara's numbers (any of cycle/drive/shift remaining <= 0)");
 // LEAD 443.281 row 109: the latest-per-driver read is one index probe per driver (… h.driver_uuid = d.id ORDER BY
 // h.polled_at DESC LIMIT 1) — same meaning as DISTINCT ON (driver_uuid) … polled_at DESC, without scanning the history.
-if (!/ORDER BY driver_uuid, polled_at DESC/.test(svc) && !/h\.driver_uuid = d\.id\s+ORDER BY h\.polled_at DESC\s+LIMIT 1/.test(svc))
+if (!/ORDER BY driver_uuid, polled_at DESC/.test(svc) && !/h\.driver_uuid = (?:d|ids)\.id\s+ORDER BY h\.polled_at DESC\s+LIMIT 1/.test(svc))
   fail("must select the LATEST snapshot per driver");
 
 // Cron: the */5 positions cron pulls clocks + writes an observable sync-log row.
