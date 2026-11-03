@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~12:35 AM CT)
+
+## CURRENT — Cursor house money wave 6 (Load Costs/escrow/liabilities)
+LoadCostsBoard rates · escrow balance tiles · LiabilitiesKpi · TourSettlement leg rates → lib/money. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~12:20 AM CT)
 
 ## CURRENT — Cursor house money wave 5 (driver reverse + TotalsStack)

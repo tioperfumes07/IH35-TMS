@@ -176,12 +176,12 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           { key: "lane", label: "Lane", sortable: true, sortValue: l => l.lane, render: l => <span className="ldt-sub">{l.lane || DASH}</span> },
           { key: "desc", label: "Description", sortable: false, render: () => "Line haul" },
           { key: "miles", label: "Miles", sortable: true, sortValue: l => l.miles_practical ?? -Infinity, render: l => miles(l.miles_practical) },
-          { key: "rate", label: "Rate", sortable: true, sortValue: l => legRate(l) ?? -Infinity, render: l => { const rt = legRate(l); return rt == null ? DASH : `$${rt.toFixed(3)}`; } },
+          { key: "rate", label: "Rate", sortable: true, sortValue: l => legRate(l) ?? -Infinity, render: l => { const rt = legRate(l); return rt == null ? DASH : formatUsdRateTable(rt, 3); } },
           { key: "amount", label: "Amount", sortable: true, sortValue: l => l.revenue_cents, render: l => money(l.revenue_cents, currencyCode) },
         ]} footerCells={{
           load: () => <span className="ldt-sub" data-testid="customer-charges-total-label">Total line haul</span>,
           miles: () => <span data-testid="customer-charges-total-miles">{miles(chargeMiles)}</span>,
-          rate: () => <span>{chargeMiles > 0 ? `$${(invoicedCents / 100 / chargeMiles).toFixed(3)}` : DASH}</span>,
+          rate: () => <span>{chargeMiles > 0 ? formatUsdRateTable(invoicedCents / 100 / chargeMiles, 3) : DASH}</span>,
           amount: () => <span className="ldt-m" data-testid="customer-charges-total-amount">{money(invoicedCents, currencyCode)}</span>,
         }} />
       </div>

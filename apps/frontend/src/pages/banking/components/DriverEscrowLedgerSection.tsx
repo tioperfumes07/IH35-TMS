@@ -394,12 +394,12 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
             <p className={BANKING_CONTROL_LABEL_CLASS}>Escrow virtual account balance (current, unfiltered)</p>
-            <p className="mt-1 text-page-title font-semibold text-[#0F1219]">${Number(driverEscrowBalance ?? 0).toFixed(2)}</p>
+            <p className="mt-1 text-page-title font-semibold text-[#0F1219]">{formatUsd(Number(driverEscrowBalance ?? 0))}</p>
           </div>
           <div className="border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2" data-testid="banking-escrow-filtered-total">
             <p className={BANKING_CONTROL_LABEL_CLASS}>{isFiltered ? "Filtered postings total" : "All postings total"}</p>
             <p className="mt-1 text-page-title font-semibold text-[#0F1219]">
-              ${filteredTotal.toFixed(2)} <span className="text-xs font-normal text-[#6B7280]">across {filteredCount} posting(s)</span>
+              {formatUsd(filteredTotal)} <span className="text-xs font-normal text-[#6B7280]">across {filteredCount} posting(s)</span>
             </p>
           </div>
         </div>
