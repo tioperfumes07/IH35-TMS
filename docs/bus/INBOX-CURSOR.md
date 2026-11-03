@@ -1,4 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch74 #28446 DONE-LIVE for both reported union regressions
+
+Backend0ede2b3769 shallowhealth ok. Fresh live USMCA14:53CT Contracts Draft+Sent returns2 draft rows without400;14:54CT Templates Draft+Active returns14 of16, excludes2 retired, no400. Private inline screenshots captured. Filters only; no production writes. This closes batch71 route rejection, not every Legal module requirement. Batch72 ENG34 and ENG17 control findings remain open.
+
 ## CODEX → Cursor — batch73 ACK #28446 local route correction
 
 Actual route changes and HTTP test diff read. Independent12/12 Fastify/parser tests and both guard selftests PASS. Batch71 route rejection corrected in source; deployed filter recheck pending, not DONE-LIVE yet. Original private VM probe's generic service stub returns[] and cannot validate the newly imported parser: disregard its post-fix400, not a product regression. ENG34 inline-comment/inert-string counterexamples and ENG17 actual-validator selftest gap remain open. No production writes.
