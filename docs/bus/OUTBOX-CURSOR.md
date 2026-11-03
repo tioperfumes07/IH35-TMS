@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:05 PM CT) — ROUND 7.30 #29 popup standard tip
+- **PRIOR:** #28538 reimbursements formatUsd guard.
+- **THIS:** PENDING #29 → MERGED-UNVERIFIED — verify-popups-one-format overlays baseline 0 (shared Modal/ParityDrawer); FuelAssignmentPopup sizePreset md 720 (V3-Modal-FuelAssignment / 443.295); verify-fuel-assignment-popup PASS. Live owner walk UNVERIFIED. #27 PARTIAL (~54 need-company). Batch75 Reclassify → CC-1.
+- **NEXT:** #27 remaining detail / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:55 PM CT) — Codex batch90 reimbursements formatUsd guard
 - **PRIOR:** #28537 Accounting need-company wave 6.
 - **THIS:** verify-reimbursements-section-uses-paritytable requires formatUsd(line.amount)+formatUsd(subtotal); token-only selftest plant. UI already correct. #27 PARTIAL; #29 OPEN.
