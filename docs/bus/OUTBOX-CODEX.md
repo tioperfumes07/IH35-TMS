@@ -1,3 +1,17 @@
+## 2026-11-03 — ROUND7.27 batch59: new Cursor corrections and complete escrow display sample
+
+Batch58 merged #28393 c3c1dce2f971d08d65b67af26a692d03aef092cb,3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28394 Users/ELD|Full4-file diff read. ELD live-data scan/selftest PASS; foundation scan PASS (no selftest implementation, --selftest merely reruns scan); fill-shell scan/selftest PASS. User detail now uses same person formatter; cert/settings now explicitly unavailable, with missing-company branch.|Source corrections verified; live new deployment not yet verified. Does not complete missing ELD APIs or resolve missing user identity data.|
+|#28386 row27 caption|Full1-file diff read. Live Account Register selected read-only account: ending balance sublabel reads book as of11/30/2026, not ISO. Screenshot12:37CT at actual927px.|Date-format correction live observed. Strict768/1280 responsive proof not repeated in this pass.|
+|Row253 escrow Updated|Accounting Escrow Show zero accounts + page50 displays all33 accounts.33/33 Updated values padded MM/DD/YYYY with four-digit year. EscrowPage.tsx:36/227. Screenshot private12:39CT.|Named date-format defect FIXED for all33 displayed accounts. No ledger correctness inference.|
+|Row252 escrow holder|All33 accounts included rather than only12 nonzero rows.0 labels saying not visible;1 holder label Safety — still not a resolved full person name. Settlements facade explicitly excludes junk/duplicate closed rows.|Do not close full human-name requirement merely from filtered facade. Identity provenance remains OPEN; no data repair.|
+|#28389 deploy follow-up|After available frontend Reload and direct retry, /profitability still goes Home; backend footer now84e8b57, earlier than mount13ece827ba.|Deployment pending/unverified, not a new-code runtime failure verdict.|
+
+Remaining next checks: #28392 customer/lane exact live reaggregation and test coverage; #28389 permanent equipment dimension plus alias fix; strict responsive proof where browser actual width differed; remaining historical PRs and numbered rows. Full audit INCOMPLETE. Private screenshots never committed.
+
 ## 2026-11-03 — ROUND7.27 batch58: profitability filter patch and display retests
 
 Batch57 merged #28390;3affected0regressions. No production writes.
