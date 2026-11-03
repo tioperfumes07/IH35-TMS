@@ -842,7 +842,8 @@ export type RollingLedgerRow = {
     | "factoring_advance"
     | "load"
     | "card_payable"
-    | "relay_topup";
+    | "relay_topup"
+    | "fuel_forecast";
   document_id: string;
   document_label: string;
   counterparty: string;
@@ -1711,8 +1712,8 @@ export async function getRollingLedgerRows(
 
   // 443.264 — FUEL TRAILING AVERAGE projected rows (13 future weeks, due_date = Monday of each week).
   // Source: fuel.fuel_transactions weekly avg over the last 4 complete weeks (Chicago time).
-  // Uses document_kind:"expense" with synthetic document_id "fuel-avg-YYYY-MM-DD" — not a real
-  // accounting.expenses row; applyRowAdjustments will find no matching adjustment and pass through.
+  // document_kind:"fuel_forecast" + synthetic document_id "fuel-avg-…" — NOT an accounting.expenses
+  // row and NOT EntityLink-drivable (CASH-T03). Never invent a money document for a forecast.
   const weeklyFuelCents = fuelAvgResult.rows[0]?.weekly_avg_cents ?? 0;
   if (weeklyFuelCents > 0) {
     const todayDate = new Date(today + "T00:00:00Z");
@@ -1731,7 +1732,7 @@ export async function getRollingLedgerRows(
         rows.push({
           row_kind: "expense",
           type: "Fuel (projected)",
-          document_kind: "expense",
+          document_kind: "fuel_forecast",
           document_id: `fuel-avg-partial-${today}`,
           document_label: `Fuel est. ${today} (partial wk)`,
           counterparty: "Fuel (4-wk avg)",
@@ -1752,7 +1753,7 @@ export async function getRollingLedgerRows(
       rows.push({
         row_kind: "expense",
         type: "Fuel (projected)",
-        document_kind: "expense",
+        document_kind: "fuel_forecast",
         document_id: `fuel-avg-${weekStartStr}`,
         document_label: `Fuel est. wk ${weekStartStr}`,
         counterparty: "Fuel (4-wk avg)",
