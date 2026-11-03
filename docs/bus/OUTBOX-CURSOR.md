@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:45 PM CT) — tip #29/#241 ROUND sync
+- **PRIOR:** #28568 tip #27.
+- **THIS:** ROUND #29/#241 → MERGED-UNVERIFIED; PENDING #241 cites #28557 + Lead min-w-0.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:40 PM CT) — tip #27 after #28566
 - **PRIOR:** #28566 CreateMultipleBills + VendorBillCreate need-company.
 - **THIS:** PENDING/ROUND tip #27 MERGED-UNVERIFIED (~69 surfaces).
