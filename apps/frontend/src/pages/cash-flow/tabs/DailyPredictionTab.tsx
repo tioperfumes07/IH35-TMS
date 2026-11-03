@@ -47,13 +47,14 @@ function fmtLongDate(iso: string): string {
   return formatDateUS(iso);
 }
 
-/** Board CashFlow-Projected outlook chips: "Thu 10-22" (weekday + MM-DD, no year on the chip). */
+/** Row 219 (D043): outlook chips "Thu 10/22/2026" — weekday + shared MM/DD/YYYY (was "Thu 10-22", no year). */
 function fmtChipDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return formatDateUS(iso);
   const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dow] ?? "";
-  return `${wd} ${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const us = formatDateUS(iso);
+  return us ? `${wd} ${us}` : "—";
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
