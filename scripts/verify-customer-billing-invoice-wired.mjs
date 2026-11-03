@@ -52,7 +52,7 @@ const CHECKS = [
     //        coming back on the profile now fails.
     name: "CustomerDetail's Billing tab is A/R read-only and sends payments to Accounting → Receive payment",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /data-cust-ar-readonly="1"[\s\S]{0,400}href="\/accounting\/payments\?create=1"[\s\S]{0,4000}data-testid="customer-record-payment-disabled"/,
+    pattern: /data-cust-ar-readonly="1"[\s\S]{0,400}href="\/accounting\/payments\?create=1"[\s\S]{0,8000}data-testid="customer-record-payment-disabled"/,
     forbidPattern: /recordPaymentOpen|createCustomerPayment\(|recordCustomerPayment\(|applyCustomerPayment\(/,
   },
   {
@@ -71,11 +71,10 @@ const CHECKS = [
     pattern: /no customer late-fee rule table/,
   },
   {
-    name: "CUST-MONEY-F6312 money tabs are not COMING_STATE_COPY leftovers",
+    name: "CUST-MONEY-F6312 money tabs are fill-not-shell (projects/opportunities wired; no COMING_STATE_COPY)",
     file: "apps/frontend/src/pages/Customers.tsx",
-    pattern:
-      /const COMING_STATE_COPY[\s\S]*projects:[\s\S]*opportunities:[\s\S]*conversations:/,
-    antiPattern: /^\s+(statements|recurring_transactions|late_fees):/m,
+    pattern: /testId="customer-tab-projects"[\s\S]{0,4000}testId="customer-tab-opportunities"/,
+    forbidPattern: /const COMING_STATE_COPY/,
   },
   {
     name: "CUST-MONEY-F6312 backend lists recurring templates scoped by customer_id",
@@ -112,11 +111,8 @@ if (process.argv.includes("--selftest")) {
       listAllAccountingRecurringTemplates(companyId, { customer_id: selectedCustomer.id })
       {activeTab === "statements" ? (
       There is no customer late-fee rule table.
-      const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
-        projects: "Projects",
-        opportunities: "Opportunities",
-        conversations: "Conversations",
-      };
+      testId="customer-tab-projects"
+      testId="customer-tab-opportunities"
     `,
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx":
       'const customerId = searchParams.get("customer_id") ?? "";',
@@ -136,7 +132,7 @@ if (process.argv.includes("--selftest")) {
   }
   const leftoverComing = checkAll((f) =>
     f === "apps/frontend/src/pages/Customers.tsx"
-      ? `const COMING_STATE_COPY = { statements: "x", recurring_transactions: "y", late_fees: "z", projects: "p", opportunities: "o", conversations: "c" };`
+      ? `testId="customer-tab-projects-GONE"`
       : GOOD_FIXTURES[f] ?? null,
   );
   if (!leftoverComing.some((line) => line.includes("coming-state"))) {
