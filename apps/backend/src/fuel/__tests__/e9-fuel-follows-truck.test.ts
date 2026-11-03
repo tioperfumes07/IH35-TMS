@@ -29,7 +29,7 @@ vi.mock("../../auth/db.js", () => ({
 
 import { rerunAction } from "../fill-truck-and-load.service.js";
 import { evaluateFuelAssignment } from "../fuel-assignment-question.service.js";
-import { runFuelFollowsTruckSweep } from "../fuel-follows-truck-sweep.js";
+import { listUnresolvedFills, runFuelFollowsTruckSweep } from "../fuel-follows-truck-sweep.js";
 
 const base = { hasRuling: false, ownerRuled: false, loadConfirmed: false, truckUnitId: "T152", engineLoadId: "L1", toLoadId: "L1", toUnitId: "T152", currentLoadId: "L1", currentUnitId: "T152" };
 
@@ -104,5 +104,25 @@ describe("E9 runFuelFollowsTruckSweep", () => {
     expect(s.load_confirmed).toBe(1);
     expect(s.failed).toBe(1);
     expect(s.failures[0]).toMatchObject({ fuel_id: "d" });
+  });
+});
+
+describe("E9 listUnresolvedFills — keyset pages until exhausted (Codex batch74: a LIMIT 2000 list starved the tail)", () => {
+  it("visits all 2001 eligible fills and excludes person-confirmed fills in the read", async () => {
+    const all = Array.from({ length: 2001 }, (_, i) => ({ id: `f${String(i).padStart(5, "0")}`, at: "2026-09-01 00:00:00+00" }));
+    let sawConfirmedExclusion = false;
+    const client = {
+      query: async (sql: string, values: unknown[]) => {
+        if (/e\.load_confirmation = 'confirmed'/.test(sql)) sawConfirmedExclusion = true;
+        const [, size, afterAt, afterId] = values as [string, number, string | null, string | null];
+        const rest = afterAt == null ? all : all.filter((r) => r.id > String(afterId));
+        return { rows: rest.slice(0, size) };
+      },
+    };
+    const ids = await listUnresolvedFills(client as never, "c", 500);
+    expect(ids).toHaveLength(2001);
+    expect(ids[2000]).toBe("f02000");
+    expect(new Set(ids).size).toBe(2001);
+    expect(sawConfirmedExclusion).toBe(true);
   });
 });

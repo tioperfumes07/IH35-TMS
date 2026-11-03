@@ -33,6 +33,7 @@ import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseli
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { loadStatusLabel } from "../../lib/load-status";
 import { formatPersonName } from "../../lib/formatPersonName";
+import { formatQuantityTable } from "../../lib/money";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -261,7 +262,9 @@ function fmtDuration(ms: number): string {
   const totalHours = Math.floor(abs / 3_600_000);
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
-  return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+  return days > 0
+    ? `${formatQuantityTable(days, 0)}d ${formatQuantityTable(hours, 0)}h`
+    : `${formatQuantityTable(hours, 0)}h`;
 }
 
 /** V10 ROUND 18.6 — HOS minutes → "11h 00m". Null stays null (never invent a drive time). */
@@ -270,7 +273,7 @@ function fmtHoursMinutes(totalMinutes: number | null): string | null {
   const whole = Math.max(0, Math.round(totalMinutes));
   const hours = Math.floor(whole / 60);
   const minutes = whole % 60;
-  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  return `${formatQuantityTable(hours, 0)}h ${String(minutes).padStart(2, "0")}m`;
 }
 
 /** Yard dock icon for THE AVAILABLE TRUCK ghost track (V10 ROUND 18.6). */

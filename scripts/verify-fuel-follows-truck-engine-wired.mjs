@@ -40,6 +40,8 @@ export function findDefects(s) {
   if (!/f\.resolved_at IS NULL/.test(list)) out.push("the sweep is not limited to fills not yet through the engine");
   if (!/NOT LIKE 'owner_ruling:%'/.test(list)) out.push("the sweep lists owner-ruled fills");
   if (!/f\.voided_at IS NULL AND f\.archived_at IS NULL/.test(list)) out.push("the sweep lists voided / archived fills");
+  if (!/e\.load_confirmation = 'confirmed'/.test(list)) out.push("the sweep lists person-confirmed fills (never moved, never stamped — they starve the queue)");
+  if (/LIMIT \$2`,\s*\[companyId, limit\]/.test(list) || !/if \(page\.length < pageSize\) return out;/.test(list)) out.push("the sweep reads a capped list instead of keyset pages until exhausted");
   const sweep = fn(s.sweep, "runFuelFollowsTruckSweep");
   if (!/for \(const fuelId of ids\)[\s\S]*?withLuciaBypass\(/.test(sweep)) out.push("the sweep does not run each fill in its own transaction");
   if (!/applyIfCertain: true/.test(sweep)) out.push("the sweep does not apply certain fills");
@@ -61,6 +63,7 @@ export function findDefects(s) {
   const iConf = ev.indexOf("if (res.load_confirmed) return");
   const iApply = ev.indexOf("applyFillTruckAndLoad(");
   if (iRuled < 0 || iConf < 0 || iApply < 0 || iRuled > iApply || iConf > iApply) out.push("evaluateFuelAssignment can apply over an owner ruling or a confirmed load");
+  if (!/if \(!candidates\.length\) candidates = await parkedTrucksAtStation\(/.test(s.engine)) out.push("a truck parked at the pump (consecutive fixes bracketing the fill) is never considered (row 105)");
   if (/odometer_meters/.test(s.question)) out.push("the question path reads odometer_meters (the column is odometer_mi)");
   return out;
 }
@@ -71,6 +74,8 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["hook no longer sweeps", plant("hook", "await runFuelFollowsTruckSweep(id)", "await Promise.resolve(id)")],
     ["sweep takes resolved fills", plant("sweep", "AND f.resolved_at IS NULL", "")],
+    ["sweep lists confirmed fills", plant("sweep", "AND e.load_confirmation = 'confirmed'", "AND e.load_confirmation = 'x'")],
+    ["sweep stops after one page", plant("sweep", "if (page.length < pageSize) return out;", "return out;")],
     ["sweep takes owner-ruled fills", plant("sweep", "AND COALESCE(f.truck_resolution, '') NOT LIKE 'owner_ruling:%'", "")],
     ["rerun compares the card's unit", plant("engine", "input.toUnitId !== input.currentUnitId", "input.toUnitId !== input.cardUnitId")],
     ["rerun ignores owner rulings", plant("engine", '  if (input.ownerRuled) return "owner_ruled";\n', "")],
@@ -78,6 +83,7 @@ if (process.argv.includes("--selftest")) {
     ["facts drop the confirmed flag", plant("engine", "e.load_confirmation = 'confirmed'", "e.load_confirmation = 'proposed'")],
     ["evaluate applies over a confirmed load", plant("question", "  if (res.load_confirmed) return", "  if (false) return")],
     ["question reads odometer_meters", plant("question", "SELECT odometer_mi::text AS odo", "SELECT odometer_meters::text AS odo")],
+    ["parked truck ignored", plant("engine", "if (!candidates.length) candidates = await parkedTrucksAtStation(", "if (false) candidates = await parkedTrucksAtStation(")],
     ["sweep failure swallowed", plant("hook", "if (failed.length) throw new Error(`fuel_follows_truck_refused:", "if (false) throw new Error(`x:")],
   ];
   let caught = 0;
