@@ -3,9 +3,12 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { resolveApiUrl } from "../../../api/client";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -95,11 +98,27 @@ export function BorderCrossingHistory() {
         key: "customs_clearance_minutes",
         label: "Customs (min)",
         sortable: true,
-        render: (ev) => ev.customs_clearance_minutes ?? "—",
+        render: (ev) =>
+          ev.customs_clearance_minutes == null ? "—" : formatQuantityTable(ev.customs_clearance_minutes),
       },
     ],
     [settlementReferences],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <div className="p-6" data-testid="gps-border-crossing-history-page">
+        <PageHeader
+          backHref="/dispatch"
+          title="GPS Border Crossing Events"
+          subtitle="Geofence enter/exit events at USMCA ports"
+        />
+        <BoardSection title="GPS border crossings" testId="gps-border-crossing-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   const filterBar = (
     <CollapsedListFilters
@@ -139,8 +158,12 @@ export function BorderCrossingHistory() {
   );
 
   return (
-    <div className="p-6">
-      <h1 className="text-page-title font-semibold mb-4">GPS Border Crossing Events</h1>
+    <div className="p-6 space-y-4" data-testid="gps-border-crossing-history-page">
+      <PageHeader
+        backHref="/dispatch"
+        title="GPS Border Crossing Events"
+        subtitle="Geofence enter/exit events at USMCA ports"
+      />
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage
           presenting as a unit with no border crossings, on a USMCA cross-border compliance surface. */}
       {isError ? (
