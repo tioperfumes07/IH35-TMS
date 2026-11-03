@@ -20,6 +20,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
 import { HosViewerSection } from "./HosViewerSection";
 import { HosHistorySection } from "./HosHistorySection";
