@@ -17,7 +17,7 @@ Owner law 11-02 6:04 PM CT: "only finall permanent fixes, no patches." · Owner 
 | E9 | ENG-64 fuel outside trip window | **110 rows / $38,937.29 / 41 loads** | CC-3 | each row re-attached to the load whose window holds its fill moment (or none) → 0 | 20:00 |
 | E10 | Backend tests red on main (row 257) | 35 files / 46 tests (11-02 baseline) | CC-1 / CC-2 / CC-3 per INBOX | 0 failed | 20:00 |
 | E11 | ENG-29 real driven miles | **46 of 198** loads have miles_driven_actual | CC-3 | every delivered load with GPS has real miles | 22:00 |
-| E12 | ENG-38 periods | **24 of 24** USMCA periods open | OWNER decides months | — | — |
+| E12 | ENG-38 periods | 24 of 24 open — owner 11-03: not categorizing yet → no month is final; stays open by design until bookkeeping starts | — | NOT AN ENGINE TODAY | — |
 | E13 | Fuel card assignments (row 161) | **0** assignments | CC-2 | cards ↔ units/drivers from Relay card data | 22:00 |
 
 ### E1 — Relay id → driver mapping (Lead recommendation; owner 11-02: "on data actions i follow your recomendation")
