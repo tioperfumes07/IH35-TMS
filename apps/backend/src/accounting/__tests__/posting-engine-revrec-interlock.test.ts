@@ -99,7 +99,14 @@ function installQueryMock({ sourceLoadId, latchRows, loadStatus = "in_transit" }
     }
     if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
     if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-1" }] };
+    // ENG-28: after INSERT, posting engine SELECTs the header to validate entry_date and lock it.
+    if (sql.includes("FROM accounting.journal_entries") && !sql.includes("INSERT")) return { rows: [{ entry_date: "2026-07-30" }] };
     if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-1" }] };
+    // posting engine validates all account ids are active and postable before writing lines.
+    if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+      const acctIds = (params[0] as string[]) ?? [];
+      return { rows: acctIds.map((id) => ({ id, deactivated_at: null, is_postable: true })) };
+    }
     if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
       postedLines.push({
         account_id: String(params[3]),

@@ -77,6 +77,7 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
                 r.matched_unit_id::text AS unit_id, u.unit_number,
                 r.matched_driver_id::text AS driver_id,
                 NULLIF(trim(concat_ws(' ', dr.first_name, dr.last_name)), '') AS driver_name,
+                r.relay_driver_integration_id,
                 NULLIF(trim(concat_ws(' ', r.relay_driver_first_name, r.relay_driver_last_name)), '') AS relay_driver_name,
                 r.matched_unit_number AS relay_unit_number,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l

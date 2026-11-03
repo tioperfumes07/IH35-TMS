@@ -558,7 +558,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             <label className="space-y-1" data-testid="claim-create-recovery-rail-field">
               <span className="text-xs font-semibold text-[#4B5563]">Driver Deductible Recovery</span>
               <SelectCombobox
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={form.recovery_rail}
                 onChange={(event) => updateField("recovery_rail", event.target.value as InsuranceClaimRecoveryRail)}
               >
@@ -572,7 +572,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             <label className="space-y-1" data-testid="claim-create-repair-books-field">
               <span className="text-xs font-semibold text-[#4B5563]">Uninsured Repair Books Treatment</span>
               <SelectCombobox
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={form.repair_books_treatment}
                 onChange={(event) =>
                   updateField("repair_books_treatment", event.target.value as InsuranceClaimRepairBooksTreatment)

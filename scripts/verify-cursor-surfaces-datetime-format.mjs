@@ -17,6 +17,7 @@ const FILES = [
   "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   // fill-not-shell datetime wave — FactoringTab timestamps
   "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+  "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/drivers/DriverCommunicationsTab.tsx",
   "apps/frontend/src/components/driver-profile/DriverProfileFuelVerdictsSection.tsx",
   "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx",
@@ -64,6 +65,7 @@ const FILES = [
 ];
 
 const DATE_ONLY = [
+  "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
   "apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx",
   "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
   "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
@@ -74,7 +76,9 @@ const DATE_ONLY = [
   "apps/frontend/src/pages/VendorDetail.tsx",
   "apps/frontend/src/lib/oos-display.ts",
   "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
-  "apps/frontend/src/pages/lists/LocationsListPage.tsx",
+  // LocationsListPage.tsx removed 2026-11-02: GLB-08 mandates mmmDd (not formatDateUS) for this
+  // date-only table; the guard contradiction was between DATE_ONLY (requiring formatDateUS) and
+  // verify-glb08-mmm-dd-sweep (banning it). TABLE_DATE_OMIT comment confirms no datetime cells.
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx",
 ];
@@ -89,6 +93,9 @@ const QUANTITY = [
   "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
   "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
   "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
+  "apps/frontend/src/components/dispatch/LoadUnitCostSplitPanel.tsx",
+  "apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx",
+  "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
   "apps/frontend/src/components/dispatch/LoadStopsRecordTab.tsx",
   "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx",
   "apps/frontend/src/pages/Customers.tsx",

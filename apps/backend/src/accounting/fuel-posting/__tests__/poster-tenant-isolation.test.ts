@@ -41,14 +41,21 @@ describe("fuel-posting tenant isolation", () => {
     });
 
     let postingLineIdx = 0;
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
       if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
       // ROUND 377: cash fuel credits the bound operating_bank role (accounting.chart_of_accounts_roles), never a guess.
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) return { rows: [{ account_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }] };
       if (sql.includes("role_key = $1")) return { rows: [{ account_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }] };
       if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-3" }] };
+      // ENG-28: after INSERT, posting engine SELECTs the header to validate entry_date and lock it.
+      if (sql.includes("FROM accounting.journal_entries") && !sql.includes("INSERT")) return { rows: [{ entry_date: "2026-06-13" }] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-3" }] };
+      // posting engine validates all account ids are active and postable before writing lines.
+      if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+        const acctIds = (values?.[0] as string[]) ?? [];
+        return { rows: acctIds.map((id) => ({ id, deactivated_at: null, is_postable: true })) };
+      }
       if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
         postingLineIdx += 1;
         return { rows: [{ id: `jep-ti-${postingLineIdx}` }] };

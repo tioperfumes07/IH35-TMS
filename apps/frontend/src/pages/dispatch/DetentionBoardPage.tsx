@@ -20,7 +20,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
@@ -374,7 +374,7 @@ export function DetentionBoardPage() {
       label: "Billable",
       sortable: true,
       cellClass: "tabular-nums",
-      render: (event) => `${Number(event.billable_minutes ?? 0)} min`,
+      render: (event) => `${formatQuantityTable(Number(event.billable_minutes ?? 0), 0)} min`,
     },
     {
       key: "live_accrued_amount_cents",

@@ -204,6 +204,8 @@ export type CreateDriverInput = {
   status?: DriverStatus;
   notes?: string;
   override_returning_warning?: boolean;
+  /** LEAD 11-03 — the operator confirmed a roster near/exact match is a different person. */
+  override_duplicate_warning?: boolean;
   prior_driver_id?: string;
   is_rehire?: boolean;
 };

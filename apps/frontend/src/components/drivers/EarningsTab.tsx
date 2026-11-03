@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { BoardSection } from "../v3/BoardSection";
 
@@ -39,7 +40,7 @@ type Props = {
 type LiabilityRow = Record<string, unknown>;
 
 function money(value: number) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return formatUsd(value ?? 0);
 }
 
 // DRV-MONEY-F6083 — a failed GET on any of this tab's 7 independent queries was silently rendering
@@ -280,7 +281,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div>
           <h2 className="text-xs font-semibold text-gray-900">Live debt summary</h2>
           <div className="text-xs text-gray-500">
-            Recomputed at {computedAt ? formatDateTimeUS(computedAt) : "—"}
+            Recomputed at {computedAt ? formatDateTimeUS(`${computedAt}`) : "—"}
           </div>
         </div>
         <Button

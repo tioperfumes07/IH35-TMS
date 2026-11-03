@@ -17289,5 +17289,130 @@
     "claimed_by": "lead",
     "claimed_at": "2026-11-02",
     "purpose": "verify-orphan-guards-batch-wire-11-02 \u2014 wire 29 guards merged unwired on 11-02 (verify-guard-wired red on main)"
+  },
+  "18941": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-11-02",
+    "purpose": "verify-avp-projected-expense-uses-engine (ROW-261) \u2014 AvP projected expense snapshot column exists"
+  },
+  "19774": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-accident-wizard-catalogs.mjs (static/selftest; shrink exempt)"
+  },
+  "19776": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-coa-roles.mjs (static/selftest; shrink exempt)"
+  },
+  "19778": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-double-entry-balance-trigger.mjs (static/selftest; shrink exempt)"
+  },
+  "19780": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-escrow-ledger-sign-follows-type.mjs (static/selftest; shrink exempt)"
+  },
+  "19782": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-item-line-quantity-rate-amount.mjs (static/selftest; shrink exempt)"
+  },
+  "19784": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-ldt-3-driver-pay.mjs (static/selftest; shrink exempt)"
+  },
+  "19786": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-ldt-d-documents-tab.mjs (static/selftest; shrink exempt)"
+  },
+  "19788": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-master-data-protected.mjs (static/selftest; shrink exempt)"
+  },
+  "19790": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-no-sample-data-holds-a-real-number.mjs (static/selftest; shrink exempt)"
+  },
+  "19792": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-one-source-per-number.mjs (static/selftest; shrink exempt)"
+  },
+  "19794": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-purge-window-exemption.mjs (static/selftest; shrink exempt)"
+  },
+  "19796": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-scheduler-tenant-context.mjs (static/selftest; shrink exempt)"
+  },
+  "19798": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-seed-document-is-whole.mjs (static/selftest; shrink exempt)"
+  },
+  "19800": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-service-location-buckets-wired.mjs (static/selftest; shrink exempt)"
+  },
+  "19802": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-settlement-close-posts-gl.mjs (static/selftest; shrink exempt)"
+  },
+  "19804": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-statement-export-contract.mjs (static/selftest; shrink exempt)"
+  },
+  "19806": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-task-link-contract.mjs (static/selftest; shrink exempt)"
+  },
+  "19808": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-truck-line-surface-tokens-locked.mjs (static/selftest; shrink exempt)"
+  },
+  "19810": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-wizard-section-equality.mjs (static/selftest; shrink exempt)"
+  },
+  "19812": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-no-test-units-in-prod.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19814": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-single-migration-dir.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19816": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-sql-read-targets.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19818": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-stalled-queue-reaper.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19820": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-trial-balance-contract.mjs (static; no-DB CI safe; shrink exempt)"
   }
 }

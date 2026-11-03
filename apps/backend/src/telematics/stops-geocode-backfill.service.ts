@@ -391,6 +391,24 @@ export async function geocodeStopsWithClient(
       if (updated.rows[0]) { geocoded += 1; locality += 1; }
       return;
     }
+    if (outcome.precision === "range") {
+      // 443.260: range geocode is too imprecise to fence reliably; write the approximate
+      // coordinate + flag so the GPS-dwell engine creates the verified fence when trucks dwell.
+      const updated = await client.query<{ id: string }>(`
+        UPDATE mdata.load_stops SET latitude=$2, longitude=$3, geocode_source=$4,
+          geocode_confidence=$5, geocode_precision='range', geocode_attempted_at=now(),
+          geocode_failure_reason='range_imprecise_no_fence', location_id=NULL, updated_at=now()
+        WHERE id=$1::uuid RETURNING id::text`,
+        [stop.stop_id, outcome.latitude, outcome.longitude, outcome.source, outcome.confidence]);
+      if (updated.rows[0]) {
+        geocoded += 1;
+        await appendCrudAudit(client as never, actorId, "dispatch.load_stop.range_geocode_flagged", {
+          resource_type: "mdata.load_stops", resource_id: stop.stop_id, load_id: stop.load_id,
+          geocode_source: outcome.source, latitude: outcome.latitude, longitude: outcome.longitude,
+        }, "warning", "443.260");
+      }
+      return;
+    }
     const locationId = stop.location_id ?? await findOrCreateLocation(client, companyId, actorId, stop, outcome.latitude, outcome.longitude, outcome.source);
     const updated = await client.query<{ id: string }>(`
       UPDATE mdata.load_stops SET location_id=$2::uuid, latitude=$3, longitude=$4,

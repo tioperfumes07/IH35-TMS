@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { colors, spacing, typography } from "../design/tokens";
 import type { DataTableErrorState } from "../lib/tableError";
 import { ListErrorState } from "./ListErrorState";
+import { SelectCombobox } from "./Combobox";
 import { ColumnChooser } from "./table/ColumnChooser";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "./table/UniversalListToolbar";
 import { useTablePref } from "./table/useTablePref";
@@ -287,16 +288,16 @@ export function DataTable<T>({
           {/* Universal rows-per-page selector (10/25/50/100/All) — persists per-surface when tableKey is set. */}
           <label className="flex items-center gap-1 text-[11px] text-gray-500">
             Rows
-            <select
+            <SelectCombobox
               aria-label="Rows per page"
-              className="h-6 rounded-sm border border-gray-300 bg-white px-1 text-[11px]"
-              value={selectedPageSize}
+              className="h-6 bg-white text-[11px]"
+              value={String(selectedPageSize)}
               onChange={(e) => setSelectedPageSize(Number(e.target.value))}
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={n}>{pageSizeLabel(n)}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         </div>
         <div className="flex items-center gap-2">

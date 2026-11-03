@@ -30,7 +30,7 @@ import { loadStatusLabel } from "../../lib/load-status";
 import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { settlementLabel } from "../../lib/settlementNumber";
-import { formatUsdCents } from "../../utils/qboFormat";
+import { formatUsdCents, formatUsdRateTable } from "../../lib/money";
 import { FuelQuestionsBadge } from "../fuel/components/FuelQuestionsBadge";
 import { FuelQuestionsPanel } from "../fuel/components/FuelQuestionsPanel";
 
@@ -95,7 +95,7 @@ const fmtMiles = (m: string | null) => (m == null ? DASH : `${Number(m).toLocale
 // STEP-1.3a defect 4 (lead 2026-09-05, live-measured): Rate Loaded/Empty rendered "0.48¢/mi" — wrong
 // unit + wrong precision. Spec: dollars per mile, four decimals (0.4800). rate_*_cents is
 // cents-per-mile, so /100 gives dollars-per-mile.
-const fmtRate = (c: string | null) => (c == null ? DASH : `$${(Number(c) / 100).toFixed(4)}`);
+const fmtRate = (c: string | null) => (c == null ? DASH : formatUsdRateTable(Number(c) / 100));
 // STEP-1.3a defect 1/6: money & mileage cells must never wrap (ParityTable's td carries
 // wrap-break-word). nowrap + tabular-nums; the column auto-fits to its widest value.
 const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";

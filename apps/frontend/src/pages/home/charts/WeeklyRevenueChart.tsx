@@ -67,7 +67,11 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
             tick={{ fontSize: 11 }}
             stroke="#4B5563"
             tickFormatter={(v) =>
-              new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v))
+              new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+                maximumFractionDigits: 0,
+              }).format(Number(v))
             }
           />
           <Tooltip

@@ -19,6 +19,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { Combobox } from "../../components/Combobox";
+import { formatUsd } from "../../lib/money";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -63,7 +64,7 @@ const columns: ParityColumn<InventoryPartRow>[] = [
     key: "unit_cost",
     label: "Unit Cost",
     className: "text-right",
-    render: (row) => (row.unit_cost ? `$${Number(row.unit_cost).toFixed(2)}` : "—"),
+    render: (row) => (row.unit_cost ? formatUsd(Number(row.unit_cost)) : "—"),
   },
   { key: "location", label: "Location/Bin" },
   {

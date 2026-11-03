@@ -63,7 +63,7 @@ export function Faro1090WireProposalsPage() {
       }),
     onSuccess: (res) => {
       setDryRunNote(
-        `Dry-run OK — would link bank ${res.bank_transaction_id.slice(0, 8)}… to advance ${res.factoring_advance_id.slice(0, 8)}… (${formatUsdCents(res.net_to_company_cents)}). Match execution deferred.`,
+        `Dry-run OK — would link the selected bank transaction to the matched factoring advance (${formatUsdCents(res.net_to_company_cents)}). Match execution deferred.`,
       );
       pushToast("Dry-run accept previewed — no match written", "success");
     },

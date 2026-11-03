@@ -48,8 +48,9 @@ function assertMigrated(src) {
   if (!src.includes("ListErrorBanner")) {
     errors.push(`${PAGE}: must render ListErrorBanner on escrow-ledger load failure`);
   }
-  if (!src.includes(".toFixed(2)")) {
-    errors.push(`${PAGE}: must keep the $X.XX two-decimal amount formatting`);
+  // House money — formatUsd (lib/money / qboFormat) is the two-decimal $X.XX path; toFixed(2) alone is stale.
+  if (!/formatUsd/.test(src) && !src.includes(".toFixed(2)")) {
+    errors.push(`${PAGE}: must keep the $X.XX two-decimal amount formatting (formatUsd or toFixed(2))`);
   }
   if (!src.includes("/drivers/")) {
     errors.push(`${PAGE}: must keep the Doc-18 defect #12 driver drill-through`);

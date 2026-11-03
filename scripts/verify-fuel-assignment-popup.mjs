@@ -122,6 +122,13 @@ export function collectProblems(sources) {
   if (!/BoardSection/.test(popup) || /function ModalSection/.test(popup)) {
     problems.push(`${FILES.popup}: ROUND 443.295 sections must use BoardSection (not local ModalSection)`);
   }
+  // House money — amount_cents via formatUsdCents, never a per-file Intl currency helper.
+  if (!/formatUsdCents/.test(sources.popup) || !/from ["'][^"']*lib\/money["']/.test(sources.popup)) {
+    problems.push(`${FILES.popup}: must format amount_cents via formatUsdCents from lib/money`);
+  }
+  if (/new Intl\.NumberFormat\([\s\S]{0,120}style:\s*["']currency["']/.test(sources.popup)) {
+    problems.push(`${FILES.popup}: must not hand-roll Intl.NumberFormat currency`);
+  }
 
 
   if (!/data-testid=["']fuel-questions-badge["']/.test(badge)) {
@@ -307,6 +314,15 @@ if (SELFTEST) {
       apply: (s) => ({
         ...s,
         panel: s.panel.replace(/fuel-questions-v3-panel/g, "fuel-questions-gone-panel"),
+      }),
+    },
+    {
+      name: "drops formatUsdCents house money",
+      apply: (s) => ({
+        ...s,
+        popup: s.popup
+          .replace(/formatUsdCents/g, "legacyMoney")
+          .replace(/from ["'][^"']*lib\/money["']/, 'from "../../../lib/missing-money"'),
       }),
     },
   ];

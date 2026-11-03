@@ -1,5 +1,5 @@
 import { companyToday } from "../../lib/businessDate";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd } from "../../lib/formatDate";
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useMemo, useState } from "react";
@@ -33,7 +33,7 @@ function dash(value: string | null | undefined): string {
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
-  return formatDateUS(value) || "—";
+  return mmmDd(value) || "—";
 }
 
 function csvCell(value: string): string {

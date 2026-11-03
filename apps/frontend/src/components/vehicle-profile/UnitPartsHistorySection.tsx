@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getUnitPartsHistoryPage, type PartsAssignmentRow } from "../../api/maintenance";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useEffect, useState } from "react";
@@ -14,7 +15,7 @@ type Props = {
 };
 
 function formatMoney(value: number | null | undefined) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return formatUsd(value ?? 0);
 }
 
 const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
