@@ -38,3 +38,5 @@ BUILD (permanent):
 3. PREVENTION — every driver writer (create route, QBO/Samsara/roster importers, settlement creator) resolves an existing driver first (hard id → normalized full name + DOB) and updates/reactivates it; never inserts a second row. Partial UNIQUE indexes per company on cdl_number, curp, passport_number, samsara_driver_id (WHERE NOT NULL) — migration, idempotent.
 4. GUARD (live, shrink-only to 0): exact-name driver groups per company = 0, except pairs marked "different person" by the owner.
 DONE = USMCA exact-name groups 0 (72 rows merged), queue live with the 1 + near sets, unique indexes live, guard green. Deadline 2026-11-03T03:00Z. Codex verifies.
+
+## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.

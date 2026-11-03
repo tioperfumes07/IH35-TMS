@@ -38,3 +38,5 @@ GUARD (live, shrink-only to 0): live pending bank lines older than 10 days = 0; 
 DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Deadline 2026-11-03T03:00Z.
 
 ## LEAD 2026-11-02 6:35 PM CT — row 162 (Relay drivers) MOVED to CC-3 (fuel/relay lane; root cause = mdata.drivers.integration_id never written — no new table). Do NOT build relay_driver_links. Your banking items (stale Plaid pendings, rows 154/156) stand.
+
+## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
