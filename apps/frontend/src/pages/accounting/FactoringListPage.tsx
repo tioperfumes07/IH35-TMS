@@ -194,6 +194,16 @@ export function FactoringListPage() {
     </MoneyListToolbar>
   );
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Factoring">
+        <BoardSection title="Factoring" testId="factoring-list-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Factoring"

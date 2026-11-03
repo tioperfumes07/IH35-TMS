@@ -165,6 +165,16 @@ export function CheckListPage() {
     </div>
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Checks">
+        <BoardSection title="Checks" testId="checks-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Checks"
@@ -204,9 +214,7 @@ export function CheckListPage() {
         </div>
       }
     >
-      {!companyId ? (
-        <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
-      ) : query.isError ? (
+      {query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
         /* 443.293-C — bare rounded card → BoardSection (Bills-grammar register chrome). */

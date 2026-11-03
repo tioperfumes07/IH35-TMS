@@ -13,6 +13,7 @@ import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from
 import { formatDateUS } from "../../lib/formatDate";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { companyToday } from "../../lib/businessDate";
 import { apAgingBillsListHref } from "../reports/agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
@@ -343,6 +344,16 @@ export function AccountsPayableAgingPage() {
         </table>
       `,
     });
+  }
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Accounts Payable">
+        <BoardSection title="Accounts Payable" testId="ap-aging-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
   }
 
   return (

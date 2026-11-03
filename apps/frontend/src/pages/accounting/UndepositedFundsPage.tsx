@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { listCoaRoles } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 /**
@@ -18,6 +19,16 @@ export function UndepositedFundsPage() {
     queryFn: () => listCoaRoles(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Undeposited Funds">
+        <BoardSection title="Undeposited Funds" testId="undeposited-funds-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   const accountId =
     rolesQuery.data?.rows?.find((r) => r.role === "undeposited_funds" && r.is_active && r.account_id)?.account_id ??
