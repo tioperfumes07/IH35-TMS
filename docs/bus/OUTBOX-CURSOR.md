@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:10 PM CT) — ROUND 7.30 #27 Accounting need-company wave
+- **PRIOR:** #28517 tip #25 statement.
+- **THIS:** Leases/Disputes/Receipts/FixedAssets BoardSection need-company; Leases asset/bill counts → formatQuantityTable. #27 Accounting tabs still OPEN (more tabs remain). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting tabs / #29 popup; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:00 PM CT) — ROUND 7.30 tip #25 statement
 - **PRIOR:** #28516 tip #16 443.282.
 - **THIS:** PENDING #25 Statement 5753-format surfaces → MERGED-UNVERIFIED (workflow+board+fuel+linked records present; live 5753 compare UNVERIFIED). Remaining Cursor OPEN: #27 Accounting tabs inspect, #29 popup standard (+ Lead date/UI). Batch75 Reclassify → CC-1.
