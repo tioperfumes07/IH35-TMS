@@ -99,8 +99,14 @@ function main() {
   }
 
   if (selftest) {
-    const m1 = boardSrc.replace(/const fmtRate =([^\n]*)toFixed\(4\)/, "const fmtRate =$1toFixed(2)");
-    if (auditBoard(m1).length === 0) { console.error("SELFTEST FAIL: reverting rate format did not trip"); process.exit(1); }
+    // House path uses formatUsdRateTable; legacy toFixed(4) plant kept for either shape.
+    const m1 = /formatUsdRateTable\(Number\(c\) \/ 100\)/.test(boardSrc)
+      ? boardSrc.replace(/formatUsdRateTable\(Number\(c\) \/ 100\)/g, "String(Number(c) / 100)")
+      : boardSrc.replace(/const fmtRate =([^\n]*)toFixed\(4\)/, "const fmtRate =$1toFixed(2)");
+    if (m1 === boardSrc || auditBoard(m1).length === 0) {
+      console.error("SELFTEST FAIL: reverting rate format did not trip");
+      process.exit(1);
+    }
     const m2 = boardSrc.replace(/label:\s*"Booked"/, 'label: "In transit"');
     if (auditBoard(m2).length === 0) { console.error("SELFTEST FAIL: removing Booked branch did not trip"); process.exit(1); }
     const m4 = boardSrc.replace(/render: r => fmtDash\(Number\(r\.late_fee_cents\)\)/, "render: r => fmt(Number(r.late_fee_cents))");

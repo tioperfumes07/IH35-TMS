@@ -1,3 +1,8 @@
+## OUTBOX (11-02-2026 ~12:45 AM CT) — Load Costs rate selftest plant (formatUsdRateTable)
+- **PRIOR:** #28234 house money wave 6.
+- **THIS:** verify-load-costs-board-no-truncation-no-wrap --selftest plants drop of formatUsdRateTable (toFixed(4) plant was vacuous after wave 6).
+- **ENG-21 BLOCKED.** NEXT: more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
 ## OUTBOX (11-02-2026 ~12:35 AM CT) — Cursor house money wave 6 (Load Costs/escrow/liabilities)
 - **PRIOR:** #28228–#28233 house money waves 1–5.
 - **THIS:** LoadCostsBoardPage rates · DriverEscrowLedger balance tiles · LiabilitiesKpiRow · TourSettlement leg rates → house formatters. Guard extended.
