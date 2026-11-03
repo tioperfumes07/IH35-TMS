@@ -19,7 +19,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -338,7 +338,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
               storageKey="factoring-payments-to-you-by-month"
               tableTestId="factoring-payments-to-you-month-table"
               footerCells={{
-                month: `${monthRows.length} month(s)`,
+                month: `${formatQuantityTable(monthRows.length, 0)} month(s)`,
                 wires: String(rows.length),
                 net_to_company_cents: formatUsdCents(totalNet),
               }}
@@ -355,7 +355,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
               storageKey="factoring-payments-to-you-purchases"
               tableTestId="factoring-payments-to-you-table"
               footerCells={{
-                display_id: `${rows.length} wire(s)`,
+                display_id: `${formatQuantityTable(rows.length, 0)} wire(s)`,
                 net_to_company_cents: formatUsdCents(totalNet),
                 running_net_cents: formatUsdCents(totalNet),
               }}
