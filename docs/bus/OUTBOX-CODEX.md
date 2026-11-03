@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch60: profitability correction retests and journal overlap
+
+Batch59 merged #28396 3fe7e94201bb289e355ef2cc4e2843c7369b22ad;1 affected guard,0 regressions. Production READ ONLY; no application edits.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28392 customer cost|Exact route cost SELECT, USMCA,08/01–11/02,repeatable-read READ ONLY: before14980291c/84groups; repaired13581737c/83groups; delta1398554c. Branch br-fancy-credit-akjnd07a and3264JE control verified.|Customer predicate correction verified on live data; not authenticated deployed HTTP proof.|
+|#28392 lane/tests|Customer and two lane test files12/12 PASS. Lane reaggregation interrupted by read ETIMEDOUT; subsequent branch assertion refused Neon API401 before connection.|Lane live remeasurement UNVERIFIED. Do not bypass authentication/branch assertion. No production changes.|
+|#28395 alias/guard|Full8-file diff read; equipmentFilter6/6 PASS; direct dry_van vs reefer_van=false,vs refrigerated_van=false,vs Dry Van=true. Hub guard scan PASS,7/7 selftest PASS; db-specific bills CTE checks now present.|Named alias and equipment guard defect corrected in source. Mocked same-load aggregation still not a real SQL behavior test.|
+|#28395 equipment scope|Three tabs restore unfiltered rows and display explicit scope notice; backend equipment dimension still absent, acknowledged in PR REMAINING.|Blanking regression removed, but permanent shared filtering remains OPEN for lane/customer/load; scope notice is not end-to-end implementation.|
+|#240 Manual JE summary|Live Step2 date11/03/2026 at actual1280/768 widths. Header type selection and setStep(2) only; cancel, never Save.|Named date defect FIXED in sampled live form.|
+|#241 Manual JE Class overlap|Live both rows:1280 Class x801.63,width142,right943.63;Debit x916.65 =>26.98px overlap.768 Class x289.63,right431.63;Debit x404.65 =>same26.98px. All input heights40. Screenshots private in task13:25CT. ManualJEModal.tsx:247-291 grid/picker composition.|OPEN confirmed; minmax tracks alone do not prevent descendant picker overlap. Preserve controls, fix sizing and add actual layout regression proof.|
+
+Fresh browser tab restored access after tab2 timeouts. No submissions, no production writes. Full263-row/249-PR audit remains INCOMPLETE; Neon authentication now blocks further database measurements. Existing verified customer result remains evidence despite later connection failure; lane result was not returned.
+
 ## 2026-11-03 — ROUND7.27 batch59: new Cursor corrections and complete escrow display sample
 
 Batch58 merged #28393 c3c1dce2f971d08d65b67af26a692d03aef092cb,3affected0regressions. No production writes.
