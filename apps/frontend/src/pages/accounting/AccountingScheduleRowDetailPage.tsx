@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const names: Record<AccountingScheduleRowKind, string> = { prepaid_amortization_row: "Prepaid amortization period", depreciation_schedule_row: "Depreciation period", loan_amortization_row: "Loan payment period" };
 export function AccountingScheduleRowDetailPage() {
@@ -16,8 +17,18 @@ export function AccountingScheduleRowDetailPage() {
   const validKind = kind === "prepaid_amortization_row" || kind === "depreciation_schedule_row" || kind === "loan_amortization_row";
   const query = useQuery({ queryKey: ["accounting", "schedule-row", companyId, kind, id], queryFn: () => getAccountingScheduleRow(kind as AccountingScheduleRowKind, id, companyId), enabled: Boolean(companyId && id && validKind), retry: false });
   const row = query.data;
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Schedule row">
+        <BoardSection title="Schedule row" testId="accounting-schedule-row-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return <AccountingSubNavWrapper title={row ? `${names[row.kind]} ${row.sequence}` : "Schedule period"} subtitle="Canonical period, parent record, and posted journal entry">
-    {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">Select an operating company to view this period.</p> : null}
+    
     {!validKind ? <ListErrorState title="Unsupported schedule period" status={400} onRetry={() => undefined} /> : null}
     {query.isError ? <ListErrorState title="Couldn't load schedule period" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
     {query.isPending && companyId && validKind ? <p className="text-xs text-[#6B7280]">Loading schedule period…</p> : null}

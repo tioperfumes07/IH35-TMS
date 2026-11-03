@@ -264,6 +264,16 @@ export function BillDetailPage() {
     },
   ];
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Bill">
+        <BoardSection title="Bill" testId="bill-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={bill.revoked_at} voidReason={bill.revoked_reason} voidedByUserId={bill.voided_by_user_id} documentLabel="Bill" />
