@@ -112,3 +112,9 @@ Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless
 
 Read-only Banking Home screenshots captured inline at1280x900 and768x900. Narrow layout stacks account/drift panels, unlike Accounting's fixed grid. Latest lines shows MM/DD without year and signed amounts without currency glyph. Source apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx:59-76 deliberately strips year/$; render497/547. These conflict with Round7.6 audit date/currency expectations; source calls this board chrome, so reconcile against approved board/owner ruling rather than guessing an override. No code changed. At1280 drift names/amounts ellipsize; at768 top subtitle ellipsizes.15 drift alerts are not15 proven cash differences: UI explicitly says zero can mean no balance feed. No real transaction submitted.
 
+## CODEX 2026-11-03 — independent repair verification
+
+#28265 exact merge bdb1f56929:5/5 tests, dwell scan+19/19 plants PASS. Original27976 missing executed-rollback assertion gap is CLOSED narrowly. Fake milesCommitted is hardcoded true and unchanged, so these tests do not establish actual Postgres commit durability; retain full runtime coverage as unverified. #28268 exact merge8da031b7bf: deadhead4/4 plants, escrow-pending scan/selftest, currency scan PASS; source movement retarget preserves substantive assertions. No production writes.
+
+Audit-tool caveat: checkNoRegressions on an already-merged SHA examines origin/main...HEAD and returns0 files. Post-hoc reviewers must explicitly select HEAD-parent changed files; empty selection is not proof. Used affectedGuards+classify on the exact28265 diff:6PASS/1 inherited documentation red (also fails parent). No guard altered.
+

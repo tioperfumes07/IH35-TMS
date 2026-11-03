@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch36: independent verification of coder repairs
+
+Read latest INBOX and all seat OUTBOX updates on main c1f7565ad6. Production remains strictly read-only; no repair runners invoked. Branch assertion and transaction_read_only=on confirmed; USMCA JE control3264.
+
+| Row / fix | Verdict | Independently measured evidence | Remaining / owner |
+|---|---|---|---|
+|260 / E5|DONE-LIVE for stated status/geocode repair|13692/13693/13695 all delivered_pending_docs; each has2 live stops,0 missing departure timestamps,0 non-rooftop stops. Each also has1 null actual_stop_event_id; no inference that every historical pickup has an event link.|Invoice readiness separately governed; CC-2|
+|258 / E6|DONE-LIVE within USMCA scope|39 owned/leased units,0 SAM-prefix units,0 of3 specifically named gateway-serial units. Other frozen-company populations not queried.|Global purge claim not independently certified; CC-2|
+|263 / E7|PARTIAL confirmed|165 physical driver rows,80 merged,85 unmerged;0 duplicate exact normalized first/last-name groups among unmerged.|Importer/hard-id indexes and ambiguous identity queue still OPEN; CC-1|
+|#28265 / prior #27976 gap|Narrow test-gap CLOSED; runtime partial|Exact merge bdb1f56929,5-file diff read;5/5 vitest tests; dwell guard scan PASS +19/19 plants. New helper actually invoked by cron after miles persist and test asserts executed rollback SQL. Existing historical selection7 guards:6PASS,1 inherited documentation failure.|Fake milesCommitted is initialized true and never changed; no real Postgres commit-durability proof. Do not call full engine DONE-LIVE; Cursor|
+|#28268|Source/selftest repair confirmed|Exact merge8da031b7bf full5-file diff; deadhead guard scan +4/4 plants, escrow-pending scan/selftest, currency guard all exit0. Missing mutation targets now fail rather than silently skipping.|Live settlement and optimizer visual proof remains OPEN; Cursor|
+|J1 design ratchet|Static PASS only|Current main scan PASS/selftest PASS; --worklist0 off-scale pixel occurrences,0 semantic occurrences,0 affected files. Baseline trapping_picker_total0.|Not blanket visual acceptance; live paired fields/header/layout still require screenshots|
+
+Historical audit caveat: checkNoRegressions at an already-merged SHA returns0 changed files because it diffs origin/main...HEAD. That empty run is NOT regression proof. For #28265 explicitly derived changed files from HEAD-parent and classified7 affected guards at exact merge. Documentation guard also fails on parent (direct run), not introduced by28265. Private records: Downloads/codex-round7-28265-historical.json; codex-round7-readonly-measurements-phase6.json. #27978 prior exact-merge wrapper execution21/21 commands PASS, but remaining post-hoc proof not complete. Full263-row/249-PR audit remains incomplete; no skips promoted to passes.
+
 ## 2026-11-03 — ROUND7.27 batch35: escrow read-only linkage verification
 
 Batch34 merged #28263 at461489fdb3c0a94c3741a212fc82c5d7554b2299; bus content confirmed on origin/main. Fresh branch-asserted READ ONLY USMCA transaction:62 accounting escrow postings,0 missing account bridges,0 missing JE links,0 unresolved linked JEs.62 driver escrow history rows,0 incorrect type/sign combinations,0 holds without settlement. Aggregate by driver + normalized event type + absolute amount across accounting and driver history:0 count/amount differences. This is stronger than matching total row counts, but not per-event identity or proof of unobserved forfeiture behavior (forfeitures remain0). SAF-ORPH-01/02 remain OPEN for full runtime coverage; observed hold/release aggregate and linkage checks PASS. Canonical GL balance equality not separately measured in this batch. Owner CC-1.

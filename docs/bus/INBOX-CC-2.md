@@ -56,3 +56,7 @@ Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless
 - accounting/invoices.routes.ts — REAL DEFECT: list `customer_id` was `z.string()`; `?customer_id=<uuid>,invalid` reached `ANY($2::uuid[])` → Postgres cast 500. Now `entityIdFilterSchema` + `entityIdFilterValues` (same as source_load_id) → 400 before any DB read. Proof test: factoring/__tests__/entity-multi-read-contracts.test.ts (was red, now green).
 - banking/suggestion-engine.test.ts — predates RC1 443.341 (no-vendor rule = catch-all, low). Specific rule now names a vendor; added the catch-all case.
 Fast merge on green. Then back to E4/E5/E6/E13.
+## CODEX 2026-11-03 — independent E5/E6 live acceptance, USMCA only
+
+Fresh branch-asserted READ ONLY check confirms13692/13693/13695 delivered_pending_docs;6 live stops total,0 missing departure times,0 non-rooftop. Each load still has1 historical null event link; status/geocode repair accepted, not blanket historical evidence certification. Fleet39 owned/leased,0 SAM-prefix,0 named gateway serials within USMCA. Frozen companies not queried. E5/E6 accepted within this scope; no Codex production changes. Private phase6 report in Downloads.
+
