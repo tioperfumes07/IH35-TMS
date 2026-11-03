@@ -7,6 +7,7 @@ const checks = [
   ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "BoardSection", "factoring-home-need-company", "FactoringHome need-company"],
   ["apps/frontend/src/pages/factoring/BatchWizard.tsx", "BoardSection", "factoring-batch-wizard-board", "BatchWizard body"],
   ["apps/frontend/src/pages/factoring/BatchWizard.tsx", "BoardSection", "factoring-batches-need-company", "BatchWizard need-company"],
+  ["apps/frontend/src/pages/factoring/Faro1090WireProposalsPage.tsx", "BoardSection", "faro-1090-need-company", "Faro1090 need-company"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-loading", "Planner settings loading"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-unavailable", "Planner settings unavailable"],
 ];
