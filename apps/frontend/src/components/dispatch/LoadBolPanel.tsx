@@ -11,6 +11,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -123,7 +124,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
       ) : (
         <>
           <p className="mb-2 text-xs text-[#4B5563]">
-            {pods.length} POD(s) · {bols.length} generated BOL(s)
+            {formatQuantityTable(pods.length, 0)} POD(s) · {formatQuantityTable(bols.length, 0)} generated BOL(s)
           </p>
           {bols.length > 0 ? (
         <ul className="space-y-1 text-xs text-[#4B5563]">

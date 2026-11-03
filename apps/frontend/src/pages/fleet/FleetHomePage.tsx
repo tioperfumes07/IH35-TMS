@@ -21,6 +21,7 @@ import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { colors } from "../../design/tokens";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { formatQuantityTable } from "../../lib/money";
 
 /**
  * PR3 — Fleet module HOME (owner 2026-10-05).
@@ -288,7 +289,9 @@ export function FleetHomePage() {
                         data-c55-fleet-master="1"
                       >
                         <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-                          {tab === "trailers" ? `Trailers (${trailers.length})` : `Units (${mdUnits.length})`}
+                          {tab === "trailers"
+                            ? `Trailers (${formatQuantityTable(trailers.length, 0)})`
+                            : `Units (${formatQuantityTable(mdUnits.length, 0)})`}
                         </p>
                         <div className={MASTER_DETAIL.listScrollClass}>
                           {(tab === "trailers" ? trailers : mdUnits).map((row) => {

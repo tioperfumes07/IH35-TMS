@@ -1590,7 +1590,7 @@ export function KanbanDispatchColumn({
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </button>
           <div className="text-center">{headerLink}</div>
-          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{formatQuantityTable(loads.length, 0)}</span>
         </header>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </section>
@@ -1653,7 +1653,7 @@ export function KanbanDispatchColumn({
               </span>
             ) : null}
           </div>
-          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{formatQuantityTable(loads.length, 0)}</span>
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>

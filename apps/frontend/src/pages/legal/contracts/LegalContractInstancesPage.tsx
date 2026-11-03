@@ -25,6 +25,7 @@ import { getDownloadUrl } from "../../../api/docs";
 import { statusOptions } from "../../../lib/statusListParams";
 import "../../../design/ih35-design-tokens.css";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 const CATEGORY_LABELS: Record<string, string> = {
   employment: "Employment",
@@ -106,18 +107,14 @@ export function LegalContractInstancesPage() {
     queryKey: ["legal", "contracts", operatingCompanyId, statusFilter.join(","), search, signerTypeParam, signerEntityIdParam],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
-      const status = statusFilter.length === 1 ? (statusFilter[0] as LegalContractStatus) : undefined;
-      const result = await legalContractsApi.list({
+      // Codex batch67 sibling — send comma-union before LIMIT 300 (never filter a capped page locally).
+      return legalContractsApi.list({
         operating_company_id: operatingCompanyId,
-        status,
+        status: statusFilter.length ? statusFilter.join(",") : undefined,
         search: search.trim() || undefined,
         signer_type: signerTypeParam ?? undefined,
         signer_entity_id: signerEntityIdParam,
       });
-      if (statusFilter.length <= 1) return result;
-      const contracts = (result.contracts ?? []).filter((row) => statusFilter.includes(row.status));
-      return { ...result, contracts };
     },
     refetchInterval: 30_000,
   });
@@ -323,7 +320,7 @@ export function LegalContractInstancesPage() {
             <section key={sectionKey} className="space-y-1" data-testid={`legal-contracts-category-${sectionKey}`}>
               {categorySections.length > 1 || sectionKey !== "all" ? (
                 <h2 className="ih-hd">
-                  {label} <span className="font-normal normal-case text-gray-500">({sectionRows.length})</span>
+                  {label} <span className="font-normal normal-case text-gray-500">({formatQuantityTable(sectionRows.length, 0)})</span>
                 </h2>
               ) : null}
             <ParityTable

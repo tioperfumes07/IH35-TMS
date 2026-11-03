@@ -17424,5 +17424,20 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099
+  "total_claimed": 1099,
+  "19827": {
+    "claimed_by": "lead",
+    "purpose": "E8 row 261: AvP projected expense reads the daily engine (getDailyExpenseItems) + snapshot projected_expense_cents (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19829": {
+    "claimed_by": "lead",
+    "purpose": "ENG-65: a Relay fill document links its fuel record on every adopt (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19833": {
+    "claimed_by": "lead",
+    "purpose": "E9 ENG-64: the fill engine runs on every unresolved fill; owner rulings + person-confirmed loads never moved; rerun compares the current unit (static guard)",
+    "claimed_at": "2026-11-03"
+  }
 }

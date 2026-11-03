@@ -1,5 +1,6 @@
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { Link } from "react-router-dom";
 
 function statusClass(status: string | undefined) {
@@ -72,7 +73,7 @@ export function TrainingRecordsSection({
         />
         {totalCount > rows.length ? (
           <div className="mt-2 flex items-center justify-between text-xs" data-testid="driver-training-records-range-disclosure">
-            <span className="text-gray-600">Showing {rows.length} of {totalCount} records.</span>
+            <span className="text-gray-600">Showing {formatQuantityTable(rows.length, 0)} of {formatQuantityTable(totalCount, 0)} records.</span>
             <Link className="font-medium text-[#1F2A44] underline" to={`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`}>
               Open full training history
             </Link>

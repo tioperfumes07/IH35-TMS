@@ -52,6 +52,23 @@ function assertStatus(status: unknown): z.infer<typeof templateStatusSchema> {
   return templateStatusSchema.parse(status);
 }
 
+const TEMPLATE_STATUS_VALUES = templateStatusSchema.options;
+
+/** Comma-union status filter for listTemplates (Codex batch67 sibling). */
+export function parseTemplateStatusFilter(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  const allow = new Set<string>(TEMPLATE_STATUS_VALUES);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const token of raw.split(",")) {
+    const v = token.trim();
+    if (!v || !allow.has(v) || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
 export function hashAttorneyReviewToken(rawToken: string) {
   return crypto.createHash("sha256").update(rawToken).digest("hex");
 }
@@ -202,7 +219,8 @@ export async function listTemplates(
     operatingCompanyId: string;
     category?: string;
     language?: "en" | "es" | "bilingual";
-    status?: z.infer<typeof templateStatusSchema>;
+    /** Single status or comma-union (Codex batch67 sibling). */
+    status?: string;
     search?: string;
   }
 ) {
@@ -213,9 +231,13 @@ export async function listTemplates(
     values.push(args.category.trim());
     where.push(`category = $${values.length}`);
   }
-  if (args.status) {
-    values.push(assertStatus(args.status));
+  const statusUnion = parseTemplateStatusFilter(args.status);
+  if (statusUnion.length === 1) {
+    values.push(assertStatus(statusUnion[0]));
     where.push(`status = $${values.length}::legal.contract_template_status`);
+  } else if (statusUnion.length > 1) {
+    values.push(statusUnion);
+    where.push(`status = ANY($${values.length}::legal.contract_template_status[])`);
   }
   if (args.language) {
     if (args.language === "en") where.push("length(content_html_en) > 0");

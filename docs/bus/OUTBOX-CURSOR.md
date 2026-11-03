@@ -1,3 +1,93 @@
+## OUTBOX (11-03-2026 ~3:30 PM CT) — ENG-34 guard-wired ignores comment-only mentions (batch70)
+- **PRIOR:** #28439 bus tip Invoice Search → Cascade.
+- **THIS:** Codex batch70 — verify-guard-wired strips // block and YAML # before CI-execution includes; selftest plants comment-only sentinel. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:20 PM CT) — Legal multi-status family closed; Invoice Search → Cascade
+- **PRIOR:** #28437 Legal templates multi-status.
+- **THIS:** Cursor Legal half of Codex batch67/69 closed (matters #28432 · contracts #28435 · templates #28437). InvoiceSearchReportPage multi-status LIMIT100 → Cascade/reports. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:10 PM CT) — Legal templates multi-status server union
+- **PRIOR:** #28435 Legal contracts multi-status.
+- **THIS:** Codex batch67 sibling — templates status comma-union + ANY(); list-duplicate-search guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~3:00 PM CT) — Legal contracts multi-status server union
+- **PRIOR:** #28432 Legal matters multi-status.
+- **THIS:** Codex batch67 sibling — contract list status comma-union + ANY() before LIMIT 300; signer-entitylink guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:45 PM CT) — Legal matters multi-status server union (batch67)
+- **PRIOR:** #28430 factoring/tour qty · #28431 bus tip.
+- **THIS:** Codex batch67 — LegalMatters list sends status/severity/type comma-unions; listMatters ANY() before COUNT/LIMIT; no client page-filter; enum-comboboxes guard + vitest; Showing house quantity. Fines/Integrity/DriverReports → Safety/CC-3 + Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:30 PM CT) — factoring/tour footer house quantity
+- **PRIOR:** #28428 trip voided/cancelled.
+- **THIS:** SubmissionQueue selected submit · SubmitToFactor created invoice_count · TourLoadRows footer tours/loads → formatQuantityTable(, 0); currency ratchet. Codex batch66 #28018 DriverReports multi-status pagination → Maintenance/Codex (not Cursor). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:15 PM CT) — trip profitability excludes voided/cancelled loads
+- **PRIOR:** #28427 reverse/home/fleet qty.
+- **THIS:** Sibling of batch63 — trip/By-Load load joins (rollup + northbound + equipment filter) exclude voided/cancelled; hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:00 PM CT) — house quantity reverse/home/fleet wave
+- **PRIOR:** #28424 AvP expense matched coverage (batch64).
+- **THIS:** Relay/Fuel overage/CashForecast/Training/UserActivity/Samsara map/Program board Showing · Dispatcher loads · FleetUtil units · Owner/Default invoices_factored · CustomerProfile open invoices → formatQuantityTable(, 0); currency + reverse-preview ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:20 AM CT) — AvP expense accuracy matched coverage (batch64)
+- **PRIOR:** #28421 compliance HOS/2290 qty.
+- **THIS:** Codex batch64 — Expense accuracy KPI uses matchedExpenseAccuracyCoverage (not raw total_actual_expense); unavailable when no matched days; vitest + expense-engine-parity FE plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:10 AM CT) — compliance HOS/2290 house quantity
+- **PRIOR:** #28419 customer voided loads.
+- **THIS:** FleetHosBoardSection + Form2290Filings counts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~2:00 AM CT) — customer voided-load exclusion
+- **PRIOR:** #28418 lane live-load predicate.
+- **THIS:** customer-profitability rev/prev/cost exclude l.voided_at (sibling of batch63 lane); hub guard. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:45 AM CT) — lane live-load predicate + AdjustPopover plant
+- **PRIOR:** #28416 factoring/remint/fuel qty.
+- **THIS:** Codex batch63 — lane-profitability load_scope excludes voided/cancelled (compute+detail) to match equipment live population; hub guard; AdjustPopover-specific ledgerEntityKind plant (batch62). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:30 AM CT) — factoring/remint/fuel count house quantity
+- **PRIOR:** #28413 reverse/factoring/settlements qty.
+- **THIS:** FactoringHome footers · SubmitToFactor missing-docs/feed-gate · PaymentsToYou · DriverBillRemint · Fuel import dead-letters · CompanySettlements downtime · LoanRecovery · CompanyDriverTab · TourPreSettlement close → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:15 AM CT) — reverse/factoring/settlements count house quantity
+- **PRIOR:** #28412 kanban/presettle/home/system qty.
+- **THIS:** TourLegs · reverse sections · TruckPlanner · SubmissionQueue · RepurchaseDue · SettlementsHome weeks · BatchSettlements · FleetCovered · LeaseToOwn · LegalContracts → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. batch61 shipped #28410.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~1:00 AM CT) — kanban/presettle/home/system qty + batch61 tip
+- **PRIOR:** #28410 batch61 equipment hooks + real dimension.
+- **THIS:** DispatchKanban column badges · TourPreSettlement counts · Owner/DefaultHome cash advances · EngineStatus · Tx Health KPIs · SettlementLoads legs · ToursRegister live → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~12:45 AM CT) — batch61 equipment hooks + real dimension
+- **PRIOR:** #28404 fleet/dispatch/RL qty + CASH-T03 AdjustPopover.
+- **THIS:** Codex batch61 — remove ByType early-returns (rules-of-hooks); customer/lane/trip accept equipment_type with exact alias SQL; lane live-computes when filtered; hub guard plants. ENG-21 DONE-LIVE. Dreamline/match deferred. Manual JE → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~12:25 AM CT) — fleet/dispatch/RL/settlement qty + CASH-T03 AdjustPopover
+- **PRIOR:** #28402 lease/map/roundtrip qty.
+- **THIS:** FleetHome trailers/units · DispatchList Showing · DispatchBoard section · LoadBol POD/BOL · Settlements live/cancelled · TourSettlement counts · RollingLedger income/expense badges → formatQuantityTable(, 0); AdjustPopover passes row into ledgerEntityKind (legacy fuel-avg); currency + cash-t03 ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Manual JE sizing → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~12:10 AM CT) — lease/map/roundtrip count house quantity
+- **PRIOR:** #28400 in-transit/settlement footer qty · #28398 equipment→ByType.
+- **THIS:** TruckLeaseCreatorModal vehicles · MapView focused · RoundTrips delivered → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~12:00 AM CT) — in-transit + settlement footer house quantity
 - **PRIOR:** #28398 equipment→ByType · #28397 border/timeline qty.
 - **THIS:** Load/Unit in-transit reverse counts · CompanySettlements + SettlementsToursRegister footer Totals → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.

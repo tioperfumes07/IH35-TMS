@@ -76,7 +76,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-7 text-center">
         <div className="text-page-title font-bold tabular-nums text-[#0F1219]">{formatQuantityTable(pct, 1)}%</div>
         <div className="text-xs text-[#4B5563]">
-          {d.active_units} / {d.total_units} units
+          {formatQuantityTable(d.active_units, 0)} / {formatQuantityTable(d.total_units, 0)} units
         </div>
       </div>
     </div>

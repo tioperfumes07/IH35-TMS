@@ -9,7 +9,7 @@ import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
@@ -130,7 +130,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
                 </AmountLink>,
               ]),
               [
-                `Total open (${a.open_invoice_count} invoices)`,
+                `Total open (${formatQuantityTable(a.open_invoice_count, 0)} invoices)`,
                 <AmountLink key="total" filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-ar-total">
                   {formatUsdCents(a.total_open_cents)}
                 </AmountLink>,

@@ -16,6 +16,7 @@ import type { DispatchListProps, SortField } from "./dispatchListTypes";
 import { entityLabel } from "../../lib/entity-label";
 import { loadStatusLabel } from "../../lib/load-status";
 import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 export type { DispatchListProps } from "./dispatchListTypes";
 
@@ -122,7 +123,9 @@ export function DispatchList({
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-gray-600">Showing {from}-{to} of {totalCount}</div>
+        <div className="text-xs text-gray-600">
+          Showing {formatQuantityTable(from, 0)}-{formatQuantityTable(to, 0)} of {formatQuantityTable(totalCount, 0)}
+        </div>
         <div className="flex items-center gap-2">
           {selectedCount > 0 && onExportSelectedCsv ? (
             <Button type="button" variant="secondary" size="sm" onClick={onExportSelectedCsv}>
@@ -467,7 +470,7 @@ export function DispatchList({
           Previous
         </Button>
         <span className="text-gray-600">
-          Showing {from}-{to} of {totalCount}
+          Showing {formatQuantityTable(from, 0)}-{formatQuantityTable(to, 0)} of {formatQuantityTable(totalCount, 0)}
         </span>
         <Button type="button" variant="secondary" size="sm" disabled={!hasNext} onClick={() => onPageChange(offset + limit)}>
           Next

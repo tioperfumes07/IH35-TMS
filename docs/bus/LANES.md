@@ -1,6 +1,8 @@
 # LANES — seat ownership. Enforced by `scripts/verify-lane-ownership.mjs` in the merge gate.
 Owner-ruled 2026-09-22 after CC-1 and CC-3 both wrote settlement rows 5805/5806 inside the same hour.
 
+**OWNER 2026-11-03 13:31 CT (verbatim): "that is not my rule. every coder should perform their full build. you are the lead, you can do anything necessary."** — LEAD may change any non-FORBIDDEN path (commit line `SURFACE-BREACH-AUTHORIZED: LEAD <reason>`); every seat completes its whole build end to end.
+
 A seat may only change paths in its own lane plus SHARED. A PR touching another seat's lane fails
 the gate. To cross a lane: post to that seat's OUTBOX, get the Lead's written ruling, and add the
 ruling's filename to the PR body under `LANE-CROSS:`.

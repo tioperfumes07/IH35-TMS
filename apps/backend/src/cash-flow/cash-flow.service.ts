@@ -107,12 +107,17 @@ export type AvpLineItem = {
   actual_cents: number;
   variance_cents: number;
   variance_pct: number | null;
-  // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set only for an "income" line whose
+  // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set for an "income" line (and, E8, an "expenses" line) whose
   // projected_cents came from the frozen daily snapshot (forecast.cash_flow_projection_snapshots),
   // not the live recomputation. Lets a caller/human see WHEN a past day's frozen projection was
   // actually captured, distinct from prediction_date (the day it projects). null/undefined for
   // every other line — never fabricated for a live-computed figure.
   projected_captured_at?: string | null;
+  /** E8 11-03 — expenses line: where projected_cents came from. engine = today/later, live daily engine; snapshot = the
+   *  morning capture of that engine for a past day; not_captured = a past day before expense capture began. */
+  projected_basis?: "engine" | "snapshot" | "not_captured";
+  /** E8 11-03 — true when projected_cents is NOT a projection (not captured): show "not captured", never $0. */
+  projected_unavailable?: boolean;
   // CASH-FLOW-01 (owner order 2026-09-06, ROUND 14, "dash-never-zero"): actual_cents on an
   // income/expenses line is derived in part from banking.bank_transactions once categorized.
   // With 0 (or very low) bank-transaction coverage categorized, a $0 actual reads as "confirmed
@@ -131,7 +136,12 @@ export type ActualVsProjectedResult = {
     total_actual_income_cents: number;
     income_variance_pct: number | null;
     total_projected_expense_cents: number;
+    /** RAW: every bank outflow in range (Codex batch41 — consumers read this as raw actual; never coverage-filtered). */
     total_actual_expense_cents: number;
+    /** E8: projected vs actual expense over the days that HAVE a projection (not_captured days excluded on both sides). */
+    matched_projected_expense_cents: number;
+    matched_actual_expense_cents: number;
+    /** Variance on the matched days only — like with like. */
     expense_variance_pct: number | null;
   };
   // CASH-FLOW-01 (owner order 2026-09-06): company-wide (not date-range-scoped -- the honesty
@@ -208,29 +218,13 @@ function isConfirmedLoadStatus(status: string): boolean {
 
 // ─── Daily Prediction ─────────────────────────────────────────────────────────
 
-export async function getDailyPrediction(
-  client: Queryable,
-  operatingCompanyId: string,
-  date: string,
-  // BLOCK 2: when CASH_FOLLOWS_ETA_ENABLED is on, bucket projected income by projected_cash_date
-  // (effective delivery + receivable lag) instead of the raw delivery appointment. Default false =
-  // current behaviour, byte-identical query.
-  cashFollowsEta = false
-): Promise<DailyPredictionResult> {
-  // One receipt projection shared with the strip and Actual vs Projected.
-  const receiptRows = await client.query<IncomeLineItem & { id: string | null; status: string }>(
-    `SELECT * FROM (${cashFlowReceiptsSql(cashFollowsEta)}) receipts
-      WHERE bucket_date = $2::date ORDER BY delivery_time ASC NULLS LAST, load_number`,
-    [operatingCompanyId, date],
-  );
-  const incomeItems: IncomeLineItem[] = receiptRows.rows.map(row => ({
-    load_id: row.id, invoice_id: row.invoice_id, load_number: row.load_number,
-    customer_id: row.customer_id, customer_name: row.customer_name,
-    delivery_time: row.delivery_time, amount_cents: Number(row.amount_cents),
-    // Proforma loads carry basis: "Proforma" (labeled projected income, excluded from Open A/R).
-    basis: row.basis === "Proforma" ? "Proforma" : row.basis === "Predicted" && isConfirmedLoadStatus(row.status) ? "Confirmed" : row.basis,
-  }));
-
+/**
+ * LEAD 11-03 E8 (row 261) — the daily engine's EXPENSE side for one date, moved out of getDailyPrediction unchanged:
+ * driver pay (settlements), bills due (open balance), manual adjustments, unmatched posted expenses on their payment
+ * due date, Relay wallet top-ups, unaccrued open driver bills. getDailyPrediction and getActualVsProjected both read
+ * it, so the projected expense for a day is the same number on both screens by construction.
+ */
+export async function getDailyExpenseItems(client: Queryable, operatingCompanyId: string, date: string): Promise<ExpenseLineItem[]> {
   // Driver pay cash-outflow predictions (0441-mod10-cashflow-driverpay-hardcoded-empty).
   // Emit kind:"driver_pay" for settlements queued / sent_to_bank, or scheduled via
   // bank_settle_date / period_end. net_pay is dollars (numeric(14,2)) → cents for UI.
@@ -504,6 +498,34 @@ export async function getDailyPrediction(
       error_stack: err instanceof Error ? err.stack : String(err),
     });
   }
+  return expenseItems;
+}
+
+export async function getDailyPrediction(
+  client: Queryable,
+  operatingCompanyId: string,
+  date: string,
+  // BLOCK 2: when CASH_FOLLOWS_ETA_ENABLED is on, bucket projected income by projected_cash_date
+  // (effective delivery + receivable lag) instead of the raw delivery appointment. Default false =
+  // current behaviour, byte-identical query.
+  cashFollowsEta = false
+): Promise<DailyPredictionResult> {
+  // One receipt projection shared with the strip and Actual vs Projected.
+  const receiptRows = await client.query<IncomeLineItem & { id: string | null; status: string }>(
+    `SELECT * FROM (${cashFlowReceiptsSql(cashFollowsEta)}) receipts
+      WHERE bucket_date = $2::date ORDER BY delivery_time ASC NULLS LAST, load_number`,
+    [operatingCompanyId, date],
+  );
+  const incomeItems: IncomeLineItem[] = receiptRows.rows.map(row => ({
+    load_id: row.id, invoice_id: row.invoice_id, load_number: row.load_number,
+    customer_id: row.customer_id, customer_name: row.customer_name,
+    delivery_time: row.delivery_time, amount_cents: Number(row.amount_cents),
+    // Proforma loads carry basis: "Proforma" (labeled projected income, excluded from Open A/R).
+    basis: row.basis === "Proforma" ? "Proforma" : row.basis === "Predicted" && isConfirmedLoadStatus(row.status) ? "Confirmed" : row.basis,
+  }));
+
+  // E8 11-03: the expense half lives in getDailyExpenseItems — the ONE source Actual vs Projected also reads.
+  const expenseItems = await getDailyExpenseItems(client, operatingCompanyId, date);
 
   const incomeTotalCents = incomeItems.reduce((s, i) => s + i.amount_cents, 0);
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
@@ -641,23 +663,6 @@ export async function getActualVsProjected(
     [operatingCompanyId, from, to]
   );
 
-  // Projected expenses: bills due in range
-  const projExpRows = await client.query<{ due_date: string; projected_expense_cents: number }>(
-    `
-    SELECT
-      b.due_date::date::text AS due_date,
-      SUM(COALESCE(b.amount_cents, 0))::int AS projected_expense_cents
-    FROM accounting.bills b
-    WHERE b.operating_company_id = $1::uuid
-      AND b.due_date::date BETWEEN $2::date AND $3::date
-      AND ${notVoidedSql("b")}
-      AND NOT ${driverApBillCarriedBySettlementSql("b")}
-    GROUP BY b.due_date::date
-    ORDER BY b.due_date::date
-    `,
-    [operatingCompanyId, from, to]
-  );
-
   // Build date-indexed maps
   const projIncomeMap = new Map<string, number>();
   for (const r of projIncomeRows.rows) projIncomeMap.set(r.delivery_date, Number(r.projected_income_cents));
@@ -670,15 +675,23 @@ export async function getActualVsProjected(
   // the map — never worse than before this fix, only better once a snapshot exists.
   const today = companyBusinessDate();
   const projIncomeCapturedAtMap = new Map<string, string>();
+  // E8: expense projection per day. Policy (explicit, LEAD 11-03 after Codex batch38):
+  //   today and later → the daily engine itself (getDailyExpenseItems), so both screens show one number;
+  //   a past day      → the morning snapshot of that same engine (what was actually projected that day);
+  //   a past day with no expense snapshot (before capture began) → NOT CAPTURED, never reconstructed and never $0 —
+  //   the engine's sources retreat once paid/matched, so re-running it for a past day would repeat the $0 defect.
+  const projExpMap = new Map<string, number>();
+  const projExpCapturedAtMap = new Map<string, string>();
   if (from < today) {
     const snapshotRows = await client.query<{
       prediction_date: string;
       projected_income_cents: number;
       captured_at: string;
+      projected_expense_cents: number | string | null;
     }>(
       `
       SELECT prediction_date::text AS prediction_date, projected_income_cents::int AS projected_income_cents,
-             captured_at::text AS captured_at
+             projected_expense_cents, captured_at::text AS captured_at
       FROM forecast.cash_flow_projection_snapshots
       WHERE operating_company_id = $1::uuid
         AND prediction_date BETWEEN $2::date AND LEAST($3::date, ($4::date - INTERVAL '1 day')::date)
@@ -690,7 +703,16 @@ export async function getActualVsProjected(
       // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — surface WHEN this frozen figure was
       // captured (distinct from prediction_date, the day it projects) to the response below.
       projIncomeCapturedAtMap.set(r.prediction_date, r.captured_at);
+      if (r.projected_expense_cents !== null && r.projected_expense_cents !== undefined) {
+        projExpMap.set(r.prediction_date, Number(r.projected_expense_cents));
+        projExpCapturedAtMap.set(r.prediction_date, r.captured_at);
+      }
     }
+  }
+  for (const date of datesBetween(from > today ? from : today, to)) {
+    const items = await getDailyExpenseItems(client, operatingCompanyId, date);
+    const cents = items.reduce((sum, i) => sum + i.amount_cents, 0);
+    if (cents !== 0) projExpMap.set(date, cents);
   }
 
   const actIncomeMap = new Map<string, number>();
@@ -700,8 +722,6 @@ export async function getActualVsProjected(
     actExpMap.set(r.actual_date, Number(r.actual_expense_cents));
   }
 
-  const projExpMap = new Map<string, number>();
-  for (const r of projExpRows.rows) projExpMap.set(r.due_date, r.projected_expense_cents);
 
 
   // Enumerate all dates in range
@@ -719,17 +739,23 @@ export async function getActualVsProjected(
   let totalActIncome = 0;
   let totalProjExp = 0;
   let totalActExp = 0;
+  let matchedActExp = 0;
 
   for (const date of sortedDates) {
     const projInc = projIncomeMap.get(date) ?? 0;
     const actInc = actIncomeMap.get(date) ?? 0;
     const projExp = projExpMap.get(date) ?? 0;
     const actExp = actExpMap.get(date) ?? 0;
+    // A past day whose expense projection was never captured is a question, not $0 (see the policy above).
+    const projExpUnavailable = date < today && !projExpMap.has(date);
 
     totalProjIncome += projInc;
     totalActIncome += actInc;
-    totalProjExp += projExp;
-    totalActExp += actExp;
+    totalActExp += actExp; // RAW actual: every day (Codex batch41)
+    if (!projExpUnavailable) {
+      totalProjExp += projExp;
+      matchedActExp += actExp;
+    }
 
     lines.push({
       date,
@@ -745,16 +771,20 @@ export async function getActualVsProjected(
       category: "expenses",
       projected_cents: projExp,
       actual_cents: actExp,
-      variance_cents: actExp - projExp,
-      variance_pct: variancePct(projExp, actExp),
+      variance_cents: projExpUnavailable ? 0 : actExp - projExp,
+      variance_pct: projExpUnavailable ? null : variancePct(projExp, actExp),
+      projected_captured_at: projExpCapturedAtMap.get(date) ?? null,
+      projected_basis: projExpUnavailable ? "not_captured" : date < today ? "snapshot" : "engine",
+      ...(projExpUnavailable ? { projected_unavailable: true } : {}),
     });
     lines.push({
       date,
       category: "net",
       projected_cents: projInc - projExp,
       actual_cents: actInc - actExp,
-      variance_cents: actInc - actExp - (projInc - projExp),
-      variance_pct: variancePct(projInc - projExp, actInc - actExp),
+      variance_cents: projExpUnavailable ? 0 : actInc - actExp - (projInc - projExp),
+      variance_pct: projExpUnavailable ? null : variancePct(projInc - projExp, actInc - actExp),
+      ...(projExpUnavailable ? { projected_unavailable: true } : {}),
     });
   }
 
@@ -804,7 +834,9 @@ export async function getActualVsProjected(
       income_variance_pct: variancePct(totalProjIncome, totalActIncome),
       total_projected_expense_cents: totalProjExp,
       total_actual_expense_cents: totalActExp,
-      expense_variance_pct: variancePct(totalProjExp, totalActExp),
+      matched_projected_expense_cents: totalProjExp,
+      matched_actual_expense_cents: matchedActExp,
+      expense_variance_pct: variancePct(totalProjExp, matchedActExp),
     },
     bank_categorization_coverage: bankCategorizationCoverage,
   };
@@ -894,6 +926,18 @@ export type RollingLedgerResult = {
   rows: RollingLedgerRow[];
   days: RollingLedgerDay[];
 };
+
+/** Inclusive YYYY-MM-DD dates from a to b (empty when a > b). */
+export function datesBetween(a: string, b: string): string[] {
+  const out: string[] = [];
+  const d = new Date(a + "T00:00:00Z");
+  const end = new Date(b + "T00:00:00Z");
+  while (d <= end) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
 
 function daysBetween(a: string, b: string): number {
   const da = new Date(a + "T00:00:00Z").getTime();

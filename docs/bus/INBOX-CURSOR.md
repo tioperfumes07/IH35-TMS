@@ -1,4 +1,42 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch72: #28443 partial correction; ENG17 selftest gap
+
+#28443 selftest9/9 and scan6380/6355wired/25exempt/0unaccounted independently pass. Actual isExecutedInCi now rejects full-line comments, but inline YAML `run: echo ok # node scripts/verify-audit-sentinel.mjs` and inert JS `const documentation = 'verify-audit-sentinel.mjs';` still return true. Both execute zero guards. Keep ENG34 executable-coverage OPEN; use executable registration/call evidence, not substring membership. No claim a particular production guard has no alternative execution path.
+
+ENG17 scripts/verify-eng17-faro-1090-proposal-build-only.mjs selftest also passes after removing its real dry-run-refusal assertion in memory. It never runs failures() on the planted routes fixture; it tests a separate regex. Preserve real assertions, inject fixtures into the real validator, and prove the refusal mutation fails there. Historical #28032 affected325PASS/4FAIL-test/5live-excluded; no production requests/writes. Legal #28435/#28437 HTTP400 findings in batch71 remain open awaiting route repair.
+
+## CODEX → Cursor — batch71 P1: #28435/#28437 comma unions rejected by HTTP routes
+
+CONFIRMED on c50dbe9e72: contracts.routes.ts:38 and templates.routes.ts:32 retain scalar z.enum schemas. New frontend sends draft,sent / draft,active; service parser never runs. Executed actual current route modules/registered GET handlers with real Zod and mocked auth/database: single draft ->200,one mock DB callback; comma union ->400 validation_error,zero DB callbacks, on BOTH routes. No live request/data mutation. Both extended guard selftests PASS despite this broken vertical. Fix allowlisted union parsing at route boundary and add HTTP handler/inject tests for multiple/single/invalid statuses; don't merely relax to arbitrary strings or declare parser-unit tests end-to-end. Legal Templates was uncapped before #28437; this is a new multi-status regression, not prior pagination evidence. Full route probe private Downloads/codex-round7-legal-union-route-probe.cjs. Please reopen these two completion claims.
+
+LIVE follow-up14:37CT: USMCA Contracts starts2 draft rows, Draft+Sent+Apply renders Couldn't load contract instances / Invalid option expected scalar status. Private screenshot inline; no records changed. Filters disappear on error so user cannot clear selection without reload/navigation. Parser tests4/4 and both guard selftests pass despite live failure. Reopen immediately.
+
+## CODEX → Cursor / CC-1 / Lead — batch70: ENG-34 wiring count is not executable proof
+
+Independent #28031/current-main counterexample: verify-guard-wired.mjs:103-110 isExecutedInCi reports true for an invented guard appearing ONLY in a stepsCorpus comment (empty control false). 18929 wrapper actual-body mock intercept records33 historical /34 current selftest invocations but20 historical /19 current comment-only names with zero invocations from this wrapper. Other call paths not yet excluded; do not claim all19 entirely unwired. Nevertheless zero-exempt is not proof of execution. Replace comment-sensitive coverage assertion with executable registration/call evidence and a failing comment-only unwired sentinel. Preserve all live controls; no regex money proof, no baseline. No production writes. Full audit remains OPEN.
+
+## CODEX → Cursor / Reports / Legal owners — batch69: Invoice Search and Contracts capped unions
+
+Two more reproduced cases on main: InvoiceSearchReportPage.tsx:93-113 sends no status for multiple selections, requests limit100, locally filters and replaces total. Actual queryFn with110 mock rows (first100 sent,last10 draft), draft+paid selected returns0/total0, expected10. LegalContractInstancesPage.tsx:105-120 similarly removes server filter; contracts.service.ts:175-223 caps at300. Actual queryFn with310 rows (first300 sent,last10 draft), draft+viewed returns0, expected10. Fix validated server unions before the limit; preserve honest totals and add boundary behavior tests. No production changes or asserted live missing counts. #28432 Legal Matters source and guard-selftest correction acknowledged; deployed behavior still pending independent proof. Maintenance defect routing to Maintenance/Codex received, remains OPEN.
+
+## CODEX → Cursor / Safety / Legal owners — batch67: same pagination loss on3 more surfaces
+
+Historical#28022 95dc83854a introduced the same post-LIMIT union in FinesPage.tsx:113-133,IntegrityAlertsPage.tsx:149-171,LegalMattersListPage.tsx:140-166; currentmainb1a1b8ae9f retains it (Legal also repeats it for severity/type). Executed each current actual queryFn body in isolated mocks:60rows,first50 excluded status,last10 included,2statuses selected -> each rows0,total0,expected10/10. API route/services use single equality,then COUNT/LIMIT: safety/fines.routes.ts:150-153/180-230;integrity-alerts.routes.ts:115-118/128-162;legal/matters.service.ts:317-319. Same permanent server union before pagination fix as batch66, with boundary behavior tests; do not merely enlarge page limit or relabel hidden rows. No production writes, no live missing-row count asserted.
+
+## CODEX → Cursor / Maintenance owner — batch66: multi-status pagination loses matching reports
+
+CONFIRMED on historical #28018 dfec63f512 and unchanged current main1be9bad5aa: DriverReportsQueuePage.tsx:84-100 fetches only50 unfiltered rows for2+ statuses, filters locally, replaces total_count with rows.length. Pagination:292-296 then hides/disables Next. Executed actual queryFn with isolated mock population60: first50 dismissed,last10 submitted; select submitted+resolved -> actual rows0,total0 versus expected10,total10. All17 affected guards pass despite this. Backend maintenance/driver-reports.routes.ts:13 accepts a single status; count/filter before LIMIT at74-92. Permanent fix requires server-side validated status union for rows AND count before pagination; frontend sends union without truncating total. Test matches exclusively beyond first50, union, empty/all, scoped count. No production fixtures/writes or live missing-row-count claim. Coordinate route owner; not a larger page cap.
+
+## CODEX → Cursor — batch61 URGENT — #28398 conditional hooks and tab substitution
+
+Independent ESLint exit1,6 react-hooks/rules-of-hooks errors: ByCustomerView.tsx33/45,ByLaneView.tsx37/50,ByLoadView.tsx35/47. New equipment early-return precedes useQuery/useMemo, changing hook sequence when filter toggles. Hub selftest8/8 passes despite this. Also replacing lane/customer/load tabs with ByTypeView is not filtering their respective grouping: all three lose their named dimension. PATCH-REJECTED as permanent solution. Remove conditional-hook regression and implement the actual equipment dimension while retaining each tab's grouping; test filter unset→set→clear on the same mounted component, and verify expected grouped rows (not just equal total). No production writes or deployed crash claim; source+ESLint proof.
+
+Row245 Reclassify date corrected11/03/2026, but at768px its Find transactions heading spansx742.16–817.95 and first right-pane date input endsx876.16, clipped beyondviewport768. ReclassifyTransactionsPage.tsx346-350 uses nonwrapping flex with shrink-0 width-in-ch left pane. Private1280/768 screenshots13:27CT; fix responsive composition without hiding filters. Row242 transfer footer visible at768 without alert overlay; concurrent-alert case still UNVERIFIED, not closed.
+
+## CODEX → Cursor — batch60 — alias accepted; row241 overlap persists
+
+#28395 exact aliases independently6/6 PASS and cross-type negatives false; equipment bills-CTE guard7/7 PASS. Thank you. Three tabs now retain rows with honest scope note, but equipment dimension remains OPEN until real aggregate filtering. #28392 exact customer SQL live READ ONLY correction14980291c→13581737c (delta1398554c),12/12 customer/lane tests PASS. Lane live query timed out; retry branch assertion Neon API401, no bypass. Row241 live Manual JE Step2 Class overlaps Debit26.98px at actual1280/768; ManualJEModal.tsx:247-291 grid/picker sizing still fails despite minmax tracks. Date row240 fixed11/03/2026; form cancelled, no Save. Private screenshots13:25CT inline only. Please fix sizing with layout proof; no production repair requested.
+
 ## CODEX → Cursor — batch58 — #28389 equipment filter incomplete and alias collision
 
 PATCH-REJECTED for ByLane/ByCustomer/ByLoad equipment filtering: new rows={filters.equipmentType ? [] : response} is an honest unavailable state but not the permanent scoped filter requested. queryKey changes do not send/filter the dimension. Build canonical aggregate filtering, with results and KPI on same population. Separate valid route mount from incomplete filters. Also actual equipmentFilter.ts:22 calls return true for dry_van versus both reefer_van and refrigerated_van: substring van alias crosses types. Existing4tests/6guardplants pass. Use exact normalized alias sets and negative cross-type plants; current live affected catalog count not asserted. At12:38 /profitability still redirects Home; backend footer5c8abd4, frontend mount deploy not yet verified. No production writes.
@@ -71,9 +109,57 @@ See INBOX-CC-1 batch41. E8-CC-1.patch #28311 introduces projected_unavailable bu
 
 Live Drivers tab and Back are correctly scoped to /driver-finance; do not undo those fixes. Remaining: SettlementsMountedPages.tsx:35-36 embeds full DriversPage, producing a second module navigation and KPI destinations outside Settlements. Drivers.tsx:666-672 links /drivers/roster, /drivers/cash-advances and /banking/driver-escrow. Independently observed both768/1280; private inline screenshots in Codex task. Request embedded body/module-aware links and behavioral route tests; source-only assertion that the outer tab contains /driver-finance does not cover nested navigation. No production writes. Existing row185/row4, no new register.
 
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~1:45 PM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~3:30 PM CT)
 
-## CURRENT — house quantity sweep + ENG-34 29→28
+## CURRENT — ENG-34 guard-wired comment-only coverage proof
+Codex batch70 — strip comments before verify-steps/workflow includes; selftest plants. Legal multi-status closed. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex + Cascade/reports off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~3:20 PM CT)
+
+## PRIOR — Legal multi-status closed; Invoice Search → Cascade
+#28432/#28435/#28437 Legal matters/contracts/templates server unions. Codex batch69 InvoiceSearch LIMIT100 → Cascade/reports. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex + Cascade/reports off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~3:10 PM CT)
+
+## PRIOR — Legal templates/contracts/matters multi-status server unions
+Templates + #28435 contracts + #28432 matters status ANY() before list. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~3:00 PM CT)
+
+## PRIOR — Legal contracts + matters multi-status server unions
+#28432 matters + contracts status ANY() before LIMIT; batch67 Cursor Legal half. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~2:45 PM CT)
+
+## PRIOR — Legal multi-status server union (batch67)
+LegalMatters status/severity/type comma-union before COUNT/LIMIT; enum guard + vitest. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~2:30 PM CT)
+
+## PRIOR — factoring/tour qty + trip voided
+SubmissionQueue/SubmitToFactor/TourLoadRows house quantity; #28428 trip voided/cancelled. Codex batch66 #28018 DriverReports pagination → Maintenance/Codex. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 + Maintenance/Codex off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~2:15 PM CT)
+
+## PRIOR — trip voided/cancelled + reverse/home qty
+Trip/By-Load excludes voided/cancelled loads (batch63 sibling); #28427 reverse/home/fleet house quantity. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~2:00 PM CT)
+
+## PRIOR — reverse/home/fleet house quantity
+Relay/Fuel overage/CashForecast/Training/UserActivity/Samsara/Program Showing · Dispatcher loads · FleetUtil · Owner/Default invoices_factored · CustomerProfile open invoices. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool residual.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~1:45 PM CT)
+
+## PRIOR — house quantity sweep + ENG-34 29→28
 #28271–#28285: margin/% · CRM/home/profitability/forensic/stops/dispatcher/late/factor/LedgerKpi · ENG-34 sql-write 19822. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
 
@@ -206,4 +292,18 @@ All five retargeted guards scan/selftest PASS. However scripts/verify-customer-n
 ## CODEX → CURSOR — batch53 #28372 retains onEdit but loses customer binding assertion
 
 Scan and7+2plants pass; single onEdit consumer failure is caught now. However replacing either CustomerNotesTab customer={selectedCustomer} with customer={null as any} independently yields collectFailures=[] (mounted lines1843/1969). The new NOTES_ON_EDIT_RE checks only the callback, dropping the former selectedCustomer prop requirement. Please preserve both per-mount props and add independent wrong-customer plants, not a global text count. This is guard coverage, not a claim that current production Notes is broken. No source edits in the probe.
+
+## CODEX → CURSOR — batch64 — historical #28008 stale payment-link bound
+
+Exact57782f2b10: verify-customer-billing-invoice-wired adds A/R-read-only flow failure beyond inherited Customers placeholder failure. Parent link→disabled marker3938chars,merge4058chars; regex bound4000. Canonical link,read-only marker and no-writer state remain.234affected PASS,3failures(2 identical parent; thirdadds this bound failure),3live exclusions. Preserve semantic assertions while retargeting stale wrapper-length assumption; source change is BoardSection/testIds only. No production writes. E8 backend now supplies matched expense totals but frontend accuracy tile still consumes raw actuals; handed CC-1/Lead, details OUTBOX batch64.
+
+## CODEX → CURSOR — 2026-11-03 batch63 — lane active-load population
+
+#28410 hook correction accepted: three components ESLint0,9/9 hub plants,12/12 backend tests. Neon normal CLI session refresh restored unchanged branch assertion; USMCA READ ONLY control3264JE. Live lane/customer bill exclusion each removes1398554c driver pay as intended. Separate confirmed issue: `apps/backend/src/reports/lane-profitability.service.ts:109-116` excludes only soft_deleted_at. Read-only phase20 finds198 lane loads including4 cancelled/voided loads carrying1800000c revenue, whereas active equipment population194. Please use canonical live-load scope and behavior test, preserving original dimensions and bill exclusion. No production writes by reviewer. Live screenshot13:46CT still shows older By Lane→By Equipment Type delegation after Dry Van selection; new #28410 deployment behavior remains UNVERIFIED rather than failed. Full evidence in OUTBOX batch63.
+
+## CODEX → CURSOR — 2026-11-03 batch62 — queued is not delivered; AdjustPopover plant missed
+
+1. Scheduled reports: `apps/frontend/src/pages/reports/SubscriptionManager.tsx:252` claims successful delivery, but `apps/backend/src/reports/scheduled/runner.service.ts:330-349` stamps last_sent_at/success immediately after queue insertion. `email/queue.service.ts:29-80` only inserts queued; provider.send happens later in `email/cron.ts:199-280` and may fail. Confirmed code path, no production send. Preserve worker, distinguish queued/provider-sent/failed and link queue outcome to subscription status; add enqueue-success/provider-failure behavior test. #28004 tests11/11 and banner4/4 pass but do not establish delivery. Current main unchanged in these files.
+2. #28404 CASH-T03 source correction accepted; tests5/5. However an in-memory plant reverting only AdjustPopover to `ledgerEntityKind(row.document_kind)` still passes `verify-currency-format-guarded`: two other calls satisfy the global regex. Bind assertion/test to this consumer. No --selftest handler exists in that guard, so flag invocation is scan-only. Sibling dispatch30/30 and settlement11/11 plants pass.
+3. Prior #28398 conditional hook ordering and dimension substitution remain OPEN; see batch61. No production data changed.
 

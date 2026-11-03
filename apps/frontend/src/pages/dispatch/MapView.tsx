@@ -1,3 +1,4 @@
+import { formatQuantityTable } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { InfoPopover } from "../../components/shared/InfoPopover";
@@ -84,7 +85,7 @@ export function MapView() {
       {hasFocus ? (
         <p className="text-xs text-[#4B5563]" data-testid="dispatch-map-focus">
           {focused.length > 0
-            ? `${focused.length} matching position(s) from Samsara${mapConfigured ? "" : " — map plotting unavailable until a map provider is configured"}.`
+            ? `${formatQuantityTable(focused.length, 0)} matching position(s) from Samsara${mapConfigured ? "" : " — map plotting unavailable until a map provider is configured"}.`
             : "No GPS match for this driver/load/unit yet."}
         </p>
       ) : null}

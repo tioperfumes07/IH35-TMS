@@ -58,7 +58,7 @@ export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: 
           <div className="text-xs text-gray-500">Rank</div>
         </div>
       </div>
-      <div className="mt-2 text-xs text-gray-400">Based on {data.loads_counted ?? 0} loads</div>
+      <div className="mt-2 text-xs text-gray-400">Based on {formatQuantityTable(data.loads_counted ?? 0, 0)} loads</div>
     </div>
   );
 }

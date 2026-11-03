@@ -963,12 +963,14 @@ export async function getCustomerProfitability(params: {
   period_start: string;
   period_end: string;
   min_revenue_cents?: number;
+  equipment_type?: string;
 }): Promise<CustomerProfitabilityResponse> {
   const q = new URLSearchParams({
     period_start: params.period_start,
     period_end: params.period_end,
   });
   if (params.min_revenue_cents !== undefined) q.set("min_revenue_cents", String(params.min_revenue_cents));
+  if (params.equipment_type) q.set("equipment_type", params.equipment_type);
   return apiRequest<CustomerProfitabilityResponse>(
     withCompany(`/api/v1/reports/customer-profitability?${q.toString()}`, params.operating_company_id),
   );
@@ -1042,10 +1044,12 @@ export async function getLaneProfitability(params: {
   period: LaneProfitabilityPeriod;
   start?: string;
   end?: string;
+  equipment_type?: string;
 }): Promise<LaneProfitabilityResponse> {
   const q = new URLSearchParams({ period: params.period });
   if (params.start) q.set("start", params.start);
   if (params.end) q.set("end", params.end);
+  if (params.equipment_type) q.set("equipment_type", params.equipment_type);
   return apiRequest<LaneProfitabilityResponse>(
     withCompany(`/api/v1/reports/lane-profitability?${q.toString()}`, params.operating_company_id),
   );

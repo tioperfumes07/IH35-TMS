@@ -786,6 +786,55 @@ export async function backfillRelayFillSettlementRefs(
   return { stamped, unnamed };
 }
 
+/**
+ * ENG-65 (LEAD 11-03, owner 13:31 CT "you are the lead, you can do anything necessary") — a Relay fill document whose
+ * source_fuel_transaction_id is NULL points at the fill's PRIMARY live fuel record by the adopt rule above (the first
+ * record not already another document's source, highest total first, then id). Fill-once: never re-points a set link,
+ * never takes a record another live document holds. Audited. Returns the linked record id, or null when the fill has no
+ * free live record yet (the next adopt — after the Settlement Creator writes them — links it).
+ */
+export async function linkRelayFillExpenseToFuelRow(
+  client: QueryableClient,
+  input: { operating_company_id: string; expense_id: string; relay_fill_id: string; actor_user_uuid?: string | null },
+): Promise<string | null> {
+  const primary = (await client.query<{ id: string }>(
+    `SELECT ft.id::text
+       FROM fuel.fuel_transactions ft
+      WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id::text = $2
+        AND ft.archived_at IS NULL AND ft.voided_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL)
+      ORDER BY ft.total_cost DESC NULLS LAST, ft.id
+      LIMIT 1`,
+    [input.operating_company_id, input.relay_fill_id],
+  )).rows[0];
+  if (!primary) return null;
+  const linked = await client.query<{ id: string }>(
+    `UPDATE accounting.expenses
+        SET source_fuel_transaction_id = $3::uuid, updated_at = now()
+      WHERE operating_company_id = $1::uuid AND id = $2::uuid AND voided_at IS NULL AND source_fuel_transaction_id IS NULL
+      RETURNING id::text`,
+    [input.operating_company_id, input.expense_id, primary.id],
+  );
+  if (!linked.rows[0]) return null;
+  if (input.actor_user_uuid) {
+    await appendCrudAudit(
+      client as never,
+      input.actor_user_uuid,
+      "accounting.expense.relay_fill_fuel_record_linked",
+      {
+        resource_type: "accounting.expenses",
+        resource_id: input.expense_id,
+        operating_company_id: input.operating_company_id,
+        relay_fuel_transaction_id: input.relay_fill_id,
+        source_fuel_transaction_id: primary.id,
+      },
+      "info",
+      "ENG-65",
+    );
+  }
+  return primary.id;
+}
+
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
   input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null; driver_id?: string | null },
@@ -797,6 +846,15 @@ export async function adoptRelayFillExpenseDocument(
     [company, input.journal_entry_id],
   );
   if (existing.rows[0]) {
+    // ENG-65 (LEAD 11-03): the document was adopted ON RECEIPT, before any fuel record of the fill existed; when the fill's
+    // records arrive (Settlement Creator writes them, then calls this adopt again) the document must point at its primary
+    // record — this is the moment that link was never made (90 live documents, $38,717.03, measured 11-02/11-03).
+    await linkRelayFillExpenseToFuelRow(client, {
+      operating_company_id: company,
+      expense_id: existing.rows[0].id,
+      relay_fill_id: input.relay_fill_id,
+      actor_user_uuid: input.requesting_user_uuid ?? null,
+    });
     if (input.settlement_no) {
       await fillRelayFillExpenseSettlementRef(client, { operating_company_id: company, expense_id: existing.rows[0].id, settlement_no: input.settlement_no, actor_user_uuid: input.requesting_user_uuid ?? null });
     } else {
