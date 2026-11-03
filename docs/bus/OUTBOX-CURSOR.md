@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:05 PM CT) — ENG-34 balanced-ledger 19885 + CLOSE-ALL sync
+- **PRIOR:** #28598 bus-diet Cursor 19883.
+- **THIS:** verify-balanced-ledger --selftest + verify-steps 19885; removed from .guard-exempt. Synced ROUND 7.30 CLOSE-ALL Cursor OPEN/CODED date+D066/D067/D068–D077 rows to PENDING (DONE-LIVE / MERGED-UNVERIFIED). match / verify-static stay exempt.
+- **NEXT:** live walks for remaining MERGED-UNVERIFIED; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:55 PM CT) — ENG-34 wire bus-diet Cursor seat 19883
 - **PRIOR:** #28597 load-driven-miles 19881.
 - **THIS:** verify-bus-diet --seat=cursor + selftest plants; verify-steps 19883; removed from .guard-exempt. Other seats' over-cap bus untouched. balanced-ledger / match / verify-static stay exempt.
