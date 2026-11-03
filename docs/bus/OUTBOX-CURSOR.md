@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:00 PM CT) — ENG-34 match orphan exempt; tip #57/#159 week TZ
+- **PRIOR:** #28572 wire rows-250-255.
+- **THIS:** verify-match-vendor exempt (OWNER BUILD-FIRST no match); PENDING #57/#159 cite #28561 company-calendar week + selected-week deductions. ENG-34 orphans → 0.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:55 PM CT) — ENG-34 wire rows-250-255
 - **PRIOR:** #28571 System need-company.
 - **THIS:** verify-steps 19869 wires verify-rows-250-255. ENG-34 orphans → match residual only.
