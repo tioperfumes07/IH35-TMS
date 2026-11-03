@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:20 PM CT) — Legal multi-status family closed; Invoice Search → Cascade
+- **PRIOR:** #28437 Legal templates multi-status.
+- **THIS:** Cursor Legal half of Codex batch67/69 closed (matters #28432 · contracts #28435 · templates #28437). InvoiceSearchReportPage multi-status LIMIT100 → Cascade/reports. Fines/Integrity → CC-3; DriverReports → Maintenance/Codex. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:10 PM CT) — Legal templates multi-status server union
 - **PRIOR:** #28435 Legal contracts multi-status.
 - **THIS:** Codex batch67 sibling — templates status comma-union + ANY(); list-duplicate-search guard + vitest. ENG-21 DONE-LIVE. Dreamline/match deferred.
