@@ -10,6 +10,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 
 interface LayoverRow {
   uuid: string;
@@ -124,7 +125,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => (row.duration_hours != null ? row.duration_hours.toFixed(1) : "—"),
+        render: (row) => (row.duration_hours != null ? formatQuantityTable(row.duration_hours, 1) : "—"),
       },
       {
         key: "billable_to_customer",

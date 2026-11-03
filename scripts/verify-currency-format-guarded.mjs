@@ -82,6 +82,11 @@ const customer = read("apps/frontend/src/pages/CustomerDetail.tsx");
 if (!/formatUsd\(qualityStats\.totalImpact\)/.test(customer)) fail("CustomerDetail Dollar Impact KPI must use formatUsd");
 if (!/formatUsdCents\(Number\(invoice\.total_cents/.test(customer)) fail("CustomerDetail invoice total must use formatUsdCents");
 if (!/formatUsdCents\(lane\.fsc_per_mile_cents\)/.test(customer)) fail("CustomerDetail FSC/mi must use formatUsdCents");
+if (!/formatUsd\(Number\(v\)/.test(customer)) fail("CustomerDetail revenue chart tooltip must use formatUsd");
+if (!/formatQuantityTable\(qualityStats\.avgDaysLate, 1\)/.test(customer)) fail("CustomerDetail Avg Days Late must use formatQuantityTable");
+if (!/formatQuantityTable\(Number\(customerPnlRow\.gross_margin_pct\) \|\| 0, 1\)/.test(customer)) {
+  fail("CustomerDetail margin % must use formatQuantityTable");
+}
 
 const vendorParts = read("apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx");
 if (!/formatUsd/.test(vendorParts) || /\$\{Number\([^)]*\)\.toFixed\(2\)\}/.test(vendorParts)) {
@@ -182,6 +187,18 @@ if (!/formatQuantityTable\(ev\.customs_clearance_minutes\)/.test(gpsBorder)) {
 const faro1090 = read("apps/frontend/src/pages/factoring/Faro1090WireProposalsPage.tsx");
 if (!/formatQuantityTable\(row\.days_unfunded\)/.test(faro1090)) {
   fail("Faro1090WireProposalsPage days_unfunded must use formatQuantityTable");
+}
+const driverLayover = read("apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx");
+if (!/formatQuantityTable\(row\.duration_hours, 1\)/.test(driverLayover)) {
+  fail("DriverLayoverHistory duration hours must use formatQuantityTable");
+}
+const driverProfile = read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx");
+if (!/formatQuantityTable\(totalHours, 1\)/.test(driverProfile)) {
+  fail("DriverProfilePage layover total hours must use formatQuantityTable");
+}
+const cargoTemp = read("apps/frontend/src/components/dispatch/CargoTempBadge.tsx");
+if (!/formatQuantityTable\(latest\.temp_celsius, 1\)/.test(cargoTemp)) {
+  fail("CargoTempBadge temp must use formatQuantityTable");
 }
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
