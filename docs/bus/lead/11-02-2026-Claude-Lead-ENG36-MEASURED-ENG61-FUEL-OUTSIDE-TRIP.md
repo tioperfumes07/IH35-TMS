@@ -1,4 +1,6 @@
-# ENG-36 measured per document + new ENG-61 (fuel attached outside the load's trip)
+# ENG-36 measured per document + new ENG-64 (fuel attached outside the load's trip)
+
+> Renumbered 11-02 5:40 PM CT: this finding first used ENG-61 / ENG-62, which already existed (ENG-61 = settlement close without posting, ENG-62 = stop stamps from fence history). Fuel outside the trip window is **ENG-64**; unlinked Relay fill expenses is **ENG-65**. File name kept for links.
 Claude Lead · 11-02-2026 4:35 PM CT (22:35Z) · prod tiny-field-89581227 read-only · USMCA 5c854333-6ea5-4faa-af31-67cb272fef80
 
 ## ENG-36 — 21 of 87 company settlements negative (guard 18841 query, re-run live = ceiling 21)
@@ -27,18 +29,18 @@ Compared each one with its SIGNED company settlement (data/alwaystrack/settlemen
 
 Causes:
 1. **Revenue:** the signed documents are IH35 Transportation settlements covering Transportation loads; by owner ruling 443.167-R2 (10-16) those loads carry $0 revenue in USMCA, while their full fuel stays in USMCA → that diesel is ENG-25b (8000 Inter-company, AUTH pending).
-2. **Fuel attached to the wrong load (ENG-61 below)** — measured fuel differs from the signed fuel in BOTH directions (5780 +2,070.42; 5776 −820.67).
+2. **Fuel attached to the wrong load (ENG-64 below)** — measured fuel differs from the signed fuel in BOTH directions (5780 +2,070.42; 5776 −820.67).
 3. Truly negative on the signed document: **2** (5778, 5793) — real economics, not a defect.
 4. 4 settlements need their signed document read (5824, 5829, 5846, 5847).
 
-## ENG-61 — NEW: fuel rows attached to a load outside that load's trip window
+## ENG-64 — NEW: fuel rows attached to a load outside that load's trip window
 Query (load window = first stop − 1 day … last stop + 1 day, fill date in America/Chicago):
 - fuel rows on USMCA loads: **856**; outside the window: **116 ($40,499.46)** on **42 loads**; source import 41, manual 75; up to **19 days** off.
 - Example: load 13530 (settlement 5780, trip 08-18 → 08-21, T148) carries 8 rows ($2,914.18); the signed settlement lists ONE fill on 13530: 08-19 LOVES inv 99525016 153.16 gal $843.76. Rows dated 08-03 (2) and 08-12 (4) are other trips' fills.
 Writers that set fuel.load_id: fuel/fill-truck-and-load.service.ts, fuel/fuel-load-at-time.ts, fuel/dreamline-statement-import.service.ts, fuel/fuel-transaction-import.ts, driver-finance/settlement-creator.service.ts, integrations/relay-payments/relay-fuel-load-rematch.service.ts.
 Owner: **CC-3** (LANES: settlements and fuel).
 
-## ADDENDUM 2026-11-02 (Lead) — 5846/5847 read; NEW ENG-62 Relay fill expenses not linked to their fuel row
+## ADDENDUM 2026-11-02 (Lead) — 5846/5847 read; NEW ENG-65 Relay fill expenses not linked to their fuel row
 Signed documents found (owner Mac stage files C5846.txt, C5847.txt): **5846 net +2,696.36**, **5847 net +3,885.83** — both POSITIVE. Measured negative only because guard 18841's expense CTE treats an expense as fuel only when `source_fuel_transaction_id` points at a fuel row on the settlement's loads.
 - 5846 measured expenses $4,576.21 vs signed $435.50; 5847 $4,739.94 vs signed $145.50. The excess is memo `Relay fuel fill <relay_fuel_transactions.id>` expenses with `source_fuel_transaction_id IS NULL` (loads 13661, 13666, 13667, 13673, 13683).
 - USMCA-wide (live, prod read, bypass): Relay fill expenses **249**; unlinked **90 = $38,717.03**, all 90 posted (JE + postings), created 2026-10-11 … 10-29.

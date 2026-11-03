@@ -4,8 +4,8 @@ Lead · 2026-10-03 · **this is the inventory. Nothing is closed until it is liv
 
 | # | What the owner said | Owner | State |
 |---|---|---|---|
-| U1 | Nothing in Accounting resizes — full screen or any width | CC-2 | OPEN |
-| U2 | Accounting tab bar runs off screen, cut at `BILL PAYM…` | CC-2 | OPEN |
+| U1 | Nothing in Accounting resizes — full screen or any width | CC-2 | FAIL partial 11-02 17:10: at measured1280/1023/768 CSS px no document overflow, but fixed three lower panels truncate names/money; aging total wraps. Screenshots private; exact1024/1440 unverified |
+| U2 | Accounting tab bar runs off screen, cut at `BILL PAYM…` | CC-2 | LIVE partial 11-02 17:10: nav wraps with scrollWidth=clientWidth at measured1280/1023/768 CSS px; screenshots private. Exact1024/1440 and owner acceptance pending |
 | U3 | `Load costs` does not belong in Accounting; Dispatch surface renders the LIVE load set + current cost from the ledger | CC-2 | LIVE partial 11-02 16:27 CT: no Load costs in Accounting top navigation or full More menu; screenshot private. Dispatch live-population/ledger parity not certified by this navigation check |
 | U4 | Two expense tabs — `Expenses` and `Expenses List` | CC-2 | LIVE 11-02: one Expenses top-level tab; overflow inspected, no Expenses List duplicate. Submenu/writer coverage pending; owner acceptance pending |
 | U5 | Receipt creator must BE the expense creator, one writer | CC-2 | LIVE partial 11-02 16:28 CT: New receipt opens RecordExpenseModal with vendor/date/unit/payment/document controls; screenshot private, closed without save. Shared component confirmed in ReceiptsPage.tsx:286; no production writer invocation or full posting certification |

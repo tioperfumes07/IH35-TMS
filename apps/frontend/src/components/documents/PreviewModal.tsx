@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { entityLabel } from "../../lib/entity-label";
 import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type PreviewModalProps = {
   file: DocsFile;
@@ -65,7 +66,7 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
             <span className="font-semibold">Uploader:</span>{" "}<EntityLink kind="user" id={file.uploader_user_id} label={entityLabel(file.uploader_email, file.uploader_user_id, "User")} />
           </div>
           <div>
-            <span className="font-semibold">Uploaded:</span> {new Date(file.created_at).toLocaleString()}
+            <span className="font-semibold">Uploaded:</span> {formatDateTimeUS(file.created_at)}
           </div>
           <div>
             <span className="font-semibold">Version:</span> v{file.version_number}

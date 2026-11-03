@@ -8,6 +8,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type PortalUserRow = {
   id: string;
@@ -120,7 +121,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             columns={[
               { key: "email", label: "Email", sortable: true, render: (row) => row.email },
               { key: "full_name", label: "Name", sortable: true, render: (row) => (row.full_name ? formatPersonName(row.full_name) : "—") },
-              { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—") },
+              { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? formatDateTimeUS(row.last_login_at) || "—" : "—") },
               { key: "status", label: "Status", render: (row) => (row.archived_at ? "Archived" : row.active ? "Active" : "Inactive") },
             ]}
           />

@@ -129,7 +129,7 @@ export function unionMergedPatterns(gitattributesText) {
   for (const raw of String(gitattributesText || "").split("\n")) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
-    if (!/\bmerge=\S*union\S*/.test(line)) continue;
+    if (!/\bmerge=(\S*union\S*|ours)\b/.test(line)) continue;
     const pattern = line.split(/\s+/)[0];
     if (pattern) patterns.push(pattern);
   }

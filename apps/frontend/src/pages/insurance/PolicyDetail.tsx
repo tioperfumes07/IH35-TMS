@@ -21,7 +21,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -30,8 +30,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
-import { SelectCombobox } from "../../components/Combobox";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { SelectCombobox } from "../../components/Combobox";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
@@ -247,9 +247,18 @@ export function PolicyDetail() {
         key: "amount_claimed_against_us",
         label: "Demand",
         sortable: true,
+        // amount_claimed_against_us is dollars (legal.matters numeric); financial_reserve_cents is cents.
+        // Never coerce one through the other's formatter (Codex 11-02 PolicyDetail demand /100).
         render: (row) => {
-          const cents = Number(row.amount_claimed_against_us ?? row.financial_reserve_cents ?? 0);
-          return formatMoney(Number.isFinite(cents) ? cents : 0);
+          const claimed = row.amount_claimed_against_us;
+          if (claimed != null && claimed !== "" && Number.isFinite(Number(claimed))) {
+            return formatUsd(Number(claimed));
+          }
+          const reserve = row.financial_reserve_cents;
+          if (reserve != null && reserve !== "" && Number.isFinite(Number(reserve))) {
+            return formatUsdCents(Number(reserve));
+          }
+          return "—";
         },
       },
     ],

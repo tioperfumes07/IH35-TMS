@@ -5,9 +5,15 @@ import { registerExpenseCategoryMapRoutes } from "../routes.js";
 
 const { mockQuery, mockWithCompanyScope } = vi.hoisted(() => {
   const query = vi.fn();
-  const withCompanyScope = vi.fn(async (_userId: string, _companyId: string, fn: (client: { query: typeof query }) => unknown) =>
-    fn({ query }),
-  );
+  const withCompanyScope = vi.fn(async (_userId: string, _companyId: string, fn: (client: { query: typeof query }) => unknown) => {
+    // Simulate assertCompanyMembership: consume one query call; throw 403 when no access.
+    const check = await query("membership_check");
+    if (!check?.rowCount) {
+      const err = Object.assign(new Error("forbidden_company_membership"), { statusCode: 403 });
+      throw err;
+    }
+    return fn({ query });
+  });
   return { mockQuery: query, mockWithCompanyScope: withCompanyScope };
 });
 
@@ -50,7 +56,8 @@ describe("expense-category-map.routes tenant isolation", () => {
     });
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ error: "forbidden" });
+    // withCompanyScope throws with statusCode:403; Fastify formats as { statusCode, error: "Forbidden" }.
+    expect(res.json()).toMatchObject({ statusCode: 403 });
   });
 
   it("creates mapping in matching tenant and writes audit event", async () => {

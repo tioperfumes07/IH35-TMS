@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTasksByTarget, type Task, type TaskStatus, type TaskTargetType } from "../../api/tasks";
 import { CreateTaskModal } from "./CreateTaskModal";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
@@ -78,7 +78,7 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
         key: "alarm_at",
         label: "Alarm",
         render: (t) => (
-          <span className="text-gray-600">{t.alarm_at ? new Date(t.alarm_at).toLocaleString() : "—"}</span>
+          <span className="text-gray-600">{t.alarm_at ? formatDateTimeUS(t.alarm_at) || "—" : "—"}</span>
         ),
       },
       {

@@ -16,6 +16,7 @@ import {
   type ChatMessage,
 } from "../../api/chat";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
 const TZ = "America/Chicago";
 const ATTACH_ACCEPT = "image/jpeg,image/png,image/heic,image/webp,application/pdf";
@@ -173,7 +174,7 @@ export function DispatchChatPage() {
                 ) : null}
                 <div className="flex-1 space-y-2 overflow-y-auto p-4">
                   {messages.map((m) => {
-                    const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
+                    const dollars = m.cash_advance_amount_cents != null ? formatUsdCents(m.cash_advance_amount_cents) : "";
                     return (
                       <div key={m.id} className="text-xs">
                         <span className="mr-2 text-xs text-[#6B7280]">#{m.seq} · {fmtTime(m.server_ts)} · {m.sender_party_type}</span>

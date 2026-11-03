@@ -81,11 +81,11 @@ export function DriverBillDetailPage() {
   return (
     <div className="mx-auto max-w-5xl p-4">
       <PageHeader
-        backHref="/dispatch"
+        backHref="/driver-finance"
         title={`Driver bill ${label}`}
         subtitle={subtitle}
         breadcrumb={[
-          { label: "Dispatch", href: "/dispatch?subtab=load_board&view=list" },
+          { label: "Driver Finance", href: "/driver-finance" },
           bill.load_id
             ? { label: `Load ${bill.load_number ?? bill.load_id}`, href: `/dispatch/loads/${bill.load_id}` }
             : { label: "Load" },

@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveSamsaraVisualStatus } from "../../lib/integration-telematics-status";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export function SamsaraIntegrationPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -33,7 +34,7 @@ export function SamsaraIntegrationPage() {
     { key: "name", label: "Samsara driver", sortable: true },
     { key: "activation_status", label: "Status", sortable: true },
     { key: "local_driver_name", label: "Linked driver", sortable: true, render: (row) => row.local_driver_name ?? "—" },
-    { key: "last_seen_at", label: "Last movement", sortable: true, render: (row) => row.last_seen_at ? new Date(row.last_seen_at).toLocaleString() : "—" },
+    { key: "last_seen_at", label: "Last movement", sortable: true, render: (row) => row.last_seen_at ? formatDateTimeUS(row.last_seen_at) || "—" : "—" },
   ], []);
 
   const publicHealth = useMemo(() => {

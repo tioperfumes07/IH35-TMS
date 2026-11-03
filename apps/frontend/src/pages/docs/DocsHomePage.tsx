@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 type DocsEntityTabId = FileEntityType | "all";
 
@@ -177,10 +178,7 @@ export function parseDocsEntityTab(raw: string | null): DocsEntityTabId {
 }
 
 function fmtDate(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString();
+  return formatDateUS(value) || "—";
 }
 
 function fmtFileSize(sizeBytes: string) {

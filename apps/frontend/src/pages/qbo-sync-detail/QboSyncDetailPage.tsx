@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { useListState } from "../../components/list-state";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const KIND_OPTIONS: Array<{ value: "all" | QboSyncEventKind; label: string }> = [
   { value: "all", label: "All kinds" },
@@ -40,9 +41,7 @@ function severityPillClass(severity: QboSyncEventSeverity) {
 }
 
 function formatTimestamp(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return formatDateTimeUS(iso) || iso;
 }
 
 export function QboSyncDetailPage() {

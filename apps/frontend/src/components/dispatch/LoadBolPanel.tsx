@@ -10,6 +10,7 @@ import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -129,7 +130,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
           {bols.map((bol: BolDocumentSummary) => (
             <li key={bol.id} className="flex items-center justify-between gap-2">
               <span>
-                {new Date(bol.generated_at).toLocaleString()} · {bol.template_version}
+                {formatDateTimeUS(bol.generated_at)} · {bol.template_version}
               </span>
               <button
                 type="button"

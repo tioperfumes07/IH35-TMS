@@ -31,6 +31,10 @@ function analyze(sources) {
   if (!/formatQuantityTable\(row\.gallons\)/.test(tx) || /gallons\.toLocaleString\(/.test(tx)) {
     e.push("FuelTransactionsReverseSection: gallons must use formatQuantityTable");
   }
+  const relay = sources["apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx"] ?? "";
+  if (!/formatQuantityTable\(row\.fuel_gallons\)/.test(relay) || /gallons\.toLocaleString\(/.test(relay)) {
+    e.push("RelayFillsReverseSection: gallons must use formatQuantityTable");
+  }
   return e;
 }
 

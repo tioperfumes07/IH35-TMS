@@ -55,13 +55,27 @@ export function monthKeyFromDate(rawDate: string): string {
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+const MONTH_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
 export function monthTitleFromKey(monthKey: string): string {
   const [yearRaw, monthRaw] = monthKey.split("-");
   const year = Number(yearRaw);
   const month = Number(monthRaw);
-  if (!Number.isFinite(year) || !Number.isFinite(month)) return "Unknown";
-  const dt = new Date(Date.UTC(year, month - 1, 1));
-  return dt.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return "Unknown";
+  return `${MONTH_LONG[month - 1]} ${year}`;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { EntityLink } from "../shared/EntityLink";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export type LivePosition = {
   lat: number;
@@ -24,7 +25,7 @@ export function LoadLivePositionCell({
       <span className={position.stale ? "font-semibold text-red-600" : "text-[#1F2A44]"}>
         {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
       </span>
-      <span className="text-[#6B7280]">{new Date(position.recorded_at).toLocaleTimeString()}</span>
+      <span className="text-[#6B7280]">{formatDateTimeUS(position.recorded_at)}</span>
       <EntityLink kind="load_map" id={loadId} label="Map" className="text-[#1F2A44] underline" />
     </div>
   );

@@ -1311,5 +1311,12 @@
     "source_file": "apps/backend/src/accounting/load-cost-rollup.sql.ts",
     "guard": "scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443260-RANGE-GEOCODE-NO-FENCE",
+    "title": "A load stop with geocode_precision='range' must not have a geofence created; the GPS-dwell engine creates the fence once trucks actually dwell. Active stops with range precision must not grow (shrink-only).",
+    "source_file": "apps/backend/src/telematics/stops-geocode-backfill.service.ts",
+    "guard": "scripts/verify-stops-geocoded.mjs",
+    "type": "enforced"
   }
 ]

@@ -45,10 +45,10 @@ describe("TotalsStack", () => {
 
     rerender(<TotalsStack subtotal={1874.5} taxRate={8.25} grandLabel="Expense Total = A + B" />);
     expect(screen.getByText("$154.65")).toBeInTheDocument();
-    expect(screen.getByText("$2029.15")).toBeInTheDocument();
+    expect(screen.getByText("$2,029.15")).toBeInTheDocument();
 
     rerender(<TotalsStack subtotal={1874.5} taxRate={0} grandLabel="Expense Total = A + B" />);
-    expect(screen.getAllByText("$1874.50").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$1,874.50").length).toBeGreaterThan(0);
   });
 
   it("renders provided grand label", () => {
@@ -67,7 +67,7 @@ describe("TotalsStack", () => {
 
   it("renders negative subtotal without crashing", () => {
     render(<TotalsStack subtotal={-50} taxRate={8.25} grandLabel="WO Total = A + B" />);
-    expect(screen.getByText("$-50.00")).toBeInTheDocument();
-    expect(screen.getByText("$-54.13")).toBeInTheDocument();
+    expect(screen.getByText("-$50.00")).toBeInTheDocument();
+    expect(screen.getByText("-$54.13")).toBeInTheDocument();
   });
 });

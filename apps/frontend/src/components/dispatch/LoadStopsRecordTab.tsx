@@ -16,6 +16,8 @@ import { Button } from "../Button";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLoadDocuments } from "./tabs/useLoadDocuments";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 type Props = {
   loadId: string;
@@ -32,17 +34,12 @@ const DASH = "—";
 function fmtMiles(v: number | null | undefined): string {
   // Unknown miles are a dash, never 0.0 — a real 0.0 would be a wrong claim (guard).
   if (v == null) return DASH;
-  return v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return formatQuantityTable(v);
 }
 
 function fmtTs(ts: string | null | undefined): string {
   if (!ts) return DASH;
-  return new Date(ts).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateTimeUS(ts);
 }
 
 function fmtDuration(minutes: number | null | undefined): string {
@@ -206,7 +203,7 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
       "Lumper",
       stop.lumper_required
         ? stop.lumper_amount_cents != null
-          ? `Required · $${(stop.lumper_amount_cents / 100).toFixed(2)}`
+          ? `Required · ${formatUsdCents(stop.lumper_amount_cents)}`
           : "Required"
         : "No",
     ],
@@ -256,7 +253,7 @@ function LoadShuttleLegsPanel({ loadId, operatingCompanyId }: { loadId: string; 
           <span>{[leg.from_city, leg.from_state].filter(Boolean).join(", ") || "Pickup"} → {leg.dropped_at_place}</span>
           <span>Truck: {leg.unit_number ?? (leg.candidate_unit_numbers?.length ? `one of ${leg.candidate_unit_numbers.join(", ")}` : "—")}</span>
           <span>Driver: {leg.driver_name ? formatPersonName(leg.driver_name) : "local driver"}</span>
-          <span>{leg.picked_up_at ? (leg.precision === "tracked" ? new Date(leg.picked_up_at).toLocaleString() : leg.picked_up_at.slice(0, 10)) : "—"}</span>
+          <span>{leg.picked_up_at ? (leg.precision === "tracked" ? formatDateTimeUS(leg.picked_up_at) : leg.picked_up_at.slice(0, 10)) : "—"}</span>
           <span className="text-gray-500">{leg.evidence === "gps_stop_event" ? "GPS" : leg.evidence === "owner_ruling" ? "Owner ruling" : "Driver report"} · {leg.precision === "tracked" ? "tracked" : "date only"}</span>
         </div>
       ))}

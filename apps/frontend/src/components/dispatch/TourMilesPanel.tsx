@@ -3,6 +3,7 @@ import { useLoadMilesRecommendations, MILES_FIELD_LABELS, type MilesFieldRec } f
 import type { TourReadout } from "../../api/tourReadout";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable } from "../parity/ParityTable";
+import { formatQuantityTable } from "../../lib/money";
 
 type MilesRow = { field: (typeof MILES_FIELD_LABELS)[number]["field"]; label: string; rec: MilesFieldRec | undefined };
 
@@ -14,7 +15,7 @@ type MilesRow = { field: (typeof MILES_FIELD_LABELS)[number]["field"]; label: st
  */
 const DASH = "—";
 const mi = (n: number | null | undefined) =>
-  n == null ? DASH : n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  n == null ? DASH : formatQuantityTable(n);
 const SOURCE_LABEL: Record<string, string> = {
   historical: "our database (lane history)",
   google: "Google",

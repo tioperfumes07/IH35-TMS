@@ -58,7 +58,14 @@ function baseImpl(opts: { unitQboClassId?: string | null; trailerQboClassId?: st
       return { rows: opts.classRowExists === false ? [] : [{ id: RESOLVED_CLASS_ID }] };
     }
     if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-class" }] };
+    // ENG-28: after INSERT, posting engine SELECTs the header to validate entry_date and lock it.
+    if (sql.includes("FROM accounting.journal_entries") && !sql.includes("INSERT")) return { rows: [{ entry_date: "2026-06-13" }] };
     if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-class" }] };
+    // posting engine validates all account ids are active and postable before writing lines.
+    if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+      const acctIds = (values?.[0] as string[]) ?? [];
+      return { rows: acctIds.map((id) => ({ id, deactivated_at: null, is_postable: true })) };
+    }
     if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
       postingLineIdx += 1;
       return { rows: [{ id: `jep-class-${postingLineIdx}` }] };
@@ -199,11 +206,11 @@ describe("fuel-posting poster.service class resolution (unit/trailer)", () => {
     mockQuery.mockReset();
     mockResolveAccountForCategory.mockReset();
     mockResolveAccountForCategory.mockResolvedValue({ account_id: "expense-acct", posting_side: "debit" });
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (String(sql).includes("FROM mdata.units") || String(sql).includes("FROM mdata.equipment")) {
         throw new Error('column "operating_company_id" does not exist');
       }
-      return baseImpl({})(sql);
+      return baseImpl({})(sql, values);
     });
 
     const result = await postFuelExpenseFromEvent({

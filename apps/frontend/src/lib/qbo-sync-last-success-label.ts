@@ -1,3 +1,5 @@
+import { formatDateTimeUS } from "./formatDate";
+
 /** Pick the most recent successful QBO sync timestamp across push + master-data CDC sources. */
 export function effectiveQboLastSuccessAt(
   lastSuccessfulSyncAt: string | null | undefined,
@@ -12,7 +14,7 @@ export function effectiveQboLastSuccessAt(
 
 export function formatQboLastSuccessLabel(iso: string | null | undefined): string {
   if (!iso) return "Last OK: never";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Last OK: never";
-  return `Last OK: ${d.toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
+  const label = formatDateTimeUS(iso);
+  if (!label) return "Last OK: never";
+  return `Last OK: ${label}`;
 }

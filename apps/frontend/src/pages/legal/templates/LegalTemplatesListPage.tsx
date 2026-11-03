@@ -12,6 +12,7 @@ import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { statusOptions } from "../../../lib/statusListParams";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 const STATUS_LABELS: Record<LegalTemplateStatus, string> = {
   draft: "Draft",
@@ -86,7 +87,7 @@ export function LegalTemplatesListPage() {
       { key: "display_name_en", label: "Display Name (EN)", sortable: true, render: (row) => row.display_name_en },
       { key: "category", label: "Category", sortable: true, render: (row) => row.category },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusPillClass(row.status)}>{row.status}</span> },
-      { key: "updated_at", label: "Updated", sortable: true, render: (row) => new Date(row.updated_at).toLocaleString() },
+      { key: "updated_at", label: "Updated", sortable: true, render: (row) => formatDateTimeUS(row.updated_at) },
     ],
     [],
   );

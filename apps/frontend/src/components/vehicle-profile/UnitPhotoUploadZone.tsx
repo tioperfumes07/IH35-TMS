@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
+import { SelectCombobox } from "../Combobox";
 
 const PHOTO_TYPES = ["exterior", "interior", "damage", "mod", "cleanliness", "other"] as const;
 type PhotoType = (typeof PHOTO_TYPES)[number];
@@ -67,10 +68,10 @@ export function UnitPhotoUploadZone({
       <div className="mb-2 flex flex-wrap gap-2">
         <label className="text-xs font-medium text-gray-600">
           Type
-          <select
+          <SelectCombobox
             value={photoType}
             onChange={(e) => setPhotoType(e.target.value as PhotoType)}
-            className="ml-1 rounded-sm border border-gray-200 px-1 py-0.5 text-xs"
+            className="ml-1 text-xs"
             data-testid="vp-photo-type-select"
           >
             {PHOTO_TYPES.map((t) => (
@@ -78,7 +79,7 @@ export function UnitPhotoUploadZone({
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex-1 text-xs font-medium text-gray-600">
           Caption

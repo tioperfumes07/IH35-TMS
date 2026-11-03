@@ -37,6 +37,9 @@ describe("auto-invoice-on-bol — BOL gate", () => {
           return { rows: [{ enabled: true }] };
         }
         if (sql.includes("dfc.code = ANY($2::text[])")) return { rows: [] };
+        // ACCT-F443344: code now creates/finds a draft invoice before checking BOL.
+        // Return a pre-existing draft so buildInvoiceFromLoad is not called.
+        if (sql.includes("FROM accounting.invoices")) return { rows: [{ id: "ffffffff-ffff-4fff-8fff-ffffffffffff", status: "draft" }] };
         return { rows: [] };
       }),
     };

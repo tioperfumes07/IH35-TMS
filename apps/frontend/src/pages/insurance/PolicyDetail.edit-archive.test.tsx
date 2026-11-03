@@ -128,11 +128,13 @@ describe("PolicyDetail edit and archive", () => {
 
   it("archives the policy and returns to policies list", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(wrap(<PolicyDetail />));
 
     await screen.findByText(/Policy PN-100/i);
     await user.click(screen.getByRole("button", { name: /^Archive$/i }));
+
+    // ConfirmModal opens — click the confirm button inside it
+    await user.click(await screen.findByRole("button", { name: /Archive policy/i }));
 
     await waitFor(() => {
       expect(insuranceApiMocks.archiveInsurancePolicy).toHaveBeenCalledWith(
@@ -141,7 +143,5 @@ describe("PolicyDetail edit and archive", () => {
       );
       expect(mockNavigate).toHaveBeenCalledWith("/insurance/policies");
     });
-
-    confirmSpy.mockRestore();
   });
 });

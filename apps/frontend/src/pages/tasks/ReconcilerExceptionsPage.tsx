@@ -9,13 +9,14 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { TasksModuleTabs } from "./TasksModuleTabs";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
 type Row = ReconcilerException & { rule: string };
 
 function dollars(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return "—";
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 /** What the owner does next, in plain words. The repair itself happens on the record's own screen,
@@ -109,7 +110,7 @@ export function ReconcilerExceptionsPage() {
       </div>
       {query.data ? (
         <div className="text-xs text-[#6B7280]" data-testid="reconciler-checked">
-          {query.data.results.length} rules checked at {new Date(query.data.ran_at).toLocaleTimeString("en-US")}.
+          {query.data.results.length} rules checked at {formatDateTimeUS(query.data.ran_at)}.
         </div>
       ) : null}
 

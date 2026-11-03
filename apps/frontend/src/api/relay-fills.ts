@@ -21,6 +21,7 @@ export type RelayFillRow = {
   driver_id: string | null;
   driver_name: string | null;
   /** Relay's own free-text driver/unit — present even when matching failed or disagrees. */
+  relay_driver_integration_id: string | null;
   relay_driver_name: string | null;
   relay_unit_number: string | null;
   /** Truck (road) diesel gallons only. */

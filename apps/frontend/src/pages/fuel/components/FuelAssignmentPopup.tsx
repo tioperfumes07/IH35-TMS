@@ -22,6 +22,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { V3 } from "../../../design/v3-tokens";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -35,7 +36,7 @@ function money(cents: string | null): string {
   if (cents == null || cents === "") return "—";
   const n = Number(cents);
   if (!Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n / 100);
+  return formatUsdCents(n);
 }
 
 

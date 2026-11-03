@@ -34,6 +34,8 @@ import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
 import { LoadMilesRecommendations } from "../loads/MilesRecommendationsPanel";
 import { LoadAuditTab } from "./LoadAuditTab";
 import { formatMoneyCents } from "./constants";
+import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { loadStatusLabel } from "../../lib/load-status";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
@@ -539,7 +541,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     const short = load?.miles_shortest ?? null;
     const rateCents = load?.rate_total_cents ?? null;
     const revPerMile = rateCents != null && practical != null && practical > 0 ? rateCents / 100 / practical : null;
-    const num = (n: number | null | undefined, dp = 1) => (n != null ? n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }) : null);
+    const num = (n: number | null | undefined, _dp = 1) => (n != null ? formatQuantityTable(n) : null);
     const driverName = load?.assigned_primary_driver_name ? formatPersonName(load.assigned_primary_driver_name) : null;
     const unit = load?.assigned_unit_number ?? null;
     const trailer = load?.trailer_number ?? null;
@@ -616,7 +618,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     const invoiceLink = linkedInvoice
       ? resolveApiUrl(`/api/v1/accounting/invoices/${encodeURIComponent(linkedInvoice.id)}.html?operating_company_id=${encodeURIComponent(load.operating_company_id)}`)
       : null;
-    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Factoring Package - ${load.load_number}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 6px}h2{font-size:15px;margin:16px 0 6px}ol{padding-left:18px}li{margin:6px 0}.meta{font-size:12px;color:#555}</style></head><body><h1>Factoring Package</h1><div class="meta">Load ${load.load_number} · ${new Date().toLocaleString()}</div><h2>1) Customer rate confirmation</h2><ol>${rateConf.map((f) => `<li>${f.original_filename}</li>`).join("") || "<li>Missing rate confirmation document.</li>"}</ol><h2>2) Signed delivery documents / BOL</h2><ol>${signedDelivery.map((f) => `<li>${f.original_filename}</li>`).join("") || "<li>Missing POD/BOL documents.</li>"}</ol><h2>3) Our invoice</h2><ol>${linkedInvoice ? `<li>${linkedInvoice.display_id}${invoiceFile ? ` · ${invoiceFile.original_filename}` : ""}</li>` : "<li>Missing invoice for this load.</li>"}</ol>${invoiceLink ? `<p><a href="${invoiceLink}" target="_blank">Open invoice document</a></p>` : ""}</body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Factoring Package - ${load.load_number}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 6px}h2{font-size:15px;margin:16px 0 6px}ol{padding-left:18px}li{margin:6px 0}.meta{font-size:12px;color:#555}</style></head><body><h1>Factoring Package</h1><div class="meta">Load ${load.load_number} · ${formatDateTimeUS(new Date())}</div><h2>1) Customer rate confirmation</h2><ol>${rateConf.map((f) => `<li>${f.original_filename}</li>`).join("") || "<li>Missing rate confirmation document.</li>"}</ol><h2>2) Signed delivery documents / BOL</h2><ol>${signedDelivery.map((f) => `<li>${f.original_filename}</li>`).join("") || "<li>Missing POD/BOL documents.</li>"}</ol><h2>3) Our invoice</h2><ol>${linkedInvoice ? `<li>${linkedInvoice.display_id}${invoiceFile ? ` · ${invoiceFile.original_filename}` : ""}</li>` : "<li>Missing invoice for this load.</li>"}</ol>${invoiceLink ? `<p><a href="${invoiceLink}" target="_blank">Open invoice document</a></p>` : ""}</body></html>`;
     // DSP-MONEY-F7264 — window.open() returning null (popup blocked) used to be silently ignored:
     // persistPackageMeta stamped generated_at and the success toast fired regardless of whether the
     // package window ever actually opened. A blocked popup therefore recorded and announced a
@@ -1033,10 +1035,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                       { label: "Customer WO #", value: load.customer_wo_number ?? "—" },
                       { label: "Pickup #", value: load.pickup_number ?? "—" },
                       { label: "Total customer invoice", value: formatMoneyCents(load.rate_total_cents, load.currency_code) },
-                      { label: "Created", value: new Date(load.created_at).toLocaleString() },
-                      { label: "Miles (practical)", value: load.miles_practical != null ? load.miles_practical.toLocaleString() : "—" },
-                      { label: "Miles (shortest)", value: load.miles_shortest != null ? load.miles_shortest.toLocaleString() : "—" },
-                      { label: "Deadhead miles", value: load.miles_deadhead != null ? load.miles_deadhead.toLocaleString() : "—" },
+                      { label: "Created", value: formatDateTimeUS(load.created_at) },
+                      { label: "Miles (practical)", value: load.miles_practical != null ? formatQuantityTable(load.miles_practical) : "—" },
+                      { label: "Miles (shortest)", value: load.miles_shortest != null ? formatQuantityTable(load.miles_shortest) : "—" },
+                      { label: "Deadhead miles", value: load.miles_deadhead != null ? formatQuantityTable(load.miles_deadhead) : "—" },
                     ]}
                   />
                   <p className="mt-1 text-xs text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
@@ -1121,19 +1123,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     fields={[
                       {
                         label: "Practical",
-                        value: load.miles_practical != null ? load.miles_practical.toLocaleString() : "—",
+                        value: load.miles_practical != null ? formatQuantityTable(load.miles_practical) : "—",
                       },
                       {
                         label: "Shortest",
-                        value: load.miles_shortest != null ? load.miles_shortest.toLocaleString() : "—",
+                        value: load.miles_shortest != null ? formatQuantityTable(load.miles_shortest) : "—",
                       },
                       {
                         label: "Loaded",
-                        value: load.loaded_miles != null ? load.loaded_miles.toLocaleString() : "—",
+                        value: load.loaded_miles != null ? formatQuantityTable(load.loaded_miles) : "—",
                       },
                       {
                         label: "Deadhead",
-                        value: load.miles_deadhead != null ? load.miles_deadhead.toLocaleString() : "—",
+                        value: load.miles_deadhead != null ? formatQuantityTable(load.miles_deadhead) : "—",
                       },
                     ]}
                   />
@@ -1154,7 +1156,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                           fields={[
                             { label: "Address", value: stop.address_line1 ?? "—" },
                             { label: "City / St / Zip", value: [[stop.city, stop.state].filter(Boolean).join(", "), stop.postal_code].filter(Boolean).join(" ") || "—" },
-                            { label: "Date / Time", value: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "—" },
+                            { label: "Date / Time", value: stop.scheduled_arrival_at ? formatDateTimeUS(stop.scheduled_arrival_at) : "—" },
                             { label: "Site contact", value: stop.site_contact_name ?? "—" },
                             { label: "Dock", value: stop.gate_dock_text ?? "—" },
                             { label: "Lumper amount", value: stop.lumper_amount_cents != null ? formatMoneyCents(stop.lumper_amount_cents, load.currency_code) : "—" },
@@ -1584,7 +1586,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               {(assignmentHistoryQuery.isError ? [] : assignmentHistoryQuery.data?.rows ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 const id = String(r.id ?? "");
-                const at = r.assigned_at ? new Date(String(r.assigned_at)).toLocaleString() : "";
+                const at = r.assigned_at ? formatDateTimeUS(String(r.assigned_at)) : "";
                 const method = String(r.assignment_method ?? "");
                 const reason = r.reason_code != null ? String(r.reason_code) : "";
                 const notes = r.notes != null ? String(r.notes) : "";

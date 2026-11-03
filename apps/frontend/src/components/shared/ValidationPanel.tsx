@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { ParityTable } from "../parity/ParityTable";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export type ValidationSeverity = "block" | "warn" | "info";
 
@@ -204,7 +205,7 @@ export function ValidationPanel({
                 const reason = rowReasons[item.rule_id] ?? "";
                 return rec ? (
                   <span data-testid={`blocker-overridden-${item.rule_id}`}>
-                    Overridden {new Date(rec.at).toLocaleString()} — {rec.reason.slice(0, 48)}
+                    Overridden {formatDateTimeUS(rec.at)} — {rec.reason.slice(0, 48)}
                     {rec.reason.length > 48 ? "…" : ""}
                   </span>
                 ) : canOwnerOverride ? (
