@@ -1,3 +1,22 @@
+## 2026-11-03 — ROUND7.27 batch40: Neon restored and live UI rechecks
+
+Neon HTTP401 diagnosed as expired configured CLI access token. Normal installed `neonctl projects list -o json --no-analytics` refreshed the existing session; unchanged assert-neon-branch then passed for the expected production branch. No guard bypass, permission expansion, credential output or production modification. Actual expense-line-account-matches-item guard subsequently exit0:1558 itemized USMCA expense lines,0 mismatches, default_transaction_read_only=on and explicit scoped context. Private log Downloads/codex-round7-expense-item-live.log. Batch39 live blocker is resolved for this session; this is not an assertion that every financial guard passed.
+
+Fresh in-app browser tab restores control; old tab binding was unavailable. Screenshots captured private inline, never committed. DOM viewport checked; 1280/768 responsive observations are independent of a guard PASS.
+
+| Row | Verdict | Independent observation | Owner / limit |
+|---|---|---|---|
+|259|DONE-LIVE scoped|Maintenance All39; changed per-page to50 and read39 actual fleet rows,0 SAM-prefix rows.|Lead; corroborates scoped DB check, not frozen-company acceptance|
+|209|DONE-LIVE bounded format|Maintenance MTD COST and Active WOs Open $ render two-decimal dollars.|Lead; nonzero money behavior not exercised on empty WO population|
+|211|PARTIAL runtime proof|Clicked Load,Driver,Vendor,Bill,JE,Timing; all6 move the ascending-sort marker to the selected header. Active WOs has0 data rows.|Lead; cannot prove row ordering with empty population, no fixture created|
+|185|PARTIAL navigation|Drivers tab lands at /driver-finance/drivers; Back returns to /driver-finance/settlements. Embedded DriversPage still renders a second module nav and KPI links to /drivers/roster, /drivers/cash-advances and /banking/driver-escrow.|Cursor: SettlementsMountedPages.tsx:35-36; Drivers.tsx:666-672. Screenshots private inline at768/1280|
+|170|DONE-LIVE bounded parity|Loaded Accounting tile164 open invoices; displayed total matches previously independently measured GL1100/open-invoice amount. Loading-phase zero values not used as findings.|Accounting lower-panel truncation remains separate OPEN layout issue|
+|173|DONE-LIVE rendering only|Actual vs Projected renders KPI strip, chart and by-date table, no crash; date range10/27-11/03.|Does not close row261 engine defect|
+|261/E8|OPEN|Loaded AvP has7 completed-date rows, each projected expense0; explicit no-projection warning. Earlier snapshot-schema/engine finding still applies.|CC-1; screenshot private inline, no money changed|
+|70|OPEN board completeness|Maintenance arrivals explicitly says full arrivals roster, PM status and scheduling action are not supplied; empty WO panels remain. At768 title truncates and table requires inner horizontal scroll.|Lead; not full V3 board acceptance|
+
+Accounting1280 lower receivables amounts still truncate and total wraps;768 fixed three-column lower grid still squeezes content. Existing AccountingHubPage.tsx:621-627 finding remains OPEN, not a new register. Full263-row/249-PR audit is still incomplete. No production data changed.
+
 ## 2026-11-03 — ROUND7.27 batch39: #27979 historical guard wiring
 
 Batch38 merged #28301 at b16befe9d307353ce2e38a3649dbff50052530c2. Reviewed all28 files of #27979 at exact fd3cd0d8e7. Loaded all25 step modules and captured their actual command arguments; classified25 target guards:22 PASS,2 FAIL-test,1 live exclusion. Private artifact Downloads/codex-round7-27979-historical.json. This is not 25 executed passing wrappers or full CI proof.
