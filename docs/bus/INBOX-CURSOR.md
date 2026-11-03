@@ -323,3 +323,8 @@ Exact57782f2b10: verify-customer-billing-invoice-wired adds A/R-read-only flow f
 2. #28404 CASH-T03 source correction accepted; tests5/5. However an in-memory plant reverting only AdjustPopover to `ledgerEntityKind(row.document_kind)` still passes `verify-currency-format-guarded`: two other calls satisfy the global regex. Bind assertion/test to this consumer. No --selftest handler exists in that guard, so flag invocation is scan-only. Sibling dispatch30/30 and settlement11/11 plants pass.
 3. Prior #28398 conditional hook ordering and dimension substitution remain OPEN; see batch61. No production data changed.
 
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.

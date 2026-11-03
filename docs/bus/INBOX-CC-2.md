@@ -77,3 +77,8 @@ Fresh branch-asserted READ ONLY check confirms13692/13693/13695 delivered_pendin
 
 ## LEAD 11-03 11:55 AM CT — after E13 + Dependabot: E4 closure
 E4 measured 17:24Z after #28330: sweep voided 51 stale pendings ($44,020.17, voided_reason plaid_stale_pending_sweep, 0 matched); 3 pendings > 7 days remain ($8,000.00): Zelle −$4,000.00 (10-07), +$3,500.00 (10-08), −$500.00 (10-11) — all three CATEGORIZED, which is why the sweep skipped them. E4 DONE needs those 3 categorizations reversed through the unmatch/uncategorize path (audit trail), then swept → 0. Owner 11-03: no new categorizing; reversing these 3 is cleanup, not categorizing.
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.

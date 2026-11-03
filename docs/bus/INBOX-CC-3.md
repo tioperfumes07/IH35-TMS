@@ -82,3 +82,8 @@ The board's "id …4" column is the CARD last-4, not relay_driver_id. Use this e
 | dr_7RVY7agkZ6sZPb | VICENTE SANTOS | 3 | Vicente Santos Contreras | 40022039-b657-4713-97de-439fba899946 |
 | dr_AMDJEt7n5hgeVh | PEDRO LOPEZ | 4 | Pedro Abraham Lopez Collado | a785bea7-6dde-4bf9-81b9-b9135c2df4b5 |
 The 16-digit legacy id looks like a card number: store it only in the link table's id column, never echo it in logs, bus files or PR text. DONE = fills with matched_driver_id ≥ 280 of 281 (live count), relay_ids_unmatched = 0.
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.

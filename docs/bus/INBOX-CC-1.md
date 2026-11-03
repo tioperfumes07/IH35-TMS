@@ -165,3 +165,8 @@ MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isErr
 
 ## LEAD 11-03 2:00 PM CT — OWNER 1:31 PM CT (verbatim): "every coder should perform their full build. you are the lead, you can do anything necessary."
 Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration 202616320100, guard 19827); ENG-65/E2 → #28422 + prod backfill (42 of 90 linked; 48 have no fuel record — Lead's next PR). Your queue now: roster placeholders (you claimed 19825) → INBOX 11:55 audit items → E3 → E7. Every seat completes its whole build end to end.
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
