@@ -80,7 +80,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 13 | R27 | Data | Delete USMCA test records (18 legal matters, 5 policies, 7 claims, 1 accident…) | CC-2 | CODED |
 | 14 | R28 | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | CC-1 | OPEN |
 | 15 | R29 | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | DONE-LIVE — verify-entity-filters-multi-select PASS on main 23:00Z: 134 entity filters detected, 134 multi-select, 0 failed |
-| 16 | R114 | Process | Cursor confirmation of 443.282 (owner-authorized build exactly as specified) | Cursor | OPEN |
+| 16 | R114 | Process | Cursor confirmation of 443.282 (owner-authorized build exactly as specified) | Cursor | MERGED-UNVERIFIED — verify-factoring-layout-tabs-first 443.282 board-exact PASS; live owner confirm UNVERIFIED |
 | 17 | R205 | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | CODED |
 | 18 | R206 | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | MERGED-UNVERIFIED — ExpenseLoadConfirmationsBoard MultiSelect + bulk confirm; live UNVERIFIED |
 | 19 | R212 | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | CODED |
