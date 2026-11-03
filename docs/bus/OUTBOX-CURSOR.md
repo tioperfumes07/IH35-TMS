@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:50 PM CT) — Legal templates/contracts need-company
+- **PRIOR:** #28465 Attorney Review need-company.
+- **THIS:** LegalTemplatesListPage + LegalContractInstancesPage BoardSection need-company; fill-shell plants. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:40 PM CT) — Legal Attorney Review need-company
 - **PRIOR:** #28464 Legal Policies need-company.
 - **THIS:** LegalAttorneyReviewPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
