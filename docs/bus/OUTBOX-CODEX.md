@@ -1,3 +1,23 @@
+## 2026-11-03 — ROUND7.27 batch46: Reports/Customers and historical checks
+
+Batch45 merged #28333 through normal hooks and fast-merge,3 affected guards0 regressions. No application or production changes.
+
+| Item | Independent result | Limit / owner |
+|---|---|---|
+|27985 at72382fc6a9|Full2-file diff;6/6 mocked dwell tests;1 affected guard classificationPASS. Live326 date-only stops,0 forbidden event links;13698 still has NULL actual miles.|Narrow constraint condition passes; miles outcome OPEN,CC-3. No production writer invoked.|
+|27987 atf7aa20c898|Full1-file claim diff;21 affected checks:19PASS,1live exclusion,1FAIL selftest-integrity. Same5 missing-selftest names fail on parent5c28a4a472.|Inherited red,not claim regression. Claim-only has no runtime live claim.|
+|27989 at30a6eaa89b|Full1-file evidence diff;only selected guard excluded-live-db. 1090/fuel assertions not independently reproduced by this historical run.|UNVERIFIED,not a pass from the author's numbers.|
+|27999 at18de9d7b94|Full6-file orders diff;17 affected checks:9PASS,2capability skips,6live exclusions.|Docs-only; skips/exclusions not proof of referred money claims.|
+|FACT-TIEOUT-01|USMCA-scoped equivalent original cohort query:0 invoices,expected33.|OPEN. Original auto_check has unscoped JE discriminator,not executed unchanged under USMCA-only scope. No invented records.|
+|SETL-TIEOUT-01|USMCA-scoped equivalent:0 matching loads/0 lines,expected2 loads.|OPEN. Same unscoped original discriminator restriction; empty is neverPASS.|
+|53 Reports Home|1280/768 private inline screenshots;20 categories,9 financial report rows,6 schedules,0 recent runs;Trial Balance opens real viewer.|PARTIAL. At768 fixed200px sidebar+1fr grid clips financial panel;2 KPI counts lack drill-through. CC-3.|
+|54 Trial Balance|52 rows;debit/credit totals equal;account drill opens register preserving From/To.1280/768 screenshots.|PARTIAL: narrow money cells ellipsize,header buttons13px/textTransform none. Size has later owner-rule comment in ParityTable,so reconcile contract before changing scale.|
+|27 Account Register|Trial Balance drill loads17 register rows and preserves date range.|Ending-balance caption renders ISOYYYY-MM-DD split across lines at768;AccountRegisterPage.tsx:764. CC-1/CC-3 display repair,not money.|
+|55 Customers|Real87-row board,1217 total roster,6 linked KPI tiles;1280/768 screenshots. Open-invoice drill correctly exposes174 total with100 loaded and explicit more-available warning.|Not an empty shell. Scope/count drill boundedPASS;full reverse coverage pending.|
+|55/170 Customer A/R semantics|Readonly phase12:10draft invoices account for exactly3835000c difference between Customers A/R label and GL1100;issued invoice balance equals1100;draft amount equals1150.|OPEN label/source distinction,CC-1. liveOpenInvoice explicitly includes drafts under10-25FINAL-4:do not silently remove them from candidates.|
+
+Private phase11/12 JSONs in Downloads;both expected Neon branch checks passed,transaction_read_only=on,USMCA JEcontrol3264. Customers row counts/factoring labels remain plain text,not drills;collected0 row renders dash though KPI renders real0 (PartyBoard.tsx:209-214). Reports source handoffs postedCC-3;customer accounting distinction postedCC-1. Design-ratchet --worklist0 raw/0 semantic off-scale occurrences does not validate inline computed headers. Full263-row/249-PR audit still incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch45: independently rechecked coder fixes
 
 Batch44 merged #28327 bcc03a2997 with normal push hooks and fast-merge:3 affected guards,0 regressions,1 inherited inbox citation failure. No production mutations. Neon access remains restored through the configured credential refresh, not a branch-assertion bypass.
