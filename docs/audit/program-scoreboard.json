@@ -1,10 +1,10 @@
 {
-  "healthzSha": "095b256",
-  "generated_at": "2026-11-03T06:32:56.893Z",
+  "healthzSha": "a133957",
+  "generated_at": "2026-11-03T08:27:05.815Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "095b256",
+    "deployedSha": "a133957",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28240,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28240",
+      "sha": "a133957b52",
+      "committedAtIso": "2026-11-03T06:33:00Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 12:32 AM CT",
+      "url": "",
+      "sha": "5732d0146d",
+      "committedAtIso": "2026-11-03T06:32:57Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "",
       "sha": "027187dd2c",
       "committedAtIso": "2026-11-03T00:57:13Z"
-    },
-    {
-      "number": 28235,
-      "title": "GUARD: Load Costs rate selftest plants formatUsdRateTable drop",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28235",
-      "sha": "67029ad110",
-      "committedAtIso": "2026-11-02T18:50:02-06:00"
-    },
-    {
-      "number": 28234,
-      "title": "FINDING: Cursor house money wave 6 — Load Costs/escrow/liabilities rates",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28234",
-      "sha": "412ca612aa",
-      "committedAtIso": "2026-11-02T18:48:28-06:00"
     }
   ]
 }
