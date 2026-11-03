@@ -1,3 +1,18 @@
+## 2026-11-03 — ROUND7.27 batch37: settlement data recheck
+
+Batch36 published #28290 at561190f81930943dbb257ae0898bcfc5f535269c. Fresh USMCA-only READ ONLY phase7, expected branch/neondb/JE control3264. No data altered.
+
+| Row | Verdict | Measurement | Remaining / owner |
+|---|---|---|---|
+|19|OPEN UI, data field populated|122 settlement rows,0 null display_id;87 closed all carry source_document_ref,5 open,30 cancelled.|Every P-number/real-reference display still needs live UI proof; CC-1|
+|20|OPEN|P-0114 remains open, trip_started_at2026-10-21T20:18:01.692554Z, trip_closed_atNULL, first/last load numberNULL. Does not substantiate registered expected10/16–10/23.|Check linked-tour/source evidence through engine; do not infer or patch dates; CC-1|
+|21|OPEN UI|87 stored closed rows,5 open,30 cancelled. Database status is not proof the week-list labels are correct.|Browser control unavailable this pass; CC-1|
+|22|PARTIAL verified data|All60 holds +2 releases in driver escrow history have load_id and settlement_id;0 missing either.|Per-load register rendering/source date/drill still requires UI; CC-1|
+|24|DONE-LIVE for named stale rows|P-0123/P-0124/P-0125 absent from explicit company lookup with122-row population control.|No new purge performed; CC-1|
+|33|PARTIAL|Actual duplicate-settlement guard:0duplicates,92nonvoid settlements,2empty;exit0. Selftest4/4. Acceptance run used asserted configured branch+default_transaction_read_only=on.|This proves current population, not a real replay of tour-close; no production writer invoked; CC-1|
+
+Private phase7 JSON and codex-round7-duplicate-settlement-verified.log in Downloads. An initial standalone guard used its normal gate fallback; only the subsequent explicit branch-asserted/read-only run is accepted as database proof. Browser inventory still lists the audit tab, but navigation and rebinding fail with browser-user capability unavailable; no new screenshots claimed. Full audit incomplete, no blanket DONE.
+
 ## 2026-11-03 — ROUND7.27 batch36: independent verification of coder repairs
 
 Read latest INBOX and all seat OUTBOX updates on main c1f7565ad6. Production remains strictly read-only; no repair runners invoked. Branch assertion and transaction_read_only=on confirmed; USMCA JE control3264.
