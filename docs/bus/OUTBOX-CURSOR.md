@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~3:40 PM CT) — Legal Attorney Review need-company
+- **PRIOR:** #28464 Legal Policies need-company.
+- **THIS:** LegalAttorneyReviewPage BoardSection need-company; fill-shell plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~3:35 PM CT) — Legal Policies need-company
 - **PRIOR:** #28462 bus tip #28460.
 - **THIS:** LegalPoliciesPage BoardSection need-company; fill-shell-empty-states plant. ENG-21 DONE-LIVE. Dreamline/match deferred.
