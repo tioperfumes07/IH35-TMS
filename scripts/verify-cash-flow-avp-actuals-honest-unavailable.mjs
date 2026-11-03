@@ -60,11 +60,17 @@ export function check({ backend = load(BACKEND_FILE), frontend = load(FRONTEND_F
   if (!/projected_unavailable/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: does not read projected_unavailable for expense projections`);
   }
-  if (!/rawActualNetFromGroups/.test(frontend)) {
-    f.push(`${FRONTEND_FILE}: Net variance must use rawActualNetFromGroups, not accuracy_summary subtraction`);
+  if (!/matchedCoverageNets/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: Net variance must use matchedCoverageNets (raw vs matched, never accuracy_summary)`);
   }
   if (!/buildAvpChartPoints/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: chart points must go through buildAvpChartPoints (null not-captured proj exp)`);
+  }
+  if (!/buildAvpChartSeries/.test(frontend) || !/projectedExpensePolylineSegments/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: chart must use buildAvpChartSeries + projectedExpensePolylineSegments (gaps)`);
+  }
+  if (!/cash-flow-avp-proj-exp-polyline/.test(frontend) || !/cash-flow-avp-proj-exp-legend/.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: must render projected-expense legend + polyline testids`);
   }
   if (/projected line reads \$0/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: dishonest note still claims projected line reads $0 for not-captured days`);
@@ -83,8 +89,12 @@ function selftest() {
     {data.bank_categorization_coverage.categorized_count} of {data.bank_categorization_coverage.total_count} bank lines categorized
     if (line.actual_unavailable) { return <span>unavailable</span>; }
     if (line.projected_unavailable) { return <span>not captured</span>; }
-    const raw = rawActualNetFromGroups(groups);
+    const cov = matchedCoverageNets(groups);
     const chartPoints = buildAvpChartPoints(groups);
+    const series = buildAvpChartSeries(chartPoints, "cumulative");
+    const segs = projectedExpensePolylineSegments(series, xOf, yOf);
+    data-testid="cash-flow-avp-proj-exp-polyline"
+    data-testid="cash-flow-avp-proj-exp-legend"
   `;
   const baseline = check({ backend: goodBackend, frontend: goodFrontend });
   if (baseline.length) {
@@ -102,12 +112,16 @@ function selftest() {
       { backend: goodBackend, frontend: goodFrontend.replace(/projected_unavailable/g, "proj_missing") },
     ],
     [
-      "frontend drops rawActualNetFromGroups",
-      { backend: goodBackend, frontend: goodFrontend.replace(/rawActualNetFromGroups/g, "badNet") },
+      "frontend drops matchedCoverageNets",
+      { backend: goodBackend, frontend: goodFrontend.replace(/matchedCoverageNets/g, "badNet") },
     ],
     [
       "frontend drops buildAvpChartPoints",
       { backend: goodBackend, frontend: goodFrontend.replace(/buildAvpChartPoints/g, "badChart") },
+    ],
+    [
+      "frontend drops projectedExpensePolylineSegments",
+      { backend: goodBackend, frontend: goodFrontend.replace(/projectedExpensePolylineSegments/g, "badSeg") },
     ],
     [
       "frontend dishonest $0 note",
