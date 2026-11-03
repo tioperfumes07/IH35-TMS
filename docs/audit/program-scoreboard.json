@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1be9bad",
-  "generated_at": "2026-11-03T20:11:51.564Z",
+  "healthzSha": "2d69ac2",
+  "generated_at": "2026-11-03T20:43:11.234Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1be9bad",
+    "deployedSha": "2d69ac2",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28431,
-      "title": "BUS: tip after #28428/#28430 factoring qty + trip voided",
+      "number": 28444,
+      "title": "FINDING: ACCT-F11040 E9 / ENG-64 — every fill goes through the one fill engine; owner rulings and confirmed loads are never moved",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28431",
-      "sha": "bbfa6447d6",
-      "committedAtIso": "2026-11-03T14:09:24-06:00"
+      "mergedAtCt": "11/03/2026, 02:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28444",
+      "sha": "468f99dae4",
+      "committedAtIso": "2026-11-03T14:41:29-06:00"
     },
     {
-      "number": 28430,
-      "title": "FORMAT: factoring submit + tour footer counts house quantity",
+      "number": 28443,
+      "title": "FIX: ENG-34 guard-wired ignores comment-only CI mentions",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28430",
-      "sha": "9d40f18f54",
-      "committedAtIso": "2026-11-03T14:07:37-06:00"
+      "mergedAtCt": "11/03/2026, 02:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28443",
+      "sha": "7e5f318240",
+      "committedAtIso": "2026-11-03T14:39:09-06:00"
     },
     {
-      "number": 28429,
-      "title": "FINDING: Codex Relay live linkage and status-pagination evidence",
+      "number": 28442,
+      "title": "FINDING: Codex Legal union HTTP validation regression",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28429",
-      "sha": "7ec326a640",
-      "committedAtIso": "2026-11-03T14:06:03-06:00"
+      "mergedAtCt": "11/03/2026, 02:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28442",
+      "sha": "2c0f8aae78",
+      "committedAtIso": "2026-11-03T14:38:04-06:00"
     },
     {
-      "number": 28428,
-      "title": "FIX: trip profitability excludes voided/cancelled loads",
+      "number": 28441,
+      "title": "CLAIM-RESERVE: verify-step 19833 (LEAD) — E9 ENG-64 fill-engine guard",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28428",
-      "sha": "2e1e768316",
-      "committedAtIso": "2026-11-03T14:05:39-06:00"
+      "mergedAtCt": "11/03/2026, 02:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28441",
+      "sha": "2d69ac249a",
+      "committedAtIso": "2026-11-03T14:37:33-06:00"
     },
     {
-      "number": 28427,
-      "title": "FORMAT: reverse/home/fleet count badges house quantity",
+      "number": 28407,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28427",
-      "sha": "9fc43b03cf",
-      "committedAtIso": "2026-11-03T14:03:53-06:00"
+      "mergedAtCt": "11/03/2026, 02:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28407",
+      "sha": "c50dbe9e72",
+      "committedAtIso": "2026-11-03T20:32:39Z"
     },
     {
-      "number": 28426,
-      "title": "FINDING: Codex maintenance multi-status pagination audit",
+      "number": 28440,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — FIX ROSTER-DUP-PLACEHOLDERS phoneKey rejects placeholder numbers",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 02:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28426",
-      "sha": "b1a1b8ae9f",
-      "committedAtIso": "2026-11-03T14:03:07-06:00"
+      "mergedAtCt": "11/03/2026, 02:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28440",
+      "sha": "fc6ad38060",
+      "committedAtIso": "2026-11-03T14:26:27-06:00"
     },
     {
-      "number": 28425,
-      "title": "FINDING: Codex independent audit query and consumer corrections",
+      "number": 28439,
+      "title": "BUS: Legal multi-status closed; Invoice Search → Cascade",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28425",
-      "sha": "1be9bad5aa",
-      "committedAtIso": "2026-11-03T13:59:51-06:00"
+      "mergedAtCt": "11/03/2026, 02:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28439",
+      "sha": "ff7f944242",
+      "committedAtIso": "2026-11-03T14:18:46-06:00"
     },
     {
-      "number": 28424,
-      "title": "FIX: AvP expense-accuracy tile uses matched coverage (batch64)",
+      "number": 28438,
+      "title": "FINDING: Codex ENG34 comment-only coverage counterexample",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28424",
-      "sha": "4dfe7f084f",
-      "committedAtIso": "2026-11-03T13:56:03-06:00"
+      "mergedAtCt": "11/03/2026, 02:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28438",
+      "sha": "785bfbe398",
+      "committedAtIso": "2026-11-03T14:18:03-06:00"
     },
     {
-      "number": 28423,
-      "title": "BUS: register rows 146/261; CC-1 queue after Lead shipped E8 + ENG-65",
+      "number": 28437,
+      "title": "FIX: Legal templates multi-status uses server status union",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28423",
-      "sha": "064f4b9e0c",
-      "committedAtIso": "2026-11-03T13:55:13-06:00"
+      "mergedAtCt": "11/03/2026, 02:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28437",
+      "sha": "b3440459d7",
+      "committedAtIso": "2026-11-03T14:17:11-06:00"
     },
     {
-      "number": 28422,
-      "title": "FINDING: ACCT-F11039 ENG-65 / E2 — a Relay fill document links its fuel record on every adopt (90 unlinked, $38,717.03)",
+      "number": 28436,
+      "title": "FINDING: Codex capped invoice and contract filter audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 01:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28422",
-      "sha": "dd171c394c",
-      "committedAtIso": "2026-11-03T13:53:52-06:00"
+      "mergedAtCt": "11/03/2026, 02:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28436",
+      "sha": "694849ab32",
+      "committedAtIso": "2026-11-03T14:15:57-06:00"
     }
   ]
 }
