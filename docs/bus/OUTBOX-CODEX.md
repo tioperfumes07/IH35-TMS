@@ -1,3 +1,19 @@
+## 2026-11-03 — ROUND7.27 batch50: #27966 live claims and cross-domain picker defect
+
+Batch49 merged #28356 050ef9bbc053dec4fa254ef5f4472ae6a14030c3 with normal push hooks;3 affected checks,0 regressions.
+
+Independent phase15/16 USMCA READ ONLY measurements: expected Neon branch br-fancy-credit-akjnd07a,3264 journal discriminator,transaction_read_only=on,ROLLBACK.
+
+| Item | Measured | Verdict |
+|---|---|---|
+|ENG-50 invoice/application equality|193 nonvoid invoices,0 header-versus-application mismatches.|Narrow live invariant PASS; not document legitimacy certification.|
+|ENG-44 named driver bills|13690,13697,13698 all delivered due-date basis with nonnull dates.|Named residual verified; no new payment or accrual.|
+|ENG-46 cash spine|0 cash-posted bill payments,0 missing spine.|Empty population; no workflow acceptance inferred. Noncash ownership separately audited.|
+|ENG-60 retirement population|0 USMCA legacy lawsuits and0 canonical lawsuit matters.|Empty is not end-to-end proof; no fixture inserted.|
+|ENG-60 picker/write contract|Picker emits legal.matters IDs; create/update assert insurance.lawsuit and production FK references that legacy table.|OPEN,source/schema confirmed; Cursor handoff. No production save or affected live rows claimed.|
+
+Private reproducible phase15/16 JSONs in Downloads. Source guards check conflicting halves independently; passing static patterns do not certify the contract. Full263-row/249-PR audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch49: historical failure attribution and current retests
 
 Batch48 merged #28353 c3b53cde0ff33da2fd1116a2fb8514779fe0d786 through normal hooks. No production writes.
