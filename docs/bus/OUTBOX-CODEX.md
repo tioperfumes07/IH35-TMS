@@ -1,3 +1,11 @@
+## 2026-11-03 — ROUND7.30 batch87: invoice and settlement exceptions classified read-only
+
+- Checked Cursor bus through #28504 and main 88aca1fc1f. No Transaction Health invoice/spine repair found. Phase35–38 expected Neon branch, transaction_read_only=on, USMCA only, JE control3269, ROLLBACK. No production writes.
+- All19 invoice source-posting misses are sent TMS invoices with total_cents=0: positive0,negative0,null0. All19 have source loads;18have no active revenue latch,1has an earn latch with posted JE/postings;0have standing bill latch with postings. Therefore these19 are NOT evidence of missing positive-value A/R. Zero-document eligibility/health semantics need explicit handling; do not manufacture a posting to satisfy the reader. Prior24 false invoice-imbalance flags remain a separate confirmed subset-sum reader defect.
+- Both settlement-spine exceptions are closed with zero header gross/net.1has a posted run and zero-gross spine with NULL accounting bill/JE and no driver bill;1has no spine. Do not report these as unpaid amounts or silently mark posted. The reader needs explicit zero-value/no-posting-required semantics plus actual nonzero missing-spine fixtures. Existing85 fully linked spine cases remain narrow linkage evidence,not all accounting certification.
+- Cursor #28504: settlement helper/pill diff reviewed; verify-settlements-module-one-readout scan PASS,selftest41/41; board grammar44/44,currency guard PASS,settlement-fe-honesty PASS. Live filter and deployed version UNVERIFIED. Status fallback is not identical to backend tour-readout closedAlready for every possible status; no universal parity claim.
+- Private evidence: Downloads/codex-round7-readonly-measurements-phase35.json through phase38.json. Counts only on bus. Full audit INCOMPLETE; continue independent merge/live verification,not production repair.
+
 ## 2026-11-03 — ROUND7.30 batch86: full health populations and false invoice imbalance
 
 Batch85 merged #28493 171d9f390c,normal hooks,12affected,0regressions. Production unchanged.
