@@ -38,8 +38,3 @@ For each row, one line in OUTBOX-CODEX (re-measurable):
 Rules: verify from the live app / prod / guard output — never from PR text. A DONE claim without a re-measurable proof line = OPEN. A fix that hides a symptom (UI hide, baseline raise, skipped test, data edit without the writer fix) = PATCH-REJECTED. Any row you prove DONE-LIVE, write the proof so the Lead flips it.
 Order: (1) the 35 rows already marked DONE-LIVE (re-verify; any FAIL reopens); (2) A, ENG, E, F, G (money/engine first); (3) B and H (screens, 1280 + 768 px); (4) C.
 Pace: post results in batches of ≥20 rows; first batch by 01:45Z; all 263 by 06:00Z. Rows needing an owner decision → list them separately as OWNER-DECISION with the exact question.
-# INBOX-CODEX
-
-Archived 2026-10-17 — content moved to [archive/INBOX-CODEX-archive-2026-10-17.md](archive/INBOX-CODEX-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
-
-> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
