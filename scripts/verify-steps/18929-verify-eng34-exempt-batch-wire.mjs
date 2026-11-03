@@ -33,6 +33,7 @@ const staticGuards = [
   "verify-statement-export-contract.mjs",
   "verify-stops-gps-verified.mjs",
   "verify-subledger-tieout.mjs",
+  "verify-settlement-line-rate-consistency.mjs",
   "verify-task-link-contract.mjs",
   "verify-trial-balance-contract.mjs",
   "verify-trial-balance-unchanged-across-purge.mjs",
@@ -52,7 +53,6 @@ for (const g of staticGuards) {
 // verify-entity-isolation.mjs
 // verify-faro-repurchase-price-ties-to-statement.mjs
 // verify-m2-integrity-position-history.mjs
-// verify-settlement-line-rate-consistency.mjs
 // verify-single-migration-dir.mjs
 // verify-sql-write-targets.mjs
 // LIVE_DB guards (corpus-referenced only)
