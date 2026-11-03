@@ -260,7 +260,11 @@ function analyse(files) {
       /buildEditPatchBody\([\s\S]{0,400}effectiveOverrideReason/.test(modal) &&
       /const effectiveOverrideReason = lockOverrideReason \?\? primaryOverrideReason/.test(modal) &&
       /const applyOverrides = Boolean\(opts\?\.override\b/.test(modal) &&
-      /const primaryOverrideReason = applyOverrides\s*\?\s*overrideReason\.trim\(\)\.length >= 10\s*\?\s*overrideReason\.trim\(\)/.test(modal);
+      // Row 28 (11-03): the reason may arrive as opts.overrideReasonText (the OverrideButton's catalog line, state lags
+      // a render) folded into overrideReasonInput — still only applied when applyOverrides.
+      (/const primaryOverrideReason = applyOverrides\s*\?\s*overrideReason\.trim\(\)\.length >= 10\s*\?\s*overrideReason\.trim\(\)/.test(modal) ||
+        (/const overrideReasonInput = \(opts\?\.overrideReasonText \?\? overrideReason\)\.trim\(\);/.test(modal) &&
+          /const primaryOverrideReason = applyOverrides\s*\?\s*overrideReasonInput\.length >= 10\s*\?\s*overrideReasonInput/.test(modal)));
     if (!directThread && !chainThread) {
       problems.push(
         `${MODAL}: the Edit-mode submit path does not pass overrideReason into buildEditPatchBody. ` +

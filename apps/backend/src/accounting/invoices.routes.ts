@@ -706,7 +706,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // CUSTVEND-PAR-1: Credit-limit enforcement. Check open exposure vs stored limit.
       // Includes open invoices + unbilled active loads. Factor-sourced limits show the source.
       if (customer.credit_limit_cents != null) {
-        const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+        const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(user.role); // row 28: Owner / Accountant confirm
         if (!body.data.override_credit_limit || !canOverride) {
           const exposureRes = await client.query(
             `SELECT
@@ -941,7 +941,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             );
             const cust = custRes.rows[0];
             if (cust?.credit_limit_cents != null) {
-              const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+              const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(user.role); // row 28: Owner / Accountant confirm
               if (!body.data.override_credit_limit || !canOverride) {
                 const expRes = await client.query(
                   `SELECT

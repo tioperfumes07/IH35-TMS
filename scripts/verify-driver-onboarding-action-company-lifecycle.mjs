@@ -9,13 +9,14 @@ const checks = [
   ["generation ref", /const actionGenerationRef = useRef\(0\)/],
   ["save snapshots company and session", /saveOnboardingStep\(input\.sessionId, input\.companyId, input\.payload\)/],
   ["complete snapshots company and session", /completeOnboardingSession\(input\.sessionId, input\.companyId\)/],
-  ["override snapshots reason and scope", /adminOverrideOnboardingSession\(input\.sessionId, input\.companyId,[\s\S]*?reason: input\.reason/],
+  // Row 28 (11-03): the admin override carries the catalog reason_code (OverrideButton → recordOverride), never typed text.
+  ["override snapshots reason and scope", /adminOverrideOnboardingSession\(input\.sessionId, input\.companyId,[\s\S]*?(?:reason: input\.reason|reason_code: input\.reasonCode)/],
   ["stale callbacks rejected", /input\.generation !== actionGenerationRef\.current/],
   ["context transition increments generation", /actionGenerationRef\.current \+= 1/],
   ["context transition resets mutations", /saveMut\.reset\(\);[\s\S]*?completeMut\.reset\(\);[\s\S]*?overrideMut\.reset\(\)/],
   ["save call captures immutable input", /saveMut\.mutateAsync\(\{ companyId, sessionId: sessionId!, generation: actionGenerationRef\.current, payload:/],
   ["complete call captures immutable input", /completeMut\.mutateAsync\(\{ companyId, sessionId, generation: actionGenerationRef\.current \}\)/],
-  ["override call captures immutable reason", /overrideMut\.mutateAsync\([\s\S]*?generation: actionGenerationRef\.current,[\s\S]*?reason: (?:overrideReason\.trim\(\)|reasonCode \?\? "owner-override")/],
+  ["override call captures immutable reason", /overrideMut\.mutateAsync\([\s\S]*?generation: actionGenerationRef\.current,[\s\S]*?(?:reason: (?:overrideReason\.trim\(\)|reasonCode \?\? "owner-override")|reasonCode,)/],
   ["driver upload keeps canonical link", /entity_links: driverId \? \[\{ entity_type: "driver", entity_id: driverId \}\] : undefined/],
   ["driver reverse drill retained", /<EntityLinkOrTombstone[\s\S]*?kind="driver"[\s\S]*?id=\{driverId\}/],
 ];
@@ -35,7 +36,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("actionGenerationRef.current += 1", "actionGenerationRef.current += 0"),
     source.replace("saveOnboardingStep(input.sessionId, input.companyId, input.payload)", "saveOnboardingStep(sessionId!, companyId, input.payload)"),
     source.replace("completeOnboardingSession(input.sessionId, input.companyId)", "completeOnboardingSession(sessionId!, companyId)"),
-    source.replace('reason: reasonCode ?? "owner-override"', "reason: null"),
+    source.replace('reason: reasonCode ?? "owner-override"', "reason: null").replace(/(generation: actionGenerationRef\.current,\s*)reasonCode,/, "$1reasonCode: null,"),
     source.replaceAll("input.generation !== actionGenerationRef.current", "false").replaceAll("input.generation === actionGenerationRef.current", "true"),
   ];
   const missed = mutations.filter((text) => failures(text).length === 0).length;

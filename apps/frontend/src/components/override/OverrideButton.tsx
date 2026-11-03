@@ -26,16 +26,51 @@ export function isOverrideConfirmRole(role: string | null | undefined): boolean 
   return (OVERRIDE_CONFIRM_ROLES as readonly string[]).includes(String(role ?? ""));
 }
 
+/** The role_only catalog rows an Owner / Accountant confirm stores (seeded by migration 202616230300). */
+const ROLE_OVERRIDE_REASONS: Readonly<Record<(typeof OVERRIDE_CONFIRM_ROLES)[number], { code: string; label_en: string; label_es: string }>> = {
+  Owner: { code: "owner_override", label_en: "Owner override", label_es: "Autorización del dueño" },
+  Accountant: { code: "accountant_override", label_en: "Accountant override", label_es: "Autorización del contador" },
+};
+
+/** The chosen catalog reason, resolved for every caller (Owner / Accountant resolve to their role_only row). */
+export type OverrideReasonChoice = {
+  /** catalogs.override_reasons.reason_code — owner_override / accountant_override for a role confirm. */
+  code: string;
+  label_en: string;
+  label_es: string;
+  /** True when the Owner / Accountant confirmed without picking (role_only code). */
+  role_override: boolean;
+  /**
+   * The catalog reason as one line — "<label> [<code>]" — for sites whose route still stores a reason sentence
+   * (dispatch override_rules, settlement floor, onboarding). Picked from the catalog, never typed, always >= 10 chars.
+   */
+  text: string;
+};
+
+export function overrideReasonText(code: string, labelEn: string): string {
+  return `${labelEn} [${code}]`;
+}
+
+export function roleOverrideChoice(role: string | null | undefined): OverrideReasonChoice | null {
+  if (!isOverrideConfirmRole(role)) return null;
+  const r = ROLE_OVERRIDE_REASONS[role as (typeof OVERRIDE_CONFIRM_ROLES)[number]];
+  return { ...r, role_override: true, text: overrideReasonText(r.code, r.label_en) };
+}
+
 export type OverrideButtonProps = {
   context: OverrideContext;
-  /** Called with null for Owner/Accountant, else the chosen catalog reason_code. */
-  onConfirm: (reasonCode: string | null) => Promise<void> | void;
+  /**
+   * Called with null for Owner/Accountant, else the chosen catalog reason_code. The second argument is the resolved
+   * catalog reason (code + labels + one-line text) for every role.
+   */
+  onConfirm: (reasonCode: string | null, choice: OverrideReasonChoice) => Promise<void> | void;
   label?: string;
   disabled?: boolean;
   testId?: string;
+  size?: "sm" | "md";
 };
 
-export function OverrideButton({ context, onConfirm, label, disabled, testId = "override-button" }: OverrideButtonProps) {
+export function OverrideButton({ context, onConfirm, label, disabled, testId = "override-button", size }: OverrideButtonProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { selectedCompanyId } = useCompanyContext();
@@ -62,9 +97,22 @@ export function OverrideButton({ context, onConfirm, label, disabled, testId = "
   };
   const confirm = async () => {
     if (!confirmOnly && !reasonCode) return;
+    const picked = (reasonsQuery.data?.reasons ?? []).find((r) => r.reason_code === reasonCode);
+    const choice: OverrideReasonChoice | null = confirmOnly
+      ? roleOverrideChoice(user?.role)
+      : picked
+        ? {
+            code: picked.reason_code,
+            label_en: picked.label_en,
+            label_es: picked.label_es,
+            role_override: false,
+            text: overrideReasonText(picked.reason_code, picked.label_en),
+          }
+        : null;
+    if (!choice) return;
     setBusy(true);
     try {
-      await onConfirm(confirmOnly ? null : reasonCode);
+      await onConfirm(confirmOnly ? null : reasonCode, choice);
       close();
     } finally {
       setBusy(false);
@@ -73,7 +121,7 @@ export function OverrideButton({ context, onConfirm, label, disabled, testId = "
 
   return (
     <>
-      <Button type="button" variant="secondary" disabled={disabled} onClick={() => setOpen(true)} data-testid={testId}>
+      <Button type="button" variant="secondary" size={size} disabled={disabled} onClick={() => setOpen(true)} data-testid={testId}>
         {label ?? t("overrides.button")}
       </Button>
       <Modal open={open} onClose={close} title={t("overrides.title")} size="sm">

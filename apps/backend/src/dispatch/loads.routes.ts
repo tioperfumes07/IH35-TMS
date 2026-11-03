@@ -1801,7 +1801,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     try {
       // CUSTVEND-PAR-1: Credit-limit enforcement at load booking.
       if (body.data.save_mode !== "draft") {
-        const canOverride = ["Owner", "Administrator", "Manager"].includes(authUser.role);
+        const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(authUser.role); // row 28: Owner / Accountant confirm
         if (!body.data.override_credit_limit || !canOverride) {
           const creditBlock = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
             const res = await client.query(
