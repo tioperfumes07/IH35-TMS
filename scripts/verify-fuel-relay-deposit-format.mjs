@@ -14,7 +14,7 @@ function audit(src) {
   if (!src.includes('import { formatDateUS } from "../../../lib/formatDate"')) {
     fails.push(`${FILE}: must import formatDateUS`);
   }
-  if (!src.includes('import { formatUsdCents } from "../../../lib/money"')) {
+  if (!/import \{[^}]*\bformatUsdCents\b[^}]*\} from "\.\.\/\.\.\/\.\.\/lib\/money"/.test(src)) {
     fails.push(`${FILE}: must import formatUsdCents from lib/money`);
   }
   if (/toLocaleDateString\(/.test(src)) fails.push(`${FILE}: forbids toLocaleDateString`);
@@ -41,7 +41,7 @@ function audit(src) {
 if (process.argv.includes("--selftest")) {
   const good = `
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 render: (d) => formatDateUS(d.relay_created_at) || "—",
 formatUsdCents(c.settled_cents)
 formatUsdCents(d.total_amount_cents)
@@ -54,6 +54,10 @@ formatUsdCents(settledFor(cls))
   const badMoney = good.replaceAll("formatUsdCents(", "String(");
   if (!audit(badMoney).some((f) => f.includes("formatUsdCents"))) {
     throw new Error("SELFTEST FAIL: formatUsdCents→String plant escaped");
+  }
+  const badImport = good.replace('import { formatUsdCents, formatQuantityTable } from "../../../lib/money";', 'import { formatQuantityTable } from "../../../lib/money";');
+  if (!audit(badImport).some((f) => f.includes("formatUsdCents"))) {
+    throw new Error("SELFTEST FAIL: missing formatUsdCents import escaped");
   }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);

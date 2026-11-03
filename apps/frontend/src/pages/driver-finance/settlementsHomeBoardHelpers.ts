@@ -34,9 +34,23 @@ export function settlementsDerivedReimb(s: SettlementListRow): number {
   return Math.abs(reimb) < 0.005 ? 0 : reimb;
 }
 
+/**
+ * REG-102 / register #159 — Week-of Open/Closed pills follow tour close, not payment_state.
+ * trip_closed_at is canonical; terminal settlement statuses without a stamp still count as closed
+ * (live: closed/paid rows can keep trip_closed_at NULL — same closedAlready rule as tour-readout).
+ */
 export function settlementsRowTourClosed(s: SettlementListRow): boolean {
   const raw = s.trip_closed_at;
-  return raw != null && String(raw).trim() !== "";
+  if (raw != null && String(raw).trim() !== "") return true;
+  const st = String(s.status ?? "").toLowerCase();
+  return (
+    st === "closed" ||
+    st === "paid" ||
+    st === "locked" ||
+    st === "final" ||
+    st === "approved" ||
+    st === "cancelled"
+  );
 }
 
 export function settlementsWeekOfStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Held" | "Cancelled" {

@@ -32,7 +32,7 @@ const checks = [
   ["daily", /queryKey: \["daily-tasks", "users", companyId\][\s\S]{0,120}listAssignableUsers\(companyId, signal\)[\s\S]{0,100}enabled: Boolean\(auth\.user && companyId\)/, "Daily Tasks scopes and keys its assignee roster"],
   ["daily", /entityLabel\(user\.name \|\| user\.email, user\.id, "User"\)/, "Daily Tasks rejects raw user UUID labels"],
   ["maintenance", /queryKey: \["identity", "users", "wo-authorized-by", operatingCompanyId\][\s\S]{0,140}listAssignableUsers\(operatingCompanyId, signal\)[\s\S]{0,80}enabled: Boolean\(operatingCompanyId\)/, "Maintenance WO scopes and keys its authorized-by roster"],
-  ["users", /entityLabel\(user\.name \?\? user\.email, user\.id, "User"\)/, "Users role approver rejects raw UUID labels"],
+  ["users", /\$\{userDisplayLabel\(user\)\} — \$\{ROLE_LABEL/, "Users role approver rejects raw UUID labels (userDisplayLabel → entityLabel fallback)"],
   ["safety", /queryKey: \["identity", "assignable-users", "complaints", companyId\][\s\S]{0,120}listAssignableUsers\(companyId, signal\)[\s\S]{0,80}enabled: canCreate && Boolean\(companyId\)/, "Safety complaint roster remains company-keyed and scoped"],
 ];
 
@@ -73,7 +73,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["daily", "listAssignableUsers(companyId, signal)", "listUsers(true)"],
     ["daily", 'entityLabel(user.name || user.email, user.id, "User")', "user.email ?? user.id"],
     ["maintenance", "listAssignableUsers(operatingCompanyId, signal)", "listAssignableUsers(undefined, signal)"],
-    ["users", 'entityLabel(user.name ?? user.email, user.id, "User")', "user.name ?? user.email ?? user.id"],
+    ["users", "${userDisplayLabel(user)} — ${ROLE_LABEL", "${user.name ?? user.email ?? user.id} — ${ROLE_LABEL"],
     ["safety", '["identity", "assignable-users", "complaints", companyId]', '["identity", "assignable-users", "complaints"]'],
   ];
   const escaped = [];

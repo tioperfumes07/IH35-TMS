@@ -1413,20 +1413,30 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (include_system && !isOwnerOrAdmin(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const scopedCompanyId = await withCurrentUser(authUser.uuid, (client) =>
-      resolveOperatingCompanyId(client, authUser.uuid, operating_company_id),
-    );
-    if (!scopedCompanyId) return { drivers: [], total: 0 };
     // Rule 49: status=Active defaults to movement. hr_status keeps the stored HR flag for pickers.
     const useMovementActive = status === "Active" && active_definition !== "hr_status";
-    const movementActiveDriverIds = useMovementActive
-      ? (await withLuciaBypass((client) => getActiveDrivers(client, scopedCompanyId, 15, 15))).active_driver_uuids
-      : null;
+    // ROW 197 (LEAD 11-03): ONE pool checkout per request. The list SQL measures 1.0 ms on prod under
+    // the app role (16 rows, 64 buffers); the 4,522 ms observed was spent waiting for connections —
+    // this handler used to take a SEPARATE withCurrentUser transaction just to resolve the company,
+    // then a second one for the list, on a 5-connection pool shared with heavy reads. Company
+    // resolution now runs inside the list transaction. Only the movement-defined Active roster (which
+    // reads the bypass-pool active-driver cache) still needs a resolve before the list.
+    let movementActiveDriverIds: string[] | null = null;
+    if (useMovementActive) {
+      const movementCompanyId = await withCurrentUser(authUser.uuid, (client) =>
+        resolveOperatingCompanyId(client, authUser.uuid, operating_company_id),
+      );
+      if (!movementCompanyId) return { drivers: [], total: 0 };
+      movementActiveDriverIds = (await withLuciaBypass((client) => getActiveDrivers(client, movementCompanyId, 15, 15)))
+        .active_driver_uuids;
+    }
     // include_deactivated is NOT role-gated: the driver roster (any authenticated role can reach
     // /drivers, no route-level role restriction) already showed every status, unrestricted, before
     // this change -- this flag only makes that existing behavior explicit/opt-in instead of ambient,
     // it does not add a new permission boundary that was not already the case.
     const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return null;
       const values: unknown[] = [];
       // VOID-COLUMN LAW (2026-09-03): selectable <=> deactivated_at IS NULL, never status. WIZ-44
       // fixed this at the entityPickerRegistry.ts layer (LAW-3 one-predicate-per-surface); this is
@@ -1566,8 +1576,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-            COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
-            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en')]::text[]) AS preferred_languages,
+            COALESCE(driver_lang.preferred_language, 'en') AS preferred_language,
+            COALESCE(mdata.drivers.preferred_languages, ARRAY[COALESCE(driver_lang.preferred_language, 'en')]::text[]) AS preferred_languages,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             qbo_class_id,
             samsara_driver_id,
@@ -1580,7 +1590,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
              LIMIT 1) AS updated_by_user_label
             ${pickerEnrichSelect}
           FROM mdata.drivers
-          WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (
+          -- one identity.users lookup per row (was two identical correlated subqueries)
+          LEFT JOIN LATERAL (
+            SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id
+          ) driver_lang ON true
+          WHERE (mdata.drivers.operating_company_id = $${ociIdx}::uuid OR EXISTS (
             SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca
              WHERE canonical_list_dca.driver_id = mdata.drivers.id
                AND canonical_list_dca.company_id = $${ociIdx}::uuid
@@ -1597,6 +1611,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       return { rows: res.rows, total: countRes.rows[0]?.total ?? 0 };
     });
 
+    if (!result) return { drivers: [], total: 0 };
     return { drivers: result.rows, total: result.total };
   });
 

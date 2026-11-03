@@ -581,6 +581,16 @@ export function ExpensesListPage() {
 
   const unmatchedCount = Math.max(0, rows.length - totals.matched);
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Expenses">
+        <BoardSection title="Expenses" testId="expenses-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Expenses"

@@ -126,6 +126,7 @@ function checkDelegation(content, file) {
   // Find local relative imports (./ or ../) of components
   const importRegex = /import\s+\{([^}]+)\}\s+from\s+["'](\.\.?\/[^"']+)["']/g;
   let match;
+  let found = null;
   while ((match = importRegex.exec(content)) !== null) {
     const importedNames = match[1].split(",").map((s) => s.trim());
     const importPath = match[2];
@@ -142,15 +143,17 @@ function checkDelegation(content, file) {
           return cleanName && content.includes(`<${cleanName}`);
         });
         if (isUsed) {
-          return {
-            exportOk: hasCsvExport(delegatedContent),
-            printOk: hasPrint(delegatedContent),
+          // Rows 79-84 (11-03): a page can mount several local components (filters, then the report shell that owns
+          // Print / Export). Every USED local component counts — the first used import alone missed the shell.
+          found = {
+            exportOk: (found?.exportOk ?? false) || hasCsvExport(delegatedContent),
+            printOk: (found?.printOk ?? false) || hasPrint(delegatedContent),
           };
         }
       }
     }
   }
-  return null;
+  return found;
 }
 
 // ── Main ──

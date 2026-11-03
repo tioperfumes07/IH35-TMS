@@ -20,6 +20,7 @@ import { formatUsdFromCents } from "../HomeKpiCard";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import "../home-print.css";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -117,7 +118,7 @@ export function AccountingHome({ auth }: Props) {
         </table>`;
     };
     const days = data?.period_close.days_to_close;
-    const countdown = days == null ? "—" : days === 0 ? "Due today" : `${days} day${days === 1 ? "" : "s"} to close`;
+    const countdown = days == null ? "—" : days === 0 ? "Due today" : `${formatQuantityTable(days, 0)} day${days === 1 ? "" : "s"} to close`;
     printLetterHtml({
       title: `Accounting Home — ${displayName}`,
       bodyHtml: `

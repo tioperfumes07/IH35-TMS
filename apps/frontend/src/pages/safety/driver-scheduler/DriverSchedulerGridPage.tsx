@@ -6,7 +6,6 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
-import { formatPlannerDayLabel } from "../../dispatch/planners/plannerDayLabel";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { Button } from "../../../components/Button";
@@ -302,7 +301,8 @@ export function DriverSchedulerGridPage() {
                 <th className="border-b border-r bg-gray-50 px-1 py-1">Unit</th>
                 {days.map((d) => (
                   <th key={d} className="border-b border-gray-100 px-0.5 py-1 text-center font-normal text-gray-500">
-                    {formatPlannerDayLabel(d)}
+                    {/* Row 206 (D030): grid day headers MM/DD/YYYY via the shared formatter (was MON-DD). */}
+                    {formatDateUS(d)}
                   </th>
                 ))}
               </tr>
@@ -475,7 +475,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-start-date"
-                  className="h-10"
+                  box="field"
                   value={tempCoverForm.startDate}
                   onChange={(startDate) => setTempCoverForm((f) => ({ ...f, startDate, endDate: f.endDate < startDate ? startDate : f.endDate }))}
                 />
@@ -486,7 +486,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-end-date"
-                  className="h-10"
+                  box="field"
                   value={tempCoverForm.endDate}
                   min={tempCoverForm.startDate}
                   onChange={(endDate) => setTempCoverForm((f) => ({ ...f, endDate }))}

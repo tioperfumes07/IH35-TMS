@@ -509,6 +509,16 @@ export function FixedAssetsPage() {
     </div>
   );
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Fixed Assets" subtitle="Fixed asset register and depreciation schedules">
+        <BoardSection title="Fixed Assets" testId="fixed-assets-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Fixed Assets" subtitle="Fixed asset register and depreciation schedules">

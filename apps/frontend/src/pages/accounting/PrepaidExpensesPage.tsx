@@ -485,6 +485,16 @@ export function PrepaidExpensesPage() {
     </div>
   );
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Prepaid Expenses">
+        <BoardSection title="Prepaid Expenses" testId="prepaid-expenses-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Prepaid Expenses"

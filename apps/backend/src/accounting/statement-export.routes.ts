@@ -19,6 +19,11 @@ const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const pointInTimeQuerySchema = companyQuerySchema.extend({
   as_of_date: isoDateSchema.optional(),
 });
+// Row 54 (ACCT-F11051): the trial-balance viewer is a PERIOD report (from..to), so its export takes the period
+// start too — otherwise the file sums all-time-to-date while the screen sums the period, and the two never tie.
+const trialBalanceExportQuerySchema = pointInTimeQuerySchema.extend({
+  from_date: isoDateSchema.optional(),
+});
 const arAgingQuerySchema = pointInTimeQuerySchema.extend({ customer_id: entityIdFilterSchema.optional() });
 const apAgingQuerySchema = pointInTimeQuerySchema.extend({ vendor_id: entityIdFilterSchema.optional() });
 
@@ -54,7 +59,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = trialBalanceExportQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
@@ -62,6 +67,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        from_date: query.data.from_date ?? null,
         format: "pdf",
       });
       reply.header("Content-Type", result.contentType);
@@ -76,7 +82,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = trialBalanceExportQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
@@ -88,6 +94,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        from_date: query.data.from_date ?? null,
         format: "xlsx",
       });
       reply.header("Content-Type", result.contentType);

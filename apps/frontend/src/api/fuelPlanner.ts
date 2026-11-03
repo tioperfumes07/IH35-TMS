@@ -12,7 +12,8 @@ export type FuelDashboard = {
   compliance_source_available: boolean;
   active_plans: number | null;
   mtd_spend: number;
-  avg_price_per_gallon: number;
+  /** Register row 164 — volume-weighted (spend / gallons) from the shared fuel spend reader; null when no gallons. */
+  avg_price_per_gallon: number | null;
   mtd_savings: number | null;
   compliance_pct: number | null;
   fleet_mpg: number | null;
@@ -221,6 +222,21 @@ export type FuelTransactionListResponse = {
    * include_voided was passed true, since nothing is hidden in that case). */
   voided_count: number;
 };
+
+/** Register row 164 — THE fuel spend figure (same backend reader as Fuel Home MTD): live rows, transaction date in range. */
+export type FuelSpendSummary = {
+  from: string;
+  to: string;
+  spend: number;
+  gallons: number;
+  avg_price_per_gallon: number | null;
+  fill_count: number;
+};
+
+export function getFuelSpendSummary(companyId: string, from: string, to: string) {
+  const qs = new URLSearchParams({ operating_company_id: companyId, from, to });
+  return apiRequest<FuelSpendSummary>(`/api/v1/fuel/spend-summary?${qs.toString()}`);
+}
 
 export function getFuelTransactions(
   companyId: string,

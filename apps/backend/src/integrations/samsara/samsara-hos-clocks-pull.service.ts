@@ -102,15 +102,30 @@ export async function getLatestHosClocksByDriver(
             s.driving_hours_remaining, s.on_duty_hours_remaining, s.cycle_hours_remaining, s.time_to_next_break_minutes,
             s.samsara_event_at::text AS samsara_event_at, s.polled_at::text AS polled_at
        FROM mdata.drivers d
+       -- Register row 166: a merged survivor's snapshots may sit on a shell (merged_into_driver_id). Still one index probe
+       -- per id (the driver + each of its shells), newest of those probes wins — never a scan of the snapshot history.
        CROSS JOIN LATERAL (
-         SELECT h.driving_hours_remaining, h.on_duty_hours_remaining, h.cycle_hours_remaining, h.time_to_next_break_minutes,
-                h.samsara_event_at, h.polled_at
-           FROM samsara.hos_snapshots h
-          WHERE h.operating_company_id = $1::uuid AND h.driver_uuid = d.id
-          ORDER BY h.polled_at DESC
+         SELECT p.*
+           FROM unnest(ARRAY[d.id] || COALESCE(ARRAY(
+                  SELECT shell.id FROM mdata.drivers shell
+                   WHERE shell.merged_into_driver_id = d.id AND shell.operating_company_id = $1::uuid), ARRAY[]::uuid[])) AS ids(id)
+           CROSS JOIN LATERAL (
+             SELECT h.driving_hours_remaining, h.on_duty_hours_remaining, h.cycle_hours_remaining, h.time_to_next_break_minutes,
+                    h.samsara_event_at, h.polled_at
+               FROM samsara.hos_snapshots h
+              WHERE h.operating_company_id = $1::uuid AND h.driver_uuid = ids.id
+              ORDER BY h.polled_at DESC
+              LIMIT 1
+           ) p
+          ORDER BY p.polled_at DESC
           LIMIT 1
        ) s
-      WHERE d.operating_company_id = $1::uuid
+      -- Register row 166: a driver authorized into the company (driver_company_authorizations) is on its board too — the
+      -- snapshot row is company-pinned above, so this widens WHO, never WHOSE data.
+      WHERE (d.operating_company_id = $1::uuid
+             OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations hos_dca
+                         WHERE hos_dca.driver_id = d.id AND hos_dca.company_id = $1::uuid
+                           AND hos_dca.is_authorized = true AND hos_dca.deactivated_at IS NULL))
         AND ($2::uuid[] IS NULL OR d.id = ANY($2::uuid[]))`,
     [operatingCompanyId, driverIds && driverIds.length ? driverIds : null]
   );

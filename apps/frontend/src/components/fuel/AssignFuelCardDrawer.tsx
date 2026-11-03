@@ -10,6 +10,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { DatePicker } from "../forms/DatePicker";
 import { EntityPicker } from "../EntityPicker";
 import { SelectCombobox } from "../Combobox";
+import { FORM_INPUT_CLASS } from "../forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -100,7 +101,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
         <label className="block font-semibold text-gray-700">
           Card last digits (4-6) *
           <input
-            className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className={`mt-1 ${FORM_INPUT_CLASS}`}
             value={cardDigits}
             onChange={(e) => setCardDigits(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
             placeholder="1234"
@@ -120,6 +121,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
               placeholder="Search unit…"
               dataTestId="fuel-cards-assign-unit"
               allowClear
+              size="sm"
             />
           </div>
         </label>
@@ -135,6 +137,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
               placeholder="Search driver…"
               dataTestId="fuel-cards-assign-driver"
               allowClear
+              size="sm"
             />
           </div>
         </label>
@@ -144,7 +147,8 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
             Card type (optional)
             <div className="mt-1">
               <SelectCombobox
-                className="h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                size="sm"
+                className="w-full"
                 value={cardTypeId}
                 onChange={(e) => setCardTypeId(e.target.value)}
                 data-testid="fuel-cards-assign-card-type"
@@ -163,14 +167,14 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
         <label className="block font-semibold text-gray-700">
           Effective from *
           <div className="mt-1">
-            <DatePicker value={effectiveFrom} onChange={setEffectiveFrom} data-testid="fuel-cards-assign-effective-from" />
+            <DatePicker box="field" value={effectiveFrom} onChange={setEffectiveFrom} data-testid="fuel-cards-assign-effective-from" />
           </div>
         </label>
 
         <label className="block font-semibold text-gray-700">
           Notes
           <input
-            className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className={`mt-1 ${FORM_INPUT_CLASS}`}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             data-testid="fuel-cards-assign-notes"

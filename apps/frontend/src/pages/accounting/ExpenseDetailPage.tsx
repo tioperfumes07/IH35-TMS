@@ -141,6 +141,16 @@ export function ExpenseDetailPage() {
     },
   ];
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Expense">
+        <BoardSection title="Expense" testId="expense-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={expense.voided_at} voidReason={expense.void_reason} voidedByUserId={expense.voided_by_user_id} documentLabel="Expense" />

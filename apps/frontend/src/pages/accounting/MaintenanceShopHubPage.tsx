@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -147,6 +148,16 @@ export function MaintenanceShopHubPage() {
       </span>
     </div>
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Work orders & bills">
+        <BoardSection title="Work orders & bills" testId="maintenance-shop-hub-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

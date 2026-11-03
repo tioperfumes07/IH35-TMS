@@ -20,6 +20,12 @@ const DRIFT_KIND_LABEL: Record<DriftAlert["drift_kind"], string> = {
   stale_feed: "Bank feed not syncing",
 };
 
+// ROW 222 (D046) — the account's display name (API: COALESCE(display_name, account_name)), then institution,
+// then the mask; never the generic word "Account" for an alert that carries a bank_account_id.
+function driftAccountLabel(alert: DriftAlert): string {
+  return alert.account_name || alert.institution_name || (alert.account_mask ? `••${alert.account_mask}` : "") || `Bank account ${String(alert.bank_account_id).slice(0, 8)}`;
+}
+
 function daysOpen(detectedAt: string): number {
   const ms = Date.now() - new Date(detectedAt).getTime();
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
@@ -59,7 +65,7 @@ function AlertRow({ alert, companyId }: { alert: DriftAlert; companyId: string }
         <div className="min-w-0">
           <span className={`font-semibold ${severityClass}`}>{DRIFT_KIND_LABEL[alert.drift_kind]}</span>
           <span className="mx-2 text-gray-400">|</span>
-          <EntityLink kind="bank_account" id={alert.bank_account_id} label={alert.account_name ?? alert.institution_name ?? "Account"} />{alert.account_mask ? ` ••${alert.account_mask}` : ""}
+          <EntityLink kind="bank_account" id={alert.bank_account_id} label={driftAccountLabel(alert)} />{alert.account_mask ? ` ••${alert.account_mask}` : ""}
           <span className="mx-2 text-gray-400">|</span>
           {/* D045 — business date MM/DD/YYYY (never raw ISO with T/Z). */}
           As of {formatDateUS(alert.as_of_date)}

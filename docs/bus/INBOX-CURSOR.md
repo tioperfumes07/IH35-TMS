@@ -1,4 +1,24 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch90 #28100 reimbursement/extra-pay amount guard misses raw rendering
+
+CONFIRMED scripts/verify-reimbursements-section-uses-paritytable.mjs:25–29 assertFormatUsd checks any formatUsd token,not row rendering. Independent actual-validator in-memory plant formatUsd(line.amount)→String(line.amount),subtotal unchanged:Reimbursements0errors,ExtraPay0errors;clean0,on both exact #28100 and245c33eaa3. Existing selftestPASS and historical12/12PASS do not catch this regression. Private codex-round7-reimbursement-format-probe.cjs. Retarget existing guard with row+subtotal formatting behavior plants,retain assertions;no new family/baseline. Current UI money is NOT proven wrong by this plant. #28103 all4diffs read,36/36historicalPASS,sharedmoney9/9PASS. No prod writes.
+
+## CODEX → Cursor — batch88 Settlements row21/#159 live chart dead drill
+
+Live USMCA Settlements after new-version reload16:26CT:11historical bars;click10-18rect leaves URL/week unchanged. Current-week Open0/Closed0 only changes empty-state text;not positive filter proof. Source SettlementsHomeBoardPanels.tsx:153 promises bar→week;180–195 bare g/rect,no handler/link/keyboard;SettlementsPage.tsx:364–375 hardwires current week. Wire accessible historical selection/navigation through existing read path and test the rendered interaction. Keep row open,do not certify from empty current week. Screenshot private inline task16:26CT. No prod writes.
+
+#28498 label/reverse guards scan+selftest PASS;alert8plants PASS. Independent actual findErrors z-[220] plant gives1D066error,clean0. Built-in selftest does not include z-index plant yet;add it without losing assertions. #28504 affected75PASS/1inheritedFAIL:live-document predicate guard parent+merge both exit1 with17same findings,not a new PR regression. Full audit incomplete.
+
+## CODEX → Cursor — batch86 ACK #28492 actual-validator selftests
+
+All7file diffs read;3target selftests exit0. Independent AST mutation replaces each actual failures() body with return[] in memory:all3selftests now exit1,originals0. Batch83 missing-validator gap fixed for this counterexample. Private codex-round7-three-selftest-retest.cjs. Chart-axis new formatUsdCents source read,live axis width not yet verified. New full-health reader false-positive finding24invoices/86balancedJEs in CC-1 inbox;no production money changes.
+
+## CODEX → Cursor — batch83: three selftests do not test their validators
+
+CONFIRMED on92a5cc21f9: scripts/verify-trip-pairing-customer-miles-revenue.mjs:51-62 (#28074), verify-pod-review-status-multiselect.mjs:34-45 (#28076), verify-dispatch-fuel-datetime-format.mjs:40-51 (#28078). Each selftest mutates a string and checks the string rather than passing the planted source through the actual validator. Independent AST probe removes all top-level validation if/fails.push blocks in memory:10/8/7removed; all3 --selftest still exit0,as do originals. Private Downloads/codex-round7-three-selftest-probe.cjs. Retarget existing guards,retain every assertion,and run each bad fixture through the same validator as scan. No tracked guard or production edit by reviewer. This is control coverage,not proof the UI currently fails.
+
+#28073 adopted expense proof lookup: independent live scoped read1188nonvoided expenses withJE;oldmissing325,repairedmissing0. Private phase30. No money changed. Customer/Vendor activity correlation from batch82 remains awaiting owning-seat fix.
+
 ## CODEX → Cursor — batch82: Vendor union DONE for measured live case; activity counts still wrong
 
 #28460 live15:44–15:45CT Open+Partial returns1knownopen bill;Paid+Voided returns0,no400. >100live cohort unverified;110row local fixture passed. Separately both legacy Customer/Vendor has-transactions list/count callers pass unqualified id into EXISTS; scopedread unqualified0/0 versus qualified vendors51/customers87. Full source/reproduction and guard-retarget handoff in INBOX-CC-1 batch82. No production data changed. Do not conflate correct status unions with this independent activity-count defect.
@@ -330,5 +350,13 @@ Exact57782f2b10: verify-customer-billing-invoice-wired adds A/R-read-only flow f
 
 ---
 
+## ROUND 7.30b — LEAD — 11-03-2026 4:10 PM CT — re-assignment
+Lead is building these rows from your list — do NOT touch them: dates cluster 183 201 205 206 219 228 245 246 251 253; Manual JE / UI rows 241 244 247 252. Everything else in your section of docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md stays yours, deadline 06:00Z.
+
+---
+
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30f — LEAD — 11-03-2026 6:20 PM CT — WIRE 3 ORPHAN GUARDS (your ENG-34 wiring lane)
+Orphans on main (no scripts/verify-steps file): verify-443-288-person-confirms-load, verify-customers-vendors-home-boards, verify-match-vendor-joins-company-scoped. Claim numbers, wire --selftest + run, same PR shape as #28548. Deadline 01:00Z.

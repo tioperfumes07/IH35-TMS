@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
+import "../../design/ih35-design-tokens.css";
 import {
   formatDateTimeLocalUS,
   formatDateUS,
@@ -44,6 +45,12 @@ type Props = {
   "aria-label"?: string;
   "aria-describedby"?: string;
   "data-testid"?: string;
+  /**
+   * Row 204 (D028): "field" = a date-time being edited in a form — the bordered box takes the owner-law
+   * 40px field height (`--ih-h-field`) instead of sizing to its padding. Opt-in, like DatePicker `box`,
+   * so filter-bar call sites (audit logs) keep their own size.
+   */
+  box?: "field";
 };
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -104,6 +111,7 @@ export function DateTimePicker({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   "data-testid": dataTestId,
+  box,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [dateDraft, setDateDraft] = useState("");
@@ -263,8 +271,9 @@ export function DateTimePicker({
   const years = yearRange(viewY, min, max);
 
   return (
-    <div className={`relative ${className}`} ref={ref} data-testid={dataTestId}>
+    <div className={`relative ${className}`} ref={ref} data-testid={dataTestId} data-date-box={box}>
       <div
+        style={box === "field" ? { height: "var(--ih-h-field)" } : undefined}
         className={`flex min-h-11 w-full items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-left text-xs disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:min-h-0 ${
           disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-[var(--surface-unselected)]"
         }`}

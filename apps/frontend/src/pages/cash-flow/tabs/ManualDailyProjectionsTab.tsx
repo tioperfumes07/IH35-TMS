@@ -578,8 +578,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     if (!y || !m || !d) return formatDateUS(projectionDate);
     const dt = new Date(Date.UTC(y, m - 1, d));
     const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getUTCDay()] ?? "";
-    const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1] ?? "";
-    return `${wd}, ${mon} ${d}`;
+    // Row 219 (D043): weekday + shared MM/DD/YYYY (was "Thu, Oct 22" — month name, no year).
+    return `${wd}, ${formatDateUS(projectionDate)}`;
   })();
   const toolbarBtn: CSSProperties = {
     display: "flex",

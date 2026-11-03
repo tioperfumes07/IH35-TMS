@@ -24,7 +24,13 @@ const REQUIRED_LABELS = ["Date", "Receipt", "Amount"];
 
 function assertFormatUsd(src, file) {
   const errors = [];
-  if (!/formatUsd\(/.test(src)) errors.push(`${file}: must format amounts via formatUsd`);
+  // Codex batch90 — token-only formatUsd() is insufficient; row Amount + Subtotal must render through it.
+  if (!/formatUsd\(\s*line\.amount\s*\)/.test(src)) {
+    errors.push(`${file}: Amount column must render formatUsd(line.amount)`);
+  }
+  if (!/Subtotal:\s*\{?\s*formatUsd\(\s*subtotal\s*\)/.test(src)) {
+    errors.push(`${file}: Subtotal must render formatUsd(subtotal)`);
+  }
   if (/\.toFixed\(2\)/.test(src)) errors.push(`${file}: must not use ad-hoc toFixed(2) money formatting`);
   return errors;
 }
@@ -99,6 +105,19 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // batch90 plant: formatUsd imported/called elsewhere but row+subtotal stay raw → must fail.
+  const tokenOnly = good
+    .replace("render: (line) => formatUsd(line.amount)", "render: (line) => String(line.amount)")
+    .replace("Subtotal: {formatUsd(subtotal)}", "Subtotal: {String(subtotal)}")
+    .replace(
+      'import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";',
+      'import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";\n    const _keep = formatUsd;',
+    );
+  const tokenErrors = assertFormatUsd(tokenOnly, PAGE);
+  if (tokenErrors.length < 2) {
+    console.error(`${LABEL} --selftest FAIL token-only plant should catch row+subtotal:`, tokenErrors);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

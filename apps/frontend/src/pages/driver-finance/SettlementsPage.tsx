@@ -53,6 +53,27 @@ function weekBucketLabel(d: Date): string {
   return `${m}-${day}`;
 }
 
+/** Local calendar YYYY-MM-DD for week_start URL (matches weekStartMs from buildSettlementsWeekBuckets). */
+function weekStartIsoFromMs(ms: number): string {
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function resolveSelectedWeekBucket(
+  buckets: SettlementsWeekBucket[],
+  weekStartParam: string | null,
+): SettlementsWeekBucket | null {
+  if (!buckets.length) return null;
+  if (weekStartParam) {
+    const found = buckets.find((w) => weekStartIsoFromMs(w.weekStartMs) === weekStartParam);
+    if (found) return found;
+  }
+  return buckets[buckets.length - 1] ?? null;
+}
+
 function buildSettlementsWeekBuckets(rows: SettlementListRow[], weekCount: number, now: Date): SettlementsWeekBucket[] {
   const thisWeek = startOfWeekSunday(now);
   const buckets: SettlementsWeekBucket[] = [];
@@ -344,16 +365,26 @@ export function SettlementsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- periodStartOfWeek / now rebuilt each render from Date
     [kpiBaseQuery.isError, kpiSettlements],
   );
-  const thisWeekBucket = weekBuckets.length ? weekBuckets[weekBuckets.length - 1] : null;
+  const calendarThisWeekBucket = weekBuckets.length ? weekBuckets[weekBuckets.length - 1] : null;
   const lastWeekBucket = weekBuckets.length > 1 ? weekBuckets[weekBuckets.length - 2] : null;
+  const weekStartParam = searchParams.get("week_start");
+  const selectedWeekBucket = useMemo(
+    () => resolveSelectedWeekBucket(weekBuckets, weekStartParam),
+    [weekBuckets, weekStartParam],
+  );
+  const selectWeekStart = (weekStartMs: number) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("week_start", weekStartIsoFromMs(weekStartMs));
+    setSearchParams(next, { replace: true });
+  };
   const driverPayVsLastWeek = (() => {
-    if (!thisWeekBucket || !lastWeekBucket) return null;
-    const delta = thisWeekBucket.net - lastWeekBucket.net;
+    if (!calendarThisWeekBucket || !lastWeekBucket) return null;
+    const delta = calendarThisWeekBucket.net - lastWeekBucket.net;
     if (delta === 0) return { label: "flat vs last wk", tone: "muted" as const };
     if (delta > 0) return { label: `▲ vs last wk`, tone: "green" as const };
     return { label: `▼ vs last wk`, tone: "red" as const };
   })();
-  const deductionsThisWeek = thisWeekBucket?.deductions ?? 0;
+  const deductionsThisWeek = selectedWeekBucket?.deductions ?? 0;
   const weekChartMax = Math.max(
     1,
     ...weekBuckets.map((w) =>
@@ -362,8 +393,8 @@ export function SettlementsPage() {
   );
 
   const thisWeekSettlements = useMemo(() => {
-    if (kpiBaseQuery.isError || !thisWeekBucket) return [] as SettlementListRow[];
-    const start = thisWeekBucket.weekStartMs;
+    if (kpiBaseQuery.isError || !selectedWeekBucket) return [] as SettlementListRow[];
+    const start = selectedWeekBucket.weekStartMs;
     const end = start + 7 * 24 * 60 * 60 * 1000;
     return kpiSettlements.filter((s) => {
       if (s.status === "cancelled") return false;
@@ -371,7 +402,7 @@ export function SettlementsPage() {
       if (Number.isNaN(pe.getTime())) return false;
       return pe.getTime() >= start && pe.getTime() < end;
     });
-  }, [kpiBaseQuery.isError, thisWeekBucket, kpiSettlements]);
+  }, [kpiBaseQuery.isError, selectedWeekBucket, kpiSettlements]);
 
   // REG-102: Week-of pills follow tour close (trip_closed_at), same as listTours — not payment_state.
   // 443.292-C: exclude empty tours ($0 gross + $0 net) from both pills — closed pill only had this
@@ -397,8 +428,8 @@ export function SettlementsPage() {
 
   const deductionSplitThisWeek = useMemo(() => {
     const empty = { escrow: { drivers: new Set<string>(), amount: 0 }, advances: { drivers: new Set<string>(), amount: 0 }, fines: { drivers: new Set<string>(), amount: 0 } };
-    if (deductionsListQuery.isError || !thisWeekBucket) return empty;
-    const start = thisWeekBucket.weekStartMs;
+    if (deductionsListQuery.isError || !selectedWeekBucket) return empty;
+    const start = selectedWeekBucket.weekStartMs;
     const end = start + 7 * 24 * 60 * 60 * 1000;
     const rows = deductionsListQuery.data?.deductions ?? [];
     for (const d of rows) {
@@ -420,7 +451,7 @@ export function SettlementsPage() {
       empty[bucket].amount += Number(d.amount_cents ?? 0) / 100;
     }
     return empty;
-  }, [deductionsListQuery.isError, deductionsListQuery.data, thisWeekBucket, kpiSettlements]);
+  }, [deductionsListQuery.isError, deductionsListQuery.data, selectedWeekBucket, kpiSettlements]);
 
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
@@ -469,14 +500,14 @@ export function SettlementsPage() {
       >
         <V3KpiTile
           label="Total unpaid"
-          value={String(kpis.total_unpaid)}
+          value={formatQuantityTable(Number(kpis.total_unpaid ?? 0), 0)}
           sub="settlements not yet paid"
           testId="settlements-kpi-total-unpaid"
           onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
         />
         <V3KpiTile
           label="This period"
-          value={String(kpis.this_period)}
+          value={formatQuantityTable(Number(kpis.this_period ?? 0), 0)}
           sub="period end ≥ this week"
           testId="settlements-kpi-this-period"
           onClick={() => navigate("/driver-finance/settlements")}
@@ -510,7 +541,9 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="Drivers w/ debt"
-          value={String(kpis.drivers_with_debt)}
+          value={
+            kpis.drivers_with_debt == null ? "—" : formatQuantityTable(Number(kpis.drivers_with_debt), 0)
+          }
           sub={focusFilter === "debt" ? "filter on" : "live debt balance"}
           tone={typeof kpis.drivers_with_debt === "number" && kpis.drivers_with_debt > 0 ? "red" : "ink"}
           testId="settlements-kpi-debt"
@@ -518,14 +551,14 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="YTD settlements"
-          value={String(kpis.ytd_settlements)}
+          value={formatQuantityTable(Number(kpis.ytd_settlements ?? 0), 0)}
           sub={`${ytdYear} calendar year`}
           testId="settlements-kpi-ytd"
           onClick={() => navigate("/driver-finance/settlements")}
         />
         <V3KpiTile
           label="Open driver bills"
-          value={String(kpis.open_driver_bills)}
+          value={formatQuantityTable(Number(kpis.open_driver_bills ?? 0), 0)}
           sub="unsettled driver pay"
           testId="settlements-kpi-open-bills"
           onClick={() => navigate("/driver-finance/settlements?tab=payments")}
@@ -634,7 +667,8 @@ export function SettlementsPage() {
           deductionsThisWeek={deductionsThisWeek}
           deductionSplitThisWeek={deductionSplitThisWeek}
           deductionsListError={deductionsListQuery.isError}
-          thisWeekBucket={thisWeekBucket ?? undefined}
+          thisWeekBucket={selectedWeekBucket ?? undefined}
+          onSelectWeek={selectWeekStart}
           weekOfPill={weekOfPill}
           setWeekOfPill={setWeekOfPill}
           weekOfOpenCount={weekOfOpenCount}
@@ -705,7 +739,7 @@ export function SettlementsPage() {
       >
         <V3KpiTile
           label="Pending Acks"
-          value={String(kpis.pending_acks)}
+          value={formatQuantityTable(Number(kpis.pending_acks ?? 0), 0)}
           sub={focusFilter === "pending_acks" ? "filter on" : "click to filter"}
           tone={focusFilter === "pending_acks" ? "amber" : "ink"}
           testId="settlements-payments-kpi-pending-acks"
@@ -713,7 +747,7 @@ export function SettlementsPage() {
         />
         <V3KpiTile
           label="Held Deductions"
-          value={String(kpis.held_deductions)}
+          value={formatQuantityTable(Number(kpis.held_deductions ?? 0), 0)}
           sub={focusFilter === "held" ? "filter on" : "click to filter"}
           tone={focusFilter === "held" ? "amber" : "ink"}
           testId="settlements-payments-kpi-held"

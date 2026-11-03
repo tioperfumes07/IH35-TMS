@@ -114,13 +114,21 @@ function analyze(reg, page, board, helpers) {
   if (!/Advances \(Zelle\)/.test(home) || !/Escrow/.test(home) || !/Fines/.test(home))
     errors.push("Settlements home deductions panel must split Escrow / Advances (Zelle) / Fines");
 
-  // REG-102 / register #102 — Week-of panel must key open/closed pills on trip_closed_at (tour phase), not payment_state.
+  // REG-102 / register #102/#159 — Week-of *pills* key on tour close, not payment_state.
+  // Status column stays payment-facing Paid/Open (v3 board grammar); pills alone move rows.
   if (!/function settlementsRowTourClosed\b/.test(home) || !/trip_closed_at/.test(home))
     errors.push("Settlements home Week-of panel must use settlementsRowTourClosed(trip_closed_at) for open/closed pills (REG-102)");
+  // Terminal statuses without trip_closed_at still count as closed (#159 Closed pill empty).
+  if (!/st === "closed"/.test(helpers) || !/st === "paid"/.test(helpers))
+    errors.push("settlementsRowTourClosed must treat status closed/paid as closed when trip_closed_at is null (#159)");
   if (!/function settlementsWeekOfStatusLabel\b/.test(home))
-    errors.push("Settlements home Week-of Status column must use settlementsWeekOfStatusLabel (tour phase, not Paid/Open pay status)");
+    errors.push("Settlements home must keep settlementsWeekOfStatusLabel helper (tour phase)");
   if (/weekOfClosedCount[\s\S]{0,120}settlementsRowPayStatus/.test(page))
     errors.push("weekOfClosedCount must not filter on settlementsRowPayStatus === Paid (REG-102)");
+  if (!/weekOfOpenCount = thisWeekSettlements\.filter\(\(s\) => !settlementsRowTourClosed\(s\)/.test(page))
+    errors.push("weekOfOpenCount must filter via !settlementsRowTourClosed (REG-102 / #159)");
+  if (!/weekOfClosedCount = thisWeekSettlements\.filter\(\(s\) => settlementsRowTourClosed\(s\)/.test(page))
+    errors.push("weekOfClosedCount must filter via settlementsRowTourClosed (REG-102 / #159)");
 
   // ROUND 443.274-C — Settlements-Open board (Ready dots · Waiting on · Settlement label · no "Open" status word).
   if (!/function ReadyDots\b/.test(reg) || !/data-testid="setl-tour-ready-dots"/.test(reg))
@@ -204,6 +212,8 @@ if (process.argv.includes("--selftest")) {
     ["drop Advances label", [reg, page, board.replace(/Advances \(Zelle\)/g, "Advances"), helpers]],
     ["week-of uses pay status for closed count", [reg, page.replace(/weekOfClosedCount = thisWeekSettlements\.filter\(\(s\) => settlementsRowTourClosed\(s\)(?: && !isEmptyRow\(s\))?\)/, "weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === \"Paid\")"), board, helpers]],
     ["drop settlementsRowTourClosed", [reg, page, board, helpers.replace(/function settlementsRowTourClosed\b[\s\S]*?\n}\n\nexport function settlementsWeekOfStatusLabel/, "export function settlementsWeekOfStatusLabel")]],
+    ["tour-closed ignores terminal status", [reg, page, board, helpers.replace(/st === "closed"/g, 'st === "never_closed"').replace(/st === "paid"/g, 'st === "never_paid"')]],
+    ["week-of open count drops tour closed", [reg, page.replace(/weekOfOpenCount = thisWeekSettlements\.filter\(\(s\) => !settlementsRowTourClosed\(s\) && !isEmptyRow\(s\)\)/, "weekOfOpenCount = thisWeekSettlements.filter((s) => !isEmptyRow(s))"), board, helpers]],
     ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page, board, helpers]],
     ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page, board, helpers]],
     ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page, board, helpers]],

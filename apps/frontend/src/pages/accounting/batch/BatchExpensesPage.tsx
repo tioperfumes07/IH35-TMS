@@ -146,6 +146,16 @@ export function BatchExpensesPage() {
   };
   const title = (r: BatchExpenseRow, f: BatchExpenseField) => (r.status === "saved" ? "Saved" : validateRow(r)[f]) ?? "";
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Batch transactions — Expenses / Checks">
+        <BoardSection title="Batch transactions — Expenses / Checks" testId="batch-expenses-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Batch transactions — Expenses / Checks" subtitle="Enter or paste many expenses at once. Every row posts as its own real expense through the standard engine (expense → lines → journal entry); rows with errors stay unsaved with the reason.">
       <BoardSection title="Transaction type" testId="batch-expenses-type-board">

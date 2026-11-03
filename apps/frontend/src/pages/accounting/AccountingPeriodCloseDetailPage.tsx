@@ -9,6 +9,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const columns: Array<ParityColumn<PeriodCloseEntry>> = [
   { key: "journal_entry_id", label: "Closing entry", render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(row.memo, row.journal_entry_id, "Journal entry")} /> },
@@ -23,8 +24,18 @@ export function AccountingPeriodCloseDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const query = useQuery({ queryKey: ["accounting", "period-close", companyId, fiscalYearId], queryFn: () => getAccountingPeriodClose(fiscalYearId, companyId), enabled: Boolean(companyId && fiscalYearId), retry: false });
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Period close">
+        <BoardSection title="Period close" testId="accounting-period-close-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return <AccountingSubNavWrapper title={query.data ? `Fiscal year ${query.data.fiscal_year} close` : "Fiscal-year close"} subtitle="Retained-earnings closing entries linked to this fiscal year">
-    {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">Select an operating company to view this close.</p> : null}
+    
     {query.isError ? <ListErrorState title="Couldn't load fiscal-year close" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
     {query.isPending && companyId ? <p className="text-xs text-[#6B7280]">Loading fiscal-year close…</p> : null}
     {query.data ? <ParityTable title="Closing journal entries" columns={columns} rows={query.data.entries} rowKey={(row) => row.journal_entry_id} storageKey="accounting-period-close-entries" tableTestId="accounting-period-close-entries-table" emptyText="No closing entries linked to this fiscal year." /> : null}

@@ -312,6 +312,16 @@ export function OpeningBalanceRegisterPage() {
     </div>
   ) : null;
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Opening Balance Register">
+        <BoardSection title="Opening Balance Register" testId="opening-balance-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Opening Balance Register"

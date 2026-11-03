@@ -18,6 +18,7 @@ import {
   type ExportStatement,
 } from "../../api/my-accountant";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
@@ -186,6 +187,16 @@ export function MyAccountantPage() {
     ],
     [operatingCompanyId],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
+        <BoardSection title="My Accountant" testId="my-accountant-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   if (!flagLoading && !enabled) {
     return (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { resolveApiUrl } from "../../api/client";
 
 // SAF-F06 class: bare fetch(path) resolves against the SPA origin, which returns
@@ -27,7 +28,11 @@ export function ItemsCatalog({ onSynced }: Props = {}) {
   const operatingCompanyId = selectedCompanyId ?? "";
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-muted-foreground">Select an operating company to manage items sync.</p>;
+    return (
+      <BoardSection title="Products & Services" testId="items-catalog-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   return (

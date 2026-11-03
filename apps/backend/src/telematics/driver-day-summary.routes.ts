@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { STOP_ARRIVAL_EVENTS_SQL } from "./stop-arrival-events.js";
+import { STOP_FENCE_LABEL_RE_SQL } from "./stop-arrival-events.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -50,6 +50,19 @@ const DRIVER_DAY_SUMMARY_SQL = `
               $2::date::timestamptz AS day_start,
               ($2::date::timestamptz + interval '1 day') AS day_end
           ),
+          -- ROW 184 (LEAD 11-03): only the assignments that overlap the day. A position inside
+          -- [day_start, day_end) can only be covered by one of these, so the join below is identical,
+          -- but it probes a handful of rows instead of every historical assignment per GPS point
+          -- (measured: 8,261 index probes / 159,465 buffers for one day).
+          day_assignments AS MATERIALIZED (
+            SELECT a.unit_id, a.driver_id, a.started_at, a.ended_at
+            FROM telematics.vehicle_driver_assignments a
+            CROSS JOIN bounds b
+            WHERE a.operating_company_id = $1::uuid
+              AND a.driver_id IS NOT NULL
+              AND a.started_at < b.day_end
+              AND (a.ended_at IS NULL OR a.ended_at > b.day_start)
+          ),
           mileage AS (
             SELECT
               a.driver_id,
@@ -84,12 +97,10 @@ const DRIVER_DAY_SUMMARY_SQL = `
                 AND v.captured_at < b.day_end
             ) p
             CROSS JOIN bounds b
-            JOIN telematics.vehicle_driver_assignments a
-              ON a.operating_company_id = $1::uuid
-             AND a.unit_id = p.unit_id
+            JOIN day_assignments a
+              ON a.unit_id = p.unit_id
              AND a.started_at <= p.captured_at
              AND (a.ended_at IS NULL OR a.ended_at > p.captured_at)
-             AND a.driver_id IS NOT NULL
             GROUP BY a.driver_id
           ),
           duty AS (
@@ -121,18 +132,75 @@ const DRIVER_DAY_SUMMARY_SQL = `
               AND ft.purchased_at < b.day_end
             GROUP BY ft.driver_id
           ),
+          -- ROW 184 (LEAD 11-03): the day's FIRST arrival per (stop, unit), bounded to the day.
+          -- Same definition as STOP_ARRIVAL_EVENTS_SQL (first 'entered' on the stop's E-25 fence, DISTINCT ON
+          -- stop+unit) filtered to triggered_at in the day — but computed set-based from the day's entered
+          -- events plus a NOT EXISTS "no earlier entry" probe, instead of materialising every arrival in
+          -- history (all 10k+ entered events, a per-event audit lateral and a per-event departure subquery)
+          -- and filtering after. Measured on prod under the app role: the unbounded derived table was
+          -- 11,141 ms of the 11,247 ms request (planner mis-estimated the RLS-filtered fences as 1 row and
+          -- seq-scanned geo.geofence_events 843 times).
+          -- The stop <-> fence map, computed ONCE (the label regex over geo.geofences is the expensive
+          -- part; doing it per candidate arrival would reintroduce the per-row scan). Both sides are
+          -- materialised first: under RLS the planner estimates the fence scan as 1 row and picks a nested
+          -- loop, and re-scanning RLS-filtered mdata.load_stops once per fence cost 4,400 ms (measured 10-19);
+          -- re-scanning a 410-row tuplestore costs nothing.
+          live_stops AS MATERIALIZED (
+            SELECT ls.id, ls.load_id, ls.sequence_number
+            FROM mdata.load_stops ls
+            WHERE ls.soft_deleted_at IS NULL
+          ),
+          stop_fence_keys AS MATERIALIZED (
+            SELECT g.id AS geofence_id,
+                   substring(g.label FROM '^load-([0-9a-f-]{36})-stop-')::uuid AS load_id,
+                   substring(g.label FROM '-stop-([0-9]+)$')::int AS sequence_number
+            FROM geo.geofences g
+            WHERE g.label ~ '${STOP_FENCE_LABEL_RE_SQL}'
+          ),
+          stop_fences AS MATERIALIZED (
+            SELECT k.geofence_id, s.id AS stop_id
+            FROM stop_fence_keys k
+            JOIN live_stops s ON s.load_id = k.load_id AND s.sequence_number = k.sequence_number
+          ),
+          day_entries AS MATERIALIZED (
+            SELECT DISTINCT ON (sf.stop_id, ge.unit_id)
+                   ge.operating_company_id,
+                   sf.stop_id,
+                   ge.unit_id,
+                   ge.driver_id,
+                   ge.occurred_at AS triggered_at
+            FROM geo.geofence_events ge
+            CROSS JOIN bounds b
+            JOIN stop_fences sf ON sf.geofence_id = ge.geofence_id
+            WHERE ge.operating_company_id = $1::uuid
+              AND ge.event_kind = 'entered'
+              AND ge.occurred_at >= b.day_start
+              AND ge.occurred_at < b.day_end
+            -- Deterministic tie-break: two fences can carry the same stop label and fire at the same
+            -- instant (measured 10-19: stop c3565355… entered twice at 15:52:33, once with the driver,
+            -- once with driver_id NULL). Prefer the driver-attributed event, then the lowest id.
+            ORDER BY sf.stop_id, ge.unit_id, ge.occurred_at, (ge.driver_id IS NULL), ge.id
+          ),
           arrivals AS (
             SELECT
               sa.driver_id,
               count(*) FILTER (WHERE sa.triggered_at <= COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at))::int AS on_time_arrivals,
               count(*) FILTER (WHERE sa.triggered_at > COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at))::int AS late_arrivals
-            FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
+            FROM day_entries sa
             JOIN mdata.load_stops ls ON ls.id = sa.stop_id
-            CROSS JOIN bounds b
             WHERE sa.operating_company_id = $1::uuid
               AND sa.driver_id IS NOT NULL
-              AND sa.triggered_at >= b.day_start
-              AND sa.triggered_at < b.day_end
+              -- first-ever entry only: no earlier 'entered' by this unit on any fence of this stop
+              AND NOT EXISTS (
+                SELECT 1
+                FROM stop_fences sfx
+                JOIN geo.geofence_events x ON x.geofence_id = sfx.geofence_id
+                WHERE sfx.stop_id = sa.stop_id
+                  AND x.operating_company_id = $1::uuid
+                  AND x.unit_id = sa.unit_id
+                  AND x.event_kind = 'entered'
+                  AND x.occurred_at < sa.triggered_at
+              )
             GROUP BY sa.driver_id
           ),
           all_drivers AS (

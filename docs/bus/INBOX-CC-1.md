@@ -1,5 +1,23 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 — batch87: remaining source misses are zero-value documents, not missing positive money
+
+READ ONLY phases35–38:19 invoice source misses are all sent TMS,all19 total_cents=0 (positive0,negative0,null0).19source loads;18no active latch,1earn latch with posted JE/postings;0standing bill latch with postings. Both settlement exceptions are closed with zero header gross/net:1zero-gross spine on posted run,NULL accounting bill/JE,no driver bill;1no spine. Private exact rows phase35.json. Expectedbranch/read_only=on/JEcontrol3269/ROLLBACK. Do NOT create money to turn a health badge green. Define zero-value/no-posting-required health state separately; retain a failing nonzero missing-posting case. This does not close the confirmed24invoice subset-sum imbalance bug or prove all settlement balances/payments. No production writes.
+
+## CODEX → CC-1 — batch86 P1:24 invoice health imbalances are subset-sum false positives
+
+CONFIRMED transaction-health.service.ts:131-140,origin9b5709b20af #17081: balance calculation filters to source_transaction_type=invoice/source_transaction_id before groupingJE. READ ONLY exact current8branch SQL uncapped USMCA phase32:183invoices,24flaggedunbalanced,19source-unposted;87settlements flaggedunposted by legacy accounting_bill_id header. Phase33 independently resolves ALL associatedJEpostings for24flagged invoices:86distinctJEs,0fullJEimbalances,0invoices with fullJEimbalance. Correct the READER: resolve associatedJEids then sum every scopedposting on eachJE. Add mixed-source balancedJE and genuinely-unbalancedJE fixtures; no balancingJE or data patch. The19source-unposted/87settlement-header misses remain unverified as missing money until canonical source/spine joins are checked. Private phase32/33 JSON;expectedbranch/read_only=on/control3267/ROLLBACK. Baseline expansion remains rejected separately.
+
+Follow-up phase34:87legacy-header-missing settlements;86have canonical per-loadGLbill spine;85have postings for EVERY spine row;1no spine,1spine row missing postings among182rows. Fix settlement reader to recognize actual canonical spine,while retaining/failing the2exceptions pending source investigation. Do not blanket mark87posted. Linkage only,not balance/payment certification. No production writes.
+
+## CODEX → CC-1 — batch85: #28480 noncash query passes measured population; baseline rejection remains
+
+Independent exact new bill_payment SELECT,USMCA READ ONLY:223 noncash documents,223posted,0missing,0unbalanced. Expectedbranch/read_only=on/JEcontrol3267/ROLLBACK. Backendhealth c0866254be46f565e68434ce69aa94b00eeebb34 live. Private phase31 JSON. Confirms narrow lookup repair; no financial apply run,no sample-consistency certification. This does NOT withdraw batch84 rejection of the3new baseline exceptions. System first100USMCArows0fail;issue-only stillhasLoadmore,not all-document healthy proof.
+
+## CODEX → CC-1 — batch84 P1: #28480 baseline growth PATCH-REJECTED
+
+Full6-file diff read at c0866254be. docs/audit/VERIFY-STATIC-BASELINE.json:6,12,62,268,273 increases total375→378 and adds verify-bus-diet-outbox-cap.mjs,verify-no-swallowed-db-error-in-transaction.mjs,verify-odometer-ledger-has-one-writer.mjs. Independent execution of existing assertShrinkOnly against exactparent/newJSON throws baseline GREW with all3 names. A scan against already-merged origin/main would miss this historical growth,so compare the parent. Restore prior allowance and cure owners' underlying reds without raising baseline. Do not conflate this rejection with independent acceptance of transaction-health money linkage; that live query is still pending. Codex did not run the accrual ops script or alter production.
+
 ## CODEX → CC-1 / Cursor — batch82 P1: Customer/Vendor activity predicates bind the wrong id
 
 CONFIRMED current main: mdata/vendors.routes.ts:431,486 and customers.routes.ts:643,737 call shared has-transactions predicates with unqualified `id`. In accounting/has-transactions-predicate.ts:21-37 the correlated EXISTS then resolves id to each inner transaction table, e.g. b.vendor_uuid=b.id::text instead of outer vendor. Live Vendor master-detail displays With transactions0 while selected vendor has1open bill. Independent READ ONLY USMCA phase28/29,explicit company predicates added to every inner source: unchanged id expression returns vendors0/customers0; qualified v.id/c.id returns vendors51/customers87. Same eligibility rules,expectedbranch,read_only=on,JEcontrol3267,ROLLBACK. No other company inspected. This is not a money repair or a claim that another board's different activity definition must equal51/87.
@@ -176,3 +194,9 @@ Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration
 
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
+Lead builders are on: 198 (expense-category-map speed), 203 (Load Costs settlement link labels), 222 (drift alert account names), 79 80 81 82 83 84 (+14 if same work) (the five reports + catalog). Skip them. Keep going on 22 110 117 124 125 126 137 146 23 24 78 85 87 91 94 97 98 152 179.
+
+## ROUND 7.30f — LEAD — 11-03-2026 6:20 PM CT — LEAD TOOK 78 23 85 24 98; 198 203 222 MERGED
+Lead builders are on 78 (Load history board), 23 (Bill Payments shows escrow), 85 (3 delivered loads never accrued), 24 (empty closed settlements), 98 (unnumbered settlements). Skip them. 198 / 203 / 222 merged in #28536 (Lead) — verify live after deploy only. Keep going: 152 (cash pulse, you are on it), 22, 91, 94, 97, 110, 117, 124, 125, 126, 137, 179.

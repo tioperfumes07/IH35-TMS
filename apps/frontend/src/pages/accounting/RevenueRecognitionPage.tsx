@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
@@ -419,10 +420,20 @@ export function RevenueRecognitionPage() {
     </div>
   );
 
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Revenue recognition">
+        <BoardSection title="Revenue recognition" testId="revenue-recognition-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Revenue Recognition" subtitle="Deferred revenue schedules and recognition rules">
-        {operatingCompanyId ? <LeakagePanel operatingCompanyId={operatingCompanyId} /> : null}
+        <LeakagePanel operatingCompanyId={operatingCompanyId} />
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           Revenue recognition contract schedules are not yet enabled for this account.{" "}
           <InfoPopover label="About revenue recognition schedules" align="right">

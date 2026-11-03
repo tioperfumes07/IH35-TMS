@@ -8,6 +8,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const words = (value: string) => value.replaceAll("_", " ");
 
@@ -22,8 +23,18 @@ export function AccountingDriverReimbursementDetailPage() {
     retry: false,
   });
   const row = query.data;
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Driver reimbursement">
+        <BoardSection title="Driver reimbursement" testId="accounting-driver-reimbursement-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return <AccountingSubNavWrapper title={row ? `Driver reimbursement — ${row.reason}` : "Driver reimbursement"} subtitle="Canonical reimbursement claim, payout, and posting lineage">
-    {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">Select an operating company to view this reimbursement.</p> : null}
+    
     {query.isError ? <ListErrorState title="Couldn't load driver reimbursement" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
     {query.isPending && companyId ? <p className="text-xs text-[#6B7280]">Loading driver reimbursement…</p> : null}
     {row ? <section className="grid gap-3 rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs md:grid-cols-3">
