@@ -84,6 +84,8 @@ describe("ManualDailyProjectionsTab — pull-and-retry duplicate prevention (GO-
     pullManualTransactions.mockRejectedValueOnce(new Error("Too Many Requests")).mockResolvedValueOnce({ created: 1, issues: [] });
 
     renderTab();
+    // #27650: Pull + opening cash live under Filters.
+    await user.click(await screen.findByTestId("cash-flow-mdp-filters-toggle"));
     const pullButton = await screen.findByRole("button", { name: /pull bills/i });
     const fetchesBefore = listForecastEntries.mock.calls.length;
     await user.click(pullButton);
@@ -116,6 +118,8 @@ describe("ManualDailyProjectionsTab — pull-and-retry duplicate prevention (GO-
     });
 
     renderTab();
+    // #27650: Pull + opening cash live under Filters.
+    await user.click(await screen.findByTestId("cash-flow-mdp-filters-toggle"));
     const pullButton = await screen.findByRole("button", { name: /pull bills/i });
     sawPostErrorFetch = true;
     await user.click(pullButton);
@@ -143,7 +147,8 @@ describe("ManualDailyProjectionsTab opening cash (443.283)", () => {
       ],
     });
     renderTab();
-    await waitFor(() => expect(screen.getByText("Relay Fuel Wallet")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("cash-flow-mdp-bank-accounts").textContent).toContain("Relay Fuel Wallet"));
+    expect(screen.getByTestId("cash-flow-mdp-bank-accounts").textContent).toContain("USMCA FREIGHT");
     expect(screen.queryByText("Dreamline Diesel Card")).toBeNull();
     expect(screen.getAllByText("$25,533.37").length).toBeGreaterThan(0);
   });
