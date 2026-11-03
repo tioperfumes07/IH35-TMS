@@ -4,6 +4,7 @@
  * The fraud detector used to run every 15 minutes and the fuel<->GPS match every hour, over every
  * company, re-reading the same rows (owner D-02). Both only have something new to do when a fuel
  * ingest completes, so they now run here, once, for the companies the ingest touched:
+ *   the fill engine on every fill not yet through it (E9 / ENG-64 — fuel/fuel-follows-truck-sweep.ts);
  *   the fraud detector (still behind ENABLE_FUEL_FRAUD_DETECTOR_WORKER, default OFF).
  * The fuel<->GPS verdict (E-22) is computed on read in fuel/fuel-gps-verdict.service.ts — it no
  * longer writes on a schedule, because the old bank-line matcher could only guess.
@@ -12,9 +13,10 @@
  * Each step is recorded in _system.background_jobs under its existing job name.
  */
 import type { FastifyBaseLogger } from "fastify";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
+import { runFuelFollowsTruckSweep } from "./fuel-follows-truck-sweep.js";
 import {
   FUEL_FRAUD_DETECTOR_JOB,
   fuelFraudDetectorEnabled,
@@ -41,6 +43,27 @@ export async function onFuelIngestComplete(
       }
     },
     log
+  );
+
+  // E9 (ENG-64): every fill not yet through the one fill engine goes through it now (fuel follows the truck at the pump;
+  // owner rulings untouched; not-certain fills become assignment questions). A fill the engine could not apply is reported
+  // and fails the job run — never swallowed.
+  await wrapBackgroundJobTick(
+    "fuel.follows_truck",
+    async () => {
+      const companies = companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id)));
+      const failed: string[] = [];
+      for (const id of companies) {
+        const res = await runFuelFollowsTruckSweep(id);
+        log.info({ ...res, source }, "[FUEL_INGEST_HOOK] fuel follows truck");
+        if (res.failed > 0) failed.push(`${id}: ${res.failed} (${res.failures.slice(0, 3).map((f) => `${f.fuel_id} ${f.error}`).join("; ")})`);
+      }
+      if (failed.length) throw new Error(`fuel_follows_truck_refused: ${failed.join(" | ")}`);
+    },
+    log,
+    // two instances run this hook (run_count_today 2 on fuel.time_derivation, 11-03): one holder moves fills, never both.
+    { leaseSeconds: JOB_LEASE_SECONDS }
   );
 
   if (fuelFraudDetectorEnabled()) {
