@@ -53,6 +53,10 @@ const FLYOUT_ITEMS: Record<
       hint: "Driver pay + deductions",
     },
     {
+      id: "profitability-hub",
+      label: "Profitability hub",
+    },
+    {
       id: "customer-profitability",
       label: "Customer profitability",
       hint: "Revenue, cost, margin",
@@ -153,6 +157,10 @@ const FLYOUT_ITEMS: Record<
       id: "settlement-summary",
       label: "Settlement summary",
       hint: "Driver pay breakdown",
+    },
+    {
+      id: "profitability-hub",
+      label: "Profitability hub",
     },
     {
       id: "customer-profitability",

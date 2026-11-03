@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
-import { getLaneProfitability } from "../../api/reports";
+import { getEquipmentTypeProfitability, getLaneProfitability } from "../../api/reports";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { money, milesLabel, perMile } from "./money";
+import { matchesEquipmentType } from "./equipmentFilter";
+import { formatQuantityTable } from "../../lib/money";
 
 interface KpiStripProps {
   filters: {
     dateFrom: string;
     dateTo: string;
+    equipmentType?: string;
   };
 }
 
@@ -18,8 +21,9 @@ export function KpiStrip({ filters }: KpiStripProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const query = useQuery({
-    queryKey: ["profitability", "kpi", companyId, filters.dateFrom, filters.dateTo],
+  const useEquipment = Boolean(filters.equipmentType);
+  const laneQuery = useQuery({
+    queryKey: ["profitability", "kpi", "lane", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getLaneProfitability({
         operating_company_id: companyId,
@@ -27,28 +31,59 @@ export function KpiStrip({ filters }: KpiStripProps) {
         start: filters.dateFrom,
         end: filters.dateTo,
       }),
-    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
+    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo) && !useEquipment,
     retry: false,
   });
+  const typeQuery = useQuery({
+    queryKey: ["profitability", "kpi", "type", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
+    queryFn: () =>
+      getEquipmentTypeProfitability({
+        operating_company_id: companyId,
+        period_start: filters.dateFrom,
+        period_end: filters.dateTo,
+      }),
+    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo) && useEquipment,
+    retry: false,
+  });
+  const query = useEquipment ? typeQuery : laneQuery;
 
   const ready = Boolean(query.data) && !query.isError;
-  const lanes = query.data?.lanes ?? [];
-  const totals = query.data?.totals;
-
   let totalMiles: number | null = null;
   let totalCost: number | null = null;
-  if (ready) {
+  let revenue: number | null = null;
+  let margin: number | null = null;
+  let loads: number | null = null;
+  if (ready && useEquipment && typeQuery.data) {
+    const rows = typeQuery.data.by_type.filter(
+      (row) =>
+        matchesEquipmentType(filters.equipmentType, row.equipment_code) ||
+        matchesEquipmentType(filters.equipmentType, row.equipment_label),
+    );
+    totalMiles = 0;
+    totalCost = 0;
+    revenue = 0;
+    margin = 0;
+    loads = 0;
+    for (const row of rows) {
+      totalMiles += row.miles;
+      totalCost += row.direct_cost_cents;
+      revenue += row.revenue_cents;
+      margin += row.gross_margin_cents;
+      loads += row.load_count;
+    }
+  } else if (ready && laneQuery.data) {
+    const lanes = laneQuery.data.lanes ?? [];
+    const totals = laneQuery.data.totals;
     totalMiles = 0;
     totalCost = 0;
     for (const l of lanes) {
       totalMiles += l.total_miles;
       totalCost += l.total_driver_pay_cents + l.total_fuel_cost_cents + l.total_maintenance_cost_cents;
     }
+    revenue = totals?.total_revenue_cents ?? null;
+    margin = totals?.gross_profit_cents ?? null;
+    loads = totals?.load_count ?? null;
   }
-
-  const revenue = ready ? totals?.total_revenue_cents ?? null : null;
-  const margin = ready ? totals?.gross_profit_cents ?? null : null;
-  const loads = ready ? totals?.load_count ?? null : null;
 
   return (
     <div className="space-y-1" data-testid="profitability-kpi-strip">
@@ -56,12 +91,12 @@ export function KpiStrip({ filters }: KpiStripProps) {
         <DrillKpiCard
           label="Total Revenue"
           value={ready ? money(revenue) : null}
-          to="/reports/lane-profitability"
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
         <DrillKpiCard
           label="Total Miles"
           value={ready ? milesLabel(totalMiles) : null}
-          to="/reports/lane-profitability"
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
         <DrillKpiCard
           label="Avg Rev/Mi"
@@ -72,7 +107,7 @@ export function KpiStrip({ filters }: KpiStripProps) {
                 ? "—"
                 : null
           }
-          to="/reports/lane-profitability"
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
         <DrillKpiCard
           label="Avg Cost/Mi"
@@ -83,7 +118,7 @@ export function KpiStrip({ filters }: KpiStripProps) {
                 ? "—"
                 : null
           }
-          to="/reports/lane-profitability"
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
         <DrillKpiCard
           label="Avg Margin/Mi"
@@ -94,12 +129,12 @@ export function KpiStrip({ filters }: KpiStripProps) {
                 ? "—"
                 : null
           }
-          to="/reports/lane-profitability"
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
         <DrillKpiCard
           label="Loads"
-          value={ready ? (loads == null ? "—" : String(loads)) : null}
-          to="/reports/lane-profitability"
+          value={ready ? (loads == null ? "—" : formatQuantityTable(loads, 0)) : null}
+          to={useEquipment ? "/profitability?tab=type" : "/reports/lane-profitability"}
         />
       </div>
       <div className="text-right text-xs text-gray-400">

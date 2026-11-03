@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:45 PM CT) — batch55 mount Profitability hub + equipment filter
+- **PRIOR:** #28384 coverage/dispatch/fuel qty · #28383 batch54 dead bills.
+- **THIS:** Codex batch55 — mount ProfitabilityPage at `/profitability` (manifest+ReportsSubNav+CategoryHoverNav+breadcrumb); wire FilterBar equipmentType into all tab/KPI queryKeys; ByType+Kpi local matchesEquipmentType; hub guard + equipmentFilter tests. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:30 PM CT) — coverage/dispatch/fuel count house quantity
 - **PRIOR:** #28383 batch54 dead bills · #28381 factoring/dispatch qty.
 - **THIS:** CoverageGap expiry KPIs · LoadsWithoutTour/DriverBill · AtRisk footer+drill · NeedsDeliveryAuth · FuelGlMapping coverage → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

@@ -26,7 +26,7 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["profitability", "by-lane", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-lane", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getLaneProfitability({
         operating_company_id: companyId,
@@ -121,14 +121,16 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
         ) : null}
         <ParityTable<LaneProfitabilityLane>
           columns={columns}
-          rows={query.data?.lanes ?? []}
+          rows={filters.equipmentType ? [] : (query.data?.lanes ?? [])}
           rowKey={laneKey}
           storageKey="profitability-by-lane"
           tableTestId="profitability-by-lane-table"
           emptyText={
             query.isLoading
               ? "Loading lane profitability…"
-              : "No lanes in this period — delivered loads with origin/destination will appear here."
+              : filters.equipmentType
+                ? "Lane view has no equipment dimension — clear Equipment or open By Type."
+                : "No lanes in this period — delivered loads with origin/destination will appear here."
           }
         />
       </div>
