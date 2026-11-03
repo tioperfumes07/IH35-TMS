@@ -111,6 +111,15 @@ TABLES: factor.* · banking.* · accounting.factoring_reserve_movements · accou
 apps/backend/src/telematics/stops-geocode-backfill.service.ts
 package.json
 scripts/verify-guard-selftests-are-real-weak-baseline.json
+#
+# **`scripts/verify-delivered-load-stops-terminal.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# This guard is under CC-1's wildcard `scripts/verify-*.mjs` but was originally authored as CC-2
+# (Lead 443.51 #3, guard comment says CC-2). Commit fc3a9e9f40 moved stampStopsFromTracking and
+# settleStampedStopStatuses from settlement-creator-deliver.ts to stop-evidence-from-tracking.ts,
+# making the guard fail permanently (DELIVER constant points to the re-export barrel, not the
+# function bodies). This Round 260 fix points DELIVER at the canonical source file; the fix is
+# within CC-2's authority because the guard itself and the ops script that arms it are both CC-2.
+scripts/verify-delivered-load-stops-terminal.mjs
 
 ## CC-3 — settlements and fuel
 apps/backend/src/settlements/**
