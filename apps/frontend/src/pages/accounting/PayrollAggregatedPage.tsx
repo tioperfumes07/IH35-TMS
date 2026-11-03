@@ -4,6 +4,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -46,6 +47,16 @@ export function PayrollAggregatedPage() {
   });
 
   const data = aggregatedQuery.data;
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Payroll (aggregated)">
+        <BoardSection title="Payroll (aggregated)" testId="payroll-aggregated-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements from driver_finance, the only source of driver pay">

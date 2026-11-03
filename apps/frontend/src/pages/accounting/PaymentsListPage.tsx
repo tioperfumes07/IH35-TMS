@@ -321,6 +321,16 @@ export function PaymentsListPage() {
     </div>
   );
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Payments">
+        <BoardSection title="Payments" testId="payments-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Payments"

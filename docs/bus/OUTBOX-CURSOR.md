@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:00 PM CT) — ROUND 7.30 #27 Accounting need-company wave 4
+- **PRIOR:** #28528 Accounting need-company wave 3.
+- **THIS:** Bills/Payments/Factoring/AP aging/Transaction register/Prepaid/Checks/Recurring bills/Vendor balances/Allocations/Sales tax/Payroll/Cash forecast/Period comparison/Daily recon/Undeposited funds BoardSection need-company; fill-shell plants. #27 still PARTIAL. Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting tabs / #29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:45 PM CT) — hotfix MyAccountant need-company landed
 - **PRIOR:** #28525 empty merge; fill-shell stayed red.
 - **THIS:** #28526 MyAccountant BoardSection need-company early return; fill-shell PASS. #27 PARTIAL. Remaining: more Accounting tabs + #29 popup (+ Lead date/UI live). Batch75 Reclassify → CC-1.

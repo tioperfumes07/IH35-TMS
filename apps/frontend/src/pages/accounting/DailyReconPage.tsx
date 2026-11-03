@@ -163,15 +163,23 @@ export function DailyReconPage() {
     </div>
   ) : undefined;
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Daily TMS↔QBO Reconciliation">
+        <BoardSection title="Daily TMS↔QBO Reconciliation" testId="daily-recon-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Daily TMS↔QBO Reconciliation"
       subtitle="Per-day parity view — TMS GL vs QBO actuals. Read-only."
       kpiStrip={kpiStrip}
     >
-      {!companyId ? (
-        <p className="text-xs text-[#1F2A44]">Select an operating company.</p>
-      ) : query.isLoading ? (
+      {query.isLoading ? (
         <p className="text-xs text-gray-500">Loading…</p>
       ) : query.isError ? (
         <p className="text-xs text-red-600">Failed to load reconciliation data.</p>
