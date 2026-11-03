@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getFleetRestoreCost } from "../../api/maintenance";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -61,7 +61,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
           </div>
           <p className="mt-1 text-xs text-[#4B5563]">
             Estimated {money(data.total_estimated_cents)} · Actual {money(data.total_actual_cents)} · Avg open{" "}
-            {Math.round(data.avg_days_open)}d
+            {formatQuantityTable(Math.round(data.avg_days_open), 0)}d
           </p>
         </div>
         <Link

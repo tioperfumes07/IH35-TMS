@@ -329,7 +329,7 @@ export function FactoringHomeBoard({
     { term: "Fee", value: activeFactor ? `${rateToPctString(activeFactor.fee_rate)}%` : "—" },
     {
       term: "Recourse",
-      value: activeFactor ? `${activeFactor.recourse_days} days` : summary?.recourse_days != null ? `${summary.recourse_days} days` : "—",
+      value: activeFactor ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : summary?.recourse_days != null ? `${formatQuantityTable(summary.recourse_days, 0)} days` : "—",
     },
     {
       term: "Wire fee",
@@ -384,7 +384,7 @@ export function FactoringHomeBoard({
         <V3KpiTile
           testId="factoring-kpi-recourse-days"
           label="Repurchase deadline"
-          value={summaryQuery.isError ? "—" : `${Number(summary?.recourse_days ?? 95)} days`}
+          value={summaryQuery.isError ? "—" : `${formatQuantityTable(Number(summary?.recourse_days ?? 95), 0)} days`}
           onClick={() => navigate(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile

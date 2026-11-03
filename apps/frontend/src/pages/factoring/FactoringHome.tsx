@@ -93,7 +93,7 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import type { NaReason } from "../../design/money-design-system";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
@@ -1712,7 +1712,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {" · "}
               Release trigger: recourse{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-escrow-recourse-days">
-                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+                {activeFactor?.recourse_days != null ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : "—"}
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase escrow cents.
             </div>
@@ -1817,7 +1817,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {" · "}
               Release trigger: recourse{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-recourse-days">
-                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+                {activeFactor?.recourse_days != null ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : "—"}
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase cash reserve cents.
             </div>
@@ -2407,7 +2407,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       render: (row: (typeof feesPaidOpenInvoiceRows)[number]) =>
                         row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
                     },
-                    { key: "age", label: "Age", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => row.age },
+                    { key: "age", label: "Age", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => formatQuantityTable(row.age, 0) },
                     { key: "amount", label: "Amount", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
                     { key: "balance", label: "Balance", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
                     {
@@ -2589,7 +2589,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     },
                     { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
-                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
+                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => formatQuantityTable(row.age, 0) },
                     { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
                     { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
                     { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
