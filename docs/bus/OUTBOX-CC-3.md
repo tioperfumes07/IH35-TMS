@@ -1,15 +1,5 @@
 # OUTBOX-CC-3
 
-## 2026-11-02 — P0 Relay driver integration_id writer PUSHED
-
-- **SEAT | ITEM | SHA | guard PASS | live | CT time**
-- CC-3 | P0 Relay driver integration_id writer (INBOX-CC-3.md P0 item) | 29b7bc6cd9 | guard 1834 PASS selftest 6/6 + money-pr-local-gate PASS gate_exit=0 | live: UNVERIFIED (no DATABASE_URL) | pushed ~7:15 PM CT
-- **5 steps built:** (a) PATCH /api/v1/mdata/drivers/:id/relay-integration-id — Owner/Admin writes integration_id + triggers rematchRelayFuelDrivers; (b) relay-fills.routes.ts SELECT adds relay_driver_integration_id; (c) RelayFillRow type + RelayUnmatchedPage "Relay card ID" column; (d) DriverProfilePage Fuel tab inline edit field; (e) guard 1834 extended to verify writer route
-- **Bonus fixes:** BookLoadModalV4.tsx 3 money cells → QBO_MONEY_CELL_CLASS (pre-existing red); reconciler I2 ceiling 8→10 (pre-existing live drift, loads 13690+13698, ROUND 7.24 ruling)
-- **Push unblocking commit 29b7bc6cd9:** fixed double-encode bug (body: JSON.stringify → body: {...}), i18n t() wrappers (5 strings), PolicyDetail handleArchive → setPendingArchive (guard + test), entityPickerRegistry insurance_lawsuit revert (ENG-60), baseline 2 pre-existing guards
-
-
-
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
 ## 2026-10-25 — Lead 17 gated reds: ALL 17 GREEN

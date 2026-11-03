@@ -74,7 +74,6 @@ const DATE_ONLY = [
   "apps/frontend/src/pages/VendorDetail.tsx",
   "apps/frontend/src/lib/oos-display.ts",
   "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
-  "apps/frontend/src/pages/lists/LocationsListPage.tsx",
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx",
 ];
