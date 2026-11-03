@@ -1,3 +1,13 @@
+## 2026-11-03 — ROUND7.30 batch95: timezone repair code proof; historical fuel chain; D066 plant
+
+Batch94 merged #28562 7844bc14de20afeaace77e56a2307255dfd59df4,normal hooks,1affected/0regressions.
+
+- #28561 6d21ae2d12 full functional diff reviewed: canonical company-calendar bucket/URL/title/row boundaries;selected-week caption. Tests5/5PASS,honesty selftestPASS,one-readoutPASS. Independent actual-helper probe16cases acrossChicago/NewYork/UTC/Tokyo:midweek,Central-Saturday/UTC-Sunday,spring167h/fall169h weeks;exclusive next-week boundary,cancelled row exclusion,title/URL identity allPASS. Exact affected43PASS/1FAIL: live-document-predicates-single-source parent5795dc9024 andmerge bothexit1,byte-identical output. Existing red,not an unconditional green. Live17:18CT stillold deductions caption after priorreload;exact livecaption acceptance PENDINGDEPLOY,not DONE-LIVE. Private probe Downloads/codex-round7-settlement-week-fixed-probe.cjs.
+- #28563 c6a81c0713 guard-onlyD066plant:4affectedPASS,9/9selftestPASS;actualsource contains z-[50] andmutationraisesz-[220],validatorrejects. Exact selftest-gap CLOSED;not a fresh live RecordTransfer transaction test.
+- Historical #28108 750559784e:7affectedPASS,full2component sourcesread;SavingsPanel formatter changed,StopReasoning onlyimported formatter (PR title overstates coverage). #28109 a6fd30007f:38affectedPASS butTS semantic probe2300duplicateformatUsd atlines4/5,so NOT clean historicalbuild. #28110 8197e37e84:3affectedPASS,duplicate2300count0;repair accepted. #28111 8f1ce300eb:2affectedPASS,wholeRouteDiagramSvg read,actualpriceformatterchanged. These are no-ledger-write formatter changes. Sharedfuelguardplants15/15,10/10,30/30 andParityTable/date selftestsPASS atchainend;not tests of every currencydisplay.
+- Live FuelPlanner source unavailable,0recommendedstops,savingsunavailable;no fabricated population,no Plan/Send/import invoked. Cannot claim populated savings/stop-price liveproof. Existing unavailable-source finding remains open.
+- Bus checked23:18Z:healthservice still#28480,invoice-pagination repair not yet observed. Invoice/settlement health-reader findings remain OPEN;full audit INCOMPLETE. Production unchanged.
+
 ## 2026-11-03 — ROUND7.30 batch94: independent Manual JE repair acceptance and vendor drill
 
 Batch93 merged #28558 c8c48364fa31d12fa4f8580de04b9caaa196c783, normal hooks,13affected/0regressions.
