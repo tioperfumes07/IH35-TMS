@@ -7,6 +7,7 @@ import { DriverHubOverview } from "./DriverHubOverview";
 import { DriverSchedulerGridPage } from "../safety/driver-scheduler/DriverSchedulerGridPage";
 import { DriverSchedulerRequestInboxPage } from "../safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 // Office roles that may review/approve driver requests (matches the backend
 // canReviewCashAdvanceRequest gate: Owner/Administrator/Manager/Accountant/Dispatcher).
@@ -43,6 +44,14 @@ export function DriverHubPage() {
     const qs = params.toString();
     navigate({ pathname: "/driver-hub", search: qs ? `?${qs}` : "" }, { replace: true });
   };
+
+  if (!companyId) {
+    return (
+      <BoardSection title="Driver Hub" testId="driver-hub-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-4" data-testid="driver-hub-page">
