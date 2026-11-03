@@ -50,3 +50,9 @@ DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Dea
 ## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
 Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
 Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
+
+## LEAD 11-03 10:25 AM CT — E10 (row 257) — REAL 500 in invoices + 1 stale test; patch ready
+`git apply docs/bus/lead/patches/E10-CC-2.patch` on a branch from main. Lead ran it green (vitest from repo root, tsc clean).
+- accounting/invoices.routes.ts — REAL DEFECT: list `customer_id` was `z.string()`; `?customer_id=<uuid>,invalid` reached `ANY($2::uuid[])` → Postgres cast 500. Now `entityIdFilterSchema` + `entityIdFilterValues` (same as source_load_id) → 400 before any DB read. Proof test: factoring/__tests__/entity-multi-read-contracts.test.ts (was red, now green).
+- banking/suggestion-engine.test.ts — predates RC1 443.341 (no-vendor rule = catch-all, low). Specific rule now names a vendor; added the catch-all case.
+Fast merge on green. Then back to E4/E5/E6/E13.

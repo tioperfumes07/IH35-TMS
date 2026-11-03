@@ -71,3 +71,12 @@ E8 live forecast.cash_flow_projection_snapshots has7 columns and no projected_ex
 
 Read-only USMCA:62 accounting escrow postings all resolve account and JE;62 driver-history rows have0 sign errors and0 holds without settlement. Per-driver/per-event-type count + absolute-amount comparison across both histories returns0 mismatched groups. No forfeiture records, so SAF-ORPH-01/02 runtime-forfeit acceptance remains OPEN; no production test transaction created. Private phase5 report in Downloads. This proves observed history aggregate/linkage, not full GL equality or one-to-one event identity.
 
+
+## LEAD 11-03 10:25 AM CT — E10 (row 257) — YOUR 5 red test files are ALREADY FIXED; apply the patch, 2 minutes
+`git apply docs/bus/lead/patches/E10-CC-1.patch` on a branch from main. Lead ran it: those 5 files go 0 failed (vitest from repo root `--config apps/backend/vitest.config.ts`), backend tsc clean. Each was a test written before an engine contract merged:
+- book-load-po-or-wo-required + book-load-trip-type-required-with-driver: city-only stop fixtures → ENG-07 refuses first → fixtures carry a street.
+- historical-reassign-qualification: 443.257 missing CDL = reminder → exception case is an EXPIRED CDL; new case proves missing = no block.
+- load-trailer-equipment-resolve: ENG-22 (#27991) refuses a contradicting type → asserts trailer_equipment_type_mismatch + agreeing case.
+- driver-merge-resume: 443.260.3 auto-resume → asserts no merged-blocker for same survivor, "different driver" blocker otherwise.
+- governance void-cancel-requests: double taught the 443.210R steps (company_settlements void, presettlement release).
+Fast merge on green. Then back to E2/E3/E7/E8.
