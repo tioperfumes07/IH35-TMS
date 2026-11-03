@@ -113,10 +113,27 @@ export function normalizePersonName(first?: string | null, last?: string | null)
   return joined.length > 0 ? joined : null;
 }
 
-function phoneKey(value: string | null | undefined): string | null {
+/**
+ * LEAD 11-03: a phone is identity only when it is a real dialable number. Measured on the USMCA roster (85 live rows):
+ * 39 carry the placeholder "000-000-0000" (→ "0000000000", which matched EVERY other placeholder as "Same phone") and
+ * one "+10000013586". A real 10-digit US/MX number never starts with 0 or 1 and is never one repeated digit.
+ */
+export function phoneKey(value: string | null | undefined): string | null {
   const digits = (value ?? "").replace(/\D/g, "");
-  return digits.length >= 10 ? digits.slice(-10) : null;
+  if (digits.length < 10) return null;
+  const key = digits.slice(-10);
+  if (!/^[2-9]\d{9}$/.test(key) || /^(\d)\1{9}$/.test(key)) return null;
+  return key;
 }
+
+/** A CDL value is identity only when it carries a digit (measured: the "Safety" placeholder row has CDL "safety"). */
+function cdlKey(value: string | null | undefined): string | null {
+  const v = norm(value);
+  return v && /\d/.test(v) ? v : null;
+}
+
+/** LEAD 11-03: a phone on this many roster rows is a shared line (measured: 956-282-0452 on 4 different people). */
+export const SHARED_PHONE_ROWS = 3;
 
 /** Plain Levenshtein distance, bounded — names are short. */
 export function editDistance(a: string, b: string): number {
@@ -160,8 +177,8 @@ const ORDER: RosterMatchReason[] = [
  */
 export function scoreRosterCandidate(input: RosterDuplicateInput, row: RosterRow): RosterMatchReason[] {
   const reasons = new Set<RosterMatchReason>();
-  const cdlIn = norm(input.cdl_number);
-  const cdlRow = norm(row.cdl_number);
+  const cdlIn = cdlKey(input.cdl_number);
+  const cdlRow = cdlKey(row.cdl_number);
   const stateIn = norm(input.cdl_state);
   const stateRow = norm(row.cdl_state);
   if (norm(input.curp) && norm(input.curp) === norm(row.curp)) reasons.add("curp_exact");
@@ -214,8 +231,19 @@ function stateOf(row: RosterRow): RosterDuplicateMatch["state"] {
 export function rankRosterDuplicates(input: RosterDuplicateInput, roster: RosterRow[], limit = 10): RosterDuplicateMatch[] {
   const rank = { hard: 0, strong: 1, possible: 2 } as const;
   const stateRank = { active: 0, inactive: 1, deactivated: 2, archived: 3 } as const;
+  const phoneRows = new Map<string, number>();
+  for (const row of roster) {
+    const k = phoneKey(row.phone);
+    if (k) phoneRows.set(k, (phoneRows.get(k) ?? 0) + 1);
+  }
   return roster
-    .map((row) => ({ row, reasons: scoreRosterCandidate(input, row) }))
+    .map((row) => {
+      const reasons = scoreRosterCandidate(input, row);
+      const k = phoneKey(row.phone);
+      // A shared line (office / dispatcher number) says nothing about who the person is.
+      const shared = k !== null && (phoneRows.get(k) ?? 0) >= SHARED_PHONE_ROWS;
+      return { row, reasons: shared ? reasons.filter((r) => r !== "phone_exact") : reasons };
+    })
     .filter((x) => x.reasons.length > 0)
     .map(({ row, reasons }) => {
       const digits = (row.phone ?? "").replace(/\D/g, "");

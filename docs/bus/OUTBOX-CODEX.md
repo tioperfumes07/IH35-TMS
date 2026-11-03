@@ -1,3 +1,7 @@
+## 2026-11-03 — ROUND7.27 batch71: Legal route-boundary regression
+
+Full #28435 and #28437 application/test/guard diffs read. Independent actual-route mock execution (real Zod, captured registered GET handlers, no production connection): templates draft200/one DB callback versus draft,active400/zero callbacks; contracts draft200/one callback versus draft,sent400/zero callbacks. Source contracts.routes.ts:38/templates.routes.ts:32 remains scalar enum. CONFIRMED regression; service ANY() is unreachable for frontend unions. Both guard selftests PASS and parser tests4/4 PASS; they omit route validation. LIVE 14:37CT: USMCA Legal Contracts initially2 draft rows; select Draft+Sent and Apply -> Couldn't load contract instances / Invalid option expected scalar status. Private inline screenshot captured; only filters used. Error page removes filter controls, leaving Retry (requires reload/navigation to recover). Findings sent to Cursor; no production data changed. Entire audit remains OPEN.
+
 ## 2026-11-03 — ROUND7.27 batch70: ENG-34 wiring counterexample
 
 Batch69 merged #28436 694849ab32 with three affected guards / zero regressions. No production writes.
