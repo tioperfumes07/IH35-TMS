@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:50 PM CT) — ENG-34 wire load-driven-miles 19881
+- **PRIOR:** #28595 Settlement Disputes U12.
+- **THIS:** verify-steps 19881 (load-driven-miles --selftest); removed from .guard-exempt. LIVE half stays money-pr via e7-batch2. balanced-ledger / bus-diet / match stay exempt.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:40 PM CT) — U12 Settlement Disputes status MultiSelect
 - **PRIOR:** #28594 U12 register tip.
 - **THIS:** SettlementDisputesTab status SelectCombobox → MultiSelectDropdown; API still open|all with client narrow for other statuses.
