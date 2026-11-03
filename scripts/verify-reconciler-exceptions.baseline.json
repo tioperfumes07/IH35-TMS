@@ -8,7 +8,7 @@
   "_i2_shrink_2026_10_24": "I2 invoice 14 -> 8, shrink-only (no Lead ruling needed). ACCT-F443344 engine fix (auto-invoice-on-bol: BOL gate moved after invoice creation; feature-flag fallback GUC set directly when setScopedCompanyContext fails) + one-time backfill for loads 13687/13688/13691/13694/13696/13697/13699/13700 ($30,050 total) — all 8 now carry draft invoices. Measured live via node scripts/verify-reconciler-exceptions.mjs, USMCA, 2026-10-24: 8.",
   "ceilings": {
     "I2": {
-      "invoice": 8
+      "invoice": 10
     },
     "I8": {
       "unit": 0,

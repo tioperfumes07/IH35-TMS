@@ -1,10 +1,10 @@
 {
-  "healthzSha": "92c525b",
-  "generated_at": "2026-11-03T02:27:06.613Z",
+  "healthzSha": "7cfe1ab",
+  "generated_at": "2026-11-03T00:27:05.166Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "92c525b",
+    "deployedSha": "7cfe1ab",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28236,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28226,
+      "title": "BUS: P0 Relay driver fix → CC-3 (owner order 6:18 PM CT); root cause integration_id never written; CC-2 note superseded",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 07:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28236",
-      "sha": "92c525bcc2",
-      "committedAtIso": "2026-11-03T01:01:41Z"
+      "mergedAtCt": "11/02/2026, 06:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28226",
+      "sha": "55b574c34d",
+      "committedAtIso": "2026-11-02T18:23:45-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28225,
+      "title": "Codex: Round 7.26 independent live acceptance evidence",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:57 PM CT",
-      "url": "",
-      "sha": "027187dd2c",
-      "committedAtIso": "2026-11-03T00:57:13Z"
+      "mergedAtCt": "11/02/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28225",
+      "sha": "7cfe1abee0",
+      "committedAtIso": "2026-11-02T18:16:27-06:00"
     },
     {
-      "number": 28235,
-      "title": "GUARD: Load Costs rate selftest plants formatUsdRateTable drop",
+      "number": 28224,
+      "title": "FINDING: stale Plaid pending bank lines never retired ($51,296.34 live, 3 booked) → CC-2 permanent fix (rows 154/156)",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28235",
-      "sha": "67029ad110",
-      "committedAtIso": "2026-11-02T18:50:02-06:00"
+      "mergedAtCt": "11/02/2026, 06:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28224",
+      "sha": "51422178fd",
+      "committedAtIso": "2026-11-02T18:13:20-06:00"
     },
     {
-      "number": 28234,
-      "title": "FINDING: Cursor house money wave 6 — Load Costs/escrow/liabilities rates",
+      "number": 28223,
+      "title": "BUS: rows 151 165 169 DONE-LIVE; 161/162 re-measured; Relay driver crosswalk (permanent) → CC-2",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28234",
-      "sha": "412ca612aa",
-      "committedAtIso": "2026-11-02T18:48:28-06:00"
+      "mergedAtCt": "11/02/2026, 06:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28223",
+      "sha": "f1d2e14bea",
+      "committedAtIso": "2026-11-02T18:10:28-06:00"
     },
     {
-      "number": 28233,
-      "title": "FINDING: Cursor house money wave 5 — driver reverse cents fix + TotalsStack",
+      "number": 28222,
+      "title": "BUS: Cursor tip #28192–#28220; SelectCombobox baseline 2; ENG-21 BLOCKED",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28233",
-      "sha": "515cce9882",
-      "committedAtIso": "2026-11-02T18:44:46-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28222",
+      "sha": "c72bdb3b4a",
+      "committedAtIso": "2026-11-02T18:08:26-06:00"
     },
     {
-      "number": 28232,
-      "title": "FINDING: DriverHubReporting CSV approved volume → formatUsdCents",
+      "number": 28221,
+      "title": "BUS: row 144 (7 accounting rules) DONE-LIVE; A/P control ties $129,216.53 to the cent",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28232",
-      "sha": "33dfd7cf5e",
-      "committedAtIso": "2026-11-02T18:42:34-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28221",
+      "sha": "a3a3173527",
+      "committedAtIso": "2026-11-02T18:08:23-06:00"
     },
     {
-      "number": 28230,
-      "title": "FINDING: Cursor house money wave 3 — parts/inventory/fleet → formatUsd",
+      "number": 28220,
+      "title": "FINDING: UniversalListToolbar SelectCombobox; raw select baseline 2",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28230",
-      "sha": "25664406a2",
-      "committedAtIso": "2026-11-02T18:41:34-06:00"
+      "mergedAtCt": "11/02/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28220",
+      "sha": "df4d59f4de",
+      "committedAtIso": "2026-11-02T18:08:01-06:00"
     },
     {
-      "number": 28231,
-      "title": "Codex: independent transaction and settlements QA batch31",
+      "number": 28219,
+      "title": "BUS: ROUND 7.26 Codex independent verification + H/B live measurement; owner permanent-fix law to all seats",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28231",
-      "sha": "fa7e89bfbe",
-      "committedAtIso": "2026-11-02T18:40:36-06:00"
+      "mergedAtCt": "11/02/2026, 06:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28219",
+      "sha": "4762abde9e",
+      "committedAtIso": "2026-11-02T18:06:32-06:00"
     },
     {
-      "number": 28229,
-      "title": "FINDING: Cursor house money wave 2 — drivers/dispatch/CRM → lib/money",
+      "number": 28217,
+      "title": "FINDING: DataTable + ColumnChooser page size SelectCombobox; baseline 4",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28229",
-      "sha": "eea4c835d9",
-      "committedAtIso": "2026-11-02T18:39:12-06:00"
+      "mergedAtCt": "11/02/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28217",
+      "sha": "92e5f01639",
+      "committedAtIso": "2026-11-02T18:02:21-06:00"
     },
     {
-      "number": 28228,
-      "title": "FINDING: Cursor house money — dispatch/fuel/insurance/DF → lib/money",
+      "number": 28215,
+      "title": "Codex: Round 7 escrow and Telematics independent retest",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28228",
-      "sha": "3ee2c75bd8",
-      "committedAtIso": "2026-11-02T18:34:15-06:00"
+      "mergedAtCt": "11/02/2026, 06:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28215",
+      "sha": "9ba2f0d432",
+      "committedAtIso": "2026-11-02T18:00:45-06:00"
     }
   ]
 }

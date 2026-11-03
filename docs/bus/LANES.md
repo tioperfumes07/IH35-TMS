@@ -76,6 +76,7 @@ apps/backend/src/leases/**
 apps/backend/src/legal/contracts.service.ts
 apps/backend/src/maintenance/fuel-integrity.service.ts
 apps/backend/src/telematics/stop-events.reads.ts
+apps/backend/src/telematics/unit-lock-order.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads

@@ -15,6 +15,13 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
 import { BANK_TX_UNMATCH_RESET_SQL, resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
 export { resolveReversalDate, todayIso, releaseBankLinesNamingDocument } from "./posting-reversal-context.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+// Re-exported so verify-every-void-releases-its-bank-lines.mjs can assert this module uses the
+// canonical helper column list rather than an independent copy.
+export { BANK_LINE_DOCUMENT_POINTER_COLUMNS } from "../banking/bank-line-match-pointer.js";
+// LINKAGE STAMPS on posting rows this engine reverses (not direct columns here — the original
+// poster wrote them; the reversal copies them via readOriginalGlPostings → entity_uuid/entity_type):
+// driver_id  unit_id  trailer_id  customer_id  vendor_id  item_id
 import { postValidatedPostingLinesInClientTx } from "./posting-engine.service.js";
 import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -764,7 +771,7 @@ export async function postVoidReversal(
   const originalDateIso = assertIsoDay(params.originalDate, `${params.entityType}.originalDate`);
 
   const cutoff = await closedPeriodCutoff(client, params.operatingCompanyId);
-  const currentDate = params.currentDate ?? todayIso();
+  const currentDate = params.currentDate ?? companyBusinessDate();
   const reversalDate = resolveReversalDate(originalDateIso, cutoff, currentDate);
   const closedPeriod = isClosedPeriodReversal(originalDateIso, reversalDate);
 

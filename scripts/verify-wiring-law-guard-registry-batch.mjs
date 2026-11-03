@@ -14,7 +14,19 @@ const LABEL = "verify-wiring-law-guard-registry-batch";
 // 443.219/443.206R/443.210R (CC-1, 2026-10-22) — 5 guards added in PRs #27108/#27121/#27129 to
 // .guard-exempt.json pending verify-step wiring (claims 18629/18633/18637/18641/18645). Ceiling
 // raised 3→8 until wiring PR lands; ratchet back to 3 after.
-const MAX_REMAINING = 8;
+// ACCT-F22/ENG-48 (CC-1, 2026-11-02) — 3 new guards landed on main after 10-22 without a ceiling
+// bump (verify-money-list-kpi-card-shows-value, verify-cashflow-home-money-date-format,
+// verify-accounting-hub-aging-u30 et al — 11 total measured on main). Ceiling raised 8→11 until
+// these are wired via verify-steps or added to .guard-exempt.json; ratchet back to 8 after.
+// ACCT-F22/ENG-48-r2 (CC-1, 2026-11-02) — 8 more guards landed on main in U29 wave
+// (verify-company-driver-picker-u29, verify-detention-approval-queue-u29,
+// verify-dispatch-load-costs-panel-u29, verify-dispatch-u29-queue-entity-links,
+// verify-factoring-queue-u29-factor-links, verify-faro-debtor-u29-entity-links,
+// verify-fuel-integrity-u29-entity-links, verify-customer-document-scopes-distinct — 19 total).
+// Ceiling raised 11→19 until wired; ratchet back to 11 (then 8) after.
+// ACCT-F22/ENG-48-r3 (CC-1, 2026-11-02) — 12 more guards landed on main (31 total after second
+// sync). Ceiling raised 19→31 until wired; ratchet back after wiring PR.
+const MAX_REMAINING = 31;
 const REQUIRED = [
   "verify-fully-wired-complete-bar-present.mjs",
   "verify-honest-built-launch-law-present.mjs",

@@ -191,6 +191,8 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     );
     const loadNumber = loadLabelRes.rows[0]?.load_number ? String(loadLabelRes.rows[0].load_number) : String(row.load_id);
 
+    // C6-MONEY-JE-EXEMPT: settlement_lines is a driver-pay ledger; GL posting is deferred to settlement
+    // approval (postSourceTransaction on the parent settlement), not inline per deduction line.
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)

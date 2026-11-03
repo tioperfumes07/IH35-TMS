@@ -74,7 +74,9 @@ const DATE_ONLY = [
   "apps/frontend/src/pages/VendorDetail.tsx",
   "apps/frontend/src/lib/oos-display.ts",
   "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
-  "apps/frontend/src/pages/lists/LocationsListPage.tsx",
+  // LocationsListPage.tsx removed 2026-11-02: GLB-08 mandates mmmDd (not formatDateUS) for this
+  // date-only table; the guard contradiction was between DATE_ONLY (requiring formatDateUS) and
+  // verify-glb08-mmm-dd-sweep (banning it). TABLE_DATE_OMIT comment confirms no datetime cells.
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
   "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx",
 ];
