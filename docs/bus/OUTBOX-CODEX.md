@@ -1,3 +1,168 @@
+## 2026-11-03 — ROUND7.27 batch72: independent recheck of guard coverage fix
+
+- #28442 merged 2c0f8aae78: Legal union route failure published. Current bus still calls the Legal family closed; no route fix present at this check.
+- #28443 7e5f318240 full guard diff and surrounding implementation reviewed. Actual selftest exits0, nine checks; actual scan exits0:6380 guards,6355 classified wired,25 exempt,0 unaccounted. Independent execution of the real isExecutedInCi function rejects full-line JS and YAML comments (both false), but accepts an inline YAML comment (`run: echo ok # node scripts/verify-audit-sentinel.mjs`) and an inert JS string (`const documentation = 'verify-audit-sentinel.mjs';`) as executed (both true). Actual node-invocation control true. Narrow original plants fixed; executable-coverage claim remains OPEN. No assertion that any particular real guard is wholly unwired.
+- #28032 5d55869a6d full seven-file diff reviewed; historical affected suite finished325 PASS,4 FAIL-test,5 live exclusions. Four failures: additive-only, cust-verify-01, load-column-all-module-remainder, scheduled-reports. Causality remains unclassified, not assigned to this PR without parent comparison; live exclusions are NOT passes.
+- ENG17 guard selftest gap confirmed in an isolated in-memory mutation: remove the production failures() assertion requiring match_execution_deferred/execute===true; unchanged --selftest still exits0. Its plant checks a separate regular expression rather than invoking the validator on the modified fixture. Existing four classifier tests do not test route execution or proposal-query completeness. Guard owner must retain the assertion and test the actual validator; no money writer or production data changed.
+- Full audit remains OPEN. No production writes or connection-setting changes in this batch.
+
+## 2026-11-03 — ROUND7.27 batch71: Legal route-boundary regression
+
+Full #28435 and #28437 application/test/guard diffs read. Independent actual-route mock execution (real Zod, captured registered GET handlers, no production connection): templates draft200/one DB callback versus draft,active400/zero callbacks; contracts draft200/one callback versus draft,sent400/zero callbacks. Source contracts.routes.ts:38/templates.routes.ts:32 remains scalar enum. CONFIRMED regression; service ANY() is unreachable for frontend unions. Both guard selftests PASS and parser tests4/4 PASS; they omit route validation. LIVE 14:37CT: USMCA Legal Contracts initially2 draft rows; select Draft+Sent and Apply -> Couldn't load contract instances / Invalid option expected scalar status. Private inline screenshot captured; only filters used. Error page removes filter controls, leaving Retry (requires reload/navigation to recover). Findings sent to Cursor; no production data changed. Entire audit remains OPEN.
+
+## 2026-11-03 — ROUND7.27 batch70: ENG-34 wiring counterexample
+
+Batch69 merged #28436 694849ab32 with three affected guards / zero regressions. No production writes.
+
+- #28028 5ec717fe34 full documentation diff read:18 CODE BUILT claims explicitly retain live OPEN state; one affected live exclusion, not PASS. #28029 ad59817eea full registry diff read:one reservation plus Unicode serialization changes; no runtime implementation claimed.
+- #28031 1c344f0906 full wrapper read: executed its actual body with execFileSync intercepted (no commands run). Historical33 selftest invocations,20 comment-only guard names,0 comment names invoked. Current main34 invocations,19 comment-only names,0 invoked. This proves wrapper coverage only; other execution paths have not been ruled out.
+- Executed actual current verify-guard-wired.mjs isExecutedInCi function: nonexistent sentinel present only as a comment returns true; empty corpus returns false. Thus zero-exempt/fully-wired count is NOT executable coverage proof. Root: stepsCorpus.includes(guard) accepts comments. Requires executable registration/call-graph evidence and a deliberately unwired comment-only sentinel that fails; preserve live checks, no baseline or bypass. ENG-34 completion claim rejected at coverage-proof level, not a new production imbalance claim.
+- Follow-up #28026 insurance guard selftest:3/3 plants PASS. #28432 Legal Matters parser tests:3/3 PASS independently. Database pagination and deployed behavior remain unverified.
+
+## 2026-11-03 — ROUND7.27 batch69: capped multi-status readers
+
+Batch68 merged #28434 faa731acfe, normal push, one affected guard / zero regressions. Initial merge raced a base update; retry preserved the same audited body. No production writes.
+
+- Historical #28026 025e7af26c: complete seven-file diff reviewed; 100 affected PASS, five FAIL-test, one live exclusion. Four failing families reproduce on the parent (coming-state, notes mutation, master-detail tasks mutation, load-column placeholder); billing scan was already documented as red since #28008. No claim those are newly caused by this PR. Insurance guard selftest requires separate recorded execution. Legal templates listTemplates is uncapped; do not incorrectly infer every client-side union loses rows.
+- Confirmed current-main Invoice Search defect: actual queryFn executed in an isolated mock with 110 invoices, first100 sent and last10 draft; selecting draft+paid yields zero invoices/total0 instead of10. Source InvoiceSearchReportPage.tsx:93-113 requests limit100 before local union. No live missing-row count claimed. Requires server union before LIMIT, not a larger cap.
+- Historical #28027 b2491c148a: both application diffs reviewed; 20 affected PASS. Current Legal Contracts actual queryFn with310 contracts, first300 sent,last10 draft, selected draft+viewed yields0 instead of10. contracts.service.ts:175-223 filters one status then LIMIT300; multiselect removes server status. Finance Scenarios is not asserted to share this specific cap defect without endpoint evidence.
+- Cursor #28432 bf8995ba21: Legal Matters server union correction reviewed in service; route accepts strings; guard selftest PASS. Three new tests exercise parser only, not database COUNT/LIMIT. Deployed behavior and independent service-boundary test remain UNVERIFIED. Fines, Integrity and Maintenance findings remain open.
+- Neon read-only access remains restored; no new connection settings or production mutations. Entire audit remains incomplete; outstanding coverage is not PASS.
+
+## 2026-11-03 — ROUND7.27 batch68: historical control limits and trip population predicates
+
+Batch67 merged#28429 7ec326a640. No production changes; no repeated unchanged database probes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical#28019 38818f82ca|Full2-file diff and whole tieout reader read. Bank tieout selftest exit0.12affected PASS; module-completion selftest timed out in classifier,then standalone completed PASS. Generated banking.md side effect restored to exact HEAD via patch.|Historical structural nine-account change reviewed. Its stored-balance comparison is superseded on current main; prior independently scoped BANK-TIEOUT result remains OPEN,not a claim that7historicalvariances stillmatch.|
+|Historical#28021 e3cf79e8da|Full2-doc diff read;5affected PASS,1live exclusion.|Published historical evidence,not new engine code or new live proof.|
+|Historical#28022 95dc83854a|Affected suite completed55PASS; full4-file diff already reviewed;3actual queryFn fixtures fail pagination in batch67.|Guards green do NOT close confirmed pagination defects.|
+|Historical#28023 8aefd54c17|Full1-file diff: replaces nested rollback catch comment with intentional-swallow annotation.30affected PASS,6live exclusions,1FAIL-test. Atomic-post guard fails identically on parent and merge: hidden-result plant passed,exit1 both. no-swallow selftest10checksPASS.|Annotation-only guard exemption,not a runtime engine repair. Transpiled output differs in whitespace only; executable behavior not changed. No failed transaction induced in production.|
+|Historical#28024 9985b91393|Full5-doc diff read;9affected PASS,2capability skips,6live exclusions.|Adds build-before-merge instruction only. No compile or runtime fix credit.|
+|Historical#28025 4eafcd4b93|Full1-doc diff read;1affected live exclusion.|Zero forfeiture population/disabled flag cannot independently establish live writer acceptance. Earlier audit already leaves those live checks OPEN; no flag changed.|
+|#28428 2e1e768316|Full backend/guard diff read;hub scan and9/9selftests PASS on9d40f18f54. Actual guard with in-memory targeted plants:remove trip rollup void,rollup cancelled,equipment void -> each exit1;clean0.|Source predicates/regression detection accepted. Actual trip SQL/deployed ByLoad behavior remains UNVERIFIED; no new test file in PR.|
+
+Fresh browser reload still renders old Expense accuracy0% with raw actual and no matched days. #28424 deployed consumer remains UNVERIFIED,not claimed failed on new deployment. Full263-row/249historical-PR audit remains INCOMPLETE.
+
+## 2026-11-03 — ROUND7.27 batch67: live ENG-65 progress and related multi-status defects
+
+Batch66 merged#28426 b1a1b8ae9f;3affected guards,0regressions,normal hooks. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28422 dd171c394c ENG-65|Full4-file diff read;link/adopt context inspected. Guard scan PASS,3/3plants PASS,focused backend4/4tests PASS.|Existing-document source-pointer writer added with fill-once behavior. Mock tests do not constitute production backfill proof; audit did not call writer.|
+|ENG-65 live remeasurement|Privatephase24 READ ONLY,expectedbranch br-fancy-credit-akjnd07a,USMCA3264JE control.249 distinct live document/fill pairs;48without source pointer;0of those48 has a live nonarchived fuel record. ExplicitUSMCA predicates on all joined sources,ROLLBACK.|Progress confirmed versus prior90unlinked report;48remain OPEN due missing source fuel records. No balancing/relink/backfill performed by audit.|
+|#28022 related pagination|Full4-frontend-file diff read. Current Fines/Integrity/Legal queryFn executed independently with60mockrows,first50outside selectedstatuses,last10inside. Each returns0rows,total0 versus expected10/10. Backend equality+COUNT/LIMIT read.|CONFIRMED same post-page filtering defect on3surfaces; Legal also applies this pattern to severity/type. Posted to Cursor/Safety/Legal owners. Full historical affected suite still pending,not claimed PASS.|
+|Historical#28020 80c8fabc4c|Full1-line diff removes unused colors import;11affected PASS.|Narrow compile-cleanup accepted; full historical frontend build not rerun,not claimed.|
+
+All source/fixture evidence is distinct from deployed UI evidence. Full audit remains INCOMPLETE; no bank matching,production data/settings changes or emails.
+
+## 2026-11-03 — ROUND7.27 batch66: historical filter pagination
+
+Batch65 merged #28425 1be9bad5aa;1 affected guard,0 regressions,normal hooks. No production changes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical#28014 36db150fd4|Full2-doc diff;4affected PASS.|Coordination-only,not workflow proof.|
+|Historical#28015 9c1646fb39|Full1-doc diff;5affected PASS,2capability skips,5live exclusions.|Historical ops instructions NOT executed. Exclusions not PASS.|
+|Historical#28016 5b86dcb9c0|Full2-file diff;COI API/route/service read.10affected PASS,1FAIL-test; customer tasks-target-type mutation escapes identically on parent exit1. Party reverse guard3/3plants PASS.|COI status union filters complete company/customer-scoped uncapped response; no demonstrated pagination defect there. No live UI proof.|
+|Historical#28017 4e9dac5b1b|Full1-file diff;6affected PASS. Payment schedule API/route read: company/policy-scoped response uncapped,then multi-status client filter.|Source wiring accepted; no live mark-paid/payment action.|
+|Historical#28018 dfec63f512|Full1-file diff,API/backend/pagination read;17affected PASS. Executed actual queryFn with60 mocked rows(first50dismissed,last10submitted),select submitted+resolved:rows0,total0 instead of10/10.|CONFIRMED regression persists current main. Filtering after LIMIT50 discards matches and overwrites total,blocking next page. Posted to Cursor/route owner; server union before COUNT/LIMIT required.|
+
+Live cash-flow screen still shows old expense-accuracy0%/raw actual while no matched days; not deployed #28424 proof. Full audit remains INCOMPLETE; historical tests/source do not certify runtime screens.
+
+## 2026-11-03 — ROUND7.27 batch65: corrected load population, expense consumer and historical controls
+
+Batch64 merged #28420 296ebd9cec. Read-only production audit; no production writes or settings changes. Neon branch assertion is restored, not blocked.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28418 081fc52fd9 / #28419 f84ea3d8b0|Full diffs read; customer/lane backend tests12/12 PASS; hub plants9/9 PASS. Additional actual-guard in-memory plants remove lane void, lane cancelled, customer void predicates separately: each exits1. Clean scan exits0.|Named dead-load population predicates accepted; independent plants demonstrate failure, not source markers alone.|
+|Lane live population|Private READ ONLY phase23, expected branch/read_only on/USMCA3264JE control:136 lanes,194 loads,66917672c revenue,13581737c driver pay. Customer83groups/13581737c. Older dead-bill comparison14980291c,delta1398554c.|Four dead loads/1800000c removed from query population;194 matches active equipment population. Deployed authenticated HTTP/browser behavior still UNVERIFIED.|
+|AdjustPopover guard gap|#28418 consumer-specific guard: clean exit0; remove row argument ONLY in AdjustPopover -> exit1 with intended error.|Batch62 missed-plant defect CLOSED at source/guard level; not a deployed popover certification.|
+|#28424 4dfe7f084f E8 expense accuracy|Full application/test/guard diff read. Existing frontend suite now11/11 PASS; scan PASS;6/6 plants PASS. Tile consumes matched_* or matched groups, no-matched-days renders unavailable. Counterexample raw20000 vs matched10000/projected10000 covered.|Batch64 named consumer correction accepted in source/tests. Full tile rendering and deployed expense snapshot parity remain UNVERIFIED. No historical data manufactured.|
+|Historical#28009 ef5fe7927b|Full3-doc diff read;8affected PASS,2capability skips,5live exclusions.|Coordination-only; exclusions/skips not PASS. Historical write orders not executed.|
+|Historical#28010 e092c46da9|Full2-doc diff;4affected PASS. READ ONLY phase22 migration metadata:3 old duplicate names absent(count0),3 canonical entries present.|Named metadata state independently confirmed. No DELETE/DDL executed by audit.|
+|Historical#28011 71a2f324ae|Full8-file diff;35affected PASS; breadcrumb selftest2/2 plants PASS; guard baseline16->15.|Breadcrumb source accepted; each runtime Back destination remains separately unverified.|
+|Historical#28012 de6a2bbe4e|Full2-script diff;7/7 plants PASS. Unmodified live signed-net guard executed after branch assertion under default_transaction_read_only=on:exit0,34/34 signed documents matched and posted once,excluded5770 livecount0.|Actual live proof,not the classifier's live exclusion. Private raw log retained outside repo; no personal amounts committed.|
+|Historical#28013 a047486a7a|Full2-file diff and API/backend status parser read;13affected PASS. Status array reaches comma union and scoped SQL ANY filter.|Source wiring accepted. Guard --selftest has no handler:10 source assertions,NOT10 plants. No added render/behavior test or live multi-selection proof.|
+
+Full263-row/249-historical-PR audit remains INCOMPLETE. No production money, email, matching, migrations or settings changed. Private evidence in Downloads; no raw production screenshots committed.
+
+## 2026-11-03 — ROUND7.27 batch64: E8 expense accuracy consumer and historical reviews
+
+Batch63 merged #28415 41319bd8cb;3 affected guards,0 regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28414 736ed1220d E8|Full8-file diff reviewed. Backend E8+driver-AP tests13/13 PASS; new guard scan PASS/plants5/5. Existing FE E8 tests9/9 PASS with frontend jsdom config. Initial root invocation lacked document and failed4 render tests; corrected workspace invocation passes.|Shared expense engine and raw/matched API separation accepted in source. Tests are mocked, not live SQL parity.|
+|E8 expense accuracy consumer|ActualVsProjectedTab.tsx:690-708 still passes total_actual_expense_cents into accuracyVerb/accuracyPct and displays it next to matched projected total; neither new matched_* field consumed. Executed actual accuracyPct helper: projected10000,matched actual10000,raw actual20000 yields50% instead of100% for covered days.|CONFIRMED remaining consumer mismatch. Keep raw total for Accounting cash-out, but expense-accuracy tile must use matched coverage and say unavailable when none exists. Existing E8 render tests cover cell/chart,not whole accuracy tile.|
+|E8 deployment|13:50CT expected-branch/read-only USMCA control3264JE. information_schema returns0 projected_expense_cents columns; subsequent SELECT returns42703, safely rolled back to savepoint then transaction rollback.|Migration/deployed expense snapshot UNVERIFIED; do not claim live parity or execute a migration for audit. Private phase21 JSON.|
+|Historical#28006 d752e71aef|Full3-file docs diff reviewed;4affected PASS,1live exclusion.|Coordination-only; no runtime fix credit or live-exclusion pass.|
+|Historical#28007 650539674b|Full2-file diff reviewed;19affected PASS,1selftest failure. Insurance lawsuit scoped-create plant fails identically on parent(exit1). Only application change removes internal legal.matters label.|No new affected failure demonstrated. Historical bus contains DELETE instructions; reviewer did not execute them.|
+|Historical#28008 57782f2b10|Full8-file diff reviewed;234affected PASS,3FAIL-test,3live exclusions. Billing-summary guard scan/plants7/7 PASS.2 failures identical parent; billing-invoice guard adds1 failure over its inherited1.|New stale bounded-source assertion: canonical payment link→disabled marker distance3938→4058 exceeds4000 regex after BoardSection testIds. Read-only marker/link retained,no writer mounted. Retarget bound without dropping behavior assertions; not proof of broken payment navigation.|
+
+Full audit remains INCOMPLETE. No money, email, migration, matching or production settings modified. Phase21 result was initially saved under the private runner's generic filename because suffix recognition stopped at20; preserved as phase21 and suffix parser corrected, no production reread required.
+
+## 2026-11-03 — ROUND7.27 batch63: Neon restored, profitability live remeasurement
+
+Read-only audit on edbecd844b. Configured Neon CLI refreshed its expired local session through `neon me`; unchanged branch assertion now PASS. No production settings/data changed. All SQL measurements used REPEATABLE READ READ ONLY, explicit USMCA scope and ROLLBACK; expected branch br-fancy-credit-akjnd07a,3264 journal-entry control.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28410 5796dd1c05|Full13-file diff reviewed. Three profitability components ESLint exit0; prior6 rules-of-hooks errors gone. Hub selftest9/9 PASS; customer+two lane test files12/12 PASS. Lane/customer/load no longer substitute ByType; equipment parameter wired into readers.|Named hook ordering and dimension source corrections accepted. Deployed new behavior not yet verified.|
+|Customer/lane dead-driver-bill correction|Private phase19 aggregate-only READ ONLY results: customer repaired13581737c/83groups vs old14980291c/84groups; lane repaired13581737c vs old14980291c,139lanes/198loads. Delta1398554c for each. Diagnostic stop CTEs additionally USMCA-scoped.|Named dead-bill exclusion verified on live data. No excluded check counted as pass.|
+|Lane active-load parity|Phase20: lane population198 includes4 cancelled/voided loads with1800000c revenue. Active equipment population194:30 DRY_VAN,61 FLATBED,103 REFRIGERATED_VAN. lane-profitability.service.ts:109-116 excludes soft_deleted_at only, not cancelled/voided.|CONFIRMED remaining load-population mismatch; canonical live-load predicate needed. No balancing or data repair.|
+|Deployed profitability filter|Private browser screenshot13:46CT: selecting Dry Van while By Lane stays selected renders By Equipment Type,1row/30loads. This is the older delegation behavior, not evidence of deployed #28410 failure. No submit/write action.|New deployment UNVERIFIED; existing dimension mismatch remains visible until deployment/retest.|
+|Historical #28005 41b3f7cc2f|Full25-file diff plus DataPanel/BoardSection reviewed.163 affected guards PASS,1 FAIL-test,4 EXCLUDED-live-db. Customer master-detail tasks-target-type mutation escapes identically on parent80d7d164e1(exit1 both).|No new affected-guard failure demonstrated; four live exclusions remain unverified. Wrapper migration does not establish underlying workflow correctness.|
+
+Full263-row/249-historical-PR audit remains INCOMPLETE. Private measurement artifacts retained in Downloads; no credentials, screenshots or per-person financial evidence committed. Neon blocker is resolved, superseding earlier batch notes.
+
+## 2026-11-03 — ROUND7.27 batch62: scheduled delivery semantics and CASH-T03 regression plant
+
+Read-only audit; main c7e397c407 (#28404). No production writes or email sends. Batch61 merged #28403.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical #28004 80d7d164e1|Full13-file diff and runner/queue/cadence read. Scheduled tests11/11 PASS from repository root; delivery-banner selftest4/4 PASS. Affected guards102 PASS,2 FAIL. Both failures identical on parent cc79fec671: PolicyDetail legal.matters internal label; scheduled-reports Home source-label preconditions.|No new affected-guard regression demonstrated. Initial workspace-relative test invocation had2 ENOENT errors; corrected repository-root invocation passes all11. No live delivery inference.|
+|#28004 delivery claim, still on current main|SubscriptionManager.tsx:252 says Last sent follows successful delivery. runner.service.ts:330-349 awaits enqueueEmail then immediately stamps last_sent_at and success. queue.service.ts:29-80 only inserts status queued; email/cron.ts:199-280 performs provider.send later and can fail. These files unchanged between historical merge and current main.|CONFIRMED misleading delivery state. A successful enqueue followed by provider failure still appears Last sent/success. Existing queue-before-provider behavior predates PR; PR adds an inaccurate delivery assurance. Backend owner must link queue outcome to subscription outcome or distinguish queued/sent/failed; no real send performed for proof.|
+|#28404 CASH-T03|Full changed application/guard diff read. RollingLedgerTab.cash-t03 tests5/5 PASS. AdjustPopover now passes row into ledgerEntityKind; named source correction accepted.|Source/test correction verified, deployed popover behavior UNVERIFIED.|
+|#28404 guard coverage|In-memory plant removes row argument ONLY inside AdjustPopover. Actual verify-currency-format-guarded script still PASS;2 other matching calls satisfy global regex. No tracked files changed by plant. Script has no --selftest branch; invocation with that flag only scans.|CONFIRMED missed regression plant. Require consumer-specific assertion or render test that fails on AdjustPopover regression; helper test alone cannot detect a missing consumer argument.|
+|#28404 sibling guards|verify-dispatch-board-sections-and-columns selftest30/30; verify-ldt-6-settlement-frozen selftest11/11 PASS.|Named retargeted assertions verified; not a complete live screen certification.|
+
+Prior #28398 conditional-hooks finding remains unresolved on this tip. Neon branch assertion401 remains unresolved; no bypass or repeated production reads. Full263-row/249-historical-PR audit remains INCOMPLETE.
+
+## 2026-11-03 — ROUND7.27 batch61: conditional-hook regression, Reclassify and historical evidence
+
+Batch60 merged #28401 d84d360af6e20d0e835e2ca6a164799d17286c56;3affected0regressions. No production writes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28398 equipment delegation|Full5-file diff read. ESLint three changed components exit1:6 rules-of-hooks errors. New equipmentType early return precedes useQuery/useMemo in all3. Guard selftest8/8 PASS.|CONFIRMED regression; toggling same mounted component changes hook sequence. Deployed runtime crash not asserted.|
+|#28398 dimensions|ByLane/ByCustomer/ByLoad return ByTypeView rather than grouped lane/customer/load data when equipment selected.|PATCH-REJECTED as permanent filter implementation; shared total alone does not preserve requested dimensions.|
+|#245 Reclassify|Live heading11/03/2026 at1280/768; date-format defect corrected.768 Find transactions headingx742.16–817.95,first dateinputright876.16 beyond768. ReclassifyTransactionsPage.tsx346-350 nonwrapping flex+shrink-0 left pane.|Named date FIXED; responsive clipping OPEN. Private screenshots13:27CT. No transactions selected/applied.|
+|#242 Transfer footer|768x800 dialogx192–768,Cancel/Save at y760,visible; Save disabled,Cancel performed. No alert stack present during measurement.|Baseline footer visible; original concurrent-alert obstruction remains UNVERIFIED, not DONE.|
+|Historical#28001 a83ab8c3c7|Full2-file diff read;98affected PASS,3EXCLUDED-live-db; toolbar selftest3plants PASS. Change wraps disabled not-wired automation label only.|Presentation correction; no auto-vendor engine proof and no live exclusions counted as pass.|
+|Historical#28003 cc79fec671|Full2-file diff read;8affected PASS,1FAIL-test scheduled-reports. Delivery-banner selftest5/5 PASS. scheduled-reports --selftest exit1 identical on parent87fc72ca7d:2 Home source-label preconditions missing.|Inherited failure,not this PR regression. BoardSection wrapper is not email-delivery implementation; no send tested.|
+
+Neon branch assertion401 remains a live measurement blocker; no bypass/repeated queries. Browser fresh tab3 works; no submit/save/match/void actions. Full audit remains INCOMPLETE.
+
+## 2026-11-03 — ROUND7.27 batch60: profitability correction retests and journal overlap
+
+Batch59 merged #28396 3fe7e94201bb289e355ef2cc4e2843c7369b22ad;1 affected guard,0 regressions. Production READ ONLY; no application edits.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28392 customer cost|Exact route cost SELECT, USMCA,08/01–11/02,repeatable-read READ ONLY: before14980291c/84groups; repaired13581737c/83groups; delta1398554c. Branch br-fancy-credit-akjnd07a and3264JE control verified.|Customer predicate correction verified on live data; not authenticated deployed HTTP proof.|
+|#28392 lane/tests|Customer and two lane test files12/12 PASS. Lane reaggregation interrupted by read ETIMEDOUT; subsequent branch assertion refused Neon API401 before connection.|Lane live remeasurement UNVERIFIED. Do not bypass authentication/branch assertion. No production changes.|
+|#28395 alias/guard|Full8-file diff read; equipmentFilter6/6 PASS; direct dry_van vs reefer_van=false,vs refrigerated_van=false,vs Dry Van=true. Hub guard scan PASS,7/7 selftest PASS; db-specific bills CTE checks now present.|Named alias and equipment guard defect corrected in source. Mocked same-load aggregation still not a real SQL behavior test.|
+|#28395 equipment scope|Three tabs restore unfiltered rows and display explicit scope notice; backend equipment dimension still absent, acknowledged in PR REMAINING.|Blanking regression removed, but permanent shared filtering remains OPEN for lane/customer/load; scope notice is not end-to-end implementation.|
+|#240 Manual JE summary|Live Step2 date11/03/2026 at actual1280/768 widths. Header type selection and setStep(2) only; cancel, never Save.|Named date defect FIXED in sampled live form.|
+|#241 Manual JE Class overlap|Live both rows:1280 Class x801.63,width142,right943.63;Debit x916.65 =>26.98px overlap.768 Class x289.63,right431.63;Debit x404.65 =>same26.98px. All input heights40. Screenshots private in task13:25CT. ManualJEModal.tsx:247-291 grid/picker composition.|OPEN confirmed; minmax tracks alone do not prevent descendant picker overlap. Preserve controls, fix sizing and add actual layout regression proof.|
+
+Fresh browser tab restored access after tab2 timeouts. No submissions, no production writes. Full263-row/249-PR audit remains INCOMPLETE; Neon authentication now blocks further database measurements. Existing verified customer result remains evidence despite later connection failure; lane result was not returned.
+
 ## 2026-11-03 — ROUND7.27 batch59: new Cursor corrections and complete escrow display sample
 
 Batch58 merged #28393 c3c1dce2f971d08d65b67af26a692d03aef092cb,3affected0regressions. No production writes.

@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { Button } from "../../components/Button";
+import { formatQuantityTable } from "../../lib/money";
 
 function healthLabel(row: EngineStatusRow) {
   switch (row.health) {
@@ -104,7 +105,7 @@ export function EngineStatusBoardPage() {
         </Link>
         <span className="text-gray-400">·</span>
         <span data-testid="engine-status-red-count" className="text-[#1F2A44]">
-          {redCount} red · {rows.length} engines
+          {formatQuantityTable(redCount, 0)} red · {formatQuantityTable(rows.length, 0)} engines
         </span>
         <Button type="button" size="sm" variant="secondary" onClick={() => void q.refetch()} disabled={q.isFetching}>
           Refresh

@@ -30,6 +30,16 @@ export type FillFacts = {
   id: string;
   relay_id: string | null;
   card_unit_id: string | null;
+  /** E9 — the row's CURRENT unit (after an earlier resolution this is the GPS truck, card_unit_id keeps the card's). */
+  unit_id: string | null;
+  /** E9 — an owner ruling is recorded on the row (truck_resolution 'owner_ruling: …'); the engine never overrides it. */
+  owner_ruled: boolean;
+  /**
+   * E9 — a PERSON confirmed this fill's load (OWNER RULING 443.288: a live expense of the fill — or of its Relay sibling
+   * rows — carries load_confirmation 'confirmed', e.g. confirmed at settlement close by the closer). A machine never
+   * moves a confirmed load: it would silently undo the person's decision and drop the expense back to 'proposed'.
+   */
+  load_confirmed: boolean;
   card_unit: string | null;
   driver_id: string | null;
   load_id: string | null;
@@ -83,13 +93,23 @@ export function pickFillTruck(candidates: GpsCandidate[], cardUnitId: string | n
 
 export async function loadFillFacts(client: DbClient, companyId: string, fuelId: string): Promise<FillFacts | null> {
   const r = (await client.query<{
-    id: string; relay_id: string | null; card_unit_id: string | null; card_unit: string | null; driver_id: string | null;
+    id: string; relay_id: string | null; card_unit_id: string | null; unit_id: string | null; owner_ruled: boolean; load_confirmed: boolean;
+    card_unit: string | null; driver_id: string | null;
     load_id: string | null; load_number: string | null; transaction_at: string; notes: string | null; fill_moment_at: string | null;
     fill_moment_source: string | null; station_lat: string | null; station_lng: string | null; location_city: string | null;
     location_state: string | null; relay_created_at: string | null; r_lat: string | null; r_lng: string | null; r_city: string | null;
     r_state: string | null; r_store: string | null; r_name: string | null;
   }>(
     `SELECT f.id::text, f.relay_fuel_transaction_id::text AS relay_id, COALESCE(f.card_unit_id, f.unit_id)::text AS card_unit_id,
+            f.unit_id::text AS unit_id, COALESCE(f.truck_resolution LIKE 'owner_ruling:%', false) AS owner_ruled,
+            EXISTS (SELECT 1 FROM accounting.expenses e
+                     WHERE e.operating_company_id = f.operating_company_id AND e.voided_at IS NULL
+                       AND e.load_confirmation = 'confirmed'
+                       AND (e.source_fuel_transaction_id = f.id
+                            OR (f.relay_fuel_transaction_id IS NOT NULL AND e.source_fuel_transaction_id IN (
+                                  SELECT s.id FROM fuel.fuel_transactions s
+                                   WHERE s.operating_company_id = f.operating_company_id
+                                     AND s.relay_fuel_transaction_id = f.relay_fuel_transaction_id AND s.voided_at IS NULL)))) AS load_confirmed,
             cu.unit_number AS card_unit, f.driver_id::text, f.load_id::text, l.load_number::text, f.transaction_at::text, f.notes,
             f.fill_moment_at::text, f.fill_moment_source, f.station_lat::text, f.station_lng::text, f.location_city, f.location_state,
             r.relay_created_at::text, r.location_latitude::text AS r_lat, r.location_longitude::text AS r_lng,
@@ -121,7 +141,9 @@ export async function loadFillFacts(client: DbClient, companyId: string, fuelId:
     if (s?.lat != null && s.lng != null && /LOVE/i.test(`${r.location_city ?? ""} ${r.r_name ?? ""}`)) { lat = Number(s.lat); lng = Number(s.lng); }
   }
   return {
-    id: r.id, relay_id: r.relay_id, card_unit_id: r.card_unit_id, card_unit: r.card_unit, driver_id: r.driver_id,
+    id: r.id, relay_id: r.relay_id, card_unit_id: r.card_unit_id, unit_id: r.unit_id, owner_ruled: r.owner_ruled === true,
+    load_confirmed: r.load_confirmed === true,
+    card_unit: r.card_unit, driver_id: r.driver_id,
     load_id: r.load_id, load_number: r.load_number, moment, moment_source: source, station_lat: lat, station_lng: lng,
     city: (r.r_city ?? parsed.city)?.toUpperCase() ?? null, state: (r.r_state ?? parsed.state)?.toUpperCase() ?? null,
     store_no: store, station: r.r_name ?? r.location_city ?? "",
@@ -285,8 +307,31 @@ export type OwnerRuling = { fuel_id: string; to_unit_id?: string | null; to_load
 export type RerunRow = {
   fuel_id: string; fill_ct: string | null; moment_source: string | null; station: string; card_unit: string | null;
   gps_unit: string | null; candidates: string; current_load: string | null; engine_load: string | null;
-  truck_resolution: string; load_resolution: string; action: "repoint" | "ruling" | "keep" | "held"; outcome?: FillMoveOutcome;
+  truck_resolution: string; load_resolution: string; action: "repoint" | "ruling" | "keep" | "held" | "owner_ruled" | "load_confirmed"; outcome?: FillMoveOutcome;
 };
+
+/**
+ * E9 (ENG-64) — pure: what the rerun does with one fill.
+ *   - a ruling passed in this run → "ruling";
+ *   - an owner ruling already recorded on the row → "owner_ruled" (kept; the engine never overrides the owner);
+ *   - a person confirmed the fill's load (443.288) → "load_confirmed" (kept; a machine never moves a confirmed load);
+ *   - engine not certain (no GPS truck or no load) → "held";
+ *   - engine load or truck differs from the row's CURRENT load / CURRENT unit → "repoint";
+ *   - else "keep".
+ * Before E9 the truck was compared with card_unit_id (COALESCE(card_unit_id, unit_id)), so a fill already moved to its GPS
+ * truck read as "repoint" on every rerun (14 phantom repoints, 11-03), and a recorded owner ruling read as "repoint"
+ * whenever the engine disagreed (5 owner-ruled fills would have been moved off the owner's load by an apply).
+ */
+export function rerunAction(input: {
+  hasRuling: boolean; ownerRuled: boolean; loadConfirmed: boolean; truckUnitId: string | null; engineLoadId: string | null;
+  toLoadId: string | null; toUnitId: string | null; currentLoadId: string | null; currentUnitId: string | null;
+}): RerunRow["action"] {
+  if (input.hasRuling) return "ruling";
+  if (input.ownerRuled) return "owner_ruled";
+  if (input.loadConfirmed) return "load_confirmed";
+  if (!input.truckUnitId || !input.engineLoadId) return "held";
+  return input.toLoadId !== input.currentLoadId || input.toUnitId !== input.currentUnitId ? "repoint" : "keep";
+}
 
 /** Dry run (default) or apply over the company's live fuel (or a subset). Owner rulings override the engine by name. */
 export async function runFuelFollowsTruck(
@@ -320,8 +365,10 @@ export async function runFuelFollowsTruck(
         toLoadNumber = l?.load_number ?? null;
       }
     }
-    const confident = !!res.truck_unit_id && !!res.engine_load_id;
-    const action: RerunRow["action"] = ruling ? "ruling" : !confident ? "held" : toLoad !== res.load_id || toUnit !== res.card_unit_id ? "repoint" : "keep";
+    const action = rerunAction({
+      hasRuling: !!ruling, ownerRuled: res.owner_ruled, loadConfirmed: res.load_confirmed, truckUnitId: res.truck_unit_id, engineLoadId: res.engine_load_id,
+      toLoadId: toLoad, toUnitId: toUnit, currentLoadId: res.load_id, currentUnitId: res.unit_id,
+    });
     const row: RerunRow = {
       fuel_id: id,
       fill_ct: res.moment ? (await client.query<{ t: string }>(`SELECT to_char($1::timestamptz AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI') AS t`, [res.moment])).rows[0]!.t : null,

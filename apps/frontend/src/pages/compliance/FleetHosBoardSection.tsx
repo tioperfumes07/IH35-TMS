@@ -389,7 +389,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
               >
                 Reset
               </Button>
-              <span className="text-xs text-[#6B7280]">{liveRows.length} reporting</span>
+              <span className="text-xs text-[#6B7280]">{formatQuantityTable(liveRows.length, 0)} reporting</span>
               <span className="text-xs text-[#6B7280]">
                 {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
               </span>
@@ -421,7 +421,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
             aria-expanded={showOffline}
           >
             <span className="text-[#6B7280]">{showOffline ? "▾" : "▸"}</span>
-            Offline / stale ({offlineRows.length})
+            Offline / stale ({formatQuantityTable(offlineRows.length, 0)})
             <span className="ml-2 font-normal text-[#6B7280]">
               no fix in the last {OFFLINE_STALE_THRESHOLD_DAYS} days — hidden from the live view
             </span>

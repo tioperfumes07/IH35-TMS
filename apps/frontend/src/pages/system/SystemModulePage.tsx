@@ -713,13 +713,13 @@ function TransactionHealthTab() {
         sub="Every TMS-native document — invoice, bill, bill payment, customer payment, expense, journal entry, factoring batch, settlement — with posted/balanced/linked/sample-consistency computed at read time. Nothing here is stored; a row clears when the underlying document is actually fixed, never by a click."
       >
         <Row label="Failing">
-          <span className="tabular-nums">{failCount}</span>
+          <span className="tabular-nums">{formatQuantityTable(failCount, 0)}</span>
         </Row>
         <Row label="Warnings">
-          <span className="tabular-nums">{warnCount}</span>
+          <span className="tabular-nums">{formatQuantityTable(warnCount, 0)}</span>
         </Row>
         <Row label="Loaded rows">
-          <span className="tabular-nums">{rows.length}</span>
+          <span className="tabular-nums">{formatQuantityTable(rows.length, 0)}</span>
         </Row>
         <Row label="Generated">{txHealthDateTime(generatedAt)}</Row>
       </Card>

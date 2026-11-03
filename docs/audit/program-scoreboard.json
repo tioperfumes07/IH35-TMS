@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e556533",
-  "generated_at": "2026-11-03T17:54:49.961Z",
+  "healthzSha": "1be9bad",
+  "generated_at": "2026-11-03T20:11:51.564Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e556533",
+    "deployedSha": "1be9bad",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28357,
-      "title": "FIX: CASH-T03 fuel_forecast provenance (no fake expense drill)",
+      "number": 28431,
+      "title": "BUS: tip after #28428/#28430 factoring qty + trip voided",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28357",
-      "sha": "e1f7f1369b",
-      "committedAtIso": "2026-11-03T11:53:30-06:00"
+      "mergedAtCt": "11/03/2026, 02:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28431",
+      "sha": "bbfa6447d6",
+      "committedAtIso": "2026-11-03T14:09:24-06:00"
     },
     {
-      "number": 28356,
-      "title": "FINDING: Codex-ROUND7 insurance attribution and AvP retest",
+      "number": 28430,
+      "title": "FORMAT: factoring submit + tour footer counts house quantity",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28356",
-      "sha": "050ef9bbc0",
-      "committedAtIso": "2026-11-03T11:52:19-06:00"
+      "mergedAtCt": "11/03/2026, 02:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28430",
+      "sha": "9d40f18f54",
+      "committedAtIso": "2026-11-03T14:07:37-06:00"
     },
     {
-      "number": 28355,
-      "title": "FORMAT: house quantity Age/idle/days/gal/renewal",
+      "number": 28429,
+      "title": "FINDING: Codex Relay live linkage and status-pagination evidence",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28355",
-      "sha": "4f4886e46d",
-      "committedAtIso": "2026-11-03T11:51:01-06:00"
+      "mergedAtCt": "11/03/2026, 02:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28429",
+      "sha": "7ec326a640",
+      "committedAtIso": "2026-11-03T14:06:03-06:00"
     },
     {
-      "number": 28353,
-      "title": "Codex: trailer proof and Rolling Ledger broken drill finding",
+      "number": 28428,
+      "title": "FIX: trip profitability excludes voided/cancelled loads",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28353",
-      "sha": "c3b53cde0f",
-      "committedAtIso": "2026-11-03T11:47:26-06:00"
+      "mergedAtCt": "11/03/2026, 02:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28428",
+      "sha": "2e1e768316",
+      "committedAtIso": "2026-11-03T14:05:39-06:00"
     },
     {
-      "number": 28352,
-      "title": "BUS: OUTBOX tip #28351 AvP chart render test",
+      "number": 28427,
+      "title": "FORMAT: reverse/home/fleet count badges house quantity",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28352",
-      "sha": "e556533532",
-      "committedAtIso": "2026-11-03T11:44:46-06:00"
+      "mergedAtCt": "11/03/2026, 02:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28427",
+      "sha": "9fc43b03cf",
+      "committedAtIso": "2026-11-03T14:03:53-06:00"
     },
     {
-      "number": 28351,
-      "title": "TEST: AvP chart renders projected-expense legend + polyline (batch45)",
+      "number": 28426,
+      "title": "FINDING: Codex maintenance multi-status pagination audit",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28351",
-      "sha": "dee7054b64",
-      "committedAtIso": "2026-11-03T11:44:07-06:00"
+      "mergedAtCt": "11/03/2026, 02:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28426",
+      "sha": "b1a1b8ae9f",
+      "committedAtIso": "2026-11-03T14:03:07-06:00"
     },
     {
-      "number": 28350,
-      "title": "Codex: independent deployed repair and journal verification",
+      "number": 28425,
+      "title": "FINDING: Codex independent audit query and consumer corrections",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28350",
-      "sha": "00881832a4",
-      "committedAtIso": "2026-11-03T11:43:08-06:00"
+      "mergedAtCt": "11/03/2026, 01:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28425",
+      "sha": "1be9bad5aa",
+      "committedAtIso": "2026-11-03T13:59:51-06:00"
     },
     {
-      "number": 28349,
-      "title": "BUS: OUTBOX tip #28347–#28348 bulkRowLabels house money",
+      "number": 28424,
+      "title": "FIX: AvP expense-accuracy tile uses matched coverage (batch64)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28349",
-      "sha": "4885ead01a",
-      "committedAtIso": "2026-11-03T11:41:57-06:00"
+      "mergedAtCt": "11/03/2026, 01:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28424",
+      "sha": "4dfe7f084f",
+      "committedAtIso": "2026-11-03T13:56:03-06:00"
     },
     {
-      "number": 28348,
-      "title": "GUARD: ratchet currency guard for bulkRowLabels",
+      "number": 28423,
+      "title": "BUS: register rows 146/261; CC-1 queue after Lead shipped E8 + ENG-65",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28348",
-      "sha": "cb4a568482",
-      "committedAtIso": "2026-11-03T11:41:21-06:00"
+      "mergedAtCt": "11/03/2026, 01:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28423",
+      "sha": "064f4b9e0c",
+      "committedAtIso": "2026-11-03T13:55:13-06:00"
     },
     {
-      "number": 28347,
-      "title": "FIX: bulkRowLabels money uses formatUsdCents",
+      "number": 28422,
+      "title": "FINDING: ACCT-F11039 ENG-65 / E2 — a Relay fill document links its fuel record on every adopt (90 unlinked, $38,717.03)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28347",
-      "sha": "c114d56f34",
-      "committedAtIso": "2026-11-03T11:40:37-06:00"
+      "mergedAtCt": "11/03/2026, 01:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28422",
+      "sha": "dd171c394c",
+      "committedAtIso": "2026-11-03T13:53:52-06:00"
     }
   ]
 }

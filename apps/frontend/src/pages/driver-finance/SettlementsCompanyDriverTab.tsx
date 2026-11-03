@@ -102,7 +102,7 @@ function ResolveFromCompanySettlement({
     <div className="space-y-2">
       {ids.length > 1 ? (
         <div className="ldt-note warn">
-          This company settlement covers {ids.length} driver settlements — showing the first side by side.
+          This company settlement covers {formatQuantityTable(ids.length, 0)} driver settlements — showing the first side by side.
         </div>
       ) : null}
       <CompanyDriverSideBySide companyId={companyId} settlementId={ids[0]} onBack={() => onSelectSettlement(null)} />

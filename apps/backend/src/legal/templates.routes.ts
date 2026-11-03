@@ -11,6 +11,7 @@ import {
   legalTemplateUpdateSchema,
   listTemplates,
   listVersions,
+  parseTemplateStatusFilter,
   remintAttorneyReviewLink,
   retireTemplate,
   submitForAttorneyReview,
@@ -26,10 +27,23 @@ const operatingCompanyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+/** Codex batch71 — comma-unions must clear the HTTP boundary; every token must be allowlisted (not arbitrary strings). */
+const templateListStatusSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .refine((raw) => {
+    const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) return false;
+    const parsed = parseTemplateStatusFilter(raw);
+    return parsed.length === new Set(parts).size;
+  }, { message: "Invalid status" });
+
 const listQuerySchema = operatingCompanyQuerySchema.extend({
   category: z.string().trim().min(1).max(120).optional(),
   language: z.enum(["en", "es", "bilingual"]).optional(),
-  status: z.enum(["draft", "pending_review", "approved", "active", "retired"]).optional(),
+  status: templateListStatusSchema.optional(),
   search: z.string().trim().min(1).max(120).optional(),
 });
 

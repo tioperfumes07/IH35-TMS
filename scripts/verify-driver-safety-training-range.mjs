@@ -22,7 +22,7 @@ export function check(s) {
   need(/data-testid="training-records-server-pager"/.test(s.register) && /pageSize=\{pageSize\}[\s\S]{0,120}\bhidePager\b/.test(s.register), "Safety register must expose one server-total pager");
   need(/count\(\*\) OVER\(\)::int AS total_count[\s\S]{0,300}LIMIT 50/.test(s.aggregate) && /training_records_total_count/.test(s.aggregate), "Driver aggregate must disclose its preview total");
   need(/totalCount=\{aggregate\.training_records_total_count/.test(s.profile) && /driverId=\{id\}/.test(s.profile), "Driver profile must pass preview range identity");
-  need(/Showing \{rows\.length\} of \{totalCount\} records/.test(s.section) && /\/safety\/training-records\?driver_id=\$\{encodeURIComponent\(driverId\)\}/.test(s.section), "Driver preview must disclose cap and link to canonical full register");
+  need(/Showing \{formatQuantityTable\(rows\.length, 0\)\} of \{formatQuantityTable\(totalCount, 0\)\} records/.test(s.section) && /\/safety\/training-records\?driver_id=\$\{encodeURIComponent\(driverId\)\}/.test(s.section), "Driver preview must disclose cap and link to canonical full register");
   return failures;
 }
 
@@ -33,7 +33,7 @@ if (process.argv.includes("--selftest")) {
     { ...source, api: source.api.replaceAll("; total_count: number", "") },
     { ...source, register: source.register.replace('data-testid="training-records-server-pager"', 'data-testid="removed-pager"') },
     { ...source, aggregate: source.aggregate.replace("count(*) OVER()::int AS total_count", "0::int AS hidden_count") },
-    { ...source, section: source.section.replace("Showing {rows.length} of {totalCount} records.", "Training records") },
+    { ...source, section: source.section.replace("Showing {formatQuantityTable(rows.length, 0)} of {formatQuantityTable(totalCount, 0)} records.", "Training records") },
   ];
   const escaped = mutations
     .map((mutation, index) => ({ index, failures: check(mutation) }))

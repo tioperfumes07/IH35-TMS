@@ -18,6 +18,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getCustomerDetail } from "../../../api/mdata";
+import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -357,7 +358,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 2 — Vehicles */}
         {stepIdx === 1 && (
           <div className="space-y-2">
-            <p className="text-xs text-[#6B7280]">{selectedList.length} selected · {units.length} eligible</p>
+            <p className="text-xs text-[#6B7280]">{formatQuantityTable(selectedList.length, 0)} selected · {formatQuantityTable(units.length, 0)} eligible</p>
             {fleetQuery.isError ? (
               <ListErrorState title="Couldn't load eligible fleet" status={0} message={(fleetQuery.error as Error)?.message} onRetry={() => void fleetQuery.refetch()} />
             ) : (

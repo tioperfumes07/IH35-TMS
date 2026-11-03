@@ -10,6 +10,7 @@ import { EntityLink } from "../shared/EntityLink";
 import type { ParityColumn } from "../parity/ParityTable";
 import type { TourListRow } from "../../api/tourReadout";
 import type { TourLegBrief } from "../../api/tourReadout";
+import { formatQuantityTable } from "../../lib/money";
 
 const DASH = "\u2014";
 
@@ -47,7 +48,7 @@ export function TourLegsCell({ legs, legsLabel }: { legs: TourLegPill[] | null |
   return (
     <span className="ldt-legs" data-testid="tour-legs-cell" title={fullList}>
       <span className="ldt-legcount" data-testid="tour-legs-count">
-        {list.length} legs
+        {formatQuantityTable(list.length, 0)} legs
       </span>
       {shown.map((l) => (
         <EntityLink

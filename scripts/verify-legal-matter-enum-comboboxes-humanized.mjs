@@ -25,6 +25,7 @@ const LABEL = "verify-legal-matter-enum-comboboxes-humanized";
 const DETAIL = "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx";
 const LIST = "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx";
 const FORM_FIELDS = "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx";
+const SERVICE = "apps/backend/src/legal/matters.service.ts";
 
 export function checkDetail(text) {
   const problems = [];
@@ -60,6 +61,27 @@ export function checkList(text) {
   if (!/\["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"\]\.map\(\(s\) => \(\{[\s\S]{0,80}label:\s*properEnumOrFilterLabel\(s\)/.test(text)) {
     problems.push("LegalMattersListPage: Type filter MultiSelect is not humanized.");
   }
+  // Codex batch67 — multi-status/severity/type must hit the server as a comma-union (never filter a page).
+  if (!text.includes('status.length ? status.join(",") : undefined')) {
+    problems.push("LegalMattersListPage: status multi-select must send comma-union to the API.");
+  }
+  if (!text.includes('severity.length ? severity.join(",") : undefined') || !text.includes('type.length ? type.join(",") : undefined')) {
+    problems.push("LegalMattersListPage: severity/type multi-select must send comma-union to the API.");
+  }
+  if (/status\.length > 1[\s\S]{0,160}matters\.filter/.test(text)) {
+    problems.push("LegalMattersListPage: must not client-filter a paginated page for multi-status.");
+  }
+  return problems;
+}
+
+export function checkService(text) {
+  const problems = [];
+  if (!text.includes("parseMatterEnumFilter") || !text.includes("m.status = ANY($${values.length}::text[])")) {
+    problems.push("listMatters: status multi-select must use ANY() via parseMatterEnumFilter before LIMIT.");
+  }
+  if (!text.includes("m.severity = ANY($${values.length}::text[])") || !text.includes("m.type = ANY($${values.length}::text[])")) {
+    problems.push("listMatters: severity/type multi-select must use ANY() before LIMIT.");
+  }
   return problems;
 }
 
@@ -78,13 +100,19 @@ function run() {
   const detailText = readFileSync(DETAIL, "utf8");
   const listText = readFileSync(LIST, "utf8");
   const formText = readFileSync(FORM_FIELDS, "utf8");
-  const problems = [...checkDetail(detailText), ...checkList(listText), ...checkFormFields(formText)];
+  const serviceText = readFileSync(SERVICE, "utf8");
+  const problems = [
+    ...checkDetail(detailText),
+    ...checkList(listText),
+    ...checkFormFields(formText),
+    ...checkService(serviceText),
+  ];
   if (problems.length) {
     console.error(`${LABEL} FAILED:`);
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — all 5 legal matter/deadline enum spots stay humanized.`);
+  console.log(`${LABEL} OK — legal matter enum humanize + multi-status server unions.`);
 }
 
 function selftest() {
@@ -92,10 +120,12 @@ function selftest() {
   const detailReal = readFileSync(DETAIL, "utf8");
   const listReal = readFileSync(LIST, "utf8");
   const formReal = readFileSync(FORM_FIELDS, "utf8");
+  const serviceReal = readFileSync(SERVICE, "utf8");
 
   if (checkDetail(detailReal).length) failures.push("LegalMatterDetailPage baseline should pass");
   if (checkList(listReal).length) failures.push("LegalMattersListPage baseline should pass");
   if (checkFormFields(formReal).length) failures.push("LegalMatterFormFields baseline should pass");
+  if (checkService(serviceReal).length) failures.push("matters.service baseline should pass");
 
   const d1 = checkDetail(
     detailReal.replace(
@@ -122,12 +152,23 @@ function selftest() {
   );
   if (!f1.some((m) => m.includes("create/edit Type combobox"))) failures.push("offender-4 (raw form Type combobox) NOT caught");
 
+  const l3 = checkList(listReal.replace('status.length ? status.join(",") : undefined', "status.length === 1 ? status[0] : undefined"));
+  if (!l3.some((m) => m.includes("comma-union"))) failures.push("offender-5 (status client single-only) NOT caught");
+
+  const l4 = checkList(
+    listReal + '\nif (status.length > 1) matters = matters.filter((row) => status.includes(String(row.status ?? "")));\n'
+  );
+  if (!l4.some((m) => m.includes("client-filter"))) failures.push("offender-5b (client page filter) NOT caught");
+
+  const s1 = checkService(serviceReal.replaceAll("m.status = ANY($${values.length}::text[])", "m.status = $REMOVED"));
+  if (!s1.some((m) => m.includes("status multi-select"))) failures.push("offender-6 (status ANY removed) NOT caught");
+
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 5/5 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — enum humanize + multi-status server-union plants caught`);
 }
 
 if (process.argv.includes("--selftest")) {

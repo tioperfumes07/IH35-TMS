@@ -57,16 +57,15 @@ export function LegalTemplatesListPage() {
     queryKey: ["legal", "templates", operatingCompanyId, search, status.join(","), category],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch unscoped then filter.
-      const statusParam = status.length === 1 && isLegalTemplateStatus(status[0]) ? status[0] : undefined;
+      // Codex batch67 sibling — send allowlisted comma-union; never client-filter the list.
+      const statusParam = status.filter(isLegalTemplateStatus).join(",") || undefined;
       const res = await legalTemplatesApi.list({
         operating_company_id: operatingCompanyId,
         search: search || undefined,
         status: statusParam,
         category: category || undefined,
       });
-      if (status.length <= 1) return res.templates;
-      return res.templates.filter((row) => status.includes(row.status));
+      return res.templates;
     },
   });
 
