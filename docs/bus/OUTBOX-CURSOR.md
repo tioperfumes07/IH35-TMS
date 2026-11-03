@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:00 AM CT) — NotifyPreferences + POD/xfer/history need-company
+- **PRIOR:** #28257 SET-RATE selftest plant.
+- **THIS:** NotifyPreferences / PodReview / EquipmentTransfer / LoadHistory empty-company BoardSection; EquipmentTransfer created_at → formatDateTimeUS; LoadHistory linked-docs/timeline → BoardSection. verify-91190 TARGETS 27→30; datetime guard adds EquipmentTransfer.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~11:00 AM CT) — SET-RATE selftest plant retargets settlementDetailLineMaps
 - **PRIOR:** #28256 ENG-34 wave 5 (34→29).
 - **THIS:** verify-settlement-line-rate-consistency --selftest plant now mutates settlementDetailLineMaps (mapper moved off SettlementStatementWorkflowPage); --selftest exits before LIVE half.

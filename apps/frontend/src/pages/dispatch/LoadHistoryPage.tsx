@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
 import {
@@ -196,6 +197,17 @@ export default function LoadHistoryPage() {
     );
   }
 
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4" data-testid="load-history-page">
+        <PageHeader backHref="/dispatch" title="Load history" breadcrumb={["Dispatch", "Loads", "History"]} />
+        <BoardSection title="Load history" testId="load-history-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4" data-testid="load-history-page">
       <PageHeader backHref="/dispatch"
@@ -221,8 +233,7 @@ export default function LoadHistoryPage() {
         />
       ) : null}
 
-      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="load-history-linked-docs">
-        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Linked documents</h2>
+      <BoardSection title="Linked documents" testId="load-history-linked-docs">
         <ParityTable appearance="board"
           columns={docColumns}
           rows={historyQuery.data?.linked_documents ?? []}
@@ -231,17 +242,16 @@ export default function LoadHistoryPage() {
             historyQuery.isLoading ? "Loading…" : "No linked invoices, advances, settlements, expenses, or work orders."
           }
         />
-      </section>
+      </BoardSection>
 
-      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="load-history-timeline">
-        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Timeline</h2>
+      <BoardSection title="Timeline" testId="load-history-timeline">
         <ParityTable appearance="board"
           columns={timelineColumns}
           rows={historyQuery.data?.rows ?? []}
           rowKey={(r) => r.id}
           emptyText={historyQuery.isLoading ? "Loading…" : "No history events recorded for this load."}
         />
-      </section>
+      </BoardSection>
     </div>
   );
 }

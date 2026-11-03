@@ -17,6 +17,7 @@ import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const POD_STATUS_OPTIONS = statusOptions({
   pending_review: "Pending review",
@@ -215,6 +216,17 @@ export function PodReviewPage() {
       </div>
     </CollapsedListFilters>
   );
+
+  if (!companyId) {
+    return (
+      <div className="p-4" data-testid="dispatch-pod-review-page">
+        <PageHeader backHref="/dispatch" title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
+        <BoardSection title="POD review" testId="pod-review-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4" data-testid="dispatch-pod-review-page">

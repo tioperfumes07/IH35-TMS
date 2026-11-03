@@ -6,8 +6,13 @@ Confirmed at exact merge13a938a0de: `apps/backend/src/telematics/__tests__/load-
 Batch33 USMCA SQL results posted OUTBOX and CC1/CC2/CC3 inboxes. Key guard semantics:10delivered_pending_docs loads without invoices and2manual invoices without load are not automatically illegal under the delivery/billing latch. Never post money simply to clear these counts.
 
 # INBOX — CURSOR (CURRENT — 11-03-2026 ~9:45 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:00 AM CT)
 
-## CURRENT — SET-RATE selftest plant retargets settlementDetailLineMaps
+## CURRENT — NotifyPreferences + POD/xfer/history need-company
+NotifyPreferences / PodReview / EquipmentTransfer / LoadHistory BoardSection need-company; EquipmentTransfer created_at house datetime; LoadHistory boards. verify-91190 27→30. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+## PRIOR — SET-RATE selftest plant retargets settlementDetailLineMaps
 verify-settlement-line-rate-consistency selftest fixed (mapper path). **ENG-21 DONE-LIVE**. Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
