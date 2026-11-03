@@ -13,6 +13,7 @@
  * A settlement cannot close while any expense on its loads is 'proposed' (proposedExpenseLoadsOnSettlement).
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { ExpenseLoadConfirmRefused, withExpenseLoadConfirmedBy } from "./expense-load-confirm-actor.js";
 import { carryFuelReceiptToLoad } from "../fuel/fuel-receipt-repoint.service.js";
 import { moveExpenseDocumentToLoad, moveExpenseFamilyToLoad, moveFuelReceiptDocumentToLoad } from "./reclassify/reclassify.service.js";
 
@@ -21,37 +22,9 @@ type Db = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]
 /** Dispatcher (Dispatch) or the Closer (Settlements Close: Accountant / Administrator / Manager) or the Owner. */
 export const EXPENSE_LOAD_CONFIRM_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"]);
 
-export class ExpenseLoadConfirmRefused extends Error {
-  /** answered 409 by name (Fastify sends statusCode + code + message) from every route that reaches it */
-  public readonly statusCode = 409;
-  constructor(public readonly code: string, message: string, public readonly details?: Record<string, unknown>) {
-    super(message);
-    this.name = "ExpenseLoadConfirmRefused";
-  }
-}
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * A route where a PERSON chose the load marks its whole transaction: every load it writes is confirmed by that person
- * (transaction-local; ends with the transaction). Used by: Settlement Creator post (the closer), expense relink,
- * reclassify by load, the fuel assignment answer, an expense entered with its load.
- */
-export async function markExpenseLoadConfirmedBy(client: Db, userId: string): Promise<void> {
-  if (!UUID.test(userId)) return;
-  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1::text, true)", [userId]);
-}
-
-/** Run `fn` with this person as the confirming actor (transaction-local); the actor is cleared afterwards. */
-export async function withExpenseLoadConfirmedBy<T>(client: Db, userId: string, fn: () => Promise<T>): Promise<T> {
-  if (!UUID.test(userId)) throw new ExpenseLoadConfirmRefused("CONFIRMING_USER_INVALID", "A load is confirmed by a signed-in person.");
-  await client.query("SELECT set_config('app.expense_load_confirm_actor', $1::text, true)", [userId]);
-  try {
-    return await fn();
-  } finally {
-    await client.query("SELECT set_config('app.expense_load_confirm_actor', '', true)");
-  }
-}
+// The one writer of the confirming actor + the named refusal live in expense-load-confirm-actor.ts (row 102: a machine
+// actor is refused by name, MACHINE_CANNOT_CONFIRM_LOAD). Re-exported so every existing import keeps one class.
+export { ExpenseLoadConfirmRefused, markExpenseLoadConfirmedBy, withExpenseLoadConfirmedBy, assertPersonConfirmsLoad } from "./expense-load-confirm-actor.js";
 
 export type ExpenseLoadConfirmItem = { expenseId: string; loadId?: string | null };
 export type ExpenseLoadConfirmResult = {
@@ -93,10 +66,25 @@ export async function confirmExpenseLoadsInClientTx(
       const changed = target !== e.load_id;
       if (changed) {
         if (e.fill) {
-          const carried = await carryFuelReceiptToLoad(client as never, {
+          let carried = await carryFuelReceiptToLoad(client as never, {
             operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, fillKind: "fuel_transaction",
             fillId: e.fill, toLoadId: target, toLoadNumber: load.load_number, reason,
           });
+          // Row 102 (443.288 family): a Relay fill is posted under its Relay id (prod 11-03: 1,655 fuel_event legs, 0 under a
+          // fuel row of a Relay fill). Carry it by the Relay id like the fill engine does, so its ledger AND every sibling
+          // fuel row (diesel + DEF) move together — never only the one row the expense names.
+          const relayId = carried === "not_posted"
+            ? (await client.query<{ relay_id: string | null }>(
+                `SELECT relay_fuel_transaction_id::text AS relay_id FROM fuel.fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+                [e.fill, input.operatingCompanyId],
+              )).rows[0]?.relay_id ?? null
+            : null;
+          if (relayId) {
+            carried = await carryFuelReceiptToLoad(client as never, {
+              operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, fillKind: "relay_fuel",
+              fillId: relayId, toLoadId: target, toLoadNumber: load.load_number, reason,
+            });
+          }
           if (carried === "split") throw new ExpenseLoadConfirmRefused("RECEIPT_SPLIT_ACROSS_LOADS", "This receipt's ledger is split across loads — reclassify it line by line.", { expense_id: e.id });
           if (carried === "not_posted") {
             // a settlement-entered receipt posts as its expense document: move that, then the fuel rows follow
@@ -104,7 +92,7 @@ export async function confirmExpenseLoadsInClientTx(
               operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, expenseId: e.id, expenseNumber: e.number,
               fromLoadId: e.load_id, toLoadId: target, reason, auditEvent: "accounting.expense_load.changed_by_person",
             });
-            await moveFuelReceiptDocumentToLoad(client as never, input.operatingCompanyId, { fillId: e.fill, loadId: target, actorUserId: input.actorUserId, reason });
+            await moveFuelReceiptDocumentToLoad(client as never, input.operatingCompanyId, { fillId: relayId ?? e.fill, loadId: target, actorUserId: input.actorUserId, reason });
           }
         } else {
           await moveExpenseDocumentToLoad(client as never, {
@@ -112,11 +100,14 @@ export async function confirmExpenseLoadsInClientTx(
             fromLoadId: e.load_id, toLoadId: target, reason, auditEvent: "accounting.expense_load.changed_by_person",
           });
         }
-        await moveExpenseFamilyToLoad(client as never, {
-          operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, parentExpenseIds: [e.id], toLoadId: target, reason,
-        });
         out.moved += 1;
       }
+      // Row 102 (443.288 family): the receipt's children ALWAYS end on the load the person confirmed — also when the
+      // receipt itself did not move (prod 11-03: 11 live children sat on another load than their confirmed receipt).
+      // Idempotent: a child already on the load is skipped by the family move.
+      await moveExpenseFamilyToLoad(client as never, {
+        operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, parentExpenseIds: [e.id], toLoadId: target, reason,
+      });
       // confirm the expense and its children on the target (the trigger stamps who / when from the actor)
       const confirmed = await client.query<{ id: string }>(
         `UPDATE accounting.expenses SET load_confirmation = 'confirmed', updated_at = now()
