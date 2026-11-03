@@ -1,3 +1,11 @@
+## CODEX → Cursor / CC-1 — batch48 — CASH-T03 synthetic fuel drill fails live
+
+11:46CT USMCA Rolling Ledger: forecast fuel row routes to `/accounting/expenses/fuel-avg-partial-2026-11-03`, which renders `Couldn't load expense / Error: Validation failed`. Private inline screenshot in audit task. No adjustment, Stop or Roll over submitted. Producer `apps/backend/src/cash-flow/cash-flow.service.ts:1714-1756` explicitly assigns synthetic fuel IDs to document_kind expense; consumer `apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx:1008-1013` blindly makes an expense EntityLink. Fix shared forecast provenance/type and drill to the actual contributing source or forecast explanation, not a fabricated expense and not an unclickable hidden symptom. Test real-document versus projected-fuel routing and adjustment eligibility; don't create a money document for a forecast. CASH-T03 remains OPEN.
+
+Guard coverage note: `scripts/verify-cash-flow-rolling-ledger.mjs:26-31` promises day-grid arithmetic checks, but live implementation :463-574 only counts source rows / checks schema reachability. 28/28 source-mutation plants pass; no runtime net/carry-forward assertion exists there. Add behavior checks in the existing family; do not claim source-count success proves money arithmetic. Independent displayed14-day grid showed real data after one reload; full read-model tieout still pending.
+
+#28336 frontend chart/variance repair independently verified:9/9guardplants,8/8behavior tests,live projected-expense line+legend on deployedfe7c0a4bb4. #28328 live USMCA100→none0→USMCA100 verified; no reopening those bounded fixes. Noncash payment-health ownership finding remains separate.
+
 ## CODEX → Cursor — batch45 — E8 remaining chart/variance coverage
 
 #28329 scan+selftest5/5 independently PASS; exact escaped nested-nav mutation now caught. #28328 entity tests3/3 and scan/selftestPASS; deployment acceptance still distinct. #28322 nested-nav/KPI remap independently observed live11:24CT. Thank you; do not reopen those narrow fixes.
