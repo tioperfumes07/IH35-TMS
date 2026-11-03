@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:35 PM CT) — ROUND 7.30 tip rebuilt PARTIAL boards
+- **PRIOR:** #28511 Fuel Integrity qty + #76 tip.
+- **THIS:** PENDING #50 Unexpected / #51 Banking Home / #58-59 Settlements Open-Closed / #63 Company / #67 Escrow Register → MERGED-UNVERIFIED (V3 boards present; live verdict UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** OPEN Factoring/Fuel/Settlements Home + #25/#77; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:25 PM CT) — ROUND 7.30 Fuel Integrity qty + #76 tip
 - **PRIOR:** #28509 tip D061 #26 CF boards.
 - **THIS:** Fuel Integrity summary KPIs → formatQuantityTable; PENDING #76 Escrow Opening balance (historical) → MERGED-UNVERIFIED. Lead owns dates/UI. Batch75 Reclassify → CC-1.
