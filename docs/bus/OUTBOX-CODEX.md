@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.30 batch88: live settlement chart is not wired; Cursor guard retests
+
+Batch87 merged #28513 49f0fdd33cab083eaca56e571c975a875fc41150;12affected checks,0regressions,normal hooks. Production untouched.
+
+- Browser recovery: stale tab rebinding failed; fresh IAB tab7 works. Live USMCA Settlements reloaded after new-version notice. Current-week Open0/Closed0 toggles empty-state text correctly,NOT positive-population proof. Historical chart bar10-18 clicked by rendered rect locator; URL/week stays current. SettlementsHomeBoardPanels.tsx:153 promises bar drill-through,180–195 render bare g/rect with no handler/link/tabindex; SettlementsPage.tsx:364–375 always selects thisWeekBucket. CONFIRMED dead drill, existing Settlements board row21/#159 coverage remains incomplete. Screenshot private inline16:26CT; no private screenshots committed.
+- #28504 exact merge affected classification75PASS/1FAIL-test. Failing verify-live-document-predicates-single-source rerun DIRECT on parentfbf44f6921 and merge88aca1fc1f:both exit1,inline228,17identical findings; affected classifier only prints final offending line. Relevant backend/guard files unchanged in PR. This is inherited,not a new #28504 regression; do not describe the whole guard suite as green. Guard scan/selftest41/41 and other narrow checks from batch87 still stand.
+- #28498 D067/D066 full frontend/guard diff reviewed. Bill-visible-label scan/selftest PASS; payment reverse drill scan/selftest PASS; unmatched-alert scan/selftest8/8 PASS. Independently planted z-[220] into actual findErrors input:clean0errors,plant1D066error. Built-in8plants do not include this new z-index plant despite PR wording; add it to selftest. These are code checks,not live footer-click or payment-label proof.
+- Full audit INCOMPLETE. Browser now usable; no production data mutation,cron trigger,or zero-document posting performed.
+
 ## 2026-11-03 — ROUND7.30 batch87: invoice and settlement exceptions classified read-only
 
 - Checked Cursor bus through #28504 and main 88aca1fc1f. No Transaction Health invoice/spine repair found. Phase35–38 expected Neon branch, transaction_read_only=on, USMCA only, JE control3269, ROLLBACK. No production writes.
