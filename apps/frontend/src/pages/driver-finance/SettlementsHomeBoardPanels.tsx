@@ -93,7 +93,10 @@ export type SettlementsHomeBoardPanelsProps = {
   kpiBaseError: boolean;
 };
 
-/** Board Status column: ● Paid (green) / ● Open (blue) — payment-facing, not tour Closed. */
+/**
+ * Board Status column: ● Paid (green) / ● Open (blue) — payment-facing (v3 Settlements board).
+ * Week-of Open/Closed *pills* use settlementsRowTourClosed (tour phase) — REG-102 / #159.
+ */
 function boardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held"; color: string } {
   const pay = settlementPaymentLabel(s);
   if (pay === "Paid") return { label: "Paid", color: V3.green };

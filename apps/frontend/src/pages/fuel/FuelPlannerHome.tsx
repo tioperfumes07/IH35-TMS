@@ -21,7 +21,7 @@ import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMulti
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -547,13 +547,13 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           >
             <V3KpiTile
               label="Transactions"
-              value={fuelTransactionsQuery.isPending ? "…" : String(fuelHistoryTotal)}
+              value={fuelTransactionsQuery.isPending ? "…" : formatQuantityTable(fuelHistoryTotal, 0)}
               sub="in current filters"
               testId="fuel-history-kpi-total"
             />
             <V3KpiTile
               label="Voided"
-              value={fuelTransactionsQuery.isPending ? "…" : String(fuelHistoryVoidedCount)}
+              value={fuelTransactionsQuery.isPending ? "…" : formatQuantityTable(fuelHistoryVoidedCount, 0)}
               sub={includeVoidedFuel ? "included in list" : "hidden by default"}
               tone={fuelHistoryVoidedCount > 0 ? "muted" : "ink"}
               testId="fuel-history-kpi-voided"
@@ -671,7 +671,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             <div className="mt-2 flex items-center gap-2">
               {!includeVoidedFuel && fuelHistoryVoidedCount > 0 ? (
                 <span className="text-xs text-gray-500" data-testid="fuel-history-voided-count">
-                  {fuelHistoryTotal} live, {fuelHistoryVoidedCount} voided (hidden)
+                  {formatQuantityTable(fuelHistoryTotal, 0)} live, {formatQuantityTable(fuelHistoryVoidedCount, 0)} voided
+                  (hidden)
                 </span>
               ) : null}
             </div>

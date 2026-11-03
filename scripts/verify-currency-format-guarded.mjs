@@ -622,6 +622,13 @@ const settlementsQty = read("apps/frontend/src/pages/driver-finance/SettlementsP
 if (!/formatQuantityTable\(settlements\.length, 0\)/.test(settlementsQty) || !/formatQuantityTable\(cancelledHiddenCount, 0\)/.test(settlementsQty)) {
   fail("SettlementsPage live/cancelled counts must use formatQuantityTable(, 0)");
 }
+if (!/formatQuantityTable\(Number\(kpis\.drivers_with_debt\), 0\)/.test(settlementsQty) || !/formatQuantityTable\(Number\(kpis\.ytd_settlements \?\? 0\), 0\)/.test(settlementsQty)) {
+  fail("SettlementsPage home KPI counts must use formatQuantityTable(, 0)");
+}
+const fuelHistoryQty = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
+if (!/formatQuantityTable\(fuelHistoryTotal, 0\)/.test(fuelHistoryQty) || !/formatQuantityTable\(fuelHistoryVoidedCount, 0\)/.test(fuelHistoryQty)) {
+  fail("Fuel History KPI counts must use formatQuantityTable(, 0)");
+}
 const rollingLedgerQty = read("apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx");
 if (!/formatQuantityTable\(driverBillCount, 0\)/.test(rollingLedgerQty) || !/formatQuantityTable\(incomeRows\.length, 0\)/.test(rollingLedgerQty)) {
   fail("RollingLedgerTab income/expense count badges must use formatQuantityTable(, 0)");
