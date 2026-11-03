@@ -18,6 +18,7 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -180,6 +181,16 @@ export function ExpenseCategoryMapPage() {
         ),
     },
   ];
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Expense Category Map">
+        <BoardSection title="Expense Category Map" testId="expense-category-map-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper

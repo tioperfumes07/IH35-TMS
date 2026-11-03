@@ -15,6 +15,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -425,6 +426,16 @@ export function AccountingAuditTrailPage() {
       </MoneyListToolbar>
     </div>
   );
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Audit Trail">
+        <BoardSection title="Audit Trail" testId="audit-trail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="Audit Trail" subtitle="Immutable posting events with tenant-scoped source lineage lookup">
