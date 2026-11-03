@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:20 PM CT) — Truck Line duration quantity
+- **PRIOR:** #28476 DispatchOverview idle days.
+- **THIS:** TruckLineBoard fmtDuration/fmtHoursMinutes → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Codex #28478 Vendor live Open+Partial ACK.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:10 PM CT) — DispatchOverview idle days quantity
 - **PRIOR:** #28475 contracts/trip pairing qty.
 - **THIS:** DispatchOverview maxDaysIdle → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
