@@ -242,9 +242,9 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 151 | R94 | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | DONE-LIVE — prod 00:15Z: 0 proforma invoices; views.ar_aging $621,076.72 / 164 = GL 1100 $621,076.72 |
 | 152 | R95 | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | OPEN |
 | 153 | R96 | Accounting | QBO sync "Not connected" | OWNER | OPEN |
-| 154 | R97 | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | OPEN |
+| 154 | R97 | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | OPEN — likely driven by row 156 stale pendings ($51,296.34) — CC-2 re-measures after the pending fix |
 | 155 | R98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | CODED |
-| 156 | R99 | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | OPEN |
+| 156 | R99 | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | OPEN — re-measured 00:30Z: root cause = stale Plaid PENDING lines never retired — 53 live pending older than 7 days $51,296.34 (3 booked); 17 PURCHASE/CHECKCARD pairs $7,614.84 counted twice; removed-handler only notes, never voids → permanent fix routed to CC-2 |
 | 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | OPEN |
 | 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | CODED |
