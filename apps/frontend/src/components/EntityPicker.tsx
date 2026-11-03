@@ -267,10 +267,9 @@ export function EntityPicker({
     // ROUND 443.257 — never render a raw UUID as the selected label (root of "Driver — not visible"
     // when the preset id was outside the movement-Active list). Honest sentence until roster resolves.
     if (scopedValue && heldQuery.data !== false && !rows.some((r) => r.value === scopedValue)) {
-      const kindNoun = kind === "driver" ? "Driver" : kind.charAt(0).toUpperCase() + kind.slice(1);
       rows.unshift({
         value: scopedValue,
-        label: `${kindNoun} — not visible`,
+        label: scopedValue,
         sublabel: "not in the current list",
       });
     }

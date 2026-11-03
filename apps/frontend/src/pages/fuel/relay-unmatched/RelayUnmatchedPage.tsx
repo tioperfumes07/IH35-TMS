@@ -86,6 +86,12 @@ export function RelayUnmatchedPage() {
       render: (row) => row.relay_unit_number || "—",
     },
     {
+      key: "relay_driver_integration_id",
+      label: "Relay card ID",
+      sortable: true,
+      render: (row) => row.relay_driver_integration_id || "—",
+    },
+    {
       key: "relay_driver_name",
       label: "Relay's driver",
       sortable: true,

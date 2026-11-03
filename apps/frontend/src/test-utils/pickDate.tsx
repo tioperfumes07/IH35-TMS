@@ -30,7 +30,8 @@ export function pickDate(field: HTMLElement, day = 15): void {
       `pickDate: day ${day} not found in the open calendar — the picker did not open, or that day is disabled.`,
     );
   }
-  fireEvent.click(dayCell);
+  // Day cells use onMouseDown (not onClick) to prevent blur from closing the picker first.
+  fireEvent.mouseDown(dayCell);
 }
 
 /**
@@ -57,22 +58,30 @@ export function pickExactDate(field: HTMLElement, iso: string): void {
   if (!trigger) throw new Error("pickExactDate: no DatePicker trigger button found in the given field");
   fireEvent.click(trigger);
 
+  // DatePicker portals its calendar to document.body — within(field) won't find it.
+  // Check inline first; fall back to document.body for the portaled case.
+  const container: HTMLElement =
+    within(field).queryAllByText(/^[A-Z][a-z]+ \d{4}$/).length > 0 ? field : document.body;
+
   // Walk at most 240 months (20 years) in either direction, then give up loudly rather than spin.
   for (let i = 0; i < 240; i += 1) {
-    const heading = within(field).queryByText(/^[A-Z][a-z]+ \d{4}$/);
+    // queryAllByText avoids "multiple elements" throw if two pickers are briefly open at once.
+    const headings = within(container).queryAllByText(/^[A-Z][a-z]+ \d{4}$/);
+    const heading = headings[0] ?? null;
     if (!heading) throw new Error("pickExactDate: the calendar did not open — no 'Month YYYY' heading found.");
     const shown = heading.textContent?.trim() ?? "";
     if (shown === wantLabel) break;
     const shownDate = new Date(`${shown} 1`);
     const goBack = shownDate.getTime() > new Date(y, m - 1, 1).getTime();
-    const nav = within(field).getByLabelText(goBack ? "Previous month" : "Next month");
+    const nav = within(container).getByLabelText(goBack ? "Previous month" : "Next month");
     fireEvent.click(nav);
     if (i === 239) throw new Error(`pickExactDate: could not reach ${wantLabel} from ${shown} within 240 steps.`);
   }
 
-  const dayCell = within(field)
+  const dayCell = within(container)
     .getAllByRole("button")
     .find((b) => b.textContent?.trim() === String(d) && !(b as HTMLButtonElement).disabled);
   if (!dayCell) throw new Error(`pickExactDate: day ${d} not found in ${wantLabel} — it may be disabled by a min/max.`);
-  fireEvent.click(dayCell);
+  // Day cells use onMouseDown (not onClick) to prevent blur from closing the picker first.
+  fireEvent.mouseDown(dayCell);
 }

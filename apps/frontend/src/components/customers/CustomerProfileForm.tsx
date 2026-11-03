@@ -27,7 +27,6 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../EntityPicker";
 import { ListErrorState } from "../ListErrorState";
 import { properPersonOrPlaceName } from "../../lib/properDisplayText";
-import { SelectCombobox } from "../Combobox";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -472,7 +471,7 @@ function SelectField({
         {label}
         {required ? " *" : ""}
       </span>
-      <SelectCombobox
+      <select
         name={name}
         value={value}
         disabled={disabled}
@@ -485,7 +484,7 @@ function SelectField({
             {o.label}
           </option>
         ))}
-      </SelectCombobox>
+      </select>
     </label>
   );
 }
