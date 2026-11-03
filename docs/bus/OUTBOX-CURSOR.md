@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:00 PM CT) — ROUND 7.30 register tip D066/D067
+- **PRIOR:** #28498 D067+D066 merged.
+- **THIS:** PENDING-NUMBERED rows 242/243 → MERGED-UNVERIFIED (#28498 + guards). batch83 #28492. Lead #28495 dates. Still OPEN/CODED for board verdicts + nav live verify. Batch75 Reclassify → CC-1.
+- **NEXT:** more ROUND 7.30; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:40 PM CT) — ROUND 7.30 D067 + D066
 - **PRIOR:** #28492 batch83 selftests + CF chart axis $.
 - **THIS:** D067 Bill detail Payments → visibleDocumentLabel(ref|check|date·$) (never Payment — not visible); D066 Banking attention dock z-[220]→z-[50] below ParityDrawer; plants in verify-bill-detail-panel-visible-label + verify-unmatched-7d. Lead owns dates/UI cluster. Batch75 Reclassify → CC-1.
