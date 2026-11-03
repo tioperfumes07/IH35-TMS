@@ -65,6 +65,15 @@ export function verdict(files) {
   if (!/voided_at\s+IS\s+NULL/.test(files.route) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(files.route)) {
     problems.push("equipment-type-profitability bills CTE must exclude void/voided driver bills");
   }
+
+  const customerRoute = read("apps/backend/src/reports/customer-profitability.routes.ts");
+  if (!/voided_at\s+IS\s+NULL/.test(customerRoute) || !/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(customerRoute)) {
+    problems.push("customer-profitability cost query must exclude void/voided driver bills");
+  }
+  const laneSvc = read("apps/backend/src/reports/lane-profitability.service.ts");
+  if ((laneSvc.match(/voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/g) || []).length < 2) {
+    problems.push("lane-profitability pay CTEs must exclude void/voided driver bills (both aggregations)");
+  }
   return problems;
 }
 

@@ -137,6 +137,8 @@ const LANE_COMPUTE_SQL = `
     FROM driver_finance.driver_bills db
     JOIN load_scope ls ON ls.id = db.load_id
     WHERE db.operating_company_id = $1::uuid
+      AND db.voided_at IS NULL
+      AND db.status NOT IN ('void', 'voided')
     GROUP BY ls.origin_city, ls.origin_state, ls.destination_city, ls.destination_state
   ),
   maint AS (
@@ -507,6 +509,8 @@ export async function getLaneLoadDetails(
         SELECT ls.id AS load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
         FROM driver_finance.driver_bills db
         JOIN load_scope ls ON ls.id = db.load_id
+        WHERE db.voided_at IS NULL
+          AND db.status NOT IN ('void', 'voided')
         GROUP BY ls.id
       ),
       maint AS (
