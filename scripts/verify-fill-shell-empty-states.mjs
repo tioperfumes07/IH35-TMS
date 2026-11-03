@@ -56,6 +56,7 @@ const checks = [
   ["apps/frontend/src/pages/home/AttentionList.tsx", "BoardSection", "home-attention-need-company", "AttentionList need-company"],
   ["apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "BoardSection", "driver-profile-need-company", "DriverProfile need-company"],
   ["apps/frontend/src/pages/drivers/DriversListPage.tsx", "BoardSection", "drivers-list-need-company", "DriversList need-company"],
+  ["apps/frontend/src/pages/Drivers.tsx", "BoardSection", "drivers-need-company", "Drivers need-company"],
   ["apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx", "BoardSection", "drivers-onboarding-need-company", "Onboarding need-company"],
   ["apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx", "BoardSection", "driver-layover-history-need-company", "LayoverHistory need-company"],
   ["apps/frontend/src/pages/CustomerDetail.tsx", "BoardSection", "customer-detail-need-company", "CustomerDetail need-company"],

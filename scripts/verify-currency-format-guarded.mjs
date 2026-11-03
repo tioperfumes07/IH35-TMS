@@ -927,6 +927,13 @@ const faroImportCountQty = read("apps/frontend/src/pages/factoring/FaroImportPag
 if (!/formatQuantityTable\(preview\.line_count, 0\)/.test(faroImportCountQty) || !/formatQuantityTable\(commit\.line_count, 0\)/.test(faroImportCountQty)) {
   fail("FaroImportPage line/invoice/reserve counts must use formatQuantityTable(, 0)");
 }
+const driversKpiQty = read("apps/frontend/src/pages/Drivers.tsx");
+if (!/formatQuantityTable\(activeCount, 0\)/.test(driversKpiQty) || !/formatQuantityTable\(allDrivers\.length, 0\)/.test(driversKpiQty) || !/formatQuantityTable\(onLeaveCount, 0\)/.test(driversKpiQty)) {
+  fail("Drivers KPI counts must use formatQuantityTable(, 0)");
+}
+if (!/drivers-need-company/.test(driversKpiQty)) {
+  fail("Drivers page must BoardSection need-company when no company selected");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
