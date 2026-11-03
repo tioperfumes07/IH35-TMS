@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import { openCombo } from "../../../test-utils/pickCombo";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -38,6 +39,8 @@ describe("InShopBoard (row 59)", () => {
     wrap(<InShopBoard companyId="c1" />);
     const lane = await screen.findByTestId("in-shop-yard-lane");
     expect(lane).toHaveTextContent("T170");
+    // The Move-to-bay choice is a SelectCombobox: its options exist only while the list is open.
+    openCombo(within(lane).getByRole("combobox"));
     expect(screen.getByRole("option", { name: "Bay 4" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Bay 1" })).toBeNull();
   });
