@@ -289,6 +289,11 @@ if (!/formatUsd\(row\.amt\)/.test(qbImport) || !/formatUsd\(includedTotal\)/.tes
   fail("Form425c QBImportTab amounts must use formatUsd");
 }
 
+const featureFlags = read("apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx");
+if (!/formatQuantityTable\(Number\(row\.rollout_pct \?\? 0\), 0\)/.test(featureFlags)) {
+  fail("FeatureFlagsManager rollout % must use formatQuantityTable");
+}
+
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
   fail("MarkDisbursedModal bank txn labels must use formatUsdCents");

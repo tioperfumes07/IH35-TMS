@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -172,6 +173,18 @@ export function BreakEvenPage() {
     );
   }
 
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Break-Even Analysis" testId="break-even-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   const toggleClass = (code: string, current: BreakEvenClassification) => {
     staged.setDraft((prev) => ({
       ...prev,
@@ -191,8 +204,6 @@ export function BreakEvenPage() {
     <div className="p-6">
       <FinanceModuleTabs />
       {header}
-
-      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}

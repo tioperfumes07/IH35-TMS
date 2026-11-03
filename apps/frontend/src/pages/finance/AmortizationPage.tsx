@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import {
   FINANCE_HUB_AMORTIZATION_FLAG,
   createLoan,
@@ -147,6 +148,18 @@ export function AmortizationPage() {
         </section>
       </div>
     );
+
+  if (!companyId) {
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <BoardSection title="Amortization" testId="amortization-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   // LV-FINANCE-AMORTIZATION-CREATE-UNGATED-RAW-DATE — `type` is narrowed to "text" | "number" so
   // this helper can no longer be called with "date" at all (it used to accept any string, and the

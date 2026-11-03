@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~2:05 PM CT) — finance need-company + Form425c/amort qty
+- **PRIOR:** #28288 customers/HOS/break-even/ELD · #28291 amort+Form425c money.
+- **THIS:** BreakEven / FinanceHub / Amortization BoardSection need-company; FeatureFlags rollout qty. fill-shell + currency guards.
+- **ENG-21 stays DONE-LIVE**. **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 ~28.
+
 ## OUTBOX (11-03-2026 ~1:55 PM CT) — customers/HOS/break-even/ELD qty
 - **PRIOR:** #28271–#28287 quantity + ENG-34 29→28.
 - **THIS:** #28288 CustomersListView % · FleetHos nums · Form2290 tax · BreakEven per-mile · ELD speed. ENG-21 DONE-LIVE. SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
