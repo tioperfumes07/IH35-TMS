@@ -234,6 +234,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
+  // Codex audit row185: when SettlementsMountedPages embeds DriversPage under
+  // /driver-finance/*, suppress Drivers chrome (outer SettlementsModuleShell owns it)
+  // and remap KPI destinations so nested nav never leaves the Settlements module.
+  const underSettlements = location.pathname.startsWith("/driver-finance");
+  const rosterPath = underSettlements ? "/driver-finance/drivers" : "/drivers/roster";
+  const settleDuePath = underSettlements ? "/driver-finance/settlements" : "/drivers/settlements";
+  const cashAdvancesPath = underSettlements ? "/driver-finance/cash-advances" : "/drivers/cash-advances";
+  const escrowPath = underSettlements ? "/driver-finance/escrow" : "/banking/driver-escrow";
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const activeTab = useMemo(() => parseDriversHomeView(searchParams), [searchParams]);
   const subnavTab = useMemo(() => {
@@ -258,13 +266,20 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   useEffect(() => {
     const legacySubtab = searchParams.get("subtab");
     if (!legacySubtab) return;
+    // Under Settlements embed: never bounce to /drivers/* — stay on the current in-module path.
+    if (underSettlements) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("subtab");
+      setSearchParams(nextParams, { replace: true });
+      return;
+    }
     const mapped = legacySubtab.toLowerCase();
     const target = DRIVERS_SUBTAB_PATH[mapped] ?? "/drivers";
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("subtab");
     const suffix = nextParams.toString() ? `?${nextParams.toString()}` : "";
     navigate(`${target}${suffix}`, { replace: true });
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, setSearchParams, underSettlements]);
   const addOpen = searchParams.get("create") === "1";
   const openCreate = () => {
     if (searchParams.get("create") === "1") return;
@@ -641,46 +656,65 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     );
   };
 
+  const createActions = (
+    <div className="flex items-center gap-2">
+      {/* ARCHIVE-not-DELETE (A24-4): former label "+ Driver" → canonical "+ Create Driver" per locked vocabulary */}
+      <Button type="button" data-testid="drivers-create-open" onClick={openCreate}>
+        + Create Driver
+      </Button>
+      {!underSettlements ? (
+        <Link to="/drivers/duplicates" className="text-xs font-semibold text-[#14314F] hover:underline" data-testid="drivers-duplicates-link">
+          Duplicate profiles
+        </Link>
+      ) : null}
+      <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
+    </div>
+  );
+
   return (
-    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="drivers" data-c06-page="drivers">
-      <PageHeader
-        title="Drivers"
-        subtitle={`${newDriversInLast3Days} new in last 3 days`}
-        actions={
-          <div className="flex items-center gap-2">
-            {/* ARCHIVE-not-DELETE (A24-4): former label "+ Driver" → canonical "+ Create Driver" per locked vocabulary */}
-            <Button type="button" data-testid="drivers-create-open" onClick={openCreate}>
-              + Create Driver
-            </Button>
-            <Link to="/drivers/duplicates" className="text-xs font-semibold text-[#14314F] hover:underline" data-testid="drivers-duplicates-link">
-              Duplicate profiles
-            </Link>
-            <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
-          </div>
-        }
-      />
+    <div
+      className={MASTER_DETAIL.pageShellClass}
+      data-c05-min-scroll="drivers"
+      data-c06-page="drivers"
+      data-settlements-embedded={underSettlements ? "1" : undefined}
+    >
+      {underSettlements ? (
+        <div className="mb-3 flex items-center justify-end gap-2" data-testid="drivers-settlements-embedded-actions">
+          {createActions}
+        </div>
+      ) : (
+        <PageHeader
+          title="Drivers"
+          subtitle={`${newDriversInLast3Days} new in last 3 days`}
+          actions={createActions}
+        />
+      )}
 
       <KpiStrip>
         {/* KPI drill-through: Active/On Leave = roster status; On Loads = Dispatch board.
-            Available has no dedicated segment yet — Active is the closest honest destination (not silent dead). */}
-        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers/roster?status=active" />
-        <KpiCard label="On Loads" number={onLoadsCount == null ? "—" : String(onLoadsCount)} accent={colors.dispatch.strong} to="/drivers/roster?status=all&load_state=on" />
-        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers/roster?status=active&load_state=free" />
-        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers/roster?status=on_leave" />
-        <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
-        <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
-        <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
+            Available has no dedicated segment yet — Active is the closest honest destination (not silent dead).
+            Under Settlements embed: keep destinations inside /driver-finance (Codex audit row185). */}
+        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to={`${rosterPath}?status=active`} />
+        <KpiCard label="On Loads" number={onLoadsCount == null ? "—" : String(onLoadsCount)} accent={colors.dispatch.strong} to={`${rosterPath}?status=all&load_state=on`} />
+        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to={`${rosterPath}?status=active&load_state=free`} />
+        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to={`${rosterPath}?status=on_leave`} />
+        <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to={settleDuePath} />
+        <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to={cashAdvancesPath} />
+        <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to={escrowPath} />
       </KpiStrip>
 
       {/* C-33 BAND 1 — one module tab bar. Cash advance requests joins it. Permits/Deductions/Disputes
-          are not peer tabs (Round 296 / C-25 / C-33). */}
-      <div data-testid="drivers-unified-subnav" data-c33-band="module-tabs">
-        <NavyPageSubNav
-          items={DRIVERS_SUBNAV.map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] }))}
-        />
-        {/* Marker for nav-integrity: Team Splits remains a peer tab; Disputes do not (C-25 hub). */}
-        <span className="sr-only" data-testid="drivers-team-splits-tab" aria-hidden="true" />
-      </div>
+          are not peer tabs (Round 296 / C-25 / C-33). Under Settlements the outer SettlementsModuleShell
+          already owns the module tab bar — do not nest a second Drivers NavyPageSubNav. */}
+      {!underSettlements ? (
+        <div data-testid="drivers-unified-subnav" data-c33-band="module-tabs">
+          <NavyPageSubNav
+            items={DRIVERS_SUBNAV.map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] }))}
+          />
+          {/* Marker for nav-integrity: Team Splits remains a peer tab; Disputes do not (C-25 hub). */}
+          <span className="sr-only" data-testid="drivers-team-splits-tab" aria-hidden="true" />
+        </div>
+      ) : null}
 
       {/* DRV-F417 — filters are SegmentedControl chips, never a second NavyPageSubNav. Roster only. */}
       {subnavTab === "roster" ? (
@@ -1038,7 +1072,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           ) : null}
           {subnavTab === "home" && searchParams.get("view") === "board" && selectedCompanyId ? (
-            <DriverHubBoard operatingCompanyId={selectedCompanyId} onList={() => navigate("/drivers/roster")} />
+            <DriverHubBoard operatingCompanyId={selectedCompanyId} onList={() => navigate(rosterPath)} />
           ) : null}
           {subnavTab === "home" && searchParams.get("view") !== "board" ? (
             <div className="grid auto-rows-fr gap-3 md:grid-cols-2" data-testid="drivers-home-attention">
