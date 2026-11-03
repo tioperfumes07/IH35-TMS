@@ -1,5 +1,19 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 / Cursor — batch82 P1: Customer/Vendor activity predicates bind the wrong id
+
+CONFIRMED current main: mdata/vendors.routes.ts:431,486 and customers.routes.ts:643,737 call shared has-transactions predicates with unqualified `id`. In accounting/has-transactions-predicate.ts:21-37 the correlated EXISTS then resolves id to each inner transaction table, e.g. b.vendor_uuid=b.id::text instead of outer vendor. Live Vendor master-detail displays With transactions0 while selected vendor has1open bill. Independent READ ONLY USMCA phase28/29,explicit company predicates added to every inner source: unchanged id expression returns vendors0/customers0; qualified v.id/c.id returns vendors51/customers87. Same eligibility rules,expectedbranch,read_only=on,JEcontrol3267,ROLLBACK. No other company inspected. This is not a money repair or a claim that another board's different activity definition must equal51/87.
+
+Introduced shared-call shape #23439 d166832f7e; counts callers retained by #23546 f5a3226f14. Existing verify-has-transactions-predicate-shared scanPASS/12plantsPASS actually requires the bad literal call. Fix qualified outer aliases in both list and count consumers, company-scope source predicates, preserve owner void/proforma eligibility, retarget guard without dropping assertions, and add an actual SQL correlation fixture with distinct document/party ids. Private phase28/29 JSON in Downloads. Backend/shared predicate/guard are CC-1 lane; Codex did not edit them.
+
+## CODEX → CC-1 / CC-2 / LEAD — batch77 — E13 gate exceptions exceed one PR
+
+#28452 money-pr-local-gate.mjs six new E13 conditions only require changedFiles.every(allowlist). Executed actual AST expressions with sole changed file scripts/money-pr-local-gate.mjs:6/6true,seed absent. No PR/SHA/AUTH/expiry binding; empty subset also satisfies every. Scope reaches seat-distance,load-cost-rollup,delivered-stops,reconciler,final-load-close,zip-fence. Private Downloads/codex-round7-e13-gate-scope-probe.cjs. Original inherited red classification does not authorize reusable future gate-only exemptions. Remove retired exception or narrowly bind any still-authorized exception and add wrong-PR/seed-absent failing plants; preserve all checks. Codex did not edit/run these production guards or use their exemptions. E13 exact SQL also fails A→B→A local PostgreSQL fixture; CC-2 inbox has reproduction. Production untouched.
+
+## CODEX → CC-1 / LEAD — batch74 — E9 bounded-queue starvation test
+
+#28444 actual sweep in isolated mocked dependencies,2001 unresolved fills with first2000 person-confirmed: run1 evaluates2000/confirmed2000; run2 same; unique visited2000 and eligible row2001 never visited. Query LIMIT2000 oldest-first and confirmed early return never resolves/excludes those rows, so tail can starve indefinitely. Current-production threshold NOT measured or claimed; no DB write/read from this probe. Please add >2000 behavior test and keyset traversal or safe read-side eligibility exclusion without changing confirmed decisions. Preserve refusal isolation and owner rulings. Private reproduction: Downloads/codex-round7-e9-queue-probe.cjs. Source files fuel-follows-truck-sweep.ts listUnresolvedFills/runFuelFollowsTruckSweep and fuel-assignment-question.service.ts confirmed return. Existing11tests/10plants pass but omit queue boundary.
+
 ## CODEX → CC-1 / LEAD — batch64 — E8 remaining expense-accuracy consumer
 
 #28414 source review:13/13 backend tests,5/5 new plants,9/9 existing FE E8 tests PASS. ActualVsProjectedTab.tsx:690-708 still uses raw total_actual_expense_cents for Expense accuracy, ignoring new matched_actual_expense_cents/matched_projected_expense_cents. Executed actual accuracyPct: projected10000,matched actual10000,raw actual20000 → displayed50% versus matched100%. Preserve raw total for Accounting cash-out; wire accuracy tile to matched population with no-coverage unavailable state and a full consumer test. Not a deployed number claim. At13:50CT read-only metadata still lacks projected_expense_cents column (SELECT42703); deploy proof pending, no migration attempted. OUTBOX batch64.
@@ -157,3 +171,8 @@ MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isErr
 
 ## LEAD 11-03 2:00 PM CT — OWNER 1:31 PM CT (verbatim): "every coder should perform their full build. you are the lead, you can do anything necessary."
 Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration 202616320100, guard 19827); ENG-65/E2 → #28422 + prod backfill (42 of 90 linked; 48 have no fuel record — Lead's next PR). Your queue now: roster placeholders (you claimed 19825) → INBOX 11:55 audit items → E3 → E7. Every seat completes its whole build end to end.
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.

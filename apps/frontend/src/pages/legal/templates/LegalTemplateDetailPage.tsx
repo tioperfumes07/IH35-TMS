@@ -7,9 +7,11 @@ import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
@@ -213,6 +215,14 @@ export function LegalTemplateDetailPage() {
     onError: (error) => setSubmitError(parseError(error, "Failed to create new version.")),
   });
 
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Template Detail" testId="legal-template-detail-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
+
   if (query.isLoading) {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading template...</div>;
   }
@@ -239,7 +249,7 @@ export function LegalTemplateDetailPage() {
       <BackArrowHeader
         backTo="/legal/templates"
         breadcrumb={["Legal", "Templates", template.template_code]}
-        title={`${template.display_name_en} (v${template.version})`}
+        title={`${template.display_name_en} (v${formatQuantityTable(template.version, 0)})`}
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => navigate("/legal/templates")}>

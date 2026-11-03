@@ -216,12 +216,14 @@ export function VendorsPage() {
       setTxnCategoryFilter(next.txnCategoryFilter);
     },
   });
+  // Codex batch76 — 2+ statuses must go to the server as a comma-union (bills.routes OR before LIMIT).
+  // Never drop statusApiParam and filter the default page-100 locally.
   const statusApiParam =
-    statusFilter.length === 1
-      ? statusFilter[0] === "unpaid"
+    statusFilter.length === 0
+      ? undefined
+      : statusFilter.length === 1 && statusFilter[0] === "unpaid"
         ? "unpaid"
-        : (statusFilter[0] as "open" | "partial" | "paid" | "voided")
-      : undefined;
+        : statusFilter.join(",");
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   const [rosterCategory, setRosterCategory] = useState("");
@@ -571,13 +573,9 @@ export function VendorsPage() {
     return (billsQuery.data?.rows ?? []).filter((bill) => {
       if (typeFilter && "bill" !== typeFilter) return false;
       if (txnCategoryFilter && !String(bill.memo ?? "").toLowerCase().includes(txnCategoryFilter.toLowerCase())) return false;
-      if (statusFilter.length > 1) {
-        const unpaidOk = statusFilter.includes("unpaid") && bill.status !== "paid" && bill.status !== "voided";
-        if (!statusFilter.includes(bill.status) && !unpaidOk) return false;
-      }
       return true;
     });
-  }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter, statusFilter]);
+  }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter]);
 
   const overdueCents = useMemo(() => {
     const today = companyToday();

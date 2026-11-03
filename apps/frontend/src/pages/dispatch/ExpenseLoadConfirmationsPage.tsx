@@ -5,15 +5,24 @@ import { Link } from "react-router-dom";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export function ExpenseLoadConfirmationsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
+  if (!companyId) {
+    return (
+      <BoardSection title="Expense load confirmations" testId="expense-load-confirmations-page-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <div data-testid="expense-load-confirmations-page" className="mx-auto max-w-6xl space-y-4 p-4">
-      {companyId ? <DispatchSubnav operatingCompanyId={companyId} /> : null}
+      <DispatchSubnav operatingCompanyId={companyId} />
       <PageHeader backHref="/dispatch"
         title="Expense load confirmations"
         subtitle="Every expense-to-load assignment is proposed by the engine and confirmed by a dispatcher or closer. Empty means confirmed — never hidden."

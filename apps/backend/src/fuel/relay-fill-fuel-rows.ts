@@ -207,3 +207,61 @@ export async function writeRelayFillFuelRows(
   }
   return out;
 }
+
+/**
+ * ENG-65 (LEAD 11-03) — a Relay fill always has its fuel RECORDS, whether or not a settlement ever names it.
+ *
+ * WHAT WAS WRONG (measured 11-03, prod USMCA): 48 Relay fills ($16,421.01, 08-04 … 10-28) were paid, posted and carried a
+ * live expense document, but had NO fuel.fuel_transactions row at all — the only writer of a Relay fill's records was the
+ * Settlement Creator, so a fill no settlement printed (or printed before the Creator) was never recorded: no gallons for
+ * IFTA, no fuel-by-load, no fill the truck/load engine could place. 47 of the 48 plan from their own Relay lines to the cent
+ * of their expense document; 1 carries two lines of one product and is refused by name.
+ *
+ * THE FIX: ensureRelayFillFuelRecords — the fill's live rows when it has them; otherwise written ONCE through
+ * writeRelayFillFuelRows (the one writer, Relay's own lines), at Relay's real moment (relay_created_at), referenced by the
+ * Relay transaction id, on the load / driver / truck its posting or document already carries. The Settlement Creator
+ * ADOPTS these rows (never writes a second set) and stamps the printed ticket number and its load.
+ */
+export async function ensureRelayFillFuelRecords(
+  client: Queryable,
+  input: { operatingCompanyId: string; relayFillId: string; loadId: string | null; driverId: string | null; unitId: string | null; actorUserId: string; notes: string },
+): Promise<{ written: boolean; rows: Array<{ id: string; fuel_type: string }> }> {
+  const live = (await client.query<{ id: string; fuel_type: string }>(
+    `SELECT id::text, fuel_type FROM fuel.fuel_transactions
+      WHERE operating_company_id = $1::uuid AND relay_fuel_transaction_id = $2::uuid AND voided_at IS NULL AND archived_at IS NULL
+      ORDER BY total_cost DESC NULLS LAST, id`,
+    [input.operatingCompanyId, input.relayFillId],
+  )).rows;
+  if (live.length) return { written: false, rows: live };
+  const fill = (await client.query<{ transaction_id: string; relay_created_at: string | null; city: string | null; state: string | null }>(
+    `SELECT transaction_id, relay_created_at::text, location_city AS city, location_state AS state
+       FROM integrations.relay_fuel_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL AND is_active`,
+    [input.relayFillId, input.operatingCompanyId],
+  )).rows[0];
+  if (!fill) throw new RelayFillFuelRowsError("relay_fill_not_ingested", `Relay fill ${input.relayFillId} is not a live Relay fill of this company.`);
+  if (!fill.relay_created_at) throw new RelayFillFuelRowsError("relay_fill_no_moment", `Relay transaction ${fill.transaction_id} has no Relay time — its record is never stamped with a guessed moment.`);
+  const vendors = (await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.vendors
+      WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name ~* '^relay( |$)' LIMIT 2`,
+    [input.operatingCompanyId],
+  )).rows;
+  if (vendors.length !== 1) throw new RelayFillFuelRowsError("relay_vendor_not_unique", `expected exactly one active Relay vendor, found ${vendors.length}`);
+  const written = await writeRelayFillFuelRows(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    relayFillId: input.relayFillId,
+    vendorId: vendors[0]!.id,
+    loadId: input.loadId,
+    driverId: input.driverId,
+    unitId: input.unitId,
+    reeferTrailerId: null,
+    reference: fill.transaction_id,
+    purchasedAt: fill.relay_created_at,
+    locationCity: [fill.city, fill.state].filter(Boolean).join(", ") || null,
+    loadExemptionReason: "Relay fill recorded at receipt — no load on its posting.",
+    actorUserId: input.actorUserId,
+    sourceDocId: null,
+    notes: input.notes,
+  });
+  return { written: true, rows: written.map((w) => ({ id: w.id, fuel_type: w.fuel_type })) };
+}

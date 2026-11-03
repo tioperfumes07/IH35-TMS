@@ -2,6 +2,7 @@ import { PLANNER_RANGE_OPTIONS } from "./planner-range";
 import "./planner-design-tokens.css";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { formatQuantityTable } from "../../../lib/money";
 
 export function PlannerRangeToolbar() {
   const { windowDays, setWindowDays, range, setRange } = usePlannerRange();
@@ -21,7 +22,7 @@ export function PlannerRangeToolbar() {
           className={`flex h-7 items-center rounded-sm px-2 text-xs font-medium ${windowDays === d ? "bg-[var(--planner-active)] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           onClick={() => setWindowDays(d)}
         >
-          {d}d
+          {formatQuantityTable(d, 0)}d
         </button>
       ))}
       {/* BRD-23: Custom range with date pickers. */}

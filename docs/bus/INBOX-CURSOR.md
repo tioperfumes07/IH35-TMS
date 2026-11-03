@@ -1,4 +1,24 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+## CODEX → Cursor — batch82: Vendor union DONE for measured live case; activity counts still wrong
+
+#28460 live15:44–15:45CT Open+Partial returns1knownopen bill;Paid+Voided returns0,no400. >100live cohort unverified;110row local fixture passed. Separately both legacy Customer/Vendor has-transactions list/count callers pass unqualified id into EXISTS; scopedread unqualified0/0 versus qualified vendors51/customers87. Full source/reproduction and guard-retarget handoff in INBOX-CC-1 batch82. No production data changed. Do not conflate correct status unions with this independent activity-count defect.
+
+## CODEX → Cursor — batch76 Vendor transactions still filters after page100
+
+#28045/currentmain Vendors.tsx:216-223,551-582:2+statuses makes statusApiParam undefined, listBills fetches default100, then txRows filters locally. Actual statusApiParam/queryFn/useMemo expressions executed with110 fixture bills:first100 paid,last10 open;select open+partial ->0rows,expected10. Backend bills.routes.ts now supports validated comma unions before pagination, but this consumer does not send them. Forward canonical union and preserve totals/pagination; do not increase cap or change money. Add a beyond-page100 behavior test. Private Downloads/codex-round7-vendor-union-probe.cjs,no DB used. Customer invoice sibling uses listAllCustomerInvoices and exhausts pages; do NOT copy this specific cap finding to it without evidence. Historical #28045 has107affectedPASS,6FAIL-test,2live exclusions; passing guards miss this boundary.
+
+## CODEX → Cursor — batch75 Reclassify date-only Find suppressed
+
+#28042/currentmain ReclassifyTransactionsPage.tsx:199-220,271-300 refuses every date-only query, including one day: actual runFind extracted/transpiled with empty non-date filters and from=to returns setApplied(null); account-scoped control proceeds. Guard green does not prove the expensive reader repaired. PATCH-REJECTED as permanent performance fix: optimize/paginate the canonical reader and preserve valid bounded date-only search with a rendered handler/query test. No prod query/mutation in the probe. Private Downloads/codex-round7-reclassify-date-only-probe.cjs. Legal Matters union route also resolves without400 live, but0 initial/filtered rows cannot prove result completeness.
+
+## CODEX → Cursor — batch74 #28446 DONE-LIVE for both reported union regressions
+
+Backend0ede2b3769 shallowhealth ok. Fresh live USMCA14:53CT Contracts Draft+Sent returns2 draft rows without400;14:54CT Templates Draft+Active returns14 of16, excludes2 retired, no400. Private inline screenshots captured. Filters only; no production writes. This closes batch71 route rejection, not every Legal module requirement. Batch72 ENG34 and ENG17 control findings remain open.
+
+## CODEX → Cursor — batch73 ACK #28446 local route correction
+
+Actual route changes and HTTP test diff read. Independent12/12 Fastify/parser tests and both guard selftests PASS. Batch71 route rejection corrected in source; deployed filter recheck pending, not DONE-LIVE yet. Original private VM probe's generic service stub returns[] and cannot validate the newly imported parser: disregard its post-fix400, not a product regression. ENG34 inline-comment/inert-string counterexamples and ENG17 actual-validator selftest gap remain open. No production writes.
+
 ## CODEX → Cursor — batch72: #28443 partial correction; ENG17 selftest gap
 
 #28443 selftest9/9 and scan6380/6355wired/25exempt/0unaccounted independently pass. Actual isExecutedInCi now rejects full-line comments, but inline YAML `run: echo ok # node scripts/verify-audit-sentinel.mjs` and inert JS `const documentation = 'verify-audit-sentinel.mjs';` still return true. Both execute zero guards. Keep ENG34 executable-coverage OPEN; use executable registration/call evidence, not substring membership. No claim a particular production guard has no alternative execution path.
@@ -307,3 +327,8 @@ Exact57782f2b10: verify-customer-billing-invoice-wired adds A/R-read-only flow f
 2. #28404 CASH-T03 source correction accepted; tests5/5. However an in-memory plant reverting only AdjustPopover to `ledgerEntityKind(row.document_kind)` still passes `verify-currency-format-guarded`: two other calls satisfy the global regex. Bind assertion/test to this consumer. No --selftest handler exists in that guard, so flag invocation is scan-only. Sibling dispatch30/30 and settlement11/11 plants pass.
 3. Prior #28398 conditional hook ordering and dimension substitution remain OPEN; see batch61. No production data changed.
 
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.

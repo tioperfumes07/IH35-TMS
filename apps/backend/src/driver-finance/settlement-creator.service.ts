@@ -1462,14 +1462,19 @@ export async function postSettlementCreatorInClientTx(
       // LEAD 443.215 (5842 repost) — Edit = void and repost: the fill's records were written ONCE (writeRelayFillFuelRows, one
       // row per product) and may have been re-attributed since the replaced post, so they are not in its posted fuel ids.
       // The repost ADOPTS the fill's live rows instead of writing them again (the one-purchase rule refused it:
-      // "Fuel purchase 99337433 is already recorded"). Only on an Edit, only this fill's own live rows, re-stamped to this load.
-      if (!rows && draft.edit_void_repost) {
+      // "Fuel purchase 99337433 is already recorded"). Only this fill's own live rows, re-stamped to this load.
+      // ENG-65 (LEAD 11-03): a fill is also recorded AT RECEIPT (ensureRelayFillFuelRecords, bank match) — on any post, not only
+      // an Edit, the Creator adopts the fill's live records instead of writing a second set, and stamps the printed ticket
+      // number where the record still carries Relay's transaction id. The load / driver / truck are the closer's (443.288-B).
+      if (!rows) {
         const existing = (await client.query<{ id: string; fuel_type: string }>(
           `UPDATE fuel.fuel_transactions ft
-              SET load_id = $3::uuid, driver_id = COALESCE($4::uuid, ft.driver_id), unit_id = COALESCE($5::uuid, ft.unit_id), updated_at = now()
+              SET load_id = $3::uuid, driver_id = COALESCE($4::uuid, ft.driver_id), unit_id = COALESCE($5::uuid, ft.unit_id),
+                  transaction_reference = CASE WHEN $6::text IS NOT NULL AND ft.transaction_reference LIKE 'txn\\_%' THEN $6::text ELSE ft.transaction_reference END,
+                  updated_at = now()
             WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id = $2::uuid AND ${notVoided("ft")}
             RETURNING ft.id::text, ft.fuel_type`,
-          [draft.operating_company_id, relayFillId, loadId, fillLoad.driverId, fillLoad.unitId],
+          [draft.operating_company_id, relayFillId, loadId, fillLoad.driverId, fillLoad.unitId, fuel.invoice?.trim() || null],
         )).rows;
         if (existing.length) {
           rows = existing;
