@@ -1,3 +1,23 @@
+## OUTBOX (11-03-2026 ~5:50 PM CT) — MXN house format wave
+- **PRIOR:** #28336 AvP batch45 · #28339 FactoringQueue MXN.
+- **THIS:** #28342 SettlementProfitabilityCard MXN house format + trip-profit money guard retarget. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:35 PM CT) — #28336–#28339 continue
+- **PRIOR:** #28326–#28334 AvP/TxHealth/subnav/FinanceHub/print · #28336 AvP batch45 · #28337 tip.
+- **THIS:** #28339 FactoringQueue MXN → house formatQuantityTable. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:20 PM CT) — #28336 AvP batch45 + prior wave
+- **PRIOR:** #28326–#28334 AvP/TxHealth/subnav/FinanceHub/print.
+- **THIS:** #28336 AvP projected-expense polyline gaps + matchedCoverageNets variance (Codex batch45). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
+## OUTBOX (11-03-2026 ~5:05 PM CT) — #28326–#28334 Cursor wave
+- **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16.
+- **THIS:** #28326 AvP raw net/chart (E8 row261) · #28328 Tx Health filter (batch42) · #28329 Settlements subnav gate (batch44) · #28331 FinanceHub/PropertyTax qty · #28332 OUTBOX tip · #28334 Finance print formatDateTimeUS. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:50 PM CT) — #28326–#28331 Cursor wave
 - **PRIOR:** #28322 Settlements Drivers embed · ENG-34 ~16.
 - **THIS:** #28326 AvP raw net + not-captured chart (E8 row261 Cursor half) · #28328 Tx Health all/subset/none (batch42) · #28329 Settlements subnav gate plant (batch44) · #28331 FinanceHub/PropertyTax house quantity. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors board / AccountingHub → CC-1.

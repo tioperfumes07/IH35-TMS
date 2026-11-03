@@ -3,6 +3,9 @@ import { render, screen } from "@testing-library/react";
 import {
   ProjectedExpenseCell,
   buildAvpChartPoints,
+  buildAvpChartSeries,
+  matchedCoverageNets,
+  projectedExpensePolylineSegments,
   projectedNetExcludingNotCaptured,
   rawActualNetFromGroups,
 } from "./ActualVsProjectedTab";
@@ -117,5 +120,58 @@ describe("E8 row261 raw actual net vs coverage", () => {
     expect(points[0].actualIncome).toBe(10_000);
     expect(points[0].actualExpenses).toBe(9_999);
     expect(points[1].projectedExpenses).toBe(150);
+  });
+});
+
+describe("E8 batch45 matched coverage + chart gaps", () => {
+  it("all-not-captured day: raw net 1, matched variance unavailable (null)", () => {
+    const groups = [
+      dayGroup({
+        date: "2026-10-05",
+        actInc: 10_000,
+        actExp: 9_999,
+        projected_unavailable: true,
+      }),
+    ];
+    const cov = matchedCoverageNets(groups);
+    expect(cov.raw_actual_net_cents).toBe(1);
+    expect(cov.matched_days).toBe(0);
+    expect(cov.matched_variance_cents).toBeNull();
+    // Never invent variance = rawNet - 0 against unavailable projection
+    expect(cov.raw_actual_net_cents - 0).toBe(1);
+  });
+
+  it("cumulative series keeps null gap on not-captured days (does not write pe back)", () => {
+    const groups = [
+      dayGroup({ date: "2026-10-05", actInc: 100, actExp: 50, projected_unavailable: true }),
+      dayGroup({ date: "2026-10-06", actInc: 200, actExp: 80, projInc: 180, projExp: 70 }),
+      dayGroup({ date: "2026-10-07", actInc: 50, actExp: 20, projected_unavailable: true }),
+    ];
+    const points = buildAvpChartPoints(groups);
+    const series = buildAvpChartSeries(points, "cumulative");
+    expect(series[0].projectedExpenses).toBeNull();
+    expect(series[1].projectedExpenses).toBe(70);
+    expect(series[2].projectedExpenses).toBeNull();
+    const segs = projectedExpensePolylineSegments(
+      series,
+      (i) => i * 10,
+      (c) => c,
+    );
+    // one contiguous captured day → one segment; gaps skipped
+    expect(segs).toHaveLength(1);
+    expect(segs[0]).toContain("10.0");
+  });
+
+  it("matched variance uses only captured days", () => {
+    const groups = [
+      dayGroup({ date: "2026-10-05", actInc: 10_000, actExp: 9_999, projected_unavailable: true }),
+      dayGroup({ date: "2026-10-06", actInc: 500, actExp: 200, projInc: 400, projExp: 150 }),
+    ];
+    const cov = matchedCoverageNets(groups);
+    expect(cov.raw_actual_net_cents).toBe(1 + 300);
+    expect(cov.matched_days).toBe(1);
+    expect(cov.matched_actual_net_cents).toBe(300);
+    expect(cov.matched_projected_net_cents).toBe(250);
+    expect(cov.matched_variance_cents).toBe(50);
   });
 });

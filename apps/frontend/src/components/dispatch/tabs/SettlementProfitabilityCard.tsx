@@ -25,14 +25,9 @@ function money(cents: number | null | undefined, currency?: string | null) {
   // Never construct NumberFormat with a null amount or a blank currency (both throw).
   if (cents == null || Number.isNaN(Number(cents))) return "—";
   const cur = currency || "USD";
-  // House USD path — MXN stays Intl (lib/money is USD-only).
+  // House path for both currencies (lib/money is USD-symbol; MXN uses code + quantity).
   if (cur === "MXN") {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(cents) / 100);
+    return `MXN ${formatQuantityTable(Number(cents) / 100, 2)}`;
   }
   return formatUsdCents(cents);
 }

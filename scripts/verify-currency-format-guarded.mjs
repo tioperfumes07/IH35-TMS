@@ -204,6 +204,20 @@ if (!/formatQuantityTable\(Number\(kpi\.value\) \|\| 0\)/.test(financeHub)) {
 if (/Intl\.NumberFormat\("en-US"\)\.format\(Number\(kpi\.value\)/.test(financeHub)) {
   fail("FinanceHubPage must not use Intl.NumberFormat for count KPIs");
 }
+const factoringQueue = read("apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx");
+if (!/MXN \$\{formatQuantityTable\(\(Number\(cents\) \|\| 0\) \/ 100, 2\)\}/.test(factoringQueue)) {
+  fail("FactoringQueuePage MXN amounts must use formatQuantityTable (not Intl money)");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(factoringQueue)) {
+  fail("FactoringQueuePage must not use Intl.NumberFormat es-MX for money");
+}
+const settleProfitCard = read("apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx");
+if (!/MXN \$\{formatQuantityTable\(Number\(cents\) \/ 100, 2\)\}/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard MXN must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("es-MX"/.test(settleProfitCard)) {
+  fail("SettlementProfitabilityCard must not use Intl.NumberFormat es-MX for money");
+}
 const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
 if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
   fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
