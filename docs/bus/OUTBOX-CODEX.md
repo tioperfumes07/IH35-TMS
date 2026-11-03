@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.27 batch43: Vendors responsive and drill-through audit
+
+Batch42 merged #28324 at6e9641bcb527f8c169e0f345ae062e3e739edac4; origin/main contains all3 bus findings,13 affected classifications0 regressions. No production changes.
+
+| Row | Verdict | Independent measurement | Owner / limit |
+|---|---|---|---|
+|56|PARTIAL, not an empty shell|Vendors Home renders6 KPI tiles,4 category aggregates,4 payment-account rows,30 default vendor rows,604 full-roster count and86 duplicate candidates. One vendor name opens real detail with fuel/history/reverse sections.|CC-3; full-board contract/complete reverse coverage not certified|
+|56|OPEN responsive/drill|768px: Vendors heading overlaps segmented filters; payment account names truncate and spend column requires horizontal reveal.1280px screenshot captured separately. Pays-through4 vendor counts and per-vendor account labels remain plain spans, not source links.|CC-3; VendorsHomeBoard.tsx:108,114,158-164,188-193; screenshots private inline|
+|97|PARTIAL, old all-no-category claim not current screen truth|Default roster displays category labels including Fuel & Diesel and Tires; first detail separately shows Other. Derived expense category and vendor master taxonomy must be distinguished before closure.|CC-1; not a blanket master-data/category fix claim|
+|158|DONE-LIVE bounded AP parity|Vendor open-bills tile agrees with independently measured184-bill AP balance.86 duplicate candidates remain visible.|CC-1; duplicate resolution and spend-source parity still unverified|
+
+Additional current-tip guard retests (not full historical acceptance): #28306 two-file diff read, fill-shell scan/selftest exit0; #28309 one-file mapping diff read, modal inventory162 hosts and selftest exit0. Prior missing DriverDuplicateDialog surface mapping resolved; no claim this certifies driver merge behavior. Full263-row/249-PR audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch42: Transaction Health independent depth
 
 Historical #27980 at exact merge3d55de4c6b: full34-file diff read;30 new wrapper targets classified with reachable DB credentials removed:21 PASS,2 capability skips,2 live exclusions,5 FAIL. Four failures explicitly require Neon invariant execution, not certified here. Fifth is genuine broken invocation: new step19545 invokes owner-authorization without mandatory AUTH id, always exit1 although --selftest catches8/8 plants. Current main retains that invocation. Underlying guard unchanged; new wiring introduced the unconditional failure. Fix wrapper contract without supplying invented authorization or weakening authorization enforcement. Private results Downloads/codex-round7-27980-historical.json. No excluded/skipped target counted as passing; full historical affected-guard comparison remains pending.
