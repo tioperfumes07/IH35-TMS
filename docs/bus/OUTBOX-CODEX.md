@@ -1,3 +1,19 @@
+## 2026-11-03 — ROUND7.27 batch56: Docs, Users and historical map/ELD review
+
+Batch55 merged #28382 at86cf33a8f22506af8e0bf4ab4f5dcaaed6effed3. Production read-only; no form submissions. Private screenshots remain inline in audit task.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Row232 Docs Upload|At1280/768 all4 editing fields40px high; both date boxes338px wide. UploadModal.tsx:294-312 supplies w-full in two-column grid. No file selected; Cancel.|Height FIXED; width OPEN against132px date-box law.|
+|Row231 Docs driver labels|Drivers filter380 documents,16pages; first25 driver links proper-cased with no UUID label. Document width768 at narrow viewport.|First-page sample passes; remaining355 not inspected, not full-row closure.|
+|Row233 Users master-detail|37 records;14 buttons named User Driver with Invited/Inactive status. Selected record detail uses raw casing while list uses proper case. Users.tsx:770 versus799. Screenshots1280/768.|OPEN; canonical human display needed. No accounts modified.|
+|Row234 Create User|At1280/768 name/email447x40px, role inner input429x40px. Cancel closed drawer; no invite or account created.|Named editing-height defect FIXED under current40px law, not create workflow proof.|
+|#27995 e4d51450f1|Full2-file diff reviewed;11 affected checks PASS; mapview-honest and disp-s23 selftests PASS. Live /dispatch/map1280/768 renders BoardSection but Map provider not configured,0 GPS loads.|Narrow wrapper verified; map data functionality remains UNVERIFIED, not DONE-LIVE.|
+|#27997 0f4e4b4917|Full3-file diff reviewed;4 affected checks PASS; eld-tabs-live-data selftest PASS. Current EldPage.tsx:48-62 still mounts HonestEmptyTab without query for certifications/settings; ELD_TABS_CONFIG.ts:34/41 asserts no records/settings.|Cosmetic wrapper verified; source-only empty claim cannot establish zero population. Workflow OPEN. No live empty-population proof claimed.|
+|UI design ratchet|Current scan and selftest PASS; worklist0 raw off-scale files/occurrences and0 semantic off-scale files/occurrences.|Scanner clean, not blanket geometry acceptance. Date-width findings above remain.|
+
+Full263-row/249-PR audit remains INCOMPLETE. No production changes or other-company database reads.
+
 ## 2026-11-03 — ROUND7.27 batch55: independent fix retests and unreachable profitability hub
 
 Batch54 merged #28380 b979cb9b6eb3e4ebcd5655a6aa78398de73ffec4,3checks0regressions. No production writes.
