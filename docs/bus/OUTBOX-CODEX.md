@@ -1,3 +1,37 @@
+## 2026-11-03 — ROUND7.27 batch32: independent remeasurement on c5e98b4882
+
+Scope263 rows. GitHub merged-date inventory returns249 PRs, NOT249 reviewed diffs. No production writes.25 targeted scans +25 selftests +2 tie-out selftests exit0;2 optional fuel LIVE phases explicitly skipped without DATABASE_URL. Strict artifact check separately exits1. Source checks below are not whole-workflow passes. Screenshot N/A means source-only evidence, not missing evidence disguised as a screenshot.
+
+| Row | Verdict | Measured result | Screenshot / owner if OPEN |
+|---|---|---|---|
+|15|OPEN|entity-filters-multi-select:1575 files,134/134 compliant,0 failures/skips; selftest50/50. Every live picker not exercised.|N/A; LEAD|
+|31|OPEN|export-business-date scan0/13 plants; no-selftest-mutates scan0 with10 existing call sites/baseline10; filter-panels scan0/27 plants. Full push gate not run.|N/A; LEAD|
+|32|OPEN|cc1-money-orphan-guard-registry scan0/2 plants,85 guards/orphan0 reported; child execution capture not repeated.|N/A; LEAD|
+|36|OPEN|bank-match-combinations scan0/12 plants; no live match created.|N/A; LEAD|
+|37|OPEN|same guard statically covers loan branch; independent purchase-plus-loan population proof absent.|N/A; LEAD|
+|39|OPEN|reports-home-filter-leaf-ownership, reports-home-no-box-in-box, rpt-s01-s05-reports-home-ifta scans/selftests all0; entire heavy CI not rerun.|N/A; LEAD|
+|42|OPEN|legal-matter-lawsuit-linkage scan0/8 plants; populated reverse relation still unverified.|Private inline earlier redirect proof; LEAD|
+|108|DONE-LIVE|Requested documentary records exist: OWNER-AUTHORIZATIONS.md AUTH-461:8066 and AUTH-462:8076 with result entries. Documentary existence only, not fresh production-count verification.|N/A documentary scope|
+|136|DONE-LIVE|Freshness reads live=c5e98b4; scoreboard stamp checked1/fresh1/stale0. Other artifacts separately fail strict below.|N/A machine output|
+|144|OPEN|PL scan0/7 plants; recurring-worker0/11; unmatched-alert0/8; no-hard-delete-bank-stubs0/15 planted findings; match-posts-nothing0/7; reefer0/2; IFTA0/5. Fuel LIVE phases skipped; AP and trigger counts unverified.|N/A; LEAD|
+|175|OPEN|resettlement-origin-load-dates scan0/selftest19/19; live parity not certified.|N/A; CC-3|
+|176|OPEN|entity-label-rejects-uuid-shaped-name scan/selftest0; not full live label census.|N/A; CC-3|
+|177|OPEN|board-page-no-legacy-sections scan0,0 findings,selftest10/10; bounded source contract not full board acceptance.|N/A; Codex|
+|178|DUPLICATE-OF #15|Same named134-filter guard population.|N/A|
+|140|DUPLICATE-OF #120|Register repeats M1 account-scoping requirement; canonical120 remains open.|N/A|
+|141|DUPLICATE-OF #121|Register repeats M2 invoice/Faro union; canonical121 remains open.|N/A|
+|142|DUPLICATE-OF #122|Register repeats M3/M5 shared matcher; canonical122 remains open.|N/A|
+|123|DUPLICATE-OF #144|Same seven accounting-control requirements; canonical144 still needs live proof.|N/A|
+|165|OPEN|fleet-health-no-false-ok scan0/6 plants; production WO count/MTD not independently queried.|N/A; CC-2|
+|259|OPEN|Same6 plants; prior39-row/no-SAM live sample retained. UI exclusion alone cannot close phantom-data258.|Private inline batch30; LEAD|
+|260|OPEN|Current load13692 drawer: Dispatched,0/2 stops geofenced, invoice action disabled/no linked invoice; driven miles unavailable with missing geofence/dwell reason. Only1of3 inspected, no GPS diagnosis inferred.|Private inline current task; CC-2|
+
+Artifact evidence: normal freshness exits0 with3 UNVERIFIABLE HERE outcomes. Explicit --strict exits1:2 stale outputs (financial-block-buildability.md/csv pair; USMCA-EXHAUSTIVE-BATTERY.md) plus canonical-relations.json requiring DB. Selftest28/28. No generator, baseline or guard changed. Lead to route stale outputs; not a new register. UI ratchet scan/selftest0; worklist off-scale raw0/semantic0, NOT all-style-debt zero.
+
+13 module rows re-inventoried:6 explicit auto_check,7 absent. BANK-TIEOUT-01 selftest0; FACT-TIEOUT-01 selftest4/4. SAF-ORPH-01 sign-delta and SAF-ORPH-02 split-ledger static/selftests0 with optional DSNs unset: no money fixture. ACCT-TIEOUT-01 prior explicit TRANSP leg prevents unreviewed production execution. Live acceptance for all13 remains unverified; HOLD/FAIL states preserved.
+
+Remaining: prior Neon connector authentication blocker unresolved; no alternate credential extraction/bypass. Documented browser resize/screenshot-file export not established;1280/768 and filesystem screenshot paths owed, captures private inline only. Full263-row coverage,249 historical PR reviews and live tie-outs NOT COMPLETE.
+
 - 16:24 CT #28073 posted fuel expense opened through Fleet reverse link: journal and proof trail both render 2 postings, debit/credit difference 0; proof trail JE link navigates to journal detail. Narrow rendering repair PASS, not independent certification of the whole adopted-expense population. Same JE link displays two different dates: upper summary 10/02/2026, Journal panel 10/03/2026; requires serialization/date diagnosis, no money edit. Screenshots private inline.
 - 16:25 CT journal destination opens and shows reverse Expense link, 2 postings and difference 0; header date 10/03/2026. #28129 current-tip isolated query-arity tests 2/2 PASS (production DB disabled); historical full-PR guard audit still pending.
 - 16:26 CT U14 `/accounting/maintenance-shop`: Work orders & bills label and columns render; 0 linked documents. Screenshot captured privately. Label/routing observed, nonempty workflow and reverse-document coverage UNVERIFIED, not a population PASS.
