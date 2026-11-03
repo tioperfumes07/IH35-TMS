@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~12:00 AM CT) — ENG-34 wire new orphans; match still deferred
+- **PRIOR:** #28551 orphans 6→1.
+- **THIS:** verify-steps 19863/19865 wire person-confirms-load + customers-vendors-home-boards. ENG-34 orphan residual = match-vendor only.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:55 PM CT) — ENG-34 orphans 6→1 (match residual)
 - **PRIOR:** #28548 Cursor orphan wire 11→6.
 - **THIS:** verify-steps 19853–19861 wire CC-1 rows/dates/reports/113-54/164-readers. ENG-34 orphans 6→1 (only verify-match-vendor — deferred, no match). 
