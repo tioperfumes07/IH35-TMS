@@ -331,7 +331,7 @@ export function SubmissionQueue() {
                     Expected reserve: {asMoney(selectedExpectedReserve)}
                   </span>
                   <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
-                    Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
+                    Submit {formatQuantityTable(selected.length, 0)} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
                   </Button>
                 </>
               ) : null}

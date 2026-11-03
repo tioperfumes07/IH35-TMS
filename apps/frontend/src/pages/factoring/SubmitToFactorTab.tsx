@@ -1222,7 +1222,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           ) : (
             <span>(not posted)</span>
           )}{" "}
-          posted — {created.purchase.invoice_count} invoice(s), gross {formatUsdCents(created.purchase.gross_cents)}, net to IH35{" "}
+          posted — {formatQuantityTable(created.purchase.invoice_count, 0)} invoice(s), gross {formatUsdCents(created.purchase.gross_cents)}, net to IH35{" "}
           {formatUsdCents(created.purchase.net_to_company_cents)}.
           {created.purchase.journal_entry_id ? (
             <>
