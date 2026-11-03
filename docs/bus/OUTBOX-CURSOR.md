@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:05 PM CT) — MXN house format complete
+- **PRIOR:** #28339 FactoringQueue · #28342 SettlementProfitabilityCard MXN.
+- **THIS:** #28344 dispatch formatMoneyCents/Dollars MXN house formatQuantityTable + dollars-not-divide guard retargets. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:50 PM CT) — MXN house format wave
 - **PRIOR:** #28336 AvP batch45 · #28339 FactoringQueue MXN.
 - **THIS:** #28342 SettlementProfitabilityCard MXN house format + trip-profit money guard retarget. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1.
