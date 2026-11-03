@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:50 PM CT) — ENG-34 wire Cursor orphans 11→6
+- **PRIOR:** #28546 tip #103.
+- **THIS:** verify-steps 19843/45/47/49/51 wire inputs-height · names-proper-case · relay-driver-links · driver-endpoints-set-based · ui4-d065..d076. ENG-34 orphans 11→6 (remaining CC-1/Lead/Cascade/match). #27/#29/#103 MERGED-UNVERIFIED.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:40 PM CT) — ROUND 7.30 tip #103 static ratchet
 - **PRIOR:** #28544 tip #27 MERGED-UNVERIFIED.
 - **THIS:** PENDING #103 → MERGED-UNVERIFIED (verify-static-ratchet PASS seeded/378). #27/#29 MERGED-UNVERIFIED. Live DONE-LIVE remaining.
