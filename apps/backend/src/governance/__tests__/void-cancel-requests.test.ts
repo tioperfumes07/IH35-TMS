@@ -192,6 +192,10 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
       { match: (s) => s.includes("banking.release_bank_line_matches"), rows: [{ n: 0 }] },
       { match: (s) => s.includes("UPDATE banking.bank_transactions"), rows: [] },
       { match: (s) => s.includes("UPDATE driver_finance.driver_settlements"), rows: [{ id: SETTLEMENT }] },
+      // 443.210R: the mirrored company settlement is voided alongside (none here) and loads pointing at this settlement
+      // through presettlement_link_id are released (none here, so no billing-status revert runs).
+      { match: (s) => s.includes("UPDATE accounting.company_settlements"), rows: [] },
+      { match: (s) => s.includes("UPDATE mdata.loads") && s.includes("presettlement_link_id = NULL"), rows: [] },
       { match: (s) => s.includes("audit.append_event"), rows: [] },
     ]);
     const result = await executeVoidCancel("driver_settlement", {

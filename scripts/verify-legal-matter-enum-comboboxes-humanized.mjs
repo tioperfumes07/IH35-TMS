@@ -56,8 +56,9 @@ export function checkList(text) {
   if (!/render:\s*\(row\)\s*=>\s*properEnumOrFilterLabel\(row\.type\)/.test(text)) {
     problems.push("LegalMattersListPage: Type column still shows raw row.type.");
   }
-  if (!/\["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"\]\.map\(\(s\) => \(\s*<option key=\{s\} value=\{s\}>\s*\{properEnumOrFilterLabel\(s\)\}/.test(text)) {
-    problems.push("LegalMattersListPage: Type filter combobox is not humanized.");
+  // U12: Type filter is MultiSelectDropdown; labels must still use properEnumOrFilterLabel.
+  if (!/\["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"\]\.map\(\(s\) => \(\{[\s\S]{0,80}label:\s*properEnumOrFilterLabel\(s\)/.test(text)) {
+    problems.push("LegalMattersListPage: Type filter MultiSelect is not humanized.");
   }
   return problems;
 }
@@ -110,6 +111,9 @@ function selftest() {
   const l1 = checkList(listReal.replace('render: (row) => properEnumOrFilterLabel(row.type)', 'render: (row) => String(row.type ?? "")'));
   if (!l1.some((m) => m.includes("Type column"))) failures.push("offender-3 (raw Type column) NOT caught");
 
+  const l2 = checkList(listReal.replace(/label:\s*properEnumOrFilterLabel\(s\)/g, "label: s"));
+  if (!l2.some((m) => m.includes("Type filter"))) failures.push("offender-3b (raw Type MultiSelect labels) NOT caught");
+
   const f1 = checkFormFields(
     formReal.replace(
       '{["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((t) => (\n            <option key={t} value={t}>\n              {properEnumOrFilterLabel(t)}',
@@ -123,7 +127,7 @@ function selftest() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 4/4 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — 5/5 offenders caught, baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {

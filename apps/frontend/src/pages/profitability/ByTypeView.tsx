@@ -10,11 +10,13 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { money, milesLabel, perMile } from "./money";
+import { matchesEquipmentType } from "./equipmentFilter";
 
 interface ByTypeViewProps {
   filters: {
     dateFrom: string;
     dateTo: string;
+    equipmentType?: string;
     customerId?: string;
   };
 }
@@ -24,7 +26,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["profitability", "by-type", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-type", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getEquipmentTypeProfitability({
         operating_company_id: companyId,
@@ -89,6 +91,14 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
     []
   );
 
+  if (!companyId) {
+    return (
+      <BoardSection title="By Equipment Type" testId="profitability-by-type-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load equipment-type profitability.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <BoardSection
       title="By Equipment Type"
@@ -96,9 +106,6 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
       testId="profitability-by-type-board"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load equipment-type profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load equipment-type profitability")}
@@ -107,7 +114,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
         ) : null}
         <ParityTable<EquipmentTypeProfitabilityRow>
           columns={columns}
-          rows={query.data?.by_type ?? []}
+          rows={(query.data?.by_type ?? []).filter((row) => matchesEquipmentType(filters.equipmentType, row.equipment_code) || matchesEquipmentType(filters.equipmentType, row.equipment_label))}
           rowKey={(row) => row.equipment_code}
           storageKey="profitability-by-type"
           tableTestId="profitability-by-type-table"

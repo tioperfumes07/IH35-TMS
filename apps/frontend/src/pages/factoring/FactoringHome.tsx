@@ -93,7 +93,7 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import type { NaReason } from "../../design/money-design-system";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
@@ -1712,7 +1712,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {" · "}
               Release trigger: recourse{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-escrow-recourse-days">
-                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+                {activeFactor?.recourse_days != null ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : "—"}
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase escrow cents.
             </div>
@@ -1794,7 +1794,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-escrow-account"
                 tableTestId="factoring-escrow-account-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   escrow_reserve_cents: fmtCents(purchaseEscrowTotals.escrow),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
@@ -1817,7 +1817,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {" · "}
               Release trigger: recourse{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-recourse-days">
-                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+                {activeFactor?.recourse_days != null ? `${formatQuantityTable(activeFactor.recourse_days, 0)} days` : "—"}
               </span>{" "}
               (from the factor profile recourse setting). Ledger = posted purchase cash reserve cents.
             </div>
@@ -1898,7 +1898,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-cash-reserve"
                 tableTestId="factoring-cash-reserve-table"
                 footerCells={{
-                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  display_id: `${formatQuantityTable(purchaseEscrowTotals.count, 0)} wire(s)`,
                   cash_reserve_cents: fmtCents(purchaseEscrowTotals.cash),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}
@@ -2407,7 +2407,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       render: (row: (typeof feesPaidOpenInvoiceRows)[number]) =>
                         row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
                     },
-                    { key: "age", label: "Age", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => row.age },
+                    { key: "age", label: "Age", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => formatQuantityTable(row.age, 0) },
                     { key: "amount", label: "Amount", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
                     { key: "balance", label: "Balance", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
                     {
@@ -2494,7 +2494,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="grid grid-cols-2 gap-2 px-3.5 py-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
               <div className="border border-gray-200 p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
-                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{formatQuantityTable(agingRows.length, 0)}</div>
               </div>
               {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => (
                 <div key={bucket} className="border border-gray-200 p-2 text-center">
@@ -2589,7 +2589,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     },
                     { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
-                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
+                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => formatQuantityTable(row.age, 0) },
                     { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
                     { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
                     { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
@@ -2817,12 +2817,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           <BoardSection title="Single-factor invariant status" testId="factoring-single-factor-invariant">
             <div className="space-y-1 px-3.5 py-2 text-xs text-gray-700">
               <div>
-                Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
+                Active factors: {formatQuantityTable(Number(settingsQuery.data?.current?.active_factor_count ?? 0), 0)} · Status:{" "}
                 <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-[#1F2A44]" : "text-red-700"}>
                   {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
                 </span>
               </div>
-              <div>Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 95)} days</div>
+              <div>Configured recourse period: {formatQuantityTable(Number(settingsQuery.data?.current?.recourse_days ?? 95), 0)} days</div>
             </div>
           </BoardSection>
 
@@ -3067,7 +3067,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Batches</div>
-                          <div className="mt-1 font-semibold text-gray-900">{filtered.length}</div>
+                          <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-faro-batches-count">{formatQuantityTable(filtered.length, 0)}</div>
                         </div>
                       </div>
                       <div className="mt-3 p-3" data-testid="factoring-faro-reconciliation">

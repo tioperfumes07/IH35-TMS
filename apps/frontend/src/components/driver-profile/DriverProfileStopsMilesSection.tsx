@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDriverProfileStopsMiles } from "../../api/driver-profile-tabs";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -137,14 +138,14 @@ export function DriverProfileStopsMilesSection({
         key: "odometer_mi",
         label: "Odometer",
         sortable: true,
-        render: (row) => (row.odometer_mi == null ? "—" : row.odometer_mi.toFixed(1)),
+        render: (row) => (row.odometer_mi == null ? "—" : formatQuantityTable(row.odometer_mi, 1)),
       },
       {
         key: "miles_since_previous_stop",
         label: "Miles since prior",
         sortable: true,
         render: (row) =>
-          row.miles_since_previous_stop == null ? "—" : row.miles_since_previous_stop.toFixed(1),
+          row.miles_since_previous_stop == null ? "—" : formatQuantityTable(row.miles_since_previous_stop, 1),
       },
       {
         key: "load_number",
@@ -180,7 +181,7 @@ export function DriverProfileStopsMilesSection({
         </div>
         {!q.isLoading && !q.isError ? (
           <div className="rounded-sm bg-gray-50 px-2 py-1 text-center">
-            <p className="text-page-title font-bold text-[#0F1219]">{readMiles.toFixed(1)}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{formatQuantityTable(readMiles, 1)}</p>
             <p className="text-xs uppercase text-gray-500">Read miles</p>
           </div>
         ) : null}

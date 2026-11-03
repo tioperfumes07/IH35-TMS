@@ -7,7 +7,8 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { money } from "./money";
+import { ByTypeView } from "./ByTypeView";
+import { money, pctLabel } from "./money";
 
 interface ByCustomerViewProps {
   filters: {
@@ -21,8 +22,16 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
+  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
+  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
+  if (filters.equipmentType) {
+    return <ByTypeView filters={filters} />;
+  }
+
+
+
   const query = useQuery({
-    queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-customer", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getCustomerProfitability({
         operating_company_id: companyId,
@@ -75,7 +84,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => `${row.gross_margin_pct.toFixed(1)}%`,
+        render: (row) => pctLabel(row.gross_margin_pct),
       },
       {
         key: "gross_margin_cents",
@@ -89,6 +98,14 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
     []
   );
 
+  if (!companyId) {
+    return (
+      <BoardSection title="By Customer" testId="profitability-by-customer-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load customer profitability.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <BoardSection
       title="By Customer"
@@ -100,9 +117,6 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
       viewAllLabel="Full report →"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load customer profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load customer profitability")}
@@ -118,7 +132,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
           emptyText={
             query.isLoading
               ? "Loading customer profitability…"
-              : "No customers with loads in this period."
+              : "No customers with profitability in this period."
           }
         />
       </div>

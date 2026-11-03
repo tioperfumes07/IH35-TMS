@@ -265,7 +265,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 ? formatDateUS(renewal.date) || "—"
                 : "—"
           }
-          sub={renewal ? `${renewal.days} days` : undefined}
+          sub={renewal ? `${formatQuantityTable(renewal.days, 0)} days` : undefined}
           onClick={() => navigate("/insurance/policies")}
         />
         <V3KpiTile

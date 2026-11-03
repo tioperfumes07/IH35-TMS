@@ -17,6 +17,7 @@ import { driverTeamMemberName, listMdataDriverTeams, type MdataDriverTeam } from
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { mmmDd } from "../../../lib/formatDate";
 import { isUnresolvedEntityTombstone } from "../../../lib/entity-label";
@@ -188,9 +189,9 @@ export function DriverTeamsPage() {
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]">
-          Select an operating company to view its driver teams.
-        </div>
+        <BoardSection title="Driver Teams" testId="driver-teams-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view its driver teams.</p>
+        </BoardSection>
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">

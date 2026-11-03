@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { formatQuantityTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 
 type LateArrivalEntityDetail = {
@@ -24,7 +25,7 @@ function today() {
 }
 
 function pct(rate: number) {
-  return `${(rate * 100).toFixed(1)}%`;
+  return `${formatQuantityTable(rate * 100, 1)}%`;
 }
 
 function fetchDriverLateArrival(companyId: string, driverId: string) {

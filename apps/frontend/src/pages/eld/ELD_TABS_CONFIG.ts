@@ -31,13 +31,13 @@ export const ELD_TABS_CONFIG: readonly EldTabConfig[] = [
     label: "Driver Certifications",
     emptyTitle: "Driver log certifications",
     emptyBody:
-      "No certification rows for this company yet. Daily log certify events appear here when Samsara ELD ingest lands — this tab stays reachable with no fake rows.",
+      "Daily log certify events are unavailable on this surface until Samsara ELD ingest lands here — this tab stays reachable with no fake rows (not a proven-empty population).",
   },
   {
     id: "settings",
     label: "ELD Settings",
     emptyTitle: "ELD settings",
     emptyBody:
-      "No carrier-level ELD alert or exemption settings saved for this company yet. Preferences appear here when the ELD settings API is attached — this tab stays reachable with no fake preferences.",
+      "Carrier ELD alert/exemption preferences are unavailable on this surface until the settings API is attached — this tab stays reachable with no fake rows (not a proven-empty preferences set).",
   },
 ];

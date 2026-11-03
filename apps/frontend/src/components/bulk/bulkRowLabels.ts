@@ -1,9 +1,10 @@
 import type { BillPayment, ExpenseListRow, Invoice, Payment, VendorBill } from "../../api/accounting";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
 function money(cents: number | string | null | undefined) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function expenseBulkRowLabel(row: ExpenseListRow): string {

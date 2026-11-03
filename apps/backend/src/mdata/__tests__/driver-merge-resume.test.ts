@@ -21,17 +21,18 @@ function fakeClient(mergedInto: string | null) {
   };
 }
 
-describe("previewDriverMerge resume (443.45)", () => {
-  it("an already-merged profile is blocked without resume", async () => {
-    const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M });
-    expect(pv.blockers).toContain("This profile is already merged.");
+describe("previewDriverMerge resume (443.45, auto-resume 443.260.3)", () => {
+  const DIFFERENT = "This profile is already merged into a different driver — re-target the survivor instead.";
+  it("a profile already pointing at THIS survivor auto-resumes (443.260.3) — no blocker, with or without resume", async () => {
+    for (const resume of [false, true]) {
+      const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M, resume });
+      expect(pv.blockers.filter((b) => /merged/i.test(b))).toEqual([]);
+    }
   });
-  it("resume finishes the merge into the SAME survivor", async () => {
-    const pv = await previewDriverMerge(fakeClient(S) as never, { companyId: "co", survivorId: S, mergedId: M, resume: true });
-    expect(pv.blockers).not.toContain("This profile is already merged.");
-  });
-  it("resume never re-targets a profile merged into a different driver", async () => {
-    const pv = await previewDriverMerge(fakeClient(X) as never, { companyId: "co", survivorId: S, mergedId: M, resume: true });
-    expect(pv.blockers).toContain("This profile is already merged.");
+  it("a profile merged into a DIFFERENT driver is never re-targeted, with or without resume", async () => {
+    for (const resume of [false, true]) {
+      const pv = await previewDriverMerge(fakeClient(X) as never, { companyId: "co", survivorId: S, mergedId: M, resume });
+      expect(pv.blockers).toContain(DIFFERENT);
+    }
   });
 });

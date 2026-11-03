@@ -31,7 +31,12 @@ function check(tabSrc, constantsSrc) {
     ),
     "all four settlement summary pay fields must use formatMoneyDollars"
   );
-  assert(/function formatMoneyDollars\([\s\S]{0,420}\.format\(Number\(valueDollars\)\)/.test(constantsSrc), "formatMoneyDollars must not divide decimal dollars by 100");
+  // House MXN path uses formatQuantityTable(dollars, 2) — never divide dollars by 100.
+  assert(
+    /function formatMoneyDollars\([\s\S]{0,520}formatQuantityTable\(Number\(valueDollars\), 2\)/.test(constantsSrc) &&
+      !/formatMoneyDollars\([\s\S]{0,520}valueDollars\)\s*\/\s*100/.test(constantsSrc),
+    "formatMoneyDollars must not divide decimal dollars by 100",
+  );
 }
 
 function selftest() {
@@ -48,8 +53,8 @@ function selftest() {
       label: "dollars formatter divides by 100",
       tab: tabOriginal,
       constants: constantsOriginal.replace(
-        ".format(Number(valueDollars))",
-        ".format(Number(valueDollars) / 100)"
+        "formatQuantityTable(Number(valueDollars), 2)",
+        "formatQuantityTable(Number(valueDollars) / 100, 2)"
       ),
     },
   ];

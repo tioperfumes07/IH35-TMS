@@ -27,7 +27,7 @@ import { Modal } from "../Modal";
 import { ParityTable } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { colors, spacing } from "../../design/tokens";
 import { kpiTileClasses } from "../layout/kpiTileClasses";
 
@@ -88,7 +88,7 @@ export type LedgerKpiDrill = { rows: Array<Record<string, unknown>> };
 function fmtValue(k: LedgerKpi) {
   if (k.value == null) return "—";
   if (k.unit === "cents") return formatUsdCents(k.value);
-  if (k.unit === "percent") return `${k.value.toFixed(2)}%`;
+  if (k.unit === "percent") return `${formatQuantityTable(k.value, 2)}%`;
   if (k.unit === "days") return `${k.value} d`;
   return String(k.value);
 }
@@ -128,7 +128,7 @@ function cell(col: string, row: Record<string, unknown>) {
 
 function fmtCompare(k: LedgerKpi) {
   const v = k.compare_value as number;
-  if (k.unit === "percent" && k.compare_label === "Contracted") return `${v.toFixed(2)}%`;
+  if (k.unit === "percent" && k.compare_label === "Contracted") return `${formatQuantityTable(v, 2)}%`;
   if (k.unit === "cents") return formatUsdCents(v);
   return String(v);
 }

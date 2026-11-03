@@ -14,6 +14,8 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
+import { formatQuantityTable } from "../../lib/money";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -261,7 +263,7 @@ export function VendorMappingResolutionPage() {
         label: "Score",
         sortable: true,
         sortValue: (row) => row.similarity_score,
-        render: (row) => row.similarity_score.toFixed(3),
+        render: (row) => formatQuantityTable(row.similarity_score, 3),
       },
       {
         key: "action",
@@ -304,7 +306,7 @@ export function VendorMappingResolutionPage() {
       };
     }
     return {
-      before: `Name mismatch remains visible (score ${draft.similarity_score.toFixed(3)})`,
+      before: `Name mismatch remains visible (score ${formatQuantityTable(draft.similarity_score, 3)})`,
       after: `Owner confirmation will be recorded for vendor ${draft.qbo_vendor_name || "(required)"}`,
     };
   }, [draft, vendorOptions]);
@@ -312,7 +314,11 @@ export function VendorMappingResolutionPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Samsara Vendor Mapping Resolution" subtitle="Resolve unmapped, duplicate, and drifted driver-to-vendor mappings" />
-      {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Select an operating company.</div> : null}
+      {!companyId ? (
+        <BoardSection title="Samsara Vendor Mapping Resolution" testId="vendor-mapping-resolution-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
 
       {integrityQuery.isError ? (
         <ListErrorState

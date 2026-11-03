@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ByTypeView } from "./ByTypeView";
 import { money, milesLabel, perMile } from "./money";
 
 interface ByLaneViewProps {
@@ -25,8 +26,16 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
+  // Codex batch58 — equipment filter scopes By Type + KPIs on the same population.
+  // When Equipment is set, this tab renders the filtered By Type aggregate (not a blanked feed).
+  if (filters.equipmentType) {
+    return <ByTypeView filters={filters} />;
+  }
+
+
+
   const query = useQuery({
-    queryKey: ["profitability", "by-lane", companyId, filters.dateFrom, filters.dateTo],
+    queryKey: ["profitability", "by-lane", companyId, filters.dateFrom, filters.dateTo, filters.equipmentType],
     queryFn: () =>
       getLaneProfitability({
         operating_company_id: companyId,
@@ -98,6 +107,14 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
     []
   );
 
+  if (!companyId) {
+    return (
+      <BoardSection title="By Lane" testId="profitability-by-lane-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load lane profitability.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <BoardSection
       title="By Lane"
@@ -105,9 +122,6 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
       testId="profitability-by-lane-board"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load lane profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load lane profitability")}

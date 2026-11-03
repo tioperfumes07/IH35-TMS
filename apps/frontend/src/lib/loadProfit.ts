@@ -8,6 +8,7 @@
  */
 
 import { apiRequest } from "../api/client";
+import { formatQuantityTable, formatUsdCents } from "./money";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,9 @@ export function profitBadgeClassName(variant: NetProfitBadgeVariant): string {
 export function formatProfitCents(cents: number): string {
   const dollars = cents / 100;
   if (Math.abs(dollars) >= 1000) {
-    return `${dollars < 0 ? "-" : ""}$${Math.round(Math.abs(dollars) / 100) / 10}k`;
+    const absK = Math.round(Math.abs(dollars) / 100) / 10;
+    return `${dollars < 0 ? "−" : ""}$${formatQuantityTable(absK, 1)}k`;
   }
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(dollars);
+  // Whole dollars on the badge — strip trailing .00 from house cents formatter.
+  return formatUsdCents(cents).replace(/\.00$/, "");
 }

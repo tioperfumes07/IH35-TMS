@@ -6,6 +6,7 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "cash-flow-statement": "/reports/cash-flow-statement",
   "cash-flow-overview": "/reports/cash-flow-overview",
   "settlement-summary": "/reports/settlement-summary",
+  "profitability-hub": "/profitability",
   "customer-profitability": "/reports/customer-profitability",
   "profit-per-truck": "/reports/profit-per-truck",
   "lane-profitability": "/reports/lane-profitability",

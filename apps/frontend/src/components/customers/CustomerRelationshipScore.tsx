@@ -1,4 +1,5 @@
 import type { CustomerRelationshipScore } from "../../api/mdata";
+import { formatQuantityTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 
 type Props = {
@@ -75,7 +76,7 @@ function tierClass(
 
 function subscoreValue(value: number | null | undefined) {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  return Number(value).toFixed(1);
+  return formatQuantityTable(value, 1);
 }
 
 export function CustomerRelationshipScore({ score, loading = false, error = null, onRetry }: Props) {
@@ -104,7 +105,7 @@ export function CustomerRelationshipScore({ score, loading = false, error = null
         <>
           <div className="mb-2 flex items-end gap-2">
             <p className="text-page-title font-semibold text-gray-900">
-              {!partial && typeof score?.overall_health_score === "number" ? score.overall_health_score.toFixed(1) : "—"}
+              {!partial && typeof score?.overall_health_score === "number" ? formatQuantityTable(score.overall_health_score, 1) : "—"}
             </p>
             <span className="pb-1 text-xs text-gray-500">/ 100</span>
           </div>

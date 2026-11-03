@@ -17,6 +17,7 @@
  * see the trailing note.
  */
 import { useMemo, type ReactNode } from "react";
+import { formatQuantityTable } from "../../lib/money";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
@@ -525,7 +526,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
   // (react-query cache holding the `{ payment_terms }` envelope under a shared key) still crashes `.map`.
   const termOptions = useMemo(() => {
     const terms = Array.isArray(paymentTermOptions) ? paymentTermOptions : [];
-    return terms.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
+    return terms.map((t) => ({ value: t.id, label: `${t.terms_name} (${formatQuantityTable(t.days_until_due, 0)}d)` }));
   }, [paymentTermOptions]);
 
   // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER: catalogs.customer_types had a working backend

@@ -9,7 +9,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { MoneyListToolbar } from "../../components/table";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
@@ -33,7 +33,7 @@ function fmtFinanceCents(value: number | null): string {
   return value == null ? "—" : fmtMoney(value);
 }
 function fmtPct(value: number | null): string {
-  return value == null ? "—" : `${value.toFixed(1)}%`;
+  return value == null ? "—" : `${formatQuantityTable(value, 1)}%`;
 }
 
 function qualityBadge(customer: Customer) {

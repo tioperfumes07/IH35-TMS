@@ -47,8 +47,11 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="qb-import-preview-table"')) {
     errors.push(`${PAGE}: must set tableTestId="qb-import-preview-table"`);
   }
-  if (!src.includes("row.amt.toFixed(2)")) {
-    errors.push(`${PAGE}: must keep the exact $X.XX amount format (row.amt.toFixed(2))`);
+  if (!src.includes("row.amt.toFixed(2)") && !/formatUsd\(row\.amt\)/.test(src)) {
+    errors.push(`${PAGE}: must keep $X.XX amount format via toFixed(2) or formatUsd(row.amt)`);
+  }
+  if (!src.includes("includedTotal.toFixed(2)") && !/formatUsd\(includedTotal\)/.test(src)) {
+    errors.push(`${PAGE}: Apply total must use toFixed(2) or formatUsd(includedTotal)`);
   }
   if (!src.includes('type="checkbox"')) {
     errors.push(`${PAGE}: must keep the include-toggle checkbox in the Use column renderer`);

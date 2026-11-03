@@ -3,6 +3,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { fetchHomeWeeklyRevenue } from "../../../api/home";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { formatUsd } from "../../../lib/money";
 import { formatUsdFromCents } from "../HomeKpiCard";
 import { formatDate } from "../../../lib/formatDate";
 
@@ -66,13 +67,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
           <YAxis
             tick={{ fontSize: 11 }}
             stroke="#4B5563"
-            tickFormatter={(v) =>
-              new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-                maximumFractionDigits: 0,
-              }).format(Number(v))
-            }
+            tickFormatter={(v) => formatUsd(Number(v))}
           />
           <Tooltip
             formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Invoice basis"]}

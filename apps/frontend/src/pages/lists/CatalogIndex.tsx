@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { GENERIC_CATALOG_REGISTRY } from "../../hooks/useCatalogQuery";
 import { buildCatalogPath, DOMAIN_CONFIG } from "./components/AllCatalogsMap";
@@ -80,9 +81,9 @@ export function CatalogIndex() {
       />
 
       {!companyReady ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
-          Select an operating company to manage catalog rows.
-        </div>
+        <BoardSection title="Catalogs" testId="catalog-index-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to manage catalog rows.</p>
+        </BoardSection>
       ) : null}
 
       {groups.map((group) => (

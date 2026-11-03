@@ -5,7 +5,9 @@ import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatQuantityTable } from "../../lib/money";
 
 type RetentionRow = {
   driver_uuid: string;
@@ -44,49 +46,62 @@ export function RetentionDashboard() {
         breadcrumb={["Drivers", "Retention Risk"]}
         backHref="/drivers"
       />
-      {!companyId ? <p className="text-xs text-gray-500">Select operating company.</p> : null}
-      {scoresQ.isLoading ? <p className="text-xs text-gray-500">Loading retention scores…</p> : null}
-      {scoresQ.isError ? (
-        <ListErrorState title="Couldn't load retention scores" status={0} message={(scoresQ.error as Error)?.message} onRetry={() => void scoresQ.refetch()} />
+      {!companyId ? (
+        <BoardSection title="Driver Retention Risk" testId="driver-retention-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       ) : null}
-      {scoresQ.isSuccess && rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center" data-testid="driver-retention-empty-state">
-          <p className="font-medium text-gray-900">No at-risk drivers</p>
-          <p className="mt-1 text-xs text-gray-500">
-            No current retention scores are in the at-risk or critical tiers for this operating company.
-          </p>
-        </div>
-      ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        {rows.map((row) => {
-          const lateArrivalRate = row.contributing_factors?.late_arrival_rate_30d;
-          const factors = Object.entries(row.contributing_factors ?? {})
-            .filter(([, v]) => v != null)
-            .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`);
-          return (
-            <div key={row.driver_uuid} className="space-y-1">
-              <AtRiskDriverCard
-                driverUuid={row.driver_uuid}
-                driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
-                operatingCompanyId={companyId}
-                riskScore={row.retention_risk_score}
-                tier={row.retention_tier}
-                topFactors={factors}
-              />
-              <p className="text-xs text-[#1F2A44]" data-testid="driver-retention-late-arrival-rate">
-                <EntityLink
-                  kind="driver"
-                  id={row.driver_uuid}
-                  label="Open driver profile"
-                  className="mr-2 text-[var(--accent-green)] underline"
-                />
-                Late arrival rate (30d): {lateArrivalRate == null ? "Unavailable" : `${(lateArrivalRate * 100).toFixed(1)}%`}
+      {companyId ? (
+        <>
+          {scoresQ.isLoading ? <p className="text-xs text-gray-500">Loading retention scores…</p> : null}
+          {scoresQ.isError ? (
+            <ListErrorState title="Couldn't load retention scores" status={0} message={(scoresQ.error as Error)?.message} onRetry={() => void scoresQ.refetch()} />
+          ) : null}
+          {scoresQ.isSuccess && rows.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center" data-testid="driver-retention-empty-state">
+              <p className="font-medium text-gray-900">No at-risk drivers</p>
+              <p className="mt-1 text-xs text-gray-500">
+                No current retention scores are in the at-risk or critical tiers for this operating company.
               </p>
-              {row.features_missing.length > 0 ? <p className="text-xs text-[#1F2A44]">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}
             </div>
-          );
-        })}
-      </div>
+          ) : null}
+          <div className="grid gap-3 md:grid-cols-2">
+            {rows.map((row) => {
+              const lateArrivalRate = row.contributing_factors?.late_arrival_rate_30d;
+              const factors = Object.entries(row.contributing_factors ?? {})
+                .filter(([, v]) => v != null)
+                .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`);
+              return (
+                <div key={row.driver_uuid} className="space-y-1">
+                  <AtRiskDriverCard
+                    driverUuid={row.driver_uuid}
+                    driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
+                    operatingCompanyId={companyId}
+                    riskScore={row.retention_risk_score}
+                    tier={row.retention_tier}
+                    topFactors={factors}
+                  />
+                  <p className="text-xs text-[#1F2A44]" data-testid="driver-retention-late-arrival-rate">
+                    <EntityLink
+                      kind="driver"
+                      id={row.driver_uuid}
+                      label="Open driver profile"
+                      className="mr-2 text-[var(--accent-green)] underline"
+                    />
+                    Late arrival rate (30d):{" "}
+                    {lateArrivalRate == null ? "Unavailable" : `${formatQuantityTable(lateArrivalRate * 100, 1)}%`}
+                  </p>
+                  {row.features_missing.length > 0 ? (
+                    <p className="text-xs text-[#1F2A44]">
+                      Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

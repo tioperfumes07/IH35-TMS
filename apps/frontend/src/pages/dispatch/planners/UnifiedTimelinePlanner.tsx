@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatQuantityTable } from "../../../lib/money";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso, widenPlannerRange } from "./planner-range";
@@ -288,7 +289,7 @@ export function UnifiedTimelinePlanner() {
   const unassignedRow: PlannerGridRow[] = unassignedLoads.length
     ? [{
         id: "unassigned-loads",
-        name: <span data-testid="timeline-unassigned-row" className="text-xs font-semibold text-[#4B5563]">Unassigned ({unassignedLoads.length})</span>,
+        name: <span data-testid="timeline-unassigned-row" className="text-xs font-semibold text-[#4B5563]">Unassigned ({formatQuantityTable(unassignedLoads.length, 0)})</span>,
         secondary: <span className="text-xs text-[#4B5563]">Loads with no driver yet</span>,
         unit: "—",
         bars: unassignedLoads.map((load) => ({

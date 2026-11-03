@@ -24,6 +24,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "cash-flow-statement", label: "Cash flow statement" },
   { id: "cash-flow-overview", label: "Cash flow overview" },
   { id: "settlement-summary", label: "Settlement summary" },
+  { id: "profitability-hub", label: "Profitability hub" },
   { id: "customer-profitability", label: "Customer profitability" },
   { id: "profit-per-truck", label: "Per-truck CPM dashboard" },
   { id: "lane-profitability", label: "Lane profitability" },
@@ -85,6 +86,7 @@ const AUDIT_REPORT_CHILDREN: NavySubNavChild[] = [
 
 export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
   { label: "Reports", to: "/reports" },
+  { label: "Profitability hub", to: "/profitability" },
   { label: "Category hub", to: "/reports/hub" },
   // Label navigates to hub; chevron lists every runner (nav-split — same class as Accounting).
   {
@@ -105,6 +107,7 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
 ];
 
 export function reportsSubNavActiveHref(pathname: string): string {
+  if (pathname === "/profitability" || pathname.startsWith("/profitability?")) return "/profitability";
   if (pathname.startsWith("/reports/audit/")) return pathname;
   if (pathname.startsWith("/reports/run/")) return pathname;
   if (pathname.startsWith("/reports/categories/")) return "/reports/hub";

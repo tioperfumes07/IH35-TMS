@@ -17,6 +17,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 function severityClass(severity: string, days: number) {
   if (days <= 0 || severity === "critical") return "text-red-700 bg-red-50";
@@ -197,7 +198,11 @@ export function DocumentAlertsPage() {
   }, [inboxPage, inboxTotalPages]);
 
   if (!companyId) {
-    return <p className="p-6 text-xs text-gray-500">Select an operating company to view document expiry alerts.</p>;
+    return (
+      <BoardSection title="Document expiry alerts" testId="document-alerts-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view document expiry alerts.</p>
+      </BoardSection>
+    );
   }
 
   return (

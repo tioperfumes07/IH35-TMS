@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { disableSamsaraIntegration, getSamsaraDriverRoster, getSamsaraOwnerConfig, saveSamsaraOwnerConfig, type SamsaraDriverRosterRow } from "../../api/samsara";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveSamsaraVisualStatus } from "../../lib/integration-telematics-status";
@@ -102,9 +103,9 @@ export function SamsaraIntegrationPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
-        Select an operating company to configure Samsara.
-      </div>
+      <BoardSection title="Samsara" testId="samsara-integration-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to configure Samsara.</p>
+      </BoardSection>
     );
   }
 

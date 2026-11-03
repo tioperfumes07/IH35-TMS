@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { formatQuantityTable } from "../../lib/money";
 
 interface DispatcherGapStats {
   dispatcher_id: string | null;
@@ -42,13 +43,13 @@ export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: 
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
           <div className="text-page-title font-bold text-gray-900">
-            {data.avg_gap_hours?.toFixed(1) ?? "—"}
+            {data.avg_gap_hours == null ? "—" : formatQuantityTable(data.avg_gap_hours, 1)}
           </div>
           <div className="text-xs text-gray-500">Avg hours</div>
         </div>
         <div className="text-center">
           <div className="text-page-title font-bold text-gray-900">
-            {data.p50_gap_hours?.toFixed(1) ?? "—"}
+            {data.p50_gap_hours == null ? "—" : formatQuantityTable(data.p50_gap_hours, 1)}
           </div>
           <div className="text-xs text-gray-500">P50 hours</div>
         </div>
