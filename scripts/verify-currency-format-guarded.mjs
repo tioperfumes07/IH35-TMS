@@ -727,6 +727,55 @@ if (!/formatQuantityTable\(result\.dead_letter_details\.length, 0\)/.test(fuelIm
   fail("ImportFuelTransactionsModal dead-letter counts must use formatQuantityTable(, 0)");
 }
 
+const relayFillsQty = read("apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(relayFillsQty) || !/formatQuantityTable\(totalCount, 0\)/.test(relayFillsQty)) {
+  fail("RelayFillsReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const fuelOverageQty = read("apps/frontend/src/components/fuel/FuelCardOverageReverseSection.tsx");
+if (!/formatQuantityTable\(visibleEvents\.length, 0\)/.test(fuelOverageQty) || !/formatQuantityTable\(totalCount, 0\)/.test(fuelOverageQty)) {
+  fail("FuelCardOverageReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const cashForecastQty = read("apps/frontend/src/components/cash-flow/CashForecastReverseSection.tsx");
+if (!/formatQuantityTable\(preview\.length, 0\)/.test(cashForecastQty) || !/formatQuantityTable\(entries\.length, 0\)/.test(cashForecastQty)) {
+  fail("CashForecastReverseSection Showing must use formatQuantityTable(, 0)");
+}
+const trainingQty = read("apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx");
+if (!/formatQuantityTable\(rows\.length, 0\)/.test(trainingQty) || !/formatQuantityTable\(totalCount, 0\)/.test(trainingQty)) {
+  fail("TrainingRecordsSection Showing must use formatQuantityTable(, 0)");
+}
+const userActivityQty = read("apps/frontend/src/components/users/UserActivityTab.tsx");
+if (!/formatQuantityTable\(events\.length, 0\)/.test(userActivityQty) || !/formatQuantityTable\(auditQuery\.data\.total_count, 0\)/.test(userActivityQty)) {
+  fail("UserActivityTab Showing must use formatQuantityTable(, 0)");
+}
+const samsaraMapQty = read("apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx");
+if (!/formatQuantityTable\(rightRows\.length, 0\)/.test(samsaraMapQty) || !/formatQuantityTable\(total, 0\)/.test(samsaraMapQty)) {
+  fail("SamsaraDriverMappingPage Showing must use formatQuantityTable(, 0)");
+}
+const programBoardQty = read("apps/frontend/src/pages/program/ProgramBoardPage.tsx");
+if (!/formatQuantityTable\(activeRows\.length, 0\)/.test(programBoardQty) || !/formatQuantityTable\(baseRows\.length, 0\)/.test(programBoardQty)) {
+  fail("ProgramBoardPage Showing must use formatQuantityTable(, 0)");
+}
+const dispPerfLoadsQty = read("apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx");
+if (!/formatQuantityTable\(data\.loads_counted \?\? 0, 0\)/.test(dispPerfLoadsQty)) {
+  fail("DispatcherPerformanceCard loads_counted must use formatQuantityTable(, 0)");
+}
+const fleetUtilUnitsQty = read("apps/frontend/src/pages/home/charts/FleetUtilizationGauge.tsx");
+if (!/formatQuantityTable\(d\.active_units, 0\)/.test(fleetUtilUnitsQty) || !/formatQuantityTable\(d\.total_units, 0\)/.test(fleetUtilUnitsQty)) {
+  fail("FleetUtilizationGauge unit counts must use formatQuantityTable(, 0)");
+}
+const ownerInvoicesQty = read("apps/frontend/src/pages/home/OwnerHome.tsx");
+if (!/formatQuantityTable\(fb\.invoices_factored \?\? 0, 0\)/.test(ownerInvoicesQty)) {
+  fail("OwnerHome invoices_factored must use formatQuantityTable(, 0)");
+}
+const defaultInvoicesQty = read("apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+if (!/formatQuantityTable\(fb\.invoices_factored \?\? 0, 0\)/.test(defaultInvoicesQty)) {
+  fail("DefaultHome invoices_factored must use formatQuantityTable(, 0)");
+}
+const custProfileQty = read("apps/frontend/src/components/customers/CustomerProfileOverview.tsx");
+if (!/formatQuantityTable\(a\.open_invoice_count, 0\)/.test(custProfileQty)) {
+  fail("CustomerProfileOverview open_invoice_count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 

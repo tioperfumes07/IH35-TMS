@@ -447,7 +447,7 @@ export function DefaultHome({ auth }: Props) {
                 ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${unverifiableReasonText(fb.unverifiable_reason)}` : ""}`
                 : (
                   <>
-                    <div>{`${fb.invoices_factored ?? 0} invoices factored`}</div>
+                    <div>{`${formatQuantityTable(fb.invoices_factored ?? 0, 0)} invoices factored`}</div>
                     <FactoringBalanceClearedNote fb={fb} />
                   </>
                 )
