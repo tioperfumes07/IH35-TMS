@@ -1,3 +1,12 @@
+## 2026-11-03 — ROUND7.30 batch93: customer board live and invoice pagination failure
+
+Batch92 merged #28556 e88f65a839768c568abd13cac1d78e06493f495b,normal hooks,3affected,0regressions.
+
+- #28549 exact merge affected5PASS/1live-excluded;board selftest13/13PASS;Customers/Vendors component tests2/2PASS (jsdom canvas warnings,not browser proof). Selected frontend/backend linkage changes reviewed;not full board acceptance. Live USMCA Customers17:05CT renders87transaction rows,9columns,6tiles,aging legend and zero collected as money. Open-invoices tile174 drills to live_open=true/date_from=2026-01-01;no create/print/export submitted.
+- CONFIRMED destination pagination gap: Invoice list announces100of174/more available but Last page shows51–100of100,2pages,noLoadMore. InvoicesListPage.tsx:349–389 queryFn hardcodeslimit100/offset0;:765–788 ParityTable only receives fetched invoices with internal pagination. listInvoices API supports offset/limit and route returns total/has_more;caller never advances. Independent actual-queryFn174fixture loads100,total174,offset0,74unloaded. Private codex-round7-invoices-list-pagination-probe.cjs. No assertion those74 are lost data;they are inaccessible through current pagination. Screenshot private inline17:07CT. Existing InvoiceSearchReportPage union-cap defect is a DIFFERENT surface.
+- Route existing invoice/customer drill coverage to CC-1/Cursor: wire server pagination (or exhaust safe scoped pages),preserve filter/sort identity andselection,add >100-row rendered navigation test;not just a larger hard cap. KPI count match alone does not certify drill-through completeness. Live dollar accounting not re-certified by these UI counts.
+- Latest bus #28554 explicitly reopens5live UI rows;not treated as fixes. Full audit still INCOMPLETE. Production unchanged.
+
 ## 2026-11-03 — ROUND7.30 batch92: historical formatter/revert review; timezone counterexample
 
 Batch91 merged #28555 d2ee7cc63e8fc6fad52e2593f293c314d0824fab,normal hooks,3affected,0regressions.
