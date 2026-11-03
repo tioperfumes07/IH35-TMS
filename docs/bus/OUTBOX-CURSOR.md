@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:20 PM CT) — ENG-34 wire batch70 static orphans 19871/73/75
+- **PRIOR:** #28577 bus-diet Cursor.
+- **THIS:** verify-steps 19871 (every-poster --selftest/static), 19873 (one-fuel-to-load-helper), 19875 (row-actions-clickable); removed from .guard-exempt. LIVE leftovers stay exempt (balanced-ledger / load-driven-miles / bus-diet global / match).
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:10 PM CT) — bus-diet Cursor INBOX/OUTBOX
 - **PRIOR:** #28575 #241 DONE-LIVE.
 - **THIS:** Archived fat Cursor inbox/outbox under docs/bus/archive/*-pre-diet.md; hot OUTBOX 162≤200, INBOX 12≤40 (standing law kept). Other seats' bus files still over cap (not Cursor-owned).
