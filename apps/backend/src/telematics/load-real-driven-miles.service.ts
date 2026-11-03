@@ -383,6 +383,45 @@ export async function loadsDueForRealMiles(client: DbClient, operatingCompanyId:
   return r.rows.map((x) => x.id);
 }
 
+/**
+ * ENG-29/53 — run dwell evidence (+ optional odometer recapture) inside a SAVEPOINT so a failure
+ * cannot abort the outer withLuciaBypass txn that already persisted miles_driven_actual.
+ * Returns whether the savepoint released cleanly or rolled back after an isolated failure.
+ */
+export async function persistDwellEvidenceInSavepoint(
+  db: DbClient,
+  operatingCompanyId: string,
+  rows: LoadRealMilesRow[],
+): Promise<"released" | "rolled_back"> {
+  const evidence = rows.flatMap((r) => r.dwell_evidence ?? []);
+  if (!evidence.length) return "released";
+
+  await db.query("SAVEPOINT real_driven_miles_dwell_evidence");
+  try {
+    const written = await persistStopDwellEvidence(db, operatingCompanyId, evidence);
+    if (written.events_written > 0) {
+      await captureGeofenceOdometerEvents(db as never, { operatingCompanyId });
+      const again = [...new Set(rows.filter((r) => r.dwell_evidence?.length).map((r) => r.load_id))];
+      await persistLoadRealDrivenMiles(db, operatingCompanyId, await computeLoadRealDrivenMiles(db, operatingCompanyId, again));
+    }
+    await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
+    return "released";
+  } catch (err) {
+    await db.query("ROLLBACK TO SAVEPOINT real_driven_miles_dwell_evidence");
+    await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
+    // Miles already persisted by the caller; dwell evidence retries next hourly tick.
+    console.error(
+      JSON.stringify({
+        engine: "telematics.load_real_driven_miles_cron",
+        company_id: operatingCompanyId,
+        event: "dwell_evidence_isolated_failure",
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+    return "rolled_back";
+  }
+}
+
 export async function runLoadRealDrivenMilesCronTick(): Promise<void> {
   await withLuciaBypass(async (client) => {
     const db = client as DbClient;
@@ -402,31 +441,7 @@ export async function runLoadRealDrivenMilesCronTick(): Promise<void> {
         // odometer capture throws, a bare throw would ROLLBACK the miles write (ENG-53 13690: tip-proven
         // 1731.7 stayed NULL while computed_at stayed 2026-10-22). Isolate evidence in a SAVEPOINT.
         await persistLoadRealDrivenMiles(db, company.id, rows);
-        const evidence = rows.flatMap((r) => r.dwell_evidence ?? []);
-        if (evidence.length) {
-          await db.query("SAVEPOINT real_driven_miles_dwell_evidence");
-          try {
-            const written = await persistStopDwellEvidence(db, company.id, evidence);
-            if (written.events_written > 0) {
-              await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id });
-              const again = [...new Set(rows.filter((r) => r.dwell_evidence?.length).map((r) => r.load_id))];
-              await persistLoadRealDrivenMiles(db, company.id, await computeLoadRealDrivenMiles(db, company.id, again));
-            }
-            await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
-          } catch (err) {
-            await db.query("ROLLBACK TO SAVEPOINT real_driven_miles_dwell_evidence");
-            await db.query("RELEASE SAVEPOINT real_driven_miles_dwell_evidence");
-            // Miles already persisted above; dwell evidence retries next hourly tick.
-            console.error(
-              JSON.stringify({
-                engine: "telematics.load_real_driven_miles_cron",
-                company_id: company.id,
-                event: "dwell_evidence_isolated_failure",
-                error: err instanceof Error ? err.message : String(err),
-              }),
-            );
-          }
-        }
+        await persistDwellEvidenceInSavepoint(db, company.id, rows);
       }
     }
   });

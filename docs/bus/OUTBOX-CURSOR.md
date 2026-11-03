@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:10 AM CT) — ENG-29/53 dwell SAVEPOINT behavior test (Codex #27976)
+- **PRIOR:** #28262 FactorAdmin + DF settlements need-company; #28261 Faro1090; #28260 border/TripProfit; #28259 Notify/POD/xfer/history.
+- **THIS:** Extract `persistDwellEvidenceInSavepoint`; vitest fake-client proves dwell failure → ROLLBACK TO SAVEPOINT, miles stay committed, txn usable; plant without rollback leaves 25P02. Source-shape order retained.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub Codex note → CC-1. ENG-34 LIVE/tool ~29 remain.
+
 ## OUTBOX (11-03-2026 ~10:00 AM CT) — NotifyPreferences + POD/xfer/history need-company
 - **PRIOR:** #28257 SET-RATE selftest plant.
 - **THIS:** NotifyPreferences / PodReview / EquipmentTransfer / LoadHistory empty-company BoardSection; EquipmentTransfer created_at → formatDateTimeUS; LoadHistory linked-docs/timeline → BoardSection. verify-91190 TARGETS 27→30; datetime guard adds EquipmentTransfer.
