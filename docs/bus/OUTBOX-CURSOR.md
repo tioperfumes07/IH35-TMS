@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~6:35 PM CT) — AvP render test + house money wave
+- **PRIOR:** #28336 AvP batch45 helpers · #28339–#28348 MXN/Intl house money.
+- **THIS:** #28351 AvP chart render test (legend + proj-exp polyline DOM). ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1. Safety lists → CC-3.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~6:25 PM CT) — house money Intl sweep continue
 - **PRIOR:** #28339–#28344 MXN · #28346 formatProfitCents.
 - **THIS:** #28347 bulkRowLabels → formatUsdCents · #28348 currency-guard ratchet. ENG-21 DONE-LIVE (owner skip rate-con). ENG-34 LIVE/tool **~16**. SelectCombobox baseline 2. Dreamline/match deferred. ENG-22 AUTH. Vendors/AccountingHub → CC-1. Safety lists → CC-3.
