@@ -123,6 +123,14 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
     []
   );
 
+  if (!companyId) {
+    return (
+      <BoardSection title="By Load (trip / settlement detail)" testId="profitability-by-load-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load trip profitability.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <BoardSection
       title="By Load (trip / settlement detail)"
@@ -134,9 +142,6 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
       viewAllLabel="Full trip P&L →"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load trip profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load trip profitability")}

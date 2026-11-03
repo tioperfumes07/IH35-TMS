@@ -89,6 +89,14 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
     []
   );
 
+  if (!companyId) {
+    return (
+      <BoardSection title="By Customer" testId="profitability-by-customer-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load customer profitability.</p>
+      </BoardSection>
+    );
+  }
+
   return (
     <BoardSection
       title="By Customer"
@@ -100,9 +108,6 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
       viewAllLabel="Full report →"
     >
       <div className="p-4 space-y-3">
-        {!companyId ? (
-          <p className="text-xs text-[#1F2A44]">Select an operating company to load customer profitability.</p>
-        ) : null}
         {query.isError ? (
           <ListErrorBanner
             message={userFacingApiError(query.error, "Could not load customer profitability")}
