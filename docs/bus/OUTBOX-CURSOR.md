@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:45 PM CT) — house qty settlement share + factor MTD wires
+- **PRIOR:** #28367 BreakEven/FleetRestore/Factor settings · #28366 wires/MPG.
+- **THIS:** SettlementStatementWorkflow share % · FactoringHomeBoard MTD advances count → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:35 PM CT) — house qty BreakEven/FleetRestore/Factor settings
 - **PRIOR:** #28366 wires/MPG/API · #28365 batch51 guards.
 - **THIS:** BreakEven days · HomeFleetRestore unit_count · FactoringHome active_factor_count/recourse settings → formatQuantityTable. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.

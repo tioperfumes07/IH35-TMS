@@ -467,6 +467,16 @@ if (!/formatQuantityTable\(Number\(settingsQuery\.data\?\.current\?\.recourse_da
   fail("FactoringHome settings recourse_days must use formatQuantityTable");
 }
 
+
+const settleShare = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
+if (!/formatQuantityTable\(Number\(split\.share_pct \?\? 0\), 1\)/.test(settleShare)) {
+  fail("SettlementStatementWorkflowPage share % must use formatQuantityTable(, 1)");
+}
+const factorMtd = read("apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx");
+if (!/formatQuantityTable\(Number\(summary\.mtd_advances_count \?\? 0\), 0\)/.test(factorMtd)) {
+  fail("FactoringHomeBoard mtd_advances_count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
