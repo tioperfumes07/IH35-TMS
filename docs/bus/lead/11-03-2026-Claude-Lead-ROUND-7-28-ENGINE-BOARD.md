@@ -46,3 +46,9 @@ Apply after E7 merges pick the survivor rows (link to the survivor id). Each lin
 
 ### Not engines (counts, 11-03): 230 numbered rows pending of 262 — A 36 · B 33 (board design) · C 7 · E 21 · ENG 31 · F 18 · G 5 · H 74 (screen labels) · NEW 5. By seat: CURSOR 72 · CC-3 54 · CC-2 40 · CC-1 37 · LEAD 10 · OWNER 6 · unassigned 9.
 CODEX: ROUND 7.26 / 7.27 audit not delivered (OUTBOX-CODEX last entry 11-02 22:01 CT). Deliver Part 1 (8 verdicts) by 17:00Z and the first 40 rows by 19:00Z.
+
+### LEAD re-measure 11-03 16:40Z (prod, bypass, USMCA)
+- E5 DONE-LIVE: 13692 / 13693 / 13695 = delivered_pending_docs; open stops on those loads = 0.
+- E6 DONE-LIVE: SAM- units 0, gateway-serial G… units 0 (owned or leased to USMCA, non-sample).
+- E7 PARTIAL: 165 rows → 85 unmerged (80 merged into survivors); exact-name groups 0. Open: owner queue (Juan Pablo Hernandez Estrada CDL …0697/…0637), importer resolve-before-insert (CC-1), unique hard-id indexes.
+- E10 PARTIAL: main 26 failed / 7934 (repo-root canonical run) → Lead patches in #28272 take it to 15; the 15 left need Postgres. CC-1 + CC-2 apply. #28274 (merged) cleared the stale derived artifacts that turned required-live-load-guard red on every PR.
