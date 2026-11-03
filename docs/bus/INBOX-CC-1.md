@@ -154,3 +154,6 @@ After the queue already posted (ODO guard → E10 → E8 v2 → roster placehold
 
 MaintenanceHomeSummaryPanels.tsx:85-98 adds pmDue but only checks arrivals.isError/isLoading. columns receives pmDue.data?.rows ?? []; pmStatusForUnit([]) returns No PM schedule. Therefore a failed or still-loading PM request with successful arrivals is displayed as confirmed absence. Four helper tests pass but no query-error/loading rendering test. Preserve unknown/error separately from successful-empty; add failing component tests. Code-path finding, no production fault injection. Live12:14CT still old4-column arrivals/old footer, so new deployment acceptance remains UNVERIFIED. Accounting#28364 lower panels independently verified at1280/768 with readable amounts and no document overflow.
 
+
+## LEAD 11-03 2:00 PM CT — OWNER 1:31 PM CT (verbatim): "every coder should perform their full build. you are the lead, you can do anything necessary."
+Lead shipped two of your queued items — drop them: E8 v2 → #28414 (migration 202616320100, guard 19827); ENG-65/E2 → #28422 + prod backfill (42 of 90 linked; 48 have no fuel record — Lead's next PR). Your queue now: roster placeholders (you claimed 19825) → INBOX 11:55 audit items → E3 → E7. Every seat completes its whole build end to end.
