@@ -137,6 +137,16 @@ export function FactorReconciliationPage() {
     []
   );
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Factor reconciliation">
+        <BoardSection title="Factor reconciliation" testId="factor-recon-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper title="Factor reconciliation" subtitle="Statement-to-ledger reconciliation with Q11 tolerance and match-state drilldown.">
 

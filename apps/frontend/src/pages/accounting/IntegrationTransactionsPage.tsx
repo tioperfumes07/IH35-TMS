@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -265,6 +266,16 @@ export function IntegrationTransactionsPage() {
       </div>
     </div>
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Integration Transactions">
+        <BoardSection title="Integration Transactions" testId="integration-txns-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="Integration Transactions" subtitle="QBO sync queue — all entity sync statuses">

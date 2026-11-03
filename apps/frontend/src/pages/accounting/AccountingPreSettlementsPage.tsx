@@ -3,6 +3,7 @@ import { listTours } from "../../api/tourReadout";
 import { PreSettlementsPanel } from "../../components/driver-finance/PreSettlementsPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 /** ROUND 443.280-A — open tours so Unit / Ready / Waiting on are live (not settlement-list dashes). */
@@ -14,6 +15,16 @@ export function AccountingPreSettlementsPage() {
     queryFn: () => listTours(companyId, "open"),
     enabled: Boolean(companyId),
   });
+
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Pre-settlements">
+        <BoardSection title="Pre-settlements" testId="accounting-presettle-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
 
   return (
     <AccountingSubNavWrapper title="Pre-settlements" subtitle="Driver pre-settlement queue">

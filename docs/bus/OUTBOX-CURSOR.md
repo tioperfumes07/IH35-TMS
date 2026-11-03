@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:15 PM CT) — ROUND 7.30 #27 Accounting need-company wave 5
+- **PRIOR:** #28532 Accounting need-company wave 4.
+- **THIS:** Account register/Audit trail/Pre-settlements/CoA roles/Expense category map/Factor recon/Integration txns/Proof trail/Month close/Opening balance/Posting lineage/Batch expenses/Abandonment/Dispute queue/Revenue recognition BoardSection need-company; fill-shell plants. #27 still PARTIAL. SURFACE-BREACH CC-1 for ROUND 7.30 #27. Batch75 Reclassify → CC-1.
+- **NEXT:** more Accounting tabs / #29; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:00 PM CT) — ROUND 7.30 #27 Accounting need-company wave 4
 - **PRIOR:** #28528 Accounting need-company wave 3.
 - **THIS:** Bills/Payments/Factoring/AP aging/Transaction register/Prepaid/Checks/Recurring bills/Vendor balances/Allocations/Sales tax/Payroll/Cash forecast/Period comparison/Daily recon/Undeposited funds BoardSection need-company; fill-shell plants. #27 still PARTIAL. Lead owns dates/UI. Batch75 Reclassify → CC-1.
