@@ -1,4 +1,8 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:35 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:50 AM CT)
+
+## CURRENT — ENG-34 shrink wave 5 (34→29 exempt)
+Wired 5 more no-DB CI-safe exempts via 19812–19820. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
 ## CURRENT — Detention billable minutes house quantity
 DetentionBoardPage billable minutes → formatQuantityTable. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
