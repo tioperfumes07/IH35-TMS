@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:00 PM CT) — customer/lane dead bills excluded
+- **PRIOR:** #28389 batch55 Profitability hub mount · #28384 qty.
+- **THIS:** customer-profitability + lane-profitability pay CTEs exclude void/voided driver bills (sibling of batch54); customer test + hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:45 PM CT) — batch55 mount Profitability hub + equipment filter
 - **PRIOR:** #28384 coverage/dispatch/fuel qty · #28383 batch54 dead bills.
 - **THIS:** Codex batch55 — mount ProfitabilityPage at `/profitability` (manifest+ReportsSubNav+CategoryHoverNav+breadcrumb); wire FilterBar equipmentType into all tab/KPI queryKeys; ByType+Kpi local matchesEquipmentType; hub guard + equipmentFilter tests. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
