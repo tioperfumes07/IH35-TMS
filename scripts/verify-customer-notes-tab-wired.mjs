@@ -11,7 +11,7 @@ const readSources = () => Object.fromEntries(Object.entries(paths).map(([key, pa
 const PLACEHOLDER = "Notes will hold free-form customer notes and history";
 
 const NOTES_ON_EDIT_RE =
-  /<CustomerNotesTab[\s\S]{0,160}?onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/g;
+  /<CustomerNotesTab[\s\S]{0,80}?customer=\{selectedCustomer\}[\s\S]{0,80}?onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/g;
 
 export function collectFailures(sources) {
   const failures = [];
@@ -29,7 +29,7 @@ export function collectFailures(sources) {
   const notesOnEditWired = (sources.page.match(NOTES_ON_EDIT_RE) ?? []).length;
   if (notesOnEditWired < 2) {
     failures.push(
-      `Edit notes must reach the canonical customer editor on every CustomerNotesTab mount (found ${notesOnEditWired})`,
+      `Edit notes must pass selectedCustomer + onEdit→drawer on every CustomerNotesTab mount (found ${notesOnEditWired})`,
     );
   }
   if (!/<CustomerEditDrawer[\s\S]{0,120}customer=\{editDrawerCustomer\}/.test(sources.page)) {
@@ -71,19 +71,26 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`selftest setup failed — expected >=2 CustomerNotesTab onEdit mounts, found ${mounts.length}`);
   }
   for (const [idx, m] of mounts.entries()) {
-    const broken =
+    const brokenOnEdit =
       sources.page.slice(0, m.index) +
       m[0].replace(
         "onEdit={() => setEditDrawerCustomer(selectedCustomer)}",
         "onEdit={() => undefined}",
       ) +
       sources.page.slice(m.index + m[0].length);
-    if (collectFailures({ ...sources, page: broken }).length === 0) {
+    if (collectFailures({ ...sources, page: brokenOnEdit }).length === 0) {
       throw new Error(`selftest missed single-consumer onEdit plant at mount ${idx}`);
+    }
+    const brokenCustomer =
+      sources.page.slice(0, m.index) +
+      m[0].replace("customer={selectedCustomer}", "customer={null as any}") +
+      sources.page.slice(m.index + m[0].length);
+    if (collectFailures({ ...sources, page: brokenCustomer }).length === 0) {
+      throw new Error(`selftest missed single-consumer customer= plant at mount ${idx}`);
     }
   }
   console.log(
-    `verify:customer-notes-tab-wired SELFTEST PASS (${mutations.length}/${mutations.length} + ${mounts.length} per-consumer)`,
+    `verify:customer-notes-tab-wired SELFTEST PASS (${mutations.length}/${mutations.length} + ${mounts.length * 2} per-consumer)`,
   );
   process.exit(0);
 }

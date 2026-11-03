@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:50 PM CT) — notes batch53 customer= plants
+- **PRIOR:** #28376 TripPairing KPI · #28374 Legal alerts KPI.
+- **THIS:** Codex batch53 — NOTES_ON_EDIT_RE requires customer={selectedCustomer}+onEdit per mount; independent customer={null as any} plants (7/7 + 4 per-consumer). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:40 PM CT) — TripPairing KPI house quantity
 - **PRIOR:** #28374 Legal alerts KPI · #28373 Legal U12.
 - **THIS:** TripPairingBoardPage board KPIs → formatQuantityTable(, 0). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
