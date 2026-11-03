@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~1:45 AM CT) — lane live-load predicate + AdjustPopover plant
+- **PRIOR:** #28416 factoring/remint/fuel qty.
+- **THIS:** Codex batch63 — lane-profitability load_scope excludes voided/cancelled (compute+detail) to match equipment live population; hub guard; AdjustPopover-specific ledgerEntityKind plant (batch62). ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~1:30 AM CT) — factoring/remint/fuel count house quantity
 - **PRIOR:** #28413 reverse/factoring/settlements qty.
 - **THIS:** FactoringHome footers · SubmitToFactor missing-docs/feed-gate · PaymentsToYou · DriverBillRemint · Fuel import dead-letters · CompanySettlements downtime · LoanRecovery · CompanyDriverTab · TourPreSettlement close → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
