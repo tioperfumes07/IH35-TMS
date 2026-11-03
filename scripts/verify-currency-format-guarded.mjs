@@ -197,6 +197,20 @@ if (!/formatUsdCents\(Math\.abs\(c\.amount_delta_cents\)\)/.test(faro1090)) {
 if (/Δ\$\{c\.amount_delta_cents\}¢/.test(faro1090)) {
   fail("Faro1090WireProposalsPage must not render raw amount_delta_cents with ¢ suffix");
 }
+const financeHub = read("apps/frontend/src/pages/finance/FinanceHubPage.tsx");
+if (!/formatQuantityTable\(Number\(kpi\.value\) \|\| 0\)/.test(financeHub)) {
+  fail("FinanceHubPage count KPIs must use formatQuantityTable");
+}
+if (/Intl\.NumberFormat\("en-US"\)\.format\(Number\(kpi\.value\)/.test(financeHub)) {
+  fail("FinanceHubPage must not use Intl.NumberFormat for count KPIs");
+}
+const propertyTax = read("apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx");
+if (!/formatQuantityTable\(rendition\.assessed_tax_cents \/ 100, 2\)/.test(propertyTax)) {
+  fail("PropertyTaxRenditionPage assessed MoneyInput placeholder must use formatQuantityTable");
+}
+if (/\(rendition\.assessed_tax_cents \/ 100\)\.toFixed\(2\)/.test(propertyTax)) {
+  fail("PropertyTaxRenditionPage must not use toFixed for assessed tax placeholder");
+}
 const driverLayover = read("apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx");
 if (!/formatQuantityTable\(row\.duration_hours, 1\)/.test(driverLayover)) {
   fail("DriverLayoverHistory duration hours must use formatQuantityTable");
