@@ -17389,5 +17389,30 @@
     "claimed_at": "2026-11-03",
     "claimed_by": "cursor",
     "purpose": "ENG-34 wire verify-wizard-section-equality.mjs (static/selftest; shrink exempt)"
+  },
+  "19812": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-no-test-units-in-prod.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19814": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-single-migration-dir.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19816": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-sql-read-targets.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19818": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-stalled-queue-reaper.mjs (static; no-DB CI safe; shrink exempt)"
+  },
+  "19820": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "cursor",
+    "purpose": "ENG-34 wire verify-trial-balance-contract.mjs (static; no-DB CI safe; shrink exempt)"
   }
 }
