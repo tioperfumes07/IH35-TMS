@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:30 PM CT) — ROUND 7.30 #27 tip MERGED-UNVERIFIED + ItemsCatalog
+- **PRIOR:** #28543 Accounting detail need-company wave 7.
+- **THIS:** ItemsCatalog BoardSection need-company; PENDING #27 → MERGED-UNVERIFIED (~67 surfaces; Reclassify/match/LoadCosts skipped; live UNVERIFIED). #29 already MERGED-UNVERIFIED.
+- **NEXT:** live DONE-LIVE / Cursor #103 static reds; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:20 PM CT) — ROUND 7.30 #27 Accounting detail need-company wave 7
 - **PRIOR:** #28540 tip #27/#29 status.
 - **THIS:** 13 Accounting *Detail* pages BoardSection need-company; fill-shell plants (~54→~67). #27 still PARTIAL (Reclassify/match/LoadCosts skipped). #29 MERGED-UNVERIFIED. SURFACE-BREACH CC-1 for ROUND 7.30 #27.
