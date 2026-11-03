@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~12:45 AM CT)
+
+## CURRENT — Load Costs rate selftest plant fixed
+verify-load-costs-board-no-truncation-no-wrap selftest matches formatUsdRateTable. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~12:35 AM CT)
 
 ## CURRENT — Cursor house money wave 6 (Load Costs/escrow/liabilities)
