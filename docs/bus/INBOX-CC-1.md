@@ -158,3 +158,15 @@ FIX: migration adds projected_expense_cents to the snapshot (idempotent, RLS unc
 
 ## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
 Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
+
+## P0 — LEAD 2026-11-02 6:45 PM CT — OWNER ORDER 6:29 PM CT (verbatim): "well there should be no multiple profiles or drivers etc, merge into one for each." — row 263 (lane: mdata.drivers = CC-1)
+MEASURED (prod, USMCA): 165 mdata.drivers rows = 93 distinct people. **65 exact-name groups, 137 rows, 72 extra rows.** Cause: the same roster imported twice — 65 group rows created **07-04** and 65 created **08-21** (+1 08-07, +1 09-01, +5 09-28). Customers 1,226 / vendors 618 / units 42: 0 exact-name duplicates.
+Hard-identifier evidence (guard verify-no-driver-merge-without-hard-identifier): 81 pairs → **33 groups share a hard id** (CDL / passport / INE / CURP / Samsara / QBO vendor / employee id); **47 pairs have no id on either side**; **1 conflicting pair**: Juan Pablo Hernandez Estrada (both 07-04) CDL …0697 vs …0637 (one digit) → hold, owner confirms.
+Near-duplicates (token subset, same first name — owner confirms each): angel alfonso sosa ↔ angel alfonso sosa perez; carlos mauricio ↔ carlos mauricio carvallo ↔ carlos mauricio pena carvallo; humberto martinez ↔ humberto martinez franco; jesus armando morales ↔ jesus armando morales leal; leonel antonio morales ↔ leonel antonio morales noguez; neftali coronado urbano ↔ neftali urbano coronado.
+
+BUILD (permanent):
+1. Merge every exact-name group into ONE survivor through the existing driver-merge engine (mdata/driver-merge.service.ts — repoints every FK: loads, settlements, bills, advances, escrow, fuel, telematics; audit row per merge). Survivor = the Active row, else the row with the most linked records. Evidence: hard id where present; for the 47 no-id pairs the evidence is the owner order above (record it verbatim on each merge row as owner_confirmed). Extend the guard to accept owner_confirmed evidence; still refuse conflicting hard ids.
+2. Owner confirm queue (Drivers › Duplicates): the 1 conflicting pair + the near-duplicate sets, side by side (ids last-4, DOB, phone, loads count) with Merge / Different person.
+3. PREVENTION — every driver writer (create route, QBO/Samsara/roster importers, settlement creator) resolves an existing driver first (hard id → normalized full name + DOB) and updates/reactivates it; never inserts a second row. Partial UNIQUE indexes per company on cdl_number, curp, passport_number, samsara_driver_id (WHERE NOT NULL) — migration, idempotent.
+4. GUARD (live, shrink-only to 0): exact-name driver groups per company = 0, except pairs marked "different person" by the owner.
+DONE = USMCA exact-name groups 0 (72 rows merged), queue live with the 1 + near sets, unique indexes live, guard green. Deadline 2026-11-03T03:00Z. Codex verifies.
