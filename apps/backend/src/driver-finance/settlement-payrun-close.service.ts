@@ -72,7 +72,7 @@ import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account
 import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 import { proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
-import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { activeSettlementLine, notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -692,9 +692,12 @@ export async function closeSettlementPayRun(
     // (never seeded, or all lines voided) must be voided, never closed. The tour-close route's
     // hard-blocker (buildTourReadout ready check) prevents reaching here from the UI, but the
     // engine enforces it unconditionally as the authoritative backstop.
+    // Rows 24 (R217): a line is live only when active AND not voided — the ONE shared rule (activeSettlementLine,
+    // live-document-predicates.sql.ts). A settlement whose every line was voided but left is_active = true is EMPTY and is refused.
     const liveLineCount = await client.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM driver_finance.settlement_lines
-        WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true`,
+      `SELECT count(*)::text AS n FROM driver_finance.settlement_lines sl
+         JOIN driver_finance.driver_settlements s_live ON s_live.id = sl.settlement_id AND s_live.operating_company_id = sl.operating_company_id
+        WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid AND ${activeSettlementLine("sl", "s_live")}`,
       [settlementId, opco]
     );
     if (Number(liveLineCount.rows[0]?.n ?? 0) === 0) {

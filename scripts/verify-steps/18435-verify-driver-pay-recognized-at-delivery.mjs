@@ -9,5 +9,9 @@ export default {
     // LEAD 443.269-B: a miles re-price restates the recognized pay everywhere (bill, A/P + GL, open pre-settlement).
     await ctx.run("node", ["scripts/verify-miles-reprice-follows-everywhere.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-miles-reprice-follows-everywhere.mjs"]);
+    // Rows 85 / 24 / 98 (2026-11-03): one accrual eligibility (open unposted settlements accrue), empty close refused by
+    // name, company settlement takes its driver settlement's number at close.
+    await ctx.run("node", ["scripts/verify-rows-85-24-98.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-rows-85-24-98.mjs"]);
   },
 };
