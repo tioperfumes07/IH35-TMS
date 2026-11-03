@@ -14,6 +14,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { statusOptions } from "../../../lib/statusListParams";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
 
 const STATUS_LABELS: Record<LegalTemplateStatus, string> = {
   draft: "Draft",
@@ -83,7 +84,7 @@ export function LegalTemplatesListPage() {
   const columns = useMemo<ParityColumn<LegalTemplateSummary>[]>(
     () => [
       { key: "template_code", label: "Code", sortable: true, render: (row) => <span className="font-mono text-xs">{row.template_code}</span> },
-      { key: "version", label: "Version", sortable: true, render: (row) => String(row.version) },
+      { key: "version", label: "Version", sortable: true, render: (row) => formatQuantityTable(row.version, 0) },
       { key: "display_name_en", label: "Display Name (EN)", sortable: true, render: (row) => row.display_name_en },
       { key: "category", label: "Category", sortable: true, render: (row) => row.category },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusPillClass(row.status)}>{row.status}</span> },

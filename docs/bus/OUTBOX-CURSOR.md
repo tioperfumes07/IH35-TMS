@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~4:50 PM CT) — Legal Templates version quantity
+- **PRIOR:** #28473 Attorney Review version qty.
+- **THIS:** LegalTemplatesListPage version → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~4:40 PM CT) — Attorney Review version quantity
 - **PRIOR:** #28471 expense load confirmations need-company.
 - **THIS:** LegalAttorneyReviewPage version → formatQuantityTable(, 0); currency ratchet plant. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
