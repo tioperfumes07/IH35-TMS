@@ -155,8 +155,8 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     label: "Projected Exp.",
     sortable: true,
     className: "text-right",
-    sortValue: (g) => g.expenses.projected_cents,
-    render: (g) => <span style={{ color: V3.ink }}>{formatCents(g.expenses.projected_cents)}</span>,
+    sortValue: (g) => (g.expenses.projected_unavailable ? -1 : g.expenses.projected_cents),
+    render: (g) => <ProjectedExpenseCell line={g.expenses} />,
   },
   {
     key: "actual_expenses",
@@ -173,7 +173,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     className: "text-right",
     sortValue: (g) => g.expenses.variance_cents,
     render: (g) =>
-      g.expenses.actual_unavailable ? (
+      g.expenses.actual_unavailable || g.expenses.projected_unavailable ? (
         <span className="text-xs" style={{ color: V3.mutedSoft }}>
           —
         </span>
@@ -203,6 +203,37 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
       ),
   },
 ];
+
+// E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0; a past
+// day read from the morning snapshot says so, like Projected Income does.
+export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
+  if (line.projected_unavailable) {
+    return (
+      <span
+        className="text-xs"
+        style={{ color: V3.mutedSoft }}
+        title="This day is before expense projections were captured — not a projected $0"
+        data-testid="cash-flow-avp-proj-exp-not-captured"
+      >
+        not captured
+      </span>
+    );
+  }
+  return (
+    <span style={{ color: V3.ink }}>
+      {formatCents(line.projected_cents)}
+      {line.projected_basis === "snapshot" && line.projected_captured_at ? (
+        <span
+          className="block text-xs"
+          style={{ color: V3.mutedSoft }}
+          title={`Frozen snapshot captured ${formatDateTimeUS(line.projected_captured_at)}`}
+        >
+          snapshot {formatDateUS(line.projected_captured_at)}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 // CASH-FLOW-01 (owner order 2026-09-06, LAW §8 "zero is a claim"): actual_unavailable means the
 // backend measured 0 categorized bank lines company-wide -- a bare $0 here would read as
@@ -260,7 +291,7 @@ function accuracyPct(projected: number, actual: number): number {
   return Math.round((100 * Math.min(Math.abs(projected), Math.abs(actual))) / max);
 }
 
-function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: ChartGrain }) {
+function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { points: ChartPoint[]; grain: ChartGrain; expNotCapturedDays?: number }) {
   const series = useMemo(() => {
     let ai = 0;
     let pi = 0;
@@ -300,7 +331,8 @@ function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: Chart
       .join(" ");
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => Math.round(maxAbs * t));
-  const projExpensesAllZero = series.every((p) => p.projectedExpenses === 0);
+  // E8: a range made only of not-captured days is not "the engine projects none" — that note would be a false claim.
+  const projExpensesAllZero = expNotCapturedDays < points.length && series.every((p) => p.projectedExpenses === 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -406,6 +438,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
     });
   }, [groups, applied.varianceFilter]);
   const acc = data?.accuracy_summary;
+  const expNotCapturedDays = groups.filter((g) => g.expenses.projected_unavailable).length;
   const actualsUnavailable = data?.bank_categorization_coverage.categorized_count === 0;
 
   const chartPoints: ChartPoint[] = useMemo(
@@ -594,7 +627,13 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           }
           testId="cash-flow-avp-chart-panel"
         >
-          <AvpCompareChart points={chartPoints} grain={chartGrain} />
+          {expNotCapturedDays > 0 ? (
+            <p className="text-xs" style={{ color: V3.amber }} data-testid="cash-flow-avp-proj-exp-not-captured-note">
+              Projected expenses not captured on {expNotCapturedDays} earlier day{expNotCapturedDays === 1 ? "" : "s"} — those
+              days are left out of the expense accuracy totals, and the projected line reads $0 for them.
+            </p>
+          ) : null}
+          <AvpCompareChart points={chartPoints} grain={chartGrain} expNotCapturedDays={expNotCapturedDays} />
         </BoardSection>
       )}
 
