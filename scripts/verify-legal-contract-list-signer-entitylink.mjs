@@ -63,6 +63,13 @@ function analyze(planted = {}) {
   if (!svc.includes("parseContractInstanceStatusFilter") || !svc.includes("ci.status = ANY($${values.length}::legal.contract_instance_status[])")) {
     failures.push("listContractInstances must apply status ANY() via parseContractInstanceStatusFilter before LIMIT");
   }
+  const routes = readSrc("apps/backend/src/legal/contracts.routes.ts");
+  if (/listQuerySchema[\s\S]{0,400}status:\s*z\.enum\(/.test(routes)) {
+    failures.push("contracts listQuerySchema status must accept comma-union strings (not scalar z.enum)");
+  }
+  if (!/contractListStatusSchema/.test(routes) || !/parseContractInstanceStatusFilter/.test(routes)) {
+    failures.push("contracts list status must allowlist comma-unions via contractListStatusSchema + parseContractInstanceStatusFilter");
+  }
   return failures;
 }
 
@@ -129,6 +136,20 @@ function selftest() {
   });
   if (!svcNoAny.some((m) => /ANY\(\)/.test(m))) {
     fail(`selftest expected status ANY fail; got: ${svcNoAny.join("; ")}`);
+  }
+
+  const routesPath = "apps/backend/src/legal/contracts.routes.ts";
+  const routesOriginal = fs.readFileSync(path.join(process.cwd(), routesPath), "utf8");
+  const routesEnum = analyze({
+    [routesPath]: routesOriginal
+      .replace(/const contractListStatusSchema[\s\S]*?\.optional\(\);/, "")
+      .replace(
+        /status:\s*contractListStatusSchema\.optional\(\)/,
+        'status: z.enum(["draft", "sent"]).optional()',
+      ),
+  });
+  if (!routesEnum.some((m) => /comma-union|z\.enum|allowlist|contractListStatusSchema/.test(m))) {
+    fail(`selftest expected route scalar-enum fail; got: ${routesEnum.join("; ")}`);
   }
 
   const good = analyze();
