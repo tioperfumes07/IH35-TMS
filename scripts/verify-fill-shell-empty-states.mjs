@@ -36,6 +36,8 @@ const checks = [
   ["apps/frontend/src/pages/compliance/Form2290Filings.tsx", "BoardSection", "form-2290-need-company", "Form2290 need-company"],
   ["apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx", "BoardSection", "filings-compliance-due-need-company", "FilingsDue need-company"],
   ["apps/frontend/src/pages/form425c/Form425CHome.tsx", "BoardSection", "form-425c-need-company", "Form425C need-company"],
+  ["apps/frontend/src/pages/customers/CoiTab.tsx", "BoardSection", "customer-coi-need-company", "CoiTab need-company"],
+  ["apps/frontend/src/pages/customers/components/PortalUsersTab.tsx", "BoardSection", "portal-users-need-company", "PortalUsers need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
