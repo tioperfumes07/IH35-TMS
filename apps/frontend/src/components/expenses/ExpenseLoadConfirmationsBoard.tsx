@@ -25,6 +25,7 @@ import { formatUsdCentsTable, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { V3 } from "../../design/v3-tokens";
 import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
+import { BoardSection } from "../v3/BoardSection";
 
 export type ExpenseLoadConfirmationsBoardProps = {
   operatingCompanyId: string;
@@ -349,9 +350,9 @@ export function ExpenseLoadConfirmationsBoard({
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]" data-testid={testId}>
-        Select an operating company.
-      </div>
+      <BoardSection title="Expense load confirmations" testId={testId ?? "expense-load-confirmations-need-company"}>
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
     );
   }
 

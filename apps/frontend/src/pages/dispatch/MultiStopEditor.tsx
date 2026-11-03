@@ -11,6 +11,7 @@ import { CappedListNotice } from "../../components/CappedListNotice";
 import { useToast } from "../../components/Toast";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/Combobox";
+import { formatQuantityTable } from "../../lib/money";
 
 export type UiStopType = "pickup" | "dropoff" | "fuel" | "rest" | "customs";
 
@@ -420,7 +421,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
           + Create stop
         </Button>
         <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
-          Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
+          Est. leg miles: ~{totals.dist} · Est. hours: ~{formatQuantityTable(totals.hrs, 1)}
         </div>
         <Button type="button" size="sm" loading={mut.isPending} onClick={saveStops}>
           Save stops

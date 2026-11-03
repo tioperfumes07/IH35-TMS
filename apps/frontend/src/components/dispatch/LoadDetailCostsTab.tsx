@@ -42,6 +42,7 @@ import {
   type FuelAssignmentQuestion,
 } from "../../api/fuelAssignmentQuestions";
 import { FuelAssignmentPopup } from "../../pages/fuel/components/FuelAssignmentPopup";
+import { formatQuantityTable, formatUsdRateTable } from "../../lib/money";
 
 // LDT-1 (owner order 2026-09-05 23:00Z, CURSOR-LOAD-DETAIL-TABS-BUILD § LDT-1; built by Claude Lead
 // 2026-09-06 on the owner's "you build all loads and finish all related"): the Costs tab is the
@@ -135,8 +136,9 @@ function blankDraft(kind: CostChoice = "expense"): Draft {
 }
 
 const num = (v: number | string | null | undefined) => (v == null || v === "" ? 0 : Number(v));
-const fmtMiles = (v: number | string | null | undefined) => (v == null || v === "" || !Number.isFinite(Number(v)) ? DASH : Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
-const fmtRate = (cents: number | string | null | undefined) => (cents == null || cents === "" ? DASH : `$${(Number(cents) / 100).toFixed(4)}`);
+const fmtMiles = (v: number | string | null | undefined) => (v == null || v === "" || !Number.isFinite(Number(v)) ? DASH : formatQuantityTable(Number(v)));
+const fmtRate = (cents: number | string | null | undefined) =>
+  cents == null || cents === "" ? DASH : formatUsdRateTable(Number(cents) / 100);
 const mmdd = (iso: string | null | undefined) => (iso ? `${iso.slice(5, 7)} / ${iso.slice(8, 10)}` : DASH);
 const acctLabel = (number: string | null | undefined, name: string | null | undefined) =>
   formatAccountDisplayLabel({ account_number: number, account_name: name });

@@ -15,7 +15,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -413,7 +413,7 @@ export function InvoiceDetailPage() {
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-3">
-        <DataPanel title="Header">
+        <BoardSection title="Header" testId="header-board">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Customer</span>
             <span className="text-xs text-gray-900">
@@ -548,9 +548,9 @@ export function InvoiceDetailPage() {
               )}
             </span>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
 
-        <DataPanel title="Totals">
+        <BoardSection title="Totals" testId="totals-board">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Subtotal</span>
             <span className="text-xs text-gray-900">{totals.subtotal}</span>
@@ -567,9 +567,9 @@ export function InvoiceDetailPage() {
             <span className="text-xs text-gray-600">Open</span>
             <span className="text-xs text-gray-900">{totals.open}</span>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
 
-        <DataPanel title="Notes">
+        <BoardSection title="Notes" testId="notes-board">
           <div className="space-y-2 text-xs text-gray-700">
             <div>
               <div className="text-xs font-semibold text-gray-500">Internal notes</div>
@@ -591,10 +591,10 @@ export function InvoiceDetailPage() {
               View audit log
             </button>
           </div>
-        </DataPanel>
+        </BoardSection>
       </div>
 
-      <DataPanel title="GL / Journal entries">
+      <BoardSection title="GL / Journal entries" testId="gl-journal-entries-board">
         {(invoice.journal_entries ?? []).length === 0 ? (
           <div className="text-xs text-gray-600" data-testid="invoice-journal-entries-empty">
             No journal entries linked yet (unposted or posting reversed).
@@ -627,9 +627,9 @@ export function InvoiceDetailPage() {
             ))}
           </div>
         )}
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Factoring">
+      <BoardSection title="Factoring" testId="factoring-board">
         {invoice.factoring_advance_id ? (
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="text-gray-700">
@@ -645,9 +645,9 @@ export function InvoiceDetailPage() {
         ) : null}
         {/* LINKAGE LAW §10-B reverse drill: the factoring purchase(s) (= Faro wire) this invoice sits on. */}
         <FactoringPurchaseLinksPanel companyId={selectedCompanyId} filter={{ invoice_id: id }} emptyText="This invoice has not been sold to the factor." />
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title={`Lines (${lineCount})`}>
+      <BoardSection title={`Lines (${lineCount})`} testId="invoice-lines-board">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-gray-600">Line items and billable components</div>
           {isDraft ? (
@@ -727,9 +727,9 @@ export function InvoiceDetailPage() {
             onSortChange={onSortChange}
           />
         )}
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Payment Applications">
+      <BoardSection title="Payment Applications" testId="payment-applications-board">
         {(invoice.payment_applications ?? []).length === 0 ? (
           <div className="text-xs text-gray-600">No payments applied yet.</div>
         ) : (
@@ -756,7 +756,7 @@ export function InvoiceDetailPage() {
             ))}
           </div>
         )}
-      </DataPanel>
+      </BoardSection>
 
       {selectedCompanyId ? (
         <SafetyAlertsReverseSection operatingCompanyId={selectedCompanyId} subjectKind="invoice" subjectId={id} />

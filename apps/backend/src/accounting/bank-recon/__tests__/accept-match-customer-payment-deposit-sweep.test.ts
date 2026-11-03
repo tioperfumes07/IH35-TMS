@@ -65,9 +65,14 @@ describe("GO-CLOSE-188 DEFECT A — customer_payment_deposit sweep on match acce
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
 
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       const s = String(sql);
+      // posting engine validates all account ids are active and postable before writing lines.
+      if (s.includes("FROM catalogs.accounts") && s.includes("FOR SHARE")) {
+        const acctIds = (values?.[0] as string[]) ?? [];
+        return { rows: acctIds.map((id) => ({ id, deactivated_at: null, is_postable: true })) };
+      }
       // the sweep's own bank-ledger-account lookup (bank_transactions JOIN bank_accounts) — checked
       // BEFORE the general bank_transactions branch below since both match "FROM banking.bank_transactions".
       if (s.includes("FROM banking.bank_transactions") && s.includes("JOIN banking.bank_accounts")) {
@@ -106,6 +111,8 @@ describe("GO-CLOSE-188 DEFECT A — customer_payment_deposit sweep on match acce
       if (s.includes("FROM accounting.journal_entry_postings") && s.includes("posting_batch_id")) return { rows: [{ n: "0" }] };
       if (s.includes("UPDATE accounting.posting_batches")) return { rows: [] };
       if (s.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+      // ENG-28: after INSERT, posting engine SELECTs the header to validate entry_date and lock it.
+      if (s.includes("FROM accounting.journal_entries") && !s.includes("INSERT")) return { rows: [{ entry_date: "2026-06-13" }] };
       if (s.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-sweep-1" }] };
       if (s.includes("INSERT INTO accounting.journal_entry_postings")) return { rows: [{ id: "p-sweep-1" }, { id: "p-sweep-2" }] };
       if (s.includes("is_sample_data")) return { rows: [{ is_sample_data: false }] };

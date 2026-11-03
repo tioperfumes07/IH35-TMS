@@ -409,6 +409,7 @@ export const GUARDS = [
   "verify-task-create-catalog-failure-exclusion.mjs",
   "verify-tasks-chat-read-recovery.mjs",
   "verify-team-split-action-lifecycle.mjs",
+  "verify-stops-geocoded.mjs",
   "verify-telematics-schema-references.mjs",
   "verify-test-insert-columns.mjs",
   "verify-timezone.mjs",

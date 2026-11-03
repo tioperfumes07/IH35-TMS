@@ -56,7 +56,8 @@ export function computeFailures(source, route = purchaseRoute) {
   if (!source.includes('listPartsPurchases(companyId, { vendor_id: vendorFilter || undefined })') || !route.includes('pp.vendor_id = ANY($2::uuid[])') || !route.includes('values.push(entityIdFilterValues(query.data.vendor_id))') || !route.includes('pp.operating_company_id = $1::uuid') || !route.includes('vendor_id: entityIdFilterSchema.optional()')) {
     errors.push("Purchase History vendor filter must compare the canonical vendor FK");
   }
-  if (!/statusFilter === "active"[\s\S]*!row\.voided_at[\s\S]*statusFilter === "voided"[\s\S]*Boolean\(row\.voided_at\)/.test(source)) {
+  // U12: statusFilter is string[]; active/voided distinguished via includes after multi-select.
+  if (!/statusFilter\.includes\("active"\)[\s\S]*!row\.voided_at[\s\S]*statusFilter\.includes\("voided"\)[\s\S]*Boolean\(row\.voided_at\)/.test(source)) {
     errors.push("Purchase History status filter must distinguish active and voided receipt events");
   }
   if (!/workOrderLinkedOnly[\s\S]*Boolean\(row\.work_order_id\)/.test(source)) {
@@ -77,8 +78,8 @@ function selftest() {
     import { listPartsPurchases } from "../../api/maintenance";
     export function InventoryPurchasesPage() {
       listPartsPurchases(companyId, { vendor_id: vendorFilter || undefined });
-      if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
-      if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
+      if (statusFilter.includes("active")) next = next.filter((row) => !row.voided_at);
+      if (statusFilter.includes("voided")) next = next.filter((row) => Boolean(row.voided_at));
       if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
       return <ParityTable rows={visibleRows} emptyText="No purchases recorded yet."
         filterBar={<CollapsedListFilters onApply={stagedFilters.apply} onReset={stagedFilters.reset}

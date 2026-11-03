@@ -8,6 +8,7 @@ import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
@@ -17,6 +18,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useStagedListFilters } from "../../components/table";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Filters = {
   driverId: string;
@@ -67,13 +69,17 @@ export function AssignmentHistoryPage() {
   const rows = historyQ.data?.rows ?? [];
   const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Assignment history" testId="assignment-history-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   type AssignmentHistoryRow = (typeof rows)[number];
 
   const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
-    { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => new Date(row.assigned_at).toLocaleString() },
+    { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => formatDateTimeUS(row.assigned_at) || "—" },
     {
       key: "load_number",
       label: "Load",
@@ -142,7 +148,7 @@ render: (row) => {
 
   return (
     <div data-testid="dispatch-assignment-history-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={

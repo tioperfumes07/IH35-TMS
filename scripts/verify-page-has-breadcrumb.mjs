@@ -17,7 +17,8 @@ const FE_PAGES = path.join(ROOT, "apps/frontend/src/pages");
 const LABEL = "verify-page-has-breadcrumb";
 
 /** Shrink-only ceiling for page files that render their own <Breadcrumb> (not Shell structural). */
-const LOCAL_BREADCRUMB_BASELINE = 16;
+/** U18 2026-11-02: WorkOrdersConsoleDetailPage moved to PageHeader breadcrumb → 16→15. */
+const LOCAL_BREADCRUMB_BASELINE = 15;
 
 /**
  * Each page file allowed to render <Breadcrumb> (Accounting wrapper + a few program/settlement leaves).
@@ -63,11 +64,6 @@ const PINNED_LOCAL = [
     rel: "pages/program/ProgramTrackerPage.tsx",
     count: 1,
     reason: "Internal program tracker surface (non-operator module).",
-  },
-  {
-    rel: "pages/work-orders/WorkOrdersConsoleDetailPage.tsx",
-    count: 1,
-    reason: "WO console detail custom trail (maintenance console grammar).",
   },
   {
     rel: "pages/customers/CustomersBoardChrome.tsx",

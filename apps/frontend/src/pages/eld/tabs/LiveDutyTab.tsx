@@ -7,6 +7,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 function formatMinutes(min: number | null | undefined): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -90,11 +91,16 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-[#4B5563]">Select an operating company to load live duty status.</p>;
+    return (
+      <BoardSection title="Live Duty Status" testId="eld-live-duty-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load live duty status.</p>
+      </BoardSection>
+    );
   }
 
   return (
-    <div className="space-y-3" data-testid="eld-live-duty-tab">
+    <BoardSection title="Live Duty Status" testId="eld-live-duty-tab-board">
+    <div className="space-y-3 p-3" data-testid="eld-live-duty-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-xs font-semibold text-[#0F1219]">Live Duty Status</div>
         <div className="text-xs text-[#6B7280]">
@@ -141,5 +147,6 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         tableTestId="eld-live-duty-table"
       />
     </div>
+    </BoardSection>
   );
 }

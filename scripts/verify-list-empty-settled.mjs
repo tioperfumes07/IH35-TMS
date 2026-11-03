@@ -57,8 +57,13 @@ const insuranceClaimsSrc = read("apps/frontend/src/pages/insurance/ClaimsTab.tsx
 const insuranceLawsuitsSrc = read("apps/frontend/src/pages/insurance/LawsuitsTab.tsx");
 const insuranceListErrorContract =
   /query\.isError\s*\?\s*\([\s\S]*?<ListErrorState[\s\S]*?userFacingApiError\(query\.error[\s\S]*?onRetry=\{\(\) => void query\.refetch\(\)\}[\s\S]*?\)\s*:\s*\([\s\S]*?<ParityTable/;
-if (!insuranceListErrorContract.test(insuranceClaimsSrc) || !insuranceListErrorContract.test(insuranceLawsuitsSrc)) {
-  fail("Insurance Claims and Lawsuits must render detailed exact-query retry instead of their empty tables");
+if (!insuranceListErrorContract.test(insuranceClaimsSrc)) {
+  fail("Insurance Claims must render detailed exact-query retry instead of their empty tables");
+}
+// ENG-60: LawsuitsTab is a Navigate → /legal/lawsuits (insurance.lawsuit retired). Empty/retry
+// contract lives on LegalMattersListPage (already in MIGRATED below).
+if (!/Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(insuranceLawsuitsSrc)) {
+  fail("Insurance LawsuitsTab must Navigate to /legal/lawsuits (ENG-60)");
 }
 
 function hasExplicitLoadingThenEmptyGate(source) {
@@ -129,7 +134,7 @@ const MIGRATED = [
     empties: ["No cash advances found — none created for this entity yet (or no rows match the current filter)."],
   },
   { file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx", empties: ["No claims found."] },
-  { file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx", empties: ["No lawsuits match the applied filters."] },
+  // ENG-60: insurance LawsuitsTab retired → LegalMattersListPage empty contract below.
   { file: "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", empties: ["No payment schedule records found."] },
   { file: "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx", empties: ["No policy templates found. Create one from Templates."] },
   { file: "apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", empties: ["No contract instances found for current filters."] },
@@ -363,20 +368,23 @@ const MIGRATED = [
 ];
 
 if (process.argv.includes("--selftest")) {
-  const lawsuitEntry = MIGRATED.find(({ file }) => file.endsWith("/insurance/LawsuitsTab.tsx"));
-  const expected = lawsuitEntry?.empties[0];
-  const source = lawsuitEntry ? read(lawsuitEntry.file) : "";
-  const mutant = expected ? source.replace(expected, "No lawsuits found.") : source;
+  const claimsEntry = MIGRATED.find(({ file }) => file.endsWith("/insurance/ClaimsTab.tsx"));
+  const expected = claimsEntry?.empties[0];
+  const source = claimsEntry ? read(claimsEntry.file) : "";
+  const mutant = expected ? source.replace(expected, "No claims match.") : source;
   if (!expected || !source.includes(expected) || mutant.includes(expected)) {
-    fail("selftest did not reject the planted stale insurance-lawsuit empty-state literal");
+    fail("selftest did not reject the planted stale insurance-claims empty-state literal");
+  }
+  if (/Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/.test(insuranceLawsuitsSrc.replace("/legal/lawsuits", "/insurance/lawsuits"))) {
+    fail("selftest did not reject a LawsuitsTab that no longer Navigate-redirects to Legal");
   }
   const retryMutant = insurancePaymentScheduleSrc.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
   if (insurancePaymentScheduleErrorContract.test(retryMutant)) {
     fail("selftest did not reject the planted Insurance Payment Schedule retry no-op");
   }
-  for (const [name, candidate] of [["Claims", insuranceClaimsSrc], ["Lawsuits", insuranceLawsuitsSrc]]) {
-    const mutant = candidate.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
-    if (insuranceListErrorContract.test(mutant)) fail(`selftest did not reject the planted Insurance ${name} retry no-op`);
+  {
+    const mutant = insuranceClaimsSrc.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
+    if (insuranceListErrorContract.test(mutant)) fail("selftest did not reject the planted Insurance Claims retry no-op");
   }
   const workOrders = read("apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx");
   // WorkOrdersTable uses ParityTable path (b): strip loading= prop to plant the race.

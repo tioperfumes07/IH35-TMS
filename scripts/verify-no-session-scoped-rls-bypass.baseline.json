@@ -38,7 +38,6 @@
     "scripts/verify-purge-era-closures-still-hold.mjs": true,
     "scripts/verify-relay-deposits-land-in-usmca.mjs": true,
     "scripts/verify-samsara-driver-mirror-complete.mjs": true,
-    "scripts/verify-stops-geocoded.mjs": true,
     "scripts/verify-trial-balance-and-balance-sheet.mjs": true,
     "scripts/verify-usmca-no-active-test-vendors.mjs": true,
     "scripts/verify-yard-location-and-fence.mjs": true

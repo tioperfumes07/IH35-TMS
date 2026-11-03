@@ -87,6 +87,7 @@ const FILE_MODULE = [
   [/\/pages\/home\/DriverHubReportingPage\.tsx$/, "/driver-hub"],
   [/\/pages\/reports\/form-425c\//, "/425c"],
   [/\/pages\/samsara-vendor-mapping\//, "/samsara"],
+  [/\/pages\/samsara-driver-mapping\//, "/integrations"],
   [/\/pages\/CustomerDetail\.tsx$/, "/customers"],
   [/\/pages\/Customers\.tsx$/, "/customers"],
   [/\/pages\/customers\//, "/customers"],

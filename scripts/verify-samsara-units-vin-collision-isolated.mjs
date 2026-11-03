@@ -26,7 +26,11 @@ function inspect(source) {
   if (!/else if \(row\.oc !== operatingCompanyId\) bump\(counts, "other_company"\);/.test(source)) {
     failures.push("mdata.units VIN match no longer skips a row owned by another company (cross-entity link)");
   }
-  if (!/UPDATE mdata\.units\s*\n\s*SET samsara_vehicle_id = COALESCE\(samsara_vehicle_id, \$2\),\s*\n\s*vin = COALESCE\(NULLIF\(vin, ''\), \$3\),/.test(source)) {
+  // Accept both the original COALESCE pattern and the ROUND 7.18 split-phase CASE WHEN pattern.
+  // The CASE WHEN pattern writes samsara_vehicle_id only when needsSid is true (fill-empty semantics preserved).
+  const hasCoalescePattern = /UPDATE mdata\.units\s*\n\s*SET samsara_vehicle_id = COALESCE\(samsara_vehicle_id, \$2\),\s*\n\s*vin = COALESCE\(NULLIF\(vin, ''\), \$3\),/.test(source);
+  const hasCaseWhenPattern = /UPDATE mdata\.units\s*\n\s*SET samsara_vehicle_id = CASE WHEN \$2::boolean THEN \$3/.test(source);
+  if (!hasCoalescePattern && !hasCaseWhenPattern) {
     failures.push("mdata.units UPDATE branch no longer writes samsara_vehicle_id (VIN-matched rows would stay unlinked)");
   }
   if (!/await client\.query\("SAVEPOINT unit_row"\);/.test(source) || !/await client\.query\("ROLLBACK TO SAVEPOINT unit_row"\)\.catch/.test(source)) {

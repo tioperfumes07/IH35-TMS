@@ -10,6 +10,7 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { colors } from "../../design/tokens";
@@ -233,7 +234,11 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
   }
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+    <BoardSection title="Drivers" testId="drivers-list-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+    </BoardSection>
+  );
   }
 
   return (

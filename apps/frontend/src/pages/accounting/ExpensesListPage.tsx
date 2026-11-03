@@ -298,8 +298,10 @@ export function ExpensesListPage() {
       key: "line_description",
       label: "Category / Memo",
       sortable: true,
-      sortValue: (r) => r.line_description || r.memo || "",
-      render: (r) => <span className="text-gray-600">{r.line_description || r.memo || "—"}</span>,
+      sortValue: (r) => humanMemo(r.line_description || r.memo || ""),
+      render: (r) => (
+        <span className="text-gray-600">{humanMemo(r.line_description || r.memo || "") || "—"}</span>
+      ),
     },
     {
       key: "load_number",
@@ -441,9 +443,18 @@ export function ExpensesListPage() {
       key: "receipt",
       label: "Receipt",
       sortable: true,
+      sortValue: (r) => Number(r.attachment_count ?? 0),
       render: (r) =>
         companyId ? (
-          <ReceiptAttach operatingCompanyId={companyId} entityType="expense" entityId={r.id} readOnly testId={`receipt-attach-expense-${r.id}`} />
+          <ReceiptAttach
+            operatingCompanyId={companyId}
+            entityType="expense"
+            entityId={r.id}
+            readOnly
+            listWhen="open"
+            initialCount={Number(r.attachment_count ?? 0)}
+            testId={`receipt-attach-expense-${r.id}`}
+          />
         ) : null,
     },
     { key: "is_reconciled", label: "Bank Match", sortable: true, render: (r) => <MatchPill matched={r.is_reconciled} /> },

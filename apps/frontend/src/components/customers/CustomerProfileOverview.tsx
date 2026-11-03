@@ -199,7 +199,8 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title={`Contacts (${p.contacts.value.length})`} testId="customer-profile-contacts" reason={p.contacts.empty_reason}>
           {p.contacts.value.length ? <ParityTable columns={contactCols} rows={p.contacts.value} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
         </Section>
-        <Section title={`Documents (${p.documents.value.length})`} testId="customer-profile-documents" reason={p.documents.empty_reason}>
+        {/* Distinct from CustomerFinancialOverviewSection "Billing attachments" — this is the customer file vault. */}
+        <Section title={`Linked files (${p.documents.value.length})`} testId="customer-profile-documents" reason={p.documents.empty_reason}>
           {p.documents.value.length ? <ParityTable columns={docCols} rows={p.documents.value} rowKey={(r) => r.file_id} onRowClick={(r) => navigate(`/documents?file=${r.file_id}`)} density="compact" suppressToolbarRange /> : null}
         </Section>
       </div>

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -9,7 +9,7 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { CustomerProfileOverview } from "../components/customers/CustomerProfileOverview";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
-import { formatUsdCents } from "../lib/money";
+import { formatUsd, formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -90,7 +90,7 @@ import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { UnclearedDocumentsNote } from "../components/accounting/UnclearedDocumentsNote";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { useToast } from "../components/Toast";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
@@ -293,7 +293,7 @@ function CustomerFinancialOverviewSection(props: {
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      <DataPanel title="Revenue (last 12 months)">
+      <BoardSection title="Revenue (last 12 months)" testId="revenue-last-12-months-board">
         {chartData.length === 0 ? (
           <p className="text-xs text-gray-500">No invoice history.</p>
         ) : (
@@ -308,8 +308,8 @@ function CustomerFinancialOverviewSection(props: {
             </ResponsiveContainer>
           </div>
         )}
-      </DataPanel>
-      <DataPanel title="Recent loads">
+      </BoardSection>
+      <BoardSection title="Recent loads" testId="recent-loads-board">
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {props.summary.recent_loads.map((l) => (
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
@@ -320,8 +320,9 @@ function CustomerFinancialOverviewSection(props: {
           ))}
           {props.summary.recent_loads.length === 0 ? <p className="text-gray-500">No loads.</p> : null}
         </div>
-      </DataPanel>
-      <DataPanel title="Documents">
+      </BoardSection>
+      {/* Distinct from CustomerProfileOverview "Linked files" — billing/financial attachment subset only. */}
+      <BoardSection title="Billing attachments" testId="documents-board">
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {(props.summary.documents as Array<{ id?: string; filename?: string; category?: string }>).map((d, i) => (
             <div key={d.id ?? String(i)} className="flex justify-between gap-2 border-b border-gray-100 py-1">
@@ -336,9 +337,9 @@ function CustomerFinancialOverviewSection(props: {
               <span className="text-gray-500">{d.category ?? ""}</span>
             </div>
           ))}
-          {props.summary.documents.length === 0 ? <p className="text-gray-500">No documents linked.</p> : null}
+          {props.summary.documents.length === 0 ? <p className="text-gray-500">No billing attachments linked.</p> : null}
         </div>
-      </DataPanel>
+      </BoardSection>
     </div>
   );
 }
@@ -1136,7 +1137,7 @@ export function CustomerDetailPage() {
         <MissingRequiredChip operatingCompanyId={operatingCompanyId} entityKind="customer" entityId={id} />
         {customer.fmcsa_verified_at ? (
           <button type="button" onClick={() => setFmcsaHistoryOpen(true)}>
-            <StatusBadge variant="positive">{`FMCSA Verified ${new Date(customer.fmcsa_verified_at).toLocaleDateString()}`}</StatusBadge>
+            <StatusBadge variant="positive">{`FMCSA Verified ${formatDateUS(customer.fmcsa_verified_at)}`}</StatusBadge>
           </button>
         ) : null}
         <Button size="sm" variant="secondary" onClick={() => setFmcsaModalOpen(true)}>
@@ -1147,10 +1148,10 @@ export function CustomerDetailPage() {
             Verify FMCSA
           </Button>
         ) : null}
-        {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
+        {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${formatDateTimeUS(customer.fmcsa_last_checked_at)}`}</span> : null}
         {saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
-            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${formatDateUS(saferEntity.safer_verified_at)}`}
           </StatusBadge>
         ) : saferEntity?.safer_status ? (
           <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
@@ -1228,7 +1229,9 @@ export function CustomerDetailPage() {
         // CUST-01 C7: this whole block (dispatcher/safety events, complaints, ETA notifications,
         // cargo claims, safety alerts, cash forecast, load templates, 4 factoring sections) used
         // to vanish with no explanation when no operating company was selected.
-        <p className="text-xs text-red-600">Select an operating company to view linked records.</p>
+        <BoardSection title="Linked records" testId="customer-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view linked records.</p>
+        </BoardSection>
       )}
 
       {/* ROUND 326 1B: AR aging, credit/exposure, open loads, payments, factoring, rate history, contacts, documents. */}
@@ -1245,7 +1248,7 @@ export function CustomerDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <DataPanel title="Identity">
+          <BoardSection title="Identity" testId="identity-board">
             <Field label="Name" value={hydratedForm.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} disabled={!editMode} />
             <Field label="Code" value={hydratedForm.customer_code} onChange={(value) => setForm((current) => ({ ...current, customer_code: value }))} disabled={!editMode} />
             <Field label="DOT Number" value={hydratedForm.dot_number} onChange={(value) => setForm((current) => ({ ...current, dot_number: value }))} disabled={!editMode} />
@@ -1276,10 +1279,10 @@ export function CustomerDetailPage() {
                 placeholder="Select state"
               />
             </div>
-          </DataPanel>
+          </BoardSection>
 
           {/* D1-4: Sub-customer / parent hard link + reverse drill-through */}
-          <DataPanel title="Relationships">
+          <BoardSection title="Relationships" testId="relationships-board">
             <div className="mb-2 flex flex-col gap-1" data-testid="customer-parent-select">
               <label className="text-xs font-semibold text-gray-600">Parent customer</label>
               {editMode && operatingCompanyId && parentCandidatesQuery.isError ? (
@@ -1339,24 +1342,24 @@ export function CustomerDetailPage() {
                 <span className="text-xs text-gray-500">No sub-customers linked.</span>
               )}
             </div>
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Main Contact">
+          <BoardSection title="Main Contact" testId="main-contact-board">
             <Field label="Name" value={hydratedForm.main_contact_name} onChange={(value) => setForm((current) => ({ ...current, main_contact_name: value }))} disabled={!editMode} />
             <Field label="Title" value={hydratedForm.main_contact_title} onChange={(value) => setForm((current) => ({ ...current, main_contact_title: value }))} disabled={!editMode} />
             <Field label="Email" value={hydratedForm.main_contact_email} onChange={(value) => setForm((current) => ({ ...current, main_contact_email: value }))} disabled={!editMode} />
             <Field label="Phone" value={hydratedForm.main_contact_phone} onChange={(value) => setForm((current) => ({ ...current, main_contact_phone: value }))} disabled={!editMode} />
             <Field label="Mobile" value={hydratedForm.main_contact_mobile} onChange={(value) => setForm((current) => ({ ...current, main_contact_mobile: value }))} disabled={!editMode} />
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Billing Endpoints">
+          <BoardSection title="Billing Endpoints" testId="billing-endpoints-board">
             <Field label="A/R Email" value={hydratedForm.ar_email} onChange={(value) => setForm((current) => ({ ...current, ar_email: value }))} disabled={!editMode} />
             <Field label="A/R Phone" value={hydratedForm.ar_phone} onChange={(value) => setForm((current) => ({ ...current, ar_phone: value }))} disabled={!editMode} />
             <Field label="A/P Email" value={hydratedForm.ap_email} onChange={(value) => setForm((current) => ({ ...current, ap_email: value }))} disabled={!editMode} />
             <Field label="A/P Phone" value={hydratedForm.ap_phone} onChange={(value) => setForm((current) => ({ ...current, ap_phone: value }))} disabled={!editMode} />
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Payment Terms">
+          <BoardSection title="Payment Terms" testId="payment-terms-board">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Assigned term</label>
               {paymentTermsQuery.isError ? (
@@ -1385,9 +1388,9 @@ export function CustomerDetailPage() {
                 Manage Payment Terms
               </button>
             </div>
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Credit Limit">
+          <BoardSection title="Credit Limit" testId="credit-limit-board">
             <Field
               label="Credit Limit (USD)"
               value={hydratedForm.credit_limit}
@@ -1417,16 +1420,16 @@ export function CustomerDetailPage() {
               <div className="text-xs font-semibold text-gray-600">Last Updated</div>
               <p className="mt-1 text-xs text-gray-800">
                 {hydratedForm.credit_limit_updated_at
-                  ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString()
+                  ? formatDateTimeUS(hydratedForm.credit_limit_updated_at)
                   : "Not set"}
               </p>
             </div>
             <p className="text-xs text-gray-500">
               If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
             </p>
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Detention Configuration">
+          <BoardSection title="Detention Configuration" testId="detention-configuration-board">
             <Field
               label="Free Time Pickup (min)"
               value={hydratedForm.free_time_pickup_minutes}
@@ -1448,9 +1451,9 @@ export function CustomerDetailPage() {
               disabled={!editMode}
               type="number"
             />
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Layover Charges">
+          <BoardSection title="Layover Charges" testId="layover-charges-board">
             {editMode ? (
               <>
                 <Field
@@ -1506,7 +1509,11 @@ export function CustomerDetailPage() {
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">Layover Charge per Day</span>
                   <span className="text-xs text-gray-900">
-                    {customer.layover_charge_per_day ? `${customer.layover_currency ?? "USD"} ${Number(customer.layover_charge_per_day).toFixed(2)}` : "Not set"}
+                    {customer.layover_charge_per_day
+                      ? customer.layover_currency && customer.layover_currency !== "USD"
+                        ? `${customer.layover_currency} ${Number(customer.layover_charge_per_day).toFixed(2)}`
+                        : formatUsd(Number(customer.layover_charge_per_day))
+                      : "Not set"}
                   </span>
                 </DataPanelRow>
                 <DataPanelRow>
@@ -1526,9 +1533,9 @@ export function CustomerDetailPage() {
             <p className="text-xs text-gray-500">
               Industry standard layover ranges $250-500/day. Most customers expect the first night included in detention rate.
             </p>
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Factoring Configuration">
+          <BoardSection title="Factoring Configuration" testId="factoring-configuration-board">
             <div className="mb-2 flex items-center gap-2">
               <input
                 id="factoring-eligible"
@@ -1592,9 +1599,9 @@ export function CustomerDetailPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Notes">
+          <BoardSection title="Notes" testId="notes-board">
             <div className="mb-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">General Notes</label>
               <textarea
@@ -1605,10 +1612,10 @@ export function CustomerDetailPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
-          </DataPanel>
+          </BoardSection>
 
           <div className="lg:col-span-2">
-            <DataPanel title={`Contacts (${contacts.length})`}>
+            <BoardSection title={`Contacts (${contacts.length})`} testId="contacts-board">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
                 <div className="flex items-center gap-2">
@@ -1681,7 +1688,7 @@ export function CustomerDetailPage() {
                   </DataPanelRow>
                 ))}
               </div>
-            </DataPanel>
+            </BoardSection>
           </div>
           <div className="lg:col-span-2">
             <LinkedBankTransactionsPanel
@@ -1695,7 +1702,7 @@ export function CustomerDetailPage() {
 
       {activeTab === "Quality & History" ? (
         <div className="space-y-3">
-          <DataPanel title="Quality Overview">
+          <BoardSection title="Quality Overview" testId="quality-overview-board">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <StatusBadge variant={qualityFlagVariant((hydratedForm.quality_overall_flag as Customer["quality_overall_flag"]) ?? customer.quality_overall_flag)}>
@@ -1731,7 +1738,7 @@ export function CustomerDetailPage() {
                 {
                   label: "SAFER Status",
                   value: saferEntity?.safer_verified_at
-                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`
+                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${formatDateUS(saferEntity.safer_verified_at)}`
                     : saferEntity?.safer_status ?? "Not verified",
                 },
               ]}
@@ -1746,22 +1753,22 @@ export function CustomerDetailPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
-          </DataPanel>
+          </BoardSection>
           <CustomerLateArrivalCard customerId={id} operatingCompanyId={selectedCompanyId ?? ""} />
 
-          <DataPanel title="Event Summary">
+          <BoardSection title="Event Summary" testId="event-summary-board">
             <FlatFieldGrid
               columns={4}
               fields={[
                 { label: "Total Events", value: String(qualityStats.totalEvents) },
                 { label: "Severe", value: String(qualityStats.severeCount) },
-                { label: "Dollar Impact", value: `$${qualityStats.totalImpact.toFixed(2)}` },
+                { label: "Dollar Impact", value: formatUsd(qualityStats.totalImpact) },
                 { label: "Avg Days Late", value: qualityStats.avgDaysLate.toFixed(1) },
               ]}
             />
-          </DataPanel>
+          </BoardSection>
 
-          <DataPanel title="Timeline">
+          <BoardSection title="Timeline" testId="timeline-board">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {canWriteQuality ? (
@@ -1787,7 +1794,7 @@ export function CustomerDetailPage() {
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
-                    {event.dollar_impact_amount != null ? <strong className="text-xs">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
+                    {event.dollar_impact_amount != null ? <strong className="text-xs">{formatUsd(Number(event.dollar_impact_amount))}</strong> : null}
                     {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
                   </div>
                   <div className={event.voided_at ? "mt-1 text-xs line-through" : "mt-1 text-xs"}>{event.summary}</div>
@@ -1826,7 +1833,7 @@ export function CustomerDetailPage() {
                 </div>
               ))}
             </div>
-          </DataPanel>
+          </BoardSection>
         </div>
       ) : null}
 
@@ -1853,13 +1860,13 @@ export function CustomerDetailPage() {
       {activeTab === "Contracts" ? (
         canViewDocuments && operatingCompanyId ? (
           <ErrorBoundary>
-            <DataPanel title="Contracts">
+            <BoardSection title="Contracts" testId="contracts-board">
               <CustomerContractsTab
                 customerId={customer.id}
                 customerName={customer.name}
                 operatingCompanyId={operatingCompanyId}
               />
-            </DataPanel>
+            </BoardSection>
           </ErrorBoundary>
         ) : (
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
@@ -1873,13 +1880,13 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Tasks" ? (
-        <DataPanel title="Tasks">
+        <BoardSection title="Tasks" testId="tasks-board">
           <TasksTab operatingCompanyId={operatingCompanyId ?? ""} targetType="customer" targetId={customer.id} targetLabel={customer.name} />
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {activeTab === "Loads" ? (
-        <DataPanel title="Loads">
+        <BoardSection title="Loads" testId="loads-board">
           {customerLoadsQuery.isError ? (
             <ListErrorState
               title="Couldn't load customer loads"
@@ -1958,17 +1965,17 @@ export function CustomerDetailPage() {
                 label: "Created",
                 sortable: true,
                 cellClass: "text-right tabular-nums",
-                render: (load) => (load.created_at ? new Date(load.created_at).toLocaleDateString() : "—"),
+                render: (load) => (load.created_at ? formatDateUS(load.created_at) || "—" : "—"),
               },
             ]}
           />
           )}
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {activeTab === "Per-Customer P&L" ? (
         <div className="space-y-3">
-          <DataPanel title="Per-Customer profitability">
+          <BoardSection title="Per-Customer profitability" testId="per-customer-profitability-board">
             <div className="mb-3 flex flex-wrap items-end gap-3">
               <label className="text-xs font-semibold text-gray-600">
                 From
@@ -2040,7 +2047,7 @@ export function CustomerDetailPage() {
                 ) : null}
               </>
             )}
-          </DataPanel>
+          </BoardSection>
         </div>
       ) : null}
 
@@ -2049,7 +2056,7 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Contacts" ? (
-        <DataPanel title={`Contacts (${contacts.length})`}>
+        <BoardSection title={`Contacts (${contacts.length})`} testId="contacts-board">
           {contactsQuery.isError ? (
             <ListErrorState title="Couldn't load customer contacts" status={0} message={contactsQuery.error instanceof Error ? contactsQuery.error.message : undefined} onRetry={() => void contactsQuery.refetch()} />
           ) : (
@@ -2154,7 +2161,7 @@ export function CustomerDetailPage() {
             ]}
           />
           )}
-        </DataPanel>
+        </BoardSection>
       ) : null}
 
       {activeTab === "Billing & Receivables" ? (
@@ -2184,7 +2191,7 @@ export function CustomerDetailPage() {
               user the load had failed. Gate on !isError, same shape as CUST-MONEY-F6278/F6985. */}
           {!billingSummaryQuery.isError ? (
             <>
-              <DataPanel title="Factoring Config">
+              <BoardSection title="Factoring Config" testId="factoring-config-board">
                 <div className="space-y-1 text-xs text-gray-700">
                   <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
                   <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
@@ -2202,8 +2209,8 @@ export function CustomerDetailPage() {
                     )}
                   </div>
                 </div>
-              </DataPanel>
-              <DataPanel title="Credit Terms">
+              </BoardSection>
+              <BoardSection title="Credit Terms" testId="credit-terms-board">
                 <div className="space-y-1 text-xs text-gray-700">
                   <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
                   <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
@@ -2216,14 +2223,14 @@ export function CustomerDetailPage() {
                     </p>
                   ) : null}
                 </div>
-              </DataPanel>
-              <DataPanel title="Detention + Layover Defaults">
+              </BoardSection>
+              <BoardSection title="Detention + Layover Defaults" testId="detention-layover-defaults-board">
                 <div className="space-y-1 text-xs text-gray-700">
                   <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
                   <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
                   <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
                 </div>
-              </DataPanel>
+              </BoardSection>
             </>
           ) : null}
           <div className="md:col-span-3 rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]" data-testid="customer-record-payment-disabled">
@@ -2425,14 +2432,14 @@ export function CustomerDetailPage() {
                   label: "Total",
                   sortable: true,
                   cellClass: "tabular-nums",
-                  render: (invoice) => (Number(invoice.total_cents ?? 0) / 100).toFixed(2),
+                  render: (invoice) => formatUsdCents(Number(invoice.total_cents ?? 0)),
                 },
                 {
                   key: "amount_open_cents",
                   label: "Open",
                   sortable: true,
                   cellClass: "tabular-nums",
-                  render: (invoice) => (Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2),
+                  render: (invoice) => formatUsdCents(Number(invoice.amount_open_cents ?? 0)),
                 },
               ]}
             />
@@ -2530,7 +2537,7 @@ export function CustomerDetailPage() {
                 key: "fsc_per_mile_cents",
                 label: "FSC/mi",
                 sortable: true,
-                render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`),
+                render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : formatUsdCents(lane.fsc_per_mile_cents)),
               },
               {
                 key: "status",
@@ -2971,7 +2978,7 @@ export function CustomerDetailPage() {
                 <StatusBadge variant={lookup.authority_status === "ACTIVE" ? "positive" : "crit"}>{lookup.authority_status}</StatusBadge>
               </div>
               <div className="text-xs text-gray-600">
-                {lookup.lookup_type.toUpperCase()} {lookup.lookup_value} • {new Date(lookup.fetched_at).toLocaleString()}
+                {lookup.lookup_type.toUpperCase()} {lookup.lookup_value} • {formatDateTimeUS(lookup.fetched_at)}
               </div>
             </div>
           ))}

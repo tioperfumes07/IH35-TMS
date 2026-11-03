@@ -20,6 +20,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdTable } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 import { AdvanceDetailDrawer } from "../cash-advances/components/AdvanceDetailDrawer";
 import { useCashAdvancesParityColumns } from "../cash-advances/components/CashAdvancesTable";
 import { MarkDisbursedModal } from "../cash-advances/components/MarkDisbursedModal";
@@ -42,9 +43,7 @@ const display = (v: string | number | null) => (v === null || v === undefined ? 
 function formatAsked(raw: unknown): string {
   const s = String(raw ?? "").trim();
   if (!s) return "—";
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s.slice(0, 10);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatDateUS(s) || "—";
 }
 
 function policyLabel(row: Record<string, unknown>): string {

@@ -6,7 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
@@ -167,7 +167,7 @@ export function VendorProfileOverview(props: { operatingCompanyId: string; vendo
         {p.work_orders.value.length ? <ParityTable columns={woCols} rows={p.work_orders.value} rowKey={(r) => r.id} onRowClick={(r) => go(navigate, "work_order", r.id)} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 
-      <ProfileSection title={`Fuel — ${fu.txns_90d} purchases, ${fu.gallons_90d.toLocaleString()} gal in 90 days`} testId="vendor-profile-fuel" reason={p.fuel.empty_reason}>
+      <ProfileSection title={`Fuel — ${fu.txns_90d} purchases, ${formatQuantityTable(fu.gallons_90d)} gal in 90 days`} testId="vendor-profile-fuel" reason={p.fuel.empty_reason}>
         {fu.recent.length ? <ParityTable columns={fuelCols} rows={fu.recent} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 

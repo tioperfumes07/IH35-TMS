@@ -22,9 +22,12 @@ const insuranceApiMocks = {
   listInsuranceClaims: vi.fn().mockResolvedValue({ claims: [] }),
   listInsurancePaymentSchedule: vi.fn().mockResolvedValue({ payment_schedules: [] }),
   listInsuranceCoiRequests: vi.fn().mockResolvedValue({ requests: [] }),
-  listInsuranceLawsuits: vi.fn().mockResolvedValue({ lawsuits: [] }),
   updateInsurancePolicy: vi.fn().mockResolvedValue({}),
   archiveInsurancePolicy: vi.fn().mockResolvedValue(undefined),
+};
+
+const legalMattersApiMocks = {
+  list: vi.fn().mockResolvedValue({ matters: [] }),
 };
 
 vi.mock("../../api/insurance", () => ({
@@ -32,9 +35,14 @@ vi.mock("../../api/insurance", () => ({
   listInsuranceClaims: (...args: unknown[]) => insuranceApiMocks.listInsuranceClaims(...args),
   listInsurancePaymentSchedule: (...args: unknown[]) => insuranceApiMocks.listInsurancePaymentSchedule(...args),
   listInsuranceCoiRequests: (...args: unknown[]) => insuranceApiMocks.listInsuranceCoiRequests(...args),
-  listInsuranceLawsuits: (...args: unknown[]) => insuranceApiMocks.listInsuranceLawsuits(...args),
   updateInsurancePolicy: (...args: unknown[]) => insuranceApiMocks.updateInsurancePolicy(...args),
   archiveInsurancePolicy: (...args: unknown[]) => insuranceApiMocks.archiveInsurancePolicy(...args),
+}));
+
+vi.mock("../../api/legal-matters", () => ({
+  legalMattersApi: {
+    list: (...args: unknown[]) => legalMattersApiMocks.list(...args),
+  },
 }));
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -120,11 +128,13 @@ describe("PolicyDetail edit and archive", () => {
 
   it("archives the policy and returns to policies list", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(wrap(<PolicyDetail />));
 
     await screen.findByText(/Policy PN-100/i);
     await user.click(screen.getByRole("button", { name: /^Archive$/i }));
+
+    // ConfirmModal opens — click the confirm button inside it
+    await user.click(await screen.findByRole("button", { name: /Archive policy/i }));
 
     await waitFor(() => {
       expect(insuranceApiMocks.archiveInsurancePolicy).toHaveBeenCalledWith(
@@ -133,7 +143,5 @@ describe("PolicyDetail edit and archive", () => {
       );
       expect(mockNavigate).toHaveBeenCalledWith("/insurance/policies");
     });
-
-    confirmSpy.mockRestore();
   });
 });

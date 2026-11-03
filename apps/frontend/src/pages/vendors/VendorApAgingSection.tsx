@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AR_AP_AGING_UI_FLAG, getApAgingBills } from "../../api/arApAging";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { companyToday } from "../../lib/businessDate";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -37,7 +37,7 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
   const clearedCents = query.data?.cleared_open_cents ?? bills.reduce((s, b) => s + b.open_cents, 0);
 
   return (
-    <DataPanel title="AP aging (open bills)">
+    <BoardSection title="AP aging (open bills)" testId="ap-aging-open-bills-board">
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load open bills for this vendor")}
@@ -78,6 +78,6 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
           ))}
         </div>
       )}
-    </DataPanel>
+    </BoardSection>
   );
 }

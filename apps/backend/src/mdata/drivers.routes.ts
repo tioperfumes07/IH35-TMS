@@ -41,6 +41,7 @@ import { findReturningDriverMatches } from "./driver-returning-detection.routes.
 import { findRosterDuplicates } from "./driver-roster-duplicate.service.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
+import { rematchRelayFuelDrivers } from "../integrations/relay-payments/relay-fuel-driver-rematch.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
 import { registerDriverMergeRoutes } from "./driver-merge.routes.js";
@@ -3129,6 +3130,71 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (code === "23505") return reply.code(409).send({ error: "identity_user_phone_conflict" });
       throw err;
     }
+  });
+
+  // P0 2026-11-02: write integration_id so the Relay driver matcher can match.
+  // Root cause: integration_id was never writable; 262/281 fills had no driver.
+  app.patch("/api/v1/mdata/drivers/:id/relay-integration-id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const bodySchema = z.object({ integration_id: z.string().max(200).nullable() });
+    const parsedBody = bodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const driverRes = await client.query<{ id: string; operating_company_id: string }>(
+        `SELECT id, operating_company_id
+           FROM mdata.drivers
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+        [parsedParams.data.id, authUser.uuid]
+      );
+      const driver = driverRes.rows[0];
+      if (!driver) return { error: "mdata_driver_not_found" as const };
+
+      const prev = await client.query<{ integration_id: string | null }>(
+        `SELECT integration_id FROM mdata.drivers WHERE id = $1 LIMIT 1`,
+        [driver.id]
+      );
+      const newVal = parsedBody.data.integration_id ?? null;
+      await client.query(
+        `UPDATE mdata.drivers SET integration_id = $1, updated_at = now() WHERE id = $2`,
+        [newVal, driver.id]
+      );
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "mdata.drivers.relay_integration_id_set",
+        {
+          resource_id: driver.id,
+          resource_type: "mdata.drivers",
+          from: prev.rows[0]?.integration_id ?? null,
+          to: newVal,
+        },
+        "info",
+        "BT-1-AUTH-DRIVER"
+      );
+      return { ok: true as const, driver_id: driver.id, operating_company_id: driver.operating_company_id };
+    });
+
+    if ("error" in result) return reply.code(404).send({ error: result.error });
+
+    // Trigger rematch so newly-tagged driver is matched immediately.
+    await withLuciaBypass(async (client) => {
+      await rematchRelayFuelDrivers(client, { operating_company_id: result.operating_company_id });
+    });
+
+    return { ok: true, driver_id: result.driver_id };
   });
 
   app.post("/api/v1/mdata/drivers/:id/disable-phone-login", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

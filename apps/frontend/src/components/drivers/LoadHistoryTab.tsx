@@ -16,16 +16,15 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
-import { SelectCombobox } from "../Combobox";
+import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
 
 type Props = {
   driverId: string;
   operatingCompanyId: string;
 };
 
-/** Status filter groups — the backend ?status= param accepts comma-separated load_status_enum values. */
+/** Status filter groups — the backend ?status= param accepts comma-separated load_status_enum values. U12: multi-select. */
 const STATUS_FILTER_OPTIONS: Array<{ label: string; value: string }> = [
-  { label: "All", value: "" },
   { label: "Open", value: "draft,booked,planned,unassigned,assigned,assigned_not_dispatched,dispatched,at_pickup,in_transit,at_delivery" },
   { label: "Dispatched", value: "dispatched" },
   { label: "Delivered", value: "delivered,delivered_pending_docs,completed_docs_received" },
@@ -193,19 +192,24 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [historyPage, setHistoryPage] = useState(1);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [assignedFromDate, setAssignedFromDate] = useState("");
   const [assignedToDate, setAssignedToDate] = useState("");
+  const statusParam = useMemo(() => {
+    if (statusFilter.length === 0) return undefined;
+    // Union of selected group enums (dedupe) for ?status= comma list.
+    return [...new Set(statusFilter.flatMap((v) => v.split(",").map((s) => s.trim()).filter(Boolean)))].join(",") || undefined;
+  }, [statusFilter]);
 
-  useEffect(() => setAssignedPage(1), [driverId, operatingCompanyId, statusFilter]);
+  useEffect(() => setAssignedPage(1), [driverId, operatingCompanyId, statusParam]);
   useEffect(() => setHistoryPage(1), [driverId, operatingCompanyId, fromDate, toDate]);
 
   const assignedQ = useQuery({
-    queryKey: ["driver-assigned-loads", driverId, operatingCompanyId, assignedPage, statusFilter],
+    queryKey: ["driver-assigned-loads", driverId, operatingCompanyId, assignedPage, statusParam],
     queryFn: () => listDriverAssignedLoads(driverId, operatingCompanyId, {
       limit: assignedPageSize,
       offset: (assignedPage - 1) * assignedPageSize,
-      status: statusFilter || undefined,
+      status: statusParam,
     }),
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
@@ -301,18 +305,17 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             filterBar={
               <div className="flex flex-wrap items-end gap-2">
                 <div className="text-xs text-gray-600">
-                  <label htmlFor="driver-assigned-loads-status-filter" className="block">Status</label>
-                  <SelectCombobox
-                    id="driver-assigned-loads-status-filter"
-                    className="mt-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    data-testid="driver-assigned-loads-status-filter"
-                  >
-                    {STATUS_FILTER_OPTIONS.map((opt) => (
-                      <option key={opt.label} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </SelectCombobox>
+                  <span className="block">Status</span>
+                  <div className="mt-1">
+                    <MultiSelectDropdown
+                      label="Status"
+                      options={STATUS_FILTER_OPTIONS}
+                      selected={statusFilter}
+                      onChange={setStatusFilter}
+                      allLabel="All statuses"
+                      data-testid="driver-assigned-loads-status-filter"
+                    />
+                  </div>
                 </div>
                 <div className="text-xs text-gray-600">
                   <label htmlFor="driver-assigned-loads-filter-from">From</label>

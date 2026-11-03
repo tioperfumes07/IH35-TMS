@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ByLaneView } from "./ByLaneView";
@@ -23,6 +23,14 @@ export function parseProfitabilityTab(raw: string | null): Tab {
   return "lane";
 }
 
+function defaultPeriod() {
+  const end = new Date();
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 90);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { dateFrom: iso(start), dateTo: iso(end) };
+}
+
 export function ProfitabilityPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = parseProfitabilityTab(searchParams.get("tab"));
@@ -32,20 +40,25 @@ export function ProfitabilityPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
+  const initial = useMemo(() => defaultPeriod(), []);
   const [filters, setFilters] = useState({
-    dateFrom: "2026-05-01",
-    dateTo: "2026-06-01",
+    dateFrom: initial.dateFrom,
+    dateTo: initial.dateTo,
     equipmentType: undefined as string | undefined,
     customerId: undefined as string | undefined,
     laneKey: undefined as string | undefined,
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="profitability-page">
       <PageHeader title="Profitability" />
-      
-      <FilterBar filters={filters} onChange={(f) => setFilters({ ...filters, ...f })} />
-      
+
+      <FilterBar
+        filters={filters}
+        onChange={(f) => setFilters({ ...filters, ...f })}
+        exportDisabledReason="Open a tab below, then use the full report Export on Lane / Customer / Trip P&L"
+      />
+
       <KpiStrip filters={filters} />
 
       <div className="border-b border-gray-200">
@@ -55,6 +68,7 @@ export function ProfitabilityPage() {
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={[
                   "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",

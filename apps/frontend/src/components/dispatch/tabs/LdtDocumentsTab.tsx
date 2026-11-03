@@ -28,6 +28,7 @@ import { LoadBolPanel } from "../LoadBolPanel";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
   loadId: string;
@@ -62,7 +63,7 @@ function formatDateShort(iso: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return formatDateUS(d) || "—";
 }
 
 // ─── component ───────────────────────────────────────────────────────────────

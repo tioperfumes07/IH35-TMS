@@ -3,11 +3,12 @@ import { formatPersonName } from "../../../lib/formatPersonName";
 import { useState } from "react";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type PortalUserRow = {
   id: string;
@@ -89,7 +90,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <DataPanel title="Active portal accounts">
+      <BoardSection title="Active portal accounts" testId="active-portal-accounts-board">
         {/* CUST-01 C5: with no operating company selected the query never fires (enabled gate
             above) and the table below silently rendered "No portal users yet." -- indistinguishable
             from a customer that genuinely has zero portal users. Say why instead of guessing. */}
@@ -120,12 +121,12 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             columns={[
               { key: "email", label: "Email", sortable: true, render: (row) => row.email },
               { key: "full_name", label: "Name", sortable: true, render: (row) => (row.full_name ? formatPersonName(row.full_name) : "—") },
-              { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—") },
+              { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? formatDateTimeUS(row.last_login_at) || "—" : "—") },
               { key: "status", label: "Status", render: (row) => (row.archived_at ? "Archived" : row.active ? "Active" : "Inactive") },
             ]}
           />
         )}
-      </DataPanel>
+      </BoardSection>
 
       <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Create portal login">
         <form

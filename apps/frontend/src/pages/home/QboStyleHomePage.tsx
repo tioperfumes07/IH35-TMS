@@ -33,6 +33,7 @@ import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { formatMoneyCents } from "../../lib/formatMoney";
+import { formatDateUS } from "../../lib/formatDate";
 
 /** ROUND 443.257-D D002 — always two decimals (never omit cents on Home Overview money tiles). */
 function fmt$(cents: number): string {
@@ -170,14 +171,13 @@ export function QboStyleHomePage({ auth }: Props) {
           <p className="mt-0.5 text-xs text-gray-500">Here's what's happening with your business today.</p>
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
-          <button
-            type="button"
-            disabled
-            title="Not yet available"
-            className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
+          <Link
+            to="/settings/company"
+            className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            title="Company and display settings"
           >
-            Customize
-          </button>
+            Settings
+          </Link>
           {/* HOME-ORPHANED-LEGAL-PAGES: /legal/privacy and /legal/terms were registered routes
               with zero inbound links anywhere in the app (SAF-F22-class orphan — reachable only
               by typing the exact URL). This header already had a disabled "Privacy" placeholder
@@ -410,7 +410,22 @@ export function QboStyleHomePage({ auth }: Props) {
                     Applied payments that have not been matched or categorized in Banking are named not cleared.
                   </p>
                 ) : null}
-                <p className="mt-3 text-xs text-[#6B7280]">Category breakdown not yet available</p>
+                <div className="mt-3 space-y-1" data-testid="qbo-expenses-ap-aging-buckets">
+                  {(
+                    [
+                      ["Current", acct?.ap_aging.current_cents ?? 0],
+                      ["1–30", acct?.ap_aging.d1_30_cents ?? 0],
+                      ["31–60", acct?.ap_aging.d31_60_cents ?? 0],
+                      ["61–90", acct?.ap_aging.d61_90_cents ?? 0],
+                      ["90+", acct?.ap_aging.d90_plus_cents ?? 0],
+                    ] as Array<[string, number]>
+                  ).map(([label, cents]) => (
+                    <div key={label} className="flex justify-between text-xs">
+                      <span className="text-gray-600">{label}</span>
+                      <span className="font-medium tabular-nums text-gray-900">{fmt$(cents)}</span>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
           </div>
@@ -520,7 +535,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <span>
             Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents ?? 0)}</span>
             {cashQuery.data.last_reconciled_at
-              ? ` · Last reconciled ${new Date(cashQuery.data.last_reconciled_at).toLocaleDateString()}`
+              ? ` · Last reconciled ${formatDateUS(cashQuery.data.last_reconciled_at)}`
               : " · Not yet reconciled"}
           </span>
         </div>

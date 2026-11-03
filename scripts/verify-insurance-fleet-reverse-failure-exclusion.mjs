@@ -3,7 +3,8 @@ import fs from "node:fs";
 
 const CONTRACTS = [
   ["apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx", "query.isError ? [] : (query.data?.claims ?? [])"],
-  ["apps/frontend/src/components/insurance/InsuranceLawsuitsReverseSection.tsx", "query.isError ? [] : (query.data?.lawsuits ?? [])"],
+  // ENG-60: InsuranceLawsuitsReverseSection wraps LegalMattersReverseSection (matters, not lawsuits).
+  ["apps/frontend/src/components/legal/LegalMattersReverseSection.tsx", "query.isError ? [] : (query.data?.matters ?? [])"],
   ["apps/frontend/src/components/insurance/VendorInsurancePoliciesReverseSection.tsx", "query.isError ? [] : (query.data?.policies ?? [])"],
   ["apps/frontend/src/components/fleet/UnitDefaultDriversReverseSection.tsx", "query.isError ? [] : (query.data?.drivers ?? [])"],
 ];

@@ -24,7 +24,12 @@ function assertLive(over = {}) {
   if (!/data-testid="dispatch-chat-threads-honest-empty"/.test(page)) {
     problems.push("missing threads honest empty");
   }
-  if (!/data-testid="dispatch-chat-need-company"/.test(page)) problems.push("missing need-company");
+  if (!/data-testid="dispatch-chat-need-company"|testId="dispatch-chat-need-company"/.test(page)) {
+    problems.push("missing need-company");
+  }
+  if (!/<BoardSection\b/.test(page) || !/testId="dispatch-chat-need-company"/.test(page)) {
+    problems.push("need-company empty must be BoardSection");
+  }
   if (!/ListErrorBanner/.test(page)) problems.push("missing ListErrorBanner");
   return problems;
 }

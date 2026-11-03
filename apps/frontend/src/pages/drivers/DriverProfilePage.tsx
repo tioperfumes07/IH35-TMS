@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "../../hooks/useTranslation";
 import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -79,6 +80,7 @@ import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EldEditHistoryTimeline } from "../../components/safety/EldEditHistoryTimeline";
 import { AuditHistoryTab } from "../../components/drivers/AuditHistoryTab";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -190,6 +192,81 @@ export type DriverProfileAggregate = {
   w8ben?: Record<string, unknown>;
   w8ben_unavailable?: boolean;
 };
+
+function DriverRelayIntegrationIdField({
+  driverId,
+  currentValue,
+  onSaved,
+}: {
+  driverId: string;
+  currentValue: string | null;
+  onSaved: () => void;
+}) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(currentValue ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await apiRequest(`/api/v1/mdata/drivers/${encodeURIComponent(driverId)}/relay-integration-id`, {
+        method: "PATCH",
+        body: { integration_id: value.trim() || null },
+      });
+      setEditing(false);
+      onSaved();
+    } catch (err) {
+      setError(userFacingApiError(err, "Could not save Relay ID"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="rounded border border-[#E5E7EB] bg-white px-3.5 py-3" data-testid="dp-relay-integration-id">
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{t("drivers.relay_id.label", "Relay card ID")}</span>
+        {!editing && (
+          <button
+            className="text-xs font-semibold text-[#1F2A44] hover:underline"
+            onClick={() => { setValue(currentValue ?? ""); setEditing(true); setError(""); }}
+          >
+            {t("common.edit", "Edit")}
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <div className="space-y-1.5">
+          <input
+            className="w-full rounded border border-[#E5E7EB] px-2 py-1 text-xs"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={t("drivers.relay_id.placeholder", "e.g. 0000000000000001")}
+            autoFocus
+          />
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              className="rounded bg-[#1F2A44] px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button className="text-xs text-gray-500 hover:underline" onClick={() => setEditing(false)} disabled={saving}>
+              {t("common.cancel", "Cancel")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-[#111827]">{currentValue || <span className="text-gray-400">{t("drivers.relay_id.not_set", "Not set — fill Relay card ID to enable auto-match")}</span>}</p>
+      )}
+    </section>
+  );
+}
 
 function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId, aggregate: "true" });
@@ -338,7 +415,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+    <BoardSection title="Driver profile" testId="driver-profile-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+    </BoardSection>
+  );
   }
 
   if (profileQ.isLoading) {
@@ -396,7 +477,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         subtitle="Driver profile"
         breadcrumb={["Drivers", "Roster", displayName]}
         onBack={onBack}
-        backHref="/drivers/roster"
+        backHref="/drivers"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {activeTab !== "Overview" && !itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
@@ -945,6 +1026,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             data-testid="driver-profile-fuel-cards"
           />
           <FuelFraudAlertsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+          <DriverRelayIntegrationIdField
+            driverId={id}
+            currentValue={(aggregate.driver as { integration_id?: string | null } | null)?.integration_id ?? null}
+            onSaved={refreshDriver}
+          />
           <RelayFillsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
         </div>
       ) : null}

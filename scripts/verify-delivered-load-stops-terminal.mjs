@@ -21,7 +21,9 @@ import { fileURLToPath } from "node:url";
 export const REQUIRES_LIVE_DB = "a pending stop on a delivered load is a row — fails closed without a database";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-delivered-load-stops-terminal";
-const DELIVER = "apps/backend/src/driver-finance/settlement-creator-deliver.ts";
+// fc3a9e9f40 moved the implementations to stop-evidence-from-tracking.ts; settlement-creator-deliver.ts
+// is now a re-export barrel. Point the guard at the file that actually contains the function bodies.
+const DELIVER = "apps/backend/src/driver-finance/stop-evidence-from-tracking.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** dispatch's delivered-and-later load statuses (settlement-creator-deliver.ts ALREADY_DELIVERED). */
 export const DELIVERED_OR_LATER = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"];

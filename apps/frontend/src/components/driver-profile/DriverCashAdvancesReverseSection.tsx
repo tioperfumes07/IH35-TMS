@@ -5,6 +5,7 @@ import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { listCashAdvances } from "../../api/cashAdvances";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -12,11 +13,6 @@ type Props = {
   /** Optional test id for the section root. */
   "data-testid"?: string;
 };
-
-function money(cents: unknown) {
-  const n = Number(cents ?? 0);
-  return `$${n.toFixed(2)}`;
-}
 
 /**
  * LINK-F5171/LINK-F5185 (settlements:cash_advances, settlements:drawer.advance_detail,
@@ -97,7 +93,7 @@ export function DriverCashAdvancesReverseSection({
                     className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
-                    {money((r as Record<string, unknown>).requested_amount_cents)} — {String((r as Record<string, unknown>).status ?? "pending")}
+                    {formatUsdCents((r as Record<string, unknown>).requested_amount_cents as number)} — {String((r as Record<string, unknown>).status ?? "pending")}
                   </span>
                 </li>
               );
@@ -131,7 +127,7 @@ export function DriverCashAdvancesReverseSection({
                     className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
-                    {money(row.amount)} — {String(row.disbursement_status ?? "pending_approval")}
+                    {formatUsd(Number(row.amount ?? 0))} — {String(row.disbursement_status ?? "pending_approval")}
                   </span>
                 </li>
               );

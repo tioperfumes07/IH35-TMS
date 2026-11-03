@@ -88,11 +88,13 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { formatUsdCents } from "../../../lib/money";
+import { formatNumber, formatUsd, formatUsdCents } from "../../../lib/money";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
+import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -371,7 +373,7 @@ export function BookLoadModalV4({
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
+  const [headerTime] = useState(() => formatDateTimeUS(new Date()) || "—");
   // ROUND 443.257 / 443.280-C — Side panel (760px) | Center (1260px); remember per browser.
   const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
     try {
@@ -1090,17 +1092,6 @@ export function BookLoadModalV4({
     if (miles <= 0) return 0;
     return (linehaul || 0) / miles / 100;
   }, [linehaul, milesPractical]);
-
-  const money = useMemo(
-    () =>
-      new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
 
   // WIZ-47: the unit-repair gate must read the SAME source that disables the submit button
   // (repairBlockSubmitBlocked). It was hardcoded `state: "live"` (green ✓) forever — so an
@@ -2340,11 +2331,11 @@ export function BookLoadModalV4({
                   <span className="blw-sec-chip">A</span>
                   <span className="blw-sec-name">Customer · Invoice · Charges</span>
                   <span className="blw-sec-meta">
-                    Invoice total <b>{money.format(customerInvoiceTotal / 100)}</b>
+                    Invoice total <b>{formatUsdCents(customerInvoiceTotal)}</b>
                     {extraRatesCents !== 0 ? (
                       <>
                         {" "}
-                        · Charges {money.format(sectionTotal / 100)} · Stop extras {money.format(extraRatesCents / 100)}
+                        · Charges {formatUsdCents(sectionTotal)} · Stop extras {formatUsdCents(extraRatesCents)}
                       </>
                     ) : null}
                   </span>
@@ -2631,19 +2622,19 @@ export function BookLoadModalV4({
                         </tr>
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Accessorial</td>
-                          <td className="px-2 py-1.5 text-right font-mono text-gray-800">
-                            {money.format(sumAccessorialCents(accessorialRows ?? []) / 100)}
+                          <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>
+                            {formatUsdCents(sumAccessorialCents(accessorialRows ?? []))}
                           </td>
                         </tr>
                         {extraRatesCents !== 0 ? (
                           <tr className="border-b border-gray-100">
                             <td className="px-2 py-1.5">Per-stop extra rates</td>
-                            <td className="px-2 py-1.5 text-right font-mono text-gray-800">{money.format(extraRatesCents / 100)}</td>
+                            <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(extraRatesCents)}</td>
                           </tr>
                         ) : null}
                         <tr className="bg-[#F7F8FA] font-semibold">
                           <td className="px-2 py-1.5">Total customer invoice</td>
-                          <td className="px-2 py-1.5 text-right">{money.format(customerInvoiceTotal / 100)}</td>
+                          <td className={`px-2 py-1.5 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(customerInvoiceTotal)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -3171,12 +3162,12 @@ export function BookLoadModalV4({
                   Per-load preview unavailable — active driver rate card checked on submit
                 </span>
               ) : (
-                <span className="font-mono text-xs font-bold text-gray-900">{money.format(driverBillPreview / 100)}</span>
+                <span className="font-mono text-xs font-bold text-gray-900">{formatUsdCents(driverBillPreview)}</span>
               )}
               <div className="text-xs text-gray-500">
                 {driverBillPreview === null
                   ? `Missing ${driverBillMissing.join(" and ")} for this preview. Booking is not blocked. Driver pay on submit is loaded miles × loaded rate plus empty miles × empty rate from the active driver rate card; with no rate card the load still books and records a skipped-no-rate event instead of a driver bill.`
-                  : `${Number(milesPractical || 0).toLocaleString()} loaded miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
+                  : `${formatNumber(milesPractical || 0)} loaded miles × ${formatUsd(driverPayRatePerMile || 0)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
               </div>
             </div>
             <div className="flex gap-2">

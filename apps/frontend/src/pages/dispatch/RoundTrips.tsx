@@ -10,6 +10,7 @@ import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, formatMoneyCent
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { BoardSection } from "../../components/v3/BoardSection";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -521,7 +522,11 @@ export function RoundTrips({
   }
 
   if (!enabled) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Round trips" testId="round-trips-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;

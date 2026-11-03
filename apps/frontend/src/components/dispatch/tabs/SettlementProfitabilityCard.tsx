@@ -13,6 +13,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { getLoadProfitability, classifyProfit } from "../../../lib/loadProfit";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   loadId: string;
@@ -23,12 +24,17 @@ type Props = {
 function money(cents: number | null | undefined, currency?: string | null) {
   // Never construct NumberFormat with a null amount or a blank currency (both throw).
   if (cents == null || Number.isNaN(Number(cents))) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(cents) / 100);
+  const cur = currency || "USD";
+  // House USD path — MXN stays Intl (lib/money is USD-only).
+  if (cur === "MXN") {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(cents) / 100);
+  }
+  return formatUsdCents(cents);
 }
 
 function Row({ label, cents, currency, negative = false }: { label: string; cents: number; currency: string; negative?: boolean }) {

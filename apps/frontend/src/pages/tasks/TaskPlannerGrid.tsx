@@ -90,14 +90,19 @@ function buildDateRange(from: string, to: string): string[] {
   return dates;
 }
 
+const DOW_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
 function fmtDow(date: string) {
   const d = new Date(date + "T00:00:00");
-  return d.toLocaleDateString("en-US", { weekday: "short" });
+  if (Number.isNaN(d.getTime())) return "";
+  return DOW_SHORT[d.getDay()] ?? "";
 }
 
 function fmtMD(date: string) {
-  const d = new Date(date + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
+  // YYYY-MM-DD → MM/DD (planner header; weekday stays short English chrome).
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!m) return date;
+  return `${m[2]}/${m[3]}`;
 }
 
 const LOCALSTORAGE_COL_KEY = "tasks_planner_employee_col_width";

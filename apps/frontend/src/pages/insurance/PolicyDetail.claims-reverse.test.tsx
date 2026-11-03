@@ -75,11 +75,25 @@ const insuranceApiMocks = {
       },
     ],
   }),
-  listInsuranceLawsuits: vi.fn().mockResolvedValue({
-    lawsuits: [{ id: lawsuitId, case_number: "CASE-9001", status: "filed", demand_cents: 500000, claim_id: claimId }],
-  }),
   updateInsurancePolicy: vi.fn().mockResolvedValue({}),
   archiveInsurancePolicy: vi.fn().mockResolvedValue(undefined),
+};
+
+const legalMattersApiMocks = {
+  list: vi.fn().mockResolvedValue({
+    matters: [
+      {
+        id: lawsuitId,
+        case_number: "CASE-9001",
+        matter_number: "LM-9001",
+        status: "filed",
+        type: "lawsuit",
+        // dollars (not cents) — PolicyDetail Demand column must use formatUsd, not formatUsdCents
+        amount_claimed_against_us: 1234.56,
+        insurance_claim_id: claimId,
+      },
+    ],
+  }),
 };
 
 vi.mock("../../api/insurance", () => ({
@@ -87,9 +101,14 @@ vi.mock("../../api/insurance", () => ({
   listInsuranceClaims: (...args: unknown[]) => insuranceApiMocks.listInsuranceClaims(...args),
   listInsurancePaymentSchedule: (...args: unknown[]) => insuranceApiMocks.listInsurancePaymentSchedule(...args),
   listInsuranceCoiRequests: (...args: unknown[]) => insuranceApiMocks.listInsuranceCoiRequests(...args),
-  listInsuranceLawsuits: (...args: unknown[]) => insuranceApiMocks.listInsuranceLawsuits(...args),
   updateInsurancePolicy: (...args: unknown[]) => insuranceApiMocks.updateInsurancePolicy(...args),
   archiveInsurancePolicy: (...args: unknown[]) => insuranceApiMocks.archiveInsurancePolicy(...args),
+}));
+
+vi.mock("../../api/legal-matters", () => ({
+  legalMattersApi: {
+    list: (...args: unknown[]) => legalMattersApiMocks.list(...args),
+  },
 }));
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -125,14 +144,20 @@ describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
     expect(link.getAttribute("href")).toBe(`/insurance/claims?claim_id=${claimId}`);
   });
 
-  it("renders the lawsuit case number as a real EntityLink to the lawsuit, not plain text", async () => {
+  it("renders the lawsuit case number as a real EntityLink to the legal matter, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CASE-9001" });
-    expect(link.getAttribute("href")).toBe(`/legal/lawsuits?insurance_lawsuit_id=${lawsuitId}`);
-    expect(insuranceApiMocks.listInsuranceLawsuits).toHaveBeenCalledWith({
-      operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
-      policy_id: policyId,
-    });
+    expect(link.getAttribute("href")).toBe(`/legal/matters/${lawsuitId}`);
+    expect(legalMattersApiMocks.list).toHaveBeenCalledWith(
+      "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+      expect.objectContaining({ type: "lawsuit" }),
+    );
+  });
+
+  it("formats lawsuit Demand as dollars (amount_claimed_against_us), not cents", async () => {
+    render(wrap(<PolicyDetail />));
+    expect(await screen.findByText("$1,234.56")).toBeTruthy();
+    expect(screen.queryByText("$12.35")).toBeNull();
   });
 
   it("requests an exact policy-filtered COI reverse list and drills to its customer", async () => {

@@ -1,4 +1,13 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { money } from "./money";
 
 interface ByLoadViewProps {
   filters: {
@@ -10,44 +19,143 @@ interface ByLoadViewProps {
   };
 }
 
-/** Row shape for the per-load profitability detail grid (display-only; no data source wired yet). */
-type ByLoadRow = {
-  load_id: string;
-  lane: string;
-  miles: string;
-  revenue: string;
-  cost: string;
-  margin: string;
-  per_mile: string;
-};
-
-const COLUMNS: Array<ParityColumn<ByLoadRow>> = [
-  { key: "load_id", label: "Load ID", sortable: true },
-  { key: "lane", label: "Lane", sortable: true },
-  { key: "miles", label: "Miles", sortable: true, className: "text-right" },
-  { key: "revenue", label: "Revenue", sortable: true, className: "text-right" },
-  { key: "cost", label: "Cost", sortable: true, className: "text-right" },
-  { key: "margin", label: "Margin", sortable: true, className: "text-right" },
-  { key: "per_mile", label: "$/Mi", sortable: true, className: "text-right" },
-];
-
 export function ByLoadView({ filters }: ByLoadViewProps) {
-  const rows: ByLoadRow[] = [];
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const query = useQuery({
+    queryKey: ["profitability", "by-load", companyId, filters.dateFrom, filters.dateTo],
+    queryFn: () =>
+      getTripProfitability({
+        operating_company_id: companyId,
+        from: filters.dateFrom,
+        to: filters.dateTo,
+      }),
+    enabled: Boolean(companyId && filters.dateFrom && filters.dateTo),
+    retry: false,
+  });
+
+  const columns = useMemo<Array<ParityColumn<TripProfitabilityRow>>>(
+    () => [
+      {
+        key: "first_load_number",
+        label: "Load",
+        sortable: true,
+        alwaysVisible: true,
+        render: (row) =>
+          row.first_load_id ? (
+            <EntityLinkOrTombstone
+              kind="load"
+              id={row.first_load_id}
+              name={row.first_load_number}
+              noun="Load"
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) =>
+          row.driver_id ? (
+            <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "settlement_display_id",
+        label: "Settlement",
+        sortable: true,
+        render: (row) =>
+          row.settlement_id ? (
+            <EntityLinkOrTombstone
+              kind="settlement"
+              id={row.settlement_id}
+              name={row.settlement_display_id}
+              noun="Settlement"
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "revenue_cents",
+        label: "Revenue",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.revenue_cents),
+      },
+      {
+        key: "cost",
+        label: "Cost",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) =>
+          money(
+            row.driver_pay_cents +
+              row.additional_driver_pay_cents +
+              row.fuel_cents +
+              row.company_expenses_cents
+          ),
+      },
+      {
+        key: "net_profit_cents",
+        label: "Margin",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => money(row.net_profit_cents),
+      },
+      {
+        key: "margin_pct",
+        label: "Margin %",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => `${row.margin_pct.toFixed(1)}%`,
+      },
+    ],
+    []
+  );
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-6">
-      <h3 className="text-page-title font-semibold text-gray-900 mb-4">By Load (Detail)</h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Per-load detail view for {filters.dateFrom} to {filters.dateTo}.
-      </p>
-      <ParityTable<ByLoadRow>
-        columns={COLUMNS}
-        rows={rows}
-        rowKey={(row) => row.load_id}
-        storageKey="profitability-by-load"
-        tableTestId="profitability-by-load-table"
-        emptyText="Profitability feed is not connected; no figures are available for this view."
-      />
-    </div>
+    <BoardSection
+      title="By Load (trip / settlement detail)"
+      subtitle={`${filters.dateFrom} → ${filters.dateTo} · trip-profitability engine`}
+      testId="profitability-by-load-board"
+      onViewAll={() => {
+        window.location.assign("/reports/trip-profitability");
+      }}
+      viewAllLabel="Full trip P&L →"
+    >
+      <div className="p-4 space-y-3">
+        {!companyId ? (
+          <p className="text-xs text-[#1F2A44]">Select an operating company to load trip profitability.</p>
+        ) : null}
+        {query.isError ? (
+          <ListErrorBanner
+            message={userFacingApiError(query.error, "Could not load trip profitability")}
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
+        <ParityTable<TripProfitabilityRow>
+          columns={columns}
+          rows={query.data?.rows ?? []}
+          rowKey={(row) => row.settlement_id}
+          storageKey="profitability-by-load"
+          tableTestId="profitability-by-load-table"
+          emptyText={
+            query.isLoading
+              ? "Loading trip profitability…"
+              : "No settlements in this period."
+          }
+        />
+      </div>
+    </BoardSection>
   );
 }

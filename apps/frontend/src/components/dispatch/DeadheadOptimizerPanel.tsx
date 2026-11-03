@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 
@@ -16,7 +16,7 @@ export type DeadheadOptimizerPanelProps = {
 };
 
 function fmtMiles(n: number) {
-  return Number.isFinite(n) ? n.toFixed(1) : "—";
+  return Number.isFinite(n) ? formatQuantityTable(n) : "—";
 }
 
 function fmtMoneyCents(cents: number) {

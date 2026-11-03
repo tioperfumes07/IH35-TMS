@@ -8,7 +8,7 @@ import { OpenPreSettlementsPanel } from "../components/driver-finance/OpenPreSet
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
@@ -767,14 +767,14 @@ export function DispatchPage({
           </SectionErrorBoundary>
         )
       ) : subTab === "book_load" ? (
-        <DataPanel title="Book load">
+        <BoardSection title="Book load" testId="book-load-board">
           <DataPanelRow>
             <span className="text-xs text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
             <button className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" onClick={() => openBookLoadModal()} type="button">
               + Book Load
             </button>
           </DataPanelRow>
-        </DataPanel>
+        </BoardSection>
       ) : subTab === "assignments" ? (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: assignments stub replaced by D2 AssignmentHistoryPage embed */
         <div data-testid="dispatch-assignments-embed">
@@ -782,12 +782,11 @@ export function DispatchPage({
         </div>
       ) : subTab === "pre_settlements" ? (
         !defaultCompanyIds[0] ? (
-          <div
-            data-testid="dispatch-pre-settlements-need-company"
-            className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-          >
-            Select an operating company to load pre-settlements for that entity.
-          </div>
+          <BoardSection title="Pre-settlements" testId="dispatch-pre-settlements-need-company">
+            <p className="px-3 py-2 text-xs text-[#4B5563]">
+              Select an operating company to load pre-settlements for that entity.
+            </p>
+          </BoardSection>
         ) : (
           <div className="space-y-2">
             {/* E11-D4 — the OPEN/accumulating cohort renders FIRST: it's the earlier stage of
@@ -819,16 +818,15 @@ export function DispatchPage({
           </div>
         )
       ) : !defaultCompanyIds[0] ? (
-        <div
-          data-testid="dispatch-settlements-need-company"
-          className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-        >
-          Select an operating company — settlement runs are entity-scoped in Driver Finance.
-        </div>
+        <BoardSection title="Settlements" testId="dispatch-settlements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company — settlement runs are entity-scoped in Driver Finance.
+          </p>
+        </BoardSection>
       ) : (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
         <div data-testid="dispatch-settlements-quicklink">
-          <DataPanel title="Settlements">
+          <BoardSection title="Settlements" testId="settlements-board">
             <DataPanelRow>
               <span
                 className="text-xs text-gray-700"
@@ -846,7 +844,7 @@ export function DispatchPage({
                 View all settlements →
               </Link>
             </DataPanelRow>
-          </DataPanel>
+          </BoardSection>
         </div>
       )}
 

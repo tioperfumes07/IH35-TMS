@@ -12,6 +12,8 @@
  *   R2  PM_BASELINE_ABSENT_SQL is the SQL twin of pmScheduleBaselineAbsentReason (no next-due AND last <= 1);
  *   R3  the page names what is missing ("No last PM on file — enter it", linked to the clock) and says
  *       "Odometer unavailable" only when the odometer is.
+ *   R4  (LEAD 11-02) every mdata.units read (all 3: KPI, unit_state, rows) applies the shared fleet-visibility rule
+ *       (excludeDemoPhantomSql + excludeSampleDataSql) — live /maintenance listed SAM-b7317a51 / SAM-c4530bd3 / SAM-fa16e203.
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -37,6 +39,12 @@ export function audit(s) {
   if (!/data-testid="fleet-health-no-last-pm">\{t\("maintenance\.fleetHealth\.noLastPm"\)\}</.test(s.line) || !/t\("maintenance\.fleetHealth\.odometerUnavailable"\)/.test(s.line)) {
     f.push("R3: the page does not say what is missing (no last PM vs odometer unavailable)");
   }
+  const unitReads = (s.route.match(/AND u\.disposed_date IS NULL/g) ?? []).length;
+  const guarded = (s.route.match(/AND u\.disposed_date IS NULL\s*AND \$\{FLEET_HEALTH_VISIBLE_UNIT_SQL\}/g) ?? []).length;
+  if (unitReads === 0 || guarded !== unitReads) f.push(`R4: ${unitReads - guarded} of ${unitReads} mdata.units read(s) skip the fleet-visibility rule (SAM-/TEST/DEMO phantoms + sample rows show)`);
+  if (!/const FLEET_HEALTH_VISIBLE_UNIT_SQL = `\$\{excludeDemoPhantomSql\("u\.unit_number"\)\} AND \$\{excludeSampleDataSql\("u\.is_sample_data"\)\}`/.test(s.route)) {
+    f.push("R4: FLEET_HEALTH_VISIBLE_UNIT_SQL is not the shared fleet-visibility rule");
+  }
   return f;
 }
 
@@ -48,6 +56,8 @@ if (process.argv.includes("--selftest")) {
     ["clean sources pass", audit(src).length === 0],
     ["KPI CASE falling through to ok FAILS", plant("route", 'WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN \'none\'\n                WHEN COALESCE(tele', "WHEN COALESCE(tele")],
     ["baseline rule ignoring next-due FAILS", plant("route", "`(${a}.next_due_odometer IS NULL AND ", "`(")],
+    ["a units read without the fleet-visibility rule FAILS", plant("route", "AND u.disposed_date IS NULL\n              AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}", "AND u.disposed_date IS NULL")],
+    ["a local phantom rule instead of the shared one FAILS", plant("route", '${excludeDemoPhantomSql("u.unit_number")} AND ', "u.unit_number NOT ILIKE 'SAM-%' AND ")],
     ["generic 'PM reading unavailable' only FAILS", plant("line", 't("maintenance.fleetHealth.noLastPm")', 't("maintenance.fleetHealth.pmReadingUnavailable")')],
   ];
   let bad = 0;
@@ -65,4 +75,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — a PM clock with no last PM is 'none' (never 'ok'), and the page names the missing fact`);
+console.log(`${LABEL}: OK — a PM clock with no last PM is 'none' (never 'ok'), the page names the missing fact, and every units read hides SAM-/TEST/DEMO phantoms`);

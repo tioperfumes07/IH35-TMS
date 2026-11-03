@@ -267,6 +267,7 @@ export function SamsaraDriverMappingPage() {
   return (
     <div className="sdm" data-testid="samsara-driver-mapping-page">
       <PageHeader
+        backHref="/integrations/samsara"
         title="Samsara driver mapping"
         subtitle="Many Samsara usernames → one driver profile. Nothing is written to Samsara. Saving adds — it never replaces."
       />

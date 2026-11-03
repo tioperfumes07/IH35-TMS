@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type StopSource = "geofence" | "driver_pwa" | "dispatcher_manual";
 type DetentionStatus = "accruing" | "closed" | "billed" | null;
@@ -55,12 +56,7 @@ function formatDuration(minutes: number | null): string {
 
 function formatTs(ts: string | null): string {
   if (!ts) return "—";
-  return new Date(ts).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateTimeUS(ts);
 }
 
 function DwellBar({

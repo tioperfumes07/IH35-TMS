@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { PageHeader } from "../components/layout/PageHeader";
 
 export type ComingSoonPageProps = {
@@ -27,11 +27,11 @@ export function ComingSoonPage({ feature: featureProp, phase: phaseProp, eta: et
   return (
     <div className="space-y-4">
       <PageHeader title={feature} subtitle={subtitle} />
-      <DataPanel title="Roadmap note">
-        <div className="text-xs text-gray-600">
+      <BoardSection title="Roadmap note" testId="coming-soon-roadmap-board">
+        <div className="px-3 py-3 text-xs text-gray-600">
           {roadmapText}
         </div>
-      </DataPanel>
+      </BoardSection>
     </div>
   );
 }

@@ -5,8 +5,8 @@
  * ClaimsTab.tsx's claim rows use the governed EntityLinkOrTombstone with the canonical driver ID
  * and nullable human display name.
  * ClaimCreateModal.tsx (shared by modal + parity surfaces) has a real DriverPickerWithCreate bound
- * to form.driver_id. LawsuitsTab.tsx's lawsuit rows have a real EntityLink kind="driver"
- * id={lawsuit.driver_id}. Policy/coverage-gap surfaces were confirmed FALSE for driver during this
+ * to form.driver_id. ENG-60: LawsuitsTab Navigate→Legal (driver chrome on LegalMattersListPage).
+ * Policy/coverage-gap surfaces were confirmed FALSE for driver during this
  * same sweep — see insurance.required.json honesty_audit["driver_column_2026_08_14_overclaim"].
  *
  * Self-test: node scripts/verify-insurance-driver-wiring.mjs --selftest
@@ -24,7 +24,7 @@ const CHECKS = [
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /<DriverPickerWithCreate[\s\S]{0,80}value=\{form\.driver_id \|\| null\}/],
   // EntityLinkOrTombstone's `id` prop already accepts string | null | undefined directly, so the
   // `?? undefined` coercion this line needed under the old raw EntityLink is no longer required.
-  ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", /kind="driver" id=\{lawsuit\.driver_id(?: \?\? undefined)?\}/],
+  ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/],
   [CLAIM_ROUTES, /LEFT JOIN mdata\.drivers cdrv[\s\S]{0,1800}cdrv\.operating_company_id = \$\{scope\}[\s\S]{0,1800}FROM mdata\.driver_company_authorizations claim_driver_dca/],
   [CLAIM_ROUTES, /claim_driver_dca\.driver_id = cdrv\.id/],
   [CLAIM_ROUTES, /claim_driver_dca\.company_id = \$\{scope\}/],

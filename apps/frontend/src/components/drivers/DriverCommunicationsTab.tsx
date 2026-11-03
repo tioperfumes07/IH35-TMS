@@ -3,6 +3,7 @@ import { Mail, MessageSquare, Phone, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { type DriverCommEntry, getDriverCommunications } from "../../api/driver-messages";
 import { Combobox } from "../Combobox";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const CHANNEL_OPTIONS = [
   { value: "", label: "All channels" },
@@ -60,17 +61,7 @@ function DeliveryBadge({ status }: { status: string }) {
 }
 
 function formatTs(ts: string) {
-  try {
-    return new Date(ts).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return ts;
-  }
+  return formatDateTimeUS(ts) || ts;
 }
 
 export function DriverCommunicationsTab({

@@ -16,10 +16,11 @@ import {
   type DetentionBoardEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
@@ -129,8 +130,16 @@ function DetentionApprovalQueue({
           const stopLabel = [row.stop_city, row.stop_state].filter(Boolean).join(", ") || "—";
           return (
             <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs text-[#0F1219]">
-              <span className="min-w-[4.5rem] font-semibold">{row.load_number ?? "—"}</span>
-              <span className="min-w-[8rem] text-[#4B5563]">{row.customer_name ?? "—"}</span>
+              <span className="min-w-[4.5rem] font-semibold">
+                <EntityLinkOrTombstone kind="load" id={row.load_id} name={row.load_number} noun="Load" />
+              </span>
+              <span className="min-w-[8rem] text-[#4B5563]">
+                {row.customer_id ? (
+                  <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+                ) : (
+                  (row.customer_name ?? "—")
+                )}
+              </span>
               <span className="min-w-[6rem] text-center">{stopLabel}</span>
               <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
               <label className="flex items-center gap-1">
@@ -304,7 +313,11 @@ export function DetentionBoardPage() {
   type DetentionRow = (typeof events)[number];
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
+    return (
+      <BoardSection title="Detention" testId="detention-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved
@@ -361,7 +374,7 @@ export function DetentionBoardPage() {
       label: "Billable",
       sortable: true,
       cellClass: "tabular-nums",
-      render: (event) => `${Number(event.billable_minutes ?? 0)} min`,
+      render: (event) => `${formatQuantityTable(Number(event.billable_minutes ?? 0), 0)} min`,
     },
     {
       key: "live_accrued_amount_cents",
@@ -398,7 +411,7 @@ export function DetentionBoardPage() {
           renders both (dispatch-queues-subnav + dispatch-breadcrumb) and its own hooks are
           self-contained, so it does not affect this page's hook order. */}
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Detention board"
         subtitle="Operational detention and stopped, unbilled customer receivables · independent of load status"
         actions={

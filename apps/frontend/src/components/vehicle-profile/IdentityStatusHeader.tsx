@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { SelectCombobox } from "../Combobox";
 import { useToast } from "../Toast";
 import type { UnitLifecycleStatus } from "./StatusChangeModal";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const STATUS_OPTIONS: Array<{ value: UnitLifecycleStatus; label: string }> = [
   { value: "InService", label: "Active (In Service)" },
@@ -57,7 +58,9 @@ export function IdentityStatusHeader({
           <p className="text-xs text-gray-600">VIN {String(unit.vin ?? "—")}</p>
           <p className="text-xs text-gray-600">
             Current location: {locationLabel}
-            {latestPosition?.captured_at ? ` · ${String(latestPosition.captured_at)}` : ""}
+            {latestPosition?.captured_at
+              ? ` · ${formatDateTimeUS(String(latestPosition.captured_at)) || "—"}`
+              : ""}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">

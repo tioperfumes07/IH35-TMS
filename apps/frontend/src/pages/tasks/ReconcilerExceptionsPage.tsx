@@ -2,19 +2,21 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { TasksModuleTabs } from "./TasksModuleTabs";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
 type Row = ReconcilerException & { rule: string };
 
 function dollars(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return "—";
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 /** What the owner does next, in plain words. The repair itself happens on the record's own screen,
@@ -81,18 +83,18 @@ export function ReconcilerExceptionsPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader title="Exceptions" subtitle="Records the reconciler found out of line" />
+        <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view its exceptions.
-        </div>
+        <BoardSection title="Exceptions" testId="reconciler-exceptions-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view its exceptions.</p>
+        </BoardSection>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
+      <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
@@ -108,7 +110,7 @@ export function ReconcilerExceptionsPage() {
       </div>
       {query.data ? (
         <div className="text-xs text-[#6B7280]" data-testid="reconciler-checked">
-          {query.data.results.length} rules checked at {new Date(query.data.ran_at).toLocaleTimeString("en-US")}.
+          {query.data.results.length} rules checked at {formatDateTimeUS(query.data.ran_at)}.
         </div>
       ) : null}
 

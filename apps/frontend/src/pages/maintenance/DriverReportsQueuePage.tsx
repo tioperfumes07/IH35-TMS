@@ -5,15 +5,23 @@ import { listDriverReports, updateDriverReportStatus, type DriverReportRow } fro
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
+import { statusOptions } from "../../lib/statusListParams";
 
 const LINK = "text-[#1F2A44] hover:underline";
+
+const STATUS_FILTER_OPTIONS = statusOptions({
+  submitted: "Submitted",
+  under_review: "Under review",
+  resolved: "Resolved",
+  dismissed: "Dismissed",
+});
 
 export function DriverReportsQueuePage({
   highlightedReportId = "",
@@ -42,7 +50,7 @@ export function DriverReportsQueuePage({
   // Driver/load filters commit via staged Apply (CLS-ADJACENT — no silent URL helpers).
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
-  const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const staged = useStagedListFilters({
@@ -51,7 +59,7 @@ export function DriverReportsQueuePage({
       driverId: driverPickerId || filterDriverId || "",
       loadId: loadPickerId || filterLoadId || "",
     },
-    empty: { statusFilter: "" as const, driverId: "", loadId: "" },
+    empty: { statusFilter: [] as string[], driverId: "", loadId: "" },
     onApply: (next) => {
       setPage(1);
       setStatusFilter(next.statusFilter);
@@ -74,16 +82,22 @@ export function DriverReportsQueuePage({
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
   const q = useQuery({
-    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, effectiveDriverId, effectiveLoadId, page],
-    queryFn: () =>
-      listDriverReports({
+    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter.join(","), effectiveDriverId, effectiveLoadId, page],
+    queryFn: async () => {
+      // U12: multi-select — API takes one status; 0/1 pass through; 2+ fetch page unscoped then filter.
+      const status = statusFilter.length === 1 ? statusFilter[0] : undefined;
+      const result = await listDriverReports({
         operating_company_id: operatingCompanyId,
-        status: statusFilter || undefined,
+        status,
         driver_id: effectiveDriverId,
         load_id: effectiveLoadId,
         limit: pageSize,
         offset: (page - 1) * pageSize,
-      }),
+      });
+      if (statusFilter.length <= 1) return result;
+      const rows = result.rows.filter((row) => statusFilter.includes(row.status));
+      return { ...result, rows, total_count: rows.length };
+    },
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -233,7 +247,7 @@ export function DriverReportsQueuePage({
         filterBar={
           <div data-driver-reports-filter-toolbar="collapsed">
             <CollapsedListFilters
-              activeFilterCount={(statusFilter ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (effectiveLoadId ? 1 : 0)}
+              activeFilterCount={(statusFilter.length ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (effectiveLoadId ? 1 : 0)}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="driver-reports"
             >
@@ -262,20 +276,14 @@ export function DriverReportsQueuePage({
                     dataTestId="driver-reports-filter-load"
                   />
                 </label>
-                <label className="space-y-1 text-xs text-gray-600">
-                  <span>Status</span>
-                  <SelectCombobox
-                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
-                    value={staged.draft.statusFilter}
-                    onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "" | DriverReportRow["status"] })}
-                  >
-                    <option value="">All statuses</option>
-                    <option value="submitted">submitted</option>
-                    <option value="under_review">under_review</option>
-                    <option value="resolved">resolved</option>
-                    <option value="dismissed">dismissed</option>
-                  </SelectCombobox>
-                </label>
+                <MultiSelectDropdown
+                  label="Status"
+                  options={STATUS_FILTER_OPTIONS}
+                  selected={staged.draft.statusFilter}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                  allLabel="All statuses"
+                  data-testid="driver-reports-status-filter"
+                />
               </div>
             </CollapsedListFilters>
           </div>

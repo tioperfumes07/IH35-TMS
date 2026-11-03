@@ -10,6 +10,7 @@ import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
 import { listTours } from "../api/tourReadout";
 import { getActiveLiabilities } from "../api/liabilities";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../lib/money";
 import {
   createDriverTeam,
@@ -26,7 +27,7 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
-import { DataPanel } from "../components/layout/DataPanel";
+import { BoardSection } from "../components/v3/BoardSection";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
@@ -100,9 +101,7 @@ function driverMatchesListSegment(status: string, segment: DriversListStatusId):
 
 function formatDate(value: string | null) {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  return formatDateUS(value) || value;
 }
 
 function formatMoney(value: number) {
@@ -554,7 +553,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       const etaVariance = Number(load.latest_eta_prediction?.variance_minutes ?? 0);
       const eta =
         load.latest_eta_prediction?.predicted_arrival_at
-          ? `${new Date(load.latest_eta_prediction.predicted_arrival_at).toLocaleDateString()} (${etaVariance}m)`
+          ? `${formatDateTimeUS(String(load.latest_eta_prediction.predicted_arrival_at))} (${etaVariance}m)`
           : "ETA n/a";
       byDriver.set(key, { driver_id: driverId, driver_name: formatPersonName(driverName), stage, route, eta });
     }
@@ -839,7 +838,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           {subnavTab === "settlements" ? (
             <div className="space-y-2" data-testid="drivers-settlements-canonical-redirect-hint">
               {!isDeductionsBoard ? (
-                <DataPanel title="Settlements">
+                <BoardSection title="Settlements" testId="settlements-board">
                   <DataPanelRow>
                     <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
                     <Link
@@ -850,7 +849,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                       View all settlements →
                     </Link>
                   </DataPanelRow>
-                </DataPanel>
+                </BoardSection>
               ) : null}
               <div data-testid="drivers-deductions-panel">
                 {isDeductionsBoard ? (
@@ -995,7 +994,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           {subnavTab === "leave" ? (
             <div className="space-y-3" data-testid="drivers-leave-workspace">
               {/* @matrix-built drivers:leave:{connectivity} */}
-              <DataPanel title="Leave Overview" accentColor={colors.warn.strong}>
+              <BoardSection title="Leave Overview" testId="leave-overview-board">
                 <DataPanelRow>
                   <span>On leave</span>
                   <span>{onLeaveCount}</span>
@@ -1004,7 +1003,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   <span>Available drivers</span>
                   <span>{availableCount ?? "—"}</span>
                 </DataPanelRow>
-              </DataPanel>
+              </BoardSection>
               <DriverSchedulerRequestInboxPage embedded />
             </div>
           ) : null}
@@ -1049,7 +1048,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 isError={settlementsReadyToursQuery.isError}
                 title="Settlements Ready"
               />
-              <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
+              <BoardSection title="Debt Alert · before any payment" testId="debt-alert-before-any-payment-board">
                 {/* DRV-MONEY-F6110 — same false-clean-bill-of-health defect as the cash_advances tab
                     above; debtDataError gates this panel too. */}
                 {debtDataError ? (
@@ -1088,11 +1087,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">{formatMoney(-(totalDriversOwe ?? 0))}</span></DataPanelRow>
                   </>
                 )}
-              </DataPanel>
-              <DataPanel
-                title={`Active Drivers · Samsara ${samsaraHealthQuery.isError ? "unavailable" : samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
-                accentColor={colors.info.strong}
-              >
+              </BoardSection>
+              <BoardSection title={`Active Drivers · Samsara ${samsaraHealthQuery.isError ? "unavailable" : samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`} testId="active-drivers-samsara-board">
                 {dispatchLoadsQuery.isError ? <ListErrorState status={0} message="Active driver movement could not be loaded." onRetry={() => void dispatchLoadsQuery.refetch()} /> : null}
                 {samsaraHealthQuery.isError ? <ListErrorState status={0} message="Samsara health could not be loaded." onRetry={() => void samsaraHealthQuery.refetch()} /> : null}
                 {!dispatchLoadsQuery.isError ? activeDriverLoadRows.map((row) => (
@@ -1105,8 +1101,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 )) : null}
                 {!dispatchLoadsQuery.isError && activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
                 {!samsaraHealthQuery.isError ? <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow> : null}
-              </DataPanel>
-              <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
+              </BoardSection>
+              <BoardSection title="Permit / Document Expirations" testId="permit-document-expirations-board">
                 {permitExpirationRows.map((row) => (
                   <DataPanelRow key={row.id}>
                     <span><EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}</span>
@@ -1120,7 +1116,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     {pendingEscrowQuery.isError ? <span className="text-red-600">Error</span> : (pendingEscrowQuery.data?.data ?? []).length}
                   </span>
                 </DataPanelRow>
-              </DataPanel>
+              </BoardSection>
             </div>
           ) : null}
       </>

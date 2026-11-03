@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   driverDeductionTypeQueryKey,
@@ -87,7 +88,11 @@ export function AutoDeductionPoliciesPanel() {
   const effectiveDriverId = applied.driverId.trim() || undefined;
 
   if (!selectedCompanyId) {
-    return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to manage auto-deduction policies.</p>;
+    return (
+    <BoardSection title="Auto deductions" testId="auto-deduction-policies-need-company">
+      <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to manage auto-deduction policies.</p>
+    </BoardSection>
+  );
   }
   return (
     <div className="space-y-3">

@@ -8,6 +8,7 @@ import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
 import { listAllUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -216,12 +217,9 @@ export function TruckPlanner() {
 
   if (!operatingCompanyId) {
     return (
-      <div
-        data-testid="dispatch-truck-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
-      >
-        Select an operating company to load the truck planner.
-      </div>
+      <BoardSection title="Truck planner" testId="dispatch-truck-planner-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load the truck planner.</p>
+      </BoardSection>
     );
   }
 

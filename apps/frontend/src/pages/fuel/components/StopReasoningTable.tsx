@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatQuantityTable, formatUsd } from "../../../lib/money";
 
 type Props = {
   stops: RecommendedStop[];
@@ -13,13 +14,13 @@ type StopRow = RecommendedStop & {
 
 function stateMile(stop: RecommendedStop): string {
   const state = String(stop.station_state ?? stop.state ?? "").trim() || "—";
-  const mile = stop.mile_marker == null ? "—" : Number(stop.mile_marker).toFixed(0);
+  const mile = stop.mile_marker == null ? "—" : formatQuantityTable(Number(stop.mile_marker), 0);
   return `${state} / ${mile}`;
 }
 
 function gallonsLabel(stop: RecommendedStop): string {
   const gallons = stop.gallons_added ?? stop.gallons;
-  return gallons == null ? "—" : Number(gallons).toFixed(1);
+  return gallons == null ? "—" : formatQuantityTable(Number(gallons), 1);
 }
 
 function whyThisStop(stop: RecommendedStop): string {
@@ -59,7 +60,7 @@ const COLUMNS: Array<ParityColumn<StopRow>> = [
     label: "$/gal",
     sortable: true,
     sortValue: (row) => Number(row.price_per_gallon ?? 0),
-    render: (row) => `$${Number(row.price_per_gallon ?? 0).toFixed(2)}`,
+    render: (row) => formatUsd(Number(row.price_per_gallon ?? 0)),
   },
   {
     key: "gallons",

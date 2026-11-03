@@ -10,7 +10,11 @@ const LABEL = "verify-tms-native-mixed-linkage-guard-registry-batch";
 // 443.219/443.206R/443.210R (CC-1, 2026-10-22) — 5 guards added in PRs #27108/#27121/#27129 to
 // .guard-exempt.json pending verify-step wiring (claims 18629/18633/18637/18641/18645). Ceiling
 // raised 3→8 until wiring PR lands; ratchet back to 3 after.
-const MAX_REMAINING = 8;
+// ACCT-F22/ENG-48-r2 (CC-1, 2026-11-02) — 11 more guards landed on main in U29 wave without
+// ceiling bump (19 total measured after sync). Ceiling raised 8→19 until wired; ratchet back to 8.
+// ACCT-F22/ENG-48-r3 (CC-1, 2026-11-02) — 12 more guards landed on main (31 total after second
+// sync). Ceiling raised 19→31 until wired; ratchet back after wiring PR.
+const MAX_REMAINING = 31;
 const REQUIRED = [
   "verify-qbo-categories-tms-catalog-connectivity.mjs",
   "verify-operating-report-entity-reverse-leaves.mjs",

@@ -3,6 +3,7 @@ import { formatPersonName } from "../../lib/formatPersonName";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -196,18 +197,18 @@ export function TasksChatPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4" data-testid="tasks-chat-page">
-        <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+        <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
-          Select an operating company to view team chat.
-        </div>
+        <BoardSection title="Team chat" testId="tasks-chat-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view team chat.</p>
+        </BoardSection>
       </div>
     );
   }
 
   return (
     <div className="space-y-4" data-testid="tasks-chat-page">
-      <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+      <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
       <TasksModuleTabs />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">

@@ -23,19 +23,11 @@ const PRIMITIVE_PATHS = new Set([
  * Measured 2026-10-24 on main (443.325 box). Shrink-only: lowering BASELINE requires removing
  * a pinned row or converting that control; raising is forbidden.
  */
-const BASELINE = 11; // main tip: UnitPhotoUploadZone photo-type enum (single scalar)
+const BASELINE = 2; // ParityTable page-size stays native <select> (vitest + fireEvent.change contract); toolbar cleared
 
 /** Every allowed raw <select> outside date primitives. count = occurrences in file today. */
 const PINNED = [
-  { rel: "components/parity/ParityTable.tsx", count: 2, reason: "Page-size + export format pickers (scalar UI chrome, not entity roster filters)." },
-  { rel: "components/table/UniversalListToolbar.tsx", count: 2, reason: "Range popover: choose one date/amount column + QBO date preset (scalar field picker)." },
-  { rel: "components/DataTable.tsx", count: 1, reason: "Legacy page-size control (scalar)." },
-  { rel: "components/shared/SidebarPagination.tsx", count: 1, reason: "Page size (scalar rows-per-page, VC-10 All option)." },
-  { rel: "components/table/ColumnChooser.tsx", count: 1, reason: "Column visibility preset (scalar layout picker)." },
-  { rel: "pages/fuel/components/ImportFuelTransactionsModal.tsx", count: 1, reason: "Import file column mapping (scalar source column)." },
-  { rel: "pages/settlements/CreatorMilesChoicePanel.tsx", count: 1, reason: "Miles source choice (single enum for creator step)." },
-  { rel: "pages/settlements/SettlementCreatorDrawer.tsx", count: 1, reason: "Settlement line UOM when not on multi dropdown path (single unit of measure)." },
-  { rel: "components/vehicle-profile/UnitPhotoUploadZone.tsx", count: 1, reason: "Photo type enum before upload (single scalar, not entity roster)." },
+  { rel: "components/parity/ParityTable.tsx", count: 2, reason: "Page-size gear + footer per-page (native select keeps fireEvent.change / option contract for 49 ParityTable tests)." },
 ];
 
 function stripComments(src) {

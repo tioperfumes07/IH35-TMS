@@ -5,6 +5,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDriverProfileFuel, type DriverFuelFillRow } from "../../api/driver-profile-tabs";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -14,7 +15,7 @@ function money(v: unknown) {
   const n = Number(v ?? 0);
   if (!Number.isFinite(n)) return "—";
   // Backend fuel.total_cost is dollars on this read model (same as fuel list).
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsd(n);
 }
 
 function verdictLabel(row: DriverFuelFillRow): string {
@@ -66,7 +67,7 @@ export function DriverProfileFuelVerdictsSection({
         key: "gallons",
         label: "Gal",
         sortable: true,
-        render: (row) => (row.gallons == null ? "—" : String(row.gallons)),
+        render: (row) => (row.gallons == null ? "—" : formatQuantityTable(row.gallons)),
       },
       {
         key: "total_cost",

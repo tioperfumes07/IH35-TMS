@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalHomeBoard } from "./components/LegalHomeBoard";
 import { LegalModuleTabs } from "./LegalModuleTabs";
@@ -17,9 +18,9 @@ export function LegalLandingPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        Select an operating company to view legal metrics.
-      </div>
+      <BoardSection title="Legal" testId="legal-landing-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view legal metrics.</p>
+      </BoardSection>
     );
   }
 

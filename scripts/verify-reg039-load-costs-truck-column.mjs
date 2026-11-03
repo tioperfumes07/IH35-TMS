@@ -20,12 +20,18 @@ function check(panel, board) {
   //             and header clicks reach the panel's own comparator (onSortChange -> clickSort, sortMode external).
   //   why: the table law sends every list through the shared ParityTable; headerBtn was the hand-rolled header.
   //        Same contract: a Truck header that sorts by assigned_unit_number.
-  const truckCol = /\{ key: "unit", label: "Truck"([^}]*)\}/.exec(panel);
-  if (!truckCol || /sortable:\s*false/.test(truckCol[1]) || !/onSortChange=\{\(key\) => clickSort\(key as SortKey\)\}/.test(panel)) {
+  // Column may be multi-line (U29 EntityLink render). Require key+label present and not sortable:false.
+  const hasTruckCol = /key:\s*"unit"[\s\S]{0,80}label:\s*"Truck"/.test(panel) || /key:\s*"unit",\s*label:\s*"Truck"/.test(panel);
+  if (!hasTruckCol || /key:\s*"unit"[\s\S]{0,200}sortable:\s*false/.test(panel) || !/onSortChange=\{\(key\) => clickSort\(key as SortKey\)\}/.test(panel)) {
     errors.push("Approximate load costs must expose a sortable Truck header");
   }
-  if (!/assigned_unit_number \?\? "Unassigned"/.test(panel)) {
-    errors.push("Truck cells must render assigned_unit_number");
+  // U29 (2026-11-02): Truck cell EntityLinks the unit when assigned_unit_id is present.
+  // Still requires assigned_unit_number as the visible label + Unassigned when no unit.
+  if (!/assigned_unit_number/.test(panel) || !/Unassigned/.test(panel)) {
+    errors.push("Truck cells must render assigned_unit_number (EntityLink label or plain) with Unassigned fallback");
+  }
+  if (!/kind="unit"/.test(panel) || !/assigned_unit_id/.test(panel)) {
+    errors.push("Truck cells must EntityLink kind=unit via assigned_unit_id (U29)");
   }
   if (!/sortKey === "unit"/.test(panel)) {
     errors.push("clicking Truck must sort by assigned_unit_number");
@@ -44,8 +50,9 @@ function selftest() {
     console.error("SELFTEST FAIL — clean:\n  " + good.join("\n  "));
     process.exit(1);
   }
-  if (check(panel.replace('{ key: "unit", label: "Truck",', '{ key: "unit", label: "Truck", sortable: false,'), board).length === 0
-    || check(panel.replace('{ key: "unit", label: "Truck"', '{ key: "unit", label: "Unit"'), board).length === 0) {
+  const plantSortable = panel.replace(/key:\s*"unit",\s*\n\s*label:\s*"Truck"/, 'key: "unit",\n              label: "Truck",\n              sortable: false');
+  const plantLabel = panel.replace(/label:\s*"Truck"/, 'label: "Unit"');
+  if (check(plantSortable, board).length === 0 || check(plantLabel, board).length === 0) {
     console.error("SELFTEST FAIL — Truck header mutation not caught");
     process.exit(1);
   }

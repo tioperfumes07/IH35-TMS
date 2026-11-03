@@ -161,7 +161,12 @@ export function AuditLogViewer() {
     return (
       <div className="space-y-3 p-4">
         <SuperAdminNav />
-        <PageHeader title="Audit log" subtitle="Universal read-only viewer" />
+        <PageHeader
+          backHref="/admin"
+          breadcrumb={["Admin", "Audit log"]}
+          title="Audit log"
+          subtitle="Universal read-only viewer"
+        />
         <p className="text-xs text-gray-600">Access restricted to Owner and SuperAdmin.</p>
       </div>
     );
@@ -175,6 +180,8 @@ export function AuditLogViewer() {
     <div className="space-y-4 p-4">
       <SuperAdminNav />
       <PageHeader
+        backHref="/admin"
+        breadcrumb={["Admin", "Audit log"]}
         title="Audit log"
         subtitle="Universal read-only viewer — compliance &amp; forensics"
       />

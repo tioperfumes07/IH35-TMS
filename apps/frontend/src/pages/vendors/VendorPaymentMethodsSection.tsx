@@ -9,7 +9,7 @@ import {
 } from "../../api/mdata";
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -115,7 +115,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
   const methods = (query.data ?? []).filter((m) => !m.deactivated_at);
 
   return (
-    <DataPanel title="Payment methods on file">
+    <BoardSection title="Payment methods on file" testId="payment-methods-on-file-board">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-xs text-gray-600">
           Structured record of how this vendor is paid — masked reference only (last 4 digits), never a
@@ -242,6 +242,6 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
         }}
         submitLabel="Confirm void"
       />
-    </DataPanel>
+    </BoardSection>
   );
 }

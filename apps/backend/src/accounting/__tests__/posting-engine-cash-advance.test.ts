@@ -66,6 +66,11 @@ function installQueryMock(opts: { status?: string } = {}) {
     // RULING 443.65 #2d — the writer's "Due to / from <party>" probe (company-scoped since #26543): the fixture's
     // accounts are a driver sub-account and a bank account, never a related-party account, so the probe finds none.
     if (sql.includes("account_name LIKE 'Due to / from %'")) return { rows: [] };
+    // posting engine validates all account ids are active and postable before writing lines (FOR SHARE = bulk).
+    if (sql.includes("FROM catalogs.accounts") && sql.includes("FOR SHARE")) {
+      const acctIds = (params[0] as string[]) ?? [];
+      return { rows: acctIds.map((id) => ({ id, deactivated_at: null, is_postable: true })) };
+    }
     if (sql.includes("FROM catalogs.accounts")) {
       if (String(params[0]) === CHOSEN_CREDIT && String(params[1]) === OPCO) {
         return { rows: [{ id: CHOSEN_CREDIT }] };
@@ -77,6 +82,8 @@ function installQueryMock(opts: { status?: string } = {}) {
     }
     if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
     if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-1" }] };
+    // ENG-28: after INSERT, posting engine SELECTs the header to validate entry_date and lock it.
+    if (sql.includes("FROM accounting.journal_entries") && !sql.includes("INSERT")) return { rows: [{ entry_date: "2026-06-13" }] };
     if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-1" }] };
     if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
       lineSeq += 1;

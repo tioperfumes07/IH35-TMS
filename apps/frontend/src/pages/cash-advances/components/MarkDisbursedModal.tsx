@@ -11,6 +11,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsdCents } from "../../../lib/money";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
@@ -58,7 +59,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
     () =>
       (bankTxQuery.data?.transactions ?? []).map((tx) => ({
         value: String(tx.id),
-        label: `${formatDateUS(tx.transaction_date)} · $${(Math.abs(Number(tx.amount_cents ?? 0)) / 100).toFixed(2)} · ${
+        label: `${formatDateUS(tx.transaction_date)} · ${formatUsdCents(Math.abs(Number(tx.amount_cents ?? 0)))} · ${
           tx.merchant_name ?? tx.description ?? "(no description)"
         }`,
       })),

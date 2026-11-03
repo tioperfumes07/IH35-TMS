@@ -17,6 +17,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function PrefToggle({
   label,
@@ -76,7 +77,7 @@ const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
     key: "sent_at",
     label: "Sent",
     sortable: true,
-    render: (entry) => (entry.sent_at ? new Date(entry.sent_at).toLocaleString() : "—"),
+    render: (entry) => (entry.sent_at ? formatDateTimeUS(entry.sent_at) || "—" : "—"),
   },
 ];
 
@@ -179,7 +180,7 @@ export function NotifyPreferencesPage() {
 
   return (
     <div className="p-4" data-testid="dispatch-notify-preferences-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Customer ETA notify"
         subtitle="SMS/email milestone alerts with delivery confirmations (B21-D9)"
       />

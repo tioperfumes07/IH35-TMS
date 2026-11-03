@@ -7,6 +7,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { FuelBoardSection } from "../../pages/fuel/FuelBoardSection";
+import { formatQuantityTable } from "../../lib/money";
 
 /**
  * Linkage law §6 (PR #23729) — Relay fills (integrations.relay_fuel_transactions) never become
@@ -80,9 +81,9 @@ export function RelayFillsReverseSection({
                 </span>
                 <span className="ml-2 text-xs text-gray-500">
                   {formatDateUS(row.relay_created_at)}
-                  {row.fuel_gallons != null ? ` · ${row.fuel_gallons.toLocaleString()} gal diesel` : ""}
-                  {row.reefer_gallons != null ? ` · ${row.reefer_gallons.toLocaleString()} gal Reefer Diesel` : ""}
-                  {row.def_gallons != null ? ` · ${row.def_gallons.toLocaleString()} gal DEF` : ""}
+                  {row.fuel_gallons != null ? ` · ${formatQuantityTable(row.fuel_gallons)} gal diesel` : ""}
+                  {row.reefer_gallons != null ? ` · ${formatQuantityTable(row.reefer_gallons)} gal Reefer Diesel` : ""}
+                  {row.def_gallons != null ? ` · ${formatQuantityTable(row.def_gallons)} gal DEF` : ""}
                   {` · ${formatMoneyCents(row.total_amount_paid_cents, "USD")}`}
                   {"unit_id" in filter ? (
                     row.driver_id ? (

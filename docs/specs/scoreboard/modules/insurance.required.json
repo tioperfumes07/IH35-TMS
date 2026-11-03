@@ -2,7 +2,7 @@
   "module": "insurance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (standalone module, ROUND 443.282)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Insurance (standalone module, ROUND 443.282)",
     "nav": "apps/frontend/src/pages/insurance/InsuranceModuleTabs.tsx",
     "routes": "/insurance/*"
   },
@@ -125,7 +125,7 @@
     {
       "id": "gl_delta",
       "group": "economics",
-      "label": "C25 GL \u0394"
+      "label": "C25 GL Δ"
     },
     {
       "id": "subledger_tie",
@@ -162,7 +162,7 @@
     {
       "id": "economics.invariants",
       "tab": "Insurance",
-      "sub": "USMCA ledger invariants C25\u2013C31",
+      "sub": "USMCA ledger invariants C25–C31",
       "route_hint": "/insurance/*",
       "required": [
         "gl_delta",
@@ -199,7 +199,7 @@
       ],
       "honesty_audit": {
         "unit_column_2026_08_14_overclaim": {
-          "finding": "FALSE \u2014 PoliciesList.tsx (the policies.list surface itself) renders no unit column, no unit filter, and no unit-scoped drill link; only a vendor_id URL filter exists. The unit relationship lives on policies.detail (Units Assigned table) and policies.create (unit multi-select in both PolicyCreateModal.tsx and PolicyCreateWizard.tsx), not on the list surface.",
+          "finding": "FALSE — PoliciesList.tsx (the policies.list surface itself) renders no unit column, no unit filter, and no unit-scoped drill link; only a vendor_id URL filter exists. The unit relationship lives on policies.detail (Units Assigned table) and policies.create (unit multi-select in both PolicyCreateModal.tsx and PolicyCreateWizard.tsx), not on the list surface.",
           "note": "Removed false unit claim from policies.list during LINK-F5167 unit-column vertical sweep.",
           "drops": [
             "unit"
@@ -300,7 +300,7 @@
       "id": "lawsuits.list",
       "tab": "Lawsuits",
       "sub": "Lawsuits list",
-      "route_hint": "/insurance/lawsuits",
+      "route_hint": "/legal/lawsuits",
       "required": [
         "driver",
         "connectivity",
@@ -311,7 +311,7 @@
       "id": "lawsuits.create",
       "tab": "Lawsuits",
       "sub": "+ Create Lawsuit",
-      "route_hint": "/insurance/lawsuits",
+      "route_hint": "/legal/lawsuits",
       "required": [
         "picker_law",
         "qbo_chrome",
@@ -412,49 +412,49 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "/insurance/lawsuits",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "/legal/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/insurance/LawsuitsTab.tsx"
+      "surface_path": "pages/legal/matters/LegalMattersListPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "/insurance/lawsuits",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "/legal/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/insurance/LawsuitsTab.tsx"
+      "surface_path": "pages/legal/matters/LegalMattersListPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "/insurance/lawsuits",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "/legal/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/insurance/LawsuitsTab.tsx"
+      "surface_path": "pages/legal/matters/LegalMattersListPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/insurance/lawsuits",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "route_hint": "/legal/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
       ],
-      "surface_path": "pages/insurance/LawsuitsTab.tsx"
+      "surface_path": "pages/legal/matters/LegalMattersListPage.tsx"
     }
   ],
   "honesty_audit": {
@@ -470,11 +470,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_create": {
       "finding": "VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER",
-      "note": "Create/modal/wizard/parity create surfaces are forward write chrome \u2014 reverse_link Required was inflation. policies.detail + coverage_gaps keep reverse_link (EntityLink Built).",
+      "note": "Create/modal/wizard/parity create surfaces are forward write chrome — reverse_link Required was inflation. policies.detail + coverage_gaps keep reverse_link (EntityLink Built).",
       "drops": [
         {
           "id": "insurance.modal.claim_create",
@@ -750,7 +750,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
-      "note": "ap_bill blanket-required on 4 insurance leaves; verified live, none own it. Policy create/detail (PolicyCreateModal.tsx, PolicyCreateWizard.tsx, PolicyDetail.tsx) carry a genuine insurer vendor_id (separate column, unaffected) but zero accounting.bills/bill_id anywhere; premiums route through insurance.payment_schedules (PaymentScheduleTab.tsx, listInsurancePaymentSchedule/markInsurancePaymentSchedulePaid) \u2014 a standalone mark-paid tracker with no bill FK at all, same direct-posting pattern as property tax. ClaimCreateModal.tsx and LawsuitCreateModal.tsx have zero bill_id/vendor_id references.",
+      "note": "ap_bill blanket-required on 4 insurance leaves; verified live, none own it. Policy create/detail (PolicyCreateModal.tsx, PolicyCreateWizard.tsx, PolicyDetail.tsx) carry a genuine insurer vendor_id (separate column, unaffected) but zero accounting.bills/bill_id anywhere; premiums route through insurance.payment_schedules (PaymentScheduleTab.tsx, listInsurancePaymentSchedule/markInsurancePaymentSchedulePaid) — a standalone mark-paid tracker with no bill FK at all, same direct-posting pattern as property tax. ClaimCreateModal.tsx and LawsuitCreateModal.tsx have zero bill_id/vendor_id references.",
       "drops": [
         {
           "id": "policies.create",
@@ -780,7 +780,7 @@
     },
     "trailer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-      "note": "5 of 6 insurance leaves are false: policies.create's \"Trailer\" chip filters a listUnits() call that never passes include=\"trailers\", so it structurally can only ever return truck units \u2014 cosmetic, not real trailer scoping; policies.list/detail and coverage_gaps render only EntityLink kind=\"unit\", never trailer, consistent with create never actually attaching a real trailer record; claims.list also renders only kind=\"unit\" despite the create modal capturing a real trailer_id. claims.create KEEPS the Required marking \u2014 ClaimCreateModal.tsx has a real EntityPicker kind=\"trailer\" bound to form.trailer_id and submitted on create.",
+      "note": "5 of 6 insurance leaves are false: policies.create's \"Trailer\" chip filters a listUnits() call that never passes include=\"trailers\", so it structurally can only ever return truck units — cosmetic, not real trailer scoping; policies.list/detail and coverage_gaps render only EntityLink kind=\"unit\", never trailer, consistent with create never actually attaching a real trailer record; claims.list also renders only kind=\"unit\" despite the create modal capturing a real trailer_id. claims.create KEEPS the Required marking — ClaimCreateModal.tsx has a real EntityPicker kind=\"trailer\" bound to form.trailer_id and submitted on create.",
       "drops": [
         {
           "id": "policies.list",
@@ -846,7 +846,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "5 of 6 insurance leaves are false: policies.list/detail render the insurer_name as plain text (no EntityLink), never linking to the real vendor record even though the create flow captures one; claims.create and both lawsuits leaves have zero vendor references. policies.create KEEPS the Required marking \u2014 PolicyCreateWizard.tsx/PolicyCreateModal.tsx both have a real ReferenceSelect(createKind=\"vendor\") for insurer_vendor_id.",
+      "note": "5 of 6 insurance leaves are false: policies.list/detail render the insurer_name as plain text (no EntityLink), never linking to the real vendor record even though the create flow captures one; claims.create and both lawsuits leaves have zero vendor references. policies.create KEEPS the Required marking — PolicyCreateWizard.tsx/PolicyCreateModal.tsx both have a real ReferenceSelect(createKind=\"vendor\") for insurer_vendor_id.",
       "drops": [
         {
           "id": "policies.list",
@@ -882,7 +882,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "2 of 13 insurance leaves are false: LawsuitCreateModal.tsx has zero unit references (only an EntityPicker for a pre-existing insurance_claim link). All 11 other leaves (policies, coverage_gaps, claims, and the claim/policy create modals/wizards) KEEP the Required marking \u2014 real listUnits-backed pickers and EntityLink kind=\"unit\" confirmed across PoliciesList.tsx, PolicyDetail.tsx, CoverageGapDashboard.tsx, ClaimsTab.tsx, ClaimCreateModal.tsx, PolicyCreateModal.tsx, and PolicyCreateWizard.tsx.",
+      "note": "2 of 13 insurance leaves are false: LawsuitCreateModal.tsx has zero unit references (only an EntityPicker for a pre-existing insurance_claim link). All 11 other leaves (policies, coverage_gaps, claims, and the claim/policy create modals/wizards) KEEP the Required marking — real listUnits-backed pickers and EntityLink kind=\"unit\" confirmed across PoliciesList.tsx, PolicyDetail.tsx, CoverageGapDashboard.tsx, ClaimsTab.tsx, ClaimCreateModal.tsx, PolicyCreateModal.tsx, and PolicyCreateWizard.tsx.",
       "drops": [
         {
           "id": "insurance.modal.lawsuit_create",
@@ -900,7 +900,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 10 insurance leaves. Verified live \u2014 PoliciesList.tsx/PolicyCreateModal.tsx/PolicyDetail.tsx/CoverageGapDashboard.tsx/PolicyCreateWizard.tsx have zero \"driver\" occurrences (policy/coverage-gap surfaces are unit-scoped, not driver-scoped); LawsuitCreateModal.tsx only has EntityPicker kind=\"insurance_claim\" to link a claim \u2014 driver is inherited server-side from the linked claim, never set on the lawsuit-create surface itself.",
+      "note": "driver blanket-required on 10 insurance leaves. Verified live — PoliciesList.tsx/PolicyCreateModal.tsx/PolicyDetail.tsx/CoverageGapDashboard.tsx/PolicyCreateWizard.tsx have zero \"driver\" occurrences (policy/coverage-gap surfaces are unit-scoped, not driver-scoped); LawsuitCreateModal.tsx only has EntityPicker kind=\"insurance_claim\" to link a claim — driver is inherited server-side from the linked claim, never set on the lawsuit-create surface itself.",
       "drops": [
         {
           "id": "policies.list",

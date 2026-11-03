@@ -17,7 +17,7 @@ import { ListErrorState } from "../ListErrorState";
 import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
-import { formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
 import { SelectCombobox } from "../Combobox";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
@@ -36,11 +36,10 @@ type Panel = {
   linked: Record<string, number>;
 };
 
-const usd = (c: number) => `${c < 0 ? "-" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 // Owner design law 7 + lib/money C-35/C-37 (Lead ruling ROUND 330.6): MISSING renders "—", a real measured zero renders
 // "$0.00". The old ternary falsy-tested a number and turned every real $0.00 into "unknown".
 const money = (c: number | null | undefined) => formatUsdCentsTable(c);
-const int = (n: number) => n.toLocaleString("en-US");
+const int = (n: number) => formatQuantityTable(n);
 
 export const DRIVER_HUB_TABS: Array<{ label: string; to: string }> = [
   { label: "Drivers", to: "/drivers" },
@@ -114,7 +113,7 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
         <div className="pb-figs">
           {/* Each figure opens the driver's tab that lists what it sums. */}
           <div><div className="ih-hd">Settlement due</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Settlements")}>{money(p.figures.settlement_due_cents)}</NumLink></div></div>
-          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Pay & escrow")}>{usd(p.figures.escrow_held_cents)}</NumLink>}</div></div>
+          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Pay & escrow")}>{money(p.figures.escrow_held_cents)}</NumLink>}</div></div>
           <div><div className="ih-hd">Advances open</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Cash advances")}>{money(p.figures.advances_open_cents)}</NumLink></div></div>
           <div><div className="ih-hd">Miles, 30 days</div><div className="pb-fig">{p.figures.miles_30d == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Loads")}>{int(p.figures.miles_30d)}</NumLink>}</div></div>
           <div className={`pb-integrity${flag ? " pb-integrity--flag" : ""}`}>

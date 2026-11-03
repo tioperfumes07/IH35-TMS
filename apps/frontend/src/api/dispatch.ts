@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 export { listDispatchLoads, listAllDispatchLoads } from "./catalog-loads";
 
 export type DispatchV2View = "home" | "loads";
@@ -626,6 +627,10 @@ export type TripPairingUnitRow = {
   settlement_signal: "settlement_open" | "round_trip" | null;
   status: string | null;
   location?: { city: string | null; state: string | null } | null; // C1b: live Samsara position
+  customer_id: string | null;
+  customer_name: string | null;
+  miles_total: number | null;
+  rate_total_cents: number | null;
 };
 export type TripPairingBoard = {
   kpis: { active_trucks: number; northbound: number; nb_unbooked: number; southbound: number; sb_unbooked: number; up_north_30d: number };
@@ -1513,6 +1518,7 @@ export type DetentionApprovalRequest = {
   status: "pending_review" | "approved" | "rejected" | "invoiced";
   load_id: string;
   load_number?: string | null;
+  customer_id?: string | null;
   customer_name?: string | null;
   amount_cents: number;
   billable_minutes: number;
@@ -1704,11 +1710,12 @@ export type BolDocumentSummary = {
 
 export function getPodDocuments(
   operatingCompanyId: string,
-  opts?: { load_id?: string; status?: string; limit?: number }
+  opts?: { load_id?: string; status?: string | readonly string[]; limit?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (opts?.load_id) params.set("load_id", opts.load_id);
-  if (opts?.status) params.set("status", opts.status);
+  // U12 — repeated ?status=a&status=b.
+  appendStatusList(params, "status", opts?.status);
   if (opts?.limit) params.set("limit", String(opts.limit));
   return apiRequest<{ documents: PodDocumentSummary[]; count: number }>(
     `/api/v1/dispatch/pod-documents?${params.toString()}`
@@ -1936,6 +1943,7 @@ export type AwaitingBolInvoiceRow = {
   load_id: string;
   load_number: string | null;
   status: string;
+  customer_id: string | null;
   customer_name: string | null;
   waiting_for: "BOL";
   has_invoice: boolean;
@@ -1956,7 +1964,9 @@ export type NeedsDeliveryAuthorizationRow = {
   load_id: string;
   load_number: string | null;
   status: string;
+  customer_id: string | null;
   customer_name: string | null;
+  invoice_id: string | null;
   invoice_display_id: string | null;
   invoice_status: string;
   factoring_status: string | null;

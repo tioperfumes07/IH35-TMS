@@ -284,6 +284,9 @@ const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringH
 const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
 const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
+const Faro1090WireProposalsPage = React.lazy(() =>
+  import("../pages/factoring/Faro1090WireProposalsPage").then((m) => ({ default: m.Faro1090WireProposalsPage })),
+);
 const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
@@ -698,14 +701,16 @@ function sessionGate(auth: ReturnType<typeof useAuth>) {
  * locations left detail pages visibly mounted under the destination URL when
  * a route chunk was not already warm (most visibly Driver profile -> Fleet).
  *
- * Key the content boundary to the location so each navigation gets a fresh
- * fallback/child lifecycle.  The Shell remains outside this boundary, so the
- * sidebar and header stay mounted while the destination chunk loads.
+ * Key the content boundary to pathname only so each PATH navigation gets a
+ * fresh fallback/child lifecycle.  Do NOT include location.search — report
+ * presets, staged list filters, and deeplink query params update search in
+ * place; remounting on every search change discards draft state (Codex Round
+ * 7.6 P&L Last-month remount).  The Shell remains outside this boundary.
  */
 function RouteContentBoundary({ children }: { children: ReactNode }) {
   const location = useLocation();
   return (
-    <React.Suspense key={`${location.pathname}${location.search}`} fallback={<RouteFallback />}>
+    <React.Suspense key={location.pathname} fallback={<RouteFallback />}>
       {children}
     </React.Suspense>
   );
@@ -2798,6 +2803,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="faro_imports" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/1090-wire-proposals"
+          element={
+            <ProtectedRoute>
+              <Faro1090WireProposalsPage />
             </ProtectedRoute>
           }
         />

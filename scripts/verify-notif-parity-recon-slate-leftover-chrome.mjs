@@ -38,7 +38,7 @@ function leftoverHits(src) {
 function d029Hits(path, src) {
   if (path !== RECON) return [];
   const hits = [];
-  if (!/import\s*\{\s*formatDateUS\s*\}\s*from\s*["'][^"']*formatDate["']/.test(src)) {
+  if (!/import\s*\{[^}]*\bformatDateUS\b[^}]*\}\s*from\s*["'][^"']*formatDate["']/.test(src)) {
     hits.push("D029: must import formatDateUS from lib/formatDate");
   }
   if (!/formatDateUS\(\s*row\.since\s*\)/.test(src)) {
@@ -50,11 +50,21 @@ function d029Hits(path, src) {
   return hits;
 }
 
+function boardHits(path, src) {
+  const hits = [];
+  if (path !== RECON) return hits;
+  if (!src.includes('testId="reconciler-exceptions-need-company"') || !/<BoardSection\b/.test(src)) {
+    hits.push("need-company empty must be BoardSection (reconciler-exceptions-need-company)");
+  }
+  return hits;
+}
+
 function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
     for (const e of d029Hits(path, src)) fails.push(`${path}: ${e}`);
+    for (const e of boardHits(path, src)) fails.push(`${path}: ${e}`);
   }
   return fails;
 }

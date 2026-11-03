@@ -12,6 +12,7 @@ import { SelectCombobox } from "../Combobox";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { formatUsdCents } from "../../lib/money";
 import { Modal } from "../Modal";
+import { BoardSection } from "../v3/BoardSection";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #FFF / #E5E7EB 4px;
@@ -108,8 +109,20 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
     },
   });
 
-  if (!canReview) return <p className="text-xs text-[#4B5563]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
-  if (!companyId) return <p className="text-xs text-[#4B5563]">Select an operating company to view the inbox.</p>;
+  if (!canReview) {
+    return (
+      <BoardSection title="Inbox" testId="driver-inbox-need-role">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>
+      </BoardSection>
+    );
+  }
+  if (!companyId) {
+    return (
+      <BoardSection title="Inbox" testId="driver-inbox-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the inbox.</p>
+      </BoardSection>
+    );
+  }
 
   const showCash = tab === "all" || tab === "cash_advance";
 

@@ -22,7 +22,8 @@ const retrySections = Object.fromEntries([
   ["tire program", "apps/frontend/src/components/maintenance/UnitTireProgramReverseSection.tsx"],
   ["severe repairs", "apps/frontend/src/components/maintenance/UnitSevereRepairsReverseSection.tsx"],
   ["temporary coverage", "apps/frontend/src/components/safety/UnitTempCoverReverseSection.tsx"],
-  ["insurance lawsuits", "apps/frontend/src/components/insurance/InsuranceLawsuitsReverseSection.tsx"],
+  // ENG-60: insurance lawsuit reverse delegates to LegalMattersReverseSection.
+  ["insurance lawsuits", "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx"],
   ["safety alerts", "apps/frontend/src/components/safety/SafetyAlertsReverseSection.tsx"],
 ].map(([name, path]) => [name, fs.readFileSync(path, "utf8")]));
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_claims_reverse","trailer.profile.insurance_claims_reverse"],"task":"FLEET-F5908-INSURANCE-CLAIMS-REVERSE-EXACT","vertical":"class-sweep"} */';

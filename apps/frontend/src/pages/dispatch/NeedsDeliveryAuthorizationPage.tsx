@@ -12,6 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -89,13 +90,23 @@ export function NeedsDeliveryAuthorizationPage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (row) => row.customer_name ?? "—",
+        render: (row) =>
+          row.customer_id ? (
+            <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+          ) : (
+            (row.customer_name ?? "—")
+          ),
       },
       {
         key: "invoice_display_id",
         label: "Invoice",
         sortable: true,
-        render: (row) => row.invoice_display_id ?? "—",
+        render: (row) =>
+          row.invoice_id ? (
+            <EntityLinkOrTombstone kind="invoice" id={row.invoice_id} name={row.invoice_display_id} noun="Invoice" />
+          ) : (
+            (row.invoice_display_id ?? "—")
+          ),
       },
       {
         key: "invoice_status",
@@ -135,16 +146,16 @@ export function NeedsDeliveryAuthorizationPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">
-        Select an operating company.
-      </div>
+      <BoardSection title="Needs delivery authorization" testId="needs-delivery-auth-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
     );
   }
 
   return (
     <div data-testid="needs-delivery-authorization-page" className="mx-auto max-w-5xl space-y-4 p-4">
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Needs delivery authorization"
         subtitle="Issued invoices on loads still rolling (dispatched / in transit). Record customer + factoring approval before delivery — same engine as FACTOR-BUT-NOT-DELIVERED."
         actions={

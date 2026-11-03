@@ -64,7 +64,8 @@ function check(sources) {
   const expects = [
     ["timeline", /entityLabel\(load\.load_number[\s\S]{0,400}testId:\s*`timeline-load-/, "timeline planner"],
     ["claims", /<EntityLink[\s\S]{0,120}kind="claim"[\s\S]{0,120}id=\{claim\.id\}[\s\S]{0,160}label=\{entityLabel\(claim\.claim_number/, "claim row"],
-    ["lawsuits", /<EntityLink[\s\S]{0,120}kind="lawsuit"[\s\S]{0,120}id=\{lawsuit\.id\}[\s\S]{0,160}label=\{entityLabel\(lawsuit\.case_number/, "lawsuit row"],
+    // ENG-60: LawsuitsTab is a Navigate stub; canonical lawsuit board is LegalMattersListPage.
+    ["lawsuits", /Navigate to=\{`\/legal\/lawsuits\$\{search\}`\}/, "lawsuit→legal redirect"],
     ["buckets", /<EntityLink kind="work_order" id=\{row\.id\}[\s\S]{0,260}onClick=\{\(event\) => \{ event\.preventDefault\(\); onOpen\(row\.id\); \}\}/, "R&M board work order"],
     ["resolver", /case "load":[\s\S]{0,100}\/dispatch\/loads\//, "load resolver"],
     ["resolver", /case "work_order":[\s\S]{0,120}\/maintenance\/work-orders\//, "work-order resolver"],
@@ -81,7 +82,7 @@ function check(sources) {
     ["dispatchMatrix", "planning.loads", ["load", "connectivity", "reverse_link"], "/dispatch/planners/loads"],
     ["dispatchMatrix", "planning.timeline", ["load", "connectivity", "reverse_link"], "/dispatch/planners/timeline"],
     ["insuranceMatrix", "claims.list", ["connectivity", "reverse_link"], "/insurance/claims"],
-    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/insurance/lawsuits"],
+    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/legal/lawsuits"],
     ["maintenanceMatrix", "home.rm_status_board", ["work_order", "connectivity", "reverse_link"], "/maintenance?tab=rm_status_board"],
     ["maintenanceMatrix", "home.recent_activity", ["work_order", "connectivity", "reverse_link"], "/maintenance"],
   ];

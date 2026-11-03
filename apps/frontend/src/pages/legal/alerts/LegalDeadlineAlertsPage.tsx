@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { legalMattersApi, type LegalDeadlineAlert } from "../../../api/legal-matters";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -61,14 +62,16 @@ export function LegalDeadlineAlertsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <PageHeader backHref="/legal"
         breadcrumb={["Legal", "Alerts"]}
         title="Legal deadline alerts"
         subtitle="Statute dates, matter deadlines, signature and attorney-review expiry — silent failure is a defect"
       />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-xs text-gray-600">Select an operating company.</p>
+        <BoardSection title="Legal deadline alerts" testId="legal-deadline-alerts-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
       ) : q.isLoading ? (
         <p className="text-xs text-gray-600">Loading…</p>
       ) : q.isError ? (

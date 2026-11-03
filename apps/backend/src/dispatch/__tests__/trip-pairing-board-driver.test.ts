@@ -109,5 +109,42 @@ describe("FAIL-TP1 trip pairing driver resolution", () => {
     expect(loadsSql).toMatch(/AS load_driver_name/);
     // ...and joins drivers, or the name column would render an id.
     expect(loadsSql).toMatch(/LEFT JOIN mdata\.drivers/);
+    // TPB gear Customer/Miles/Revenue — real joins, never invented.
+    expect(loadsSql).toMatch(/LEFT JOIN mdata\.customers/);
+    expect(loadsSql).toMatch(/l\.loaded_miles::text AS loaded_miles/);
+    expect(loadsSql).toMatch(/l\.rate_total_cents::text AS rate_total_cents/);
+  });
+
+  it("rolls customer / miles / booked rate onto the tour from the load rows", async () => {
+    const { client } = makeClient({
+      eldDriver: [],
+      loads: [
+        {
+          ...LOAD_LEG,
+          load_driver_id: "drv-load",
+          load_driver_name: "Alfredo Cazares",
+          customer_id: "cust-1",
+          customer_name: "Acme Broker",
+          loaded_miles: "450",
+          rate_total_cents: "125000",
+        },
+      ],
+    });
+    const board = await getTripPairingBoard(client, "co-1", AS_OF);
+    expect(board.tours[0]?.customer_id).toBe("cust-1");
+    expect(board.tours[0]?.customer_name).toBe("Acme Broker");
+    expect(board.tours[0]?.miles_total).toBe(450);
+    expect(board.tours[0]?.rate_total_cents).toBe(125000);
+  });
+
+  it("includes driver_id on unbooked pool rows", async () => {
+    const { client } = makeClient({
+      eldDriver: [{ unit_id: "unit-1", driver_id: "drv-eld", driver_name: "Eld Driver" }],
+      loads: [],
+    });
+    const board = await getTripPairingBoard(client, "co-1", AS_OF);
+    expect(board.unbooked).toHaveLength(1);
+    expect(board.unbooked[0]?.driver_id).toBe("drv-eld");
+    expect(board.unbooked[0]?.driver_name).toBe("Eld Driver");
   });
 });

@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -15,6 +16,7 @@ import {
   type ChatMessage,
 } from "../../api/chat";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
 const TZ = "America/Chicago";
 const ATTACH_ACCEPT = "image/jpeg,image/png,image/heic,image/webp,application/pdf";
@@ -106,9 +108,11 @@ export function DispatchChatPage() {
     <div className="flex h-full flex-col" data-testid="dispatch-chat-page">
       <PageHeader title="Dispatch Chat" subtitle="Per-load driver ↔ office communication" />
       {!companyId ? (
-        <p className="p-4 text-xs text-[#4B5563]" data-testid="dispatch-chat-need-company">
-          Select an operating company to load entity-scoped chat threads.
-        </p>
+        <BoardSection title="Dispatch Chat" testId="dispatch-chat-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">
+            Select an operating company to load entity-scoped chat threads.
+          </p>
+        </BoardSection>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
           {threadsQuery.isError ? (
@@ -170,7 +174,7 @@ export function DispatchChatPage() {
                 ) : null}
                 <div className="flex-1 space-y-2 overflow-y-auto p-4">
                   {messages.map((m) => {
-                    const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
+                    const dollars = m.cash_advance_amount_cents != null ? formatUsdCents(m.cash_advance_amount_cents) : "";
                     return (
                       <div key={m.id} className="text-xs">
                         <span className="mr-2 text-xs text-[#6B7280]">#{m.seq} · {fmtTime(m.server_ts)} · {m.sender_party_type}</span>

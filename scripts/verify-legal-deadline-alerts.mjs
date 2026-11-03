@@ -48,6 +48,10 @@ if (!problems.length) {
   if (!/deadlineAlerts\(/.test(api)) problems.push("FE api deadlineAlerts missing");
   if (!/LegalDeadlineAlertsPage/.test(page)) problems.push("alerts page export missing");
   if (!/to: "\/legal\/alerts"/.test(tabs) && !/to: '\/legal\/alerts'/.test(tabs)) problems.push("LegalModuleTabs missing Alerts tab");
+  // fill-not-shell — need-company uses BoardSection
+  if (!/testId="legal-deadline-alerts-need-company"/.test(page) || !/<BoardSection\b/.test(page)) {
+    problems.push("need-company empty must be BoardSection (legal-deadline-alerts-need-company)");
+  }
   if (!/path="\/legal\/alerts"/.test(manifest)) problems.push("manifest missing /legal/alerts route");
 }
 

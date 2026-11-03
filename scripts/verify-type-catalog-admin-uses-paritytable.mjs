@@ -56,6 +56,16 @@ function assertMigrated(src) {
   if (!src.includes("Deactivate")) {
     errors.push(`${PAGE}: must preserve Deactivate action`);
   }
+  // fill-not-shell — BoardSection + U18 module-home back
+  if (!src.includes('from "../../components/v3/BoardSection"')) {
+    errors.push(`${PAGE}: must import BoardSection`);
+  }
+  if (!src.includes('testId="type-catalog-list-board"')) {
+    errors.push(`${PAGE}: list BoardSection testId=type-catalog-list-board required`);
+  }
+  if (!src.includes('backHref="/insurance"')) {
+    errors.push(`${PAGE}: PageHeader backHref must be /insurance (U18 module home)`);
+  }
   // BANK-F91321 leftover refuse — TypeCatalogAdmin.tsx page-scoped text token ratchet
   if (src.includes("text-[11px]")) {
     errors.push(`${PAGE}: leftover text-[11px]`);
@@ -70,6 +80,7 @@ function selftest() {
   const good = `
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    import { BoardSection } from "../../components/v3/BoardSection";
     const columns = [
       { key: "code", label: "Code" },
       { key: "name", label: "Name" },
@@ -81,13 +92,16 @@ function selftest() {
     export function TypeCatalogAdmin() {
       return (
         <>
+          <PageHeader backHref="/insurance" />
           <button>+ Create type</button>
-          <ListErrorState title="Couldn't load type catalog" status={0} onRetry={() => {}} />
-          <ParityTable
-            storageKey="insurance-type-catalog-admin"
-            tableTestId="insurance-type-catalog-admin-table"
-            emptyText="No type catalog entries."
-          />
+          <BoardSection title="Insurance types" testId="type-catalog-list-board">
+            <ListErrorState title="Couldn't load type catalog" status={0} onRetry={() => {}} />
+            <ParityTable
+              storageKey="insurance-type-catalog-admin"
+              tableTestId="insurance-type-catalog-admin-table"
+              emptyText="No type catalog entries."
+            />
+          </BoardSection>
           <button>Deactivate</button>
         </>
       );

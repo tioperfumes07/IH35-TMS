@@ -19,6 +19,7 @@ import { FuelBoardSection } from "../FuelBoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
+import { formatQuantityTable } from "../../../lib/money";
 import type { RelayFillRow } from "../../../api/relay-fills";
 
 const PAGE_SIZE = 50;
@@ -85,6 +86,12 @@ export function RelayUnmatchedPage() {
       render: (row) => row.relay_unit_number || "—",
     },
     {
+      key: "relay_driver_integration_id",
+      label: "Relay card ID",
+      sortable: true,
+      render: (row) => row.relay_driver_integration_id || "—",
+    },
+    {
       key: "relay_driver_name",
       label: "Relay's driver",
       sortable: true,
@@ -102,8 +109,8 @@ export function RelayUnmatchedPage() {
       sortable: true,
       render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
-    { key: "fuel_gallons", label: "Diesel gal", sortable: true, render: (row) => (row.fuel_gallons != null ? row.fuel_gallons.toFixed(1) : "—") },
-    { key: "def_gallons", label: "DEF gal", sortable: true, render: (row) => (row.def_gallons != null ? row.def_gallons.toFixed(1) : "—") },
+    { key: "fuel_gallons", label: "Diesel gal", sortable: true, render: (row) => (row.fuel_gallons != null ? formatQuantityTable(row.fuel_gallons, 1) : "—") },
+    { key: "def_gallons", label: "DEF gal", sortable: true, render: (row) => (row.def_gallons != null ? formatQuantityTable(row.def_gallons, 1) : "—") },
     {
       key: "total_amount_paid_cents",
       label: "Amount",

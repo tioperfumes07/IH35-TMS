@@ -12,7 +12,8 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { Breadcrumb } from "../../../components/shared/Breadcrumb";
@@ -253,7 +254,7 @@ export function FraudAlertsListPage() {
 
   const columns = useMemo<ParityColumn<FraudAlertRow>[]>(
     () => [
-      { key: "detected_at", label: "Detected", sortable: true, render: (row) => new Date(row.detected_at).toLocaleString() },
+      { key: "detected_at", label: "Detected", sortable: true, render: (row) => formatDateTimeUS(row.detected_at) || "—" },
       {
         key: "severity",
         label: "Severity",
@@ -269,7 +270,7 @@ export function FraudAlertsListPage() {
         sortable: true,
         render: (row) => [row.location_city, row.location_state].filter(Boolean).join(", ") || "—",
       },
-      { key: "gallons", label: "Gallons", sortable: true, render: (row) => (row.gallons != null ? row.gallons.toFixed(1) : "—") },
+      { key: "gallons", label: "Gallons", sortable: true, render: (row) => (row.gallons != null ? formatQuantityTable(row.gallons, 1) : "—") },
       {
         key: "status",
         label: "Status",

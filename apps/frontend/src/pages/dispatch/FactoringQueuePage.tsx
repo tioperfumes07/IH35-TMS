@@ -14,6 +14,7 @@ import { getFactoringSummary } from "../../api/factoring";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -24,6 +25,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -67,8 +69,7 @@ const fmtM = (cents: number, currency = "USD") => {
 };
 const fmtD = (v: string | null | undefined) => {
   if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  return formatDateUS(v) || "—";
 };
 
 const STAGE_LABELS: Record<FactoringQueueRow["packet_stage"], string> = {
@@ -299,15 +300,15 @@ export function FactoringQueuePage() {
 
   if (!companyId) {
     return (
-      <div className="mx-auto max-w-6xl p-4 text-xs text-gray-500">
-        Select an operating company to view the factoring queue.
-      </div>
+      <BoardSection title="Factoring queue" testId="factoring-queue-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the factoring queue.</p>
+      </BoardSection>
     );
   }
 
   return (
     <div className="mx-auto max-w-6xl space-y-4" data-testid="factoring-queue-page">
-      <PageHeader
+      <PageHeader backHref="/dispatch"
         title="Factoring Queue"
         subtitle="Loads ready to submit to FARO — track packet status from delivery to advance"
         actions={

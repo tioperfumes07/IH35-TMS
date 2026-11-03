@@ -1,10 +1,10 @@
 {
-  "healthzSha": "3d2679f",
-  "generated_at": "2026-11-02T12:30:36.815Z",
+  "healthzSha": "3ecaad5",
+  "generated_at": "2026-11-03T14:24:49.356Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "3d2679f",
+    "deployedSha": "3ecaad5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27963,
+      "number": 28241,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27963",
-      "sha": "5ecb36cbdf",
-      "committedAtIso": "2026-11-02T12:30:23Z"
+      "mergedAtCt": "11/03/2026, 06:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28241",
+      "sha": "3ecaad51ba",
+      "committedAtIso": "2026-11-03T06:30:23-06:00"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 04:24 AM CT",
+      "mergedAtCt": "11/03/2026, 06:29 AM CT",
       "url": "",
-      "sha": "3d2679f31b",
-      "committedAtIso": "2026-11-02T10:24:07Z"
+      "sha": "0eb5530f92",
+      "committedAtIso": "2026-11-03T12:29:19Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 02:28 AM CT",
+      "mergedAtCt": "11/03/2026, 04:23 AM CT",
       "url": "",
-      "sha": "bc9153ca8b",
-      "committedAtIso": "2026-11-02T08:28:55Z"
+      "sha": "43a2d62fe1",
+      "committedAtIso": "2026-11-03T10:23:32Z"
     },
     {
-      "number": 27962,
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 02:27 AM CT",
+      "url": "",
+      "sha": "5de3b70538",
+      "committedAtIso": "2026-11-03T08:27:05Z"
+    },
+    {
+      "number": 28240,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27962",
-      "sha": "7614163042",
-      "committedAtIso": "2026-11-02T06:41:54Z"
+      "mergedAtCt": "11/03/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28240",
+      "sha": "a133957b52",
+      "committedAtIso": "2026-11-03T06:33:00Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/02/2026, 12:41 AM CT",
+      "mergedAtCt": "11/03/2026, 12:32 AM CT",
       "url": "",
-      "sha": "9c080a8ae2",
-      "committedAtIso": "2026-11-02T06:41:03Z"
+      "sha": "5732d0146d",
+      "committedAtIso": "2026-11-03T06:32:57Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 10:25 PM CT",
+      "mergedAtCt": "11/02/2026, 10:24 PM CT",
       "url": "",
-      "sha": "2f512303bc",
-      "committedAtIso": "2026-11-02T04:25:22Z"
+      "sha": "095b2560e9",
+      "committedAtIso": "2026-11-03T04:24:26Z"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28239,
+      "title": "CC-2-FINDING: ACCT-F443260-ROW260 LANE: FINANCIAL — 443.260: range-geocode stops skip fence; 3 Edison NJ deliveries uninvoiced ($14,700)",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 08:27 PM CT",
-      "url": "",
-      "sha": "adf9bc90c4",
-      "committedAtIso": "2026-11-02T02:27:55Z"
+      "mergedAtCt": "11/02/2026, 10:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28239",
+      "sha": "6c88335742",
+      "committedAtIso": "2026-11-02T22:01:02-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28238,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — CLAIM-RESERVE step 18941 (CC-1)",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 06:45 PM CT",
-      "url": "",
-      "sha": "c8228fe7a6",
-      "committedAtIso": "2026-11-02T00:45:04Z"
+      "mergedAtCt": "11/02/2026, 10:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28238",
+      "sha": "409cf6a40f",
+      "committedAtIso": "2026-11-02T22:00:35-06:00"
     },
     {
-      "number": 27961,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28237,
+      "title": "Claude-3- P0 Relay driver integration_id writer + FINDING fixes",
       "state": "merged",
-      "mergedAtCt": "11/01/2026, 06:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27961",
-      "sha": "22eab3805d",
-      "committedAtIso": "2026-11-02T00:44:57Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/01/2026, 04:23 PM CT",
-      "url": "",
-      "sha": "41be37b19b",
-      "committedAtIso": "2026-11-01T22:23:09Z"
+      "mergedAtCt": "11/02/2026, 09:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28237",
+      "sha": "8894b34050",
+      "committedAtIso": "2026-11-02T21:38:39-06:00"
     }
   ]
 }

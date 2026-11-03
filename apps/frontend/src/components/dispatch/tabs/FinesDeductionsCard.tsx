@@ -27,6 +27,7 @@ import { Modal } from "../../Modal";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QueryErrorNote } from "./QueryErrorNote";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -42,7 +43,7 @@ function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
+  return formatDateTimeUS(date);
 }
 
 function policyProgress(policy: AutoDeductionPolicy) {
@@ -325,13 +326,13 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             {fineDeductionLines.map((line) => (
               <div key={line.id} className="flex justify-between text-xs">
                 <span className="text-gray-700">{line.description}</span>
-                <span className="font-medium text-red-700">−${Math.abs(Number(line.amount)).toFixed(2)}</span>
+                <span className="font-medium text-red-700">−{formatUsd(Math.abs(Number(line.amount)))}</span>
               </div>
             ))}
             {otherDeductionLines.map((line) => (
               <div key={line.id} className="flex justify-between text-xs text-gray-500">
                 <span>{line.description}</span>
-                <span>−${Math.abs(Number(line.amount)).toFixed(2)}</span>
+                <span>−{formatUsd(Math.abs(Number(line.amount)))}</span>
               </div>
             ))}
             {fineDeductionLines.length === 0 && otherDeductionLines.length === 0 ? (

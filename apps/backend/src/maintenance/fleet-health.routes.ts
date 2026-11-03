@@ -10,6 +10,12 @@
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+
+// LEAD 11-02 (live /maintenance 5:20 PM CT): the Fleet health line listed SAM-b7317a51 / SAM-c4530bd3 / SAM-fa16e203 —
+// Samsara dual-write phantoms (vehicle_type NULL, VIN 'SAMVIN-…', 0 loads/fuel/WOs/bills; last ping 06/2019). Same
+// fleet-visibility rule the Fleet roster, Home and Insurance already apply — one rule, not a local copy.
+const FLEET_HEALTH_VISIBLE_UNIT_SQL = `${excludeDemoPhantomSql("u.unit_number")} AND ${excludeSampleDataSql("u.is_sample_data")}`;
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -66,6 +72,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             FROM mdata.units u, co
             WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = co.oc_id
               AND u.disposed_date IS NULL
+              AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}
           ),
           pm AS (
             SELECT DISTINCT ON (ps.unit_id)
@@ -187,6 +194,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             LEFT JOIN open_wo ow ON ow.unit_id = u.id
             WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = co.oc_id
               AND u.disposed_date IS NULL
+              AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}
           )
           SELECT
             u.id::text AS unit_id,
@@ -274,6 +282,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
 
           WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
             AND u.disposed_date IS NULL
+              AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}
             ${stateFilter}
 
           ORDER BY

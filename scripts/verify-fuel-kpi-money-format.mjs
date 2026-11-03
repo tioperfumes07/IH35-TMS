@@ -46,6 +46,8 @@ const MONEY_KPIS = [
 ];
 
 const GROUPING_API_RE = /\btoLocaleString\s*\(|\bIntl\s*\.\s*NumberFormat\s*\(/;
+/** House money helpers (lib/money) — themselves Intl-backed; count as grouping-capable. */
+const HOUSE_MONEY_RE = /\bformatUsd(?:Cents|RateTable|Table)?\s*\(/;
 
 function readReal(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -157,9 +159,24 @@ export function contractErrors(
       }
     }
 
-    if (!GROUPING_API_RE.test(slice)) {
+    if (!GROUPING_API_RE.test(slice) && !HOUSE_MONEY_RE.test(slice)) {
+      // Local wrapper may delegate to formatUsd/formatUsdRateTable — resolve that import once.
+      const houseName = (slice.match(/\b(formatUsd(?:Cents|RateTable|Table)?)\s*\(/) || [])[1];
+      if (houseName) {
+        const moneyRel =
+          importedFilePath(kpiContent, houseName, kpiPath, importExists) ||
+          (kpiContent.includes(`from "../../../lib/money"`) || kpiContent.includes(`from "../../lib/money"`)
+            ? "apps/frontend/src/lib/money.ts"
+            : null);
+        if (moneyRel) {
+          const moneySrc = readFile(moneyRel);
+          if (GROUPING_API_RE.test(moneySrc) || HOUSE_MONEY_RE.test(moneySrc)) {
+            continue;
+          }
+        }
+      }
       errors.push(
-        `Formatter "${formatterName}" (${sourceDescription}) does not use toLocaleString(...)/Intl.NumberFormat(...) — ` +
+        `Formatter "${formatterName}" (${sourceDescription}) does not use toLocaleString(...)/Intl.NumberFormat(...)/formatUsd* — ` +
           `a grouping-capable API is required. bare toFixed() alone reproduces the "$54409" regression.`
       );
     }

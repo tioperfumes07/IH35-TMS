@@ -1,5 +1,5 @@
 import { colors } from "../../../design/tokens";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 // GO-21-J1: this component was cited as the owner's own proof of the "text sizes, column headers
 // look too dirty" defect — 4 different arbitrary sizes in one 2-box section (text-xs=12,
@@ -37,7 +37,7 @@ export function BookLoadValidationSection({ checks }: Props) {
 
   return (
     <section className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-      <DataPanel title="Book + dispatch checks">
+      <BoardSection title="Book + dispatch checks" testId="book-dispatch-checks-board">
         <div className="space-y-1">
           {checks.map((check, index) => (
             <div
@@ -76,8 +76,8 @@ export function BookLoadValidationSection({ checks }: Props) {
             </div>
           ))}
         </div>
-      </DataPanel>
-      <DataPanel title="On save — book + dispatch">
+      </BoardSection>
+      <BoardSection title="On save — book + dispatch" testId="on-save-book-dispatch-board">
         <div className="space-y-1 text-xs" style={{ color: colors.bodyText }}>
           {saveActions.map((action) => (
             <div key={action}>
@@ -92,7 +92,7 @@ export function BookLoadValidationSection({ checks }: Props) {
           ) : null}
           {liveCount} live gates · {pendingCount} not automated · {onSaveCount} run on save
         </div>
-      </DataPanel>
+      </BoardSection>
     </section>
   );
 }

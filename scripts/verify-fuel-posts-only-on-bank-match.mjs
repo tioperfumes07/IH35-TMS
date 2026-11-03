@@ -348,7 +348,7 @@ if (process.argv.includes("--selftest")) {
     ["dreamline fill without the card rail", { ...real, [DREAMLINE]: real[DREAMLINE].replace("cardType.id, line.product", "null, line.product") }],
     ["dreamline posts through another poster", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await postFuelFillOnReceipt(client as never, { operating_company_id: companyId", "await postFuelExpenseOnClient(client as never, { operating_company_id: companyId") }],
     ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
-    ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
+    ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replaceAll("if (dup.duplicateVendorDocumentNumber || dup.duplicateSubmission) return null;", "/* dup check removed */") }],
     // 443.195 — main's shape: the receipt consumed as soon as it is matched (before the mismatch / cross-rail exits).
     ["dreamline mismatch consumes the receipt", { ...real, [DREAMLINE]: real[DREAMLINE]
       .replace("const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used, rail.any_truck_scope);\n      if (hit) {", "const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used, rail.any_truck_scope);\n      if (hit) {\n        used.add(hit.expense_id);")

@@ -6,7 +6,7 @@ import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getExpense, voidExpense, type ExpenseDetailLine } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { WorkOrderCopyLinks } from "../../components/accounting/WorkOrderCopyLinks";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -263,7 +263,7 @@ export function ExpenseDetailPage() {
         }
       />
 
-      <DataPanel title="Expense">
+      <BoardSection title="Expense" testId="expense-board">
         {expense.vendor_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
@@ -405,9 +405,9 @@ export function ExpenseDetailPage() {
           <span className="text-xs font-semibold text-gray-600">Created</span>
           <span className="text-xs text-gray-900">{formatDateUS(expense.created_at)}</span>
         </DataPanelRow>
-      </DataPanel>
+      </BoardSection>
 
-      <DataPanel title="Expense lines">
+      <BoardSection title="Expense lines" testId="expense-lines-board">
         <ParityTable<ExpenseDetailLine>
           columns={lineColumns}
           rows={lines}
@@ -417,7 +417,7 @@ export function ExpenseDetailPage() {
           density="compact"
           storageKey="expense-detail-lines"
         />
-      </DataPanel>
+      </BoardSection>
       <JournalPostingsPanel sourceTransactionType="expense" sourceTransactionId={id} operatingCompanyId={selectedCompanyId} />
       <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="expense" documentId={id} />
     </AccountingSubNavWrapper>

@@ -308,7 +308,10 @@ export function isTrailerChoiceOnlyPatch(input: UpdateDispatchLoadInput): boolea
 
 /** LEAD 443.107 item 3: the trailer choice was refused (422) — foreign / deactivated trailer, or incomplete choice. */
 export class TrailerChoiceRefusedError extends Error {
-  constructor(public readonly code: TrailerChoiceRefusal["error"]) {
+  constructor(
+    public readonly code: TrailerChoiceRefusal["error"],
+    public readonly details: { booked_code?: string; trailer_code?: string; equipment_number?: string } = {}
+  ) {
     super(code);
     this.name = "TrailerChoiceRefusedError";
   }
@@ -994,6 +997,48 @@ export async function updateDispatchLoad(
       choice: resolvedTrailerChoice,
       assignmentMethod: "manual_reassign",
     });
+    // ENG-22: company trailer body type is evidence — re-derive load_trailer_equipment_id (refuse on conflict
+    // with an explicit PATCH of a different physical type). Customer / none leave the booked type alone.
+    if (resolvedTrailerChoice.kind === "company") {
+      const { resolveLoadTrailerEquipmentIdForInsert, equipmentTypeToLoadTrailerCode } = await import("./book-load.service.js");
+      const explicitEquip =
+        typeof fields.load_trailer_equipment_id === "string" ? fields.load_trailer_equipment_id : null;
+      try {
+        const derivedId = await resolveLoadTrailerEquipmentIdForInsert(
+          client as never,
+          operatingCompanyId,
+          explicitEquip,
+          { companyTrailerId: resolvedTrailerChoice.equipment_id, choiceKind: "company" }
+        );
+        await client.query(
+          `UPDATE mdata.loads SET load_trailer_equipment_id = $3::uuid, updated_at = now()
+             WHERE id = $1::uuid AND operating_company_id = $2::uuid
+               AND load_trailer_equipment_id IS DISTINCT FROM $3::uuid`,
+          [loadId, operatingCompanyId, derivedId]
+        );
+        // Keep mdata.loads.trailer_type text in lockstep with the catalog code (same as ENG-22 ops repair).
+        const eqType = (await client.query<{ equipment_type: string | null }>(
+          `SELECT equipment_type::text AS equipment_type FROM mdata.equipment WHERE id = $1::uuid LIMIT 1`,
+          [resolvedTrailerChoice.equipment_id]
+        )).rows[0]?.equipment_type;
+        const code = equipmentTypeToLoadTrailerCode(eqType);
+        if (code) {
+          await client.query(
+            `UPDATE mdata.loads SET trailer_type = lower($3), updated_at = now()
+               WHERE id = $1::uuid AND operating_company_id = $2::uuid
+                 AND trailer_type IS DISTINCT FROM lower($3)`,
+            [loadId, operatingCompanyId, code]
+          );
+        }
+      } catch (err) {
+        if ((err as { code?: string; message?: string }).code === "trailer_equipment_type_mismatch"
+            || (err as Error).message === "trailer_equipment_type_mismatch") {
+          const e = err as { booked_code?: string; trailer_code?: string; equipment_number?: string };
+          throw new TrailerChoiceRefusedError("trailer_equipment_type_mismatch", e);
+        }
+        throw err;
+      }
+    }
     await appendCrudAudit(client as never, requestingUserUuid, "dispatch.load.trailer_choice_recorded", {
       operating_company_id: operatingCompanyId,
       load_id: loadId,

@@ -14,7 +14,15 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
+import { formatDateTimeUS } from "../../lib/formatDate";
+
+const POD_STATUS_OPTIONS = statusOptions({
+  pending_review: "Pending review",
+  approved: "Approved",
+  rejected: "Rejected",
+});
 
 function PodRowActions({
   doc,
@@ -100,18 +108,19 @@ export function PodReviewPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [loadId, setLoadId] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"pending_review" | "approved" | "rejected" | "">("pending_review");
+  // U12 — multi-select; default pending_review so the review queue stays the landing view.
+  const [statusFilter, setStatusFilter] = useState<string[]>(["pending_review"]);
   const staged = useStagedListFilters({
     applied: { loadId, statusFilter },
-    empty: { loadId: "", statusFilter: "pending_review" as const },
+    empty: { loadId: "", statusFilter: [] as string[] },
     onApply: (next) => { setLoadId(next.loadId); setStatusFilter(next.statusFilter); },
   });
 
   const podsQuery = useQuery({
-    queryKey: ["pod-documents", companyId, statusFilter, loadId],
+    queryKey: ["pod-documents", companyId, statusFilter.join(","), loadId],
     queryFn: () =>
       getPodDocuments(companyId, {
-        status: statusFilter || undefined,
+        status: statusFilter.length ? statusFilter : undefined,
         load_id: loadId || undefined,
       }),
     enabled: Boolean(companyId),
@@ -151,7 +160,7 @@ export function PodReviewPage() {
         key: "created_at",
         label: "Captured",
         sortable: true,
-        render: (doc) => new Date(doc.created_at).toLocaleString(),
+        render: (doc) => formatDateTimeUS(doc.created_at) || "—",
       },
       {
         key: "actions",
@@ -173,7 +182,7 @@ export function PodReviewPage() {
 
   const filterBar = (
     <CollapsedListFilters
-      activeFilterCount={(loadId ? 1 : 0) + (statusFilter !== "pending_review" ? 1 : 0)}
+      activeFilterCount={(loadId ? 1 : 0) + (statusFilter.length ? 1 : 0)}
       onApply={staged.apply}
       onReset={staged.reset}
       onCancel={staged.cancel}
@@ -195,27 +204,21 @@ export function PodReviewPage() {
             />
           </div>
         </label>
-        <label className="text-xs">
-          POD status
-          <SelectCombobox
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={staged.draft.statusFilter}
-            onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as typeof statusFilter })}
-            data-testid="pod-status-filter"
-          >
-            <option value="pending_review">Pending review</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="">All</option>
-          </SelectCombobox>
-        </label>
+        <MultiSelectDropdown
+          label="POD status"
+          options={POD_STATUS_OPTIONS}
+          selected={staged.draft.statusFilter}
+          onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+          allLabel="All statuses"
+          data-testid="pod-status-filter"
+        />
       </div>
     </CollapsedListFilters>
   );
 
   return (
     <div className="p-4" data-testid="dispatch-pod-review-page">
-      <PageHeader title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
+      <PageHeader backHref="/dispatch" title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
 
       {loadId && !loadId.includes(",") ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 

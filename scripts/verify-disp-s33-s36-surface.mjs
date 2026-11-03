@@ -33,24 +33,38 @@ function assertLive() {
   if (!/path="\/dispatch\/settlements"/.test(manifest)) problems.push("S35 route missing");
   if (!/path="\/dispatch\/trip-pairing"/.test(manifest)) problems.push("S36 route missing");
 
-  if (!/data-testid="dispatch-pre-settlements-need-company"/.test(dispatch)) problems.push("S33 need-company");
+  if (!/data-testid="dispatch-pre-settlements-need-company"|testId="dispatch-pre-settlements-need-company"/.test(dispatch)) {
+    problems.push("S33 need-company");
+  }
+  if (!/<BoardSection\b/.test(dispatch) || !/testId="dispatch-pre-settlements-need-company"/.test(dispatch)) {
+    problems.push("S33 need-company must be BoardSection");
+  }
   if (!/ListErrorBanner/.test(dispatch) || !/preSettlementsQuery\.isError/.test(dispatch)) {
     problems.push("S33 ListErrorBanner on pre-settlements");
   }
   if (!/data-testid="dispatch-pre-settlements-honest-empty"/.test(panel)) problems.push("S33 honest empty");
   if (!/enabled:\s*Boolean\(defaultCompanyIds\[0\]\)/.test(dispatch)) problems.push("S33 query not company-gated");
 
-  if (!/data-testid="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company");
+  if (!/data-testid="dispatch-settings-need-company"|testId="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company");
+  if (!/<BoardSection\b/.test(settings) || !/testId="dispatch-settings-need-company"/.test(settings)) problems.push("S34 need-company must be BoardSection");
   if (!/ListErrorBanner/.test(settings)) problems.push("S34 ListErrorBanner");
   if (!/useCompanyContext/.test(settings)) problems.push("S34 missing company context");
+  if (!/backHref="\/dispatch"/.test(settings)) problems.push("S34 PageHeader backHref must be /dispatch (U18)");
 
-  if (!/data-testid="dispatch-settlements-need-company"/.test(dispatch)) problems.push("S35 need-company");
+  if (!/data-testid="dispatch-settlements-need-company"|testId="dispatch-settlements-need-company"/.test(dispatch)) {
+    problems.push("S35 need-company");
+  }
+  if (!/<BoardSection\b/.test(dispatch) || !/testId="dispatch-settlements-need-company"/.test(dispatch)) {
+    problems.push("S35 need-company must be BoardSection");
+  }
   if (!/data-testid="dispatch-settlements-honest-empty"/.test(dispatch)) problems.push("S35 honest empty");
 
-  if (!/data-testid="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company");
+  if (!/data-testid="dispatch-trip-pairing-need-company"|testId="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company");
+  if (!/<BoardSection\b/.test(trip) || !/testId="dispatch-trip-pairing-need-company"/.test(trip)) problems.push("S36 need-company must be BoardSection");
   if (!/data-testid="dispatch-trip-pairing-honest-empty"/.test(trip)) problems.push("S36 honest empty");
   if (!/ListErrorBanner/.test(trip)) problems.push("S36 ListErrorBanner");
   if (!/enabled:\s*Boolean\(companyId\)/.test(trip)) problems.push("S36 not company-gated");
+  if (!/backHref="\/dispatch"/.test(trip)) problems.push("S36 PageHeader backHref must be /dispatch (U18)");
   if (!/aria-label=\{`Book Southbound return for \$\{t\.unit_number/.test(trip)) {
     problems.push("S36 open-return action is not an accessible button");
   }

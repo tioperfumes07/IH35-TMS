@@ -2,7 +2,7 @@
 import { settlementNumber } from "../../lib/settlementNumber";
 import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -27,7 +27,7 @@ import {
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
@@ -652,7 +652,7 @@ export function SettlementStatementWorkflowPage() {
           value={formatUsdCents(
             readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)
           )}
-          sub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
+          sub={`${formatQuantityTable(kpi.loadedMiles, 0)} mi loaded`}
           testId="settlement-workflow-kpi-gross"
         />
         <V3KpiTile
@@ -763,7 +763,7 @@ export function SettlementStatementWorkflowPage() {
         revenueCents={companyReport ? companyReport.sections.revenue.invoiced_cents : (readout?.company_settlement?.revenue_cents ?? 0)}
         revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
         driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
-        driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
+        driverPaySub={`${formatQuantityTable(kpi.loadedMiles, 0)} mi loaded`}
         reimbursementCents={Math.round(summary.reimbTotal * 100)}
         reimbursementLines={reimbursementsWithSeq.length}
         deductionCents={Math.round(summary.deductionTotal * 100)}
@@ -773,9 +773,9 @@ export function SettlementStatementWorkflowPage() {
         companyMarginSub={
           companyReport
             ? (companyReport.sections.revenue.invoiced_cents
-                ? `${((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100).toFixed(1)}%`
+                ? `${formatQuantityTable((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100, 1)}%`
                 : "—")
-            : (readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`)
+            : (readout?.totals?.margin_pct == null ? "—" : `${formatQuantityTable(readout.totals.margin_pct, 1)}%`)
         }
       />
       {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
@@ -885,7 +885,7 @@ export function SettlementStatementWorkflowPage() {
                   )}{" "}
                   · Role {String(split.pay_role ?? "—")} ·
                   Share {Number(split.share_pct ?? 0)}% ·
-                  Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+                  Pay {formatUsdCents(Number(split.driver_pay_cents ?? 0) || 0)}
                 </div>
               );
             })}
@@ -1301,7 +1301,7 @@ export function SettlementStatementWorkflowPage() {
                   {(paymentEventsQuery.data?.events ?? []).map((event) => (
                     <div key={event.id} className="border-t border-gray-100 px-2 py-1 text-xs">
                       <p className="font-semibold text-gray-800">{event.event_type}</p>
-                      <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
+                      <p className="text-gray-500">{formatDateTimeUS(event.created_at) || "—"}</p>
                     </div>
                   ))}
                   {/* LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE — this query had NO error branch, so a failed

@@ -290,6 +290,10 @@ type ListBillsOptions = {
   /** ROUND 297 — driver / trailer profile reverse lists (accounting.bills.driver_id / trailer_id). */
   driverId?: string;
   trailerId?: string;
+  /** ACCT-F2026110203 — BillsPage category tab filter server-side (accounting.bills.bill_category). One or more values OR-ed via ANY(). */
+  billCategories?: string[];
+  /** ACCT-F2026110203 — multi-vendor server-side filter (comma-separated or array of vendor ids). */
+  vendorIds?: string[];
   /** SORT LAW (COL-04) — allowlisted column key from BillsPage; unknown → bill_date. */
   sort?: string;
   dir?: "asc" | "desc";
@@ -1154,6 +1158,10 @@ export async function listBillsByVendor(
       });
       if (clause) where.push(clause);
     }
+    if (options.billCategories && options.billCategories.length > 0) {
+      values.push(options.billCategories);
+      where.push(`b.bill_category = ANY($${values.length}::text[])`);
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -1381,6 +1389,17 @@ function buildAllBillsWhereClause(
     );
   }
 
+  if (options.billCategories && options.billCategories.length > 0) {
+    values.push(options.billCategories);
+    where.push(`b.bill_category = ANY($${values.length}::text[])`);
+  }
+  if (options.vendorIds && options.vendorIds.length > 0) {
+    values.push(options.vendorIds);
+    where.push(
+      `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) = ANY($${values.length}::text[]) OR ` +
+      `EXISTS (SELECT 1 FROM mdata.vendors mv WHERE mv.operating_company_id = b.operating_company_id AND mv.id::text = ANY($${values.length}::text[]) AND mv.qbo_vendor_id = COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')))`
+    );
+  }
   if (options.search?.trim()) {
     const clause = buildListSearchClause({
       search: options.search,
@@ -1506,8 +1525,12 @@ export async function aggregateBillsForRegister(
 ): Promise<{ count: number; amount_cents: number; balance_cents: number }> {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
-    if (options.vendorId) {
+    // Multi-vendor: pass as vendorIds so buildAllBillsWhereClause handles it uniformly.
+    // Single vendor: keep the QBO-alias-aware vendorIdentitySetSql path for backward compat.
+    const vendorIdList = options.vendorId ? options.vendorId.split(",").map((id) => id.trim()).filter(Boolean) : [];
+    const aggregateOptions = vendorIdList.length > 1 ? { ...options, vendorIds: vendorIdList } : options;
+    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, aggregateOptions);
+    if (vendorIdList.length === 1) {
       values.push(options.vendorId);
       where.push(`COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, values.length)}`);
     }
@@ -2101,8 +2124,13 @@ export async function listBills(
   operatingCompanyId: string,
   options: ListBillsOptions & { vendorId?: string }
 ) {
+  // Multi-vendor: pass as vendorIds array through buildAllBillsWhereClause
   if (!options.vendorId) {
     return listAllBillsForCompany(userId, operatingCompanyId, options);
+  }
+  const vendorIdList = options.vendorId.split(",").map((id) => id.trim()).filter(Boolean);
+  if (vendorIdList.length > 1) {
+    return listAllBillsForCompany(userId, operatingCompanyId, { ...options, vendorIds: vendorIdList });
   }
   const rows = await listBillsByVendor(userId, operatingCompanyId, options.vendorId, options);
   // Resolve names from the ROWS, not from the requested id: a vendor asked for by mdata uuid now

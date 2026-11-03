@@ -6,6 +6,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 import { useAuth } from "../../auth/useAuth";
 import { useSettlementDisputes, type SettlementDisputeRow, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
@@ -21,7 +22,7 @@ const STATUS_FILTERS: Array<{ id: SettlementDisputeStatus | "all"; label: string
 ];
 
 function money(cents: number | null | undefined) {
-  return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
+  return formatUsdCents(cents ?? 0);
 }
 
 export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 import { Button } from "../Button";
+import { SelectCombobox } from "../Combobox";
 import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 
 // GLOBAL-TABLE-CONTROLS — QuickBooks-style gear menu: rows-per-page + show/hide columns.
@@ -96,16 +97,16 @@ export function ColumnChooser({
         <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg" role="menu">
           <div className="mb-2">
             <label htmlFor="column-chooser-page-size" className="mb-1 block text-xs font-semibold text-gray-600">Rows per page</label>
-            <select
+            <SelectCombobox
               id="column-chooser-page-size"
-              className="h-7 w-full rounded-sm border border-gray-300 px-1 text-xs"
-              value={draftPageSize}
+              className="h-7 w-full text-xs"
+              value={String(draftPageSize)}
               onChange={(e) => setDraftPageSize(Number(e.target.value))}
             >
               {pageSizeOptions.map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="mb-1 text-xs font-semibold text-gray-600">Columns</div>
           <div className="max-h-56 space-y-0.5 overflow-y-auto">

@@ -10,6 +10,7 @@ import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
+import { formatQuantityTable } from "../../lib/money";
 
 // LDT-5 · Pre-Settlement = the open TOUR this load is on (render § Pre-Settlement, owner 2026-09-05 23:06Z
 // "i love the designs"; 2026-09-06 01:4xZ "we are missing the Close button"). One readout
@@ -19,7 +20,7 @@ import { formatMoneyCents } from "./constants";
 const DASH = "—";
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
 const pct = (p: number | null | undefined) => (p == null ? DASH : `${p.toFixed(1)}%`);
-const miles = (m: number | null | undefined) => (m == null ? DASH : m.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+const miles = (m: number | null | undefined) => (m == null ? DASH : formatQuantityTable(m));
 // REG-033(b) (owner 2026-09-09): the pre-settlement must be scoped to THIS tour's number AND dates.
 // Format a date-only / timestamp string as MM/DD/YYYY without a Date() timezone shift.
 const fmtDate = (d: string | null | undefined): string | null => {

@@ -7,25 +7,46 @@
  * ROUND 443.326 — KPI + MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel). getRelayWalletRollForward unchanged.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getRelayWalletRollForward, type RelayRollForwardDay, type RelayRollForwardDoc } from "../../../api/relay";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatMoneyCents } from "../../../components/dispatch/constants";
+import { formatUsdCents } from "../../../lib/money";
 
 type Bucket = "deposits" | "fills" | "lumper";
 const BUCKET_LABEL: Record<Bucket, string> = { deposits: "Deposits", fills: "Fuel fills (with fee)", lumper: "Lumper (with fee)" };
-const money = (c: number) => formatMoneyCents(c, "USD");
+const money = (c: number) => formatUsdCents(c);
 
 function kpiMoney(cents: number | undefined, loading: boolean): string {
   if (loading) return "…";
   if (cents == null) return "—";
   return money(cents);
+}
+
+function docRefLink(bucket: Bucket, d: RelayRollForwardDoc) {
+  if (bucket === "deposits") {
+    // Deposit detail lives on the Relay inbox (no dedicated EntityLink route for relay_topup yet).
+    return (
+      <Link to="/fuel/inbox" className="text-[#1F4E9D] underline" data-testid="relay-wallet-doc-deposit-link">
+        {d.ref || d.id}
+      </Link>
+    );
+  }
+  return (
+    <EntityLink
+      kind="fuel_transaction"
+      id={d.id}
+      label={d.ref || d.id}
+      data-testid="relay-wallet-doc-fill-link"
+    />
+  );
 }
 
 export function RelayWalletRollForwardPage() {
@@ -70,10 +91,24 @@ export function RelayWalletRollForwardPage() {
   ];
 
   const openDay = open ? days.find((d) => d.day === open.day) : undefined;
-  const docColumns: ParityColumn<RelayRollForwardDoc>[] = [
-    { key: "ref", label: "Relay reference", sortable: true, render: (d) => d.ref },
-    { key: "cents", label: "Amount", sortable: true, render: (d) => money(d.cents) },
-  ];
+  const openLatestBucket = (bucket: Bucket) => {
+    const hit = [...days].reverse().find((d) => d[bucket].length > 0);
+    if (hit) setOpen({ day: hit.day, bucket });
+  };
+  const docColumns: ParityColumn<RelayRollForwardDoc>[] = open
+    ? [
+        {
+          key: "ref",
+          label: "Relay reference",
+          sortable: true,
+          render: (d) => docRefLink(open.bucket, d),
+        },
+        { key: "cents", label: "Amount", sortable: true, render: (d) => money(d.cents) },
+      ]
+    : [
+        { key: "ref", label: "Relay reference", sortable: true, render: (d) => d.ref },
+        { key: "cents", label: "Amount", sortable: true, render: (d) => money(d.cents) },
+      ];
 
   if (!companyId) {
     return (
@@ -100,24 +135,28 @@ export function RelayWalletRollForwardPage() {
           value={kpiMoney(totals?.deposits_cents, query.isPending)}
           sub="settled into wallet"
           testId="relay-wallet-kpi-deposits"
+          onClick={() => openLatestBucket("deposits")}
         />
         <V3KpiTile
           label="Fuel fills"
           value={kpiMoney(totals?.fills_cents, query.isPending)}
           sub="drawn from wallet"
           testId="relay-wallet-kpi-fills"
+          onClick={() => openLatestBucket("fills")}
         />
         <V3KpiTile
           label="Fill fees"
           value={kpiMoney(totals?.fill_fees_cents, query.isPending)}
           sub="on fuel fills"
           testId="relay-wallet-kpi-fill-fees"
+          onClick={() => openLatestBucket("fills")}
         />
         <V3KpiTile
           label="Lumper"
           value={kpiMoney(totals?.lumper_cents, query.isPending)}
           sub="with fee"
           testId="relay-wallet-kpi-lumper"
+          onClick={() => openLatestBucket("lumper")}
         />
         <V3KpiTile
           label="Balance"
@@ -132,6 +171,7 @@ export function RelayWalletRollForwardPage() {
           sub="charged to funding card"
           tone="muted"
           testId="relay-wallet-kpi-deposit-fees"
+          onClick={() => openLatestBucket("deposits")}
         />
       </div>
       <MoneyListToolbar

@@ -1,4 +1,5 @@
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type LogEntry = {
   id: string;
@@ -19,7 +20,7 @@ const COLUMNS: Array<ParityColumn<LogEntry>> = [
     label: "Sent",
     sortable: true,
     sortValue: (row) => row.sent_at,
-    render: (row) => new Date(row.sent_at).toLocaleString(),
+    render: (row) => formatDateTimeUS(row.sent_at) || "—",
   },
   {
     key: "credential_type",

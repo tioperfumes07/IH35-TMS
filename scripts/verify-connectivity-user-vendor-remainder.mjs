@@ -51,7 +51,13 @@ export function verify(source) {
   need("vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)', "New transaction must preserve vendor context into the canonical bill creator");
   need("vendorPage", 'date_from: dateFrom || undefined', "vendor transaction filters must forward the start date");
   need("vendorPage", 'date_to: dateTo || undefined', "vendor transaction filters must forward the end date");
-  need("vendorPage", 'status: statusFilter === "unpaid"', "vendor transaction filters must forward canonical status semantics");
+  // U12 — Status is MultiSelect; unpaid semantics live on statusApiParam (1 selected) / client filter (2+).
+  if (!/status:\s*statusApiParam/.test(source.vendorPage)) {
+    failures.push("vendor transaction filters must forward canonical status semantics (statusApiParam / unpaid)");
+  }
+  if (!/statusFilter\[0\] === "unpaid"/.test(source.vendorPage)) {
+    failures.push("vendor transaction filters must keep unpaid semantics on the single-status API path");
+  }
   // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category must stage until Apply (CollapsedListFilters).
   need("vendorPage", "const txnFilters = useStagedListFilters({", "vendor txn filters must use staged draft state until Apply");
   need("vendorPage", 'testIdPrefix="vendor-txn"', "vendor txn filters must use CollapsedListFilters with vendor-txn prefix");
@@ -59,11 +65,15 @@ export function verify(source) {
   need("vendorPage", "onCancel={txnFilters.cancel}", "vendor txn filters must support Cancel without mutating applied query");
   need("vendorPage", "onReset={txnFilters.reset}", "vendor txn filters must support Reset");
   need("vendorPage", "value={txnFilters.draft.typeFilter}", "type control must bind draft, not applied typeFilter");
-  need("vendorPage", "value={txnFilters.draft.statusFilter}", "status control must bind draft, not applied statusFilter");
+  // U12 MultiSelect binds selected={draft.statusFilter} (not value=).
+  if (!/selected=\{txnFilters\.draft\.statusFilter\}/.test(source.vendorPage) && !/value=\{txnFilters\.draft\.statusFilter\}/.test(source.vendorPage)) {
+    failures.push("status control must bind draft, not applied statusFilter");
+  }
   need("vendorPage", "value={txnFilters.draft.dateFrom}", "date-from control must bind draft");
   need("vendorPage", "value={txnFilters.draft.dateTo}", "date-to control must bind draft");
   need("vendorPage", "value={txnFilters.draft.txnCategoryFilter}", "category control must bind draft");
   need("vendorPage", "setTypeFilter(next.typeFilter)", "type must commit only via txnFilters.onApply");
+  need("vendorPage", 'data-testid="vendor-txn-status-filter"', "U12 vendor txn Status MultiSelect test id");
   if (source.vendorPage.includes("setShowFilterBox") || source.vendorPage.includes("showFilterBox")) {
     failures.push("vendor txn filters must not use immediate inline showFilterBox (Apply triad required)");
   }
@@ -85,12 +95,12 @@ if (process.argv.includes("--selftest")) {
     ["safetyRoute", "const opco = await scopeToRelatedEntity(client, authUser.uuid"], ["safetyRoute", "INSERT INTO mdata.dispatcher_safety_events"], ["safetyRoute", '"mdata.dispatcher_safety_events.created"'],
     ["vendorPage", 'listBills(companyId, {'], ["vendorPage", "vendor_id: selectedVendor!.id"], ["vendorPage", '<EntityLink kind="bill" id={r.id}'],
     ["vendorPage", "selectedVendorPublicNotes"], ["vendorPage", "setEditVendorId(selectedVendor.id)"], ["vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)'],
-    ["vendorPage", 'date_from: dateFrom || undefined'], ["vendorPage", 'date_to: dateTo || undefined'], ["vendorPage", 'status: statusFilter === "unpaid"'],
+    ["vendorPage", 'date_from: dateFrom || undefined'], ["vendorPage", 'date_to: dateTo || undefined'], ["vendorPage", "status: statusApiParam"],
     ["vendorPage", "const txnFilters = useStagedListFilters({"], ["vendorPage", 'testIdPrefix="vendor-txn"'], ["vendorPage", "onApply={txnFilters.apply}"],
     ["vendorPage", "onCancel={txnFilters.cancel}"], ["vendorPage", "onReset={txnFilters.reset}"],
-    ["vendorPage", "value={txnFilters.draft.typeFilter}"], ["vendorPage", "value={txnFilters.draft.statusFilter}"], ["vendorPage", "value={txnFilters.draft.dateFrom}"],
+    ["vendorPage", "value={txnFilters.draft.typeFilter}"], ["vendorPage", "selected={txnFilters.draft.statusFilter}"], ["vendorPage", "value={txnFilters.draft.dateFrom}"],
     ["vendorPage", "value={txnFilters.draft.dateTo}"], ["vendorPage", "value={txnFilters.draft.txnCategoryFilter}"],
-    ["vendorPage", "setTypeFilter(next.typeFilter)"],
+    ["vendorPage", "setTypeFilter(next.typeFilter)"], ["vendorPage", 'data-testid="vendor-txn-status-filter"'],
   ];
   const typeImmediateMutant = {
     ...source,

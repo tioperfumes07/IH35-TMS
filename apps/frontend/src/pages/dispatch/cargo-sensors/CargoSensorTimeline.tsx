@@ -15,6 +15,9 @@ import {
 import { apiRequest } from "../../../api/client";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { formatDateTimeUS } from "../../../lib/formatDate";
+import { formatQuantityTable } from "../../../lib/money";
+import { BoardSection } from "../../../components/v3/BoardSection";
 
 type Props = {
   loadId: string;
@@ -53,9 +56,8 @@ type TimelineResponse = {
 };
 
 function formatTick(iso: string) {
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return iso;
-  return dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // House datetime (MM/DD/YYYY h:mm AM/PM); chart ticks stay readable via angle/interval.
+  return formatDateTimeUS(iso) || iso;
 }
 
 function statusText(status: "green" | "amber" | "red") {
@@ -101,7 +103,11 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   const latest = query.data?.rows?.[0];
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Select an operating company.</div>;
+    return (
+      <BoardSection title="Cargo sensors" testId="cargo-sensor-timeline-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
   }
 
   if (query.isLoading) {
@@ -148,7 +154,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
                 <span>{incident.ended_at ? "Ended" : "Active"}{incident.resolved_at ? " · Resolved" : ""}</span>
               </div>
               <div className="mt-1 text-gray-700">
-                {new Date(incident.started_at).toLocaleString()} · {incident.reading_count} reading{incident.reading_count === 1 ? "" : "s"}
+                {formatDateTimeUS(incident.started_at) || "—"} · {incident.reading_count} reading{incident.reading_count === 1 ? "" : "s"}
                 {incident.duration_minutes != null ? ` · ${incident.duration_minutes} min` : ""}
                 {incident.worst_value != null ? ` · worst ${incident.worst_value}` : ""}
               </div>
@@ -162,7 +168,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         {latest ? (
           <div className="text-xs text-gray-600">
             Latest: {statusText(latest.threshold_status)}{" "}
-            {latest.temp_celsius != null ? `(${latest.temp_celsius.toFixed(1)}C)` : ""}
+            {latest.temp_celsius != null ? `(${formatQuantityTable(latest.temp_celsius, 1)}C)` : ""}
           </div>
         ) : null}
       </div>

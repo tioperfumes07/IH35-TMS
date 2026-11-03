@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBillPayment, voidVendorBillPayment } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
@@ -140,7 +140,7 @@ export function BillPaymentDetailPage() {
       />
 
       <div data-testid="bill-payment-detail">
-      <DataPanel title="Bill payment">
+      <BoardSection title="Bill payment" testId="bill-payment-board">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Payment date</span>
           <span className="text-xs text-gray-900">{formatDateUS(payment.payment_date)}</span>
@@ -210,7 +210,7 @@ export function BillPaymentDetailPage() {
             <EntityLink kind="work_order" id={payment.work_order_id} label={visibleDocumentLabel(payment.work_order_display_id, payment.work_order_id, "Work order")} />
           </DataPanelRow>
         ) : null}
-      </DataPanel>
+      </BoardSection>
       </div>
       <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill_payment" documentId={id} />
     </AccountingSubNavWrapper>
