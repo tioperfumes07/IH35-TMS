@@ -88,7 +88,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
     },
     { key: "purchase_date", label: "Purchased", sortable: true, render: (row) => formatDateUS(row.purchase_date) },
     { key: "due_date", label: "Repurchase due", sortable: true, render: (row) => formatDateUS(row.due_date) },
-    { key: "days_since_purchase", label: "Days", kind: "number", sortable: true, render: (row) => String(row.days_since_purchase) },
+    { key: "days_since_purchase", label: "Days", kind: "number", sortable: true, render: (row) => formatQuantityTable(row.days_since_purchase, 0) },
     { key: "gross_cents", label: "Face", kind: "money", sortable: true, render: (row) => formatUsdCents(row.gross_cents) },
     {
       key: "decide",

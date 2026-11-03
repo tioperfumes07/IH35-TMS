@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:45 PM CT) — legal/factoring/dispatch/df quantity wave
+- **PRIOR:** #28481 reserve/planner/template detail qty.
+- **THIS:** Legal deadline days · repurchase days · DispatchBoard days_down · legal sign/portal/creator/send versions · AccountingHome close days · dispute/escrow days → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred. Batch75 Reclassify → CC-1.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:30 PM CT) — reserve/planner/template detail quantity
 - **PRIOR:** #28479 Truck Line duration qty.
 - **THIS:** ReserveTracker Next Nd · PlannerRangeToolbar chips · LegalTemplateDetail title version → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. Dreamline/match deferred.
