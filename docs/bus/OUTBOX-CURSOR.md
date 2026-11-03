@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:25 PM CT) — U12 Cursor wave tip; Cascade handoff Accounting lists
+- **PRIOR:** #28591 EDI U12.
+- **THIS:** Cursor U12 MultiSelect landed CardOverage/DriversTable/Fuel/Fleet/Maint/Safety/Dispatch/Termination/LoadCancel/LoadException/EDI. Residual Active-Inactive on pages/lists/accounting/** (AccountingCatalog/DetailTypes/VoidCancel) → Cascade seat surface; do not steal without SURFACE-BREACH-AUTHORIZED: Cascade.
+- **NEXT:** live DONE-LIVE walks; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:20 PM CT) — U12 EDI Transaction Log status MultiSelect
 - **PRIOR:** #28590 Load cancel/exception U12.
 - **THIS:** EdiTransactionLog status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Shared integrations surface.
