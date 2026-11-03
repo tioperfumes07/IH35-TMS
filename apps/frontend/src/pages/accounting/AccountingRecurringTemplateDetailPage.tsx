@@ -6,6 +6,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 const label = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -21,6 +22,16 @@ export function AccountingRecurringTemplateDetailPage() {
   });
   const row = query.data;
   const fields = row ? Object.entries(row.template_payload).filter(([, value]) => value !== null && typeof value !== "object") : [];
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Recurring template">
+        <BoardSection title="Recurring template" testId="accounting-recurring-template-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title={row ? `${label(row.kind)} template` : "Recurring template"}

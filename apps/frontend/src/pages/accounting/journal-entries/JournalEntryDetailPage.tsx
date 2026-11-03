@@ -242,6 +242,16 @@ export function JournalEntryDetailPage() {
   const sourceRows = uniqueSourceRows(sourceLinksQuery.data?.source_links ?? []);
   const chromeLabel = journalEntryChromeLabel(entry);
 
+  if (!selectedCompanyId) {
+    return (
+      <AccountingSubNavWrapper title="Journal entry">
+        <BoardSection title="Journal entry" testId="journal-entry-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={entry.voided_at} voidReason={entry.void_reason} voidedByUserId={entry.voided_by_user_id} documentLabel="Journal entry" />

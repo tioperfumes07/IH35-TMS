@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:20 PM CT) — ROUND 7.30 #27 Accounting detail need-company wave 7
+- **PRIOR:** #28540 tip #27/#29 status.
+- **THIS:** 13 Accounting *Detail* pages BoardSection need-company; fill-shell plants (~54→~67). #27 still PARTIAL (Reclassify/match/LoadCosts skipped). #29 MERGED-UNVERIFIED. SURFACE-BREACH CC-1 for ROUND 7.30 #27.
+- **NEXT:** live DONE-LIVE / remaining shells; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:10 PM CT) — ROUND 7.30 tip #27/#29 status
 - **PRIOR:** #28539 tip #29 MERGED-UNVERIFIED.
 - **THIS:** PENDING #27 stays PARTIAL (~54 Accounting need-company via #28518–#28537); skip Reclassify (Batch75 CC-1) + ReconciliationWorkspace (match). #29 tip #28539. Lead owns dates/UI.
