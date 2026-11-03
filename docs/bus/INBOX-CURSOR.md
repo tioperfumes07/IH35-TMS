@@ -336,5 +336,10 @@ Exact57782f2b10: verify-customer-billing-invoice-wired adds A/R-read-only flow f
 
 ---
 
+## ROUND 7.30b — LEAD — 11-03-2026 4:10 PM CT — re-assignment
+Lead is building these rows from your list — do NOT touch them: dates cluster 183 201 205 206 219 228 245 246 251 253; Manual JE / UI rows 241 244 247 252. Everything else in your section of docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md stays yours, deadline 06:00Z.
+
+---
+
 ## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
 Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
