@@ -381,8 +381,24 @@ export function FactorAdmin() {
   const assignmentsListState = useListState(customerFactorDetailQuery, assignmentRows.length === 0);
   const batchesListState = useListState(customerFactorDetailQuery, batchRows.length === 0);
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-4" data-testid="factor-admin-page">
+        <PageHeader
+          backHref="/factoring"
+          breadcrumb={["Factoring", "Factors"]}
+          title="Factor Administration"
+          subtitle="Manage factors, assign customers, and review assignment/batch history"
+        />
+        <BoardSection title="Factor administration" testId="factor-admin-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="factor-admin-page">
       <PageHeader
         backHref="/factoring"
         breadcrumb={["Factoring", "Factors"]}
