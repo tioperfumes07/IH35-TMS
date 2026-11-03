@@ -702,6 +702,16 @@ export function QboReconcileCapturesPage() {
     setSearchParams(params, { replace: true });
   };
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="QBO Reconcile Captures">
+        <BoardSection title="QBO Reconcile Captures" testId="qbo-recon-captures-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="QBO Reconcile" subtitle="QuickBooks sync health, modify captures, and conflicts">

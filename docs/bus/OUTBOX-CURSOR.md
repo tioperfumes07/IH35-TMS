@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:45 PM CT) — ROUND 7.30 #27 Accounting need-company wave 6
+- **PRIOR:** #28535 Settlements week chart → Week-of.
+- **THIS:** Loans/QBO recon/drift/captures/Maintenance shop hub/Accounting hub/Account type catalog/Check print BoardSection need-company; fill-shell plants. #27 still PARTIAL (~54). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Batch75 Reclassify → CC-1.
+- **NEXT:** #29 popup / remaining Accounting detail; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:30 PM CT) — Settlements week chart → Week-of select
 - **PRIOR:** #28534 Accounting need-company wave 5.
 - **THIS:** Settlements home historical week bars set `week_start` + Week-of/deductions follow selected week (Codex batch88); accessible role=button bars; honesty plant. #27 PARTIAL; #29 OPEN. Lead owns dates/UI. Batch75 Reclassify → CC-1.
