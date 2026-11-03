@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:30 PM CT) — batch58 equipment exact aliases + batch57 bills CTE plants
+- **PRIOR:** #28394 Users/ELD · #28392 customer/lane dead bills · #28389 hub mount.
+- **THIS:** Codex batch58 — matchesEquipmentType exact alias sets (no van substring cross-type); lane/customer/load keep rows + scope note (KPI+ByType same filtered population); batch57 bills CTE plants require db.voided_at/db.status independently. ENG-21 DONE-LIVE. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:15 PM CT) — batch56 Users labels + ELD honest unavailable
 - **PRIOR:** #28392 customer/lane dead bills · #28389 Profitability hub.
 - **THIS:** Codex batch56 Cursor bits — Users detail/roster EntityLink use formatPersonName+entityLabel (no bare User); ELD cert/settings copy honest unavailable (no fake rows; not proven-empty); EldPage need-company. Docs UploadModal width → owning seat. ENG-21 DONE-LIVE. Dreamline/match deferred.
