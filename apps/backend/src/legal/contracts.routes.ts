@@ -10,6 +10,7 @@ import {
   getContractInstanceDetail,
   getContractInstanceForRender,
   listContractInstances,
+  parseContractInstanceStatusFilter,
   sendContractSigningLink,
   syncCompanyContractLinkage,
 } from "./contracts.service.js";
@@ -34,8 +35,21 @@ const operatingCompanyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+/** Codex batch71 — comma-unions must clear the HTTP boundary; every token must be allowlisted (not arbitrary strings). */
+const contractListStatusSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .refine((raw) => {
+    const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) return false;
+    const parsed = parseContractInstanceStatusFilter(raw);
+    return parsed.length === new Set(parts).size;
+  }, { message: "Invalid status" });
+
 const listQuerySchema = operatingCompanyQuerySchema.extend({
-  status: z.enum(["draft", "sent", "viewed", "signed_electronically", "voided", "expired"]).optional(),
+  status: contractListStatusSchema.optional(),
   search: z.string().trim().min(1).max(120).optional(),
   signer_type: z.enum(["driver", "employee", "customer", "vendor", "other"]).optional(),
   signer_entity_id: z.string().uuid().optional(),
