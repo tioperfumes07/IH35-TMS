@@ -182,7 +182,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 100 | R201 | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2 | CODED |
 | 101 | R202 | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | CODED |
 | 102 | R207 | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | CC-2 | OPEN |
-| 103 | R209 | Guards | 107 main static reds outside baseline split by seat | Cursor | IN PROGRESS |
+| 103 | R209 | Guards | 107 main static reds outside baseline split by seat | Cursor | MERGED-UNVERIFIED — verify-static-ratchet PASS status=seeded names=378 on main; live full static suite UNVERIFIED |
 | 104 | R210 | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | CC-2 | OPEN |
 | 105 | R223 | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | MERGED-UNVERIFIED — #28482 (Lead): parked-truck rule (consecutive fixes ≤483 m bracketing the fill) + odometer_mi; applies at the 06:00 CT fill sweep |
 
