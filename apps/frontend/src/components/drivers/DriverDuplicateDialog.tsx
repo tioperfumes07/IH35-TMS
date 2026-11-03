@@ -62,7 +62,7 @@ export function DriverDuplicateDialog({ open, attemptedName, candidates, onOpenE
   const needsConfirm = candidates.some((c) => c.strength !== "possible");
   return (
     <Modal open={open} onClose={onCancel} title="This driver may already exist" size="md">
-      <div className="space-y-3 text-sm text-[#0F1219]" data-testid="driver-duplicate-dialog">
+      <div className="space-y-3 text-xs text-[#0F1219]" data-testid="driver-duplicate-dialog">
         <p>
           {candidates.length === 1 ? "One existing driver profile" : `${candidates.length} existing driver profiles`} may be the same
           person as <strong>{attemptedName || "this driver"}</strong>. Each person has only one driver profile — open the existing one
