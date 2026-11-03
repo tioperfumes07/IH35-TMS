@@ -8,7 +8,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
 import { titleize } from "../../lib/titleize";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 
 function asMoney(cents: number) {
@@ -170,7 +170,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
               {asMoney(detail.batch.total_face_cents - detail.batch.expected_advance_cents - detail.batch.expected_fee_cents)}
             </span>
           </div>
-          <div className="text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
+          <div className="text-xs text-gray-600" data-testid="factoring-batch-detail-invoice-count">Included invoices: {formatQuantityTable(detail.invoices.length, 0)}</div>
         </div>
       </BoardSection>
 

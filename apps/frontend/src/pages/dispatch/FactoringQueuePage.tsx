@@ -435,7 +435,7 @@ export function FactoringQueuePage() {
             >
               {stage === "ALL" ? "All" : STAGE_LABELS[stage as FactoringQueueRow["packet_stage"]]}
               {count > 0 ? (
-                <span className="ml-1 rounded-full bg-white/20 px-1 text-xs">{count}</span>
+                <span className="ml-1 rounded-full bg-white/20 px-1 text-xs">{formatQuantityTable(count, 0)}</span>
               ) : null}
             </button>
           );
@@ -466,7 +466,7 @@ export function FactoringQueuePage() {
 
       {filtered.length > 0 ? (
         <p className="text-right text-xs text-gray-400">
-          Showing {filtered.length} of {rows.length} loads
+          Showing {formatQuantityTable(filtered.length, 0)} of {formatQuantityTable(rows.length, 0)} loads
         </p>
       ) : null}
     </div>

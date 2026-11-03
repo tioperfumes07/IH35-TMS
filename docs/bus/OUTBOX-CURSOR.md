@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:05 PM CT) — factoring/dispatch count house quantity
+- **PRIOR:** #28378 notes batch53 customer= plants · #28376 TripPairing KPI.
+- **THIS:** TripPairing section badges · SubmitToFactor invoice count · FactoringHome aging/batches · BatchWizard/Detail invoice counts · AwaitingBol row count · FactoringQueue stage/showing → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:50 PM CT) — notes batch53 customer= plants
 - **PRIOR:** #28376 TripPairing KPI · #28374 Legal alerts KPI.
 - **THIS:** Codex batch53 — NOTES_ON_EDIT_RE requires customer={selectedCustomer}+onEdit per mount; independent customer={null as any} plants (7/7 + 4 per-consumer). ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
