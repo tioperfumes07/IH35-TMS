@@ -1,3 +1,21 @@
+## 2026-11-03 — ROUND7.27 batch65: corrected load population, expense consumer and historical controls
+
+Batch64 merged #28420 296ebd9cec. Read-only production audit; no production writes or settings changes. Neon branch assertion is restored, not blocked.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|#28418 081fc52fd9 / #28419 f84ea3d8b0|Full diffs read; customer/lane backend tests12/12 PASS; hub plants9/9 PASS. Additional actual-guard in-memory plants remove lane void, lane cancelled, customer void predicates separately: each exits1. Clean scan exits0.|Named dead-load population predicates accepted; independent plants demonstrate failure, not source markers alone.|
+|Lane live population|Private READ ONLY phase23, expected branch/read_only on/USMCA3264JE control:136 lanes,194 loads,66917672c revenue,13581737c driver pay. Customer83groups/13581737c. Older dead-bill comparison14980291c,delta1398554c.|Four dead loads/1800000c removed from query population;194 matches active equipment population. Deployed authenticated HTTP/browser behavior still UNVERIFIED.|
+|AdjustPopover guard gap|#28418 consumer-specific guard: clean exit0; remove row argument ONLY in AdjustPopover -> exit1 with intended error.|Batch62 missed-plant defect CLOSED at source/guard level; not a deployed popover certification.|
+|#28424 4dfe7f084f E8 expense accuracy|Full application/test/guard diff read. Existing frontend suite now11/11 PASS; scan PASS;6/6 plants PASS. Tile consumes matched_* or matched groups, no-matched-days renders unavailable. Counterexample raw20000 vs matched10000/projected10000 covered.|Batch64 named consumer correction accepted in source/tests. Full tile rendering and deployed expense snapshot parity remain UNVERIFIED. No historical data manufactured.|
+|Historical#28009 ef5fe7927b|Full3-doc diff read;8affected PASS,2capability skips,5live exclusions.|Coordination-only; exclusions/skips not PASS. Historical write orders not executed.|
+|Historical#28010 e092c46da9|Full2-doc diff;4affected PASS. READ ONLY phase22 migration metadata:3 old duplicate names absent(count0),3 canonical entries present.|Named metadata state independently confirmed. No DELETE/DDL executed by audit.|
+|Historical#28011 71a2f324ae|Full8-file diff;35affected PASS; breadcrumb selftest2/2 plants PASS; guard baseline16->15.|Breadcrumb source accepted; each runtime Back destination remains separately unverified.|
+|Historical#28012 de6a2bbe4e|Full2-script diff;7/7 plants PASS. Unmodified live signed-net guard executed after branch assertion under default_transaction_read_only=on:exit0,34/34 signed documents matched and posted once,excluded5770 livecount0.|Actual live proof,not the classifier's live exclusion. Private raw log retained outside repo; no personal amounts committed.|
+|Historical#28013 a047486a7a|Full2-file diff and API/backend status parser read;13affected PASS. Status array reaches comma union and scoped SQL ANY filter.|Source wiring accepted. Guard --selftest has no handler:10 source assertions,NOT10 plants. No added render/behavior test or live multi-selection proof.|
+
+Full263-row/249-historical-PR audit remains INCOMPLETE. No production money, email, matching, migrations or settings changed. Private evidence in Downloads; no raw production screenshots committed.
+
 ## 2026-11-03 — ROUND7.27 batch64: E8 expense accuracy consumer and historical reviews
 
 Batch63 merged #28415 41319bd8cb;3 affected guards,0 regressions. No production writes.
