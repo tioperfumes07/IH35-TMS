@@ -26,7 +26,7 @@ export function collectFailures(sources) {
   //             (onEdit={() => setEditDrawerCustomer(selectedCustomer)}), and that drawer is mounted with
   //             customer={editDrawerCustomer} — it saves through the same updateCustomer PATCH.
   //   why: CUR-2 (#20812, cda6f7b4e3) moved customer edit into a QBO-style side drawer; same canonical writer.
-  if (!/<CustomerNotesTab\s+customer=\{selectedCustomer\}\s+onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/.test(sources.page) ||
+  if (!/<CustomerNotesTab[\s\S]{0,120}customer=\{selectedCustomer\}[\s\S]{0,80}onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/.test(sources.page) ||
       !/<CustomerEditDrawer[\s\S]{0,120}customer=\{editDrawerCustomer\}/.test(sources.page)) {
     failures.push("Edit notes does not reach the canonical customer editor");
   }
@@ -51,7 +51,7 @@ if (process.argv.includes("--selftest")) {
     ["page", "No notes recorded for this customer.", "Notes unavailable"],
     ["page", "function CustomerNotesTab", `${PLACEHOLDER}\nfunction CustomerNotesTab`],
     ["page", 'activeTab === "notes"', 'activeTab === "removed_notes"'],
-    ["page", /(<CustomerNotesTab\s+customer=\{selectedCustomer\}\s+)onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/, "$1onEdit={() => undefined}"],
+    ["page", /onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/g, "onEdit={() => undefined}"],
     ["page", "<CustomerEditDrawer", "<SomethingElse"],
     ["built", '"leafRe": "^md\\\\.notes$"', '"leafRe": ".*"'],
   ];
