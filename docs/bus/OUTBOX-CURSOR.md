@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~7:15 PM CT) — U12 Load Cancellation + Exception Reasons MultiSelect
+- **PRIOR:** #28589 Dispatch/Termination U12.
+- **THIS:** LoadCancellationReasonsListPage + LoadExceptionReasonsListPage status → MultiSelectDropdown; filter-surfaces matchesStatus retarget.
+- **NEXT:** Accounting/DetailTypes/VoidCancel (CC-1) / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~7:10 PM CT) — U12 Dispatch + Termination Reasons MultiSelect
 - **PRIOR:** #28588 Safety catalog U12.
 - **THIS:** DispatchCatalogListPage + TerminationReasonsListPage status → MultiSelectDropdown; filter-surfaces Termination matchesStatus retarget.
