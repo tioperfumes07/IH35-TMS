@@ -120,6 +120,24 @@ scripts/verify-guard-selftests-are-real-weak-baseline.json
 # function bodies). This Round 260 fix points DELIVER at the canonical source file; the fix is
 # within CC-2's authority because the guard itself and the ops script that arms it are both CC-2.
 scripts/verify-delivered-load-stops-terminal.mjs
+#
+# **`scripts/verify-stops-geocoded.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-*.mjs` but the guard is the direct verification
+# companion of the geocode backfill service (CC-2's stops-geocode-backfill.service.ts fix).
+# Same rationale as verify-delivered-load-stops-terminal.mjs directly above. Owner may move it.
+scripts/verify-stops-geocoded.mjs
+#
+# **`scripts/verify-no-session-scoped-rls-bypass.baseline.json` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-*.baseline.json`. CC-2's rewrite of verify-stops-geocoded.mjs
+# eliminated its bypass pattern; this baseline change removes that entry from the bypass allowlist.
+# The edit is a direct consequence of the guard rewrite in the same round. Owner may move it.
+scripts/verify-no-session-scoped-rls-bypass.baseline.json
+#
+# **`scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs` added to CC-2 (ROUND 260, 2026-11-02).**
+# Under CC-1's wildcard `scripts/verify-steps/**`. CC-2 wired verify-stops-geocoded.mjs into
+# CI via step 18565 (shrinks the unwired-guards count); this is the CI registration artifact
+# for the new guard. Owner may move it.
+scripts/verify-steps/18565-verify-unwired-guards-shrink-only.mjs
 
 ## CC-3 — settlements and fuel
 apps/backend/src/settlements/**
