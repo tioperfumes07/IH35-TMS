@@ -1,6 +1,10 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:05 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:25 AM CT)
 
-## CURRENT — Escrow holder names + Faro dry-run labels + weekly revenue axis
+## CURRENT — ENG-34 shrink wave 4 (53→34 exempt)
+Wired 19 static exempts via claimed steps 19774–19810 (#28248 reserve). LIVE/tool exempts remain. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+## PRIOR — Escrow holder names + Faro dry-run labels + weekly revenue axis
 SettlementsEscrowBoard resolves holder names via escrow-visualizer when accounts omit holder_label. Faro1090 dry-run note has no UUID slices. WeeklyRevenueChart axis en-US. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
