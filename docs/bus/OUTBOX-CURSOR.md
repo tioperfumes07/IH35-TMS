@@ -1,3 +1,33 @@
+## OUTBOX (11-03-2026 ~12:30 PM CT) — margin/% qty + Customer/Driver/Cargo qty + ENG-34 29→28
+- **PRIOR:** #28271 dispatch margin/% formatQuantityTable; #28270 ENG-36 re-measure.
+- **THIS:** CustomerDetail chart/avg-days/margin% · DriverLayover hours · DriverProfile layover hours · CargoTempBadge → formatQuantityTable/formatUsd. Currency guard extended. ENG-34 wire verify-sql-write-targets (19822) exempt **29→28**.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
+## OUTBOX (11-03-2026 ~11:55 AM CT) — ENG-36 re-measure (18841 still 21/≤21)
+- **PRIOR:** #28269 OptimalDrivers quantity; #28268 deadhead guard; #28266 DF need-company.
+- **THIS:** LIVE re-run `verify-steps/18841` PASS — still 21 of ≤21 negative company settlements. ENGINE-REGISTER ENG-36 evidence stamped 11-03. No balancing JE. Further → ENG-25b.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 cancelled residual waits AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~29 remain.
+
+## OUTBOX (11-03-2026 ~11:40 AM CT) — deadhead guard retarget + DeadheadOptimizer score quantity
+- **PRIOR:** #28266 DF board need-company.
+- **THIS:** verify-deadhead-pay-line plants retarget settlementDetailLineMaps; escrow-pending ParityTable selftest plant fixed; DeadheadOptimizer ¢/mi score → formatQuantityTable(,2).
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub → CC-1. ENG-34 LIVE/tool ~29 remain.
+
+## OUTBOX (11-03-2026 ~11:25 AM CT) — DF board need-company wave (pre-settle/cash/deductions/detail)
+- **PRIOR:** #28265 dwell SAVEPOINT behavior (Codex #27976).
+- **THIS:** SettlementsPreSettlements / CashAdvances / Deductions / EscrowDeductionsPending / SettlementDetail / SettlementWorkflow need-company BoardSections. fill-shell guard extended.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub → CC-1. ENG-34 LIVE/tool ~29 remain.
+
+## OUTBOX (11-03-2026 ~11:10 AM CT) — ENG-29/53 dwell SAVEPOINT behavior test (Codex #27976)
+- **PRIOR:** #28262 FactorAdmin + DF settlements need-company; #28261 Faro1090; #28260 border/TripProfit; #28259 Notify/POD/xfer/history.
+- **THIS:** Extract `persistDwellEvidenceInSavepoint`; vitest fake-client proves dwell failure → ROLLBACK TO SAVEPOINT, miles stay committed, txn usable; plant without rollback leaves 25P02. Source-shape order retained.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub Codex note → CC-1. ENG-34 LIVE/tool ~29 remain.
+
+## OUTBOX (11-03-2026 ~10:00 AM CT) — NotifyPreferences + POD/xfer/history need-company
+- **PRIOR:** #28257 SET-RATE selftest plant.
+- **THIS:** NotifyPreferences / PodReview / EquipmentTransfer / LoadHistory empty-company BoardSection; EquipmentTransfer created_at → formatDateTimeUS; LoadHistory linked-docs/timeline → BoardSection. verify-91190 TARGETS 27→30; datetime guard adds EquipmentTransfer.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-03-2026 ~11:00 AM CT) — SET-RATE selftest plant retargets settlementDetailLineMaps
 - **PRIOR:** #28256 ENG-34 wave 5 (34→29).
 - **THIS:** verify-settlement-line-rate-consistency --selftest plant now mutates settlementDetailLineMaps (mapper moved off SettlementStatementWorkflowPage); --selftest exits before LIVE half.

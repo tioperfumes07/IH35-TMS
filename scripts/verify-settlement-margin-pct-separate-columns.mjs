@@ -57,7 +57,12 @@ function analyze(src) {
   }
   if (!/testId:\s*"tour-col-margin-pct"/.test(board)) errors.push('TourLoadRows (Load-Costs tour register) must add a separate "Margin %" column (testId tour-col-margin-pct)');
   if (!/key:\s*"tour_margin_pct"[\s\S]{0,240}?label:\s*"Margin %"/.test(board)) errors.push('TourLoadRows (Load-Costs tour register) "Margin %" column must carry key tour_margin_pct + label "Margin %"');
-  if (!/key:\s*"tour_margin_pct"[\s\S]{0,320}?r\.load_margin_pct\.toFixed\(1\)\}%/.test(board)) errors.push('TourLoadRows (Load-Costs tour register) "Margin %" column must render r.load_margin_pct.toFixed(1)%');
+  if (
+    !/key:\s*"tour_margin_pct"[\s\S]{0,320}?r\.load_margin_pct\.toFixed\(1\)\}%/.test(board) &&
+    !/key:\s*"tour_margin_pct"[\s\S]{0,360}?formatQuantityTable\(r\.load_margin_pct,\s*1\)\}%/.test(board)
+  ) {
+    errors.push('TourLoadRows (Load-Costs tour register) "Margin %" column must render margin % via toFixed(1) or formatQuantityTable(..., 1)');
+  }
 
   // 3. Pre-Settlement tab — % in its own sub-element, not jammed inline.
   if (/currencyCode\)\}\s*·\s*\{pct\(/.test(tab)) {
@@ -93,7 +98,7 @@ if (process.argv.includes("--selftest")) {
     ["setl drops pct render", withField("setl", (s) => s.replace(/r\.margin_pct\.toFixed\(1\)\}%/g, '"x"}').replace(/formatQuantityTable\(r\.margin_pct,\s*1\)\}%/g, '"x"}'))],
     ["board drops pct testId", withField("board", (s) => s.replace(/tour-col-margin-pct/g, "gone"))],
     ["board drops pct key", withField("board", (s) => s.replace(/key: "tour_margin_pct"/g, 'key: "gone"'))],
-    ["board drops pct render", withField("board", (s) => s.replace(/r\.load_margin_pct\.toFixed\(1\)\}%/g, '"x"}'))],
+    ["board drops pct render", withField("board", (s) => s.replace(/r\.load_margin_pct\.toFixed\(1\)\}%/g, '"x"}').replace(/formatQuantityTable\(r\.load_margin_pct,\s*1\)\}%/g, '"x"}'))],
     ["tab jams pct inline", withField("tab", (s) => s.replace('<span data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span>', '<span data-testid="tour-leg-margin-pct">{money(l.margin_cents, currencyCode)} · {pct(l.margin_pct)}</span>'))],
     ["tab drops leg pct testid", withField("tab", (s) => s.replace(/tour-leg-margin-pct/g, "gone"))],
     ["tab drops totals pct testid", withField("tab", (s) => s.replace(/tour-totals-margin-pct/g, "gone"))],

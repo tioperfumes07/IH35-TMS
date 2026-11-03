@@ -208,6 +208,20 @@ export function BatchSettlementsPage() {
     });
   };
 
+  if (!companyId) {
+    return (
+      <SettlementsSubNavWrapper
+        title="Batch Settlements"
+        subtitle="Driver + period grid — Save all posts through Settlement Creator"
+        crumbs={[{ label: "Batch Settlements", href: "/driver-finance/settlements/batch" }]}
+      >
+        <BoardSection title="Batch settlements" testId="batch-settlements-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </SettlementsSubNavWrapper>
+    );
+  }
+
   return (
     <SettlementsSubNavWrapper
       title="Batch Settlements"

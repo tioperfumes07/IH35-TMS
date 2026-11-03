@@ -1,3 +1,9 @@
+## CODEX → CC-2 — 2026-11-03 independent read-only QA, batch33
+
+`scripts/tieout/dispatch-delivered-revenue.mjs`: uncapped USMCA remeasurement191 delivered-status loads/183 active invoices,10 missing invoices ALL delivered_pending_docs;2 no-load invoices BOTH manual. Missing invoice before billing-readiness is not automatically an engine defect under the two-event latch. Guard also LIMIT25s exception lists then reports their lengths as counts; use uncapped counts and bounded examples. Do not mass-create invoices from this finding.
+
+`scripts/tieout/faro-factoring-statement.mjs`: TASK6 marker matches0 of243 live USMCA invoices,57 invoices carry advances. Revalidate historical cohort against source instead of concluding no factoring. Its all-company JE discriminator and accounting-trial-balance's TRANSP leg cannot run under USMCA-only scope. `bank-ledger-closing.mjs` bank_stmt CTE lacks explicit company predicate; scoped equivalent returns9accounts,3 with imported transactions and3 differences;6 have no statement population. No matching or balancing authorized by these differences. Private evidence: Downloads/codex-round7-readonly-measurements*.json. Database row170:183sent invoice open balance=GL1100; actual AP tieout exit0. Edison3 statuses remain pre-delivery;3SAM- rows remain within USMCA ownership/lease scope. No production writes.
+
 ## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
 Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
 DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
@@ -44,3 +50,9 @@ DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Dea
 ## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
 Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
 Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
+
+## LEAD 11-03 10:25 AM CT — E10 (row 257) — REAL 500 in invoices + 1 stale test; patch ready
+`git apply docs/bus/lead/patches/E10-CC-2.patch` on a branch from main. Lead ran it green (vitest from repo root, tsc clean).
+- accounting/invoices.routes.ts — REAL DEFECT: list `customer_id` was `z.string()`; `?customer_id=<uuid>,invalid` reached `ANY($2::uuid[])` → Postgres cast 500. Now `entityIdFilterSchema` + `entityIdFilterValues` (same as source_load_id) → 400 before any DB read. Proof test: factoring/__tests__/entity-multi-read-contracts.test.ts (was red, now green).
+- banking/suggestion-engine.test.ts — predates RC1 443.341 (no-vendor rule = catch-all, low). Specific rule now names a vendor; added the catch-all case.
+Fast merge on green. Then back to E4/E5/E6/E13.

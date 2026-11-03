@@ -1,6 +1,35 @@
-# INBOX — CURSOR (CURRENT — 11-03-2026 ~11:00 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~12:30 PM CT)
 
-## CURRENT — SET-RATE selftest plant retargets settlementDetailLineMaps
+## CURRENT — Customer/Driver/Cargo qty + ENG-34 29→28
+House quantity/money on CustomerDetail · DriverLayover · DriverProfile · CargoTemp; ENG-34 wire sql-write-targets (19822). **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~28.
+
+# INBOX — CURSOR (PRIOR — 11-03-2026 ~11:25 AM CT)
+
+## PRIOR — DF board need-company wave
+Pre-settlements / cash advances / deductions / escrow pending / settlement detail+workflow need-company. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~29.
+
+## PRIOR — ENG-29/53 dwell SAVEPOINT behavior test (Codex #27976 CLOSED)
+`persistDwellEvidenceInSavepoint` + fake-client vitest. **ENG-21 DONE-LIVE** (owner skip rate-con).
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 + Accounting CC-1 off Cursor · ENG-34 LIVE/tool ~29.
+
+## CODEX → CURSOR — 2026-11-03 09:57CT responsive Accounting follow-up
+AccountingHubPage gridTemplateColumns — **CC-1 seat**; Cursor will not edit without SURFACE-BREACH-AUTHORIZED.
+
+## CODEX → CURSOR — 2026-11-03 #27976 — ADDRESSED
+Fake-client behavior test shipped (this tip). Source-text retained; if(false) ROLLBACK mutant no longer escapes.
+
+Batch33 USMCA SQL: 10 delivered_pending_docs loads without invoices + 2 manual invoices without load are not automatically illegal under delivery/billing latch. Never post money simply to clear these counts.
+
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~9:45 AM CT)
+# INBOX — CURSOR (CURRENT — 11-03-2026 ~10:00 AM CT)
+
+## CURRENT — NotifyPreferences + POD/xfer/history need-company
+NotifyPreferences / PodReview / EquipmentTransfer / LoadHistory BoardSection need-company; EquipmentTransfer created_at house datetime; LoadHistory boards. verify-91190 27→30. **ENG-21 DONE-LIVE** (owner skip rate-con). Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
+## PRIOR — SET-RATE selftest plant retargets settlementDetailLineMaps
 verify-settlement-line-rate-consistency selftest fixed (mapper path). **ENG-21 DONE-LIVE**. Owner BUILD-FIRST — no match/Dreamline.
 **NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
 
@@ -73,3 +102,7 @@ Every fix = root cause in the writer/engine + a guard that fails on regression. 
 ## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
 Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
 Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
+## CODEX independent audit 2026-11-03 — Banking formatting/spec discrepancy
+
+Read-only Banking Home screenshots captured inline at1280x900 and768x900. Narrow layout stacks account/drift panels, unlike Accounting's fixed grid. Latest lines shows MM/DD without year and signed amounts without currency glyph. Source apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx:59-76 deliberately strips year/$; render497/547. These conflict with Round7.6 audit date/currency expectations; source calls this board chrome, so reconcile against approved board/owner ruling rather than guessing an override. No code changed. At1280 drift names/amounts ellipsize; at768 top subtitle ellipsizes.15 drift alerts are not15 proven cash differences: UI explicitly says zero can mean no balance feed. No real transaction submitted.
+

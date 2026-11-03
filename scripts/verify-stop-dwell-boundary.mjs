@@ -80,9 +80,27 @@ export function check(src) {
   if (!/runLoadRealDrivenMilesCronTick/.test(cron)) p.push(`${CRON}: the cron no longer runs runLoadRealDrivenMilesCronTick (WIRED).`);
 
   const tick = miles.match(/export async function runLoadRealDrivenMilesCronTick[\s\S]*?\n\}/)?.[0] ?? "";
-  if (!/await persistStopDwellEvidence\(db, company\.id, evidence\)/.test(tick)) p.push(`${MILES}: the cron tick no longer writes the GPS-dwell evidence (END TO END).`);
-  if (!/await captureGeofenceOdometerEvents\(db as never, \{ operatingCompanyId: company\.id \}\)/.test(tick)) p.push(`${MILES}: the tick no longer reads the odometer for the replayed crossings.`);
-  if (!/persistLoadRealDrivenMiles\(db, company\.id, await computeLoadRealDrivenMiles\(db, company\.id, again\)\)/.test(tick)) p.push(`${MILES}: the tick no longer recomputes the GPS-verified loads.`);
+  // ENG-29/53 Codex #27976 — dwell SAVEPOINT body lives in persistDwellEvidenceInSavepoint; tick must call it
+  // after miles persist (helper keeps evidence → odometer → recompute). Match against whole miles file
+  // because the helper body has nested braces that defeat a shallow function extract.
+  if (!/await persistDwellEvidenceInSavepoint\(db, company\.id, rows\)/.test(tick)) {
+    p.push(`${MILES}: the cron tick no longer isolates dwell evidence via persistDwellEvidenceInSavepoint.`);
+  }
+  if (!/export async function persistDwellEvidenceInSavepoint/.test(miles)) {
+    p.push(`${MILES}: persistDwellEvidenceInSavepoint helper missing.`);
+  }
+  if (!/await persistStopDwellEvidence\(db, (?:company\.id|operatingCompanyId), evidence\)/.test(miles)) {
+    p.push(`${MILES}: the cron tick no longer writes the GPS-dwell evidence (END TO END).`);
+  }
+  if (!/await captureGeofenceOdometerEvents\(db as never, \{ operatingCompanyId(?:: company\.id)? \}\)/.test(miles)) {
+    p.push(`${MILES}: the tick no longer reads the odometer for the replayed crossings.`);
+  }
+  if (!/persistLoadRealDrivenMiles\(db, (?:company\.id|operatingCompanyId), await computeLoadRealDrivenMiles\(db, (?:company\.id|operatingCompanyId), again\)\)/.test(miles)) {
+    p.push(`${MILES}: the tick no longer recomputes the GPS-verified loads.`);
+  }
+  if (!/SAVEPOINT real_driven_miles_dwell_evidence/.test(miles) || !/ROLLBACK TO SAVEPOINT real_driven_miles_dwell_evidence/.test(miles)) {
+    p.push(`${MILES}: persistDwellEvidenceInSavepoint must SAVEPOINT + ROLLBACK isolate dwell failures.`);
+  }
   if (!/g\.label = q\.gps_label/.test(miles) || !/loadStopGpsFenceLabel\(w\.stop\.load_id, w\.stop\.sequence_number\)/.test(miles)) p.push(`${MILES}: the compute no longer matches the stop's own GPS-verified fence.`);
   if (!/'load_stop_gps_dwell'/.test(src.evidence)) p.push(`${EVIDENCE}: the dwell is no longer written as a stop event.`);
   if (!/s\.actual_stop_event_id IS NULL/.test(evidence)) p.push(`${EVIDENCE}: the stop link can overwrite existing evidence.`);
@@ -118,8 +136,9 @@ function selftest() {
     ["dwell odometer invented", "miles", (s) => s.replace("anchor: timeAnchor?.anchor ?? null,", "anchor: { odometer_mi: 0, read_at: dwell.hit.at, source: \"vehicle_locations\" },")],
     ["cron unwired", "cron", (s) => s.split("runLoadRealDrivenMilesCronTick").join("noop")],
     ["second exclusion copy", "verify", (s) => s + "\nconst x = `location_kind = 'fuel_stop'`;"],
-    ["tick stops writing evidence", "miles", (s) => s.replace("await persistStopDwellEvidence(db, company.id, evidence)", "await Promise.resolve(evidence)")],
-    ["tick skips odometer capture", "miles", (s) => s.replace("await captureGeofenceOdometerEvents(db as never, { operatingCompanyId: company.id })", "await Promise.resolve()")],
+    ["tick stops writing evidence", "miles", (s) => s.replace("await persistStopDwellEvidence(db, operatingCompanyId, evidence)", "await Promise.resolve(evidence)")],
+    ["tick skips odometer capture", "miles", (s) => s.replace("await captureGeofenceOdometerEvents(db as never, { operatingCompanyId })", "await Promise.resolve()")],
+    ["tick drops SAVEPOINT isolate helper", "miles", (s) => s.replace("await persistDwellEvidenceInSavepoint(db, company.id, rows)", "await Promise.resolve(rows)")],
     ["gps fence not matched", "miles", (s) => s.replace("g.label = q.gps_label", "false")],
     ["evidence overwrites a link", "evidence", (s) => s.replace("s.actual_stop_event_id IS NULL", "true")],
     ["evidence stamps a time", "evidence", (s) => s.replace("SET actual_stop_event_id = $2::uuid", "SET actual_stop_event_id = $2::uuid, actual_departure_at = now()")],

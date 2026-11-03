@@ -314,7 +314,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
 
   const anyBlocked = drafts.some((r) => !isPristine(r) && blocker(r) !== null);
   const statusBadge = statusLabel(load.status);
-  const pct = revenue > 0 ? `${((margin / revenue) * 100).toFixed(1)}%` : DASH;
+  const pct = revenue > 0 ? `${formatQuantityTable((margin / revenue) * 100, 1)}%` : DASH;
 
   // Driver pay sentence for the footer — the live driver bill, two lines when the bill carries them.
   const driverPayBasis = (() => {

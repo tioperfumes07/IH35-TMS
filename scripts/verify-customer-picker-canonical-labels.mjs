@@ -70,7 +70,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["legal", 'entityLabel(customer.name, customer.id, "Customer")', "String(customer.id)"],
     ["legal", 'kind="vendor"', 'kind="unit"'],
     ["legal", "getVendor(id, operatingCompanyId)", "getVendorRemoved(id, operatingCompanyId)"],
-    ["dispatch", '<EntityPicker\n              kind="customer"\n              operatingCompanyId={companyId}', '<EntityPicker\n              kind="unit"\n              operatingCompanyId={companyId}'],
+    ["dispatch", '<EntityPicker\n                kind="customer"\n                operatingCompanyId={companyId}', '<EntityPicker\n                kind="unit"\n                operatingCompanyId={companyId}'],
     ["docs", 'value: "customer", label: "Customer"', 'value: "unit", label: "Customer"'],
     ["safety", '<EntityPicker\n                kind="customer"\n                operatingCompanyId={companyId}', '<EntityPicker\n                kind="unit"\n                operatingCompanyId={companyId}'],
     ["safety", 'label: entityLabel(u.name || u.email, u.id, "User")', "label: String(u.name || u.email || u.id)"],

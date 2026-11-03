@@ -10,7 +10,9 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCentsTable } from "../../lib/money";
@@ -73,6 +75,22 @@ export function FaroDebtorRecordPage() {
       ),
     enabled: Boolean(selectedCompanyId && name),
   });
+  if (!selectedCompanyId) {
+    return (
+      <div className="space-y-3 p-4 text-xs" data-testid="faro-debtor-record">
+        <PageHeader
+          backHref="/factoring"
+          breadcrumb={["Factoring", "Faro debtor"]}
+          title="Faro debtor"
+          subtitle="Read-only factor statement lines for one debtor"
+        />
+        <BoardSection title="Faro debtor" testId="faro-debtor-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   if (q.isError) {
     return <ListErrorState status={q.error instanceof ApiError ? q.error.status : 0} message="Could not load this Faro debtor." onRetry={() => void q.refetch()} />;
   }
