@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:10 PM CT) — ROUND 7.30 tip #27/#29 status
+- **PRIOR:** #28539 tip #29 MERGED-UNVERIFIED.
+- **THIS:** PENDING #27 stays PARTIAL (~54 Accounting need-company via #28518–#28537); skip Reclassify (Batch75 CC-1) + ReconciliationWorkspace (match). #29 tip #28539. Lead owns dates/UI.
+- **NEXT:** Accounting detail need-company / live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~11:05 PM CT) — ROUND 7.30 #29 popup standard tip
 - **PRIOR:** #28538 reimbursements formatUsd guard.
 - **THIS:** PENDING #29 → MERGED-UNVERIFIED — verify-popups-one-format overlays baseline 0 (shared Modal/ParityDrawer); FuelAssignmentPopup sizePreset md 720 (V3-Modal-FuelAssignment / 443.295); verify-fuel-assignment-popup PASS. Live owner walk UNVERIFIED. #27 PARTIAL (~54 need-company). Batch75 Reclassify → CC-1.
