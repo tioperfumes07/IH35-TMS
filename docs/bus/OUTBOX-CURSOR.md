@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~1:35 PM CT) — qty sweep + #28283 body finish
+- **PRIOR:** #28271–#28282 quantity/ENG-34 waves.
+- **THIS:** #28283 finished CustomerRelationshipScore + AtRiskDriverCard bodies to match currency guard. ENG-21 DONE-LIVE. ENG-34 ~28 LIVE/tool. SelectCombobox baseline 2.
+- **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred.
+
 ## OUTBOX (11-03-2026 ~1:25 PM CT) — house quantity sweep continuation
 - **PRIOR:** #28271 margin/% · #28273 CRM/driver/cargo · #28276 claim 19822 · #28277 ENG-34 29→28 · #28278–#28281 qty waves.
 - **THIS:** AtRiskDriverCard risk score → formatQuantityTable. ENG-21 DONE-LIVE (owner skip rate-con). SelectCombobox baseline 2. ENG-34 LIVE/tool ~28.
