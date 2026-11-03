@@ -11,7 +11,7 @@ import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinan
 import { listTours } from "../api/tourReadout";
 import { getActiveLiabilities } from "../api/liabilities";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
-import { formatUsd, formatUsdCents } from "../lib/money";
+import { formatUsd, formatUsdCents, formatQuantityTable } from "../lib/money";
 import {
   createDriverTeam,
   deactivateDriverTeam,
@@ -671,6 +671,22 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     </div>
   );
 
+  if (!selectedCompanyId) {
+    return (
+      <div
+        className={MASTER_DETAIL.pageShellClass}
+        data-c05-min-scroll="drivers"
+        data-c06-page="drivers"
+        data-settlements-embedded={underSettlements ? "1" : undefined}
+      >
+        {underSettlements ? null : <PageHeader title="Drivers" />}
+        <BoardSection title="Drivers" testId="drivers-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
+
   return (
     <div
       className={MASTER_DETAIL.pageShellClass}
@@ -694,11 +710,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         {/* KPI drill-through: Active/On Leave = roster status; On Loads = Dispatch board.
             Available has no dedicated segment yet — Active is the closest honest destination (not silent dead).
             Under Settlements embed: keep destinations inside /driver-finance (Codex audit row185). */}
-        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to={`${rosterPath}?status=active`} />
-        <KpiCard label="On Loads" number={onLoadsCount == null ? "—" : String(onLoadsCount)} accent={colors.dispatch.strong} to={`${rosterPath}?status=all&load_state=on`} />
-        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to={`${rosterPath}?status=active&load_state=free`} />
-        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to={`${rosterPath}?status=on_leave`} />
-        <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to={settleDuePath} />
+        <KpiCard label="Active" number={`${formatQuantityTable(activeCount, 0)}/${formatQuantityTable(allDrivers.length, 0)}`} accent={colors.drivers.strong} to={`${rosterPath}?status=active`} />
+        <KpiCard label="On Loads" number={onLoadsCount == null ? "—" : formatQuantityTable(onLoadsCount, 0)} accent={colors.dispatch.strong} to={`${rosterPath}?status=all&load_state=on`} />
+        <KpiCard label="Available" number={availableCount == null ? "—" : formatQuantityTable(availableCount, 0)} accent={colors.info.strong} to={`${rosterPath}?status=active&load_state=free`} />
+        <KpiCard label="On Leave" number={formatQuantityTable(onLeaveCount, 0)} accent={colors.warn.strong} to={`${rosterPath}?status=on_leave`} />
+        <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : formatQuantityTable(settleDueCount, 0)} accent={colors.accounting.strong} to={settleDuePath} />
         <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to={cashAdvancesPath} />
         <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to={escrowPath} />
       </KpiStrip>
