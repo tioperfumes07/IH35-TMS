@@ -133,7 +133,10 @@ export function Faro1090WireProposalsPage() {
                 {row.candidates.map((c) => (
                   <option key={c.bank_transaction_id} value={c.bank_transaction_id}>
                     {formatDateUS(c.transaction_date)} · {formatUsdCents(c.amount_cents)}
-                    {c.exact_amount ? " · exact" : ` · Δ${c.amount_delta_cents}¢`} · {(c.merchant_name || c.description || "bank").slice(0, 40)}
+                    {c.exact_amount
+                      ? " · exact"
+                      : ` · Δ${formatUsdCents(Math.abs(c.amount_delta_cents))}`}{" "}
+                    · {(c.merchant_name || c.description || "bank").slice(0, 40)}
                   </option>
                 ))}
               </SelectCombobox>

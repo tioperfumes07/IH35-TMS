@@ -191,6 +191,12 @@ const faro1090 = read("apps/frontend/src/pages/factoring/Faro1090WireProposalsPa
 if (!/formatQuantityTable\(row\.days_unfunded\)/.test(faro1090)) {
   fail("Faro1090WireProposalsPage days_unfunded must use formatQuantityTable");
 }
+if (!/formatUsdCents\(Math\.abs\(c\.amount_delta_cents\)\)/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage amount_delta must use formatUsdCents (not raw ¢)");
+}
+if (/Δ\$\{c\.amount_delta_cents\}¢/.test(faro1090)) {
+  fail("Faro1090WireProposalsPage must not render raw amount_delta_cents with ¢ suffix");
+}
 const driverLayover = read("apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx");
 if (!/formatQuantityTable\(row\.duration_hours, 1\)/.test(driverLayover)) {
   fail("DriverLayoverHistory duration hours must use formatQuantityTable");
