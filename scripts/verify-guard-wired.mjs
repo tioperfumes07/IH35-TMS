@@ -70,12 +70,35 @@ function packageScriptsByGuard(guards) {
   return map;
 }
 
+/**
+ * Codex batch70 — comment-only mentions are NOT execution.
+ * JS: strip line/block comments (and unclosed block tails) per file.
+ * YAML: strip # line comments only — never JS block rules (YAML can contain bare /*).
+ */
+export function stripJsComments(src) {
+  let s = String(src || "")
+    .replace(/\/\*[\s\S]*?\*\//g, "\n")
+    .replace(/(^|[^:\\])\/\/[^\n]*/gm, "$1");
+  const open = s.indexOf("/*");
+  if (open >= 0) s = s.slice(0, open);
+  return s;
+}
+
+export function stripYamlComments(src) {
+  return String(src || "").replace(/(^|\n)[ \t]*#[^\n]*/g, "$1");
+}
+
+/** @deprecated use stripJsComments / stripYamlComments — kept for call sites/tests */
+export function stripCodeComments(src) {
+  return stripYamlComments(stripJsComments(src));
+}
+
 function workflowCorpus() {
   if (!fs.existsSync(WF_DIR)) return "";
   let corpus = "";
   for (const f of fs.readdirSync(WF_DIR)) {
     if (!/\.ya?ml$/i.test(f)) continue;
-    corpus += readIf(path.join(".github/workflows", f)) + "\n";
+    corpus += stripYamlComments(readIf(path.join(".github/workflows", f))) + "\n";
   }
   return corpus;
 }
@@ -85,7 +108,8 @@ function verifyStepsCorpus() {
   let corpus = "";
   for (const f of fs.readdirSync(STEPS_DIR)) {
     if (!f.endsWith(".mjs") || f.startsWith("_")) continue;
-    corpus += readIf(path.join("scripts/verify-steps", f)) + "\n";
+    // Per-file JS strip — a stray block comment must not eat later verify-step files.
+    corpus += stripJsComments(readIf(path.join("scripts/verify-steps", f))) + "\n";
   }
   return corpus;
 }
@@ -95,25 +119,16 @@ function ciRunsPreCommit(wfCorpus) {
 }
 
 /**
- * Codex batch70 — comment-only mentions are NOT execution. Strip line/block comments and YAML
- * hashes so `stepsCorpus.includes(guard)` / workflow path includes cannot greenwash a sentinel.
- */
-export function stripCodeComments(src) {
-  return String(src || "")
-    .replace(/\/\*[\s\S]*?\*\//g, "\n")
-    .replace(/(^|[^:\\])\/\/[^\n]*/gm, "$1")
-    .replace(/(^|\n)[ \t]*#[^\n]*/g, "$1");
-}
-
-/**
  * True when CI will execute this guard:
  * - workflow mentions the .mjs path (non-comment), OR
  * - workflow runs an npm script that points at it, OR
  * - it is imported/referenced from verify-steps (non-comment) AND ci.yml runs verify:pre-commit
  */
 function isExecutedInCi(guard, npmNames, wfCorpus, stepsCorpus, preCommitInCi) {
-  const wf = stripCodeComments(wfCorpus);
-  const steps = stripCodeComments(stepsCorpus);
+  // Corpora from workflowCorpus/verifyStepsCorpus are already comment-stripped per file.
+  // Selftest still passes raw snippets — strip again so comment-only plants stay red.
+  const wf = stripYamlComments(wfCorpus);
+  const steps = stripJsComments(stepsCorpus);
   if (wf.includes(guard)) return true;
   for (const name of npmNames) {
     // npm run verify:foo  /  run: npm run verify:foo
