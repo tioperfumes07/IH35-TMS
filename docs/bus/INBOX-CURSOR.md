@@ -1,3 +1,9 @@
+# INBOX — CURSOR (CURRENT — 11-02-2026 ~10:20 PM CT)
+
+## CURRENT — Cursor BUILD-FIRST tip (#28192–#28220)
+House formatters · U18 · SelectCombobox shrink (baseline 2) · PolicyDetail Demand · Load History epoch guard shipped. **ENG-21 BLOCKED**. Owner BUILD-FIRST — no match/Dreamline.
+**NEXT:** more Cursor engines · ENG-22 AUTH · Safety/CC-3 stays off Cursor.
+
 # INBOX — CURSOR (CURRENT — 11-02-2026 ~10:00 PM CT)
 
 ## CURRENT — Cursor BUILD-FIRST tip (#28192–#28205)
