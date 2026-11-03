@@ -13,6 +13,7 @@ import { apiRequest } from "../../api/client";
 import { deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
@@ -155,7 +156,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
             <p className="text-xs text-gray-500">Total layovers</p>
           </div>
           <div className="rounded-sm bg-gray-50 p-3 text-center">
-            <p className="text-page-title font-bold text-[#0F1219]">{totalHours.toFixed(1)}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{formatQuantityTable(totalHours, 1)}</p>
             <p className="text-xs text-gray-500">Total hours</p>
           </div>
           <div className="rounded-sm bg-gray-50 p-3 text-center">

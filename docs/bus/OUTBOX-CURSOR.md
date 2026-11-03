@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~12:30 PM CT) — margin/% qty + Customer/Driver/Cargo qty + ENG-34 29→28
+- **PRIOR:** #28271 dispatch margin/% formatQuantityTable; #28270 ENG-36 re-measure.
+- **THIS:** CustomerDetail chart/avg-days/margin% · DriverLayover hours · DriverProfile layover hours · CargoTempBadge → formatQuantityTable/formatUsd. Currency guard extended. ENG-34 wire verify-sql-write-targets (19822) exempt **29→28**.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. ENG-34 LIVE/tool ~28 remain.
+
 ## OUTBOX (11-03-2026 ~11:55 AM CT) — ENG-36 re-measure (18841 still 21/≤21)
 - **PRIOR:** #28269 OptimalDrivers quantity; #28268 deadhead guard; #28266 DF need-company.
 - **THIS:** LIVE re-run `verify-steps/18841` PASS — still 21 of ≤21 negative company settlements. ENGINE-REGISTER ENG-36 evidence stamped 11-03. No balancing JE. Further → ENG-25b.
