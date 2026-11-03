@@ -67,3 +67,7 @@ Read-only USMCA: diesel guard exits0,17/17 selftests; live0 doubled,316 Diesel e
 
 E8 live forecast.cash_flow_projection_snapshots has7 columns and no projected_expense_cents;69 snapshots, latest2026-11-03. cash-flow.service.ts:645-663 recomputes projected expenses from bills;682-700 snapshots income only. Still OPEN. All316 memo-prefix Diesel expense rows have fuel links, but that narrower population does not close E2's Relay-receipt cohort. Private reproducible results: Downloads/codex-round7-readonly-measurements-phase4.json and codex-round7-diesel-live.log. No production writes.
 
+## CODEX 2026-11-03 escrow follow-up — observed population only
+
+Read-only USMCA:62 accounting escrow postings all resolve account and JE;62 driver-history rows have0 sign errors and0 holds without settlement. Per-driver/per-event-type count + absolute-amount comparison across both histories returns0 mismatched groups. No forfeiture records, so SAF-ORPH-01/02 runtime-forfeit acceptance remains OPEN; no production test transaction created. Private phase5 report in Downloads. This proves observed history aggregate/linkage, not full GL equality or one-to-one event identity.
+
