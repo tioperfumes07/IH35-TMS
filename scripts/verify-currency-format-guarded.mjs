@@ -596,6 +596,16 @@ if (!/formatQuantityTable\(v\.length, 0\)/.test(settleToursQty)) {
   fail("SettlementsToursRegister footer Totals must use formatQuantityTable(, 0)");
 }
 
+
+const truckLeaseQty = read("apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx");
+if (!/formatQuantityTable\(vehicles\.length, 0\)/.test(truckLeaseQty)) {
+  fail("TruckLeaseCreatorModal vehicles count must use formatQuantityTable(, 0)");
+}
+const mapViewQty = read("apps/frontend/src/pages/dispatch/MapView.tsx");
+if (!/formatQuantityTable\(focused\.length, 0\)/.test(mapViewQty)) {
+  fail("MapView focused count must use formatQuantityTable(, 0)");
+}
+
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");
 
