@@ -1,3 +1,19 @@
+## 2026-11-03 — ROUND7.27 batch68: historical control limits and trip population predicates
+
+Batch67 merged#28429 7ec326a640. No production changes; no repeated unchanged database probes.
+
+|Item|Independent evidence|Verdict|
+|---|---|---|
+|Historical#28019 38818f82ca|Full2-file diff and whole tieout reader read. Bank tieout selftest exit0.12affected PASS; module-completion selftest timed out in classifier,then standalone completed PASS. Generated banking.md side effect restored to exact HEAD via patch.|Historical structural nine-account change reviewed. Its stored-balance comparison is superseded on current main; prior independently scoped BANK-TIEOUT result remains OPEN,not a claim that7historicalvariances stillmatch.|
+|Historical#28021 e3cf79e8da|Full2-doc diff read;5affected PASS,1live exclusion.|Published historical evidence,not new engine code or new live proof.|
+|Historical#28022 95dc83854a|Affected suite completed55PASS; full4-file diff already reviewed;3actual queryFn fixtures fail pagination in batch67.|Guards green do NOT close confirmed pagination defects.|
+|Historical#28023 8aefd54c17|Full1-file diff: replaces nested rollback catch comment with intentional-swallow annotation.30affected PASS,6live exclusions,1FAIL-test. Atomic-post guard fails identically on parent and merge: hidden-result plant passed,exit1 both. no-swallow selftest10checksPASS.|Annotation-only guard exemption,not a runtime engine repair. Transpiled output differs in whitespace only; executable behavior not changed. No failed transaction induced in production.|
+|Historical#28024 9985b91393|Full5-doc diff read;9affected PASS,2capability skips,6live exclusions.|Adds build-before-merge instruction only. No compile or runtime fix credit.|
+|Historical#28025 4eafcd4b93|Full1-doc diff read;1affected live exclusion.|Zero forfeiture population/disabled flag cannot independently establish live writer acceptance. Earlier audit already leaves those live checks OPEN; no flag changed.|
+|#28428 2e1e768316|Full backend/guard diff read;hub scan and9/9selftests PASS on9d40f18f54. Actual guard with in-memory targeted plants:remove trip rollup void,rollup cancelled,equipment void -> each exit1;clean0.|Source predicates/regression detection accepted. Actual trip SQL/deployed ByLoad behavior remains UNVERIFIED; no new test file in PR.|
+
+Fresh browser reload still renders old Expense accuracy0% with raw actual and no matched days. #28424 deployed consumer remains UNVERIFIED,not claimed failed on new deployment. Full263-row/249historical-PR audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.27 batch67: live ENG-65 progress and related multi-status defects
 
 Batch66 merged#28426 b1a1b8ae9f;3affected guards,0regressions,normal hooks. No production writes.
