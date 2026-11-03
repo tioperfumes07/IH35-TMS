@@ -147,6 +147,16 @@ const checks = [
   ["apps/frontend/src/components/driver-inbox/DriverInbox.tsx", "BoardSection", "driver-inbox-need-company", "DriverInbox need-company"],
   ["apps/frontend/src/components/drivers/EarningsTab.tsx", "BoardSection", "driver-earnings-need-company", "EarningsTab need-company"],
   ["apps/frontend/src/components/expenses/ExpenseLoadConfirmationsBoard.tsx", "BoardSection", "expense-load-confirmations-need-company", "ExpenseLoadConfirmations need-company"],
+  ["apps/frontend/src/pages/profitability/ByTypeView.tsx", "BoardSection", "profitability-by-type-need-company", "ByType need-company"],
+  ["apps/frontend/src/pages/profitability/ByLaneView.tsx", "BoardSection", "profitability-by-lane-need-company", "ByLane need-company"],
+  ["apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx", "BoardSection", "qbo-sync-status-need-company", "QboSyncStatus need-company"],
+  ["apps/frontend/src/pages/lists/CatalogIndex.tsx", "BoardSection", "catalog-index-need-company", "CatalogIndex need-company"],
+  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", "BoardSection", "driver-teams-need-company", "DriverTeams need-company"],
+  ["apps/frontend/src/pages/units/UnitDetail.tsx", "BoardSection", "unit-detail-need-company", "UnitDetail need-company"],
+  ["apps/frontend/src/pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx", "BoardSection", "hos-driver-map-need-company", "HosDriverMap need-company"],
+  ["apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx", "BoardSection", "daily-tasks-need-company", "DailyTasks need-company"],
+  ["apps/frontend/src/pages/assets/AssetsWorkspacePage.tsx", "BoardSection", "assets-workspace-need-company", "AssetsWorkspace need-company"],
+  ["apps/frontend/src/pages/onboarding/OnboardingWizard.tsx", "BoardSection", "onboarding-wizard-need-company", "OnboardingWizard need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
