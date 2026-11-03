@@ -99,6 +99,13 @@ const comparable = read("apps/frontend/src/components/vehicle-profile/Comparable
 if (!/formatUsd\(cents \/ 100\)/.test(comparable)) {
   fail("ComparableUnitsWidget per-mile must use formatUsd");
 }
+const driverHub = read("apps/frontend/src/pages/home/DriverHubReportingPage.tsx");
+if (!/formatUsdCents\(r\.approved_advance_cents\)/.test(driverHub)) {
+  fail("DriverHubReportingPage CSV approved volume must use formatUsdCents");
+}
+if (/\(r\.approved_advance_cents \/ 100\)\.toFixed\(2\)/.test(driverHub)) {
+  fail("DriverHubReportingPage must not hand-roll approved_advance_cents / 100 toFixed");
+}
 
 // The regression test exists (renders a no-load row's currency path).
 read("apps/frontend/src/components/dispatch/constants.money.test.ts");

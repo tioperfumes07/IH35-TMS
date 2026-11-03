@@ -65,7 +65,7 @@ function exportCsv(data: InboxReportingData) {
       r.approval_rate_pct ?? "",
       r.avg_time_to_view_seconds ?? "",
       r.avg_time_to_approve_seconds ?? "",
-      (r.approved_advance_cents / 100).toFixed(2),
+      JSON.stringify(formatUsdCents(r.approved_advance_cents)),
     ].join(",")
   );
   const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv" });
