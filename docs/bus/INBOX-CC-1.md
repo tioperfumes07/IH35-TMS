@@ -40,3 +40,16 @@ BUILD (permanent):
 DONE = USMCA exact-name groups 0 (72 rows merged), queue live with the 1 + near sets, unique indexes live, guard green. Deadline 2026-11-03T03:00Z. Codex verifies.
 
 ## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
+
+## LEAD 11-03 9:40 AM CT — E7 UPDATED — OWNER 9:35 AM CT (verbatim): "merge all near duplicates, remember a driver profile vendor can have multiple users in samsara. only one driver profile in the app. get those done. merge, use logic. you decide."
+Decision (Lead, delegated by owner "you decide"): merge ALL into one profile per person —
+- the 65 exact-name groups (72 extra rows);
+- Juan Pablo Hernandez Estrada (CDL …0697 / …0637 = one-digit typo, same 07-04 import) → one profile; keep the CDL on the survivor that matches his CDL document if on file, else the Active row's;
+- near-duplicates: angel alfonso sosa → angel alfonso sosa perez; carlos mauricio + carlos mauricio carvallo → carlos mauricio pena carvallo; humberto martinez → humberto martinez franco; jesus armando morales → jesus armando morales leal; leonel antonio morales → leonel antonio morales noguez; neftali urbano coronado → neftali coronado urbano.
+Survivor = Active/Probation row with the most linked records; it keeps the fuller legal name. Evidence on each merge row: hard id where present, else owner order 11-03 9:35 AM CT.
+SAMSARA (owner): one driver profile can have MULTIPLE Samsara users → do NOT add a unique samsara_driver_id-per-driver assumption; store Samsara user ids in a many-to-one link (driver_samsara_users: samsara_driver_id UNIQUE per company → driver_id), carry every merged row's samsara_driver_id into it, and point the Samsara readers at it. Same shape CC-3 builds for Relay cards (relay_driver_links).
+No owner confirm queue needed for this list (decided). Keep the create/import resolve-before-insert + guard (0 duplicate profiles). Deadline unchanged 21:00Z.
+
+## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
+Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
+Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
