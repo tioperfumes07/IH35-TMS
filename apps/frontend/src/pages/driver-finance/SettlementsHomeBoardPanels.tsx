@@ -84,6 +84,8 @@ export type SettlementsHomeBoardPanelsProps = {
   deductionSplitThisWeek: DeductionSplit;
   deductionsListError: boolean;
   thisWeekBucket: SettlementsWeekBucket | undefined;
+  /** ROUND 7.30 / Codex batch88 — bar click selects Week-of roster (URL week_start). */
+  onSelectWeek: (weekStartMs: number) => void;
   weekOfPill: "open" | "closed";
   setWeekOfPill: Dispatch<SetStateAction<"open" | "closed">>;
   weekOfOpenCount: number;
@@ -118,6 +120,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
     deductionSplitThisWeek,
     deductionsListError,
     thisWeekBucket,
+    onSelectWeek,
     weekOfPill,
     setWeekOfPill,
     weekOfOpenCount,
@@ -175,7 +178,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
                   const x = i * 48 + 12;
                   const y = 122 - h;
-                  const isLatest = i === weekBuckets.length - 1;
+                  const isSelected = thisWeekBucket?.weekStartMs === w.weekStartMs;
                   return (
                     <g key={w.weekStartMs}>
                       <rect
@@ -185,10 +188,23 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                         width={24}
                         height={h}
                         rx={1}
-                        fill={value < 0 ? V3.red : isLatest ? V3.shell : V3.data}
-                        style={{ transformOrigin: `${x + 12}px 122px` } as CSSProperties}
+                        fill={value < 0 ? V3.red : isSelected ? V3.shell : V3.data}
+                        opacity={isSelected || value < 0 ? 1 : 0.72}
+                        style={{ transformOrigin: `${x + 12}px 122px`, cursor: "pointer" } as CSSProperties}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Week of ${formatWeekOfTitle(new Date(w.weekStartMs))}`}
+                        aria-pressed={isSelected}
+                        data-testid={`settlements-home-week-bar-${w.label}`}
+                        onClick={() => onSelectWeek(w.weekStartMs)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onSelectWeek(w.weekStartMs);
+                          }
+                        }}
                       />
-                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: V3.muted, fontFamily: V3.font }}>
+                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
                         {w.label}
                       </text>
                     </g>
@@ -305,7 +321,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               </button>
             </span>
           }
-          footer={`This week · ${formatQuantityTable(weekOfRows.length, 0)} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
+          footer={`Selected week · ${formatQuantityTable(weekOfRows.length, 0)} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
           testId="settlements-home-week-of-panel"
         >
           <div style={{ padding: "0 0 8px" }} data-testid="settlements-home-week-of-body">
@@ -335,7 +351,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
             </div>
             {weekOfRows.length === 0 ? (
               <div style={{ padding: "14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
-                No {weekOfPill === "open" ? "open" : "closed"} settlements this week.
+                No {weekOfPill === "open" ? "open" : "closed"} settlements for this week.
               </div>
             ) : (
               weekOfRows.map((s) => {

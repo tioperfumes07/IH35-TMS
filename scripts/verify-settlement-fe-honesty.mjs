@@ -57,6 +57,17 @@ export function run(overrides = {}) {
     "Settlements home must render REG-005 KPI strip (SettlementsPage) + V3 week/deductions panels (SettlementsPage + SettlementsHomeBoardPanels)",
     errors
   );
+  // ROUND 7.30 / Codex batch88 — historical week bars must select Week-of via week_start + onSelectWeek.
+  assert(
+    page.includes('searchParams.get("week_start")') &&
+      page.includes("onSelectWeek={selectWeekStart}") &&
+      homeBoard.includes("onSelectWeek") &&
+      homeBoard.includes('data-testid={`settlements-home-week-bar-${w.label}`}') &&
+      homeBoard.includes('role="button"') &&
+      homeBoard.includes("aria-pressed"),
+    "Settlements home week chart bars must be accessible selectors that set week_start / onSelectWeek",
+    errors
+  );
   // 443.280 fill — Payments focus filters are V3KpiTile (not local KpiCard chrome).
   assert(
     page.includes('data-settlements-payments-v3-kpis="1"') &&
