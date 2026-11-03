@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~5:15 PM CT) — Codex batch91/92 Settlements week TZ + deductions caption
+- **PRIOR:** #28557 Manual JE #241 size=sm MERGED-UNVERIFIED.
+- **THIS:** Settlements week buckets → companyWeekStartSundayIso / weekStartIso (America/Chicago); formatWeekOfTitle prefers bare ISO; deductions title `Deductions · Week of …` (batch91); honesty plants CT/caption. Live UNVERIFIED.
+- **NEXT:** live DONE-LIVE #241 + Settlements week; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~5:10 PM CT) — FAILED-LIVE #241 Manual JE Class/Debit
 - **PRIOR:** #28555 Codex settlement/reimburse verify; ROUND 7.30g reopened #241.
 - **THIS:** Manual JE Step 2 Account/Class ReferenceSelect size="sm" (drop FILTER min-w-[10rem] ~142px that overlapped Debit ~27px); verify-ui4 size=sm plant; ManualJEModal vitest layout proof (no min-w-[10rem], h-10 form chrome). PENDING #241 → MERGED-UNVERIFIED. Live UNVERIFIED.
