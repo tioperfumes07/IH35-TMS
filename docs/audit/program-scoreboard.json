@@ -1,10 +1,10 @@
 {
-  "healthzSha": "67029ad",
-  "generated_at": "2026-11-03T00:57:13.462Z",
+  "healthzSha": "92c525b",
+  "generated_at": "2026-11-03T02:27:06.613Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "67029ad",
+    "deployedSha": "92c525b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28236,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/02/2026, 07:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28236",
+      "sha": "92c525bcc2",
+      "committedAtIso": "2026-11-03T01:01:41Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/02/2026, 06:57 PM CT",
+      "url": "",
+      "sha": "027187dd2c",
+      "committedAtIso": "2026-11-03T00:57:13Z"
+    },
+    {
       "number": 28235,
       "title": "GUARD: Load Costs rate selftest plants formatUsdRateTable drop",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28228",
       "sha": "3ee2c75bd8",
       "committedAtIso": "2026-11-02T18:34:15-06:00"
-    },
-    {
-      "number": 28227,
-      "title": "BUS: P0 driver dedupe (72 duplicate rows, row 263) → CC-1; ROUND 7.27 Codex full audit of all 263 rows",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28227",
-      "sha": "aa0aea1c9d",
-      "committedAtIso": "2026-11-02T18:32:03-06:00"
-    },
-    {
-      "number": 28226,
-      "title": "BUS: P0 Relay driver fix → CC-3 (owner order 6:18 PM CT); root cause integration_id never written; CC-2 note superseded",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28226",
-      "sha": "55b574c34d",
-      "committedAtIso": "2026-11-02T18:23:45-06:00"
     }
   ]
 }
