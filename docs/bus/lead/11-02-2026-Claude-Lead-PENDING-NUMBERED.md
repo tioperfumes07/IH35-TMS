@@ -145,7 +145,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 73 | R61 | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | MERGED-UNVERIFIED |
 | 74 | R62 | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | MERGED-UNVERIFIED |
 | 75 | R64 | Insurance | Insurance › Home — board verdict REBUILT | LEAD | CODED |
-| 76 | R313 | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | Cursor | OPEN |
+| 76 | R313 | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | Cursor | MERGED-UNVERIFIED — EscrowRegisterPage Opening balance (historical) first line; live UNVERIFIED |
 | 77 | R314 | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | Cursor | OPEN |
 
 ## C · Reports & Load history builds
