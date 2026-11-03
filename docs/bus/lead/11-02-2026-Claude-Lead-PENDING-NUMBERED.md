@@ -90,7 +90,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 23 | R216 | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | OPEN |
 | 24 | R217 | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | OPEN |
 | 25 | R218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | CODED |
-| 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | CODED |
+| 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Dispatch Pre-Settlement/LoadDetail CTA; live UNVERIFIED |
 | 27 | R220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | OPEN |
 | 28 | R221 | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | OPEN |
 | 29 | R222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | OPEN |
@@ -114,11 +114,11 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 45 | R31 | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | CODED |
-| 46 | R32 | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | CODED |
-| 47 | R33 | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | CODED |
-| 48 | R34 | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | CODED |
-| 49 | R35 | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | CODED |
+| 45 | R31 | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — CashFlowHomeTab BoardSection/V3; verify-cash-flow-home-tab; live board verdict UNVERIFIED |
+| 46 | R32 | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — Projected tab + D042/D073 guards; live board verdict UNVERIFIED |
+| 47 | R33 | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | MERGED-UNVERIFIED — AvP BoardSection/V3 + formatUsdCents axis; live board verdict UNVERIFIED |
+| 48 | R34 | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — RollingLedgerTab ParityTable; live board verdict UNVERIFIED |
+| 49 | R35 | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — ManualDailyProjectionsTab; live board verdict UNVERIFIED |
 | 50 | R37 | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | PARTIAL |
 | 51 | R38 | Banking | Banking › Home — board verdict REBUILT | Cursor | PARTIAL |
 | 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | OPEN |
@@ -336,7 +336,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 234 | R177 | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | OPEN |
 | 235 | R178 | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | MERGED-UNVERIFIED — verify-homepage-scenario-tracker-staleness D059 PASS; live UNVERIFIED |
 | 236 | R179 | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | MERGED-UNVERIFIED — verify-transaction-health D060 PASS; live UNVERIFIED |
-| 237 | R180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | CODED-QUEUED |
+| 237 | R180 | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | MERGED-UNVERIFIED — TXH display_label payee·date·$ / memo strip UUID; live UNVERIFIED |
 | 238 | R181 | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | MERGED-UNVERIFIED — txHealthLedgerText formatUsdCents; live UNVERIFIED |
 | 239 | R182 | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | CODED |
 | 240 | R183 | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | MERGED-UNVERIFIED — verify-91105 D064 PASS; live UNVERIFIED |

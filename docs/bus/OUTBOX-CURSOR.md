@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:15 PM CT) — ROUND 7.30 tip D061 + #26 CF boards
+- **PRIOR:** #28508 tip #18 D021 D062.
+- **THIS:** PENDING D061 + #26 Settlement Close Dispatch CTA + CF Home/Projected/AvP/RL/Manual (#45-49) → MERGED-UNVERIFIED (guards/boards present; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
+- **NEXT:** OPEN/PARTIAL + #25 statement; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:05 PM CT) — ROUND 7.30 tip #18 D021 D062
 - **PRIOR:** #28507 Company Settlements #160 pending KPIs + D007-D014 tip.
 - **THIS:** PENDING #18 expense confirm MultiSelect/bulk, D021 round-trip full names, D062 TXH wiring $ → MERGED-UNVERIFIED (guards PASS; live UNVERIFIED). Lead owns dates/UI. Batch75 Reclassify → CC-1.
