@@ -1,3 +1,16 @@
+## 2026-11-03 — ROUND7.30 batch90: settlement formatter history and reproduced guard coverage hole
+
+Batch89 merged #28524 7a47a9c51384cd82c75e2613aa9bd0614c8b1567,normal hooks,1affected,0regressions.
+
+| PR | Independent code/guard review | Historical affected checks | Live verdict |
+|---|---|---|---|
+|#28100 b27d959072|Both settlement amount components and changed guard diff read;scan+selftest PASS;actual monetary-render mutation escapes|12/12PASS at exact merge;first-parent diff used for merge commit|Affected amount surfaces not newly visually certified|
+|#28103 2da98176f8|All4file diffs read;dollar versus cents calls preserve units;shared money.test.ts9/9PASS|36/36PASS at exact merge|No pay-run or deduction action submitted;all-surface verification still open|
+
+CONFIRMED guard gap on both #28100 and current245c33eaa3: verify-reimbursements-section-uses-paritytable assertFormatUsd accepts any formatUsd call anywhere. Independent in-memory actual-validator probe changes amount renderer formatUsd(line.amount)→String(line.amount),leaves formatted subtotal;Reimbursements and ExtraPay both return0errors,clean0. Private Downloads/codex-round7-reimbursement-format-probe.cjs. This proves missing row-format enforcement,NOT a currently wrong displayed amount. Cursor:retarget same guard/add rendered behavior plants for both row and subtotal;no new family/baseline. No application/guard or production edits by reviewer.
+
+Full audit remains INCOMPLETE;remaining cross-lane fixes and live coverage stay open.
+
 ## 2026-11-03 — ROUND7.30 batch89: scheduled miles re-measure and populated settlement registers
 
 - Batch88 merged #28520 abba701145e721e9a029b3a63e0aa2a9b1bc2491;normal hooks,3affected,0regressions. Initial fast-merge fetch lost a concurrent origin/main ref race;rerun succeeded without lock removal or bypass. PR evidence URL made explicit after warning;no fabricated screenshot/path.
