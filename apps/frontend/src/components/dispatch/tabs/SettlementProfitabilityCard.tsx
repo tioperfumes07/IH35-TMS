@@ -13,7 +13,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { getLoadProfitability, classifyProfit } from "../../../lib/loadProfit";
-import { formatUsdCents } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 
 type Props = {
   loadId: string;
@@ -110,7 +110,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
           {netLabel}
         </div>
         <div className="mt-0.5 text-xs text-gray-500">
-          {d.margin_pct.toFixed(1)}% margin
+          {formatQuantityTable(d.margin_pct, 1)}% margin
           {d.miles > 0 ? ` · ${money(Math.round(d.net_profit_cents / d.miles * 100), currencyCode)}/mi` : ""}
         </div>
       </div>

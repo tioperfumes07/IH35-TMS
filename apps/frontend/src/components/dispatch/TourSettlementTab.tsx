@@ -80,7 +80,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft")
   );
   const pm = (c: number) => (totalMiles > 0 ? `${formatUsdRateTable(c / 100 / totalMiles, 3)} p/m` : DASH);
-  const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
+  const pct = (c: number) => (invoicedCents > 0 ? `${formatQuantityTable((c / invoicedCents) * 100, 2)}%` : DASH);
   const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
   // NOTE: `name` (not `label`) deliberately -- this is a P&L waterfall line-item list, not a
   // ParityTable/DataTable column array; verify-sortable-columns-and-void-visibility.mjs's A1
@@ -161,7 +161,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           <div className="ldt-row"><span>Driver pay</span><span className="ldt-m">−{money(cs.driver_pay_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Factoring<span className="ldt-sub">{cs.factoring.factored_invoices ? `${cs.factoring.factored_invoices} invoice(s) factored · face ${money(cs.factoring.face_cents, currencyCode)}` : "not factored"}{cs.factoring.broker_advance_applied_cents ? ` · broker advance applied ${money(cs.factoring.broker_advance_applied_cents, currencyCode)}` : ""}</span></span><span className="ldt-m">{cs.factoring.factored_invoices ? "see Factoring tab" : "−$0.00"}</span></div>
           <div className="ldt-row big"><span>Margin</span><span className="ldt-m" data-testid="company-margin">{money(cs.margin_cents, currencyCode)}</span></div>
-          <div className="ldt-row"><span>Margin %</span><span className="ldt-m">{tot.margin_pct == null ? DASH : `${tot.margin_pct.toFixed(1)}%`}</span></div>
+          <div className="ldt-row"><span>Margin %</span><span className="ldt-m">{tot.margin_pct == null ? DASH : `${formatQuantityTable(tot.margin_pct, 1)}%`}</span></div>
           <div className="ldt-row"><span>Per practical mile</span><span className="ldt-m">{perMile(tot.per_mile_practical_cents)}</span></div>
           <div className="ldt-row"><span>Per real mile</span><span className="ldt-m">{perMile(tot.per_mile_real_cents)}</span></div>
         </div>

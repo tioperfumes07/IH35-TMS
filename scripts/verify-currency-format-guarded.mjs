@@ -160,6 +160,16 @@ if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand
 const optimalDrivers = read("apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx");
 if (!/formatQuantityTable\(n, 0\)/.test(optimalDrivers)) fail("OptimalDriversPanel scores must use formatQuantityTable");
 if (/n\.toFixed\(0\)/.test(optimalDrivers)) fail("OptimalDriversPanel must not hand-roll score toFixed(0)");
+if (!/formatQuantityTable\(\(c \/ invoicedCents\) \* 100, 2\)/.test(tourSettle)) fail("TourSettlementTab pct must use formatQuantityTable");
+if (!/formatQuantityTable\(tot\.margin_pct, 1\)/.test(tourSettle)) fail("TourSettlementTab margin % must use formatQuantityTable");
+const tourPre = read("apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx");
+if (!/formatQuantityTable\(p, 1\)/.test(tourPre)) fail("TourPreSettlementTab pct must use formatQuantityTable");
+const loadDetailCosts = read("apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx");
+if (!/formatQuantityTable\(\(margin \/ revenue\) \* 100, 1\)/.test(loadDetailCosts)) fail("LoadDetailCostsTab margin % must use formatQuantityTable");
+const tourLoadRows = read("apps/frontend/src/components/dispatch/TourLoadRows.tsx");
+if (!/formatQuantityTable\(r\.load_margin_pct, 1\)/.test(tourLoadRows)) fail("TourLoadRows margin % must use formatQuantityTable");
+const settleProfit = read("apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx");
+if (!/formatQuantityTable\(d\.margin_pct, 1\)/.test(settleProfit)) fail("SettlementProfitabilityCard margin % must use formatQuantityTable");
 
 const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx");
 if (!/formatQuantityTable\(Number\(event\.billable_minutes/.test(detention)) {
