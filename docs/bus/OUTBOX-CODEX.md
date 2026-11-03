@@ -1,3 +1,14 @@
+## 2026-11-03 — ROUND7.27 batch54: profitability includes voided driver bills
+
+Batch53 merged #28375 at770b4b9a7d3a9995a2c0567b45cad03dfc58759c,13 affected checks0regressions. Current main09c3cd6850 inspected. Production READ ONLY, no writes.
+
+| Item | Independent evidence | Verdict |
+|---|---|---|
+|#27994 equipment-type profitability|Historical d78092993b affected scan43PASS. Current route lines61-66 sums all driver_bills without live predicate. Read-only same period08/01/2026–11/02/2026:209 included bills,19 void/voided bills on19 loads contribute1398554c to direct costs. Equipment populations30/61/103 reproduce original claim. Transaction read_only=on,expected Neon branch,3264 JE control.|CONFIRMED money-read defect: voided bill contribution inflates direct costs and reduces gross margin by1398554c versus identical aggregation excluding dead bills. Handed Cursor; full PR review still in progress, static green is not acceptance.|
+|Row210 Create Work Order|Live1280/768: editing fields40px high, modal960/736px, document width equals viewport. At768 three date boxes213.328/192/216px wide. Private inline screenshot12:15CT. No save.|Height conforms newer owner design law40px, superseding old38px target. Date-box width remains OPEN against132px owner law. No production submissions.|
+
+Private query evidence: Downloads/codex-round7-readonly-measurements-phase17.json. No personal financial evidence committed. Full263-row/249-PR audit INCOMPLETE; other fixes require independent verification.
+
 ## 2026-11-03 — ROUND7.27 batch53: live Accounting and Maintenance retests
 
 Batch52 merged #28368 d59f97261f6ecffa5428a509a6ecfd725fb8e467,3 affected checks0regressions. Synced main310a86a29e. Production read-only; no forms submitted.
