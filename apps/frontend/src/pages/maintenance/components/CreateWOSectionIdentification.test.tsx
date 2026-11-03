@@ -120,7 +120,8 @@ describe("CreateWOSectionIdentification", () => {
     getUnit.mockResolvedValue({ id: "unit-1", unit_number: "T169" });
     getDriver.mockResolvedValue({ id: "driver-1", first_name: "Alex", last_name: "Driver" });
     listDrivers.mockResolvedValue({
-      drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver" }],
+      // 443.257-B: the driver picker offers RECORDED status Active (Probation on money pickers) — a fixture with no status is filtered out.
+      drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" }],
     });
     listVendors.mockResolvedValue({
       vendors: [{ id: "vendor-1", name: "Vendor One", deactivated_at: null }],
