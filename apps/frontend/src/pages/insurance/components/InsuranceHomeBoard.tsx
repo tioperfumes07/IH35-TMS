@@ -23,11 +23,10 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3 } from "../../../design/v3-tokens";
 import { companyToday } from "../../../lib/businessDate";
-import { formatQuantityTable } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { formatUsdCents } from "../../../utils/qboFormat";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function dayMs(iso: string): number {

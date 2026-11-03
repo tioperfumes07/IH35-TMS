@@ -1,3 +1,9 @@
+## OUTBOX (11-02-2026 ~11:15 PM CT) — Cursor house money (dispatch/fuel/insurance/DF)
+- **PRIOR:** #28192–#28220 SelectCombobox baseline 2 · ENG-21 BLOCKED tip (#28222).
+- **THIS:** FuelAssignmentPopup · BookLoadModalV4 · SettlementProfitabilityCard · dispatch formatMoneyCents/Dollars USD → formatUsdCents/formatUsd (MXN Intl kept) · InsuranceHomeBoard unify lib/money · useLiveDebt displayDebt → formatUsd. Extended verify-currency-format-guarded + verify-fuel-assignment-popup.
+- **ENG-21 BLOCKED:** rate con not on file for 13699 — no Edit Load.
+- **NEXT:** more Cursor engines; ENG-22 AUTH apply; Dreamline/match deferred. Safety/CC-3 stays off Cursor.
+
 ## OUTBOX (11-02-2026 ~10:00 PM CT) — Cursor BUILD-FIRST tip (#28192–#28205)
 - **SHIPPED THIS CONT:** #28192 CRM/Drivers format · #28195 shared format · #28198 inventory/integrations/forensic/payroll · #28200 System qty+U18 · #28201 Driver Bill U18 · #28203 SelectCombobox shrink · #28204 PolicyDetail Demand dollars · #28205 Load History epoch guard + Lawsuits deep-link.
 - **ENG-21 BLOCKED:** load 13699 delivery already Bradley IL/Copamex; rate con not on file — no Edit Load.
