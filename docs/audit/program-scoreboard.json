@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6c88335",
-  "generated_at": "2026-11-03T04:24:25.945Z",
+  "healthzSha": "095b256",
+  "generated_at": "2026-11-03T06:32:56.893Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6c88335",
+    "deployedSha": "095b256",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/02/2026, 10:24 PM CT",
+      "url": "",
+      "sha": "095b2560e9",
+      "committedAtIso": "2026-11-03T04:24:26Z"
+    },
+    {
       "number": 28239,
       "title": "CC-2-FINDING: ACCT-F443260-ROW260 LANE: FINANCIAL — 443.260: range-geocode stops skip fence; 3 Edison NJ deliveries uninvoiced ($14,700)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28234",
       "sha": "412ca612aa",
       "committedAtIso": "2026-11-02T18:48:28-06:00"
-    },
-    {
-      "number": 28233,
-      "title": "FINDING: Cursor house money wave 5 — driver reverse cents fix + TotalsStack",
-      "state": "merged",
-      "mergedAtCt": "11/02/2026, 06:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28233",
-      "sha": "515cce9882",
-      "committedAtIso": "2026-11-02T18:44:46-06:00"
     }
   ]
 }
