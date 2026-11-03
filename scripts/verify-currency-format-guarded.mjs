@@ -155,6 +155,7 @@ if (/u\.miles\.toFixed\(1\)/.test(unitSplit) || /data\.total_miles\.toFixed\(1\)
 
 const deadhead = read("apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx");
 if (!/formatQuantityTable\(n\)/.test(deadhead)) fail("DeadheadOptimizerPanel miles must use formatQuantityTable");
+if (!/formatQuantityTable\(row\.score, 2\)/.test(deadhead)) fail("DeadheadOptimizerPanel score must use formatQuantityTable");
 if (/n\.toFixed\(1\)/.test(deadhead)) fail("DeadheadOptimizerPanel must not hand-roll miles toFixed(1)");
 
 const detention = read("apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx");

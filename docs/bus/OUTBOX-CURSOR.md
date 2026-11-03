@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:40 AM CT) — deadhead guard retarget + DeadheadOptimizer score quantity
+- **PRIOR:** #28266 DF board need-company.
+- **THIS:** verify-deadhead-pay-line plants retarget settlementDetailLineMaps; escrow-pending ParityTable selftest plant fixed; DeadheadOptimizer ¢/mi score → formatQuantityTable(,2).
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub → CC-1. ENG-34 LIVE/tool ~29 remain.
+
 ## OUTBOX (11-03-2026 ~11:25 AM CT) — DF board need-company wave (pre-settle/cash/deductions/detail)
 - **PRIOR:** #28265 dwell SAVEPOINT behavior (Codex #27976).
 - **THIS:** SettlementsPreSettlements / CashAdvances / Deductions / EscrowDeductionsPending / SettlementDetail / SettlementWorkflow need-company BoardSections. fill-shell guard extended.
