@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 import { ListErrorState } from "../../components/ListErrorState";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
 export function LegalAttorneyReviewPage() {
@@ -51,6 +52,14 @@ export function LegalAttorneyReviewPage() {
     ],
     [navigate],
   );
+
+  if (!operatingCompanyId) {
+    return (
+      <BoardSection title="Attorney Review" testId="legal-attorney-review-need-company">
+        <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+      </BoardSection>
+    );
+  }
 
   return (
     <div className="space-y-3">
