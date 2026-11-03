@@ -30,8 +30,11 @@ export function check(subnavSrc, files, manifestSrc = fs.readFileSync(MANIFEST, 
   if (!/\/driver-finance\/cash-advances/.test(driversSrc) || !/\/driver-finance\/escrow/.test(driversSrc)) {
     v.push(`${DRIVERS}: KPI destinations must remap to /driver-finance/cash-advances + /escrow under Settlements`);
   }
-  if (!/!underSettlements\s*\?\s*\(/.test(driversSrc) || !/drivers-unified-subnav/.test(driversSrc)) {
-    v.push(`${DRIVERS}: must suppress drivers-unified-subnav when underSettlements`);
+  // Bind to the actual nav mount (Codex batch44): a global !underSettlements regex also matches
+  // the Duplicate-profiles link — that alone must not green this check. Require the subnav
+  // testid to sit inside the underSettlements-gated branch.
+  if (!/!underSettlements\s*\?\s*\(\s*<div\s+data-testid="drivers-unified-subnav"/.test(driversSrc)) {
+    v.push(`${DRIVERS}: must suppress drivers-unified-subnav when underSettlements (testid must sit in the gated branch)`);
   }
   return v;
 }
@@ -43,8 +46,20 @@ if (process.argv.includes("--selftest")) {
   const p2 = check(sub, [["plant.tsx", '<Link to="/drivers">Drivers</Link>']]).length > 0;
   const p3 = check(sub, files, fs.readFileSync(MANIFEST, "utf8").replace('path="/driver-finance/deductions"', 'path="/gone"')).length > 0;
   const p4 = check(sub, files, undefined, drivers.replace("underSettlements = location.pathname.startsWith(\"/driver-finance\")", "underSettlements = false")).length > 0;
-  if (!p1 || !p2 || !p3 || !p4) { console.error(`${LABEL} SELFTEST FAIL: plant escaped (${p1 ? "" : "subnav "}${p2 ? "" : "page "}${p3 ? "" : "route "}${p4 ? "" : "drivers-embed"})`); process.exit(1); }
-  console.log(`${LABEL} --selftest PASS 4/4`); process.exit(0);
+  // Codex batch44 escaped plant: flip only the subnav gate to {true ? ( — Duplicate-profiles
+  // !underSettlements elsewhere must not keep this green.
+  const subnavGateFrom = "{!underSettlements ? (\n        <div data-testid=\"drivers-unified-subnav\"";
+  const subnavGateTo = "{true ? (\n        <div data-testid=\"drivers-unified-subnav\"";
+  if (!drivers.includes(subnavGateFrom)) {
+    console.error(`${LABEL} SELFTEST FAIL: subnav gate plant target missing — guard out of sync`);
+    process.exit(1);
+  }
+  const p5 = check(sub, files, undefined, drivers.replace(subnavGateFrom, subnavGateTo)).length > 0;
+  if (!p1 || !p2 || !p3 || !p4 || !p5) {
+    console.error(`${LABEL} SELFTEST FAIL: plant escaped (${p1 ? "" : "subnav "}${p2 ? "" : "page "}${p3 ? "" : "route "}${p4 ? "" : "drivers-embed "}${p5 ? "" : "subnav-gate"})`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS 5/5`); process.exit(0);
 }
 const v = check(sub, files);
 if (v.length) { console.error(`${LABEL}: FAIL\n  ${v.join("\n  ")}`); process.exit(1); }
