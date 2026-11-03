@@ -1,0 +1,251 @@
+diff --git a/apps/backend/src/cash-flow/__tests__/driver-ap-carried-by-settlement.test.ts b/apps/backend/src/cash-flow/__tests__/driver-ap-carried-by-settlement.test.ts
+index b4b0cb683f..ec79361250 100644
+--- a/apps/backend/src/cash-flow/__tests__/driver-ap-carried-by-settlement.test.ts
++++ b/apps/backend/src/cash-flow/__tests__/driver-ap-carried-by-settlement.test.ts
+@@ -8,6 +8,8 @@ import { driverApBillCarriedBySettlementSql } from "../cash-flow-obligations.sql
+ // settlement row; every cash-flow reader of accounting.bills must apply the shared predicate.
+ const here = dirname(fileURLToPath(import.meta.url));
+ const service = readFileSync(join(here, "..", "cash-flow.service.ts"), "utf8");
++// E8 11-03: Actual vs Projected's projected-expense reader moved to cashFlowProjectedExpensesByDaySql (obligations file).
++const obligations = readFileSync(join(here, "..", "cash-flow-obligations.sql.ts"), "utf8");
+ 
+ /** Each SQL template literal that reads `FROM accounting.bills b`. */
+ function billReaders(src: string): string[] {
+@@ -43,9 +45,11 @@ describe("driverApBillCarriedBySettlementSql", () => {
+ });
+ 
+ describe("every cash-flow reader of accounting.bills applies it (no reader double-counts settlement pay)", () => {
+-  const readers = billReaders(service);
++  const readers = [...billReaders(service), ...billReaders(obligations)];
+ 
+-  it("finds the 4 readers (daily prediction, 7-day net, actual-vs-projected, rolling ledger)", () => {
++  it("finds the 4 readers (daily prediction, 7-day net, rolling ledger in the service; actual-vs-projected in obligations)", () => {
++    expect(billReaders(service).length).toBe(3);
++    expect(billReaders(obligations).length).toBe(1);
+     expect(readers.length).toBe(4);
+   });
+ 
+diff --git a/apps/backend/src/cash-flow/__tests__/e8-projected-expenses-by-day.test.ts b/apps/backend/src/cash-flow/__tests__/e8-projected-expenses-by-day.test.ts
+new file mode 100644
+index 0000000000..cf1d6e55c3
+--- /dev/null
++++ b/apps/backend/src/cash-flow/__tests__/e8-projected-expenses-by-day.test.ts
+@@ -0,0 +1,31 @@
++import { describe, expect, it } from "vitest";
++import { cashFlowProjectedExpensesByDaySql } from "../cash-flow-obligations.sql.js";
++
++// LEAD 11-03 E8 (row 261): Actual vs Projected read bills only → $0.00 projected expense on almost every day.
++// Measured USMCA Oct 2026: this query = 18 days / $63,619.90 (29 settlements $43,023.50 + bills + adjustments).
++describe("cashFlowProjectedExpensesByDaySql — every obligation class the daily engine projects", () => {
++  const sql = cashFlowProjectedExpensesByDaySql();
++
++  it("sums driver pay (settlements), bills due and manual adjustments", () => {
++    expect(sql).toContain("FROM driver_finance.driver_settlements s");
++    expect(sql).toContain("FROM accounting.bills b");
++    expect(sql).toContain("FROM accounting.cash_flow_adjustments a");
++  });
++
++  it("buckets a settlement on the engine's date and counts it ONCE (its driver A/P bills are excluded)", () => {
++    expect(sql).toContain("COALESCE(s.bank_settle_date, s.payment_sent_at::date, s.payment_queued_at::date, s.period_end)");
++    expect(sql).toContain("cdb.accrued_bill_id = b.id");
++  });
++
++  it("a PAID settlement stays projected on its day (no unpaid filter) — projection is what was expected", () => {
++    expect(sql).not.toMatch(/NOT IN \('cleared', 'manual_paid', 'bounced'\)/);
++    expect(sql).toContain("s.voided_at IS NULL");
++  });
++
++  it("is scoped to one company and the requested window", () => {
++    expect(sql).toContain("s.operating_company_id = $1::uuid");
++    expect(sql).toContain("b.operating_company_id = $1::uuid");
++    expect(sql).toContain("a.operating_company_id = $1::uuid");
++    expect(sql).toContain("projected_date BETWEEN $2::date AND $3::date");
++  });
++});
+diff --git a/apps/backend/src/cash-flow/cash-flow-obligations.sql.ts b/apps/backend/src/cash-flow/cash-flow-obligations.sql.ts
+index 8b3770c144..4cccaafd62 100644
+--- a/apps/backend/src/cash-flow/cash-flow-obligations.sql.ts
++++ b/apps/backend/src/cash-flow/cash-flow-obligations.sql.ts
+@@ -1,4 +1,4 @@
+-import { activeSettlementLine, liveSettlement } from "../accounting/live-document-predicates.sql.js";
++import { activeSettlementLine, liveBill, liveSettlement } from "../accounting/live-document-predicates.sql.js";
+ 
+ /** A live, unpaid settlement is a cash obligation once finalized or scheduled.
+  * Date bucketing is separate; all forecast views use this same eligibility rule.
+@@ -42,3 +42,45 @@ export function driverApBillCarriedBySettlementSql(billAlias: string): string {
+        AND (cds.status IN ('locked', 'final', 'approved', 'posted', 'closed')
+             OR COALESCE(cds.payment_state, 'unpaid') <> 'unpaid')))`;
+ }
++
++/**
++ * LEAD 11-03 E8 (row 261) — PROJECTED EXPENSES BY DAY for Actual vs Projected. The same three obligation classes the
++ * daily engine (getDailyPrediction) lists — driver pay (settlements), bills due, manual adjustments — summed per day,
++ * as SCHEDULED: an obligation projected for a day stays projected for that day after it is paid (projection is what
++ * was expected, the bank is what happened). The old AvP read accounting.bills only, and every driver bill inside a
++ * closed settlement is (correctly) excluded there, so measured on USMCA October 2026: 3 vendor bills, $743.25, against
++ * 29 settlements / $43,023.50 of driver pay that the engine projects — the screen showed $0.00 on almost every day.
++ *   $1 operating_company_id · $2 from · $3 to  →  rows (projected_date text, projected_expense_cents bigint)
++ * Settlement date bucket = the engine's: COALESCE(bank_settle_date, payment_sent_at, payment_queued_at, period_end).
++ * Eligibility on a PAST day cannot use the engine's unpaid filter (a paid settlement would vanish from its own day), so
++ * it is: live settlement, net_pay > 0, status past draft (locked/final/approved/posted/closed) or payment started.
++ */
++export function cashFlowProjectedExpensesByDaySql(): string {
++  const live = liveSettlement("s");
++  return `
++    SELECT projected_date::text AS projected_date, SUM(cents)::bigint AS projected_expense_cents
++      FROM (
++        SELECT COALESCE(s.bank_settle_date, s.payment_sent_at::date, s.payment_queued_at::date, s.period_end) AS projected_date,
++               ROUND(COALESCE(s.net_pay, 0) * 100)::bigint AS cents
++          FROM driver_finance.driver_settlements s
++         WHERE s.operating_company_id = $1::uuid
++           AND ${live}
++           AND COALESCE(s.net_pay, 0) > 0
++           AND (s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
++                OR COALESCE(s.payment_state, 'unpaid') <> 'unpaid')
++        UNION ALL
++        SELECT b.due_date::date, COALESCE(b.amount_cents, 0)::bigint
++          FROM accounting.bills b
++         WHERE b.operating_company_id = $1::uuid
++           AND ${liveBill("b")}
++           AND NOT ${driverApBillCarriedBySettlementSql("b")}
++        UNION ALL
++        SELECT a.entry_date, a.amount_cents::bigint
++          FROM accounting.cash_flow_adjustments a
++         WHERE a.operating_company_id = $1::uuid
++           AND a.archived_at IS NULL
++      ) obligations
++     WHERE projected_date BETWEEN $2::date AND $3::date
++     GROUP BY projected_date
++     ORDER BY projected_date`;
++}
+diff --git a/apps/backend/src/cash-flow/cash-flow.service.ts b/apps/backend/src/cash-flow/cash-flow.service.ts
+index 99cc5250e9..43922d1759 100644
+--- a/apps/backend/src/cash-flow/cash-flow.service.ts
++++ b/apps/backend/src/cash-flow/cash-flow.service.ts
+@@ -46,7 +46,7 @@ import { driverBillAmountKnown, liveBill, liveExpense, notVoided, openDriverBill
+ import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
+ import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
+ import { operatingBankActualsByDaySql, operatingBankFeedCountSql } from "./cash-flow-bank-actuals.sql.js";
+-import { cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
++import { cashFlowProjectedExpensesByDaySql, cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
+ import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
+ import { openBill } from "../accounting/live-document-predicates.sql.js";
+ import { loadServiceMembershipSql } from "../dispatch/load-service.js";
+@@ -641,20 +641,10 @@ export async function getActualVsProjected(
+     [operatingCompanyId, from, to]
+   );
+ 
+-  // Projected expenses: bills due in range
+-  const projExpRows = await client.query<{ due_date: string; projected_expense_cents: number }>(
+-    `
+-    SELECT
+-      b.due_date::date::text AS due_date,
+-      SUM(COALESCE(b.amount_cents, 0))::int AS projected_expense_cents
+-    FROM accounting.bills b
+-    WHERE b.operating_company_id = $1::uuid
+-      AND b.due_date::date BETWEEN $2::date AND $3::date
+-      AND ${notVoidedSql("b")}
+-      AND NOT ${driverApBillCarriedBySettlementSql("b")}
+-    GROUP BY b.due_date::date
+-    ORDER BY b.due_date::date
+-    `,
++  // Projected expenses: LEAD 11-03 E8 — every obligation class the daily engine projects (driver pay + bills due +
++  // adjustments), as scheduled; past days prefer the frozen snapshot below. Was bills-only → $0.00 on almost every day.
++  const projExpRows = await client.query<{ projected_date: string; projected_expense_cents: number | string }>(
++    cashFlowProjectedExpensesByDaySql(),
+     [operatingCompanyId, from, to]
+   );
+ 
+@@ -670,15 +660,17 @@ export async function getActualVsProjected(
+   // the map — never worse than before this fix, only better once a snapshot exists.
+   const today = companyBusinessDate();
+   const projIncomeCapturedAtMap = new Map<string, string>();
++  const projExpSnapshotMap = new Map<string, number>();
+   if (from < today) {
+     const snapshotRows = await client.query<{
+       prediction_date: string;
+       projected_income_cents: number;
+       captured_at: string;
++      projected_expense_cents: number | string | null;
+     }>(
+       `
+       SELECT prediction_date::text AS prediction_date, projected_income_cents::int AS projected_income_cents,
+-             captured_at::text AS captured_at
++             projected_expense_cents, captured_at::text AS captured_at
+       FROM forecast.cash_flow_projection_snapshots
+       WHERE operating_company_id = $1::uuid
+         AND prediction_date BETWEEN $2::date AND LEAST($3::date, ($4::date - INTERVAL '1 day')::date)
+@@ -690,6 +682,9 @@ export async function getActualVsProjected(
+       // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — surface WHEN this frozen figure was
+       // captured (distinct from prediction_date, the day it projects) to the response below.
+       projIncomeCapturedAtMap.set(r.prediction_date, r.captured_at);
++      if (r.projected_expense_cents !== null && r.projected_expense_cents !== undefined) {
++        projExpSnapshotMap.set(r.prediction_date, Number(r.projected_expense_cents));
++      }
+     }
+   }
+ 
+@@ -701,7 +696,10 @@ export async function getActualVsProjected(
+   }
+ 
+   const projExpMap = new Map<string, number>();
+-  for (const r of projExpRows.rows) projExpMap.set(r.due_date, r.projected_expense_cents);
++  for (const r of projExpRows.rows) projExpMap.set(r.projected_date, Number(r.projected_expense_cents));
++  // E8: the morning snapshot is what the engine actually projected for that day — it wins for past days. NULL = the
++  // row predates expense capture: the scheduled-obligation figure above stands.
++  for (const [date, cents] of projExpSnapshotMap) projExpMap.set(date, cents);
+ 
+ 
+   // Enumerate all dates in range
+diff --git a/apps/backend/src/cron/cash-flow-projection-snapshot.cron.ts b/apps/backend/src/cron/cash-flow-projection-snapshot.cron.ts
+index 12a1d2b74a..ee3242570b 100644
+--- a/apps/backend/src/cron/cash-flow-projection-snapshot.cron.ts
++++ b/apps/backend/src/cron/cash-flow-projection-snapshot.cron.ts
+@@ -33,6 +33,8 @@ export async function insertCashFlowProjectionSnapshot(
+     operating_company_id: string;
+     prediction_date: string;
+     projected_income_cents: number;
++    /** E8 11-03: the engine's expense_subtotal_cents for the day (driver pay + bills due + adjustments). */
++    projected_expense_cents: number;
+     cash_follows_eta: boolean;
+   }
+ ): Promise<void> {
+@@ -41,11 +43,11 @@ export async function insertCashFlowProjectionSnapshot(
+   await client.query(
+     `
+       INSERT INTO forecast.cash_flow_projection_snapshots
+-        (operating_company_id, prediction_date, projected_income_cents, cash_follows_eta)
+-      VALUES ($1::uuid, $2::date, $3, $4)
++        (operating_company_id, prediction_date, projected_income_cents, projected_expense_cents, cash_follows_eta)
++      VALUES ($1::uuid, $2::date, $3, $4, $5)
+       ON CONFLICT (operating_company_id, prediction_date) DO NOTHING
+     `,
+-    [args.operating_company_id, args.prediction_date, args.projected_income_cents, args.cash_follows_eta]
++    [args.operating_company_id, args.prediction_date, args.projected_income_cents, args.projected_expense_cents, args.cash_follows_eta]
+   );
+ }
+ 
+@@ -64,13 +66,13 @@ export async function runCashFlowProjectionSnapshotCronTick(deps?: {
+   for (const operatingCompanyId of companyIds) {
+     assertTenantContext(operatingCompanyId, CRON_NAME);
+     try {
+-      const { cashFollowsEta, incomeCents } = await withLuciaBypassImpl(async (client) => {
++      const { cashFollowsEta, incomeCents, expenseCents } = await withLuciaBypassImpl(async (client) => {
+         const flagEnabled = await isEnabled(client as never, "CASH_FOLLOWS_ETA_ENABLED", {
+           operating_company_id: operatingCompanyId,
+           user_uuid: SYSTEM_ACTOR_ID,
+         });
+         const prediction = await getDailyPredictionImpl(client, operatingCompanyId, predictionDate, flagEnabled);
+-        return { cashFollowsEta: flagEnabled, incomeCents: prediction.income_subtotal_cents };
++        return { cashFollowsEta: flagEnabled, incomeCents: prediction.income_subtotal_cents, expenseCents: prediction.expense_subtotal_cents };
+       });
+ 
+       await withLuciaBypassImpl(async (client) =>
+@@ -78,6 +80,7 @@ export async function runCashFlowProjectionSnapshotCronTick(deps?: {
+           operating_company_id: operatingCompanyId,
+           prediction_date: predictionDate,
+           projected_income_cents: incomeCents,
++          projected_expense_cents: expenseCents,
+           cash_follows_eta: cashFollowsEta,
+         })
+       );

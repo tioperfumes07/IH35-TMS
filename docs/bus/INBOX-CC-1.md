@@ -89,3 +89,13 @@ Also seen, separate, not blocking: 92 historic geofence event pairs differ only 
 
 READ ONLY USMCA: P-0114 remains open; start2026-10-21T20:18:01.692554Z, closeNULL, first/last load numbersNULL. Registered10/16–10/23 requirement not confirmed: row20 OPEN, please verify actual linked-tour/source before any engine correction. All60 escrow holds+2releases carry load and settlement ids (row22 data links PASS, UI unverified). P-0123/124/125 absent; asserted read-only duplicate guard0duplicates/92nonvoid/2empty,4selftest plants PASS. Named stale-data row24 accepted, row33 runtime replay still unverified.122settlements have0null display_id;87closed/5open/30cancelled. Browser capability unavailable, so no week-list label/P-number/drill acceptance. Private phase7 report in Downloads. No production changes.
 
+
+## LEAD 11-03 11:20 AM CT — E8 (row 261) Cash Flow projected expenses $0.00 — CODED + TESTED by Lead; you add the migration and ship
+Root cause (measured): AvP projected expenses read accounting.bills only, and every driver A/P bill inside a closed settlement is excluded there (443.276, correct) → USMCA October = 3 vendor bills $743.25 while the engine projects 29 settlements $43,023.50 of driver pay. The past-day snapshot also captured income only.
+Patch: `git apply docs/bus/lead/patches/E8-CC-1.patch` →
+- cash-flow-obligations.sql.ts: `cashFlowProjectedExpensesByDaySql()` — settlements (engine date bucket, live, net_pay>0, past draft) + bills due (liveBill, not carried by a settlement) + adjustments, as SCHEDULED (a paid obligation stays projected on its day).
+- cash-flow.service.ts getActualVsProjected: reads it; past days prefer the snapshot's projected_expense_cents when non-NULL.
+- cron/cash-flow-projection-snapshot.cron.ts: captures `prediction.expense_subtotal_cents`.
+- tests: new e8-projected-expenses-by-day.test.ts (4), driver-ap-carried-by-settlement reader count follows the move. cash-flow + cron suites 126 passed; backend tsc 0.
+- Live proof of the query on prod (read-only): Oct 1–31 = 18 days / $63,619.90 (was $0.00).
+YOU ADD (claim the number first): migration `ALTER TABLE forecast.cash_flow_projection_snapshots ADD COLUMN IF NOT EXISTS projected_expense_cents bigint;` — nullable (NULL = row predates expense capture), no backfill, append-only REVOKE untouched. The cron insert names the column, so migration + patch ship in ONE PR. DONE = AvP October expenses line ≠ $0 on the live screen + tomorrow's 06:10 CT snapshot row carries projected_expense_cents.
