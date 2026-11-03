@@ -51,9 +51,15 @@ export function verify(source) {
   need("vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)', "New transaction must preserve vendor context into the canonical bill creator");
   need("vendorPage", 'date_from: dateFrom || undefined', "vendor transaction filters must forward the start date");
   need("vendorPage", 'date_to: dateTo || undefined', "vendor transaction filters must forward the end date");
-  // U12 — Status is MultiSelect; unpaid semantics live on statusApiParam (1 selected) / client filter (2+).
+  // U12 + Codex batch76 — Status MultiSelect forwards allowlisted comma-unions; never page-then-filter.
   if (!/status:\s*statusApiParam/.test(source.vendorPage)) {
     failures.push("vendor transaction filters must forward canonical status semantics (statusApiParam / unpaid)");
+  }
+  if (!/statusApiParam\s*=\s*[\s\S]{0,280}?statusFilter\.join\(["'],["']\)/.test(source.vendorPage)) {
+    failures.push("vendor transaction filters must send statusFilter.join(',') via statusApiParam for multi-status (Codex batch76)");
+  }
+  if (/statusFilter\.length > 1[\s\S]{0,220}statusFilter\.includes\(bill\.status\)/.test(source.vendorPage)) {
+    failures.push("vendor transaction filters must not client-filter multi-status on a LIMIT page (Codex batch76)");
   }
   if (!/statusFilter\[0\] === "unpaid"/.test(source.vendorPage)) {
     failures.push("vendor transaction filters must keep unpaid semantics on the single-status API path");
@@ -96,6 +102,7 @@ if (process.argv.includes("--selftest")) {
     ["vendorPage", 'listBills(companyId, {'], ["vendorPage", "vendor_id: selectedVendor!.id"], ["vendorPage", '<EntityLink kind="bill" id={r.id}'],
     ["vendorPage", "selectedVendorPublicNotes"], ["vendorPage", "setEditVendorId(selectedVendor.id)"], ["vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)'],
     ["vendorPage", 'date_from: dateFrom || undefined'], ["vendorPage", 'date_to: dateTo || undefined'], ["vendorPage", "status: statusApiParam"],
+    ["vendorPage", "statusFilter.join(\",\")"],
     ["vendorPage", "const txnFilters = useStagedListFilters({"], ["vendorPage", 'testIdPrefix="vendor-txn"'], ["vendorPage", "onApply={txnFilters.apply}"],
     ["vendorPage", "onCancel={txnFilters.cancel}"], ["vendorPage", "onReset={txnFilters.reset}"],
     ["vendorPage", "value={txnFilters.draft.typeFilter}"], ["vendorPage", "selected={txnFilters.draft.statusFilter}"], ["vendorPage", "value={txnFilters.draft.dateFrom}"],
