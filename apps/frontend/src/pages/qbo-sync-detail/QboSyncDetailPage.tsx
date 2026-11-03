@@ -9,6 +9,7 @@ import {
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { useListState } from "../../components/list-state";
@@ -119,7 +120,11 @@ export function QboSyncDetailPage() {
         subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events"
       />
 
-      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {!companyId ? (
+        <BoardSection title="QBO Sync Event Log" testId="qbo-sync-detail-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      ) : null}
       {eventLogQuery.isError ? <ReportBlockVPendingBanner error={eventLogQuery.error} onRetry={() => void eventLogQuery.refetch()} /> : null}
 
       <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">

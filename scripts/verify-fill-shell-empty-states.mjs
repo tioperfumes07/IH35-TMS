@@ -38,6 +38,15 @@ const checks = [
   ["apps/frontend/src/pages/form425c/Form425CHome.tsx", "BoardSection", "form-425c-need-company", "Form425C need-company"],
   ["apps/frontend/src/pages/customers/CoiTab.tsx", "BoardSection", "customer-coi-need-company", "CoiTab need-company"],
   ["apps/frontend/src/pages/customers/components/PortalUsersTab.tsx", "BoardSection", "portal-users-need-company", "PortalUsers need-company"],
+  ["apps/frontend/src/pages/alerts/DocumentAlertsPage.tsx", "BoardSection", "document-alerts-need-company", "DocumentAlerts need-company"],
+  ["apps/frontend/src/pages/integrations/SamsaraIntegrationPage.tsx", "BoardSection", "samsara-integration-need-company", "SamsaraIntegration need-company"],
+  ["apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx", "BoardSection", "qbo-sync-detail-need-company", "QboSyncDetail need-company"],
+  ["apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx", "BoardSection", "vendor-mapping-resolution-need-company", "VendorMapping need-company"],
+  ["apps/frontend/src/pages/profitability/ByCustomerView.tsx", "BoardSection", "profitability-by-customer-need-company", "ByCustomer need-company"],
+  ["apps/frontend/src/pages/profitability/ByLoadView.tsx", "BoardSection", "profitability-by-load-need-company", "ByLoad need-company"],
+  ["apps/frontend/src/pages/chat/DispatchChatPage.tsx", "BoardSection", "dispatch-chat-need-company", "DispatchChat need-company"],
+  ["apps/frontend/src/pages/docs/DocsHomePage.tsx", "BoardSection", "docs-home-need-company", "DocsHome need-company"],
+  ["apps/frontend/src/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx", "FuelBoardSection", "relay-unmatched-need-company", "RelayUnmatched need-company"],
 ];
 
 const selftest = process.argv.includes("--selftest");
