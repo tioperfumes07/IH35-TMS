@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatQuantityTable } from "../../lib/money";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -107,14 +108,14 @@ export function StopsMilesSection({
         key: "odometer_mi",
         label: "Odometer",
         sortable: true,
-        render: (row) => (row.odometer_mi == null ? "—" : row.odometer_mi.toFixed(1)),
+        render: (row) => (row.odometer_mi == null ? "—" : formatQuantityTable(row.odometer_mi, 1)),
       },
       {
         key: "miles_since_previous_stop",
         label: "Miles since prior",
         sortable: true,
         render: (row) =>
-          row.miles_since_previous_stop == null ? "—" : row.miles_since_previous_stop.toFixed(1),
+          row.miles_since_previous_stop == null ? "—" : formatQuantityTable(row.miles_since_previous_stop, 1),
       },
     ],
     [driverId],

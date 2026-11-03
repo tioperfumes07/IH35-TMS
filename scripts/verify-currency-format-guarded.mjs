@@ -233,6 +233,18 @@ const custLate = read("apps/frontend/src/components/customers/CustomerLateArriva
 if (!/formatQuantityTable\(rate \* 100, 1\)/.test(custLate)) fail("CustomerLateArrivalCard pct must use formatQuantityTable");
 const drvLate = read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
 if (!/formatQuantityTable\(rate \* 100, 1\)/.test(drvLate)) fail("DriverLateArrivalCard pct must use formatQuantityTable");
+const dpStops = read("apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx");
+if (!/formatQuantityTable\(row\.odometer_mi, 1\)/.test(dpStops) || !/formatQuantityTable\(readMiles, 1\)/.test(dpStops)) {
+  fail("DriverProfileStopsMilesSection miles must use formatQuantityTable");
+}
+const stopsMiles = read("apps/frontend/src/components/shared/StopsMilesSection.tsx");
+if (!/formatQuantityTable\(row\.odometer_mi, 1\)/.test(stopsMiles)) fail("StopsMilesSection odometer must use formatQuantityTable");
+const dispPerf = read("apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx");
+if (!/formatQuantityTable\(data\.avg_gap_hours, 1\)/.test(dispPerf)) fail("DispatcherPerformanceCard gap hours must use formatQuantityTable");
+const daySum = read("apps/frontend/src/components/home/DriverDaySummaryCard.tsx");
+if (!/formatQuantityTable\(row\.miles, 1\)/.test(daySum) || !/formatQuantityTable\(row\.hours_on_duty, 2\)/.test(daySum)) {
+  fail("DriverDaySummaryCard miles/hours must use formatQuantityTable");
+}
 
 const markDisb = read("apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx");
 if (!/formatUsdCents\(Math\.abs\(Number\(tx\.amount_cents/.test(markDisb)) {
