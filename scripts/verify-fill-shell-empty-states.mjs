@@ -15,6 +15,12 @@ const checks = [
   ["apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx", "BoardSection", "company-settlements-need-company", "CompanySettlements need-company"],
   ["apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx", "BoardSection", "escrow-register-need-company", "EscrowRegister need-company"],
   ["apps/frontend/src/pages/driver-finance/DriverBillDetailPage.tsx", "BoardSection", "driver-bill-detail-need-company", "DriverBillDetail need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementsPreSettlementsBoard.tsx", "BoardSection", "settlements-presettle-need-company", "PreSettlements need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx", "BoardSection", "settlements-cash-advances-need-company", "CashAdvances need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx", "BoardSection", "settlements-deductions-need-company", "Deductions need-company"],
+  ["apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx", "BoardSection", "escrow-deductions-pending-need-company", "EscrowDeductionsPending need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx", "BoardSection", "settlement-detail-need-company", "SettlementDetail need-company"],
+  ["apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx", "BoardSection", "settlement-workflow-need-company", "SettlementWorkflow need-company"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-loading", "Planner settings loading"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "FuelBoardSection", "fuel-planner-settings-unavailable", "Planner settings unavailable"],
 ];

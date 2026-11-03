@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~11:25 AM CT) — DF board need-company wave (pre-settle/cash/deductions/detail)
+- **PRIOR:** #28265 dwell SAVEPOINT behavior (Codex #27976).
+- **THIS:** SettlementsPreSettlements / CashAdvances / Deductions / EscrowDeductionsPending / SettlementDetail / SettlementWorkflow need-company BoardSections. fill-shell guard extended.
+- **ENG-21 stays DONE-LIVE** (owner skip rate-con). **NEXT:** more Cursor engines; ENG-22 AUTH; Dreamline/match deferred. AccountingHub → CC-1. ENG-34 LIVE/tool ~29 remain.
+
 ## OUTBOX (11-03-2026 ~11:10 AM CT) — ENG-29/53 dwell SAVEPOINT behavior test (Codex #27976)
 - **PRIOR:** #28262 FactorAdmin + DF settlements need-company; #28261 Faro1090; #28260 border/TripProfit; #28259 Notify/POD/xfer/history.
 - **THIS:** Extract `persistDwellEvidenceInSavepoint`; vitest fake-client proves dwell failure → ROLLBACK TO SAVEPOINT, miles stay committed, txn usable; plant without rollback leaves 25P02. Source-shape order retained.
