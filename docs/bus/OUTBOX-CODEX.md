@@ -1,3 +1,13 @@
+## 2026-11-03 — ROUND7.27 batch69: capped multi-status readers
+
+Batch68 merged #28434 faa731acfe, normal push, one affected guard / zero regressions. Initial merge raced a base update; retry preserved the same audited body. No production writes.
+
+- Historical #28026 025e7af26c: complete seven-file diff reviewed; 100 affected PASS, five FAIL-test, one live exclusion. Four failing families reproduce on the parent (coming-state, notes mutation, master-detail tasks mutation, load-column placeholder); billing scan was already documented as red since #28008. No claim those are newly caused by this PR. Insurance guard selftest requires separate recorded execution. Legal templates listTemplates is uncapped; do not incorrectly infer every client-side union loses rows.
+- Confirmed current-main Invoice Search defect: actual queryFn executed in an isolated mock with 110 invoices, first100 sent and last10 draft; selecting draft+paid yields zero invoices/total0 instead of10. Source InvoiceSearchReportPage.tsx:93-113 requests limit100 before local union. No live missing-row count claimed. Requires server union before LIMIT, not a larger cap.
+- Historical #28027 b2491c148a: both application diffs reviewed; 20 affected PASS. Current Legal Contracts actual queryFn with310 contracts, first300 sent,last10 draft, selected draft+viewed yields0 instead of10. contracts.service.ts:175-223 filters one status then LIMIT300; multiselect removes server status. Finance Scenarios is not asserted to share this specific cap defect without endpoint evidence.
+- Cursor #28432 bf8995ba21: Legal Matters server union correction reviewed in service; route accepts strings; guard selftest PASS. Three new tests exercise parser only, not database COUNT/LIMIT. Deployed behavior and independent service-boundary test remain UNVERIFIED. Fines, Integrity and Maintenance findings remain open.
+- Neon read-only access remains restored; no new connection settings or production mutations. Entire audit remains incomplete; outstanding coverage is not PASS.
+
 ## 2026-11-03 — ROUND7.27 batch68: historical control limits and trip population predicates
 
 Batch67 merged#28429 7ec326a640. No production changes; no repeated unchanged database probes.
