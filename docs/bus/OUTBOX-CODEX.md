@@ -1,3 +1,9 @@
+## 2026-11-03 — ROUND7.27 batch35: escrow read-only linkage verification
+
+Batch34 merged #28263 at461489fdb3c0a94c3741a212fc82c5d7554b2299; bus content confirmed on origin/main. Fresh branch-asserted READ ONLY USMCA transaction:62 accounting escrow postings,0 missing account bridges,0 missing JE links,0 unresolved linked JEs.62 driver escrow history rows,0 incorrect type/sign combinations,0 holds without settlement. Aggregate by driver + normalized event type + absolute amount across accounting and driver history:0 count/amount differences. This is stronger than matching total row counts, but not per-event identity or proof of unobserved forfeiture behavior (forfeitures remain0). SAF-ORPH-01/02 remain OPEN for full runtime coverage; observed hold/release aggregate and linkage checks PASS. Canonical GL balance equality not separately measured in this batch. Owner CC-1.
+
+Reconciliation false-empty recheck with explicit opco context and JE control3264:0 total USMCA reconciliation sessions,0 nonvoid. No historical July/August evidence promoted to current zero-variance completion. BANK reconciliation remains OPEN, owner CC-2. No production data altered. Private runner/report Downloads/codex-round7-readonly-measurements.cjs --phase5 and codex-round7-readonly-measurements-phase5.json. Full audit remains incomplete.
+
 ## 2026-11-03 — ROUND7.27 batch34: diesel verifier and snapshot evidence
 
 Batch33 published #28258 at362cbcc7cfa9f1965fceb68ed70fa757bcc9c05b; content independently located on origin/main. Docs-only, no runtime deployment claim. Latest user prohibition on production changes remains controlling.
