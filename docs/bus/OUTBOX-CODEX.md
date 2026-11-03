@@ -4,6 +4,25 @@
 
 ## 2026-11-02 — ROUND 7.6 independent QA (in progress, not acceptance)
 
+Batch31 / ROUND7.26 continued, authenticated built-in browser, USMCA only, no submissions. Row40: selected all200 currently loaded Transaction Health documents sequentially;195 expose Journal-entry links,0 of those labels contain UUID patterns;5 expose no such link. This is a bounded200-document sample, not the remaining Load-more population and not proof that the5 missing links are valid. Pagination100→200 was already proved in batch30.
+
+| H row | Observed top-level route / rendered population | Verdict |
+|---|---|---|
+|186 Profiles|`/driver-finance/profiles`,11 profile rows|Top-level route FIXED; nested DriversPage navigation still points outside module.|
+|187 Pre-Settlements|`/driver-finance/pre-settlements`,3 open tours and29 open bills|Top-level route FIXED; full layout/close behavior not accepted.|
+|188 Feed Gate|`/driver-finance/feed-gate`,100 intake rows; detail links remain in module|Top-level route FIXED; full pagination/processing unverified.|
+|189 Cash Advances|`/driver-finance/cash-advances`,0 requests and12 advances|Top-level route FIXED; no cash operation performed.|
+|190 Liabilities|`/driver-finance/liabilities`,0 rows|Top-level route FIXED only; empty population is not workflow proof.|
+|191 Escrow|`/driver-finance/escrow`,12 driver rows|Top-level route FIXED; stale footer described below, no release/forfeit performed.|
+|192 Pay Rate Templates|`/driver-finance/pay-rate-templates`,0 template rows|Top-level route FIXED; nested DriversPage/KPI/nav layer remains, workflow unverified.|
+|193 Deductions|`/driver-finance/deductions`,4 type rows and1 scheduled row|Top-level route FIXED; no create/post action performed.|
+
+Cross-lane follow-up on existing186/192: SettlementsMountedPages.tsx:44/:112 mounts DriversPage; Drivers.tsx:666–669 sends KPI drills to `/drivers/roster`. Live Profiles and Pay Rate Templates expose the additional Driver Hub navigation, heading and KPI layer. Required module-parent navigation is not satisfied by correcting only the top-level tab target. Lead to route to owning seat; no new finding register and no app edits.
+
+Escrow source correction: SettlementsEscrowBoard.tsx:333 claims unresolved/closed rows are hidden, but aggregation at:35–43 only excludes non-driver/zero-balance rows and explicitly retains nonzero unresolved/inactive/negative balances. The visible footer is stale misleading copy; this audit does NOT assert hidden nonzero money from that note. Preserve the actual nonzero-row contract in any repair.
+
+All8 screen captures are private inline in this task. Filesystem screenshot paths and1280/768 measurements remain OWED: current pane is narrow, not either required width. Therefore this batch does not satisfy the40-row/two-width acceptance bar. Independent row170 GL proof and historical PR/module auto_checks remain incomplete. No production changes.
+
 18:05–18:16 CT batch30 / ROUND 7.26 independent retest, authenticated built-in browser, no production submissions. Private screenshots are inline in this task (not committed; filesystem screenshot paths and 1280/768 width proof remain owed). This is NOT whole-audit completion.
 
 | Pending row | Independent result | Verdict / limitation |
