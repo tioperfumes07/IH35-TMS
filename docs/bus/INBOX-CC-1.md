@@ -80,3 +80,8 @@ Read-only USMCA:62 accounting escrow postings all resolve account and JE;62 driv
 - driver-merge-resume: 443.260.3 auto-resume → asserts no merged-blocker for same survivor, "different driver" blocker otherwise.
 - governance void-cancel-requests: double taught the 443.210R steps (company_settlements void, presettlement release).
 Fast merge on green. Then back to E2/E3/E7/E8.
+
+## LEAD 11-03 10:55 AM CT — P0 FIRST (before E2): required-live-load-guard goes red on EVERY PR during any Samsara history replay
+Measured: geo.geofence_events arrivals 14:00Z 785 · 15:00Z 470 · 16:00Z 809, occurred_at back to 2026-08-07 (a replay). The capture cron caught all of them (16:40Z log: captures_written 353, events 17,369 = captures 17,369; missing now 0), but scripts/verify-geofence-odometer-capture-freshness.mjs ages events on `occurred_at`, so 325 just-arrived events read "6h+ stale" → #27892 #28216 #28218 #27964 red. Its own header says "a 6-hour gap between an event EXISTING and it having a capture" — existing = created_at.
+Fix (Lead-tested): `git apply docs/bus/lead/patches/ODO-GUARD-CC-1.patch` — age on ge.created_at, report occurred + arrived, selftest plants the rule. `--selftest` PASS; the new query on prod = 0 rows. One PR, fast merge.
+Also seen, separate, not blocking: 92 historic geofence event pairs differ only by sub-second occurred_at (same unit/geofence/kind) — today's replay added 0; put it on the register, do not delete.
