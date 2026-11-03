@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:55 PM CT) — Codex batch90 reimbursements formatUsd guard
+- **PRIOR:** #28537 Accounting need-company wave 6.
+- **THIS:** verify-reimbursements-section-uses-paritytable requires formatUsd(line.amount)+formatUsd(subtotal); token-only selftest plant. UI already correct. #27 PARTIAL; #29 OPEN.
+- **NEXT:** #29 popup / Accounting detail; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:45 PM CT) — ROUND 7.30 #27 Accounting need-company wave 6
 - **PRIOR:** #28535 Settlements week chart → Week-of.
 - **THIS:** Loans/QBO recon/drift/captures/Maintenance shop hub/Accounting hub/Account type catalog/Check print BoardSection need-company; fill-shell plants. #27 still PARTIAL (~54). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Batch75 Reclassify → CC-1.
