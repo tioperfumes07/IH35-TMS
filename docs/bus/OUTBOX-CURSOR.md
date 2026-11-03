@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~10:20 PM CT) — batch54 equipment-type dead bills excluded
+- **PRIOR:** #28381 factoring/dispatch count qty · #28378 notes batch53.
+- **THIS:** Codex batch54 — equipment-type profitability bills CTE excludes void/voided (`voided_at IS NULL` + `status NOT IN ('void','voided')`); behavior test live+void same-load; profitability-hub guard ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
+- **NEXT:** more Cursor engines; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~10:05 PM CT) — factoring/dispatch count house quantity
 - **PRIOR:** #28378 notes batch53 customer= plants · #28376 TripPairing KPI.
 - **THIS:** TripPairing section badges · SubmitToFactor invoice count · FactoringHome aging/batches · BatchWizard/Detail invoice counts · AwaitingBol row count · FactoringQueue stage/showing → formatQuantityTable(, 0); currency ratchet. ENG-21 DONE-LIVE. ENG-34 LIVE/tool **~16**. Dreamline/match deferred.
