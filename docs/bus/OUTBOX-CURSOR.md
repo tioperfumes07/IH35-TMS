@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:35 PM CT) — U12 Compliance filings Program MultiSelect
+- **PRIOR:** #28604 Coverage Gap U12.
+- **THIS:** FilingsComplianceDueSection Program SelectCombobox → MultiSelectDropdown (empty=all). Status KPI tiles stay single-toggle. Accounting lists still Cascade (SURFACE-BREACH).
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:30 PM CT) — U12 Coverage Gap by-type MultiSelect
 - **PRIOR:** #28602 QBO Sync Status U12.
 - **THIS:** CoverageGapDashboard per-type Covered/Missing SelectCombobox → MultiSelectDropdown (empty/both=all). Accounting lists still Cascade.
