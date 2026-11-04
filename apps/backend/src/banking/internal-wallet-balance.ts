@@ -152,6 +152,23 @@ async function sumLedgerBalanceCents(
 
 
 
+
+/**
+ * ROWS 148/149 — what counts as BANK CASH. A depository bank_accounts row is cash only when its linked GL account is
+ * an ASSET of a cash kind (Checking / Savings / CashOnHand / Bank, or the Relay fuel wallet / DIP cash purposes).
+ * Card payables (Liability — Dreamline 2510, WEX 2520, Amex) and factoring / escrow reserves (Faro advance liability,
+ * reserve receivable) are NOT cash even when they are registered as banking rows. An account with no linked GL
+ * account (a fresh Plaid link) is still cash. `alias` is the bank_accounts alias or table name in the query.
+ */
+export function bankCashLedgerFilterSql(alias: string): string {
+  return `AND (${alias}.ledger_account_id IS NULL OR EXISTS (
+        SELECT 1 FROM catalogs.accounts la
+         WHERE la.id = ${alias}.ledger_account_id AND la.operating_company_id = ${alias}.operating_company_id
+           AND la.account_type = 'Asset'
+           AND (la.account_subtype IN ('Checking', 'Savings', 'CashOnHand', 'Bank')
+                OR la.system_purpose IN ('cash_dip', 'relay_fuel_wallet'))))`;
+}
+
 /**
 
  * Single authoritative depository cash total for KPI + cash-flow opening + accounts/all agreement.
@@ -210,6 +227,7 @@ export async function sumAuthoritativeDepositoryCashCents(
         AND plaid_item_id IS NOT NULL
 
       ${opts.hideFilterOnBankAccounts}
+      ${bankCashLedgerFilterSql("banking.bank_accounts")}
 
       `,
 
@@ -257,6 +275,7 @@ export async function sumAuthoritativeDepositoryCashCents(
         AND bt.voided_at IS NULL
 
       ${opts.hideFilterOnBaAlias}
+      ${bankCashLedgerFilterSql("ba")}
 
       `,
 
@@ -401,6 +420,7 @@ export async function listAuthoritativeDepositoryCashByAccount(
         AND deactivated_at IS NULL
         AND plaid_item_id IS NOT NULL
       ${opts.hideFilterOnBankAccounts}
+      ${bankCashLedgerFilterSql("banking.bank_accounts")}
       ORDER BY display_order NULLS LAST, account_name
     `,
     [operatingCompanyId]
@@ -417,6 +437,7 @@ export async function listAuthoritativeDepositoryCashByAccount(
         AND ba.deactivated_at IS NULL
         AND ba.plaid_item_id IS NULL
       ${opts.hideFilterOnBaAlias}
+      ${bankCashLedgerFilterSql("ba")}
       GROUP BY ba.id, ba.display_name, ba.account_name, ba.display_order
       ORDER BY ba.display_order NULLS LAST, ba.account_name
     `,
