@@ -77,8 +77,10 @@ export async function onFuelIngestComplete(
   await wrapBackgroundJobTick(
     "fuel.relay_fill_records",
     async () => {
-      const companies = companyIds ?? (await withLuciaBypass(async (client) =>
-        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id)));
+      // Relay fills are stored for USMCA only (ROUND 443.15); never run this writer for a frozen entity.
+      const companies = (companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id))))
+        .filter((id) => isUsmcaOperatingCompany(id));
       const refused: string[] = [];
       for (const id of companies) {
         const docs = await withLuciaBypass(async (client) => {
@@ -108,8 +110,11 @@ export async function onFuelIngestComplete(
   await wrapBackgroundJobTick(
     "fuel.follows_truck",
     async () => {
-      const companies = companyIds ?? (await withLuciaBypass(async (client) =>
-        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id)));
+      // USMCA only (11-04, measured): the unscoped list ran the engine for IH 35 Transportation (frozen) and opened 1,631
+      // assignment questions there. The engine never touches a frozen entity.
+      const companies = (companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id))))
+        .filter((id) => isUsmcaOperatingCompany(id));
       const failed: string[] = [];
       for (const id of companies) {
         const res = await runFuelFollowsTruckSweep(id);
