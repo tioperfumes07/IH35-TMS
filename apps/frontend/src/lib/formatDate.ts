@@ -44,10 +44,36 @@ function calendarParts(value: unknown): { y: number; mo: number; d: number } | n
     }
   }
 
+  // ACCT-F11062 item 3 (live 11-03: Driver settlements Period "10/21/2001"): a free-text string with no 4-digit year
+  // ("Wed Oct 21") is NOT a date -- `new Date("Wed Oct 21")` silently invents the year 2001. Blank, never a guessed year.
+  if (typeof value === "string" && !/\d{4}/.test(value)) return null;
   const dt = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(dt.getTime())) return null;
   const [y, mo, d] = companyToday(dt).split("-").map(Number);
   return { y, mo, d };
+}
+
+const LEADING_ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T ])/;
+
+/**
+ * ROW 167 (live 11-03: CDL expiry 2029-09-22 displayed 09/21/2029). A CALENDAR date -- an expiry, a date of birth, a
+ * hire / termination date, a document's issue or effective date -- is a day, not an instant. The API often sends it
+ * as the midnight-UTC timestamp "2029-09-22T00:00:00.000Z"; formatDateUS treats any offset timestamp as an instant
+ * and converts it to Central, which is 7 PM the PREVIOUS day. Date-only mode reads the stored Y-M-D literally: the
+ * leading "YYYY-MM-DD" of a string, or the UTC components of a Date. No timezone conversion, ever.
+ */
+function calendarDateOnlyParts(value: unknown): { y: number; mo: number; d: number } | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "string") {
+    const m = LEADING_ISO_DATE.exec(value.trim());
+    if (m) return { y: Number(m[1]), mo: Number(m[2]), d: Number(m[3]) };
+    return calendarParts(value);
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return { y: value.getUTCFullYear(), mo: value.getUTCMonth() + 1, d: value.getUTCDate() };
+  }
+  return calendarParts(value);
 }
 
 /**
@@ -62,10 +88,19 @@ function calendarParts(value: unknown): { y: number; mo: number; d: number } | n
  * Returns "" for null / undefined / empty / unparseable input (so callers can render a blank cell
  * instead of "Invalid Date").
  */
-export function formatDateUS(value: unknown): string {
-  const parts = calendarParts(value);
+export function formatDateUS(value: unknown, options?: { dateOnly?: boolean }): string {
+  const parts = options?.dateOnly ? calendarDateOnlyParts(value) : calendarParts(value);
   if (!parts) return "";
   return `${pad2(parts.mo)}/${pad2(parts.d)}/${parts.y}`;
+}
+
+/**
+ * ROW 167 — MM/DD/YYYY for a CALENDAR date (expiry, DOB, hire / termination, issue / effective date). Never shifts
+ * the day: "2029-09-22T00:00:00.000Z" -> "09/22/2029". Guard: scripts/verify-live-fails-2.mjs requires every
+ * expiry / birth / hire / termination formatter call in apps/frontend/src to use this, not formatDateUS.
+ */
+export function formatCalendarDateUS(value: unknown): string {
+  return formatDateUS(value, { dateOnly: true });
 }
 
 /**

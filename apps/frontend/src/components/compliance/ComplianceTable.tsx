@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { ComplianceCredential } from "../../api/compliance";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
@@ -79,7 +79,7 @@ const COLUMNS: Array<ParityColumn<ComplianceCredential>> = [
     label: "Expiration",
     sortable: true,
     sortValue: (row) => row.expiration_date ?? "",
-    render: (row) => formatDateUS(row.expiration_date) || "—",
+    render: (row) => formatCalendarDateUS(row.expiration_date) || "—",
   },
   {
     key: "days_until_expiration",

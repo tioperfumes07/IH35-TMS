@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveSafetyPermit,
@@ -166,7 +166,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
     { key: "permit_number", label: "Number", sortable: true, render: (row) => String(row.permit_number || "—") },
     { key: "issuing_state", label: "State", sortable: true, render: (row) => String(row.issuing_state || "—") },
     { key: "holder_name", label: "Holder", sortable: true, render: (row) => String(row.holder_name || "—") },
-    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => (row.expiry_date ? formatDateUS(row.expiry_date) : "—") },
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) : "—") },
     {
       key: "renewal_severity",
       label: "Status",
@@ -243,7 +243,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 </span>
                 <span>{PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? row.permit_type}</span>
                 <span>{String(row.holder_name || row.permit_number || "—")}</span>
-                <span className="text-[#4B5563]">expires {row.expiry_date ? formatDateUS(row.expiry_date) : "—"}</span>
+                <span className="text-[#4B5563]">expires {row.expiry_date ? formatCalendarDateUS(row.expiry_date) : "—"}</span>
               </li>
             ))}
           </ul>

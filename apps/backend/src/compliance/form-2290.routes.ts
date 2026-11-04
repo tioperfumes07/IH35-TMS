@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -144,7 +145,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
       .map((u) => ({
         unit_id: u.id,
         unit_number: u.unit_number,
-        first_used_month: String(u.acquired_date).slice(0, 10),
+        first_used_month: (pgDateOnly(u.acquired_date) ?? ""),
         deadline: form2290DueDateForFirstUse(String(u.acquired_date)),
       }))
       // Only the ones the annual banner would MISREPRESENT are worth surfacing; a July first use is

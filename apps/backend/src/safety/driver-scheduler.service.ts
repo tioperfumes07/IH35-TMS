@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import { unitCurrentDriverSql } from "../dispatch/unit-current-driver.js";
 import { z } from "zod";
 import { canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
@@ -889,9 +890,9 @@ export async function reviewLeaveRequest(
   const start =
     input.action === "approve_modified" && input.approved_start_date
       ? input.approved_start_date
-      : String(current.start_date).slice(0, 10);
+      : (pgDateOnly(current.start_date) ?? "");
   const end =
-    input.action === "approve_modified" && input.approved_end_date ? input.approved_end_date : String(current.end_date).slice(0, 10);
+    input.action === "approve_modified" && input.approved_end_date ? input.approved_end_date : (pgDateOnly(current.end_date) ?? "");
 
   if (daysInclusive(start, end) < 1) return { error: "leave_invalid_dates" as const };
 

@@ -2,6 +2,7 @@
  * ACCT-R-24 / ND-INV-01 B2d — shared draft→sent path for manual POST /send and
  * POD auto-send after proforma convert. No new GL math; reuses existing guards + email queue.
  */
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueEmail, enqueueEmailWithClient } from "../email/queue.service.js";
@@ -426,7 +427,7 @@ export async function sendDraftInvoice(
 
   const invoiceDate = current.issue_date instanceof Date
     ? current.issue_date.toISOString().slice(0, 10)
-    : String(current.issue_date).slice(0, 10);
+    : (pgDateOnly(current.issue_date) ?? "");
   const noaCheck = await client.query(
     `
       SELECT

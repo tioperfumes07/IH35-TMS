@@ -1,4 +1,4 @@
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -486,7 +486,7 @@ export function InvoicesListPage() {
           );
         },
       },
-      { key: "issue_date", label: "Issue", sortable: true, render: (row) => formatDateUS(row.issue_date) },
+      { key: "issue_date", label: "Issue", sortable: true, render: (row) => formatCalendarDateUS(row.issue_date) },
       { key: "due_date", label: "Due", sortable: true, render: (row) => formatDateUS(row.due_date) },
       {
         // VIS-02 — void as first-class Status column (gear-togglable via ParityTable), not only filter text.
