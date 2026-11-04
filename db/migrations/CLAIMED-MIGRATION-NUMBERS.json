@@ -1043,7 +1043,8 @@
     "202616350100",
     "202616360100",
     "202616360200",
-    "202616370100"
+    "202616370100",
+    "202616380100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1074,5 +1075,10 @@
     "claimed_at": "2026-11-03",
     "claimed_by": "claude",
     "purpose": "ACCT-F11093 row 22: accounting.escrow_postings.document_date + accounting.escrow_posting_loads (per-load split of each escrow posting, append-only)."
+  },
+  "202616380100": {
+    "claimed_at": "2026-11-04",
+    "claimed_by": "claude",
+    "purpose": "ACCT-F11099: accounting.recompute_invoice_paid() moves a factored invoice to partial/paid (owner 11-04); accounting.invoice_recoursed_off_trade_ar() factoring identity + ar_aging_as_of / views.ar_aging repointed to it."
   }
 }
