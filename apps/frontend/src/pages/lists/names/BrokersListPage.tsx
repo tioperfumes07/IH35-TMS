@@ -138,7 +138,7 @@ export function BrokersListPage() {
           onRowClick={(row) => navigate(`/customers/${row.id}`)}
           loading={query.isLoading}
           storageKey="names-brokers"
-          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          title={status.length !== 1 ? "All entries" : status[0] === "inactive" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}

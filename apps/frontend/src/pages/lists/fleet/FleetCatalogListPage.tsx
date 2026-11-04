@@ -161,7 +161,7 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath, read
           }
           loading={query.isLoading}
           storageKey="catalogs-fleet"
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+          title={status.length !== 1 ? "All entries" : status[0] === "false" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}
