@@ -450,9 +450,10 @@ export async function postEscrowTransactionOnClient(
           note,
           posted_at,
           posted_by_user_id,
-          linked_journal_entry_id
+          linked_journal_entry_id,
+          document_date
         )
-        VALUES ($1::uuid,$2::uuid,$3,$4::bigint,$5,$6::uuid,$7,now(),$8::uuid,$9::uuid)
+        VALUES ($1::uuid,$2::uuid,$3,$4::bigint,$5,$6::uuid,$7,now(),$8::uuid,$9::uuid,$10::date)
         RETURNING
           id::text,
           operating_company_id::text,
@@ -477,6 +478,8 @@ export async function postEscrowTransactionOnClient(
         input.note ?? null,
         actor.userId,
         journalEntry.id,
+        // ACCT-F11093: the posting's document date is its journal entry's entry_date.
+        postingDate,
       ]
     );
     const posting = postingRes.rows[0];
@@ -609,11 +612,16 @@ export async function recordEscrowPostingOnly(
     note?: string | null;
     posted_by_user_id: string;
     linked_journal_entry_id?: string | null;
+    /** ACCT-F11093: the movement's document date. Omitted → the linked JE's entry_date, else the company business date. */
+    document_date?: string | null;
+    /** ACCT-F11093: escrow is per load — the per-load split of this posting. Must sum to amount_cents exactly. */
+    loads?: EscrowPostingLoadSplit[] | null;
   },
   opts?: { failSoft?: boolean }
 ): Promise<{ posted: boolean; escrow_account_id: string | null; posting_id: string | null }> {
   const amount = cents(input.amount_cents);
   if (amount <= 0) return { posted: false, escrow_account_id: null, posting_id: null };
+  const loads = assertEscrowLoadSplit(amount, input.loads);
 
   const bridge = await client.query<{ id: string }>(
     `
@@ -655,14 +663,21 @@ export async function recordEscrowPostingOnly(
     }
   }
 
-  const posting = await client.query<{ id: string }>(
+  // ACCT-F11093: the posting carries its document date (never the wall-clock day it was keyed) — the caller's date, else
+  // the linked journal entry's entry_date (the settlement's period end for a contribution; the reversal JE's date for an
+  // unwind), else today's company business date for a JE-less movement.
+  const posting = await client.query<{ id: string; document_date: string }>(
     `
       INSERT INTO accounting.escrow_postings (
         operating_company_id, escrow_account_id, posting_type, amount_cents,
-        source_type, source_id, note, posted_at, posted_by_user_id, linked_journal_entry_id
+        source_type, source_id, note, posted_at, posted_by_user_id, linked_journal_entry_id, document_date
       )
-      VALUES ($1::uuid, $2::uuid, $3, $4::bigint, $5, $6::uuid, $7, now(), $8::uuid, $9::uuid)
-      RETURNING id::text
+      VALUES ($1::uuid, $2::uuid, $3, $4::bigint, $5, $6::uuid, $7, now(), $8::uuid, $9::uuid,
+              COALESCE($10::date,
+                       (SELECT je.entry_date FROM accounting.journal_entries je
+                         WHERE je.id = $9::uuid AND je.operating_company_id = $1::uuid),
+                       $11::date))
+      RETURNING id::text, document_date::text
     `,
     [
       input.operating_company_id,
@@ -674,9 +689,122 @@ export async function recordEscrowPostingOnly(
       input.note ?? null,
       input.posted_by_user_id,
       input.linked_journal_entry_id ?? null,
+      input.document_date ?? null,
+      companyBusinessDate(),
     ]
   );
-  return { posted: true, escrow_account_id: escrowAccountId, posting_id: posting.rows[0]?.id ?? null };
+  const postingRow = posting.rows[0];
+  if (postingRow && loads.length) {
+    await insertEscrowPostingLoads(client, {
+      operating_company_id: input.operating_company_id,
+      escrow_posting_id: postingRow.id,
+      document_date: postingRow.document_date,
+      created_by_user_id: input.posted_by_user_id,
+      loads,
+    });
+  }
+  return { posted: true, escrow_account_id: escrowAccountId, posting_id: postingRow?.id ?? null };
+}
+
+/** ACCT-F11093 — one load's share of an escrow posting (escrow is per load). */
+export type EscrowPostingLoadSplit = {
+  load_id: string;
+  settlement_line_id?: string | null;
+  amount_cents: number;
+};
+
+/**
+ * ACCT-F11093 — a split must name distinct loads, carry positive cents, and tie to the posting EXACTLY. A split that
+ * does not tie is refused by name (never scaled, never partially written): the escrow register must never show a
+ * per-load amount the posting did not move.
+ */
+export function assertEscrowLoadSplit(amountCents: number, loads: EscrowPostingLoadSplit[] | null | undefined): EscrowPostingLoadSplit[] {
+  const rows = (loads ?? []).map((l) => ({ ...l, amount_cents: cents(l.amount_cents) }));
+  if (!rows.length) return [];
+  const seen = new Set<string>();
+  let total = 0;
+  for (const r of rows) {
+    if (!r.load_id) throw new Error("escrow_posting_load_split_invalid: a split row has no load_id");
+    if (seen.has(r.load_id)) throw new Error(`escrow_posting_load_split_invalid: load ${r.load_id} appears twice`);
+    if (!(r.amount_cents > 0)) throw new Error(`escrow_posting_load_split_invalid: load ${r.load_id} has ${r.amount_cents} cents`);
+    seen.add(r.load_id);
+    total += r.amount_cents;
+  }
+  if (total !== amountCents) {
+    throw new Error(`escrow_posting_load_split_mismatch: per-load split ${total} cents does not tie to the posting ${amountCents} cents`);
+  }
+  return rows;
+}
+
+async function insertEscrowPostingLoads(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: {
+    operating_company_id: string;
+    escrow_posting_id: string;
+    document_date: string;
+    created_by_user_id: string;
+    loads: EscrowPostingLoadSplit[];
+  }
+): Promise<void> {
+  for (const l of input.loads) {
+    await client.query(
+      `
+        INSERT INTO accounting.escrow_posting_loads (
+          operating_company_id, escrow_posting_id, load_id, settlement_line_id, amount_cents, document_date, origin, created_by_user_id
+        )
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::bigint, $6::date, 'writer', $7::uuid)
+      `,
+      [
+        input.operating_company_id,
+        input.escrow_posting_id,
+        l.load_id,
+        l.settlement_line_id ?? null,
+        l.amount_cents,
+        input.document_date,
+        input.created_by_user_id,
+      ]
+    );
+  }
+}
+
+/**
+ * ACCT-F11093 — the per-load split of a settlement's escrow contribution, read from the settlement's own active
+ * escrow_contribution lines (each line carries its load). Returns [] when any line has no load or the lines do not tie
+ * to `amountCents` — the caller then refuses (a settlement contribution must be per load) rather than guess.
+ */
+export async function loadSettlementEscrowLoadSplit(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string,
+  settlementId: string
+): Promise<{ loads: EscrowPostingLoadSplit[]; lines_without_load: number; total_cents: number }> {
+  const res = await client.query<{ id: string; load_id: string | null; cents: string }>(
+    `
+      SELECT sl.id::text AS id, sl.load_id::text AS load_id, round(abs(sl.amount) * 100)::bigint::text AS cents
+        FROM driver_finance.settlement_lines sl
+       WHERE sl.operating_company_id = $1::uuid
+         AND sl.settlement_id = $2::uuid
+         AND sl.line_type = 'escrow_contribution'
+         AND sl.is_active = true
+         AND sl.voided_at IS NULL
+       ORDER BY sl.created_at, sl.id
+    `,
+    [operatingCompanyId, settlementId]
+  );
+  const byLoad = new Map<string, EscrowPostingLoadSplit>();
+  let withoutLoad = 0;
+  let total = 0;
+  for (const r of res.rows) {
+    const c = Number(r.cents);
+    total += c;
+    if (!r.load_id) {
+      withoutLoad += 1;
+      continue;
+    }
+    const prior = byLoad.get(r.load_id);
+    if (prior) prior.amount_cents += c;
+    else byLoad.set(r.load_id, { load_id: r.load_id, settlement_line_id: r.id, amount_cents: c });
+  }
+  return { loads: [...byLoad.values()], lines_without_load: withoutLoad, total_cents: total };
 }
 
 export async function releaseEscrow(

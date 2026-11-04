@@ -156,6 +156,9 @@ describeIntegration("G11: geocode_precision at booking + load status from fence 
           stop_type: "delivery",
           scheduled_arrival_at: dayAfter(),
           facility_name: "Picker-only dest",
+          // ENG-07 (#27901): a live booking refuses a city-only stop. A picker stop with a street but no place id and
+          // no catalog location is still picker coords (NULL precision) — what this case proves.
+          address_line1: "400 Picker St",
           city: "San Antonio",
           state: "TX",
           country: "US",
@@ -294,6 +297,25 @@ describeIntegration("G11: geocode_precision at booking + load status from fence 
       `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid`,
       [loadId]
     );
-    expect(afterArrival.rows[0]!.status).toBe("delivered_pending_docs");
+    // LEAD 443.279 — an ARRIVAL never delivers the load (13691/13694/13696/13697 were delivered with no departure, so
+    // pay never accrued). Entering the final delivery fence is at_delivery; LEAVING it delivers.
+    expect(afterArrival.rows[0]!.status).toBe("at_delivery");
+
+    await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+      await processGeofenceDetectionsForGpsPoint(client as never, {
+        operating_company_id: companyId,
+        unit_id: unitId,
+        latitude: 33.5,
+        longitude: -96.0,
+        occurred_at: "2026-10-12T18:00:00Z",
+      });
+    });
+
+    const afterDelivery = await db.query<{ status: string }>(
+      `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid`,
+      [loadId]
+    );
+    expect(afterDelivery.rows[0]!.status).toBe("delivered_pending_docs");
   });
 });

@@ -111,6 +111,28 @@ export async function unwindPayRunSubledgersInClientTx(
     // GL-linked escrow balance: a 'release' posting applies −escrowCents via the DB trigger, linked to
     // the reversing JE for a both-way audit trail. Mirrors closeSettlementPayRun's recordEscrowPostingOnly
     // 'deposit' one-for-one.
+    // ACCT-F11093 (row 22): the release gives back per load exactly what the deposit(s) took per load — read from the
+    // deposits' own escrow_posting_loads split. A deposit written before the split existed has none: the release then
+    // carries no load (never a guessed one). Its document date is the reversing JE's entry_date.
+    const depositSplit = await client.query<{ load_id: string; settlement_line_id: string | null; cents: string }>(
+      `SELECT epl.load_id::text AS load_id, MIN(epl.settlement_line_id::text) AS settlement_line_id,
+              SUM(epl.amount_cents)::bigint::text AS cents
+         FROM accounting.escrow_posting_loads epl
+         JOIN accounting.escrow_postings ep ON ep.id = epl.escrow_posting_id AND ep.operating_company_id = epl.operating_company_id
+        WHERE ep.operating_company_id = $1::uuid
+          AND ep.source_type = 'driver_settlement'
+          AND ep.source_id = $2::uuid
+          AND ep.posting_type = 'deposit'
+          AND ep.linked_journal_entry_id = $3::uuid
+        GROUP BY epl.load_id`,
+      [opco, settlementId, originalJeId]
+    );
+    const releaseLoads = depositSplit.rows.map((r) => ({
+      load_id: r.load_id,
+      settlement_line_id: r.settlement_line_id,
+      amount_cents: Number(r.cents),
+    }));
+    const releaseSplitTies = releaseLoads.reduce((n, r) => n + r.amount_cents, 0) === escrowCents;
     await recordEscrowPostingOnly(client as never, {
       operating_company_id: opco,
       driver_id: settlement.driver_id,
@@ -121,6 +143,7 @@ export async function unwindPayRunSubledgersInClientTx(
       note: `${label} — escrow contribution reversal: ${reason}`,
       posted_by_user_id: actor.userId,
       linked_journal_entry_id: reversalJeId,
+      loads: releaseSplitTies ? releaseLoads : null,
     });
     // Pay-run cap summary + detailed ledger: undo the 'hold' the close appended (running balance falls
     // back by escrowCents). total_held is reduced (the hold is being unwound, not paid out).

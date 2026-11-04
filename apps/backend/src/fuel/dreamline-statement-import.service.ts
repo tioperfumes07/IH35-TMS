@@ -951,7 +951,12 @@ export async function importFuelCardStatement(
     const vendorName = dreamlineMerchantVendorName(line.location_name);
     const vendor = vendorName
       ? (await client.query<{ id: string }>(
-          `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND vendor_name = $2 AND deactivated_at IS NULL LIMIT 1`,
+          // UI-F443347-B (202616250900) normalizes vendor names at WRITE (mdata.proper_person_name: 'LOVES' is stored 'Loves');
+          // the merchant key is an upper-case brand, so the match is case-insensitive — an exact match found 0 of USMCA's
+          // Loves / Pilot / Flying vendors and left every missing fill "unresolved".
+          `SELECT id::text FROM mdata.vendors
+            WHERE operating_company_id = $1::uuid AND upper(btrim(vendor_name)) = upper(btrim($2)) AND deactivated_at IS NULL
+            ORDER BY created_at, id LIMIT 1`,
           [companyId, vendorName]
         )).rows[0]
       : undefined;
