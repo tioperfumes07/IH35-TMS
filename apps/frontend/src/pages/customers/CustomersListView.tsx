@@ -507,7 +507,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               return (
                 <span className="flex items-center gap-1 min-w-[72px]">
                   <span className="flex h-2 w-16 overflow-hidden rounded-sm">
-                    <span style={{ width: `${pCurrent}%` }} className="bg-[#1B2333]" title={`Current: ${pCurrent}%`} />
+                    <span style={{ width: `${pCurrent}%` }} className="bg-[#14314F]" title={`Current: ${pCurrent}%`} />
                     <span style={{ width: `${p130}%` }} className="bg-[#9CA3AF]" title={`1–30 days: ${p130}%`} />
                     <span style={{ width: `${p31plus > 0 ? p31plus : 0}%` }} className="bg-red-500" title={`31+ days: ${p31plus}%`} />
                   </span>

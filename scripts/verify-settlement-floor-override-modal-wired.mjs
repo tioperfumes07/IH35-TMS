@@ -27,11 +27,17 @@ export function collectFailures(src = source) {
   if (!/export function FloorOverrideDecisionModal/.test(src.modal)) {
     failures.push(`${modalPath}: no longer exports FloorOverrideDecisionModal`);
   }
-  if (!/onDecide:\s*\(override:\s*\{\s*pct:\s*number\s*\|\s*null;\s*cents:\s*number\s*\|\s*null;\s*reason:\s*string\s*\}\)\s*=>\s*void/.test(src.modal)) {
-    failures.push(`${modalPath}: onDecide no longer carries the {pct, cents, reason} override shape`);
+  if (!/onDecide:\s*\(override:\s*\{\s*pct:\s*number\s*\|\s*null;\s*cents:\s*number\s*\|\s*null;\s*reason_code:\s*string\s*\|\s*null\s*\}\)\s*=>\s*void/.test(src.modal)) {
+    failures.push(`${modalPath}: onDecide no longer carries the {pct, cents, reason_code} override shape`);
   }
-  if (!/reason\.trim\(\)\.length >= 10/.test(src.modal)) {
-    failures.push(`${modalPath}: no longer requires a written reason before confirming an override`);
+  // ACCT-F11073 row 28 (owner): the written reason was replaced by the ONE shared OverrideButton (context
+  // "settlement") — Owner/Accountant confirm, everyone else picks a catalog reason; nothing is typed. The
+  // reason requirement is therefore: the confirm control IS the OverrideButton and its code is what travels.
+  if (!/<OverrideButton[\s\S]{0,200}?context="settlement"/.test(src.modal)) {
+    failures.push(`${modalPath}: no longer requires a reason before confirming an override (settlement OverrideButton gone)`);
+  }
+  if (!/onConfirm=\{\(code\) => confirmOverride\(code\)\}/.test(src.modal) || !/onDecide\(\{\s*pct:\s*0,\s*cents:\s*0,\s*reason_code:\s*reasonCode\s*\}\)/.test(src.modal)) {
+    failures.push(`${modalPath}: the OverrideButton reason_code no longer travels with the override`);
   }
 
   if (!/import\s*\{\s*FloorOverrideDecisionModal\s*\}\s*from\s*"\.\/FloorOverrideDecisionModal"/.test(src.panel)) {
@@ -64,7 +70,8 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["modal export", "modal", /export function FloorOverrideDecisionModal/, "function FloorOverrideDecisionModal"],
-    ["min reason length", "modal", /reason\.trim\(\)\.length >= 10/, "reason.trim().length >= 0"],
+    ["override button", "modal", /context="settlement"/, 'context="other"'],
+    ["reason_code threading", "modal", /reason_code: reasonCode/, "reason_code: null"],
     ["panel import", "panel", /import \{ FloorOverrideDecisionModal \} from "\.\/FloorOverrideDecisionModal";\n/, ""],
     ["catch branch", "panel", /NET_PAY_FLOOR_BREACH/g, "NET_PAY_FLOOR_BREACH_DISABLED"],
     ["close payload", "panel", /override_floor: floorOverride \?\? null,/, "override_floor: null,"],
