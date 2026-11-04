@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { resolveEntityRoute } from "../shared/EntityLink";
 import { ProfileKpi, ProfileRows, ProfileSection } from "../profile/ProfileBlocks";
+import { SuggestedCategory, type SuggestedCategoryData } from "./SuggestedCategory";
 
 type Block<T> = { value: T; empty_reason: string | null };
 type Bill = { id: string; bill_no: string | null; bill_date: string | null; due_date: string | null; status: string; amount_cents: number; paid_cents: number; open_cents: number; days_past_due: number };
@@ -23,6 +24,9 @@ type History = { kind: "bill" | "bill_payment" | "expense"; id: string; ref: str
 
 export type VendorProfile = {
   vendor: { id: string; name: string };
+  /** Row 97 — proposed saved category; saved_category_account = what the vendor carries today. */
+  suggested_category?: SuggestedCategoryData | null;
+  saved_category_account?: { id: string; label: string } | null;
   ap_aging: Block<{ current_cents: number; d1_30_cents: number; d31_60_cents: number; d61_90_cents: number; d90_plus_cents: number; total_open_cents: number; overdue_cents: number; open_bill_count: number }>;
   open_bills: Block<Bill[]>;
   form_1099: Block<{ tax_year: number; eligible_1099: boolean; has_tax_id: boolean; paid_ytd_cents: number; bill_payments_ytd_cents: number; expenses_ytd_cents: number; threshold_cents: number; reportable: boolean; missing_tax_id: boolean; review_eligibility: boolean }>;
@@ -144,6 +148,7 @@ export function VendorProfileOverview(props: { operatingCompanyId: string; vendo
             ["Days until due", t.days_until_due == null ? "—" : String(t.days_until_due)],
             ["Early-pay discount", t.early_payment_discount_pct == null ? "—" : `${t.early_payment_discount_pct}% in ${t.early_payment_discount_days ?? "—"} days`],
             ["Default expense account", t.default_expense_account ?? "Not set"],
+            ["Suggested category", <SuggestedCategory key="suggested-category" vendorId={p.vendor.id} suggestion={p.suggested_category ?? null} />],
           ]} />
         </ProfileSection>
       </div>

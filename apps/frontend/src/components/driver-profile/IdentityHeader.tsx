@@ -45,6 +45,7 @@ export function IdentityHeader({
     "Driver",
   );
   const photoUrl = driver.photo_url ? String(driver.photo_url) : null;
+  const photoDerivedFrom = (driver.photo_derived_from as { original_filename?: string } | null | undefined)?.original_filename ?? null;
   // Canonical label first; pay_basis remains the pre-existing secondary. The retired column is NOT
   // consulted at all — a value there would be stale by definition, since nothing writes it.
   const employment = employmentStatusLabel
@@ -59,7 +60,16 @@ export function IdentityHeader({
     <section className={`${MASTER_DETAIL.surfaceClass} p-4`} data-testid="driver-identity-header">
       <div className="flex flex-wrap items-start gap-4">
         <div className="relative">
-          {photoUrl ? (
+          {photoUrl && photoDerivedFrom ? (
+            // Row 3 — an uploaded ID image shown WHOLE (object-contain, no circle crop); the source file is never modified.
+            <img
+              src={photoUrl}
+              alt={`Uploaded ID: ${photoDerivedFrom}`}
+              title={`From uploaded file ${photoDerivedFrom}`}
+              className="h-20 w-32 rounded-sm border border-gray-200 bg-white object-contain"
+              data-testid="driver-photo-from-upload"
+            />
+          ) : photoUrl ? (
             <img src={photoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E5E7EB] text-page-title font-semibold text-[#4B5563]">

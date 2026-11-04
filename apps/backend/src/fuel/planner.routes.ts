@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { recommendFuelStopsForRecommendation } from "../telematics/fuel-stop-planner.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { companyMonthToDateRange, readFuelPeriodSpend } from "./fuel-period-spend.js";
+import { readFuelSourceGap } from "./fuel-source-state.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -383,6 +384,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           fleet_pct_followed: null,
           fleet_total_recommendations: null,
           per_driver: [],
+          gap: await readFuelSourceGap(client, companyId, true),
         };
       }
       const fleetRes = await client.query<{ pct: number; total_recs: number }>(
@@ -417,6 +419,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         fleet_pct_followed: Number(fleetRes.rows[0]?.pct ?? 0),
         fleet_total_recommendations: Number(fleetRes.rows[0]?.total_recs ?? 0),
         per_driver: perDriverRes.rows,
+        gap: await readFuelSourceGap(client, companyId, false),
       };
     });
     return summary;
@@ -439,6 +442,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           fleet_savings_ytd: null,
           fleet_lost_savings_ytd: null,
           top_driver: null,
+          gap: await readFuelSourceGap(client, companyId, true),
         };
       }
       const fleetRes = await client.query<{ savings_ytd: number; lost_savings_ytd: number }>(
@@ -471,6 +475,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         fleet_savings_ytd: Number(fleetRes.rows[0]?.savings_ytd ?? 0),
         fleet_lost_savings_ytd: Number(fleetRes.rows[0]?.lost_savings_ytd ?? 0),
         top_driver: topRes.rows[0] ?? null,
+        gap: await readFuelSourceGap(client, companyId, false),
       };
     });
     return summary;
