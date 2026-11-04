@@ -36,6 +36,8 @@ export function findDefects(s) {
   if (!/runFuelFollowsTruckSweep\(/.test(s.hook)) out.push("the fuel ingest hook does not run the fill engine sweep");
   if (!/"fuel\.follows_truck"[\s\S]*?leaseSeconds: JOB_LEASE_SECONDS/.test(s.hook)) out.push("the sweep runs without a job lease (two instances could move one fill)");
   if (!/fuel_follows_truck_refused/.test(s.hook)) out.push("sweep failures are not raised (silent failure)");
+  const sweepStep = s.hook.slice(s.hook.indexOf('"fuel.follows_truck"'), s.hook.indexOf("runFuelFollowsTruckSweep(id)"));
+  if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(sweepStep)) out.push("the sweep is not limited to USMCA (it opened 1,631 questions on frozen IH 35 Transportation, 11-04)");
   const list = fn(s.sweep, "listUnresolvedFills");
   if (!/f\.resolved_at IS NULL/.test(list)) out.push("the sweep is not limited to fills not yet through the engine");
   if (!/NOT LIKE 'owner_ruling:%'/.test(list)) out.push("the sweep lists owner-ruled fills");
@@ -84,6 +86,7 @@ if (process.argv.includes("--selftest")) {
     ["evaluate applies over a confirmed load", plant("question", "  if (res.load_confirmed) return", "  if (false) return")],
     ["question reads odometer_meters", plant("question", "SELECT odometer_mi::text AS odo", "SELECT odometer_meters::text AS odo")],
     ["parked truck ignored", plant("engine", "if (!candidates.length) candidates = await parkedTrucksAtStation(", "if (false) candidates = await parkedTrucksAtStation(")],
+    ["sweep runs for every company", plant("hook", ".filter((id) => isUsmcaOperatingCompany(id));\n      const failed", ";\n      const failed")],
     ["sweep failure swallowed", plant("hook", "if (failed.length) throw new Error(`fuel_follows_truck_refused:", "if (false) throw new Error(`x:")],
   ];
   let caught = 0;
