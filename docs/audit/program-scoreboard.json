@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ef146b9",
-  "generated_at": "2026-11-04T10:25:16.986Z",
+  "healthzSha": "9c7d141",
+  "generated_at": "2026-11-04T12:29:22.495Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ef146b9",
+    "deployedSha": "9c7d141",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 28649,
+      "title": "BUS: Lead register 11-04 12:15Z — 06:00 CT engine results (E1, ENG-65, row 85, E8, E9)",
+      "state": "merged",
+      "mergedAtCt": "11/04/2026, 06:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28649",
+      "sha": "9c7d14191e",
+      "committedAtIso": "2026-11-04T06:14:12-06:00"
+    },
+    {
+      "number": 28648,
+      "title": "FIX: fuel sweep and Relay fill records run for USMCA only — E9 opened 1,631 questions on frozen IH 35 Transportation",
+      "state": "merged",
+      "mergedAtCt": "11/04/2026, 06:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28648",
+      "sha": "d48dc2bfb4",
+      "committedAtIso": "2026-11-04T06:13:08-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/04/2026, 04:25 AM CT",
+      "url": "",
+      "sha": "0f0184f174",
+      "committedAtIso": "2026-11-04T10:25:17Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28644",
       "sha": "9cb8841ff8",
       "committedAtIso": "2026-11-03T22:14:33-06:00"
-    },
-    {
-      "number": 28642,
-      "title": "FIX: escrow postings carry their load and document date; register reads them (row 22)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 09:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28642",
-      "sha": "804a5b64bc",
-      "committedAtIso": "2026-11-03T21:56:18-06:00"
-    },
-    {
-      "number": 28641,
-      "title": "CLAIM-RESERVE: migrations 202616360100 + 202616360200, verify-step 19925 (ACCT-F11094 row 257, heavy CI red)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 09:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28641",
-      "sha": "520153bd99",
-      "committedAtIso": "2026-11-03T21:50:55-06:00"
-    },
-    {
-      "number": 28640,
-      "title": "FIX: ENG-04 2170 reclass evidence counted voided and double-claimed bank lines",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 09:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28640",
-      "sha": "188bf7fbce",
-      "committedAtIso": "2026-11-03T21:37:47-06:00"
     }
   ]
 }
