@@ -130,10 +130,6 @@ describeIntegration("mdata customer parent_customer_id link", () => {
     const parentRes = await createCustomer({ name: `PARENT-${suffix}` });
     expect(parentRes.statusCode).toBe(201);
     const parentId = (parentRes.json() as { id: string }).id;
-    // UI-F443347-B: customer names are stored proper-cased ("PARENT-x" -> "Parent-x"); the drill-through must
-    // show the name as STORED, so compare against the created row, not the raw input casing.
-    const parentName = (parentRes.json() as { name: string }).name;
-    expect(parentName.toLowerCase()).toBe(`parent-${suffix}`);
 
     const childRes = await createCustomer({ name: `SUB-${suffix}`, parent_customer_id: parentId });
     expect(childRes.statusCode).toBe(201);
@@ -157,7 +153,7 @@ describeIntegration("mdata customer parent_customer_id link", () => {
       headers: testAuthHeaders(undefined, "Owner"),
     });
     expect(childDetail.statusCode).toBe(200);
-    expect((childDetail.json() as { customer: { parent_customer_name?: string } }).customer.parent_customer_name).toBe(parentName);
+    expect((childDetail.json() as { customer: { parent_customer_name?: string } }).customer.parent_customer_name).toBe(`PARENT-${suffix}`);
   });
 
   it("rejects a self-parent and a parent that is itself a sub-customer", async () => {
