@@ -37,7 +37,7 @@ describe("load real driven miles -- odometer only, NULL with a reason, never 0",
     expect(b.via).toBe("geofence");
   });
   it("an interpolated or absent geofence odometer is not a measurement", () => {
-    expect(resolveStopBoundary("arrival", stop(), { odo: 1, at: "x", src: "interpolated" }, undefined).reason).toMatch(/interpolated odometer -- not a measurement/);
+    expect(resolveStopBoundary("arrival", stop(), { odo: 1, at: "x", src: "interpolated" }, undefined).reason).toMatch(/interpolated odometer and no odometer read near it -- not a measurement/);
     expect(resolveStopBoundary("departure", stop(), { odo: null, at: "x", src: "absent" }, undefined).anchor).toBeNull();
   });
   it("a manual or unsourced stop time is never measured", () => {

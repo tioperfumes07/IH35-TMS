@@ -9,6 +9,7 @@ import { useToast } from "../../components/Toast";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
 import { Combobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { companyToday } from "../../lib/businessDate";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
@@ -21,8 +22,8 @@ import {
   type DriverTagMembership,
 } from "../../api/driver-tags";
 
+/** U12 — status multi-selector (was single Combobox). Empty = all. */
 const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
-  { value: "", label: "All statuses" },
   { value: "Active", label: "Active" },
   { value: "Inactive", label: "Inactive" },
   { value: "Terminated", label: "Terminated" },
@@ -66,11 +67,11 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   const bulk = useEntityBulkAction();
   const [deactivateRows, setDeactivateRows] = useState<DriverTableRow[]>([]);
   const [employmentReasonId, setEmploymentReasonId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [tagFilterId, setTagFilterId] = useState("");
   const staged = useStagedListFilters({
     applied: { status: statusFilter, tag: tagFilterId },
-    empty: { status: "", tag: "" },
+    empty: { status: [] as string[], tag: "" },
     onApply: (next) => {
       setStatusFilter(next.status);
       setTagFilterId(next.tag);
@@ -134,7 +135,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
 
   const filteredRows = useMemo(() => {
     let out = enrichedRows;
-    if (statusFilter) out = out.filter((row) => row.status === statusFilter);
+    if (statusFilter.length) out = out.filter((row) => statusFilter.includes(row.status));
     if (tagFilterId) {
       // Filters the currently-loaded roster page by active tag membership. A full server-side
       // roster-wide tag filter (beyond the current page) is a follow-on if the owner wants it —
@@ -199,7 +200,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
       selectable={bulkPermission.canUseBulkOps}
       filterBar={
         <CollapsedListFilters
-          activeFilterCount={(statusFilter ? 1 : 0) + (tagFilterId ? 1 : 0)}
+          activeFilterCount={(statusFilter.length ? 1 : 0) + (tagFilterId ? 1 : 0)}
           onApply={staged.apply}
           onReset={staged.reset}
           onCancel={staged.cancel}
@@ -207,18 +208,18 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           testIdPrefix="drivers-table"
           dataAttributes={{ "data-drivers-table-filter-toolbar": "collapsed" }}
         >
-          <div className="w-full max-w-xs text-xs font-semibold text-[#4B5563]">
-            <label htmlFor="drivers-table-status-filter">Status</label>
-            <Combobox
-              id="drivers-table-status-filter"
-              dataTestId="drivers-table-status-filter"
-              className="mt-1"
-              options={DRIVER_STATUS_FILTERS.filter((option) => option.value)}
-              value={staged.draft.status || null}
-              onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next ?? "" }))}
-              placeholder="All statuses"
-              allowClear
-            />
+          <div className="w-full max-w-xs text-xs font-semibold text-[#4B5563]" data-testid="drivers-table-status-filter">
+            <span className="block" id="drivers-table-status-filter-label">Status</span>
+            <div className="mt-1">
+              <MultiSelectDropdown
+                label="Status"
+                options={DRIVER_STATUS_FILTERS}
+                selected={staged.draft.status}
+                onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next }))}
+                allLabel="All statuses"
+                data-testid="drivers-table-status-multiselect"
+              />
+            </div>
           </div>
           <div className="w-full max-w-xs text-xs font-semibold text-[#4B5563]">
             <label htmlFor="drivers-table-tag-filter">Tag</label>

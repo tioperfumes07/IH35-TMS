@@ -8,7 +8,7 @@ export type ForecastSettings = {
 export type ForecastWeek = {
   week_start: string;
   expected_inflows: { invoices: number; factoring: number; other: number };
-  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number };
+  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number; card_payables: number };
   projected_balance: number;
 };
 
@@ -28,6 +28,8 @@ export function buildForecastWeeks(input: {
   /** Proforma / pre-invoice projected inflows (not Open A/R). */
   inflowOther?: Map<string, number>;
   outflowBills: Map<string, number>;
+  /** Fuel-card payable balances (Dreamline 2510 / WEX 2520) bucketed by payment due week. */
+  outflowCardPayables?: Map<string, number>;
   outflowFactoringFee: Map<string, number>;
 }): ForecastWeek[] {
   const rows: ForecastWeek[] = [];
@@ -45,13 +47,14 @@ export function buildForecastWeeks(input: {
       Number(input.settings.lease_weekly_cents ?? 0);
     const payroll = Number(input.settings.payroll_weekly_cents ?? 0);
     const fuelEstimate = Number(input.settings.fuel_estimate_weekly_cents ?? 0);
+    const cardPayables = Number(input.outflowCardPayables?.get(weekStart) ?? 0);
     const factoringFee = Number(input.outflowFactoringFee.get(weekStart) ?? 0);
 
-    runningBalance = runningBalance + invoices + factoring + other - bills - payroll - fuelEstimate - factoringFee;
+    runningBalance = runningBalance + invoices + factoring + other - bills - payroll - fuelEstimate - factoringFee - cardPayables;
     rows.push({
       week_start: weekStart,
       expected_inflows: { invoices, factoring, other },
-      expected_outflows: { bills, payroll, fuel_estimate: fuelEstimate, factoring_fee: factoringFee },
+      expected_outflows: { bills, payroll, fuel_estimate: fuelEstimate, factoring_fee: factoringFee, card_payables: cardPayables },
       projected_balance: runningBalance,
     });
   }

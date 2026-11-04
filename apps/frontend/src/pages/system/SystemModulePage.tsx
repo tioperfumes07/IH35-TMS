@@ -36,6 +36,7 @@ import {
 } from "./txHealthEntityFilter";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -1217,6 +1218,17 @@ export function SystemModulePage() {
 
   const visibleTabs = SYSTEM_TABS.filter((candidate) => qboAvailable || !QBO_SYSTEM_TAB_IDS.has(candidate.id));
   const data = useSystemData(selectedCompanyId, qboAvailable);
+
+  if (!selectedCompanyId) {
+    return (
+      <div className="space-y-3">
+        <PageHeader breadcrumb={["System"]} backHref="/system" title="SYSTEM" subtitle="Owner-only" />
+        <BoardSection title="SYSTEM" testId="system-module-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

@@ -43,3 +43,35 @@ describe("variant duplicate candidates", () => {
     expect(cts.mergeable).toBe(false); // customer ~ factoring debtor: cross-module, linked not merged
   });
 });
+
+// Row 157 — only identical-after-normalization names, or a similar name + same MC/DOT/address, are flagged.
+import { corroboration, isFlaggedDuplicate } from "./variant-candidates.js";
+
+describe("row 157 duplicate customer rule", () => {
+  const cust = (id: string, name: string, extra: Partial<PartyRecord> = {}): PartyRecord => ({ kind: "customer", id, name, docs: 0, total_cents: 0, open_cents: 0, ...extra });
+  const key = (n: string) => n.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+  it("flags the same name written with and without LLC", () => {
+    const pairs = variantPairs([cust("a", "Brock Transportation, Llc"), cust("b", "Brock Transportation")], key);
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0]!.tier).toBe("exact");
+    expect(isFlaggedDuplicate(pairs[0]!)).toBe(true);
+  });
+  it("does not flag a similar-name pair with nothing else in common", () => {
+    const pairs = variantPairs([cust("a", "Jakebrake Logistics Llc"), cust("b", "Jakebreak Logistics, Llc")], key);
+    expect(pairs.length).toBe(1);
+    expect(pairs[0]!.tier).toBe("name_only");
+    expect(isFlaggedDuplicate(pairs[0]!)).toBe(false);
+  });
+  it("flags the same similar-name pair once the MC or the address agrees", () => {
+    const withMc = variantPairs([cust("a", "Jakebrake Logistics Llc", { mc: "MC-123456" }), cust("b", "Jakebreak Logistics, Llc", { mc: "123456" })], key);
+    expect(withMc[0]!.tier).toBe("corroborated");
+    expect(withMc[0]!.corroboration).toEqual(["mc"]);
+    expect(isFlaggedDuplicate(withMc[0]!)).toBe(true);
+    const withAddr = variantPairs([cust("a", "Jakebrake Logistics Llc", { address: "100 Main St 78040" }), cust("b", "Jakebreak Logistics, Llc", { address: "100 MAIN ST. 78040" })], key);
+    expect(withAddr[0]!.corroboration).toEqual(["address"]);
+  });
+  it("empty identifiers never corroborate", () => {
+    expect(corroboration(cust("a", "X", { mc: "", dot: null, address: "" }), cust("b", "Y", { mc: "", dot: null, address: "" }))).toEqual([]);
+  });
+});

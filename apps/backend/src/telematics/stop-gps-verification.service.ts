@@ -212,8 +212,12 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     const from = new Date(Math.min(...days) - 2 * DAY_MS), to = new Date(Math.max(...days) + 3 * DAY_MS);
     const fixes = (await client.query<{ captured_at: string; lat: string | null; lng: string | null; speed_mph: string | null; engine_state: string | null; odometer_mi: string | null; city: string | null; state: string | null }>(
       `SELECT captured_at::text, lat::text, lng::text, speed_mph::text, engine_state, odometer_mi::text, city, state
-         FROM telematics.vehicle_locations WHERE unit_id = $1::uuid AND captured_at BETWEEN $2 AND $3 ORDER BY captured_at`,
-      [load.unit_id, from.toISOString(), to.toISOString()])).rows;
+         FROM telematics.vehicle_locations
+        -- Row 131 (11-03): company-pinned so the read uses idx_vehicle_locations_unit_time (operating_company_id, unit_id,
+        -- captured_at) as a range — unit-only skipped across every tenant: 11,643 buffers / 129 ms -> 810 / 13 ms for one
+        -- 10-day window on prod; the engine's 194-load pass ran > 120 s. Prod: 0 fixes of a USMCA load's truck carry another company.
+        WHERE operating_company_id = $4::uuid AND unit_id = $1::uuid AND captured_at BETWEEN $2 AND $3 ORDER BY captured_at`,
+      [load.unit_id, from.toISOString(), to.toISOString(), input.operatingCompanyId])).rows;
     const pf: PositionFix[] = fixes.map((f) => ({ capturedAt: new Date(f.captured_at), lat: f.lat == null ? null : Number(f.lat), lng: f.lng == null ? null : Number(f.lng),
       speedMph: f.speed_mph == null ? null : Number(f.speed_mph), engineState: f.engine_state, odometerMi: f.odometer_mi == null ? null : Number(f.odometer_mi), city: f.city, state: f.state }));
     fixDays = new Set(pf.map((f) => f.capturedAt.toISOString().slice(0, 10)));

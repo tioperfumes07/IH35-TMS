@@ -1400,6 +1400,61 @@ export async function getLoadsReport(params: {
   return apiRequest<LoadsReportResponse>(withCompany(`/api/v1/reports/loads?${q.toString()}`, params.operating_company_id));
 }
 
+/** Row 78 — Dispatch › Load history list. Backend: apps/backend/src/reports/loads-history.service.ts (the loads-report
+ *  rows + load-cost rollup, paged, with DB-side totals and per-status counts). */
+export type LoadsHistoryRow = LoadsReportRow & { miles_deadhead: number | null };
+export type LoadsHistoryResponse = {
+  date_field: "pickup" | "delivery";
+  scope_label: string;
+  period: { start: string; end: string };
+  pagination: { limit: number; offset: number; total: number };
+  totals: {
+    load_count: number;
+    revenue_cents: number;
+    driver_pay_cents: number;
+    fuel_cents: number;
+    margin_cents: number;
+    ar_invoice_count: number;
+    ar_invoice_amount_cents: number;
+    loaded_miles: number;
+    empty_miles: number;
+    delivered_not_invoiced: number;
+    customer_count: number;
+  };
+  status_counts: Array<{ status: string; count: number }>;
+  rows: LoadsHistoryRow[];
+};
+
+export async function getLoadsHistory(params: {
+  operating_company_id: string;
+  from: string;
+  to: string;
+  date_field?: "pickup" | "delivery";
+  customer_id?: string;
+  driver_id?: string;
+  unit_id?: string;
+  status?: string;
+  trip_type?: string;
+  include_cancelled?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<LoadsHistoryResponse> {
+  const q = new URLSearchParams({
+    from: params.from,
+    to: params.to,
+    date_field: params.date_field ?? "pickup",
+    limit: String(params.limit ?? 200),
+    offset: String(params.offset ?? 0),
+  });
+  if (params.customer_id) q.set("customer_id", params.customer_id);
+  if (params.driver_id) q.set("driver_id", params.driver_id);
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.status) q.set("status", params.status);
+  if (params.trip_type) q.set("trip_type", params.trip_type);
+  if (params.include_cancelled) q.set("include_cancelled", "true");
+  return apiRequest<LoadsHistoryResponse>(withCompany(`/api/v1/reports/loads-history?${q.toString()}`, params.operating_company_id));
+}
+
 export async function getDispatchMargin(params: {
   operating_company_id: string;
   from: string;

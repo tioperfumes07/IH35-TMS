@@ -376,7 +376,8 @@ function assertSettlementsHomeNoPanelExtract() {
     fail("SettlementsHomeBoardPanels must import shared BoardSection");
   }
   if (!/Net driver pay by week/.test(panels)) fail('missing "Net driver pay by week" panel');
-  if (!/Deductions this week/.test(panels)) fail('missing "Deductions this week" panel');
+  // Codex batch91 — selected-week caption (historical bars drive the amount); not hard-wired "this week".
+  if (!/Deductions · Week of/.test(panels)) fail('missing "Deductions · Week of" panel (selected-week caption)');
   if (!/11 weeks, not cancelled, not sample|weeks, not cancelled, not sample/.test(panels)) {
     fail('chart footer must use board "weeks, not cancelled, not sample" grammar');
   }

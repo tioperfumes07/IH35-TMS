@@ -24,6 +24,7 @@ export const OVERRIDE_CONTEXTS = [
   "dispatch",
   "safety",
   "maintenance",
+  "425c_carry_forward",
 ] as const;
 export type OverrideContext = (typeof OVERRIDE_CONTEXTS)[number];
 

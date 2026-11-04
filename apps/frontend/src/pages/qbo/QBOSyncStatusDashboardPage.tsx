@@ -22,7 +22,23 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 // ConflictsTab removed (qbo-sync-detail/ConflictsTab.tsx deleted in orphan-triage batch 11)
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "pending", label: "pending" },
+  { value: "running", label: "running" },
+  { value: "success", label: "success" },
+  { value: "failed", label: "failed" },
+  { value: "dead_letter", label: "dead_letter" },
+  { value: "cancelled", label: "cancelled" },
+] as const;
+
+/** U12: 0 → all (omit API status), 1 → scalar pass-through, 2+ → fetch all + client filter. */
+function apiStatusParam(selected: string[]): string | undefined {
+  if (selected.length === 1) return selected[0];
+  return undefined;
+}
 
 function withinHours(iso: string, hours: number) {
   const t = new Date(iso).getTime();
@@ -54,7 +70,7 @@ export function QBOSyncStatusDashboardPage() {
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const { pushToast } = useToast();
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<string[]>([]);
   const [kind, setKind] = useState("");
   const [timeRange, setTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
   const [search, setSearch] = useState("");
@@ -66,13 +82,15 @@ export function QBOSyncStatusDashboardPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
+  const statusApi = apiStatusParam(status);
+  const statusKey = status.slice().sort().join(",") || "all";
 
   const runsQuery = useQuery({
-    queryKey: ["qbo", "sync-runs", companyId, status, kind, timeRange, search],
+    queryKey: ["qbo", "sync-runs", companyId, statusKey, kind, timeRange, search],
     queryFn: () =>
       listQboSyncRuns({
         operating_company_id: companyId,
-        status: status || undefined,
+        status: statusApi,
         kind: kind || undefined,
         time_range: timeRange,
         search: search.trim() || undefined,
@@ -80,7 +98,8 @@ export function QBOSyncStatusDashboardPage() {
       }),
     enabled: Boolean(companyId),
     retry: false,
-    refetchInterval: status === "pending" || status === "running" ? 30_000 : false,
+    refetchInterval:
+      status.includes("pending") || status.includes("running") ? 30_000 : false,
   });
 
   const alertsQuery = useQuery({
@@ -90,7 +109,12 @@ export function QBOSyncStatusDashboardPage() {
     retry: false,
   });
 
-  const runs = runsQuery.data?.runs ?? [];
+  const runsRaw = runsQuery.data?.runs ?? [];
+  // U12: 2+ statuses — API fetched unscoped; narrow client-side.
+  const runs =
+    status.length >= 2
+      ? runsRaw.filter((r) => status.includes(r.status))
+      : runsRaw;
 
   const kpis = useMemo(() => {
     const healthy = runs.filter((r) => r.status === "success" && withinHours(r.started_at, 24)).length;
@@ -280,22 +304,19 @@ export function QBOSyncStatusDashboardPage() {
         <>
 
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          Status
-          <SelectCombobox
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-xs"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="pending">pending</option>
-            <option value="running">running</option>
-            <option value="success">success</option>
-            <option value="failed">failed</option>
-            <option value="dead_letter">dead_letter</option>
-            <option value="cancelled">cancelled</option>
-          </SelectCombobox>
-        </label>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="qbo-sync-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={setStatus}
+              allLabel="All statuses"
+              data-testid="qbo-sync-status-multiselect"
+            />
+          </div>
+        </div>
         <label className="text-xs text-gray-600">
           Kind
           <input

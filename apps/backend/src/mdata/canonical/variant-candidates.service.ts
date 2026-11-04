@@ -4,15 +4,16 @@
  * merge through POST /api/v1/mdata/canonical/:kind/merge (evidence "owner_approved_variant").
  */
 import { normalizedKeySql } from "./canonical-entities.service.js";
-import { variantPairs, type PartyRecord, type VariantPair } from "./variant-candidates.js";
+import { isFlaggedDuplicate, variantPairs, type PartyRecord, type VariantPair } from "./variant-candidates.js";
 
 type Db = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
 const normalizedKey = (name: string) => name.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 export async function loadPartyNamespace(client: Db, oc: string): Promise<PartyRecord[]> {
-  const customers = await client.query<{ id: string; name: string; docs: string; total: string; open: string }>(
-    `SELECT c.id::text, c.customer_name AS name,
+  const customers = await client.query<{ id: string; name: string; docs: string; total: string; open: string; mc: string | null; dot: string | null; address: string | null }>(
+    `SELECT c.id::text, c.customer_name AS name, c.mc_number AS mc, c.dot_number AS dot,
+            NULLIF(concat_ws(' ', c.billing_address_line1, c.billing_postal_code), '') AS address,
             count(i.id)::text AS docs, COALESCE(sum(i.total_cents), 0)::text AS total, COALESCE(sum(i.amount_open_cents), 0)::text AS open
        FROM mdata.customers c
        LEFT JOIN accounting.invoices i ON i.customer_id::text = c.id::text AND i.voided_at IS NULL AND i.operating_company_id = c.operating_company_id
@@ -20,8 +21,9 @@ export async function loadPartyNamespace(client: Db, oc: string): Promise<PartyR
       GROUP BY c.id`,
     [oc]
   );
-  const vendors = await client.query<{ id: string; name: string; docs: string; total: string; open: string }>(
-    `SELECT v.id::text, v.vendor_name AS name,
+  const vendors = await client.query<{ id: string; name: string; docs: string; total: string; open: string; mc: string | null; dot: string | null; address: string | null }>(
+    `SELECT v.id::text, v.vendor_name AS name, v.mc_number AS mc, v.dot_number AS dot,
+            NULLIF(concat_ws(' ', v.address_line1, v.postal_code), '') AS address,
             count(b.id)::text AS docs, COALESCE(sum(b.amount_cents), 0)::text AS total,
             COALESCE(sum(b.amount_cents - COALESCE(b.paid_cents, 0)) FILTER (WHERE b.status <> 'void'), 0)::text AS open
        FROM mdata.vendors v
@@ -40,13 +42,21 @@ export async function loadPartyNamespace(client: Db, oc: string): Promise<PartyR
     [oc]
   );
   return [
-    ...customers.rows.map((r) => ({ kind: "customer" as const, id: r.id, name: r.name, docs: Number(r.docs), total_cents: Number(r.total), open_cents: Number(r.open) })),
-    ...vendors.rows.map((r) => ({ kind: "vendor" as const, id: r.id, name: r.name, docs: Number(r.docs), total_cents: Number(r.total), open_cents: Number(r.open) })),
+    ...customers.rows.map((r) => ({ kind: "customer" as const, id: r.id, name: r.name, docs: Number(r.docs), total_cents: Number(r.total), open_cents: Number(r.open), mc: r.mc, dot: r.dot, address: r.address })),
+    ...vendors.rows.map((r) => ({ kind: "vendor" as const, id: r.id, name: r.name, docs: Number(r.docs), total_cents: Number(r.total), open_cents: Number(r.open), mc: r.mc, dot: r.dot, address: r.address })),
     ...debtors.rows.map((r) => ({ kind: "factoring_debtor" as const, id: r.name, name: r.name, docs: Number(r.docs), total_cents: Number(r.total), open_cents: 0 })),
   ];
 }
 
-export async function readVariantCandidates(client: Db, oc: string): Promise<{ parties: number; pairs: VariantPair[] }> {
+export const DUPLICATE_RULE =
+  "Flagged = names identical after case, punctuation and LLC/Inc are removed, or a similar name with the same MC / DOT number or street address. A similar name alone is not flagged.";
+
+export async function readVariantCandidates(
+  client: Db,
+  oc: string
+): Promise<{ parties: number; pairs: VariantPair[]; rule: string; name_only_hidden: number }> {
   const parties = await loadPartyNamespace(client, oc);
-  return { parties: parties.length, pairs: variantPairs(parties, normalizedKey) };
+  const all = variantPairs(parties, normalizedKey);
+  const pairs = all.filter(isFlaggedDuplicate);
+  return { parties: parties.length, pairs, rule: DUPLICATE_RULE, name_only_hidden: all.length - pairs.length };
 }

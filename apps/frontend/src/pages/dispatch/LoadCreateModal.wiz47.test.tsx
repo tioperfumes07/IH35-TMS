@@ -19,6 +19,10 @@ import { BookLoadValidationSection } from "./components/BookLoadValidationSectio
 //   (c) a gate that blocks submit renders "blocked" (red ✕) in the checks panel — never a green ✓.
 const getDriverLoadAvailability = vi.hoisted(() => vi.fn());
 vi.mock("../../api/dispatch", () => ({ getDriverLoadAvailability }));
+// Row 28 — the override is the shared OverrideButton (Owner confirms; nothing typed).
+vi.mock("../../auth/useAuth", () => ({ useAuth: () => ({ user: { role: "Owner" } }) }));
+vi.mock("../../contexts/CompanyContext", () => ({ useCompanyContext: () => ({ selectedCompanyId: "usmca" }) }));
+vi.mock("../../api/catalogs", () => ({ listOverrideReasons: vi.fn(async () => ({ reasons: [] })) }));
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -70,11 +74,12 @@ describe("WIZ-47 — unit-repair gate is a visible, reason-carrying, reachable b
     // rule code + subject unit + the missing open work order
     expect(screen.getByText("UNIT-REPAIR-WO")).toBeTruthy();
     expect(screen.getByText(/WO-T156-IS-09-01-2026-0041-23914/)).toBeTruthy();
-    // a reachable override control (not a hidden gate)
-    expect(screen.getByTestId("repair-block-override-reason")).toBeTruthy();
+    // a reachable override control (not a hidden gate) — the ONE OverrideButton, no text box (row 28)
+    expect(screen.getByTestId("repair-block-override")).toBeTruthy();
+    expect(row.querySelector("textarea, input[type=text]")).toBeNull();
   });
 
-  it("(b) submit stays blocked until a >=10-char reason is entered, then enables", async () => {
+  it("(b) submit stays blocked until the override is confirmed (catalog reason, nothing typed), then enables", async () => {
     getDriverLoadAvailability.mockResolvedValue(REPAIR_BLOCK);
     const onSubmitBlockedChange = vi.fn();
     const user = userEvent.setup();
@@ -85,18 +90,14 @@ describe("WIZ-47 — unit-repair gate is a visible, reason-carrying, reachable b
     await waitFor(() => expect(onSubmitBlockedChange).toHaveBeenLastCalledWith(true));
     expect(screen.getByTestId("repair-block-submit-blocked")).toBeTruthy();
 
-    // a short reason does NOT clear the block
-    await user.type(screen.getByTestId("repair-block-override-reason"), "too short");
+    // opening the override without confirming does NOT clear the block
+    await user.click(screen.getByTestId("repair-block-override"));
     expect(onSubmitBlockedChange).toHaveBeenLastCalledWith(true);
 
-    // a >=10-char reason clears it and records the override
-    await user.clear(screen.getByTestId("repair-block-override-reason"));
-    await user.type(
-      screen.getByTestId("repair-block-override-reason"),
-      "Shop cleared this unit verbally; WO closes tomorrow AM."
-    );
+    // the Owner confirms → the owner_override catalog line clears it and is recorded with the booking
+    await user.click(screen.getByTestId("repair-block-override-confirm"));
     await waitFor(() => expect(onSubmitBlockedChange).toHaveBeenLastCalledWith(false));
-    expect(screen.getByTestId("repair-block-override-recorded")).toBeTruthy();
+    expect(screen.getByTestId("repair-block-override-recorded").textContent).toContain("Owner override [owner_override]");
   });
 
   it("(c) the checks panel renders a blocking gate as blocked (red ✕), never a green live ✓", () => {

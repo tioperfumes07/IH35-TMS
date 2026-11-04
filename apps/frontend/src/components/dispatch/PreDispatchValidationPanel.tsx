@@ -93,7 +93,6 @@ export function PreDispatchValidationPanel({
   const [error, setError] = useState<string | null>(null);
   const [acknowledgedRules, setAcknowledgedRules] = useState<Set<string>>(new Set());
   const [blockOverrides, setBlockOverrides] = useState<Record<string, BlockOverrideRecord>>({});
-  const [rowReasons, setRowReasons] = useState<Record<string, string>>({});
   const [pendingInsScheduleConfirm, setPendingInsScheduleConfirm] = useState<{ ruleId: string; message: string } | null>(null);
   const [retryGeneration, setRetryGeneration] = useState(0);
 
@@ -123,7 +122,6 @@ export function PreDispatchValidationPanel({
     setError(null);
     setAcknowledgedRules(new Set());
     setBlockOverrides({});
-    setRowReasons({});
     onBlockOverridesChange?.({});
     onRemainingBlockersChange?.(0);
     if (!driverUuid && !unitUuid && !customerId) {
@@ -292,18 +290,13 @@ export function PreDispatchValidationPanel({
           allowBlockOverride
           canOwnerOverride={canOwnerOverride}
           blockOverrides={blockOverrides}
-          rowReasons={rowReasons}
-          onRowReasonChange={(ruleId, reason) => {
-            setRowReasons((prev) => ({ ...prev, [ruleId]: reason }));
-            onOverrideReasonChange?.(reason);
-          }}
-          onOverrideBlocker={(ruleId) => {
-            const reason = (rowReasons[ruleId] ?? "").trim();
-            if (reason.length < 10) return;
+          onOverrideBlocker={(ruleId, reason) => {
+            // Row 28: `reason` is the catalog line from the shared OverrideButton (never typed).
             setBlockOverrides((prev) => ({
               ...prev,
               [ruleId]: { reason, at: new Date().toISOString() },
             }));
+            onOverrideReasonChange?.(reason);
           }}
         />
       )}

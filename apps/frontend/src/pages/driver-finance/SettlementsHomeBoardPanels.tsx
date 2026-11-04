@@ -31,7 +31,7 @@ function csvEscape(value: string): string {
 
 /** Client CSV of the Week-of roster (fill-not-shell — prior Export only navigated with a dead export flag). */
 function exportWeekOfSettlementsCsv(
-  weekStartMs: number,
+  weekStartIso: string,
   pill: "open" | "closed",
   rows: SettlementListRow[],
 ): void {
@@ -55,7 +55,7 @@ function exportWeekOfSettlementsCsv(
         .join(",");
     })
     .join("\n");
-  const weekLabel = formatWeekOfTitle(new Date(weekStartMs)).replace(/[^a-zA-Z0-9]+/g, "-");
+  const weekLabel = formatWeekOfTitle(weekStartIso).replace(/[^a-zA-Z0-9]+/g, "-");
   const blob = new Blob([`${header}\n${body}\n`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -84,8 +84,8 @@ export type SettlementsHomeBoardPanelsProps = {
   deductionSplitThisWeek: DeductionSplit;
   deductionsListError: boolean;
   thisWeekBucket: SettlementsWeekBucket | undefined;
-  /** ROUND 7.30 / Codex batch88 — bar click selects Week-of roster (URL week_start). */
-  onSelectWeek: (weekStartMs: number) => void;
+  /** ROUND 7.30 / Codex batch88 — bar click selects Week-of roster (URL week_start company-calendar ISO). */
+  onSelectWeek: (weekStartIso: string) => void;
   weekOfPill: "open" | "closed";
   setWeekOfPill: Dispatch<SetStateAction<"open" | "closed">>;
   weekOfOpenCount: number;
@@ -178,7 +178,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
                   const x = i * 48 + 12;
                   const y = 122 - h;
-                  const isSelected = thisWeekBucket?.weekStartMs === w.weekStartMs;
+                  const isSelected = thisWeekBucket?.weekStartIso === w.weekStartIso;
                   return (
                     <g key={w.weekStartMs}>
                       <rect
@@ -193,14 +193,14 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                         style={{ transformOrigin: `${x + 12}px 122px`, cursor: "pointer" } as CSSProperties}
                         role="button"
                         tabIndex={0}
-                        aria-label={`Week of ${formatWeekOfTitle(new Date(w.weekStartMs))}`}
+                        aria-label={`Week of ${formatWeekOfTitle(w.weekStartIso)}`}
                         aria-pressed={isSelected}
                         data-testid={`settlements-home-week-bar-${w.label}`}
-                        onClick={() => onSelectWeek(w.weekStartMs)}
+                        onClick={() => onSelectWeek(w.weekStartIso)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            onSelectWeek(w.weekStartMs);
+                            onSelectWeek(w.weekStartIso);
                           }
                         }}
                       />
@@ -219,7 +219,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
           </BoardSection>
 
           <BoardSection
-            title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
+            title={`Deductions · Week of ${thisWeekBucket ? formatWeekOfTitle(thisWeekBucket.weekStartIso) : "—"} · ${formatSettlementsUsd(deductionsThisWeek)}`}
             onViewAll={() => navigate("/driver-finance/deductions")}
             footer={
               deductionsListError
@@ -285,7 +285,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
 
       {!kpiBaseError && thisWeekBucket ? (
         <BoardSection
-          title={`Week of ${formatWeekOfTitle(new Date(thisWeekBucket.weekStartMs))}`}
+          title={`Week of ${formatWeekOfTitle(thisWeekBucket.weekStartIso)}`}
           onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
           headerRight={
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -303,7 +303,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 data-testid="settlements-home-week-of-export"
                 disabled={weekOfRows.length === 0}
                 onClick={() =>
-                  exportWeekOfSettlementsCsv(thisWeekBucket.weekStartMs, weekOfPill, weekOfRows)
+                  exportWeekOfSettlementsCsv(thisWeekBucket.weekStartIso, weekOfPill, weekOfRows)
                 }
                 style={{
                   fontSize: 11,

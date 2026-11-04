@@ -26,7 +26,7 @@ export type RunInTx = <T>(fn: (client: QueryClient) => Promise<T>) => Promise<T>
 export const STATEMENT_CARD_CREDIT_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA only (AUTH-453 scope)
 const REASON = "LEAD 443.258.5 ruling 2: the statement card difference is re-issued as its document (card credit / expense) through the expense writer — the hand-written statement JE is voided by the void engine";
 
-// ENG-48 (2026-10-24): replaced literal account_number = '5000' with role-based CTE (company_fuel_advance_expense)
+// ENG-48 (2026-10-24): the fuel account resolves by role (company_fuel_advance_expense), never by account number
 // so verify-every-poster-resolves-by-role-not-by-name-or-number passes (LEAD 443.329).
 export const LIVE_STATEMENT_DISCOUNT_JES_SQL = `
     WITH _fuel_acct AS (
@@ -76,14 +76,10 @@ const tb = async (c: QueryClient, companyId: string) =>
   (await c.query<{ net: string; n: string }>(
     `SELECT COALESCE(sum(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END), 0)::text AS net, count(*)::text AS n
        FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [companyId])).rows[0]!;
-const acctNet = async (c: QueryClient, companyId: string, num: string) =>
-  Number((await c.query<{ net: string }>(
-    `SELECT COALESCE(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net
-       FROM accounting.journal_entry_postings p
-       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
-       JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
-      WHERE p.operating_company_id = $1::uuid AND je.voided_at IS NULL AND a.account_number = $2`, [companyId, num])).rows[0]!.net);
-// ENG-48: resolve fuel account by role (same CTE the posting SQL uses) — never a bare account_number literal.
+// ENG-48 / row 127 (11-03): BOTH accounts this repair asserts on resolve by role (same CTE the posting SQL uses). The card
+// payable (fuel_card_payable_dreamline, number 2510 on USMCA) was still read through a number-keyed helper after the fuel side
+// moved to its role; that helper is gone. No account number literal is read anywhere in this file.
+export const CARD_CREDIT_REPAIR_ROLES = Object.freeze({ fuel: "company_fuel_advance_expense", cardPayable: "fuel_card_payable_dreamline" });
 const acctNetByRole = async (c: QueryClient, companyId: string, role: string) => {
   const row = (await c.query<{ account_id: string }>(
     `SELECT COALESCE(
@@ -113,7 +109,7 @@ async function runBatch(c: QueryClient, input: { companyId: string; actorUserId:
   await c.query("SAVEPOINT card_credit_batch");
   const tbBefore = await tb(c, companyId);
   if (tbBefore.net !== "0") throw new CardCreditRepairRefused(`batch ${input.batch}: TB ${tbBefore.net} before`);
-  const b5000 = await acctNetByRole(c, companyId, "company_fuel_advance_expense"), b2510 = await acctNet(c, companyId, "2510");
+  const b5000 = await acctNetByRole(c, companyId, CARD_CREDIT_REPAIR_ROLES.fuel), b2510 = await acctNetByRole(c, companyId, CARD_CREDIT_REPAIR_ROLES.cardPayable);
   const jes = (await c.query<{ je: string; entry_date: string; memo: string; receipt: string; cents_5000: string; acct_5000: string; acct_2510: string }>(
     `${LIVE_STATEMENT_DISCOUNT_JES_SQL} LIMIT ${input.size}`, [companyId])).rows;
   if (!jes.length) { await c.query("ROLLBACK TO SAVEPOINT card_credit_batch"); return null; }
@@ -139,7 +135,7 @@ async function runBatch(c: QueryClient, input: { companyId: string; actorUserId:
       doc: cents > 0 ? `${marker}-CARD-DISC` : `${marker}-CARD-DIFF`, cents, receipt: j.receipt });
   }
   const tbAfter = await tb(c, companyId);
-  const d5000 = (await acctNetByRole(c, companyId, "company_fuel_advance_expense")) - b5000, d2510 = (await acctNet(c, companyId, "2510")) - b2510;
+  const d5000 = (await acctNetByRole(c, companyId, CARD_CREDIT_REPAIR_ROLES.fuel)) - b5000, d2510 = (await acctNetByRole(c, companyId, CARD_CREDIT_REPAIR_ROLES.cardPayable)) - b2510;
   const bad: string[] = [];
   if (d5000 !== 0) bad.push(`5000 moved ${d5000}`);
   if (d2510 !== 0) bad.push(`2510 moved ${d2510}`);

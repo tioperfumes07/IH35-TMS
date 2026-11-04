@@ -14,8 +14,10 @@ function verify(source) {
     ["company scope", /operating_company_id:\s*companyId/],
     ["broker discriminator", /customer_type:\s*"broker"/],
     // Re-anchored round 296 (owner filter law: ONE search = the house toolbar over the full roster, "N of M").
-    ["active lifecycle scope (default)", /useState<"active" \| "inactive" \| "all">\("active"\)/],
-    ["status narrows server-side", /\.\.\.\(status === "all" \? \{\} : \{ status \}\)/],
+    // U12: MultiSelect default Active; apiStatus maps 0/2+→all, 1→scalar for server status.
+    ["active lifecycle scope (default)", /useState<string\[\]>\(\["active"\]\)/],
+    ["U12 status MultiSelect", /<MultiSelectDropdown\b[\s\S]*allLabel="All statuses"/],
+    ["status narrows server-side", /\.\.\.\(statusParam === "all" \? \{\} : \{ status: statusParam \}\)/],
     // LEAD 443.181: DataTable -> ParityTable; its toolbar search must not be suppressed.
     ["house toolbar is the one search", /<ParityTable\b(?![\s\S]*suppressToolbarSearch)/],
     ["forward customer drill", /<EntityLink kind="customer" id=\{row\.id\}/],
@@ -42,7 +44,7 @@ if (process.argv.includes("--selftest")) {
     ["bounded scanner", source.replace("listAllCustomers({", "listCustomers({")],
     ["cross-company", source.replace("operating_company_id: companyId", "operating_company_id: undefined")],
     ["wrong type", source.replace('customer_type: "broker"', 'customer_type: "customer"')],
-    ["inactive leak", source.replace('useState<"active" | "inactive" | "all">("active")', 'useState<"active" | "inactive" | "all">("all")')],
+    ["inactive leak", source.replace('useState<string[]>(["active"])', 'useState<string[]>(["active", "inactive"])')],
     ["second search box", source + "\n<CatalogListSearchInput value={x} />"],
     ["dead forward link", source.replace('kind="customer"', 'kind="vendor"')],
     ["hidden read failure", source.replace("Failed to load brokers.", "")],

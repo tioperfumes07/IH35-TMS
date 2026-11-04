@@ -9,7 +9,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { TasksModuleTabs } from "./TasksModuleTabs";
-import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS, formatIsoDatesInText } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 
 type Row = ReconcilerException & { rule: string };
@@ -72,7 +72,7 @@ export function ReconcilerExceptionsPage() {
           );
         },
       },
-      { key: "reason", label: "What is wrong", sortable: true, cellClass: "text-[#1F2A44]" },
+      { key: "reason", label: "What is wrong", sortable: true, render: (row) => formatIsoDatesInText(row.reason), cellClass: "text-[#1F2A44]" },
       { key: "since", label: "Since", sortable: true, render: (row) => formatDateUS(row.since), cellClass: "text-[#4B5563]" },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => dollars(row.amount_cents), cellClass: "whitespace-nowrap text-[#1F2A44]" },
       { key: "repair_engine", label: "Repair", sortable: true, render: (row) => repairHint(row), cellClass: "text-[#1F2A44]" },

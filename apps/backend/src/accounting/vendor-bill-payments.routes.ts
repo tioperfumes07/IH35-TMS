@@ -1,4 +1,5 @@
 import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
+import { apBillPaymentOnlySql } from "./ap-bill-payment-scope.sql.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
@@ -380,6 +381,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
         bp.vendor_id = $2
         AND bp.operating_company_id = $1::uuid
         AND bp.revoked_at IS NULL
+        AND ${apBillPaymentOnlySql("bp")}
       `;
       const baseValues: unknown[] = [query.data.operating_company_id, params.data.id];
 

@@ -5,7 +5,7 @@ import { filterDispatchUnits } from "../../lib/dispatch-unit-filter";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
-import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
+import { listUnitsWithoutLoad, unitsWithoutLoadQueryKey, type UnitsWithoutLoad } from "../../api/dispatch";
 import { listLoadInvoices } from "../../api/accounting";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -484,7 +484,7 @@ export function RoundTrips({
   });
 
   const idleUnitsQuery = useQuery({
-    queryKey: ["dispatch", "round-trips", "units-without-load", operatingCompanyId],
+    queryKey: unitsWithoutLoadQueryKey(operatingCompanyId),
     queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
     enabled,
     refetchInterval: 60_000,

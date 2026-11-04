@@ -1,7 +1,8 @@
 /**
  * ENGINE: odometer-history backfill for real-driven-miles boundaries (E11 / ENG-29)
  * SCHEDULE: hourly, inside the load real-driven-miles tick (load-real-driven-miles.cron.ts), before the miles compute
- * WRITES: telematics.odometer_readings (source 'samsara', confidence 'measured' — Samsara's own reads only)
+ * WRITES: telematics.odometer_readings (source 'samsara_boundary', confidence 'measured' — Samsara's own reads only;
+ *   outside the one-'samsara'-row-per-day key, migration 202616340100)
  * IDEMPOTENCY: UNIQUE(unit_id, read_at, source) + the per-day key, ON CONFLICT DO NOTHING; a boundary with any Samsara row
  *   within ±BACKFILL_WINDOW_MIN is never asked again; a window Samsara answered empty is not asked again by this process
  * OVERLAP: the miles tick holds a job lease; a twin insert of the same read is a no-op
@@ -75,13 +76,11 @@ export async function planOdometerBackfill(
   const r = await client.query<{ unit_id: string; at: string; vid: string | null; attempted: boolean }>(
     `SELECT q.unit_id::text, q.at::text, u.samsara_vehicle_id::text AS vid,
             EXISTS (SELECT 1 FROM telematics.odometer_readings o
-                     WHERE o.operating_company_id = $1::uuid AND o.unit_id = q.unit_id AND o.source = 'samsara'
-                       AND (o.read_at BETWEEN q.at - make_interval(mins => $4::int) AND q.at + make_interval(mins => $4::int)
-                            -- from 2026-09-30 telematics.odometer_readings holds ONE 'samsara' row per unit per day
-                            -- (odometer_readings_oci_unit_date_source_key): a day that already has it cannot take a read,
-                            -- so asking again would repeat every hour
-                            OR (q.at >= '2026-09-30 00:00:00+00'::timestamptz
-                                AND telematics.odometer_reading_day(o.read_at) = telematics.odometer_reading_day(q.at)))) AS attempted
+                     WHERE o.operating_company_id = $1::uuid AND o.unit_id = q.unit_id AND o.source IN ('samsara', 'samsara_boundary')
+                       -- Row 116 (11-03): boundary reads are stored as 'samsara_boundary', outside the one-'samsara'-row-per-day key
+                       -- (migration 202616340100). Before, a boundary on a day the daily snapshot had already written was marked
+                       -- "attempted" and never asked (prod fork 11-03: 3 of 4 open gaps — 13657's 2026-09-30 01:41Z departure).
+                       AND o.read_at BETWEEN q.at - make_interval(mins => $4::int) AND q.at + make_interval(mins => $4::int)) AS attempted
        FROM unnest($2::uuid[], $3::timestamptz[]) AS q(unit_id, at)
        LEFT JOIN mdata.units u ON u.id = q.unit_id
         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid`,
@@ -140,7 +139,7 @@ export async function writeBoundaryReads(
     for (const row of rows) {
       const ins = await client.query<{ id: string }>(
         `INSERT INTO telematics.odometer_readings (operating_company_id, unit_id, read_at, odometer_miles, source, confidence)
-         VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4, 'samsara', 'measured')
+         VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4, 'samsara_boundary', 'measured')
          ON CONFLICT DO NOTHING
          RETURNING id`,
         [operatingCompanyId, q.unit_id, row.at, row.miles]

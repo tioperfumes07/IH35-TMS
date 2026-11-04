@@ -447,7 +447,7 @@ export function reactivateVoidCancelReason(id: string) {
 }
 
 // LEAD 443.294 — the ONE override reason catalog (catalogs.override_reasons). The OverrideButton reads it by context.
-export const OVERRIDE_CONTEXTS = ["factoring", "expense", "load_wizard", "settlement", "banking", "invoice", "bill", "dispatch", "safety", "maintenance"] as const;
+export const OVERRIDE_CONTEXTS = ["factoring", "expense", "load_wizard", "settlement", "banking", "invoice", "bill", "dispatch", "safety", "maintenance", "425c_carry_forward"] as const;
 export type OverrideContext = (typeof OVERRIDE_CONTEXTS)[number];
 
 export type OverrideReason = {

@@ -28,6 +28,11 @@ const querySchema = companyQuerySchema.extend({
   status: z.string().trim().min(1).optional(),
   trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).optional(),
   factoring_status: z.string().trim().min(1).optional(),
+  // Row 78 — Dispatch › Load history "View all" includes cancelled loads (draft / voided / sample stay out).
+  include_cancelled: z
+    .enum(["true", "false", "1", "0"])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -55,6 +60,7 @@ export async function registerLoadsHistoryRoutes(app: FastifyInstance) {
         status,
         trip_type: tripType,
         factoring_status: factoringStatus,
+        include_cancelled: includeCancelled,
         limit,
         offset,
       } = parsed.data;
@@ -71,6 +77,7 @@ export async function registerLoadsHistoryRoutes(app: FastifyInstance) {
           status,
           tripType,
           factoringStatus,
+          includeCancelled,
           limit,
           offset,
         } satisfies LoadsHistoryQuery)
