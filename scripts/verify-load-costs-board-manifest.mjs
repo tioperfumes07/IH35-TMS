@@ -67,7 +67,9 @@ function violations(board, backend) {
   if (!board.includes('headerBg="#EEF2F6"') || !board.includes('headerInk="#1F2937"')) errors.push("light table-header re-theme (headerBg/headerInk) missing");
   if (!board.includes("columnGroups={COLUMN_GROUPS}") || !board.includes('label: "The trip"') || !board.includes('label: "Revenue"') || !board.includes('label: "Trip expense"') || !board.includes('label: "Driver pay"')) errors.push("grouped column-band row (spec §2.2) missing");
   // Drafts never shown; voided (cancelled) hidden by default, toggle-able.
-  if (!backend.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)') || !backend.includes("l.status <> 'draft'") || !backend.includes("l.status NOT IN ('cancelled','voided',")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
+  if (!(backend.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)')
+       // #28625 moved the scope into buildLoadCostsBoardSql(sortSql, showVoided): the request flag must still reach the clause.
+       || (backend.includes('canonicalLoadCostsOpenClause("l", showVoided)') && backend.includes("buildLoadCostsBoardSql(sortSql, parsed.data.show_voided)"))) || !backend.includes("l.status <> 'draft'") || !backend.includes("l.status NOT IN ('cancelled','voided',")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
   if (!backend.includes("repairs_maintenance_cents") || !backend.includes("linked_work_order_uuid") || !backend.includes("wo.load_id = cd.load_id") || !backend.includes('COALESCE(el.load_id,e.load_id)') || !backend.includes('COALESCE(bl.load_id,b.load_id)')) errors.push("direct-trip R&M must derive from same-load work-order financial links");
   if (!backend.includes("wo.load_id IS NOT NULL") || !backend.includes("wo.status <> 'cancelled'")) errors.push("R&M aggregate must exclude non-trip and cancelled work orders");
   // Honesty rule (owner order 2026-09-04): Empty Miles / Deadhead Pay render BLANK, never 0, when
@@ -127,7 +129,8 @@ if (process.argv.includes("--selftest")) {
     { board, backend: backend.replaceAll("wo.load_id = cd.load_id", "TRUE") },
     { board, backend: backend.replaceAll("COALESCE(el.load_id,e.load_id)", "e.load_id") },
     { board, backend: backend.replaceAll("COALESCE(bl.load_id,b.load_id)", "b.load_id") },
-    { board, backend: backend.replaceAll('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)', 'TRUE') },
+    { board, backend: backend.replaceAll('canonicalLoadCostsOpenClause("l", showVoided)', 'TRUE') },
+    { board, backend: backend.replaceAll("buildLoadCostsBoardSql(sortSql, parsed.data.show_voided)", "buildLoadCostsBoardSql(sortSql, true)") },
     { board, backend: backend.replace("l.status <> 'draft'", "TRUE") },
     { board, backend: backend.replace("l.status NOT IN ('cancelled','voided',", "l.status NOT IN (") },
     { board: board.replaceAll("empty_miles == null", "false"), backend },
