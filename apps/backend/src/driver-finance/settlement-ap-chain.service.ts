@@ -25,6 +25,7 @@ import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
 import { resolveDriverBillDueDate } from "./driver-bill-due-date.js";
+import { rollupSettlementPaidStatusInClientTx } from "./settlement-paid-rollup.service.js";
 
 export class SettlementApChainError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}) {
@@ -487,5 +488,8 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     );
     out.push({ load_number: x.b.loadNumber, accounting_bill_id: x.billId, bill_journal_entry_id: x.billJeId, cash_bill_payment_id: cashBpId, cash_journal_entry_id: cashJeId, total_cents: x.total, applied_cents: applied.get(x.billId) ?? 0, cash_cents: cash });
   }
+  // ACCT-F11081 — the spine rows exist now: a close that paid net pay from the bank is paid by those payment documents.
+  // leaveNetOpen (R12) leaves the bills open, so the rollup finds no real cash and writes nothing.
+  await rollupSettlementPaidStatusInClientTx(client, opco, { settlementIds: [input.settlementId] }, input.actorUserId);
   return { run_id: runId, application_journal_entry_id: applicationJeId, bills: out };
 }
