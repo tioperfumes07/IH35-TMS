@@ -128,6 +128,13 @@
       "applied_ledger": "_system._schema_migrations on prod; read-only measurement 2026-10-16",
       "why_not_in_migration": "Already applied before the omitted declaration was caught; preserve immutable migration checksum.",
       "text": "-- CANONICAL-CHECK: money concept = CONTRACT OBLIGATION ALERT (Engine Registry E-47, Faro misdirected payment), not a financial ledger. One row per (bank line, Faro-purchased invoice) says a customer payment landed with us and must be forwarded to Faro by forward_by. It posts nothing: the money lives only in accounting.journal_entries / accounting.journal_entry_postings, the purchase in accounting.factoring_purchases / accounting.factoring_purchase_lines, and the repurchase deadline in accounting.factoring_repurchase_due_events (a different obligation: Faro selling an invoice back). amount_cents is informational (the payment received), never a balance."
+    },
+    "accounting.escrow_posting_loads": {
+      "migration": "202616370100_escrow_posting_document_date_and_loads.sql",
+      "applied_at_utc": "2026-11-04T03:58:53.226Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a (checksum a1e69708\u2026); read 2026-11-04",
+      "why_not_in_migration": "Already applied before the omitted declaration was caught; preserve immutable migration checksum.",
+      "text": "-- CANONICAL-CHECK: money concept = PER-LOAD SPLIT OF AN ESCROW POSTING, not a second escrow ledger. accounting.escrow_postings remains the one canonical driver-escrow sub-ledger (its amount, direction and linked journal entry are unchanged); accounting.journal_entries / journal_entry_postings remain the GL. This table only attributes an existing escrow_postings row to the mdata.loads it was withheld on (FK escrow_posting_id + load_id, append-only, sum per posting <= the posting amount). Distinct from the registry's canonical escrow ledger driver_finance.escrow_ledger (per-driver hold/release/forfeit history): no row here is a hold, release or forfeit; each row only names the load of an amount already recorded once on accounting.escrow_postings, so nothing is ledgered twice. It holds no balance, debit, credit or payment and is never summed as escrow independently of its posting (ACCT-F11093, register row 22)."
     }
   },
   "_added_2026_10_06": "CC-2 (ACCT-F2026100618): 14 financial tables created 2026-10-01..10-03 (13 applied, 1 held) without a line-start '-- CANONICAL-CHECK:' block; with CI down the guard never ran and main went red. Declarations relocated here, one per table, each read against its migration and its readers; none is a second ledger (stored balances in faro_reserve_entries were already dropped by 202615420600)."

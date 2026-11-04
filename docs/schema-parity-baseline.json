@@ -589,9 +589,23 @@
       "status",
       "updated_at"
     ],
+    "accounting.escrow_posting_loads": [
+      "amount_cents",
+      "created_at",
+      "created_by_user_id",
+      "document_date",
+      "escrow_posting_id",
+      "evidence",
+      "id",
+      "load_id",
+      "operating_company_id",
+      "origin",
+      "settlement_line_id"
+    ],
     "accounting.escrow_postings": [
       "amount_cents",
       "created_at",
+      "document_date",
       "escrow_account_id",
       "id",
       "linked_journal_entry_id",
