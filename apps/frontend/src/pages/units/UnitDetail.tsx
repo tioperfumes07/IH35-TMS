@@ -1,3 +1,4 @@
+import { UnitHeaderPhoto } from "../../components/units/UnitHeaderPhoto";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -68,6 +69,7 @@ export function UnitDetail() {
         title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"
       />
+      {companyId && id ? <UnitHeaderPhoto unitId={id} operatingCompanyId={companyId} /> : null}
       {!unitQuery.isPending && !unitQuery.isError && id ? (
         <p className="text-xs text-gray-600">
           <EntityLink kind="unit" id={id} label={unitLabel} />

@@ -6,6 +6,7 @@
  */
 
 import { apBillPaymentOnlySql } from "../../accounting/ap-bill-payment-scope.sql.js";
+import { readVendorSuggestedCategories } from "./vendor-suggested-category.js";
 
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type ProfileBlock<T> = { value: T; empty_reason: string | null };
@@ -204,6 +205,11 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
 
   return {
     vendor: { id: v.id, name: v.vendor_name, vendor_type: v.vendor_type, vendor_category: v.vendor_category, deactivated_at: v.deactivated_at },
+    // Row 97 — proposed saved category (read only); null = the vendor has no live expense on an operating-cost account.
+    suggested_category: (await readVendorSuggestedCategories(client, companyId, vendorId)).get(String(v.id)) ?? null,
+    saved_category_account: v.default_expense_account_name
+      ? { id: v.default_expense_account_id as string, label: `${v.default_expense_account_number ? `${v.default_expense_account_number} ` : ""}${v.default_expense_account_name}` }
+      : null,
     ap_aging: block(aging, aging.open_bill_count === 0 ? "No open bill — every bill is paid or none has been entered." : null),
     open_bills: block(openBills, openBills.length === 0 ? "No open bill." : null),
     form_1099: block(form1099, null),
