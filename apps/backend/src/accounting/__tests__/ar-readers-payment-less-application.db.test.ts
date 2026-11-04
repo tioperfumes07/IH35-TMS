@@ -85,8 +85,8 @@ describeIntegration("ACCT-F11103 A/R readers count payment-less applications (re
   afterAll(async () => {
     shared.db = null;
     if (db) {
-      await db.query("ROLLBACK").catch(() => {});
-      await db.end().catch(() => {});
+      try { await db.query("ROLLBACK"); } catch { /* the test transaction may already be closed */ }
+      try { await db.end(); } catch { /* pool already ended */ }
     }
   });
 
