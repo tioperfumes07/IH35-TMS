@@ -17514,5 +17514,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-eng04-advance-bank-evidence"
+  },
+  "19925": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-migration-views-security-invoker"
   }
 }
