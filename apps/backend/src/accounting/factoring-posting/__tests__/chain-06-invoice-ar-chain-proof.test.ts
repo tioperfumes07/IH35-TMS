@@ -15,6 +15,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { makeInvoiceReliefMock } from "./invoice-relief-mock.js";
 import {
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
@@ -120,6 +121,8 @@ function assertBalanced(postings: Posting[]) {
 let invoiceRows: Array<{ id: string; total_cents: string; voided_at: string | null }>;
 let alreadyPosted = false;
 let updateCalls: Array<{ sql: string; values: unknown[] }>;
+// Row 129: relief is an application; the double simulates the one writer (accounting.recompute_invoice_paid).
+let relief = makeInvoiceReliefMock((c) => updateCalls.push(c));
 let reserveCalls: Array<{ sql: string; values: unknown[] }>;
 let advanceLoadSql: string[];
 
@@ -131,6 +134,7 @@ function installDefaults() {
   invoiceRows = [INVOICE];
   alreadyPosted = false;
   updateCalls = [];
+  relief = makeInvoiceReliefMock((c) => updateCalls.push(c));
   reserveCalls = [];
   advanceLoadSql = [];
 
@@ -154,6 +158,7 @@ function installDefaults() {
   );
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
@@ -290,7 +295,7 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
       amount_cents: 100000,
     });
     expect(updateCalls.length).toBeGreaterThan(0);
-    expect(updateCalls[0].sql).toContain("amount_paid_cents");
+    expect(updateCalls[0].sql).toContain("INSERT INTO accounting.payment_applications"); // Row 129: relief is an application
     expect(updateCalls[0].values[0]).toBe(INVOICE.id);
 
     mockCreateJournalEntry.mockClear();
@@ -317,7 +322,8 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
   });
 
   it("missing link: advance_not_found when factoring advance is absent for the entity", async () => {
-    mockQuery.mockImplementation(async (sql: string) => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
