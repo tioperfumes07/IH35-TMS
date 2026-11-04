@@ -83,6 +83,10 @@ export function deliveryAccrualSkipReasonSql(alias = "db"): string {
                      AND ${liveSettlement("s_acc")}`;
   return `(CASE
       WHEN ${db}.accrued_bill_id IS NOT NULL OR ${db}.accrued_team_bill_id IS NOT NULL THEN 'already_accrued'
+      -- Row 124(b) (ACCT-F11065): OWNER LAW (LEAD 443.192) — per-mile pay is SHORT miles only; practical miles are never a
+      -- pay basis. Prod 11-03: the only 2 live practical-basis bills (Rafael, salaried local driver: 13544 $3.46, 13563
+      -- $3.24 — 7.2 practical mi, one at a TEST placeholder rate) were posted to A/P by the delivery-accrual sweep 10-23.
+      WHEN ${db}.miles_basis_type = 'practical' THEN 'practical_miles_basis'
       WHEN ${db}.settled_in_settlement_id IS NULL THEN NULL
       WHEN NOT EXISTS (SELECT 1 FROM ${onLive}) THEN NULL
       WHEN EXISTS (SELECT 1 FROM ${onLive}
@@ -145,7 +149,7 @@ export async function accrueDriverPayAtDeliveryInClientTx(
   let bills = (
     await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null; skip_reason: string | null; quicksave_pending_fields?: Record<string, unknown> }>(
       `SELECT db.id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.driver_id::text, db.team_driver_id::text,
-              ${restate ? `CASE WHEN ${RESTATE_ON_OPEN_PRESETTLEMENT_SQL} THEN NULL ELSE ${deliveryAccrualSkipReasonSql("db")} END` : deliveryAccrualSkipReasonSql("db")} AS skip_reason,
+              ${restate ? `CASE WHEN db.miles_basis_type = 'practical' THEN 'practical_miles_basis' WHEN ${RESTATE_ON_OPEN_PRESETTLEMENT_SQL} THEN NULL ELSE ${deliveryAccrualSkipReasonSql("db")} END` : deliveryAccrualSkipReasonSql("db")} AS skip_reason,
               db.gross_amount_cents::int AS gross, db.loaded_pay_cents::int AS loaded, db.deadhead_pay_cents::int AS deadhead, l.quicksave_pending_fields,
               COALESCE(db.unit_id, ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")})::text AS unit_id
          FROM driver_finance.driver_bills db

@@ -8,6 +8,7 @@
  * NEVER: must never post a journal entry or an invoice at booking, and never enqueue QuickBooks write-back
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
+import { liveLoadNumberForInsert } from "./live-load-number.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { DriverBillMintOutcome } from "./load-transition-hooks.js";
 import { learnLoadLanes } from "./load-lane-learning.service.js";
@@ -3547,7 +3548,8 @@ export async function createLoadWithFullSideEffects(
         input.lumper_amount_cents ?? 0,
         Boolean(input.customer_chargeback_requested),
         input.customer_chargeback_reason ?? null,
-        input.live_load_number ?? null,
+        // Row 124(d) (ACCT-F11065): the AlwaysTrack live number is another system's number — never the load's own.
+        liveLoadNumberForInsert(input.live_load_number, loadNumber),
         JSON.stringify(v3Metadata),
         null,
         input.requestingUserUuid,

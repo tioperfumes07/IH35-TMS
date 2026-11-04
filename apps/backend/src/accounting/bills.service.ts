@@ -2687,6 +2687,12 @@ function validateCreateBillInput(input: CreateBillInput) {
     throw new Error("bill_lines_required");
   }
 
+  // Rows 94 / 124(a) (ACCT-F11065): a driver A/P bill without a due date is refused at the one INSERT — the settlement
+  // close wrote 11 USMCA driver bills with due_date NULL (P-0069 / 13530 $300 sat undated since 08-21). The writer
+  // resolves it from driver_finance.load_driver_pay_due (driver-finance/driver-bill-due-date.ts).
+  if ((input.source === "settlement_driver_bill" || input.source === "driver_pay_accrual") && !String(input.dueDate ?? "").trim()) {
+    throw new Error("driver_bill_due_date_required");
+  }
 }
 
 /** The bill row + lines + spine event, on the CALLER's client (one transaction with the caller). */
