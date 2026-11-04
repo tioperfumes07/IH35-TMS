@@ -27,6 +27,7 @@ import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
 import { decryptPlaidAccessToken, encryptPlaidAccessToken } from "./plaid-token-crypto.js";
 import { plaidMaskOwnershipViolation } from "../../banking/plaid-mask-ownership.js";
 import { scoreRuleMatch } from "../../banking/category-scoring.js";
+import { clearedBankLine } from "../../banking/cleared-bank-line.sql.js";
 
 type SyncCounts = {
   added: number;
@@ -77,16 +78,14 @@ export async function applyPostedSignedCurrentBalance(
         SELECT COALESCE(SUM(t.amount_cents), 0)::bigint AS sum_cents
         FROM banking.bank_transactions t
         WHERE t.bank_account_id = $1::uuid
-          AND t.voided_at IS NULL
-          AND t.pending IS NOT TRUE
+          AND ${clearedBankLine("t")}
       ) posted
       WHERE a.id = $1::uuid
         AND EXISTS (
           SELECT 1
           FROM banking.bank_transactions t
           WHERE t.bank_account_id = a.id
-            AND t.voided_at IS NULL
-            AND t.pending IS NOT TRUE
+            AND ${clearedBankLine("t")}
         )
     `,
     [bankAccountId],

@@ -8,12 +8,17 @@
  * Handles both BofA (signed amount_cents) and Relay (unsigned + is_credit flag) uniformly.
  * Outflow groups from CATEGORIZED lines only. Uncategorized shown as its own group (never guessed).
  * 443.218 rule: all numbers from SQL aggregates.
+ *
+ * ACCT-F11100 (QuickBooks parity): every total here reads clearedBankLine() — pending bank-feed lines are
+ * never added into money in/out, line counts or review counts. They are returned separately per account
+ * (pending_count / pending_in_cents / pending_out_cents) and as pending_lines for the Pending list.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { clearedBankLine, pendingBankLine } from "./cleared-bank-line.sql.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -77,13 +82,23 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
               SUM(CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents)::bigint ELSE 0 END) AS out_cents,
               COUNT(*) FILTER (
                 WHERE (bt.status = 'pending_categorization' OR bt.status = 'uncategorized')
-                  AND bt.voided_at IS NULL
               )::int AS pending_review_count
             FROM banking.bank_transactions bt, co
             WHERE bt.operating_company_id = co.oc_id
-              AND bt.voided_at IS NULL
-              AND bt.is_sample_data IS NOT TRUE
+              AND ${clearedBankLine("bt")}
               ${dateWhere}
+            GROUP BY bt.bank_account_id
+          ),
+          bank_pending AS (
+            /* ACCT-F11100: pending bank-feed lines — shown in the Pending list, never in the totals above */
+            SELECT
+              bt.bank_account_id,
+              COUNT(*)::int AS pending_count,
+              SUM(CASE WHEN bt.is_credit     THEN abs(bt.amount_cents)::bigint ELSE 0 END) AS pending_in_cents,
+              SUM(CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents)::bigint ELSE 0 END) AS pending_out_cents
+            FROM banking.bank_transactions bt, co
+            WHERE bt.operating_company_id = co.oc_id
+              AND ${pendingBankLine("bt")}
             GROUP BY bt.bank_account_id
           ),
           outflow_groups AS (
@@ -104,8 +119,7 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
             LEFT JOIN catalogs.accounts cat ON cat.id = ba.ledger_account_id AND cat.operating_company_id = bt.operating_company_id, co
             WHERE bt.operating_company_id = co.oc_id
               AND NOT bt.is_credit
-              AND bt.voided_at IS NULL
-              AND bt.is_sample_data IS NOT TRUE
+              AND ${clearedBankLine("bt")}
               AND bt.status NOT IN ('pending_categorization','uncategorized')
               ${dateWhere}
             GROUP BY bt.bank_account_id, outflow_group
@@ -118,8 +132,7 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
             FROM banking.bank_transactions bt, co
             WHERE bt.operating_company_id = co.oc_id
               AND NOT bt.is_credit
-              AND bt.voided_at IS NULL
-              AND bt.is_sample_data IS NOT TRUE
+              AND ${clearedBankLine("bt")}
               AND (bt.status = 'pending_categorization' OR bt.status = 'uncategorized')
               ${dateWhere}
             GROUP BY bt.bank_account_id
@@ -142,13 +155,34 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
               FROM outflow_groups og WHERE og.bank_account_id = a.id
             ) AS outflow_groups,
             COALESCE(uo.cents, 0) AS uncategorized_out_cents,
-            COALESCE(uo.count, 0) AS uncategorized_out_count
+            COALESCE(uo.count, 0) AS uncategorized_out_count,
+            COALESCE(bp.pending_count, 0)     AS pending_count,
+            COALESCE(bp.pending_in_cents, 0)  AS pending_in_cents,
+            COALESCE(bp.pending_out_cents, 0) AS pending_out_cents
           FROM accounts a
           LEFT JOIN tx_stats ts ON ts.bank_account_id = a.id
           LEFT JOIN uncategorized_out uo ON uo.bank_account_id = a.id
+          LEFT JOIN bank_pending bp ON bp.bank_account_id = a.id
           ORDER BY COALESCE(ts.line_count, 0) DESC, a.account_name
           `,
           dateParams
+        );
+
+        // ACCT-F11100 — the Pending list: every live pending bank-feed line on the active accounts (any date:
+        // a pending item is current by definition). Listed, never summed into the cleared totals.
+        const pendingRes = await client.query(
+          `
+          SELECT bt.id::text AS bank_transaction_id, bt.bank_account_id::text AS bank_account_id,
+                 bt.transaction_date::text AS transaction_date, bt.description, bt.is_credit,
+                 abs(bt.amount_cents)::bigint AS amount_cents
+            FROM banking.bank_transactions bt
+            JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id AND ba.operating_company_id = bt.operating_company_id
+           WHERE bt.operating_company_id = $1::uuid
+             AND ba.is_active = true AND ba.deactivated_at IS NULL
+             AND ${pendingBankLine("bt")}
+           ORDER BY bt.transaction_date DESC, abs(bt.amount_cents) DESC, bt.id
+          `,
+          [q.operating_company_id]
         );
 
         // Totals
@@ -158,12 +192,23 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
             acc.out_cents += Number(r.out_cents);
             acc.line_count += r.line_count;
             acc.pending_review_count += r.pending_review_count;
+            acc.pending_count += Number(r.pending_count);
+            acc.pending_in_cents += Number(r.pending_in_cents);
+            acc.pending_out_cents += Number(r.pending_out_cents);
             return acc;
           },
-          { in_cents: 0, out_cents: 0, line_count: 0, pending_review_count: 0 }
+          {
+            in_cents: 0,
+            out_cents: 0,
+            line_count: 0,
+            pending_review_count: 0,
+            pending_count: 0,
+            pending_in_cents: 0,
+            pending_out_cents: 0,
+          }
         );
 
-        return { accounts: res.rows, totals };
+        return { accounts: res.rows, totals, pending_lines: pendingRes.rows };
       });
 
       return data;

@@ -1,7 +1,9 @@
 /**
  * ROUND 443.267 / 443.280 board 3 — Banking Home (board-faithful, not shell).
  * Board: docs/design/v3/Banking.png (+ Banking.dc.html)
- * Sections (order): KPI strip → Accounts | Reconciliation drift (1fr 1fr) → Latest lines.
+ * Sections (order): KPI strip → Accounts | Reconciliation drift (1fr 1fr) → Pending → Latest lines.
+ * ACCT-F11100 (QuickBooks parity): Money in / Money out are CLEARED lines only; pending bank-feed lines are
+ * listed in their own Pending section with a count and total and are never added into the tiles.
  * Engines: getMoneyMap · getBankingTiles · getDriftAlerts · getPlaidCompanyTransactions.
  * U30: Accounts / Drift / Latest use ParityTable so every header sorts asc/desc.
  */
@@ -16,6 +18,7 @@ import {
   type BankingTile,
   type DriftAlert,
   type MoneyMapAccount,
+  type MoneyMapPendingLine,
   type PlaidBankTransaction,
 } from "../../../api/banking";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -366,6 +369,16 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
   }, [driftQuery.data?.rows, accountNameById]);
 
   const driftCount = driftQuery.data?.total_count ?? driftRows.length;
+  const pendingLines: MoneyMapPendingLine[] = moneyMapQuery.data?.pending_lines ?? [];
+  const pendingSummary = useMemo(() => {
+    let inCents = 0;
+    let outCents = 0;
+    for (const p of pendingLines) {
+      if (p.is_credit) inCents += Number(p.amount_cents);
+      else outCents += Number(p.amount_cents);
+    }
+    return { count: pendingLines.length, inCents, outCents };
+  }, [pendingLines]);
   const latest = latestQuery.data?.transactions ?? [];
 
   const accountColumns = useMemo((): Array<ParityColumn<AccountBoardRow>> => {
@@ -491,6 +504,54 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     ];
   }, []);
 
+  const pendingColumns = useMemo((): Array<ParityColumn<MoneyMapPendingLine>> => {
+    return [
+      {
+        key: "transaction_date",
+        label: "Date",
+        sortable: true,
+        sortValue: (row) => row.transaction_date,
+        render: (row) => <span style={{ whiteSpace: "nowrap" }}>{formatBoardMmDd(row.transaction_date)}</span>,
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        allowWrap: true,
+        sortValue: (row) => (row.description ?? "").trim(),
+        render: (row) => (row.description ?? "—").trim() || "—",
+      },
+      {
+        key: "bank_account_id",
+        label: "Account",
+        sortable: true,
+        sortValue: (row) => tileById.get(row.bank_account_id)?.display_name ?? "",
+        render: (row) => (
+          <EntityLink
+            kind="bank_account"
+            id={row.bank_account_id}
+            label={tileById.get(row.bank_account_id)?.display_name ?? "Bank account"}
+          />
+        ),
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        kind: "money",
+        sortable: true,
+        sortValue: (row) => (row.is_credit ? Number(row.amount_cents) : -Number(row.amount_cents)),
+        cellClass: "text-right",
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.amount_cents)}
+            format={(c) => formatSignedCentsClean(c, Boolean(row.is_credit))}
+            drill={{ entity: { kind: "bank_transaction", id: row.bank_transaction_id } }}
+          />
+        ),
+      },
+    ];
+  }, [tileById]);
+
   const latestColumns = useMemo((): Array<ParityColumn<PlaidBankTransaction>> => {
     return [
       {
@@ -598,7 +659,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         <V3KpiTile
           label={`Money in · ${monthLabel}`}
           value={moneyMapQuery.isError ? "—" : formatUsdCents(kpiSplit.opIn)}
-          sub="operating"
+          sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-in"
           onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?types=money_in`)}
@@ -606,7 +667,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         <V3KpiTile
           label={`Money out · ${monthLabel}`}
           value={moneyMapQuery.isError ? "—" : formatUsdCents(kpiSplit.opOut)}
-          sub="operating"
+          sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-out"
           onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?types=money_out`)}
@@ -701,6 +762,33 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           />
         </BoardSection>
       </div>
+
+      <BoardSection
+        title={`Pending · ${pendingSummary.count}`}
+        headerRight={
+          <span style={{ fontSize: 11, color: V3.ink, fontFamily: V3.font }} data-testid="banking-home-pending-total">
+            {`out ${formatUsdCents(pendingSummary.outCents)} · in ${formatUsdCents(pendingSummary.inCents)}`}
+          </span>
+        }
+        footer="Pending bank-feed lines are not counted in Money in / Money out. When the bank posts a line, the posted line replaces it."
+        testId="banking-home-board-pending"
+      >
+        <ParityTable<MoneyMapPendingLine>
+          embedded
+          rows={pendingLines}
+          rowKey={(row) => row.bank_transaction_id}
+          columns={pendingColumns}
+          loading={moneyMapQuery.isPending}
+          emptyText="No pending bank lines."
+          storageKey="banking-home-pending"
+          tableTestId="banking-home-pending-table"
+          rowTestId={() => "banking-home-pending-row"}
+          suppressToolbarSearch
+          suppressToolbarRange
+          hidePager
+          initialPageSize={50}
+        />
+      </BoardSection>
 
       <BoardSection
         title="Latest lines"
