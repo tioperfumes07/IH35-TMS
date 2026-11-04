@@ -1045,7 +1045,8 @@
     "202616360200",
     "202616370100",
     "202616380100",
-    "202616390100"
+    "202616390100",
+    "202616400100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1086,5 +1087,10 @@
     "claimed_at": "2026-11-04",
     "claimed_by": "claude",
     "purpose": "ACCT-F11098: driver_finance.settlement_lines reinstated_at / reinstate_reason / reinstated_by_user_id / reinstated_from_void_je_id + prior_void_* history columns (universal reinstate engine, settlement_line family)."
+  },
+  "202616400100": {
+    "claimed_at": "2026-11-04",
+    "claimed_by": "claude",
+    "purpose": "ACCT-F11103: accounting.invoice_applied_cents_as_of() counts payment-less (relief) applications; ar_aging_as_of + recompute_invoice_paid() repointed to it."
   }
 }
