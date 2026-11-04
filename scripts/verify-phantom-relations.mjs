@@ -45,6 +45,19 @@ const REAL_SCHEMAS = new Set([...canonical].map((r) => r.split(".")[0]));
 // Relation names whose table part is actually a function or pseudo-relation, never a base table.
 const FUNCTION_LIKE = /^(fn_|recompute_|next_wo_|set_|trg_|refresh_)/;
 
+// SQL functions the migrations create (CREATE [OR REPLACE] FUNCTION schema.name): a mention of one in a comment or
+// with a space before "(" is not a relation reference (11-04: driver_finance.load_driver_pay_due named in comments).
+export function migrationFunctions(sqlSources) {
+  const out = new Set();
+  const re = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s*\(/gi;
+  for (const src of sqlSources) { let m; re.lastIndex = 0; while ((m = re.exec(src))) out.add(`${m[1]}.${m[2]}`.toLowerCase()); }
+  return out;
+}
+const MIGRATIONS_DIR = join(ROOT, "db", "migrations");
+const SQL_FUNCTIONS = migrationFunctions(
+  readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).map((f) => readFileSync(join(MIGRATIONS_DIR, f), "utf8")),
+);
+
 // Schemas that are clearly not data schemas referenced in app SQL (defensive; none expected).
 const NON_DATA_SCHEMAS = new Set(["pg_catalog", "information_schema", "pg_temp"]);
 
@@ -220,6 +233,11 @@ if (SELFTEST) {
     console.error("verify-phantom-relations SELFTEST FAIL — unguarded relation was accepted");
     process.exit(1);
   }
+  {
+    const fns = migrationFunctions(["CREATE OR REPLACE FUNCTION driver_finance.load_x_due(p uuid) RETURNS int", "CREATE TABLE driver_finance.t_y (id int)"]);
+    if (!fns.has("driver_finance.load_x_due")) { console.error("verify-phantom-relations SELFTEST FAIL — a migration-created function was not recognized"); process.exit(1); }
+    if (fns.has("driver_finance.t_y")) { console.error("verify-phantom-relations SELFTEST FAIL — a table was read as a function"); process.exit(1); }
+  }
   console.log("verify-phantom-relations SELFTEST PASS — guarded and unguarded relation mutations distinguished");
   process.exit(0);
 }
@@ -245,6 +263,7 @@ for (const file of walk(BACKEND)) {
     if (NON_DATA_SCHEMAS.has(schema)) continue;
     if (!REAL_SCHEMAS.has(schema)) continue; // alias / JS member / unbuilt-schema forward-ref
     if (FUNCTION_LIKE.test(table)) continue;
+    if (SQL_FUNCTIONS.has(relation)) continue;
     if (canonical.has(relation)) continue;
     if (seen.has(relation)) continue;
     seen.add(relation);
