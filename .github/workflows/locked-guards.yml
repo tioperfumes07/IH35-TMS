@@ -1510,12 +1510,22 @@ jobs:
       - name: verify:settlement-costs-exclude-driver-bills --selftest
         run: node scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs --selftest
       - name: verify:settlement-costs-exclude-driver-bills
+        # live money guard: read-only prod credential, same as ci.yml required-live-load-guard (fails closed without it)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=30000'
         run: node scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs
 
       # ENG-36 (step 18841) — company-settlement negative count must not exceed ratchet ceiling
       - name: verify:company-settlement-negative-ratchet --selftest
         run: node scripts/verify-steps/18841-verify-company-settlement-negative-ratchet.mjs --selftest
       - name: verify:company-settlement-negative-ratchet
+        # live money guard: read-only prod credential, same as ci.yml required-live-load-guard (fails closed without it)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=30000'
         run: node scripts/verify-steps/18841-verify-company-settlement-negative-ratchet.mjs
 
       # ENG-34 (step 18565) — previously-unwired guards now run + shrink-only ratchet on .guard-exempt.json
@@ -1528,6 +1538,11 @@ jobs:
       - name: verify:close-creates-company-settlement --selftest
         run: node scripts/verify-steps/18793-verify-close-creates-company-settlement.mjs --selftest
       - name: verify:close-creates-company-settlement
+        # live money guard: read-only prod credential, same as ci.yml required-live-load-guard (fails closed without it)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=30000'
         run: node scripts/verify-steps/18793-verify-close-creates-company-settlement.mjs
 
       # ENG-46 (step 18821) — posted bill_payments on USMCA must have spine JE link
