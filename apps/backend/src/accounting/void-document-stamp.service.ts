@@ -363,6 +363,8 @@ export const REINSTATE_DOCUMENT_FAMILIES = [
   "bank_transaction",
   "check_number_registry",
   "work_order",
+  // ACCT-F11098 — a voided settlement LINE (liveness = is_active; void history kept in prior_void_*).
+  "settlement_line",
 ] as const;
 
 export type ReinstateDocumentFamily = (typeof REINSTATE_DOCUMENT_FAMILIES)[number];
@@ -379,6 +381,16 @@ type ReinstateFamilySpec = FamilyTableSpec & {
   voidReasonColumn?: "void_reason" | "voided_reason" | "void_notes";
   /** Default true. bank_transactions has no voided_by_user_id column. */
   hasVoidedByUserId?: boolean;
+  /**
+   * ACCT-F11098 — the boolean liveness flag the void cleared (settlement_lines.is_active). Reinstate sets it true.
+   * Every settlement_lines reader filters is_active = true, so a reinstate that leaves it false restores nothing.
+   */
+  activeFlagColumn?: "is_active";
+  /**
+   * ACCT-F11098 — copy voided_at / void_reason / voided_by_user_id into prior_voided_at / prior_void_reason /
+   * prior_voided_by_user_id before clearing them, so the void history stays on the row (owner: keep the void history).
+   */
+  keepsVoidHistory?: boolean;
 };
 
 const REINSTATE_FAMILY_TABLE: Record<ReinstateDocumentFamily, ReinstateFamilySpec> = {
@@ -482,6 +494,17 @@ const REINSTATE_FAMILY_TABLE: Record<ReinstateDocumentFamily, ReinstateFamilySpe
     hasReinstateCols: true,
     voidReasonColumn: "void_notes",
   },
+  settlement_line: {
+    schema: "driver_finance",
+    table: "settlement_lines",
+    // No void-status column: the line's liveness is is_active (+ voided_at).
+    voidStatusValue: null,
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+    activeFlagColumn: "is_active",
+    keepsVoidHistory: true,
+  },
 };
 
 export type StampDocumentReinstatedParams = {
@@ -572,7 +595,15 @@ export async function stampDocumentReinstated(
   const fromJe = params.reinstatedFromVoidJeId ?? null;
 
   const reasonCol = spec.voidReasonColumn ?? "void_reason";
-  const setClauses = ["voided_at = NULL", `${reasonCol} = NULL`];
+  const setClauses: string[] = [];
+  if (spec.keepsVoidHistory) {
+    // SET expressions read the OLD row, so these copy the void stamps before the clears below take effect.
+    setClauses.push("prior_voided_at = voided_at", `prior_void_reason = ${reasonCol}`, "prior_voided_by_user_id = voided_by_user_id");
+  }
+  setClauses.push("voided_at = NULL", `${reasonCol} = NULL`);
+  if (spec.activeFlagColumn) {
+    setClauses.push(`${spec.activeFlagColumn} = true`);
+  }
   if (spec.hasVoidedByUserId !== false) {
     setClauses.push("voided_by_user_id = NULL");
   }
@@ -587,7 +618,7 @@ export async function stampDocumentReinstated(
     // Only flip status when the family has a void-status column (customer_payment / bank_transaction do not).
     queryParams.push(restoreStatus);
     setClauses.push(`status = $${queryParams.length}`);
-  } else if (restoreStatus !== null && (family === "customer_payment" || family === "bank_transaction")) {
+  } else if (restoreStatus !== null && (family === "customer_payment" || family === "bank_transaction" || family === "settlement_line")) {
     // no-op — no void-status column (bank_transaction.status is categorization, left untouched).
   } else if (restoreStatus === null && spec.voidStatusValue !== null && family !== "journal_entry") {
     // Caller forgot restoreStatus on a status-bearing family — refuse rather than leave status='void'.
@@ -620,7 +651,7 @@ export async function stampDocumentReinstated(
     }
     setClauses.push("updated_at = now()");
   }
-  if (family === "bill" || family === "bill_payment" || family === "invoice" || family === "credit_memo") {
+  if (family === "bill" || family === "bill_payment" || family === "invoice" || family === "credit_memo" || family === "settlement_line") {
     setClauses.push("updated_at = now()");
   }
 

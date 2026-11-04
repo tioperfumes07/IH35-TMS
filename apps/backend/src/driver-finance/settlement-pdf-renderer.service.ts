@@ -128,6 +128,9 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
       SELECT line_type::text, description, amount
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
+        -- ACCT-F11098: the PDF statement prints live lines only (same predicate as every total reader).
+        AND is_active = true
+        AND voided_at IS NULL
       ORDER BY created_at ASC
     `,
     [input.settlementId]

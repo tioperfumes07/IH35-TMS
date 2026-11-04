@@ -137,6 +137,10 @@ export async function buildDriverSettlementDocument(
             ON l.id = COALESCE(db.load_id, sl.load_id)
            AND l.operating_company_id = $2::uuid
           WHERE sl.settlement_id = $1
+            -- ACCT-F11098: a statement prints live lines only. Without this a voided true duplicate printed next to its
+            -- original (and a reinstated line's void is its own audit history, not a second statement line).
+            AND sl.is_active = true
+            AND sl.voided_at IS NULL
           ORDER BY sl.created_at ASC
         `,
         [input.settlementId, input.operatingCompanyId]

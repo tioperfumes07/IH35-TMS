@@ -20,6 +20,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { canVoid } from "../accounting/void.service.js";
+import { reinstateDocumentThenVoidReversal, ReinstateDocumentError } from "../accounting/reinstate-document.service.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
 import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
 import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
@@ -1758,6 +1759,43 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
       if ("notFoundOrNotLocked" in result) return reply.code(404).send({ error: "settlement_not_found_or_not_locked" });
       return result.row;
+    }
+  );
+
+  // ACCT-F11098 — reinstate ONE voided settlement line through the universal reinstate engine (reinstateDocument type
+  // settlement_line). Same executor gate as /reverse; reason required and audited. The engine refuses a true duplicate
+  // (active twin on the same load), a line whose dollars the posted header / escrow ledger never carried, and a void that
+  // reversed GL unless the GL restore runs in the same chain (reinstateDocumentThenVoidReversal). Never posts a JE.
+  app.post(
+    "/api/v1/driver-finance/settlement-lines/:id/unvoid",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = requireSettlementVoidRole(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const body = settlementReasonBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+      const companyId = body.data.operating_company_id;
+      try {
+        const result = await reinstateDocumentThenVoidReversal(
+          (fn) => withCompany(user.uuid, companyId, async (client) => fn(client as never)),
+          {
+            operatingCompanyId: companyId,
+            type: "settlement_line",
+            id: params.data.id,
+            reason: body.data.reason,
+            actor: { userId: String(user.uuid), role: String((user as { role?: string }).role ?? "") },
+          }
+        );
+        return { ok: true, reinstated_at: result.reinstatedAt, reinstated_from_void_je_id: result.reinstatedFromVoidJeId };
+      } catch (error) {
+        if (error instanceof ReinstateDocumentError) {
+          const code = error.code.includes("not_found") ? 404 : error.code.includes("not_void") ? 409 : 409;
+          return reply.code(code).send({ error: error.code, message: error.message });
+        }
+        throw error;
+      }
     }
   );
 }

@@ -21,6 +21,14 @@
  * to exclude voided rows), never from settlement_lines. This is a display/data-hygiene correction,
  * not a money correction — no dollar amount on any driver_settlements row changes.
  *
+ * ACCT-F11098 (2026-11-04) — the group key MUST carry the load. The first run grouped by (settlement, line_type,
+ * description, amount) only, so per-load lines of the same $25.00 on DIFFERENT loads read as duplicates: it voided 105
+ * real lines (69 escrow_contribution + 36 extra_pay, 0 with a same-load twin) whose dollars the posted headers and the
+ * escrow ledger still carried; they were reinstated through reinstateDocument(type settlement_line). A line is a
+ * duplicate only when settlement, line_type, description, amount, load AND source driver bill all match, and a line with
+ * no load is never auto-voided as a duplicate (nothing proves it is the same event). Guarded by
+ * scripts/verify-settlement-line-dedupe-keys-on-load.mjs.
+ *
  * VOID-NOT-DELETE: is_active=false + voided_at + void_reason, keeping the EARLIEST row per group
  * (matching DED-DUP's own convention) — never a DELETE.
  *
@@ -36,7 +44,7 @@ import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
-const VOID_REASON = "SET-24 LINE-DUP: exact duplicate of the earliest settlement_lines row in the same (settlement, line_type, description, amount) group — the source row this materialized from was voided by an earlier sweep (DED-DUP / TRANSPORTATION-NOT-USMCA / SETL-DED-GL retype), but the already-materialized line itself was never voided. Does not feed any posted JE (deductions are summed from the source table directly, not this table) — display/data-hygiene correction only, no dollar amount changes.";
+const VOID_REASON = "SET-24 LINE-DUP: exact duplicate of the earliest settlement_lines row in the same (settlement, line_type, description, amount, load, source driver bill) group — the source row this materialized from was voided by an earlier sweep (DED-DUP / TRANSPORTATION-NOT-USMCA / SETL-DED-GL retype), but the already-materialized line itself was never voided. Does not feed any posted JE (deductions are summed from the source table directly, not this table) — display/data-hygiene correction only, no dollar amount changes.";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -64,18 +72,20 @@ async function main() {
     line_type: string;
     description: string;
     amount: string;
+    load_id: string;
     keep_id: string;
     void_ids: string[];
   }>(
     `
-      SELECT settlement_id::text, line_type, description, amount::text,
+      SELECT settlement_id::text, line_type, description, amount::text, load_id::text,
              (array_agg(id ORDER BY created_at ASC))[1]::text AS keep_id,
              (array_agg(id::text ORDER BY created_at ASC))[2:] AS void_ids
         FROM driver_finance.settlement_lines sl
        WHERE sl.is_active = true
          AND sl.line_type <> 'reimbursement'
          AND sl.operating_company_id = $1::uuid
-       GROUP BY settlement_id, line_type, description, amount
+         AND sl.load_id IS NOT NULL
+       GROUP BY settlement_id, line_type, description, amount, load_id, source_driver_bill_id
       HAVING count(*) > 1
        ORDER BY settlement_id
     `,
@@ -85,7 +95,7 @@ async function main() {
   const totalVoidIds = groups.reduce((sum, g) => sum + g.void_ids.length, 0);
   console.log(`${dryRun ? "DRY-RUN" : "APPLY"}: ${groups.length} duplicate group(s), ${totalVoidIds} row(s) to void (keeping the earliest per group).`);
   for (const g of groups) {
-    console.log(`  settlement ${g.settlement_id} — ${g.line_type} "${g.description}" $${g.amount} — keep ${g.keep_id}, void ${g.void_ids.length}: ${g.void_ids.join(", ")}`);
+    console.log(`  settlement ${g.settlement_id} load ${g.load_id} — ${g.line_type} "${g.description}" $${g.amount} — keep ${g.keep_id}, void ${g.void_ids.length}: ${g.void_ids.join(", ")}`);
   }
 
   if (dryRun) {
@@ -127,6 +137,7 @@ async function main() {
               operating_company_id: USMCA_COMPANY_ID,
               settlement_id: g.settlement_id,
               line_type: g.line_type,
+              load_id: g.load_id,
               description: g.description,
               amount: g.amount,
               kept_id: g.keep_id,
