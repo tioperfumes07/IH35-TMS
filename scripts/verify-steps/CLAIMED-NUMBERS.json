@@ -17509,5 +17509,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-void-stray-practical-ui-wired"
+  },
+  "19921": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-relay-deposit-csv-upload-wired"
   }
 }
