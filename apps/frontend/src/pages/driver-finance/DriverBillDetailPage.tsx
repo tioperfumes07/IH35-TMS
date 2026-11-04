@@ -12,6 +12,8 @@ import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { useAuth } from "../../auth/useAuth";
+import { VoidStrayPracticalBillAction } from "./VoidStrayPracticalBillAction";
 
 /**
  * REG-023(b) (owner 2026-09-10: "the Open Driver Bill button is unwired — no driver_bills/:id route
@@ -33,6 +35,8 @@ type DriverBillRef = {
   voided_at: string | null;
   void_reason: string | null;
   voided_by_user_id: string | null;
+  miles_basis_type: string | null;
+  settled_in_settlement_id: string | null;
 };
 
 function statusLabel(status: string): string {
@@ -42,6 +46,7 @@ function statusLabel(status: string): string {
 export function DriverBillDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
+  const auth = useAuth();
   const enabled = Boolean(id && selectedCompanyId);
 
   const query = useQuery({
@@ -95,6 +100,15 @@ export function DriverBillDetailPage() {
         backHref="/driver-finance"
         title={`Driver bill ${label}`}
         subtitle={subtitle}
+        actions={
+          <VoidStrayPracticalBillAction
+            billId={bill.id}
+            operatingCompanyId={selectedCompanyId}
+            billLabel={label}
+            bill={bill}
+            role={auth.user?.role}
+          />
+        }
         breadcrumb={[
           { label: "Driver Finance", href: "/driver-finance" },
           bill.load_id
