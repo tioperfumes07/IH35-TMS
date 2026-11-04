@@ -130,6 +130,10 @@ describeIntegration("mdata customer parent_customer_id link", () => {
     const parentRes = await createCustomer({ name: `PARENT-${suffix}` });
     expect(parentRes.statusCode).toBe(201);
     const parentId = (parentRes.json() as { id: string }).id;
+    // customer names are normalized at write (trg_customers_proper_name, migration 202616250900), so the
+    // stored name is not the literal input; the link must surface the name AS STORED.
+    const storedParentName = (parentRes.json() as { name: string }).name;
+    expect(storedParentName.toUpperCase()).toBe(`PARENT-${suffix}`.toUpperCase());
 
     const childRes = await createCustomer({ name: `SUB-${suffix}`, parent_customer_id: parentId });
     expect(childRes.statusCode).toBe(201);
@@ -153,7 +157,7 @@ describeIntegration("mdata customer parent_customer_id link", () => {
       headers: testAuthHeaders(undefined, "Owner"),
     });
     expect(childDetail.statusCode).toBe(200);
-    expect((childDetail.json() as { customer: { parent_customer_name?: string } }).customer.parent_customer_name).toBe(`PARENT-${suffix}`);
+    expect((childDetail.json() as { customer: { parent_customer_name?: string } }).customer.parent_customer_name).toBe(storedParentName);
   });
 
   it("rejects a self-parent and a parent that is itself a sub-customer", async () => {
