@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:40 PM CT) — U12 Drivers Reference catalog archive MultiSelect
+- **PRIOR:** #28606 Compliance filings Program U12.
+- **THIS:** DriversReferenceCatalogPage Active/Archived → MultiSelectDropdown (archiveMode). Accounting lists still Cascade.
+- **NEXT:** live DONE-LIVE; Locations/Maint services filters / Accounting Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:35 PM CT) — U12 Compliance filings Program MultiSelect
 - **PRIOR:** #28604 Coverage Gap U12.
 - **THIS:** FilingsComplianceDueSection Program SelectCombobox → MultiSelectDropdown (empty=all). Status KPI tiles stay single-toggle. Accounting lists still Cascade (SURFACE-BREACH).
