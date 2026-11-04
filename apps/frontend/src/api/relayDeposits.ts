@@ -1,4 +1,32 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestText } from "./client";
+
+/** The Relay CSV import route (relay-fuel-csv-import.routes.ts). Relay publishes no deposit API, so its portal
+ *  "All Transactions" CSV export is the ONLY source of wallet fundings (type=deposit rows); fuel rows in the same file
+ *  upsert idempotently by Relay transaction id. ACCT-F11086: until this caller existed, the route had no button. */
+export const RELAY_CSV_IMPORT_PATH = "/api/integrations/relay/fuel/import-csv";
+
+export type RelayCsvImportResult = {
+  status: "imported" | "imported_with_rejected_rows";
+  operating_company_id: string;
+  imported: number;
+  skipped: number;
+  rejected: number;
+  lines: number;
+  deposits: number;
+  depositCompany: number;
+  depositUnclassified: number;
+  deposits_posted: number;
+  deposits_held: unknown[];
+  deposits_refused: unknown[];
+};
+
+export function importRelayTransactionsCsv(operatingCompanyId: string, csvText: string): Promise<RelayCsvImportResult> {
+  return apiRequestText<RelayCsvImportResult>(
+    `${RELAY_CSV_IMPORT_PATH}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    csvText,
+    "text/csv"
+  );
+}
 
 // Relay deposit-funding review (Part B). DISPLAY + card-map config only — no posting.
 // See docs/trackers/RELAY-DEPOSIT-FUNDING-RECON-2026-07-12.md.

@@ -3,11 +3,14 @@
  * getRelayDeposits engine unchanged. DISPLAY only — separates money funded INTO Relay by its funding card.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "../../../hooks/useTranslation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getRelayCompanyCards,
   getRelayDeposits,
+  importRelayTransactionsCsv,
   putRelayCompanyCard,
+  type RelayCsvImportResult,
   type RelayDepositByCardRow,
   type RelayDepositClassification,
   type RelayDepositRow,
@@ -40,6 +43,7 @@ const CLASS_KPI_LABEL: Record<RelayDepositClassification, string> = {
  * owner. Nothing posts. The owner adds a card to the company set to reclassify its deposits.
  */
 export function RelayDepositReview({ companyId }: { companyId: string }) {
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -105,9 +109,33 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
     lifecycleGenerationRef.current += 1;
     addCardMutation.reset();
     deactivateMutation.reset();
+    csvImportMutation.reset();
+    setCsvResult(null);
     setNewCard("");
     setNewLabel("");
   }, [companyId]); // Mutation reset functions are stable; company transitions own a fresh review draft.
+
+  // ACCT-F11086 — Relay publishes no deposit API; its "All Transactions" CSV is the only feed of wallet fundings.
+  // The import route existed with no button, so deposits stopped at the last file a coder ran by hand.
+  const latestDepositAt = deposits.reduce<string | null>(
+    (max, d) => (d.relay_created_at && (!max || d.relay_created_at > max) ? d.relay_created_at : max),
+    null,
+  );
+  const [csvResult, setCsvResult] = useState<RelayCsvImportResult | null>(null);
+  const csvImportMutation = useMutation({
+    mutationFn: async (input: { companyId: string; file: File; generation: number }) =>
+      importRelayTransactionsCsv(input.companyId, await input.file.text()),
+    onSuccess: (res, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      setCsvResult(res);
+      pushToast(`Relay CSV imported — ${res.deposits} deposit row(s), ${res.imported} fuel row(s), ${res.rejected} rejected`, res.rejected > 0 ? "error" : "success");
+      void queryClient.invalidateQueries({ queryKey: ["relay", "deposits", input.companyId] });
+    },
+    onError: (e, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(e instanceof Error ? e.message : "Relay CSV import failed", "error");
+    },
+  });
 
   const unclassifiedCards = byCard.filter((c) => c.classification === "unclassified");
   const [depositSearch, setDepositSearch] = useState("");
@@ -251,6 +279,45 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
           />
         ))}
       </div>
+
+      <FuelBoardSection
+        title={t("fuel.relay_csv.title", "Import Relay transactions CSV")}
+        subtitle={t("fuel.relay_csv.subtitle", "Relay has no deposit API — export All Transactions from the Relay portal and upload it here")}
+        testId="fuel-relay-csv-import-panel"
+      >
+        <div className="space-y-2 px-3 py-2 text-xs text-[#4B5563]">
+          <p data-testid="fuel-relay-csv-latest-deposit">
+            {t("fuel.relay_csv.latest", "Latest deposit on file: {{date}}. Export from that date to today; rows already stored are matched by Relay id and never doubled.", {
+              date: latestDepositAt ? formatDateUS(latestDepositAt) : t("fuel.relay_csv.none", "none"),
+            })}
+          </p>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            data-testid="fuel-relay-csv-import-input"
+            disabled={csvImportMutation.isPending}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) csvImportMutation.mutate({ companyId, file, generation: lifecycleGenerationRef.current });
+            }}
+          />
+          {csvImportMutation.isPending ? <p>{t("fuel.relay_csv.importing", "Importing…")}</p> : null}
+          {csvResult ? (
+            <p data-testid="fuel-relay-csv-import-result" className="tabular-nums">
+              {t(
+                "fuel.relay_csv.result",
+                "Deposits {{deposits}} (company {{company}}, unclassified {{unclassified}}, posted {{posted}}, held {{held}}, refused {{refused}}) · fuel rows {{imported}} · skipped {{skipped}} · rejected {{rejected}}",
+                {
+                  deposits: csvResult.deposits, company: csvResult.depositCompany, unclassified: csvResult.depositUnclassified,
+                  posted: csvResult.deposits_posted, held: csvResult.deposits_held.length, refused: csvResult.deposits_refused.length,
+                  imported: csvResult.imported, skipped: csvResult.skipped, rejected: csvResult.rejected,
+                },
+              )}
+            </p>
+          ) : null}
+        </div>
+      </FuelBoardSection>
 
       <MoneyListToolbar
         search={depositSearch}
