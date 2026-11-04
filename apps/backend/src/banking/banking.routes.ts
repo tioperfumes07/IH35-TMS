@@ -16,6 +16,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { clearedBankLine } from "./cleared-bank-line.sql.js";
 import { bankingRuleMatches, type BankingRuleRow } from "./banking-rules.engine.js";
 import { undoBankLineOnClient } from "./bank-line-state-machine.service.js";
 import {
@@ -588,6 +589,8 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               -- hidden under the normal voided_at filter unless include_sample_data explicitly asks
               -- to reveal them. Every other voided (real) row stays excluded either way.
               AND (bt.voided_at IS NULL OR (bt.is_sample_data = true AND $5::boolean))
+              -- ACCT-F11100: the register lists cleared (posted) lines only — never a pending bank-feed line.
+              AND (${clearedBankLine("bt")} OR (bt.is_sample_data = true AND $5::boolean))
             ORDER BY bt.transaction_date DESC, bt.created_at DESC
             LIMIT $3 OFFSET $4
           `,

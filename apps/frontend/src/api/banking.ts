@@ -507,6 +507,20 @@ export type MoneyMapAccount = {
   outflow_groups: MoneyMapOutflowGroup[] | null;
   uncategorized_out_cents: number | string;
   uncategorized_out_count: number;
+  /** ACCT-F11100 — pending bank-feed lines: listed apart, never inside in/out (QuickBooks parity). */
+  pending_count?: number | string;
+  pending_in_cents?: number | string;
+  pending_out_cents?: number | string;
+};
+
+/** ACCT-F11100 — one live pending bank-feed line (the Pending list). */
+export type MoneyMapPendingLine = {
+  bank_transaction_id: string;
+  bank_account_id: string;
+  transaction_date: string;
+  description: string | null;
+  is_credit: boolean;
+  amount_cents: number | string;
 };
 
 export type MoneyMapResponse = {
@@ -516,7 +530,11 @@ export type MoneyMapResponse = {
     out_cents: number;
     line_count: number;
     pending_review_count: number;
+    pending_count?: number;
+    pending_in_cents?: number;
+    pending_out_cents?: number;
   };
+  pending_lines?: MoneyMapPendingLine[];
 };
 
 export function getMoneyMap(companyId: string, from?: string, to?: string) {

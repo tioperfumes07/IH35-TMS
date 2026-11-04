@@ -11,6 +11,7 @@
 // thousands. Both surfaces now derive from this one predicate.
 
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+import { clearedBankLine } from "./cleared-bank-line.sql.js";
 
 export const PENDING_CATEGORIZATION_STATUSES = ["pending_categorization", "uncategorized"] as const;
 
@@ -82,8 +83,12 @@ export function supersededDuplicatePredicate(alias = "bt"): string {
 // happened to still carry status='pending_categorization'/'uncategorized' inflated both the
 // Banking Home UNCATEGORIZED KPI and the For-review queue with phantom work. Live-measured on
 // USMCA: 101 of 388 (26%) "needs review" transactions were actually voided.
+//
+// ACCT-F11100 (QuickBooks parity): a PENDING bank-feed line is not reviewable work — QBO never puts a
+// pending item in For Review; it appears once, when it posts. clearedBankLine() carries the void clause
+// plus not-pending / not-merged / not-sample, the same predicate every Banking total reads.
 export function pendingCategorizationPredicate(alias = "bt"): string {
-  return `((${alias}.status = 'pending_categorization' OR ${alias}.status = 'uncategorized') AND ${alias}.voided_at IS NULL AND ${supersededDuplicatePredicate(alias)})`;
+  return `((${alias}.status = 'pending_categorization' OR ${alias}.status = 'uncategorized') AND ${clearedBankLine(alias)} AND ${alias}.voided_at IS NULL AND ${supersededDuplicatePredicate(alias)})`;
 }
 
 // Entity-scoped count of transactions needing categorization, across ALL accounts — the exact
@@ -159,6 +164,8 @@ export async function countTotalBankTransactions(
       FROM banking.bank_transactions bt
       WHERE bt.operating_company_id = $1::uuid
         ${includeSampleData ? "" : "AND bt.voided_at IS NULL AND bt.is_sample_data = false"}
+        -- ACCT-F11100: the register lists cleared lines only, so the denominator counts cleared lines only.
+        AND (${clearedBankLine("bt")} OR ${includeSampleData ? "bt.is_sample_data = true" : "false"})
     `,
     [operatingCompanyId]
   );
