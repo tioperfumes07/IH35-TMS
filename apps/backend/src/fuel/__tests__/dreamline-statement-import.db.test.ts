@@ -135,8 +135,12 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
       // The adopted receipt kept its ONE fuel posting; the imported fill added exactly one fuel posting pair.
       const adoptedRow = first.results.find((r) => r.outcome === "adopted")!;
       const discountLegs = (await db.query<{ dc: string; cents: string; account_id: string }>(
-        `SELECT debit_or_credit AS dc, amount_cents::text AS cents, account_id::text FROM accounting.journal_entry_postings
-          WHERE operating_company_id = $1::uuid AND source_transaction_type = 'expense' AND source_transaction_id = $2 AND idempotency_key LIKE 'dreamline-statement:%'`,
+        // LEAD 443.258.5 writer shape B (#27384): the card difference is never a handwritten JE on the receipt — it is its own
+        // credit expense document through the one expense writer, linked to the receipt by parent_expense_id (443.288-A).
+        `SELECT p.debit_or_credit AS dc, p.amount_cents::text AS cents, p.account_id::text FROM accounting.journal_entry_postings p
+           JOIN accounting.expenses c ON c.id::text = p.source_transaction_id AND c.operating_company_id = p.operating_company_id
+          WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'expense'
+            AND c.parent_expense_id = $2::uuid AND c.is_credit = true`,
         [opco, adoptedRow.expense_id])).rows;
       expect(discountLegs).toEqual(expect.arrayContaining([
         { dc: "debit", cents: "2000", account_id: payable },

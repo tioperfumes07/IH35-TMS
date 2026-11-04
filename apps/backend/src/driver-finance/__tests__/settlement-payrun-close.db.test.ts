@@ -294,11 +294,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
        VALUES ($1::uuid,'earnings','linehaul earnings',3000.00,$2::uuid,true)`,
       [s.settlementId, loadId]);
     // a plain 'insurance' deduction (400.00) -> insurance_recovery role
-    await db.query(
+    const dsd = await db.query<{ id: string }>(
       `INSERT INTO driver_finance.driver_settlement_deductions
          (operating_company_id, driver_id, deduction_type, amount_cents, reason, applied_to_settlement_id, created_by_user_id)
-       VALUES ($1::uuid,$2::uuid,'insurance',$3,'insurance recovery',$4::uuid,$5::uuid)`,
+       VALUES ($1::uuid,$2::uuid,'insurance',$3,'insurance recovery',$4::uuid,$5::uuid) RETURNING id::text`,
       [companyId, s.driverId, 40000, s.settlementId, userId]
+    );
+    // ...and its settlement line, the pair the canonical writer (settlement-deduction-cap.service.ts) always writes.
+    // ENG-01b (443.322, #27527): the close refuses when settlement_lines deductions != driver_settlement_deductions.
+    await db.query(
+      `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, source_table, source_reference_id)
+       VALUES ($1::uuid,'deduction','insurance recovery',400.00,'driver_finance.driver_settlement_deductions',$2::uuid)`,
+      [s.settlementId, dsd.rows[0]!.id]
     );
     // an abandonment chargeback line (100.00)
     await db.query(

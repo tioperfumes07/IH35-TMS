@@ -423,6 +423,12 @@ async function updateEscrowBalance(
     ]);
   }
 
+  // ACCT-F11093 (row 22): escrow is per load — the line item's own load (when it carries one) is the posting's split.
+  const lineLoad = await client.query<{ load_id: string | null }>(
+    `SELECT load_id::text AS load_id FROM driver_finance.settlement_lines WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [lineItemId, operating_company_id]
+  );
+  const lineLoadId = lineLoad.rows[0]?.load_id ?? null;
   await recordEscrowPostingOnly(
     client,
     {
@@ -435,6 +441,7 @@ async function updateEscrowBalance(
       note: `Escrow ${transactionType} from settlement line item (settlement ${settlementId})`,
       posted_by_user_id: approvedByUserId,
       linked_journal_entry_id: null,
+      loads: lineLoadId ? [{ load_id: lineLoadId, settlement_line_id: lineItemId, amount_cents: amt }] : null,
     },
     { failSoft: true }
   );

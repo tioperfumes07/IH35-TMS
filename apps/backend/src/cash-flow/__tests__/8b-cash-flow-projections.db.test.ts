@@ -14,6 +14,8 @@ import { resolve } from "path";
 const ROOT = resolve(__dirname, "../../../../..");
 const SVC = readFileSync(resolve(ROOT, "apps/backend/src/cash-flow/cash-flow.service.ts"), "utf8");
 const PROJ = readFileSync(resolve(ROOT, "apps/backend/src/cash-flow/projected-cash-date.ts"), "utf8");
+// ACCT-F11067 (#28618, rows 91/149): both card payables (Dreamline 2510, WEX 2520) are read by the ONE shared reader.
+const CARD = readFileSync(resolve(ROOT, "apps/backend/src/cash-flow/card-payables.ts"), "utf8");
 
 describe("8b: cash-flow projections wired (443.140)", () => {
   it("rolling ledger includes card payable 2510 query", () => {
@@ -67,7 +69,9 @@ describe("8b: cash-flow projections wired (443.140)", () => {
   });
 
   it("card payable section queries debit_or_credit on journal_entry_postings", () => {
-    expect(SVC).toContain("debit_or_credit");
+    expect(SVC).toContain('import { readCardPayableBalances } from "./card-payables.js"');
+    expect(CARD).toContain("accounting.journal_entry_postings");
+    expect(CARD).toMatch(/CASE WHEN jep\.debit_or_credit = 'credit' THEN jep\.amount_cents ELSE -jep\.amount_cents END/);
   });
 
   it("relay top-up section queries cash_flow_adjustments with relay label filter", () => {
@@ -76,8 +80,8 @@ describe("8b: cash-flow projections wired (443.140)", () => {
   });
 
   it("getRollingLedgerRows fires card_payable and relay_topup concurrently via Promise.all", () => {
-    expect(SVC).toContain("cardPayable2510Promise");
+    expect(SVC).toContain("const cardPayablesPromise = readCardPayableBalances(");
     expect(SVC).toContain("relayTopupPromise");
-    expect(SVC).toMatch(/Promise\.all\(\[[\s\S]*cardPayable2510Promise[\s\S]*relayTopupPromise/);
+    expect(SVC).toMatch(/Promise\.all\(\[[\s\S]*cardPayablesPromise[\s\S]*relayTopupPromise/);
   });
 });
