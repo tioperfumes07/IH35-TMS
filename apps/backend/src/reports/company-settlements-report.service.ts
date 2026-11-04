@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { PoolClient } from "pg";
 import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
@@ -126,8 +127,8 @@ export async function getCompanySettlementsReport(
     period_start: String(row.period_start ?? "").slice(0, 10),
     period_end: String(row.period_end ?? "").slice(0, 10),
     status: String(row.status ?? ""),
-    closed_at: row.closed_at != null ? String(row.closed_at).slice(0, 10) : null,
-    voided_at: row.voided_at != null ? String(row.voided_at).slice(0, 10) : null,
+    closed_at: pgDateOnly(row.closed_at),
+    voided_at: pgDateOnly(row.voided_at),
     driver_settlement_count: num(row.driver_settlement_count),
     gross_driver_pay_cents: num(row.gross_driver_pay_cents),
     net_revenue_cents: row.net_revenue_cents != null ? num(row.net_revenue_cents) : null,

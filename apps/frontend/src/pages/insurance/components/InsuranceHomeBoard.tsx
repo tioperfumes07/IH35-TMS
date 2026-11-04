@@ -24,7 +24,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3 } from "../../../design/v3-tokens";
 import { companyToday } from "../../../lib/businessDate";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -106,7 +106,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     sortable: true,
     defaultHidden: true,
     sortValue: (row) => row.expiry_date ?? "",
-    render: (row) => (row.expiry_date ? formatDateUS(row.expiry_date) || "—" : "—"),
+    render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) || "—" : "—"),
   },
 ];
 

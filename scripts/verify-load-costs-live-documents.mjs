@@ -14,8 +14,11 @@ const paths = {
 const rules = [
   ['model','SUM(i.total_cents-i.tax_cents)','issued revenue excludes tax liability'],
   ['model','issued.document_count > 0','zero-dollar issued invoice is authoritative'],
-  ['model','SUM(cl.amount_cents)','booking revenue (inner alias cl — #27126: no caller alias can collide)'],
-  ['model','cl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
+  // ACCT-F11062: #27126's inner alias `cl` DID collide -- loadCostRollupLateral passes load "cl", so the filter read a
+  // charge line against itself and booked revenue was $0 on 8 live USMCA loads. The inner alias is `rcl`.
+  ['model','SUM(rcl.amount_cents)','booking revenue (inner alias rcl — never the rollup caller alias cl)'],
+  ['model','rcl.load_id = ${load}.id','booking revenue correlates to the caller load'],
+  ['model','rcl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
   ['model','i.voided_at IS NULL','void invoice excluded'],
   ['model',"i.status NOT IN ('draft','proforma','void','voided')",'only issued invoice replaces booking'],
   ['model','COALESCE(el.load_id,e.load_id)','line expense attribution'],
@@ -33,7 +36,9 @@ const rules = [
   // from the ONE shared join, now transitively through the canonical rollup lateral (lcr alias).
   ['route','${loadCostRollupLateral("l.id", "l.operating_company_id")}','rollup lateral (R443.139 via loadCostRollupLateral) mounted on the board'],
   ['rollup','${loadCostsRevenueJoin("cl", "rev")}','the rollup mounts the shared revenue join'],
-  ['route','canonicalLoadCostsOpenClause("l", parsed.data.show_voided)','canonical current-cost scope mounted'],
+  ['route','canonicalLoadCostsOpenClause("l", showVoided)','canonical current-cost scope mounted'],
+  // ACCT-F11062: the statement lives in buildLoadCostsBoardSql (EXPLAIN-able); the route hands it the request toggle.
+  ['route','buildLoadCostsBoardSql(sortSql, parsed.data.show_voided)','board passes show_voided into the canonical scope'],
   ['route','NULLIF(COALESCE(lcr.revenue_cents,0), 0)','margin percentage uses document revenue (via lcr alias)'],
   ['scope','export function canonicalLoadCostsOpenClause','named canonical cost scope'],
   ['scope',"AND ds.voided_at IS NULL AND ds.status='closed'",'actual closed settlement excluded'],
@@ -48,6 +53,8 @@ export function failures(sources) {
   const costScope = sources.scope.split('export function canonicalLoadCostsOpenClause')[1] ?? '';
   if (costScope.includes('accounting.invoices')) errors.push('invoice incorrectly finishes cost scope');
   if (sources.route.includes('l.rate_total_cents::text AS revenue_cents')) errors.push('header revenue bypass');
+  // ACCT-F11062: no inner table alias may equal an alias a caller passes in (the rollup passes "cl").
+  if (/load_charge_lines\s+cl\b/.test(sources.model)) errors.push('inner charge-line alias cl shadows the rollup caller alias');
   // R443.139: no private copy of the revenue rule on the board (a second definition drifts from the rollup's).
   if (/\b(invoice_rollup|charge_line_rollup|rev_cte)\s+AS\s*\(/.test(sources.route)) errors.push('private revenue copy on the board (R443.139: the shared join only)');
   return errors;

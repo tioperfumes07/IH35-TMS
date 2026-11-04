@@ -11,7 +11,7 @@ import {
   getTrainingCompletions,
 } from "../../api/safety";
 import { useAuth } from "../../auth/useAuth";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
@@ -422,7 +422,7 @@ export function DriverSafetyReverseSection({
             />
             <span className="ml-2 text-gray-600">{s(fine.status) || "open"}</span>
             <div className="mt-1 text-xs text-gray-600">
-              {formatDateUS(s(fine.issued_date))} · {formatUsdCents(fine.amount_cents as number)}
+              {formatCalendarDateUS(s(fine.issued_date))} · {formatUsdCents(fine.amount_cents as number)}
               {fine.issued_by_authority ? ` · ${s(fine.issued_by_authority)}` : ""}
             </div>
           </li>

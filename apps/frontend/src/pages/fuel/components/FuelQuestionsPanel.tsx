@@ -22,6 +22,7 @@ import { formatDate } from "../../../lib/formatDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { fuelQuestionSettlementLabel } from "../../../lib/no-settlement-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -31,6 +32,16 @@ type Props = {
 
 // CLS-SILENT-CAP: the list fetches one page; CappedListNotice says so (with the server total) when there are more.
 const FUEL_QUESTIONS_PAGE = 100;
+
+/** ROW 203 — Settlement cell: linked number when the load has a settlement; words, never a bare dash, when not. */
+function fuelQuestionSettlementCell(r: FuelAssignmentQuestion) {
+  const label = fuelQuestionSettlementLabel(r);
+  return r.proposed_settlement_id ? (
+    <EntityLink kind="settlement" id={r.proposed_settlement_id} label={label} onClick={(e) => e.stopPropagation()} />
+  ) : (
+    label
+  );
+}
 
 function kpiValue(n: number | undefined, loading: boolean): string {
   if (loading) return "…";
@@ -158,7 +169,9 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
         label: "Settlement",
         sortable: true,
         sortValue: (r) => r.proposed_settlement_ref ?? "",
-        render: (r) => r.proposed_settlement_ref ?? "—",
+        // ROW 203: the settlement is read live from the load (backend PROPOSED_SETTLEMENT_LIVE_SQL) and links to it;
+        // with no settlement the cell says so in words -- never a bare dash.
+        render: (r) => fuelQuestionSettlementCell(r),
       },
       {
         key: "actions",
