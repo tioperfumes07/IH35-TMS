@@ -14,15 +14,30 @@ import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
-type TriFilter = "all" | "yes" | "no";
-type SourceFilter = "all" | "google" | "samsara" | "manual";
+const TRI_FILTER_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+] as const;
 
-function triToBool(v: TriFilter): boolean | undefined {
-  if (v === "yes") return true;
-  if (v === "no") return false;
+const SOURCE_FILTER_OPTIONS = [
+  { value: "google", label: "Google" },
+  { value: "samsara", label: "Samsara" },
+  { value: "manual", label: "Manual" },
+] as const;
+
+/** U12: empty/both → undefined (all); single yes/no → bool. */
+function triToBool(selected: string[]): boolean | undefined {
+  if (selected.length === 1 && selected[0] === "yes") return true;
+  if (selected.length === 1 && selected[0] === "no") return false;
+  return undefined;
+}
+
+/** U12: empty/2+ → undefined (all); single source → scalar. */
+function apiSource(selected: string[]): string | undefined {
+  if (selected.length === 1) return selected[0];
   return undefined;
 }
 
@@ -199,21 +214,25 @@ export function LocationsListPage() {
 
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("");
-  const [geocodedFilter, setGeocodedFilter] = useState<TriFilter>("all");
-  const [geofenceFilter, setGeofenceFilter] = useState<TriFilter>("all");
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [geocodedFilter, setGeocodedFilter] = useState<string[]>([]);
+  const [geofenceFilter, setGeofenceFilter] = useState<string[]>([]);
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [showInactive, setShowInactive] = useState(false);
   const [activeRow, setActiveRow] = useState<LocationRow | null>(null);
+  const geocodedKey = geocodedFilter.slice().sort().join(",") || "all";
+  const geofenceKey = geofenceFilter.slice().sort().join(",") || "all";
+  const sourceKey = sourceFilter.slice().sort().join(",") || "all";
+  const sourceApi = apiSource(sourceFilter);
 
   const listQuery = useQuery({
-    queryKey: ["lists-locations", companyId, search, stateFilter, geocodedFilter, geofenceFilter, sourceFilter],
+    queryKey: ["lists-locations", companyId, search, stateFilter, geocodedKey, geofenceKey, sourceKey],
     queryFn: () =>
       getLocationsList(companyId, {
         search: search || undefined,
         state: stateFilter || undefined,
         geocoded: triToBool(geocodedFilter),
         geofence: triToBool(geofenceFilter),
-        source: sourceFilter === "all" ? undefined : sourceFilter,
+        source: sourceApi,
       }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
@@ -223,7 +242,11 @@ export function LocationsListPage() {
   // LFI-20+ (owner 2026-09-05): deactivated locations hidden by default — the list route itself
   // returns every location regardless of deactivated_at, so this is a client-side filter, same
   // shape as MaintenancePartsCatalog.tsx's showInactive.
-  const rows = showInactive ? allRows : allRows.filter((r) => !r.deactivated_at);
+  // U12: 2+ source selections — API unscoped; narrow client-side on geocoding_source.
+  const rows = (showInactive ? allRows : allRows.filter((r) => !r.deactivated_at)).filter((r) => {
+    if (sourceFilter.length < 2) return true;
+    return sourceFilter.includes(String(r.geocoding_source ?? ""));
+  });
   const count = rows.length;
 
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Locations"], []);
@@ -283,46 +306,45 @@ export function LocationsListPage() {
             data-testid="locations-list-filter-state"
           />
         </label>
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Geocoded
-          <SelectCombobox
-            value={geocodedFilter}
-            onChange={(e) => setGeocodedFilter(e.target.value as TriFilter)}
-            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-            data-testid="locations-list-filter-geocoded"
-          >
-            <option value="all">All</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </SelectCombobox>
-        </label>
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Geofence
-          <SelectCombobox
-            value={geofenceFilter}
-            onChange={(e) => setGeofenceFilter(e.target.value as TriFilter)}
-            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-            data-testid="locations-list-filter-geofence"
-          >
-            <option value="all">All</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </SelectCombobox>
-        </label>
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Source
-          <SelectCombobox
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value as SourceFilter)}
-            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-            data-testid="locations-list-filter-source"
-          >
-            <option value="all">All</option>
-            <option value="google">Google</option>
-            <option value="samsara">Samsara</option>
-            <option value="manual">Manual</option>
-          </SelectCombobox>
-        </label>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="locations-list-filter-geocoded">
+          <span className="block">Geocoded</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Geocoded"
+              options={[...TRI_FILTER_OPTIONS]}
+              selected={geocodedFilter}
+              onChange={setGeocodedFilter}
+              allLabel="All"
+              data-testid="locations-list-geocoded-multiselect"
+            />
+          </div>
+        </div>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="locations-list-filter-geofence">
+          <span className="block">Geofence</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Geofence"
+              options={[...TRI_FILTER_OPTIONS]}
+              selected={geofenceFilter}
+              onChange={setGeofenceFilter}
+              allLabel="All"
+              data-testid="locations-list-geofence-multiselect"
+            />
+          </div>
+        </div>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="locations-list-filter-source">
+          <span className="block">Source</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Source"
+              options={[...SOURCE_FILTER_OPTIONS]}
+              selected={sourceFilter}
+              onChange={setSourceFilter}
+              allLabel="All sources"
+              data-testid="locations-list-source-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">
