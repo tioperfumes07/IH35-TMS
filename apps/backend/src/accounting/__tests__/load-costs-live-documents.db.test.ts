@@ -89,7 +89,8 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("load-costs live document
       const settlement=(await one("INSERT INTO driver_finance.driver_settlements (operating_company_id,display_id,driver_id,period_start,period_end,status,gross_pay,deductions_total,reimbursements_total,net_pay,settlement_model) VALUES ($1,$2,$3,CURRENT_DATE,CURRENT_DATE,'open',0,0,0,0,'load_bookended') RETURNING id",[company,`LC-${tag}`,driver])).id;
       await db.query("UPDATE driver_finance.driver_bills SET settled_in_settlement_id=$1 WHERE load_id=$2 AND operating_company_id=$3",[settlement,load,company]);
       expect(await board()).toHaveLength(1);
-      await db.query("UPDATE driver_finance.driver_settlements SET status='closed' WHERE id=$1",[settlement]);
+      // ACCT-ENG-01 (#27507): a settlement closes only together with posted_at (tg_settlement_close_requires_posting).
+      await db.query("UPDATE driver_finance.driver_settlements SET status='closed', posted_at=now() WHERE id=$1",[settlement]);
       expect(await board()).toHaveLength(0);
     } finally {
       await app.close();

@@ -114,11 +114,12 @@ describeIntegration("createDraftLoadFrom204 -> the shared create path (E6)", () 
         state: "TX",
       });
 
-      const charges = await db.query<{ charge_code: string; amount_cents: string }>(
+      // LEAD 443.219 (#27119, lib/pg-type-parsers.ts): the backend registers ONE int8 parser — a safe bigint is a JS number.
+      const charges = await db.query<{ charge_code: string; amount_cents: number }>(
         `SELECT charge_code, amount_cents FROM dispatch.load_charge_lines WHERE load_id = $1`,
         [loadId]
       );
-      expect(charges.rows).toEqual([{ charge_code: "LINEHAUL", amount_cents: "150000" }]);
+      expect(charges.rows).toEqual([{ charge_code: "LINEHAUL", amount_cents: 150000 }]);
     } finally {
       await db.query("ROLLBACK TO SAVEPOINT edi204_create");
       await db.query("COMMIT");

@@ -56,6 +56,9 @@ describeIntegration("Relay receipt document load + one purchase posts once (443.
       const fuelAcct = await account("95000", `${tag} Fuel & Diesel`, "Expense");
       await db.query(`INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id) VALUES ($1, 'Fuel-Truck Diesel', 'NonInventory', $2)`, [opco, fuelAcct]);
       await db.query(`INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1, 'Relay', 'other')`, [opco]);
+      // The Relay card rail, as every carrier has it (USMCA: one active RELAY card type). ENG-65 (#28457) records a fill at
+      // receipt on this card; without it the fill's own record reads as "another rail" (443.133 A cross-rail refusal).
+      await db.query(`INSERT INTO catalogs.fuel_card_types (operating_company_id, code, display_name, is_active) VALUES ($1, 'RELAY', 'Relay', true)`, [opco]);
       await db.query(
         `INSERT INTO lib.feature_flag_overrides (uuid, flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid, set_at)
          VALUES (gen_random_uuid(), 'EXPENSE_GL_POSTING_ENABLED', $1, NULL, true, $2, now())`, [opco, TEST_OWNER_USER_ID]);
@@ -106,8 +109,10 @@ describeIntegration("Relay receipt document load + one purchase posts once (443.
       expect(firstPostings.length).toBeGreaterThan(0);
       expect(firstPostings.every((p) => p.load_id === load)).toBe(true);
       expect(firstPostings.every((p) => p.resolved === load)).toBe(true); // old resolver: NULL
-      const noFuelRow = await one<{ n: string }>(`SELECT count(*)::text AS n FROM fuel.fuel_transactions WHERE relay_fuel_transaction_id = $1::uuid OR id = $1::uuid`, [first]);
-      expect(noFuelRow.n).toBe("0");
+      // ENG-65 residual (ACCT-F11041, #28457): every Relay fill is recorded from its OWN Relay lines at receipt — exactly one
+      // record for the one diesel line, never a second set. The posting's load still comes from the document (above).
+      const fuelRows = await one<{ n: string }>(`SELECT count(*)::text AS n FROM fuel.fuel_transactions WHERE relay_fuel_transaction_id = $1::uuid AND voided_at IS NULL`, [first]);
+      expect(fuelRows.n).toBe("1");
 
       // ---- ACCT-F4431371 (engine): the same purchase listed again 86 min later is refused by name, nothing posts -------------
       const twin = await relayFill("B", "2026-09-07 11:26");

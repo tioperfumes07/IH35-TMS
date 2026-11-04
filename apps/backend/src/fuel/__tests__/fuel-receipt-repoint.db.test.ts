@@ -17,6 +17,7 @@ import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "..
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { FUEL_NO_LOAD_REASON_PREFIX, postFuelFillOnReceipt } from "../../accounting/bank-recon/bank-match-fuel-post.service.js";
 import { repointFuelReceiptsToLoad } from "../fuel-receipt-repoint.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 const TZ = "America/Chicago";
@@ -105,6 +106,17 @@ describeIntegration("fuel receipt posts with no load, then attaches to its load 
       await db.query(
         `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, load_id, is_active)
          VALUES ($1::uuid, 'earnings', 'linehaul earnings', 1000.00, $2::uuid, true)`, [settlementId, load]);
+      // LEAD 443.203 ruling #3: holding the load is not enough — a settlement is named only when its own posted audit printed
+      // this fill (the event the Settlement Creator writes on post, naming its fuel rows).
+      await appendCrudAudit(db as never, TEST_OWNER_USER_ID, "driver_finance.settlement_creator.posted", {
+        resource_type: "driver_finance.driver_settlements",
+        resource_id: settlementId,
+        operating_company_id: opco,
+        source_document_ref: `${tag}-DOC`,
+        load_ids: [load],
+        expense_ids: [],
+        fuel_transaction_ids: [inWindow],
+      });
 
       const out = await repointFuelReceiptsToLoad(db as never, { operatingCompanyId: opco, loadId: load, actorUserId: TEST_OWNER_USER_ID });
       expect(out.map((o) => [o.fill_id, o.outcome])).toEqual([[inWindow, "attached"]]);

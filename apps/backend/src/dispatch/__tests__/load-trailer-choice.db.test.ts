@@ -81,8 +81,8 @@ describeIntegration("Book Load requires and records the trailer choice (LEAD 443
       customer_po_number: "PO-443-107",
       requested_load_number: String(700000 + Math.floor(Math.random() * 200000)),
       stops: [
-        { stop_type: "pickup", sequence_number: 1, city: "Laredo", state: "TX", scheduled_arrival_at: tomorrow },
-        { stop_type: "delivery", sequence_number: 2, city: "Dallas", state: "TX", scheduled_arrival_at: dayAfter },
+        { stop_type: "pickup", sequence_number: 1, address_line1: "100 Pickup Rd", city: "Laredo", state: "TX", scheduled_arrival_at: tomorrow },
+        { stop_type: "delivery", sequence_number: 2, address_line1: "200 Delivery Ave", city: "Dallas", state: "TX", scheduled_arrival_at: dayAfter },
       ],
       save_mode: "book_dispatch",
       ...overrides,

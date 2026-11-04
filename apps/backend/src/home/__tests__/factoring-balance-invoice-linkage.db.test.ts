@@ -243,11 +243,14 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         ? (line.sourceType ?? "factoring_advance")
         : null;
       const posting = await db.query<{ id: string }>(
+        // LAW 363.2 + ENG-26 (#27939): a factoring posting carries its advance's load — stamped with the ONE resolver in the
+        // INSERT, as every poster does (trg refuses a load-born posting written with load_id NULL).
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id,
             debit_or_credit, amount_cents, description,
-            source_transaction_type, source_transaction_id, idempotency_key)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5,$6,$7,$8,$9,$10)
+            source_transaction_type, source_transaction_id, idempotency_key, load_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5,$6,$7,$8,$9,$10,
+                 accounting.posting_source_load_id($8::text, $9::text, NULL::text, NULL::uuid))
          RETURNING id::text AS id`,
         [
           opts.opco,

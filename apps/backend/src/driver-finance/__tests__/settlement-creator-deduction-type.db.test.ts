@@ -13,7 +13,7 @@ import { SettlementCreatorError } from "../settlement-creator-error.js";
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
 describeIntegration("Settlement Creator deduction posts by its type (real Postgres)", () => {
-  it("fine / admin fee -> other_recovery 7200, damage -> damage_recovery, cash advance -> advance_recovery; escrow, unmapped and itemless lines refused", async () => {
+  it("fine -> fine_recovery (ENG-12), admin fee -> other_recovery 7200, damage -> damage_recovery, cash advance -> advance_recovery; escrow, unmapped and itemless lines refused", async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
     refuseProductionConnectionString(cs);
@@ -32,6 +32,7 @@ describeIntegration("Settlement Creator deduction posts by its type (real Postgr
           [opco, num, name, type]
         )).rows[0]!.id;
       const income7200 = await account("7200", "Driver Admin Fee & Chargeback Income", "OtherIncome");
+      const fine4910 = await account("4910", "Driver Fine Recovery", "OtherIncome");
       const damage6175 = await account("6175", "Driver Accident Damages & Repairs", "Expense");
       const advance1245 = await account("1245", "Driver Cash Advances Receivable", "Asset");
       const tolls5300 = await account("5300", "Tolls & Scales", "Expense");
@@ -39,6 +40,8 @@ describeIntegration("Settlement Creator deduction posts by its type (real Postgr
       const bind = (role: string, accountId: string) =>
         db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active) VALUES ($1::uuid, $2, $3::uuid, true)`, [opco, role, accountId]);
       await bind("other_recovery", income7200);
+      // ENG-12 (#27916, migrations 202616301200/1201): fines recover through their own role, never the 7200 admin-fee path.
+      await bind("fine_recovery", fine4910);
       await bind("damage_recovery", damage6175);
       await bind("advance_recovery", advance1245);
       await bind("escrow_liability_default", escrow2100);
@@ -50,7 +53,8 @@ describeIntegration("Settlement Creator deduction posts by its type (real Postgr
           `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, category_id, default_income_account_id) VALUES ($1::uuid, $2, 'Service', $3::uuid, $4::uuid) RETURNING id::text`,
           [opco, name, cat, accountId]
         )).rows[0]!.id;
-      const fineItem = await item("Driver Deduction-Fines & Violations", income7200);
+      const fineItem = await item("Driver Deduction-Fines & Violations", fine4910);
+      const adminFeeItem = await item("Driver Deduction-Admin Fee", income7200);
       const damageItem = await item("Driver Deduction-For Accident & Damages to Equipment", damage6175);
       const advanceItem = await item("Driver Deduction-Cash Advance Wire Transfer", advance1245);
       const tollItem = await item("Highway Toll Expense-USA", tolls5300);
@@ -63,13 +67,15 @@ describeIntegration("Settlement Creator deduction posts by its type (real Postgr
         return (err as SettlementCreatorError & { code: string }).code;
       };
 
-      expect(await resolve({ item_id: fineItem, description: "Late delivery fine" })).toMatchObject({ deductionType: "other", roleKey: "other_recovery", accountId: income7200 });
+      expect(await resolve({ item_id: fineItem, description: "Late delivery fine" })).toMatchObject({ deductionType: "fine", roleKey: "fine_recovery", accountId: fine4910 });
       expect(await resolve({ item_id: null, description: "Admin fee" })).toMatchObject({ deductionType: "other", accountId: income7200 });
       expect(await resolve({ item_id: damageItem, description: "Mirror" })).toMatchObject({ deductionType: "damage", roleKey: "damage_recovery", accountId: damage6175 });
       expect(await resolve({ item_id: advanceItem, description: "Wire advance" })).toMatchObject({ deductionType: "cash_advance_repayment", roleKey: "advance_recovery", accountId: advance1245 });
 
       // Never silently "other".
       expect(await refusal({ item_id: tollItem, description: "Toll" })).toBe("deduction_type_unmapped");
+      // ENG-12: a fine on an item still bound to 7200 is refused by name, never posted as admin-fee income.
+      expect(await refusal({ item_id: adminFeeItem, description: "Late delivery fine" })).toBe("deduction_fine_permit_not_admin_fee");
       expect(await refusal({ item_id: escrowItem, description: "Escrow" })).toBe("deduction_is_escrow");
       expect(await refusal({ item_id: null, description: "Phone" })).toBe("deduction_item_required");
     } finally {
