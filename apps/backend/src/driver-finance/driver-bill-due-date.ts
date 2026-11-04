@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 /**
  * Rows 94 + 124(a) (ACCT-F11065) — THE due date of a driver A/P bill.
  *
@@ -22,7 +23,7 @@ export type DriverBillDueDate = { dueDate: string; basis: "delivered" | "project
 
 /** Pure: pick the due date from the load's delivery evidence, else the bill date. */
 export function pickDriverBillDueDate(loadDue: { due_date: string | null; basis: string | null } | null | undefined, billDate: string): DriverBillDueDate {
-  const d = loadDue?.due_date ? String(loadDue.due_date).slice(0, 10) : null;
+  const d = pgDateOnly(loadDue?.due_date);
   if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
     return { dueDate: d, basis: loadDue?.basis === "delivered" ? "delivered" : "projected" };
   }

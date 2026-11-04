@@ -47,6 +47,8 @@ export type FuelAssignmentQuestion = {
   proposed_load_id: string | null;
   proposed_load_number: string | null;
   proposed_settlement_ref: string | null;
+  /** ROW 203: live settlement id of the question's load (null when none). */
+  proposed_settlement_id?: string | null;
   proposed_why: string | null;
   answer_kind: "confirm_proposed" | "pick_other" | "keep_card_truck" | null;
   answered_unit_id: string | null;

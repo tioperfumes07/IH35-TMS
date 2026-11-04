@@ -14,7 +14,7 @@ import { SettlementRefCell } from "../components/shared/SettlementRefCell";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../lib/formatDate";
 import { entityLabel } from "../lib/entity-label";
 import { entityLabel as formatEntityLabel } from "../lib/entity-label";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -274,7 +274,7 @@ export function DocumentsPage() {
           },
           { key: "uploader_email", label: "Uploader", sortable: true, render: (row) => formatEntityLabel(row.uploader_email, row.uploader_user_id, "User") },
           { key: "document_date", label: "Doc Date", sortable: true, render: (row) => formatDateUS(row.document_date) || "-" },
-          { key: "expiration_date", label: "Expires", sortable: true, render: (row) => formatDateUS(row.expiration_date) || "-" },
+          { key: "expiration_date", label: "Expires", sortable: true, render: (row) => formatCalendarDateUS(row.expiration_date) || "-" },
           { key: "version_number", label: "Version", sortable: true, cellClass: "code-cell", render: (row) => `v${row.version_number}` },
           {
             key: "actions",

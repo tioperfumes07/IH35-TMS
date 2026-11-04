@@ -4,7 +4,7 @@ import { getAccountingScheduleRow, type AccountingScheduleRowKind } from "../../
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -34,7 +34,7 @@ export function AccountingScheduleRowDetailPage() {
     {query.isPending && companyId && validKind ? <p className="text-xs text-[#6B7280]">Loading schedule period…</p> : null}
     {row ? <section className="grid gap-3 rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs md:grid-cols-3">
       <div><span className="text-[#6B7280]">Parent</span><p><EntityLink kind={row.parent_kind} id={row.parent_id} label={row.parent_label} /></p></div>
-      <div><span className="text-[#6B7280]">Effective date</span><p>{formatDateUS(row.effective_date)}</p></div>
+      <div><span className="text-[#6B7280]">Effective date</span><p>{formatCalendarDateUS(row.effective_date)}</p></div>
       <div><span className="text-[#6B7280]">Status</span><p>{row.posted ? "Posted" : "Scheduled"}</p></div>
       <div><span className="text-[#6B7280]">Amount</span><p>{formatUsdCents(Number(row.amount_cents))}</p></div>
       <div><span className="text-[#6B7280]">Ending balance</span><p>{formatUsdCents(Number(row.balance_cents))}</p></div>

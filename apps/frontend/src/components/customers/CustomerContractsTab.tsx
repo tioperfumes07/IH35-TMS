@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -199,8 +199,8 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             { key: "contract_type", label: "Type", render: (row: CustomerContract) => CONTRACT_TYPE_LABELS[row.contract_type] },
             { key: "file_name", label: "File", render: (row: CustomerContract) => <EntityLink kind="document" id={row.file_id} label={row.file_name ?? "—"} /> },
             { key: "file_size_bytes", label: "Size", render: (row: CustomerContract) => formatBytes(row.file_size_bytes) },
-            { key: "effective_date", label: "Effective", render: (row: CustomerContract) => formatDate(row.effective_date) },
-            { key: "expiration_date", label: "Expires", render: (row: CustomerContract) => formatDate(row.expiration_date) },
+            { key: "effective_date", label: "Effective", render: (row: CustomerContract) => (formatCalendarDateUS(row.effective_date) || "—") },
+            { key: "expiration_date", label: "Expires", render: (row: CustomerContract) => (formatCalendarDateUS(row.expiration_date) || "—") },
             { key: "created_at", label: "Uploaded", render: (row: CustomerContract) => formatDate(row.created_at) },
             { key: "supersedes_id", label: "Status", render: (row: CustomerContract) => row.supersedes_id ? <span className="text-xs text-[#6B7280]">Superseded</span> : <span className="text-xs text-[#1F2A44]">Current</span> },
             ...(canWrite
@@ -260,7 +260,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             {supersedeTarget && (
               <p className="text-xs text-[#1F2A44] bg-[#F7F8FA] rounded-sm p-2">
                 Superseding: <strong>{CONTRACT_TYPE_LABELS[supersedeTarget.contract_type]}</strong>
-                {supersedeTarget.effective_date ? ` (effective ${formatDate(supersedeTarget.effective_date)})` : ""}
+                {supersedeTarget.effective_date ? ` (effective ${(formatCalendarDateUS(supersedeTarget.effective_date) || "—")})` : ""}
               </p>
             )}
             <label className="block text-xs">

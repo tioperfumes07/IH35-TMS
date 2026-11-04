@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyPermits } from "../../api/safety";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
@@ -44,7 +44,7 @@ export function UnitPermitsReverseSection({
               name={permit.permit_number ?? permit.permit_type}
               noun="Permit"
             />
-            <span className="text-gray-500">Expires {formatDateUS(String(permit.expiry_date ?? ""))}</span>
+            <span className="text-gray-500">Expires {formatCalendarDateUS(String(permit.expiry_date ?? ""))}</span>
           </div>
         );
       })}

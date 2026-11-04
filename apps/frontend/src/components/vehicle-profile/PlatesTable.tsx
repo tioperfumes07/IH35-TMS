@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { SelectCombobox } from "../Combobox";
 
@@ -44,7 +44,7 @@ const COLUMNS: Array<ParityColumn<Plate>> = [
     label: "Expiration",
     sortable: true,
     sortValue: (row) => row.expiration ?? "",
-    render: (row) => (row.expiration ? formatDateUS(row.expiration) || "—" : "—"),
+    render: (row) => (row.expiration ? formatCalendarDateUS(row.expiration) || "—" : "—"),
   },
   {
     key: "status",

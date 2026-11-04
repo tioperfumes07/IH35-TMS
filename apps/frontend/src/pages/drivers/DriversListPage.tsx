@@ -15,7 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { colors } from "../../design/tokens";
 import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { DriversTable, type DriverTableRow } from "./DriversTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
@@ -212,7 +212,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
       };
       const header = ["Last name", "First name", "Hire date", "Termination date", "Pay basis", "Status", "CDL number", "CDL state", "Phone", "Driver ID"];
       const lines = all.drivers.map((d) =>
-        [d.last_name, d.first_name, formatDateUS(d.hire_date), formatDateUS(d.termination_date), d.pay_basis ?? "", d.status ?? "", d.cdl_number ?? "", d.cdl_state ?? "", d.phone ?? "", d.id]
+        [d.last_name, d.first_name, formatCalendarDateUS(d.hire_date), formatCalendarDateUS(d.termination_date), d.pay_basis ?? "", d.status ?? "", d.cdl_number ?? "", d.cdl_state ?? "", d.phone ?? "", d.id]
           .map(esc)
           .join(",")
       );

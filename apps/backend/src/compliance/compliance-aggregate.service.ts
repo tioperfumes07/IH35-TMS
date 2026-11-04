@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -32,7 +33,7 @@ export function computeComplianceSeverity(daysUntil: number | null): ComplianceS
 }
 
 function mapRow(row: Record<string, unknown>): ComplianceCredential {
-  const expiration = row.expiration_date ? String(row.expiration_date).slice(0, 10) : null;
+  const expiration = pgDateOnly(row.expiration_date);
   const days = row.days_until_expiration === null || row.days_until_expiration === undefined
     ? daysUntilExpiration(expiration)
     : Number(row.days_until_expiration);
@@ -266,3 +267,4 @@ export function summarizeComplianceCredentials(rows: ComplianceCredential[]) {
   for (const row of rows) summary[row.severity] += 1;
   return summary;
 }
+

@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 
 type FieldDef = { id: string; label: string };
 
@@ -134,14 +135,17 @@ export function CustomReportBuilder() {
           }}
         >
           <h3 className="text-xs font-semibold text-[#0F1219]">Report layout</h3>
+          {/* Live 11-03: the filter input measured 26px (py-1, no height). Both single-line fields use the shared 40px
+              FORM_INPUT_CLASS (PR #28494's rule); guard scripts/verify-live-fails-2.mjs. */}
           <input
-            className="mt-2 h-10 max-w-sm rounded-sm border border-[#E5E7EB] px-2 text-xs"
+            className={`mt-2 max-w-sm ${FORM_INPUT_CLASS}`}
             placeholder="Report name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
-            className="mt-2 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
+            className={`mt-2 ${FORM_INPUT_CLASS}`}
+            data-testid="custom-report-filter-report-id"
             placeholder="Filter: report_id (optional)"
             value={filterReportId}
             onChange={(e) => setFilterReportId(e.target.value)}

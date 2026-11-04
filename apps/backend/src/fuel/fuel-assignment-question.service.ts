@@ -112,6 +112,8 @@ export type FuelAssignmentQuestionRow = {
   proposed_load_id: string | null;
   proposed_load_number: string | null;
   proposed_settlement_ref: string | null;
+  /** ROW 203: the load's settlement id, read live (null when the load has none) -- the Settlement cell links to it. */
+  proposed_settlement_id?: string | null;
   proposed_why: string | null;
   answer_kind: "confirm_proposed" | "pick_other" | "keep_card_truck" | null;
   answered_unit_id: string | null;
@@ -139,6 +141,29 @@ async function fillCt(client: DbClient, moment: string | null): Promise<string |
     )
   ).rows[0]?.t ?? null;
 }
+
+/**
+ * ROW 203 (live 11-03, load 13689): the Fuel-questions Settlement cell showed "—" while load 13689 sat on signed
+ * settlement 5851. Root cause: proposed_settlement_ref is a SNAPSHOT written when the question was created
+ * (2026-10-22 19:57Z); the load joined settlement 5851 afterwards (settlement updated 2026-10-24), so the stored
+ * value stayed NULL forever. Readers now resolve the settlement LIVE from the load the question points at (the
+ * answered load wins over the proposed one) through the same presettlement link loadWindowLabel uses, falling back
+ * to the stored snapshot only when the load has no live settlement. The id travels with it so the cell can link.
+ */
+export const PROPOSED_SETTLEMENT_LIVE_SQL = `COALESCE((SELECT COALESCE(ds.source_document_ref, ds.display_id)
+                 FROM mdata.loads sl_load
+                 JOIN driver_finance.driver_settlements ds
+                   ON ds.id = sl_load.presettlement_link_id AND ds.operating_company_id = sl_load.operating_company_id
+                  AND ds.voided_at IS NULL
+                WHERE sl_load.id = COALESCE(q.answered_load_id, q.proposed_load_id)
+                  AND sl_load.operating_company_id = q.operating_company_id), q.proposed_settlement_ref) AS proposed_settlement_ref,
+              (SELECT ds.id::text
+                 FROM mdata.loads sl_load
+                 JOIN driver_finance.driver_settlements ds
+                   ON ds.id = sl_load.presettlement_link_id AND ds.operating_company_id = sl_load.operating_company_id
+                  AND ds.voided_at IS NULL
+                WHERE sl_load.id = COALESCE(q.answered_load_id, q.proposed_load_id)
+                  AND sl_load.operating_company_id = q.operating_company_id) AS proposed_settlement_id`;
 
 async function loadWindowLabel(client: DbClient, companyId: string, loadId: string | null): Promise<FuelCandidateLoad> {
   if (!loadId) {
@@ -517,7 +542,7 @@ export async function listFuelAssignmentQuestions(
               q.fill_moment_at::text, q.fill_moment_ct, q.station, q.gallons::text, q.amount_cents::text,
               q.card_unit_id::text, q.card_unit_number, q.card_driver_id::text, q.card_driver_name,
               q.evidence, q.proposed_unit_id::text, q.proposed_unit_number, q.proposed_load_id::text,
-              q.proposed_load_number, q.proposed_settlement_ref, q.proposed_why,
+              q.proposed_load_number, ${PROPOSED_SETTLEMENT_LIVE_SQL}, q.proposed_why,
               q.answer_kind, q.answered_unit_id::text, q.answered_load_id::text, q.answer_reason,
               q.answered_by_user_id::text, q.answered_at::text, q.created_at::text, q.updated_at::text
          FROM fuel.fuel_assignment_questions q
@@ -553,7 +578,7 @@ export async function getFuelAssignmentQuestion(
               q.fill_moment_at::text, q.fill_moment_ct, q.station, q.gallons::text, q.amount_cents::text,
               q.card_unit_id::text, q.card_unit_number, q.card_driver_id::text, q.card_driver_name,
               q.evidence, q.proposed_unit_id::text, q.proposed_unit_number, q.proposed_load_id::text,
-              q.proposed_load_number, q.proposed_settlement_ref, q.proposed_why,
+              q.proposed_load_number, ${PROPOSED_SETTLEMENT_LIVE_SQL}, q.proposed_why,
               q.answer_kind, q.answered_unit_id::text, q.answered_load_id::text, q.answer_reason,
               q.answered_by_user_id::text, q.answered_at::text, q.created_at::text, q.updated_at::text
          FROM fuel.fuel_assignment_questions q

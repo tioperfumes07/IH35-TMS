@@ -1,4 +1,4 @@
-import { liveDriverBill, liveExpense, liveSettlement, notVoided } from "./live-document-predicates.sql.js";
+import { driverBillHasActiveSettlement, liveDriverBill, liveExpense, liveSettlement, notVoided } from "./live-document-predicates.sql.js";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
@@ -28,75 +28,21 @@ export const LOAD_COSTS_HUB_LINKAGE = {
   12: { hub: "mdata.equipment", via: "dispatch.load_assignment_history.new_trailer_id, most recent row (mdata.loads has no trailer_id column)", reverse: "equipment / trailer loads" },
 } as const;
 
-export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/load-costs-board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    if (!["Owner", "Administrator", "Accountant", "Dispatcher", "SuperAdmin"].includes(String(user.role ?? ""))) {
-      return reply.code(403).send({ error: "forbidden" });
-    }
-    // Spec 09-04-2026 (Load Costs Board 19 Columns) §3: "every one of the 19 is server-side
-    // sortable, ascending and descending. A column the owner cannot sort is not delivered." Each key
-    // below matches a frontend ParityColumn `key` 1:1 (LoadCostsBoardPage.tsx) so the page can pass
-    // the clicked column key straight through as load_costs_sort with no translation table to drift.
-    const parsed = companyQuerySchema.extend({
-      load_costs_sort: z.enum([
-        "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
-        // ROUND 285.4.4 — wizard amounts from dispatch.load_charge_lines (Book Load).
-        "line_haul", "fuel_surcharge", "accessorials", "detention_charge", "layover",
-        "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
-        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
-        "settlement",
-        // U3 — the ledger's own cost for the load (computed after the main query; sorted in code below).
-        "ledger_cost",
-      ]).default("load"),
-      sort_direction: z.enum(["asc", "desc"]).default("desc"),
-      /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
-      show_voided: queryBoolean().default(false),
-    }).safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-
-    return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-      // Sort by the raw numeric/timestamp CTE expression, never the ::text-cast SELECT-list alias --
-      // a text cast would sort "1000" before "200" lexicographically. `status` mirrors the frontend's
-      // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
-      // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
-      // click same as every other column.
-      // 443.257-C: revenue_cents / driver_pay_cents come from set-based CTEs (not per-row lateral).
-      const marginSql = "(COALESCE(lcr.revenue_cents,0)-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dgp.driver_pay_cents,0))";
-      const sortColumns = {
-        ledger_cost: "l.load_number", // re-sorted by ledger_cost_cents after the ledger read
-        load: "l.load_number",
-        unit: "u.unit_number",
-        driver_name: "mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id)",
-        pu_date: "pickup.scheduled_arrival_at",
-        del_date: "delivery.actual_arrival_at",
-        status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
-        revenue: "COALESCE(lcr.revenue_cents,0)",
-        line_haul: "COALESCE(wiz.linehaul_cents,0)",
-        fuel_surcharge: "COALESCE(wiz.fuel_surcharge_cents,0)",
-        accessorials: "COALESCE(wiz.accessorial_cents,0)",
-        detention_charge: "COALESCE(wiz.detention_charge_cents,0)",
-        layover: "COALESCE(wiz.layover_charge_cents,0)",
-        late_fee: "COALESCE(cb.late_fee_cents,0)",
-        lumper: "COALESCE(cb.lumper_cents,0)",
-        fuel: "COALESCE(cb.fuel_cents,0)",
-        repairs_maintenance: "COALESCE(rm.repairs_maintenance_cents,0)",
-        other: "(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0)-COALESCE(rm.repairs_maintenance_cents,0)-COALESCE(cb.fuel_cents,0)-COALESCE(cb.lumper_cents,0)-COALESCE(cb.late_fee_cents,0))",
-        short_miles: "dpd.short_miles",
-        rate_loaded: "dpd.rate_loaded_cents",
-        loaded_pay: "COALESCE(dpa.loaded_pay_cents,0)",
-        empty_miles: "dpd.empty_miles",
-        rate_empty: "dpd.rate_empty_cents",
-        deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
-        gross: "COALESCE(dgp.driver_pay_cents,0)",
-        margin: marginSql,
-        margin_pct: `(${marginSql}::numeric / NULLIF(COALESCE(lcr.revenue_cents,0), 0))`,
-        settlement: "si.settlement_display_id",
-      } as const;
-      const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
-      const result = await client.query(
-        `WITH ${LOAD_COST_DOCUMENTS_CTE},
+/**
+ * The board's one statement, exported so the SQL can be EXPLAINed / unit-tested verbatim. $1 = operating_company_id.
+ * `showVoided` is the request's show_voided; the shared canonicalLoadCostsOpenClause is mounted inside the statement.
+ *
+ * ACCT-F11062: `board_loads` applies that predicate FIRST (MATERIALIZED), so every per-load lateral below (revenue
+ * rollup, wizard charges, trailer, stops) runs for the loads the board actually shows -- measured 11-03: 13 rows --
+ * instead of all 194 live USMCA loads that the anti-joins used to discard only after the laterals had run.
+ */
+export function buildLoadCostsBoardSql(sortSql: string, showVoided: boolean): string {
+  return `WITH ${LOAD_COST_DOCUMENTS_CTE},
+         board_loads AS MATERIALIZED (
+           SELECT l.* FROM mdata.loads l
+            WHERE l.operating_company_id=$1::uuid
+              AND ${canonicalLoadCostsOpenClause("l", showVoided)}
+         ),
          -- 443.257-C: set-based driver gross pay (replaces per-row subquery inside lateral)
          driver_gross_pay AS (
            SELECT db.load_id,
@@ -197,6 +143,34 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          -- NO number (source_document_ref NULL → dash), exactly like AlwaysTrack "Unsettled Loads".
          -- Continuation keeps the same UUID after a closed/invoiced source load and remains Resettlement
          -- even while the settlement is reopened for its next leg.
+         -- ACCT-F11062 (live 11-03: GET /load-costs-board 41,812 ms; EXPLAIN on prod 35,979 ms of which 35,110 ms was
+         -- this CTE). The legacy bill->settlement fallback used to be a LATERAL inside settlement_info, joined to
+         -- driver_settlements on ds.id = COALESCE(link, lateral.settlement_id). That join is not hashable, so the planner
+         -- nested-looped 92 settlements x 198 loads and re-ran the lateral 18,216 times (1,675,872 settlement_lines
+         -- probes). It is now ONE set-based pass: newest live bill's live settlement per load, same ORDER BY
+         -- (db.created_at DESC, sl.id) the lateral's LIMIT 1 used, MATERIALIZED so it is computed once.
+         -- ROW 203 (live 11-03): a load with NO settlement must say why. The newest live driver bill that is on no
+         -- settlement (13544 / 13563: Rafael's local moves, each with one open bill) -- set-based, one row per load.
+         ), unsettled_driver_bill AS (
+           SELECT DISTINCT ON (db.load_id) db.load_id, db.id::text AS driver_bill_id, db.bill_number::text AS driver_bill_number
+             FROM driver_finance.driver_bills db
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+              AND ${liveDriverBill("db")}
+              AND db.settled_in_settlement_id IS NULL
+              AND NOT ${driverBillHasActiveSettlement("db")}
+            ORDER BY db.load_id, db.created_at DESC
+         ), settlement_bill_link AS MATERIALIZED (
+           SELECT DISTINCT ON (db.load_id) db.load_id, sl.settlement_id
+             FROM driver_finance.driver_bills db
+             JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
+             JOIN driver_finance.driver_settlements legacy ON legacy.id = sl.settlement_id
+              AND legacy.operating_company_id = db.operating_company_id
+              AND ${liveSettlement("legacy")}
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+              AND ${liveDriverBill("db")}
+            ORDER BY db.load_id, db.created_at DESC, sl.id
          ), settlement_info AS (
            -- The booking link is authoritative even before a driver bill/settlement line exists.
            -- Legacy bill linkage is a fallback only; it cannot override a continued tour's identity.
@@ -250,17 +224,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                        AND continuation.suggested_reason LIKE 'REG-040 resettlement continuation%'
                    )) AS is_resettlement
              FROM mdata.loads linked
-             LEFT JOIN LATERAL (
-               SELECT sl.settlement_id
-               FROM driver_finance.driver_bills db
-               JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
-               JOIN driver_finance.driver_settlements legacy ON legacy.id = sl.settlement_id
-                 AND legacy.operating_company_id = linked.operating_company_id
-                 AND ${liveSettlement("legacy")}
-               WHERE db.operating_company_id = linked.operating_company_id
-                 AND db.load_id = linked.id AND ${liveDriverBill("db")}
-               ORDER BY db.created_at DESC, sl.id LIMIT 1
-             ) bill_link ON linked.presettlement_link_id IS NULL
+             LEFT JOIN settlement_bill_link bill_link
+               ON linked.presettlement_link_id IS NULL AND bill_link.load_id = linked.id
              JOIN driver_finance.driver_settlements ds
                ON ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)
               AND ds.operating_company_id = linked.operating_company_id AND ${liveSettlement("ds")}
@@ -330,16 +295,22 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
                 si.settlement_display_id, si.settlement_id, si.settlement_status, si.settlement_is_open,
                 COALESCE(si.is_resettlement, false) AS is_resettlement,
+                -- ROW 203: facts for the no-settlement label (frontend lib/no-settlement-label.ts). Salaried = the 0-rate
+                -- "Salaried (owner ruling)…" override that SETL-F44346 / 443.36 stamp on a salaried driver's loads.
+                (COALESCE(l.driver_pay_rate_override_reason, '') ILIKE 'Salaried%') AS salaried_load,
+                CASE WHEN si.settlement_id IS NULL THEN udb.driver_bill_id END AS unsettled_driver_bill_id,
+                CASE WHEN si.settlement_id IS NULL THEN udb.driver_bill_number END AS unsettled_driver_bill_number,
                 lcr.is_invoiced,
                 -- 443.257-C fuel source: posted (source_fuel_transaction_id) + unposted fills
                 COALESCE(ff.fuel_fills_total_cents, 0)::text AS fuel_fills_total_cents,
                 COALESCE(ff.fuel_fills_count, 0)::int AS fuel_fills_count,
                 COALESCE(fpost.fuel_posted_cents, 0)::text AS fuel_posted_cents,
                 (COALESCE(ff.fuel_fills_total_cents, 0) - COALESCE(fpost.fuel_posted_cents, 0))::text AS fuel_unposted_cents
-           FROM mdata.loads l
+           FROM board_loads l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN settlement_info si ON si.load_id=l.id
+           LEFT JOIN unsettled_driver_bill udb ON udb.load_id=l.id
            -- ENG-52 (2026-10-24): swapped loadCostsRevenueJoin for loadCostRollupLateral (alias lcr) — the ONE shared money
            -- read model enforced by verify-money-surfaces-agree RULE1. revenue_cents/revenue_source/is_invoiced columns
            -- remain identical (loadCostRollupLateral internally uses loadCostsRevenueJoin).
@@ -360,9 +331,78 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            ${loadServiceTrailerLateralSql("l", "tr")}
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
-          WHERE l.operating_company_id=$1::uuid
-            AND ${canonicalLoadCostsOpenClause("l", parsed.data.show_voided)}
-          ORDER BY ${sortSql}`,
+          ORDER BY ${sortSql}`;
+}
+
+export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
+  app.get("/api/v1/accounting/load-costs-board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!["Owner", "Administrator", "Accountant", "Dispatcher", "SuperAdmin"].includes(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    // Spec 09-04-2026 (Load Costs Board 19 Columns) §3: "every one of the 19 is server-side
+    // sortable, ascending and descending. A column the owner cannot sort is not delivered." Each key
+    // below matches a frontend ParityColumn `key` 1:1 (LoadCostsBoardPage.tsx) so the page can pass
+    // the clicked column key straight through as load_costs_sort with no translation table to drift.
+    const parsed = companyQuerySchema.extend({
+      load_costs_sort: z.enum([
+        "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
+        // ROUND 285.4.4 — wizard amounts from dispatch.load_charge_lines (Book Load).
+        "line_haul", "fuel_surcharge", "accessorials", "detention_charge", "layover",
+        "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
+        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
+        "settlement",
+        // U3 — the ledger's own cost for the load (computed after the main query; sorted in code below).
+        "ledger_cost",
+      ]).default("load"),
+      sort_direction: z.enum(["asc", "desc"]).default("desc"),
+      /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
+      show_voided: queryBoolean().default(false),
+    }).safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+      // Sort by the raw numeric/timestamp CTE expression, never the ::text-cast SELECT-list alias --
+      // a text cast would sort "1000" before "200" lexicographically. `status` mirrors the frontend's
+      // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
+      // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
+      // click same as every other column.
+      // 443.257-C: revenue_cents / driver_pay_cents come from set-based CTEs (not per-row lateral).
+      const marginSql = "(COALESCE(lcr.revenue_cents,0)-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dgp.driver_pay_cents,0))";
+      const sortColumns = {
+        ledger_cost: "l.load_number", // re-sorted by ledger_cost_cents after the ledger read
+        load: "l.load_number",
+        unit: "u.unit_number",
+        driver_name: "mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id)",
+        pu_date: "pickup.scheduled_arrival_at",
+        del_date: "delivery.actual_arrival_at",
+        status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
+        revenue: "COALESCE(lcr.revenue_cents,0)",
+        line_haul: "COALESCE(wiz.linehaul_cents,0)",
+        fuel_surcharge: "COALESCE(wiz.fuel_surcharge_cents,0)",
+        accessorials: "COALESCE(wiz.accessorial_cents,0)",
+        detention_charge: "COALESCE(wiz.detention_charge_cents,0)",
+        layover: "COALESCE(wiz.layover_charge_cents,0)",
+        late_fee: "COALESCE(cb.late_fee_cents,0)",
+        lumper: "COALESCE(cb.lumper_cents,0)",
+        fuel: "COALESCE(cb.fuel_cents,0)",
+        repairs_maintenance: "COALESCE(rm.repairs_maintenance_cents,0)",
+        other: "(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0)-COALESCE(rm.repairs_maintenance_cents,0)-COALESCE(cb.fuel_cents,0)-COALESCE(cb.lumper_cents,0)-COALESCE(cb.late_fee_cents,0))",
+        short_miles: "dpd.short_miles",
+        rate_loaded: "dpd.rate_loaded_cents",
+        loaded_pay: "COALESCE(dpa.loaded_pay_cents,0)",
+        empty_miles: "dpd.empty_miles",
+        rate_empty: "dpd.rate_empty_cents",
+        deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
+        gross: "COALESCE(dgp.driver_pay_cents,0)",
+        margin: marginSql,
+        margin_pct: `(${marginSql}::numeric / NULLIF(COALESCE(lcr.revenue_cents,0), 0))`,
+        settlement: "si.settlement_display_id",
+      } as const;
+      const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
+      const result = await client.query(
+        buildLoadCostsBoardSql(sortSql, parsed.data.show_voided),
         [parsed.data.operating_company_id]
       );
       const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);

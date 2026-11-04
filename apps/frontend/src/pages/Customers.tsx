@@ -75,7 +75,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateTimeUS, formatDateQboList, mmmDd } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateQboList, mmmDd, formatCalendarDateUS } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
@@ -1208,7 +1208,7 @@ export function CustomersPage() {
   // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateQboList(r.issue_date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatCalendarDateUS(r.issue_date) },
       { key: "type", label: "Type", sortable: true, render: (r) => String(r.invoice_type ?? "manual") },
       {
         key: "doc_no",
@@ -1306,7 +1306,7 @@ export function CustomersPage() {
         label: "Invoice",
         render: (r) => <EntityLinkOrTombstone kind="invoice" id={r.id} name={r.display_id} noun="Invoice" />,
       },
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateQboList(r.issue_date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatCalendarDateUS(r.issue_date) },
       { key: "due", label: "Due", sortable: true, render: (r) => formatDateQboList(r.due_date) },
       { key: "status", label: "Status", sortable: true, render: (r) => (isVoidInvoice(r) ? "Voided" : r.status) },
       { key: "total", label: "Total", sortable: true, render: (r) => fmtMoney(r.total_cents) },

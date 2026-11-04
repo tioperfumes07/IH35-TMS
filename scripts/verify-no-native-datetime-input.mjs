@@ -270,21 +270,21 @@ export function run() {
   const profileSrc = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, "utf8") : "";
   const profileFails = [];
   if (profileSrc) {
-    if (!/formatDateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)) {
+    if (!/format(?:Calendar)?DateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)) {
       profileFails.push("DriverProfilePage: CDL Expires must use formatDateUS(profileDriver.cdl_expires_at…)");
     }
-    if (!/formatDateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)) {
+    if (!/format(?:Calendar)?DateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)) {
       profileFails.push("DriverProfilePage: Medical Expires must use formatDateUS(profileDriver.dot_medical_expires_at…)");
     }
     if (
       /\{\s*\(?\s*profileDriver\.cdl_expires_at\s+as\b/.test(profileSrc) &&
-      !/formatDateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)
+      !/format(?:Calendar)?DateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)
     ) {
       profileFails.push("DriverProfilePage: CDL expires still rendered bare behind a TypeScript cast");
     }
     if (
       /\{\s*\(?\s*profileDriver\.dot_medical_expires_at\s+as\b/.test(profileSrc) &&
-      !/formatDateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)
+      !/format(?:Calendar)?DateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)
     ) {
       profileFails.push("DriverProfilePage: Medical expires still rendered bare behind a TypeScript cast");
     }
@@ -300,7 +300,7 @@ export function run() {
   const licenseSrc = fs.existsSync(licensePath) ? fs.readFileSync(licensePath, "utf8") : "";
   const medicalSrc = fs.existsSync(medicalPath) ? fs.readFileSync(medicalPath, "utf8") : "";
   if (licenseSrc) {
-    if (!/formatDateUS\s*\(\s*license\.expiration/.test(licenseSrc)) {
+    if (!/format(?:Calendar)?DateUS\s*\(\s*license\.expiration/.test(licenseSrc)) {
       profileFails.push("LicenseSection: Expires must use formatDateUS(license.expiration…)");
     }
     if (/Expires\s*\{\s*String\s*\(\s*license\.expiration/.test(licenseSrc)) {
@@ -308,7 +308,7 @@ export function run() {
     }
   }
   if (medicalSrc) {
-    if (!/formatDateUS\s*\(\s*medical\.expiration/.test(medicalSrc)) {
+    if (!/format(?:Calendar)?DateUS\s*\(\s*medical\.expiration/.test(medicalSrc)) {
       profileFails.push("MedicalCardSection: Expires must use formatDateUS(medical.expiration…)");
     }
     if (/Expires\s*\{\s*String\s*\(\s*medical\.expiration/.test(medicalSrc)) {
