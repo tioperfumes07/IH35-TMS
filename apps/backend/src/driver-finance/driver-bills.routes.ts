@@ -6,6 +6,7 @@ import { driverBillAmountKnown, liveDriverBill, openDriverBill } from "../accoun
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { DriverBillRepriceRefused, repriceDriverBillToSettlementLineInClientTx } from "./driver-bill-reprice-to-settlement.service.js";
 import { StraySalariedBillVoidRefusedError, voidStraySalariedDriverBill, voidStrayPracticalBasisDriverBill } from "./void-stray-salaried-driver-bill.service.js";
 
 const VOID_STRAY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -550,6 +551,39 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       return reply.code(200).send(result);
     } catch (e) {
       if (e instanceof StraySalariedBillVoidRefusedError) return reply.code(409).send({ error: e.code, message: e.message });
+      throw e;
+    }
+  });
+
+  /**
+   * ACCT-F11102 (owner, load 13693: "the data you got from the settlement directly is the correct data") — re-price ONE driver
+   * bill to the settlement earnings line minted from it, at the per-mile rate that reproduces that line on the bill's miles.
+   * Pay already accrued to A/P follows through THE restate engine (reversal + re-accrual). The driver's pay rate is untouched.
+   */
+  app.post("/api/v1/driver-finance/driver-bills/:id/reprice-to-settlement-line", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!VOID_STRAY_ROLES.has(user.role)) return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = z.object({
+      operating_company_id: z.string().uuid(),
+      settlement_line_id: z.string().uuid(),
+      rate_per_mile_cents: z.coerce.number().int().positive().max(1000),
+      reason: z.string().trim().min(20).max(1000),
+    }).safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const { accrueDriverPayAtDeliveryInClientTx } = await import("./driver-pay-delivery-accrual.service.js");
+      const result = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        repriceDriverBillToSettlementLineInClientTx(client as never, {
+          operatingCompanyId: body.data.operating_company_id, driverBillId: params.data.id, settlementLineId: body.data.settlement_line_id,
+          ratePerMileCents: body.data.rate_per_mile_cents, actorUserId: user.uuid, reason: body.data.reason, accrue: accrueDriverPayAtDeliveryInClientTx,
+        }),
+      );
+      return reply.code(200).send(result);
+    } catch (e) {
+      if (e instanceof DriverBillRepriceRefused) return reply.code(409).send({ error: e.code, message: e.message, details: e.details });
       throw e;
     }
   });

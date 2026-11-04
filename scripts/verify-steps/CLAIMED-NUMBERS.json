@@ -17549,5 +17549,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-invoice-applied-cents-payment-less"
+  },
+  "19953": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-sent-invoice-corrected-by-credit-memo"
+  },
+  "19957": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-driver-bill-reprices-to-settlement-line"
   }
 }
