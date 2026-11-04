@@ -7,7 +7,7 @@ import { formatPersonName } from "../../lib/formatPersonName";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { BoardSection } from "../../components/v3/BoardSection";
 
 type Props = {
@@ -59,11 +59,11 @@ export function filingDetailLabel(row: Pick<FilingItem, "category" | "detail" | 
 
 export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilingStatus | "">("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [filterText, setFilterText] = useState("");
   const staged = useStagedListFilters({
     applied: { categoryFilter, filterText },
-    empty: { categoryFilter: "", filterText: "" },
+    empty: { categoryFilter: [] as string[], filterText: "" },
     onApply: (next) => {
       setCategoryFilter(next.categoryFilter);
       setFilterText(next.filterText);
@@ -85,7 +85,8 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   const filteredRows = useMemo(() => {
     let rows = items;
     if (statusFilter) rows = rows.filter((r) => r.status === statusFilter);
-    if (categoryFilter) rows = rows.filter((r) => r.program === categoryFilter);
+    // U12: empty program MultiSelect ⇒ all; otherwise program ∈ selected.
+    if (categoryFilter.length > 0) rows = rows.filter((r) => categoryFilter.includes(r.program));
     if (filterText.trim()) {
       const needle = filterText.trim().toLowerCase();
       rows = rows.filter((r) => `${r.program} ${r.detail} ${r.entity_code}`.toLowerCase().includes(needle));
@@ -181,7 +182,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
         suppressToolbarSearch
         filterBar={
           <CollapsedListFilters
-            activeFilterCount={(categoryFilter ? 1 : 0) + (filterText.trim() ? 1 : 0)}
+            activeFilterCount={(categoryFilter.length > 0 ? 1 : 0) + (filterText.trim() ? 1 : 0)}
             onApply={staged.apply}
             onReset={staged.reset}
             onCancel={staged.cancel}
@@ -197,21 +198,19 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
                 onChange={(e) => staged.setDraft({ ...staged.draft, filterText: e.target.value })}
                 className="h-8 w-full max-w-md rounded-sm border px-2 text-xs"
               />
-              <label className="text-xs">
-                Program{" "}
-                <SelectCombobox
-                  className="ml-1"
-                  value={staged.draft.categoryFilter}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, categoryFilter: e.target.value })}
-                >
-                  <option value="">All</option>
-                  {programs.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </SelectCombobox>
-              </label>
+              <div className="text-xs font-semibold text-[#4B5563]" data-testid="compliance-filings-program-filter">
+                <span className="block">Program</span>
+                <div className="mt-1">
+                  <MultiSelectDropdown
+                    label="Program"
+                    options={programs.map((p) => ({ value: p, label: p }))}
+                    selected={staged.draft.categoryFilter}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, categoryFilter: next })}
+                    allLabel="All programs"
+                    data-testid="compliance-filings-program-multiselect"
+                  />
+                </div>
+              </div>
             </div>
           </CollapsedListFilters>
         }

@@ -6,6 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
+import { DispatchOverrideRefusedError, dispatchOverrideWireShape } from "./dispatch-override.js";
 import {
   dispatchStatusSchema,
   fromMdataStatus,
@@ -206,7 +207,7 @@ const stopTimeWindowSchema = z.preprocess(
   z.enum(["appointment", "open_window", "select_hours", "refused"]).optional()
 );
 
-const createDispatchLoadBodySchema = z.object({
+export const createDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   customer_id: z.string().uuid(),
   status: dispatchStatusSchema.default("assigned_not_dispatched"),
@@ -411,17 +412,9 @@ const createDispatchLoadBodySchema = z.object({
   // Ignored unless save_mode === "draft".
   quicksave_pending_fields: z.array(z.string().trim().min(1).max(80)).max(40).optional(),
   override_token: z.string().uuid().optional(),
-  override_reason: z.string().trim().min(10).max(1000).optional(),
-  override_rules: z
-    .array(
-      z.object({
-        rule_code: z.string().trim().min(1).max(80),
-        reason: z.string().trim().min(10).max(1000),
-        subject: z.string().trim().max(200).optional(),
-      })
-    )
-    .max(40)
-    .optional(),
+  // Row 28 (443.294): the ONE override — a catalogs.override_reasons code (Owner / Accountant send none and just confirm),
+  // validated by recordOverride inside bookLoad's transaction. The old typed `override_reason` is REFUSED.
+  ...dispatchOverrideWireShape,
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
 }).superRefine((data, ctx) => {
@@ -450,7 +443,7 @@ const createDispatchLoadBodySchema = z.object({
 // Block 06 (Inc 2) — full load edit. All fields optional (PATCH semantics); only present keys update.
 // Excludes status (uses /transition) and immutable booking provenance. Charges -> rate_total_cents;
 // stops (>=2 when provided) are replaced evidence-safely in the service.
-const updateDispatchLoadBodySchema = z.object({
+export const updateDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
   trailer_choice: trailerChoiceSchema.optional(),
@@ -572,17 +565,9 @@ const updateDispatchLoadBodySchema = z.object({
   // GO-23 per-blocker Override — Owner-only, mirrors createLoadBodySchema's override_reason
   // (line ~343 above). Unlocks assertDriverQualifiedForLoad's CDL/DOT-medical/hazmat gate on this
   // PATCH the same way book-load's create path already does; previously Edit had no override path.
-  override_reason: z.string().trim().min(10).max(1000).optional(),
-  override_rules: z
-    .array(
-      z.object({
-        rule_code: z.string().trim().min(1).max(80),
-        reason: z.string().trim().min(10).max(1000),
-        subject: z.string().trim().max(200).optional(),
-      })
-    )
-    .max(40)
-    .optional(),
+  // Row 28: a catalog reason_code (or an explicit Owner / Accountant confirm) — never typed text (refused).
+  override_requested: z.boolean().optional(),
+  ...dispatchOverrideWireShape,
 });
 
 const reserveLoadIdBodySchema = z.object({
@@ -612,8 +597,11 @@ async function withCompanyScope<T>(
     query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
   }) => Promise<T>
 ) {
-  await assertCompanyMembership(userId, operatingCompanyId);
+  // Row 250 (D074): ONE pool checkout per request. The string overload of assertCompanyMembership opened its
+  // own withCurrentUser transaction first, so every dispatch read held the 5-connection pool twice in a row
+  // and the Dispatch page's ~15 concurrent reads queued behind each other. Same check, same client.
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client);
   });
@@ -1798,7 +1786,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     try {
       // CUSTVEND-PAR-1: Credit-limit enforcement at load booking.
       if (body.data.save_mode !== "draft") {
-        const canOverride = ["Owner", "Administrator", "Manager"].includes(authUser.role);
+        const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(authUser.role); // row 28: Owner / Accountant confirm
         if (!body.data.override_credit_limit || !canOverride) {
           const creditBlock = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
             const res = await client.query(
@@ -1932,7 +1920,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const { operating_company_id, charges, stops, override_reason, override_rules, trailer_choice, ...fields } = body.data;
+    const { operating_company_id, charges, stops, override_reason: _refusedTypedReason, override_reason_code, override_requested, override_rules, trailer_choice, ...fields } = body.data;
     try {
       const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
         updateDispatchLoad(client, {
@@ -1940,7 +1928,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           operatingCompanyId: operating_company_id,
           requestingUserUuid: authUser.uuid,
           requestingUserRole: authUser.role,
-          override_reason,
+          override_reason_code,
+          override_requested,
           override_rules,
           fields: fields as UpdateDispatchLoadFields,
           charges,
@@ -1951,6 +1940,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reply.send(result);
     } catch (error) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
+      if (error instanceof DispatchOverrideRefusedError) return reply.code(error.status).send({ error: error.code });
       if (error instanceof TrailerChoiceRefusedError) {
         return reply.code(422).send({ error: error.code, ...error.details });
       }
@@ -2206,14 +2196,6 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             WHERE l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
             ORDER BY l.assigned_unit_id, ls.actual_departure_at DESC
-          ),
-          -- D074 443.265-B: set-based loc (replaces per-unit LATERAL: N scans → 1)
-          last_city_per_unit AS (
-            SELECT DISTINCT ON (g.unit_id) g.unit_id, g.city, g.state, g.formatted_location
-            FROM telematics.vehicle_locations g
-            WHERE g.operating_company_id = $1::uuid
-              AND (g.city IS NOT NULL OR g.state IS NOT NULL)
-            ORDER BY g.unit_id, g.captured_at DESC
           )
           SELECT
             u.id,
@@ -2285,8 +2267,23 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
-          -- D074 443.265-B: replaced per-unit LATERAL with CTE join (last_city_per_unit above)
-          LEFT JOIN last_city_per_unit loc ON loc.unit_id = u.id
+          -- Row 250 (D074): fallback city = the newest vehicle_locations row WITH a city, read ONLY when the
+          -- latest-position cache has none. The previous DISTINCT ON CTE over every USMCA location row
+          -- (566,392 rows, seq scan + 47 MB on-disk sort, 2,680 ms on prod) ran on every request even
+          -- though 16 of 16 units already had a cached city. The gate lives INSIDE the lateral so the
+          -- planner turns it into a One-Time Filter (a join-level ON gate still runs the subquery per row),
+          -- and the constant $1 company key lets idx_vehicle_locations_unit_time (operating_company_id,
+          -- unit_id, captured_at DESC) answer it with one index probe per unit.
+          LEFT JOIN LATERAL (
+            SELECT g.city, g.state, g.formatted_location
+              FROM telematics.vehicle_locations g
+             WHERE p.city IS NULL AND p.state IS NULL
+               AND g.operating_company_id = $1::uuid
+               AND g.unit_id = u.id
+               AND (g.city IS NOT NULL OR g.state IS NOT NULL)
+             ORDER BY g.captured_at DESC
+             LIMIT 1
+          ) loc ON true
           -- LEAD 443.231b — SAME free-unit gate as Truck Line AVAILABLE (UNIT_IN_SERVICE_SQL =
           -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
           -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/

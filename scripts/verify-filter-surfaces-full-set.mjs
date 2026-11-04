@@ -21,27 +21,30 @@ const SURFACES = [
   // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
   // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
   ...[
-    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /<ParityTable\b/],
-    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /<ParityTable\b/],
-    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /<ParityTable\b/],
-    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /<ParityTable\b/],
-  ].map(([name, file, table]) => ({
+    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+    // U12: Termination Reasons status MultiSelect → matchesStatus(row.is_active, status)
+    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+    // U12: Void/Cancel Reasons status MultiSelect → matchesStatus(row.is_active, status)
+    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
+  ].map(([name, file, filterMust]) => ({
     name,
     file,
-    must: [table, /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    must: [/<ParityTable\b/, filterMust],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /Total rows:/],
   })),
   // Capped routes (limit max 200): the page reads EVERY page through lib/fetchAllCatalogPages; status narrows
   // server-side on the indexed is_active; the house toolbar is the one search.
   ...[
-    ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx"],
-    ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx"],
-    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx"],
-  ].map(([name, file]) => ({
+    // U12: Fuel/Fleet status is MultiSelect → apiStatus(status) maps []/2→all, 1→scalar for the indexed is_active API.
+    ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
+    ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
+    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx", /fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatus\(status\) \}\)/],
+  ].map(([name, file, fetchMust]) => ({
     name,
     file,
     // LEAD 443.181: DataTable -> ParityTable; its own toolbar search stays the one search (never suppressed).
-    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    must: [fetchMust, /<ParityTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /limit: 200, offset: 0/, /suppressToolbarSearch/],
   })),
   {
@@ -53,7 +56,8 @@ const SURFACES = [
   {
     name: "Safety catalogs (8 lists, one generic page)",
     file: "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
-    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    // U12: status MultiSelect → apiStatusFromMulti(status) for indexed is_active API.
+    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: apiStatusFromMulti\(status\) \}\)/, /<ParityTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /limit: 200,\s*offset: 0/],
   },
   // Server-paged (route max 200): every filter runs on the server; the house toolbar's search drives `q`; "N of M" =

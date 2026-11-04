@@ -1,3 +1,4 @@
+import { confirmOverride, overrideReasonCodeSchema, refusedTypedReason } from "../overrides/confirm-override.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -40,7 +41,14 @@ const createSchema = COMPANY_QUERY.extend({
   petition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
-const patchSchema = z
+class Form425COverrideRefusedError extends Error {
+  constructor(readonly status: number, readonly code: string) {
+    super(code);
+    this.name = "Form425COverrideRefusedError";
+  }
+}
+
+export const patchSchema = z
   .object({
     case_number: z.string().trim().min(1).optional(),
     court_district: z.string().trim().min(1).optional(),
@@ -60,7 +68,13 @@ const patchSchema = z
     line_33_proj_disbursements: z.number().nullable().optional(),
     line_35_next_proj_receipts: z.number().nullable().optional(),
     line_36_next_proj_disbursements: z.number().nullable().optional(),
-    projection_override_reason: z.string().trim().optional(),
+    // Row 28 (443.294): the carry-forward override is the ONE override — a catalogs.override_reasons code (context
+    // 425c_carry_forward; Owner / Accountant send none and just confirm), validated by recordOverride in this transaction.
+    // The old typed `projection_override_reason` (30+ characters) is REFUSED.
+    projection_override_reason_code: overrideReasonCodeSchema.nullable().optional(),
+    /** The Override button was clicked + confirmed (an Owner / Accountant picks no reason). */
+    projection_override_confirmed: z.boolean().optional(),
+    projection_override_reason: refusedTypedReason("projection_override_reason"),
   })
   .merge(COMPANY_QUERY);
 
@@ -927,11 +941,21 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         next32 !== optionalNumeric(current.line_32_proj_receipts) ||
         next33 !== optionalNumeric(current.line_33_proj_disbursements);
       if (projChanged && current.carry_forward_source_report_id) {
-        const reason = String(b.projection_override_reason ?? "").trim();
-        if (reason.length < 30) {
-          throw new Error("projection_override_reason_required_min_30_chars");
+        if (!b.projection_override_confirmed && !b.projection_override_reason_code) {
+          throw new Form425COverrideRefusedError(422, "projection_override_required");
         }
-        values.push(reason);
+        const carry = await confirmOverride(client as never, {
+          context: "425c_carry_forward",
+          operatingCompanyId: b.operating_company_id,
+          actor: { userId: user.uuid, role: String(user.role ?? "") },
+          reasonCode: b.projection_override_reason_code ?? null,
+          entityType: "compliance.form_425c_reports",
+          entityId: params.data.id,
+          before: { line_32_proj_receipts: current.line_32_proj_receipts ?? null, line_33_proj_disbursements: current.line_33_proj_disbursements ?? null },
+          after: { line_32_proj_receipts: next32, line_33_proj_disbursements: next33 },
+        });
+        if (!carry.ok) throw new Form425COverrideRefusedError(carry.status, carry.error);
+        values.push(carry.text);
         updates.push(`projection_override_reason = $${values.length}`);
         values.push(user.uuid);
         updates.push(`projection_override_by_user_id = $${values.length}`);
@@ -975,10 +999,10 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     });
     } catch (error) {
       const msg = (error as Error).message;
-      if (msg === "projection_override_reason_required_min_30_chars") {
-        return reply.code(422).send({
-          error: "projection_override_reason_required_min_30_chars",
-          message: "Carry-forward override needs a reason of at least 30 characters",
+      if (error instanceof Form425COverrideRefusedError) {
+        return reply.code(error.status).send({
+          error: error.code,
+          message: "Carry-forward override needs an Override confirm (Owner / Accountant) or a reason picked from the catalog",
         });
       }
       if (msg === "form_425c_filed_immutable") {

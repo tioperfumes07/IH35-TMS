@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
+import { loadLinkedImageFiles, pickUnitPhoto } from "./uploaded-photo-pick.js";
 
 const PHOTO_URL_PREFIX = "file:";
 const SIGNED_TTL_SECONDS = 3600;
@@ -88,10 +89,16 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
         const signed_url = await resolvePhotoRow(client as Parameters<typeof resolvePhotoRow>[0], row.photo_url);
         rows.push({ ...row, signed_url });
       }
-      return rows;
+      // Register row 3 — no unit photo row: offer the unit's own linked image (if any), whole and unmodified.
+      let derived: { file_id: string; original_filename: string; signed_url: string } | null = null;
+      if (rows.length === 0 && isR2Configured()) {
+        const pick = pickUnitPhoto(await loadLinkedImageFiles(client, "unit", params.data.id, query.data.operating_company_id));
+        if (pick) derived = { file_id: pick.id, original_filename: pick.original_filename, signed_url: (await generatePresignedDownloadUrl(pick.r2_key, SIGNED_TTL_SECONDS)).url };
+      }
+      return { rows, derived };
     });
     if (rows === null) return reply.code(404).send({ error: "mdata_unit_not_found" });
-    return { photos: rows };
+    return { photos: rows.rows, derived: rows.derived };
   });
 
   app.post("/api/v1/mdata/units/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

@@ -39,7 +39,9 @@ const DREAMLINE_VENDOR_ID = "3e72d4a5-e6e7-497a-932e-2d3062502be2";
 // posted_to_gl=true rows, 0 traceable via source_transaction_id. Ratchet floor: the traceable
 // count must never DROP below these (it may only rise, if a future fix links them up).
 // Shrink-only: matched fuel bank lines the engine refuses to post, each named with its refusal (BANK-F2026100403).
-// ENG-48 (2026-10-24): fc461eb6 removed — line is now posted (LEAD 443.329).
+// ENG-48 (2026-10-24): fc461eb6 removed from the debt list. Row 127 correction (11-03, measured prod): the line is NOT posted —
+// it is no longer MATCHED (review_state 'for_review', matched_journal_entry_id NULL), so it left the matched-without-JE set; the
+// set is 0 today. When it is matched again, the match posts it (BANK-F2026100403) or this guard names it.
 const MATCHED_FUEL_LINE_DEBT = {};
 
 const BASELINE = {

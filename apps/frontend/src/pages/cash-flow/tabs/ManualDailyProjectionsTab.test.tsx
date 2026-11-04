@@ -152,4 +152,14 @@ describe("ManualDailyProjectionsTab opening cash (443.283)", () => {
     expect(screen.queryByText("Dreamline Diesel Card")).toBeNull();
     expect(screen.getAllByText("$25,533.37").length).toBeGreaterThan(0);
   });
+
+  it("ROW 148: a stale saved opening ($0) never overrides the shared opening cash", async () => {
+    listForecastEntries.mockResolvedValue({ entries: [] });
+    getForecastOpeningBalance.mockResolvedValue({ operating_company_id: COMPANY_ID, amount_cents: 0, as_of_date: null, updated_at: "2026-08-24T18:27:23Z" });
+    getBankingTiles.mockResolvedValue({ tiles: [] });
+    getCashFlowOpeningCash.mockResolvedValue({ opening_cash_cents: 2553337, accounts: [{ id: "bofa", display_name: "USMCA FREIGHT", source: "plaid", cents: 2553337 }] });
+    renderTab();
+    await waitFor(() => expect(screen.getAllByText("$25,533.37").length).toBeGreaterThan(0));
+    expect(screen.queryByText("Use bank total")).toBeNull();
+  });
 });

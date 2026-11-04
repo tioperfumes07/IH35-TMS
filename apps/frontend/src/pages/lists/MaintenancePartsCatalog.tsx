@@ -9,18 +9,31 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useMaintenancePartsCatalog, type MaintPartRow } from "../../hooks/useMaintenancePartsCatalog";
 import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { CreateMaintPartModal } from "./CreateMaintPartModal";
 
-const MANUFACTURERS = ["", "Detroit Diesel", "Cummins", "Freightliner", "Peterbilt", "Kenworth"];
-const CATEGORIES = [
-  "", "engine", "transmission", "brake", "tire", "suspension",
+const MANUFACTURER_OPTIONS = [
+  { value: "Detroit Diesel", label: "Detroit Diesel" },
+  { value: "Cummins", label: "Cummins" },
+  { value: "Freightliner", label: "Freightliner" },
+  { value: "Peterbilt", label: "Peterbilt" },
+  { value: "Kenworth", label: "Kenworth" },
+] as const;
+
+const CATEGORY_OPTIONS = [
+  "engine", "transmission", "brake", "tire", "suspension",
   "electrical", "fuel_system", "cooling", "exhaust", "cabin",
   "reefer", "body", "fluid", "filter", "other",
-];
+].map((c) => ({ value: c, label: properEnumOrFilterLabel(c) }));
+
+/** U12: 0/2+ → undefined, 1 → scalar API. */
+function apiScalar(selected: string[]): string | undefined {
+  if (selected.length === 1) return selected[0];
+  return undefined;
+}
 
 function cents(n: number) {
   return n > 0 ? `$${(n / 100).toFixed(2)}` : "—";
@@ -77,17 +90,19 @@ export function MaintenancePartsCatalog() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [manufacturer, setManufacturer] = useState("");
-  const [category, setCategory] = useState("");
+  const [manufacturer, setManufacturer] = useState<string[]>([]);
+  const [category, setCategory] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const manufacturerApi = apiScalar(manufacturer);
+  const categoryApi = apiScalar(category);
 
   const query = useMaintenancePartsCatalog({
     operating_company_id: companyId,
     search: search || undefined,
-    manufacturer: manufacturer || undefined,
-    category: category || undefined,
+    manufacturer: manufacturerApi,
+    category: categoryApi,
     page,
     limit: 50,
       ...catalogListSearchQueryOptions,
@@ -95,7 +110,12 @@ export function MaintenancePartsCatalog() {
   });
 
   const allRows = query.data?.rows ?? [];
-  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active);
+  const rows = (showInactive ? allRows : allRows.filter((r) => r.is_active)).filter((r) => {
+    // U12: 2+ selections — API unscoped; narrow client-side.
+    if (manufacturer.length >= 2 && !manufacturer.includes(r.manufacturer)) return false;
+    if (category.length >= 2 && !category.includes(r.category)) return false;
+    return true;
+  });
   const total = query.data?.total ?? 0;
 
   return (
@@ -122,12 +142,32 @@ export function MaintenancePartsCatalog() {
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3516: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <CatalogListSearchInput value={search} onChange={(v: string) => { setSearch(v); setPage(1); }} placeholder="Search by SKU, name, or UPC" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-        <SelectCombobox value={manufacturer} onChange={(e) => { setManufacturer(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-          {MANUFACTURERS.map((m) => <option key={m} value={m}>{m || "All manufacturers"}</option>)}
-        </SelectCombobox>
-        <SelectCombobox value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c ? properEnumOrFilterLabel(c) : "All categories"}</option>)}
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="maint-parts-manufacturer-filter">
+          <span className="block">Manufacturer</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Manufacturer"
+              options={[...MANUFACTURER_OPTIONS]}
+              selected={manufacturer}
+              onChange={(next) => { setManufacturer(next); setPage(1); }}
+              allLabel="All manufacturers"
+              data-testid="maint-parts-manufacturer-multiselect"
+            />
+          </div>
+        </div>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="maint-parts-category-filter">
+          <span className="block">Category</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Category"
+              options={CATEGORY_OPTIONS}
+              selected={category}
+              onChange={(next) => { setCategory(next); setPage(1); }}
+              allLabel="All categories"
+              data-testid="maint-parts-category-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">

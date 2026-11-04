@@ -12,7 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DotViolationTypeModal } from "./DotViolationTypeModal";
 import { ListsSubNav } from "../ListsSubNav";
-import { statusPillClass, type StatusFilter } from "./shared";
+import { statusPillClass, apiStatusFromMulti } from "./shared";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 const CATEGORY_LABELS: Record<DotBasicCategory, string> = {
@@ -35,7 +35,7 @@ export function DotViolationTypesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("true");
+  const [statusFilter, setStatusFilter] = useState<string[]>(["true"]);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -50,8 +50,8 @@ export function DotViolationTypesListPage() {
   const [selectedRow, setSelectedRow] = useState<DotViolationTypeRow | null>(null);
 
   const query = useQuery({
-    queryKey: ["catalogs", "safety", "dot-violation-types", companyId, search, statusFilter],
-    queryFn: () => listDotViolationTypes(companyId, { search: search || undefined, is_active: statusFilter, limit: 200, offset: 0 }),
+    queryKey: ["catalogs", "safety", "dot-violation-types", companyId, search, statusFilter.join(",") || "all"],
+    queryFn: () => listDotViolationTypes(companyId, { search: search || undefined, is_active: apiStatusFromMulti(statusFilter), limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });

@@ -20,7 +20,7 @@ import { NumLink } from "./partyBoardKit";
  */
 type PartyKind = "customer" | "vendor" | "factoring_debtor";
 type Party = { kind: PartyKind; id: string; name: string; docs: number; total_cents: number; open_cents: number };
-type Pair = { a: Party; b: Party; score: number; reasons: string[]; mergeable: boolean };
+type Pair = { a: Party; b: Party; score: number; reasons: string[]; mergeable: boolean; tier?: "exact" | "corroborated" | "name_only"; corroboration?: string[] };
 
 const KIND_LABEL: Record<PartyKind, string> = { customer: "Customer", vendor: "Vendor", factoring_debtor: "Faro debtor" };
 const REASON_LABEL: Record<string, string> = {
@@ -43,7 +43,7 @@ export function variantPairsFor(pairs: Pair[], board: "customers" | "vendors"): 
 export function useVariantCandidates(operatingCompanyId: string) {
   return useQuery({
     queryKey: ["variant-candidates", operatingCompanyId],
-    queryFn: () => apiRequest<{ parties: number; pairs: Pair[] }>(`/api/v1/mdata/canonical/variant-candidates?operating_company_id=${operatingCompanyId}`),
+    queryFn: () => apiRequest<{ parties: number; pairs: Pair[]; rule?: string; name_only_hidden?: number }>(`/api/v1/mdata/canonical/variant-candidates?operating_company_id=${operatingCompanyId}`),
     staleTime: 60_000,
   });
 }
@@ -111,6 +111,11 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
       onSubmit={async (reasonCode) => { if (voidModalPair) merge.mutate({ pair: voidModalPair, reasonCode }); }}
     />
     <div className="pb-card" data-testid="variant-duplicates-panel">
+      {q.data?.rule ? (
+        <div className="pb-sub-sm" data-testid="variant-duplicates-rule">
+          {q.data.rule}{q.data.name_only_hidden ? ` ${q.data.name_only_hidden} name-only lead${q.data.name_only_hidden === 1 ? "" : "s"} not counted.` : ""}
+        </div>
+      ) : null}
       <ParityTable<Pair>
         appearance="board"
         storageKey={`variant-duplicates-${props.board}`}

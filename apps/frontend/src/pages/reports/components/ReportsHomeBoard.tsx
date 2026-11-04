@@ -1,13 +1,15 @@
 // TABLE_DATE_OMIT: these tables have no date column by design — they are the report CATALOG (one row per report: name / what it shows / basis / run / export); a report's dates are chosen in the live viewer it opens, not listed here.
 /**
- * ROUND 443.267 → FINAL-3 row 40 — Reports Home board (v3, sidebar, non-layered).
- * v3 spec: docs/design/v3/Reports.dc.html — KPI strip → two-column (200px sidebar + right panel).
- * Selected category drives the right panel. Financial = detailed accounting table + management rows (Rule 07).
- * Automation = ScheduledReportsPanel. Saved = Custom report entry. Others = simple report table.
+ * ROUND 443.267 → FINAL-3 row 40 → register row 53 (11-03) — Reports Home IS the board (v3, sidebar, NOT layered).
+ * v3 spec: docs/design/v3/Reports.dc.html — KPI strip → two-column (200px sidebar + right panel), nothing below it.
+ * Selected category drives the right panel. Financial = the accounting catalog table (the 3 Management report
+ * compilations are catalog rows under View all — Rule 07: relocated, still reachable, never deleted).
+ * Automation = ScheduledReportsPanel. Saved = Frequently run + Custom report entry. Compliance = report rows + the
+ * IFTA preparer. Every catalog row is a real <Link> (anchor) to its route — never a button.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
 import { FrequentlyRunTable } from "../../../components/reports/FrequentlyRunTable";
 import {
@@ -40,8 +42,23 @@ const SIDEBAR_CATEGORIES = [
 ] as const;
 type SidebarCategory = typeof SIDEBAR_CATEGORIES[number]["id"];
 
-// ── Financial — board primary 9 + Rule-07 management rows ───────────────────
-const ACCOUNTING_FINANCIAL_ROWS = [
+// ── Financial — board primary rows + Rule-07 extras (View all) ───────────────
+/** [report key, label, what it shows, primary (shown before View all)] */
+type CatalogRow = readonly [string, string, string, boolean];
+
+/**
+ * Rule 07 — the Management report compilations (Branded financial compilations — lender, insurance, and stakeholder
+ * ready). Row 53: they are catalog rows of the board (View all), not a second panel stacked under it.
+ */
+const MANAGEMENT_ROWS = [
+  { type: "company-overview", label: "Company Overview", sub: "P&L + Balance Sheet" },
+  { type: "sales-performance", label: "Sales Performance", sub: "P&L + A/R Aging + Customer Summary" },
+  { type: "expenses-performance", label: "Expenses Performance", sub: "P&L + A/P Aging + Vendor Summary" },
+] as const;
+
+const MANAGEMENT_KEY_PREFIX = "management-";
+
+const ACCOUNTING_FINANCIAL_ROWS: readonly CatalogRow[] = [
   ["trial-balance", "Trial balance", "Debits and credits by account", true],
   ["profit-loss", "Profit & loss", "By month · truck · load · customer", true],
   ["balance-sheet", "Balance sheet", "As of any date", true],
@@ -62,16 +79,48 @@ const ACCOUNTING_FINANCIAL_ROWS = [
   ["posted-while-tour-open", "Posted while tour open", "Money posted before tour close", false],
   ["reefer-fuel-credit", "Reefer fuel credit", "Federal reefer diesel credit gallons", false],
   ["scheduled-reports", "Default report subscriptions", "Automation · email queue", false],
-] as const;
-
-/** Rule 07 — management report compilations always shown on the hub. */
-const MANAGEMENT_ROWS = [
-  { type: "company-overview", label: "Company Overview", sub: "P&L + Balance Sheet" },
-  { type: "sales-performance", label: "Sales Performance", sub: "P&L + A/R Aging + Customer Summary" },
-  { type: "expenses-performance", label: "Expenses Performance", sub: "P&L + A/P Aging + Vendor Summary" },
-] as const;
+  // Management reports — Branded financial compilations (Rule 07; open /reports/management?type=…).
+  ...MANAGEMENT_ROWS.map(
+    ({ type, label, sub }): CatalogRow => [`${MANAGEMENT_KEY_PREFIX}${type}`, label, `Management reports — ${sub}`, false],
+  ),
+];
 
 const BASIS_AWARE = new Set(["trial-balance", "profit-loss", "balance-sheet"]);
+
+/** The route a catalog row opens — one resolver for the name, Run → and Export links. */
+export function reportCatalogHref(reportKey: string, basis: AccountingBasis): string | null {
+  if (reportKey.startsWith(MANAGEMENT_KEY_PREFIX)) {
+    return `/reports/management?type=${encodeURIComponent(reportKey.slice(MANAGEMENT_KEY_PREFIX.length))}`;
+  }
+  const href = PHASE_6_REPORT_HREFS[reportKey];
+  if (!href) return null;
+  return BASIS_AWARE.has(reportKey) ? `${href}?basis=${basis}` : href;
+}
+
+/** A catalog cell: a real anchor to the report route (row 53 — rows open through links, not buttons). */
+function CatalogLink({
+  href,
+  children,
+  testId,
+  muted = false,
+  bold = true,
+  title,
+}: {
+  href: string | null;
+  children: ReactNode;
+  testId?: string;
+  muted?: boolean;
+  bold?: boolean;
+  title?: string;
+}) {
+  const style = { color: muted ? V3.muted : V3.ink, fontSize: V3_TABLE.fontPx };
+  if (!href) return <span style={style}>{children}</span>;
+  return (
+    <Link to={href} className={`${bold ? "font-semibold " : ""}hover:underline`} style={style} data-testid={testId} title={title}>
+      {children}
+    </Link>
+  );
+}
 
 // ── Non-financial category report rows ────────────────────────────────────────
 const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label: string; shows: string }[]>> = {
@@ -161,9 +210,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortable: true,
       sortValue: ([, label]) => label,
       render: ([reportKey, label]) => (
-        <button type="button" className="text-left font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => openReport(reportKey)}>
+        <CatalogLink href={reportCatalogHref(reportKey, basis)} testId={`reports-acct-link-${reportKey}`}>
           {label}
-        </button>
+        </CatalogLink>
       ),
     },
     { key: "shows", label: "What it shows", sortable: true, sortValue: ([, , shows]) => shows, render: ([, , shows]) => <span style={{ color: V3.muted }}>{shows}</span> },
@@ -174,9 +223,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortable: true,
       sortValue: ([, label]) => label,
       render: ([reportKey]) => (
-        <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => openReport(reportKey)}>
+        <CatalogLink href={reportCatalogHref(reportKey, basis)} testId={`reports-acct-run-${reportKey}`}>
           Run →
-        </button>
+        </CatalogLink>
       ),
     },
     {
@@ -185,22 +234,17 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortable: true,
       sortValue: ([, label]) => label,
       render: ([reportKey]) => (
-        <button type="button" className="hover:underline" style={{ color: V3.muted, fontSize: V3_TABLE.fontPx }} title="Opens the live viewer — export PDF / XLSX from the report with filters applied" onClick={() => openReport(reportKey)}>
+        <CatalogLink
+          href={reportCatalogHref(reportKey, basis)}
+          muted
+          bold={false}
+          title="Opens the live viewer — export PDF / XLSX from the report with filters applied"
+        >
           PDF · XLSX
-        </button>
+        </CatalogLink>
       ),
     },
   ];
-
-  function openReport(reportKey: string) {
-    const href = PHASE_6_REPORT_HREFS[reportKey];
-    if (!href) return;
-    if (BASIS_AWARE.has(reportKey)) {
-      navigate(`${href}?basis=${basis}`);
-      return;
-    }
-    navigate(href);
-  }
 
   function runFrequentReport(row: FrequentlyRunReport) {
     const href = PHASE_6_REPORT_HREFS[row.id];
@@ -329,71 +373,48 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 </p>
               </V3Panel>
 
-              {/* Rule 07 — management compilations stay on the hub */}
-              <div className="mt-3">
-              <V3Panel
-                title="Management reports"
-                subtitle="Branded financial compilations — lender, insurance, and stakeholder ready"
-                testId="reports-home-management"
-              >
-                <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]">
-                  {MANAGEMENT_ROWS.map(({ type, label, sub }) => (
-                    <button
-                      key={type}
-                      type="button"
-                      className="border-t border-[#E5E7EB] px-3 py-2 text-left hover:bg-[#F7F8FA]"
-                      onClick={() => navigate(`/reports/management?type=${type}`)}
-                    >
-                      <div className="text-xs font-semibold text-[#0F1219]">{label}</div>
-                      <div className="mt-0.5 text-xs text-[#6B7280]">{sub}</div>
-                    </button>
-                  ))}
-                </div>
-              </V3Panel>
-              </div>
             </>
           ) : activeCategory === "automation" ? (
             <ScheduledReportsPanel />
           ) : activeCategory === "saved" ? (
-            <V3Panel title="Saved" testId="reports-category-panel-saved">
-            <div className="px-3 py-4 text-center text-xs text-[#4B5563]">
-              <p>Open <strong className="text-[#0F1219]">+ Custom report</strong> (top right) to build and save reports — saved definitions appear in the builder list.</p>
-              <button
-                type="button"
-                className="mt-2 text-xs font-semibold text-blue-700 hover:underline"
-                onClick={() => navigate("/reports/custom")}
-              >
-                Open report builder →
-              </button>
-            </div>
+            /* Rule 07 — Frequently run stays reachable on the board: the Saved category (row 53 — not stacked below). */
+            <V3Panel
+              title="Saved"
+              subtitle="Your most-run reports — run counts from the report log"
+              testId="reports-category-panel-saved"
+            >
+              <div data-testid="reports-home-frequently-run">
+                {frequentQuery.isError ? (
+                  <ListErrorBanner
+                    message={userFacingApiError(frequentQuery.error, "Failed to load frequently run reports.")}
+                    onRetry={() => void frequentQuery.refetch()}
+                  />
+                ) : frequentQuery.isLoading ? (
+                  <div className="px-3 py-2 text-xs text-[#6B7280]">Loading…</div>
+                ) : (
+                  <FrequentlyRunTable rows={frequentQuery.data ?? []} onRun={runFrequentReport} />
+                )}
+              </div>
+              <p className="px-3 py-2 text-xs text-[#4B5563]" style={{ borderTop: `1px solid ${V3.borderSoft}` }}>
+                Build and save your own reports in the{" "}
+                <Link to="/reports/custom" className="font-semibold text-blue-700 hover:underline" data-testid="reports-saved-builder-link">
+                  report builder →
+                </Link>
+              </p>
             </V3Panel>
+          ) : activeCategory === "compliance" ? (
+            <div className="space-y-3">
+              <SimpleCategoryPanel category="compliance" rows={SIMPLE_CATEGORY_ROWS.compliance ?? []} />
+              {/* IFTA preparer (S05) — reached from the IFTA due tile and here; drawn only once the real status loads. */}
+              {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
+            </div>
           ) : (
             /* Simple report table for other categories */
-            <SimpleCategoryPanel
-              category={activeCategory}
-              rows={SIMPLE_CATEGORY_ROWS[activeCategory] ?? []}
-              onRun={(id) => { const href = PHASE_6_REPORT_HREFS[id]; if (href) navigate(href); }}
-            />
+            <SimpleCategoryPanel category={activeCategory} rows={SIMPLE_CATEGORY_ROWS[activeCategory] ?? []} />
           )}
         </div>
       </div>
 
-      {/* Rule 07 — Frequently run stays on the hub (restored after the v3 rebuild #27715 dropped it). */}
-      <V3Panel title="Frequently run" subtitle="Your most-run reports — run counts from the report log" testId="reports-home-frequently-run">
-        {frequentQuery.isError ? (
-          <ListErrorBanner
-            message={userFacingApiError(frequentQuery.error, "Failed to load frequently run reports.")}
-            onRetry={() => void frequentQuery.refetch()}
-          />
-        ) : frequentQuery.isLoading ? (
-          <div className="px-3 py-2 text-xs text-[#6B7280]">Loading…</div>
-        ) : (
-          <FrequentlyRunTable rows={frequentQuery.data ?? []} onRun={runFrequentReport} />
-        )}
-      </V3Panel>
-
-      {/* IFTA preparer (S05) — the quarter, due date and countdown from the real IFTA status; drawn only once loaded. */}
-      {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
     </div>
   );
 }
@@ -401,11 +422,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
 function SimpleCategoryPanel({
   category,
   rows,
-  onRun,
 }: {
   category: SidebarCategory;
   rows: { id: string; label: string; shows: string }[];
-  onRun: (id: string) => void;
 }) {
   const label = SIDEBAR_CATEGORIES.find((c) => c.id === category)?.label ?? category;
   return (
@@ -431,9 +450,9 @@ function SimpleCategoryPanel({
               sortable: true,
               sortValue: (r) => r.label,
               render: (r) => (
-                <button type="button" className="text-left font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
+                <CatalogLink href={PHASE_6_REPORT_HREFS[r.id] ?? null} testId={`reports-category-link-${r.id}`}>
                   {r.label}
-                </button>
+                </CatalogLink>
               ),
             },
             { key: "shows", label: "What it shows", sortable: true, sortValue: (r) => r.shows, render: (r) => <span style={{ color: V3.muted }}>{r.shows}</span> },
@@ -443,9 +462,9 @@ function SimpleCategoryPanel({
               sortable: true,
               sortValue: (r) => r.label,
               render: (r) => (
-                <button type="button" className="font-semibold hover:underline" style={{ color: V3.ink, fontSize: V3_TABLE.fontPx }} onClick={() => onRun(r.id)}>
+                <CatalogLink href={PHASE_6_REPORT_HREFS[r.id] ?? null} testId={`reports-category-run-${r.id}`}>
                   Run →
-                </button>
+                </CatalogLink>
               ),
             },
           ]}

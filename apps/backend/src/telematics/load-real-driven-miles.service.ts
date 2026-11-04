@@ -117,17 +117,36 @@ export function resolveStopBoundary(
   stop: StopPoint,
   hit: GeofenceHit | undefined,
   timeAnchor: { anchor: OdometerAnchor | null; reason: string | null } | undefined,
-  dwell?: DwellPick
+  dwell?: DwellPick,
+  /**
+   * Row 116 (11-03): the shared odometer anchor AT the fence crossing's own time. A crossing is a device-measured TIME even
+   * when its capture carried no OBD odometer; the odometer then comes from the one anchor rule (a real read the truck did not
+   * move away from, or within 30 min) — never interpolated.
+   */
+  fenceAnchor?: { anchor: OdometerAnchor | null; reason: string | null },
+  /** The deadhead leg's start is the PREVIOUS load's last stop — its label must say so (it read as this load's stop). */
+  labelOverride?: string
 ): Boundary {
-  const label = `stop ${stop.sequence_number} ${side}`;
-  if (hit) {
-    if (hit.odo != null && hit.src === "real_obd") return { anchor: { odometer_mi: hit.odo, read_at: hit.at, source: "odometer_readings" }, reason: null, at: hit.at, via: "geofence" };
-    // A crossing with no real OBD read is not a measurement; the truck's GPS dwell (with the shared anchor) may still be.
-    if (!dwell?.hit) return { anchor: null, reason: `${label}: geofence ${side === "arrival" ? "entry" : "exit"} at ${hit.at} has a ${hit.src ?? "missing"} odometer -- not a measurement`, at: hit.at, via: "geofence" };
-  }
+  const label = labelOverride ?? `stop ${stop.sequence_number} ${side}`;
   const at = side === "arrival" ? stop.arrival_at : stop.departure_at;
   const src = side === "arrival" ? stop.arrival_source : stop.departure_source;
   const deviceTime = !!at && !!src && (MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src);
+  if (hit) {
+    if (hit.odo != null && hit.src === "real_obd") return { anchor: { odometer_mi: hit.odo, read_at: hit.at, source: "odometer_readings" }, reason: null, at: hit.at, via: "geofence" };
+    // Row 116: the crossing's time through the shared anchor rule. Before 11-03 a crossing without an OBD read refused the
+    // boundary outright — even when a real read sat beside it, and even when the stop also had a device-recorded time
+    // (prod fork 11-03: 7 delivered USMCA loads refused this way: 13552 13560 13576 13595 13629 13640 + 1).
+    if (fenceAnchor?.anchor) return { anchor: fenceAnchor.anchor, reason: null, at: hit.at, via: "geofence_time" };
+    // Else the truck's GPS dwell, or a device-recorded stop time, may still measure it (below).
+    if (!dwell?.hit && !deviceTime) {
+      return {
+        anchor: null,
+        reason: `${label}: geofence ${side === "arrival" ? "entry" : "exit"} at ${hit.at} has a ${hit.src ?? "missing"} odometer and ${fenceAnchor?.reason ?? "no odometer read near it"} -- not a measurement`,
+        at: hit.at,
+        via: "geofence",
+      };
+    }
+  }
   if (!deviceTime && dwell?.hit) {
     // GPS dwell: the time is the truck's own stop; the odometer is the shared anchor at that time (timeAnchor).
     return {
@@ -247,6 +266,8 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
     const h = hits.get(w.key);
     // a real-OBD fence crossing is the measurement; a crossing without one still lets the dwell try
     if ((h && h.odo != null && h.src === "real_obd") || !w.stop.unit_id) continue;
+    // Row 116: a crossing without an OBD read still fixes the TIME — its odometer through the shared anchor rule.
+    if (h) timed.push({ key: `${w.key}:fence`, unit_id: w.stop.unit_id, at: h.at });
     const at = w.side === "arrival" ? w.stop.arrival_at : w.stop.departure_at;
     const src = w.side === "arrival" ? w.stop.arrival_source : w.stop.departure_source;
     if (at && src && (MEASURED_STOP_TIME_SOURCES as readonly string[]).includes(src)) timed.push({ key: w.key, unit_id: w.stop.unit_id, at });
@@ -266,7 +287,11 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
   const anchors = await fetchOdometerAnchors(client, operatingCompanyId, timed);
   const timedByKey = new Map(timed.map((b) => [b.key, b]));
   const boundary = new Map<string, Boundary>();
-  for (const w of wanted) boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key), dwells.get(w.key)));
+  for (const w of wanted) {
+    // The deadhead start is the previous load's stop: say so (it read "stop 1 departure" as if it were this load's stop 1).
+    const label = w.key.endsWith(":prior_departure") ? `previous load's stop ${w.stop.sequence_number} departure` : undefined;
+    boundary.set(w.key, resolveStopBoundary(w.side, w.stop, hits.get(w.key), anchors.get(w.key), dwells.get(w.key), anchors.get(`${w.key}:fence`), label));
+  }
   // The GPS-dwell boundaries actually used, per stop (written by the cron, never by a read).
   const evidenceByKey = new Map<string, StopDwellEvidence>();
   for (const w of wanted) {
@@ -294,7 +319,9 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
     const total = loadTotalFromLegs(legs);
     const keys = list.flatMap((st, i) => [`${st.stop_id}:arrival`, `${st.stop_id}:departure`, ...(i === 0 ? [`${st.stop_id}:prior_departure`] : [])]);
     const dwell_evidence = keys.map((k) => evidenceByKey.get(k)).filter((e): e is StopDwellEvidence => !!e);
-    const odometer_gaps = keys.map((k) => timedByKey.get(k)).filter((b): b is BoundaryRequest => !!b && !anchors.get(b.key)?.anchor);
+    // A fence crossing's own time is a gap only while its boundary is still unmeasured (the E11 backfill asks Samsara there).
+    const fenceGaps = keys.filter((k) => !boundary.get(k)?.anchor).map((k) => `${k}:fence`);
+    const odometer_gaps = [...keys, ...fenceGaps].map((k) => timedByKey.get(k)).filter((b): b is BoundaryRequest => !!b && !anchors.get(b.key)?.anchor);
     out.push({
       load_id: loadId, unit_id: unitId, legs, miles_driven_actual: total.miles, source: total.source, reason: total.reason,
       ...(dwell_evidence.length ? { dwell_evidence } : {}), ...(odometer_gaps.length ? { odometer_gaps } : {}),

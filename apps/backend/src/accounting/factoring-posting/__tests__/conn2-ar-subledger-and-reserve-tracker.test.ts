@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { makeInvoiceReliefMock } from "./invoice-relief-mock.js";
 import {
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
@@ -54,6 +55,8 @@ const INVOICE_A = { id: "aaaaaaaa-0000-4000-8000-000000000001", total_cents: "30
 const INVOICE_B = { id: "aaaaaaaa-0000-4000-8000-000000000002", total_cents: "200000", voided_at: null };
 
 let updateCalls: Array<{ sql: string; values: unknown[] }>;
+// Row 129: relief is an application; the double simulates the one writer (accounting.recompute_invoice_paid).
+let relief = makeInvoiceReliefMock((c) => updateCalls.push(c));
 let insertMovementCalls: Array<{ sql: string; values: unknown[] }>;
 /** Cumulative ledger-backed customer payments returned by linkedCustomerPaymentPaidCents mock. */
 let ledgerPaidCents: number;
@@ -64,6 +67,7 @@ function installDefaults(opts?: { ledgerPaidCents?: number; outstanding?: string
   mockCreateJournalEntry.mockReset();
   mockResolveRoleAccount.mockReset();
   updateCalls = [];
+  relief = makeInvoiceReliefMock((c) => updateCalls.push(c));
   insertMovementCalls = [];
   ledgerPaidCents = opts?.ledgerPaidCents ?? 0;
 
@@ -87,6 +91,7 @@ function installDefaults(opts?: { ledgerPaidCents?: number; outstanding?: string
   );
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
@@ -173,8 +178,9 @@ describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
     expect(byId.get(INVOICE_A.id)).toBe(300000); // fully allocated + closed
     expect(byId.get(INVOICE_B.id)).toBe(200000);
     for (const c of updateCalls) {
-      expect(c.sql).toContain("amount_paid_cents = $2");
-      expect(c.sql).toContain("'paid'");
+      // Row 129: an application (the trigger derives amount_paid_cents + 'paid'), never a direct SET.
+      expect(c.sql).toContain("INSERT INTO accounting.payment_applications");
+      expect(c.sql).not.toContain("amount_paid_cents =");
     }
   });
 
@@ -198,6 +204,7 @@ describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
     // Payment 1: $40
     installDefaults({ ledgerPaidCents: 4000, outstanding: "10000" });
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
       if (sql.includes("set_config(") || sql.includes("SAVEPOINT") || sql.includes("RELEASE") || sql.includes("ROLLBACK TO")) {
         return { rows: [] };
       }
@@ -278,6 +285,7 @@ describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
     // Outstanding after $40 paid = $60; second payment $30 OK.
     const prevImpl = mockQuery.getMockImplementation()!;
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
       if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "6000" }] };
       if (sql.includes("factoring_lifecycle_posting_keys") && sql.includes("INSERT")) {
         return { rows: [{ journal_entry_id: "je-p2" }] };
@@ -359,6 +367,7 @@ describe("CONN-2 — Faro Reserve Tracker (write side)", () => {
 
   it("funding with zero reserve records no movement row", async () => {
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };

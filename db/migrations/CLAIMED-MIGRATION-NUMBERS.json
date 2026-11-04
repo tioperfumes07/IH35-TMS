@@ -1038,11 +1038,23 @@
     "202616301201",
     "202616310100",
     "202616320100",
-    "202616330100"
+    "202616330100",
+    "202616340100",
+    "202616350100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
     "claimed_by": "claude",
     "purpose": "E1 row 162: integrations.relay_driver_links (many Relay driver ids -> one driver); the Relay driver matcher reads it."
+  },
+  "202616340100": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "claude",
+    "purpose": "Rows 93/116: hos.duty_status_events append-only trigger admits only a merged-shell -> survivor driver_id repoint; telematics.odometer_readings source samsara_boundary (E11 boundary reads) outside the per-day key."
+  },
+  "202616350100": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "claude",
+    "purpose": "Row 28: catalogs.override_reasons seed for context 425c_carry_forward (Form 425C carry-forward override picks a catalog reason; no typed text)."
   }
 }

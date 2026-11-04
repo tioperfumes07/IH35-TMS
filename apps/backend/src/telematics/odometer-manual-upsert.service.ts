@@ -17,7 +17,8 @@ export async function upsertManualOdometerReading(
       )
       VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4, 'manual', 'entered', $5::uuid)
       ON CONFLICT (operating_company_id, unit_id, telematics.odometer_reading_day(read_at), source)
-        WHERE read_at >= '2026-09-30T00:00:00Z'::timestamptz
+        -- the per-day key's predicate since migration 202616340100 (row 116: E11 boundary reads are outside it)
+        WHERE read_at >= '2026-09-30T00:00:00Z'::timestamptz AND source <> 'samsara_boundary'
       DO UPDATE
       SET odometer_miles = EXCLUDED.odometer_miles,
           read_at = EXCLUDED.read_at,

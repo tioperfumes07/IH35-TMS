@@ -1,3 +1,4 @@
+import { overrideReasonCodeSchema, refusedTypedReason } from "../overrides/confirm-override.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -18,7 +19,7 @@ const previewQuerySchema = companyQuerySchema.extend({
   payment_method_id: z.string().uuid().nullable().optional(),
   standard_escrow_contribution_cents: z.coerce.number().int().min(0).max(1_000_000).optional(),
 });
-const closeBodySchema = companyQuerySchema.extend({
+export const closeBodySchema = companyQuerySchema.extend({
   payment_method_id: z.string().uuid().nullable().optional(),
   standard_escrow_contribution_cents: z.coerce.number().int().min(0).max(1_000_000).optional(),
   payment_reference: z.string().trim().max(200).nullable().optional(),
@@ -28,7 +29,10 @@ const closeBodySchema = companyQuerySchema.extend({
     .object({
       pct: z.number().min(0).max(100).nullable().optional(),
       cents: z.number().int().min(0).nullable().optional(),
-      reason: z.string().trim().min(1).max(500).nullable().optional(),
+      // Row 28 (443.294): a catalogs.override_reasons code (Owner / Accountant send none and just confirm), validated by
+      // recordOverride inside the close transaction. The old typed `reason` is REFUSED.
+      reason_code: overrideReasonCodeSchema.nullable().optional(),
+      reason: refusedTypedReason("override_floor.reason"),
     })
     .nullable()
     .optional(),
@@ -63,6 +67,9 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 function mapPayRunError(reply: FastifyReply, e: unknown) {
   if (e instanceof SettlementPayRunError) {
+    if (e.code === "OVERRIDE_REFUSED") {
+      return reply.code(Number(e.details?.status ?? 422)).send({ error: String(e.details?.error ?? "override_refused"), message: e.message });
+    }
     const code = e.code === "SETTLEMENT_NOT_FOUND" ? 404 : 409;
     return reply.code(code).send({ error: e.code, message: e.message, details: e.details ?? null });
   }
@@ -132,7 +139,7 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
               }
             : null,
         },
-        { userId: user.uuid }
+        { userId: user.uuid, role: String(user.role ?? "") }
       );
     } catch (e) {
       return mapPayRunError(reply, e);

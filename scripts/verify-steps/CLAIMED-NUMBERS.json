@@ -17449,5 +17449,60 @@
     "claimed_by": "lead",
     "purpose": "ENG-65 residual: every Relay fill is recorded from its own lines at receipt; the Creator adopts, never writes a second set (static guard)",
     "claimed_at": "2026-11-03"
+  },
+  "19851": {
+    "claimed_by": "lead",
+    "purpose": "Rows 78 + 23: Dispatch Load history board reads the loads-history hub + existing load panels; Bill Payments lists A/P bill payments only (settlement deductions/escrow excluded on every list reader) (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19885": {
+    "claimed_by": "lead",
+    "purpose": "COLLISION: occupied on main by scripts/verify-steps/19885-verify-balanced-ledger.mjs (#28599, merged 2026-11-03 23:55Z without a claim) before this claim (#28612) landed; the rows 89/90/112 guard moved to 19889",
+    "claimed_at": "2026-11-03"
+  },
+  "19889": {
+    "claimed_by": "lead",
+    "purpose": "Rows 89 + 90 + 112 (ACCT-F11071): Faro 1090 wire proposals anchored on purchase dates; PROPOSED = one exclusive exact wire; deposit sweep by live match only; Undo skips reversal entries; one A/R relief per factored invoice (static guard verify-rows-89-90-112)",
+    "claimed_at": "2026-11-03"
+  },
+  "19901": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-127-130"
+  },
+  "19887": {
+    "claimed_by": "lead",
+    "purpose": "Re-home verify-ui4-d065-d068-d071-d076 (was wired at 19851 without a claim, colliding with Lead's claimed 19851 rows 78/23)",
+    "claimed_at": "2026-11-03"
+  },
+  "19903": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-match-vendor-joins-company-scoped"
+  },
+  "19905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-53-28"
+  },
+  "19907": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-97-157-163-3"
+  },
+  "19909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-91-148-149"
+  },
+  "19911": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-93-116-131"
+  },
+  "19913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-deadhead-prior-overlap-refused"
   }
 }

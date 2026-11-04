@@ -60,7 +60,8 @@ export function completeOnboardingSession(sessionId: string, operatingCompanyId:
 export function adminOverrideOnboardingSession(
   sessionId: string,
   operatingCompanyId: string,
-  payload: { reason: string; missing_steps?: number[] }
+  /** Row 28 — a catalogs.override_reasons code (null for an Owner / Accountant confirm); never typed text. */
+  payload: { reason_code: string | null; missing_steps?: number[] }
 ) {
   return apiRequest<{ session: OnboardingSession }>(
     `/api/v1/safety/onboarding/sessions/${sessionId}/admin-override?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,

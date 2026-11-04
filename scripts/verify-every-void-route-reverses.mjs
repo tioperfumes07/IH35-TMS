@@ -93,6 +93,11 @@ const REVERSAL_WRAPPERS = [
   // 443.136 (CC-3) — fuel/relay-duplicate-purchase.service.ts voidLaterRelayDuplicatePurchases() (fuel-receipt-repoint.routes.ts
   // POST /api/v1/fuel/relay-duplicates/void-later) voids each duplicate copy only through voidExpenseDocumentInClientTx above.
   "voidLaterRelayDuplicatePurchases",
+  // ACCT-F11065 (row 124(b)) — driver-finance/void-stray-salaried-driver-bill.service.ts voidStrayPracticalBasisDriverBill()
+  // (driver-bills.routes.ts POST /:id/void-stray-practical) reverses the accrued A/P bill only through
+  // releaseDriverPayAccrualInClientTx -> voidBillInClientTx (named above) before it void-stamps. Verified in source;
+  // pinned by verify-rows-94-124.
+  "voidStrayPracticalBasisDriverBill",
 ];
 
 /** All function names that satisfy the reversal requirement. */

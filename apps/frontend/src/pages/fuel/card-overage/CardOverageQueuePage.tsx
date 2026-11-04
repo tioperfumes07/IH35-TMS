@@ -9,6 +9,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -70,6 +71,16 @@ const RULE_LABEL: Record<string, string> = {
   confirmed_fraud: "Confirmed fraud",
 };
 
+/** U12 — status is a multi-selector (not mutually-exclusive pills). Default = pending_review queue. */
+const STATUS_FILTER_OPTIONS = [
+  { value: "pending_review", label: "pending review" },
+  { value: "approved", label: "approved" },
+  { value: "posted", label: "posted" },
+  { value: "company_variance", label: "company variance" },
+  { value: "exempt_authorized", label: "exempt authorized" },
+  { value: "voided", label: "voided" },
+] as const;
+
 type ListResponse = {
   events: OverageEventRow[];
   total_count: number;
@@ -102,7 +113,8 @@ export function CardOverageQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const actionGenerationRef = useRef(0);
-  const [statusFilter, setStatusFilter] = useState("pending_review");
+  // U12: multi-select status — API takes one status; 0/1 pass through; 2+ fetch all then filter.
+  const [statusFilter, setStatusFilter] = useState<string[]>(["pending_review"]);
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
@@ -132,7 +144,7 @@ export function CardOverageQueuePage() {
       driverId: driverId || "",
       unitId: unitId || "",
     },
-    empty: { statusFilter: "pending_review", driverId: "", unitId: "" },
+    empty: { statusFilter: ["pending_review"] as string[], driverId: "", unitId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setSearchParams(
@@ -151,14 +163,29 @@ export function CardOverageQueuePage() {
   const effectiveDriverId = driverId || undefined;
   const effectiveUnitId = unitId || undefined;
   const hasEntityTarget = Boolean(eventId || effectiveDriverId || effectiveUnitId);
+  const statusKey = statusFilter.join(",") || "all";
+  const apiStatus =
+    hasEntityTarget || statusFilter.length === 0
+      ? "all"
+      : statusFilter.length === 1
+        ? statusFilter[0]!
+        : "all";
 
   const eventsQuery = useQuery({
-    queryKey: ["fuel", "card-overage-events", companyId, statusFilter, eventId ?? null, effectiveDriverId ?? null, effectiveUnitId ?? null],
-    queryFn: () => listOverageEvents(companyId, hasEntityTarget ? "all" : statusFilter, {
-      event_id: eventId,
-      driver_id: effectiveDriverId,
-      unit_id: effectiveUnitId,
-    }),
+    queryKey: ["fuel", "card-overage-events", companyId, statusKey, eventId ?? null, effectiveDriverId ?? null, effectiveUnitId ?? null],
+    queryFn: async () => {
+      const result = await listOverageEvents(companyId, apiStatus, {
+        event_id: eventId,
+        driver_id: effectiveDriverId,
+        unit_id: effectiveUnitId,
+      });
+      if (hasEntityTarget || statusFilter.length <= 1) return result;
+      return {
+        ...result,
+        events: result.events.filter((row) => statusFilter.includes(row.status)),
+        total_count: result.events.filter((row) => statusFilter.includes(row.status)).length,
+      };
+    },
     enabled: Boolean(companyId),
   });
 
@@ -391,7 +418,7 @@ export function CardOverageQueuePage() {
         searchPlaceholder={"Search driver, unit, rule…"}
         onClearAll={() => setListSearch("")}
         activeFilterCount={
-          (statusFilter !== "pending_review" ? 1 : 0) +
+          (statusFilter.length !== 1 || statusFilter[0] !== "pending_review" ? 1 : 0) +
           (effectiveDriverId ? 1 : 0) +
           (effectiveUnitId ? 1 : 0)
         }
@@ -399,7 +426,7 @@ export function CardOverageQueuePage() {
       >
         <CollapsedListFilters
           activeFilterCount={
-            (statusFilter !== "pending_review" ? 1 : 0) +
+            (statusFilter.length !== 1 || statusFilter[0] !== "pending_review" ? 1 : 0) +
             (effectiveDriverId ? 1 : 0) +
             (effectiveUnitId ? 1 : 0)
           }
@@ -435,19 +462,18 @@ export function CardOverageQueuePage() {
                 dataTestId="fuel-card-overage-filter-unit"
               />
             </label>
-            <div className="flex flex-wrap items-center gap-2">
-              {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"].map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  className={`rounded-sm border px-2 py-1 text-xs ${
-                    staged.draft.statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"
-                  }`}
-                  onClick={() => staged.setDraft({ ...staged.draft, statusFilter: status })}
-                >
-                  {status.replace(/_/g, " ")}
-                </button>
-              ))}
+            <div className="text-xs font-semibold text-[#4B5563]" data-testid="fuel-card-overage-status-filter">
+              <span className="block">Status</span>
+              <div className="mt-1">
+                <MultiSelectDropdown
+                  label="Status"
+                  options={[...STATUS_FILTER_OPTIONS]}
+                  selected={staged.draft.statusFilter}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next })}
+                  allLabel="All statuses"
+                  data-testid="fuel-card-overage-status-multiselect"
+                />
+              </div>
             </div>
           </div>
         </CollapsedListFilters>

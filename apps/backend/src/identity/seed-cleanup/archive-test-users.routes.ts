@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
+import { userListName } from "../user-list-name.js";
 
 /** Patterns archived by migration 0396 and guarded in production listings. */
 export const TEST_USER_EMAIL_ARCHIVE_PATTERNS = [
@@ -76,7 +77,7 @@ function mapIdentityUser(row: IdentityUserRow) {
   const fullName = `${firstName} ${lastName}`.trim();
   return {
     id: String(row.id),
-    name: fullName || (row.email ? row.email.split("@")[0] : "User"),
+    name: userListName(fullName, row.email, row.role),
     first_name: firstName || null,
     last_name: lastName || null,
     email: row.email,

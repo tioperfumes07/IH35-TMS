@@ -1,3 +1,4 @@
+import { confirmOverride, overrideReasonCodeSchema, refusedTypedReason } from "../overrides/confirm-override.js";
 import type { FastifyInstance } from "fastify";
 import { BILLING_REVERSE_EDGES } from "../dispatch/load-state-machine.js";
 import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
@@ -121,7 +122,7 @@ function invoiceListOrderBy(sort: string | undefined, dir: "asc" | "desc" | unde
   return `${expr} ${direction} NULLS LAST, i.created_at DESC, i.id ASC`;
 }
 
-const createBodySchema = z.object({
+export const createBodySchema = z.object({
   customer_id: z.string().uuid(),
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -134,6 +135,10 @@ const createBodySchema = z.object({
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
+  // Row 28 (443.294): the ONE override — a catalogs.override_reasons code (Owner / Accountant send none and just confirm),
+  // validated by recordOverride in this transaction. The old typed `override_credit_limit_reason` is REFUSED.
+  override_reason_code: overrideReasonCodeSchema.nullable().optional(),
+  override_credit_limit_reason: refusedTypedReason("override_credit_limit_reason"),
   /**
    * P37 (37 OF 50) — Wave-A load linkage AT CREATE.
    *
@@ -158,7 +163,7 @@ const fromLoadBodySchema = z.object({
   display_id: z.string().trim().min(1).max(40).optional(),
 });
 
-const expandedInvoiceBodySchema = z.object({
+export const expandedInvoiceBodySchema = z.object({
   customer_id: z.string().uuid(),
   bill_to_entity_type: z.enum(["customer", "driver", "vendor", "other"]),
   bill_to_entity_id: z.string().uuid().nullable().optional(),
@@ -173,6 +178,10 @@ const expandedInvoiceBodySchema = z.object({
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
+  // Row 28 (443.294): the ONE override — a catalogs.override_reasons code (Owner / Accountant send none and just confirm),
+  // validated by recordOverride in this transaction. The old typed `override_credit_limit_reason` is REFUSED.
+  override_reason_code: overrideReasonCodeSchema.nullable().optional(),
+  override_credit_limit_reason: refusedTypedReason("override_credit_limit_reason"),
   display_id: z.string().trim().min(1).max(40).optional(),
 });
 
@@ -706,7 +715,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // CUSTVEND-PAR-1: Credit-limit enforcement. Check open exposure vs stored limit.
       // Includes open invoices + unbilled active loads. Factor-sourced limits show the source.
       if (customer.credit_limit_cents != null) {
-        const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+        const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(user.role); // row 28: Owner / Accountant confirm
         if (!body.data.override_credit_limit || !canOverride) {
           const exposureRes = await client.query(
             `SELECT
@@ -742,13 +751,18 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           }
         }
         if (body.data.override_credit_limit && canOverride) {
-          await appendCrudAudit(
-            client, user.uuid,
-            "accounting.invoices.credit_limit_override",
-            { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
-            "warning",
-            "CUSTVEND-PAR-1"
-          );
+          // Row 28: the ONE engine, same transaction as the invoice insert (writes the 'override.invoice' audit row).
+          const ov = await confirmOverride(client as never, {
+            context: "invoice",
+            operatingCompanyId: query.data.operating_company_id,
+            actor: { userId: user.uuid, role: String(user.role ?? "") },
+            reasonCode: body.data.override_reason_code,
+            entityType: "mdata.customers",
+            entityId: body.data.customer_id,
+            before: { credit_limit_cents: Number(customer.credit_limit_cents), source: "CUSTVEND-PAR-1" },
+            after: { invoice_created_over_credit_limit: true },
+          });
+          if (!ov.ok) return { code: ov.status as 400 | 403 | 422, error: ov.error };
         }
       }
 
@@ -941,7 +955,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             );
             const cust = custRes.rows[0];
             if (cust?.credit_limit_cents != null) {
-              const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+              const canOverride = ["Owner", "Accountant", "Administrator", "Manager"].includes(user.role); // row 28: Owner / Accountant confirm
               if (!body.data.override_credit_limit || !canOverride) {
                 const expRes = await client.query(
                   `SELECT
@@ -968,9 +982,20 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
                 }
               }
               if (body.data.override_credit_limit && canOverride) {
-                await appendCrudAudit(client, user.uuid, "accounting.invoices.credit_limit_override",
-                  { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
-                  "warning", "CUSTVEND-PAR-1");
+                // Row 28: the ONE engine, same transaction as the invoice insert (writes the 'override.invoice' audit row).
+                const ov = await confirmOverride(client as never, {
+                  context: "invoice",
+                  operatingCompanyId: query.data.operating_company_id,
+                  actor: { userId: user.uuid, role: String(user.role ?? "") },
+                  reasonCode: body.data.override_reason_code,
+                  entityType: "mdata.customers",
+                  entityId: body.data.customer_id,
+                  before: { credit_limit_cents: Number(cust.credit_limit_cents), source: "CUSTVEND-PAR-1" },
+                  after: { invoice_created_over_credit_limit: true },
+                });
+                if (!ov.ok) {
+                  return { _creditBlock: { code: ov.status, error: ov.error, exposure_cents: 0, limit_cents: Number(cust.credit_limit_cents), credit_limit_source: cust.credit_limit_source ?? null, can_override: canOverride } };
+                }
               }
             }
           }

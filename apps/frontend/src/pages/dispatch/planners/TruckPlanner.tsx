@@ -5,7 +5,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
-import { listUnitsWithoutLoad } from "../../../api/dispatch";
+import { listUnitsWithoutLoad, unitsWithoutLoadQueryKey } from "../../../api/dispatch";
 import { listAllUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -76,7 +76,7 @@ export function TruckPlanner() {
   });
 
   const reservedQuery = useQuery({
-    queryKey: ["dispatch", "units-without-load", operatingCompanyId],
+    queryKey: unitsWithoutLoadQueryKey(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
     queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
   });

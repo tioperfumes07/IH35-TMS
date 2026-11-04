@@ -17,6 +17,11 @@ import { userFacingApiError } from "../../lib/api-error-message";
  * widen its track past its share: equal `1fr` tracks resolve to minmax(auto, 1fr), which let the Class
  * picker's content push into the Debit field and the row overflow the 700px drawer. `[&>*]:min-w-0`
  * lets each grid item shrink to its track. Header and rows import this constant, so they cannot drift.
+ *
+ * Live FAIL (ROUND 7.30g / Codex batch60): minmax alone was insufficient — ReferenceSelect defaulted
+ * Combobox size="md" → FILTER_CONTROL_SIZE_CLASS includes `min-w-[10rem]` (~142px). Class painted
+ * 142px into a ~115px track and overlapped Debit by ~27px at 1280/768. Step 2 pickers MUST use
+ * size="sm" (FORM_FIELD_CONTROL_SIZE_CLASS = h-10, no min-width) so they shrink to the track.
  */
 export const MANUAL_JE_LINE_GRID_TEMPLATE =
   "grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]";
@@ -273,6 +278,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     createKind="account"
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Account"
+                    size="sm"
                     onOptionCreated={() => void accountsQuery.refetch()}
                   />
                   <ReferenceSelect
@@ -284,6 +290,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     createKind="class"
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Class"
+                    size="sm"
                     onOptionCreated={() => void classesQuery.refetch()}
                   />
                   {/* M-1: dollars-mode QBO money entry; debit/credit DOLLARS → Math.round(*100)=amount_cents byte-for-byte. */}

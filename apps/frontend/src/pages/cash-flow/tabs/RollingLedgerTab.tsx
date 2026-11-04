@@ -13,7 +13,8 @@ import {
   type CashFlowAdjustmentReason,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDateUS, formatIsoDatesInText } from "../../../lib/formatDate";
+import { ledgerPartyLabel } from "../ledgerPartyLabel";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute, type EntityKind } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -50,12 +51,12 @@ export function ledgerDocLabel(row: RollingLedgerRow) {
         className="text-[#1F2A44] underline-offset-2 hover:underline"
         onClick={(e) => e.stopPropagation()}
       >
-        {row.document_label}
+        {formatIsoDatesInText(row.document_label)}
         <span className="ml-1 text-[#6B7280] no-underline">(forecast · Fuel History)</span>
       </Link>
     );
   }
-  return <span>{row.document_label}</span>;
+  return <span>{formatIsoDatesInText(row.document_label)}</span>;
 }
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
@@ -595,7 +596,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   return (
     <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
       <div className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6B7280]">
-        Adjust expectation · {row.document_label} · {row.counterparty} · {row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
+        Adjust expectation · {formatIsoDatesInText(row.document_label)} · {ledgerPartyLabel(row)} · {row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
@@ -936,9 +937,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) => {
         if (row.customer_id) {
-          return <EntityLink kind="customer" id={row.customer_id} label={row.customer_name || row.counterparty} onClick={(e) => e.stopPropagation()} />;
+          return <EntityLink kind="customer" id={row.customer_id} label={ledgerPartyLabel({ ...row, counterparty: row.customer_name || row.counterparty })} onClick={(e) => e.stopPropagation()} />;
         }
-        return <span>{row.counterparty || "—"}</span>;
+        return <span>{ledgerPartyLabel(row) || "—"}</span>;
       },
       sortValue: (row) => row.counterparty,
     },
@@ -1025,7 +1026,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         if (isBoardEmptyRow(row)) {
           return <span style={{ color: V3.slate }}>{row.counterparty}</span>;
         }
-        return <span>{row.counterparty || "—"}</span>;
+        return <span>{ledgerPartyLabel(row) || "—"}</span>;
       },
       sortValue: (row) => row.counterparty,
     },

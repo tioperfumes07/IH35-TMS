@@ -170,6 +170,8 @@ function selftest() {
     ["stats back to last-7-days uncategorized", { stats: sources.stats + "\n// created_at >= (now() - interval '7 day') AND coa_account_id IS NULL\n" }],
     ["Home strip drops the alert", { strip: sources.strip.replaceAll("unmatched-7d-alert", "unmatched-7d-count") }],
     ["pointer list loses matched_invoice_id", { pointer: sources.pointer.replaceAll("matched_invoice_id", "matched_other_id") }],
+    // Codex inbox — D066 z-index plant: attention dock raised above ParityDrawer must fail.
+    ["D066 attention dock z-[220] over drawers", { strip: sources.strip.replaceAll("z-[50]", "z-[220]") }],
   ];
   let caught = 0;
   for (const [name, patch] of planted) {

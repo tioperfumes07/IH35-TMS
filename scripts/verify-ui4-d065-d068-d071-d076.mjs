@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * UI4 (LEAD 11-03) — register rows 241 / 244 / 247 / 252.
- *  D065 Manual JE Step 2: header + rows share ONE minmax(0,…) grid template constant with shrinkable items.
+ *  D065 Manual JE Step 2: header + rows share ONE minmax(0,…) grid template constant with shrinkable items;
+ *       Account/Class ReferenceSelect MUST pass size="sm" so Combobox drops FILTER min-w-[10rem] (live Class/Debit overlap).
  *  D068 Bill detail Journal Entity column: the reader returns the party NAME (postingPartyNameSql, same-company,
  *       vendor/driver/customer) and PostingGrid renders it via entityLabel — never the uuid.
  *  D071 Match candidate payee: people (server counterparty_is_person) via formatPersonName, organisations as stored.
@@ -34,6 +35,13 @@ export function findDefects(s) {
   if (!/MANUAL_JE_LINE_GRID_CLASS = `grid min-w-0 \$\{MANUAL_JE_LINE_GRID_TEMPLATE\} gap-1 \[&>\*\]:min-w-0`/.test(s.je)) out.push("D065: line grid class lost min-w-0 / [&>*]:min-w-0");
   if ((s.je.match(/\$\{MANUAL_JE_LINE_GRID_CLASS\}/g) ?? []).length < 2) out.push("D065: header and rows do not both use MANUAL_JE_LINE_GRID_CLASS");
   if (/grid-cols-\[[^\]]*\]/.test(s.je.replace(TEMPLATE, "")) || /grid-cols-\d/.test(s.je)) out.push("D065: a second (drifting) grid-cols template exists in ManualJEModal");
+  // Live Class→Debit overlap: default Combobox size=md carries min-w-[10rem] (~142px). Both Step 2
+  // ReferenceSelects must opt into size="sm" (form field, no min-width) so the picker can shrink.
+  const jeRefSelects = s.je.match(/<ReferenceSelect[\s\S]*?\/>/g) ?? [];
+  if (jeRefSelects.length < 2) out.push("D065: Manual JE Step 2 must render Account + Class ReferenceSelect");
+  for (const tag of jeRefSelects) {
+    if (!/\bsize="sm"/.test(tag)) out.push("D065: Manual JE ReferenceSelect missing size=\"sm\" (FILTER min-w-[10rem] overlaps Debit)");
+  }
   // D068
   for (const kind of ["vendor", "driver", "customer"]) {
     if (!new RegExp(`WHEN '${kind}' THEN \\(SELECT`).test(s.party)) out.push(`D068: postingPartyNameSql does not resolve ${kind} names`);
@@ -64,6 +72,7 @@ if (process.argv.includes("--selftest")) {
     ["D065 bare 1fr tracks", plant("je", TEMPLATE, "grid-cols-[2fr_1.3fr_1fr_1fr_1.6fr]")],
     ["D065 items cannot shrink", plant("je", "gap-1 [&>*]:min-w-0`", "gap-1`")],
     ["D065 rows drift to grid-cols-6", plant("je", "className={`${MANUAL_JE_LINE_GRID_CLASS} rounded-sm", "className={`grid grid-cols-6 rounded-sm")],
+    ["D065 picker loses size=sm", plant("je", 'placeholder="Class"\n                    size="sm"', 'placeholder="Class"\n                    size="md"')],
     ["D068 driver name dropped", plant("party", "WHEN 'driver' THEN (SELECT", "WHEN 'driverx' THEN (SELECT")],
     ["D068 grid prints uuid", plant("grid", /p\.entity_uuid\n\s+\? entityLabel\(p\.entity_name, p\.entity_uuid,[^\n]*\n\s+: "—",/, 'p.entity_uuid,')],
     ["D071 all payees person-cased", plant("drawer", "<span data-testid=\"match-candidate-payee\">Payee: {matchCandidatePayeeLabel(c)}</span>", "<span data-testid=\"match-candidate-payee\">Payee: {formatPersonName(c.counterparty_name)}</span>")],

@@ -87,6 +87,7 @@ export function CashForecastPage() {
     { key: "payroll", label: "Payroll", render: (week) => money(week.expected_outflows.payroll) },
     { key: "fuel_estimate", label: "Fuel est.", render: (week) => money(week.expected_outflows.fuel_estimate) },
     { key: "factoring_fee", label: "Factoring fee", render: (week) => money(week.expected_outflows.factoring_fee) },
+    { key: "card_payables", label: "Card payables", render: (week) => money(week.expected_outflows.card_payables ?? 0) },
     {
       key: "projected_balance",
       label: "Projected balance",

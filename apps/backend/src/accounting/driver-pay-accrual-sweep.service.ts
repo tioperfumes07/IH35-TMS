@@ -12,7 +12,7 @@
  * Failures are recorded in _system.background_jobs (last_failed_run_at + last_error_message).
  */
 import { withLuciaBypass } from "../auth/db.js";
-import { accrueDriverPayAtDeliveryInClientTx } from "../driver-finance/driver-pay-delivery-accrual.service.js";
+import { accrueDriverPayAtDeliveryInClientTx, deliveryAccrualSkipReasonSql } from "../driver-finance/driver-pay-delivery-accrual.service.js";
 
 export const DRIVER_PAY_ACCRUAL_SWEEP_JOB = "driver_finance.driver_pay_accrual_sweep";
 const SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -46,10 +46,10 @@ export async function runDriverPayAccrualSweep(operatingCompanyId: string): Prom
           AND COALESCE(db.gross_amount_cents, 0) > 0
           AND db.load_id IS NOT NULL
           AND (
+            -- Rows 85 (R73): the engine's own eligibility (one expression) — a bill on an OPEN, unposted settlement
+            -- is a candidate; one the engine would skip by name is never picked (no 50-row starvation).
             (db.due_date_basis = 'delivered'
-              AND db.accrued_bill_id IS NULL
-              AND db.accrued_team_bill_id IS NULL
-              AND db.settled_in_settlement_id IS NULL)
+              AND ${deliveryAccrualSkipReasonSql("db")} IS NULL)
             OR (
               COALESCE(db.due_date_basis, 'projected') = 'projected'
               AND EXISTS (

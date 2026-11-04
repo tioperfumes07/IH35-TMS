@@ -10,7 +10,8 @@
  *      (driver_bill_effective_due_date) and driver_bills.accrued_bill_id;
  *   2. the delivery-evidence latch posts the pay accrual on EVERY delivery path — queued after commit AND on the inline path;
  *   3. the accrual posts Dr driver pay / Cr A/P dated the delivery, with driver + load + unit on the bill, and stamps
- *      accrued_bill_id only while the bill is unaccrued and unsettled (never twice);
+ *      accrued_bill_id only while the bill is unaccrued and its settlement (if any) has not posted (never twice; rows 85,
+ *      2026-11-03: a bill on an OPEN, unposted settlement accrues — one eligibility, deliveryAccrualSkipReasonSql);
  *   4. settlement close REUSES an accrued load's bill (never a second pay bill): splitLoadLinesAgainstDeliveryAccrual, the
  *      refusal PAY_BELOW_DELIVERY_ACCRUAL, and the spine row flagged bill_posted_at_delivery;
  *   5. a settlement void never voids a delivery-accrued bill nor reverses its pay posting;
@@ -76,8 +77,11 @@ export function deliveryPayErrors(src) {
   need("accrual", "dueDate: deliveryDate,", "due on the delivery");
   need("accrual", "loadId: input.loadId,", "the load rides the bill header");
   // 443.128 C: the once-only stamp also requires no co-driver bill yet (old anchor lacked accrued_team_bill_id).
-  need("accrual", "AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL", "accrued once, never on a settled bill");
-  need("accrual", "db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL", "only unaccrued, unsettled bills are read");
+  // Rows 85 (2026-11-03): the once-only stamp re-checks THE one eligibility; a bill whose settlement close has POSTED never
+  // accrues (the close posted its pay), a bill on an OPEN unposted settlement does (13663 / 13688 had no A/P bill).
+  need("accrual", 'AND ${deliveryAccrualSkipReasonSql("db")} IS NULL`', "accrued once: the stamp re-checks the one eligibility");
+  need("accrual", "AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL\n          AND COALESCE(db.gross_amount_cents, 0) > 0", "only unaccrued bills are read");
+  need("accrual", "THEN 'settlement_posted'", "a bill on a settlement whose close posted never accrues (pay would post twice)");
   // LEAD 443.269-B: the ONE exception — the restate engine re-accrues a single named bill only while its pre-settlement is
   // open, never closed, posted or voided. Any wider exception (any settled bill, any id) is a red.
   need("accrual", "db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "the restate exception names one bill and stays unaccrued");
@@ -137,7 +141,7 @@ if (process.argv.includes("--selftest")) {
     ["latch", "    if (!payAccrualQueued) await fireDriverPayAccrual(input);\n", "", "accrual dropped when the queue refuses"],
     ["latch", "  await fireLoadBillingSync(input);\n  await fireDriverPayAccrual(input);\n", "  await fireLoadBillingSync(input);\n", "inline delivery path without accrual"],
     ["accrual", "billDate: deliveryDate,", "billDate: new Date().toISOString().slice(0, 10),", "accrual dated today, not the delivery"],
-    ["accrual", "AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL", "", "accrual stamp not once-only"],
+    ["accrual", 'AND ${deliveryAccrualSkipReasonSql("db")} IS NULL`', "`", "accrual stamp not once-only"],
     ["chain", "billId: b.accruedBillId", "billId: (await postLoadBill(b, ls, b.loadNumber, \"x\")).billId", "close re-posts the whole pay"],
     ["chain", "\"PAY_BELOW_DELIVERY_ACCRUAL\"", "\"PAY_DIFFERS\"", "pay-below refusal renamed away"],
     ["reversal", "if (!gb.bill_posted_at_delivery) originalJeIds.push(gb.bill_journal_entry_id);", "originalJeIds.push(gb.bill_journal_entry_id);", "void reverses the delivery pay"],
@@ -149,7 +153,7 @@ if (process.argv.includes("--selftest")) {
     ["cashFlow", "const daysOverdue = daysBetween(today, db_.due_date);", "const daysOverdue = daysBetween(today, db_.created_at);", "cash flow ages from creation"],
     ["accrual", "AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND ${liveSettlement(\"s\")})", "AND s.voided_at IS NULL)", "restate re-accrues a bill on a POSTED settlement"],
     ["accrual", "db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "restate exception admits every bill, not the named one"],
-    ["accrual", "AND (${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR", "AND (db.settled_in_settlement_id IS NULL OR ${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR", "a settled bill admitted on the default path"],
+    ["accrual", "THEN 'settlement_posted'", "THEN NULL", "a bill on a POSTED settlement admitted on the default path"],
   ];
   let failed = 0;
   for (const [file, from, to, label] of plants) {

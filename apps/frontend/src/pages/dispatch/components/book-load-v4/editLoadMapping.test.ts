@@ -146,24 +146,40 @@ describe("editLoadMapping — prefill", () => {
   });
 });
 
-// GO-23 per-blocker Override: Edit Load's PATCH body had no way to carry an owner-attested override
-// reason for the driver-qualification gate (CDL/DOT medical/hazmat) -- the Owner clicking
-// "Override & dispatch" on an Edit silently saved with no reason, and the backend still 422'd.
-describe("editLoadMapping — GO-23 per-blocker Override (override_reason)", () => {
+// GO-23 per-blocker Override + row 28 (443.294): Edit Load's PATCH body carries the CATALOG reason_code of the confirmed
+// OverrideButton line ("<label> [<code>]") -- never a typed sentence (the server refuses override_reason).
+describe("editLoadMapping — per-blocker Override (override_reason_code)", () => {
   const values = { ...buildEditPrefill(baseLoad), linehaul_cents: 300000 };
 
-  it("sets body.override_reason when a >=10 char reason is passed", () => {
-    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "Angel's CDL is current per FMCSA, system record is stale");
-    expect(body.override_reason).toBe("Angel's CDL is current per FMCSA, system record is stale");
+  it("sets body.override_reason_code (and override_requested) from the confirmed catalog line", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "Driver request [driver_request]");
+    expect(body.override_reason_code).toBe("driver_request");
+    expect(body.override_requested).toBe(true);
+    expect("override_reason" in body).toBe(false);
   });
 
-  it("never sets body.override_reason when omitted", () => {
+  it("an Owner confirm sends the role_only code", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "Owner override [owner_override]");
+    expect(body.override_reason_code).toBe("owner_override");
+  });
+
+  it("never sets an override when omitted", () => {
     const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID);
+    expect("override_reason_code" in body).toBe(false);
+    expect("override_requested" in body).toBe(false);
+  });
+
+  it("never sends a typed sentence: text without a [code] suffix yields no code", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "Angel's CDL is current per FMCSA, system record is stale");
+    expect(body.override_reason_code).toBeNull();
     expect("override_reason" in body).toBe(false);
   });
 
-  it("never sets body.override_reason for a reason under 10 characters (matches the >=10 rule everywhere else)", () => {
-    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "too short");
-    expect("override_reason" in body).toBe(false);
+  it("override rules carry reason_code only", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, undefined, [
+      { rule_code: "WF-CDL-MISSING", reason_code: "owner_approved", subject: "WF-CDL-MISSING" },
+    ]);
+    expect(body.override_rules).toEqual([{ rule_code: "WF-CDL-MISSING", reason_code: "owner_approved", subject: "WF-CDL-MISSING" }]);
+    expect(body.override_reason_code).toBe("owner_approved");
   });
 });

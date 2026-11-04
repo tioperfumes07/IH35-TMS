@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { overrideRefusalStatus, recordOverride } from "../overrides/record-override.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -36,8 +37,10 @@ const saveStepSchema = z.object({
   advance: z.boolean().optional(),
 });
 
+// Row 28 (443.294): the ONE override — a catalogs.override_reasons code (Owner / Accountant send none and just
+// confirm). Never a typed sentence: there is no free-text reason field.
 const adminOverrideSchema = z.object({
-  reason: z.string().trim().min(10).max(2000),
+  reason_code: z.string().trim().regex(/^[a-z][a-z0-9_]*$/).max(80).nullable().optional(),
   missing_steps: z.array(z.number().int().min(1).max(7)).optional(),
 });
 
@@ -336,6 +339,19 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const result = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      // The ONE engine: validates the catalog code for this role + context and writes the override audit row.
+      const ov = await recordOverride(client, {
+        operatingCompanyId: company.data.operating_company_id,
+        context: "dispatch",
+        entityType: "safety.onboarding_session",
+        entityId: params.data.session_id,
+        reasonCode: body.data.reason_code ?? null,
+        actor: { userId: user.uuid, role: String(user.role ?? "") },
+        before: { status: "in_progress" },
+        after: { status: "completed", admin_override: true },
+      });
+      if (!ov.ok) return { refused: ov.error } as const;
+      const reason = `${ov.label_en} [${ov.reason_code}]`;
       const res = await client.query(
         `
           UPDATE safety.onboarding_sessions
@@ -351,7 +367,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
             AND status = 'in_progress'
           RETURNING *
         `,
-        [params.data.session_id, company.data.operating_company_id, body.data.reason, user.uuid]
+        [params.data.session_id, company.data.operating_company_id, reason, user.uuid]
       );
       if (!res.rows[0]) return { error: "not_found" as const };
       await appendCrudAudit(
@@ -362,7 +378,8 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
           resource_type: "safety.onboarding_sessions",
           resource_id: params.data.session_id,
           operating_company_id: company.data.operating_company_id,
-          reason: body.data.reason,
+          reason,
+          reason_code: ov.reason_code,
           missing_steps: body.data.missing_steps ?? [],
         },
         "warning",
@@ -371,6 +388,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
       return { session: res.rows[0] };
     });
 
+    if ("refused" in result && result.refused) return reply.code(overrideRefusalStatus(result.refused)).send({ error: result.refused });
     if ("error" in result) return reply.code(404).send({ error: result.error });
     return reply.send(result);
   });

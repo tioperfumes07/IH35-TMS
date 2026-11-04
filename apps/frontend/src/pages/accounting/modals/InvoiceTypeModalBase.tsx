@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { OverrideButton } from "../../../components/override/OverrideButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { AlertTriangle } from "lucide-react";
@@ -90,6 +91,8 @@ type Props = {
     customer_notes?: string;
     attachment_draft_id?: string;
     override_credit_limit?: boolean;
+    /** Row 28: the catalog reason_code behind override_credit_limit (null = Owner / Accountant plain confirm). */
+    override_reason_code?: string | null;
     display_id?: string;
   }) => Promise<{ id: string; display_id?: string | null }>;
 };
@@ -112,11 +115,12 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
+  const [overrideReasonCode, setOverrideReasonCode] = useState<string | null>(null);
   // LINK-F5191: hold the just-created invoice instead of tearing the drawer down in the same
   // tick as onCreated() fires -- same "hold state -> confirm -> close" pattern already applied
   // to CreateBillModal.tsx (ap_bill sweep) and CreateExpenseModal.tsx (expense sweep).
   const [createdInvoice, setCreatedInvoice] = useState<{ id: string; display_id: string | null } | null>(null);
-  const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "");
+  const canOverrideCreditLimit = ["Owner", "Accountant", "Administrator", "Manager"].includes(auth.user?.role ?? "");
 
   const customersQuery = useQuery({
     queryKey: ["invoice-type-modal", "customers", operatingCompanyId],
@@ -221,6 +225,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           customer_notes: parsed.notes || undefined,
           attachment_draft_id: draftAttachmentEntityId,
           override_credit_limit: overrideCreditLimit || undefined,
+          override_reason_code: overrideCreditLimit ? overrideReasonCode : undefined,
           display_id: parsed.display_id.trim() || undefined,
         });
 
@@ -278,6 +283,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setDisplayId("");
     setCreditLimitBlock(null);
     setOverrideCreditLimit(false);
+    setOverrideReasonCode(null);
     setCreatedInvoice(null);
     resetInvoiceErrors();
     setDraftAttachmentEntityId(crypto.randomUUID());
@@ -599,16 +605,26 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
             </p>
             {canOverrideCreditLimit ? (
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={overrideCreditLimit}
-                  onChange={(e) => setOverrideCreditLimit(e.target.checked)}
-                />
-                <span className="text-[#1F2A44]">Override — I acknowledge this customer is over their credit limit</span>
-              </label>
+              // Row 28 (443.294): the ONE override — Owner / Accountant confirm; everyone else picks a catalog reason.
+              overrideCreditLimit ? (
+                <p className="mt-2 font-semibold text-[#1F2A44]" data-testid="invoice-credit-limit-override-approved">
+                  Override approved — this customer is over their credit limit.
+                </p>
+              ) : (
+                <div className="mt-2">
+                  <OverrideButton
+                    context="invoice"
+                    size="sm"
+                    testId="invoice-credit-limit-override"
+                    onConfirm={(code) => {
+                      setOverrideReasonCode(code);
+                      setOverrideCreditLimit(true);
+                    }}
+                  />
+                </div>
+              )
             ) : (
-              <p className="mt-1 text-[#6B7280]">Contact an Owner or Manager to override.</p>
+              <p className="mt-1 text-[#6B7280]">Contact an Owner, Accountant or Manager to override.</p>
             )}
           </div>
         ) : null}

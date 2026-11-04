@@ -21,6 +21,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { useStagedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { FILTER_CONTROL_SIZE_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS } from "../../../design/tokens";
@@ -29,6 +30,24 @@ import { formatUsdCents, formatQuantityTable } from "../../../lib/money";
 const EMPTY_FILTERS = {
   driverId: "",
 };
+
+/** U12 — status multi-selector. API still open|all; open = open+under_review; else fetch all + client filter. */
+const STATUS_FILTER_OPTIONS = [
+  { value: "open", label: "Open" },
+  { value: "under_review", label: "Under review" },
+  { value: "resolved_in_favor", label: "Resolved in favor" },
+  { value: "resolved_rejected", label: "Resolved rejected" },
+  { value: "partially_resolved", label: "Partially resolved" },
+  { value: "withdrawn", label: "Withdrawn" },
+] as const;
+
+const OPEN_BUCKET = new Set(["open", "under_review"]);
+
+function apiStatusParam(selected: string[]): "open" | "all" {
+  if (!selected.length) return "all";
+  if (selected.every((s) => OPEN_BUCKET.has(s))) return "open";
+  return "all";
+}
 
 function money(cents: number | null | undefined) {
   return formatUsdCents(cents);
@@ -48,7 +67,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   // LV-DRIVER-FINANCE-SETTLEMENT-DISPUTES-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const requestedDisputeId = searchParams.get("dispute_id")?.trim() ?? "";
-  const [status, setStatus] = useState<"open" | "all">("open");
+  const [status, setStatus] = useState<string[]>(["open", "under_review"]);
   const [selected, setSelected] = useState<SettlementDisputeRow | null>(null);
 
   function patchListSearchParam(next: { driverId: string }) {
@@ -87,9 +106,22 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
 
+  const statusKey = status.join(",") || "all";
   const disputesQuery = useQuery({
-    queryKey: ["driver-finance", "settlement-disputes", companyId, status, effectiveDriverId],
-    queryFn: () => listSettlementDisputes(companyId, { status, driver_id: effectiveDriverId || undefined }),
+    queryKey: ["driver-finance", "settlement-disputes", companyId, statusKey, effectiveDriverId],
+    queryFn: async () => {
+      const result = await listSettlementDisputes(companyId, {
+        status: apiStatusParam(status),
+        driver_id: effectiveDriverId || undefined,
+      });
+      // API "open" returns open+under_review; narrow client-side when the multi-select is a subset.
+      if (!status.length) return result;
+      if (status.length === 2 && OPEN_BUCKET.has(status[0]!) && OPEN_BUCKET.has(status[1]!)) return result;
+      return {
+        ...result,
+        disputes: result.disputes.filter((row) => status.includes(row.status)),
+      };
+    },
     enabled: Boolean(companyId),
   });
 
@@ -230,17 +262,18 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
     <div className="space-y-3">
       <BoardSection title="Dispute filters" testId="settlement-disputes-filters-board">
         <div className="relative grid gap-2 px-3.5 py-2 md:grid-cols-3" data-testid="settlement-disputes-filters">
-          <label className="text-xs">
+          <div className="text-xs" data-testid="settlement-disputes-status-filter">
             <div className="mb-1 text-gray-500">Status</div>
-            <SelectCombobox
-              value={status}
-              onChange={(event) => setStatus(event.target.value as "open" | "all")}
-              className={`w-full rounded-sm border border-gray-300 px-2 ${FILTER_CONTROL_SIZE_CLASS}`}
-            >
-              <option value="all">All</option>
-              <option value="open">Open / Under Review</option>
-            </SelectCombobox>
-          </label>
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={setStatus}
+              allLabel="All statuses"
+              className={`w-full ${FILTER_CONTROL_SIZE_CLASS}`}
+              data-testid="settlement-disputes-status-multiselect"
+            />
+          </div>
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Driver</div>
             <EntityMultiSelect

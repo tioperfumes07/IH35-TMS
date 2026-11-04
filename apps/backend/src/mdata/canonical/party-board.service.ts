@@ -9,7 +9,8 @@
  *            (open bills = amount_cents - paid_cents), integrations.relay_fuel_transactions (unposted fuel).
  */
 
-import { liveOpenInvoice } from "../../accounting/live-document-predicates.sql.js";
+import { issuedInvoice, liveOpenInvoice } from "../../accounting/live-document-predicates.sql.js";
+import { readVendorSuggestedCategories } from "./vendor-suggested-category.js";
 import { relayFillPostedSql } from "../../fuel/relay-fill-posted.sql.js";
 
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
@@ -27,19 +28,24 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
   const rows = (
     await client.query(
       `WITH inv AS (
-         SELECT customer_id, count(*)::int AS invoices, sum(total_cents) AS billed, sum(amount_open_cents) AS open,
+         SELECT customer_id, count(*)::int AS invoices,
+                -- Row 157: BILLED = issued invoices only. Draft / proforma invoices (a proforma is minted on first pickup)
+                -- are not billed yet; they are shown apart as proforma_cents and still count in the open balance.
+                sum(total_cents) FILTER (WHERE ${issuedInvoice("i")}) AS billed,
+                coalesce(sum(total_cents) FILTER (WHERE NOT ${issuedInvoice("i")}), 0) AS proforma,
+                sum(amount_open_cents) AS open,
                 count(*) FILTER (WHERE coalesce(amount_paid_cents, 0) > 0)::int AS paid_invoices, max(issue_date) AS last_invoice,
                 -- ROUND 297: "Factored" = an invoice actually SOLD to the factor (factoring status or a live purchase
                 -- line), never the eligibility flag (1,187 USMCA customers copied from TRANSP all carry it; 0 are factored).
                 count(*) FILTER (WHERE coalesce(factoring_status, 'not_factored') <> 'not_factored'
                                     OR EXISTS (SELECT 1 FROM accounting.factoring_purchase_lines pl
-                                                WHERE pl.invoice_id = accounting.invoices.id AND pl.voided_at IS NULL))::int AS factored_invoices,
+                                                WHERE pl.invoice_id = i.id AND pl.voided_at IS NULL))::int AS factored_invoices,
                 sum(amount_open_cents) FILTER (WHERE due_date IS NULL OR due_date >= current_date) AS a_current,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 1 AND 30) AS a_1_30,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 31 AND 60) AS a_31_60,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 61 AND 90) AS a_61_90,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date > 90) AS a_90
-           FROM accounting.invoices
+           FROM accounting.invoices i
           WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
           GROUP BY customer_id),
        collected AS (
@@ -52,7 +58,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
           GROUP BY p.customer_id)
        SELECT c.id, c.customer_name AS name, c.status::text AS status, c.deactivated_at, c.factoring_eligible,
               fv.vendor_name AS factor_name, fv.id AS factor_vendor_id,
-              coalesce(inv.invoices, 0) AS invoices, coalesce(inv.billed, 0) AS billed_cents, coalesce(inv.open, 0) AS open_cents,
+              coalesce(inv.invoices, 0) AS invoices, coalesce(inv.billed, 0) AS billed_cents, coalesce(inv.proforma, 0) AS proforma_cents, coalesce(inv.open, 0) AS open_cents,
               coalesce(collected.collected, 0) AS collected_cents, coalesce(inv.paid_invoices, 0) AS paid_invoices,
               coalesce(inv.factored_invoices, 0) AS factored_invoices,
               inv.last_invoice, inv.a_current, inv.a_1_30, inv.a_31_60, inv.a_61_90, inv.a_90
@@ -69,12 +75,12 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
     factored: n(r.factored_invoices) > 0 ? (r.factor_name ?? "Factored") : null,
     // Rows 55/56 — the Factored cell names the factor's vendor record, so it links to it (null = no factor vendor on file).
     factor_vendor_id: n(r.factored_invoices) > 0 ? ((r.factor_vendor_id as string | null) ?? null) : null,
-    invoices: n(r.invoices), billed_cents: n(r.billed_cents), collected_cents: n(r.collected_cents), open_cents: n(r.open_cents),
+    invoices: n(r.invoices), billed_cents: n(r.billed_cents), proforma_cents: n(r.proforma_cents), collected_cents: n(r.collected_cents), open_cents: n(r.open_cents),
     paid_invoices: n(r.paid_invoices), last_invoice: r.last_invoice ?? null,
     aging: { current: n(r.a_current), d1_30: n(r.a_1_30), d31_60: n(r.a_31_60), d61_90: n(r.a_61_90), d90_plus: n(r.a_90) },
   }));
   const withTx = rows.filter((r) => r.invoices > 0);
-  const sum = (k: "invoices" | "billed_cents" | "collected_cents" | "open_cents" | "paid_invoices") => withTx.reduce((s, r) => s + r[k], 0);
+  const sum = (k: "invoices" | "billed_cents" | "proforma_cents" | "collected_cents" | "open_cents" | "paid_invoices") => withTx.reduce((s, r) => s + r[k], 0);
   // The exact first day the board counts from — the Open invoices drill passes it as date_from.
   const rangeFrom = String((await client.query(`SELECT (${from})::text AS d`)).rows[0]?.d ?? "");
   return {
@@ -85,7 +91,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
       with_transactions: withTx.length, in_the_book: rows.length, open_invoices: (await client.query(
         `SELECT count(*)::int AS n FROM accounting.invoices i WHERE i.operating_company_id = $1::uuid AND ${liveOpenInvoice("i")}
            AND i.issue_date >= ${from}`, [oc])).rows[0].n,
-      billed_cents: sum("billed_cents"), ar_open_cents: sum("open_cents"), collected_cents: sum("collected_cents"),
+      billed_cents: sum("billed_cents"), proforma_cents: sum("proforma_cents"), ar_open_cents: sum("open_cents"), collected_cents: sum("collected_cents"),
       invoices: sum("invoices"), invoices_with_payment: sum("paid_invoices"),
     },
     chips: {
@@ -100,6 +106,8 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
 
 export async function readVendorBoard(client: Q, oc: string, range: BoardRange) {
   const from = rangeStartSql(range);
+  // Row 97: the account most of each vendor's live expenses post to, offered (never written) as its saved category.
+  const suggestions = await readVendorSuggestedCategories(client, oc);
   const rows = (
     await client.query(
       `WITH exp AS (
@@ -146,6 +154,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
     )
   ).rows.map((r) => ({
     id: r.id, name: r.name, status: r.deactivated_at ? "inactive" : "active", category: r.category ?? null,
+    suggested_category: suggestions.get(String(r.id)) ?? null,
     saved_category: (r.saved_category as string | null) ?? null, eligible_1099: r.eligible_1099 === true,
     txns: n(r.txns), spend_cents: n(r.spend_cents), avg_ticket_cents: n(r.txns) ? Math.round(n(r.spend_cents) / n(r.txns)) : null,
     last_paid: r.last_paid ?? null, pays_through: r.pays_through ?? null,

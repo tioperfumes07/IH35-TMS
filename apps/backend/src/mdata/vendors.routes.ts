@@ -246,7 +246,9 @@ async function checkDefaultExpenseAccountIsExpenseType(
     [accountId, operatingCompanyId]
   );
   const accountType = res.rows[0]?.account_type ?? null;
-  if (accountType === "Expense") return { ok: true };
+  // Rows 97: a carrier's operating costs (Fuel & Diesel, Lumper, Tolls, Tires ...) post to CostOfGoodsSold accounts, so
+  // a vendor's default category may be either operating-cost type. Balance-sheet / revenue accounts stay refused.
+  if (accountType === "Expense" || accountType === "CostOfGoodsSold") return { ok: true };
   return { ok: false, accountType };
 }
 

@@ -109,6 +109,14 @@ export function sendFuelRecommendationToDriver(id: string, companyId: string) {
   );
 }
 
+/** Row 163 — why a fuel planner source is empty (named, with the Loves price sync state). */
+export type FuelSourceGap = {
+  reason: string | null;
+  loves_rows: number;
+  loves_last_synced_at: string | null;
+  feed_configured: boolean;
+};
+
 export function getFuelComplianceSummary(companyId: string, driverId?: string | null) {
   const search = new URLSearchParams({ operating_company_id: companyId });
   if (driverId) search.set("driver_id", driverId);
@@ -117,6 +125,7 @@ export function getFuelComplianceSummary(companyId: string, driverId?: string | 
     fleet_pct_followed: number | null;
     fleet_total_recommendations: number | null;
     per_driver: Array<Record<string, unknown>>;
+    gap?: FuelSourceGap;
   }>(`/api/v1/fuel/planner/compliance/summary?${search}`);
 }
 
@@ -126,6 +135,7 @@ export function getFuelSavingsSummary(companyId: string) {
     fleet_savings_ytd: number | null;
     fleet_lost_savings_ytd: number | null;
     top_driver: Record<string, unknown> | null;
+    gap?: FuelSourceGap;
   }>(`/api/v1/fuel/planner/savings/summary?${q(companyId)}`);
 }
 
