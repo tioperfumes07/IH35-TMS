@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9c7d141",
-  "generated_at": "2026-11-04T12:29:22.495Z",
+  "healthzSha": "2fe1923",
+  "generated_at": "2026-11-04T14:23:58.092Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9c7d141",
+    "deployedSha": "2fe1923",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/04/2026, 06:29 AM CT",
+      "url": "",
+      "sha": "2fe19238b5",
+      "committedAtIso": "2026-11-04T12:29:22Z"
+    },
+    {
       "number": 28649,
       "title": "BUS: Lead register 11-04 12:15Z — 06:00 CT engine results (E1, ENG-65, row 85, E8, E9)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28645",
       "sha": "400d95ac79",
       "committedAtIso": "2026-11-03T22:15:49-06:00"
-    },
-    {
-      "number": 28644,
-      "title": "MAIN-GREEN: locked-guards-heavy — escrow_posting_loads canonical-ledger declaration (relocated; migration already applied)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28644",
-      "sha": "9cb8841ff8",
-      "committedAtIso": "2026-11-03T22:14:33-06:00"
     }
   ]
 }
