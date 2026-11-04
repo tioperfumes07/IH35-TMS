@@ -17539,5 +17539,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-factored-invoice-payment-status"
+  },
+  "19945": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-settlement-line-dedupe-keys-on-load"
   }
 }
