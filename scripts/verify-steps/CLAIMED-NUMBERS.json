@@ -17534,5 +17534,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-settlement-paid-rollup"
+  },
+  "19941": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-factored-invoice-payment-status"
   }
 }
