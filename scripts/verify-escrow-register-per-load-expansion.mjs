@@ -20,30 +20,37 @@ const TYPE_FILE = "apps/frontend/src/api/banking.ts";
 const PAGE = "apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx";
 
 const CHECKS = [
+  // ACCT-F11093 (row 22, #28642): the per-load rows come from the split the WRITER records (accounting.escrow_posting_loads),
+  // no longer expanded at read time from settlement_lines (53 per-load lines voided as "SET-24 LINE-DUP" dropped $1,725.00).
   {
-    name: "backend: LATERAL joins settlement_lines for escrow_contribution",
+    name: "backend: per-load rows read the recorded split accounting.escrow_posting_loads",
     file: ROUTE,
-    pattern: /LEFT JOIN LATERAL[\s\S]{0,300}line_type = 'escrow_contribution'/,
+    pattern: /LEFT JOIN accounting\.escrow_posting_loads epl[\s\S]{0,150}epl\.escrow_posting_id = ep\.id/,
   },
   {
     name: "backend: joins mdata.loads for load_number",
     file: ROUTE,
-    pattern: /LEFT JOIN mdata\.loads l[\s\S]{0,100}sl_expand\.load_id/,
+    pattern: /LEFT JOIN mdata\.loads l[\s\S]{0,100}l\.id = epl\.load_id/,
   },
   {
     name: "backend: selects load_id, load_number, load_date",
     file: ROUTE,
-    pattern: /sl_expand\.load_id::text AS load_id[\s\S]{0,100}l\.load_number AS load_number[\s\S]{0,400}FROM mdata\.load_stops st[\s\S]{0,200}stop_type = 'pickup'[\s\S]{0,200}\) AS load_date/, // 443.331: mdata.loads has no pickup_date column — load_date is the first pickup stop
+    pattern: /epl\.load_id::text AS load_id[\s\S]{0,100}l\.load_number AS load_number[\s\S]{0,400}FROM mdata\.load_stops st[\s\S]{0,200}stop_type = 'pickup'[\s\S]{0,200}\) AS load_date/, // 443.331: mdata.loads has no pickup_date column — load_date is the first pickup stop
+  },
+  {
+    name: "backend: the row date is the document date, never posted_at",
+    file: ROUTE,
+    pattern: /COALESCE\(epl\.document_date, ep\.document_date, je\.entry_date\)::text AS document_date/,
   },
   {
     name: "frontend type: EscrowDriverTimelineRow has load_id, load_number, load_date",
     file: TYPE_FILE,
-    pattern: /EscrowDriverTimelineRow[\s\S]{0,800}load_id\?.*string[\s\S]{0,200}load_number\?.*string[\s\S]{0,200}load_date\?.*string/,
+    pattern: /EscrowDriverTimelineRow[\s\S]{0,1600}load_id\?.*string[\s\S]{0,200}load_number\?.*string[\s\S]{0,200}load_date\?.*string/,
   },
   {
-    name: "frontend page: renders Load {number} label when load_id present",
+    name: "frontend page: Load column links the load when load_id present",
     file: PAGE,
-    pattern: /t\.load_id[\s\S]{0,100}Load \${t\.load_number/,
+    pattern: /loadNumber: t\.load_id \? \(t\.load_number[\s\S]{0,1500}to=\{`\/dispatch\/loads\/\$\{encodeURIComponent\(r\.loadId\)\}`\}/,
   },
   {
     name: "frontend CSV money uses formatUsd (not toFixed)",
@@ -70,14 +77,11 @@ function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     [ROUTE]: `
-      LEFT JOIN LATERAL (
-        SELECT sl.load_id, sl.amount
-        FROM driver_finance.settlement_lines sl
-        WHERE sl.settlement_id = ep.source_id::uuid
-          AND sl.line_type = 'escrow_contribution'
-      ) sl_expand ON true
-      LEFT JOIN mdata.loads l ON l.id = sl_expand.load_id AND l.operating_company_id = ep.operating_company_id
-      sl_expand.load_id::text AS load_id,
+      LEFT JOIN accounting.escrow_posting_loads epl
+        ON epl.escrow_posting_id = ep.id
+      LEFT JOIN mdata.loads l ON l.id = epl.load_id AND l.operating_company_id = ep.operating_company_id
+      COALESCE(epl.document_date, ep.document_date, je.entry_date)::text AS document_date,
+      epl.load_id::text AS load_id,
       l.load_number AS load_number,
       (SELECT (COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at) AT TIME ZONE 'America/Chicago')::date::text
          FROM mdata.load_stops st
@@ -93,9 +97,8 @@ if (process.argv.includes("--selftest")) {
       }
     `,
     [PAGE]: `
-      const settLabel = t.load_id
-        ? \`Load \${t.load_number ?? "—"} · ...\`
-        : t.settlement_id
+        loadNumber: t.load_id ? (t.load_number ?? null) : null,
+        render: (r) => r.loadId ? (<Link to={\`/dispatch/loads/\${encodeURIComponent(r.loadId)}\`}>{r.loadNumber}</Link>) : "—",
       formatUsd(r.balance)
     `,
   };
