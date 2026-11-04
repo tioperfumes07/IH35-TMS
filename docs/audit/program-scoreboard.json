@@ -1,10 +1,10 @@
 {
-  "healthzSha": "400d95a",
-  "generated_at": "2026-11-04T04:25:05.058Z",
+  "healthzSha": "0877050",
+  "generated_at": "2026-11-04T06:33:20.082Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "400d95a",
+    "deployedSha": "0877050",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 28647,
+      "title": "BUS: Lead register 11-04 05:05Z — rows 22 110 125 257 measured; owner merge list",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 11:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28647",
+      "sha": "0877050d43",
+      "committedAtIso": "2026-11-03T23:02:48-06:00"
+    },
+    {
+      "number": 28646,
+      "title": "MAIN-GREEN: locked-guards-heavy — escrow register guard follows the recorded per-load split (#28642)",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 10:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28646",
+      "sha": "f3497a8e57",
+      "committedAtIso": "2026-11-03T22:27:09-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 10:25 PM CT",
+      "url": "",
+      "sha": "03d5b5477e",
+      "committedAtIso": "2026-11-04T04:25:05Z"
+    },
+    {
       "number": 28645,
       "title": "MAIN-GREEN: regenerate schema-parity baseline for accounting.escrow_posting_loads",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28638",
       "sha": "db668d120e",
       "committedAtIso": "2026-11-03T20:37:58-06:00"
-    },
-    {
-      "number": 28637,
-      "title": "MAIN-GREEN: build-typecheck red on main — driver list scope guard pinned an unqualified column",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 08:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28637",
-      "sha": "261f1e4c03",
-      "committedAtIso": "2026-11-03T20:30:59-06:00"
-    },
-    {
-      "number": 28636,
-      "title": "BUS: Lead register 11-04 02:40Z — rows 152 261 11 12 87 88 measured",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28636",
-      "sha": "578b1b3f69",
-      "committedAtIso": "2026-11-03T20:28:23-06:00"
-    },
-    {
-      "number": 28635,
-      "title": "MAIN-GREEN: locked-guards-heavy red on main — three stale pins and one unregistered external id",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 08:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28635",
-      "sha": "f6799905e4",
-      "committedAtIso": "2026-11-03T20:27:20-06:00"
     }
   ]
 }
