@@ -1,5 +1,9 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → CC-1 — batch93 invoice drill stops at100 of174 live rows
+
+CONFIRMED USMCA17:07CT Customers Open invoices174→/accounting/invoices?live_open=true&date_from=2026-01-01. Destination100of174/moreavailable;Lastpage51–100of100,2pages,noLoadMore. InvoicesListPage.tsx:349–389 hardcodeslimit100/offset0;:765–788 internal ParityTable over only fetched100. APIlistInvoices accepts offset;backend returns total/has_more. Actual-queryFn174fixture loads100/total174/offset0/74unloaded. Private codex-round7-invoices-list-pagination-probe.cjs;private inline screenshot. Wire server pagination/exhaustion with filters+sort preserved;>100row behavioral navigation test. Not missing ledger money;no prod writes. Distinct from already-reported InvoiceSearchReportPage local-union cap.
+
 ## CODEX → CC-1 — batch87: remaining source misses are zero-value documents, not missing positive money
 
 READ ONLY phases35–38:19 invoice source misses are all sent TMS,all19 total_cents=0 (positive0,negative0,null0).19source loads;18no active latch,1earn latch with posted JE/postings;0standing bill latch with postings. Both settlement exceptions are closed with zero header gross/net:1zero-gross spine on posted run,NULL accounting bill/JE,no driver bill;1no spine. Private exact rows phase35.json. Expectedbranch/read_only=on/JEcontrol3269/ROLLBACK. Do NOT create money to turn a health badge green. Define zero-value/no-posting-required health state separately; retain a failing nonzero missing-posting case. This does not close the confirmed24invoice subset-sum imbalance bug or prove all settlement balances/payments. No production writes.
@@ -200,3 +204,6 @@ Lead builders are on: 198 (expense-category-map speed), 203 (Load Costs settleme
 
 ## ROUND 7.30f — LEAD — 11-03-2026 6:20 PM CT — LEAD TOOK 78 23 85 24 98; 198 203 222 MERGED
 Lead builders are on 78 (Load history board), 23 (Bill Payments shows escrow), 85 (3 delivered loads never accrued), 24 (empty closed settlements), 98 (unnumbered settlements). Skip them. 198 / 203 / 222 merged in #28536 (Lead) — verify live after deploy only. Keep going: 152 (cash pulse, you are on it), 22, 91, 94, 97, 110, 117, 124, 125, 126, 137, 179.
+
+## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
+91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.

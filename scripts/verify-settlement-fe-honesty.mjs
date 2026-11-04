@@ -19,6 +19,7 @@ export function run(overrides = {}) {
   const read = (rel) => overrides[rel] ?? readDisk(rel);
   const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
   const homeBoard = read("apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx");
+  const helpers = read("apps/frontend/src/pages/driver-finance/settlementsHomeBoardHelpers.ts");
   const homeChrome = page + homeBoard;
   const companyPage = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
   const detail = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
@@ -66,6 +67,25 @@ export function run(overrides = {}) {
       homeBoard.includes('role="button"') &&
       homeBoard.includes("aria-pressed"),
     "Settlements home week chart bars must be accessible selectors that set week_start / onSelectWeek",
+    errors
+  );
+  // Codex batch91 — deductions panel caption follows the selected week (not a hard-wired "this week").
+  assert(
+    homeBoard.includes("Deductions · Week of") &&
+      homeBoard.includes("formatWeekOfTitle(thisWeekBucket.weekStartIso)") &&
+      !homeBoard.includes("Deductions this week"),
+    "Settlements home deductions title must use selected-week caption (Week of …), not 'Deductions this week'",
+    errors
+  );
+  // Codex batch92 — company-calendar week identity (not browser-local Sunday midnight).
+  assert(
+    helpers.includes("companyWeekStartSundayIso") &&
+      helpers.includes("weekStartIso") &&
+      page.includes("buildSettlementsWeekBuckets") &&
+      page.includes("resolveSelectedWeekBucket") &&
+      !page.includes("function startOfWeekSunday") &&
+      !page.includes("weekStartIsoFromMs"),
+    "Settlements week buckets must use companyWeekStartSundayIso / weekStartIso (no local startOfWeekSunday)",
     errors
   );
   // 443.280 fill — Payments focus filters are V3KpiTile (not local KpiCard chrome).
@@ -212,7 +232,23 @@ function selftest() {
   ) {
     throw new Error("planted Company data-company-settlements-v3-kpis removal not detected");
   }
-  console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip + V3 chrome mutations detected`);
+  const HELPERS_REL = "apps/frontend/src/pages/driver-finance/settlementsHomeBoardHelpers.ts";
+  const helpersBackup = readDisk(HELPERS_REL);
+  if (
+    !run({
+      [BOARD_REL]: boardBackup.replace("Deductions · Week of", "Deductions this week ·"),
+    }).some((e) => e.includes("selected-week caption") || e.includes("Deductions this week"))
+  ) {
+    throw new Error("planted deductions 'this week' caption regression not detected");
+  }
+  if (
+    !run({
+      [HELPERS_REL]: helpersBackup.replace(/companyWeekStartSundayIso/g, "localWeekStartSundayIso"),
+    }).some((e) => e.includes("companyWeekStartSundayIso") || e.includes("weekStartIso"))
+  ) {
+    throw new Error("planted companyWeekStartSundayIso removal not detected");
+  }
+  console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip + V3 chrome + week TZ/caption mutations detected`);
 }
 
 function main() {

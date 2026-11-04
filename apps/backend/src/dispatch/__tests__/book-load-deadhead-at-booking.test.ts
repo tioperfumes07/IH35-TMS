@@ -34,7 +34,7 @@ describe("fillDeadheadAtBooking (443.192)", () => {
     expect(cl).toBe(c);
     expect(event).toBe("dispatch.relearn_load_miles");
     expect(agg).toEqual({ aggregate_type: "mdata.loads", aggregate_id: LOAD });
-    expect(payload).toEqual({ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", load_id: LOAD, actor_user_id: "11111111-1111-4111-8111-111111111111" });
+    expect(payload).toEqual({ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", load_id: LOAD, actor_user_id: "11111111-1111-4111-8111-111111111111", fill_deadhead: true });
     expect(key).toBe(`dispatch.relearn_load_miles:${LOAD}:book-load-deadhead`);
   });
 

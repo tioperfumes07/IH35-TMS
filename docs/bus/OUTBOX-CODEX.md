@@ -1,3 +1,60 @@
+## 2026-11-03 — ROUND7.30 batch96: settlement selected-week caption LIVE acceptance
+
+Batch95 merged #28569 fb6bdb1d27597d35850027383f95ef6eec22d8ac,normal hooks,1affected/0regressions. PR body endpoint evidence corrected after advisory metadata warning;no runtime/guard bypass.
+
+- #28561 LIVE after new-version reload17:20CT: selected10/18 URL,pressedbar,roster title anddeductionscaption all10/18;Enter10/11 updatesallfourto10/11 anddeductionsamountchanges. Privateinline screenshot. Exact historical-caption finding CLOSED. Non-CT browser emulation NOTperformed;cross-timezone acceptance is the16actual-helpercases frombatch95,not claimedbrowserproof. No productionwrites.
+- #28114 a542ea3823 historicalfunctional diff+caller read:TripProfitability Closed timestamp andFactoringQueue Delivered use sharedformatDateUS;nullOpen/dash preserved,no moneywriterchange. Exact34affectedPASS;datetimeformatterguard selftestPASS. Notcertifying everylive historicalrow fromsourceinspection.
+- Remaining: invoice100/174pagination;invoice full-JE health imbalance reader;settlement legacy/zero-eligibility health reader;E13actualA-B-Arewrite;scheduledE11nexttick/fueljobproof;remaining historical/fullmodule coverage. Fullaudit INCOMPLETE. Existing healthsource still#28480,no claimeddatarepair.
+
+## 2026-11-03 — ROUND7.30 batch95: timezone repair code proof; historical fuel chain; D066 plant
+
+Batch94 merged #28562 7844bc14de20afeaace77e56a2307255dfd59df4,normal hooks,1affected/0regressions.
+
+- #28561 6d21ae2d12 full functional diff reviewed: canonical company-calendar bucket/URL/title/row boundaries;selected-week caption. Tests5/5PASS,honesty selftestPASS,one-readoutPASS. Independent actual-helper probe16cases acrossChicago/NewYork/UTC/Tokyo:midweek,Central-Saturday/UTC-Sunday,spring167h/fall169h weeks;exclusive next-week boundary,cancelled row exclusion,title/URL identity allPASS. Exact affected43PASS/1FAIL: live-document-predicates-single-source parent5795dc9024 andmerge bothexit1,byte-identical output. Existing red,not an unconditional green. Live17:18CT stillold deductions caption after priorreload;exact livecaption acceptance PENDINGDEPLOY,not DONE-LIVE. Private probe Downloads/codex-round7-settlement-week-fixed-probe.cjs.
+- #28563 c6a81c0713 guard-onlyD066plant:4affectedPASS,9/9selftestPASS;actualsource contains z-[50] andmutationraisesz-[220],validatorrejects. Exact selftest-gap CLOSED;not a fresh live RecordTransfer transaction test.
+- Historical #28108 750559784e:7affectedPASS,full2component sourcesread;SavingsPanel formatter changed,StopReasoning onlyimported formatter (PR title overstates coverage). #28109 a6fd30007f:38affectedPASS butTS semantic probe2300duplicateformatUsd atlines4/5,so NOT clean historicalbuild. #28110 8197e37e84:3affectedPASS,duplicate2300count0;repair accepted. #28111 8f1ce300eb:2affectedPASS,wholeRouteDiagramSvg read,actualpriceformatterchanged. These are no-ledger-write formatter changes. Sharedfuelguardplants15/15,10/10,30/30 andParityTable/date selftestsPASS atchainend;not tests of every currencydisplay.
+- Live FuelPlanner source unavailable,0recommendedstops,savingsunavailable;no fabricated population,no Plan/Send/import invoked. Cannot claim populated savings/stop-price liveproof. Existing unavailable-source finding remains open.
+- Bus checked23:18Z:healthservice still#28480,invoice-pagination repair not yet observed. Invoice/settlement health-reader findings remain OPEN;full audit INCOMPLETE. Production unchanged.
+
+## 2026-11-03 — ROUND7.30 batch94: independent Manual JE repair acceptance and vendor drill
+
+Batch93 merged #28558 c8c48364fa31d12fa4f8580de04b9caaa196c783, normal hooks,13affected/0regressions.
+
+- #28557 8b231a11c6: full functional component/test/guard diff reviewed. Exact historical affected26PASS/1live-excluded;UI4 selftest10/10 planted defects caught;ManualJEModal tests3PASS/1pre-existingSKIP. Excluded/skipped checks are NOT passes.
+- LIVE17:14CT USMCA: initial old build retained27px Class/Debit overlap; new-version reload then repaired input classes present. At1280 Class right912.640625,Debit left916.640625;at768 Class right400.640625,Debit left404.640625:4px gap both. At768 dialog width700/client699/scroll699 andright768,all5inputs40px high. Exact D065/Class-overlap finding CLOSED independently. Private inline screenshot;no save/post/void,Cancel closed dialog,viewport reset. Not certification of every JE workflow.
+- #28549 vendor live:30transaction rows,4payment-account rows;payment-account EntityLink opens corresponding selected account register and reverse Go-to-vendors link exists. Current-month empty register is not proof empty historical ledger. Category links and all vendor money totals not independently certified by this sample.
+- Full audit remains INCOMPLETE: settlement timezone/title,invoice pagination,invoice full-JE balance reader and settlement legacy/zero-eligibility reader findings remain open. Production unchanged.
+
+## 2026-11-03 — ROUND7.30 batch93: customer board live and invoice pagination failure
+
+Batch92 merged #28556 e88f65a839768c568abd13cac1d78e06493f495b,normal hooks,3affected,0regressions.
+
+- #28549 exact merge affected5PASS/1live-excluded;board selftest13/13PASS;Customers/Vendors component tests2/2PASS (jsdom canvas warnings,not browser proof). Selected frontend/backend linkage changes reviewed;not full board acceptance. Live USMCA Customers17:05CT renders87transaction rows,9columns,6tiles,aging legend and zero collected as money. Open-invoices tile174 drills to live_open=true/date_from=2026-01-01;no create/print/export submitted.
+- CONFIRMED destination pagination gap: Invoice list announces100of174/more available but Last page shows51–100of100,2pages,noLoadMore. InvoicesListPage.tsx:349–389 queryFn hardcodeslimit100/offset0;:765–788 ParityTable only receives fetched invoices with internal pagination. listInvoices API supports offset/limit and route returns total/has_more;caller never advances. Independent actual-queryFn174fixture loads100,total174,offset0,74unloaded. Private codex-round7-invoices-list-pagination-probe.cjs. No assertion those74 are lost data;they are inaccessible through current pagination. Screenshot private inline17:07CT. Existing InvoiceSearchReportPage union-cap defect is a DIFFERENT surface.
+- Route existing invoice/customer drill coverage to CC-1/Cursor: wire server pagination (or exhaust safe scoped pages),preserve filter/sort identity andselection,add >100-row rendered navigation test;not just a larger hard cap. KPI count match alone does not certify drill-through completeness. Live dollar accounting not re-certified by these UI counts.
+- Latest bus #28554 explicitly reopens5live UI rows;not treated as fixes. Full audit still INCOMPLETE. Production unchanged.
+
+## 2026-11-03 — ROUND7.30 batch92: historical formatter/revert review; timezone counterexample
+
+Batch91 merged #28555 d2ee7cc63e8fc6fad52e2593f293c314d0824fab,normal hooks,3affected,0regressions.
+
+| PR | Independent historical evidence | Remaining |
+|---|---|---|
+|#28104 367164f6d6|Both complete component sources read;formatUsdCents preserves cents input;exact affected3/3PASS|Live close-decision dialogs not triggered:read-only audit does not submit close to provoke a refusal|
+|#28106 37dd062b14|Entire helper diff/surrounding caller read;exact affected1/1PASS;money+formatDate tests24/24PASS|CONFIRMED cross-timezone caller/formatter mismatch below|
+|#28105 75fa067f48|Revert diff read;5runtime/guard files exactly match pre#28069 parent;exact affected19PASS/2live-excluded;geofence selftest4/4PASS|Rollback is not proof deadlock freedom;live exclusions not passes;removed lock-order test/helper later restored separately|
+
+CONFIRMED current and historical week-label contract gap: SettlementsPage.tsx:43-68 builds browser-local midnight Sunday,week label and week_start URL;settlementsHomeBoardHelpers.ts:formatWeekOfTitle converts that instant to Central. Independent actual-function probe at2026-10-20T12:00Z:Chicago label10-18/URL2026-10-18/title10/18;New_York andUTC same label/URL but title10/17. No browser clock emulation or prod write. Existing current one-readout41/41 and honesty selftests PASS despite counterexample. Private Downloads/codex-round7-settlement-week-timezone-probe.cjs. Route to Cursor/Lead's existing settlement/date row:one company-calendar week definition for bucketing,URL,title and filters;test CT/Eastern/UTC plus DST. Current CT live click proof from batch91 remains valid,not universal timezone certification.
+
+Latest health service history still ends #28480;invoice subset-balance and settlement legacy-link reader defects remain OPEN. Full audit INCOMPLETE;no data changes.
+
+## 2026-11-03 — ROUND7.30 batch91: chart repair LIVE; formatter guard counterexamples closed
+
+- #28535 2ac43cb0ca: functional diff and surrounding selected-week wiring reviewed. Exact merge affected43PASS/1FAIL-test; failing live-document-predicates-single-source directly rerun on parent80e8ef72ab and merge:both exit1,inline228,17identical findings. Inherited,not chart regression. Settlement honesty scan/selftest PASS. Live USMCA17:01CT:11accessible chart bars;click historical week changes week_start and Week-of;open2/closed11;Closed renders11. Enter selects another week with open1/closed6 and6rendered;Space restores prior11. Deductions and selected footer change with selection. Batch88 dead chart drill CLOSED for these actual interactions. Screenshot private inline task,not committed.
+- #28538 b984b35e95: exact merge affected3/3PASS;target scan+selftest PASS. Independent actual-validator plants separately remove row and subtotal formatUsd from each of Reimbursements/ExtraPay:4/4now rejected,clean2/2accepted. Same4plants escaped exact old#28100. Batch90 precise guard gap CLOSED;no claim that every formatting variant is covered. Private codex-round7-reimbursement-format-probe.cjs.
+- Remaining selected-week label defect: SettlementsHomeBoardPanels.tsx:222 still says Deductions this week after selecting a historical week,while value follows selected week. Cursor should label selected week. Board payment Status Open is distinct from tour Closed by explicit contract;not reported as a new data defect.
+- Production untouched. Invoice full-JE health reader and canonical settlement-spine findings remain OPEN with CC-1;no fix observed through546a1beee7. Full audit remains INCOMPLETE.
+
 ## 2026-11-03 — ROUND7.30 batch90: settlement formatter history and reproduced guard coverage hole
 
 Batch89 merged #28524 7a47a9c51384cd82c75e2613aa9bd0614c8b1567,normal hooks,1affected,0regressions.

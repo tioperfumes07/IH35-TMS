@@ -9,6 +9,9 @@ import { formatQuantityTable } from "../../../lib/money";
 
 type Props = {
   sourceAvailable: boolean;
+  /** Row 163 — why the source is empty (planner recommendations + Loves price sync state), from the API. */
+  unavailableReason?: string | null;
+  lovesLastSyncedAt?: string | null;
   sentToDriverAt: string | null;
   fleetPct: number | null;
   fleetTotalRecommendations: number | null;
@@ -27,6 +30,8 @@ function count(sourceAvailable: boolean, value: number | null): string {
 
 export function CompliancePanel({
   sourceAvailable,
+  unavailableReason,
+  lovesLastSyncedAt,
   sentToDriverAt,
   fleetPct,
   fleetTotalRecommendations,
@@ -69,6 +74,13 @@ export function CompliancePanel({
         />
       </div>
 
+      {!sourceAvailable ? (
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-[#1F2A44]" data-testid="fuel-source-gap">
+          <strong>Not available.</strong>{" "}
+          {unavailableReason ?? "The planner has not produced the data this panel reads."}{" "}
+          {lovesLastSyncedAt ? `Loves prices last synced ${lovesLastSyncedAt.slice(0, 10)}.` : "Not synced since: never."}
+        </div>
+      ) : null}
       <FuelBoardSection
         title="Compliance Tracker"
         subtitle="YTD from the fuel planner compliance summary"

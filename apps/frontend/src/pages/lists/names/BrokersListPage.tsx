@@ -1,6 +1,5 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per broker (name / code / MC # / email / status) — a names directory, not a time series.
 import { useState } from "react";
-import { SelectCombobox } from "../../../components/Combobox";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +11,20 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { NewCustomerDrawerForm } from "../../../components/parity/drawers/NewCustomerDrawerForm";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → all, single Active/Inactive → scalar for listAllCustomers status. */
+function apiStatus(selected: string[]): "active" | "inactive" | "all" {
+  if (selected.length === 1 && (selected[0] === "active" || selected[0] === "inactive")) return selected[0];
+  return "all";
+}
 
 function statusPillClass(status: string) {
   return status === "active"
@@ -27,19 +37,21 @@ export function BrokersListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
-  const [status, setStatus] = useState<"active" | "inactive" | "all">("active");
+  const [status, setStatus] = useState<string[]>(["active"]);
   const [showVoided, setShowInactive] = useState(false);
+  const statusParam = apiStatus(status);
 
   const query = useQuery({
     // Round 296: every broker of the chosen status (customer_type + status narrow server-side; listAllCustomers reads
     // every page to the total), then the house toolbar (ParityTable's UniversalListToolbar) is the one search with
     // "N of M". The page search + "Show voided" checkbox are gone (two searches, double status filter).
-    queryKey: ["names", "brokers", companyId, status],
+    // U12: MultiSelect → apiStatus maps []/2→all, 1→scalar.
+    queryKey: ["names", "brokers", companyId, statusParam],
     queryFn: () =>
       listAllCustomers({
         operating_company_id: companyId,
         customer_type: "broker",
-        ...(status === "all" ? {} : { status }),
+        ...(statusParam === "all" ? {} : { status: statusParam }),
       }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
@@ -79,25 +91,29 @@ export function BrokersListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Show
-          <SelectCombobox
-            value={status}
-            onChange={(event) => setStatus(event.target.value as "active" | "inactive" | "all")}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="all">All</option>
-          </SelectCombobox>
-        </label>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="brokers-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={(next) => {
+                setStatus(next);
+                setShowInactive(apiStatus(next) === "all");
+              }}
+              allLabel="All statuses"
+              data-testid="brokers-status-multiselect"
+            />
+          </div>
+        </div>
         <label className="flex items-center gap-2 text-xs text-gray-700">
           <input
             type="checkbox"
             checked={showVoided}
             onChange={(event) => {
               setShowInactive(event.target.checked);
-              setStatus(event.target.checked ? "all" : "active");
+              setStatus(event.target.checked ? ["active", "inactive"] : ["active"]);
             }}
             className="h-3.5 w-3.5 rounded-sm border-gray-300"
           />
@@ -122,7 +138,7 @@ export function BrokersListPage() {
           onRowClick={(row) => navigate(`/customers/${row.id}`)}
           loading={query.isLoading}
           storageKey="names-brokers"
-          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          title={status.length !== 1 ? "All entries" : status[0] === "inactive" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}

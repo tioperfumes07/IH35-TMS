@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { Button } from "../../components/Button";
 import { formatQuantityTable } from "../../lib/money";
@@ -92,6 +93,17 @@ export function EngineStatusBoardPage() {
     ],
     [],
   );
+
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4" data-testid="engine-status-board-page">
+        <PageHeader title="Engine status" subtitle="Every registry engine — last run, rows written in 24 hours, last error, next run." />
+        <BoardSection title="Engine status" testId="engine-status-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4" data-testid="engine-status-board-page">

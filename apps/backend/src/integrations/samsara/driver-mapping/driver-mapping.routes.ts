@@ -14,6 +14,7 @@ import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../../../accounting/shared.js";
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
 import { resolveProfilesAgainstCandidates, type ResolverCandidate, type ResolverProfile } from "./resolver.service.js";
+import { repointHosRowsToSurvivor } from "../../../mdata/hos-shell-repoint.service.js";
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -512,7 +513,12 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
                 WHERE operating_company_id = $1::uuid AND id = $2::uuid AND merged_into_driver_id IS NULL AND id <> $3::uuid`,
               [operating_company_id, driver_id, target_id]
             );
-            if ((r.rowCount ?? 0) > 0) retired.push(driver_id);
+            if ((r.rowCount ?? 0) > 0) {
+              retired.push(driver_id);
+              // Register row 93: the retired record's HOS rows follow the person to the survivor in this same transaction
+              // (this path set merged_into_driver_id and moved nothing — prod 11-03: 49,486 snapshots left on 8 shells).
+              await repointHosRowsToSurvivor(client as never, driver_id, target_id);
+            }
           }
         }
 

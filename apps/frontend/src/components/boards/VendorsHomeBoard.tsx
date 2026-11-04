@@ -17,6 +17,7 @@ import { V3KpiTile, V3Panel, V3Segmented } from "../v3";
 import { EntityLink } from "../shared/EntityLink";
 import { formatCompanyName } from "../../lib/formatCompanyName";
 import { ListErrorState } from "../ListErrorState";
+import { SuggestedCategory, type SuggestedCategoryData } from "../vendors/SuggestedCategory";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { MeasuredNote, NumLink, PartyHomeHeader, PartyTable, SpendBar, day, int, outlineButton, usd, type PartyCol } from "./partyBoardKit";
 
@@ -25,6 +26,8 @@ type VendorRow = {
   avg_ticket_cents: number | null; last_paid: string | null; pays_through: string | null; open_bills: number; open_bills_cents: number;
   /** Rows 55/56 — the GL accounts behind the Category and Pays through cells (null = not an account / none recorded). */
   category_account_id?: string | null; pays_through_account_id?: string | null;
+  /** Row 97 — the account most of this vendor's live expenses post to (read only; saving is the user's click). */
+  suggested_category?: SuggestedCategoryData | null;
 };
 export type VendorBoard = {
   kpis: {
@@ -97,6 +100,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
   const cols: Array<PartyCol<VendorRow>> = [
     { key: "name", label: "Vendor", sort: (r) => r.name, cell: (r) => r.name },
     { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
+    { key: "suggested", label: "Suggested category", width: 300, sortable: false, sort: (r) => r.suggested_category?.label ?? "", cell: (r) => (r.txns ? <SuggestedCategory vendorId={r.id} suggestion={r.suggested_category ?? null} compact /> : <span>—</span>) },
     {
       key: "txns", label: "Transactions", num: true, width: 100, sort: (r) => r.txns,
       cell: (r) => (r.txns ? <NumLink to={`/vendors/${r.id}`}>{int(r.txns)}</NumLink> : <span>—</span>),

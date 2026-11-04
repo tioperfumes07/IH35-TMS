@@ -8,6 +8,9 @@ import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
   sourceAvailable: boolean;
+  /** Row 163 — why the source is empty (planner recommendations + Loves price sync state), from the API. */
+  unavailableReason?: string | null;
+  lovesLastSyncedAt?: string | null;
   driverSavings: number | null;
   fleetSavings: number | null;
   lostSavings: number | null;
@@ -24,6 +27,8 @@ function kpiMoney(sourceAvailable: boolean, value: number | null): string {
 
 export function SavingsPanel({
   sourceAvailable,
+  unavailableReason,
+  lovesLastSyncedAt,
   driverSavings,
   fleetSavings,
   lostSavings,
@@ -72,6 +77,13 @@ export function SavingsPanel({
           testId="fuel-savings-kpi-highest"
         />
       </div>
+      {!sourceAvailable ? (
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-[#1F2A44]" data-testid="fuel-source-gap">
+          <strong>Not available.</strong>{" "}
+          {unavailableReason ?? "The planner has not produced the data this panel reads."}{" "}
+          {lovesLastSyncedAt ? `Loves prices last synced ${lovesLastSyncedAt.slice(0, 10)}.` : "Not synced since: never."}
+        </div>
+      ) : null}
       <FuelBoardSection
         title="Savings tracker"
         subtitle="YTD from the fuel planner savings summary"

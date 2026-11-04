@@ -174,8 +174,11 @@ export function collectProblems(src) {
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
-  if (!src.includes("Carry-forward override needs a reason of at least 30 characters")) {
-    problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
+  // Row 28 (443.294): the carry-forward override is the shared OverrideButton -> a catalog reason_code. The save sends the
+  // code (never a typed sentence); a save without a confirmed Override is refused 422 by the route and surfaced by the
+  // mutation's onError toast, never a 500.
+  if (!src.includes("projection_override_reason_code: overrideReasonCodeOf(form.projectionOverrideReason)")) {
+    problems.push(`${PAGE}: carry-forward save must send the catalog projection_override_reason_code (row 28), not a typed reason`);
   }
   const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c.routes.ts"), "utf8");
   if (routes.includes("Number(incoming32 ?? current.line_32_proj_receipts ?? 0)") || routes.includes("Number(b.line_35_next_proj_receipts ?? current.line_35_next_proj_receipts ?? 0)")) {
@@ -247,8 +250,8 @@ export function collectProblems(src) {
   if (profiles.includes("disabled={saving || !canSave}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Save Defaults must stay clickable when canSave is false so the parent toast fires — disabled is a leftover dead click");
   }
-  if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
-    problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
+  if (!routes.includes('reply.code(422).send({') || !routes.includes('"projection_override_required"') || !routes.includes("Form425COverrideRefusedError")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: a carry-forward change without a confirmed Override / catalog reason must 422, not 500");
   }
   if (!routes.includes("mor_cash_zero_with_activity") || !routes.includes('reply.code(422).send({')) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: banking import $0-with-activity must 422, not 502/500");
@@ -580,7 +583,7 @@ const good = `
   openedReportId
   Create already in progress
   matches.find((r) => r.status !== "filed")
-  throw new Error("Carry-forward override needs a reason of at least 30 characters");
+  projection_override_reason_code: overrideReasonCodeOf(form.projectionOverrideReason)
   throw new Error("This MOR is filed — use Amend on History");
   form.status === "filed"
   addForm425CExhibitA

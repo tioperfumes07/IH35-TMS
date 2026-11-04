@@ -7,6 +7,7 @@ import { useTranslation } from "../../hooks/useTranslation";
  * change account / class / vendor (each optional) + reason → Apply → one RECLASSIFICATION JE per
  * document, audit each, results per document, Undo per batch.
  */
+import { OverrideButton } from "../../components/override/OverrideButton";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -130,7 +131,8 @@ export function ReclassifyTransactionsPage() {
   const { t } = useTranslation();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
-  const isOwner = user?.role === "Owner";
+  // Row 28: the refused-class override is Owner / Accountant confirm (the shared OverrideButton).
+  const canOverrideRefusals = user?.role === "Owner" || user?.role === "Accountant";
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   // Owner ruling (Round 83): account numbers hidden by default, shown only when the toggle is on.
@@ -182,6 +184,7 @@ export function ReclassifyTransactionsPage() {
   const itemTargetOptions = useMemo<ReferenceOption[]>(() => (itemsTargetQ.data ?? []).map((row) => ({ value: row.id, label: row.name })), [itemsTargetQ.data]);
   const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [overrideRefusals, setOverrideRefusals] = useState(false);
+  const [overrideReasonCode, setOverrideReasonCode] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ReclassifyBatchResult | null>(null);
   const [accountFilter, setAccountFilter] = useState("");
   const [undoTarget, setUndoTarget] = useState<string | null>(null);
@@ -228,10 +231,11 @@ export function ReclassifyTransactionsPage() {
       to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
       to_item_id: toItem || null, to_load_id: toLoad || null,
       filter_snapshot: applied ?? {},
-      override_refusals: isOwner && overrideRefusals ? true : undefined,
+      override_refusals: canOverrideRefusals && overrideRefusals ? true : undefined,
+      override_reason_code: canOverrideRefusals && overrideRefusals ? overrideReasonCode : undefined,
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setVoidModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setToItem(""); setToLoad(null); setOverrideRefusals(false);
+      setLastResult(res); setModalOpen(false); setVoidModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setToItem(""); setToLoad(null); setOverrideRefusals(false); setOverrideReasonCode(null);
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -705,11 +709,24 @@ export function ReclassifyTransactionsPage() {
                 </div>
               </div>
             </div>
-            {isOwner ? (
-              <label className="mt-2 flex items-start gap-2 text-xs text-[#1F2A44]" data-testid="reclassify-owner-override">
-                <input type="checkbox" checked={overrideRefusals} onChange={(e) => setOverrideRefusals(e.target.checked)} className="mt-0.5" />
-                <span><span className="font-semibold">Owner override</span> — also move lines normally refused (A/R, A/P, inventory, payroll, subledger control accounts). Bank and cash lines are never moved here. Each overridden line is recorded with the refusal it bypassed and audited.</span>
-              </label>
+            {canOverrideRefusals ? (
+              <div className="mt-2 flex items-start gap-2 text-xs text-[#1F2A44]" data-testid="reclassify-owner-override">
+                {overrideRefusals ? (
+                  <span data-testid="reclassify-override-approved"><span className="font-semibold">Override approved</span> — </span>
+                ) : (
+                  <OverrideButton
+                    context="expense"
+                    size="sm"
+                    label="Override"
+                    testId="reclassify-override-button"
+                    onConfirm={(code) => {
+                      setOverrideReasonCode(code);
+                      setOverrideRefusals(true);
+                    }}
+                  />
+                )}
+                <span>also move lines normally refused (A/R, A/P, inventory, payroll, subledger control accounts). Bank and cash lines are never moved here. Each overridden line is recorded with the refusal it bypassed and audited.</span>
+              </div>
             ) : null}
             {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** DRIVER-F6481 — Driver roster staged Status filter uses canonical Combobox chrome. */
+/**
+ * DRIVER-F6481 → U12 — Driver roster staged Status filter is MultiSelectDropdown
+ * (was Combobox single). Apply + predicate wiring preserved.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,22 +15,19 @@ const diskSource = fs.readFileSync(path.join(ROOT, REL), "utf8");
 function assertContract(source) {
   if (/<select\b/.test(source)) throw new Error("native select returned to DriversTable");
   for (const token of [
-    'htmlFor="drivers-table-status-filter"',
-    'id="drivers-table-status-filter"',
-    'dataTestId="drivers-table-status-filter"',
-    'options={DRIVER_STATUS_FILTERS.filter((option) => option.value)}',
-    'value={staged.draft.status || null}',
-    // 443.187 (CC-2) repoint — DRIVER-F7334 (0141802168, #19555) added the tag filter beside status: the draft update
-    // became functional, Apply sets both filters, and the status predicate is conditional. Same contract.
-    'onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next ?? "" }))}',
-    'placeholder="All statuses"',
-    'setStatusFilter(next.status);',
-    'if (statusFilter) out = out.filter((row) => row.status === statusFilter);',
+    'data-testid="drivers-table-status-filter"',
+    "MultiSelectDropdown",
+    "options={DRIVER_STATUS_FILTERS}",
+    "selected={staged.draft.status}",
+    'onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next }))}',
+    'allLabel="All statuses"',
+    "setStatusFilter(next.status);",
+    "if (statusFilter.length) out = out.filter((row) => statusFilter.includes(row.status));",
   ]) if (!source.includes(token)) throw new Error(`missing Driver roster status contract: ${token}`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = diskSource.replace('setStatusFilter(next.status);', '');
+  const planted = diskSource.replace("setStatusFilter(next.status);", "");
   const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
     cwd: ROOT,
     env: { ...process.env, DRIVER_F6481_PLANTED_SOURCE: planted },
@@ -39,4 +39,4 @@ if (process.argv.includes("--selftest")) {
 }
 
 assertContract(process.env.DRIVER_F6481_PLANTED_SOURCE ?? diskSource);
-console.log("verify-driver-roster-status-filter-combobox PASS — staged Combobox preserves Apply + predicate wiring");
+console.log("verify-driver-roster-status-filter-combobox PASS — staged MultiSelect preserves Apply + predicate wiring");

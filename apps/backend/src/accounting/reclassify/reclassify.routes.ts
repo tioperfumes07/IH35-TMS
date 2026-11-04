@@ -1,4 +1,5 @@
 /** Reclassify Transactions — routes (Lead 2026-10-01, QBO spec §24). Owner / Administrator / Accountant only. */
+import { overrideReasonCodeSchema } from "../../overrides/confirm-override.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -86,6 +87,8 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       to_load_id: z.string().uuid().nullable().optional(),
       filter_snapshot: z.record(z.string(), z.unknown()).optional(),
       override_refusals: z.boolean().optional(),
+      // Row 28: the ONE override — a catalog reason_code (Owner / Accountant send none and just confirm).
+      override_reason_code: overrideReasonCodeSchema.nullable().optional(),
     }).safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);

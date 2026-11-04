@@ -1,5 +1,6 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
 import { recordSamsaraDriverLogin } from "../samsara-driver-login.service.js";
+import { resolveSurvivorDriverId } from "../../../mdata/driver-merge-resolution.js";
 
 type DutyStatus =
   | "off_duty"
@@ -187,7 +188,10 @@ export async function projectHosEvent(client: DbClient, event: SamsaraWebhookEve
     };
   }
 
-  const localDriverId = await resolveLocalDriverId(client, event.operating_company_id, driverSamsaraId);
+  const mappedDriverId = await resolveLocalDriverId(client, event.operating_company_id, driverSamsaraId);
+  // Register row 93: the mirror fallback (integrations.samsara_drivers.local_driver_id) and a not-yet-deactivated merged
+  // record can both name a shell — the event is written onto the survivor, never the shell.
+  const localDriverId = mappedDriverId ? await resolveSurvivorDriverId(client as never, mappedDriverId) : null;
   if (!localDriverId) {
     return {
       success: false,

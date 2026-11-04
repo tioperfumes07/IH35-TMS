@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { makeInvoiceReliefMock } from "./invoice-relief-mock.js";
 import {
   postFactoringAdvanceEvent,
   postFactoringCustomerPaymentEvent,
@@ -65,6 +66,8 @@ const ACTOR = "33333333-3333-4333-8333-333333333333";
 
 type AccrualState = { exists?: boolean; lastClosing?: number | null };
 
+// Row 129: relief is an application; the double simulates the one writer (accounting.recompute_invoice_paid).
+let relief = makeInvoiceReliefMock(() => undefined);
 function installDefaults(
   opts: {
     flagOn?: boolean;
@@ -102,7 +105,8 @@ function installDefaults(
   );
   mockAppendCrudAudit.mockResolvedValue(undefined);
 
-  mockQuery.mockImplementation(async (sql: string) => {
+  mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    { const r = relief.handle(sql, values); if (r) return r; }
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };

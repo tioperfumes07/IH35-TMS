@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
+import { OverrideButton } from "../../../components/override/OverrideButton";
 import type { NetPayFloorBreachDetails } from "../../../api/driverFinance";
 import { formatUsdCents } from "../../../lib/money";
 
@@ -9,7 +9,7 @@ type Props = {
   details: NetPayFloorBreachDetails | null;
   onClose: () => void;
   /** Fires with the override to attach to a re-submitted close call. Never auto-submits — the panel owns the retry. */
-  onDecide: (override: { pct: number | null; cents: number | null; reason: string }) => void;
+  onDecide: (override: { pct: number | null; cents: number | null; reason_code: string | null }) => void;
 };
 
 function formatCents(cents: number): string {
@@ -25,23 +25,18 @@ function formatCents(cents: number): string {
  * error banner (its own PR body said so: "override_floor is wired in the API client but has no
  * modal UI yet"). This is that missing control: Override waives the floor to $0 (pct:0, cents:0)
  * so netCents (already asserted >= 0 by NET_PAY_NEGATIVE upstream) always clears it — the "full
- * final check" the task names, gated on a written reason so who decided and why is on the audit
+ * final check" the task names, gated on a reason so who decided and why is on the audit
  * trail (driver_finance.settlement.payrun_floor_override), never silent, never a default.
+ * Row 28 (443.294): the reason is the ONE OverrideButton (context "settlement") — Owner / Accountant
+ * confirm; everyone else picks a catalog reason. Nothing is typed.
  */
 export function FloorOverrideDecisionModal({ open, details, onClose, onDecide }: Props) {
-  const [reason, setReason] = useState("");
-
-  useEffect(() => {
-    if (open && details) setReason("");
-  }, [open, details]);
-
   if (!details) return null;
 
-  const canConfirm = reason.trim().length >= 10;
-
-  function confirmOverride() {
-    if (!canConfirm) return;
-    onDecide({ pct: 0, cents: 0, reason: reason.trim() });
+  function confirmOverride(reasonCode: string | null) {
+    // Row 28: the catalog reason_code (null = an Owner / Accountant plain confirm) — the server validates it through
+    // recordOverride in the close transaction. A typed sentence never travels.
+    onDecide({ pct: 0, cents: 0, reason_code: reasonCode });
   }
 
   return (
@@ -51,26 +46,17 @@ export function FloorOverrideDecisionModal({ open, details, onClose, onDecide }:
           Net pay <span className="font-semibold">{formatCents(details.net_cents)}</span> is below
           the {details.floor_pct}% / {formatCents(details.floor_min_cents)} net-pay floor (
           {formatCents(details.floor_cents)}) after escrow/advance/chargeback withholding. Closing
-          below the floor requires a written reason — e.g. driver termination, paying the full
-          final check.
+          below the floor requires an override — e.g. driver termination, paying the full final check.
         </p>
 
-        <label className="block">
-          <span className="mb-1 block font-medium text-gray-600">Reason (min 10 chars)</span>
-          <textarea
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            rows={2}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            placeholder="e.g. Driver terminated — full final check, no floor withheld"
-            data-testid="floor-override-reason"
-          />
-        </label>
-
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={confirmOverride} disabled={!canConfirm} data-testid="floor-override-confirm">
-            Override — pay full net {formatCents(details.net_cents)}
-          </Button>
+          <OverrideButton
+            context="settlement"
+            size="sm"
+            label={`Override — pay full net ${formatCents(details.net_cents)}`}
+            testId="floor-override-confirm"
+            onConfirm={(code) => confirmOverride(code)}
+          />
           <Button size="sm" variant="secondary" onClick={onClose} data-testid="floor-override-cancel">
             Cancel
           </Button>

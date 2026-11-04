@@ -87,6 +87,8 @@ describe("ManualJEModal (accounting 2-step)", () => {
 
   // D065 (register row 241): header + every line row share ONE fixed minmax(0,…) template so the Class
   // picker can never overlap Debit and the row can never push the 700px drawer into a horizontal scroll.
+  // Layout proof: Account/Class Combobox shells must NOT carry FILTER min-w-[10rem] (live Class was
+  // 142px into a ~115px track → ~27px Debit overlap). size="sm" uses FORM_FIELD chrome (no min-width).
   it("D065 step 2 header and line rows use the fixed minmax(0,…) grid template with shrinkable items", async () => {
     const user = userEvent.setup();
     render(wrap(<ManualJEModal open operatingCompanyId={companyId} onClose={vi.fn()} onSaved={vi.fn()} />));
@@ -114,6 +116,54 @@ describe("ManualJEModal (accounting 2-step)", () => {
     expect(screen.getByTestId("manual-je-lines").className).toContain("min-w-0");
     // Header labels align 1:1 with row controls: Account · Class · Debit · Credit · Description.
     expect([...header.children].map((c) => c.textContent)).toEqual(["Account", "Class", "Debit", "Credit", "Description"]);
+
+    // Layout proof (jsdom cannot measure px overlap): every Account/Class combobox shell must omit
+    // FILTER min-w-[10rem], which was the live Class→Debit overflow source at 1280/768.
+    for (const row of rows) {
+      const accountCell = row.children[0] as HTMLElement;
+      const classCell = row.children[1] as HTMLElement;
+      for (const cell of [accountCell, classCell]) {
+        const shells = cell.querySelectorAll("[class*='min-w-']");
+        for (const shell of shells) {
+          expect((shell as HTMLElement).className).not.toMatch(/min-w-\[10rem\]/);
+        }
+        // size="sm" form chrome paints h-10 on the input (same as MoneyInput), not the md filter shell.
+        const input = cell.querySelector('input[role="combobox"]') as HTMLInputElement | null;
+        expect(input).toBeTruthy();
+        expect(input!.className).toMatch(/\bh-10\b/);
+        expect(input!.className).toMatch(/\bmin-w-0\b/);
+      }
+    }
+  });
+
+  // Row 241 live FAIL 11-03: at a 299px pane the Account combobox drew 142px inside a 68px cell over Debit — the
+  // flex-item <input> kept min-width:auto (its ~20ch intrinsic size). Every control in every cell must be able to
+  // shrink to its cell: grid item min-width 0, picker root + input width:100% / min-width 0, money input min-width 0.
+  it("row 241 — every line-grid control fits its cell: min-w-0 cells, comboboxes w-full + min-w-0", async () => {
+    const user = userEvent.setup();
+    render(wrap(<ManualJEModal open operatingCompanyId={companyId} onClose={vi.fn()} onSaved={vi.fn()} />));
+    await user.click(screen.getByRole("button", { name: /Continue to Lines/i }));
+    await waitFor(() => expect(screen.getAllByTestId("manual-je-line-row").length).toBeGreaterThanOrEqual(2));
+    for (const row of screen.getAllByTestId("manual-je-line-row")) {
+      expect(row.className.split(/\s+/)).toContain("[&>*]:min-w-0");
+      const roots = row.querySelectorAll('[data-testid="reference-select-root"]');
+      expect(roots).toHaveLength(2);
+      for (const r of roots) {
+        const cls = r.className.split(/\s+/);
+        expect(cls).toContain("w-full");
+        expect(cls).toContain("min-w-0");
+      }
+      const triggers = row.querySelectorAll('input[role="combobox"]');
+      expect(triggers).toHaveLength(2);
+      for (const t of triggers) {
+        const cls = t.className.split(/\s+/);
+        expect(cls).toContain("w-full");
+        expect(cls).toContain("min-w-0");
+      }
+      for (const money of row.querySelectorAll('input[data-control-kind="money"]')) {
+        expect(money.className.split(/\s+/)).toContain("min-w-0");
+      }
+    }
   });
 
   it("step 2 keeps Save disabled until debits equal credits", async () => {

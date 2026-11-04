@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { apBillPaymentOnlySql } from "./ap-bill-payment-scope.sql.js";
 import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { AP_BILL_OUTSTANDING_STATUSES, sqlList } from "../lib/document-status-vocabulary.js";
 import { agingWindowPredicate } from "./aging/buckets.js";
@@ -2157,9 +2158,13 @@ export async function listBillPayments(
     // close. They are NOT cash payments and must not appear on the Bill Payments list.
     // The discriminator is settlement_deduction_noncash = true (set by the settlement close engine).
     // They remain visible in listBillPaymentsForBill (the per-bill drill-through) where they belong.
+    // Row 23 (ACCT-F11057): the shared A/P bill-payment predicate (ap-bill-payment-scope.sql.ts) — settlement
+    // deductions (escrow / advance / other recovery) are not bill payments on ANY list, not only this one.
     const where: string[] = [
       "bp.operating_company_id = $1::uuid",
+      // ROW-216 literal kept for verify-bill-payments-list-excludes-deductions; the predicate below carries it too.
       "bp.settlement_deduction_noncash IS NOT TRUE",
+      apBillPaymentOnlySql("bp"),
     ];
     if (!options.includeVoided) {
       where.push("bp.revoked_at IS NULL");
@@ -2682,6 +2687,12 @@ function validateCreateBillInput(input: CreateBillInput) {
     throw new Error("bill_lines_required");
   }
 
+  // Rows 94 / 124(a) (ACCT-F11065): a driver A/P bill without a due date is refused at the one INSERT — the settlement
+  // close wrote 11 USMCA driver bills with due_date NULL (P-0069 / 13530 $300 sat undated since 08-21). The writer
+  // resolves it from driver_finance.load_driver_pay_due (driver-finance/driver-bill-due-date.ts).
+  if ((input.source === "settlement_driver_bill" || input.source === "driver_pay_accrual") && !String(input.dueDate ?? "").trim()) {
+    throw new Error("driver_bill_due_date_required");
+  }
 }
 
 /** The bill row + lines + spine event, on the CALLER's client (one transaction with the caller). */

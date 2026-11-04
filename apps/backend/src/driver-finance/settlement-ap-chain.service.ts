@@ -24,6 +24,7 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting/driver-vendor-link.service.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
+import { resolveDriverBillDueDate } from "./driver-bill-due-date.js";
 
 export class SettlementApChainError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}) {
@@ -290,9 +291,13 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
       [opco, billNumber]
     );
+    // Rows 94 / 124(a) (ACCT-F11065): every driver bill carries its due date = the load's delivery date
+    // (driver_finance.load_driver_pay_due — the same rule the delivery accrual uses). Before this the close wrote NULL.
+    const due = await resolveDriverBillDueDate(client as never, b.loadId, input.billDate);
     const bill = await createBillInClientTx(client, {
       operatingCompanyId: opco,
       source: "settlement_driver_bill",
+      dueDate: due.dueDate,
       vendorId,
       driverId: input.driverId,
       // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): a driver bill carries vendor, driver, load and unit on

@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { splitCostByMiles, sharesReconcile, type UnitMiles, type UnitCostShare } from "./load-unit-cost-split.math.js";
+import { signedExpenseCentsSql } from "./expense-signed-cents.sql.js";
 
 /**
  * SET-28 — vehicle-swap mid-trip cost split by miles each truck ran.
@@ -70,7 +71,7 @@ export async function buildLoadUnitCostSplit(
               now()
             )::text AS load_end,
             (
-              COALESCE((SELECT SUM(e.total_amount_cents) FROM accounting.expenses e
+              COALESCE((SELECT SUM(${signedExpenseCentsSql("e")}) FROM accounting.expenses e
                          WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void'), 0)
               + COALESCE((SELECT SUM(ROUND(bl.amount * 100)) FROM accounting.bill_lines bl
                            JOIN accounting.bills b ON b.id = bl.bill_id

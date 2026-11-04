@@ -19,10 +19,23 @@ import {
   type MaintenanceService,
 } from "../../hooks/useMaintenanceServicesCatalog";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 import { formatQuantityTable } from "../../lib/money";
 
-const APPLIES_TO = ["", "truck", "trailer", "reefer", "all"];
+const APPLIES_TO_OPTIONS = [
+  { value: "truck", label: "Truck" },
+  { value: "trailer", label: "Trailer" },
+  { value: "reefer", label: "Reefer" },
+  { value: "all", label: "All types" },
+] as const;
+
+/** U12: 0/2+ → omit API applies_to; 1 → scalar. */
+function apiAppliesTo(selected: string[]): string | undefined {
+  if (selected.length === 1) return selected[0];
+  return undefined;
+}
+
 const PAGE_SIZE = 50;
 
 type CreateForm = {
@@ -185,7 +198,7 @@ export function MaintenanceServicesCatalog() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [appliesTo, setAppliesTo] = useState("");
+  const [appliesTo, setAppliesTo] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_CREATE);
@@ -194,17 +207,22 @@ export function MaintenanceServicesCatalog() {
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [editError, setEditError] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+  const appliesApi = apiAppliesTo(appliesTo);
 
   const query = useMaintenanceServicesCatalog(companyId, {
     search: search || undefined,
-    applies_to: appliesTo || undefined,
+    applies_to: appliesApi,
     page,
   });
   const createMutation = useCreateMaintenanceService(companyId);
   const updateMutation = useUpdateMaintenanceService(companyId);
 
   const allRows = query.data?.rows ?? [];
-  const rows = showInactive ? allRows : allRows.filter((s) => s.is_active);
+  const rows = (showInactive ? allRows : allRows.filter((s) => s.is_active)).filter((s) => {
+    // U12: 2+ vehicle-type selections — API unscoped; narrow client-side.
+    if (appliesTo.length < 2) return true;
+    return appliesTo.includes(s.applies_to_type) || s.applies_to_type === "all";
+  });
   const total = query.data?.total ?? 0;
 
   const openEdit = (svc: MaintenanceService) => {
@@ -227,9 +245,22 @@ export function MaintenanceServicesCatalog() {
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* MAINT-F3506: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <CatalogListSearchInput value={search} onChange={(v: string) => { setSearch(v); setPage(1); }} placeholder="Search by code or service name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-        <SelectCombobox value={appliesTo} onChange={(e) => { setAppliesTo(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-          {APPLIES_TO.map((t) => <option key={t} value={t}>{t || "All vehicle types"}</option>)}
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="maintenance-services-applies-filter">
+          <span className="block">Applies to</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Applies to"
+              options={[...APPLIES_TO_OPTIONS]}
+              selected={appliesTo}
+              onChange={(next) => {
+                setAppliesTo(next);
+                setPage(1);
+              }}
+              allLabel="All vehicle types"
+              data-testid="maintenance-services-applies-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">

@@ -1067,7 +1067,7 @@ export function closeSettlementPayRun(
      * resolved floor. 00_LOCKED_DECISIONS 9.2: 5% default, owner-editable per settlement; on
      * termination the operator may override up to the FULL final check.
      */
-    override_floor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
+    override_floor?: { pct?: number | null; cents?: number | null; reason_code?: string | null } | null;
     /**
      * GO-22 B7 / 00_LOCKED_DECISIONS 9.2 — blocking, non-deferrable decision whenever the driver
      * carries ANY outstanding advance/loan. 'full' accepts the computed recovery as-is; 'partial'

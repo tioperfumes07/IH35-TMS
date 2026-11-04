@@ -15,9 +15,16 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { ListsSubNav } from "../ListsSubNav";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+
+/** U12: 0/2+ → undefined, 1 → scalar API. */
+function apiScalar(selected: string[]): string | undefined {
+  if (selected.length === 1) return selected[0];
+  return undefined;
+}
 
 function formatCost(value: string | null) {
   if (!value) return "—";
@@ -161,11 +168,15 @@ export function OemPartsCatalog() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [brandFilter, setBrandFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [fleetOnly, setFleetOnly] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const brandApi = apiScalar(brandFilter);
+  const categoryApi = apiScalar(categoryFilter);
+  const brandKey = brandFilter.slice().sort().join(",") || "all";
+  const categoryKey = categoryFilter.slice().sort().join(",") || "all";
 
   // LST-F5218 — Lists hub ?create=1 must open OEM part create modal.
   useCreateQueryParam({
@@ -174,13 +185,13 @@ export function OemPartsCatalog() {
   });
 
   const query = useQuery({
-    queryKey: ["lists", "oem-parts", search, brandFilter, categoryFilter, fleetOnly],
+    queryKey: ["lists", "oem-parts", search, brandKey, categoryKey, fleetOnly],
     queryFn: () =>
       oemPartsCatalogClient.list({
         operating_company_id: companyId,
         q: search || undefined,
-        brand: brandFilter || undefined,
-        category: categoryFilter || undefined,
+        brand: brandApi,
+        category: categoryApi,
         fleet_only: fleetOnly,
       }),
     enabled: Boolean(companyId),
@@ -194,7 +205,12 @@ export function OemPartsCatalog() {
   });
 
   const allRows = query.data?.rows ?? [];
-  const rows = showInactive ? allRows : allRows.filter((r) => !r.archived_at);
+  const rows = (showInactive ? allRows : allRows.filter((r) => !r.archived_at)).filter((r) => {
+    // U12: 2+ selections — API unscoped; narrow client-side.
+    if (brandFilter.length >= 2 && !brandFilter.includes(String(r.brand ?? ""))) return false;
+    if (categoryFilter.length >= 2 && !categoryFilter.includes(String(r.category ?? ""))) return false;
+    return true;
+  });
   const total = query.data?.total_count ?? 0;
   const brandCount = query.data?.brand_count ?? 0;
   const fleetCount = query.data?.fleet_count ?? 0;
@@ -228,30 +244,32 @@ export function OemPartsCatalog() {
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3508: server-bound OEM search (q) — keep; ParityTable toolbar Search suppressed */}
         <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search name or part #" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-        <SelectCombobox
-          value={brandFilter}
-          onChange={(event) => setBrandFilter(event.target.value)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="">All brands</option>
-          {brandOptions.map((brand) => (
-            <option key={brand} value={brand}>
-              {brand}
-            </option>
-          ))}
-        </SelectCombobox>
-        <SelectCombobox
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="">All categories</option>
-          {OEM_PART_CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="oem-parts-brand-filter">
+          <span className="block">Brand</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Brand"
+              options={brandOptions.map((brand) => ({ value: brand, label: brand }))}
+              selected={brandFilter}
+              onChange={setBrandFilter}
+              allLabel="All brands"
+              data-testid="oem-parts-brand-multiselect"
+            />
+          </div>
+        </div>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="oem-parts-category-filter">
+          <span className="block">Category</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Category"
+              options={OEM_PART_CATEGORIES.map((category) => ({ value: category, label: category }))}
+              selected={categoryFilter}
+              onChange={setCategoryFilter}
+              allLabel="All categories"
+              data-testid="oem-parts-category-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-2 text-xs text-[#1F2A44]">

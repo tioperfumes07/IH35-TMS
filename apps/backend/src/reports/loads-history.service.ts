@@ -29,6 +29,11 @@ export type LoadsHistoryQuery = {
   status?: string;
   tripType?: string;
   factoringStatus?: string;
+  /**
+   * Row 78 (Dispatch › Load history): the board's "View all" includes cancelled loads. Default false keeps the
+   * loads-report scope (draft · cancelled · voided excluded). Draft, voided, deleted and sample loads stay out either way.
+   */
+  includeCancelled?: boolean;
   limit: number;
   offset: number;
 };
@@ -45,7 +50,18 @@ export type LoadsHistoryTotals = {
   ar_invoice_count: number;
   /** Sum of invoice amount_cents for the filtered load set (ties to GL 1100 posted balance). */
   ar_invoice_amount_cents: number;
+  /** Row 78 — practical (loaded) miles summed over the filtered set. */
+  loaded_miles: number;
+  /** Row 78 — mdata.loads.miles_deadhead summed over the filtered set (empty miles). */
+  empty_miles: number;
+  /** Row 78 — delivered loads with no live invoice (status delivered / delivered_pending_docs / completed_docs_received). */
+  delivered_not_invoiced: number;
+  /** Row 78 — distinct customers on the filtered set. */
+  customer_count: number;
 };
+
+/** Row 78 — load count per status for the same window + filters, status filter ignored, cancelled always counted. */
+export type LoadsHistoryStatusCount = { status: string; count: number };
 
 export type LoadsHistoryPayload = {
   date_field: "pickup" | "delivery";
@@ -54,14 +70,29 @@ export type LoadsHistoryPayload = {
   period: { start: string; end: string };
   pagination: { limit: number; offset: number; total: number };
   totals: LoadsHistoryTotals;
-  rows: LoadsReportRow[];
+  status_counts: LoadsHistoryStatusCount[];
+  rows: LoadsHistoryRow[];
 };
 
-function buildFilters(query: LoadsHistoryQuery): { filters: string[]; values: unknown[] } {
+/** Row 78 — the loads-report row plus the load's empty (deadhead) miles. */
+export type LoadsHistoryRow = LoadsReportRow & { miles_deadhead: number | null };
+
+/** Row 78 — the loads-report scope, with the cancelled exclusion lifted when the board asks for "View all". */
+export function loadsHistoryScopeSql(includeCancelled: boolean): string[] {
+  if (!includeCancelled) return [...LOADS_REPORT_SCOPE_SQL];
+  return LOADS_REPORT_SCOPE_SQL.map((clause) =>
+    clause.startsWith("l.status::text NOT IN") ? `l.status::text NOT IN ('draft', 'voided')` : clause
+  );
+}
+
+function buildFilters(
+  query: LoadsHistoryQuery,
+  opts: { ignoreStatus?: boolean; includeCancelled?: boolean } = {}
+): { filters: string[]; values: unknown[] } {
   const { operatingCompanyId, from, to, dateField } = query;
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
-    ...LOADS_REPORT_SCOPE_SQL,
+    ...loadsHistoryScopeSql(opts.includeCancelled ?? query.includeCancelled === true),
     `${scheduledStopDateSql(effectiveDateField(dateField as LoadsReportDateField))} BETWEEN $2::date AND $3::date`,
   ];
 
@@ -79,7 +110,7 @@ function buildFilters(query: LoadsHistoryQuery): { filters: string[]; values: un
     values.push(query.unitId);
     filters.push(`l.assigned_unit_id = $${values.length}::uuid`);
   }
-  if (query.status) {
+  if (query.status && !opts.ignoreStatus) {
     values.push(query.status);
     filters.push(`l.status = $${values.length}`);
   }
@@ -204,6 +235,7 @@ export async function getLoadsHistoryPage(
           l.miles_practical::text AS miles_practical,
           l.miles_shortest::text AS miles_shortest,
           l.miles_driven_actual::text AS miles_driven_actual,
+          l.miles_deadhead::text AS miles_deadhead,
           inv.invoice_id,
           inv.invoice_number,
           COALESCE(fbl.factoring_advance_id, inv.factoring_advance_id) AS factoring_advance_id,
@@ -234,7 +266,7 @@ export async function getLoadsHistoryPage(
 
   const total = num(res.rows[0]?._total_count ?? 0);
 
-  const rows: LoadsReportRow[] = (res.rows as Array<Record<string, string | null>>).map((row) => ({
+  const rows: LoadsHistoryRow[] = (res.rows as Array<Record<string, string | null>>).map((row) => ({
     load_id: String(row.load_id),
     load_number: row.load_number,
     status: row.status,
@@ -258,6 +290,7 @@ export async function getLoadsHistoryPage(
     miles_practical: nullableNum(row.miles_practical),
     miles_shortest: nullableNum(row.miles_shortest),
     miles_driven_actual: nullableNum(row.miles_driven_actual),
+    miles_deadhead: nullableNum(row.miles_deadhead),
     revenue_cents: num(row.lc_revenue_cents),
     driver_pay_cents: num(row.lc_driver_pay_cents),
     fuel_cents: num(row.lc_fuel_cents),
@@ -278,12 +311,19 @@ export async function getLoadsHistoryPage(
     `
       SELECT
         COUNT(DISTINCT l.id)::int AS load_count,
-        COALESCE(SUM(lc.lc_revenue_cents), 0)::bigint AS revenue_cents,
-        COALESCE(SUM(lc.lc_driver_pay_cents), 0)::bigint AS driver_pay_cents,
-        COALESCE(SUM(lc.lc_fuel_cents), 0)::bigint AS fuel_cents,
-        COALESCE(SUM(lc.lc_margin_cents), 0)::bigint AS margin_cents,
+        COALESCE(SUM(lc.lc_revenue_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS revenue_cents,
+        COALESCE(SUM(lc.lc_driver_pay_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS driver_pay_cents,
+        COALESCE(SUM(lc.lc_fuel_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS fuel_cents,
+        COALESCE(SUM(lc.lc_margin_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS margin_cents,
         COUNT(DISTINCT inv.id)::int AS ar_invoice_count,
-        COALESCE(SUM(inv.total_cents), 0)::bigint AS ar_invoice_amount_cents
+        COALESCE(SUM(inv.total_cents), 0)::bigint AS ar_invoice_amount_cents,
+        COALESCE(SUM(l.miles_practical) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::numeric AS loaded_miles,
+        COALESCE(SUM(l.miles_deadhead) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::numeric AS empty_miles,
+        COUNT(DISTINCT l.id) FILTER (
+          WHERE first_inv.id IS NULL
+            AND l.status::text IN ('delivered', 'delivered_pending_docs', 'completed_docs_received')
+        )::int AS delivered_not_invoiced,
+        COUNT(DISTINCT l.customer_id)::int AS customer_count
       FROM mdata.loads l
       ${loadCostRollupLateral("l.id", "$1::uuid")}
       LEFT JOIN accounting.invoices inv
@@ -291,6 +331,12 @@ export async function getLoadsHistoryPage(
         AND inv.operating_company_id = $1::uuid
         AND ${liveInvoice("inv")}
         -- (void stamp is inside liveInvoice)
+      LEFT JOIN LATERAL (
+        SELECT i1.id FROM accounting.invoices i1
+        WHERE i1.source_load_id = l.id AND i1.operating_company_id = $1::uuid AND ${liveInvoice("i1")}
+        ORDER BY i1.created_at DESC, i1.id
+        LIMIT 1
+      ) first_inv ON TRUE
       WHERE l.operating_company_id = $1::uuid
         AND ${totalsFilters.join("\n        AND ")}
     `,
@@ -306,7 +352,30 @@ export async function getLoadsHistoryPage(
     margin_cents: num(t.margin_cents),
     ar_invoice_count: num(t.ar_invoice_count),
     ar_invoice_amount_cents: num(t.ar_invoice_amount_cents),
+    loaded_miles: num(t.loaded_miles),
+    empty_miles: num(t.empty_miles),
+    delivered_not_invoiced: num(t.delivered_not_invoiced),
+    customer_count: num(t.customer_count),
   };
+
+  // Row 78 — status counts for the same window + filters (status filter ignored, cancelled always counted) so the
+  // board can say "198 booked · 4 cancelled" and every status chip ties to the list.
+  const sc = buildFilters(query, { ignoreStatus: true, includeCancelled: true });
+  const statusRes = await client.query(
+    `
+      SELECT l.status::text AS status, COUNT(*)::int AS count
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND ${sc.filters.join("\n        AND ")}
+      GROUP BY l.status
+      ORDER BY COUNT(*) DESC, l.status::text
+    `,
+    sc.values
+  );
+  const status_counts: LoadsHistoryStatusCount[] = (statusRes.rows as Array<Record<string, unknown>>).map((r) => ({
+    status: String(r.status ?? ""),
+    count: num(r.count),
+  }));
 
   return {
     date_field: effectiveDateField(dateField as LoadsReportDateField),
@@ -315,6 +384,7 @@ export async function getLoadsHistoryPage(
     period: { start: from, end: to },
     pagination: { limit, offset, total },
     totals,
+    status_counts,
     rows,
   };
 }

@@ -9,6 +9,7 @@ import { projectedCashDateSql } from "../cash-flow/projected-cash-date.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
+import { readCardPayableOutflows } from "../cash-flow/card-payables.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -284,6 +285,16 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
         outflowBills.set(bucket, Number(outflowBills.get(bucket) ?? 0) + Number(row.amount_cents ?? 0));
       }
 
+      // ROW 91: card payables (Dreamline 2510, WEX 2520) are outstanding liabilities owed to the card issuer — a real
+      // outflow on their payment due date. ONE shared reader (cash-flow/card-payables.ts), same as the rolling ledger.
+      const cardPayables = await readCardPayableOutflows(client, query.data.operating_company_id, asOf);
+      const outflowCardPayables = new Map<string, number>();
+      for (const cp of cardPayables) {
+        // Overdue / due-before-window balances are still owed: they land in the first forecast week.
+        const bucket = cp.due_date < startWeek ? startWeek : bucketStart(cp.due_date);
+        outflowCardPayables.set(bucket, Number(outflowCardPayables.get(bucket) ?? 0) + cp.balance_cents);
+      }
+
       const inflowFactoring = new Map<string, number>();
       const outflowFactoringFee = new Map<string, number>();
       for (const row of factoringRes.rows) {
@@ -301,6 +312,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
         inflowFactoring,
         inflowOther,
         outflowBills,
+        outflowCardPayables,
         outflowFactoringFee,
       });
 

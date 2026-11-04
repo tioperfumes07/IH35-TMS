@@ -10,11 +10,21 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { FORM_LABEL_CLASS, FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
-type StatusFilter = "true" | "false" | "all";
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → all, single → scalar for is_active API. */
+function apiStatus(selected: string[]): "true" | "false" | "all" {
+  if (selected.length === 1 && (selected[0] === "true" || selected[0] === "false")) return selected[0];
+  return "all";
+}
 
 type FormState = { account_type_id: string; name: string; code: string; description: string; sort_order: number };
 
@@ -31,10 +41,11 @@ export function DetailTypesListPage() {
   const companyId = selectedCompanyId ?? "";
 
   const [typeFilter, setTypeFilter] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<DetailTypeRow | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const statusParam = apiStatus(status);
 
   const accountTypesQuery = useQuery({ queryKey: ["account-type-catalog", companyId], queryFn: () => getAccountTypeCatalog(companyId || undefined) });
   const typeLabel = useMemo(() => {
@@ -44,8 +55,8 @@ export function DetailTypesListPage() {
   }, [accountTypesQuery.data]);
 
   const listQuery = useQuery({
-    queryKey: ["detail-types", companyId, typeFilter, status],
-    queryFn: () => detailTypesCatalogClient.list({ operating_company_id: companyId, account_type_id: typeFilter || undefined, is_active: status, limit: DETAIL_TYPES_LIST_CAP }),
+    queryKey: ["detail-types", companyId, typeFilter, statusParam],
+    queryFn: () => detailTypesCatalogClient.list({ operating_company_id: companyId, account_type_id: typeFilter || undefined, is_active: statusParam, limit: DETAIL_TYPES_LIST_CAP }),
     enabled: Boolean(companyId),
   });
   const rows = listQuery.data?.rows ?? [];
@@ -160,14 +171,19 @@ export function DetailTypesListPage() {
             ))}
           </SelectCombobox>
         </label>
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Status
-          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-            <option value="all">All</option>
-          </SelectCombobox>
-        </label>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="detail-types-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={setStatus}
+              allLabel="All statuses"
+              data-testid="detail-types-status-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       {!companyId ? (

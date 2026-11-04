@@ -904,6 +904,27 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       const advance = advanceRes.rows[0] ?? null;
       if (!advance) return { code: 404 as const, error: "factoring_advance_not_found" };
       if (!["advanced", "submitted"].includes(String(advance.status))) return { code: 409 as const, error: "factoring_status_invalid_transition" };
+      // ACCT-F11071 (row 89) — ONE A/R relief per factored invoice. The Faro collection-apply engine
+      // (factoring/collection-apply.service.ts) relieves A/R through a customer payment (Dr 2150 / Cr A/R, source =
+      // the payment). linkedOutstandingLiabilityCents counts only advance-sourced 2150 legs, so posting the full face
+      // here after a collection was applied would relieve 2150 and A/R a SECOND time. Refuse; the collection stands.
+      const priorCollection: { rows: Array<{ n: string }> } = await client.query(
+        `SELECT COUNT(*)::text AS n
+           FROM accounting.payment_applications pa
+           JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
+           JOIN accounting.invoices i
+             ON i.id = COALESCE(pa.invoice_id, CASE WHEN pa.target_kind = 'invoice' THEN pa.target_id END)
+            AND i.operating_company_id = pa.operating_company_id
+          WHERE pa.operating_company_id = $2::uuid
+            AND i.factoring_advance_id = $1::uuid
+            AND pa.unapplied_at IS NULL
+            AND p.voided_at IS NULL
+            AND p.payment_source_kind = 'factoring_collection'`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (Number(priorCollection.rows[0]?.n ?? 0) > 0) {
+        return { code: 409 as const, error: "factoring_collection_already_applied" };
+      }
 
       const collectedAt = body.data.collected_at ?? new Date().toISOString();
       await client.query(
