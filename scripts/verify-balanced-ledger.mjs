@@ -67,6 +67,44 @@ export const ASSERTIONS = {
             AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings x WHERE x.id = p.reversed_by_line_id))`,
 };
 
+const LABEL = "verify-balanced-ledger";
+
+if (process.argv.includes("--selftest")) {
+  // CI-safe: prove assertion SQL shape only. LIVE measure stays money-pr / DATABASE_URL.
+  const keys = Object.keys(ASSERTIONS);
+  const cases = [
+    [
+      "three assertions exported",
+      keys.length === 3 &&
+        keys.includes("balance") &&
+        keys.includes("minLines") &&
+        keys.includes("reversalIntegrity"),
+    ],
+    [
+      "balance is entity-scoped with HAVING debit≠credit",
+      /operating_company_id/.test(ASSERTIONS.balance) &&
+        /HAVING[\s\S]*debit[\s\S]*<>[\s\S]*credit/.test(ASSERTIONS.balance),
+    ],
+    [
+      "minLines HAVING COUNT(*) < 2",
+      /HAVING COUNT\(\*\) < 2/.test(ASSERTIONS.minLines),
+    ],
+    [
+      "reversalIntegrity checks both link columns",
+      /reversal_of_line_id/.test(ASSERTIONS.reversalIntegrity) &&
+        /reversed_by_line_id/.test(ASSERTIONS.reversalIntegrity),
+    ],
+  ];
+  for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(
+    bad
+      ? `${LABEL} --selftest FAIL`
+      : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`,
+  );
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!cs) {

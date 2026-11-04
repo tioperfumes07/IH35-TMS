@@ -12,9 +12,11 @@ import {
   type RollingLedgerResult,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDateUS, formatIsoDatesInText } from "../../../lib/formatDate";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
+import { ledgerPartyLabel } from "../ledgerPartyLabel";
+import { companyLabel } from "../../../lib/formatCompanyName";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -734,14 +736,14 @@ function IncomeGroupRows({
                 <EntityLinkOrTombstone
                   kind="customer"
                   id={item.customer_id}
-                  name={customerName}
+                  name={ledgerPartyLabel({ ...item, counterparty: customerName })}
                   noun="Customer"
                   className="font-medium"
                   data-testid="cash-flow-predicted-customer-link"
                 />
               ) : (
                 <span data-testid="cash-flow-predicted-customer-link">
-                  {entityLabel(item.customer_name, null, "Customer")}
+                  {companyLabel(item.customer_name, null, "Customer")}
                 </span>
               )}
             </td>
@@ -817,7 +819,7 @@ function ExpenseGroupRows({
           return (
           <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
             <td style={tdStyle}>
-              <span data-testid="cash-flow-projected-expense-payee">{entityLabel(item.counterparty, null, payeeNoun)}</span>
+              <span data-testid="cash-flow-projected-expense-payee">{entityLabel(ledgerPartyLabel(item) || item.counterparty, null, payeeNoun)}</span>
             </td>
             <td style={tdStyle}>
               {item.load_id ? (
@@ -845,7 +847,7 @@ function ExpenseGroupRows({
                   data-testid="cash-flow-predicted-expense-bill-link"
                 />
               ) : (
-                <span>{item.document_label}</span>
+                <span>{formatIsoDatesInText(item.document_label)}</span>
               )}
               {item.adjustment_id ? (
                 <button

@@ -36,7 +36,7 @@ import {
   addPaymentTermsDays,
 } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { readCardPayableBalances } from "./card-payables.js";
 import {
   isFactoringPathLoadStatus,
   DELIVERY_EVIDENCE_MDATA_STATUSES,
@@ -1339,100 +1339,9 @@ export async function getRollingLedgerRows(
   // LEAD 443.187 — the card-payable account is RESOLVED BY ROLE (fuel_card_payable_dreamline), never by number / name
   // (verify-every-poster-resolves-by-role-not-by-name-or-number). Prod: the role maps to exactly the 2510 "Dreamline Diesel
   // Card Payable" account the old literal matched; an unbound role yields no row (as a company with no 2510 did before).
-  const cardPayableAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, "fuel_card_payable_dreamline");
-  // 443.277-B — WEX card payable (2520 England Logistics WEX Fuel Card Payable) is the same pattern as Dreamline (2510).
-  // Both are billed-in-arrears fuel card rails; the outstanding GL credit balance on each is a real cash obligation.
-  const wexCardPayableAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, "fuel_card_payable_wex");
-  const cardPayable2510Promise = !cardPayableAccountId
-    ? Promise.resolve({ rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] })
-    : client.query<{
-    account_id: string;
-    account_name: string;
-    balance_cents: number;
-    due_date: string;
-  }>(
-    `
-    SELECT
-      ca.id::text AS account_id,
-      ca.account_name,
-      GREATEST(
-        COALESCE(SUM(
-          CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
-        ), 0)::int,
-        0
-      ) AS balance_cents,
-      $2::date AS due_date
-    FROM catalogs.accounts ca
-    JOIN accounting.journal_entry_postings jep ON jep.account_id = ca.id
-      AND jep.operating_company_id = $1::uuid
-    JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-      AND je.operating_company_id = $1::uuid
-      AND ${notVoided("je")}
-    WHERE ca.operating_company_id = $1::uuid
-      AND ca.id = $3::uuid
-      AND ca.deactivated_at IS NULL
-    GROUP BY ca.id, ca.account_name
-    HAVING GREATEST(
-      COALESCE(SUM(
-        CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
-      ), 0)::int,
-      0
-    ) > 0
-    `,
-    [operatingCompanyId, today, cardPayableAccountId]
-  ).catch((err) => {
-    logger.warn("cash-flow rolling-ledger: card_payable_2510 subquery failed", {
-      operating_company_id: operatingCompanyId,
-      error_stack: err instanceof Error ? err.stack : String(err),
-    });
-    return { rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] };
-  });
-
-  // 443.277-B — CARD PAYABLE WEX (2520): same shape as Dreamline (2510). Role: fuel_card_payable_wex.
-  const cardPayable2520Promise = !wexCardPayableAccountId
-    ? Promise.resolve({ rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] })
-    : client.query<{
-    account_id: string;
-    account_name: string;
-    balance_cents: number;
-    due_date: string;
-  }>(
-    `
-    SELECT
-      ca.id::text AS account_id,
-      ca.account_name,
-      GREATEST(
-        COALESCE(SUM(
-          CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
-        ), 0)::int,
-        0
-      ) AS balance_cents,
-      $2::date AS due_date
-    FROM catalogs.accounts ca
-    JOIN accounting.journal_entry_postings jep ON jep.account_id = ca.id
-      AND jep.operating_company_id = $1::uuid
-    JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-      AND je.operating_company_id = $1::uuid
-      AND ${notVoided("je")}
-    WHERE ca.operating_company_id = $1::uuid
-      AND ca.id = $3::uuid
-      AND ca.deactivated_at IS NULL
-    GROUP BY ca.id, ca.account_name
-    HAVING GREATEST(
-      COALESCE(SUM(
-        CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
-      ), 0)::int,
-      0
-    ) > 0
-    `,
-    [operatingCompanyId, today, wexCardPayableAccountId]
-  ).catch((err) => {
-    logger.warn("cash-flow rolling-ledger: card_payable_2520_wex subquery failed", {
-      operating_company_id: operatingCompanyId,
-      error_stack: err instanceof Error ? err.stack : String(err),
-    });
-    return { rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] };
-  });
+  // ROWS 91/149: BOTH card payables (Dreamline 2510, WEX 2520) come from the ONE shared reader (card-payables.ts),
+  // which resolves each account by role and returns only outstanding credit balances.
+  const cardPayablesPromise = readCardPayableBalances(client, operatingCompanyId, today);
 
   // 443.140 #8(b) — RELAY WALLET TOP-UPS: (1) owner-scheduled cash_flow_adjustments (label
   // contains 'relay') and (2) ingested integrations.relay_deposits not yet matched to a bank
@@ -1525,7 +1434,7 @@ export async function getRollingLedgerRows(
   // All 13 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
   // concurrently instead of paying sequential Neon round-trips, then process in the exact same
   // order the old sequential-await code did so row order/content is unchanged.
-  const [billRows, settlementRows, driverBillRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, cardPayable2520Rows, relayTopupRows, fuelAvgResult] =
+  const [billRows, settlementRows, driverBillRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayableAll, relayTopupRows, fuelAvgResult] =
     await Promise.all([
       billsPromise,
       settlementsPromise,
@@ -1535,8 +1444,7 @@ export async function getRollingLedgerRows(
       advancesPromise,
       reservesPromise,
       notInvoicedPromise,
-      cardPayable2510Promise,
-      cardPayable2520Promise,
+      cardPayablesPromise,
       relayTopupPromise,
       fuelAvgPromise,
     ]);
@@ -1701,7 +1609,7 @@ export async function getRollingLedgerRows(
   }
 
   // 443.140 #8(b) — CARD PAYABLE (2510) rows
-  for (const cp of cardPayable2510Rows.rows) {
+  for (const cp of cardPayableAll.filter((c) => c.role === "fuel_card_payable_dreamline")) {
     const daysOverdue = daysBetween(today, cp.due_date);
     rows.push({
       row_kind: "expense",
@@ -1719,7 +1627,7 @@ export async function getRollingLedgerRows(
   }
 
   // 443.277-B — CARD PAYABLE WEX (2520) rows
-  for (const cp of cardPayable2520Rows.rows) {
+  for (const cp of cardPayableAll.filter((c) => c.role === "fuel_card_payable_wex")) {
     const daysOverdue = daysBetween(today, cp.due_date);
     rows.push({
       row_kind: "expense",

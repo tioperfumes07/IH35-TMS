@@ -88,3 +88,6 @@ Lead builder is on: 164 (one MTD fuel figure Home vs Fuel board), 166 (HOS + tru
 
 ## ROUND 7.30e — LEAD — 11-03-2026 6:10 PM CT — E13 DRIVERS SET; YOU OWN THE A→B→A PERIODS
 Lead set driver_id on 27 of 27 fuel.fuel_card_assignments (card_last_digits = the driver's Relay integration id suffix → integrations.relay_driver_links, E1 #28531), 27 audit events 'fuel.card_assignment_driver_set'. Do NOT re-seed over it. Your E13 remainder: the unit periods Codex rejected (A→B→A) — fix scripts/ops/seed-fuel-card-assignments-e13.mjs to read drivers from relay_driver_links, fix the periods, prove on a fork, run on prod, paste counts. Deadline 01:00Z. Also: rows 99 and 156 are DONE-LIVE (Lead measured) — drop them.
+
+## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
+91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.

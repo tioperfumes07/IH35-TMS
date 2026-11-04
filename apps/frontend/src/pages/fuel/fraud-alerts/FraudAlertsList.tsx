@@ -16,8 +16,17 @@ import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { Breadcrumb } from "../../../components/shared/Breadcrumb";
 import { FuelBoardSection } from "../FuelBoardSection";
+
+/** U12 — status multi-selector (was mutually-exclusive pills). */
+const STATUS_FILTER_OPTIONS = [
+  { value: "open", label: "open" },
+  { value: "investigating", label: "investigating" },
+  { value: "dismissed", label: "dismissed" },
+  { value: "confirmed_fraud", label: "confirmed fraud" },
+] as const;
 
 type FraudAlertRow = {
   uuid: string;
@@ -127,8 +136,9 @@ export function FraudAlertsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const scopeKey = SCOPE_KEYS.find((k) => searchParams.get(k));
   const scope = scopeKey ? { key: scopeKey, value: searchParams.get(scopeKey)! } : null;
-  // A drilled view opens on ALL statuses — the set the reverse section counted.
-  const [statusFilter, setStatusFilter] = useState(scope ? "all" : "open");
+  // U12: multi-select — drilled view opens empty (= all); queue defaults to open.
+  // API takes one status; 0/1 pass through; 2+ fetch all then filter client-side.
+  const [statusFilter, setStatusFilter] = useState<string[]>(scope ? [] : ["open"]);
   const [listSearch, setListSearch] = useState("");
   const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
   const [dismissReason, setDismissReason] = useState("");
@@ -140,9 +150,18 @@ export function FraudAlertsListPage() {
   >(null);
   const lifecycleGenerationRef = useRef(0);
 
+  const statusKey = statusFilter.join(",") || "all";
+  const apiStatus = statusFilter.length === 1 ? statusFilter[0] : undefined;
   const alertsQuery = useQuery({
-    queryKey: ["fuel", "fraud-alerts", companyId, statusFilter, scope?.key ?? "", scope?.value ?? ""],
-    queryFn: () => listAlerts(companyId, statusFilter, undefined, scope),
+    queryKey: ["fuel", "fraud-alerts", companyId, statusKey, scope?.key ?? "", scope?.value ?? ""],
+    queryFn: async () => {
+      const result = await listAlerts(companyId, apiStatus ?? "all", undefined, scope);
+      if (statusFilter.length <= 1) return result;
+      return {
+        ...result,
+        alerts: result.alerts.filter((row) => statusFilter.includes(row.status)),
+      };
+    },
     enabled: Boolean(companyId),
   });
 
@@ -232,7 +251,7 @@ export function FraudAlertsListPage() {
     setConfirmFraudTarget(null);
     setRecoverAmountInput("");
     setConfirmFraudResult(null);
-    setStatusFilter("open");
+    setStatusFilter(["open"]);
   }, [companyId]); // Mutation reset functions are stable; company transitions own fresh action state.
 
   const rows = alertsQuery.data?.alerts ?? [];
@@ -393,7 +412,10 @@ export function FraudAlertsListPage() {
           setListSearch("");
           setStatusFilter(scope ? "all" : "open");
         }}
-        activeFilterCount={(statusFilter !== (scope ? "all" : "open") ? 1 : 0) + (scope ? 1 : 0)}
+        activeFilterCount={
+          ((scope ? statusFilter.length > 0 : statusFilter.length !== 1 || statusFilter[0] !== "open") ? 1 : 0) +
+          (scope ? 1 : 0)
+        }
         testIdPrefix="fuel-fraud-alerts"
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -413,16 +435,19 @@ export function FraudAlertsListPage() {
               {scope.key.replace("_id", "")} only · clear ×
             </button>
           ) : null}
-          {["all", "open", "investigating", "dismissed", "confirmed_fraud"].map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={`rounded-sm border px-2 py-1 text-xs ${statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"}`}
-              onClick={() => setStatusFilter(status)}
-            >
-              {status.replace("_", " ")}
-            </button>
-          ))}
+          <div className="text-xs font-semibold text-[#4B5563]" data-testid="fraud-alerts-status-filter">
+            <span className="block">Status</span>
+            <div className="mt-1">
+              <MultiSelectDropdown
+                label="Status"
+                options={[...STATUS_FILTER_OPTIONS]}
+                selected={statusFilter}
+                onChange={setStatusFilter}
+                allLabel="All statuses"
+                data-testid="fraud-alerts-status-multiselect"
+              />
+            </div>
+          </div>
         </div>
       </MoneyListToolbar>
 

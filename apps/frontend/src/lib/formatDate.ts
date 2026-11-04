@@ -104,6 +104,16 @@ export function formatCalendarDateUS(value: unknown): string {
 }
 
 /**
+ * Rows 205 / 219 (live 11-03) — a server-built sentence or label that embeds an ISO calendar date
+ * ("departed on 2026-10-20", "Fuel est. 2026-11-03 (partial wk)") renders that date as MM/DD/YYYY. Display only:
+ * the stored / API string is never rewritten; every embedded YYYY-MM-DD goes through formatDateUS.
+ */
+export function formatIsoDatesInText(value: unknown): string {
+  const s = value == null ? "" : String(value);
+  return s.replace(/(?<![\d-])(\d{4}-\d{2}-\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?(?![\d])/g, (m, ymd: string) => formatDateUS(m.includes("T") ? m : ymd) || m);
+}
+
+/**
  * ROUND 443.258-B (D004 D025 D029 D030) — canonical display date = MM/DD/YYYY.
  * Charts may use MM/DD on axis ticks only when the tooltip shows MM/DD/YYYY.
  */

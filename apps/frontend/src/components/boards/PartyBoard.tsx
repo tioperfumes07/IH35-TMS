@@ -37,7 +37,7 @@ type CustomerRow = {
 export type CustomerBoard = {
   /** The board's first counted day (server) for the selected range. */
   range_from: string;
-  kpis: { with_transactions: number; in_the_book: number; open_invoices: number; billed_cents: number; ar_open_cents: number; collected_cents: number; invoices: number; invoices_with_payment: number };
+  kpis: { with_transactions: number; in_the_book: number; open_invoices: number; billed_cents: number; proforma_cents?: number; ar_open_cents: number; collected_cents: number; invoices: number; invoices_with_payment: number };
   chips: { with_transactions: number; open_balance: number; factored: number; all: number };
   rows: CustomerRow[];
 };
@@ -153,11 +153,11 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     note = (
       <MeasuredNote testId="party-board-note">
         <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)}</NumLink> invoices issued (open and paid) since {day(b.range_from)},{" "}
-        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed.{" "}
+        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed (issued invoices only){(b.kpis.proforma_cents ?? 0) > 0 ? <>, plus <span data-testid="party-board-proforma">{tileUsd(b.kpis.proforma_cents ?? 0)}</span> of draft / proforma invoices not yet billed</> : null}.{" "}
         {b.kpis.collected_cents === 0 ? (
           <>
             Collected is <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(0)}</NumLink> for every customer: no payment has been
-            applied to any of them, so open balance <NumLink to={`/customers?chip=open_balance&range=${range}`}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> = billed.
+            applied to any of them, so open balance <NumLink to={`/customers?chip=open_balance&range=${range}`}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> = billed{(b.kpis.proforma_cents ?? 0) > 0 ? " + proforma" : ""}.
           </>
         ) : (
           <>

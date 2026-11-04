@@ -114,6 +114,22 @@ export function collectBoardProblems(boardSrc) {
   return problems;
 }
 
+/** Row 53 — the Management compilations ride the accounting catalog (MANAGEMENT_ROWS spread into its rows). */
+export function collectManagementCatalogRowProblems(boardSrc) {
+  const problems = [];
+  const body = stripComments(boardSrc);
+  if (!/const MANAGEMENT_ROWS = \[[\s\S]*?"company-overview"[\s\S]*?"sales-performance"[\s\S]*?"expenses-performance"/.test(body)) {
+    problems.push(`${BOARD}: the 3 Management report compilations (Rule 07) are missing from the board`);
+  }
+  if (!/\.\.\.MANAGEMENT_ROWS\.map\(/.test(body)) {
+    problems.push(`${BOARD}: Management rows must be catalog rows of the accounting table (row 53)`);
+  }
+  if (!/\/reports\/management\?type=/.test(body)) {
+    problems.push(`${BOARD}: Management rows must open /reports/management?type=…`);
+  }
+  return problems;
+}
+
 /** Back-compat export used by older imports / selftest helpers. */
 export function reportCatalogSections(src) {
   return managementCatalogSection(src);
@@ -207,6 +223,11 @@ function selftest() {
   if (!collectBoardProblems(badBoardNoTableId).some((p) => /reports-accounting-financial-table/.test(p))) {
     throw new Error("selftest: missing accounting table testid was not flagged");
   }
+  const goodCatalog = 'const MANAGEMENT_ROWS = [{ type: "company-overview" }, { type: "sales-performance" }, { type: "expenses-performance" }];\nconst R = [...MANAGEMENT_ROWS.map((m) => m)];\nconst h = `/reports/management?type=${t}`;';
+  if (collectManagementCatalogRowProblems(goodCatalog).length) throw new Error("selftest: good management catalog rows flagged");
+  if (collectManagementCatalogRowProblems(goodCatalog.replace("...MANAGEMENT_ROWS.map(", "MANAGEMENT_ROWS.filter(")).length < 1) {
+    throw new Error("selftest: management rows dropped from the catalog were not flagged");
+  }
   console.log(`${LABEL} --selftest OK`);
 }
 
@@ -226,8 +247,12 @@ if (IS_MAIN) {
     process.exit(1);
   }
   const problems = [
-    // The Management strip lives on the board since #27715; the home shell no longer carries it.
-    ...collectManagementProblems(managementCatalogSection(boardSrc)),
+    // The Management strip lived on the board since #27715. Register row 53 (11-03, board verdict LAYERED): the board
+    // is exactly docs/design/v3/Reports.dc.html, so the 3 Management compilations are catalog rows (View all) — no
+    // second panel. A Management panel, if one ever returns, is still held to the flat-frame law.
+    ...(/title="Management reports"/.test(stripComments(boardSrc))
+      ? collectManagementProblems(managementCatalogSection(boardSrc))
+      : collectManagementCatalogRowProblems(boardSrc)),
     ...collectBoardProblems(boardSrc),
   ];
   if (problems.length) {

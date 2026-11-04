@@ -44,8 +44,15 @@ const SCREENS = [
       ["M/D/YY delivery", "r.actual_delivery_at ? formatDateQboList(r.actual_delivery_at)", "r.actual_delivery_at ? r.actual_delivery_at.slice(5, 10)"],
     ] },
   { row: 205, file: "pages/tasks/ReconcilerExceptionsPage.tsx",
-    required: [new RegExp(`render: \\(row\\) => ${US}\\(row\\.since\\)`)],
-    plants: [["ISO Since", "render: (row) => formatDateUS(row.since)", "render: (row) => String(row.since).slice(0, 10)"]] },
+    required: [new RegExp(`render: \\(row\\) => ${US}\\(row\\.since\\)`), /render: \(row\) => formatIsoDatesInText\(row\.reason\)/],
+    plants: [
+      ["ISO Since", "render: (row) => formatDateUS(row.since)", "render: (row) => String(row.since).slice(0, 10)"],
+      // live 11-03: "departed on 2026-10-20" in What is wrong — server sentence printed raw
+      ["ISO date inside What is wrong", "render: (row) => formatIsoDatesInText(row.reason), ", ""],
+    ] },
+  { row: 205, file: "components/drift/DriftAlertPopup.tsx",
+    required: [/render: \(r\) => formatIsoDatesInText\(r\.reason\)/],
+    plants: [["ISO date inside What to fix", "render: (r) => formatIsoDatesInText(r.reason)", "render: (r) => r.reason"]] },
   { row: 206, file: "pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
     required: [new RegExp(`${US}\\(range\\.start\\)`), new RegExp(`${US}\\(range\\.end\\)`), new RegExp(`\\{${US}\\(d\\)\\}`)],
     plants: [
@@ -56,10 +63,13 @@ const SCREENS = [
     required: [/function fmtChipDate\(iso: string\): string \{[\s\S]{0,400}?const us = formatDateUS\(iso\);[\s\S]{0,80}?\$\{wd\} \$\{us\}/, /function fmtLongDate\(iso: string\): string \{\s*return formatDateUS\(iso\);/],
     plants: [["chip without year", "return us ? `${wd} ${us}` : \"—\";", "return `${wd} ${String(m).padStart(2, \"0\")}-${String(d).padStart(2, \"0\")}`;"]] },
   { row: 219, file: "pages/cash-flow/tabs/RollingLedgerTab.tsx",
-    required: [/function fmtNavDate\(iso: string\): string \{[\s\S]{0,400}?const us = formatDateUS\(iso\);[\s\S]{0,80}?\$\{wd\}, \$\{us\}/, /function fmtDateShort\(iso: string\): string \{\s*return formatDateUS\(iso\);/],
+    required: [/function fmtNavDate\(iso: string\): string \{[\s\S]{0,400}?const us = formatDateUS\(iso\);[\s\S]{0,80}?\$\{wd\}, \$\{us\}/, /function fmtDateShort\(iso: string\): string \{\s*return formatDateUS\(iso\);/, /\{formatIsoDatesInText\(row\.document_label\)\}\n\s*<span/, /return <span>\{formatIsoDatesInText\(row\.document_label\)\}<\/span>;/],
     plants: [
       ["navigator month name", "const us = formatDateUS(iso);\n  return us ? `${wd}, ${us}` : \"—\";", "const mon = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\", \"Jul\", \"Aug\", \"Sep\", \"Oct\", \"Nov\", \"Dec\"][m - 1] ?? \"\";\n  return `${wd}, ${mon} ${d}`;"],
       ["due cell without year", "function fmtDateShort(iso: string): string {\n  return formatDateUS(iso);", "function fmtDateShort(iso: string): string {\n  return iso.slice(5, 10);"],
+      // live 11-03: Doc cell "Fuel est. 2026-11-03 (partial wk)"
+      ["ISO date inside fuel Doc cell", "        {formatIsoDatesInText(row.document_label)}\n        <span", "        {row.document_label}\n        <span"],
+      ["ISO date inside Doc cell", "  return <span>{formatIsoDatesInText(row.document_label)}</span>;", "  return <span>{row.document_label}</span>;"],
     ] },
   { row: 219, file: "pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
     required: [/return `\$\{wd\}, \$\{formatDateUS\(projectionDate\)\}`;/, /const dateLabel = projectionDate \? formatDateUS\(projectionDate\)/],
@@ -100,6 +110,7 @@ const SCREENS = [
 ];
 
 const SHARED_PLANTS = [
+  ["embedded ISO left raw", "(m, ymd: string) => formatDateUS(m.includes(\"T\") ? m : ymd) || m);", "(m) => m);"],
   ["unpadded month/day", "return `${pad2(parts.mo)}/${pad2(parts.d)}/${parts.y}`;", "return `${parts.mo}/${parts.d}/${parts.y}`;"],
   ["two-digit year list style", "export function formatDateQboList(value: unknown): string {\n  return formatDateUS(value);", "export function formatDateQboList(value: unknown): string {\n  const p = formatDateUS(value);\n  return p.slice(0, 6) + p.slice(8);"],
   ["MMM-DD resurrected", "export function mmmDd(value: unknown): string {\n  // OWNER RULING", "export function mmmDd(value: unknown): string {\n  if (value) return String(value).toUpperCase();\n  // OWNER RULING"],
@@ -116,6 +127,7 @@ export function findSharedDefects(src) {
   if (!/export function formatDateQboList\(value: unknown\): string \{\s*return formatDateUS\(value\);\s*\}/.test(src)) out.push(`${SHARED}: formatDateQboList does not delegate to formatDateUS`);
   if (!/export function mmmDd\(value: unknown\): string \{\s*(?:\/\/[^\n]*\n\s*)*return formatDateUS\(value\);\s*\}/.test(src)) out.push(`${SHARED}: mmmDd does not delegate to formatDateUS`);
   if (!/export const formatDate = formatDateUS;/.test(src)) out.push(`${SHARED}: formatDate alias is not formatDateUS`);
+  if (!/export function formatIsoDatesInText\(value: unknown\): string \{[\s\S]{0,400}?=> formatDateUS\(/.test(src)) out.push(`${SHARED}: formatIsoDatesInText does not route embedded ISO dates through formatDateUS`);
   const dt = src.slice(src.indexOf("export function formatDateTimeUS("), src.indexOf("export function formatDateTimeLocalUS("));
   if (!/month: "2-digit",\s*day: "2-digit",\s*year: "numeric"/.test(dt)) out.push(`${SHARED}: formatDateTimeUS is not zero-padded four-digit year`);
   return out;

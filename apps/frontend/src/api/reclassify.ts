@@ -171,6 +171,7 @@ export function applyReclassify(body: {
   filter_snapshot?: Record<string, unknown>;
   /** LAW 363.5 — owner only: apply over the refused classes (A/R, A/P, inventory, payroll); never a bank line; audited per line. */
   override_refusals?: boolean;
+  override_reason_code?: string | null;
 }) {
   return apiRequest<ReclassifyBatchResult>("/api/v1/accounting/reclassify/apply", { method: "POST", body });
 }

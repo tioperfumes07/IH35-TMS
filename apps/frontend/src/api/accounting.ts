@@ -673,6 +673,7 @@ export function createInvoice(
     customer_notes?: string;
     currency_code?: "USD" | "MXN";
     override_credit_limit?: boolean;
+    override_reason_code?: string | null;
   }
 ) {
   return apiRequest<Invoice>(withCompany("/api/v1/accounting/invoices", operatingCompanyId), { method: "POST", body: payload });
@@ -2867,7 +2868,7 @@ export type CashForecastSettings = {
 export type CashForecastWeek = {
   week_start: string;
   expected_inflows: { invoices: number; factoring: number; other: number };
-  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number };
+  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number; card_payables?: number };
   projected_balance: number;
 };
 

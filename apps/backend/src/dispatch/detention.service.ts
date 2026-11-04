@@ -46,7 +46,11 @@ function rowAccrual(row: Record<string, unknown>, nowMs = Date.now()) {
 }
 
 export async function syncDetentionEventsFromStopArrivals(userId: string, operatingCompanyId: string) {
-  return withCompany(userId, operatingCompanyId, async (client) => {
+  return withCompany(userId, operatingCompanyId, (client) => syncDetentionEventsInClient(client, operatingCompanyId));
+}
+
+/** The sync body on a caller's already-scoped client (row 250: the board runs it on its OWN checkout). */
+async function syncDetentionEventsInClient(client: PoolClient, operatingCompanyId: string) {
     const started = await client.query(
       `
         INSERT INTO dispatch.detention_events (
@@ -137,7 +141,6 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
     );
 
     return { started: started.rowCount ?? 0, stopped: stopped.rowCount ?? 0 };
-  });
 }
 
 // DISP-F6470 — LINK-F5171 group (b): `dispatch.detention_events` has always had `load_id`, but
@@ -199,11 +202,13 @@ export async function listDetentionBoard(
 ) {
   const now = Date.now();
   const last = _lastSync.get(operatingCompanyId) ?? 0;
-  if (now - last >= SYNC_TTL_MS) {
-    _lastSync.set(operatingCompanyId, now);
-    await syncDetentionEventsFromStopArrivals(userId, operatingCompanyId);
-  }
+  const syncDue = now - last >= SYNC_TTL_MS;
+  if (syncDue) _lastSync.set(operatingCompanyId, now);
+  // Row 250 (D074): the throttled sync and the board read share ONE pool checkout. Before, a due sync
+  // took its own withCurrentUser transaction and then the read took a second one, so on the Dispatch
+  // page (5-connection pool, ~15 concurrent reads) the board waited in the pool queue twice.
   return withCompany(userId, operatingCompanyId, async (client) => {
+    if (syncDue) await syncDetentionEventsInClient(client, operatingCompanyId);
     const orderBy = dispatchAlertOrderBy(filters, {
       event_at: "de.started_at", load_number: "l.load_number", customer_name: "customer_name",
       driver_name: "driver_name", unit_number: "u.unit_number", status: "de.status", location: "ls.city",

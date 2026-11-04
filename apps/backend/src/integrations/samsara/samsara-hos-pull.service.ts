@@ -10,6 +10,7 @@
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 import { listActiveHosDriverRoster } from "./active-hos-driver-roster.service.js";
+import { resolveSurvivorDriverId } from "../../mdata/driver-merge-resolution.js";
 
 export type CanonicalDutyStatus =
   | "off_duty"
@@ -109,11 +110,16 @@ export async function syncSamsaraHosLogs(
   let firstError: string | null = null; // HONEST: a committed row must never be success=false with a null error
   for (let i = 0; i < driverLogs.length; i++) {
     const dl = driverLogs[i];
-    const localDriverId = localBySamsara.get(dl.driverId);
-    if (!localDriverId) {
+    const mappedDriverId = localBySamsara.get(dl.driverId);
+    if (!mappedDriverId) {
       unmapped += 1; // should be ~0 now that we only request the active driverIds
       continue;
     }
+    // Register row 93: never write onto a merged shell — the person's ONE profile is the survivor (measured 11-03 on prod,
+    // USMCA: 9,035 duty events on 15 shells; shell e6933af3 took events up to its merge day).
+    const localDriverId = await resolveSurvivorDriverId(client as never, mappedDriverId);
+    const pairedUnit = unitByLocalDriver.get(mappedDriverId);
+    if (pairedUnit && !unitByLocalDriver.has(localDriverId)) unitByLocalDriver.set(localDriverId, pairedUnit);
     mapped += 1;
     // Savepoint-isolate each driver's insert batch AND capture the real error (not swallow it): one bad log row
     // aborts only this driver's savepoint, the others + the sync-log row commit, and the reason is persisted.

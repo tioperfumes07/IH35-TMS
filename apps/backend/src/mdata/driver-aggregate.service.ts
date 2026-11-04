@@ -1,3 +1,4 @@
+import { loadLinkedImageFiles, pickDriverIdPhoto } from "./uploaded-photo-pick.js";
 import { loadServiceMembershipSql } from "../dispatch/load-service.js";
 import { withSavepoint } from "../auth/db.js";
 import { computeDriverScoreFromCounts } from "../safety/driver-scoring.service.js";
@@ -101,6 +102,16 @@ export async function buildDriverAggregate(
       (driver as Record<string, unknown>).photo_url = signed.url;
     } else {
       (driver as Record<string, unknown>).photo_url = null;
+    }
+  }
+
+  // Register row 3 — no saved photo: show the driver's own uploaded ID image (CDL / INE / driver photo) whole, never cropped.
+  // Read only; photo_url on the driver row is untouched, so choosing a photo in the header still wins.
+  if (!(driver as Record<string, unknown>).photo_url && isR2Configured()) {
+    const pick = pickDriverIdPhoto(await loadLinkedImageFiles(client, "driver", driverId, operatingCompanyId));
+    if (pick) {
+      (driver as Record<string, unknown>).photo_url = (await generatePresignedDownloadUrl(pick.r2_key, 3600)).url;
+      (driver as Record<string, unknown>).photo_derived_from = { file_id: pick.id, original_filename: pick.original_filename };
     }
   }
 

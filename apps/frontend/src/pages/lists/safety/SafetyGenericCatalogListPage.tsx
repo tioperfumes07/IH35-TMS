@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { SafetyGenericCatalogModal, type SafetyGenericCatalogClient } from "./SafetyGenericCatalogModal";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
+import { apiStatusFromMulti } from "./shared";
 
 type Props = {
   client: SafetyGenericCatalogClient & {
@@ -63,7 +64,7 @@ const COLUMNS: Array<ParityColumn<SafetyGenericCatalogRow>> = [
 export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [showVoided, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<SafetyGenericCatalogRow | null>(null);
@@ -83,8 +84,8 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
     // Round 296: every row of the catalog (status narrows server-side on the indexed is_active; the route caps at
     // max(200) per page, so read page after page), then the house toolbar (ParityTable's UniversalListToolbar) is the
     // one search over all of it with "N of M". No page search box, no "Show voided" double filter.
-    queryKey: ["catalogs", "safety-generic", displayName, companyId, status],
-    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
+    queryKey: ["catalogs", "safety-generic", displayName, companyId, status.join(",") || "all"],
+    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: apiStatusFromMulti(status) }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
@@ -122,7 +123,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
             checked={showVoided}
             onChange={(event) => {
               setShowInactive(event.target.checked);
-              setStatus(event.target.checked ? "all" : "true");
+              setStatus(event.target.checked ? ["true", "false"] : ["true"]);
             }}
             className="h-3.5 w-3.5 rounded-sm border-gray-300"
           />

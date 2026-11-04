@@ -127,7 +127,7 @@ describe("a fence crossing without a real OBD read yields to the GPS dwell", () 
     expect(resolveStopBoundary("departure", stop, absent, { anchor, reason: null }, pick).via).toMatch(/^gps_dwell /);
   });
   it("absent-odometer crossing and no dwell -> the original refusal", () => {
-    expect(resolveStopBoundary("departure", stop, absent, undefined, undefined).reason).toMatch(/has a absent odometer -- not a measurement/);
+    expect(resolveStopBoundary("departure", stop, absent, undefined, undefined).reason).toMatch(/has a absent odometer and no odometer read near it -- not a measurement/);
   });
   it("a real-OBD crossing always wins", () => {
     const b = resolveStopBoundary("departure", stop, { odo: 1000, at: "2026-08-07T15:40:00.000Z", src: "real_obd" }, undefined, pick);

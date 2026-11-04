@@ -50,6 +50,7 @@
 //     funding/release JE this file already posts — no new GL entry, just a structural (non-memo-parsed)
 //     record for the reserve-balance view (`views.factoring_reserve_balances`) and the advance packet.
 
+import { raiseInvoicePaidTo } from "../invoice-relief-application.service.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -393,7 +394,8 @@ async function linkedCustomerPaymentPaidCents(
 async function applyCustomerPaymentSubledgerRelief(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string
+  factoringAdvanceId: string,
+  actorUserId: string | null
 ): Promise<void> {
   const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter(
     (inv) => !inv.voided_at
@@ -423,21 +425,14 @@ async function applyCustomerPaymentSubledgerRelief(
         `factoring_customer_payment_allocation_exceeds_invoice: inv=${inv.id} alloc=${allocated} total=${inv.total_cents}`
       );
     }
-    await client.query(
-      `
-        UPDATE accounting.invoices
-        SET amount_paid_cents = $2,
-            status = CASE
-              WHEN status = 'void' THEN 'void'
-              WHEN $2 >= total_cents AND total_cents > 0 THEN 'paid'
-              WHEN $2 > 0 THEN 'partial'
-              ELSE status
-            END,
-            updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid
-      `,
-      [inv.id, allocated, operatingCompanyId]
-    );
+    // Row 129 (ACCT-F11070): the relief is an APPLICATION; accounting.recompute_invoice_paid() (the one writer) derives
+    // amount_paid_cents + status from it. The direct `SET amount_paid_cents` here left a header with no application behind it.
+    await raiseInvoicePaidTo(client as never, {
+      operatingCompanyId,
+      invoiceId: inv.id,
+      targetPaidCents: allocated,
+      actorUserId,
+    });
   }
 }
 
@@ -1950,7 +1945,8 @@ async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustome
         await applyCustomerPaymentSubledgerRelief(
           client,
           input.operating_company_id,
-          input.factoring_advance_id
+          input.factoring_advance_id,
+          input.actor_user_id ?? null
         );
       },
     });
@@ -2000,7 +1996,8 @@ async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustome
       await applyCustomerPaymentSubledgerRelief(
         client,
         input.operating_company_id,
-        input.factoring_advance_id
+        input.factoring_advance_id,
+        input.actor_user_id ?? null
       );
     },
   });

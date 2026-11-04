@@ -154,7 +154,7 @@ export function ReferenceSelect({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 items-center gap-2" data-testid="reference-select-root">
       <div className="min-w-0 flex-1">
         {/* QB-STD-1/2: the "+" row lives inside the Combobox dropdown as its permanent first row.
         No external button — the Combobox allowAddNew now always-shows the row on open. */}

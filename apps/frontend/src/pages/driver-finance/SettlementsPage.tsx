@@ -32,73 +32,16 @@ import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { SettlementsHomeBoardPanels } from "./SettlementsHomeBoardPanels";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import {
   settlementsDerivedReimb,
   settlementsRowTourClosed,
-  type SettlementsWeekBucket,
+  buildSettlementsWeekBuckets,
+  resolveSelectedWeekBucket,
+  settlementPeriodEndIso,
 } from "./settlementsHomeBoardHelpers";
-
-function startOfWeekSunday(d: Date): Date {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  x.setDate(x.getDate() - x.getDay());
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function weekBucketLabel(d: Date): string {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${m}-${day}`;
-}
-
-/** Local calendar YYYY-MM-DD for week_start URL (matches weekStartMs from buildSettlementsWeekBuckets). */
-function weekStartIsoFromMs(ms: number): string {
-  const d = new Date(ms);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function resolveSelectedWeekBucket(
-  buckets: SettlementsWeekBucket[],
-  weekStartParam: string | null,
-): SettlementsWeekBucket | null {
-  if (!buckets.length) return null;
-  if (weekStartParam) {
-    const found = buckets.find((w) => weekStartIsoFromMs(w.weekStartMs) === weekStartParam);
-    if (found) return found;
-  }
-  return buckets[buckets.length - 1] ?? null;
-}
-
-function buildSettlementsWeekBuckets(rows: SettlementListRow[], weekCount: number, now: Date): SettlementsWeekBucket[] {
-  const thisWeek = startOfWeekSunday(now);
-  const buckets: SettlementsWeekBucket[] = [];
-  for (let i = weekCount - 1; i >= 0; i--) {
-    const start = new Date(thisWeek);
-    start.setDate(start.getDate() - i * 7);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-    let net = 0;
-    let gross = 0;
-    let deductions = 0;
-    for (const s of rows) {
-      if (s.status === "cancelled") continue;
-      const pe = new Date(s.period_end);
-      if (Number.isNaN(pe.getTime())) continue;
-      if (pe.getTime() >= start.getTime() && pe.getTime() < end.getTime()) {
-        net += Number(s.net_pay ?? 0);
-        gross += Number(s.gross_pay ?? 0);
-        deductions += Number(s.deductions_total ?? 0);
-      }
-    }
-    buckets.push({ weekStartMs: start.getTime(), label: weekBucketLabel(start), net, gross, deductions });
-  }
-  return buckets;
-}
 
 /** ROUND 443.267 — board Settlements.dc.html deduction split buckets (Escrow / Advances / Fines). */
 function settlementsDeductionBucket(type: string): "escrow" | "advances" | "fines" | "other" {
@@ -372,9 +315,9 @@ export function SettlementsPage() {
     () => resolveSelectedWeekBucket(weekBuckets, weekStartParam),
     [weekBuckets, weekStartParam],
   );
-  const selectWeekStart = (weekStartMs: number) => {
+  const selectWeekStart = (weekStartIso: string) => {
     const next = new URLSearchParams(searchParams);
-    next.set("week_start", weekStartIsoFromMs(weekStartMs));
+    next.set("week_start", weekStartIso);
     setSearchParams(next, { replace: true });
   };
   const driverPayVsLastWeek = (() => {
@@ -394,13 +337,13 @@ export function SettlementsPage() {
 
   const thisWeekSettlements = useMemo(() => {
     if (kpiBaseQuery.isError || !selectedWeekBucket) return [] as SettlementListRow[];
-    const start = selectedWeekBucket.weekStartMs;
-    const end = start + 7 * 24 * 60 * 60 * 1000;
+    const startIso = selectedWeekBucket.weekStartIso;
+    const endIso = addDaysIso(startIso, 7);
     return kpiSettlements.filter((s) => {
       if (s.status === "cancelled") return false;
-      const pe = new Date(s.period_end);
-      if (Number.isNaN(pe.getTime())) return false;
-      return pe.getTime() >= start && pe.getTime() < end;
+      const peIso = settlementPeriodEndIso(s.period_end);
+      if (!peIso) return false;
+      return peIso >= startIso && peIso < endIso;
     });
   }, [kpiBaseQuery.isError, selectedWeekBucket, kpiSettlements]);
 
@@ -429,19 +372,19 @@ export function SettlementsPage() {
   const deductionSplitThisWeek = useMemo(() => {
     const empty = { escrow: { drivers: new Set<string>(), amount: 0 }, advances: { drivers: new Set<string>(), amount: 0 }, fines: { drivers: new Set<string>(), amount: 0 } };
     if (deductionsListQuery.isError || !selectedWeekBucket) return empty;
-    const start = selectedWeekBucket.weekStartMs;
-    const end = start + 7 * 24 * 60 * 60 * 1000;
+    const startIso = selectedWeekBucket.weekStartIso;
+    const endIso = addDaysIso(startIso, 7);
     const rows = deductionsListQuery.data?.deductions ?? [];
     for (const d of rows) {
       if (String(d.status || "").toLowerCase() === "voided" || String(d.status || "").toLowerCase() === "cancelled") continue;
-      const created = new Date(d.created_at);
-      // Prefer applied settlement's period when we can match; else created_at in this week.
-      let inWeek = !Number.isNaN(created.getTime()) && created.getTime() >= start && created.getTime() < end;
+      const createdIso = d.created_at ? companyToday(new Date(d.created_at)) : null;
+      // Prefer applied settlement's period when we can match; else created_at in this week (company calendar).
+      let inWeek = Boolean(createdIso && createdIso >= startIso && createdIso < endIso);
       if (d.applied_to_settlement_id) {
         const match = kpiSettlements.find((s) => s.id === d.applied_to_settlement_id);
         if (match) {
-          const pe = new Date(match.period_end);
-          inWeek = !Number.isNaN(pe.getTime()) && pe.getTime() >= start && pe.getTime() < end;
+          const peIso = settlementPeriodEndIso(match.period_end);
+          inWeek = Boolean(peIso && peIso >= startIso && peIso < endIso);
         }
       }
       if (!inWeek) continue;

@@ -64,8 +64,9 @@ function assertMigrated(src) {
   if (!src.includes("Raw EDI viewer")) {
     errors.push(`${PAGE}: must keep raw EDI viewer side panel`);
   }
-  if (!src.includes('<option value="failed">Failed</option>')) {
-    errors.push(`${PAGE}: must keep status filter dropdown`);
+  // U12 — status is MultiSelectDropdown (was native <option> SelectCombobox).
+  if (!src.includes("MultiSelectDropdown") || !src.includes('{ value: "failed", label: "Failed" }')) {
+    errors.push(`${PAGE}: must keep status filter MultiSelect (incl. Failed)`);
   }
   if (!src.includes("onRowClick")) {
     errors.push(`${PAGE}: must keep onRowClick for message selection`);

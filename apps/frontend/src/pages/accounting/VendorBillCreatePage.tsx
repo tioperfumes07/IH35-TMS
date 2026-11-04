@@ -14,6 +14,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { entityLabel } from "../../lib/entity-label";
@@ -82,6 +83,16 @@ export function VendorBillCreatePage() {
     [],
   );
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Create vendor bill" crumbs={[{ label: "Bills", href: "/accounting/bills" }]}>
+        <BoardSection title="Create vendor bill" testId="vendor-bill-create-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Create vendor bill"
@@ -117,7 +128,6 @@ export function VendorBillCreatePage() {
         </div>
       }
     >
-      {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
       <MoneyListToolbar
         search={toolbarSearch}
         onSearchChange={setToolbarSearch}
