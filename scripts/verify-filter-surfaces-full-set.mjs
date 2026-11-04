@@ -25,7 +25,8 @@ const SURFACES = [
     ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
     // U12: Termination Reasons status MultiSelect → matchesStatus(row.is_active, status)
     ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
-    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    // U12: Void/Cancel Reasons status MultiSelect → matchesStatus(row.is_active, status)
+    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /allRows\.filter\(\(row\) => matchesStatus\(row\.is_active, status\)\)/],
   ].map(([name, file, filterMust]) => ({
     name,
     file,

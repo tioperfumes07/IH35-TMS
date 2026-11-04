@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~9:05 PM CT) — U12 Accounting lists MultiSelect (SURFACE-BREACH Cascade)
+- **PRIOR:** #28611 Maint Parts + OEM Parts U12.
+- **THIS:** SURFACE-BREACH-AUTHORIZED: Cascade archived — AccountingCatalog + DetailTypes + VoidCancel + OverrideReasons + PostingTemplates status → MultiSelectDropdown (apiStatus/matchesStatus). verify-filter-surfaces VoidCancel retarget.
+- **NEXT:** live DONE-LIVE; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:50 PM CT) — U12 Maint Parts + OEM Parts MultiSelect
 - **PRIOR:** #28609 Locations + Maint services U12.
 - **THIS:** MaintenancePartsCatalog manufacturer/category + OemPartsCatalog brand/category → MultiSelectDropdown. Accounting lists still Cascade.
