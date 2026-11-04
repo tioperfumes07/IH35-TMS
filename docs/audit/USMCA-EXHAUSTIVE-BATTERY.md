@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 366 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 367 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 288 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 254 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 981 | |
+| **TOTAL POST endpoints** | 982 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -643,6 +643,18 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/form-425c/:id/mark-filed` | `apps/backend/src/compliance/form-425c.routes.ts` | — | — | — |
 | create | `/api/v1/form-425c/profiles` | `apps/backend/src/compliance/form-425c.routes.ts` | — | — | — |
 
+### driver-pay — 7 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| nested | `/api/v1/driver-pay/settlements/:id/mark-bounced` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-pay/settlements/:id/mark-cleared` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-pay/settlements/:id/mark-paid-manually` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-pay/settlements/:id/mark-sent` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-pay/settlements/:id/queue-payment` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-pay/settlements/:id/reopen-manual-paid` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+| create | `/api/v1/driver-pay/settlements/repair-paid-status` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
+
 ### settlements — 7 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -677,17 +689,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
 | create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
 | nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
-
-### driver-pay — 6 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| nested | `/api/v1/driver-pay/settlements/:id/mark-bounced` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-pay/settlements/:id/mark-cleared` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-pay/settlements/:id/mark-paid-manually` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-pay/settlements/:id/mark-sent` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-pay/settlements/:id/queue-payment` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-pay/settlements/:id/reopen-manual-paid` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
 
 ### bank-recon — 5 create-surface(s)
 
