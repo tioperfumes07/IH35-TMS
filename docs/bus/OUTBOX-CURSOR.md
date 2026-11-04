@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:30 PM CT) — U12 Coverage Gap by-type MultiSelect
+- **PRIOR:** #28602 QBO Sync Status U12.
+- **THIS:** CoverageGapDashboard per-type Covered/Missing SelectCombobox → MultiSelectDropdown (empty/both=all). Accounting lists still Cascade.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:25 PM CT) — U12 QBO Sync Status MultiSelect
 - **PRIOR:** #28600 Driver/Teams/Brokers U12.
 - **THIS:** QBOSyncStatusDashboardPage status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Accounting lists still Cascade.
