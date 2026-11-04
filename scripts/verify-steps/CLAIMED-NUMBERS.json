@@ -17559,5 +17559,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-driver-bill-reprices-to-settlement-line"
+  },
+  "19961": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-ar-applications-need-live-source"
   }
 }
