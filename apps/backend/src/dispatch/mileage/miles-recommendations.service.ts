@@ -97,10 +97,30 @@ async function laneRow(client: Queryable, companyId: string, from: StopPoint, to
 }
 
 /** The unit's previous last stop before `before` (or the latest one when no date) — where the empty run starts. */
-async function priorLastStop(client: Queryable, companyId: string, unitId: string, excludeLoadId: string | null, before: string | null): Promise<StopPoint | null> {
+/**
+ * The unit's previous load's last stop before `before` (this load's first stop).
+ * overlap_load (row 131 follow-up, measured 11-03): the unit's loads overlap — another load of the same truck has a stop
+ * between that previous last stop and this pickup, or is still on its way at the pickup (13687: 13672 ends Swedesboro NJ,
+ * but 13677 Vineland NJ -> Temple TX ran in between; the engine wrote 1,875.6 empty miles NJ -> Laredo). The truck's real
+ * position before the pickup is then unknown from dispatch data, so no deadhead is measured from it (never a guess).
+ */
+type PriorStop = StopPoint & { overlap_load?: string | null };
+async function priorLastStop(client: Queryable, companyId: string, unitId: string, excludeLoadId: string | null, before: string | null): Promise<PriorStop | null> {
   const r = (
-    await client.query<StopPoint & { at: string | null }>(
-      `SELECT ls.latitude::float8 AS latitude, ls.longitude::float8 AS longitude, ls.city, ls.state, ls.postal_code, ls.at::text
+    await client.query<PriorStop & { at: string | null }>(
+      `SELECT ls.latitude::float8 AS latitude, ls.longitude::float8 AS longitude, ls.city, ls.state, ls.postal_code, ls.at::text,
+              CASE WHEN $4::timestamptz IS NULL THEN NULL ELSE (
+                SELECT o.load_number FROM mdata.loads o
+                  JOIN mdata.load_stops s ON s.load_id = o.id AND s.soft_deleted_at IS NULL
+                 WHERE o.assigned_unit_id = $1::uuid AND o.operating_company_id = $2::uuid AND o.id <> l.id
+                   AND ($3::uuid IS NULL OR o.id <> $3::uuid)
+                   AND o.voided_at IS NULL AND o.soft_deleted_at IS NULL AND ${canonicalHappenedNotVoidedLoadClause("o")}
+                 GROUP BY o.id, o.load_number
+                HAVING bool_or(COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at) > ls.at
+                               AND COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at) < $4::timestamptz)
+                    OR (min(COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)) < $4::timestamptz
+                        AND max(COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)) > $4::timestamptz)
+                 ORDER BY o.load_number LIMIT 1) END AS overlap_load
          FROM mdata.loads l
          JOIN LATERAL (
            SELECT x.latitude, x.longitude, x.city, x.state, x.postal_code, COALESCE(x.actual_arrival_at, x.scheduled_arrival_at, x.appointment_start_at) AS at
@@ -199,6 +219,7 @@ export async function computeMilesRecommendations(
   else {
     const prior = await priorLastStop(client, args.operatingCompanyId, args.unitId, args.loadId ?? null, args.firstStopAt ?? null);
     if (!prior) googleEmptyMissing = "no previous load for this unit";
+    else if (prior.overlap_load) googleEmptyMissing = `the truck's loads overlap before this pickup (load ${prior.overlap_load} runs between) — fix the dispatch dates first`;
     else if (!located(prior)) googleEmptyMissing = "the previous load's last stop has no real point";
     else {
       const leg = await googleLegMiles(client, { lat: Number(prior.latitude), lng: Number(prior.longitude) }, { lat: Number(first.latitude), lng: Number(first.longitude) }, route);
@@ -491,7 +512,7 @@ export async function fillLoadDeadhead(
     const { stops, firstAt } = await loadStopPoints(client, args.operatingCompanyId, args.loadId);
     const first = stops[0];
     const prior = first && located(first) ? await priorLastStop(client, args.operatingCompanyId, row.unit, args.loadId, firstAt) : null;
-    if (prior && located(prior) && first) {
+    if (prior && !prior.overlap_load && located(prior) && first) {
       const r = Math.PI / 180;
       const h = Math.sin(((Number(first.latitude) - Number(prior.latitude)) * r) / 2) ** 2
         + Math.cos(Number(prior.latitude) * r) * Math.cos(Number(first.latitude) * r) * Math.sin(((Number(first.longitude) - Number(prior.longitude)) * r) / 2) ** 2;

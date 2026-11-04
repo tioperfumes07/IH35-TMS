@@ -17499,5 +17499,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-rows-93-116-131"
+  },
+  "19913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-deadhead-prior-overlap-refused"
   }
 }
