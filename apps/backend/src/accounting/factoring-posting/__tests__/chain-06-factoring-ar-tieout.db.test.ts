@@ -61,6 +61,7 @@ import {
   requireEffectiveFaroFullRecourseAgreement,
 } from "../faro-agreement-gate.js";
 import { createJournalEntry } from "../../journal-entries.service.js";
+import { applyInvoiceRelief } from "../../invoice-relief-application.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -605,6 +606,107 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     // Cumulative ledger-backed paid total — NOT the latest $30k allocation overwriting the first $40k.
     expect(afterSecond.paid).toBe(70_000);
     expect(afterSecond.status).toBe("partial");
+  });
+
+  // ── ACCT-F11099 (owner 2026-11-04) — a customer payment moves a factored invoice to partial / paid like QuickBooks ──
+  // accounting.recompute_invoice_paid() used to pin `status = 'factored'` whatever was paid. The factoring identity now
+  // lives in factoring_status / the factoring link (accounting.invoice_recoursed_off_trade_ar), never in the payment status.
+  it("ACCT-F11099 — a factored invoice paid in full reads 'paid' ($40k then $60k of $100k); factoring_status stays 'advanced'", async () => {
+    const { id: advanceId } = await seedAdvance({
+      invoiceTotalCents: 100_000,
+      advanceCents: 90_000,
+      reserveCents: 8_000,
+      feeCents: 2_000,
+      withLinkedInvoice: true,
+    });
+    expectPosted(
+      await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID }),
+      "F11099 funding"
+    );
+    expectPosted(
+      await postFactoringCustomerPaymentEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID, amount_cents: 40_000 }),
+      "F11099 first $40k"
+    );
+    expect(await readAdvanceInvoicePaid(advanceId)).toEqual({ paid: 40_000, status: "partial" });
+    expectPosted(
+      await postFactoringCustomerPaymentEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID, amount_cents: 60_000 }),
+      "F11099 final $60k"
+    );
+    expect(await readAdvanceInvoicePaid(advanceId)).toEqual({ paid: 100_000, status: "paid" });
+    const ident = await scopedRead<{ factoring_status: string; recoursed: boolean }>(
+      `SELECT factoring_status, accounting.invoice_recoursed_off_trade_ar(id) AS recoursed FROM accounting.invoices
+        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid`,
+      [advanceId, companyId]
+    );
+    // Funded (secured borrowing) — the factoring identity stays on factoring_status; it was never off trade A/R.
+    expect(ident).toEqual([{ factoring_status: "advanced", recoursed: false }]);
+  });
+
+  it("ACCT-F11099 — a recoursed invoice a payment moves to 'partial' is still factored: off trade A/R in ar_aging_as_of + views.ar_aging; unapply restores 'factored'", async () => {
+    const { id: advanceId } = await seedAdvance({
+      invoiceTotalCents: 50_000,
+      advanceCents: 45_000,
+      reserveCents: 4_000,
+      feeCents: 1_000,
+      withLinkedInvoice: true,
+    });
+    expectPosted(
+      await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID }),
+      "F11099 recourse funding"
+    );
+    const exact = await loadExactLinkedChargebackAmounts(companyId, advanceId);
+    expectPosted(
+      await postFactoringChargebackEvent({
+        operating_company_id: companyId,
+        factoring_advance_id: advanceId,
+        actor_user_id: TEST_OWNER_USER_ID,
+        chargeback_amount_cents: exact.liability_cents,
+        default_interest_cents: 0,
+        recoursed_ar_cents: exact.recoursed_ar_cents,
+      }),
+      "F11099 chargeback"
+    );
+    const inv = (await scopedRead<{ id: string; status: string; factoring_status: string; recoursed: boolean }>(
+      `SELECT id::text, status, factoring_status, accounting.invoice_recoursed_off_trade_ar(id) AS recoursed FROM accounting.invoices
+        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid`,
+      [advanceId, companyId]
+    ))[0]!;
+    expect({ status: inv.status, factoring_status: inv.factoring_status, recoursed: inv.recoursed }).toEqual({
+      status: "factored",
+      factoring_status: "recourse_returned",
+      recoursed: true,
+    });
+
+    const arTotals = async () =>
+      scopedRead<{ as_of: string; view: string }>(
+        `SELECT COALESCE((SELECT SUM(total_open_cents) FROM accounting.ar_aging_as_of($1::uuid, CURRENT_DATE) WHERE customer_id = $2::uuid), 0)::text AS as_of,
+                COALESCE((SELECT SUM(total_open_cents) FROM views.ar_aging WHERE operating_company_id = $1::uuid AND customer_id = $2::uuid), 0)::text AS view`,
+        [companyId, customerId]
+      );
+    const before = (await arTotals())[0]!;
+
+    // The customer pays IH35 $20k of the recoursed $50k (a payment-less relief application — the trigger derives status).
+    const app = await bypass(() =>
+      applyInvoiceRelief(db as never, { operatingCompanyId: companyId, invoiceId: inv.id, amountCents: 20_000, actorUserId: TEST_OWNER_USER_ID })
+    );
+    expect(app?.application_id).toBeTruthy();
+    const afterPay = (await scopedRead<{ status: string; paid: string; recoursed: boolean }>(
+      `SELECT status, amount_paid_cents::text AS paid, accounting.invoice_recoursed_off_trade_ar(id) AS recoursed FROM accounting.invoices WHERE id = $1::uuid`,
+      [inv.id]
+    ))[0]!;
+    expect(afterPay).toEqual({ status: "partial", paid: "20000", recoursed: true });
+    // Still off trade A/R: the $30k open balance must NOT re-enter either aging engine.
+    expect((await arTotals())[0]).toEqual(before);
+
+    // Unapply the application — paid back to 0 restores the recoursed invoice to 'factored', not 'sent'.
+    await bypass(() =>
+      db.query(`UPDATE accounting.payment_applications SET unapplied_at = now() WHERE id = $1::uuid`, [app!.application_id])
+    );
+    const afterUnapply = (await scopedRead<{ status: string; paid: string }>(
+      `SELECT status, amount_paid_cents::text AS paid FROM accounting.invoices WHERE id = $1::uuid`,
+      [inv.id]
+    ))[0]!;
+    expect(afterUnapply).toEqual({ status: "factored", paid: "0" });
   });
 
   // ── F2 (CPA VETO 36946df7) — default interest compounds on the OUTSTANDING liability after payments ──

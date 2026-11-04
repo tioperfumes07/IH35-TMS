@@ -66,7 +66,9 @@ export function analyze(src) {
   if (!/-\s*COALESCE\(i\.tax_cents,\s*0\)[\s\S]{0,80}?AS revenue_cents/.test(code)) {
     failures.push(`${FILE}: revenue leg is not pre-tax — must subtract COALESCE(i.tax_cents, 0) per the documented revenue basis (revenue-gl-linkage.service.ts).`);
   }
-  if (!/CASE WHEN i\.status = 'factored' THEN 0/.test(code)) {
+  // ACCT-F11099: a recoursed invoice that a payment moved to partial / paid keeps its receivable leg at 0 — the identity
+  // accounting.invoice_recoursed_off_trade_ar (via invoiceRecoursedOffTradeArSql), not the payment status alone.
+  if (!/CASE WHEN i\.status = 'factored' OR \$\{invoiceRecoursedOffTradeArSql\("i"\)\} THEN 0/.test(code)) {
     failures.push(`${FILE}: 'factored' must zero the RECEIVABLE leg per-leg (its A/R moved off trade A/R) without excluding the row's revenue leg.`);
   }
   if (/i\.status NOT IN \([^)]*'factored'[^)]*\)/.test(code)) {
@@ -85,7 +87,7 @@ if (process.argv.includes("--selftest")) {
   if (good.length) throw new Error(`[${LABEL}] selftest: the REAL file should PASS but failed: ${good.join("; ")}`);
 
   // Mutation 1 — regress the invoices leg back to the live generated column.
-  const m1 = real.replace(/CASE WHEN i\.status = 'factored' THEN 0 ELSE GREATEST\([\s\S]*?, 0\) END::bigint AS open_cents/,
+  const m1 = real.replace(/CASE WHEN i\.status = 'factored' OR \$\{invoiceRecoursedOffTradeArSql\("i"\)\} THEN 0 ELSE GREATEST\([\s\S]*?, 0\) END::bigint AS open_cents/,
     "GREATEST(COALESCE(i.amount_open_cents, 0), 0)::bigint AS open_cents");
   const f1 = analyze(m1);
   if (!f1.some((f) => f.includes("amount_open_cents"))) {

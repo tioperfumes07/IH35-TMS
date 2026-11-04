@@ -1,0 +1,1 @@
+export default { name: "verify:verify-factored-invoice-payment-status", run(ctx) { ctx.run("node", ["scripts/verify-factored-invoice-payment-status.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-factored-invoice-payment-status.mjs"]); } };

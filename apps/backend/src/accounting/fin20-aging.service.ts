@@ -24,6 +24,7 @@ import {
   listUnclearedCustomerPayments,
   type UnclearedDocument,
 } from "./uncleared-applied-documents.js";
+import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -314,6 +315,7 @@ export async function getArAgingCustomerInvoices(input: {
                 AND i.customer_id = $2::uuid
                 AND i.issue_date <= $3::date
                 AND i.status NOT IN ('draft', 'factored')
+                AND ${invoiceOnTradeArSql("i")}
                 AND (i.voided_at IS NULL OR i.voided_at::date > $3::date)
             )
             SELECT
@@ -349,6 +351,8 @@ export async function getArAgingCustomerInvoices(input: {
               AND i.customer_id = $2::uuid
               AND i.voided_at IS NULL
               AND i.status IN ('sent', 'partial')
+              -- ACCT-F11099: parity with views.ar_aging — a recoursed invoice moved to partial stays off trade A/R.
+              AND ${invoiceOnTradeArSql("i")}
               AND i.amount_open_cents > 0
             ORDER BY i.due_date ASC, i.display_id ASC
           `,

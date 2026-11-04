@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
 
 // LST-CUST-ACT (2026-09-05): a read-only UNION of every customer money event — invoices,
 // payments received, credit memos, broker advances, and factoring advances — as a single
@@ -86,6 +87,7 @@ export async function getCustomerActivity(input: {
           AND i.total_cents IS NOT NULL
           AND i.voided_at IS NULL
           AND i.status NOT IN ${AR_STATUS_EXCLUSIONS}
+          AND ${invoiceOnTradeArSql("i")}
           AND i.is_sample_data = false
       `,
       [input.operating_company_id, input.customer_id]

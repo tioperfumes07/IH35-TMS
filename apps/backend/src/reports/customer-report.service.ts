@@ -7,6 +7,7 @@ import {
   type LoadsReportDateField,
 } from "./loads-report.service.js";
 import { issuedInvoice } from "../accounting/live-document-predicates.sql.js";
+import { invoiceOnTradeArSql } from "../accounting/invoice-factored-identity.js";
 
 /**
  * 443.281-B endpoint 5: customer report.
@@ -98,6 +99,7 @@ export async function getCustomerReport(
           CASE WHEN inv.id IS NOT NULL AND ${issuedInvoice("inv")}
             AND COALESCE(inv.amount_open_cents, 0) > 0
             AND inv.status <> 'factored'
+            AND ${invoiceOnTradeArSql("inv")}
             THEN COALESCE(inv.amount_open_cents, 0)
           ELSE 0 END
         ), 0)::bigint AS outstanding_ar_cents,
@@ -108,6 +110,7 @@ export async function getCustomerReport(
         AND inv.operating_company_id = $1::uuid
         AND ${issuedInvoice("inv")}
         AND inv.status <> 'factored'
+        AND ${invoiceOnTradeArSql("inv")}
       ${loadCostRollupLateral("l.id", "$1::uuid")}
       WHERE l.operating_company_id = $1::uuid
         AND ${filters.join("\n        AND ")}

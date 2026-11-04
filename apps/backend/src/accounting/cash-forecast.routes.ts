@@ -10,6 +10,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { readCardPayableOutflows } from "../cash-flow/card-payables.js";
+import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -186,6 +187,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
             AND voided_at IS NULL
             AND COALESCE(amount_open_cents, 0) > 0
             AND status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
+            AND ${invoiceOnTradeArSql("accounting.invoices")}
             AND due_date BETWEEN $2::date AND $3::date
         `,
         [query.data.operating_company_id, startWeek, endWeek]
