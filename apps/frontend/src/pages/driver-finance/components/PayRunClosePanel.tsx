@@ -171,7 +171,7 @@ export function PayRunClosePanel({
 
   async function runClose(
     loanDecision?: { mode: "full" | "partial"; partial_cents: number | null; reason: string | null } | null,
-    floorOverride?: { pct: number | null; cents: number | null; reason: string } | null
+    floorOverride?: { pct: number | null; cents: number | null; reason_code: string | null } | null
   ) {
     if (!companyId) return;
     setBusy("close");

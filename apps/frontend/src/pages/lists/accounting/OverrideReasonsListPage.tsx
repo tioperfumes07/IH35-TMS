@@ -87,6 +87,7 @@ const CONTEXT_LABELS: Record<OverrideContext, string> = {
   dispatch: "Dispatch",
   safety: "Safety",
   maintenance: "Maintenance",
+  "425c_carry_forward": "Form 425C carry-forward",
 };
 
 export function OverrideReasonsListPage() {
@@ -195,7 +196,7 @@ export function OverrideReasonsListPage() {
 
       <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         The one list of override reasons used across the app (factoring, expense, load wizard, settlement, banking,
-        invoice, bill, dispatch, safety, maintenance). Owner and Accountant just confirm an override; everyone else picks a
+        invoice, bill, dispatch, safety, maintenance, 425c_carry_forward). Owner and Accountant just confirm an override; everyone else picks a
         reason from this list for that screen. Nothing is typed. Per entity.
       </div>
 

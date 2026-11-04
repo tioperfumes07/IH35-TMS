@@ -20,7 +20,8 @@
  *
  * WHAT IT ENFORCES — the override must stay OWNER-ONLY, REASONED and AUDITED:
  *   A. the gate has an Owner-role-checked override branch;
- *   B. that branch requires a reason of >= 10 characters;
+ *   B. that branch confirms through the ONE override engine (row 28: dispatchOverrideRequested + confirmDispatchOverride ->
+ *      recordOverride, catalog reason_code or an Owner confirm — never a typed >= 10 character sentence);
  *   C. that branch writes an appendCrudAudit event naming the override;
  *   D. the non-override path still returns E_DRIVER_NOT_QUALIFIED (the gate is not removed);
  *   E. the frontend actually wires the reason props (or the box is dead again).
@@ -31,7 +32,7 @@
  * (Edit Load reassigning a driver) calls the identical assertDriverQualifiedForLoad gate but, until
  * this extension, had NO override branch at all — an absolute 422 for an Owner too, unlike the
  * create path above. Checks A-D repeat against update-load.service.ts; E repeats against the route
- * schema (override_reason must be an accepted PATCH field, or the reason has nowhere to go).
+ * schema (the catalog override_reason_code must be an accepted PATCH field, or the reason has nowhere to go).
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -79,10 +80,10 @@ function analyse(files) {
           `a dispatch past a CDL / DOT-medical blocker.`
       );
     }
-    if (!/override_reason[\s\S]{0,120}trim\(\)\.length\s*>=\s*10/.test(branch)) {
+    if (!/dispatchOverrideRequested\s*\(\s*input\s*\)/.test(branch) || !/confirmDispatchOverride\s*\(\s*client/.test(branch)) {
       problems.push(
-        `${SERVICE}: the driver-qualification override no longer requires a >= 10 character reason. ` +
-          `An unreasoned override is an unauditable one.`
+        `${SERVICE}: the driver-qualification override no longer confirms through the ONE engine (recordOverride). ` +
+          `An unrecorded override is an unauditable one.`
       );
     }
   }
@@ -218,9 +219,9 @@ function analyse(files) {
             `a driver reassignment past a CDL / DOT-medical blocker.`
         );
       }
-      if (!/override_reason[\s\S]{0,120}trim\(\)\.length\s*>=\s*10/.test(editBranch)) {
+      if (!/dispatchOverrideRequested\s*\(\s*input\s*\)/.test(editBranch) || !/confirmDispatchOverride\s*\(\s*client/.test(editBranch)) {
         problems.push(
-          `${EDIT_SERVICE}: the EDIT-path override no longer requires a >= 10 character reason.`
+          `${EDIT_SERVICE}: the EDIT-path override no longer confirms through the ONE engine (recordOverride).`
         );
       }
     }
@@ -231,17 +232,17 @@ function analyse(files) {
       );
     }
     // E (edit) — the PATCH schema must accept override_reason, or the reason has nowhere to go.
-    if (!/override_reason:\s*z\.string\(\)/.test(editRoute)) {
+    if (!/\.\.\.dispatchOverrideWireShape/.test(editRoute)) {
       problems.push(
-        `${EDIT_ROUTE}: updateDispatchLoadBodySchema does not accept override_reason. The Owner can ` +
+        `${EDIT_ROUTE}: updateDispatchLoadBodySchema does not accept the catalog override_reason_code. The Owner can ` +
           `type a reason on the Edit Load form and it is dropped before it ever reaches the gate.`
       );
     }
     // E (edit) — buildEditPatchBody must actually be ABLE to carry override_reason into the body,
     // or the route accepting the field is a dead end from the other side.
-    if (!/body\.override_reason\s*=/.test(mapping)) {
+    if (!/body\.override_reason_code\s*=/.test(mapping)) {
       problems.push(
-        `${EDIT_MAPPING}: buildEditPatchBody never sets body.override_reason. Even a route that ` +
+        `${EDIT_MAPPING}: buildEditPatchBody never sets body.override_reason_code. Even a route that ` +
           `accepts the field and a backend gate that honors it never see a reason typed in the UI.`
       );
     }
@@ -293,8 +294,8 @@ function selftest() {
   const goodSvc =
     `function canOwnerOverrideQualification(role) { return role === "Owner"; }\n` +
     `load_context: loadContext,\n` +
-    `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole) && ` +
-    `typeof input.override_reason === "string" && input.override_reason.trim().length >= 10;\n` +
+    `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole) && dispatchOverrideRequested(input);\n` +
+    `const dq = await confirmDispatchOverride(client, {});\n` +
     `await appendCrudAudit(client, u, "${OVERRIDE_EVENT}", { override_class: "DOT_QUALIFICATION", attestation_scope: "single_dispatch" });\n` +
     `override_rules\n` +
     `error: "E_DRIVER_NOT_QUALIFIED",`;
@@ -307,12 +308,12 @@ function selftest() {
   const goodIndex = `await registerDispatchRefinementsRoutes(app);`;
   const goodEditSvc =
     `function canOwnerOverrideQualification(role) { return role === "Owner"; }\n` +
-    `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole ?? "") && ` +
-    `typeof input.override_reason === "string" && input.override_reason.trim().length >= 10;\n` +
+    `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole ?? "") && dispatchOverrideRequested(input);\n` +
+    `const dq = await confirmDispatchOverride(client, {});\n` +
     `await appendCrudAudit(client, u, "${OVERRIDE_EVENT}", {});\n` +
     `throw new DriverNotQualifiedError(block); // E_DRIVER_NOT_QUALIFIED`;
-  const goodEditRoute = `override_reason: z.string().trim().min(10).max(1000).optional(),`;
-  const goodEditMapping = `body.override_reason = overrideReason.trim();`;
+  const goodEditRoute = `...dispatchOverrideWireShape,`;
+  const goodEditMapping = `body.override_reason_code = overrideReasonCodeOf(overrideReason);`;
   const base = {
     [LOG_ROUTE]: goodLog,
     [INDEX]: goodIndex,
@@ -369,10 +370,10 @@ function selftest() {
   );
   // Reason requirement dropped.
   t(
-    "override without the >=10 char reason FAILS",
+    "override that skips the recordOverride engine FAILS",
     analyse({
       ...base,
-      [SERVICE]: goodSvc.replace('input.override_reason.trim().length >= 10', "true"),
+      [SERVICE]: goodSvc.replace('confirmDispatchOverride(client,', "noop(client,"),
       [MODAL]: goodModal,
       [PANEL]: goodPanel,
     }).length === 1
@@ -411,8 +412,8 @@ function selftest() {
     }).length === 1
   );
   t(
-    "edit path: override without the >=10 char reason FAILS",
-    analyse({ ...editBase, [EDIT_SERVICE]: goodEditSvc.replace("input.override_reason.trim().length >= 10", "true") }).length === 1
+    "edit path: override that skips the recordOverride engine FAILS",
+    analyse({ ...editBase, [EDIT_SERVICE]: goodEditSvc.replace("confirmDispatchOverride(client,", "noop(client,") }).length === 1
   );
   t(
     "edit path: gate removed entirely FAILS",
@@ -421,12 +422,12 @@ function selftest() {
   // The REAL pre-fix route defect: schema never accepted override_reason — a typed reason had
   // nowhere to go even if the backend gate and the modal were both wired.
   t(
-    "edit path: PATCH schema missing override_reason FAILS",
+    "edit path: PATCH schema missing override_reason_code FAILS",
     analyse({ ...editBase, [EDIT_ROUTE]: `no override field here` }).length === 1
   );
   // The REAL pre-fix mapping defect: buildEditPatchBody never set body.override_reason.
   t(
-    "edit path: buildEditPatchBody never sets override_reason FAILS",
+    "edit path: buildEditPatchBody never sets override_reason_code FAILS",
     analyse({ ...editBase, [EDIT_MAPPING]: `const body = {};` }).length === 1
   );
   // The REAL pre-fix modal defect: onOwnerOverride existed (create path) but the Edit submit branch

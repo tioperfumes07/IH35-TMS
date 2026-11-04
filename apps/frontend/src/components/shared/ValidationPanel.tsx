@@ -38,7 +38,7 @@ type Props = {
   canOwnerOverride?: boolean;
   blockOverrides?: Record<string, BlockOverrideRecord>;
   /**
-   * Row 28 (443.294) — the ONE override: the row's Override is the shared <OverrideButton context="load_wizard">;
+   * Row 28 (443.294) — the ONE override: the row's Override is the shared <OverrideButton context="dispatch">;
    * the reason is the catalog pick (Owner / Accountant just confirm), handed over as the catalog line — never typed.
    */
   onOverrideBlocker?: (ruleId: string, reason: string) => void;
@@ -210,7 +210,7 @@ export function ValidationPanel({
                   </span>
                 ) : canOwnerOverride ? (
                   <OverrideButton
-                    context="load_wizard"
+                    context="dispatch"
                     size="sm"
                     label="Override"
                     disabled={!onOverrideBlocker}

@@ -42,6 +42,7 @@ import {
   loadedMilesFor, mileageSourceFor,
 } from "./book-load.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import { confirmDispatchOverride, dispatchOverrideRequested, DispatchOverrideRefusedError, type DispatchOverrideRule } from "./dispatch-override.js";
 import {
   assertDriverBillAllowsPayOverride,
   assertInvoiceAllowsRateOverride,
@@ -159,8 +160,13 @@ export type UpdateDispatchLoadInput = {
    * already does (BT-3-DISPATCH-AUTH-GATES). Before this field existed, editing an existing load's
    * driver assignment had NO override path at all — an absolute 422, even for an Owner attesting a
    * stale/unreadable credential. */
+  /** Row 28: a catalogs.override_reasons code (null = Owner / Accountant plain confirm). Never typed text. */
+  override_reason_code?: string | null;
+  /** Row 28: an explicit confirm (the Owner / Accountant picked nothing). */
+  override_requested?: boolean;
+  /** INTERNAL — a trusted engine's own attestation line. No route schema carries it. */
   override_reason?: string;
-  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
+  override_rules?: DispatchOverrideRule[];
   fields: UpdateDispatchLoadFields;
   charges?: UpdateLoadCharge[];
   stops?: UpdateLoadStopInput[];
@@ -239,12 +245,11 @@ export function isOwnerNonMoneyLockOverridePatch(input: UpdateDispatchLoadInput)
   );
 }
 
-/** D-H0 — Owner/Admin may bypass ANY load_edit_locked field when override_reason >= 10 chars. */
+/** D-H0 — Owner/Admin may bypass ANY load_edit_locked field once they confirm the override (row 28: catalog reason, never typed). */
 export function isOwnerFullLockOverridePatch(input: UpdateDispatchLoadInput): boolean {
   if (!canOwnerOverrideLoadEditLock(input.requestingUserRole)) return false;
   if (isLiveLoadNumberOnlyPatch(input)) return false;
-  const reason = String(input.override_reason ?? "").trim();
-  if (reason.length < 10) return false;
+  if (!dispatchOverrideRequested(input)) return false;
   const hasScalar = Object.keys(input.fields ?? {}).length > 0;
   return hasScalar || input.stops !== undefined || input.charges !== undefined;
 }
@@ -685,6 +690,18 @@ export async function updateDispatchLoad(
           });
         }
         const beforeAfter = buildScalarDiff(old, fields);
+        // Row 28: the ONE engine, same transaction as the edit. Owner confirms; Administrator must pick a catalog reason.
+        const lockOverride = await confirmDispatchOverride(client, {
+          operatingCompanyId,
+          actor: { userId: requestingUserUuid, role: String(input.requestingUserRole ?? "") },
+          reasonCode: input.override_reason_code,
+          systemReason: input.override_reason,
+          entityType: "mdata.loads",
+          entityId: loadId,
+          before: { locked: true, lock_reason: lock.reason },
+          after: { edit_lock_overridden: true },
+        });
+        if (!lockOverride.ok) throw new DispatchOverrideRefusedError(lockOverride.status, lockOverride.error);
         await appendCrudAudit(
           client,
           requestingUserUuid,
@@ -692,7 +709,8 @@ export async function updateDispatchLoad(
           {
             load_id: loadId,
             operating_company_id: operatingCompanyId,
-            override_reason: String(input.override_reason ?? "").trim(),
+            override_reason: lockOverride.text,
+            override_reason_code: lockOverride.reason_code,
             role: input.requestingUserRole,
             locks_crossed: crossedLocks,
             before_after: beforeAfter,
@@ -761,10 +779,7 @@ export async function updateDispatchLoad(
     // existed on the CREATE path; PATCH /dispatch/loads/:id (Edit Load reassigning a driver) had
     // an absolute 422 with no way out, even for an Owner attesting a stale/unreadable credential.
     const ownerOverridingQualification =
-      canOwnerOverrideQualification(input.requestingUserRole ?? "") &&
-      ((typeof input.override_reason === "string" && input.override_reason.trim().length >= 10) ||
-        (Array.isArray(input.override_rules) &&
-          input.override_rules.some((r) => String(r.reason ?? "").trim().length >= 10)));
+      canOwnerOverrideQualification(input.requestingUserRole ?? "") && dispatchOverrideRequested(input);
     for (const driverId of driverIdsToGate) {
       const block = await assertDriverQualifiedForLoad(client, {
         driverId,
@@ -773,17 +788,24 @@ export async function updateDispatchLoad(
       });
       if (!block) continue;
       if (ownerOverridingQualification) {
-        const ruleRows =
+        const ruleRows: Array<{ rule_code: string; reason_code?: string | null; subject?: string }> =
           Array.isArray(input.override_rules) && input.override_rules.length > 0
-            ? input.override_rules.filter((r) => String(r.reason ?? "").trim().length >= 10)
-            : [
-                {
-                  rule_code: "DOT_QUALIFICATION",
-                  reason: String(input.override_reason ?? "").trim(),
-                  subject: block.driverName,
-                },
-              ];
+            ? input.override_rules
+            : [{ rule_code: "DOT_QUALIFICATION", reason_code: input.override_reason_code ?? null, subject: block.driverName ?? undefined }];
+        let primaryText: string | null = null;
         for (const row of ruleRows) {
+          const dq = await confirmDispatchOverride(client, {
+            operatingCompanyId,
+            actor: { userId: requestingUserUuid, role: String(input.requestingUserRole ?? "") },
+            reasonCode: row.reason_code ?? input.override_reason_code,
+            systemReason: input.override_reason,
+            entityType: "mdata.drivers",
+            entityId: String(block.driverId),
+            before: { blocked: true, reasons: block.reasons },
+            after: { rule_code: row.rule_code, attested: true, load_id: loadId },
+          });
+          if (!dq.ok) throw new DispatchOverrideRefusedError(dq.status, dq.error);
+          primaryText ??= dq.text;
           await appendCrudAudit(
             client,
             requestingUserUuid,
@@ -800,7 +822,8 @@ export async function updateDispatchLoad(
               cdl_expires_at: block.cdlExpiresAt,
               medical_expiry_date: block.medicalExpiryDate,
               hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
-              override_reason: row.reason.trim(),
+              override_reason: dq.text,
+              override_reason_code: dq.reason_code,
               role: input.requestingUserRole,
               override_class: "DOT_QUALIFICATION",
               load_context: {
@@ -822,7 +845,7 @@ export async function updateDispatchLoad(
           notify_channels: ["email", "sms"],
           operating_company_id: operatingCompanyId,
           overridden_reasons: block.reasons,
-          override_reason: ruleRows[0]?.reason.trim() ?? input.override_reason,
+          override_reason: primaryText ?? undefined,
           override_by_user_id: requestingUserUuid,
           override_class: "DOT_QUALIFICATION",
           load_context: { load_id: loadId, load_number: old.live_load_number ?? null },
@@ -843,7 +866,7 @@ export async function updateDispatchLoad(
           medical_expiry_date: block.medicalExpiryDate,
           hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
           override_available_to: "Owner",
-          override_attempted: Boolean(input.override_reason),
+          override_attempted: dispatchOverrideRequested(input),
         },
         "warning",
         "BT-3-DISPATCH-AUTH-GATES"

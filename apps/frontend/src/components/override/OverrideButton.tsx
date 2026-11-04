@@ -18,6 +18,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../Button";
 import { SimpleCombobox } from "../Combobox";
 import { Modal } from "../Modal";
+import { overrideReasonText } from "./reasonLine";
+
+export { overrideReasonCodeOf, overrideReasonText } from "./reasonLine";
 
 /** Roles whose override is a plain confirm (same set as the engine's ROLE_OVERRIDE_CODES). */
 export const OVERRIDE_CONFIRM_ROLES = ["Owner", "Accountant"] as const;
@@ -46,10 +49,6 @@ export type OverrideReasonChoice = {
    */
   text: string;
 };
-
-export function overrideReasonText(code: string, labelEn: string): string {
-  return `${labelEn} [${code}]`;
-}
 
 export function roleOverrideChoice(role: string | null | undefined): OverrideReasonChoice | null {
   if (!isOverrideConfirmRole(role)) return null;

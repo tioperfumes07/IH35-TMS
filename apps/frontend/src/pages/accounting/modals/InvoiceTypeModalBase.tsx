@@ -91,6 +91,8 @@ type Props = {
     customer_notes?: string;
     attachment_draft_id?: string;
     override_credit_limit?: boolean;
+    /** Row 28: the catalog reason_code behind override_credit_limit (null = Owner / Accountant plain confirm). */
+    override_reason_code?: string | null;
     display_id?: string;
   }) => Promise<{ id: string; display_id?: string | null }>;
 };
@@ -113,6 +115,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
+  const [overrideReasonCode, setOverrideReasonCode] = useState<string | null>(null);
   // LINK-F5191: hold the just-created invoice instead of tearing the drawer down in the same
   // tick as onCreated() fires -- same "hold state -> confirm -> close" pattern already applied
   // to CreateBillModal.tsx (ap_bill sweep) and CreateExpenseModal.tsx (expense sweep).
@@ -222,6 +225,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           customer_notes: parsed.notes || undefined,
           attachment_draft_id: draftAttachmentEntityId,
           override_credit_limit: overrideCreditLimit || undefined,
+          override_reason_code: overrideCreditLimit ? overrideReasonCode : undefined,
           display_id: parsed.display_id.trim() || undefined,
         });
 
@@ -279,6 +283,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setDisplayId("");
     setCreditLimitBlock(null);
     setOverrideCreditLimit(false);
+    setOverrideReasonCode(null);
     setCreatedInvoice(null);
     resetInvoiceErrors();
     setDraftAttachmentEntityId(crypto.randomUUID());
@@ -611,7 +616,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
                     context="invoice"
                     size="sm"
                     testId="invoice-credit-limit-override"
-                    onConfirm={() => setOverrideCreditLimit(true)}
+                    onConfirm={(code) => {
+                      setOverrideReasonCode(code);
+                      setOverrideCreditLimit(true);
+                    }}
                   />
                 </div>
               )

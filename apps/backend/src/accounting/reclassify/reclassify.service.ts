@@ -21,6 +21,7 @@
  * source_transaction_type/id of the ORIGINAL document, so a document's ledger drill shows the
  * reclassification; audit.audit_events one row per document per batch.
  */
+import { confirmOverride } from "../../overrides/confirm-override.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { createJournalEntryOnClient, restoreReversedJournalEntryInClientTx } from "../journal-entries.service.js";
 import { PostingEngineError } from "../posting-engine.service.js";
@@ -430,6 +431,8 @@ export type ApplyReclassifyInput = {
   filter_snapshot?: Record<string, unknown>;
   /** LAW 363.5 — OWNER ONLY: apply the batch to lines in an overridable refused class; each one is recorded and audited. */
   override_refusals?: boolean;
+  /** Row 28: catalog reason_code behind override_refusals (null = Owner / Accountant plain confirm). Never typed text. */
+  override_reason_code?: string | null;
   /** OWNER RULING 443.288-A — internal: false while the family follower moves CHILD documents (a child has no children). */
   family_follow?: boolean;
   /** OWNER RULING 443.288-B — the PERSON who chose this load (reclassify by load from the screen): the loads this batch
@@ -1039,7 +1042,8 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
   if (postingIds.length === 0) throw new Error("reclassify_no_lines_selected");
   if (postingIds.length > 500) throw new Error("reclassify_too_many_lines_max_500");
   const overrideRefusals = input.override_refusals === true;
-  if (overrideRefusals && actor.role !== "Owner") throw new Error("reclassify_override_owner_only");
+  // Row 28: Owner / Accountant confirm (recordOverride, below, in this transaction).
+  if (overrideRefusals && actor.role !== "Owner" && actor.role !== "Accountant") throw new Error("reclassify_override_owner_only");
   const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null, to_item_id: input.to_item_id ?? null, to_load_id: input.to_load_id ?? null };
   {
     const companyId = input.operating_company_id;
@@ -1093,6 +1097,19 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
       [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length, overrideRefusals, target.to_item_id, target.to_load_id],
     );
     const batchId = batchRes.rows[0]!.id;
+    if (overrideRefusals) {
+      const ov = await confirmOverride(client as never, {
+        context: "expense",
+        operatingCompanyId: companyId,
+        actor: { userId: actor.userId, role: String(actor.role ?? "") },
+        reasonCode: input.override_reason_code ?? null,
+        entityType: "accounting.reclassify_batches",
+        entityId: batchId,
+        before: { refusals_enforced: true },
+        after: { override_refusals: true, lines_requested: postingIds.length },
+      });
+      if (!ov.ok) throw new Error(`reclassify_override_refused_${ov.error}`);
+    }
     const result: ReclassifyBatchResult = { batch_id: batchId, lines_requested: postingIds.length, lines_applied: 0, lines_refused: 0, amount_cents_moved: 0, documents: [] };
 
     const recordRefusal = async (p: SelectedPosting, why: string) => {

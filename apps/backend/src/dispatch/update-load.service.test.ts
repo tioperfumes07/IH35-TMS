@@ -45,6 +45,12 @@ function makeClient(handlers: { match: RegExp; rows: Row[] }[]) {
   return { client, sqls };
 }
 
+// Row 28 (443.294): overrides confirm through recordOverride (catalogs.override_reasons) in the same transaction.
+const overrideRow = (code: string, roleOnly: boolean) => ({
+  match: /FROM catalogs\.override_reasons/,
+  rows: [{ id: "reason-1", reason_code: code, label_en: code === "owner_override" ? "Owner override" : "Driver request", label_es: "x", contexts: ["dispatch"], is_active: true, role_only: roleOnly }],
+});
+
 const loadExists = { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] };
 const noSettlement = { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] };
 const noInvoice = { match: /FROM accounting\.invoices/, rows: [] as Row[] };
@@ -117,12 +123,13 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     ).rejects.toMatchObject({ lock: { reason: "issued_invoice", reference_display_id: "INV-9" } });
   });
 
-  it("D-H0: Owner + override_reason (>=10) may change miles behind issued invoice with audit", async () => {
+  it("D-H0: Owner confirm (row 28 — recordOverride, no typed reason) may change miles behind issued invoice with audit", async () => {
     const auditSqls: string[] = [];
     const { client, sqls } = makeClient([
       loadExists,
       noSettlement,
       { match: /FROM accounting\.invoices/, rows: [{ id: "i1", display_id: "INV-9", status: "sent" }] },
+      overrideRow("owner_override", true),
       // assertInvoiceAllowsRateOverride — only fires on charges; miles alone skips it
       { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
       { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000, miles_practical: 500 }] },
@@ -139,7 +146,7 @@ describe("updateDispatchLoad — money/evidence guards", () => {
       operatingCompanyId: OCI,
       requestingUserUuid: USER,
       requestingUserRole: "Owner",
-      override_reason: "Owner correcting practical miles after route audit",
+      override_requested: true,
       fields: { miles_practical: 500 },
     });
     expect(auditSqls.some((e) => e === "dispatch.load_edit_lock_overridden")).toBe(true);
@@ -164,8 +171,9 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     ).rejects.toMatchObject({ lock: { reason: "open_settlement" } });
   });
 
-  it("D-H0: Owner + override_reason refuses charge change when invoice is sent (void-and-reissue)", async () => {
+  it("D-H0: Owner confirm refuses charge change when invoice is sent (void-and-reissue)", async () => {
     const { client } = makeClient([
+      overrideRow("owner_override", true),
       {
         match: /SELECT \* FROM mdata\.loads WHERE id/,
         rows: [{ id: LOAD_ID, rate_total_cents: 100000 }],
@@ -182,7 +190,7 @@ describe("updateDispatchLoad — money/evidence guards", () => {
         operatingCompanyId: OCI,
         requestingUserUuid: USER,
         requestingUserRole: "Owner",
-        override_reason: "Owner correcting customer rate after quote mismatch",
+        override_requested: true,
         charges: [{ code: "LINEHAUL", amount_cents: 120000 }],
         fields: {},
       })
@@ -268,22 +276,22 @@ describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualificatio
   };
   const hazmatCheck = { match: /quicksave_pending_fields->>'hazmat'/, rows: [{ is_hazmat: false }] };
 
-  it("throws DriverNotQualifiedError for a non-Owner even with an override_reason typed", async () => {
+  it("throws DriverNotQualifiedError for a non-Owner even with a catalog reason picked (DOT qualification stays Owner-only)", async () => {
     mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
-    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
+    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck, overrideRow("driver_request", false)]);
     await expect(
       updateDispatchLoad(client, {
         loadId: LOAD_ID,
         operatingCompanyId: OCI,
         requestingUserUuid: USER,
         requestingUserRole: "Dispatcher",
-        override_reason: "Angel's CDL is current per FMCSA, system record is stale",
+        override_reason_code: "driver_request",
         fields: { assigned_primary_driver_id: "drv-new" },
       })
     ).rejects.toBeInstanceOf(DriverNotQualifiedError);
   });
 
-  it("throws DriverNotQualifiedError for an Owner with NO override_reason (blocker stands by default)", async () => {
+  it("throws DriverNotQualifiedError for an Owner who never pressed Override (blocker stands by default)", async () => {
     mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
     const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
     await expect(
@@ -297,15 +305,17 @@ describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualificatio
     ).rejects.toBeInstanceOf(DriverNotQualifiedError);
   });
 
-  it("Owner + >=10 char override_reason passes the gate and writes the DOT_QUALIFICATION audit event", async () => {
+  it("Owner confirm (no reason to pick) passes the gate: recordOverride audit row + DOT_QUALIFICATION audit event, same transaction", async () => {
     mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
     const auditPayloads: Record<string, unknown>[] = [];
+    const auditEvents: string[] = [];
     const { client } = makeClient([
       loadExists,
       noSettlement,
       noInvoice,
       noBill,
       hazmatCheck,
+      overrideRow("owner_override", true),
       { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
       { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
       { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
@@ -313,7 +323,10 @@ describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualificatio
     ]);
     const origQuery = client.query.bind(client);
     client.query = async (sql: string, values?: unknown[]) => {
-      if (/audit\.append_event/.test(sql)) auditPayloads.push(JSON.parse(String(values?.[2] ?? "{}")) as Record<string, unknown>);
+      if (/audit\.append_event/.test(sql)) {
+        auditEvents.push(String(values?.[0] ?? ""));
+        auditPayloads.push(JSON.parse(String(values?.[2] ?? "{}")) as Record<string, unknown>);
+      }
       return origQuery(sql, values);
     };
 
@@ -322,17 +335,37 @@ describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualificatio
       operatingCompanyId: OCI,
       requestingUserUuid: USER,
       requestingUserRole: "Owner",
-      override_reason: "Angel's CDL is current per FMCSA, system record is stale",
+      override_requested: true,
       fields: { assigned_primary_driver_id: "drv-new" },
     });
 
+    expect(auditEvents).toContain("override.dispatch");
+    const engine = auditPayloads.find((p) => p.context === "dispatch" && p.entity_type === "mdata.drivers");
+    expect(engine).toMatchObject({ reason_code: "owner_override", actor_role: "Owner", role_override: true });
     const overrideEvent = auditPayloads.find((p) => p.block_code === "E_DRIVER_NOT_QUALIFIED" && p.override_class === "DOT_QUALIFICATION");
     expect(overrideEvent).toBeTruthy();
     expect(overrideEvent?.load_id).toBe(LOAD_ID);
     expect(overrideEvent?.driver_id).toBe("drv-new");
+    expect(overrideEvent?.override_reason_code).toBe("owner_override");
+    expect(overrideEvent?.override_reason).toBe("Owner override [owner_override]");
   });
 
-  it("a reason under 10 characters does NOT unlock the gate for an Owner", async () => {
+  it("an unknown catalog code is REFUSED (reason_unknown, 422) and nothing is attested", async () => {
+    mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
+    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck, { match: /FROM catalogs\.override_reasons/, rows: [] as Row[] }]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        override_reason_code: "made_up_reason",
+        fields: { assigned_primary_driver_id: "drv-new" },
+      })
+    ).rejects.toMatchObject({ name: "DispatchOverrideRefusedError", status: 422, code: "override_reason_unknown" });
+  });
+
+  it("another role's role_only code is REFUSED (403)", async () => {
     mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
     const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
     await expect(
@@ -341,10 +374,10 @@ describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualificatio
         operatingCompanyId: OCI,
         requestingUserUuid: USER,
         requestingUserRole: "Owner",
-        override_reason: "too short",
+        override_reason_code: "accountant_override",
         fields: { assigned_primary_driver_id: "drv-new" },
       })
-    ).rejects.toBeInstanceOf(DriverNotQualifiedError);
+    ).rejects.toMatchObject({ name: "DispatchOverrideRefusedError", status: 403 });
   });
 });
 
