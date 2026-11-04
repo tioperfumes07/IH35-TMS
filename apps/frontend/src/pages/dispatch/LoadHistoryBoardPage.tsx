@@ -436,6 +436,7 @@ export default function LoadHistoryBoardPage() {
 
       <div className={selected ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px]" : ""}>
         <ParityTable
+          appearance="board"
           rows={rows}
           title={`${total} loads · newest first · every cell opens its record`}
           columns={columns}
