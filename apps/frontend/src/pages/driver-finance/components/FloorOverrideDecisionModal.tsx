@@ -9,7 +9,7 @@ type Props = {
   details: NetPayFloorBreachDetails | null;
   onClose: () => void;
   /** Fires with the override to attach to a re-submitted close call. Never auto-submits — the panel owns the retry. */
-  onDecide: (override: { pct: number | null; cents: number | null; reason: string }) => void;
+  onDecide: (override: { pct: number | null; cents: number | null; reason_code: string | null }) => void;
 };
 
 function formatCents(cents: number): string {
@@ -33,10 +33,10 @@ function formatCents(cents: number): string {
 export function FloorOverrideDecisionModal({ open, details, onClose, onDecide }: Props) {
   if (!details) return null;
 
-  function confirmOverride(reason: string) {
-    // The catalog line ("<label> [<code>]") — always >= 10 chars; a shorter value never reaches the close call.
-    if (!(reason.trim().length >= 10)) return;
-    onDecide({ pct: 0, cents: 0, reason: reason.trim() });
+  function confirmOverride(reasonCode: string | null) {
+    // Row 28: the catalog reason_code (null = an Owner / Accountant plain confirm) — the server validates it through
+    // recordOverride in the close transaction. A typed sentence never travels.
+    onDecide({ pct: 0, cents: 0, reason_code: reasonCode });
   }
 
   return (
@@ -55,7 +55,7 @@ export function FloorOverrideDecisionModal({ open, details, onClose, onDecide }:
             size="sm"
             label={`Override — pay full net ${formatCents(details.net_cents)}`}
             testId="floor-override-confirm"
-            onConfirm={(_code, choice) => confirmOverride(choice.text)}
+            onConfirm={(code) => confirmOverride(code)}
           />
           <Button size="sm" variant="secondary" onClick={onClose} data-testid="floor-override-cancel">
             Cancel

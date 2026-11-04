@@ -1,3 +1,4 @@
+import { overrideReasonCodeOf } from "../../components/override/reasonLine";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -370,9 +371,6 @@ export function Form425CHome() {
       if (form.status === "filed") {
         throw new Error("This MOR is filed — use Amend on History");
       }
-      if (form.hasCarryForward && String(form.projectionOverrideReason ?? "").trim().length < 30) {
-        throw new Error("Carry-forward override needs a reason of at least 30 characters");
-      }
       await patchForm425CReport(form.reportId, companyId, {
         operating_company_id: companyId,
         part1_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) <= 9)),
@@ -389,7 +387,10 @@ export function Form425CHome() {
         line_33_proj_disbursements: optionalFormNumber(form.projDisbLast),
         line_35_next_proj_receipts: optionalFormNumber(form.projReceiptsNext),
         line_36_next_proj_disbursements: optionalFormNumber(form.projDisbNext),
-        projection_override_reason: form.projectionOverrideReason,
+        // Row 28: the catalog reason_code behind the confirmed Override (round-tripped from the OverrideButton line);
+        // the server validates it through recordOverride. A typed sentence is refused.
+        projection_override_confirmed: overrideReasonCodeOf(form.projectionOverrideReason) ? true : undefined,
+        projection_override_reason_code: overrideReasonCodeOf(form.projectionOverrideReason),
       });
     },
     onSuccess: async () => {

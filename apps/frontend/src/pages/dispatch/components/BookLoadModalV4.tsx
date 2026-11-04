@@ -10,6 +10,7 @@
  * renamed without moving the exception with it.
  */
 import { OverrideButton } from "../../../components/override/OverrideButton";
+import { overrideReasonCodeOf } from "../../../components/override/reasonLine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
@@ -1122,10 +1123,12 @@ export function BookLoadModalV4({
     return reservedLoadNumber || "—";
   }, [reservedLoadNumber]);
 
-  const canOverrideHardBlock = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
+  // Row 28: the hard-block override is Owner / Accountant confirm; Administrator stays (it holds the HOS + locked-load gates too).
+  const canOverrideHardBlock = ["Owner", "Accountant", "Administrator"].includes(String(auth.user?.role ?? ""));
+  const canOverrideLockedLoad = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
   const canOverrideCreditLimit = ["Owner", "Accountant", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
-  const canOwnerLockOverride = canOverrideHardBlock;
+  const canOwnerLockOverride = canOverrideLockedLoad;
 
   const editLockQuery = useQuery({
     queryKey: ["dispatch-load-edit-lock", operatingCompanyId, editLoadId],
@@ -1275,9 +1278,11 @@ export function BookLoadModalV4({
     const repairOverrideApplied = repairOverrideReason.trim().length >= 10;
     const applyOverrides = Boolean(opts?.override || recordedOverrides.length || repairOverrideApplied);
     const overrideRuleRows = [
-      ...recordedOverrides.map(([rule_code, rec]) => ({ rule_code, reason: rec.reason, subject: rule_code })),
+      // Row 28: each row carries the catalog reason_code (round-tripped from the confirmed OverrideButton line) — the
+      // server validates it through recordOverride; the sentence itself never travels.
+      ...recordedOverrides.map(([rule_code, rec]) => ({ rule_code, reason_code: overrideReasonCodeOf(rec.reason), subject: rule_code })),
       ...(repairOverrideApplied
-        ? [{ rule_code: "unit_repair_active_wo", reason: repairOverrideReason.trim(), subject: "unit" }]
+        ? [{ rule_code: "unit_repair_active_wo", reason_code: overrideReasonCodeOf(repairOverrideReason), subject: "unit" }]
         : []),
     ];
     const overrideReasonInput = (opts?.overrideReasonText ?? overrideReason).trim();
@@ -1339,7 +1344,7 @@ export function BookLoadModalV4({
       try {
         if (loadIsEditLocked && canOwnerLockOverride && !(effectiveOverrideReason && effectiveOverrideReason.length >= 10)) {
           setSubmitErrorMessage(
-            "This load is locked (settlement / issued invoice / driver bill). Enter an Owner override reason (10+ characters) below, then save."
+            "This load is locked (settlement / issued invoice / driver bill). Press Override below (Owner / Administrator), then save."
           );
           pushToast("Owner override reason required", "error");
           return;
@@ -1414,7 +1419,7 @@ export function BookLoadModalV4({
           // this PATCH's override_reason.
           setSubmitErrorMessage(
             canOverrideHardBlock
-              ? "Driver not qualified (CDL/medical/hazmat) — enter an override reason above and click \"Override & dispatch\" to attest and save anyway."
+              ? "Driver not qualified (CDL/medical/hazmat) — click the blocker row's Override above to attest and save anyway."
               : "Driver not qualified (CDL/medical/hazmat). Only the Owner can override this to save."
           );
           pushToast("Blocked — driver not qualified", "error");
@@ -1756,7 +1761,7 @@ export function BookLoadModalV4({
         // so a resumed draft can flag precisely what's still missing instead of re-deriving it.
         quicksave_pending_fields: saveMode === "draft" ? draftPendingFields : undefined,
         override_token: token,
-        override_reason: primaryOverrideReason,
+        override_reason_code: primaryOverrideReason ? overrideReasonCodeOf(primaryOverrideReason) : undefined,
         override_rules: applyOverrides ? overrideRuleRows : undefined,
         override_credit_limit: overrideCreditLimit || undefined,
       });
@@ -2160,7 +2165,7 @@ export function BookLoadModalV4({
                     <span className="text-xs font-semibold text-[#1F2A44]">Override approved — {overrideReason}</span>
                   ) : (
                     <OverrideButton
-                      context="load_wizard"
+                      context="dispatch"
                       size="sm"
                       testId="owner-lock-override-button"
                       onConfirm={(_code, choice) => setOverrideReason(choice.text)}
@@ -2271,9 +2276,9 @@ export function BookLoadModalV4({
                   <div className="flex gap-2">
                     {(gateBanner.type === "hard_block" && canOverrideHardBlock) || (gateBanner.type === "hos_block" && canOverrideHos) ? (
                       <OverrideButton
-                        context="load_wizard"
+                        context="dispatch"
                         size="sm"
-                        label={gateBanner.type === "hard_block" ? "Override (Owner only)" : "Override"}
+                        label="Override"
                         testId={`book-load-gate-override-${gateBanner.type}`}
                         onConfirm={async (_code, choice) => {
                           setOverrideReason(choice.text);
@@ -2286,7 +2291,7 @@ export function BookLoadModalV4({
                         }}
                       />
                     ) : null}
-                    {gateBanner.type === "hard_block" && !canOverrideHardBlock ? <span>Contact Owner to override.</span> : null}
+                    {gateBanner.type === "hard_block" && !canOverrideHardBlock ? <span>Contact an Owner or Accountant to override.</span> : null}
                     {gateBanner.type === "hos_block" && !canOverrideHos ? <span>Manager+ role required for HOS override.</span> : null}
                   </div>
                 </div>

@@ -260,8 +260,9 @@ export type DispatchBookLoadPayload = {
   // is "draft".
   quicksave_pending_fields?: string[];
   override_token?: string;
-  override_reason?: string;
-  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
+  /** Row 28: a catalogs.override_reasons code (null = an Owner / Accountant plain confirm). Never typed text. */
+  override_reason_code?: string | null;
+  override_rules?: Array<{ rule_code: string; reason_code: string | null; subject?: string }>;
   anticipated_chargeback_cents?: number;
   anticipated_chargeback_reason?: string;
   detention_expected_y_n?: boolean;

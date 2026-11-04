@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/Combobox";
+import { OverrideButton } from "../../../components/override/OverrideButton";
 import { formatUsd } from "../../../lib/money";
 
 type ExhibitRow = Record<string, unknown> & { line_number?: number; explanation?: string };
@@ -322,14 +323,24 @@ export function CurrentPeriodTab({
           <span>37. Next month projected net cash flow</span>
           <span className="text-right">{projNetNextLabel}</span>
         </div>
-        <label className="block border-t px-3 py-2 text-xs font-semibold uppercase text-[#4B5563]">
-          Override Reason (required for carry-forward overrides)
-          <textarea
-            className="mt-1 h-20 w-full rounded-sm border px-2 py-1.5 text-xs normal-case"
-            value={form.projectionOverrideReason}
-            onChange={(e) => setForm((prev) => ({ ...prev, projectionOverrideReason: e.target.value }))}
-          />
-        </label>
+        {/* Row 28 (443.294): the ONE override. Owner / Accountant confirm; everyone else picks a reason from the
+            425c_carry_forward catalog. Nothing is typed. */}
+        <div className="flex flex-wrap items-center gap-3 border-t px-3 py-2 text-xs" data-testid="form425c-carry-forward-override">
+          <span className="font-semibold uppercase text-[#4B5563]">Carry-forward override</span>
+          {form.projectionOverrideReason.trim() ? (
+            <span className="font-semibold text-[#1F2A44]" data-testid="form425c-carry-forward-override-recorded">
+              Override recorded — {form.projectionOverrideReason.trim()}
+            </span>
+          ) : (
+            <OverrideButton
+              context="425c_carry_forward"
+              size="sm"
+              label="Override carry-forward projections"
+              testId="form425c-carry-forward-override-button"
+              onConfirm={(_code, choice) => setForm((prev) => ({ ...prev, projectionOverrideReason: choice.text }))}
+            />
+          )}
+        </div>
       </div>
 
       <div className="rounded-sm border bg-white">

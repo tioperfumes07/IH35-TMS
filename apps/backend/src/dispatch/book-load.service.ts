@@ -30,6 +30,7 @@ import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad, driverDqFileOnPaperSince, recordDqFileOnPaper } from "./driver-qualification.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import { confirmDispatchOverride, dispatchOverrideRequested, type DispatchOverrideRule } from "./dispatch-override.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
   assertLoadNumberAvailable,
@@ -318,8 +319,11 @@ export type BookLoadInput = {
   quicksave_pending_fields?: string[];
   driver_pay_plan?: AdditionalOnlyDriverPayPlan;
   override_token?: string;
+  /** Row 28: a catalogs.override_reasons code (null / absent = an Owner / Accountant plain confirm). Never typed text. */
+  override_reason_code?: string | null;
+  /** INTERNAL — a trusted engine's own attestation line (Settlement Creator). No route schema carries it. */
   override_reason?: string;
-  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
+  override_rules?: DispatchOverrideRule[];
 };
 
 export type BookLoadResult =
@@ -333,8 +337,9 @@ function normalizeStopTimeWindow(raw?: string): "appointment" | "open_window" | 
   return "appointment";
 }
 
-function canOverrideUnitBlock(role: string) {
-  return role === "Owner";
+/** Row 28: the hard-block (dispatch-blocked / OOS unit) override is Owner / Accountant confirm; Administrator stays (it already holds the HOS + locked-load gates). */
+export function canOverrideUnitBlock(role: string) {
+  return role === "Owner" || role === "Accountant" || role === "Administrator";
 }
 
 /**
@@ -2546,6 +2551,23 @@ export async function createLoadWithFullSideEffects(
         [input.assigned_unit_id, input.operating_company_id]
       );
       const unit = unitRows[0] ?? null;
+      // Row 28 / WIZ-47: the unit-repair-WO override rides in override_rules (rule_code unit_repair_active_wo). It is a
+      // recorded override like any other — confirm it through the ONE engine so a bad / typed reason never lands.
+      const repairRule = (input.override_rules ?? []).find((r) => r.rule_code === "unit_repair_active_wo");
+      if (repairRule && unit) {
+        const repair = await confirmDispatchOverride(client, {
+          operatingCompanyId: input.operating_company_id,
+          actor: { userId: input.requestingUserUuid, role: input.requestingUserRole },
+          reasonCode: repairRule.reason_code ?? input.override_reason_code,
+          entityType: "mdata.units",
+          entityId: String(unit.id),
+          before: { gate: "unit_repair_active_wo" },
+          after: { booked_over_open_repair_wo: true },
+        });
+        if (!repair.ok) {
+          return { kind: "error", status: repair.status, payload: { error: repair.error, message: "Override refused: pick a reason from the override catalog." } };
+        }
+      }
       if (unit?.has_open_pm_due_wo) {
         wf044Warnings.push({
           unit_id: unit.id,
@@ -2640,16 +2662,24 @@ export async function createLoadWithFullSideEffects(
           return {
             kind: "error",
             status: 403,
-            payload: { error: "E_PERMISSION_DENIED", message: "Only Owner can override dispatch-blocked units." },
+            payload: { error: "E_PERMISSION_DENIED", message: "Only Owner, Accountant or Administrator can override dispatch-blocked units." },
           };
         }
-        if (!input.override_reason || input.override_reason.trim().length < 10) {
-          return {
-            kind: "error",
-            status: 400,
-            payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
-          };
+        // Row 28: the ONE engine, same transaction. Owner / Accountant confirm; everyone else must pick a catalog reason.
+        const unitOverride = await confirmDispatchOverride(client, {
+          operatingCompanyId: input.operating_company_id,
+          actor: { userId: input.requestingUserUuid, role: input.requestingUserRole },
+          reasonCode: input.override_reason_code,
+          systemReason: input.override_reason,
+          entityType: "mdata.units",
+          entityId: String(unit.id),
+          before: { dispatch_blocked: true, block_reason: unit.dispatch_block_reason ?? null },
+          after: { gate: "unit_dispatch_blocked", booked_over_block: true },
+        });
+        if (!unitOverride.ok) {
+          return { kind: "error", status: unitOverride.status, payload: { error: unitOverride.error, message: "Override refused: pick a reason from the override catalog." } };
         }
+        const unitOverrideText = unitOverride.text;
         await appendCrudAudit(
           client,
           input.requestingUserUuid,
@@ -2660,7 +2690,7 @@ export async function createLoadWithFullSideEffects(
             unit_display_id: unit.display_id,
             block_reason: unit.dispatch_block_reason ?? null,
             override_token: input.override_token,
-            override_reason: input.override_reason,
+            override_reason: unitOverrideText,
             role: input.requestingUserRole,
             severity_label: "critical",
           },
@@ -2671,7 +2701,7 @@ export async function createLoadWithFullSideEffects(
           override_type: "unit_block",
           notify_channels: ["email", "sms"],
           operating_company_id: input.operating_company_id,
-          override_reason: input.override_reason,
+          override_reason: unitOverrideText,
           override_by_user_id: input.requestingUserUuid,
         });
         }
@@ -2742,15 +2772,21 @@ export async function createLoadWithFullSideEffects(
           return {
             kind: "error",
             status: 403,
-            payload: { error: "E_PERMISSION_DENIED", message: "Only Owner can override out-of-service (OOS) units." },
+            payload: { error: "E_PERMISSION_DENIED", message: "Only Owner, Accountant or Administrator can override out-of-service (OOS) units." },
           };
         }
-        if (!input.override_reason || input.override_reason.trim().length < 10) {
-          return {
-            kind: "error",
-            status: 400,
-            payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
-          };
+        const oosOverride = await confirmDispatchOverride(client, {
+          operatingCompanyId: input.operating_company_id,
+          actor: { userId: input.requestingUserUuid, role: input.requestingUserRole },
+          reasonCode: input.override_reason_code,
+          systemReason: input.override_reason,
+          entityType: "mdata.units",
+          entityId: String(oosUnit.id),
+          before: { is_oos: true },
+          after: { gate: "unit_oos", booked_over_block: true },
+        });
+        if (!oosOverride.ok) {
+          return { kind: "error", status: oosOverride.status, payload: { error: oosOverride.error, message: "Override refused: pick a reason from the override catalog." } };
         }
         await appendCrudAudit(
           client,
@@ -2761,7 +2797,8 @@ export async function createLoadWithFullSideEffects(
             unit_id: oosUnit.id,
             unit_display_id: oosUnit.display_id,
             override_token: input.override_token,
-            override_reason: input.override_reason,
+            override_reason: oosOverride.text,
+            override_reason_code: oosOverride.reason_code,
             role: input.requestingUserRole,
             severity_label: "critical",
           },
@@ -2945,12 +2982,18 @@ export async function createLoadWithFullSideEffects(
             payload: { error: "E_PERMISSION_DENIED", message: "Only Manager/Admin/Owner can override HOS violations." },
           };
         }
-        if (!input.override_reason || input.override_reason.trim().length < 10) {
-          return {
-            kind: "error",
-            status: 400,
-            payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
-          };
+        const hosOverride = await confirmDispatchOverride(client, {
+          operatingCompanyId: input.operating_company_id,
+          actor: { userId: input.requestingUserUuid, role: input.requestingUserRole },
+          reasonCode: input.override_reason_code,
+          systemReason: input.override_reason,
+          entityType: "mdata.drivers",
+          entityId: String(hos.id),
+          before: { is_in_violation: true, minutes_until_violation: Number(hos.minutes_until_violation ?? 0) },
+          after: { gate: "hos_violation", booked_over_block: true },
+        });
+        if (!hosOverride.ok) {
+          return { kind: "error", status: hosOverride.status, payload: { error: hosOverride.error, message: "Override refused: pick a reason from the override catalog." } };
         }
         await appendCrudAudit(
           client,
@@ -2962,7 +3005,7 @@ export async function createLoadWithFullSideEffects(
             driver_display_id: hos.display_id,
             minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
             override_token: input.override_token,
-            override_reason: input.override_reason,
+            override_reason: hosOverride.text,
             role: input.requestingUserRole,
           },
           "warning",
@@ -2972,7 +3015,7 @@ export async function createLoadWithFullSideEffects(
           override_type: "hos_violation",
           notify_channels: ["email"],
           operating_company_id: input.operating_company_id,
-          override_reason: input.override_reason,
+          override_reason: hosOverride.text,
           override_by_user_id: input.requestingUserUuid,
         });
         }
@@ -3152,24 +3195,32 @@ export async function createLoadWithFullSideEffects(
             save_mode: input.save_mode,
           };
 
+          // Row 28: DOT qualification stays Owner-only (scripts/verify-owner-override-driver-qualification.mjs); the Owner
+          // just confirms — each attestation row is recorded through the ONE engine (recordOverride) in this transaction.
           const ownerOverridingQualification =
-            canOwnerOverrideQualification(input.requestingUserRole) &&
-            ((typeof input.override_reason === "string" && input.override_reason.trim().length >= 10) ||
-              (Array.isArray(input.override_rules) &&
-                input.override_rules.some((r) => String(r.reason ?? "").trim().length >= 10)));
+            canOwnerOverrideQualification(input.requestingUserRole) && dispatchOverrideRequested(input);
 
           if (ownerOverridingQualification) {
-            const ruleRows =
+            const ruleRows: Array<{ rule_code: string; reason_code?: string | null; subject?: string }> =
               Array.isArray(input.override_rules) && input.override_rules.length > 0
-                ? input.override_rules.filter((r) => String(r.reason ?? "").trim().length >= 10)
-                : [
-                    {
-                      rule_code: "DOT_QUALIFICATION",
-                      reason: String(input.override_reason ?? "").trim(),
-                      subject: block.driverName,
-                    },
-                  ];
+                ? input.override_rules
+                : [{ rule_code: "DOT_QUALIFICATION", reason_code: input.override_reason_code ?? null, subject: block.driverName ?? undefined }];
+            let primaryText: string | null = null;
             for (const row of ruleRows) {
+              const dq = await confirmDispatchOverride(client, {
+                operatingCompanyId: input.operating_company_id,
+                actor: { userId: input.requestingUserUuid, role: input.requestingUserRole },
+                reasonCode: row.reason_code ?? input.override_reason_code,
+                systemReason: input.override_reason,
+                entityType: "mdata.drivers",
+                entityId: String(block.driverId),
+                before: { blocked: true, reasons: block.reasons },
+                after: { rule_code: row.rule_code, attested: true },
+              });
+              if (!dq.ok) {
+                return { kind: "error", status: dq.status, payload: { error: dq.error, message: "Override refused: pick a reason from the override catalog." } };
+              }
+              primaryText ??= dq.text;
               await appendCrudAudit(
                 client,
                 input.requestingUserUuid,
@@ -3185,7 +3236,8 @@ export async function createLoadWithFullSideEffects(
                   cdl_expires_at: block.cdlExpiresAt,
                   medical_expiry_date: block.medicalExpiryDate,
                   hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
-                  override_reason: row.reason.trim(),
+                  override_reason: dq.text,
+                  override_reason_code: dq.reason_code,
                   role: input.requestingUserRole,
                   override_class: "DOT_QUALIFICATION",
                   load_context: loadContext,
@@ -3201,7 +3253,7 @@ export async function createLoadWithFullSideEffects(
               notify_channels: ["email", "sms"],
               operating_company_id: input.operating_company_id,
               overridden_reasons: block.reasons,
-              override_reason: ruleRows[0]?.reason.trim() ?? input.override_reason,
+              override_reason: primaryText ?? undefined,
               override_by_user_id: input.requestingUserUuid,
               override_class: "DOT_QUALIFICATION",
               load_context: loadContext,
@@ -3222,7 +3274,7 @@ export async function createLoadWithFullSideEffects(
               medical_expiry_date: block.medicalExpiryDate,
               hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
               override_available_to: "Owner",
-              override_attempted: Boolean(input.override_reason),
+              override_attempted: dispatchOverrideRequested(input),
             },
             "warning",
             "BT-3-DISPATCH-AUTH-GATES"
@@ -3234,7 +3286,7 @@ export async function createLoadWithFullSideEffects(
               error: "E_DRIVER_NOT_QUALIFIED",
               message:
                 `Driver ${block.driverName ?? block.driverId} cannot be dispatched: ${block.reasons.join(", ")}. ` +
-                `An Owner may override with a reason of at least 10 characters; the override is written to the audit trail.`,
+                `An Owner may confirm the override; it is recorded in the override audit trail.`,
               details: {
                 driver_id: block.driverId,
                 reasons: block.reasons,

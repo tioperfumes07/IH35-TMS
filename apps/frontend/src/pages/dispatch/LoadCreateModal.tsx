@@ -113,7 +113,7 @@ export function LoadCreateModal({
       ) : (
         <div className="mt-2 flex items-center gap-2">
           <OverrideButton
-            context="load_wizard"
+            context="dispatch"
             size="sm"
             label="Override this blocker"
             testId="repair-block-override"

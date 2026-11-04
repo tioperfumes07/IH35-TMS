@@ -19,6 +19,7 @@
  *
  * Kept as pure functions so the anti-data-loss behavior is unit-testable without rendering the modal.
  */
+import { overrideReasonCodeOf } from "../../../../components/override/reasonLine";
 import { buildTrailerChoice, trailerChoicePrefill } from "./trailerChoice";
 import type { LoadDetail } from "../../../../api/loads";
 import { buildBookLoadChargeLines } from "../../../../components/dispatch/accessorial-editor-lib";
@@ -247,18 +248,21 @@ export function buildEditPatchBody(
   // when the Owner actually clicked "Override & dispatch" on the pre-dispatch panel. Mirrors Book
   // Load's create path (createDispatchLoad's own override_reason), which Edit never had.
   overrideReason?: string,
-  overrideRules?: Array<{ rule_code: string; reason: string; subject?: string }>
+  overrideRules?: Array<{ rule_code: string; reason_code: string | null; subject?: string }>
 ): AnyValues {
   const body: AnyValues = { operating_company_id: operatingCompanyId };
   const isDirty = (k: string) => Boolean((dirty as Record<string, unknown>)[k]);
+  // Row 28 (443.294): the server takes a catalog reason_code (the confirmed OverrideButton line carries it) — never a typed
+  // sentence. An Owner / Accountant confirm is `override_requested` with the role_only code.
   if (overrideReason && overrideReason.trim().length >= 10) {
-    body.override_reason = overrideReason.trim();
+    body.override_requested = true;
+    body.override_reason_code = overrideReasonCodeOf(overrideReason);
   }
   if (Array.isArray(overrideRules) && overrideRules.length > 0) {
+    body.override_requested = true;
     body.override_rules = overrideRules;
-    if (!body.override_reason) {
-      const first = overrideRules.find((r) => String(r.reason ?? "").trim().length >= 10);
-      if (first) body.override_reason = first.reason.trim();
+    if (!body.override_reason_code) {
+      body.override_reason_code = overrideRules.find((r) => r.reason_code)?.reason_code ?? null;
     }
   }
 
