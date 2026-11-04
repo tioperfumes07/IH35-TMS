@@ -103,7 +103,7 @@ for (const [mod, eps] of modules) {
   lines.push("| kind | endpoint | route file | created | registered | gap |");
   lines.push("|---|---|---|---|---|---|");
   for (const e of eps.sort((a, b) => a.path.localeCompare(b.path))) {
-    lines.push(`| ${e.kind} | \`${e.path}\` | \`${e.file}:${e.line}\` | — | — | — |`);
+    lines.push(`| ${e.kind} | \`${e.path}\` | \`${e.file}\` | — | — | — |`);
   }
   lines.push("");
 }

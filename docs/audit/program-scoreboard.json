@@ -1,10 +1,10 @@
 {
-  "healthzSha": "150dd4b",
-  "generated_at": "2026-11-04T01:19:16.913Z",
+  "healthzSha": "38ae4ea",
+  "generated_at": "2026-11-04T01:38:51.347Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "150dd4b",
+    "deployedSha": "38ae4ea",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 28630,
+      "title": "FIX: \"Void practical-miles bill\" action on the driver bill detail page (ACCT-F11079)",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 07:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28630",
+      "sha": "38ae4ea5ab",
+      "committedAtIso": "2026-11-03T19:32:59-06:00"
+    },
+    {
+      "number": 28629,
+      "title": "BUS: Lead register 11-04 01:30Z checkpoint — rows 93/94/127/130 DONE-LIVE, 131/116/124 PARTIAL",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 07:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28629",
+      "sha": "a610530320",
+      "committedAtIso": "2026-11-03T19:26:05-06:00"
+    },
+    {
+      "number": 28628,
+      "title": "MAIN-GREEN: regenerate 3 stale derived artifacts (scoreboard, USMCA battery, schema-parity baseline)",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 07:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28628",
+      "sha": "800b4642bd",
+      "committedAtIso": "2026-11-03T19:21:12-06:00"
+    },
+    {
+      "number": 28625,
+      "title": "FIX: load-costs board set-based; settlement period year; diesel by truck paging; calendar dates never shift; 40px filter; Load Costs salary labels (rows 203 167 + live defects)",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 07:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28625",
+      "sha": "d4c84e3269",
+      "committedAtIso": "2026-11-03T19:20:57-06:00"
+    },
+    {
       "number": 28627,
       "title": "FIX: deadhead engine never measures across overlapping loads of one truck (row 131 follow-up)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28621",
       "sha": "1d2532d006",
       "committedAtIso": "2026-11-03T18:31:50-06:00"
-    },
-    {
-      "number": 28620,
-      "title": "MAIN-GREEN: move the UI4 step to claimed 19887 (duplicate verify-step 19851)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28620",
-      "sha": "a8b723ae95",
-      "committedAtIso": "2026-11-03T18:30:33-06:00"
-    },
-    {
-      "number": 28619,
-      "title": "CLAIM-RESERVE: verify-step 19887 (LEAD) — re-home the UI4 guard off duplicate 19851",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28619",
-      "sha": "9a409b9d85",
-      "committedAtIso": "2026-11-03T18:30:03-06:00"
-    },
-    {
-      "number": 28618,
-      "title": "FINDING: ACCT-F11067 FIX: cash forecast carries card payables; one opening-cash figure; cash excludes card payables and Faro (rows 91 148 149)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28618",
-      "sha": "715231af55",
-      "committedAtIso": "2026-11-03T18:28:31-06:00"
-    },
-    {
-      "number": 28617,
-      "title": "CLAIM-RESERVE: verify-step 19901 (LEAD) — rows 127-130 static guard (ACCT-F11070)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28617",
-      "sha": "574ec724fa",
-      "committedAtIso": "2026-11-03T18:27:00-06:00"
     }
   ]
 }
