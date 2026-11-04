@@ -9,7 +9,7 @@ import {
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { dqfExpiryPillClass, dqfItemStatusClass } from "../../../lib/driverDqf";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../../lib/formatDate";
 import { Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { listRequiredDocumentTypes } from "../../../api/requiredDocuments";
@@ -251,14 +251,14 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
               label: "Effective",
               sortable: true,
               cellClass: "text-[#4B5563]",
-              render: (item) => formatDateUS(item.effective_date) || "—",
+              render: (item) => formatCalendarDateUS(item.effective_date) || "—",
             },
             {
               key: "expiry_date",
               label: "Expiry",
               sortable: true,
               cellClass: "text-[#4B5563]",
-              render: (item) => formatDateUS(item.expiry_date) || "—",
+              render: (item) => formatCalendarDateUS(item.expiry_date) || "—",
             },
             {
               key: "expiry_pill",

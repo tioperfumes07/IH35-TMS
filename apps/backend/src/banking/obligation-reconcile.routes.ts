@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -121,7 +122,7 @@ export async function loadObligationCandidates(
       // B7 — never put an id fragment in the operator-visible label (Match / link-suggestions).
       label: r.load_number ? `Load ${r.load_number}` : "Load",
       amount_cents: Math.abs(Math.round(Number(r.rate_total_cents ?? 0))),
-      event_date: String(r.created_at).slice(0, 10),
+      event_date: (pgDateOnly(r.created_at) ?? ""),
     });
   }
 
@@ -161,7 +162,7 @@ export async function loadObligationCandidates(
       label: settleRef ? `Settlement ${settleRef}` : "Settlement",
       amount_cents: Math.abs(Math.round(Number(r.net_pay ?? 0) * 100)),
       counterparty_name: r.driver_name?.trim() || null,
-      event_date: String(r.created_at).slice(0, 10),
+      event_date: (pgDateOnly(r.created_at) ?? ""),
     });
   }
 
@@ -245,7 +246,7 @@ export async function loadObligationCandidates(
       obligation_id: r.id,
       label: `Invoice ${r.display_id}`,
       amount_cents: Math.abs(Math.round(Number(r.total_cents ?? 0))),
-      event_date: String(r.issue_date).slice(0, 10),
+      event_date: (pgDateOnly(r.issue_date) ?? ""),
       counterparty_name: r.customer_name?.trim() || null,
     });
   }
@@ -275,7 +276,7 @@ export async function loadObligationCandidates(
       // B7 — display number / sanitized memo / plain noun; never id.slice.
       label: r.bill_number?.slice(0, 80) || operatorVisibleMatchText(r.memo)?.slice(0, 80) || "Bill",
       amount_cents: Math.abs(Math.round(Number(r.amount_cents ?? 0))),
-      event_date: String(r.bill_date).slice(0, 10),
+      event_date: (pgDateOnly(r.bill_date) ?? ""),
       counterparty_name: r.vendor_name?.trim() || null,
     });
   }
@@ -311,7 +312,7 @@ export async function loadObligationCandidates(
       // B7 — expense_number or plain noun; never id.slice.
       label: r.expense_number ? `Expense ${r.expense_number}` : "Expense",
       amount_cents: Math.abs(Math.round(Number(r.total_amount_cents ?? 0))),
-      event_date: String(r.transaction_date).slice(0, 10),
+      event_date: (pgDateOnly(r.transaction_date) ?? ""),
       counterparty_name: r.vendor_name?.trim() || null,
     });
   }

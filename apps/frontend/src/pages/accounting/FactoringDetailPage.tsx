@@ -1,4 +1,4 @@
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -185,7 +185,7 @@ export function FactoringDetailPage() {
         </span>
       ),
     },
-    { key: "issue_date", label: "Issue Date", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
+    { key: "issue_date", label: "Issue Date", sortable: true, render: (invoice) => formatCalendarDateUS(invoice.issue_date) },
     { key: "total_cents", label: "Total", sortable: true, render: (invoice) => money(invoice.total_cents) },
     { key: "factoring_status", label: "Factoring Status", sortable: true },
   ];

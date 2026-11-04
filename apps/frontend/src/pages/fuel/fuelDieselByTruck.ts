@@ -1,4 +1,4 @@
-import { getFuelTransactions, type FuelTransactionListItem } from "../../api/fuelPlanner";
+import { FUEL_TRANSACTIONS_MAX_PAGE, getFuelTransactions, type FuelTransactionListItem } from "../../api/fuelPlanner";
 
 export type DieselByTruckRow = {
   unit_id: string | null;
@@ -77,7 +77,9 @@ export async function fetchDieselByTruckAggregate(
   from: string,
   to: string,
 ): Promise<DieselByTruckAggregate> {
-  const pageSize = 500;
+  // Live 11-03: pageSize 500 -> HTTP 400 on /fuel and /fuel/by-truck (the API caps limit at 200; no by-truck aggregate
+  // endpoint exists). Page at the API's own maximum until has_more is false.
+  const pageSize = FUEL_TRANSACTIONS_MAX_PAGE;
   let offset = 0;
   const all: FuelTransactionListItem[] = [];
   for (;;) {

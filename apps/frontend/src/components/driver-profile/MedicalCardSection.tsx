@@ -1,4 +1,4 @@
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 
 export function MedicalCardSection({ medical, unavailable = false }: { medical: Record<string, unknown>; unavailable?: boolean }) {
   const color = String(medical.color_status ?? "gray");
@@ -16,7 +16,7 @@ export function MedicalCardSection({ medical, unavailable = false }: { medical: 
             "this driver has no medical certificate on file" -- say it plainly instead. */}
         {medical.expiration ? (
           <>
-            Expires {formatDateUS(medical.expiration as string)}
+            Expires {formatCalendarDateUS(medical.expiration as string)}
             {days != null ? ` · ${days} days` : ""}
           </>
         ) : (

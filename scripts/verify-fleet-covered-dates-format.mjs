@@ -11,10 +11,11 @@ const FLEET_HOME = "apps/frontend/src/pages/fleet/FleetHomePage.tsx";
 
 function collect(fleetSrc, homeSrc) {
   const fails = [];
-  if (!/import \{ formatDateUS \} from ["'].*formatDate["']/.test(fleetSrc)) {
+  if (!/import \{[^}]*\bformatDateUS\b[^}]*\} from ["'].*formatDate["']/.test(fleetSrc)) {
     fails.push(`${FLEET_COVERED}: must import formatDateUS`);
   }
-  if (!/formatDateUS\(coverage\.expiry_date\)/.test(fleetSrc)) {
+  // ACCT-F11062 row 167: a policy expiry is a calendar date -> formatCalendarDateUS (date-only) also satisfies the rule.
+  if (!/format(?:Calendar)?DateUS\(coverage\.expiry_date\)/.test(fleetSrc)) {
     fails.push(`${FLEET_COVERED}: policy expiry badge must use formatDateUS(coverage.expiry_date)`);
   }
   if (/\{coverage\.policy_number\} · \{coverage\.expiry_date\}/.test(fleetSrc)) {
@@ -69,8 +70,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const plantFleet = fleet
-    .replace(/import \{ formatDateUS \} from ["'][^"']+["'];\n?/, "")
-    .replace(/const expiry = formatDateUS\(coverage\.expiry_date\) \|\| "—";\n\s*/g, "")
+    .replace(/import \{[^}]*\bformatDateUS\b[^}]*\} from ["'][^"']+["'];\n?/, "")
+    .replace(/const expiry = format(?:Calendar)?DateUS\(coverage\.expiry_date\) \|\| "—";\n\s*/g, "")
     .replace(/\{coverage\.policy_number\} · \{expiry\}/g, "{coverage.policy_number} · {coverage.expiry_date}")
     .replace(/formatDateUS\(row\.covered_since\) \|\| "—"/g, 'row.covered_since ?? "—"')
     .replace(/import \{ BoardSection \} from ["'][^"']+["'];\n?/, "")

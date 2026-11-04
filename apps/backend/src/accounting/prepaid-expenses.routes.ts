@@ -11,6 +11,7 @@
  * SAME transaction as the asset header — never a partial post, never an ad-hoc poster here.
  * Money = integer cents. Entity-scoped. RLS enforced.
  */
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -600,7 +601,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
             operatingCompanyId: oci,
             entityType: "prepaid_purchase",
             entityId: assetId,
-            originalDate: String(asset.purchase_date).slice(0, 10),
+            originalDate: (pgDateOnly(asset.purchase_date) ?? ""),
             memo: `Void reversal of prepaid asset ${asset.asset_number}: ${body.data.reason}`,
           },
           { userId: String(user.uuid) }
@@ -641,7 +642,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
               operatingCompanyId: oci,
               entityType: "prepaid_amortization",
               entityId: assetId,
-              originalDate: String(asset.purchase_date).slice(0, 10),
+              originalDate: (pgDateOnly(asset.purchase_date) ?? ""),
               memo: `Void reversal of amortization-to-date for prepaid asset ${asset.asset_number}: ${body.data.reason}`,
             },
             { userId: String(user.uuid) }

@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../../lib/pg-date-only.js";
 import { withLuciaBypass } from "../../auth/db.js";
 import { checkFactoringPurchaseOwner, FactoringPurchaseOwnerOnlyError } from "../../factoring/owner-only-purchase.js";
 import { findAmountCombinations, type AmountCombination } from "./amount-combinations.js";
@@ -2653,7 +2654,7 @@ export async function acceptExactMultiDocumentMatch(input: {
           account_id: party.account_id,
           target_type: txn.is_credit ? "bank_funding" : "bank_repayment",
           principal_cents: Math.abs(varianceCents),
-          entry_date: String(txn.transaction_date).slice(0, 10),
+          entry_date: (pgDateOnly(txn.transaction_date) ?? ""),
           bank_transaction_id: input.bank_transaction_id,
           funding_source_note: `LEAD 443.305: rest of bank line ${input.bank_transaction_id} after ${input.entries.length} matched document(s); GL ${loanJournalEntryId}`,
         }, input.actor_user_uuid);

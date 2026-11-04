@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/safety";
@@ -30,7 +30,7 @@ function expiryLabel(expiryDate: string | null | undefined) {
   const days = Math.ceil((new Date(`${expiryDate}T00:00:00`).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   if (days < 0) return { text: "Expired", tone: "text-red-700" };
   if (days <= 30) return { text: `Due in ${days}d`, tone: "text-[#1F2A44]" };
-  return { text: formatDateUS(expiryDate), tone: "text-[#1F2A44]" };
+  return { text: formatCalendarDateUS(expiryDate), tone: "text-[#1F2A44]" };
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {

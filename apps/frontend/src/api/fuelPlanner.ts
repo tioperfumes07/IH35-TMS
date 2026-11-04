@@ -238,6 +238,10 @@ export function getFuelSpendSummary(companyId: string, from: string, to: string)
   return apiRequest<FuelSpendSummary>(`/api/v1/fuel/spend-summary?${qs.toString()}`);
 }
 
+/** GET /api/v1/fuel/transactions accepts limit 1..200 (fuel-transactions.routes.ts listQuerySchema). A larger page is
+ *  HTTP 400 -- live 11-03 the Diesel-by-truck board asked for 500 and rendered nothing. Callers page with this. */
+export const FUEL_TRANSACTIONS_MAX_PAGE = 200;
+
 export function getFuelTransactions(
   companyId: string,
   params: {

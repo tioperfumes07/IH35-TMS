@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatCalendarDateUS } from "../../../lib/formatDate";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -135,7 +135,7 @@ export function FineDetailDrawer({
               "—"
             )}
           </div>
-          <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
+          <div><strong>Issued date:</strong> {formatCalendarDateUS(fine.issued_date)}</div>
           <div><strong>Amount:</strong> ${(Number(fine.amount_cents ?? 0) / 100).toFixed(2)}</div>
           <div>
             <strong>Converted liability:</strong>{" "}

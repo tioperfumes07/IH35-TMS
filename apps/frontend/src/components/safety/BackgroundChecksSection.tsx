@@ -11,7 +11,7 @@ import { UploadModal } from "../documents/UploadModal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Combobox } from "../Combobox";
 import { companyToday } from "../../lib/businessDate";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 
 const CHECK_TYPES = [
@@ -110,7 +110,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     ...(driverId ? [] : [{ key: "driver_name", label: "Driver", render: (row: SafetyBackgroundCheckRow) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> }]),
     { key: "check_type", label: "Check", sortable: true, render: (row) => CHECK_TYPES.find((type) => type.value === row.check_type)?.label ?? row.check_type },
     { key: "result", label: "Result", sortable: true, render: (row) => <span className={row.result === "pass" ? "text-[#1F2A44]" : "text-red-700"}>{row.result}</span> },
-    { key: "expiry_date", label: "Expires", sortable: true, render: (row) => row.expiry_date ? formatDateUS(row.expiry_date) : "—" },
+    { key: "expiry_date", label: "Expires", sortable: true, render: (row) => row.expiry_date ? formatCalendarDateUS(row.expiry_date) : "—" },
     {
       key: "document_count",
       label: "Document",

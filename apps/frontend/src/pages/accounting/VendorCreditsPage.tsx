@@ -30,7 +30,7 @@ import { useToast } from "../../components/Toast";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { moneyListKpiCard } from "./moneyListKpiCard";
@@ -216,7 +216,7 @@ export function VendorCreditsPage() {
         key: "issue_date",
         label: "Issue date",
         sortable: true,
-        render: (row) => formatDateUS(row.issue_date),
+        render: (row) => formatCalendarDateUS(row.issue_date),
       },
       {
         key: "amount_cents",
@@ -568,7 +568,7 @@ export function VendorCreditsPage() {
               </div>
               <div>
                 <dt className="text-xs font-semibold text-[#4B5563]">Issue date</dt>
-                <dd className="mt-0.5 text-[#0F1219]">{formatDateUS(credit.issue_date)}</dd>
+                <dd className="mt-0.5 text-[#0F1219]">{formatCalendarDateUS(credit.issue_date)}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold text-[#4B5563]">Credit amount</dt>

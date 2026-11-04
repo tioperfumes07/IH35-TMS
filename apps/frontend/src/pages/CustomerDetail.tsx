@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS, formatCalendarDateUS } from "../lib/formatDate";
 import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -2427,7 +2427,7 @@ export function CustomerDetailPage() {
                     </span>
                   ),
                 },
-                { key: "issue_date", label: "Issue", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
+                { key: "issue_date", label: "Issue", sortable: true, render: (invoice) => formatCalendarDateUS(invoice.issue_date) },
                 { key: "status", label: "Status", sortable: true, render: (invoice) => invoice.status },
                 {
                   key: "total_cents",

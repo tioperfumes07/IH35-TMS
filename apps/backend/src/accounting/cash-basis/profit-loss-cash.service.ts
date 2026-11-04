@@ -42,6 +42,7 @@
  *       assumed. A type appearing here is a prompt to classify it, not a wrong number.
  */
 
+import { pgDateOnly } from "../../lib/pg-date-only.js";
 import { withCurrentUser } from "../../auth/db.js";
 import {
   placeAccountType,
@@ -506,7 +507,7 @@ function groupSettlements(rows: readonly SettlementRowDb[]): Map<string, Settlem
     const amount = Number(row.amount_cents ?? 0);
     if (amount <= 0) continue;
     const list = out.get(row.document_id);
-    const event: SettlementEvent = { date: String(row.settled_on).slice(0, 10), amount_cents: amount };
+    const event: SettlementEvent = { date: (pgDateOnly(row.settled_on) ?? ""), amount_cents: amount };
     if (list) list.push(event);
     else out.set(row.document_id, [event]);
   }
@@ -560,7 +561,7 @@ export async function fetchCashBasisProfitLossInputs(
 
   const driverSettlementDates = new Map<string, string | null>();
   for (const row of settlementDates.rows) {
-    driverSettlementDates.set(row.document_id, row.settled_on ? String(row.settled_on).slice(0, 10) : null);
+    driverSettlementDates.set(row.document_id, pgDateOnly(row.settled_on));
   }
 
   return {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyFines } from "../../api/safety";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -54,7 +54,7 @@ export function CivilFinesReverseBlock({ companyId, related, entityId }: { compa
               <li key={id} className="text-xs text-[#1F2A44]">
                 <EntityLink kind="safety_fine" id={id} label={entityLabel(String(row.violation_description ?? ""), id, "Fine")} />
                 <span className="ml-2 text-xs text-gray-500">
-                  {row.issued_date ? formatDateUS(String(row.issued_date)) : "—"}
+                  {row.issued_date ? formatCalendarDateUS(String(row.issued_date)) : "—"}
                   {row.subject_driver_name ? ` · ${String(row.subject_driver_name)}` : ""}
                 </span>
               </li>

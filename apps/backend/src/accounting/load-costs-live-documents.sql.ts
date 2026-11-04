@@ -13,11 +13,17 @@ export function loadCostsRevenueJoin(load = "l", alias = "revenue"): string {
              WHERE i.source_load_id = ${load}.id
                AND i.operating_company_id = ${load}.operating_company_id
                AND i.voided_at IS NULL AND i.status NOT IN ('draft','proforma','void','voided')) issued
-      CROSS JOIN (SELECT COALESCE(SUM(cl.amount_cents),0)::bigint AS cents
-                    FROM dispatch.load_charge_lines cl
-                   WHERE cl.load_id = ${load}.id
-                     AND cl.operating_company_id = ${load}.operating_company_id
-                     AND cl.is_active IS NOT FALSE) booked
+      -- ACCT-F11062: the inner charge-line alias is \`rcl\`, never \`cl\`. loadCostRollupLateral passes load = "cl"; an
+      -- inner \`cl\` shadowed it, so the filter compared a charge line's load_id with that same line's own id (always
+      -- false): booked (proforma) revenue read $0 on every un-invoiced load and every load scanned the whole table.
+      -- Measured 11-03 on the USMCA Load Costs board: 8 un-invoiced open loads (13688 13690 13692-13695 13698 13700)
+      -- went from $0.00 to their booked charges ($33,750.00 together); every other column identical (md5 of all 13
+      -- rows minus revenue_cents matched before/after).
+      CROSS JOIN (SELECT COALESCE(SUM(rcl.amount_cents),0)::bigint AS cents
+                    FROM dispatch.load_charge_lines rcl
+                   WHERE rcl.load_id = ${load}.id
+                     AND rcl.operating_company_id = ${load}.operating_company_id
+                     AND rcl.is_active IS NOT FALSE) booked
   ) ${alias} ON true`;
 }
 
