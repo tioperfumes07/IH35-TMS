@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c9ac4ea",
-  "generated_at": "2026-11-04T18:25:42.807Z",
+  "healthzSha": "d46ebf5",
+  "generated_at": "2026-11-04T20:23:26.500Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c9ac4ea",
+    "deployedSha": "d46ebf5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/04/2026, 12:25 PM CT",
+      "url": "",
+      "sha": "d46ebf58db",
+      "committedAtIso": "2026-11-04T18:25:42Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/04/2026, 10:24 AM CT",
       "url": "",
       "sha": "c9ac4eabaf",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28652",
       "sha": "6ad7b74372",
       "committedAtIso": "2026-11-04T08:52:46-06:00"
-    },
-    {
-      "number": 28651,
-      "title": "CLAIM-RESERVE: migration 202616390100, verify-step 19945 (ACCT-F11098 settlement line reinstate)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 08:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28651",
-      "sha": "fa8ad0df01",
-      "committedAtIso": "2026-11-04T08:44:18-06:00"
     }
   ]
 }
