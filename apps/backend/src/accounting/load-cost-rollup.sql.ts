@@ -19,6 +19,7 @@ import { loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { resolveLoadSettlementSql } from "../driver-finance/settlement-resolution.sql.js";
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 import { liveExpense, liveBill, liveBillLine, liveDriverBill } from "./live-document-predicates.sql.js";
+import { signedExpenseCentsSql, expenseEffectiveFuelRowIdSql } from "./expense-signed-cents.sql.js";
 
 export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): string {
   return `LEFT JOIN LATERAL (
@@ -54,9 +55,10 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
       LEFT JOIN (
         SELECT
           e.load_id,
-          COALESCE(SUM(e.total_amount_cents), 0)::bigint AS expense_cents,
-          COALESCE(SUM(e.total_amount_cents) FILTER (WHERE e.source_fuel_transaction_id IS NOT NULL), 0)::bigint AS fuel_cents,
-          COALESCE(SUM(e.total_amount_cents) FILTER (WHERE e.source_fuel_transaction_id IS NULL), 0)::bigint AS non_fuel_expense_cents
+          -- Row 128 (ACCT-F11070): a card credit is a NEGATIVE cost, and a statement adjustment sits in its receipt's bucket.
+          COALESCE(SUM(${signedExpenseCentsSql("e")}), 0)::bigint AS expense_cents,
+          COALESCE(SUM(${signedExpenseCentsSql("e")}) FILTER (WHERE ${expenseEffectiveFuelRowIdSql("e")} IS NOT NULL), 0)::bigint AS fuel_cents,
+          COALESCE(SUM(${signedExpenseCentsSql("e")}) FILTER (WHERE ${expenseEffectiveFuelRowIdSql("e")} IS NULL), 0)::bigint AS non_fuel_expense_cents
           FROM accounting.expenses e
          WHERE e.load_id IS NOT NULL
            AND ${liveExpense("e")}

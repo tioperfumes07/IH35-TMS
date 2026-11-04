@@ -54,6 +54,10 @@ export const REQUIRES_LIVE_DB = "live() fails closed without DATABASE_URL by des
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-alwaystrack-parity";
+// Row 128 (ACCT-F11070) — the same rule as apps/backend/src/accounting/expense-signed-cents.sql.ts (signedExpenseCentsSql /
+// expenseEffectiveFuelRowIdSql), inlined because a guard cannot import TypeScript.
+export const SIGNED_EXPENSE_CENTS = "(CASE WHEN e.is_credit IS TRUE THEN -e.total_amount_cents ELSE e.total_amount_cents END)";
+export const EFFECTIVE_FUEL_ROW = "COALESCE(e.source_fuel_transaction_id, (SELECT pe.source_fuel_transaction_id FROM accounting.expenses pe WHERE pe.id = e.parent_expense_id AND pe.operating_company_id = e.operating_company_id))";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const GROUND_TRUTH_PATH = path.join(ROOT, "data/alwaystrack/settlements-truth-2026-09-13.json");
 
@@ -264,16 +268,18 @@ async function live() {
     // accounting.expenses (source_fuel_transaction_id set by createExpenseFromFuelTransaction)
     // are the bank-match document for the same diesel purchase — counting them here double-counts.
     const expenseRes = await client.query(
-      `SELECT l.load_number, sum(e.total_amount_cents) AS cents, count(e.id) AS n
+      `SELECT l.load_number, sum(${SIGNED_EXPENSE_CENTS}) AS cents, count(e.id) AS n
          FROM mdata.loads l
          JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND e.voided_at IS NULL
           -- R-164 (owner order 09-25-2026, LAW 4): DEF / reefer fuel bought on the card is booked ONCE, as the
           -- fuel-backed accounting.expenses row (Cr the card). Only DIESEL belongs to the FUEL dimension; a
           -- fuel-backed non-diesel expense is an AlwaysTrack company expense and counts here.
-          AND (e.source_fuel_transaction_id IS NULL
-               OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
-                           WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))
+          -- Row 128 (ACCT-F11070): a statement card credit / card difference belongs to the receipt it adjusts
+          -- (parent_expense_id) — an adjustment of a DIESEL receipt is not a company expense — and a credit is negative.
+          -- P-0018 (5787) read $235.01 here vs the signed $140.20: +$94.79 / +$0.02 card credits added as costs.
+          AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
+                           WHERE ft.id = ${EFFECTIVE_FUEL_ROW} AND ft.fuel_type = 'diesel')
         GROUP BY l.load_number`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );

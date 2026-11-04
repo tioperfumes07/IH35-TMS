@@ -4,7 +4,7 @@
 // driver pay miles are the signed settlement. Idempotent: a second delivery recomputes the same values from the cache.
 import { recomputeFirstStopDeadhead, relearnLoadStopLegs } from "../../dispatch/load-lane-learning.service.js";
 import { geocodeStopsWithClient } from "../../telematics/stops-geocode-backfill.service.js";
-import { fillLoadDeadhead, recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
+import { fillLoadDeadhead, recordBookedMilesSources, recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -46,8 +46,10 @@ export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
     // through the ONE engine (fillLoadDeadhead: only a NULL value, never a document / typed one, audited). Only Book Load
     // (live_feed) sets the flag; a Settlement Creator load never gets an engine deadhead (LEAD RULING 15:10Z #2).
     const fill = payload.fill_deadhead === true ? await fillLoadDeadhead(ctx.client as never, { operatingCompanyId, loadId, actorUserId }) : null;
+    // Row 130 (ACCT-F11070): a load Book Load wrote miles on records each field's source as the value as booked ('manual').
+    const booked = payload.record_booked_sources === true ? await recordBookedMilesSources(ctx.client as never, { operatingCompanyId, loadId, actorUserId }) : null;
     return {
-      message: `street_from_place:${geo.street_from_place ?? 0}:samsara:${geo.samsara_matched}:zip_listed:${geo.zip_center_listed.length}:relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}${sources ? `:sources:${sources.recorded.join("+") || "none"}` : ""}${fill ? `:miles_deadhead:${fill.status}${fill.reason ? `(${fill.reason})` : ""}` : ""}`,
+      message: `street_from_place:${geo.street_from_place ?? 0}:samsara:${geo.samsara_matched}:zip_listed:${geo.zip_center_listed.length}:relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}${sources ? `:sources:${sources.recorded.join("+") || "none"}` : ""}${fill ? `:miles_deadhead:${fill.status}${fill.reason ? `(${fill.reason})` : ""}` : ""}${booked ? `:booked_sources:${booked.recorded.join("+") || "none"}` : ""}`,
     };
   }
 }

@@ -85,6 +85,16 @@ export function mileageSourceFor(source: string | null | undefined, ...miles: un
   return miles.some((m) => m != null && m !== "" && Number.isFinite(Number(m))) ? "Operator entered" : null;
 }
 
+/** Row 130 — the miles fields a Book Load input carries (each one needs its source recorded). */
+export function bookedMilesFields(input: { miles_practical?: number | null; miles_shortest?: number | null; miles_deadhead?: number | null }): Array<"practical" | "short" | "empty"> {
+  const has = (v: unknown) => v != null && (v as unknown) !== "" && Number.isFinite(Number(v));
+  return [
+    ...(has(input.miles_practical) ? (["practical"] as const) : []),
+    ...(has(input.miles_shortest) ? (["short"] as const) : []),
+    ...(has(input.miles_deadhead) ? (["empty"] as const) : []),
+  ];
+}
+
 export type LoadCreateSource = "live_feed" | "historical_backfill";
 
 /**
@@ -2222,6 +2232,18 @@ export async function bookLoadOnClient(
     // historical_backfill caller (the Settlement Creator) never fills deadhead from the engine — LEAD RULING 15:10Z #2: the
     // Creator's deadhead is the signed document's empty miles only, blank when the document has none.
     if (source === "live_feed") await fillDeadheadAtBooking(client, input, String(result.row.id));
+    // Row 130 (ACCT-F11070) — every miles field Book Load wrote gets its source recorded (the value as booked, 'manual' with
+    // the booking's mileage_source as the reason) by THE re-learn engine's handler, in this same commit. Measured: 13696 /
+    // 13697 / 13699 reached their settlements with miles_practical and no recorded source.
+    if (source === "live_feed" && bookedMilesFields(input).length) {
+      await enqueueOutboxEvent(
+        client as never,
+        "dispatch.relearn_load_miles",
+        { aggregate_type: "mdata.loads", aggregate_id: String(result.row.id) },
+        { operating_company_id: input.operating_company_id, load_id: String(result.row.id), actor_user_id: input.requestingUserUuid, record_booked_sources: true },
+        `dispatch.relearn_load_miles:${String(result.row.id)}:book-load-sources`
+      );
+    }
   }
   return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
 }

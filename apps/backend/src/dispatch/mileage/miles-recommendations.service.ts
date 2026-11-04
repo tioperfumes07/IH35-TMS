@@ -413,6 +413,37 @@ export async function recordDocumentMilesSources(
   return { recorded };
 }
 
+/**
+ * Row 130 / ENG-51 (11-03, ACCT-F11070) — the source of every miles field Book Load wrote. ROOT CAUSE: Book Load writes
+ * miles_practical / miles_shortest / miles_deadhead from the operator (mileage_source 'Operator entered' — measured: 13696 / 13697
+ * / 13699 carried the load confirmation's printed miles, "miles 1110 as printed") and recorded NO source in miles_choice, so
+ * every booked load reached its settlement with an unsourced miles field (verify-settlement-creator-miles-choice RULE 2: 3).
+ * The value as booked is a person's entry: it is recorded as 'manual' with the booking's own mileage_source as the reason —
+ * never 'document' (that is the signed settlement's value) and never a changed number. Fields that already carry a source are
+ * left alone. Runs in the dispatch.relearn_load_miles handler (Google recommendations are recorded beside it).
+ */
+export async function recordBookedMilesSources(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId: string },
+  route: RouteFn = computeRouteReference
+): Promise<{ recorded: MilesField[] }> {
+  const recs = await milesRecommendationsForLoad(client, args, route);
+  if (!recs) return { recorded: [] };
+  const src = (await client.query<{ mileage_source: string | null }>(
+    `SELECT mileage_source FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [args.loadId, args.operatingCompanyId]
+  )).rows[0]?.mileage_source;
+  const reason = `Book Load — the value as booked (${String(src ?? "").trim() || "Operator entered"})`;
+  const recorded: MilesField[] = [];
+  for (const f of MILES_FIELDS) {
+    const cur = recs.fields[f].current;
+    if (cur?.value == null || cur.source != null) continue;
+    await setMilesChoice(client, { ...args, field: f, source: "manual", manualValue: Number(cur.value), reason }, route);
+    recorded.push(f);
+  }
+  return { recorded };
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // RULING 443.86 #1 (CC-3) — DEADHEAD where a previous load exists. The Settlement Creator writes miles_deadhead only from
 // the document's printed empty miles (settlement-creator-seed-loads.ts), so a load whose document prints none was left
