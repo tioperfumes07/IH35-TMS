@@ -114,7 +114,7 @@ export function LoadHistoryDetailPanel({
     <aside className="flex min-w-0 flex-col rounded-sm border border-[#E5E7EB] bg-white" data-testid="load-history-detail-panel" aria-label={`Load ${loadLabel}`}>
       <header className="flex items-start justify-between gap-2 px-3 py-2">
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#111827]">
+          <div className="text-xs font-semibold text-[#111827]">
             Load <EntityLink kind="load" id={loadId} label={loadLabel} /> — everything linked to it
           </div>
           <div className="text-xs text-[#6B7280]">

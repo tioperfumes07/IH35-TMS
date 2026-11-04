@@ -17504,5 +17504,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-deadhead-prior-overlap-refused"
+  },
+  "19917": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-void-stray-practical-ui-wired"
   }
 }

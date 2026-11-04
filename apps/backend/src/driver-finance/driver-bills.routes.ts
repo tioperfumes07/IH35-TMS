@@ -348,6 +348,9 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
             db.voided_at::text AS voided_at,
             db.void_reason,
             db.voided_by_user_id::text AS voided_by_user_id,
+            -- ACCT-F11079: the detail page gates the "Void practical-miles bill" action on these two.
+            db.miles_basis_type,
+            db.settled_in_settlement_id::text AS settled_in_settlement_id,
             -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): identity_user_id feeds the WHO-may-see-this
             -- authorization check below, so these driver joins are load-bearing, not decorative labels.
             d1.identity_user_id AS primary_identity_user_id,
@@ -398,6 +401,11 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         load_id: row.load_id,
         load_number: row.load_number ?? null,
         driver_name: row.driver_name ?? null,
+        miles_basis_type: row.miles_basis_type ?? null,
+        settled_in_settlement_id: row.settled_in_settlement_id ?? null,
+        voided_at: row.voided_at ?? null,
+        void_reason: row.void_reason ?? null,
+        voided_by_user_id: row.voided_by_user_id ?? null,
       };
     });
 
