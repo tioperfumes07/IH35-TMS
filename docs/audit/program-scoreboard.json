@@ -1,10 +1,10 @@
 {
-  "healthzSha": "968457e",
-  "generated_at": "2026-11-04T02:26:01.333Z",
+  "healthzSha": "400d95a",
+  "generated_at": "2026-11-04T04:25:05.058Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "968457e",
+    "deployedSha": "400d95a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28632,
-      "title": "MAIN-GREEN: three guards red on main — phantom false positive on a SQL function, one off-scale class, battery doc churn",
+      "number": 28645,
+      "title": "MAIN-GREEN: regenerate schema-parity baseline for accounting.escrow_posting_loads",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 08:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28632",
-      "sha": "968457ee68",
-      "committedAtIso": "2026-11-03T20:04:54-06:00"
+      "mergedAtCt": "11/03/2026, 10:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28645",
+      "sha": "400d95ac79",
+      "committedAtIso": "2026-11-03T22:15:49-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28644,
+      "title": "MAIN-GREEN: locked-guards-heavy — escrow_posting_loads canonical-ledger declaration (relocated; migration already applied)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:38 PM CT",
-      "url": "",
-      "sha": "bbd3383f1d",
-      "committedAtIso": "2026-11-04T01:38:51Z"
+      "mergedAtCt": "11/03/2026, 10:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28644",
+      "sha": "9cb8841ff8",
+      "committedAtIso": "2026-11-03T22:14:33-06:00"
     },
     {
-      "number": 28630,
-      "title": "FIX: \"Void practical-miles bill\" action on the driver bill detail page (ACCT-F11079)",
+      "number": 28642,
+      "title": "FIX: escrow postings carry their load and document date; register reads them (row 22)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28630",
-      "sha": "38ae4ea5ab",
-      "committedAtIso": "2026-11-03T19:32:59-06:00"
+      "mergedAtCt": "11/03/2026, 09:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28642",
+      "sha": "804a5b64bc",
+      "committedAtIso": "2026-11-03T21:56:18-06:00"
     },
     {
-      "number": 28629,
-      "title": "BUS: Lead register 11-04 01:30Z checkpoint — rows 93/94/127/130 DONE-LIVE, 131/116/124 PARTIAL",
+      "number": 28641,
+      "title": "CLAIM-RESERVE: migrations 202616360100 + 202616360200, verify-step 19925 (ACCT-F11094 row 257, heavy CI red)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28629",
-      "sha": "a610530320",
-      "committedAtIso": "2026-11-03T19:26:05-06:00"
+      "mergedAtCt": "11/03/2026, 09:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28641",
+      "sha": "520153bd99",
+      "committedAtIso": "2026-11-03T21:50:55-06:00"
     },
     {
-      "number": 28628,
-      "title": "MAIN-GREEN: regenerate 3 stale derived artifacts (scoreboard, USMCA battery, schema-parity baseline)",
+      "number": 28640,
+      "title": "FIX: ENG-04 2170 reclass evidence counted voided and double-claimed bank lines",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28628",
-      "sha": "800b4642bd",
-      "committedAtIso": "2026-11-03T19:21:12-06:00"
+      "mergedAtCt": "11/03/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28640",
+      "sha": "188bf7fbce",
+      "committedAtIso": "2026-11-03T21:37:47-06:00"
     },
     {
-      "number": 28625,
-      "title": "FIX: load-costs board set-based; settlement period year; diesel by truck paging; calendar dates never shift; 40px filter; Load Costs salary labels (rows 203 167 + live defects)",
+      "number": 28639,
+      "title": "MAIN-GREEN: build-typecheck red on main — vehicle photo route guard read a fixed 2,200-char window",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28625",
-      "sha": "d4c84e3269",
-      "committedAtIso": "2026-11-03T19:20:57-06:00"
+      "mergedAtCt": "11/03/2026, 09:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28639",
+      "sha": "23c3f8d414",
+      "committedAtIso": "2026-11-03T21:07:39-06:00"
     },
     {
-      "number": 28627,
-      "title": "FIX: deadhead engine never measures across overlapping loads of one truck (row 131 follow-up)",
+      "number": 28638,
+      "title": "MAIN-GREEN: locked-guards-heavy — three live money guards ran without the read-only DB credential",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28627",
-      "sha": "a8e0debd05",
-      "committedAtIso": "2026-11-03T19:18:29-06:00"
+      "mergedAtCt": "11/03/2026, 08:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28638",
+      "sha": "db668d120e",
+      "committedAtIso": "2026-11-03T20:37:58-06:00"
     },
     {
-      "number": 28626,
-      "title": "MAIN-GREEN: frontend typecheck red on main — finish the U12 status string[] conversion",
+      "number": 28637,
+      "title": "MAIN-GREEN: build-typecheck red on main — driver list scope guard pinned an unqualified column",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28626",
-      "sha": "150dd4b36a",
-      "committedAtIso": "2026-11-03T19:12:44-06:00"
+      "mergedAtCt": "11/03/2026, 08:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28637",
+      "sha": "261f1e4c03",
+      "committedAtIso": "2026-11-03T20:30:59-06:00"
     },
     {
-      "number": 28624,
-      "title": "MAIN-GREEN: wire 5 orphan guards through claimed verify-steps 19903-19911",
+      "number": 28636,
+      "title": "BUS: Lead register 11-04 02:40Z — rows 152 261 11 12 87 88 measured",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 07:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28624",
-      "sha": "e3355e3c80",
-      "committedAtIso": "2026-11-03T19:05:01-06:00"
+      "mergedAtCt": "11/03/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28636",
+      "sha": "578b1b3f69",
+      "committedAtIso": "2026-11-03T20:28:23-06:00"
     },
     {
-      "number": 28623,
-      "title": "FINDING: ACCT-F11070 — FIX: fuel-expense one-to-one; settlement 5787 non-diesel; invoice amount_paid derived from applications; composite memos (rows 127 128 129 130)",
+      "number": 28635,
+      "title": "MAIN-GREEN: locked-guards-heavy red on main — three stale pins and one unregistered external id",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28623",
-      "sha": "65b964dc5e",
-      "committedAtIso": "2026-11-03T18:43:30-06:00"
+      "mergedAtCt": "11/03/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28635",
+      "sha": "f6799905e4",
+      "committedAtIso": "2026-11-03T20:27:20-06:00"
     }
   ]
 }
