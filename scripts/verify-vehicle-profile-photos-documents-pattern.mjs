@@ -17,7 +17,9 @@ function failures({ migrationSource = migration, docsSource = docsRoute, photosS
   if (!docsSource.includes("docs.file_links") || !docsSource.includes("docs.files")) errors.push("docs.files pattern missing");
   if (!photosSource.includes("mdata.unit_photos")) errors.push("unit_photos routes missing");
   const start = photosSource.indexOf('app.get("/api/v1/mdata/units/:id/photos"');
-  const route = start < 0 ? "" : photosSource.slice(start, start + 2200);
+  // The handler's own text up to the next route registration (#28610 grew it past the old fixed 2,200-char window).
+  const nextRoute = start < 0 ? -1 : photosSource.indexOf("\n  app.", start + 10);
+  const route = start < 0 ? "" : photosSource.slice(start, nextRoute < 0 ? undefined : nextRoute);
   const parentIndex = route.indexOf("FROM mdata.units");
   const childIndex = route.indexOf("FROM mdata.unit_photos");
   if (!/owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/.test(route)) {
