@@ -2260,11 +2260,14 @@ export async function fillDeadheadAtBooking(client: DbClient, input: BookLoadInp
     // 13695 / 13696 / 13697 / 13699 kept a NULL first-stop leg with both points located (verify-booked-loads-save-miles RULE 4).
     // Queue THE re-learn engine in this same commit: its handler resolves the stops, then recomputes the module's legs and the
     // first-stop deadhead (recomputeFirstStopDeadhead) — never a document leg, never a straight line.
+    // Row 131 (11-03): fill_deadhead — the handler then fills mdata.loads.miles_deadhead through fillLoadDeadhead once the
+    // stops have points. Before, it re-learned only the stop-1 planning leg: 13690 got leg 199 mi on 10-22 while
+    // miles_deadhead stayed NULL, and 11 delivered loads booked 10-21/22 kept a NULL deadhead the same way.
     await enqueueOutboxEvent(
       client as never,
       "dispatch.relearn_load_miles",
       { aggregate_type: "mdata.loads", aggregate_id: loadId },
-      { operating_company_id: input.operating_company_id, load_id: loadId, actor_user_id: input.requestingUserUuid },
+      { operating_company_id: input.operating_company_id, load_id: loadId, actor_user_id: input.requestingUserUuid, fill_deadhead: true },
       `dispatch.relearn_load_miles:${loadId}:book-load-deadhead`
     );
   }
