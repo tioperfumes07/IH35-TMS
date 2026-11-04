@@ -224,6 +224,10 @@ async function reverseMatchCreatedEntries(
        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
         AND je.status = 'posted' AND je.reversed_by_je_id IS NULL
+        -- ACCT-F11071: the reversal an earlier Undo posted carries the SAME source key as the sweep it reversed. Without
+        -- this clause a match → Undo → re-match → Undo picked that reversal up and the void engine refused it
+        -- (void_reversal_je_is_itself_a_reversal) — the line could never be undone again. Only original sweeps reverse.
+        AND je.reverses_je_id IS NULL
         AND ((p.source_transaction_type = 'customer_payment_deposit' AND p.source_transaction_id::text = ANY($2::text[]))
           OR (p.source_transaction_type = 'factoring_advance_deposit' AND p.source_transaction_id::text = ANY($3::text[])))
      UNION
