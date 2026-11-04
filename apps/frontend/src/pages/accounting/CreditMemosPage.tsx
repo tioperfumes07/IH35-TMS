@@ -82,7 +82,12 @@ export function CreditMemosPage() {
   // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<Array<CreditMemoStatus | "active">>(["active"]);
   const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
+  // ACCT-F11101 — "Create credit memo" on a SENT invoice deep-links here (?invoice_id=&customer_id=&create=1): the drawer
+  // opens prefilled with the customer and the invoice it corrects, applied to it by default (QBO), or left as customer credit.
+  const fromInvoiceId = searchParams.get("invoice_id");
+  const fromInvoiceDisplayId = searchParams.get("invoice_display_id");
+  const [createOpen, setCreateOpen] = useState(searchParams.get("create") === "1");
+  const [createApplyToInvoice, setCreateApplyToInvoice] = useState(true);
   const [selectedCreditMemoId, setSelectedCreditMemoId] = useState<string | null>(deepLinkCreditMemoId);
   const [applyOpen, setApplyOpen] = useState(false);
   const [applyInvoiceId, setApplyInvoiceId] = useState<string | null>(null);
@@ -154,9 +159,11 @@ export function CreditMemosPage() {
         notes: createNotes.trim() || undefined,
         display_id: createDisplayId.trim() || undefined,
         account_id: createAccountId as string,
+        ...(fromInvoiceId ? { related_invoice_id: fromInvoiceId, apply_to_invoice: createApplyToInvoice } : {}),
       }),
     onSuccess: async () => {
-      pushToast("Credit memo created", "success");
+      pushToast(fromInvoiceId && createApplyToInvoice ? "Credit memo created and applied to the invoice" : "Credit memo created", "success");
+      if (fromInvoiceId) void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
       setCreateOpen(false);
       setCreateAmountCents(null);
       setCreateReason("other");
@@ -460,6 +467,22 @@ export function CreditMemosPage() {
         }
       >
         <div className="space-y-3 text-xs">
+          {fromInvoiceId ? (
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-2" data-testid="credit-memo-from-invoice">
+              <div className="text-xs font-medium text-gray-700">
+                Corrects invoice <EntityLink kind="invoice" id={fromInvoiceId} label={fromInvoiceDisplayId || "invoice"} /> — the invoice stays as sent; this credit memo is the correction.
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={createApplyToInvoice}
+                  onChange={(e) => setCreateApplyToInvoice(e.target.checked)}
+                  data-testid="credit-memo-apply-to-invoice"
+                />
+                Apply to this invoice (lowers its open balance). Unchecked, it stays as customer credit.
+              </label>
+            </div>
+          ) : null}
           <QboDocumentNumberField
             label="Credit memo no."
             value={createDisplayId}

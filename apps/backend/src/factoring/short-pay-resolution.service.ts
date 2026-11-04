@@ -54,6 +54,9 @@ export async function resolveFaroShortPay(
     note?: string | null;
     actor_user_id: string;
     actor_role: string;
+    /** ACCT-F11101 — the shortfall is the credit memo already issued against this SENT invoice ("Create credit memo"): link
+     *  it, never write the same shortfall down a second time. */
+    existing_credit_memo_id?: string | null;
   }
 ) {
   const oci = input.operating_company_id;
@@ -93,6 +96,8 @@ export async function resolveFaroShortPay(
     return { entry_id: e.id, resolution: "kept_open" as const };
   }
 
+  if (input.existing_credit_memo_id) return linkShortPayToExistingCreditMemo(client, input, e, link);
+
   const reason = input.reason ? SHORT_PAY_REASONS[input.reason] : undefined;
   if (!reason) throw new ShortPayResolutionError("short_pay_reason_required");
   const account = (await client.query<{ id: string }>(
@@ -108,7 +113,14 @@ export async function resolveFaroShortPay(
     [link.invoice_id, oci]
   )).rows[0]?.c ?? 0);
   const remaining = Number(link.total_cents) - Number(link.amount_paid_cents) - applied;
-  if (amount > remaining) throw new ShortPayResolutionError("short_pay_exceeds_invoice_open_balance");
+  if (amount > remaining) {
+    // ACCT-F11101 — a credit memo already issued against this invoice took the open balance: resolve THROUGH it.
+    const covering = (await client.query<{ id: string }>(
+      `SELECT id::text FROM accounting.credit_memos WHERE operating_company_id = $1::uuid AND related_invoice_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
+      [oci, link.invoice_id]
+    )).rows[0];
+    throw new ShortPayResolutionError(covering ? "short_pay_covered_by_existing_credit_memo" : "short_pay_exceeds_invoice_open_balance");
+  }
 
   const today = companyBusinessDate();
   const displayId = await resolveCreditMemoDisplayId(client as never, oci, new Date(`${today}T00:00:00Z`), undefined);
@@ -171,4 +183,57 @@ export async function resolveFaroShortPay(
     credit_memo_id: memo.id, journal_entry_id: je.id, reason: input.reason, amount_cents: amount,
   }, "warning", "OWNER-RULING-2026-10-02-SHORT-PAY");
   return { entry_id: e.id, resolution: "written_down" as const, credit_memo_id: memo.id, journal_entry_id: je.id, amount_cents: amount };
+}
+
+/**
+ * ACCT-F11101 (owner 11-04 08:44 CT: "7-ok folow qb") — the Faro short-pay row for an invoice we already corrected with a
+ * credit memo ("Create credit memo" on the SENT invoice). The customer side already posted ONCE, when the memo was created
+ * (Dr the reason account / Cr A/R through the posting engine) and applied to the invoice; Faro's side posts from Faro's own
+ * row (DR 2150 / CR 1235). This links the two — the Faro entry names the credit memo and its journal entry, and the memo's legs
+ * are spine-linked to the Faro entry — and posts NOTHING. Fail-closed: the memo must be live, against THIS invoice, applied
+ * to it for at least the shortfall, posted, and not already the resolution of another Faro row.
+ */
+async function linkShortPayToExistingCreditMemo(
+  client: DbClient,
+  input: { operating_company_id: string; entry_id: string; actor_user_id: string; note?: string | null; existing_credit_memo_id?: string | null },
+  e: { id: string; amount_cents: string; faro_invoice_number: string | null },
+  link: { invoice_id: string }
+) {
+  const oci = input.operating_company_id;
+  const amount = Math.abs(Number(e.amount_cents));
+  const memo = (await client.query<{ id: string; account_id: string | null; journal_entry_id: string | null; applied: string; other_entry: string | null }>(
+    `SELECT cm.id::text, cm.account_id::text, cm.journal_entry_id::text,
+            COALESCE((SELECT sum(a.applied_cents) FROM accounting.credit_memo_applications a
+                       WHERE a.credit_memo_id = cm.id AND a.invoice_id = $3::uuid AND a.voided_at IS NULL), 0)::text AS applied,
+            (SELECT f.id::text FROM accounting.faro_reserve_entries f
+              WHERE f.operating_company_id = cm.operating_company_id AND f.short_pay_credit_memo_id = cm.id AND f.id <> $4::uuid LIMIT 1) AS other_entry
+       FROM accounting.credit_memos cm
+      WHERE cm.id = $1::uuid AND cm.operating_company_id = $2::uuid AND cm.voided_at IS NULL AND cm.related_invoice_id = $3::uuid
+      FOR UPDATE OF cm`,
+    [input.existing_credit_memo_id, oci, link.invoice_id, e.id]
+  )).rows[0];
+  if (!memo) throw new ShortPayResolutionError("existing_credit_memo_not_against_this_invoice");
+  if (memo.other_entry) throw new ShortPayResolutionError("existing_credit_memo_already_resolves_another_faro_entry");
+  if (!memo.journal_entry_id || !memo.account_id) throw new ShortPayResolutionError("existing_credit_memo_not_posted");
+  if (Number(memo.applied) < amount) throw new ShortPayResolutionError("existing_credit_memo_applied_less_than_short_pay");
+  const legs = await client.query<{ id: string }>(`SELECT id::text FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid`, [memo.journal_entry_id]);
+  for (const leg of legs.rows) {
+    await writeTransactionSourceLink(client as never, {
+      operating_company_id: oci, journal_entry_posting_id: leg.id, linked_object_type: "faro_reserve_entry", linked_object_id: e.id,
+      relationship_role: "faro_short_pay_credit_memo",
+    });
+  }
+  await client.query(
+    `UPDATE accounting.faro_reserve_entries
+        SET short_pay_resolution = 'written_down', short_pay_reason = 'credit_memo', short_pay_reason_account_id = $2::uuid,
+            short_pay_credit_memo_id = $3::uuid, short_pay_resolution_journal_entry_id = $4::uuid,
+            short_pay_resolved_by_user_id = $5::uuid, short_pay_resolved_at = now(), short_pay_resolution_note = $6
+      WHERE id = $1::uuid`,
+    [e.id, memo.account_id, memo.id, memo.journal_entry_id, input.actor_user_id, input.note ?? null]
+  );
+  await appendCrudAudit(client as never, input.actor_user_id, "factoring.faro_short_pay_linked_to_credit_memo", {
+    resource_type: "accounting.faro_reserve_entries", resource_id: e.id, operating_company_id: oci, invoice_id: link.invoice_id,
+    credit_memo_id: memo.id, journal_entry_id: memo.journal_entry_id, amount_cents: amount, posted: "nothing (the credit memo already posted the customer side)",
+  }, "warning", "ACCT-F11101");
+  return { entry_id: e.id, resolution: "written_down" as const, credit_memo_id: memo.id, journal_entry_id: memo.journal_entry_id, amount_cents: amount };
 }

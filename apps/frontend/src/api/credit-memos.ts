@@ -62,6 +62,9 @@ export type CreditMemo = {
   notes: string | null;
   created_at: string;
   created_by_user_id: string | null;
+  /** ACCT-F11101 — the SENT invoice this credit memo corrects ("Create credit memo" on the invoice). */
+  related_invoice_id?: string | null;
+  related_invoice_display_id?: string | null;
 };
 
 export type CreditMemoApplication = {
@@ -77,17 +80,22 @@ export function listCreditMemos(
   operatingCompanyId: string,
   // R-102-B item 5 — "active" is a backend-recognized pseudo-status meaning "exclude voided"
   // (draft/issued/applied are all live states); see credit-memos.routes.ts's listQuerySchema.
-  params: { customer_id?: string; status?: CreditMemoStatus | "active" | ReadonlyArray<CreditMemoStatus | "active"> }
+  params: { customer_id?: string; related_invoice_id?: string; status?: CreditMemoStatus | "active" | ReadonlyArray<CreditMemoStatus | "active"> }
 ): Promise<{ credit_memos: CreditMemo[]; voided_count?: number }> {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.customer_id) qs.set("customer_id", params.customer_id);
+  if (params.related_invoice_id) qs.set("related_invoice_id", params.related_invoice_id);
   appendStatusList(qs, "status", params.status);
   return apiRequest<{ credit_memos: CreditMemo[]; voided_count?: number }>(`/api/v1/accounting/credit-memos?${qs.toString()}`);
 }
 
 export function createCreditMemo(
   operatingCompanyId: string,
-  payload: { customer_id: string; issue_date?: string; amount_cents: number; reason: CreditMemoReason; account_id: string; notes?: string; display_id?: string }
+  payload: {
+    customer_id: string; issue_date?: string; amount_cents: number; reason: CreditMemoReason; account_id: string; notes?: string; display_id?: string;
+    /** ACCT-F11101 — the sent invoice it corrects; apply_to_invoice lowers that invoice's open balance (else customer credit). */
+    related_invoice_id?: string; apply_to_invoice?: boolean;
+  }
 ): Promise<CreditMemo> {
   return apiRequest<CreditMemo>(
     `/api/v1/accounting/credit-memos?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,

@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { listCreditMemos } from "../../api/credit-memos";
 import { getLoad } from "../../api/loads";
 import { Button } from "../../components/Button";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -177,6 +178,17 @@ export function InvoiceDetailPage() {
   const invoice = detailQuery.data;
   const isDraft = invoice?.status === "draft";
   const canRecordPayment = invoice?.status === "sent" || invoice?.status === "partial";
+  // ACCT-F11101 (owner 11-04: "7-ok folow qb") — a SENT invoice is never rewritten: its correction is a credit memo against
+  // it, so the original and the correction both stay on record (QuickBooks rule).
+  const isIssued = ["sent", "partial", "paid", "factored"].includes(String(invoice?.status ?? ""));
+  const creditMemoHref = invoice
+    ? `/accounting/credit-memos?${new URLSearchParams({ customer_id: String(invoice.customer_id ?? ""), invoice_id: String(invoice.id), invoice_display_id: String(invoice.display_id ?? ""), create: "1" }).toString()}`
+    : "";
+  const invoiceCreditMemosQuery = useQuery({
+    queryKey: ["accounting", "credit-memos", selectedCompanyId, "related-invoice", invoice?.id],
+    queryFn: () => listCreditMemos(selectedCompanyId!, { related_invoice_id: invoice!.id, status: ["active"] }),
+    enabled: Boolean(selectedCompanyId && invoice?.id && isIssued),
+  });
   const lineCount = invoice?.lines?.length ?? 0;
 
   const incomeAccountOptions = useMemo(
@@ -352,6 +364,11 @@ export function InvoiceDetailPage() {
             {canRecordPayment ? (
               <Button variant="secondary" onClick={() => setRecordPaymentOpen(true)}>
                 Record Payment
+              </Button>
+            ) : null}
+            {isIssued ? (
+              <Button variant="secondary" onClick={() => navigate(creditMemoHref)} data-testid="invoice-create-credit-memo">
+                Create credit memo
               </Button>
             ) : null}
             <Button
@@ -658,6 +675,24 @@ export function InvoiceDetailPage() {
       </BoardSection>
 
       <BoardSection title={`Lines (${lineCount})`} testId="invoice-lines-board">
+        {isIssued ? (
+          <div className="mb-2 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="invoice-sent-edit-refused">
+            This invoice has been sent, so its amount and lines are not edited. To correct it, use{" "}
+            <Link to={creditMemoHref} className="font-medium text-[#1F2A44] underline">Create credit memo</Link> — the invoice and the credit memo both stay on record.
+            {(invoiceCreditMemosQuery.data?.credit_memos ?? []).length ? (
+              <div className="mt-1" data-testid="invoice-credit-memos">
+                Credit memos against this invoice:{" "}
+                {(invoiceCreditMemosQuery.data?.credit_memos ?? []).map((cm, i) => (
+                  <span key={cm.id}>
+                    {i ? ", " : ""}
+                    <Link to={`/accounting/credit-memos?credit_memo_id=${encodeURIComponent(cm.id)}`} className="underline">{cm.display_id}</Link>{" "}
+                    {formatUsdCents(cm.amount_cents)} ({cm.status})
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-gray-600">Line items and billable components</div>
           {isDraft ? (

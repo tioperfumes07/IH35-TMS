@@ -1,0 +1,1 @@
+export default { name: "verify:verify-driver-bill-reprices-to-settlement-line", run(ctx) { ctx.run("node", ["scripts/verify-driver-bill-reprices-to-settlement-line.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-driver-bill-reprices-to-settlement-line.mjs"]); } };

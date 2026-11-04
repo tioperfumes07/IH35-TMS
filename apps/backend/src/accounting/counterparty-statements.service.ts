@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
+import { applicationDateSql, invoiceAppliedCentsAsOfSql } from "./invoice-applied-cents.js";
 
 // V2 — COUNTERPARTY STATEMENTS (owner-requested 2026-09-05, STANDING-DIRECTIVES-2026-09-05.md §CC-1
 // item 5, "the wiring into statements ask"): a real per-counterparty statement of account —
@@ -60,16 +61,7 @@ async function customerOpeningBalanceCents(
       SELECT COALESCE(SUM(
         GREATEST(
           COALESCE(i.total_cents, 0)
-            - COALESCE((
-                SELECT SUM(COALESCE(pa.amount_cents, 0))
-                FROM accounting.payment_applications pa
-                JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = i.operating_company_id
-                WHERE pa.invoice_id = i.id
-                  AND pa.operating_company_id = i.operating_company_id
-                  AND p.payment_date < $3::date
-                  AND (p.voided_at IS NULL OR p.voided_at::date >= $3::date)
-                  AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date >= $3::date)
-              ), 0)
+            - ${invoiceAppliedCentsAsOfSql("i", "($3::date - 1)")}
             - COALESCE((
                 SELECT SUM(cma.applied_cents)
                 FROM accounting.credit_memo_applications cma
@@ -118,17 +110,23 @@ async function customerLedgerLines(
     `,
     [operatingCompanyId, customerId, fromDate, toDate]
   );
-  const paymentRows = await client.query<{ date: string; reference: string; description: string; amount_cents: string | number; id: string }>(
+  const paymentRows = await client.query<{ date: string; reference: string; description: string; amount_cents: string | number; id: string; is_relief: boolean }>(
     `
-      SELECT p.payment_date::text AS date, p.display_id AS reference,
-             ('Payment ' || p.display_id || COALESCE(' — ' || p.reference, '')) AS description,
-             pa.amount_cents AS amount_cents, p.id::text AS id
+      -- ACCT-F11103: a payment-less relief application (payment_id NULL — Faro collected the cash, ACCT-F11070) is a
+      -- statement line too, dated by the application, so the closing balance equals the dated aging. Was an INNER JOIN.
+      SELECT ${applicationDateSql("pa", "p")}::text AS date,
+             COALESCE(p.display_id, i.display_id) AS reference,
+             CASE WHEN pa.payment_id IS NULL
+                  THEN ('Invoice relief ' || i.display_id || ' — collected by factor')
+                  ELSE ('Payment ' || p.display_id || COALESCE(' — ' || p.reference, ''))
+             END AS description,
+             pa.amount_cents AS amount_cents, COALESCE(p.id, i.id)::text AS id, (pa.payment_id IS NULL) AS is_relief
       FROM accounting.payment_applications pa
-      JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
+      LEFT JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
       JOIN accounting.invoices i ON i.id = pa.invoice_id AND i.operating_company_id = pa.operating_company_id
       WHERE pa.operating_company_id = $1::uuid
         AND i.customer_id = $2::uuid
-        AND p.payment_date BETWEEN $3::date AND $4::date
+        AND ${applicationDateSql("pa", "p")} BETWEEN $3::date AND $4::date
         AND (p.voided_at IS NULL OR p.voided_at::date > $4::date)
         AND pa.unapplied_at IS NULL
     `,
@@ -167,7 +165,8 @@ async function customerLedgerLines(
       description: r.description,
       debit_cents: 0,
       credit_cents: Math.round(Number(r.amount_cents ?? 0)),
-      link_kind: "payment" as const,
+      // ACCT-F11103: a relief application has no payment document — it links to the invoice it relieved.
+      link_kind: r.is_relief ? ("invoice" as const) : ("payment" as const),
       link_id: r.id,
     })),
     ...creditMemoRows.rows.map((r) => ({

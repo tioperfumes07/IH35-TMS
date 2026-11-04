@@ -52,6 +52,7 @@ import {
 import type { ProfitLossLine, ProfitLossReport, ProfitLossSection } from "../profit-loss.service.js";
 import { recognizeCashBasis, type SettlementEvent } from "./recognition.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "../ledger-membership.js";
+import { applicationDateSql, applicationLiveSql } from "../invoice-applied-cents.js";
 
 /** How the basis engine treats a posting, decided entirely by its source document's kind. */
 export type CashBasisSourceTreatment =
@@ -411,19 +412,23 @@ const POSTINGS_SQL = `
 /**
  * Everything that settles an INVOICE. @decision "paid by value, not by new money" — both halves:
  *   • a customer payment applied to the invoice, dated by the PAYMENT's date, not the application's
+ *   • a payment-less relief application (payment_id NULL — the factor collected the cash, ACCT-F11070), dated by the
+ *     application (ACCT-F11103: the INNER JOIN to payments dropped it, so a factor-collected invoice never settled)
  *   • a credit memo applied to the invoice, dated by the application
- * A voided payment, a voided application and a voided credit memo all settle nothing.
+ * A voided payment, an unapplied application and a voided credit memo all settle nothing — the same live rule as
+ * accounting.invoice_applied_cents_as_of / recompute_invoice_paid (invoice-applied-cents.ts).
  */
 const AR_SETTLEMENTS_SQL = `
   SELECT pa.invoice_id::text AS document_id,
-         pm.payment_date::text AS settled_on,
+         ${applicationDateSql("pa", "pm")}::text AS settled_on,
          pa.amount_cents::bigint AS amount_cents
     FROM accounting.payment_applications pa
-    JOIN accounting.payments pm
+    LEFT JOIN accounting.payments pm
       ON pm.id = pa.payment_id
      AND pm.operating_company_id = pa.operating_company_id
    WHERE pa.operating_company_id = $1::uuid
-     AND pm.voided_at IS NULL
+     AND pa.invoice_id IS NOT NULL
+     AND ${applicationLiveSql("pa", "pm")}
   UNION ALL
   SELECT cma.invoice_id::text AS document_id,
          (cma.applied_at AT TIME ZONE 'UTC')::date::text AS settled_on,

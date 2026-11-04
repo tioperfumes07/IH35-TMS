@@ -86,7 +86,8 @@ describe("candidate query shape", () => {
     expect(sql).toContain("i.factoring_direct_pay_at IS NULL");
     expect(sql).toMatch(/NOT EXISTS \(SELECT 1 FROM accounting\.factoring_purchase_lines pl WHERE pl\.invoice_id = i\.id AND pl\.voided_at IS NULL\)/);
     // open/pledge base is the canonical INVOICE_PLEDGE_CENTS_SQL (payments + credit memos net out)
-    expect(sql).toContain("accounting.payment_applications");
+    // ACCT-F11103: applied cents (payment-backed + payment-less relief) come from the one shared rule.
+    expect(sql).toContain("accounting.invoice_applied_cents_as_of(i.id, 'infinity'::date)");
     // docs: BOL / POD (approved POD or a pod file) / rate confirmation on the load
     expect(sql).toMatch(/fc\.code\s+IN \('bol'\)/);
     expect(sql).toContain("dispatch.pod_documents");

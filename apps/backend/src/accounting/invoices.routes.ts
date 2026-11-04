@@ -1,4 +1,5 @@
 import { confirmOverride, overrideReasonCodeSchema, refusedTypedReason } from "../overrides/confirm-override.js";
+import { invoiceNotDraftMessage } from "./credit-memo-from-invoice.service.js";
 import type { FastifyInstance } from "fastify";
 import { BILLING_REVERSE_EDGES } from "../dispatch/load-state-machine.js";
 import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
@@ -292,8 +293,10 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       SELECT pa.*, p.display_id AS payment_display_id, p.payment_date,
              p.cleared_date, p.deposited_to_account_id,
              dep_acct.account_name AS deposited_to_account_name
+      -- ACCT-F11103: LEFT JOIN so a payment-less relief application (payment_id NULL, ACCT-F11070) is listed beside the
+      -- payment-backed ones — the list then sums to the amount_paid_cents the trigger derives from all of them.
       FROM accounting.payment_applications pa
-      JOIN accounting.payments p ON p.id = pa.payment_id
+      LEFT JOIN accounting.payments p ON p.id = pa.payment_id
                                  AND p.operating_company_id = $2::uuid
       LEFT JOIN catalogs.accounts dep_acct
         ON dep_acct.id::text = p.deposited_to_account_id
@@ -1071,7 +1074,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       ]);
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return { code: 404 as const, error: "invoice_not_found" };
-      if (String(oldRow.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
+      // ACCT-F11101 (owner 11-04: "7-ok folow qb") — a SENT invoice is never rewritten; the refusal points at the credit memo.
+      if (String(oldRow.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft", message: invoiceNotDraftMessage(String(oldRow.status)) };
 
       if ("source_load_id" in body.data && body.data.source_load_id) {
         const loadRes = await client.query(
@@ -1169,7 +1173,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       });
       return { code: 200 as const, data: detail };
     });
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    if ("error" in result) return reply.code(result.code).send({ error: result.error, ...("message" in result && result.message ? { message: result.message } : {}) });
     return result.data;
   });
 

@@ -9,6 +9,7 @@
  * must default to that account (or carry an override reason); totals recompute; one audit row; the QBO push is enqueued. The
  * route and the lumper advance (cash-advances/lumper-advance-expense.service.ts) both call it — one writer, never a copy.
  */
+import { invoiceNotDraftMessage } from "./credit-memo-from-invoice.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { deriveRevenueCode, resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
@@ -71,7 +72,10 @@ export async function ensureDraftInvoice(client: { query: (sql: string, values?:
   );
   const invoice = invoiceRes.rows[0] ?? null;
   if (!invoice) return { ok: false as const, code: 404 as const, error: "invoice_not_found" };
-  if (String(invoice.status) !== "draft") return { ok: false as const, code: 409 as const, error: "invoice_not_draft" };
+  // ACCT-F11101 (owner 11-04: "7-ok folow qb") — a SENT invoice is never rewritten: the refusal points at the credit memo.
+  if (String(invoice.status) !== "draft") {
+    return { ok: false as const, code: 409 as const, error: "invoice_not_draft", message: invoiceNotDraftMessage(String(invoice.status)) };
+  }
   return { ok: true as const, invoice };
 }
 

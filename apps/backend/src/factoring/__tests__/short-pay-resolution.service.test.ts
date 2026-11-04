@@ -74,3 +74,32 @@ describe("owner ruling 2026-10-02 — short-pay customer side", () => {
     expect(mockCreateJe).not.toHaveBeenCalled();
   });
 });
+
+describe("ACCT-F11101 — a short-pay already corrected by the sent invoice's credit memo is linked, not written down twice", () => {
+  function linkClient(memo: Record<string, unknown> | null) {
+    const base = client({ paid: "375000", applied: "25000" });
+    const inner = base.query;
+    return {
+      query: vi.fn(async (sql: string, v?: unknown[]) => {
+        if (sql.includes("FROM accounting.credit_memos cm")) return { rows: memo ? [memo] : [] };
+        return inner(sql, v as never);
+      }),
+    };
+  }
+  const memo = { id: "cm-sent", account_id: "acct-4955", journal_entry_id: "je-cm", applied: "25000", other_entry: null };
+  it("links the existing credit memo + its journal entry to the Faro entry and posts nothing", async () => {
+    const c = linkClient(memo);
+    const r = await resolveFaroShortPay(c as never, { ...base, resolution: "written_down", existing_credit_memo_id: "cm-sent" });
+    expect(r).toMatchObject({ resolution: "written_down", credit_memo_id: "cm-sent", journal_entry_id: "je-cm", amount_cents: 25000 });
+    expect(mockCreateJe).not.toHaveBeenCalled();
+    const sqls = c.query.mock.calls.map((x) => String(x[0]));
+    expect(sqls.some((s) => s.includes("INSERT INTO accounting.credit_memos"))).toBe(false);
+    expect(sqls.some((s) => s.includes("short_pay_reason = 'credit_memo'"))).toBe(true);
+    expect(mockLink.mock.calls.map((x) => x[1].linked_object_type)).toEqual(["faro_reserve_entry", "faro_reserve_entry"]);
+  });
+  it("refuses a memo applied for less than the shortfall, or one already resolving another Faro row", async () => {
+    await expect(resolveFaroShortPay(linkClient({ ...memo, applied: "100" }) as never, { ...base, resolution: "written_down", existing_credit_memo_id: "cm-sent" })).rejects.toThrow("existing_credit_memo_applied_less_than_short_pay");
+    await expect(resolveFaroShortPay(linkClient({ ...memo, other_entry: "e-9" }) as never, { ...base, resolution: "written_down", existing_credit_memo_id: "cm-sent" })).rejects.toThrow("existing_credit_memo_already_resolves_another_faro_entry");
+    await expect(resolveFaroShortPay(linkClient(null) as never, { ...base, resolution: "written_down", existing_credit_memo_id: "cm-x" })).rejects.toThrow("existing_credit_memo_not_against_this_invoice");
+  });
+});
