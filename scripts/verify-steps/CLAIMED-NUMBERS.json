@@ -17524,5 +17524,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-03",
     "purpose": "verify-escrow-posting-load-and-date"
+  },
+  "19933": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-relay-deposit-csv-upload-wired"
   }
 }

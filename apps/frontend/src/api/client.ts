@@ -126,6 +126,26 @@ export async function apiRequestFormData<T>(path: string, formData: FormData, me
   return payload as T;
 }
 
+/**
+ * ACCT-F11086 — POST a raw text body (e.g. a CSV export) with its own Content-Type. apiRequest always
+ * JSON-encodes, which turns a CSV into a quoted string the text/csv parser never sees.
+ */
+export async function apiRequestText<T>(path: string, text: string, contentType: string): Promise<T> {
+  const response = await fetch(buildUrl(path), {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": contentType, "Idempotency-Key": generateIdempotencyKey() },
+    body: text,
+  });
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+  const payload = isJson ? await response.json() : await response.text();
+  if (response.ok && !isJson) {
+    throw new ApiError(502, { message: "API returned a non-JSON response; the import was not confirmed." });
+  }
+  if (!response.ok) throw new ApiError(response.status, payload, retryAfterSeconds(response));
+  return payload as T;
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? "GET";
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
