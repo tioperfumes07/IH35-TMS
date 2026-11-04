@@ -51,7 +51,8 @@ const HELPER = "apps/backend/src/accounting/invoice-applied-cents.ts";
 const HELPER_RULES = [
   /accounting\.invoice_applied_cents_as_of\(\$\{alias\}\.id, \$\{asOfSql\}\)/,
   /COALESCE\(\$\{p\}\.payment_date, \(\$\{pa\}\.applied_at AT TIME ZONE 'UTC'\)::date\)/,
-  /\$\{pa\}\.unapplied_at IS NULL AND \$\{p\}\.voided_at IS NULL/,
+  // ACCT-F11103 part 2 (202616410100): the live rule is the dated relieve rule as of 'infinity'.
+  /return applicationRelievesAsOfSql\(pa, p, `'infinity'::date`\);/,
 ];
 
 function stripSqlComments(text) {
@@ -102,7 +103,7 @@ export function check({ migrations, sources }) {
     if (!/COALESCE\(p\.payment_date, \(pa\.applied_at AT TIME ZONE 'UTC'\)::date\) <= p_as_of/.test(b)) failures.push(`R1: ${fn.name}: a payment-less application must be dated by its own applied_at`);
     if (!/pa\.unapplied_at IS NULL OR \(pa\.unapplied_at AT TIME ZONE 'UTC'\)::date > p_as_of/.test(b)) failures.push(`R1: ${fn.name}: missing the as-of unapplied rule`);
     if (!/p\.voided_at IS NULL OR \(p\.voided_at AT TIME ZONE 'UTC'\)::date > p_as_of/.test(b)) failures.push(`R1: ${fn.name}: missing the as-of voided-payment rule`);
-    if (/payment_id IS NOT NULL/.test(b)) failures.push(`R1: ${fn.name}: must not exclude payment-less applications (payment_id IS NOT NULL)`);
+    if (/AND pa\.payment_id IS NOT NULL/.test(b)) failures.push(`R1: ${fn.name}: must not exclude payment-less applications (payment_id IS NOT NULL)`);
   }
 
   const aging = lastDefinition(migrations, "CREATE OR REPLACE FUNCTION accounting.ar_aging_as_of(");

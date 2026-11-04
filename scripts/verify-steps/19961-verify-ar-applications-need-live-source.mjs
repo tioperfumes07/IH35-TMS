@@ -1,0 +1,1 @@
+export default { name: "verify:verify-ar-applications-need-live-source", run(ctx) { ctx.run("node", ["scripts/verify-ar-applications-need-live-source.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-ar-applications-need-live-source.mjs"]); } };

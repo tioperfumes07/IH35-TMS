@@ -122,6 +122,8 @@ describe("Faro reserve posters — post what the line says", () => {
     if (sql.includes("l.gross_cents::text AS gross, l.faro_invoice_number AS faro")) return [{ gross: String(gross), faro: "007" }];
     if (sql.includes("AS relieved")) return [{ relieved: String(relieved) }];
     if (sql.includes("SELECT total_cents::text AS total")) return [{ total: "400000", paid: "0" }];
+    // ACCT-F11103 part 2: the relief names the JE just posted (je-1), which credits A/R.
+    if (sql.includes("journal_entry_live_as_of")) return [{ credited: "400000" }];
     return null;
   };
   const legs = () => mockCreateJe.mock.calls.at(-1)![1].postings.map((p: { account_id: string; debit_or_credit: string; amount_cents: number }) => `${p.debit_or_credit}:${p.account_id}:${p.amount_cents}`);
@@ -132,6 +134,17 @@ describe("Faro reserve posters — post what the line says", () => {
     );
     const l = legs().filter((x: string) => !x.endsWith(":0"));
     expect(l).toEqual(["debit:acct:factoring_advance_liability:300000", "debit:acct:cash_clearing:100000", "credit:acct:ar_control:400000"]);
+  });
+  it("ACCT-F11103 part 2: the customer-paid-Faro relief is written AFTER its JE and names it as the source", async () => {
+    const c = client(entry({ entry_kind: "short_pay", amount_cents: "0", short_pay_paid_cents: "400000", faro_invoice_number: "007" }), partial(300000, 0));
+    await postFaroReserveEntryOnClient(c, { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
+    const calls = c.query.mock.calls as unknown as Array<[string, unknown[]?]>;
+    const ins = calls.find(([sql]) => sql.includes("INSERT INTO accounting.payment_applications"));
+    expect(ins?.[0]).toContain("source_journal_entry_id");
+    expect(ins?.[1]?.[4]).toBe("je-1");
+    const jeOrder = mockCreateJe.mock.invocationCallOrder.at(-1)!;
+    const insOrder = c.query.mock.invocationCallOrder[calls.indexOf(ins!)]!;
+    expect(insOrder).toBeGreaterThan(jeOrder);
   });
   it("443.171 C: a short-pay leg already in the entry counts against the purchased gross (never over-relieve 2150)", async () => {
     await postFaroReserveEntryOnClient(

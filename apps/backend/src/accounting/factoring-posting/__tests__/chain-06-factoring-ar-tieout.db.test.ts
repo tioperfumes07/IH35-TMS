@@ -655,17 +655,15 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       "F11099 recourse funding"
     );
     const exact = await loadExactLinkedChargebackAmounts(companyId, advanceId);
-    expectPosted(
-      await postFactoringChargebackEvent({
-        operating_company_id: companyId,
-        factoring_advance_id: advanceId,
-        actor_user_id: TEST_OWNER_USER_ID,
-        chargeback_amount_cents: exact.liability_cents,
-        default_interest_cents: 0,
-        recoursed_ar_cents: exact.recoursed_ar_cents,
-      }),
-      "F11099 chargeback"
-    );
+    const chargeback = await postFactoringChargebackEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      chargeback_amount_cents: exact.liability_cents,
+      default_interest_cents: 0,
+      recoursed_ar_cents: exact.recoursed_ar_cents,
+    });
+    expectPosted(chargeback, "F11099 chargeback");
     const inv = (await scopedRead<{ id: string; status: string; factoring_status: string; recoursed: boolean }>(
       `SELECT id::text, status, factoring_status, accounting.invoice_recoursed_off_trade_ar(id) AS recoursed FROM accounting.invoices
         WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid`,
@@ -687,7 +685,14 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
 
     // The customer pays IH35 $20k of the recoursed $50k (a payment-less relief application — the trigger derives status).
     const app = await bypass(() =>
-      applyInvoiceRelief(db as never, { operatingCompanyId: companyId, invoiceId: inv.id, amountCents: 20_000, actorUserId: TEST_OWNER_USER_ID })
+      // ACCT-F11103 part 2: relief must name a live JE crediting ar_control — the chargeback JE (Cr ar_control) stands in.
+      applyInvoiceRelief(db as never, {
+        operatingCompanyId: companyId,
+        invoiceId: inv.id,
+        amountCents: 20_000,
+        actorUserId: TEST_OWNER_USER_ID,
+        sourceJournalEntryId: String((chargeback as { journal_entry_id?: string }).journal_entry_id ?? ""),
+      })
     );
     expect(app?.application_id).toBeTruthy();
     const afterPay = (await scopedRead<{ status: string; paid: string; recoursed: boolean }>(
