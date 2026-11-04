@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:45 PM CT) — U12 Locations + Maint services MultiSelect
+- **PRIOR:** #28608 Drivers Reference U12.
+- **THIS:** LocationsListPage Geocoded/Geofence/Source + MaintenanceServicesCatalog Applies-to → MultiSelectDropdown. Accounting lists still Cascade.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:40 PM CT) — U12 Drivers Reference catalog archive MultiSelect
 - **PRIOR:** #28606 Compliance filings Program U12.
 - **THIS:** DriversReferenceCatalogPage Active/Archived → MultiSelectDropdown (archiveMode). Accounting lists still Cascade.
