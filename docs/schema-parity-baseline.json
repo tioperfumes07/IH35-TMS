@@ -1569,6 +1569,7 @@
       "invoice_id",
       "operating_company_id",
       "payment_id",
+      "source_journal_entry_id",
       "target_id",
       "target_kind",
       "unapplied_at",

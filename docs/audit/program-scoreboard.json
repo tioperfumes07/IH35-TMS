@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2fe1923",
-  "generated_at": "2026-11-04T14:23:58.092Z",
+  "healthzSha": "2811ac7",
+  "generated_at": "2026-11-04T16:24:18.338Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2fe1923",
+    "deployedSha": "2811ac7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28660,
+      "title": "FIX: A/R open balance counts only non-voided payments, live-sourced relief and non-voided credit memos (ACCT-F11103 part 2)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 06:29 AM CT",
-      "url": "",
-      "sha": "2fe19238b5",
-      "committedAtIso": "2026-11-04T12:29:22Z"
+      "mergedAtCt": "11/04/2026, 09:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28660",
+      "sha": "2811ac7ac3",
+      "committedAtIso": "2026-11-04T09:31:41-06:00"
     },
     {
-      "number": 28649,
-      "title": "BUS: Lead register 11-04 12:15Z — 06:00 CT engine results (E1, ENG-65, row 85, E8, E9)",
+      "number": 28659,
+      "title": "FIX: live QuickBooks bill-payment evidence for open USMCA bills (read-only proposal: bill -> QBO bill -> QBO payment -> bank line)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 06:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28649",
-      "sha": "9c7d14191e",
-      "committedAtIso": "2026-11-04T06:14:12-06:00"
+      "mergedAtCt": "11/04/2026, 09:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28659",
+      "sha": "3493aeb897",
+      "committedAtIso": "2026-11-04T09:25:57-06:00"
     },
     {
-      "number": 28648,
-      "title": "FIX: fuel sweep and Relay fill records run for USMCA only — E9 opened 1,631 questions on frozen IH 35 Transportation",
+      "number": 28658,
+      "title": "CLAIM-RESERVE: migration 202616410100, verify-step 19961 (ACCT-F11103 part 2 — applications need a live source)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 06:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28648",
-      "sha": "d48dc2bfb4",
-      "committedAtIso": "2026-11-04T06:13:08-06:00"
+      "mergedAtCt": "11/04/2026, 09:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28658",
+      "sha": "f26916bbd3",
+      "committedAtIso": "2026-11-04T09:23:05-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28657,
+      "title": "FIX: sent invoice corrected by credit memo (QBO rule) + driver bill re-prices to its settlement line (13693)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 04:25 AM CT",
-      "url": "",
-      "sha": "0f0184f174",
-      "committedAtIso": "2026-11-04T10:25:17Z"
+      "mergedAtCt": "11/04/2026, 09:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28657",
+      "sha": "33c2dc65a4",
+      "committedAtIso": "2026-11-04T09:20:21-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28655,
+      "title": "FIX: A/R aging, statements and every invoice applied-amount reader count payment-less relief applications (ACCT-F11103)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 02:26 AM CT",
-      "url": "",
-      "sha": "ef146b934f",
-      "committedAtIso": "2026-11-04T08:26:28Z"
+      "mergedAtCt": "11/04/2026, 09:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28655",
+      "sha": "d0d20344ae",
+      "committedAtIso": "2026-11-04T09:13:10-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28654,
+      "title": "CLAIM-RESERVE: migration 202616400100, verify-step 19949 (ACCT-F11103 payment-less applications in A/R readers)",
       "state": "merged",
-      "mergedAtCt": "11/04/2026, 12:33 AM CT",
-      "url": "",
-      "sha": "6391fa8ecc",
-      "committedAtIso": "2026-11-04T06:33:20Z"
+      "mergedAtCt": "11/04/2026, 08:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28654",
+      "sha": "875686c47b",
+      "committedAtIso": "2026-11-04T08:56:29-06:00"
     },
     {
-      "number": 28647,
-      "title": "BUS: Lead register 11-04 05:05Z — rows 22 110 125 257 measured; owner merge list",
+      "number": 28653,
+      "title": "FIX: one settlement-line reinstate engine; SET-24 LINE-DUP keys on the load (ACCT-F11098)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 11:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28647",
-      "sha": "0877050d43",
-      "committedAtIso": "2026-11-03T23:02:48-06:00"
+      "mergedAtCt": "11/04/2026, 08:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28653",
+      "sha": "dc4bb87e1f",
+      "committedAtIso": "2026-11-04T08:54:22-06:00"
     },
     {
-      "number": 28646,
-      "title": "MAIN-GREEN: locked-guards-heavy — escrow register guard follows the recorded per-load split (#28642)",
+      "number": 28652,
+      "title": "FIX: a customer payment moves a factored invoice to partial/paid; A/R readers use the factoring identity (ACCT-F11099)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28646",
-      "sha": "f3497a8e57",
-      "committedAtIso": "2026-11-03T22:27:09-06:00"
+      "mergedAtCt": "11/04/2026, 08:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28652",
+      "sha": "6ad7b74372",
+      "committedAtIso": "2026-11-04T08:52:46-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28651,
+      "title": "CLAIM-RESERVE: migration 202616390100, verify-step 19945 (ACCT-F11098 settlement line reinstate)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:25 PM CT",
-      "url": "",
-      "sha": "03d5b5477e",
-      "committedAtIso": "2026-11-04T04:25:05Z"
+      "mergedAtCt": "11/04/2026, 08:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28651",
+      "sha": "fa8ad0df01",
+      "committedAtIso": "2026-11-04T08:44:18-06:00"
     },
     {
-      "number": 28645,
-      "title": "MAIN-GREEN: regenerate schema-parity baseline for accounting.escrow_posting_loads",
+      "number": 28650,
+      "title": "CLAIM-RESERVE: migration 202616380100, verify-step 19941 (ACCT-F11099 factored invoice partial/paid)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 10:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28645",
-      "sha": "400d95ac79",
-      "committedAtIso": "2026-11-03T22:15:49-06:00"
+      "mergedAtCt": "11/04/2026, 08:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28650",
+      "sha": "366a30cbad",
+      "committedAtIso": "2026-11-04T08:42:28-06:00"
     }
   ]
 }

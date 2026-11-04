@@ -33,6 +33,7 @@ describeIntegration("ACCT-F11103 payment-less applications in A/R aging (real Po
   const invoiceId = randomUUID();
   const paymentId = randomUUID();
   let reliefId = "";
+  const reliefJeId = randomUUID();
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -58,13 +59,19 @@ describeIntegration("ACCT-F11103 payment-less applications in A/R aging (real Po
     );
     await insertInvoiceLine(db, companyId, invoiceId, 5000000, { loadId, status: "sent" });
 
-    // Relief exactly as invoice-relief-application.service.ts writes it (payment_id NULL), dated 2026-02-10.
+    // Relief exactly as invoice-relief-application.service.ts writes it (payment_id NULL, naming its source JE — ACCT-F11103
+    // part 2), dated 2026-02-10.
+    await db.query(
+      `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data)
+       VALUES ($1::uuid,$2::uuid,DATE '2026-02-10','F11103 relief source JE','posted','auto',true)`,
+      [reliefJeId, companyId]
+    );
     const relief = await db.query<{ id: string }>(
       `INSERT INTO accounting.payment_applications
-         (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id, applied_at)
-       VALUES ($1::uuid, NULL, $2::uuid, 2000000, 20000.00, 'invoice', $2::uuid, TIMESTAMPTZ '2026-02-10 12:00:00+00')
+         (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id, applied_at, source_journal_entry_id)
+       VALUES ($1::uuid, NULL, $2::uuid, 2000000, 20000.00, 'invoice', $2::uuid, TIMESTAMPTZ '2026-02-10 12:00:00+00', $3::uuid)
        RETURNING id::text`,
-      [companyId, invoiceId]
+      [companyId, invoiceId, reliefJeId]
     );
     reliefId = relief.rows[0]!.id;
 
@@ -129,9 +136,60 @@ describeIntegration("ACCT-F11103 payment-less applications in A/R aging (real Po
     expect(await openAsOf("2026-03-10")).toBe(4500000);
   });
 
-  it("a voided payment applies nothing after its void date (same rule for both kinds)", async () => {
+  it("a voided payment applies nothing after its void date — and the header follows whoever voided it (ACCT-F11103 part 2)", async () => {
+    // A raw void (not through payment-void-stamp.service): before 202616410100 the application stayed live and the header kept 500,000.
     await db.query(`UPDATE accounting.payments SET voided_at = TIMESTAMPTZ '2026-03-12 12:00:00+00' WHERE id = $1::uuid`, [paymentId]);
     expect(await openAsOf("2026-03-10")).toBe(4500000);
     expect(await openAsOf("2026-03-15")).toBe(5000000);
+    const h = await header();
+    expect(h.paid).toBe(0);
+    const live = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM accounting.payment_applications WHERE payment_id = $1::uuid AND unapplied_at IS NULL`,
+      [paymentId]
+    );
+    expect(live.rows[0]!.n).toBe("0");
+  });
+
+  it("a payment-less application with no source JE is refused (no payment, no relief)", async () => {
+    await db.query("SAVEPOINT no_source");
+    await expect(
+      db.query(
+        `INSERT INTO accounting.payment_applications
+           (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id)
+         VALUES ($1::uuid, NULL, $2::uuid, 100, 1.00, 'invoice', $2::uuid)`,
+        [companyId, invoiceId]
+      )
+    ).rejects.toThrow(/payment_applications_payment_or_source_je_check/);
+    await db.query("ROLLBACK TO SAVEPOINT no_source");
+  });
+
+  it("a payment-less application relieves only while its source JE lives: reversing the JE drops it from header and aging", async () => {
+    const jeId = randomUUID();
+    await db.query(
+      `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data)
+       VALUES ($1::uuid,$2::uuid,DATE '2026-03-20','F11103 relief 2 source JE','posted','auto',true)`,
+      [jeId, companyId]
+    );
+    await db.query(
+      `INSERT INTO accounting.payment_applications
+         (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id, applied_at, source_journal_entry_id)
+       VALUES ($1::uuid, NULL, $2::uuid, 1000000, 10000.00, 'invoice', $2::uuid, TIMESTAMPTZ '2026-03-20 12:00:00+00', $3::uuid)`,
+      [companyId, invoiceId, jeId]
+    );
+    expect((await header()).paid).toBe(1000000);
+    expect(await openAsOf("2026-03-25")).toBe(4000000);
+
+    const reversalId = randomUUID();
+    await db.query(
+      `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data, reverses_je_id)
+       VALUES ($1::uuid,$2::uuid,DATE '2026-03-28','F11103 reversal','posted','auto',true,$3::uuid)`,
+      [reversalId, companyId, jeId]
+    );
+    await db.query(`UPDATE accounting.journal_entries SET reversed_by_je_id = $1::uuid WHERE id = $2::uuid`, [reversalId, jeId]);
+
+    // The trigger archived the application; the header and the aging after the reversal carry the full $50,000.00.
+    expect((await header()).paid).toBe(0);
+    expect(await openAsOf("2026-03-25")).toBe(4000000);
+    expect(await openAsOf("2026-03-30")).toBe(5000000);
   });
 });

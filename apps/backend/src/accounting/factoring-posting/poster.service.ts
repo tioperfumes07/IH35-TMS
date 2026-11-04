@@ -395,7 +395,9 @@ async function applyCustomerPaymentSubledgerRelief(
   client: DbClient,
   operatingCompanyId: string,
   factoringAdvanceId: string,
-  actorUserId: string | null
+  actorUserId: string | null,
+  // ACCT-F11103 part 2: the factoring_customer_payment JE whose Cr ar_control is this relief — the application's source.
+  sourceJournalEntryId: string | null
 ): Promise<void> {
   const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter(
     (inv) => !inv.voided_at
@@ -432,6 +434,7 @@ async function applyCustomerPaymentSubledgerRelief(
       invoiceId: inv.id,
       targetPaidCents: allocated,
       actorUserId,
+      sourceJournalEntryId,
     });
   }
 }
@@ -1941,12 +1944,13 @@ async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustome
       memo: prepared.memo,
       journal_entry_id: prepared.journal_entry_id ?? null,
       expected_legs: expectedLegs,
-      afterRepair: async (client) => {
+      afterRepair: async (client, journalEntryId) => {
         await applyCustomerPaymentSubledgerRelief(
           client,
           input.operating_company_id,
           input.factoring_advance_id,
-          input.actor_user_id ?? null
+          input.actor_user_id ?? null,
+          journalEntryId
         );
       },
     });
@@ -1997,7 +2001,8 @@ async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustome
         client,
         input.operating_company_id,
         input.factoring_advance_id,
-        input.actor_user_id ?? null
+        input.actor_user_id ?? null,
+        journalEntryId
       );
     },
   });

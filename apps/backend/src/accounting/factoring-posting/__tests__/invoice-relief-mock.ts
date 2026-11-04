@@ -14,7 +14,12 @@ export function makeInvoiceReliefMock(record: (c: Rec) => void) {
         const id = String(values?.[0]);
         return { rows: [{ total: String(Number.MAX_SAFE_INTEGER), paid: String(paid.get(id) ?? 0) }] };
       }
+      // ACCT-F11103 part 2: the relief's source JE (the poster's own Cr ar_control) — live when the poster passed one.
+      if (sql.includes("journal_entry_live_as_of")) {
+        return { rows: values?.[0] ? [{ credited: String(Number.MAX_SAFE_INTEGER) }] : [] };
+      }
       if (sql.includes("INSERT INTO accounting.payment_applications")) {
+        if (!values?.[4]) throw new Error("invoice-relief-mock: payment-less application written without source_journal_entry_id");
         const id = String(values?.[1]);
         const cents = Number(values?.[2]);
         const next = (paid.get(id) ?? 0) + cents;

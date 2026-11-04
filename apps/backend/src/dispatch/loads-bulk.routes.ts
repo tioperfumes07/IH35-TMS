@@ -24,6 +24,7 @@ import { postFinalLoadSettlementsGl } from "../driver-finance/settlement-payrun-
 import { cancelLoadInClientTx } from "./cancellation.service.js";
 import { assertClosedLoadHasPricedDriverBill, ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { applicationLiveSql } from "../accounting/invoice-applied-cents.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
@@ -329,7 +330,8 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
             ON p.id = pa.payment_id
            AND p.operating_company_id = i.operating_company_id
          WHERE i.operating_company_id = $1::uuid
-           AND p.voided_at IS NULL
+           -- ACCT-F11103 part 2: a non-voided payment, or a payment-less relief whose source JE is live.
+           AND ${applicationLiveSql("pa", "p")}
            AND i.source_load_id = $2::uuid
            AND i.voided_at IS NULL
            AND COALESCE(i.is_sample_data, false) IS NOT TRUE
