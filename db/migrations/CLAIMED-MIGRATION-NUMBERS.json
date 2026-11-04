@@ -1042,7 +1042,8 @@
     "202616340100",
     "202616350100",
     "202616360100",
-    "202616360200"
+    "202616360200",
+    "202616370100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1068,5 +1069,10 @@
     "claimed_at": "2026-11-04",
     "claimed_by": "claude",
     "purpose": "ACCT-F11094 row 257: accounting.payment_applications.payment_id DROP NOT NULL \u2014 prod already nullable (drift); the migration chain kept NOT NULL so a fresh DB refuses the ACCT-F11070 payment-less relief application."
+  },
+  "202616370100": {
+    "claimed_at": "2026-11-03",
+    "claimed_by": "claude",
+    "purpose": "ACCT-F11093 row 22: accounting.escrow_postings.document_date + accounting.escrow_posting_loads (per-load split of each escrow posting, append-only)."
   }
 }

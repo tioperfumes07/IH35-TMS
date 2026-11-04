@@ -126,13 +126,15 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
         "ea.holder_type = 'driver'",
         "ea.purpose = 'driver_bond'",
       ];
+      // ACCT-F11093: the period filter reads the movement's DOCUMENT date (not the day it was keyed).
+      const docDateSql = "COALESCE(ep.document_date, je.entry_date, (ep.posted_at AT TIME ZONE 'America/Chicago')::date)";
       if (q.from) {
         values.push(q.from);
-        filters.push(`ep.posted_at >= $${values.length}::timestamptz`);
+        filters.push(`${docDateSql} >= ($${values.length}::timestamptz AT TIME ZONE 'America/Chicago')::date`);
       }
       if (q.to) {
         values.push(q.to);
-        filters.push(`ep.posted_at <= $${values.length}::timestamptz`);
+        filters.push(`${docDateSql} <= ($${values.length}::timestamptz AT TIME ZONE 'America/Chicago')::date`);
       }
       if (q.type) {
         values.push(q.type);
@@ -147,34 +149,29 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
       //
       // BANK-F9515: this used to .catch(() => ({ rows: [] })) here too — same fake-empty-200 class as
       // the /escrow-visualizer list handler above, same fix.
-      // ROW 215: expand settlement postings into one row per load via settlement_lines escrow_contribution.
-      // Non-settlement postings (releases, adjustments) keep one row with no load fields.
-      // Settlements with no matching lines keep one row (NULL load_id) to preserve the audit trail.
+      // ACCT-F11093 (row 22): one register row per LOAD of each posting, read from the per-load split the WRITER records
+      // (accounting.escrow_posting_loads) — no longer guessed from the settlement's currently-active escrow lines (53 per-load
+      // lines voided as "SET-24 LINE-DUP" made that guess drop $1,725.00 of $3,325.00 deposited). A posting with no split
+      // (a manual adjustment, forfeiture, merge transfer) keeps one row with no load. The row's date is the movement's
+      // DOCUMENT date (split row → posting.document_date → its journal entry's entry_date); posted_at stays as the
+      // keyed-at time, never shown as the date.
       const res = await client.query(
         `
             SELECT
-              COALESCE(
-                CASE WHEN sl_expand.load_id IS NOT NULL
-                  THEN ep.id::text || '-' || sl_expand.load_id::text
-                END,
-                ep.id::text
-              ) AS id,
+              COALESCE(ep.id::text || '-' || epl.load_id::text, ep.id::text) AS id,
               ea.holder_id AS driver_id,
               ep.posting_type AS entry_type,
               NULL::text AS bucket,
-              CASE
-                WHEN sl_expand.load_id IS NOT NULL
-                  THEN (round(abs(sl_expand.amount) * 100) / 100.0)
-                ELSE (ep.amount_cents::numeric / 100)
-              END AS amount,
+              (COALESCE(epl.amount_cents, ep.amount_cents)::numeric / 100) AS amount,
               ep.note AS memo,
               ep.posted_at AS created_at,
-              CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
-              NULL::text AS settlement_line_id,
+              COALESCE(epl.document_date, ep.document_date, je.entry_date)::text AS document_date,
+              CASE WHEN ep.source_type = 'driver_settlement' THEN COALESCE(sl_src.settlement_id, ep.source_id)::text ELSE NULL END AS settlement_id,
+              epl.settlement_line_id::text AS settlement_line_id,
               ep.linked_journal_entry_id::text AS journal_entry_id,
               je.entry_date::text AS journal_entry_date,
               je.memo AS journal_entry_memo,
-              sl_expand.load_id::text AS load_id,
+              epl.load_id::text AS load_id,
               l.load_number AS load_number,
               (SELECT (COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at) AT TIME ZONE 'America/Chicago')::date::text
                  FROM mdata.load_stops st
@@ -187,21 +184,17 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             LEFT JOIN accounting.journal_entries je
               ON je.id = ep.linked_journal_entry_id
              AND je.operating_company_id = ep.operating_company_id
-            LEFT JOIN LATERAL (
-              SELECT sl.load_id, sl.amount
-              FROM driver_finance.settlement_lines sl
-              WHERE sl.settlement_id = ep.source_id::uuid
-                AND sl.line_type = 'escrow_contribution'
-                AND ep.source_type = 'driver_settlement'
-                AND sl.is_active = true
-                AND sl.voided_at IS NULL
-                AND sl.operating_company_id = ep.operating_company_id
-            ) sl_expand ON true
+            LEFT JOIN accounting.escrow_posting_loads epl
+              ON epl.escrow_posting_id = ep.id
+             AND epl.operating_company_id = ep.operating_company_id
+            LEFT JOIN driver_finance.settlement_lines sl_src
+              ON sl_src.id = ep.source_id
+             AND sl_src.operating_company_id = ep.operating_company_id
             LEFT JOIN mdata.loads l
-              ON l.id = sl_expand.load_id
+              ON l.id = epl.load_id
              AND l.operating_company_id = ep.operating_company_id
             WHERE ${filters.join(" AND ")}
-            ORDER BY ep.posted_at DESC
+            ORDER BY COALESCE(epl.document_date, ep.document_date, je.entry_date) DESC, ep.posted_at DESC, l.load_number DESC
             LIMIT 500
           `,
         values

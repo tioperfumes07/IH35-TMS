@@ -43,7 +43,7 @@ import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { createJournalEntry, enqueueJournalEntrySideEffects, type CreateJournalEntryInput } from "../accounting/journal-entries.service.js";
 import { postSettlementApChainInClientTx, resolvePayoutBankAccountId, SettlementApChainError, type ApChainApplication, type ApChainPayItem } from "./settlement-ap-chain.service.js";
 import { SETTLEMENT_EARNINGS_LINE_TYPES } from "./settlement-line-buckets.js";
-import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
+import { loadSettlementEscrowLoadSplit, recordEscrowPostingOnly, type EscrowPostingLoadSplit } from "../accounting/escrow/service.js";
 import {
   DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
   ESCROW_CAP_CENTS,
@@ -95,6 +95,7 @@ const POSTABLE_STATUSES = new Set(["locked", "final", "closed", "paid", "approve
 
 export type PayRunCloseErrorCode =
   | "OVERRIDE_REFUSED"
+  | "ESCROW_CONTRIBUTION_NOT_PER_LOAD"
   | "EXPENSE_LOADS_PROPOSED"
   | "DEDUCTION_STATE_TRANSITION_FAILED"
   | "SETTLEMENT_NOT_FOUND"
@@ -1636,6 +1637,22 @@ export async function closeSettlementPayRun(
     // JE, it only appends the accounting.escrow_postings audit row so the existing DB trigger
     // (accounting.apply_escrow_posting_delta, migration 0234) applies the balance delta.
     if (escrowContributionCents > 0) {
+      // ACCT-F11093 (row 22): escrow is per load. A load_bookended contribution IS the sum of its per-load
+      // escrow_contribution lines, so the posting carries that split (load + source line + cents); its document date is
+      // the composite JE's entry_date (the settlement period end), stamped by recordEscrowPostingOnly. A split that does
+      // not tie, or a line with no load, refuses the close by name — never a posting the register cannot place on a load.
+      let escrowLoads: EscrowPostingLoadSplit[] | null = null;
+      if (settlement.settlement_model === "load_bookended") {
+        const split = await loadSettlementEscrowLoadSplit(client, opco, settlementId);
+        if (split.lines_without_load > 0 || split.total_cents !== escrowContributionCents) {
+          throw new SettlementPayRunError(
+            "ESCROW_CONTRIBUTION_NOT_PER_LOAD",
+            `${label}: escrow contribution ${escrowContributionCents} cents does not split onto its loads ` +
+              `(${split.lines_without_load} escrow line(s) with no load; lines total ${split.total_cents} cents)`
+          );
+        }
+        escrowLoads = split.loads;
+      }
       await recordEscrowPostingOnly(client, {
         operating_company_id: opco,
         driver_id: settlement.driver_id,
@@ -1646,6 +1663,7 @@ export async function closeSettlementPayRun(
         note: `${label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`,
         posted_by_user_id: actor.userId,
         linked_journal_entry_id: je.id,
+        loads: escrowLoads,
       });
     }
 
