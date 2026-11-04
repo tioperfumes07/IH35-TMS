@@ -772,6 +772,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         ) : (
           <CompliancePanel
             sourceAvailable={Boolean(complianceQuery.data?.source_available)}
+            unavailableReason={complianceQuery.data?.gap?.reason ?? null}
+            lovesLastSyncedAt={complianceQuery.data?.gap?.loves_last_synced_at ?? null}
             sentToDriverAt={activeRoute?.computed_at ?? null}
             fleetPct={complianceQuery.data?.fleet_pct_followed ?? null}
             fleetTotalRecommendations={complianceQuery.data?.fleet_total_recommendations ?? null}
@@ -898,6 +900,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             ) : (
               <SavingsPanel
                 sourceAvailable={Boolean(savingsQuery.data?.source_available)}
+                unavailableReason={savingsQuery.data?.gap?.reason ?? null}
+                lovesLastSyncedAt={savingsQuery.data?.gap?.loves_last_synced_at ?? null}
                 driverSavings={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
                 fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}
                 lostSavings={savingsQuery.data?.fleet_lost_savings_ytd ?? null}

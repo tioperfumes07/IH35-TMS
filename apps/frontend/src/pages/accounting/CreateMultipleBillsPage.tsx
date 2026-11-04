@@ -366,6 +366,16 @@ export function CreateMultipleBillsPage() {
     );
   };
 
+  if (!companyId) {
+    return (
+      <AccountingSubNavWrapper title="Multiple bills" crumbs={[{ label: "Bills", href: "/accounting/bills" }]}>
+        <BoardSection title="Multiple bills" testId="create-multiple-bills-need-company">
+          <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
+        </BoardSection>
+      </AccountingSubNavWrapper>
+    );
+  }
+
   return (
     <AccountingSubNavWrapper
       title="Multiple bills"
@@ -403,9 +413,6 @@ export function CreateMultipleBillsPage() {
       actions={filterBar}
     >
     <div className="space-y-3" data-testid="create-multiple-bills-page">
-      {!companyId ? (
-        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">Select an operating company.</p>
-      ) : null}
       {vendorsQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load vendors for bill rows: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}

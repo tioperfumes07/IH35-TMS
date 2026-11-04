@@ -17,13 +17,24 @@ import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { Modal } from "../../../components/Modal";
-import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
-type StatusFilter = "active" | "inactive" | "all";
+const STATUS_MULTI_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+function matchesStatus(rowActive: boolean, selected: string[]): boolean {
+  if (!selected.length || selected.length === 2) return true;
+  if (selected[0] === "active") return rowActive;
+  if (selected[0] === "inactive") return !rowActive;
+  return true;
+}
 
 const CODE_REGEX = /^[a-z][a-z0-9_]+$/;
 
@@ -76,7 +87,7 @@ export function TerminationReasonsListPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [status, setStatus] = useState<StatusFilter>("active");
+  const [status, setStatus] = useState<string[]>(["active"]);
   const [showVoided, setShowInactive] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DriverTerminationReason | null>(null);
@@ -140,7 +151,7 @@ export function TerminationReasonsListPage() {
   // (the table's UniversalListToolbar) is the ONE search, over every row, with "N of M". The old page search +
   // "Show voided" checkbox double-filtered: Show = Inactive rendered nothing until the checkbox was also ticked.
   const rows = useMemo(
-    () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
+    () => allRows.filter((row) => matchesStatus(row.is_active, status)),
     [allRows, status],
   );
 
@@ -180,18 +191,29 @@ export function TerminationReasonsListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="termination-reasons-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_MULTI_OPTIONS]}
+              selected={status}
+              onChange={(next) => {
+                setStatus(next);
+                setShowInactive(next.length !== 1 || next[0] !== "active");
+              }}
+              allLabel="All statuses"
+              data-testid="termination-reasons-status-multiselect"
+            />
+          </div>
+        </div>
         <label className="flex items-center gap-2 text-xs text-gray-700">
           <input
             type="checkbox"
             checked={showVoided}
             onChange={(event) => {
               setShowInactive(event.target.checked);
-              setStatus(event.target.checked ? "all" : "active");
+              setStatus(event.target.checked ? ["active", "inactive"] : ["active"]);
             }}
             className="h-3.5 w-3.5 rounded-sm border-gray-300"
           />
@@ -220,7 +242,7 @@ export function TerminationReasonsListPage() {
           }}
           loading={listQuery.isLoading}
           storageKey="driver-termination-reasons"
-          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          title={!status.length || status.length === 2 ? "All entries" : status[0] === "inactive" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}

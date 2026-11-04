@@ -18,7 +18,20 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+
+const STATUS_MULTI_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+function matchesStatus(rowActive: boolean, selected: string[]): boolean {
+  if (!selected.length || selected.length === 2) return true;
+  if (selected[0] === "active") return rowActive;
+  if (selected[0] === "inactive") return !rowActive;
+  return true;
+}
+
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
@@ -35,7 +48,6 @@ import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 // DispatchCatalogListPage.tsx's ParityTable usage (columns/sort/storageKey/export/empty state).
 const CATALOG_KEY = "load-exception-reasons";
 
-type StatusFilter = "active" | "inactive" | "all";
 
 const CODE_REGEX = /^[a-z][a-z0-9_]+$/;
 
@@ -80,7 +92,7 @@ export function LoadExceptionReasonsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const [status, setStatus] = useState<StatusFilter>("active");
+  const [status, setStatus] = useState<string[]>(["active"]);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<LoadExceptionReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
@@ -137,7 +149,7 @@ export function LoadExceptionReasonsListPage() {
   // (the table's UniversalListToolbar) is the ONE search, over every row, with "N of M". The old page search +
   // "Show inactive" checkbox double-filtered: Show = Inactive rendered nothing until the checkbox was also ticked.
   const rows = useMemo(
-    () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
+    () => allRows.filter((row) => matchesStatus(row.is_active, status)),
     [allRows, status],
   );
 
@@ -195,18 +207,17 @@ export function LoadExceptionReasonsListPage() {
       </div>
 
       <div className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_180px]">
-        <label className={FORM_LABEL_STACK_CLASS}>
-          Show
-          <SelectCombobox
-            value={status}
-            onChange={(event) => setStatus(event.target.value as StatusFilter)}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="all">All</option>
-          </SelectCombobox>
-        </label>
+        <div className={FORM_LABEL_STACK_CLASS} data-testid="load-exception-status-filter">
+          <span>Show</span>
+          <MultiSelectDropdown
+            label="Status"
+            options={[...STATUS_MULTI_OPTIONS]}
+            selected={status}
+            onChange={setStatus}
+            allLabel="All statuses"
+            data-testid="load-exception-status-multiselect"
+          />
+        </div>
       </div>
 
       {listQuery.isError ? (

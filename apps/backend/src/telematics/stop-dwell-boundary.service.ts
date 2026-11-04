@@ -135,9 +135,10 @@ export async function fetchStopDwells(
       const rows = (await client.query<{ captured_at: string; lat: string | null; lng: string | null; speed_mph: string | null; engine_state: string | null; odometer_mi: string | null; city: string | null; state: string | null }>(
         `SELECT captured_at::text, lat::text, lng::text, speed_mph::text, engine_state, odometer_mi::text, city, state
            FROM telematics.vehicle_locations
-          WHERE unit_id = $1::uuid AND captured_at BETWEEN $2::timestamptz AND $3::timestamptz
+          -- Row 131 (11-03): company-pinned — the (operating_company_id, unit_id, captured_at) index becomes a range (10x fewer buffers)
+          WHERE operating_company_id = $4::uuid AND unit_id = $1::uuid AND captured_at BETWEEN $2::timestamptz AND $3::timestamptz
           ORDER BY captured_at`,
-        [unitId, new Date(w.from).toISOString(), new Date(w.to).toISOString()])).rows;
+        [unitId, new Date(w.from).toISOString(), new Date(w.to).toISOString(), operatingCompanyId])).rows;
       const fixes: PositionFix[] = rows.map((f) => ({
         capturedAt: new Date(f.captured_at), lat: f.lat == null ? null : Number(f.lat), lng: f.lng == null ? null : Number(f.lng),
         speedMph: f.speed_mph == null ? null : Number(f.speed_mph), engineState: f.engine_state,

@@ -1,3 +1,4 @@
+import { confirmOverride } from "../overrides/confirm-override.js";
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { payComponentOfLine, resolvePayComponentItem } from "./pay-component-items.js";
 import { claimSettlementPayRunInClientTx } from "./settlement-payrun-claim.service.js";
@@ -72,7 +73,7 @@ import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account
 import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 import { proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
-import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { activeSettlementLine, notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -87,11 +88,13 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-type Actor = { userId: string };
+/** `role` lets the floor override confirm through recordOverride (row 28); callers without a person (system / tests) omit it. */
+type Actor = { userId: string; role?: string };
 
 const POSTABLE_STATUSES = new Set(["locked", "final", "closed", "paid", "approved", "ready"]);
 
 export type PayRunCloseErrorCode =
+  | "OVERRIDE_REFUSED"
   | "EXPENSE_LOADS_PROPOSED"
   | "DEDUCTION_STATE_TRANSITION_FAILED"
   | "SETTLEMENT_NOT_FOUND"
@@ -597,7 +600,7 @@ export async function closeSettlementPayRun(
      * SET-05 — explicit floor override for THIS close only. Required (with a non-empty reason)
      * to close when post-withholding net would breach the resolved floor. Never silently caps.
      */
-    overrideFloor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
+    overrideFloor?: { pct?: number | null; cents?: number | null; reason_code?: string | null; reason?: string | null } | null;
     /**
      * GO-22 B7 (owner direct instruction, 2026-09-02): "If the driver has ANY outstanding loan
      * or debt... a window MUST appear and ask. IT CANNOT BE DEFERRED and the decision MUST BE
@@ -692,9 +695,12 @@ export async function closeSettlementPayRun(
     // (never seeded, or all lines voided) must be voided, never closed. The tour-close route's
     // hard-blocker (buildTourReadout ready check) prevents reaching here from the UI, but the
     // engine enforces it unconditionally as the authoritative backstop.
+    // Rows 24 (R217): a line is live only when active AND not voided — the ONE shared rule (activeSettlementLine,
+    // live-document-predicates.sql.ts). A settlement whose every line was voided but left is_active = true is EMPTY and is refused.
     const liveLineCount = await client.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM driver_finance.settlement_lines
-        WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true`,
+      `SELECT count(*)::text AS n FROM driver_finance.settlement_lines sl
+         JOIN driver_finance.driver_settlements s_live ON s_live.id = sl.settlement_id AND s_live.operating_company_id = sl.operating_company_id
+        WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid AND ${activeSettlementLine("sl", "s_live")}`,
       [settlementId, opco]
     );
     if (Number(liveLineCount.rows[0]?.n ?? 0) === 0) {
@@ -957,7 +963,6 @@ export async function closeSettlementPayRun(
     // Deduction-apply already floors at apply-time; later withholdings can still breach it.
     const resolvedMinNet = await resolveSettlementMinNet(client, settlement.driver_id, opco);
     const ov = input.overrideFloor ?? null;
-    const ovReason = ov?.reason != null ? String(ov.reason).trim() : "";
     const ovPct =
       ov && ov.pct !== null && ov.pct !== undefined && Number.isFinite(Number(ov.pct))
         ? Math.min(100, Math.max(0, Number(ov.pct)))
@@ -969,8 +974,10 @@ export async function closeSettlementPayRun(
     const floorPct = ovPct ?? resolvedMinNet.pct;
     const floorMinCents = ovCents ?? resolvedMinNet.cents;
     const floorCents = Math.max(Math.round((grossCents * floorPct) / 100), floorMinCents);
-    // Owner-locked: never silently cap. Closing below the resolved floor requires a non-empty reason.
-    const hasExplicitOverride = ovReason.length > 0;
+    // Owner-locked: never silently cap. Closing below the resolved floor requires an explicit override object; row 28:
+    // it is confirmed through recordOverride below (a catalog reason_code, or an Owner / Accountant plain confirm) —
+    // a typed sentence is never the reason.
+    const hasExplicitOverride = ov != null;
 
     if (netCents < floorCents) {
       if (!hasExplicitOverride) {
@@ -987,6 +994,24 @@ export async function closeSettlementPayRun(
           } as unknown as Record<string, unknown>
         );
       }
+      const floorOverride = await confirmOverride(client as never, {
+        context: "settlement",
+        operatingCompanyId: opco,
+        actor: { userId: actor.userId, role: String(actor.role ?? "") },
+        reasonCode: ov?.reason_code ?? null,
+        systemReason: ov?.reason ?? null,
+        entityType: "driver_finance.driver_settlements",
+        entityId: settlementId,
+        before: { net_cents: netCents, floor_cents: floorCents },
+        after: { floor_override_pct: ovPct, floor_override_cents: ovCents },
+      });
+      if (!floorOverride.ok) {
+        throw new SettlementPayRunError("OVERRIDE_REFUSED", `Net-pay floor override refused: ${floorOverride.error}`, {
+          status: floorOverride.status,
+          error: floorOverride.error,
+        });
+      }
+      const ovReason = floorOverride.text;
       await appendCrudAudit(
         client,
         actor.userId,
@@ -1003,6 +1028,7 @@ export async function closeSettlementPayRun(
           override_pct: ovPct,
           override_cents: ovCents,
           override_reason: ovReason,
+          override_reason_code: floorOverride.reason_code,
           min_net_pct_source: resolvedMinNet.pctSource,
           min_net_cents_source: resolvedMinNet.centsSource,
         },

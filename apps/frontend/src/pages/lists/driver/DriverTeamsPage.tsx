@@ -21,13 +21,22 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { mmmDd } from "../../../lib/formatDate";
 import { isUnresolvedEntityTombstone } from "../../../lib/entity-label";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverTeamModal } from "./DriverTeamModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
-type StatusFilter = "true" | "false" | "all";
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → undefined (all), single → scalar for listMdataDriverTeams is_active. */
+function apiIsActive(selected: string[]): "true" | "false" | undefined {
+  if (selected.length === 1 && (selected[0] === "true" || selected[0] === "false")) return selected[0];
+  return undefined;
+}
 
 
 function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "primary" | "secondary" }) {
@@ -125,11 +134,12 @@ export function DriverTeamsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [status, setStatus] = useState<StatusFilter>("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedTeam, setSelectedTeam] = useState<MdataDriverTeam | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const statusParam = apiIsActive(status);
 
   // LST-F5215 — Lists hub ?create=1 must open DriverTeamModal (shared catalog create parity).
   useCreateQueryParam({
@@ -142,11 +152,11 @@ export function DriverTeamsPage() {
   });
 
   const query = useQuery({
-    queryKey: ["mdata", "driver-teams", companyId, status],
+    queryKey: ["mdata", "driver-teams", companyId, statusParam ?? "all"],
     queryFn: () =>
       listMdataDriverTeams({
         operating_company_id: companyId,
-        is_active: status === "all" ? undefined : status,
+        is_active: statusParam,
       }),
     enabled: Boolean(companyId),
   });
@@ -195,22 +205,32 @@ export function DriverTeamsPage() {
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <SelectCombobox
-          value={status}
-          onChange={(event) => setStatus(event.target.value as StatusFilter)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-1"
-        >
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="driver-teams-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={(next) => {
+                setStatus(next);
+                setShowInactive(apiIsActive(next) === undefined);
+              }}
+              allLabel="All statuses"
+              data-testid="driver-teams-status-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">
         <input
           type="checkbox"
           checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
+          onChange={(e) => {
+            setShowInactive(e.target.checked);
+            setStatus(e.target.checked ? ["true", "false"] : ["true"]);
+          }}
           className="h-3.5 w-3.5 rounded-sm border-gray-300"
         />
         Show inactive

@@ -8,7 +8,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useToast } from "../../../components/Toast";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -21,7 +21,16 @@ type Props = {
   catalogKey: string;
 };
 
-type ArchiveFilter = "active" | "archived" | "all";
+const ARCHIVE_FILTER_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "archived", label: "Archived" },
+] as const;
+
+/** U12: 0/2+ → all, single Active/Archived → scalar. */
+function archiveMode(selected: string[]): "active" | "archived" | "all" {
+  if (selected.length === 1 && (selected[0] === "active" || selected[0] === "archived")) return selected[0];
+  return "all";
+}
 
 function archivedPillClass(archived: boolean) {
   return archived
@@ -32,9 +41,10 @@ function archivedPillClass(archived: boolean) {
 export function DriversReferenceCatalogPage({ client, displayName, catalogKey }: Props) {
   const { pushToast } = useToast();
   const [search, setSearch] = useState("");
-  const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
+  const [archiveFilter, setArchiveFilter] = useState<string[]>(["active"]);
   const [modalOpen, setModalOpen] = useState(false);
   const [showVoided, setShowVoided] = useState(false);
+  const archiveParam = archiveMode(archiveFilter);
 
   // LST-F5215 — Lists hub ?create=1 must open reference create modal (org-wide catalog).
   useCreateQueryParam({
@@ -42,10 +52,10 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
     onOpenCreate: () => setModalOpen(true),
   });
 
-  const includeArchived = archiveFilter !== "active";
+  const includeArchived = archiveParam !== "active";
 
   const query = useQuery({
-    queryKey: ["lists", "drivers", catalogKey, search, archiveFilter],
+    queryKey: ["lists", "drivers", catalogKey, search, archiveParam],
     queryFn: () =>
       client.list({
         search: search || undefined,
@@ -58,11 +68,11 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
   const rows = useMemo(() => {
     const all = query.data?.rows ?? [];
     let filtered = all;
-    if (archiveFilter === "archived") filtered = filtered.filter((row) => row.archived_at);
-    if (archiveFilter === "active") filtered = filtered.filter((row) => !row.archived_at);
+    if (archiveParam === "archived") filtered = filtered.filter((row) => row.archived_at);
+    if (archiveParam === "active") filtered = filtered.filter((row) => !row.archived_at);
     if (!showVoided) filtered = filtered.filter((row) => !row.archived_at);
     return filtered;
-  }, [archiveFilter, showVoided, query.data?.rows]);
+  }, [archiveParam, showVoided, query.data?.rows]);
 
   const total = query.data?.total_count ?? 0;
 
@@ -132,22 +142,32 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* LST-F3514: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-        <SelectCombobox
-          value={archiveFilter}
-          onChange={(event) => setArchiveFilter(event.target.value as ArchiveFilter)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="drivers-reference-archive-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...ARCHIVE_FILTER_OPTIONS]}
+              selected={archiveFilter}
+              onChange={(next) => {
+                setArchiveFilter(next);
+                setShowVoided(archiveMode(next) === "all");
+              }}
+              allLabel="All statuses"
+              data-testid="drivers-reference-archive-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">
         <input
           type="checkbox"
           checked={showVoided}
-          onChange={(e) => setShowVoided(e.target.checked)}
+          onChange={(e) => {
+            setShowVoided(e.target.checked);
+            setArchiveFilter(e.target.checked ? ["active", "archived"] : ["active"]);
+          }}
           className="h-3.5 w-3.5 rounded-sm border-gray-300"
         />
         Show voided

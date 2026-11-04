@@ -12,7 +12,18 @@ import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
 import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → all, single Active/Inactive → scalar for indexed is_active. */
+function apiStatus(selected: string[]): "true" | "false" | "all" {
+  if (selected.length === 1 && (selected[0] === "true" || selected[0] === "false")) return selected[0];
+  return "all";
+}
 
 type Props = {
   client: AccountingCatalogClient & {
@@ -61,7 +72,7 @@ export function AccountingCatalogListPage({
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -72,6 +83,7 @@ export function AccountingCatalogListPage({
   const [tableKey, setTableKey] = useState(0);
   const bulkEnabled = enableBulkSelect && Boolean(bulkBar);
   const clearSelection = () => setTableKey((k) => k + 1);
+  const statusParam = apiStatus(status);
 
   // Deep-link ?create=1 opens AccountingCatalogModal (Classes / Expense Categories / etc.).
   useEffect(() => {
@@ -86,8 +98,8 @@ export function AccountingCatalogListPage({
   }, [searchParams, companyId, readOnly, setSearchParams]);
 
   const query = useQuery({
-    queryKey: ["catalogs", "accounting", displayName, companyId, search, status],
-    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 200, offset: 0 }),
+    queryKey: ["catalogs", "accounting", displayName, companyId, search, statusParam],
+    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: statusParam, limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
@@ -167,7 +179,7 @@ export function AccountingCatalogListPage({
       ) : (
         <ParityTable<AccountingCatalogRow>
           key={tableKey}
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+          title={statusParam === "all" ? "All entries" : statusParam === "false" ? "Inactive entries" : "Active entries"}
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}
@@ -195,11 +207,19 @@ export function AccountingCatalogListPage({
           filterBar={
             <div className="grid gap-2 md:grid-cols-3">
               <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-              <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-                <option value="all">All</option>
-              </SelectCombobox>
+              <div className="text-xs font-semibold text-[#4B5563]" data-testid="accounting-catalog-status-filter">
+                <span className="block">Status</span>
+                <div className="mt-1">
+                  <MultiSelectDropdown
+                    label="Status"
+                    options={[...STATUS_FILTER_OPTIONS]}
+                    selected={status}
+                    onChange={setStatus}
+                    allLabel="All statuses"
+                    data-testid="accounting-catalog-status-multiselect"
+                  />
+                </div>
+              </div>
             </div>
           }
         />

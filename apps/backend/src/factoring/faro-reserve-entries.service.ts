@@ -41,6 +41,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
 import { interestPositionThrough, proposeEventInterestAccrual } from "./interest-accrual.service.js";
 import { unrelievedPurchasedGrossCents } from "./purchased-gross.service.js";
+import { applyInvoiceRelief } from "../accounting/invoice-relief-application.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -601,14 +602,9 @@ export async function postFaroReserveEntryOnClient(
       { account: await role("ar_control"), dc: "credit", amount: payment.cents, entry: payment.entry },
     );
     memo = `${memo} · customer paid Faro ${(payment.cents / 100).toFixed(2)}${excess > 0 ? ` (purchased ${(to2150 / 100).toFixed(2)}; ${(excess / 100).toFixed(2)} not purchased — due from Faro)` : ""}`;
-    await client.query(
-      `UPDATE accounting.invoices
-          SET amount_paid_cents = COALESCE(amount_paid_cents, 0) + $2::bigint,
-              status = CASE WHEN COALESCE(amount_paid_cents, 0) + $2::bigint >= total_cents THEN 'paid' ELSE 'partial' END,
-              updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
-      [link!.invoice_id, payment.cents, oci]
-    );
+    // Row 129 (ACCT-F11070): the customer's payment to Faro is an APPLICATION on the invoice; the one writer
+    // (accounting.recompute_invoice_paid) derives amount_paid_cents + status from it. Never SET the column here.
+    await applyInvoiceRelief(client as never, { operatingCompanyId: oci, invoiceId: link!.invoice_id, amountCents: payment.cents, actorUserId: input.actor_user_id });
   }
 
   const je = await createJournalEntryOnClient(

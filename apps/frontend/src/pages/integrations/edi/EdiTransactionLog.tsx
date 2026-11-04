@@ -8,7 +8,15 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+
+const STATUS_OPTIONS = [
+  { value: "received", label: "Received" },
+  { value: "parsed", label: "Parsed" },
+  { value: "processed", label: "Processed" },
+  { value: "sent", label: "Sent" },
+  { value: "failed", label: "Failed" },
+] as const;
 
 type EdiMessage = {
   uuid: string;
@@ -76,12 +84,18 @@ const COLUMNS: Array<ParityColumn<EdiMessage>> = [
 export function EdiTransactionLog() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [statusFilter, setStatusFilter] = useState("");
+  // U12: status multi-selector — API takes one status; 0/1 pass through; 2+ fetch all then filter.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
 
   const messagesQuery = useQuery({
-    queryKey: ["integrations", "edi", "messages", companyId, statusFilter],
-    queryFn: () => fetchMessages(companyId, statusFilter || undefined),
+    queryKey: ["integrations", "edi", "messages", companyId, statusFilter.join(",") || "all"],
+    queryFn: async () => {
+      const apiStatus = statusFilter.length === 1 ? statusFilter[0] : undefined;
+      const rows = await fetchMessages(companyId, apiStatus);
+      if (statusFilter.length <= 1) return rows;
+      return rows.filter((row) => statusFilter.includes(row.status));
+    },
     enabled: Boolean(companyId),
   });
 
@@ -94,20 +108,20 @@ export function EdiTransactionLog() {
     <div data-testid="edi-transaction-log">
       <PageHeader backHref="/integrations/edi" title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
       <div className="space-y-4 p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs font-medium">Status</label>
-          <SelectCombobox
-            className="rounded-sm border px-3 py-2 text-xs"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="received">Received</option>
-            <option value="parsed">Parsed</option>
-            <option value="processed">Processed</option>
-            <option value="sent">Sent</option>
-            <option value="failed">Failed</option>
-          </SelectCombobox>
+        <div className="flex flex-wrap items-end gap-3" data-testid="edi-status-filter">
+          <div className="text-xs font-semibold text-[#4B5563]">
+            <span className="block">Status</span>
+            <div className="mt-1">
+              <MultiSelectDropdown
+                label="Status"
+                options={[...STATUS_OPTIONS]}
+                selected={statusFilter}
+                onChange={setStatusFilter}
+                allLabel="All statuses"
+                data-testid="edi-status-multiselect"
+              />
+            </div>
+          </div>
         </div>
 
         {messagesQuery.isError ? (

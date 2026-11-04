@@ -169,7 +169,18 @@ export type PartyRecord = {
   docs: number; // invoices (customer) · bills (vendor) · Faro lines (debtor)
   total_cents: number;
   open_cents: number;
+  /** Row 157 corroborating identifiers (customers / vendors only; a Faro debtor has none). */
+  mc?: string | null;
+  dot?: string | null;
+  address?: string | null;
 };
+/**
+ * Row 157 — how firmly a pair is the same party.
+ *  exact        the names are identical once case, punctuation, spacing and legal suffixes (LLC / Inc ...) are removed
+ *  corroborated a fuzzy name match AND the same MC / DOT number or the same street address
+ *  name_only    a fuzzy name match alone (shares a word, sounds alike ...): a lead, NOT a flagged duplicate
+ */
+export type VariantTier = "exact" | "corroborated" | "name_only";
 export type VariantPair = {
   a: PartyRecord;
   b: PartyRecord;
@@ -177,7 +188,33 @@ export type VariantPair = {
   reasons: VariantReason[];
   /** Same kind and both have a uuid: mergeable through the canonical engine once the owner approves. */
   mergeable: boolean;
+  tier: VariantTier;
+  /** Which identifiers agree: "mc" | "dot" | "address". */
+  corroboration: string[];
 };
+
+const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").replace(/^0+/, "");
+const addressKey = (v: string | null | undefined) => (v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+/** Identifiers two records share. Empty values never agree. */
+export function corroboration(a: PartyRecord, b: PartyRecord): string[] {
+  const out: string[] = [];
+  if (digits(a.mc) && digits(a.mc) === digits(b.mc)) out.push("mc");
+  if (digits(a.dot) && digits(a.dot) === digits(b.dot)) out.push("dot");
+  if (addressKey(a.address).length >= 8 && addressKey(a.address) === addressKey(b.address)) out.push("address");
+  return out;
+}
+
+/**
+ * The duplicate rule the boards count (row 157): normalized name + same MC / DOT or same address. A pair of two parties
+ * whose names are identical after normalization is flagged on the name alone. A fuzzy pair with NO customer in it
+ * (vendor ~ vendor, vendor ~ Faro debtor) keeps its row-297 behaviour; every fuzzy pair that involves a customer needs
+ * the corroboration, so "shares the word Logistics" no longer flags 200 customers.
+ */
+export function isFlaggedDuplicate(p: Pick<VariantPair, "a" | "b" | "tier">): boolean {
+  if (p.tier !== "name_only") return true;
+  return p.a.kind !== "customer" && p.b.kind !== "customer";
+}
 
 /** Blocking keys: a pair is only scored when the two names share one (keeps ~1.9k parties well under a second). */
 function blockKeys(tokens: string[]): string[] {
@@ -225,7 +262,9 @@ export function variantPairs(parties: PartyRecord[], normalizedKey: (name: strin
         if (resolvedDebtor(i) || resolvedDebtor(j)) continue;
         const m = matchTokens(tokens[i]!, tokens[j]!, isGeneric);
         if (!m) continue;
-        out.push({ a, b, score: m.score, reasons: m.reasons, mergeable: a.kind === b.kind && a.kind !== "factoring_debtor" });
+        const shared = corroboration(a, b);
+        const tier: VariantTier = m.reasons.includes("same_squashed_name") ? "exact" : shared.length ? "corroborated" : "name_only";
+        out.push({ a, b, score: m.score, reasons: m.reasons, mergeable: a.kind === b.kind && a.kind !== "factoring_debtor", tier, corroboration: shared });
       }
     }
   }

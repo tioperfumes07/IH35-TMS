@@ -10,7 +10,18 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogModal";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → all, single Active/Inactive → scalar for indexed is_active API. */
+function apiStatus(selected: string[]): "true" | "false" | "all" {
+  if (selected.length === 1 && (selected[0] === "true" || selected[0] === "false")) return selected[0];
+  return "all";
+}
 
 /** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
 type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string; sortable?: boolean };
@@ -112,11 +123,12 @@ export function DriverCatalogListPage({
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<DriverCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const statusParam = apiStatus(status);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
   useCreateQueryParam({
@@ -129,12 +141,12 @@ export function DriverCatalogListPage({
   });
 
   const query = useQuery({
-    queryKey: ["catalogs", "driver", displayName, companyId, search, status],
+    queryKey: ["catalogs", "driver", displayName, companyId, search, statusParam],
     queryFn: () =>
       client.list({
         operating_company_id: companyId,
         search: search || undefined,
-        is_active: status,
+        is_active: statusParam,
         limit: 200,
         offset: 0,
       }),
@@ -171,22 +183,32 @@ export function DriverCatalogListPage({
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* LST-F3512: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
-        <SelectCombobox
-          value={status}
-          onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="driver-catalog-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={(next) => {
+                setStatus(next);
+                setShowInactive(apiStatus(next) === "all");
+              }}
+              allLabel="All statuses"
+              data-testid="driver-catalog-status-multiselect"
+            />
+          </div>
+        </div>
       </div>
 
       <label className="flex items-center gap-1 text-xs text-gray-600">
         <input
           type="checkbox"
           checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
+          onChange={(e) => {
+            setShowInactive(e.target.checked);
+            setStatus(e.target.checked ? ["true", "false"] : ["true"]);
+          }}
           className="h-3.5 w-3.5 rounded-sm border-gray-300"
         />
         Show inactive
@@ -194,7 +216,7 @@ export function DriverCatalogListPage({
 
       <ParityTable
         columns={columns}
-        title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+        title={statusParam === "all" ? "All entries" : statusParam === "false" ? "Inactive entries" : "Active entries"}
         rows={rows}
         rowKey={(row) => row.id}
         loading={query.isLoading}

@@ -11,6 +11,8 @@ function makeClient(handlers: Record<string, (sql: string, values?: unknown[]) =
       for (const [needle, handler] of Object.entries(handlers).sort(([a], [b]) => Number(b.startsWith("UPDATE")) - Number(a.startsWith("UPDATE")))) {
         if (sql.includes(needle)) return handler(sql, values);
       }
+      // Rows 98: the renumber read — none of these cases carry a P-numbered header (covered in company-settlement-renumber.test.ts).
+      if (sql.includes("AS header_number")) return { rows: [] };
       throw new Error(`unexpected sql in test: ${sql}`);
     }),
   };

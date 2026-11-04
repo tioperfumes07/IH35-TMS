@@ -12,7 +12,7 @@ vi.mock("../../api/catalogs", () => ({
 vi.mock("../../auth/useAuth", () => ({ useAuth: () => ({ user: { role } }) }));
 vi.mock("../../contexts/CompanyContext", () => ({ useCompanyContext: () => ({ selectedCompanyId: "usmca" }) }));
 
-function renderButton(onConfirm: (code: string | null) => void) {
+function renderButton(onConfirm: (code: string | null, choice?: unknown) => void) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -37,7 +37,15 @@ describe("443.294 OverrideButton — nothing to type", () => {
     expect(screen.getByTestId("override-button-confirm-only")).toBeTruthy();
     expect(document.querySelector("textarea")).toBeNull();
     fireEvent.click(screen.getByTestId("override-button-confirm"));
-    await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(null));
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(null, {
+        code: "owner_override",
+        label_en: "Owner override",
+        label_es: "Autorización del dueño",
+        role_override: true,
+        text: "Owner override [owner_override]",
+      })
+    );
     expect(listOverrideReasons).not.toHaveBeenCalled();
   });
 
@@ -49,5 +57,18 @@ describe("443.294 OverrideButton — nothing to type", () => {
     await waitFor(() => expect(listOverrideReasons).toHaveBeenCalledWith("usmca", { context: "factoring" }));
     expect((screen.getByTestId("override-button-confirm") as HTMLButtonElement).disabled).toBe(true);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("Accountant: confirm only — the choice resolves to the accountant_override catalog row (row 28)", async () => {
+    role = "Accountant";
+    const onConfirm = vi.fn();
+    renderButton(onConfirm);
+    fireEvent.click(screen.getByTestId("override-button"));
+    expect(screen.getByTestId("override-button-confirm-only")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("override-button-confirm"));
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
+    expect(onConfirm.mock.calls[0][0]).toBeNull();
+    expect(onConfirm.mock.calls[0][1]).toMatchObject({ code: "accountant_override", role_override: true, text: "Accountant override [accountant_override]" });
+    expect(document.querySelector("input[type=text], textarea")).toBeNull();
   });
 });

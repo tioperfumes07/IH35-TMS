@@ -27,7 +27,18 @@ import { useSearchParams } from "react-router-dom";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+
+const COVERAGE_FILTER_OPTIONS = [
+  { value: "covered", label: "Covered" },
+  { value: "missing", label: "Missing" },
+] as const;
+
+/** U12: empty / both → all; single Covered/Missing → exact cell match. */
+function coverageFilterMatches(selected: string[] | undefined, cell: CoverageCell): boolean {
+  if (!selected || selected.length === 0 || selected.length >= 2) return true;
+  return selected[0] === cell;
+}
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
 function toDate(value: string) {
@@ -44,7 +55,6 @@ function unitLabel(unit: InsuranceCoverageGapUnit) {
 }
 
 type CoverageCell = "covered" | "missing" | "na";
-type CoverageFilter = "all" | "covered" | "missing";
 
 function coverageCell(code: InsuranceCoverageType, missing: InsuranceCoverageType[], required: InsuranceCoverageType[]): CoverageCell {
   if (!required.includes(code)) return "na";
@@ -92,7 +102,7 @@ export function CoverageGapDashboard() {
     empty: { unitId: "" },
     onApply: (next) => setUnitFilter(next.unitId),
   });
-  const [coverageFilter, setCoverageFilter] = useState<Record<string, CoverageFilter>>({});
+  const [coverageFilter, setCoverageFilter] = useState<Record<string, string[]>>({});
 
   const unitId = unitPickerId.trim() || deepLinkUnitId || undefined;
 
@@ -158,10 +168,8 @@ export function CoverageGapDashboard() {
   const visibleRows = useMemo(() => {
     return gapRows.filter((row) =>
       catalogCodes.every((code) => {
-        const wanted = coverageFilter[code] ?? "all";
-        if (wanted === "all") return true;
         const cell = coverageCell(code, row.missing_types, requiredTypes);
-        return cell === wanted;
+        return coverageFilterMatches(coverageFilter[code], cell);
       }),
     );
   }, [gapRows, catalogCodes, coverageFilter, requiredTypes]);
@@ -315,21 +323,19 @@ export function CoverageGapDashboard() {
       <BoardSection title="Coverage by type" testId="coverage-gap-by-type-board">
         <div className="flex flex-wrap gap-2 px-3.5 pt-2">
           {catalogCodes.map((code) => (
-            <label key={code} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-              {insuranceTypeLabel(code, typeNameByCode.get(code))}
-              <SelectCombobox
-                className="ml-1 h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs font-normal normal-case"
-                value={coverageFilter[code] ?? "all"}
-                onChange={(event) =>
-                  setCoverageFilter((prev) => ({ ...prev, [code]: event.target.value as CoverageFilter }))
-                }
-                aria-label={`Filter ${code}`}
-              >
-                <option value="all">All</option>
-                <option value="covered">Covered</option>
-                <option value="missing">Missing</option>
-              </SelectCombobox>
-            </label>
+            <div key={code} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+              <span className="block">{insuranceTypeLabel(code, typeNameByCode.get(code))}</span>
+              <div className="mt-1 normal-case">
+                <MultiSelectDropdown
+                  label={`Filter ${code}`}
+                  options={[...COVERAGE_FILTER_OPTIONS]}
+                  selected={coverageFilter[code] ?? []}
+                  onChange={(next) => setCoverageFilter((prev) => ({ ...prev, [code]: next }))}
+                  allLabel="All"
+                  data-testid={`coverage-gap-filter-${code}`}
+                />
+              </div>
+            </div>
           ))}
         </div>
         <div className="mt-2" data-testid="kpi-drill-row-count">

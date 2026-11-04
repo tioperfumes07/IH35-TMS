@@ -25,6 +25,20 @@ export function survivorDriverIdSql(driverIdExpr: string): string {
   return `COALESCE((SELECT merge_src.merged_into_driver_id FROM mdata.drivers merge_src WHERE merge_src.id = ${driverIdExpr}), ${driverIdExpr})`;
 }
 
+/**
+ * Register row 93 (2026-11-03) — a WRITER's driver id resolved to the survivor before it writes. One profile per person:
+ * nothing is ever written onto a merged shell (mdata.drivers.merged_into_driver_id set). Merges are one level deep (the
+ * merge engine refuses a survivor that is itself merged; prod 11-03: 0 chained shells), so one hop is the survivor. An
+ * unknown id comes back unchanged (the writer's own FK / mapping check reports it).
+ */
+export async function resolveSurvivorDriverId(client: Queryable, driverId: string): Promise<string> {
+  const r = await client.query<{ id: string }>(
+    `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id FROM mdata.drivers d WHERE d.id = $1::uuid`,
+    [driverId]
+  );
+  return r.rows[0]?.id ?? driverId;
+}
+
 /** Credential / document columns a merged shell can hold that the survivor's profile reads. */
 export const SHELL_CREDENTIAL_FIELDS = [
   "cdl_number", "cdl_state", "cdl_class", "cdl_expires_at", "cdl_restrictions",

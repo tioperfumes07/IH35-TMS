@@ -23,6 +23,7 @@
 //   6. PROVE: zero references to the merged record remain (except the superseded 1:1 rows); otherwise the whole
 //      transaction is refused.
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { repointHosRowsToSurvivor } from "./hos-shell-repoint.service.js";
 
 type Db = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number | null }> };
 
@@ -449,6 +450,11 @@ export async function executeDriverMerge(
       WHERE id = $1::uuid`,
     [M, S]
   );
+  // Register row 93: the append-only HOS ledger refused repointAll (history_kept); now that the record is merged, the ledger
+  // admits the shell -> survivor move. Exact duplicates of a survivor event stay on the shell (never deleted).
+  const hosMoved = await repointHosRowsToSurvivor(client, M, S);
+  if (hosMoved.duty_events_moved > 0) repointed.push({ ref: "hos.duty_status_events.driver_id(after merge)", rows: hosMoved.duty_events_moved });
+  if (hosMoved.snapshots_moved > 0) repointed.push({ ref: "samsara.hos_snapshots.driver_uuid(after merge)", rows: hosMoved.snapshots_moved });
 
   // 6. PROVE nothing writable still points at the merged record (history kept by the database is listed, not hidden).
   const remaining: string[] = [];

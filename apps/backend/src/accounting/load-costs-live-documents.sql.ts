@@ -1,4 +1,6 @@
 import { liveExpense, liveBill, liveDriverBill, liveBillLine } from "./live-document-predicates.sql.js";
+import { signedExpenseCentsSql, expenseSignSql } from "./expense-signed-cents.sql.js";
+// Row 128 (ACCT-F11070): an expense CREDIT document (is_credit) is a negative cost on every load read model.
 /** R443.139 #8(a): read documents immediately, independently of posting/settlement timing.
  * Internal SQL expressions only; callers bind the company. Never joins the QBO archive.
  */
@@ -27,13 +29,13 @@ export function loadCostsRevenueJoin(load = "l", alias = "revenue"): string {
  */
 export const LOAD_COST_DOCUMENTS_CTE = `cost_documents AS (
   SELECT COALESCE(el.load_id,e.load_id) AS load_id, e.id AS document_id, 'expense'::text AS kind,
-         el.amount_cents::bigint AS amount_cents, el.line_category, e.linked_work_order_uuid,
+         (el.amount_cents * ${expenseSignSql("e")})::bigint AS amount_cents, el.line_category, e.linked_work_order_uuid,
          false AS unpaid
     FROM accounting.expenses e
     JOIN accounting.expense_lines el ON el.expense_id=e.id AND el.operating_company_id=e.operating_company_id
    WHERE e.operating_company_id=$1::uuid AND ${liveExpense("e")}
   UNION ALL
-  SELECT e.load_id,e.id,'expense',e.total_amount_cents::bigint,NULL,e.linked_work_order_uuid,false
+  SELECT e.load_id,e.id,'expense',${signedExpenseCentsSql("e")}::bigint,NULL,e.linked_work_order_uuid,false
     FROM accounting.expenses e
    WHERE e.operating_company_id=$1::uuid AND ${liveExpense("e")}
      AND NOT EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id=e.id)

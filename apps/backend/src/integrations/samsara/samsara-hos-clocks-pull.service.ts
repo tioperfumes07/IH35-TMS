@@ -6,6 +6,7 @@ import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 import { listActiveHosDriverRoster } from "./active-hos-driver-roster.service.js";
 import { tryXactSingleFlight } from "../../lib/single-flight.js";
+import { resolveSurvivorDriverId } from "../../mdata/driver-merge-resolution.js";
 
 export type HosClocksPullResult = {
   active_drivers: number;
@@ -51,6 +52,9 @@ export async function syncSamsaraHosClocks(client: PgClient, operatingCompanyId:
     const sp = `hos_clk_${i}`;
     await client.query(`SAVEPOINT ${sp}`);
     try {
+      // Register row 93: the snapshot lands on the survivor, never a merged shell (prod 11-03: 49,486 snapshots on 8 shells;
+      // e6933af3 took 2 snapshots 4 minutes after its merge).
+      const driverUuid = await resolveSurvivorDriverId(client as never, map.local);
       // Verbatim into the (already-migrated) snapshot columns — values stored in MINUTES.
       const res = await client.query(
         `INSERT INTO samsara.hos_snapshots
@@ -59,7 +63,7 @@ export async function syncSamsaraHosClocks(client: PgClient, operatingCompanyId:
             samsara_payload, polled_at, samsara_event_at)
          VALUES ($1::uuid, $2::uuid, $3::uuid, NULL, $4, $5, $6, $7, $8::jsonb, now(), $9::timestamptz)`,
         [
-          operatingCompanyId, map.local, map.unit,
+          operatingCompanyId, driverUuid, map.unit,
           c.drive_remaining_min, c.shift_remaining_min, c.cycle_remaining_min, c.break_remaining_min,
           JSON.stringify(c.raw), c.cycle_started_at,
         ]

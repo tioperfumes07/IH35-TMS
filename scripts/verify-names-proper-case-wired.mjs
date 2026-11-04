@@ -46,6 +46,13 @@ export const SURFACES = [
   ["233", FE("pages/Users.tsx"), "label={userDisplayLabel(selected)} />", 'label={selected.name ?? "User"} />'],
   ["233", FE("pages/Users.tsx"), "linkLabel={userDisplayLabel(row)}", "linkLabel={row.name}"],
   ["233", FE("lib/entity-label.ts"), "    return formatPersonName(name);\n  }\n  if (email) return email;", "    return name;\n  }\n  if (email) return email;"],
+  // live 11-03 row 233: never the bare word "User" — display name → full name → email → "Invited user (<role>)"
+  ["233", FE("lib/entity-label.ts"), "  return `Invited user (${role || \"no role\"})`;", "  return entityLabel(null, user.id, \"User\");"],
+  // live 11-03 row 219: cash-flow payees go through the ONE org casing function (no second casing path)
+  ["219", FE("pages/cash-flow/ledgerPartyLabel.ts"), "return tail ? `${formatCompanyName(raw.slice(0, tail.index))}${tail[0]}` : formatCompanyName(raw);", "return raw;"],
+  ["219", FE("pages/cash-flow/tabs/RollingLedgerTab.tsx"), 'return <span>{ledgerPartyLabel(row) || "—"}</span>;', 'return <span>{row.counterparty || "—"}</span>;'],
+  ["219", FE("pages/cash-flow/tabs/DailyPredictionTab.tsx"), "{entityLabel(ledgerPartyLabel(item) || item.counterparty, null, payeeNoun)}", "{entityLabel(item.counterparty, null, payeeNoun)}"],
+  ["219", FE("pages/cash-flow/tabs/DailyPredictionTab.tsx"), "{companyLabel(item.customer_name, null, \"Customer\")}", "{entityLabel(item.customer_name, null, \"Customer\")}"],
 ];
 
 /** Formatter contracts (the shared helpers the surfaces lean on). */
@@ -53,6 +60,10 @@ export const CONTRACTS = [
   ["entityLabel person nouns", FE("lib/entity-label.ts"), "        return formatPersonName(s);", "        return s;"],
   ["formatCompanyName keeps suffixes upper", FE("lib/formatCompanyName.ts"), "  if (KEEP_UPPER.has(b)) return word.toUpperCase();", "  if (KEEP_UPPER.has(b)) return word;"],
   ["companyLabel formats a resolved name", FE("lib/formatCompanyName.ts"), "return raw !== \"\" && label === raw ? formatCompanyName(raw) : label;", "return label;"],
+  // live 11-03 rows 223 225 229 + owner org-casing rule 443.266-A ("org acronym stays ACME")
+  ["formatCompanyName keeps short all-caps acronyms", FE("lib/formatCompanyName.ts"), "    if (l.length >= 2 && l.length <= limit) return word;", "    if (false) return word;"],
+  ["formatCompanyName never keeps a lower-then-caps hybrid", FE("lib/formatCompanyName.ts"), "  if (isDeliberateCamel(word)) return word;", "  if (word !== word.toUpperCase() && word !== word.toLowerCase()) return word;"],
+  ["formatCompanyName sees a suffix glued after a comma", FE("lib/formatCompanyName.ts"), "    .replace(/,(?=\\S)/g, \", \")", "    .replace(/,$/g, \",\")"],
 ];
 
 const ALL = [...SURFACES.map(([row, file, needle, plant]) => [`row ${row}`, file, needle, plant]), ...CONTRACTS];
@@ -101,4 +112,4 @@ if (defects.length) {
   console.error(`${LABEL} FAIL:\n - ${defects.join("\n - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — ${SURFACES.length} name surfaces across 12 register rows render through formatPersonName / formatCompanyName (${CONTRACTS.length} formatter contracts held)`);
+console.log(`${LABEL} PASS — ${SURFACES.length} name surfaces across ${new Set(SURFACES.map((r) => r[0])).size} register rows render through formatPersonName / formatCompanyName (${CONTRACTS.length} formatter contracts held)`);

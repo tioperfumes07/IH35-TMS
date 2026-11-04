@@ -11,6 +11,7 @@ import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visi
 // remain as informational operational-cost detail but no longer feed net_profit_cents/margin_pct.
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 import { expenseIsNotCountedFuelSql } from "../accounting/fuel-expense-not-double-counted.sql.js";
+import { signedExpenseCentsSql } from "../accounting/expense-signed-cents.sql.js";
 import { loadMatchesEquipmentSql } from "../reports/equipment-type-aliases.js";
 
 export type LoadProfitabilitySnapshot = {
@@ -433,7 +434,8 @@ export async function computeTripProfitabilityReport(
     ),
     company_expenses AS (
       SELECT sl.settlement_id,
-             COALESCE(SUM(e.total_amount_cents), 0)::bigint AS company_expenses_cents
+             -- Row 128 (ACCT-F11070): a card credit is a negative cost (P-0018 read $94.81 too high).
+             COALESCE(SUM(${signedExpenseCentsSql("e")}), 0)::bigint AS company_expenses_cents
       FROM settlement_loads sl
       JOIN accounting.expenses e
         ON e.load_id = sl.load_id

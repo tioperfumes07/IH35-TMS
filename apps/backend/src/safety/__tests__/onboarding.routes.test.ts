@@ -33,6 +33,13 @@ vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAppendCrudAudit,
 }));
 
+// Row 28 — the admin override goes through the ONE override engine (catalogs.override_reasons).
+const { mockRecordOverride } = vi.hoisted(() => ({ mockRecordOverride: vi.fn() }));
+vi.mock("../../overrides/record-override.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../overrides/record-override.service.js")>();
+  return { ...actual, recordOverride: mockRecordOverride };
+});
+
 function baseSession(overrides: Record<string, unknown> = {}) {
   return {
     id: SESSION_ID,
@@ -253,8 +260,18 @@ describe("safety onboarding routes (A24-8)", () => {
     expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 
-  it("POST admin-override completes with reason", async () => {
-    mockQuery.mockImplementation(async (sql: string) => {
+  it("POST admin-override completes with a catalog reason code through recordOverride (row 28)", async () => {
+    mockRecordOverride.mockResolvedValue({
+      ok: true,
+      reason_code: "owner_approved",
+      reason_id: "r1",
+      label_en: "Owner approved",
+      label_es: "Aprobado por el dueño",
+      role_override: false,
+    });
+    const updateParams: unknown[][] = [];
+    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes("admin_override = true")) updateParams.push(params ?? []);
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
       if (sql.includes("admin_override = true")) {
         return {
@@ -274,10 +291,37 @@ describe("safety onboarding routes (A24-8)", () => {
     const res = await app.inject({
       method: "POST",
       url: `/api/v1/safety/onboarding/sessions/${SESSION_ID}/admin-override?operating_company_id=${COMPANY}`,
-      payload: { reason: "Prior employer verified CDL on file", missing_steps: [2, 3] },
+      payload: { reason_code: "owner_approved", missing_steps: [2, 3] },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().session.admin_override).toBe(true);
     expect(mockAppendCrudAudit).toHaveBeenCalled();
+    expect(mockRecordOverride).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ context: "dispatch", entityType: "safety.onboarding_session", entityId: SESSION_ID, reasonCode: "owner_approved" })
+    );
+    expect(updateParams[0]?.[2]).toBe("Owner approved [owner_approved]");
+  });
+
+  it("POST admin-override refuses a missing/unknown reason with the engine's status and writes nothing", async () => {
+    mockRecordOverride.mockResolvedValue({ ok: false, error: "reason_required" });
+    mockQuery.mockImplementation(async () => ({ rows: [], rowCount: 0 }));
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/onboarding/sessions/${SESSION_ID}/admin-override?operating_company_id=${COMPANY}`,
+      payload: { reason_code: null },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "reason_required" });
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("admin_override = true"))).toBe(false);
+  });
+
+  it("POST admin-override rejects a typed free-text reason", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/onboarding/sessions/${SESSION_ID}/admin-override?operating_company_id=${COMPANY}`,
+      payload: { reason_code: "Prior employer verified CDL" },
+    });
+    expect(res.statusCode).toBe(400);
   });
 });

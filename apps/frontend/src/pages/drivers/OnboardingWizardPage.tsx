@@ -98,9 +98,9 @@ export function OnboardingWizardPage() {
   });
 
   const overrideMut = useMutation({
-    mutationFn: (input: { companyId: string; sessionId: string; generation: number; reason: string }) =>
+    mutationFn: (input: { companyId: string; sessionId: string; generation: number; reasonCode: string | null }) =>
       adminOverrideOnboardingSession(input.sessionId, input.companyId, {
-        reason: input.reason,
+        reason_code: input.reasonCode,
       }),
     onSuccess: (_data, input) => {
       if (input.generation === actionGenerationRef.current) void qc.invalidateQueries({ queryKey: ["onboarding-session", input.companyId, input.sessionId] });
@@ -384,7 +384,7 @@ export function OnboardingWizardPage() {
                   companyId,
                   sessionId,
                   generation: actionGenerationRef.current,
-                  reason: reasonCode ?? "owner-override",
+                  reasonCode,
                 });
               }}
               label="Apply admin override"

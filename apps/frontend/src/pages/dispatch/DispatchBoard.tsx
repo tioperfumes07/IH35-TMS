@@ -52,7 +52,7 @@ function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font
   );
 }
 import {
-  listUnitsWithoutLoad,
+  listUnitsWithoutLoad, unitsWithoutLoadQueryKey,
   listDispatchInShopUnits,
   isDispatchInShopUnit,
   listActiveLoadTriSignals,
@@ -675,7 +675,7 @@ export function DispatchBoard({
   const isHistoryBoard = boardScope === "history";
 
   const unitsWithoutLoadQuery = useQuery({
-    queryKey: ["dispatch-board", "units-without-load", companyId],
+    queryKey: unitsWithoutLoadQueryKey(companyId),
     queryFn: () => listUnitsWithoutLoad(companyId),
     enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 30_000,

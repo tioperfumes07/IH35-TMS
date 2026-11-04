@@ -12,7 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ComplaintTypeModal } from "./ComplaintTypeModal";
 import { ListsSubNav } from "../ListsSubNav";
-import { statusPillClass, type StatusFilter } from "./shared";
+import { statusPillClass, apiStatusFromMulti } from "./shared";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 const SEVERITY_LABELS: Record<ComplaintSeverity, string> = {
@@ -39,7 +39,7 @@ export function ComplaintTypesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("true");
+  const [statusFilter, setStatusFilter] = useState<string[]>(["true"]);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -54,8 +54,8 @@ export function ComplaintTypesListPage() {
   const [selectedRow, setSelectedRow] = useState<ComplaintTypeRow | null>(null);
 
   const query = useQuery({
-    queryKey: ["catalogs", "safety", "complaint-types", companyId, search, statusFilter],
-    queryFn: () => listComplaintTypes(companyId, { search: search || undefined, is_active: statusFilter, limit: 200, offset: 0 }),
+    queryKey: ["catalogs", "safety", "complaint-types", companyId, search, statusFilter.join(",") || "all"],
+    queryFn: () => listComplaintTypes(companyId, { search: search || undefined, is_active: apiStatusFromMulti(statusFilter), limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });

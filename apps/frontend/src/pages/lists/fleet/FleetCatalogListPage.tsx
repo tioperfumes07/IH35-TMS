@@ -11,7 +11,17 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { FleetCatalogModal, type FleetCatalogClient } from "./FleetCatalogModal";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+function apiStatus(selected: string[]): "true" | "false" | "all" {
+  if (selected.length === 1 && (selected[0] === "true" || selected[0] === "false")) return selected[0];
+  return "all";
+}
 
 type Props = {
   client: FleetCatalogClient & {
@@ -35,7 +45,7 @@ function statusPillClass(isActive: boolean) {
 export function FleetCatalogListPage({ client, displayName, breadcrumbPath, readOnly = false }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [showVoided, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<FleetCatalogRow | null>(null);
@@ -55,8 +65,8 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath, read
   const query = useQuery({
     // Round 296: every row of the catalog (status narrows server-side on the indexed is_active), then the house toolbar
     // (ParityTable's UniversalListToolbar) is the one search over all of it with "N of M" -- no 200-row cap.
-    queryKey: ["catalogs", "fleet", displayName, companyId, status],
-    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
+    queryKey: ["catalogs", "fleet", displayName, companyId, status.join(",") || "all"],
+    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: apiStatus(status) }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
@@ -96,18 +106,29 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath, read
         }
       />
       <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <div className="text-xs font-semibold text-[#4B5563]" data-testid="catalog-status-filter">
+          <span className="block">Status</span>
+          <div className="mt-1">
+            <MultiSelectDropdown
+              label="Status"
+              options={[...STATUS_FILTER_OPTIONS]}
+              selected={status}
+              onChange={(next) => {
+                setStatus(next);
+                setShowInactive(apiStatus(next) === "all");
+              }}
+              allLabel="All statuses"
+              data-testid="catalog-status-multiselect"
+            />
+          </div>
+        </div>
         <label className="flex items-center gap-2 text-xs text-gray-700">
           <input
             type="checkbox"
             checked={showVoided}
             onChange={(event) => {
               setShowInactive(event.target.checked);
-              setStatus(event.target.checked ? "all" : "true");
+              setStatus(event.target.checked ? ["true", "false"] : ["true"]);
             }}
             className="h-3.5 w-3.5 rounded-sm border-gray-300"
           />
@@ -140,7 +161,7 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath, read
           }
           loading={query.isLoading}
           storageKey="catalogs-fleet"
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+          title={status.length !== 1 ? "All entries" : status[0] === "false" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}
