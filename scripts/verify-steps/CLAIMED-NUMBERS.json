@@ -17454,5 +17454,10 @@
     "claimed_by": "lead",
     "purpose": "Rows 78 + 23: Dispatch Load history board reads the loads-history hub + existing load panels; Bill Payments lists A/P bill payments only (settlement deductions/escrow excluded on every list reader) (static guard)",
     "claimed_at": "2026-11-03"
+  },
+  "19885": {
+    "claimed_by": "lead",
+    "purpose": "Rows 89 + 90 + 112 (ACCT-F11071): Faro 1090 wire proposals anchored on purchase dates; PROPOSED = one exclusive exact wire; deposit sweep by live match only; Undo skips reversal entries; one A/R relief per factored invoice (static guard verify-rows-89-90-112)",
+    "claimed_at": "2026-11-03"
   }
 }
