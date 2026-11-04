@@ -292,8 +292,10 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       SELECT pa.*, p.display_id AS payment_display_id, p.payment_date,
              p.cleared_date, p.deposited_to_account_id,
              dep_acct.account_name AS deposited_to_account_name
+      -- ACCT-F11103: LEFT JOIN so a payment-less relief application (payment_id NULL, ACCT-F11070) is listed beside the
+      -- payment-backed ones — the list then sums to the amount_paid_cents the trigger derives from all of them.
       FROM accounting.payment_applications pa
-      JOIN accounting.payments p ON p.id = pa.payment_id
+      LEFT JOIN accounting.payments p ON p.id = pa.payment_id
                                  AND p.operating_company_id = $2::uuid
       LEFT JOIN catalogs.accounts dep_acct
         ON dep_acct.id::text = p.deposited_to_account_id

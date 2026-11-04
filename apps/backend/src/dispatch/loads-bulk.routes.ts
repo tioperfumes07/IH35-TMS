@@ -323,11 +323,13 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
             ON pa.invoice_id = i.id
            AND pa.operating_company_id = i.operating_company_id
            AND pa.unapplied_at IS NULL
-          JOIN accounting.payments p
+          -- ACCT-F11103: a payment-less relief application (payment_id NULL — the factor collected the customer's cash,
+          -- ACCT-F11070) is a real receipt; an INNER JOIN hid it. A voided payment still counts nothing.
+          LEFT JOIN accounting.payments p
             ON p.id = pa.payment_id
            AND p.operating_company_id = i.operating_company_id
-           AND p.voided_at IS NULL
          WHERE i.operating_company_id = $1::uuid
+           AND p.voided_at IS NULL
            AND i.source_load_id = $2::uuid
            AND i.voided_at IS NULL
            AND COALESCE(i.is_sample_data, false) IS NOT TRUE

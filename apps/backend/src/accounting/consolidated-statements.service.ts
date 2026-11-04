@@ -4,6 +4,7 @@ import { getProfitLossReport, type ProfitLossReport } from "./profit-loss.servic
 import { getBalanceSheetReport, type BalanceSheetReport } from "./balance-sheet.service.js";
 import { getCashFlowReport, type CashFlowReport } from "./cash-flow.service.js";
 import { invoiceRecoursedOffTradeArSql } from "./invoice-factored-identity.js";
+import { invoiceAppliedCentsAsOfSql } from "./invoice-applied-cents.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSOLIDATED FINANCIAL STATEMENTS WITH INTERCOMPANY ELIMINATION (item 4)
@@ -276,18 +277,7 @@ async function readInvoices(
         -- still revenue: revenue-gl-linkage status set is sent/partial/paid/factored).
         CASE WHEN i.status = 'factored' OR ${invoiceRecoursedOffTradeArSql("i")} THEN 0 ELSE GREATEST(
           COALESCE(i.total_cents, 0)
-            - COALESCE((
-                SELECT SUM(COALESCE(pa.amount_cents, 0))
-                FROM accounting.payment_applications pa
-                JOIN accounting.payments p
-                  ON p.id = pa.payment_id
-                 AND p.operating_company_id = i.operating_company_id
-                WHERE pa.invoice_id = i.id
-                  AND pa.operating_company_id = i.operating_company_id
-                  AND p.payment_date <= $2::date
-                  AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
-                  AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
-              ), 0)
+            - ${invoiceAppliedCentsAsOfSql("i", "$2::date")}
             - COALESCE((
                 SELECT SUM(cma.applied_cents)
                 FROM accounting.credit_memo_applications cma

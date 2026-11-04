@@ -1,0 +1,1 @@
+export default { name: "verify:verify-invoice-applied-cents-payment-less", run(ctx) { ctx.run("node", ["scripts/verify-invoice-applied-cents-payment-less.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-invoice-applied-cents-payment-less.mjs"]); } };

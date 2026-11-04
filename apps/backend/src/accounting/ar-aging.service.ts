@@ -8,6 +8,7 @@ import {
   type UnclearedDocument,
 } from "./uncleared-applied-documents.js";
 import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
+import { invoiceAppliedCentsAsOfSql } from "./invoice-applied-cents.js";
 
 type ArAgingInvoiceRowDb = {
   customer_id: string;
@@ -105,18 +106,7 @@ export async function getArAgingReport(input: {
           i.due_date::text AS due_date,
           GREATEST(
             COALESCE(i.total_cents, 0)
-              - COALESCE((
-                  SELECT SUM(COALESCE(pa.amount_cents, 0))
-                  FROM accounting.payment_applications pa
-                  JOIN accounting.payments p
-                    ON p.id = pa.payment_id
-                   AND p.operating_company_id = i.operating_company_id
-                  WHERE pa.invoice_id = i.id
-                    AND pa.operating_company_id = i.operating_company_id
-                    AND p.payment_date <= $2::date
-                    AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
-                    AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
-                ), 0)
+              - ${invoiceAppliedCentsAsOfSql("i", "$2::date")}
               - COALESCE((
                   SELECT SUM(cma.applied_cents)
                   FROM accounting.credit_memo_applications cma
@@ -144,18 +134,7 @@ export async function getArAgingReport(input: {
           AND i.is_sample_data = false
           AND GREATEST(
             COALESCE(i.total_cents, 0)
-              - COALESCE((
-                  SELECT SUM(COALESCE(pa.amount_cents, 0))
-                  FROM accounting.payment_applications pa
-                  JOIN accounting.payments p
-                    ON p.id = pa.payment_id
-                   AND p.operating_company_id = i.operating_company_id
-                  WHERE pa.invoice_id = i.id
-                    AND pa.operating_company_id = i.operating_company_id
-                    AND p.payment_date <= $2::date
-                    AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
-                    AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
-                ), 0)
+              - ${invoiceAppliedCentsAsOfSql("i", "$2::date")}
               - COALESCE((
                   SELECT SUM(cma.applied_cents)
                   FROM accounting.credit_memo_applications cma

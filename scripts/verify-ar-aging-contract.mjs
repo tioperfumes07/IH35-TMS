@@ -49,10 +49,13 @@ try {
     /i\.issue_date <= \$2::date/,
     "AR Aging must gate invoice existence on issue_date <= as_of (ACCT-F5658 — never count an invoice issued after the statement date)",
   );
+  // ACCT-F11103: the dated paid-as-of is the ONE shared rule accounting.invoice_applied_cents_as_of (via
+  // invoiceAppliedCentsAsOfSql) — payment-dated for payment-backed applications, application-dated for payment-less relief
+  // applications (ACCT-F11070). The former inline `JOIN accounting.payments ... p.payment_date <= $2` dropped relief.
   assertMatches(
     service,
-    /p\.payment_date <= \$2::date/,
-    "AR Aging must reconstruct paid-as-of from payment_applications joined to payments.payment_date <= as_of (ACCT-F5658 — never read the live amount_open_cents for a dated statement)",
+    /\$\{invoiceAppliedCentsAsOfSql\("i", "\$2::date"\)\}/,
+    "AR Aging must reconstruct paid-as-of through invoiceAppliedCentsAsOfSql(\"i\", \"$2::date\") (ACCT-F5658 dated basis; ACCT-F11103 payment-less applications)",
   );
   assertMatches(
     service,

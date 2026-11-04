@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
+import { applicationDateSql, applicationLiveSql } from "./invoice-applied-cents.js";
 
 // LST-CUST-ACT (2026-09-05): a read-only UNION of every customer money event — invoices,
 // payments received, credit memos, broker advances, and factoring advances — as a single
@@ -111,22 +112,25 @@ export async function getCustomerActivity(input: {
       amount_cents: string | number; status: string;
     }>(
       `
-        SELECT p.id::text AS id, p.payment_date::text AS date, p.display_id AS reference,
+        -- ACCT-F11103: LEFT JOIN — a payment-less relief application (payment_id NULL, Faro collected the cash; ACCT-F11070)
+        -- is activity too, dated by the application. Was an INNER JOIN that hid it.
+        SELECT COALESCE(p.id, i.id)::text AS id, ${applicationDateSql("pa", "p")}::text AS date,
+               COALESCE(p.display_id, i.display_id) AS reference,
                l.load_number AS load_number, pa.amount_cents AS amount_cents,
                -- ACCT-F26014 (owner, 2026-09-07): accounting.payments has no "status" column at
                -- all -- the prior fallback expression referencing it 500'd right after the
                -- source_load_number fix uncovered it. Every row this query returns already passed
                -- the payment's own void exclusion above, so 'received' is the correct, non-guessed
                -- literal here, not a fallback for a real column.
+               -- ACCT-F11103: a payment-less relief application is a receipt too (the factor collected the cash).
                'received'::text AS status
         FROM accounting.payment_applications pa
-        JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
+        LEFT JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
         JOIN accounting.invoices i ON i.id = pa.invoice_id AND i.operating_company_id = pa.operating_company_id
         LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
         WHERE pa.operating_company_id = $1::uuid
           AND i.customer_id = $2::uuid
-          AND p.voided_at IS NULL
-          AND pa.unapplied_at IS NULL
+          AND ${applicationLiveSql("pa", "p")}
       `,
       [input.operating_company_id, input.customer_id]
     );

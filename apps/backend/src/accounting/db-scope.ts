@@ -61,7 +61,8 @@ export async function recomputeInvoiceTotals(client: { query: (sql: string, valu
 
 /**
  * FACT-DELIVERED-AUTO — the open-AR "pledge" a factoring advance is faced/reserved/feed against:
- * invoice total minus applied non-void payments minus applied non-void credit memos. Lives here as the
+ * invoice total minus applied non-void payments (payment-backed AND payment-less relief applications —
+ * accounting.invoice_applied_cents_as_of, ACCT-F11103) minus applied non-void credit memos. Lives here as the
  * single source of truth so the manual create route (factoring-advances.routes.ts) and the delivery
  * auto-submit service (factoring/auto-submit-on-delivery.service.ts) compute the identical base — never
  * two formulas that can drift. `i` must be the aliased accounting.invoices row in the caller's query.
@@ -69,17 +70,7 @@ export async function recomputeInvoiceTotals(client: { query: (sql: string, valu
 export const INVOICE_PLEDGE_CENTS_SQL = `
 GREATEST(
   COALESCE(i.total_cents, 0)
-    - COALESCE((
-        SELECT SUM(COALESCE(pa.amount_cents, 0))
-        FROM accounting.payment_applications pa
-        JOIN accounting.payments p
-          ON p.id = pa.payment_id
-         AND p.operating_company_id = i.operating_company_id
-        WHERE pa.invoice_id = i.id
-          AND pa.operating_company_id = i.operating_company_id
-          AND p.voided_at IS NULL
-          AND pa.unapplied_at IS NULL
-      ), 0)
+    - accounting.invoice_applied_cents_as_of(i.id, 'infinity'::date)
     - COALESCE((
         SELECT SUM(cma.applied_cents)
         FROM accounting.credit_memo_applications cma
