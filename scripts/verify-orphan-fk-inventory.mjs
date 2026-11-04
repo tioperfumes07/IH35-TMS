@@ -37,7 +37,7 @@ const NON_FK = path.join(__dirname, "verify-orphan-fk-inventory.non-fk-columns.j
  */
 const NON_FK_KINDS = {
   // raw_samsara_event_id is Samsara's event id copied onto vehicle_locations / cache rows (0233 + 202616200100).
-  external_id: /^((raw_)?samsara_[a-z_]+|google_place_id|observation_id|faro_entry_id|qbo_[a-z_]+|realm_id)$/,
+  external_id: /^((raw_)?samsara_[a-z_]+|google_place_id|observation_id|faro_entry_id|qbo_[a-z_]+|realm_id|relay_[a-z_]+)$/,
   display_label: /(^|_)display_id$/,
   authorization_code: /^auth_id$/,
   tombstone_id: /^merged_[a-z_]+_id$/,
