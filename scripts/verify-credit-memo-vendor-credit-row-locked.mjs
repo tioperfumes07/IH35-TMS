@@ -27,6 +27,8 @@ const ROUTES = [
     applyPath: "/api/v1/accounting/credit-memos/:id/apply",
     voidPath: "/api/v1/accounting/credit-memos/:id/void",
     voidedLiteral: "'voided'",
+    // ACCT-F11101: the /apply body moved VERBATIM into the one apply service; the route delegates to it.
+    applyDelegate: { fn: "applyCreditMemoToInvoicesInClientTx", file: "apps/backend/src/accounting/credit-memo-apply.service.ts" },
   },
   {
     file: "apps/backend/src/accounting/vendor-credits.routes.ts",
@@ -49,7 +51,12 @@ export function run(root = process.cwd()) {
   for (const cfg of ROUTES) {
     const src = fs.readFileSync(`${root}/${cfg.file}`, "utf8");
 
-    const applyRoute = extractRoute(src, cfg.applyPath);
+    let applyRoute = extractRoute(src, cfg.applyPath);
+    if (applyRoute && cfg.applyDelegate && applyRoute.includes(`${cfg.applyDelegate.fn}(`) && fs.existsSync(`${root}/${cfg.applyDelegate.file}`)) {
+      const svc = fs.readFileSync(`${root}/${cfg.applyDelegate.file}`, "utf8");
+      const m = svc.match(new RegExp(`export async function ${cfg.applyDelegate.fn}\\([\\s\\S]*?\\n\\}`));
+      applyRoute = m ? m[0] : "";
+    }
     if (!applyRoute) {
       failures.push(`${cfg.file}: could not locate the ${cfg.applyPath} route`);
     } else if (!/SELECT[\s\S]{0,300}?FOR UPDATE/.test(applyRoute)) {

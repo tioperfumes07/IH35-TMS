@@ -1,0 +1,1 @@
+export default { name: "verify:verify-sent-invoice-corrected-by-credit-memo", run(ctx) { ctx.run("node", ["scripts/verify-sent-invoice-corrected-by-credit-memo.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-sent-invoice-corrected-by-credit-memo.mjs"]); } };

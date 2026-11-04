@@ -12,6 +12,8 @@ import {
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
+import { applyCreditMemoToInvoicesInClientTx } from "./credit-memo-apply.service.js";
+import { creditMemoTargetInvoiceRefusal, recordFactoredInvoiceCreditMemoLink } from "./credit-memo-from-invoice.service.js";
 
 // ACCT-F5606 — AR credit memo CRUD + apply-to-invoice + void, mirroring vendor-credits.routes.ts's
 // proven AP shape (CUSTVEND-PAR-1) column-for-column and check-for-check. Closes LV-CREDITMEMO-NOPATH's
@@ -55,6 +57,11 @@ const createBodySchema = z.object({
   account_id: z.string().trim().uuid(),
   notes: z.string().trim().max(2000).optional().nullable(),
   display_id: z.string().trim().min(1).max(40).optional(),
+  // ACCT-F11101 (owner 11-04: "7-ok folow qb") — "Create credit memo" from a SENT invoice: the invoice it corrects
+  // (related_invoice_id) and, like QuickBooks, whether it is applied to that invoice now (lowers its open balance) or left
+  // unapplied as customer credit.
+  related_invoice_id: z.string().trim().uuid().optional(),
+  apply_to_invoice: z.boolean().optional(),
 });
 
 const applyBodySchema = z.object({
@@ -80,6 +87,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // one, so "active" means "exclude voided" rather than matching one literal status column value.
   // U12 — multi-select: ?status=a&status=b (one value still accepted).
   status: statusListParam(["draft", "issued", "applied", "voided", "active"] as const),
+  // ACCT-F11101 — the credit memos issued against one invoice (invoice detail: original + corrections, both on record).
+  related_invoice_id: z.string().trim().uuid().optional(),
 });
 
 function canWriteCreditMemos(role: string) {
@@ -101,6 +110,10 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       if (query.data.customer_id) {
         params.push(entityIdFilterValues(query.data.customer_id));
         conditions.push(`cm.customer_id = ANY($${params.length}::uuid[])`);
+      }
+      if (query.data.related_invoice_id) {
+        params.push(query.data.related_invoice_id);
+        conditions.push(`cm.related_invoice_id = $${params.length}::uuid`);
       }
       const statusCond = statusListCondition("cm.status", query.data.status, (v) => {
         params.push(v);
@@ -125,8 +138,13 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
            cm.created_by_user_id,
            cm.voided_at,
            cm.void_reason,
-           cm.voided_by_user_id
+           cm.voided_by_user_id,
+           cm.related_invoice_id,
+           ri.display_id AS related_invoice_display_id
          FROM accounting.credit_memos cm
+         LEFT JOIN accounting.invoices ri
+           ON ri.id = cm.related_invoice_id
+          AND ri.operating_company_id = cm.operating_company_id
          LEFT JOIN mdata.customers c
            ON c.id = cm.customer_id
           AND c.operating_company_id = cm.operating_company_id
@@ -200,8 +218,13 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
            cm.created_by_user_id,
            cm.voided_at,
            cm.void_reason,
-           cm.voided_by_user_id
+           cm.voided_by_user_id,
+           cm.related_invoice_id,
+           ri.display_id AS related_invoice_display_id
          FROM accounting.credit_memos cm
+         LEFT JOIN accounting.invoices ri
+           ON ri.id = cm.related_invoice_id
+          AND ri.operating_company_id = cm.operating_company_id
          LEFT JOIN mdata.customers c
            ON c.id = cm.customer_id
           AND c.operating_company_id = cm.operating_company_id
@@ -268,6 +291,19 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       );
       if (!acctRes.rows[0]) return { code: 400 as const, error: "account_not_postable_for_company" };
 
+      // ACCT-F11101 — a credit memo created FROM an invoice: issued (not draft / proforma / void), same customer, and when
+      // applied now, no more than the invoice's open balance. Refused before anything is written.
+      const relatedInvoiceId = body.data.related_invoice_id ?? null;
+      const applyToInvoice = Boolean(relatedInvoiceId && body.data.apply_to_invoice);
+      if (body.data.apply_to_invoice && !relatedInvoiceId) return { code: 400 as const, error: "apply_to_invoice_requires_related_invoice_id" };
+      if (relatedInvoiceId) {
+        const refusal = await creditMemoTargetInvoiceRefusal(client as never, {
+          operatingCompanyId: query.data.operating_company_id, invoiceId: relatedInvoiceId, customerId: body.data.customer_id,
+          amountCents: body.data.amount_cents, applyToInvoice,
+        });
+        if (refusal) return refusal;
+      }
+
       // Canonical generator (same advisory-lock + MAX pattern nextVendorCreditDisplayId uses).
       const displayId = await resolveCreditMemoDisplayId(
         client,
@@ -278,9 +314,9 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
 
       const insRes = await client.query(
         `INSERT INTO accounting.credit_memos
-           (operating_company_id, customer_id, display_id, status, reason, issue_date, amount_cents, notes, created_by_user_id, account_id)
-         VALUES ($1, $2, $3, 'issued', $4, $5, $6, $7, $8, $9::uuid)
-         RETURNING id, display_id, status, reason, issue_date, amount_cents, amount_applied_cents, (amount_cents - amount_applied_cents) AS amount_unapplied_cents, account_id`,
+           (operating_company_id, customer_id, display_id, status, reason, issue_date, amount_cents, notes, created_by_user_id, account_id, related_invoice_id)
+         VALUES ($1, $2, $3, 'issued', $4, $5, $6, $7, $8, $9::uuid, $10::uuid)
+         RETURNING id, display_id, status, reason, issue_date, amount_cents, amount_applied_cents, (amount_cents - amount_applied_cents) AS amount_unapplied_cents, account_id, related_invoice_id`,
         [
           query.data.operating_company_id,
           body.data.customer_id,
@@ -291,6 +327,7 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
           user.uuid,
           body.data.account_id,
+          relatedInvoiceId,
         ]
       );
       const credit = insRes.rows[0];
@@ -307,6 +344,25 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
         await client.query(`UPDATE accounting.credit_memos SET journal_entry_id = $2::uuid WHERE id = $1::uuid`, [credit.id, jeId]);
       }
       credit.journal_entry_id = jeId;
+
+      if (relatedInvoiceId) {
+        // ACCT-F11101 — a factored invoice: the credit memo's legs are linked to the Faro purchase / advance (no Faro posting).
+        credit.factoring = await recordFactoredInvoiceCreditMemoLink(client as never, {
+          operatingCompanyId: query.data.operating_company_id, creditMemoId: String(credit.id), invoiceId: relatedInvoiceId,
+          journalEntryId: jeId, amountCents: body.data.amount_cents, userId: user.uuid,
+        });
+        if (applyToInvoice) {
+          // THE apply (same transaction): the invoice's open balance drops by the credit memo, exactly like QBO.
+          const applied = await applyCreditMemoToInvoicesInClientTx(client as never, {
+            operatingCompanyId: query.data.operating_company_id, creditMemoId: String(credit.id), userId: user.uuid,
+            applications: [{ invoice_id: relatedInvoiceId, applied_cents: body.data.amount_cents, idempotency_key: `credit_memo_from_invoice:${String(credit.id)}` }],
+          });
+          if ("error" in applied) throw new Error(`credit_memo_apply_failed:${String(applied.error)}`);
+          credit.amount_applied_cents = body.data.amount_cents;
+          credit.amount_unapplied_cents = 0;
+          credit.status = "applied";
+        }
+      }
 
       await appendCrudAudit(
         client,
@@ -326,7 +382,10 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       throw error;
     }
 
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    if ("error" in result) {
+      const { code, ...payload } = result;
+      return reply.code(code).send(payload);
+    }
     return reply.code(result.code).send(result.data);
   });
 
@@ -343,160 +402,11 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
     const body = applyBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      // ACCT-F5639 — FOR UPDATE, same row-lock pattern applied to the sibling /void endpoint below.
-      // Closes two races at once: a concurrent /void call can no longer read this row unlocked while
-      // this apply is mid-flight (which previously let a credit memo end up 'voided' with a live,
-      // non-voided application row still standing), and two concurrent /apply calls can no longer
-      // both read the same stale amount_unapplied_cents and jointly over-apply the credit beyond its
-      // face amount across two different invoices.
-      const creditRes = await client.query(
-        `SELECT id, status, customer_id, (amount_cents - amount_applied_cents) AS amount_unapplied_cents
-         FROM accounting.credit_memos
-         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1
-         FOR UPDATE`,
-        [params.data.id, query.data.operating_company_id]
-      );
-      const credit = creditRes.rows[0];
-      if (!credit) return { code: 404 as const, error: "credit_memo_not_found" };
-      if (credit.status === "voided") return { code: 409 as const, error: "credit_memo_voided" };
-
-      // ACCT-F5618 — resolve idempotent replays FIRST, before the over-apply check. A retried
-      // request (double-click, client timeout+retry) with the same idempotency_key must return the
-      // SAME success result, never a fresh INSERT and never a stale over-apply rejection computed
-      // against a balance that ALREADY reflects the first successful call. Mirrors
-      // settlement-posting.service.ts's own findExistingPostedJe pre-check pattern (look up by the
-      // uq_credit_memo_app_idempotency unique index before inserting) rather than catching 23505 —
-      // catching after the fact would still 500/409 on the retry instead of transparently replaying.
-      const applicationIds: string[] = [];
-      const newApplications: typeof body.data.applications = [];
-      for (const appReq of body.data.applications) {
-        if (appReq.idempotency_key) {
-          const existing = await client.query(
-            `SELECT id FROM accounting.credit_memo_applications
-              WHERE operating_company_id = $1::uuid AND idempotency_key = $2 AND voided_at IS NULL
-              LIMIT 1`,
-            [query.data.operating_company_id, appReq.idempotency_key]
-          );
-          if (existing.rows[0]) {
-            applicationIds.push(String(existing.rows[0].id));
-            continue;
-          }
-        }
-        newApplications.push(appReq);
-      }
-
-      const totalApplying = newApplications.reduce((s, a) => s + a.applied_cents, 0);
-      const unapplied = Number(credit.amount_unapplied_cents);
-      if (totalApplying > unapplied) {
-        return {
-          code: 422 as const,
-          error: "over_apply_refused",
-          unapplied_cents: unapplied,
-          requested_cents: totalApplying,
-        };
-      }
-
-      for (const appReq of newApplications) {
-        // customer_id on both sides is a direct mdata.customers.id uuid (unlike the AP side's
-        // vendor_id, which bridges a canonical/QBO-mirror text space) — a plain equality check is
-        // the correct, sufficient cross-customer guard here, no identity-set resolution needed.
-        const invoiceRes = await client.query(
-          `SELECT id, customer_id, total_cents, amount_paid_cents
-             FROM accounting.invoices
-            WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
-          [appReq.invoice_id, query.data.operating_company_id]
-        );
-        const invoice = invoiceRes.rows[0];
-        if (!invoice) return { code: 404 as const, error: `invoice_not_found:${appReq.invoice_id}` };
-
-        if (String(invoice.customer_id) !== String(credit.customer_id)) {
-          return {
-            code: 422 as const,
-            error: "invoice_customer_mismatch",
-            detail: {
-              invoice_id: appReq.invoice_id,
-              invoice_customer_id: invoice.customer_id,
-              credit_memo_customer_id: credit.customer_id,
-            },
-          };
-        }
-
-        // CAP THE APPLICATION AT THE INVOICE'S TRUE REMAINING BALANCE. amount_open_cents is a
-        // GENERATED column (total_cents - amount_paid_cents, migration 0123) that has NO knowledge
-        // of credit-memo applications — a naive check against it alone would let a credit memo
-        // overshoot an invoice that a PRIOR credit-memo application had already partially covered.
-        // Net off already-applied, non-voided credit-memo cents against this invoice, mirroring the
-        // AP side's own "already-applied" ceiling fix (vendor-credits.routes.ts) exactly, so this
-        // route ships with that class of bug already closed rather than repeating it here first.
-        const alreadyAppliedRes = await client.query(
-          `SELECT COALESCE(SUM(applied_cents), 0)::text AS applied_cents
-             FROM accounting.credit_memo_applications
-            WHERE invoice_id = $1
-              AND operating_company_id = $2::uuid
-              AND voided_at IS NULL`,
-          [appReq.invoice_id, query.data.operating_company_id]
-        );
-        const invoiceRemainingCents =
-          Number(invoice.total_cents ?? 0)
-          - Number(invoice.amount_paid_cents ?? 0)
-          - Number(alreadyAppliedRes.rows[0]?.applied_cents ?? 0);
-        if (appReq.applied_cents > invoiceRemainingCents) {
-          return {
-            code: 422 as const,
-            error: "applied_cents_exceeds_invoice_balance",
-            detail: {
-              invoice_id: appReq.invoice_id,
-              applied_cents: appReq.applied_cents,
-              invoice_remaining_cents: Math.max(0, invoiceRemainingCents),
-            },
-          };
-        }
-
-        const appRes = await client.query(
-          `INSERT INTO accounting.credit_memo_applications
-             (operating_company_id, credit_memo_id, invoice_id, applied_cents, applied_by_user_id, idempotency_key)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING id`,
-          [
-            query.data.operating_company_id,
-            params.data.id,
-            appReq.invoice_id,
-            appReq.applied_cents,
-            user.uuid,
-            appReq.idempotency_key ?? null,
-          ]
-        );
-        applicationIds.push(String(appRes.rows[0]?.id ?? ""));
-      }
-
-      await client.query(
-        `UPDATE accounting.credit_memos
-         SET amount_applied_cents = amount_applied_cents + $2,
-             status = CASE
-               WHEN amount_applied_cents + $2 >= amount_cents THEN 'applied'
-               ELSE status
-             END
-         WHERE id = $1`,
-        [params.data.id, totalApplying]
-      );
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.credit_memos.applied",
-        {
-          resource_type: "accounting.credit_memos",
-          resource_id: params.data.id,
-          total_applied_cents: totalApplying,
-          invoice_count: newApplications.length,
-        },
-        "info",
-        "ACCT-F5606"
-      );
-
-      return { code: 200 as const, data: { applicationIds } };
-    });
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      applyCreditMemoToInvoicesInClientTx(client as never, {
+        operatingCompanyId: query.data.operating_company_id, creditMemoId: params.data.id, userId: user.uuid, applications: body.data.applications,
+      })
+    );
 
     if ("error" in result) {
       const { code, ...payload } = result;

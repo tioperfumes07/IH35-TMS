@@ -17,7 +17,9 @@ const SELFTEST = process.argv.includes("--selftest");
 
 const TARGETS = [
   {
-    file: "apps/backend/src/accounting/credit-memos.routes.ts",
+    // ACCT-F11101: the AR apply moved VERBATIM out of credit-memos.routes.ts into the one apply service (the route and the
+    // "Create credit memo" from a sent invoice both call it).
+    file: "apps/backend/src/accounting/credit-memo-apply.service.ts",
     table: "accounting.credit_memo_applications",
     varKey: "appReq.idempotency_key",
     newApplicationsVar: "newApplications",
@@ -63,10 +65,7 @@ if (SELFTEST) {
     const filePath = path.join(ROOT, target.file);
     const src = fs.readFileSync(filePath, "utf8");
 
-    const dropped = src.replace(
-      `const ${target.newApplicationsVar}: typeof body.data.applications = [];`,
-      ""
-    );
+    const dropped = src.replace(new RegExp(`const ${target.newApplicationsVar}: [^=\\n]+= \\[\\];`), "");
     if (dropped === src) {
       console.error(`${LABEL} SELFTEST SETUP FAILED: ${target.file} mutation string did not match live source`);
       process.exit(1);

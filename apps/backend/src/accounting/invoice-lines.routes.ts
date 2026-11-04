@@ -72,7 +72,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         createInvoiceLineInClientTx(client, { operatingCompanyId: query.data.operating_company_id, invoiceId: params.data.id, ...body.data }, user.uuid)
       );
 
-      if (!result.ok) return reply.code(result.code).send({ error: result.error });
+      if (!result.ok) return reply.code(result.code).send({ error: result.error, ...("message" in result && result.message ? { message: result.message } : {}) });
       return reply.code(result.code).send(result.data);
     } catch (error) {
       if (error instanceof ExpenseCategoryMapResolutionError) {
@@ -200,7 +200,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         return { ok: true as const, code: 200 as const, data: { line, totals } };
       });
 
-      if (!result.ok) return reply.code(result.code).send({ error: result.error });
+      if (!result.ok) return reply.code(result.code).send({ error: result.error, ...("message" in result && result.message ? { message: result.message } : {}) });
       return reply.code(result.code).send(result.data);
     } catch (error) {
       if (error instanceof ExpenseCategoryMapResolutionError) {
@@ -261,7 +261,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       return { ok: true as const, code: 200 as const, data: { ok: true, totals } };
     });
 
-    if (!result.ok) return reply.code(result.code).send({ error: result.error });
+    if (!result.ok) return reply.code(result.code).send({ error: result.error, ...("message" in result && result.message ? { message: result.message } : {}) });
     return result.data;
   });
 }

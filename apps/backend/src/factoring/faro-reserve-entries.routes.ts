@@ -47,6 +47,8 @@ const shortPayBody = z.object({
   resolution: z.enum(["written_down", "kept_open"]),
   reason: z.enum(Object.keys(SHORT_PAY_REASONS) as [ShortPayReason, ...ShortPayReason[]]).nullish(),
   note: z.string().trim().max(500).nullish(),
+  // ACCT-F11101 — resolve through the credit memo already issued against the sent invoice (links it, posts nothing).
+  existing_credit_memo_id: z.string().uuid().nullish(),
 });
 
 export async function registerFaroReserveEntryRoutes(app: FastifyInstance) {
@@ -68,6 +70,7 @@ export async function registerFaroReserveEntryRoutes(app: FastifyInstance) {
           resolution: b.data.resolution,
           reason: b.data.reason ?? null,
           note: b.data.note ?? null,
+          existing_credit_memo_id: b.data.existing_credit_memo_id ?? null,
           actor_user_id: user.uuid,
           actor_role: String(user.role ?? ""),
         })
