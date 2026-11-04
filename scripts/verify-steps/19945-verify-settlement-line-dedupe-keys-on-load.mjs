@@ -1,0 +1,1 @@
+export default { name: "verify:verify-settlement-line-dedupe-keys-on-load", run(ctx) { ctx.run("node", ["scripts/verify-settlement-line-dedupe-keys-on-load.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-settlement-line-dedupe-keys-on-load.mjs"]); } };

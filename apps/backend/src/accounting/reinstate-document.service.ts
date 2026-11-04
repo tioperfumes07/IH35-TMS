@@ -18,13 +18,20 @@ import {
 } from "./void-document-stamp.service.js";
 import type { VoidDocumentType } from "./void-document.service.js";
 import { updateBankBalance, type BillMutationClient } from "./bills.service.js";
+import {
+  SETTLEMENT_DEDUCTION_LINE_TYPES,
+  SETTLEMENT_EARNINGS_LINE_TYPES,
+  SETTLEMENT_REIMBURSEMENT_LINE_TYPES,
+  isPreCloseStatus,
+} from "../driver-finance/settlement-line-buckets.js";
 
 export type ReinstateDocumentType =
   | VoidDocumentType
   | "driver_bill"
   | "bank_transaction"
   | "check_number_registry"
-  | "work_order";
+  | "work_order"
+  | "settlement_line";
 
 export type ReinstateDocumentResult = {
   reinstatedAt: string;
@@ -301,6 +308,8 @@ export async function reinstateDocument(
       return reinstateSimple(client, input, "check_number_registry", "check_number_registry");
     case "work_order":
       return reinstateSimple(client, input, "work_order", "work_order");
+    case "settlement_line":
+      return reinstateSettlementLine(client, input);
     default: {
       const _exhaustive: never = input.type;
       throw new Error(`reinstateDocument: unhandled type ${_exhaustive as string}`);
@@ -807,6 +816,182 @@ async function reinstateJournalEntry(
     reinstatedFromVoidJeId: voidReversalJeId,
     restoreStatus: null,
   };
+}
+
+/**
+ * ACCT-F11098 — reinstate ONE voided driver_finance.settlement_lines row (owner 11-04: "make sure the unvoid engine works
+ * correctly and places everything where it should go, correct tables, ap, ar, etc. fully wiring").
+ *
+ * A settlement line is a statement line, not a posting: the settlement's GL (payrun close: Dr cost / Cr 2000 A/P, escrow
+ * Cr 2100-xx, deductions applied to the per-load driver bills) was posted from the settlement HEADER and the escrow
+ * ledger, never re-derived from the line flags. So a reinstate NEVER posts. It is allowed only when the line's dollars
+ * are already in what was posted — otherwise turning it on would show money the books never carried:
+ *   1. the line is voided, its settlement is live;
+ *   2. no ACTIVE twin: same settlement, line_type, description, amount AND the same load (a true duplicate stays void);
+ *   3. closed settlement: active lines of the line's bucket + this line <= the header bucket the close posted
+ *      (gross_pay / deductions_total / reimbursements_total); a line type outside the three buckets is refused;
+ *   4. escrow_contribution on a closed settlement: active escrow lines + this line <= the settlement's escrow deposit
+ *      postings, AND accounting.escrow_posting_loads already carries this line (or its load) — the GL credit to the
+ *      driver's 2100-xx escrow account and the per-load split exist, so no new JE;
+ *   5. a void that reversed GL (void_reversal_entry_id) goes through the GL-restore path only (ReinstateGlNotRestoredError).
+ * Pre-close settlements (no GL yet) skip 3-4: the close will post them.
+ */
+export async function reinstateSettlementLine(
+  client: ReinstateClient,
+  input: {
+    operatingCompanyId: string;
+    id: string;
+    reason: string;
+    actor: { userId: string };
+    expectGlRestoreFollowUp?: boolean;
+  }
+): Promise<ReinstateDocumentResult> {
+  const res = await client.query<{
+    id: string;
+    settlement_id: string | null;
+    line_type: string;
+    description: string;
+    amount_cents: string;
+    load_id: string | null;
+    is_active: boolean;
+    voided_at: string | null;
+    void_reason: string | null;
+    void_reversal_entry_id: string | null;
+    settlement_status: string | null;
+    settlement_voided_at: string | null;
+    gross_cents: string | null;
+    deductions_cents: string | null;
+    reimbursements_cents: string | null;
+    active_twins: string;
+  }>(
+    `SELECT sl.id::text, sl.settlement_id::text, sl.line_type, sl.description,
+            round(sl.amount * 100)::bigint::text AS amount_cents, sl.load_id::text, sl.is_active,
+            sl.voided_at::text, sl.void_reason, sl.void_reversal_entry_id::text,
+            ds.status::text AS settlement_status, ds.voided_at::text AS settlement_voided_at,
+            round(ds.gross_pay * 100)::bigint::text AS gross_cents,
+            round(ds.deductions_total * 100)::bigint::text AS deductions_cents,
+            round(ds.reimbursements_total * 100)::bigint::text AS reimbursements_cents,
+            (SELECT count(*) FROM driver_finance.settlement_lines t
+              WHERE t.operating_company_id = sl.operating_company_id
+                AND t.settlement_id = sl.settlement_id AND t.id <> sl.id
+                AND t.line_type = sl.line_type AND t.description = sl.description AND t.amount = sl.amount
+                AND t.load_id IS NOT DISTINCT FROM sl.load_id
+                AND t.is_active = true AND t.voided_at IS NULL)::text AS active_twins
+       FROM driver_finance.settlement_lines sl
+       LEFT JOIN driver_finance.driver_settlements ds
+         ON ds.id = sl.settlement_id AND ds.operating_company_id = sl.operating_company_id
+      WHERE sl.id = $1::uuid AND sl.operating_company_id = $2::uuid
+      LIMIT 1
+      FOR UPDATE OF sl`,
+    [input.id, input.operatingCompanyId]
+  );
+  const line = res.rows[0];
+  if (!line) throw new ReinstateDocumentError("settlement_line_not_found", "Settlement line not found.");
+  if (line.is_active && !line.voided_at) {
+    throw new ReinstateDocumentError("settlement_line_not_void", "Settlement line is not void — nothing to reinstate.");
+  }
+  if (!line.settlement_id || line.settlement_voided_at || line.settlement_status === "cancelled") {
+    throw new ReinstateDocumentError(
+      "parent_settlement_void",
+      "The line's settlement is void — reinstate the settlement first."
+    );
+  }
+  if (Number(line.active_twins) > 0) {
+    throw new ReinstateDocumentError(
+      "settlement_line_true_duplicate",
+      `Settlement line ${line.id} has ${line.active_twins} active twin(s) on the same settlement, type, description, amount AND load — a true duplicate stays void.`
+    );
+  }
+
+  const lineCents = Number(line.amount_cents);
+  const evidence: Record<string, unknown> = {
+    settlement_id: line.settlement_id,
+    load_id: line.load_id,
+    line_type: line.line_type,
+    description: line.description,
+    amount_cents: lineCents,
+    prior_void_reason: line.void_reason,
+    prior_voided_at: line.voided_at,
+    settlement_status: line.settlement_status,
+    active_twins: 0,
+  };
+
+  if (!isPreCloseStatus(line.settlement_status)) {
+    const bucket: { types: readonly string[]; headerCents: number; name: string } | null = (
+      SETTLEMENT_EARNINGS_LINE_TYPES as readonly string[]
+    ).includes(line.line_type)
+      ? { types: SETTLEMENT_EARNINGS_LINE_TYPES, headerCents: Number(line.gross_cents ?? 0), name: "gross_pay" }
+      : (SETTLEMENT_DEDUCTION_LINE_TYPES as readonly string[]).includes(line.line_type)
+        ? { types: SETTLEMENT_DEDUCTION_LINE_TYPES, headerCents: Number(line.deductions_cents ?? 0), name: "deductions_total" }
+        : (SETTLEMENT_REIMBURSEMENT_LINE_TYPES as readonly string[]).includes(line.line_type)
+          ? { types: SETTLEMENT_REIMBURSEMENT_LINE_TYPES, headerCents: Number(line.reimbursements_cents ?? 0), name: "reimbursements_total" }
+          : null;
+    if (!bucket) {
+      throw new ReinstateDocumentError(
+        "settlement_line_type_not_reinstatable",
+        `Line type '${line.line_type}' is not summed into a posted settlement header — reinstating it on a closed settlement cannot be proven against the books.`
+      );
+    }
+    const bucketRes = await client.query<{ active_cents: string }>(
+      `SELECT COALESCE(round(sum(amount) * 100), 0)::bigint::text AS active_cents
+         FROM driver_finance.settlement_lines
+        WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid
+          AND is_active = true AND voided_at IS NULL AND line_type = ANY($3::text[])`,
+      [input.operatingCompanyId, line.settlement_id, [...bucket.types]]
+    );
+    const activeCents = Number(bucketRes.rows[0]?.active_cents ?? 0);
+    evidence[`header_${bucket.name}_cents`] = bucket.headerCents;
+    evidence[`active_${bucket.name}_lines_cents_before`] = activeCents;
+    if (activeCents + lineCents > bucket.headerCents) {
+      throw new ReinstateDocumentError(
+        "reinstate_exceeds_posted_header",
+        `Reinstating line ${line.id} (${lineCents}c) would make the active ${bucket.name} lines ${activeCents + lineCents}c, above the posted header ${bucket.headerCents}c — the books never carried it; that needs a posting, not a reinstate.`
+      );
+    }
+
+    if (line.line_type === "escrow_contribution") {
+      const escrowRes = await client.query<{ posted_cents: string; active_cents: string; split_rows: string }>(
+        `SELECT
+           (SELECT COALESCE(sum(ep.amount_cents), 0) FROM accounting.escrow_postings ep
+             WHERE ep.operating_company_id = $1::uuid AND ep.source_type = 'driver_settlement'
+               AND ep.source_id = $2::uuid AND ep.posting_type = 'deposit')::text AS posted_cents,
+           (SELECT COALESCE(round(sum(abs(amount)) * 100), 0)::bigint FROM driver_finance.settlement_lines
+             WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid
+               AND line_type = 'escrow_contribution' AND is_active = true AND voided_at IS NULL)::text AS active_cents,
+           (SELECT count(*) FROM accounting.escrow_posting_loads epl
+              JOIN accounting.escrow_postings ep ON ep.id = epl.escrow_posting_id
+             WHERE epl.operating_company_id = $1::uuid AND ep.source_id = $2::uuid AND ep.posting_type = 'deposit'
+               AND (epl.settlement_line_id = $3::uuid OR ($4::uuid IS NOT NULL AND epl.load_id = $4::uuid)))::text AS split_rows`,
+        [input.operatingCompanyId, line.settlement_id, line.id, line.load_id]
+      );
+      const posted = Number(escrowRes.rows[0]?.posted_cents ?? 0);
+      const active = Number(escrowRes.rows[0]?.active_cents ?? 0);
+      const splitRows = Number(escrowRes.rows[0]?.split_rows ?? 0);
+      evidence.escrow_posted_cents = posted;
+      evidence.escrow_active_lines_cents_before = active;
+      evidence.escrow_posting_load_rows = splitRows;
+      if (active + Math.abs(lineCents) > posted || splitRows === 0) {
+        throw new ReinstateDocumentError(
+          "escrow_not_posted_for_line",
+          `Escrow line ${line.id}: active ${active}c + ${Math.abs(lineCents)}c vs posted ${posted}c, ${splitRows} escrow_posting_loads row(s) — the escrow ledger does not already carry this line.`
+        );
+      }
+    }
+  }
+
+  return stampAndAudit(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    type: "settlement_line",
+    id: input.id,
+    reason: input.reason,
+    actorUserId: input.actor.userId,
+    family: "settlement_line",
+    restoreStatus: null,
+    voidReversalJeId: line.void_reversal_entry_id,
+    auditAction: "driver_finance.settlement_line.reinstated",
+    auditExtra: { evidence, gl_posted: false },
+    expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
+  });
 }
 
 /**
