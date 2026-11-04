@@ -166,6 +166,10 @@
     "202616200100_vehicle_latest_position_cache.sql::samsara_vehicle_id": {
       "kind": "external_id",
       "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202616330100_relay_driver_links.sql::relay_integration_id": {
+      "kind": "external_id",
+      "reason": "Relay Payments' own card/driver integration id printed on every Relay fill (E1 relay_driver_links). It is Relay's identifier, not a row of ours, so no FOREIGN KEY can hold."
     }
   }
 }

@@ -62,7 +62,8 @@ export function run(reader = readFileSync) {
     ["modal-escape-guard-datepicker", /data-date-picker-popover="open"/.test(modal)],
     ["wo-new-page", /export function WorkOrderNewPage/.test(woNewPage)],
     ["manifest-wo-new-route", /path="\/maintenance\/work-orders\/new"/.test(manifest) && /WorkOrderNewPage/.test(manifest)],
-    ["vehicle-actionbar-spa-link", /<Link[\s\S]{0,200}work-orders\/new/.test(vehicleActionBar)],
+    // #28377 (LST-F11034): the vehicle profile opens the canonical D24 create-WO modal deep link; an SPA <Link> either way.
+    ["vehicle-actionbar-spa-link", /<Link[\s\S]{0,200}(work-orders\/new|create_wo=1)/.test(vehicleActionBar)],
   ];
 
   const failed = checks.filter(([, ok]) => !ok).map(([id]) => id);
