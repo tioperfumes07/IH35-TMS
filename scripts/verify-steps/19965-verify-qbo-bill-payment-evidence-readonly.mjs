@@ -1,0 +1,1 @@
+export default { name: "verify:verify-qbo-bill-payment-evidence-readonly", run(ctx) { ctx.run("node", ["scripts/verify-qbo-bill-payment-evidence-readonly.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-qbo-bill-payment-evidence-readonly.mjs"]); } };
