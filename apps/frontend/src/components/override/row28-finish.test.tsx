@@ -44,7 +44,7 @@ describe("row 28 — Form 425C carry-forward override is the shared OverrideButt
           activeCompany: "usmca", setActiveCompany: () => {}, month: 1, year: 2026, setMonth: () => {}, setYear: () => {},
           profiles, availableCompanies: [], form, setForm, onCreateOrLoad: () => {}, onImportBanking: () => {}, onSave: () => {},
           onGeneratePdf: () => {}, onMarkFiled: () => {}, onAttachFile: () => {}, exhibitA: [], exhibitB: [], onSaveExhibit: () => {}, savingExhibit: false, attaching: false, loading: false, autoSaveLabel: "",
-        } as never)}
+        } as unknown as Parameters<typeof CurrentPeriodTab>[0])}
       />
     );
   }

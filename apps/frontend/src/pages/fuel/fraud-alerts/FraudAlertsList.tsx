@@ -410,7 +410,7 @@ export function FraudAlertsListPage() {
         searchPlaceholder={"Search rule, status, location…"}
         onClearAll={() => {
           setListSearch("");
-          setStatusFilter(scope ? "all" : "open");
+          setStatusFilter(scope ? [] : ["open"]);
         }}
         activeFilterCount={
           ((scope ? statusFilter.length > 0 : statusFilter.length !== 1 || statusFilter[0] !== "open") ? 1 : 0) +
