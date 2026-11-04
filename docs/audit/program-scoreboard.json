@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2811ac7",
-  "generated_at": "2026-11-04T16:24:18.338Z",
+  "healthzSha": "c9ac4ea",
+  "generated_at": "2026-11-04T18:25:42.807Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2811ac7",
+    "deployedSha": "c9ac4ea",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/04/2026, 10:24 AM CT",
+      "url": "",
+      "sha": "c9ac4eabaf",
+      "committedAtIso": "2026-11-04T16:24:18Z"
+    },
+    {
       "number": 28660,
       "title": "FIX: A/R open balance counts only non-voided payments, live-sourced relief and non-voided credit memos (ACCT-F11103 part 2)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28651",
       "sha": "fa8ad0df01",
       "committedAtIso": "2026-11-04T08:44:18-06:00"
-    },
-    {
-      "number": 28650,
-      "title": "CLAIM-RESERVE: migration 202616380100, verify-step 19941 (ACCT-F11099 factored invoice partial/paid)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 08:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28650",
-      "sha": "366a30cbad",
-      "committedAtIso": "2026-11-04T08:42:28-06:00"
     }
   ]
 }
