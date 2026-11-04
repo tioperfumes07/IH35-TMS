@@ -17544,5 +17544,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-settlement-line-dedupe-keys-on-load"
+  },
+  "19949": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-invoice-applied-cents-payment-less"
   }
 }
