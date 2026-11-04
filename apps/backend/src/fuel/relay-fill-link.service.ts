@@ -21,6 +21,7 @@
  */
 import { fuelRowKindSql, relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
 import { resolveReeferTrailerForFuelRow } from "./reefer-fuel.service.js";
+import { OTHER_RAIL_TICKET_ROWS_SQL } from "./relay-fill-other-rail-ticket.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -77,10 +78,21 @@ export async function crossRailFuelRowsForRelayFill(
   operatingCompanyId: string,
   relayFuelTransactionId: string,
 ): Promise<{ fuel_transaction_id: string; card: string | null }[]> {
+  // ACCT-F11105 — plus the other-rail TICKET that records the same purchase on ANY truck (identical metered gallons, ±1 day,
+  // the ticket's total = Relay's retail): the settlement can carry the pump receipt on another truck than the one keyed at
+  // the pump (13 Relay purchases, 11-04). relay-fill-other-rail-ticket.ts holds the one rule.
   const res = await client.query<{ fuel_transaction_id: string; card: string | null }>(
-    `SELECT f.id::text AS fuel_transaction_id,
+    `/* cross_rail_rows */
+     SELECT f.id::text AS fuel_transaction_id,
             (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = f.fuel_card_id) AS card
-       ${PAIR_EVIDENCE_SQL} AND r.id = $2::uuid AND NOT ${RELAY_CARD_ROW_SQL}`,
+       ${PAIR_EVIDENCE_SQL} AND r.id = $2::uuid AND NOT ${RELAY_CARD_ROW_SQL}
+     UNION
+     SELECT q.id::text AS fuel_transaction_id,
+            (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = q.fuel_card_id) AS card
+       FROM integrations.relay_fuel_transactions r
+       CROSS JOIN LATERAL (${OTHER_RAIL_TICKET_ROWS_SQL("r")}) q
+      WHERE r.id = $2::uuid AND r.operating_company_id = $1::uuid
+     ORDER BY 1`,
     [operatingCompanyId, relayFuelTransactionId]
   );
   return res.rows;

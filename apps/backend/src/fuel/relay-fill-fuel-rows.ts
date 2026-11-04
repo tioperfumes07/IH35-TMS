@@ -22,6 +22,7 @@ import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.
 import { relayFillFeeCents, relayFuelPaidCents } from "../integrations/relay-payments/relay-sender-fee-cents.js";
 import { FUEL_TYPE_FOR_RELAY_KIND, relayLineKind } from "./relay-product-kind.js";
 import { refuseDuplicateProviderTransaction } from "./fuel-provider-reference.js";
+import { crossRailFuelRowsForRelayFill } from "./relay-fill-link.service.js";
 
 type Queryable = { query: <R = any>(sql: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -241,6 +242,16 @@ export async function ensureRelayFillFuelRecords(
   )).rows[0];
   if (!fill) throw new RelayFillFuelRowsError("relay_fill_not_ingested", `Relay fill ${input.relayFillId} is not a live Relay fill of this company.`);
   if (!fill.relay_created_at) throw new RelayFillFuelRowsError("relay_fill_no_moment", `Relay transaction ${fill.transaction_id} has no Relay time — its record is never stamped with a guessed moment.`);
+  // ACCT-F11105 — a fill whose purchase another rail already records (the same truck pair of LEAD 443.133, or the same
+  // ticket on any truck: identical metered gallons, ±1 day, ticket total = Relay's retail) gets no second record; the owner
+  // decides which rail paid. Refused by name before any write.
+  const otherRail = await crossRailFuelRowsForRelayFill(client as never, input.operatingCompanyId, input.relayFillId);
+  if (otherRail.length) {
+    throw new RelayFillFuelRowsError(
+      "relay_fill_recorded_on_other_rail",
+      `Relay transaction ${fill.transaction_id} is already recorded on another rail (${otherRail.map((r) => `${r.fuel_transaction_id} ${r.card ?? "no card"}`).join(", ")}) — one purchase, one record; the owner decides which rail paid.`,
+    );
+  }
   const vendors = (await client.query<{ id: string }>(
     `SELECT id::text FROM mdata.vendors
       WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name ~* '^relay( |$)' LIMIT 2`,

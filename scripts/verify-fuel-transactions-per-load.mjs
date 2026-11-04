@@ -46,6 +46,21 @@
 //   for a Relay row.
 //   WHY: the record must be wrong-proof at the writer, not caught a day later on prod.
 //
+// ACCT-F11105 (2026-11-04) — a fifth source, and a new failure. Old rule -> new rule -> why:
+//   OLD: a Relay-tied row on a load that HAS a settlement document had to be on a document line; a Relay row was only ever
+//   written by the Settlement Creator, from a printed line.
+//   NEW: (a) a row ENG-65 recorded at receipt (fuel/relay-fill-fuel-rows.ts ensureRelayFillFuelRecords: notes carry its
+//   marker "ENG-65: Relay fill recorded at receipt from its own Relay lines" AND its reference IS its live Relay fill's own
+//   transaction_id) is RELAY-FILE-SOURCED — the Relay file is its source document, exactly as a provider statement is for a
+//   Dreamline / WEX import row (443.198 / 443.202). It never satisfies a document line, its Relay sum is still checked
+//   against what Relay paid, and it is listed for the owner's "Not on the settlement" review. (b) NEW FAILURE: a Relay fill
+//   whose purchase another rail already records — the same ticket on any truck (identical metered gallons, ±1 day, the
+//   ticket total = Relay's retail; fuel/relay-fill-other-rail-ticket.ts, read from the engine's own SQL) — fails while any
+//   live row is tied to it: one purchase, two records.
+//   WHY: ENG-65 (#28457) records fills no settlement printed, on the load its expense document carries; its first sweep
+//   (2026-11-04 12:00Z) put 29 such rows on documented loads (red), 16 of them second records of 13 purchases already on
+//   DREAMLINE settlement rows on another truck — those were voided; the 13 others are real Relay fills on no document.
+//
 // --selftest runs the pure comparator against fixtures (no DB). Live: fails closed with no DATABASE_URL
 // (requireLiveDbOrExit, ROUND 29.9-B); money-pr-local-gate.mjs runs it when its own domain paths change.
 import fs from "node:fs";
@@ -74,7 +89,16 @@ export const baseInvoice = (ref) => String(ref ?? "").replace(/-1[0-9]{4}$/, "")
  * statementBatches: [{event_id, at, declared_lines, rows}] — every import event's declared imported lines vs the rows
  * (live + voided) written in its transaction.
  */
-export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set(), statementIds = new Set(), statementBatches = [] }) {
+/** ACCT-F11105 — ENG-65's own marker on the rows it records at receipt (fuel-expense-document.service.ts writes it). */
+export const RELAY_AT_RECEIPT_MARKER = "ENG-65: Relay fill recorded at receipt from its own Relay lines";
+/** A row ENG-65 recorded at receipt: its marker AND its reference is its live Relay fill's own transaction id. Pure. */
+export function relayAtReceiptRow(r, relayTotals) {
+  if (!r.relay_id || !r.ref || !String(r.notes ?? "").includes(RELAY_AT_RECEIPT_MARKER)) return false;
+  const rt = relayTotals.get(r.relay_id);
+  return Boolean(rt && !rt.dead && rt.txn && rt.txn === r.ref);
+}
+
+export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set(), statementIds = new Set(), statementBatches = [], otherRailByRelay = new Map() }) {
   const failures = [];
   const notes = [];
   for (const b of statementBatches) {
@@ -147,6 +171,7 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     }
   }
   let statementSourced = 0;
+  let relayAtReceipt = 0;
   for (const r of live) {
     const t = perLoad.get(r.load_number);
     // 443.198: a statement-sourced row no document line took is the provider statement's fill, not the document's —
@@ -173,6 +198,14 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
       notes.push(`moved by the fuel engine (${String(r.truck_resolution).split(":")[0]}): ${how}; it is on load ${r.load_number} — "Not on the settlement" review`);
       continue;
     }
+    // ACCT-F11105 (a): a Relay fill ENG-65 recorded at receipt is sourced by the Relay file — on a documented load it is
+    // listed for "Not on the settlement" review, never matched to a document line. A fill another rail already records is
+    // failed below (b), never sourced here.
+    if (t && relayAtReceiptRow(r, relayTotals) && !otherRailByRelay.has(r.relay_id)) {
+      relayAtReceipt++;
+      notes.push(`Relay fill recorded at receipt (ENG-65), on no settlement document: load ${r.load_number} invoice ${r.ref} ${money(r.cents)} ${r.date} — "Not on the settlement" review`);
+      continue;
+    }
     if (t) {
       failures.push(`unsourced: load ${r.load_number} live row ${r.id.slice(0, 8)} invoice ${r.ref} ${money(r.cents)} ${r.date} is on no settlement document line`);
     } else if (!creatorIds.has(r.id) && !r.relay_id) {
@@ -192,8 +225,13 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     if (!rt) failures.push(`relay: live rows point at Relay transaction ${rid} which is not in the Relay file`);
     else if (rt.dead) failures.push(`relay: Relay transaction ${rid} is voided/inactive but ${money(sum)} of live fuel rows still point at it`);
     else if (rt.paid_cents !== sum) failures.push(`relay: Relay transaction ${rid} paid ${money(rt.paid_cents)} but its live fuel rows sum to ${money(sum)}`);
+    // ACCT-F11105 (b): one purchase, one record — never a Relay record AND another rail's record of the same ticket.
+    const other = otherRailByRelay.get(rid);
+    if (other && other.length) {
+      failures.push(`relay: Relay transaction ${rt?.txn ?? rid} has ${money(sum)} of live fuel rows AND is recorded on another rail by ticket ${[...new Set(other.map((o) => o.ref))].join(", ")} (${other.map((o) => `${String(o.id).slice(0, 8)} ${o.card ?? "no card"}`).join(", ")}) — one purchase, two records`);
+    }
   }
-  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced, gpsMoved };
+  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced, relayAtReceipt, gpsMoved };
 }
 
 /** 443.198 — the Creator's Relay rows come from the fill's own lines (pure: source texts in, problems out). */
@@ -241,8 +279,29 @@ function readOrNull(rel) {
   const f = path.join(process.cwd(), rel);
   return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null;
 }
+/** ACCT-F11105 — the other-rail ticket rule, read from the engine's own SQL so the guard measures what the engine refuses. */
+export const OTHER_RAIL_PATH = "apps/backend/src/fuel/relay-fill-other-rail-ticket.ts";
+export const RECEIPT_WRITER_PATH = "apps/backend/src/fuel/fuel-expense-document.service.ts";
+export function otherRailTicketSql(src, alias) {
+  const m = /export const OTHER_RAIL_TICKET_ROWS_SQL = \(r: string\) => `([\s\S]*?)`;/.exec(src ?? "");
+  return m ? m[1].replaceAll("${r}", alias) : null;
+}
+export function receiptRecordProblems(otherRailSrc, linkSrc, rowsSrc, writerSrc) {
+  const p = [];
+  if (!otherRailTicketSql(otherRailSrc, "r")) p.push(`${OTHER_RAIL_PATH} does not export OTHER_RAIL_TICKET_ROWS_SQL`);
+  if (!/CROSS JOIN LATERAL \(\$\{OTHER_RAIL_TICKET_ROWS_SQL\("r"\)\}\) q/.test(linkSrc ?? "")) p.push("crossRailFuelRowsForRelayFill does not include the other-rail ticket rows (any truck)");
+  const ensure = (rowsSrc ?? "").slice((rowsSrc ?? "").indexOf("export async function ensureRelayFillFuelRecords("));
+  const iAsk = ensure.indexOf("await crossRailFuelRowsForRelayFill(");
+  const iWrite = ensure.indexOf("await writeRelayFillFuelRows(");
+  if (iAsk < 0 || iWrite < 0 || iAsk > iWrite || !/"relay_fill_recorded_on_other_rail"/.test(ensure)) p.push("ENG-65 does not refuse, before writing, a fill another rail already records");
+  if (!(writerSrc ?? "").includes(`notes: "${RELAY_AT_RECEIPT_MARKER}"`)) p.push(`the receipt writer no longer stamps "${RELAY_AT_RECEIPT_MARKER}" (the Relay-at-receipt source cannot be proven)`);
+  return p;
+}
 function staticCheck() {
-  const problems = creatorRelayRowProblems(readOrNull(CREATOR_PATH) ?? "", readOrNull(RELAY_ROWS_ENGINE_PATH));
+  const problems = [
+    ...creatorRelayRowProblems(readOrNull(CREATOR_PATH) ?? "", readOrNull(RELAY_ROWS_ENGINE_PATH)),
+    ...receiptRecordProblems(readOrNull(OTHER_RAIL_PATH), readOrNull("apps/backend/src/fuel/relay-fill-link.service.ts"), readOrNull(RELAY_ROWS_ENGINE_PATH), readOrNull(RECEIPT_WRITER_PATH)),
+  ];
   for (const q of problems) console.error(`  ✗ static: ${q}`);
   return problems;
 }
@@ -327,6 +386,23 @@ function selftest() {
     ["the same receipt moved by hand (no engine resolution) is still unsourced on its new load",
       { documents: doc([L(), L({ load_number: "200", invoice: "B2", receipt_cents: 7000 })]),
         live: [R({ load_number: "200" }), R({ id: "bbbbbbbb-2", load_number: "200", ref: "B2", cents: 7000 })] }, 1],
+    // ACCT-F11105 — the Relay-at-receipt source (ENG-65) and the other-rail record.
+    ["an ENG-65 receipt record on a documented load (marker, own txn id, sum ties) is sourced",
+      { documents: doc([L()]), live: [R(), R({ id: "eeeeeeee-1", ref: "txn_X", cents: 2734, relay_id: "rX", notes: "ENG-65: Relay fill recorded at receipt from its own Relay lines" })],
+        relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]) }, 0],
+    ["planted: the ENG-65 marker on a row whose reference is NOT its fill's transaction id is still unsourced",
+      { documents: doc([L()]), live: [R(), R({ id: "eeeeeeee-1", ref: "99671555", cents: 2734, relay_id: "rX", notes: "ENG-65: Relay fill recorded at receipt from its own Relay lines" })],
+        relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]) }, 1],
+    ["planted: a Relay row WITHOUT the ENG-65 marker on a documented load is still unsourced",
+      { documents: doc([L()]), live: [R(), R({ id: "eeeeeeee-1", ref: "txn_X", cents: 2734, relay_id: "rX" })],
+        relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]) }, 1],
+    ["planted: an ENG-65 record of a purchase another rail already records fails twice (unsourced + two records)",
+      { documents: doc([L()]), live: [R(), R({ id: "eeeeeeee-1", ref: "txn_X", cents: 2734, relay_id: "rX", notes: "ENG-65: Relay fill recorded at receipt from its own Relay lines" })],
+        relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]),
+        otherRailByRelay: new Map([["rX", [{ id: "dddddddd-1", ref: "99671555", card: "DREAMLINE" }]]]) }, 2],
+    ["planted: a Creator Relay record on an undocumented load whose purchase another rail records fails",
+      { documents: doc([]), live: [R({ load_number: "200", relay_id: "rX", cents: 2734 })], relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]),
+        otherRailByRelay: new Map([["rX", [{ id: "dddddddd-1", ref: "99671555", card: "DREAMLINE" }]]]) }, 1],
     ["a statement fill does not excuse a Relay sum that differs",
       { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", relay_id: "r1" })], statementIds: new Set(["ssssssss-1"]),
         relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
@@ -381,6 +457,22 @@ function selftest() {
     if (got !== want) bad++;
   }
   cases.push(...writerCases);
+  // ACCT-F11105 — the receipt record's engine: the real sources pass; each planted defect fails.
+  const oSrc = readOrNull(OTHER_RAIL_PATH), lSrc = readOrNull("apps/backend/src/fuel/relay-fill-link.service.ts"), wSrc = readOrNull(RECEIPT_WRITER_PATH);
+  const receiptCases = [
+    ["the real other-rail rule, cross-rail check, ENG-65 refusal and marker pass", receiptRecordProblems(oSrc, lSrc, realEngine, wSrc).length, 0],
+    ["planted: cross-rail check without the any-truck ticket rows fails",
+      receiptRecordProblems(oSrc, (lSrc ?? "").replace('CROSS JOIN LATERAL (${OTHER_RAIL_TICKET_ROWS_SQL("r")}) q', "q"), realEngine, wSrc).length > 0 ? 1 : 0, 1],
+    ["planted: ENG-65 writes without asking the cross-rail check fails",
+      receiptRecordProblems(oSrc, lSrc, (realEngine ?? "").replace("await crossRailFuelRowsForRelayFill(", "await Promise.resolve(["), wSrc).length > 0 ? 1 : 0, 1],
+    ["planted: the receipt writer's marker changed fails",
+      receiptRecordProblems(oSrc, lSrc, realEngine, (wSrc ?? "").replace(RELAY_AT_RECEIPT_MARKER, "ENG-65: recorded")).length > 0 ? 1 : 0, 1],
+  ];
+  for (const [name, got, want] of receiptCases) {
+    console.log(`${got === want ? "ok  " : "FAIL"} ${name} (${got}, want ${want})`);
+    if (got !== want) bad++;
+  }
+  cases.push(...receiptCases);
   console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
   process.exit(bad ? 1 : 0);
 }
@@ -428,10 +520,24 @@ async function live() {
       [USMCA_COMPANY_ID]
     );
     const relayRes = await client.query(
-      `SELECT id::text, total_amount_paid_cents::bigint AS paid, (voided_at IS NOT NULL OR is_active IS FALSE) AS dead
+      `SELECT id::text, transaction_id AS txn, total_amount_paid_cents::bigint AS paid, (voided_at IS NOT NULL OR is_active IS FALSE) AS dead
          FROM integrations.relay_fuel_transactions WHERE operating_company_id = $1::uuid`,
       [USMCA_COMPANY_ID]
     );
+    // ACCT-F11105 (b) — every Relay fill with live rows whose purchase another rail records, by the engine's own SQL.
+    const otherRailSql = otherRailTicketSql(readOrNull(OTHER_RAIL_PATH), "r");
+    const otherRailRes = otherRailSql ? await client.query(
+      `SELECT r.id::text AS relay_id, q.id::text AS id, q.transaction_reference AS ref,
+              (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = q.fuel_card_id) AS card
+         FROM integrations.relay_fuel_transactions r
+         CROSS JOIN LATERAL (${otherRailSql}) q
+        WHERE r.operating_company_id = $1::uuid AND r.voided_at IS NULL
+          AND EXISTS (SELECT 1 FROM fuel.fuel_transactions f WHERE f.relay_fuel_transaction_id = r.id
+                       AND f.operating_company_id = r.operating_company_id AND f.voided_at IS NULL AND f.archived_at IS NULL)`,
+      [USMCA_COMPANY_ID]
+    ) : { rows: [] };
+    const otherRailByRelay = new Map();
+    for (const o of otherRailRes.rows) otherRailByRelay.set(o.relay_id, [...(otherRailByRelay.get(o.relay_id) ?? []), o]);
     const creatorRes = await client.query(
       `SELECT DISTINCT jsonb_array_elements_text(payload->'fuel_transaction_ids') AS id
          FROM audit.audit_events
@@ -469,7 +575,8 @@ async function live() {
       documentDuplicates: source.document_duplicates || [],
       live: liveRows,
       purged: purgedRes.rows.map((r) => ({ ...r, cents: Number(r.cents) })),
-      relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead }])),
+      relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead, txn: r.txn }])),
+      otherRailByRelay,
       creatorIds: new Set(creatorRes.rows.map((r) => r.id)),
       statementIds,
       statementBatches: stmtEvents.rows.map((e) => ({ event_id: e.event_id, at: e.at, declared_lines: e.declared_lines, rows: e.rows })),
@@ -550,7 +657,8 @@ async function live() {
     const liveCents = liveRows.reduce((s, r) => s + r.cents, 0);
     const summary = `${source.documents.length} settlement documents, ${result.expectedRows} fuel lines; live ${liveRows.length} rows / ${money(liveCents)}; ` +
       `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.statementSourced} card-statement fill(s) (Dreamline + England WEX) sourced to ${stmtEvents.rows.length} import event(s); ` +
-      `${result.relayTxns} Relay transactions read against the Relay file; ` +
+      `${result.relayTxns} Relay transactions read against the Relay file; ${result.relayAtReceipt} Relay fill row(s) recorded at receipt (ENG-65) on documented loads, on no document; ` +
+      `${otherRailByRelay.size} Relay fill(s) with live rows also recorded on another rail; ` +
       `${purgedRes.rows.length} governed-purge deletions read; DEF shares ${sharedCount} posting(s) with diesel`;
     if (failures > 0) {
       console.error(`${LABEL}: LIVE FAIL — ${failures} failure(s). ${summary}`);
