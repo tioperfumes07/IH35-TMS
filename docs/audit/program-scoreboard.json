@@ -1,10 +1,10 @@
 {
-  "healthzSha": "38ae4ea",
-  "generated_at": "2026-11-04T01:38:51.347Z",
+  "healthzSha": "968457e",
+  "generated_at": "2026-11-04T02:26:01.333Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "38ae4ea",
+    "deployedSha": "968457e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28632,
+      "title": "MAIN-GREEN: three guards red on main — phantom false positive on a SQL function, one off-scale class, battery doc churn",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 08:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28632",
+      "sha": "968457ee68",
+      "committedAtIso": "2026-11-03T20:04:54-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/03/2026, 07:38 PM CT",
+      "url": "",
+      "sha": "bbd3383f1d",
+      "committedAtIso": "2026-11-04T01:38:51Z"
+    },
+    {
       "number": 28630,
       "title": "FIX: \"Void practical-miles bill\" action on the driver bill detail page (ACCT-F11079)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28623",
       "sha": "65b964dc5e",
       "committedAtIso": "2026-11-03T18:43:30-06:00"
-    },
-    {
-      "number": 28622,
-      "title": "FIX: HOS writes to the survivor; shell events repointed; miles gaps (rows 93 116 131)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28622",
-      "sha": "c6551dfa04",
-      "committedAtIso": "2026-11-03T18:36:51-06:00"
-    },
-    {
-      "number": 28621,
-      "title": "FINDING: ACCT-F11073 every override records through recordOverride; Book Load hard-block owner/accountant; 425C and Reclassify use the shared button (row 28)",
-      "state": "merged",
-      "mergedAtCt": "11/03/2026, 06:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28621",
-      "sha": "1d2532d006",
-      "committedAtIso": "2026-11-03T18:31:50-06:00"
     }
   ]
 }
