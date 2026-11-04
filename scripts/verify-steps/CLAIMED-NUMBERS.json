@@ -17469,5 +17469,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-rows-127-130"
+  },
+  "19887": {
+    "claimed_by": "lead",
+    "purpose": "Re-home verify-ui4-d065-d068-d071-d076 (was wired at 19851 without a claim, colliding with Lead's claimed 19851 rows 78/23)",
+    "claimed_at": "2026-11-03"
   }
 }
