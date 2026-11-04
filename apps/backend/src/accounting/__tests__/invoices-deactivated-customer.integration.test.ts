@@ -42,6 +42,9 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
   const suffixDigits = String(parseInt(suffix, 16) % 100000).padStart(5, "0");
   const customerId = randomUUID();
   const customerName = `Deactivated Customer ${suffix}`;
+  // UI-F443347-B (202616250900): mdata.customers normalizes customer_name at WRITE, so a hex suffix starting with a letter is
+  // stored capitalized ('aae12c69' -> 'Aae12c69'). The API must return the name AS STORED — read it back after the insert.
+  let storedCustomerName = "";
   const invoiceId = randomUUID();
 
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
@@ -75,6 +78,9 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
          VALUES ($1::uuid, $2::uuid, $3)`,
         [customerId, companyId, customerName]
       );
+      storedCustomerName = (await db.query<{ n: string }>(`SELECT customer_name AS n FROM mdata.customers WHERE id = $1::uuid`, [customerId]))
+        .rows[0]!.n;
+      expect(storedCustomerName.toLowerCase()).toBe(customerName.toLowerCase());
       // LAW 363.2: a from_load invoice is written with its load (trg_from_load_invoice_carries_its_load).
       const loadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 12500 });
       await db.query(
@@ -116,7 +122,7 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
     const body = res.json() as { invoices: Array<{ id: string; customer_name: string | null }>; total?: number };
     const row = body.invoices.find((r) => r.id === invoiceId);
     expect(row).toBeTruthy();
-    expect(row?.customer_name).toBe(customerName);
+    expect(row?.customer_name).toBe(storedCustomerName);
   });
 
   it("still counts the invoice in the total (not silently dropped from pagination)", async () => {
@@ -138,6 +144,6 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
     });
     expect(res.statusCode).toBe(200);
     const body = res.json() as { customer_name: string | null };
-    expect(body.customer_name).toBe(customerName);
+    expect(body.customer_name).toBe(storedCustomerName);
   });
 });

@@ -133,7 +133,8 @@ describeIntegration("settlement approval.service canonical repoint (real Postgre
     expect(summary!.netDueCents).toBe(7500);
     expect(summary!.approvalStatus).toBe("needs_review"); // default from migration 202607450000
     expect(summary!.linesToApprove).toEqual({ pending: 1, total: 1 });
-    expect(summary!.driverName).toContain("P24A");
+    // LEAD 443.281-E (#27378): mdata.drivers normalizes names at WRITE (trg_drivers_proper_names) — 'P24A' is stored 'P24a'.
+    expect(summary!.driverName).toContain("P24a");
   });
 
   it("approve write path returns 1234 cents and leaves the stored dollar amount intact", async () => {

@@ -148,6 +148,10 @@ describeIntegration("443.140 #8(b) cash-flow projections land on the right date 
     company = (await db.query<{ c: string }>(`SELECT operating_company_id::text AS c FROM mdata.loads WHERE id = $1::uuid`, [fixtureLoadId]))
       .rows[0]!.c;
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company]);
+    // dispatch.load_charge_lines is FORCE RLS on org.user_accessible_company_ids() with no lucia-bypass arm
+    // (202612502200), so the ih35_app session books its charge lines as the integration Owner — the user the
+    // fixture loads already name as dispatcher / creator.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [TEST_OWNER_USER_ID]);
     trailerEquipmentId = await prepareCompanyForLoadInserts(db, company);
     const terms = async (name: string, days: number) =>
       (await db.query<{ id: string }>(
@@ -245,8 +249,11 @@ describeIntegration("443.140 #8(b) cash-flow projections land on the right date 
         [expenseId, company, vendorId, B, card, net7]
       );
 
+      // LEAD 443.265-E3 (fb554db220): a posted expense is cash/card already spent, never its own rolling-ledger row —
+      // the card's obligation reaches the ledger only as the 2510 GL balance row (card-payables.ts, ACCT-F11067), so
+      // listing the expense too would count the same fuel twice.
       const row = (await ledgerRows()).find((r) => r.document_id === expenseId);
-      expect.soft(row, "rolling ledger: the 2510 card payable row").toMatchObject({ row_kind: "expense", due_date: day(7) });
+      expect.soft(row, "rolling ledger: a posted card expense is not a second ledger row (443.265-E3)").toBeUndefined();
 
       const out = (await daily(day(7))).expense_items.find((e) => e.amount_cents === 44_417);
       expect.soft(out, `daily prediction ${day(7)} (card payment date): the 2510 outflow`).toBeDefined();

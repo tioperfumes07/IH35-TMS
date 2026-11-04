@@ -20,6 +20,7 @@ import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { testAuthHeaders } from "../../test-helpers/auth-fixture.js";
 import { ensureIntegrationPrerequisites, ensureSecondEntityLoad } from "../../test-helpers/db-fixture.js";
@@ -89,7 +90,7 @@ describeIntegration("customer quality events — company scope (CUST-F5995, real
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         event_type: "other",
-        event_date: new Date().toISOString().slice(0, 10),
+        event_date: companyBusinessDate(), // the route refuses dates after the Laredo business date; a UTC date is "tomorrow" after 18:00 CT
         severity: "info",
         summary: "CUST-F5995 create-honors-selected-company regression guard",
       },
@@ -109,7 +110,7 @@ describeIntegration("customer quality events — company scope (CUST-F5995, real
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         event_type: "other",
-        event_date: new Date().toISOString().slice(0, 10),
+        event_date: companyBusinessDate(), // the route refuses dates after the Laredo business date; a UTC date is "tomorrow" after 18:00 CT
         severity: "info",
         summary: "CUST-F5995 default-company-mismatch guard",
       },
