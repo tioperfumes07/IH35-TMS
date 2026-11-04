@@ -6,7 +6,6 @@ import {
   createForecastEntry,
   updateForecastEntry,
   deleteForecastEntry,
-  getForecastOpeningBalance,
   putForecastOpeningBalance,
   type ForecastEntry,
   type ForecastRefKind,
@@ -488,7 +487,6 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   useEffect(() => {
     if (drillDate) setProjectionDate(drillDate);
   }, [drillDate]);
-  const [openingDraft, setOpeningDraft] = useState<number | null>(null);
   const [pullError, setPullError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -496,11 +494,6 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const entriesQuery = useQuery({
     queryKey: ["forecast", "entries", operatingCompanyId, reverseFilter],
     queryFn: () => listForecastEntries(operatingCompanyId, undefined, undefined, reverseFilter),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const openingQuery = useQuery({
-    queryKey: ["forecast", "opening", operatingCompanyId],
-    queryFn: () => getForecastOpeningBalance(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
   // LEAD 443.283: the bank list is the authoritative operating cash (same source as Cash Flow Home's
@@ -515,11 +508,10 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const [openingError, setOpeningError] = useState<string | null>(null);
   const openingMutation = useMutation({
     mutationFn: (amountCents?: number) =>
-      putForecastOpeningBalance({ operating_company_id: operatingCompanyId, amount_cents: amountCents ?? openingDraft ?? 0 }),
+      putForecastOpeningBalance({ operating_company_id: operatingCompanyId, amount_cents: amountCents ?? 0 }),
     onSuccess: () => {
       setOpeningError(null);
-      setOpeningDraft(null);
-      void qc.invalidateQueries({ queryKey: ["forecast", "opening", operatingCompanyId] });
+      void qc.invalidateQueries({ queryKey: ["cash-flow", "opening-cash", operatingCompanyId] });
     },
     onError: (e) => setOpeningError(e instanceof Error ? e.message : "Failed to save opening cash"),
   });
@@ -566,8 +558,10 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const { incomeCents: totalIncome, expenseCents: totalExpense, netCents: net } = computeProjectionTotals(entries);
   // LEAD 443.283: with no saved manual opening, the projection opens from the authoritative bank cash
   // (same figure as Cash Flow Home), never from $0.00.
-  const hasSavedOpening = Boolean(openingQuery.data?.updated_at);
-  const openingCents = hasSavedOpening ? toCents(openingQuery.data?.amount_cents) : Math.round(bankTotalDollars * 100);
+  // ROW 148: ONE opening-cash figure. The projection ALWAYS opens from the shared authoritative bank cash (the server's
+  // sumAuthoritativeDepositoryCashCents) — a saved forecast.opening_balance row (prod: a stale $0.00 from 08-24) must never
+  // override it, or the tile says $25,533.37 while the projection opens from another number.
+  const openingCents = Math.round(bankTotalDollars * 100);
   const projectedClosing = openingCents + net;
   const netPositive = net >= 0;
   // D043 — panel titles use MM/DD/YYYY; day-nav uses board weekday chrome.
@@ -604,16 +598,16 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           Clear projection filter
         </Link>
       ) : null}
-      {(entriesQuery.isError || openingQuery.isError) && (
+      {(entriesQuery.isError || banksQuery.isError) && (
         <ListErrorBanner
-          message={`Failed to load projections: ${((entriesQuery.error ?? openingQuery.error) as Error | undefined)?.message ?? "Request failed"}`}
+          message={`Failed to load projections: ${((entriesQuery.error ?? banksQuery.error) as Error | undefined)?.message ?? "Request failed"}`}
           onRetry={() => {
             void entriesQuery.refetch();
-            void openingQuery.refetch();
+            void banksQuery.refetch();
           }}
         />
       )}
-      {(entriesQuery.isLoading || openingQuery.isLoading) && (
+      {(entriesQuery.isLoading || banksQuery.isLoading) && (
         <div className="rounded-sm p-4 text-xs" style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.muted }}>
           Loading projections…
         </div>
@@ -684,7 +678,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           disabled={openingMutation.isPending || !projectionDate}
           onClick={() => {
             setOpeningError(null);
-            openingMutation.mutate(openingDraft ?? openingCents);
+            openingMutation.mutate(openingCents);
           }}
           data-testid="cash-flow-mdp-save-projection"
         >
@@ -717,35 +711,6 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           >
             Pull bills / expenses / payments
           </button>
-          <span className="inline-flex items-center gap-1">
-            <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
-            <button
-              type="button"
-              className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
-              style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
-              disabled={openingMutation.isPending || openingDraft === null}
-              onClick={() => {
-                setOpeningError(null);
-                openingMutation.mutate(openingDraft ?? 0);
-              }}
-            >
-              Save opening
-            </button>
-            <button
-              type="button"
-              className="h-7 rounded-sm border px-2 font-semibold disabled:opacity-50"
-              style={{ borderColor: V3.border, background: V3.surface, color: V3.ink }}
-              disabled={realBanks.length === 0 || openingMutation.isPending}
-              onClick={() => {
-                const cents = Math.round(bankTotalDollars * 100);
-                setOpeningDraft(cents);
-                setOpeningError(null);
-                openingMutation.mutate(cents);
-              }}
-            >
-              Use bank total
-            </button>
-          </span>
         </div>
       ) : null}
       {openingError ? (

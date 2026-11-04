@@ -2867,7 +2867,7 @@ export type CashForecastSettings = {
 export type CashForecastWeek = {
   week_start: string;
   expected_inflows: { invoices: number; factoring: number; other: number };
-  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number };
+  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number; card_payables?: number };
   projected_balance: number;
 };
 
