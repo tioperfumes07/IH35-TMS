@@ -12,35 +12,58 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-banking-home-boards";
 const FILE = "apps/frontend/src/pages/banking/BankingHome.tsx";
-const src = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-const fails = [];
+// --selftest (ACCT-F11105, verify-guard-selftests-are-real): the same check on the real tree must PASS, and on
+// planted sources (BoardSection import removed; surfaces emptied) must FAIL.
+function check(read) {
+  const src = read(FILE);
+  const fails = [];
 
-if (!src.includes('from "../../components/v3/BoardSection"')) {
-  fails.push(`${FILE}: must import BoardSection`);
+  if (!src.includes('from "../../components/v3/BoardSection"')) {
+    fails.push(`${FILE}: must import BoardSection`);
+  }
+  for (const testId of [
+    "banking-home-accounts-board",
+    "banking-home-factoring-virtual-board",
+    "bank-account-inspect-board",
+    "banking-home-relay-board",
+    "banking-home-statement-import-board",
+    "banking-home-plaid-board",
+    "banking-home-settings-board",
+  ]) {
+    const re = new RegExp(`<BoardSection[\\s\\S]{0,260}testId=["']${testId}["']`);
+    if (!re.test(src)) fails.push(`${FILE}: missing BoardSection testId=${testId}`);
+  }
+  for (const keep of [
+    'data-testid="bank-account-inspect-panel"',
+    'data-testid="banking-relay-tab"',
+    "BankingHomeBoard",
+    "reorderBankAccounts",
+    "StatementUpload",
+    "FORM_SELECT_CLASS",
+  ]) {
+    if (!src.includes(keep)) fails.push(`${FILE}: must keep ${keep}`);
+  }
+  return fails;
 }
-for (const testId of [
-  "banking-home-accounts-board",
-  "banking-home-factoring-virtual-board",
-  "bank-account-inspect-board",
-  "banking-home-relay-board",
-  "banking-home-statement-import-board",
-  "banking-home-plaid-board",
-  "banking-home-settings-board",
-]) {
-  const re = new RegExp(`<BoardSection[\\s\\S]{0,260}testId=["']${testId}["']`);
-  if (!re.test(src)) fails.push(`${FILE}: missing BoardSection testId=${testId}`);
-}
-for (const keep of [
-  'data-testid="bank-account-inspect-panel"',
-  'data-testid="banking-relay-tab"',
-  "BankingHomeBoard",
-  "reorderBankAccounts",
-  "StatementUpload",
-  "FORM_SELECT_CLASS",
-]) {
-  if (!src.includes(keep)) fails.push(`${FILE}: must keep ${keep}`);
+const realRead = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["the real tree passes", realRead, false],
+    ["planted: BoardSection import removed fails", (rel) => realRead(rel).replaceAll("components/v3/BoardSection", "components/v3/Removed"), true],
+    ["planted: surfaces emptied fails", () => "", true],
+  ];
+  let bad = 0;
+  for (const [name, read, wantFail] of cases) {
+    const got = check(read).length > 0;
+    console.log(`${got === wantFail ? "ok  " : "FAIL"} ${name}`);
+    if (got !== wantFail) bad++;
+  }
+  console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
+  process.exit(bad ? 1 : 0);
 }
 
+const fails = check(realRead);
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
   process.exit(1);

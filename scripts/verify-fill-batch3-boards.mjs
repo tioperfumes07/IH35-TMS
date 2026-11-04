@@ -12,12 +12,39 @@ const SURFACES = [
    ["qbo-recon-health-board", "qbo-recon-captures-board", "qbo-recon-runs-board"],
    ["ParityTable"]],
 ];
-const fails=[];
-for (const [id,rel,ids,keep] of SURFACES) {
-  const src=fs.readFileSync(path.join(ROOT,rel),"utf8");
-  if (!src.includes("components/v3/BoardSection")) fails.push(`${id}: import`);
-  for (const tid of ids) if (!src.includes(`testId="${tid}"`)) fails.push(`${id}: ${tid}`);
-  for (const k of keep) if (!src.includes(k)) fails.push(`${id}: keep ${k}`);
+// --selftest (ACCT-F11105, verify-guard-selftests-are-real): the same check on the real tree must PASS, and on
+// planted sources (BoardSection import removed; surfaces emptied) must FAIL.
+function check(read) {
+  const fails=[];
+  for (const [id,rel,ids,keep] of SURFACES) {
+    const src=read(rel);
+    if (!src.includes("components/v3/BoardSection")) fails.push(`${id}: import`);
+    for (const tid of ids) if (!src.includes(`testId="${tid}"`)) fails.push(`${id}: ${tid}`);
+    for (const k of keep) if (!src.includes(k)) fails.push(`${id}: keep ${k}`);
+  }
+  return fails;
 }
-if (fails.length){console.error(LABEL+": FAIL\n  - "+fails.join("\n  - ")); process.exit(1)}
+const realRead = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["the real tree passes", realRead, false],
+    ["planted: BoardSection import removed fails", (rel) => realRead(rel).replaceAll("components/v3/BoardSection", "components/v3/Removed"), true],
+    ["planted: surfaces emptied fails", () => "", true],
+  ];
+  let bad = 0;
+  for (const [name, read, wantFail] of cases) {
+    const got = check(read).length > 0;
+    console.log(`${got === wantFail ? "ok  " : "FAIL"} ${name}`);
+    if (got !== wantFail) bad++;
+  }
+  console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
+  process.exit(bad ? 1 : 0);
+}
+
+const fails = check(realRead);
+if (fails.length) {
+  console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
+  process.exit(1);
+}
 console.log(`${LABEL}: PASS — ${SURFACES.length}`);

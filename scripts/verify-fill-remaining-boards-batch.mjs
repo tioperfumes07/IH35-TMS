@@ -28,24 +28,47 @@ const SURFACES = [
   ["AccountRegisterPage", "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx", "account-register-lines-board", ["b1-account-register", "account-register-audit-board"]],
 ];
 
-const fails = [];
-for (const [id, rel, testId, keep] of SURFACES) {
-  const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
-  if (!src.includes("components/v3/BoardSection")) {
-    fails.push(`${id}: must import BoardSection`);
+// --selftest (ACCT-F11105, verify-guard-selftests-are-real): the same check on the real tree must PASS, and on
+// planted sources (BoardSection import removed; surfaces emptied) must FAIL.
+function check(read) {
+  const fails = [];
+  for (const [id, rel, testId, keep] of SURFACES) {
+    const src = read(rel);
+    if (!src.includes("components/v3/BoardSection")) {
+      fails.push(`${id}: must import BoardSection`);
+    }
+    const re = new RegExp(`<BoardSection[\\s\\S]{0,320}testId=["']${testId}["']`);
+    if (!re.test(src) && !src.includes(`testId="${testId}"`)) {
+      fails.push(`${id}: missing BoardSection testId=${testId}`);
+    }
+    for (const k of keep) {
+      if (!src.includes(k)) fails.push(`${id}: must keep ${k}`);
+    }
+    if (/<section className="rounded-sm border border-gray-200 bg-white"/.test(src)) {
+      fails.push(`${id}: still has bare rounded section shell`);
+    }
   }
-  const re = new RegExp(`<BoardSection[\\s\\S]{0,320}testId=["']${testId}["']`);
-  if (!re.test(src) && !src.includes(`testId="${testId}"`)) {
-    fails.push(`${id}: missing BoardSection testId=${testId}`);
+  return fails;
+}
+const realRead = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["the real tree passes", realRead, false],
+    ["planted: BoardSection import removed fails", (rel) => realRead(rel).replaceAll("components/v3/BoardSection", "components/v3/Removed"), true],
+    ["planted: surfaces emptied fails", () => "", true],
+  ];
+  let bad = 0;
+  for (const [name, read, wantFail] of cases) {
+    const got = check(read).length > 0;
+    console.log(`${got === wantFail ? "ok  " : "FAIL"} ${name}`);
+    if (got !== wantFail) bad++;
   }
-  for (const k of keep) {
-    if (!src.includes(k)) fails.push(`${id}: must keep ${k}`);
-  }
-  if (/<section className="rounded-sm border border-gray-200 bg-white"/.test(src)) {
-    fails.push(`${id}: still has bare rounded section shell`);
-  }
+  console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
+  process.exit(bad ? 1 : 0);
 }
 
+const fails = check(realRead);
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
   process.exit(1);
