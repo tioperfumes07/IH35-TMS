@@ -461,7 +461,10 @@ export type EscrowDriverTimelineRow = {
   bucket: string | null;
   amount: number;
   memo: string | null;
+  /** When the posting was keyed (posted_at). Not the register date — see document_date. */
   created_at: string;
+  /** ACCT-F11093: the movement's document date (settlement period end / journal entry date). */
+  document_date?: string | null;
   /** Canonical driver_finance.driver_settlements id when this ledger row was posted from a settlement. */
   settlement_id?: string | null;
   settlement_line_id?: string | null;
@@ -469,7 +472,7 @@ export type EscrowDriverTimelineRow = {
   journal_entry_id?: string | null;
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
-  /** ROW 215: per-load expansion — null for non-settlement postings or legacy settlement rows with no lines. */
+  /** ACCT-F11093: the load this escrow row moved for (accounting.escrow_posting_loads); null only for a non-load movement. */
   load_id?: string | null;
   load_number?: string | null;
   load_date?: string | null;

@@ -19,7 +19,7 @@ import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsd, formatUsdCents, formatUsdTable, formatQuantityTable } from "../../lib/money";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS, formatDateUS } from "../../lib/formatDate";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
 import { V3 } from "../../design/v3-tokens";
@@ -29,7 +29,11 @@ const ESCROW_RELEASE_WINDOW_DAYS = 60;
 
 type RegisterRow = {
   id: string;
+  /** ACCT-F11093: the movement's document date (YYYY-MM-DD), never the day it was keyed. */
   date: string;
+  /** ACCT-F11093: escrow is per load — the load this row moved for (null only for a non-load movement). */
+  loadId: string | null;
+  loadNumber: string | null;
   source: string;
   sourceHref: string | null;
   type: string;
@@ -47,11 +51,12 @@ function csvEscape(value: string): string {
 
 /** Client CSV of the register lines on screen (fill-not-shell — Export was a dead button). */
 function exportEscrowRegisterCsv(driverName: string, rows: RegisterRow[]): void {
-  const header = ["Date", "Source", "Type", "In", "Out", "Balance"].map(csvEscape).join(",");
+  const header = ["Date", "Load", "Source", "Type", "In", "Out", "Balance"].map(csvEscape).join(",");
   const body = rows
     .map((r) =>
       [
-        formatDateUS(r.date) || "",
+        formatCalendarDateUS(r.date) || "",
+        r.loadNumber ?? "",
         r.source,
         r.type,
         r.inAmt == null ? "" : formatUsd(r.inAmt),
@@ -151,8 +156,14 @@ export function EscrowRegisterPage() {
   const rows: RegisterRow[] = useMemo(() => {
     // Design N2 (Settlements-EscrowRegister.dc.html): first line is "Opening balance (historical)"
     // so running balance ties to Held = opening + signed timeline activity.
-    const timeline = [...(tlQ.data?.timeline ?? [])].sort((a, b) =>
-      String(a.created_at).localeCompare(String(b.created_at)),
+    // ACCT-F11093: the register runs in DOCUMENT-date order (settlement period end / JE date), keyed-at time breaks ties.
+    const docDate = (t: { document_date?: string | null; journal_entry_date?: string | null; created_at: string }) =>
+      String(t.document_date ?? t.journal_entry_date ?? t.created_at ?? "").slice(0, 10);
+    const timeline = [...(tlQ.data?.timeline ?? [])].sort(
+      (a, b) =>
+        docDate(a).localeCompare(docDate(b)) ||
+        String(a.created_at).localeCompare(String(b.created_at)) ||
+        String(a.load_number ?? "").localeCompare(String(b.load_number ?? "")),
     );
     let activityNet = 0;
     for (const t of timeline) {
@@ -164,11 +175,13 @@ export function EscrowRegisterPage() {
     }
     const openingAmt = Number.isFinite(held) ? held - activityNet : 0;
     let run = openingAmt;
-    const openingDate = timeline[0]?.created_at ?? "";
+    const openingDate = timeline[0] ? docDate(timeline[0]) : "";
     const built: RegisterRow[] = [
       {
         id: `opening-balance-${driverId || "driver"}`,
         date: openingDate,
+        loadId: null,
+        loadNumber: null,
         source: "Opening balance (historical)",
         sourceHref: null,
         type: "Opening",
@@ -185,17 +198,18 @@ export function EscrowRegisterPage() {
       run += isOut ? -abs : abs;
       // A uuid fragment is never a label (verify-no-uuid-label-rendering): the source names its kind + date; the link
       // (sourceHref) still opens the exact settlement / journal entry.
-      // ROW 215: when load_id is present (per-load expansion), show Load {number} · {date}; fall back to Settlement.
-      const settLabel = t.load_id
-        ? `Load ${t.load_number ?? "—"} · ${formatDateUS(t.load_date ?? t.created_at) || "posted"}`
-        : t.settlement_id
-          ? `Settlement · ${formatDateUS(t.created_at) || "posted"}`
-          : t.journal_entry_id
-            ? `Journal · ${formatDateUS(t.journal_entry_date) || formatDateUS(t.created_at) || "entry"}`
-            : t.memo || "Escrow entry";
+      // ACCT-F11093 (row 22): the load has its own linked column; the source names the document it came from + its date.
+      const rowDate = docDate(t);
+      const settLabel = t.settlement_id
+        ? `Settlement · ${formatCalendarDateUS(rowDate) || "posted"}`
+        : t.journal_entry_id
+          ? `Journal · ${formatCalendarDateUS(rowDate) || "entry"}`
+          : t.memo || "Escrow entry";
       built.push({
         id: t.id,
-        date: t.created_at,
+        date: rowDate,
+        loadId: t.load_id ?? null,
+        loadNumber: t.load_id ? (t.load_number ?? null) : null,
         source: settLabel,
         sourceHref: t.settlement_id
           ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(t.settlement_id)}`
@@ -218,7 +232,8 @@ export function EscrowRegisterPage() {
       (r) =>
         r.source.toLowerCase().includes(q) ||
         r.type.toLowerCase().includes(q) ||
-        (formatDateUS(r.date) ?? "").toLowerCase().includes(q),
+        (r.loadNumber ?? "").toLowerCase().includes(q) ||
+        (formatCalendarDateUS(r.date) ?? "").toLowerCase().includes(q),
     );
   }, [rows, search]);
 
@@ -229,7 +244,26 @@ export function EscrowRegisterPage() {
         label: "Date",
         sortable: true,
         sortValue: (r) => r.date,
-        render: (r) => formatDateUS(r.date) || "—",
+        render: (r) => formatCalendarDateUS(r.date) || "—",
+      },
+      {
+        key: "load",
+        label: "Load",
+        sortable: true,
+        sortValue: (r) => r.loadNumber ?? "",
+        render: (r) =>
+          r.loadId ? (
+            <Link
+              to={`/dispatch/loads/${encodeURIComponent(r.loadId)}`}
+              className="underline"
+              style={{ color: V3.link }}
+              data-testid="escrow-register-load-link"
+            >
+              {r.loadNumber ?? "Load"}
+            </Link>
+          ) : (
+            ""
+          ),
       },
       {
         key: "source",
@@ -299,7 +333,7 @@ export function EscrowRegisterPage() {
         <MoneyListToolbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search source · type · date…"
+          searchPlaceholder="Search load · source · type · date…"
           searchTestId="escrow-register-search"
           onClearAll={() => setSearch("")}
           activeFilterCount={search.trim() ? 1 : 0}
