@@ -154,7 +154,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
           loading={query.isLoading}
           storageKey="catalogs-maintenance"
           initialPageSize={50}
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+          title={status.length !== 1 ? "All entries" : status[0] === "false" ? "Inactive entries" : "Active entries"}
           allowAllPageSize
         />
       )}
