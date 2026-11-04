@@ -91,13 +91,16 @@ async function loadAppSide(userId: string, operatingCompanyId: string, cutover: 
       status: string | null;
     }>(
       `SELECT t.id::text, t.bank_account_id::text, t.transaction_date::text AS transaction_date,
-              t.amount_cents::text, t.description, t.status
+              -- direction comes from is_credit (amount_cents' sign runs opposite it on this table);
+              -- the matcher's convention is debit = negative, so project the signed amount from is_credit.
+              (CASE WHEN t.is_credit THEN abs(t.amount_cents) ELSE -abs(t.amount_cents) END)::text AS amount_cents,
+              t.description, t.status
          FROM banking.bank_transactions t
         WHERE t.operating_company_id = $1::uuid
           AND t.voided_at IS NULL
           AND t.merged_into_bank_transaction_id IS NULL
           AND COALESCE(t.is_sample_data, false) = false
-          AND t.amount_cents < 0
+          AND t.is_credit = false
           AND t.transaction_date >= $2::date
           AND t.matched_bill_payment_id IS NULL
           AND t.matched_bill_id IS NULL
