@@ -17,6 +17,10 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 260 | Dispatch | 13692/13693/13695 delivered to Edison (GPS) but never stamped — delivery stop geocode 'range' 0.7 mi off the dock; $14,700 not invoiced; USMCA range 22 stops → 5 unstamped, NULL 8 → 8 unstamped, rooftop 373 → 0 (docs/bus/lead/11-02-2026-Claude-Lead-FINDING-RANGE-GEOCODE-MISSED-DELIVERIES-14700.md) | CC-2 | DONE-LIVE — 11-03 16:40Z prod: 13692/13693/13695 delivered_pending_docs; open stops on them 0 |
 | 259 | Maintenance | Fleet health showed the SAM- phantoms — fixed #28191 e27c5b2c8 | LEAD | DONE-LIVE — live /maintenance 23:35Z: "All 39", 0 SAM- units |
 
+## Lead 11-04 01:30Z (7:30 PM CT) checkpoint
+
+Rows 93, 94, 127, 130 DONE-LIVE (prod numbers in each row). 131, 116, 124 PARTIAL. Main made green: #28624 (5 orphan guards wired, verify-guard-wired 0), #28626 (frontend tsc 13 errors → 0; Termination Reasons modal crashed on SelectCombobox), #28628 (3 stale derived artifacts). #28627 deadhead overlap refusal. #28625 (live-fails pass 2): load-costs board 35,979 ms → 302 ms on prod SQL; Period 2001 fixed (pgDateOnly, 22 sites); diesel-by-truck page 200; CDL/date-only display (62 calls); revenue alias fix +$33,750 booked revenue on 8 un-invoiced loads (13688 13690 13692–13695 13698 13700) — deployed endpoint check pending.
+
 ## Counts by category
 
 | Category | Pending |
@@ -67,7 +71,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 |---|---|---|---|---|---|
 | 1 | R3 | Dispatch | Kanban: truck cards drag to assign/book/availability | LEAD | MERGED-UNVERIFIED |
 | 2 | R5 | All | Names proper-case automatically (people), org casing kept (ACME) | CC-3 | PARTIAL |
-| 3 | R6 | Driver/Fleet | Driver photo from uploaded IDs; unit photos | CC-2 | OPEN |
+| 3 | R6 | Driver/Fleet | Driver photo from uploaded IDs; unit photos | CC-2 | MERGED — #28610; live UI proof pending |
 | 4 | R8 | Settlements | Navigation defects N1-N10 (tabs leave module, escrow dupes, $2575.96, initials) | Cursor | MERGED-UNVERIFIED — D007-D014 SETTLEMENTS_SUBNAV in-module; residual money/initials live UNVERIFIED |
 | 5 | R9 | Dispatch | Truck Line status opens searchable dropdown | Cursor | MERGED-UNVERIFIED |
 | 6 | R12 | Fuel | Fuel Questions Review crash (load_number undefined) | CC-2 | MERGED-UNVERIFIED |
@@ -92,7 +96,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 25 | R218 | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | MERGED-UNVERIFIED — SettlementStatementWorkflow + BoardPanels + LinkedRecords + FuelPurchases; live 5753 compare UNVERIFIED |
 | 26 | R219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | MERGED-UNVERIFIED — SettlementCloseArrivalPage + Dispatch Pre-Settlement/LoadDetail CTA; live UNVERIFIED |
 | 27 | R220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | MERGED-UNVERIFIED — #28518–#28543 + #28566 CreateMultipleBills/VendorBillCreate BoardSection need-company (~69 Accounting surfaces; Reclassify/match/LoadCosts skipped); fill-shell PASS; live tab inspect UNVERIFIED |
-| 28 | R221 | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | OPEN |
+| 28 | R221 | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | MERGED — #28621 (migration 202616350100 applied 00:36:59Z); live UI proof pending |
 | 29 | R222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | MERGED-UNVERIFIED — verify-popups-one-format overlays=0; FuelAssignmentPopup sizePreset md 720 (443.295); verify-fuel-assignment-popup PASS; live owner walk UNVERIFIED |
 | 30 | R224 | Process | CODE-COMPLETE MODE: code every row, verify at the end | ALL | IN PROGRESS |
 | 31 | R225 | Gates | Main pre-push gate red for every seat (filter-panel regex, selftest-mutates, export-business-date) | LEAD | DONE-LIVE — verify-export-business-date / verify-no-selftest-mutates-tracked-source / verify-program-system-cashflow-filter-panels PASS on main 22:58Z |
@@ -122,7 +126,7 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 50 | R37 | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — UnexpectedExpensesPage board; live verdict UNVERIFIED |
 | 51 | R38 | Banking | Banking › Home — board verdict REBUILT | Cursor | MERGED-UNVERIFIED — BankingHomeBoard BoardSection/ParityTable; live verdict UNVERIFIED |
 | 52 | R39 | Factoring | Factoring › Home — board verdict LAYERED | Cursor | MERGED-UNVERIFIED — FactoringHomeBoard tabs-first; verify-factoring-layout-tabs-first; live UNVERIFIED |
-| 53 | R40 | Reports | Reports › Home — board verdict LAYERED | CC-3 | OPEN |
+| 53 | R40 | Reports | Reports › Home — board verdict LAYERED | CC-3 | MERGED — #28601; guard wired 19905 (#28624); live UI proof pending |
 | 54 | R41 | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | DONE-LIVE — #28541; Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: Q4 debits $1,628,649.66 = credits $1,628,649.66, 52 accounts, Balanced |
 | 55 | R42 | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | MERGED-UNVERIFIED — #28549 (Lead): Customers Home rebuilt to V3 board from /api/v1/mdata/boards/customers. Prod YTD: 87 with transactions, 193 invoices, billed $659,426.72, A/R open $659,426.72 (68.0% past due), collected $0.00 (row 89) |
 | 56 | R43 | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | MERGED-UNVERIFIED — #28549: Vendors Home cells link (category, pays-through); 30 vendors with transactions, spend YTD $363,227.28 |
@@ -168,15 +172,15 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 86 | R74 | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | MERGED-UNVERIFIED |
 | 87 | R75 | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | OPEN |
 | 88 | R76 | Settlements | 0 of 85 closed settlements marked paid ($127,897.75) | CC-2 | OPEN |
-| 89 | R77 | A/R | 0 customer payments / Faro purchases applied: all $621,076.72 open incl. 57 advanced invoices | CC-2 | OPEN |
-| 90 | R78 | Banking | 1090 Undeposited $170,210.48 (33 Faro advances never deposited) -> GL bank -$88,433.89 | CC-2 | OPEN |
-| 91 | R79 | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 | CC-1 | OPEN |
+| 89 | R77 | A/R | 0 customer payments / Faro purchases applied: all $621,076.72 open incl. 57 advanced invoices | CC-2 | MERGED — #28615 factoring engines; posting Faro receipts = matching real money → OWNER |
+| 90 | R78 | Banking | 1090 Undeposited $170,210.48 (33 Faro advances never deposited) -> GL bank -$88,433.89 | CC-2 | MERGED — #28615; residual tie needs owner Faro decisions |
+| 91 | R79 | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 | CC-1 | MERGED — #28618 (deploy 150dd4b); live UI proof pending |
 | 92 | R80 | Dispatch | Load 13699 Bradley IL delivery stop city-only (no street/ZIP) | CC-3 | OPEN |
-| 93 | R81 | HOS | 222,587 duty events on merged driver shells | CC-2 | OPEN |
-| 94 | R82 | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | OPEN |
+| 93 | R81 | HOS | 222,587 duty events on merged driver shells | CC-2 | DONE-LIVE — prod 11-04 01:10Z: samsara.hos_snapshots on shells 49,486 → 0 (audits b347c2e2, 0494d1e5); hos.duty_status_events on shells 9,034 → 408 (all exact duplicates of a survivor event, kept by design); writers resolve the survivor (#28622, migration 202616340100 applied 00:40:56Z) |
+| 94 | R82 | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | DONE-LIVE — #28605; prod 7 driver bill due dates set from load_driver_pay_due (13530 08-21→08-19, 13546, 13562, 13687, 13691, 13696, 13697) |
 | 95 | R83 | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | PARTIAL |
 | 96 | R84 | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | CODED |
-| 97 | R85 | Vendors | All 30 vendors have no category | CC-1 | OPEN |
+| 97 | R85 | Vendors | All 30 vendors have no category | CC-1 | MERGED — #28610; guard wired 19907 (#28624) |
 | 98 | R86 | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | DONE-LIVE — #28583 + Lead prod repair 23:36Z: company settlement P-0119 → 5854 (driver settlement source_document_ref 5854), audit event; P-0113 = 5852, P-0117 = 5853 already. Close now renumbers (company_settlement_number_taken refusal) |
 | 99 | R113 | Banking | 43 Plaid PENDING lines in October never replaced by their posted lines (e.g. SOUTH TX TRUCK CENTERS -460.01 pending 10-03 + posted 10-05) -> Banking Money in/out ($216,532.56 / $239,059.03) and Unexpected "possible duplicates" count them twice | CC-2 | DONE-LIVE — Lead 23:00Z prod: 248 pending lines voided (replaced_by_plaid_posted / plaid_stale_pending_sweep); 11 live pending all ≥ 10-28; South Texas Truck Centers -460.01 = 1 live line (10-05) |
 | 100 | R201 | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2 | CODED |
@@ -196,11 +200,11 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 109 | R238 | Dispatch | Load 13699 (Copamex, in transit) delivery stop is 'Bradley, IL' with no street; verify-stops-are-geocoded RED live, blocks dispatch-touching pushes (443.301) | OWNER | OPEN |
 | 110 | R242 | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents | CC-1 | PARTIAL |
 | 111 | R251 | Dispatch | ENG-13 G1: 129 loads (10-11) with no trailer choice — back-fill from documents | CC-2 | PARTIAL |
-| 112 | R255 | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | OPEN |
+| 112 | R255 | Accounting | ENG-17 1090 $170,210.48 / 2510 $187,894.21 residuals — tie document by document (rows 78, 79) | CC-2 | MERGED — #28615; residual tie needs owner Faro decisions |
 | 113 | R257 | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van | CC-3 | DONE-LIVE — #28541 + Lead prod repair 23:08Z: 3 cancelled loads 13593/13634/13635 DRY_VAN → REFRIGERATED_VAN (company reefer trailers 10219/10870/10218), audit 6da04ce4/fc674f44/6888bf9e. Prod now DRY_VAN 31 / REFRIGERATED_VAN 106 / FLATBED 61; 198/198 resolve in catalogs.load_trailer_equipment (the "195 unresolved" read the wrong catalog). bills.service wrong join removed |
 | 114 | R258 | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents | CC-3 | OPEN |
 | 115 | R262 | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain | CC-3 | PARTIAL |
-| 116 | R264 | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | PARTIAL |
+| 116 | R264 | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events | CC-3 | PARTIAL — #28622: no-OBD crossings measured through the anchor; E11 boundary reads outside the per-day key; open: 98 delivered loads need the yard / cross-dock stop rule (OWNER) |
 | 117 | R269 | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only | CC-1 | PARTIAL |
 | 118 | R271 | Reports | ENG-36 23 company settlements still negative after ENG-19 — measure each | LEAD | DONE-LIVE — measured each (#28140 + addendum #28141): 21 of 87; causes routed — ENG-64 fuel outside trip (CC-3), ENG-65 unlinked Relay fills (CC-1), ENG-25b Transportation diesel; 5824/5829 signed docs not found on owner Mac stage |
 | 119 | R273 | Accounting | ENG-38 periods: 24 USMCA periods all open — lock closed months (owner names the months) | OWNER | OPEN |
@@ -208,14 +212,14 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 121 | R275 | Banking | M2 invoices + Faro purchases in the match union | - | MERGED-UNVERIFIED |
 | 122 | R276 | Banking | M3/M5 one matcher (MatchDrawer embedded); filters live | - | MERGED-UNVERIFIED |
 | 123 | R281 | Accounting | Cash-basis P&L (F412), bank-line delete rule (F431), recurring worker refusal, 7-day unmatched alert, reefer off IFTA, A/P control by documents, matched-to-nothing refusal | - | MERGED-UNVERIFIED |
-| 124 | R289 | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | PARTIAL |
+| 124 | R289 | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 | CC-1 | PARTIAL — #28605 due dates live; salaried stray bills 13544/13563 void needs OWNER OK |
 | 125 | R291 | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document | CC-1 | PARTIAL |
 | 126 | R292 | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS | CC-1 | PARTIAL |
-| 127 | R293 | Fuel | ENG-48 fuel-expense one-to-one (13563-1 JE 0¢ + 14 loads); same-day duplicate fill pairs; traceability shrink fc461eb6; literal account '5000' in statement-card-credit-repair | CC-2 | OPEN |
-| 128 | R294 | Settlements | ENG-49 settlement 5787 non-diesel expenses $235.01 vs signed $140.20 | CC-2 | OPEN |
-| 129 | R295 | Factoring | ENG-50 invoice amount_paid vs applications (9-13515 $525, 7 $350); book = Faro = AlwaysTrack 12 issues; factoring-advance-links-its-load selftest | CC-2 | OPEN |
-| 130 | R296 | Banking | ENG-51 944 composite-memo rows unbackfilled; 1 Creator load miles without source | CC-2 | OPEN |
-| 131 | R298 | Dispatch | ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s | CC-3 | OPEN |
+| 127 | R293 | Fuel | ENG-48 fuel-expense one-to-one (13563-1 JE 0¢ + 14 loads); same-day duplicate fill pairs; traceability shrink fc461eb6; literal account '5000' in statement-card-credit-repair | CC-2 | DONE-LIVE — #28623; prod fuel row ddc51b70 fee 0 → 2.00 (audit a1edce94); 4 duplicate fill pairs need the statement document |
+| 128 | R294 | Settlements | ENG-49 settlement 5787 non-diesel expenses $235.01 vs signed $140.20 | CC-2 | MERGED — #28623 read-model sign rule (P-0018 non-diesel $140.22 vs signed $140.20, $0.02 named Dreamline DEF differences); UI proof pending |
+| 129 | R295 | Factoring | ENG-50 invoice amount_paid vs applications (9-13515 $525, 7 $350); book = Faro = AlwaysTrack 12 issues; factoring-advance-links-its-load selftest | CC-2 | MERGED — #28623 writers closed, live data consistent (193 invoices, 0 mismatches); Faro collections = OWNER (no receipts after AUTH-001 purge) |
+| 130 | R296 | Banking | ENG-51 944 composite-memo rows unbackfilled; 1 Creator load miles without source | CC-2 | DONE-LIVE — #28623; prod 01:03Z 3 relearn events delivered: 13696 1644.0 / 13697 1110.0 / 13699 1338.0 unchanged, miles_choice.practical.source = manual |
+| 131 | R298 | Dispatch | ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s | CC-3 | PARTIAL — #28622 + #28627: 11 NULL deadheads re-queued 01:03Z, 9 filled (13688 20.2 · 13691 195.5 · 13692 175.3 · 13694 90.1 · 13695 450.3 · 13696 180.6 · 13697 29.0 · 13698 4.7 · 13699 148.2); 13687 (1,875.6) and 13690 (199.0) were measured across overlapping loads of the truck → engine now refuses overlaps, both cleared to NULL (audits b03aa1f1, 352eba6e); open: dispatch dates 13672/13677/13682/13687 and 13690/13693 overlap — needs the source documents |
 | 132 | R299 | Fleet | ENG-54 T122, T124, T156 owned by IH 35 Transportation (leased to USMCA); rule: every real truck owned by IH 35 Trucking — waits for the owner's truck list (16 trucks) | OWNER | OPEN |
 | 133 | R300 | Dispatch | ENG-55 443.327 app-wide drift alert every 30 min until fixed (reconciler I9: truck cannot make next stop, no stop date, no street address, no rate); 7 live | LEAD | DONE-LIVE (alert engine) — merged #27655; prod 23:45Z: I9 population = 3 active loads (13692/13693/13695), all past delivery with no stamp — root cause filed as row 260 |
 | 134 | R301 | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine | CC-3 | OPEN |
@@ -237,8 +241,8 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 
 | # | Src | Area | Item | Seat | Status |
 |---|---|---|---|---|---|
-| 148 | R89 | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | CODED |
-| 149 | R90 | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | CODED |
+| 148 | R89 | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | MERGED — #28618 (deploy 150dd4b); live UI proof pending |
+| 149 | R90 | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | MERGED — #28618 (deploy 150dd4b); live UI proof pending |
 | 150 | R93 | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 151 | R94 | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | DONE-LIVE — prod 00:15Z: 0 proforma invoices; views.ar_aging $621,076.72 / 164 = GL 1100 $621,076.72 |
 | 152 | R95 | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | OPEN |
@@ -246,13 +250,13 @@ Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re
 | 154 | R97 | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | OPEN — likely driven by row 156 stale pendings ($51,296.34) — CC-2 re-measures after the pending fix |
 | 155 | R98 | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | MERGED-UNVERIFIED — fmtMoneyDollars + trueCostPercent guards PASS; live USMCA UNVERIFIED |
 | 156 | R99 | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | DONE-LIVE — Lead 23:00Z prod: -460.01 and -155.86 each 1 live line; the repeats were pending lines, now voided by the replace/sweep engine |
-| 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | OPEN |
+| 157 | R100 | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | MERGED — #28610; guard wired 19907 |
 | 158 | R101 | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | DONE-LIVE — prod 00:10Z: GL 2000 A/P $129,216.53 = 184 open bills $129,216.53 (0.00 diff); 2000 posted only by bill / bill_payment / driver_settlement |
 | 159 | R102 | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED (#28561); Closed pill = trip_closed_at OR terminal; Status Paid/Open (v3). Non-CT browser not claimed |
 | 160 | R103 | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | MERGED-UNVERIFIED — KPIs show … while toursQuery.isPending (no flash 0); live UNVERIFIED |
 | 161 | R104 | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | PARTIAL — Lead 23:10Z: issuer set; 27 of 27 card assignments now carry their driver (card digits = the driver Relay id, integrations.relay_driver_links), 27 audit events. Open: A→B→A unit periods Codex rejected (CC-2) |
 | 162 | R105 | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | MERGED-UNVERIFIED — #28531 (Lead, 22:50Z): integrations.relay_driver_links (17 links, 15 drivers) + matcher reads it + rematch in the fuel ingest hook. Fork br-solitary-cloud-akbd7y9h: fills with driver 19 → 280/281 (1 has no Relay id). Prod: migration at deploy, rematch at 06:00 CT |
-| 163 | R106 | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | OPEN |
+| 163 | R106 | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | MERGED — #28610 (Loves price feed needs LOVES_CARD_CSV_URL — OWNER) |
 | 164 | R107 | Fuel | Home MTD spend $91,539 vs Fuel board figure; Avg $/gal $5.44 | CC-2 | MERGED-UNVERIFIED — #28530; live Nov 1–3 has 0 fills (cannot compare); Oct spend-summary $76,349.13 / 13,897.553 gal / $5.4937. Diesel-by-truck HTTP 400 (limit 500 > 200) → live-fails-2 |
 | 165 | R108 | Maintenance | All 43 trucks "PM reading unavailable"; 0 work orders; MTD cost $0.00 | CC-2 | DONE-LIVE — live /maintenance 23:35Z: PM states shown ("No PM clock" + "Start PM clock →", never a false OK — verify-fleet-health-no-false-ok); prod: USMCA maintenance.work_orders = 0 (true empty), MTD $0.00 true |
 | 166 | R109 | Dispatch | Load board HOS columns blank for most trucks; Truck planner driver column "—" for trucks with drivers | CC-3 | DONE-LIVE — #28530; Lead live check 11-03 5:00–5:15 PM CT, 1440×900, Owner/USMCA: truck planner 13 of 16 trucks named, T156 Angel Alfonso Sosa Perez |
