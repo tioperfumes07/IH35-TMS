@@ -4,7 +4,7 @@
 // driver pay miles are the signed settlement. Idempotent: a second delivery recomputes the same values from the cache.
 import { recomputeFirstStopDeadhead, relearnLoadStopLegs } from "../../dispatch/load-lane-learning.service.js";
 import { geocodeStopsWithClient } from "../../telematics/stops-geocode-backfill.service.js";
-import { recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
+import { fillLoadDeadhead, recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -41,8 +41,13 @@ export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
     // 443.55: record_sources = also record 'document' as the source of every miles field that has a value and no recorded
     // source (with both recommendations at this moment). Never changes a value.
     const sources = payload.record_sources === true ? await recordDocumentMilesSources(ctx.client as never, { operatingCompanyId, loadId, actorUserId }) : null;
+    // Row 131 (11-03): Book Load's deadhead fill refused because the stops had no points yet ("the first stop has no real point
+    // yet") and queued THIS event with fill_deadhead — now that the stops are resolved, the load's own miles_deadhead is filled
+    // through the ONE engine (fillLoadDeadhead: only a NULL value, never a document / typed one, audited). Only Book Load
+    // (live_feed) sets the flag; a Settlement Creator load never gets an engine deadhead (LEAD RULING 15:10Z #2).
+    const fill = payload.fill_deadhead === true ? await fillLoadDeadhead(ctx.client as never, { operatingCompanyId, loadId, actorUserId }) : null;
     return {
-      message: `street_from_place:${geo.street_from_place ?? 0}:samsara:${geo.samsara_matched}:zip_listed:${geo.zip_center_listed.length}:relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}${sources ? `:sources:${sources.recorded.join("+") || "none"}` : ""}`,
+      message: `street_from_place:${geo.street_from_place ?? 0}:samsara:${geo.samsara_matched}:zip_listed:${geo.zip_center_listed.length}:relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}${sources ? `:sources:${sources.recorded.join("+") || "none"}` : ""}${fill ? `:miles_deadhead:${fill.status}${fill.reason ? `(${fill.reason})` : ""}` : ""}`,
     };
   }
 }

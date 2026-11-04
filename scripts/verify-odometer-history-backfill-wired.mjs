@@ -33,7 +33,8 @@ function fn(src, name) {
 
 export function findDefects(s) {
   const out = [];
-  if (!/odometer_gaps = keys\.map\(\(k\) => timedByKey\.get\(k\)\)\.filter\(\(b\): b is BoundaryRequest => !!b && !anchors\.get\(b\.key\)\?\.anchor\)/.test(s.miles))
+  // Row 116 (11-03): the gaps also carry a fence crossing's own time (`${key}:fence`) while its boundary is unmeasured.
+  if (!/odometer_gaps = \[\.\.\.keys, \.\.\.fenceGaps\]\.map\(\(k\) => timedByKey\.get\(k\)\)\.filter\(\(b\): b is BoundaryRequest => !!b && !anchors\.get\(b\.key\)\?\.anchor\)/.test(s.miles))
     out.push("computeLoadRealDrivenMiles does not report the timed boundaries without an anchor (odometer_gaps)");
   const tick = s.cron.slice(s.cron.indexOf("wrapBackgroundJobTick("));
   const iB = tick.indexOf("await runOdometerHistoryBackfillTick(");
@@ -49,12 +50,14 @@ export function findDefects(s) {
   const fetchLine = run.slice(iFetch - 80, iFetch + 80);
   if (/withDb/.test(fetchLine)) out.push("Samsara is called inside a DB transaction");
   const write = fn(s.svc, "writeBoundaryReads");
-  if (!/'samsara', 'measured'/.test(write)) out.push("the backfill does not store Samsara reads as source 'samsara', confidence 'measured'");
+  // Row 116 (11-03): boundary reads carry source 'samsara_boundary' — outside the one-'samsara'-row-per-day key (202616340100).
+  if (!/'samsara_boundary', 'measured'/.test(write)) out.push("the backfill does not store Samsara reads as source 'samsara_boundary', confidence 'measured'");
   if (/suggested/.test(write)) out.push("the backfill writes 'suggested' rows (read as an odometer gap by the PM rate engine)");
   if (!/ON CONFLICT DO NOTHING/.test(write)) out.push("the backfill insert is not idempotent");
   if (!/export const BACKFILL_WINDOW_MIN = 30;/.test(s.svc)) out.push("the backfill window is not ±30 minutes (the anchor rule's moving tolerance)");
   const plan = fn(s.svc, "planOdometerBackfill");
-  if (!/o\.source = 'samsara'/.test(plan) || !/odometer_reading_day/.test(plan)) out.push("the plan asks again for boundaries already answered (window or per-day key)");
+  if (!/o\.source IN \('samsara', 'samsara_boundary'\)/.test(plan) || !/make_interval\(mins => \$4::int\)/.test(plan)) out.push("the plan asks again for boundaries already answered (the ±window)");
+  if (/odometer_reading_day/.test(plan)) out.push("the plan skips a boundary because the daily snapshot holds that day's 'samsara' slot (row 116)");
   if (!/export const MOVING_ANCHOR_MAX_MINUTES = 30;/.test(s.anchor) || !/confidence IN \('measured','entered'\)/.test(s.anchor))
     out.push("the anchor rule changed (30-minute moving tolerance; measured/entered reads only)");
   return out;
@@ -66,9 +69,10 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["compute stops reporting gaps", plant("miles", "!!b && !anchors.get(b.key)?.anchor", "!!b")],
     ["cron skips the backfill", plant("cron", "await runOdometerHistoryBackfillTick(app.log);", "")],
-    ["backfill writes suggested markers", plant("svc", "'samsara', 'measured')", "'samsara', 'suggested')")],
+    ["backfill writes suggested markers", plant("svc", "'samsara_boundary', 'measured')", "'samsara_boundary', 'suggested')")],
+    ["backfill writes into the per-day 'samsara' slot", plant("svc", "'samsara_boundary', 'measured')", "'samsara', 'measured')")],
     ["backfill window widened", plant("svc", "export const BACKFILL_WINDOW_MIN = 30;", "export const BACKFILL_WINDOW_MIN = 240;")],
-    ["plan re-asks answered windows", plant("svc", "AND o.source = 'samsara'", "AND o.source = 'manual'")],
+    ["plan re-asks answered windows", plant("svc", "o.source IN ('samsara', 'samsara_boundary')", "o.source = 'manual'")],
     ["anchor tolerance loosened", plant("anchor", "export const MOVING_ANCHOR_MAX_MINUTES = 30;", "export const MOVING_ANCHOR_MAX_MINUTES = 600;")],
     ["fetch moved before plan", plant("svc", "  const fetched = await fetchBoundaryReads(planned.requests, planned.fetchHistory);", "")],
   ];
