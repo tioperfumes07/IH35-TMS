@@ -17474,5 +17474,30 @@
     "claimed_by": "lead",
     "purpose": "Re-home verify-ui4-d065-d068-d071-d076 (was wired at 19851 without a claim, colliding with Lead's claimed 19851 rows 78/23)",
     "claimed_at": "2026-11-03"
+  },
+  "19903": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-match-vendor-joins-company-scoped"
+  },
+  "19905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-53-28"
+  },
+  "19907": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-97-157-163-3"
+  },
+  "19909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-91-148-149"
+  },
+  "19911": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-93-116-131"
   }
 }
