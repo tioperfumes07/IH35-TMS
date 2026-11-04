@@ -1,3 +1,8 @@
+## OUTBOX (11-03-2026 ~8:50 PM CT) — U12 Maint Parts + OEM Parts MultiSelect
+- **PRIOR:** #28609 Locations + Maint services U12.
+- **THIS:** MaintenancePartsCatalog manufacturer/category + OemPartsCatalog brand/category → MultiSelectDropdown. Accounting lists still Cascade.
+- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~8:45 PM CT) — U12 Locations + Maint services MultiSelect
 - **PRIOR:** #28608 Drivers Reference U12.
 - **THIS:** LocationsListPage Geocoded/Geofence/Source + MaintenanceServicesCatalog Applies-to → MultiSelectDropdown. Accounting lists still Cascade.

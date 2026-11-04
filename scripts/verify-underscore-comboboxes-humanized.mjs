@@ -65,9 +65,10 @@ const CHECKS = [
     pattern: /\{ownerTypes\.map\(\(t\) => \(\s*<option key=\{t\} value=\{t\}>\s*\{ownerNoun\(t\)\}/,
   },
   {
+    // U12: category options feed MultiSelectDropdown labels via properEnumOrFilterLabel (was SelectCombobox <option>).
     name: "MaintenancePartsCatalog category filter",
     file: "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
-    pattern: /\{CATEGORIES\.map\(\(c\) => <option key=\{c\} value=\{c\}>\{c \? properEnumOrFilterLabel\(c\) : "All categories"\}<\/option>\)\}/,
+    pattern: /CATEGORY_OPTIONS = \[[\s\S]*?\]\.map\(\(c\) => \(\{ value: c, label: properEnumOrFilterLabel\(c\) \}\)\)/,
   },
 ];
 
