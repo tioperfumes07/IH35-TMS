@@ -109,11 +109,13 @@ async function main() {
     let customersChecked = 0;
     let vendorsChecked = 0;
 
+    // ACCT-F11103: every payment_applications sum below LEFT JOINs payments — a payment-less relief application
+    // (payment_id NULL, ACCT-F11070) relieves A/R in the GL, so the statement and the aging must count it, dated by applied_at.
     for (const { opco, customer_id } of customers.rows) {
       // The statement's own opening(from 2000-01-01, i.e. 0) + ledger[2000-01-01..today] closing.
       const openingRes = await client.query(
         `SELECT COALESCE(SUM(GREATEST(COALESCE(i.total_cents,0)
-            - COALESCE((SELECT SUM(pa.amount_cents) FROM accounting.payment_applications pa JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=i.operating_company_id WHERE pa.invoice_id=i.id AND pa.operating_company_id=i.operating_company_id AND p.payment_date < $3::date AND (p.voided_at IS NULL OR p.voided_at::date >= $3::date) AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date >= $3::date)),0)
+            - COALESCE((SELECT SUM(pa.amount_cents) FROM accounting.payment_applications pa LEFT JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=i.operating_company_id WHERE pa.invoice_id=i.id AND pa.operating_company_id=i.operating_company_id AND COALESCE(p.payment_date, (pa.applied_at AT TIME ZONE 'UTC')::date) < $3::date AND (p.voided_at IS NULL OR p.voided_at::date >= $3::date) AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date >= $3::date)),0)
             - COALESCE((SELECT SUM(cma.applied_cents) FROM accounting.credit_memo_applications cma WHERE cma.invoice_id=i.id AND cma.operating_company_id=i.operating_company_id AND cma.voided_at IS NULL AND (cma.applied_at AT TIME ZONE 'UTC')::date < $3::date),0)
           ,0)),0) AS opening_cents
          FROM accounting.invoices i
@@ -133,9 +135,9 @@ async function main() {
       );
       const payRows = await client.query(
         `SELECT pa.amount_cents::bigint AS c FROM accounting.payment_applications pa
-         JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=pa.operating_company_id
+         LEFT JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=pa.operating_company_id
          JOIN accounting.invoices i ON i.id=pa.invoice_id AND i.operating_company_id=pa.operating_company_id
-         WHERE pa.operating_company_id=$1::uuid AND i.customer_id=$2::uuid AND p.payment_date BETWEEN $3::date AND $4::date
+         WHERE pa.operating_company_id=$1::uuid AND i.customer_id=$2::uuid AND COALESCE(p.payment_date, (pa.applied_at AT TIME ZONE 'UTC')::date) BETWEEN $3::date AND $4::date
            AND (p.voided_at IS NULL OR p.voided_at::date > $4::date) AND pa.unapplied_at IS NULL`,
         [opco, customer_id, farPast, today]
       );
@@ -154,7 +156,7 @@ async function main() {
       // summed across their invoices (re-derived here, not imported — see docstring).
       const agingRes = await client.query(
         `SELECT COALESCE(SUM(GREATEST(COALESCE(i.total_cents,0)
-            - COALESCE((SELECT SUM(pa.amount_cents) FROM accounting.payment_applications pa JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=i.operating_company_id WHERE pa.invoice_id=i.id AND pa.operating_company_id=i.operating_company_id AND p.payment_date <= $3::date AND (p.voided_at IS NULL OR p.voided_at::date > $3::date) AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $3::date)),0)
+            - COALESCE((SELECT SUM(pa.amount_cents) FROM accounting.payment_applications pa LEFT JOIN accounting.payments p ON p.id=pa.payment_id AND p.operating_company_id=i.operating_company_id WHERE pa.invoice_id=i.id AND pa.operating_company_id=i.operating_company_id AND COALESCE(p.payment_date, (pa.applied_at AT TIME ZONE 'UTC')::date) <= $3::date AND (p.voided_at IS NULL OR p.voided_at::date > $3::date) AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $3::date)),0)
             - COALESCE((SELECT SUM(cma.applied_cents) FROM accounting.credit_memo_applications cma WHERE cma.invoice_id=i.id AND cma.operating_company_id=i.operating_company_id AND cma.voided_at IS NULL AND (cma.applied_at AT TIME ZONE 'UTC')::date <= $3::date),0)
           ,0)),0) AS open_cents
          FROM accounting.invoices i

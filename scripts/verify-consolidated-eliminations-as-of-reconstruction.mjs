@@ -54,11 +54,14 @@ export function analyze(src) {
   if (!/accounting\.vendor_credit_applications\s+vca[\s\S]{0,400}?\(vca\.applied_at AT TIME ZONE 'UTC'\)::date <= \$2::date/.test(code)) {
     failures.push(`${FILE}: bills leg is missing the dated vendor_credit_applications netting term.`);
   }
-  if (!/accounting\.payment_applications\s+pa[\s\S]{0,600}?p\.payment_date <= \$2::date/.test(code)) {
-    failures.push(`${FILE}: invoices leg is missing the dated payment_applications reconstruction term (p.payment_date <= $2::date).`);
+  // ACCT-F11103: the dated applied amount is the ONE shared rule accounting.invoice_applied_cents_as_of (payment-backed AND
+  // payment-less relief applications; payment-dated / application-dated; unapplied- and void-aware as of the date). An
+  // inline INNER JOIN to accounting.payments dropped relief applications.
+  if (!/\$\{invoiceAppliedCentsAsOfSql\("i", "\$2::date"\)\}/.test(code)) {
+    failures.push(`${FILE}: invoices leg must reconstruct the dated applied amount through invoiceAppliedCentsAsOfSql("i", "$2::date") (accounting.invoice_applied_cents_as_of, ACCT-F11103).`);
   }
-  if (!/pa\.unapplied_at IS NULL OR \(pa\.unapplied_at AT TIME ZONE 'UTC'\)::date > \$2::date/.test(code)) {
-    failures.push(`${FILE}: invoices leg is missing the as-of-aware unapplied_at term — an application unapplied AFTER the as-of still counted on that date.`);
+  if (/JOIN\s+accounting\.payments\s+p\s+ON\s+p\.id\s*=\s*pa\.payment_id/.test(code) && !/LEFT\s+JOIN\s+accounting\.payments\s+p\s+ON\s+p\.id\s*=\s*pa\.payment_id/.test(code)) {
+    failures.push(`${FILE}: INNER JOIN payment_applications -> payments drops payment-less relief applications (ACCT-F11103).`);
   }
   if (!/accounting\.credit_memo_applications\s+cma[\s\S]{0,400}?\(cma\.applied_at AT TIME ZONE 'UTC'\)::date <= \$2::date/.test(code)) {
     failures.push(`${FILE}: invoices leg is missing the dated credit_memo_applications netting term.`);
