@@ -10,8 +10,13 @@
  *   - payment-backed applications dated by payments.payment_date, payment-less ones by the application's applied_at (UTC);
  *   - an application unapplied on/before the date, or whose payment was voided on/before the date, applies nothing.
  *
+ * ACCT-F11103 part 2 (migration 202616410100) — QuickBooks rule: only NON-VOIDED payments (and non-voided credit memos)
+ * relieve an invoice. A payment-less application relieves it only while its source journal entry
+ * (payment_applications.source_journal_entry_id — the JE whose Cr ar_control is the relief) is live
+ * (accounting.journal_entry_live_as_of): no source, or a voided / reversed source, relieves nothing.
+ *
  * Row-level readers (statement lines, activity, cash-basis settlements) cannot call a SUM function; they LEFT JOIN payments
- * and use the same three predicates through the helpers below.
+ * and use the same predicates through the helpers below.
  */
 
 /** SQL bigint: cents applied to the invoice aliased `alias` as of the SQL date expression `asOfSql` (e.g. `$2::date`). */
@@ -32,7 +37,20 @@ export function applicationDateSql(pa: string, p: string): string {
   return `COALESCE(${p}.payment_date, (${pa}.applied_at AT TIME ZONE 'UTC')::date)`;
 }
 
-/** SQL boolean: the application row is live today (not unapplied; its payment, if it has one, not voided). */
+/**
+ * SQL boolean: the application row relieves the invoice as of the SQL date `asOfSql` — not unapplied by then; a payment-backed
+ * row's payment exists and is not voided by then; a payment-less row's source journal entry is live by then.
+ */
+export function applicationRelievesAsOfSql(pa: string, p: string, asOfSql: string): string {
+  return `((${pa}.unapplied_at IS NULL OR (${pa}.unapplied_at AT TIME ZONE 'UTC')::date > ${asOfSql})
+    AND CASE WHEN ${pa}.payment_id IS NOT NULL
+             THEN ${p}.id IS NOT NULL AND (${p}.voided_at IS NULL OR (${p}.voided_at AT TIME ZONE 'UTC')::date > ${asOfSql})
+             ELSE ${pa}.source_journal_entry_id IS NOT NULL
+                  AND accounting.journal_entry_live_as_of(${pa}.source_journal_entry_id, ${asOfSql})
+        END)`;
+}
+
+/** SQL boolean: the application row relieves the invoice today (applicationRelievesAsOfSql as of 'infinity'). */
 export function applicationLiveSql(pa: string, p: string): string {
-  return `(${pa}.unapplied_at IS NULL AND ${p}.voided_at IS NULL)`;
+  return applicationRelievesAsOfSql(pa, p, `'infinity'::date`);
 }

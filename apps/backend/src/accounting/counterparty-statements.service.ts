@@ -1,6 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
-import { applicationDateSql, invoiceAppliedCentsAsOfSql } from "./invoice-applied-cents.js";
+import { applicationDateSql, applicationRelievesAsOfSql, invoiceAppliedCentsAsOfSql } from "./invoice-applied-cents.js";
 
 // V2 — COUNTERPARTY STATEMENTS (owner-requested 2026-09-05, STANDING-DIRECTIVES-2026-09-05.md §CC-1
 // item 5, "the wiring into statements ask"): a real per-counterparty statement of account —
@@ -127,8 +127,8 @@ async function customerLedgerLines(
       WHERE pa.operating_company_id = $1::uuid
         AND i.customer_id = $2::uuid
         AND ${applicationDateSql("pa", "p")} BETWEEN $3::date AND $4::date
-        AND (p.voided_at IS NULL OR p.voided_at::date > $4::date)
-        AND pa.unapplied_at IS NULL
+        -- ACCT-F11103 part 2: the one relieve rule — a non-voided payment, or a payment-less relief whose source JE is live.
+        AND ${applicationRelievesAsOfSql("pa", "p", "$4::date")}
     `,
     [operatingCompanyId, customerId, fromDate, toDate]
   );

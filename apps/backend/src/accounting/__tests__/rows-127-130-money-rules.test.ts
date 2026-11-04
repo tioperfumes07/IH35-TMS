@@ -70,13 +70,14 @@ describe("row 128 — settlement 5787 (P-0018) non-diesel: a card credit is a ne
 
 describe("row 129 — amount_paid_cents is derived from applications, one writer", () => {
   type Call = { sql: string; values?: unknown[] };
-  const fake = (invoice: { total: number; paid: number } | null) => {
+  const fake = (invoice: { total: number; paid: number } | null, arCreditedCents = 1_000_000) => {
     const calls: Call[] = [];
     return {
       calls,
       client: {
         query: async (sql: string, values?: unknown[]) => {
           calls.push({ sql, values });
+          if (/journal_entry_live_as_of/.test(sql)) return { rows: [{ credited: String(arCreditedCents) }] };
           if (/FROM accounting\.invoices/.test(sql)) return { rows: invoice ? [{ total: String(invoice.total), paid: String(invoice.paid) }] : [] };
           if (/INSERT INTO accounting\.payment_applications/.test(sql)) return { rows: [{ id: "app-1" }] };
           return { rows: [] };
@@ -86,20 +87,28 @@ describe("row 129 — amount_paid_cents is derived from applications, one writer
   };
   it("relief is ONE payment-less application; the column is never written", async () => {
     const f = fake({ total: 52500, paid: 0 });
-    const out = await applyInvoiceRelief(f.client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 52500, actorUserId: "u" });
+    const out = await applyInvoiceRelief(f.client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 52500, actorUserId: "u", sourceJournalEntryId: "je-1" });
     expect(out).toEqual({ application_id: "app-1" });
-    expect(f.calls.some((c) => /INSERT INTO accounting\.payment_applications/.test(c.sql) && /NULL, \$2::uuid, \$3::bigint/.test(c.sql))).toBe(true);
+    expect(f.calls.some((c) => /INSERT INTO accounting\.payment_applications/.test(c.sql) && /NULL, \$2::uuid, \$3::bigint/.test(c.sql) && c.values?.[4] === "je-1" && /source_journal_entry_id/.test(c.sql))).toBe(true);
     expect(f.calls.some((c) => /amount_paid_cents\s*=/.test(c.sql))).toBe(false);
   });
   it("relief above the open balance is refused", async () => {
-    await expect(applyInvoiceRelief(fake({ total: 35000, paid: 30000 }).client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 6000, actorUserId: null })).rejects.toBeInstanceOf(InvoiceReliefError);
+    await expect(applyInvoiceRelief(fake({ total: 35000, paid: 30000 }).client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 6000, actorUserId: null, sourceJournalEntryId: "je-1" })).rejects.toBeInstanceOf(InvoiceReliefError);
   });
   it("a cumulative poster raises paid by the delta only, and never lowers it", async () => {
     const f = fake({ total: 100000, paid: 25000 });
-    await raiseInvoicePaidTo(f.client as never, { operatingCompanyId: "c", invoiceId: "i", targetPaidCents: 60000, actorUserId: null });
+    await raiseInvoicePaidTo(f.client as never, { operatingCompanyId: "c", invoiceId: "i", targetPaidCents: 60000, actorUserId: null, sourceJournalEntryId: "je-1" });
     const ins = f.calls.find((c) => /INSERT INTO accounting\.payment_applications/.test(c.sql))!;
     expect(ins.values?.[2]).toBe(35000);
-    await expect(raiseInvoicePaidTo(fake({ total: 100000, paid: 60000 }).client as never, { operatingCompanyId: "c", invoiceId: "i", targetPaidCents: 25000, actorUserId: null })).rejects.toThrow(/invoice_relief_would_lower_paid/);
+    await expect(raiseInvoicePaidTo(fake({ total: 100000, paid: 60000 }).client as never, { operatingCompanyId: "c", invoiceId: "i", targetPaidCents: 25000, actorUserId: null, sourceJournalEntryId: "je-1" })).rejects.toThrow(/invoice_relief_would_lower_paid/);
+  });
+  it("ACCT-F11103: relief with no source JE, or a source JE that is not a live A/R credit, is refused — no payment, no relief", async () => {
+    const none = fake({ total: 52500, paid: 0 });
+    await expect(applyInvoiceRelief(none.client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 100, actorUserId: null, sourceJournalEntryId: null })).rejects.toThrow(/invoice_relief_source_journal_entry_required/);
+    expect(none.calls.some((c) => /INSERT INTO accounting\.payment_applications/.test(c.sql))).toBe(false);
+    const dead = fake({ total: 52500, paid: 0 }, 0);
+    await expect(applyInvoiceRelief(dead.client as never, { operatingCompanyId: "c", invoiceId: "i", amountCents: 100, actorUserId: null, sourceJournalEntryId: "je-dead" })).rejects.toThrow(/invoice_relief_source_not_live_ar_credit/);
+    expect(dead.calls.some((c) => /INSERT INTO accounting\.payment_applications/.test(c.sql))).toBe(false);
   });
   it("neither poster SETs amount_paid_cents any more", () => {
     for (const rel of ["accounting/factoring-posting/poster.service.ts", "factoring/faro-reserve-entries.service.ts"]) {

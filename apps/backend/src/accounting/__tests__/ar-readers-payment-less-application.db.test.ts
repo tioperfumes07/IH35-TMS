@@ -42,6 +42,7 @@ describeIntegration("ACCT-F11103 A/R readers count payment-less applications (re
   const customerId = randomUUID();
   const invoiceId = randomUUID();
   const USER = randomUUID();
+  const reliefJeId = randomUUID();
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -67,11 +68,17 @@ describeIntegration("ACCT-F11103 A/R readers count payment-less applications (re
       [invoiceId, companyId, customerId, invDisplay, loadId]
     );
     await insertInvoiceLine(db, companyId, invoiceId, 5000000, { loadId, status: "sent" });
+    // ACCT-F11103 part 2: relief names the JE whose Cr ar_control it is (header row is enough for the readers).
+    await db.query(
+      `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data)
+       VALUES ($1::uuid,$2::uuid,DATE '2026-02-10','F11103R relief source JE','posted','auto',true)`,
+      [reliefJeId, companyId]
+    );
     await db.query(
       `INSERT INTO accounting.payment_applications
-         (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id, applied_at)
-       VALUES ($1::uuid, NULL, $2::uuid, 2000000, 20000.00, 'invoice', $2::uuid, TIMESTAMPTZ '2026-02-10 12:00:00+00')`,
-      [companyId, invoiceId]
+         (operating_company_id, payment_id, invoice_id, amount_cents, amount_applied, target_kind, target_id, applied_at, source_journal_entry_id)
+       VALUES ($1::uuid, NULL, $2::uuid, 2000000, 20000.00, 'invoice', $2::uuid, TIMESTAMPTZ '2026-02-10 12:00:00+00', $3::uuid)`,
+      [companyId, invoiceId, reliefJeId]
     );
   });
 
@@ -113,5 +120,21 @@ describeIntegration("ACCT-F11103 A/R readers count payment-less applications (re
     const ev = a!.rows.find((r) => r.type === "payment");
     expect(ev?.amount_cents).toBe(-2000000);
     expect(ev?.reference).toBe(invDisplay);
+  });
+
+  it("ACCT-F11103 part 2: once the relief's source JE is reversed, every reader stops relieving the invoice", async () => {
+    const reversalId = randomUUID();
+    await db.query(
+      `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data, reverses_je_id)
+       VALUES ($1::uuid,$2::uuid,DATE '2026-02-12','F11103R reversal','posted','auto',true,$3::uuid)`,
+      [reversalId, companyId, reliefJeId]
+    );
+    await db.query(`UPDATE accounting.journal_entries SET reversed_by_je_id = $1::uuid WHERE id = $2::uuid`, [reversalId, reliefJeId]);
+    const r = await getArAgingReport({ userId: USER, operating_company_id: companyId, as_of_date: "2026-02-15", customer_id: customerId });
+    expect(r.customers.find((c) => c.customer_id === customerId)?.total_outstanding).toBe(5000000);
+    const s = await getCustomerStatementOfAccount({ userId: USER, operating_company_id: companyId, customer_id: customerId, from_date: "2026-01-01", to_date: "2026-02-15" });
+    expect(s!.closing_balance_cents).toBe(5000000);
+    const a = await getCustomerActivity({ userId: USER, operating_company_id: companyId, customer_id: customerId });
+    expect(a!.rows.find((x) => x.type === "payment")).toBeUndefined();
   });
 });
