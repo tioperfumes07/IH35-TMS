@@ -1,10 +1,10 @@
 {
-  "healthzSha": "d46ebf5",
-  "generated_at": "2026-11-04T20:23:26.500Z",
+  "healthzSha": "8580ce2",
+  "generated_at": "2026-11-04T22:23:46.466Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "d46ebf5",
+    "deployedSha": "8580ce2",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/04/2026, 02:23 PM CT",
+      "url": "",
+      "sha": "8580ce2031",
+      "committedAtIso": "2026-11-04T20:23:26Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/04/2026, 12:25 PM CT",
       "url": "",
       "sha": "d46ebf58db",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28653",
       "sha": "dc4bb87e1f",
       "committedAtIso": "2026-11-04T08:54:22-06:00"
-    },
-    {
-      "number": 28652,
-      "title": "FIX: a customer payment moves a factored invoice to partial/paid; A/R readers use the factoring identity (ACCT-F11099)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 08:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28652",
-      "sha": "6ad7b74372",
-      "committedAtIso": "2026-11-04T08:52:46-06:00"
     }
   ]
 }
