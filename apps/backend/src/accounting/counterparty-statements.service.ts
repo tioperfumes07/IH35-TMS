@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
 
 // V2 — COUNTERPARTY STATEMENTS (owner-requested 2026-09-05, STANDING-DIRECTIVES-2026-09-05.md §CC-1
 // item 5, "the wiring into statements ask"): a real per-counterparty statement of account —
@@ -86,6 +87,7 @@ async function customerOpeningBalanceCents(
         AND i.total_cents IS NOT NULL
         AND (i.voided_at IS NULL OR i.voided_at::date >= $3::date)
         AND i.status NOT IN ${AR_STATUS_EXCLUSIONS}
+        AND ${invoiceOnTradeArSql("i")}
         AND i.is_sample_data = false
     `,
     [operatingCompanyId, customerId, fromDateExclusive]
@@ -111,6 +113,7 @@ async function customerLedgerLines(
         AND i.total_cents IS NOT NULL
         AND (i.voided_at IS NULL OR i.voided_at::date > $4::date)
         AND i.status NOT IN ${AR_STATUS_EXCLUSIONS}
+        AND ${invoiceOnTradeArSql("i")}
         AND i.is_sample_data = false
     `,
     [operatingCompanyId, customerId, fromDate, toDate]

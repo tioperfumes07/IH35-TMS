@@ -3,6 +3,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { getProfitLossReport, type ProfitLossReport } from "./profit-loss.service.js";
 import { getBalanceSheetReport, type BalanceSheetReport } from "./balance-sheet.service.js";
 import { getCashFlowReport, type CashFlowReport } from "./cash-flow.service.js";
+import { invoiceRecoursedOffTradeArSql } from "./invoice-factored-identity.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSOLIDATED FINANCIAL STATEMENTS WITH INTERCOMPANY ELIMINATION (item 4)
@@ -273,7 +274,7 @@ async function readInvoices(
         -- (Dr factoring_recoursed_ar / Cr ar_control), so its receivable leg is 0 — same reason the
         -- whole aging family excludes it — while its REVENUE leg below stays (factored revenue is
         -- still revenue: revenue-gl-linkage status set is sent/partial/paid/factored).
-        CASE WHEN i.status = 'factored' THEN 0 ELSE GREATEST(
+        CASE WHEN i.status = 'factored' OR ${invoiceRecoursedOffTradeArSql("i")} THEN 0 ELSE GREATEST(
           COALESCE(i.total_cents, 0)
             - COALESCE((
                 SELECT SUM(COALESCE(pa.amount_cents, 0))

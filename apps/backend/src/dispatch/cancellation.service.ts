@@ -21,6 +21,7 @@ import { executeVoidCancel } from "../governance/void-cancel-executors.js";
 import { reverseDriverAdvanceInClientTx } from "../cash-advances/cash-advance-create.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 import { settleRevrecOnCancel } from "../accounting/revrec-delivery-posting/poster.service.js";
+import { invoiceRecoursedOffTradeArSql } from "../accounting/invoice-factored-identity.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -524,8 +525,10 @@ export async function finalizeLoadCancellationInClientTx(
       reversedAdvanceIds.push(adv.id);
     }
 
-    const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null }>(
-      `SELECT id::text, status::text, issue_date::text FROM accounting.invoices
+    // ACCT-F11099: a recoursed invoice a payment moved to partial / paid is still factored — the gate reads the factoring
+    // identity (accounting.invoice_recoursed_off_trade_ar), not the payment status alone.
+    const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null; recoursed: boolean }>(
+      `SELECT id::text, status::text, issue_date::text, ${invoiceRecoursedOffTradeArSql("accounting.invoices")} AS recoursed FROM accounting.invoices
         WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
           -- 443.113 AJK-11: the charge this cancellation EARNED (TONU) is not one of the load's original
           -- documents — identified by its canonical backlink, never by type/memo — so it is never unwound.
@@ -536,7 +539,7 @@ export async function finalizeLoadCancellationInClientTx(
           )`,
       [args.load_id, args.operating_company_id]
     );
-    const unvoidable = liveInvoicesForGate.rows.filter((r) => r.status === "paid" || r.status === "factored");
+    const unvoidable = liveInvoicesForGate.rows.filter((r) => r.status === "paid" || r.status === "factored" || r.recoursed === true);
     if (unvoidable.length > 0) {
       throw Object.assign(
         new Error(

@@ -7,6 +7,7 @@ import {
   listUnclearedCustomerPayments,
   type UnclearedDocument,
 } from "./uncleared-applied-documents.js";
+import { invoiceOnTradeArSql } from "./invoice-factored-identity.js";
 
 type ArAgingInvoiceRowDb = {
   customer_id: string;
@@ -135,6 +136,8 @@ export async function getArAgingReport(input: {
           AND i.total_cents IS NOT NULL
           AND (i.voided_at IS NULL OR i.voided_at::date > $2::date)
           AND i.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
+          -- ACCT-F11099: a recoursed invoice stays off trade A/R after a payment moves it to partial / paid.
+          AND ${invoiceOnTradeArSql("i")}
           -- VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE (GO-0009 G1) — AR sibling of the same ap-aging fix:
           -- a demo/test invoice has no real receivable. Mirrors balance-sheet.service.ts /
           -- trial-balance.service.ts's existing is_sample_data exclusion.
