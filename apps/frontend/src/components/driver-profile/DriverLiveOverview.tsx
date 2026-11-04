@@ -9,7 +9,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { FleetTruck } from "../../pages/maintenance/components/FleetHealthLine";
-import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsdTable, formatUsdCentsTable } from "../../lib/money";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import { settlementLabel } from "../../lib/settlementNumber";
@@ -33,7 +33,8 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   const pay = useQuery({ queryKey: ["driver-live-overview", "pre-settlement", companyId, driverId], queryFn: () => getPreSettlementForDriver(driverId, companyId), enabled: Boolean(companyId && driverId) });
   const position = positions.isError ? undefined : positions.data?.rows?.find((row) => row.unit_id === unitId);
   const settlement = pay.isError ? null : pay.data?.settlement;
-  const date = (value: unknown) => text(value) ? formatDateUS(text(value)) : "Not recorded";
+  // ROW 167: these are CALENDAR dates (CDL / medical / visa expiry) -- date-only, never shifted to Central.
+  const date = (value: unknown) => text(value) ? formatCalendarDateUS(text(value)) : "Not recorded";
   const b1Expiration = aggregate.driver.has_b1_visa || /^b[- ]?1$/i.test(text(aggregate.driver.visa_type)) ? aggregate.driver.visa_expires_at || aggregate.driver.b1_visa_expires_date : null;
   const documents = [
     { id: "cdl", label: "CDL", expires: date(aggregate.driver.cdl_expires_at), state: aggregate.driver.cdl_expires_at ? "Date recorded" : "Add date", to: driverProfileTabHref(driverId, "Safety file") },

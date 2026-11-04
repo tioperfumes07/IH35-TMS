@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c8c4836",
-  "generated_at": "2026-11-03T23:16:38.283Z",
+  "healthzSha": "150dd4b",
+  "generated_at": "2026-11-04T01:19:16.913Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c8c4836",
+    "deployedSha": "150dd4b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28563,
-      "title": "GUARD: unmatched-7d D066 z-index selftest plant (Codex inbox)",
+      "number": 28627,
+      "title": "FIX: deadhead engine never measures across overlapping loads of one truck (row 131 follow-up)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28563",
-      "sha": "c6a81c0713",
-      "committedAtIso": "2026-11-03T17:15:57-06:00"
+      "mergedAtCt": "11/03/2026, 07:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28627",
+      "sha": "a8e0debd05",
+      "committedAtIso": "2026-11-03T19:18:29-06:00"
     },
     {
-      "number": 28562,
-      "title": "FINDING: Codex independent live Manual JE repair acceptance",
+      "number": 28626,
+      "title": "MAIN-GREEN: frontend typecheck red on main — finish the U12 status string[] conversion",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28562",
-      "sha": "7844bc14de",
-      "committedAtIso": "2026-11-03T17:15:41-06:00"
+      "mergedAtCt": "11/03/2026, 07:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28626",
+      "sha": "150dd4b36a",
+      "committedAtIso": "2026-11-03T19:12:44-06:00"
     },
     {
-      "number": 28561,
-      "title": "FIX: Settlements week company-calendar ISO + selected-week deductions caption (Codex batch91/92)",
+      "number": 28624,
+      "title": "MAIN-GREEN: wire 5 orphan guards through claimed verify-steps 19903-19911",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28561",
-      "sha": "6d21ae2d12",
-      "committedAtIso": "2026-11-03T17:14:55-06:00"
+      "mergedAtCt": "11/03/2026, 07:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28624",
+      "sha": "e3355e3c80",
+      "committedAtIso": "2026-11-03T19:05:01-06:00"
     },
     {
-      "number": 28560,
-      "title": "FIX: org names keep acronyms and legal suffixes, one casing path; Users never \"User\"; Manual JE grid never overlaps; residual ISO dates (rows 223 225 229 233 241 219 247 205)",
+      "number": 28623,
+      "title": "FINDING: ACCT-F11070 — FIX: fuel-expense one-to-one; settlement 5787 non-diesel; invoice amount_paid derived from applications; composite memos (rows 127 128 129 130)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28560",
-      "sha": "5795dc9024",
-      "committedAtIso": "2026-11-03T17:14:31-06:00"
+      "mergedAtCt": "11/03/2026, 06:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28623",
+      "sha": "65b964dc5e",
+      "committedAtIso": "2026-11-03T18:43:30-06:00"
     },
     {
-      "number": 28559,
-      "title": "BUS: ROUND 7.30h — second live pass: 18 rows DONE-LIVE, 167 203 230 PARTIAL (live-fails-2)",
+      "number": 28622,
+      "title": "FIX: HOS writes to the survivor; shell events repointed; miles gaps (rows 93 116 131)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28559",
-      "sha": "961359d209",
-      "committedAtIso": "2026-11-03T17:12:53-06:00"
+      "mergedAtCt": "11/03/2026, 06:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28622",
+      "sha": "c6551dfa04",
+      "committedAtIso": "2026-11-03T18:36:51-06:00"
     },
     {
-      "number": 28558,
-      "title": "FINDING: Codex customer invoice drill pagination live failure",
+      "number": 28621,
+      "title": "FINDING: ACCT-F11073 every override records through recordOverride; Book Load hard-block owner/accountant; 425C and Reclassify use the shared button (row 28)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28558",
-      "sha": "c8c48364fa",
-      "committedAtIso": "2026-11-03T17:12:19-06:00"
+      "mergedAtCt": "11/03/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28621",
+      "sha": "1d2532d006",
+      "committedAtIso": "2026-11-03T18:31:50-06:00"
     },
     {
-      "number": 28557,
-      "title": "FIX: Manual JE Step 2 size=sm drops FILTER min-w so Class no longer overlaps Debit (#241 D065)",
+      "number": 28620,
+      "title": "MAIN-GREEN: move the UI4 step to claimed 19887 (duplicate verify-step 19851)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28557",
-      "sha": "8b231a11c6",
-      "committedAtIso": "2026-11-03T17:08:46-06:00"
+      "mergedAtCt": "11/03/2026, 06:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28620",
+      "sha": "a8b723ae95",
+      "committedAtIso": "2026-11-03T18:30:33-06:00"
     },
     {
-      "number": 28556,
-      "title": "FINDING: Codex settlement timezone counterexample and historical checks",
+      "number": 28619,
+      "title": "CLAIM-RESERVE: verify-step 19887 (LEAD) — re-home the UI4 guard off duplicate 19851",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28556",
-      "sha": "e88f65a839",
-      "committedAtIso": "2026-11-03T17:07:00-06:00"
+      "mergedAtCt": "11/03/2026, 06:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28619",
+      "sha": "9a409b9d85",
+      "committedAtIso": "2026-11-03T18:30:03-06:00"
     },
     {
-      "number": 28555,
-      "title": "FINDING: Codex settlement chart and reimbursement guard independent verification",
+      "number": 28618,
+      "title": "FINDING: ACCT-F11067 FIX: cash forecast carries card payables; one opening-cash figure; cash excludes card payables and Faro (rows 91 148 149)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28555",
-      "sha": "d2ee7cc63e",
-      "committedAtIso": "2026-11-03T17:04:07-06:00"
+      "mergedAtCt": "11/03/2026, 06:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28618",
+      "sha": "715231af55",
+      "committedAtIso": "2026-11-03T18:28:31-06:00"
     },
     {
-      "number": 28554,
-      "title": "BUS: ROUND 7.30g — live check: 26 rows DONE-LIVE, 5 FAILED-LIVE reopened (223 225 229 233 241), 2 cannot-check",
+      "number": 28617,
+      "title": "CLAIM-RESERVE: verify-step 19901 (LEAD) — rows 127-130 static guard (ACCT-F11070)",
       "state": "merged",
-      "mergedAtCt": "11/03/2026, 05:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28554",
-      "sha": "219c8f7201",
-      "committedAtIso": "2026-11-03T17:01:01-06:00"
+      "mergedAtCt": "11/03/2026, 06:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28617",
+      "sha": "574ec724fa",
+      "committedAtIso": "2026-11-03T18:27:00-06:00"
     }
   ]
 }

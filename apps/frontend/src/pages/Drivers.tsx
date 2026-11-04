@@ -10,7 +10,7 @@ import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
 import { listTours } from "../api/tourReadout";
 import { getActiveLiabilities } from "../api/liabilities";
-import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatCalendarDateUS } from "../lib/formatDate";
 import { formatUsd, formatUsdCents, formatQuantityTable } from "../lib/money";
 import {
   createDriverTeam,
@@ -99,11 +99,6 @@ function driverMatchesListSegment(status: string, segment: DriversListStatusId):
   return true;
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  return formatDateUS(value) || value;
-}
-
 function formatMoney(value: number) {
   // C-35 — formatUsd already refuses "-$0.00"; never prefix a literal "-" (that printed "-$0.00").
   return formatUsd(value);
@@ -135,7 +130,7 @@ const driversRosterColumns: ParityColumn<Driver>[] = [
     // GLOBAL-TABLE-ALIGNMENT (Block A): dates are numeric — right-align so they line up by place.
     className: "text-right",
     cellClass: "text-right",
-    render: (row) => formatDate(row.cdl_expires_at),
+    render: (row) => (formatCalendarDateUS(row.cdl_expires_at) || "—"),
   },
   {
     key: "status",
@@ -147,7 +142,7 @@ const driversRosterColumns: ParityColumn<Driver>[] = [
     label: "Hire Date",
     className: "text-right",
     cellClass: "text-right",
-    render: (row) => formatDate(row.hire_date),
+    render: (row) => (formatCalendarDateUS(row.hire_date) || "—"),
   },
 ];
 

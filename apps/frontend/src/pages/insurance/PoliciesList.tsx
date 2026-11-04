@@ -20,7 +20,7 @@ import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizar
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { BoardSection } from "../../components/v3/BoardSection";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -122,8 +122,8 @@ export function PoliciesList() {
     { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
     // Codex QA 11-02: total_premium_cents is premium, not a coverage limit — label must say Premium.
     { key: "total_premium_cents", label: "Premium", sortable: true, cellClass: "text-right tabular-nums", render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
-    { key: "effective_date", label: "Effective Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
-    { key: "expiry_date", label: "Expiry Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
+    { key: "effective_date", label: "Effective Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatCalendarDateUS(p.effective_date) },
+    { key: "expiry_date", label: "Expiry Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatCalendarDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
       <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
     ) },

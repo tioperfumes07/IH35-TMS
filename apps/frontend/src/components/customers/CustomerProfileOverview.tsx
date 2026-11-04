@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
@@ -83,7 +83,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
   const docCols: Array<ParityColumn<Doc>> = [
     { key: "original_filename", label: "File", sortable: true },
     { key: "document_date", label: "Doc date", sortable: true, render: (r) => (r.document_date ? formatDateUS(r.document_date) : "—") },
-    { key: "expiration_date", label: "Expires", sortable: true, render: (r) => (r.expiration_date ? formatDateUS(r.expiration_date) : "—") },
+    { key: "expiration_date", label: "Expires", sortable: true, render: (r) => (r.expiration_date ? formatCalendarDateUS(r.expiration_date) : "—") },
     { key: "linked_at", label: "Linked", sortable: true, render: (r) => formatDateUS(r.linked_at) },
   ];
   const contactCols: Array<ParityColumn<Contact>> = [

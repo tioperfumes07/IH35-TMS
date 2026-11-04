@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { PoolClient } from "pg";
 import { notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
@@ -107,8 +108,10 @@ export async function getDriversSettlementsReport(
         s.source_document_ref AS settlement_number,
         s.driver_id,
         COALESCE(CONCAT_WS(' ', d.first_name, d.last_name), 'Unknown') AS driver_name,
-        s.period_start,
-        s.period_end,
+        -- ACCT-F11062 item 3: DATE as its own 'YYYY-MM-DD' text, never a node-pg Date (String(Date).slice(0,10) was
+        -- "Wed Oct 21" -> the browser read year 2001). pgDateOnly below is the belt to this brace.
+        s.period_start::text AS period_start,
+        s.period_end::text AS period_end,
         s.status,
         COALESCE(ROUND(s.gross_pay::numeric * 100), 0)::bigint AS gross_cents,
         COALESCE(ROUND(s.deductions_total::numeric * 100), 0)::bigint AS deductions_cents,
@@ -167,8 +170,8 @@ export async function getDriversSettlementsReport(
     settlement_number: row.settlement_number != null ? String(row.settlement_number) : null,
     driver_id: String(row.driver_id),
     driver_name: String(row.driver_name),
-    period_start: String(row.period_start).slice(0, 10),
-    period_end: String(row.period_end).slice(0, 10),
+    period_start: (pgDateOnly(row.period_start) ?? ""),
+    period_end: (pgDateOnly(row.period_end) ?? ""),
     status: String(row.status),
     gross_cents: num(row.gross_cents),
     deductions_cents: num(row.deductions_cents),

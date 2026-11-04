@@ -6,6 +6,7 @@
  * A scenario is versioned (draft/active/superseded), never deleted: activating a new scenario
  * supersedes the company's current active one atomically in the same transaction.
  */
+import { pgDateOnly } from "../../lib/pg-date-only.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 
@@ -100,7 +101,7 @@ function mapScenarioRow(row: Record<string, unknown>): ScenarioRecord {
     id: String(row.id),
     name: String(row.name),
     period_basis: row.period_basis as "monthly" | "quarterly",
-    period_start: String(row.period_start).slice(0, 10),
+    period_start: (pgDateOnly(row.period_start) ?? ""),
     period_count: Number(row.period_count),
     notes: row.notes == null ? null : String(row.notes),
     status: row.status as ScenarioRecord["status"],

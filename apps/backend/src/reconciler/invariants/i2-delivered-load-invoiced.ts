@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../../lib/pg-date-only.js";
 import { finalActiveDeliveryDepartureAt } from "../../accounting/revrec-delivery-posting/poster.service.js";
 import { canonicalActiveLoadInvoiceExclusionCte, isDeliveredOrLaterStatus } from "../../dispatch/canonical-active-load-set.js";
 import type { Invariant, Queryable, ReconcilerException } from "../types.js";
@@ -103,7 +104,7 @@ export function i2ExceptionForRow(row: Row, departedAt: string | null): Reconcil
     since = departedAt;
     sinceSource = "mdata.load_stops.actual_departure_at";
   } else if (row.authorized_at) {
-    reason = `A manual delivery authorization was recorded on ${String(row.authorized_at).slice(0, 10)}, but no invoice has been issued.`;
+    reason = `A manual delivery authorization was recorded on ${(pgDateOnly(row.authorized_at) ?? "")}, but no invoice has been issued.`;
     since = String(row.authorized_at);
     sinceSource = "dispatch.manual_delivery_authorizations.authorized_at";
   } else {

@@ -42,7 +42,7 @@ import {
   type VendorProfileMeta,
 } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../lib/formatDate";
 import { userFacingApiError } from "../lib/api-error-message";
 import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
@@ -1121,7 +1121,7 @@ export function VendorDetailPage() {
                       />
                     ),
                   },
-                  { key: "issue_date", label: "Issue date", sortable: true, render: (c) => formatDateUS(c.issue_date) },
+                  { key: "issue_date", label: "Issue date", sortable: true, render: (c) => formatCalendarDateUS(c.issue_date) },
                   {
                     key: "amount_unapplied_cents",
                     label: "Unapplied",

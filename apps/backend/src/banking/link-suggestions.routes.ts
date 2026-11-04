@@ -13,6 +13,7 @@
  * than re-querying expenses/bills/invoices/settlements/loads a third time — see that file's own
  * header comment for why a fourth from-scratch candidate query was rejected.
  */
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -113,7 +114,7 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
           const ranked = rankLinkCandidates(
             {
               amount_cents: amount,
-              transaction_date: String(t.transaction_date).slice(0, 10),
+              transaction_date: (pgDateOnly(t.transaction_date) ?? ""),
               description: t.description,
               merchant_name: t.merchant_name,
             },
@@ -128,7 +129,7 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
           ).filter((c) => !rejectedKeys.has(`${t.id}:${c.obligation_type}:${c.obligation_id}`));
           return {
             bank_transaction_id: t.id,
-            transaction_date: String(t.transaction_date).slice(0, 10),
+            transaction_date: (pgDateOnly(t.transaction_date) ?? ""),
             amount_cents: amount,
             is_credit: t.is_credit,
             description: t.description,

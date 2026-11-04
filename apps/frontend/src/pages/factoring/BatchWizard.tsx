@@ -18,7 +18,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
@@ -106,7 +106,7 @@ export function BatchWizard() {
       {
         key: "issue_date",
         label: "Issue Date",
-        render: (invoice) => formatDateUS(invoice.issue_date) || "—",
+        render: (invoice) => formatCalendarDateUS(invoice.issue_date) || "—",
       },
       {
         key: "due_date",
