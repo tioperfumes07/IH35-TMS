@@ -50,7 +50,7 @@ if (!/listQuerySchema[\s\S]*operating_company_id:\s*z\.string\(\)\.uuid\(\)\.opt
 // drivers canonically owned by the selected company plus drivers with an active company authorization.
 const listScopedViaFilters = /filters\.push\(`operating_company_id = \$\$\{values\.length\}`\)/.test(text);
 function hasCanonicalListScope(source) {
-  return (source.match(/WHERE \(operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \(/g) ?? []).length === 2 &&
+  return (source.match(/WHERE \((?:mdata\.drivers\.)?operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \(/g) ?? []).length === 2 &&
     (source.match(/canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid/g) ?? []).length === 2 &&
     (source.match(/canonical_list_dca\.is_authorized = true/g) ?? []).length === 2 &&
     (source.match(/canonical_list_dca\.deactivated_at IS NULL/g) ?? []).length === 2;
@@ -63,13 +63,14 @@ if (!listScopedViaFilters && !listScopedViaTemplate) {
 if (process.argv.includes("--selftest")) {
   for (const token of [
     "WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (",
+    "WHERE (mdata.drivers.operating_company_id = $${ociIdx}::uuid OR EXISTS (",
     "canonical_list_dca.company_id = $${ociIdx}::uuid",
     "canonical_list_dca.is_authorized = true",
     "canonical_list_dca.deactivated_at IS NULL",
   ]) {
     if (hasCanonicalListScope(text.split(token).join("REMOVED"))) fail(`selftest mutation escaped: ${token}`);
   }
-  console.log("verify:driver-company-scope — selftest PASS (4/4)");
+  console.log("verify:driver-company-scope — selftest PASS (5/5)");
 }
 
 console.log("verify:driver-company-scope — OK");
