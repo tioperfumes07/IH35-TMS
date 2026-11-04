@@ -1735,18 +1735,24 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
       FROM banking.bank_transactions bt
       JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
       WHERE bt.operating_company_id = $2::uuid
+        AND bt.voided_at IS NULL
         AND (
           bt.matched_factoring_advance_id = $1::uuid
           -- ROUND 326 queue item 12: a batch wire matched to several advances carries ONE pointer (the first
           -- advance); every advance on it is found by its own reconciliation match row.
+          -- ACCT-F11071: only a LIVE match covers the advance. Undo leaves the row as match_state 'released'
+          -- (never deleted); the old "<> 'rejected'" test still counted it, so a re-match of the same advance to a
+          -- line on ANOTHER bank account could sweep 1090 into the released line's bank register (LIMIT 1, no order).
           OR EXISTS (
             SELECT 1 FROM banking.reconciliation_matches rm
              WHERE rm.bank_transaction_id = bt.id
                AND rm.ledger_entry_kind = 'factoring_advance'
                AND rm.ledger_entry_id::text = $1::text
-               AND rm.match_state <> 'rejected'
+               AND rm.voided_at IS NULL
+               AND rm.match_state IN ('auto_matched', 'user_matched')
           )
         )
+      ORDER BY (bt.matched_factoring_advance_id = $1::uuid) DESC NULLS LAST, bt.transaction_date DESC, bt.id
       LIMIT 1
     `,
     [advance.id, operatingCompanyId]
