@@ -1,3 +1,4 @@
+import { pgDateOnly } from "../lib/pg-date-only.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -144,7 +145,7 @@ function normalizeActionRow(row: RawActionRow): CsaMitigationActionRow {
     title: String(row.title),
     description: row.description ?? null,
     owner_user_id: row.owner_user_id ?? null,
-    due_date: String(row.due_date).slice(0, 10),
+    due_date: (pgDateOnly(row.due_date) ?? ""),
     status: String(row.status),
     priority: toFiniteNumber(row.priority),
     completed_at: row.completed_at ?? null,

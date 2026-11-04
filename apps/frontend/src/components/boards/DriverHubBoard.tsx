@@ -12,7 +12,7 @@ import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import { NumLink } from "./partyBoardKit";
 import { V3KpiTile } from "../v3";
 import { ApiError, apiRequest } from "../../api/client";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import "../../design/ih35-design-tokens.css";
@@ -104,7 +104,7 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
         <div>
           <div className="pb-panel-name">{p.driver.name}</div>
           <div className="pb-panel-meta">
-            Unit {p.driver.unit ?? "—"} · CDL {p.driver.cdl_state ?? "—"} · hired {p.driver.hire_date ? formatDateUS(p.driver.hire_date) : "—"} · <b>{p.driver.status}</b>
+            Unit {p.driver.unit ?? "—"} · CDL {p.driver.cdl_state ?? "—"} · hired {p.driver.hire_date ? formatCalendarDateUS(p.driver.hire_date) : "—"} · <b>{p.driver.status}</b>
           </div>
         </div>
         <Link className="pb-link" to={`/drivers/${p.driver.id}`}>Open full profile →</Link>

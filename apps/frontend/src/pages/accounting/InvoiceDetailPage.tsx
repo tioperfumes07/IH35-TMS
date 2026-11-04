@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { FactoringPurchaseLinksPanel } from "../../components/factoring/FactoringPurchaseLinksPanel";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
@@ -478,7 +478,7 @@ export function InvoiceDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Issue Date</span>
-            <span className="text-xs text-gray-900">{formatDateUS(invoice.issue_date)}</span>
+            <span className="text-xs text-gray-900">{formatCalendarDateUS(invoice.issue_date)}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Due Date</span>

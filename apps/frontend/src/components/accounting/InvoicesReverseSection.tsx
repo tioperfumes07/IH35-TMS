@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listInvoices } from "../../api/accounting";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -68,7 +68,7 @@ export function InvoicesReverseSection({
                 className="font-medium"
               />
               <span className="ml-2 text-xs text-gray-500">
-                {formatDateUS(row.issue_date)} · {formatMoneyCents(Number(row.total_cents ?? 0), "USD")} · {row.status}
+                {formatCalendarDateUS(row.issue_date)} · {formatMoneyCents(Number(row.total_cents ?? 0), "USD")} · {row.status}
               </span>
             </li>
           ))}

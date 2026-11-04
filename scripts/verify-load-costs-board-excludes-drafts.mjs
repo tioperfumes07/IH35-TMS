@@ -15,7 +15,8 @@ const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
 
 function violations(backend, current = normal, voided = history) {
   const errors = [];
-  if (!backend.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)')) errors.push('board does not mount the shared predicate');
+  // ACCT-F11062: the board statement is buildLoadCostsBoardSql(sortSql, showVoided); the route passes the request toggle.
+  if (!backend.includes('canonicalLoadCostsOpenClause("l", showVoided)') || !backend.includes('buildLoadCostsBoardSql(sortSql, parsed.data.show_voided)')) errors.push('board does not mount the shared predicate');
   if (!current.includes("l.status <> 'draft'") || !voided.includes("l.status <> 'draft'")) errors.push("draft must be excluded in both normal and show_voided scopes");
   // The draft exclusion must not be inside the show_voided ternary -- it is unconditional, unlike cancelled.
   const showVoidedLine = backend.match(/\$\{parsed\.data\.show_voided[^}]*\}/);

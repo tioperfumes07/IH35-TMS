@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
 import { CompanyViolationsPage } from "./CompanyViolationsPage";
@@ -213,7 +213,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
   // preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<FineRow>> = [
-    { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatDateUS(row.issued_date) },
+    { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatCalendarDateUS(row.issued_date) },
     { key: "subject_type", label: "Subject", sortable: true, render: (row) => String(row.subject_type ?? "—") },
     {
       // SAF-F18: show the driver NAME (from the server-side join) as a drill-through link — was a raw

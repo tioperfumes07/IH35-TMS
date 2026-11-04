@@ -1,4 +1,4 @@
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 
 function expColor(days: number | null | undefined) {
   if (days == null) return "text-[#4B5563]";
@@ -22,7 +22,7 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
         </div>
         <div className={expColor(days)}>
           {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}
-          Expires {formatDateUS(license.expiration as string | null) || "—"}
+          Expires {formatCalendarDateUS(license.expiration as string | null) || "—"}
           {days != null ? ` (${days}d)` : ""}
         </div>
         <div>Restrictions {String(license.restrictions ?? "—")}</div>

@@ -12,7 +12,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
@@ -189,7 +189,7 @@ export function SubmissionQueue() {
         key: "issue_date",
         label: "Issue Date",
         sortable: true,
-        render: (item) => (item.issue_date ? formatDateUS(item.issue_date) : "—"),
+        render: (item) => (item.issue_date ? formatCalendarDateUS(item.issue_date) : "—"),
       },
       {
         key: "total_cents",

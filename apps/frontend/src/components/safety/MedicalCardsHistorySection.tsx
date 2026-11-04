@@ -11,7 +11,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 
 /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId?: string }) {
@@ -93,8 +93,8 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
   const columns: Array<ParityColumn<SafetyMedicalCardRow>> = [
     ...(driverId ? [] : [{ key: "driver_name", label: "Driver", render: (row: SafetyMedicalCardRow) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> }]),
     { key: "card_number", label: "Card number", sortable: true },
-    { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatDateUS(row.issued_date) },
-    { key: "expiry_date", label: "Expires", sortable: true, render: (row) => formatDateUS(row.expiry_date) },
+    { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatCalendarDateUS(row.issued_date) },
+    { key: "expiry_date", label: "Expires", sortable: true, render: (row) => formatCalendarDateUS(row.expiry_date) },
     { key: "expiry_pill", label: "Status", sortable: true, render: (row) => <span className={row.expiry_pill === "red" ? "text-red-700" : "text-[#1F2A44]"}>{row.expiry_pill === "red" ? "Expired" : row.days_to_expiry == null ? "Unknown" : `${row.days_to_expiry} days`}</span> },
     {
       key: "document_count",

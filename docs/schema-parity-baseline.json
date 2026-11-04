@@ -7249,6 +7249,20 @@
       "updated_at",
       "voided_at"
     ],
+    "integrations.relay_driver_links": [
+      "confirmed_by",
+      "created_at",
+      "created_by",
+      "driver_id",
+      "evidence",
+      "id",
+      "operating_company_id",
+      "relay_integration_id",
+      "relay_name",
+      "void_reason",
+      "voided_at",
+      "voided_by"
+    ],
     "integrations.relay_fuel_transaction_lines": [
       "created_at",
       "discounted_price_per_unit_cents",

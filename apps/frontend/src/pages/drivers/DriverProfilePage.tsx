@@ -12,7 +12,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
@@ -745,14 +745,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                   {(profileDriver.cdl_number as string | null) ?? "—"} · {(profileDriver.cdl_state as string | null) ?? "—"}
                 </div>
                 <div>
-                  Expires {formatDateUS(profileDriver.cdl_expires_at as string | null) || "—"}
+                  Expires {formatCalendarDateUS(profileDriver.cdl_expires_at as string | null) || "—"}
                 </div>
               </div>
               <div>
                 <div className="font-semibold text-[#1F2A44]">Medical card</div>
                 <div>
                   {profileDriver.dot_medical_expires_at
-                    ? `Expires ${formatDateUS(profileDriver.dot_medical_expires_at as string)}`
+                    ? `Expires ${formatCalendarDateUS(profileDriver.dot_medical_expires_at as string)}`
                     : <span className="font-medium text-[#1F2A44]">Missing — no document</span>}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import type { BillPayment, ExpenseListRow, Invoice, Payment, VendorBill } from "../../api/accounting";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 
 function money(cents: number | string | null | undefined) {
@@ -23,7 +23,7 @@ export function invoiceBulkRowLabel(row: Invoice): string {
   const display = entityLabel(row.display_id, row.id, "Invoice");
   const customer = row.customer_name?.trim();
   const customerPart = customer ? ` · ${customer}` : "";
-  return `${display}${customerPart} · ${formatDateUS(row.issue_date)} · ${money(row.total_cents)}`;
+  return `${display}${customerPart} · ${formatCalendarDateUS(row.issue_date)} · ${money(row.total_cents)}`;
 }
 
 export function paymentBulkRowLabel(row: Payment): string {

@@ -31,7 +31,7 @@ import { RequiredDocumentsSection } from "./RequiredDocumentsSection";
 import { HOSViolationsTab } from "../safety/tabs/HOSViolationsTab";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { Modal } from "../../components/Modal";
 import { Button } from "../../components/Button";
@@ -62,7 +62,7 @@ function exportCsv(rows: ComplianceCredential[]) {
   const lines = [
     header.join(","),
     ...rows.map((r) =>
-      [r.type, r.owner_type, `"${r.owner_name.replace(/"/g, '""')}"`, formatDateUS(r.expiration_date), r.days_until_expiration ?? "", r.severity].join(",")
+      [r.type, r.owner_type, `"${r.owner_name.replace(/"/g, '""')}"`, formatCalendarDateUS(r.expiration_date), r.days_until_expiration ?? "", r.severity].join(",")
     ),
   ];
   const blob = new Blob([lines.join("\n")], { type: "text/csv" });
