@@ -21,6 +21,7 @@ import {
   reversePostedSourceTransactionInClientTx,
 } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { rollupSettlementPaidStatusInClientTx } from "../driver-finance/settlement-paid-rollup.service.js";
 import { insertTransferInClient, type TransferInput } from "../banking/transfers.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { vendorIdentitySetSql } from "./vendor-identity.js";
@@ -3747,6 +3748,10 @@ async function payBillRowInClientTx(
       source_table: "accounting.bills",
     });
 
+    // ACCT-F11081 — a bill payment is the settlement's payment document: roll the settlement's paid status from it in
+    // THIS transaction (real cash only; a settlement whose bills are not yet on its GL spine is rolled by the close).
+    await rollupSettlementPaidStatusInClientTx(client, input.operatingCompanyId, { billIds: [input.billId] }, userId);
+
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
@@ -4242,6 +4247,8 @@ export async function voidBillPaymentInClientTx(
       "warning",
       "P5-D2-BILL-PAYMENT"
     );
+    // ACCT-F11081 — voiding the payment document reopens a settlement this rollup had marked paid from it.
+    await rollupSettlementPaidStatusInClientTx(client as never, input.operatingCompanyId, { billIds: [String(payment.bill_id)] }, input.userId);
     return {
       ok: true,
       bill_id: payment.bill_id,

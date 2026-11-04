@@ -11,6 +11,7 @@ import {
   queuePayment,
   reopenManualPaid,
 } from "./settlement-payment.service.js";
+import { repairSettlementPaidStatus } from "./settlement-paid-rollup.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -68,6 +69,21 @@ async function parseCompanyQuery(req: FastifyRequest, reply: FastifyReply, userI
 }
 
 export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
+  // ACCT-F11081 — repair: roll every settlement's paid status from its real bill payments (never without a payment document).
+  app.post("/api/v1/driver-pay/settlements/repair-paid-status", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
+    try {
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const result = await repairSettlementPaidStatus(operatingCompanyId, user.uuid);
+      return { ok: true, examined: result.examined, marked_paid: result.marked_paid.length, reopened: result.reopened.length, result };
+    } catch (error) {
+      return mapServiceError(error, reply);
+    }
+  });
+
   app.post("/api/v1/driver-pay/settlements/:id/queue-payment", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
