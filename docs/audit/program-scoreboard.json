@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8c13793",
-  "generated_at": "2026-11-05T06:33:36.595Z",
+  "healthzSha": "a5e27b6",
+  "generated_at": "2026-11-05T08:28:36.133Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8c13793",
+    "deployedSha": "a5e27b6",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/05/2026, 12:33 AM CT",
+      "url": "",
+      "sha": "a5e27b62c0",
+      "committedAtIso": "2026-11-05T06:33:36Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/04/2026, 10:25 PM CT",
       "url": "",
       "sha": "8c13793c6c",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28659",
       "sha": "3493aeb897",
       "committedAtIso": "2026-11-04T09:25:57-06:00"
-    },
-    {
-      "number": 28658,
-      "title": "CLAIM-RESERVE: migration 202616410100, verify-step 19961 (ACCT-F11103 part 2 — applications need a live source)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 09:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28658",
-      "sha": "f26916bbd3",
-      "committedAtIso": "2026-11-04T09:23:05-06:00"
     }
   ]
 }
