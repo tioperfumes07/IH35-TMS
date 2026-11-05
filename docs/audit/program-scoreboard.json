@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8580ce2",
-  "generated_at": "2026-11-04T22:23:46.466Z",
+  "healthzSha": "2625069",
+  "generated_at": "2026-11-05T00:42:59.712Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8580ce2",
+    "deployedSha": "2625069",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/04/2026, 04:23 PM CT",
+      "url": "",
+      "sha": "2625069edb",
+      "committedAtIso": "2026-11-04T22:23:46Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/04/2026, 02:23 PM CT",
       "url": "",
       "sha": "8580ce2031",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28654",
       "sha": "875686c47b",
       "committedAtIso": "2026-11-04T08:56:29-06:00"
-    },
-    {
-      "number": 28653,
-      "title": "FIX: one settlement-line reinstate engine; SET-24 LINE-DUP keys on the load (ACCT-F11098)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 08:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28653",
-      "sha": "dc4bb87e1f",
-      "committedAtIso": "2026-11-04T08:54:22-06:00"
     }
   ]
 }
