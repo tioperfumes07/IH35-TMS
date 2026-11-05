@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ef9d621",
-  "generated_at": "2026-11-05T04:25:06.023Z",
+  "healthzSha": "8c13793",
+  "generated_at": "2026-11-05T06:33:36.595Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ef9d621",
+    "deployedSha": "8c13793",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/04/2026, 10:25 PM CT",
+      "url": "",
+      "sha": "8c13793c6c",
+      "committedAtIso": "2026-11-05T04:25:06Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/04/2026, 08:27 PM CT",
       "url": "",
       "sha": "ef9d62162e",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28658",
       "sha": "f26916bbd3",
       "committedAtIso": "2026-11-04T09:23:05-06:00"
-    },
-    {
-      "number": 28657,
-      "title": "FIX: sent invoice corrected by credit memo (QBO rule) + driver bill re-prices to its settlement line (13693)",
-      "state": "merged",
-      "mergedAtCt": "11/04/2026, 09:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28657",
-      "sha": "33c2dc65a4",
-      "committedAtIso": "2026-11-04T09:20:21-06:00"
     }
   ]
 }
