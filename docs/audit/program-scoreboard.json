@@ -1,10 +1,10 @@
 {
-  "healthzSha": "892c9c5",
-  "generated_at": "2026-11-06T16:24:43.125Z",
+  "healthzSha": "72f0e34",
+  "generated_at": "2026-11-06T18:26:19.676Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "892c9c5",
+    "deployedSha": "72f0e34",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/06/2026, 10:24 AM CT",
+      "url": "",
+      "sha": "72f0e343e5",
+      "committedAtIso": "2026-11-06T16:24:43Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/06/2026, 08:24 AM CT",
       "url": "",
       "sha": "892c9c57dd",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "2a8e15f90c",
       "committedAtIso": "2026-11-05T22:24:09Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/05/2026, 02:24 PM CT",
-      "url": "",
-      "sha": "8a28229dce",
-      "committedAtIso": "2026-11-05T20:24:04Z"
     }
   ]
 }
