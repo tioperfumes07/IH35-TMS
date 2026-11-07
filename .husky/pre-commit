@@ -93,6 +93,22 @@ if echo "$CHANGED_FILES" | grep -qE '^docs/module-completion/[^/]+\.json$'; then
   node scripts/generate-module-completion-data.mjs --check || exit 1
 fi
 
+# DERIVED_BATTERY_DOC_AUTOREGEN (2026-11-04 MAIN-GREEN)
+# docs/audit/USMCA-EXHAUSTIVE-BATTERY.md is generated from the route sources
+# (scripts/usmca-create-surface-inventory.mjs). A route add/remove/move left it stale on main
+# (#28657) and turned required-live-load-guard red for every PR. Regenerate (0.5s) and stage it
+# whenever a route/UI source or the inventory script is in the commit. CI
+# verify-derived-artifact-freshness remains the authority.
+if echo "$CHANGED_FILES" | grep -qE '^(apps/backend/src/.*\.ts|apps/frontend/src/.*\.tsx|scripts/usmca-create-surface-inventory\.mjs|scripts/gen-usmca-battery-doc\.mjs)$' \
+  && command -v node >/dev/null 2>&1 && [ -f scripts/gen-usmca-battery-doc.mjs ]; then
+  if node scripts/gen-usmca-battery-doc.mjs >/dev/null 2>&1; then
+    rm -f .tmp-usmca-inventory.json
+    git add docs/audit/USMCA-EXHAUSTIVE-BATTERY.md
+  else
+    echo "WARN: gen-usmca-battery-doc.mjs failed; CI verify-derived-artifact-freshness will decide"
+  fi
+fi
+
 # TYPECHECK_SKIP_DOCS_ONLY (HARD — worktree hook 2026-08-27)
 # Fresh git worktrees often have no node_modules/.bin/tsc. `npm run typecheck` then exits 127
 # and blocks docs/bus GO packets for 20–30 minutes. CI still typechecks. Skip only when the

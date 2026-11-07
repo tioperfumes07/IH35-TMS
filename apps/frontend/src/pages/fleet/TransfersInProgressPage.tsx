@@ -60,7 +60,7 @@ export function TransfersInProgressPage() {
         ),
       },
       {
-        key: "dropoff_ack",
+        key: "dropoff_ack_at",
         label: "Dropoff ack",
         sortable: true,
         sortValue: (row) => row.dual_ack?.dropoff_ack_at ?? "",
@@ -68,7 +68,7 @@ export function TransfersInProgressPage() {
           row.dual_ack?.dropoff_ack_at ? formatDateTimeUS(row.dual_ack.dropoff_ack_at) || "—" : "Pending",
       },
       {
-        key: "pickup_ack",
+        key: "pickup_ack_at",
         label: "Pickup ack",
         sortable: true,
         sortValue: (row) => row.dual_ack?.pickup_ack_at ?? "",
