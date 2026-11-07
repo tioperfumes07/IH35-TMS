@@ -26,6 +26,7 @@ function client(
   matchedDriverId: string | null = "d1",
   loadRows: unknown[] = [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }],
   twinRows: unknown[] = [],
+  crossRailRows: unknown[] = [],
 ) {
   const calls: string[] = [];
   return {
@@ -35,6 +36,8 @@ function client(
         calls.push(sql);
         // 443.136 — the duplicate-purchase rule (fuel/relay-duplicate-purchase.service.ts): an already-posted Relay twin.
         if (sql.includes("JOIN s b ON")) return { rows: twinRows };
+        // LEAD 443.133 A / ACCT-F11105 — the cross-rail rows of this fill (same-truck pair + same ticket on any truck): none here.
+        if (sql.includes("/* cross_rail_rows */")) return { rows: crossRailRows };
         if (sql.includes("FROM integrations.relay_fuel_transactions r")) {
           return {
             rows: [
@@ -104,6 +107,14 @@ describe("Relay fill posting — one leg per product", () => {
       [{ fill_id: "fill-0", transaction_id: "txn_AJyrss5NZ141mg" }]);
     await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_duplicate_purchase" });
     await expect(postFuelFillOnBankMatch(c, input)).rejects.toThrow(/fill-0 txn_AJyrss5NZ141mg/);
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it("ACCT-F11105 — a purchase another rail already records (same ticket, any truck) is refused by name and never posts", async () => {
+    const { c, calls } = client(27340, [{ fuel_type: "diesel", cents: 27340 }], [], "daily_pull", "d1", undefined, [],
+      [{ fuel_transaction_id: "dream-99671555", card: "DREAMLINE" }]);
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_matches_other_rail_fill" });
+    expect(calls.some((q) => q.includes("CROSS JOIN LATERAL") && q.includes("total_retail_price_cents"))).toBe(true);
     expect(mockPost).not.toHaveBeenCalled();
   });
 

@@ -96,6 +96,7 @@ jobs:
             scripts/verify-settlement-net-equals-document.mjs \
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
             scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
+            scripts/verify-relay-fill-not-recorded-twice.mjs \
             scripts/verify-acc13-no-test-accounts-in-usmca-coa.mjs \
             scripts/verify-dispute-window-unified.mjs \
             scripts/verify-driver-bill-settlement-link.mjs \

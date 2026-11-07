@@ -17569,5 +17569,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-qbo-bill-payment-evidence-readonly"
+  },
+  "19969": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-relay-fill-not-recorded-twice"
   }
 }
