@@ -42,6 +42,8 @@
 
 
 
+import { clearedBankLine } from "./cleared-bank-line.sql.js";
+
 type QueryClient = {
 
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -102,7 +104,7 @@ async function sumLedgerBalanceCents(
 
         AND bank_account_id = ANY($2::uuid[])
 
-        AND voided_at IS NULL
+        AND ${clearedBankLine("bank_transactions")}
 
       GROUP BY bank_account_id
 
@@ -272,7 +274,7 @@ export async function sumAuthoritativeDepositoryCashCents(
 
         AND ba.plaid_item_id IS NULL
 
-        AND bt.voided_at IS NULL
+        AND ${clearedBankLine("bt")}
 
       ${opts.hideFilterOnBaAlias}
       ${bankCashLedgerFilterSql("ba")}
@@ -430,7 +432,7 @@ export async function listAuthoritativeDepositoryCashByAccount(
       SELECT ba.id::text, COALESCE(ba.display_name, ba.account_name) AS display_name,
         COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint AS cents
       FROM banking.bank_accounts ba
-      JOIN banking.bank_transactions bt ON bt.bank_account_id = ba.id AND bt.operating_company_id = $1::uuid AND bt.voided_at IS NULL
+      JOIN banking.bank_transactions bt ON bt.bank_account_id = ba.id AND bt.operating_company_id = $1::uuid AND ${clearedBankLine("bt")}
       WHERE ba.operating_company_id = $1::uuid
         AND ba.account_class = 'depository'
         AND ba.is_active = true

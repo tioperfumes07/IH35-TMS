@@ -16,6 +16,7 @@ import { naturalSignFactor } from "../accounting/natural-sign.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "../accounting/ledger-membership.js";
+import { clearedBankLine } from "./cleared-bank-line.sql.js";
 
 export type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -43,7 +44,7 @@ export function classifyTieout(input: {
 const FEED_ONLY_SQL = `
   FROM banking.bank_transactions bt
  WHERE bt.operating_company_id = $1::uuid AND bt.bank_account_id = $2::uuid
-   AND bt.voided_at IS NULL AND bt.merged_into_bank_transaction_id IS NULL AND COALESCE(bt.pending, false) = false
+   AND ${clearedBankLine("bt")}
    AND bt.matched_journal_entry_id IS NULL
    AND bt.transaction_date <= $4::date
    AND bt.transaction_date >= COALESCE((

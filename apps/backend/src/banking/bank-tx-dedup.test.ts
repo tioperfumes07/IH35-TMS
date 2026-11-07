@@ -79,6 +79,8 @@ describe("bank-tx-dedup", () => {
     const client = {
       async query(sql: string, values?: unknown[]) {
         queries.push({ sql, values });
+        // ACCT-F11100: no older pending generation in this fixture.
+        if (sql.includes("superseded_pending_generation")) return { rows: [], rowCount: 0 };
         if (sql.includes("matched_journal_entry_id") && sql.includes("SELECT")) {
           return {
             rows: [{ id: "pending-row", matched_journal_entry_id: null, reconciled_obligation_id: null, categorization_gl_account_id: null }],

@@ -27,7 +27,7 @@ export type MergeManualStubResult =
 
 export type RetirePlaidPendingResult =
   | { retired: false; reason: "no_pending_predecessor" | "financially_linked" }
-  | { retired: true; pending_id: string };
+  | { retired: true; pending_id: string; orphan_pending_ids?: string[] };
 
 export type SupersedePlaidPendingResult =
   | { superseded: false; reason: "pending_not_found" | "no_exact_posted_candidate" | "multiple_exact_posted_candidates" | "financially_linked" }
@@ -245,7 +245,115 @@ export async function retirePlaidPendingPredecessor(
     survivorId: args.postedRowId,
     operatingCompanyId: args.operatingCompanyId,
   });
-  return { retired: true, pending_id: pending.id };
+  // ACCT-F11100 — the bank re-issued this pending once before Plaid posted it; retire that older generation too.
+  const orphans = await retireOrphanPendingGenerations(client, {
+    retiredPendingId: pending.id,
+    postedRowId: args.postedRowId,
+    postedPlaidTransactionId: args.postedPlaidTransactionId,
+    operatingCompanyId: args.operatingCompanyId,
+    bankAccountId: args.bankAccountId,
+  });
+  return orphans.length > 0
+    ? { retired: true, pending_id: pending.id, orphan_pending_ids: orphans }
+    : { retired: true, pending_id: pending.id };
+}
+
+/**
+ * ACCT-F11100 — ROOT CAUSE of the stale pending duplicates (measured on prod USMCA 11-04).
+ *
+ * Bank of America re-issues a card/payment pending ONCE before it posts, under a new Plaid id and a new
+ * description format, and Plaid sends NO `removed` event for the first generation:
+ *   gen 1  pending  "PURCHASE 10/28 FUEL AMERICA TRAVEL CE"                 (b9470c21, created 10/28 16:17Z)
+ *   gen 2  pending  "PURCHASE FUEL AMERICA TRAV LAREDO TX ON 10/28"         (0bd89507, created 10/29 16:41Z)
+ *   posted          "CHECKCARD 1028 FUEL AMERICA TRAV LAREDO TX …"          (05e4f91a, pending_transaction_id → gen 2)
+ * retirePlaidPendingPredecessor retired gen 2 only; gen 1 stayed live and was counted beside the posted line
+ * until sweepStalePlaidPendings voided it 7 calendar days later. Of the 70 gen-1 ("PURCHASE MM/DD …") pending
+ * rows ingested on USMCA since 09-20, 33 were left for that sweep.
+ *
+ * When the posted row lands and retires its named pending, the SAME engine now retires the one older
+ * generation of that pending: same account, same amount and direction, same leading verb, created at an
+ * EARLIER sync, whose card date ("MM/DD" after the verb) equals the retired pending's " ON MM/DD" date.
+ * The rule only fires when the retired pending is a re-issue (its description ends " ON MM/DD") and the
+ * candidate is not; a candidate that shares the merchant's first word is preferred, oldest first, one per
+ * posted line. Financially linked rows are never touched. Void + merged_into, never DELETE.
+ * $1 retired pending id · $2 posted row id · $3 posted plaid txn id · $4 company · $5 bank account.
+ */
+export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = `
+  WITH retired AS (
+    SELECT r.id, r.amount_cents, r.is_credit, r.transaction_date, r.description, r.created_at,
+           substring(r.description from ' ON ([0-9]{2}/[0-9]{2})[[:space:]]*$') AS card_date
+      FROM banking.bank_transactions r
+     WHERE r.id = $1::uuid
+       AND r.operating_company_id = $4::uuid
+       AND r.bank_account_id = $5::uuid
+  ),
+  orphan AS (
+    SELECT o.id
+      FROM banking.bank_transactions o
+      JOIN retired r ON r.card_date IS NOT NULL
+     WHERE o.operating_company_id = $4::uuid
+       AND o.bank_account_id = $5::uuid
+       AND o.id <> r.id
+       AND o.id <> $2::uuid
+       AND o.source = 'plaid'
+       AND o.pending = true
+       AND o.voided_at IS NULL
+       AND o.merged_into_bank_transaction_id IS NULL
+       AND o.matched_journal_entry_id IS NULL
+       AND o.reconciled_obligation_id IS NULL
+       AND o.categorization_gl_account_id IS NULL
+       AND o.amount_cents = r.amount_cents
+       AND o.is_credit = r.is_credit
+       AND o.created_at < r.created_at
+       AND o.description !~ ' ON [0-9]{2}/[0-9]{2}[[:space:]]*$'
+       AND split_part(o.description, ' ', 1) = split_part(r.description, ' ', 1)
+       AND substring(o.description from '^[A-Za-z]+(?: [A-Za-z]+)? ([0-9]{2}/[0-9]{2})(?:[[:space:]]|$)') = r.card_date
+       AND o.transaction_date BETWEEN r.transaction_date - 7 AND r.transaction_date + 7
+     ORDER BY (strpos(upper(r.description),
+                      upper(substring(o.description from '[0-9]{2}/[0-9]{2}[[:space:]]+([^[:space:]]+)'))) > 0) DESC NULLS LAST,
+              o.created_at, o.id
+     LIMIT 1
+       FOR UPDATE OF o SKIP LOCKED
+  )
+  UPDATE banking.bank_transactions t
+     SET voided_at = now(),
+         voided_reason = 'replaced_by_plaid_posted:' || $3::text,
+         merged_into_bank_transaction_id = $2::uuid,
+         dedup_hash = NULL,
+         notes = trim(BOTH ';' FROM concat_ws(';', t.notes, 'superseded_pending_generation:' || $1::text)),
+         updated_at = now()
+    FROM orphan
+   WHERE t.id = orphan.id
+     AND t.pending = true
+     AND t.voided_at IS NULL
+  RETURNING t.id`;
+
+export async function retireOrphanPendingGenerations(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
+  args: {
+    retiredPendingId: string;
+    postedRowId: string;
+    postedPlaidTransactionId: string;
+    operatingCompanyId: string;
+    bankAccountId: string;
+  }
+): Promise<string[]> {
+  const res = await client.query(RETIRE_ORPHAN_PENDING_GENERATION_SQL, [
+    args.retiredPendingId,
+    args.postedRowId,
+    args.postedPlaidTransactionId,
+    args.operatingCompanyId,
+    args.bankAccountId,
+  ]);
+  const ids = (res.rows as Array<{ id?: unknown }>).map((r) => String(r?.id ?? "")).filter(Boolean);
+  for (const id of ids) {
+    await repointReconciliationMatchesOnPlaidMerge(client, {
+      pendingId: id,
+      survivorId: args.postedRowId,
+      operatingCompanyId: args.operatingCompanyId,
+    });
+  }
+  return ids;
 }
 
 /** Merge a single manual receipt/intake row into a Plaid-backed row and void the stub (never DELETE). */
