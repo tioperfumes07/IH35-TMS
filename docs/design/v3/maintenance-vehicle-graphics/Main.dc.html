@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Health Line</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EDF2}
+a{color:#14213D}a:hover{color:#2456C7}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin .8s linear infinite}
+</style>
+</helmet>
+<div style="font-family: 'Barlow', system-ui, sans-serif; color: #101828; background: #E9EDF2; box-sizing: border-box; padding: 20px 28px 28px">
+<div style="max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+<h1 style="margin: 0; font: 800 28px/1 'Barlow Semi Condensed'; color: #14213D">Fleet Health Line</h1>
+<span style="font-size: 13px; color: #4A5A70">Each truck on its 25,000-mile road to the next PM · live Samsara odometer · 12,000 mi / month</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px; background: #FFFFFF; box-shadow: 0 1px 0 #D5DCE5"><span style="font: 800 20px 'Barlow Semi Condensed'; color: {{t.color}}">{{t.n}}</span><span style="font: 700 11px 'Barlow Semi Condensed'; letter-spacing: .08em; color: #33415A">{{t.label}}</span></span>
+</sc-for>
+<button type="button" style="height: 36px; padding: 0 16px; border-radius: 9px; border: 0; background: #14213D; font: 600 13px 'Barlow'; color: #FFFFFF">New work order</button>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border-radius: 14px; box-shadow: 0 1px 0 #D5DCE5; overflow-x: auto">
+<div style="min-width: 1200px">
+<div style="display: grid; grid-template-columns: 70px 150px 150px minmax(0, 1fr) 96px 190px 112px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #E3E8EF; font: 700 10.5px 'Barlow Semi Condensed'; letter-spacing: .12em; color: #5B6B7E">
+<div>UNIT</div><div>TRACTOR</div><div>MAKE · MODEL</div><div>ROAD TO NEXT PM · 0 — 20K PLAN — 25K</div><div>NEXT PM</div><div>LOCATION</div><div>STATUS</div>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="27">
+<div style="display: grid; grid-template-columns: 70px 150px 150px minmax(0, 1fr) 96px 190px 112px; align-items: center; height: 56px; padding: 0 16px; border-bottom: 1px solid #F0F3F7">
+<a href="TruckProfile.dc.html" style="font: 800 17px 'Barlow Semi Condensed'; text-decoration: none; color: #14213D">{{r.unit}}</a>
+
+<svg width="122" height="52" viewBox="-14 96 314 128" role="img" aria-label="{{r.aria}}">
+<sc-if value="{{r.moving}}" hint-placeholder-val="{{false}}">
+<path d="M-12 130h16M-12 160h22M-12 190h16" stroke="#9AA8B8" stroke-width="5" stroke-linecap="round"></path>
+</sc-if>
+<g transform="rotate(-90 150 160)">
+<g>
+<ellipse cx="150" cy="160" rx="62" ry="138" fill="#1A2533" opacity=".28"></ellipse>
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="{{r.cab}}"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+<rect x="113" y="160" width="74" height="40" rx="6" fill="{{r.cab}}"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+<sc-if value="{{r.isAero}}" hint-placeholder-val="{{true}}">
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="{{r.cab}}"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+</sc-if>
+<sc-if value="{{r.isClassic}}" hint-placeholder-val="{{false}}">
+<path d="M117 200h66l-1 12h-64z" fill="#A9C8E3"></path>
+<rect x="102" y="234" width="14" height="30" rx="4" fill="#141B26"></rect><rect x="184" y="234" width="14" height="30" rx="4" fill="#141B26"></rect>
+<rect x="119" y="212" width="62" height="72" rx="3" fill="{{r.cab}}"></rect>
+<path d="M135 214v68M165 214v68" stroke="#FFFFFF" stroke-opacity=".22" stroke-width="2"></path>
+<rect x="121" y="282" width="58" height="8" rx="2" fill="#D3DBE5"></rect>
+<circle cx="113" cy="276" r="5" fill="#FDE68A" stroke="#B3B9C2" stroke-width="1.5"></circle><circle cx="187" cy="276" r="5" fill="#FDE68A" stroke="#B3B9C2" stroke-width="1.5"></circle>
+<rect x="126" y="186" width="5" height="18" rx="2.5" fill="#D3DBE5"></rect><rect x="169" y="186" width="5" height="18" rx="2.5" fill="#D3DBE5"></rect>
+</sc-if>
+<sc-if value="{{r.isSloped}}" hint-placeholder-val="{{false}}">
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="{{r.cab}}"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+</sc-if>
+</g>
+</g>
+<sc-if value="{{r.alert}}" hint-placeholder-val="{{false}}">
+<circle cx="286" cy="110" r="13" fill="{{r.cab}}" stroke="#FFFFFF" stroke-width="3.5"></circle>
+<path d="M281 115l5.5-5.5M288 105.5a2.8 2.8 0 1 0 3.5 3.5" stroke="#FFFFFF" stroke-width="2.6" fill="none" stroke-linecap="round"></path>
+</sc-if>
+</svg>
+
+<div style="display: flex; flex-direction: column; gap: 1px"><span style="font: 700 13px 'Barlow'; color: #14213D">{{r.make}}</span><span style="font: 500 11.5px 'IBM Plex Mono'; color: #5B6B7E">{{r.odo}}</span></div>
+
+<div style="padding-right: 22px; display: flex; flex-direction: column; gap: 2px">
+<svg width="100%" height="16" viewBox="0 0 600 16" preserveAspectRatio="none" aria-hidden="true">
+<rect x="0" y="4" width="600" height="8" rx="4" fill="#DCE2EA"></rect>
+<rect x="0" y="4" width="{{r.fillW}}" height="8" rx="4" fill="{{r.road}}"></rect>
+<rect x="479" y="1" width="2.5" height="14" fill="#C76A0A"></rect>
+<rect x="596" y="0" width="4" height="16" fill="#C0262D"></rect>
+</svg>
+<div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #4A5A70"><span>{{r.sinceLabel}}</span><span style="font-weight: 700; color: {{r.leftColor}}">{{r.leftLabel}}</span></div>
+</div>
+
+<span style="font: 800 15px 'Barlow Semi Condensed'; color: {{r.leftColor}}">{{r.nextPm}}</span>
+<span style="font-size: 12px; color: #33415A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.loc}}</span>
+<span style="display: inline-flex; align-items: center; gap: 5px; justify-self: start; padding: 3px 9px; border-radius: 999px; background: {{r.stBg}}; color: {{r.stFg}}; font: 700 11.5px 'Barlow'"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{r.cab}}"></span>{{r.status}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="font-size: 11.5px; font-weight: 600; color: #8A4B06">Live: units, make/model/year, odometers and locations (Samsara + unit records, 10-22-2026 12:45 CT). Illustrative: the 6 PM positions shown — USMCA has 0 PM records today; every other truck shows "Enter last PM" until its last PM odometer is entered. Tractors drawn from above by body style (long-hood aero, classic square-hood, sloped-hood); no manufacturer logos.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var PM = 25000, PER_DAY = 400;
+    var src = [
+      ['T120','FREIGHTLINER CASCADIA','2009',null,'Webb County TX',false,null],
+      ['T122','PETERBILT 579','2015',null,'Laredo yard',false,null],
+      ['T124','PETERBILT 579','2015',815328,'Laredo yard',false,26350],
+      ['T145','MACK ANTHEM','2022',617435,'Laredo yard',false,null],
+      ['T147','MACK ANTHEM','2022',404486,'Laredo yard',false,null],
+      ['T148','MACK ANTHEM','2022',651054,'I-20 · Jackson MS',true,21800],
+      ['T149','PETERBILT 567','2020',null,'Black Diamond Cir, Laredo',false,null],
+      ['T150','PETERBILT 579','2022',518230,'Black Diamond Cir, Laredo',false,null],
+      ['T151','PETERBILT 579','2022',467351,'Black Diamond Cir, Laredo',false,null],
+      ['T152','PETERBILT 579','2022',757895,'Laredo yard',false,22410,true],
+      ['T154','VOLVO VNL','2022',389416,'Nuevo Laredo, TAM',false,null],
+      ['T155','VOLVO VNL','2022',397764,'Prescott AR',false,null],
+      ['T156','VOLVO VNL','2022',579205,'Atoka OK',false,9800],
+      ['T157','VOLVO VNL','2022',423996,'Black Diamond Cir, Laredo',false,null],
+      ['T160','MACK ANTHEM','2023',544013,'Laredo yard',false,null],
+      ['T161','MACK ANTHEM','2023',573600,'Brookshire TX',false,null],
+      ['T163','MACK ANTHEM','2023',580537,'Laredo yard',false,null],
+      ['T164','MACK ANTHEM','2023',465969,'Essex County MA',false,null],
+      ['T166','PETERBILT 389','2023',366907,'Black Diamond Cir, Laredo',false,null],
+      ['T168','MACK ANTHEM','2023',463598,'Laredo yard',false,null],
+      ['T170','VOLVO VNR','2024',405208,'Laredo yard',false,null],
+      ['T171','VOLVO VNR','2024',447042,'St. Tammany Parish LA',false,null],
+      ['T173','VOLVO VNR','2024',439236,'Encinal TX',false,null],
+      ['T174','VOLVO VNR','2023',464453,'Kankakee IL',false,null],
+      ['T175','PETERBILT 579','2024',459696,'Vinton LA',false,6200],
+      ['T176','PETERBILT 579','2024',439715,'Brotherton TN',false,null],
+      ['T177','PETERBILT 579','2024',505542,'Hwy 71 · CO',true,14900]
+    ];
+    var styleOf = function (mk) { return /389/.test(mk) ? 'classic' : /VOLVO|CASCADIA/.test(mk) ? 'sloped' : 'aero'; };
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var day = function (d) { var t = new Date(2026, 9, 22); t.setDate(t.getDate() + d); return M[t.getMonth()] + ' ' + t.getDate(); };
+    var C = {
+      ok:   ['#1F8A4C','#3FB070','#2E9E5E','#E3F4EA','#14532D','Healthy'],
+      soon: ['#C76A0A','#E9932F','#D97B16','#FDF0DC','#7A3E04','PM soon'],
+      over: ['#C0262D','#E24C52','#C0262D','#FBE3E4','#7F1D1D','PM overdue'],
+      shop: ['#2456C7','#4C7BE6','#2F63D6','#E2EAFB','#1E3A8A','In shop'],
+      none: ['#5B6B7E','#8496AA','#5B6B7E','#E6EAF0','#1E293B','Enter last PM']
+    };
+    var cnt = { over: 0, soon: 0, shop: 0, none: 0, ok: 0 };
+    var rows = src.map(function (s, i) {
+      var since = s[6], known = since != null, left = known ? PM - since : 0, days = Math.round(left / PER_DAY);
+      var k = s[7] ? 'shop' : !known ? 'none' : left < 0 ? 'over' : days <= 14 ? 'soon' : 'ok';
+      cnt[k]++;
+      var c = C[k], st = styleOf(s[1]);
+      return {
+        i: i, unit: s[0], make: s[1], odo: (s[3] ? fmt(s[3]) + ' mi · ' : 'no odometer · ') + s[2], loc: s[4],
+        cab: c[0], hi: c[1], road: c[2], stBg: c[3], stFg: c[4], status: c[5],
+        isAero: st === 'aero', isClassic: st === 'classic', isSloped: st === 'sloped',
+        spin: s[5] ? 'spin' : '', moving: s[5], alert: k === 'over' || k === 'soon' || k === 'shop',
+        aria: s[0] + ' ' + s[1] + ', ' + c[5],
+        fillW: known ? Math.max(8, Math.min(600, Math.round(since / PM * 600))) : 0,
+        sinceLabel: known ? fmt(since) + ' mi since PM' : 'Last PM not entered',
+        leftLabel: !known ? '' : left < 0 ? fmt(-left) + ' over' : fmt(left) + ' to go',
+        leftColor: !known ? '#5B6B7E' : left < 0 ? '#C0262D' : days <= 14 ? '#C76A0A' : '#1F8A4C',
+        nextPm: !known ? '—' : left < 0 ? 'Overdue' : day(days)
+      };
+    });
+    return {
+      rows: rows,
+      tiles: [
+        { n: cnt.over, label: 'OVERDUE', color: '#C0262D' },
+        { n: cnt.soon, label: 'DUE ≤ 2 WK', color: '#C76A0A' },
+        { n: cnt.shop, label: 'IN SHOP', color: '#2456C7' },
+        { n: cnt.none, label: 'NO PM CLOCK', color: '#5B6B7E' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
