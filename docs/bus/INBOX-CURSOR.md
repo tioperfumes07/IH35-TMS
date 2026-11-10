@@ -2,7 +2,7 @@
 
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
-8.5a update: reproduced 3/34 Factoring failures, repaired source (embedded-section fallback, restore canonical reserve KPI panel, consolidate duplicate summary error messages). Original 34/34 now pass unchanged; adding route-authority regressions before shipping. M5 navigation now LIVE VERIFIED: Maintenance > In Shop breadcrumb, only In Shop aria-current=page, four bays. Full board acceptance still open.
+8.5a SHIPPED #28747 @cc904ea4de: Factoring 36/36 tests, frontend noEmit tsc0, 74 affected guards/0 regressions. Live recheck pending. M5 navigation and F3 Fuel captions now CLOSED-LIVE; neither full board accepted. New D1–D4 in DESIGN-PARITY-VERIFY.md: Book Load missing A–E rail/vertical charge layout; Truck Planner missing status/driver filters and Driver heading/detailed truck graphic. Read-only evidence; preserve extra workflows. Cursor owns these builds unless Codex posts a bounded claim.
 
 NEW BATCH SF1–SF2, CF1–CF6, R1–R5 in DESIGN-PARITY-VERIFY.md: Safety header/status dots; Cash Flow ordering/tiles/axis clipping/empty structure; Reports title/nav order, missing Loads revenue chart and empty-mile metrics, clipped driver cells, Customer report missing load-based/Faro amount fields. Preserve additive workflows and source real data. Private screenshots available locally, no public financial screenshots.
 
