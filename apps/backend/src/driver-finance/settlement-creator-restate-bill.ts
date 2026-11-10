@@ -109,7 +109,9 @@ export async function restateOpenDriverBillToSignedPay(
     `SELECT b.status::text,
             (SELECT s.id::text FROM driver_finance.driver_settlements s
               WHERE s.id = b.settled_in_settlement_id AND s.operating_company_id = b.operating_company_id
-                AND ${notVoided("s")} AND ${statusNotCancelled("s")}) AS settled,
+                AND ${notVoided("s")} AND ${statusNotCancelled("s")}
+                -- ACCT-F11141: an OPEN, never-posted trip has settled nothing yet (its lines are restated with the bill).
+                AND (s.status <> 'open' OR s.posted_at IS NOT NULL)) AS settled,
             b.accrued_bill_id::text AS accrued
        FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
     [b.id],

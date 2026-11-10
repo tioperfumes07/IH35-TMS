@@ -504,6 +504,9 @@ export async function ensureDispatchedLoadsForCreator(
       miles_deadhead: load.empty_miles ?? null,
       save_mode: "book_dispatch",
       addToOpenPresettlement: true,
+      // ACCT-F11141 — a signed load is linked by the Creator to its own signed settlement in this transaction, never to the
+      // driver's live trip (book-load presettlement_linked_by_caller).
+      presettlement_linked_by_caller: true,
       is_sample_data: false,
       // R-186.1 §3 — driver profiles not fed; automatic Owner override via engine path.
       override_reason: SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON,

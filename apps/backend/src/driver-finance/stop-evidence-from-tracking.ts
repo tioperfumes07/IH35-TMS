@@ -63,11 +63,12 @@ export async function stampStopsFromTracking(
   ).rows[0];
   if (!load) return [];
   const stops = (
-    await client.query<{ id: string; sequence_number: number; stop_type: string; latitude: string | null; longitude: string | null; sched_day: string | null; stamped: boolean }>(
+    await client.query<{ id: string; sequence_number: number; stop_type: string; latitude: string | null; longitude: string | null; sched_day: string | null; stamped: boolean; half?: boolean }>(
       `SELECT id::text, sequence_number, stop_type::text, latitude::text, longitude::text,
               -- LEAD 443.230: a stop booked with an appointment but no scheduled arrival (Book Load) is dated by its appointment.
               to_char((COALESCE(scheduled_arrival_at, appointment_start_at) AT TIME ZONE $2), 'YYYY-MM-DD') AS sched_day,
-              (actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped
+              (actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped,
+              ((actual_arrival_at IS NULL) <> (actual_departure_at IS NULL)) AS half
          FROM mdata.load_stops WHERE load_id = $1::uuid AND soft_deleted_at IS NULL ORDER BY sequence_number`,
       [loadId, STOP_DAY_TIMEZONE],
     )
@@ -82,6 +83,18 @@ export async function stampStopsFromTracking(
       : st.sched_day || dates.deliveryDate || null;
     const base = { load_number: load.load_number, stop_id: st.id, sequence: st.sequence_number, stop_type: st.stop_type };
     if (st.stamped) {
+      // ACCT-F11141 — a HALF-stamped stop (measured: 13688's delivery, departure 2026-10-20 00:59:58Z, no arrival) counted
+      // as stamped, so nothing completed it and the feed gate refused the settlement (stops missing actual arrival/departure
+      // stamps). The one recorded time stands for the missing side — never overwritten, never an invented clock time.
+      if (st.half === true) {
+        await client.query(
+          `UPDATE mdata.load_stops
+              SET actual_arrival_at = COALESCE(actual_arrival_at, actual_departure_at),
+                  actual_departure_at = COALESCE(actual_departure_at, actual_arrival_at), updated_at = now()
+            WHERE id = $1::uuid AND (actual_arrival_at IS NULL) <> (actual_departure_at IS NULL)`,
+          [st.id],
+        );
+      }
       out.push({ ...base, precision: "already_stamped", stop_event_id: null, arrival_at: null, departure_at: null, note: "stop already carried an actual time — not overwritten" });
       continue;
     }

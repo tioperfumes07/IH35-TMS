@@ -982,11 +982,38 @@ export async function reverseSettlementBillPaymentInClientTx(
     }>(
       `SELECT driver_bill_id::text, accounting_bill_id::text, bill_journal_entry_id::text,
               cash_bill_payment_id::text, cash_journal_entry_id::text,
-              deduction_bill_payment_id::text, bill_posted_at_delivery, pay_basis
+              deduction_bill_payment_id::text, bill_posted_at_delivery, pay_basis,
+              -- ACCT-F11141: a salaried $0 load row (no A/P bill, no payment, 0 cents — measured: P-0122 / #5856, Rafael
+              -- 13700) carries no money and no journal entry; it is not a reversal leg.
+              (accounting_bill_id IS NULL AND cash_bill_payment_id IS NULL AND deduction_bill_payment_id IS NULL
+               AND COALESCE(gross_cents, 0) = 0 AND COALESCE(cash_cents, 0) = 0 AND COALESCE(deduction_cents, 0) = 0) AS no_money
          FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid`,
       [run.id]
     );
-    const glBills = r.rows;
+    const allGlBills = r.rows as Array<(typeof r.rows)[number] & { no_money?: boolean }>;
+    const glBills = allGlBills.filter((b) => !b.no_money);
+    if (allGlBills.length > 0 && glBills.length === 0 && !run.deduction_journal_entry_id) {
+      const liveGl = await client.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM accounting.journal_entry_postings
+          WHERE operating_company_id = $1::uuid AND source_transaction_type = 'driver_settlement' AND source_transaction_id = $2
+            AND reversed_by_line_id IS NULL AND reversal_of_line_id IS NULL`,
+        [opco, settlementId]
+      );
+      if (!liveGl.rows[0]?.n) {
+        // The run is closed out exactly as a reversed run is (status 'reversed', spine rows kept and superseded).
+        await client.query(
+          `UPDATE driver_finance.driver_settlement_gl_runs
+              SET status = 'reversed', reversed_at = now(), reversed_by_user_id = $2::uuid, reversal_reason = $3, updated_at = now()
+            WHERE id = $1::uuid AND status = 'posted'`,
+          [run.id, actor.userId, input.reason]
+        );
+        await client.query(
+          `UPDATE driver_finance.driver_settlement_gl_bills SET superseded_at = COALESCE(superseded_at, now()) WHERE run_id = $1::uuid`,
+          [run.id]
+        );
+        return { result: "nothing_to_reverse", settlement_id: settlementId, run_id: run.id };
+      }
+    }
     if (glBills.length === 0) {
       throw new SettlementBillPaymentError(
         "NO_LOAD_BILLS",
@@ -1037,6 +1064,23 @@ export async function reverseSettlementBillPaymentInClientTx(
             `Settlement ${settlementId} cash payment ${gb.cash_bill_payment_id} is missing its original journal-entry linkage`
           );
         }
+        // ACCT-F11141 — 443.339 R12 (AUTH-467) already voided this net-pay payment through voidBillPaymentInClientTx
+        // (reversePostedGl): its JE carries its reversal. The settlement reverse takes that reversal as done — voiding it a
+        // second time refused the WHOLE reverse (bill_payment_already_voided; measured on #5852..#5855). Any other voided
+        // state (no reversal JE on the original) still refuses below.
+        const priorVoid = (await client.query<{ reversal: string | null }>(
+          `SELECT je.reversed_by_je_id::text AS reversal
+             FROM accounting.bill_payments bp
+             JOIN accounting.journal_entries je ON je.id = $3::uuid AND je.operating_company_id = bp.operating_company_id
+            WHERE bp.id = $1::uuid AND bp.operating_company_id = $2::uuid
+              AND (bp.revoked_at IS NOT NULL OR bp.status::text = 'void') AND je.reversed_by_je_id IS NOT NULL`,
+          [gb.cash_bill_payment_id, opco, gb.cash_journal_entry_id]
+        )).rows[0];
+        if (priorVoid?.reversal) {
+          // Both sides join the equal-and-opposite proof below (the original and its existing reversal net to zero).
+          originalJeIds.push(gb.cash_journal_entry_id);
+          reversalJeIds.push(priorVoid.reversal);
+        } else {
         originalJeIds.push(gb.cash_journal_entry_id);
         const paymentReversal = await voidBillPaymentInClientTx(
           client,
@@ -1051,6 +1095,7 @@ export async function reverseSettlementBillPaymentInClientTx(
         );
         if (!paymentReversal.reversal_journal_entry_id) throw new Error("settlement_cash_payment_reversal_missing");
         reversalJeIds.push(paymentReversal.reversal_journal_entry_id);
+        }
       }
 
       // Every NON-CASH settlement application on this bill (advance, deduction, chargeback, escrow — the chain writes
