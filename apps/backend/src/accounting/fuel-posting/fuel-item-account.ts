@@ -59,4 +59,28 @@ export const POSTING_KIND_FUEL_TYPE: Readonly<Record<string, string | null>> = {
   reefer: "reefer_diesel",
   oil: null,
   misc: null,
+  lumper: null,
+  scales: null,
 };
+
+/**
+ * ACCT-F11127 (Lead ruling 11-09, QuickBooks item model) — a Relay code that buys a SERVICE, not fuel: a lumper or a CAT
+ * scale ticket paid from the Relay wallet. It is an expense on its load through the same poster and the same item rule —
+ * the account lives on the item: "Warehouse Lumper Expense" → 5310 Lumper Expense, "OTR-Scale Expense" → 5300 Tolls &
+ * Scales (both existing USMCA items, measured 11-10). No IFTA gallons; no fuel record.
+ */
+export const NON_FUEL_COST_ITEM_NAME: Readonly<Record<string, string>> = {
+  lumper: "Warehouse Lumper Expense",
+  scales: "OTR-Scale Expense",
+};
+
+export function isNonFuelPostingKind(kind: string): boolean {
+  return Object.prototype.hasOwnProperty.call(NON_FUEL_COST_ITEM_NAME, kind);
+}
+
+/** The item (and its account) for one poster kind: a non-fuel service item by name, else the fuel-type item. */
+export async function resolvePostingKindItem(client: FuelItemClient, operatingCompanyId: string, kind: string): Promise<FuelItemResolution> {
+  const serviceItem = NON_FUEL_COST_ITEM_NAME[kind];
+  if (serviceItem) return resolveItemByName(client, operatingCompanyId, serviceItem);
+  return resolveFuelItem(client, operatingCompanyId, POSTING_KIND_FUEL_TYPE[kind] ?? null);
+}

@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relay-service-codes-post", run(ctx) { ctx.run("node", ["scripts/verify-relay-service-codes-post.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relay-service-codes-post.mjs"]); } };

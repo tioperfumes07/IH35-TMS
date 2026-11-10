@@ -27,6 +27,8 @@ function client(
   loadRows: unknown[] = [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }],
   twinRows: unknown[] = [],
   crossRailRows: unknown[] = [],
+  products: unknown = [],
+  fuelCodeType: string | null = "one_time",
 ) {
   const calls: string[] = [];
   return {
@@ -53,6 +55,8 @@ function client(
                 location_state: "TX",
                 gallons: "100",
                 merchant_name: "Love's",
+                products,
+                fuel_code_type: fuelCodeType,
               },
             ],
           };
@@ -190,5 +194,41 @@ describe("Relay fill posting — one leg per product", () => {
     expect(arg.load_id).toBeNull();
     expect(arg.driver_id).toBe("truck-driver");
     expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ driver_id: "truck-driver" }));
+  });
+});
+
+describe("ACCT-F11127 — Relay service codes (lumper / CAT scales) post on their own item through the same poster", () => {
+  beforeEach(() => { mockPost.mockClear(); mockAdopt.mockClear(); });
+  const LOAD = [{ load_id: "load-1", load_number: "13653", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }];
+
+  it("CSV lumper (txn_9uASdgwadAXAzL shape): $260.00 'other' line + $5.00 fee -> one lumper leg, fee leg, wallet $265.00, no IFTA", async () => {
+    const { c } = client(26000, [{ fuel_type: "other", cents: 26000 }], [{ type: "relay_fee", amount: "5.00" }], "csv_import", "d1", LOAD, [], [], [{ name: "Lumper" }], "One-time lumper");
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { fuel_kind: string; cost_lines: Array<{ fuel_kind: string; amount_cents: number }>; fee_amount_cents: number | null; amount_cents: number; ifta_state: string | null; ifta_gallons: number | null; load_id: string | null; company_direct_credit: string };
+    expect(arg.cost_lines).toEqual([{ fuel_kind: "lumper", amount_cents: 26000 }]);
+    expect(arg.fuel_kind).toBe("lumper");
+    expect(arg.fee_amount_cents).toBe(500);
+    expect(arg.amount_cents).toBe(26500);
+    expect(arg.ifta_state).toBeNull();
+    expect(arg.ifta_gallons).toBeNull();
+    expect(arg.load_id).toBe("load-1");
+    expect(arg.company_direct_credit).toBe("relay_fuel_wallet");
+    expect(mockAdopt).toHaveBeenCalledTimes(1);
+  });
+
+  it("API CAT Scales (no line; Relay's product price) $15.25 + $1.50 sender fee -> one scales leg, wallet $16.75", async () => {
+    const products = [{ fee: { type: "sender_fee", amount: "1.50" }, quantity: "1.000", product_type: "scales", price_per_unit: "15.250", purchase_price_total: "15.25", product_type_description: "CAT Scales" }];
+    const { c } = client(1525, [], [{ type: "sender_fee", amount: "1.50" }], "daily_pull", "d1", LOAD, [], [], products);
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { cost_lines: Array<{ fuel_kind: string; amount_cents: number }>; fee_amount_cents: number | null; amount_cents: number };
+    expect(arg.cost_lines).toEqual([{ fuel_kind: "scales", amount_cents: 1525 }]);
+    expect(arg.fee_amount_cents).toBe(150);
+    expect(arg.amount_cents).toBe(1675);
+  });
+
+  it("a service code that also carries a fuel line is refused by name — never split by guess", async () => {
+    const { c } = client(3000, [{ fuel_type: "other", cents: 1500 }, { fuel_type: "diesel", cents: 1500 }], [], "csv_import", "d1", LOAD, [], [], [{ name: "Cat Scales" }]);
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_service_code_has_fuel_line" });
+    expect(mockPost).not.toHaveBeenCalled();
   });
 });

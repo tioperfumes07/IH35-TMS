@@ -1,3 +1,13 @@
+## OUTBOX (11-09-2026 ~10:45 PM CT) — ROUND 8.4/8.5 Accounting hub board geometry + Inter titles
+- **PRIOR:** #28718 Insurance board-identical (Codex 8.5 fail list).
+- **THIS:** Accounting hub lower row restored to board 1.2fr/1.2fr/1fr (stack &lt;1100px); aging Amount/Share nowrap; .text-page-title + AccountingSubNav h1 → Inter 700 (board font, not serif). No census-label-only work.
+- **NEXT:** next Codex failing boards — full geometry rebuilds; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~10:30 PM CT) — ROUND 8.4/8.5 Insurance board-identical rebuild (Codex audit)
+- **PRIOR:** census label pins (surface) — owner/Codex: that drifted; not complete design builds.
+- **THIS:** Insurance Landing rebuilt to Insurance.dc.html geometry from Codex ROUND 8.5 fail list: Policy year labels BESIDE bars (190px label | track | premium); Premium table nowrap + board plain dollars; Fleet Covered footnote INSIDE Premium panel footer; PageHeader titles Inter 700 (not serif). Live engines unchanged.
+- **NEXT:** next Codex failing board (Accounting/Banking/Settlements) — full board rebuilds, not census pins; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:55 PM CT) — ROUND 8.4 Fuel/Factoring/Dispatch census deepen
 - **PRIOR:** #28715 Banking+Reports hub deepen.
 - **THIS:** Census deepens Fuel (Diesel by truck cols), Factoring (purchase/terms panels), Dispatch Load history KPIs + Planner nav labels. failing_routes stays 0.
@@ -182,14 +192,4 @@
 - **PRIOR:** #28581 empty squash (push flake; title only).
 - **THIS:** Re-land CardOverageQueuePage status → MultiSelectDropdown + U12 register note (code that #28581 missed).
 - **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:35 PM CT) — U12 Fuel Card Overage status MultiSelect
-- **PRIOR:** #28580 #57/#159 DONE-LIVE.
-- **THIS:** CardOverageQueuePage status pills → MultiSelectDropdown (default pending_review; 0/1 API pass-through, 2+ client filter). Owner UI register U12 note: PoliciesList already multi. (#28581 landed empty — see re-ship tip.)
-- **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:30 PM CT) — #57/#159 Settlements DONE-LIVE (Codex batch96)
-- **PRIOR:** #28579 cash-basis wire.
-- **THIS:** PENDING/ROUND #57/#159 → DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED after #28561. Non-CT browser not claimed.
-- **NEXT:** U12 residuals / more live DONE-LIVE; no match/Dreamline.
 

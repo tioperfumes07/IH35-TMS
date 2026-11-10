@@ -46,7 +46,7 @@ export function BoardSection({
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: V3.ink }}>{title}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font }}>{title}</span>
           {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
