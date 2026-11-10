@@ -250,17 +250,35 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
 
 /** ROUND 441.6: a module's index tab (Finance "Hub" -> /finance) prefix-matches every sibling (/finance/overview),
  *  so two tabs were active at once. Only the most specific matching tab is active. */
-export function mostSpecificActiveTo(pathname: string, tos: readonly string[]): string | null {
+export function mostSpecificActiveTo(pathname: string, tos: readonly string[], search = ""): string | null {
   let best: string | null = null;
-  for (const to of tos) if (isActive(pathname, to) && (best === null || to.length > best.length)) best = to;
+  let bestPathLength = -1;
+  let bestQueryCount = -1;
+  const currentQuery = new URLSearchParams(search);
+  for (const to of tos) {
+    const [targetPath, targetSearch = ""] = to.split("?");
+    const targetQuery = new URLSearchParams(targetSearch);
+    // A query-specific sibling wins only when its requested filters match.
+    // Unrelated query keys (sort/page) do not deselect the current tab.
+    if (!isActive(pathname, targetPath) || !Array.from(targetQuery).every(
+      ([key, value]) => currentQuery.getAll(key).includes(value),
+    )) continue;
+    if (targetPath.length > bestPathLength ||
+      (targetPath.length === bestPathLength && targetQuery.size > bestQueryCount)) {
+      best = to;
+      bestPathLength = targetPath.length;
+      bestQueryCount = targetQuery.size;
+    }
+  }
   return best;
 }
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const activeTo = mostSpecificActiveTo(
     pathname,
-    items.filter((i) => !i.children?.length).map((i) => i.to)
+    items.filter((i) => !i.children?.length).map((i) => i.to),
+    search,
   );
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
   // C-22 — locked tab-row height (28px clickable boxes law): every module's NavyPageSubNav is h-7.

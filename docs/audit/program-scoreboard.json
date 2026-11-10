@@ -1,10 +1,10 @@
 {
-  "healthzSha": "dad611e",
-  "generated_at": "2026-11-10T00:41:47.520Z",
+  "healthzSha": "d36e11d",
+  "generated_at": "2026-11-10T02:41:38.874Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "dad611e",
+    "deployedSha": "d36e11d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28723,
+      "title": "FINDING: UI-F11126 Codex Maintenance parity and Cursor handoff",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 04:24 PM CT",
-      "url": "",
-      "sha": "dad611ebf3",
-      "committedAtIso": "2026-11-09T22:24:29Z"
+      "mergedAtCt": "11/09/2026, 08:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28723",
+      "sha": "d36e11d51e",
+      "committedAtIso": "2026-11-09T20:36:13-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28724,
+      "title": "BUS: ROUND 8.6 all coders fast 4-minute weekend merge law",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 02:23 PM CT",
-      "url": "",
-      "sha": "686e444f53",
-      "committedAtIso": "2026-11-09T20:23:47Z"
+      "mergedAtCt": "11/09/2026, 08:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28724",
+      "sha": "1638121113",
+      "committedAtIso": "2026-11-09T20:36:10-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28722,
+      "title": "FIX: Relay lumper / CAT scales codes post as load expenses from the Relay wallet through the one fill poster, queued by the Relay ingest (ACCT-F11127)",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:25 AM CT",
-      "url": "",
-      "sha": "ecbcee090e",
-      "committedAtIso": "2026-11-09T16:25:30Z"
+      "mergedAtCt": "11/09/2026, 08:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28722",
+      "sha": "d931410ed3",
+      "committedAtIso": "2026-11-09T20:32:26-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28721,
+      "title": "FINDING: UI-F11125 Codex Round 8.5 independent design differences",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:24 AM CT",
-      "url": "",
-      "sha": "cae1c3a987",
-      "committedAtIso": "2026-11-09T14:24:58Z"
+      "mergedAtCt": "11/09/2026, 08:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28721",
+      "sha": "f271e02190",
+      "committedAtIso": "2026-11-09T20:32:06-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28720,
+      "title": "ROUND 8.4/8.5: Accounting hub board grid + Inter page titles",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 06:29 AM CT",
-      "url": "",
-      "sha": "fb7e323c86",
-      "committedAtIso": "2026-11-09T12:29:57Z"
+      "mergedAtCt": "11/09/2026, 08:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28720",
+      "sha": "c034e06140",
+      "committedAtIso": "2026-11-09T20:30:38-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28719,
+      "title": "BUS: Lead engine status — 32 QBO engines OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 04:23 AM CT",
-      "url": "",
-      "sha": "706422e065",
-      "committedAtIso": "2026-11-09T10:23:35Z"
+      "mergedAtCt": "11/09/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28719",
+      "sha": "c9233da0b7",
+      "committedAtIso": "2026-11-09T20:28:53-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28717,
+      "title": "CC-2-443.329 ENG-48/49/51 register DONE-LIVE; ENG-50 live-red annotated; freeze step 20017",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 02:29 AM CT",
-      "url": "",
-      "sha": "1148d46841",
-      "committedAtIso": "2026-11-09T08:29:52Z"
+      "mergedAtCt": "11/09/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28717",
+      "sha": "07cdbb3148",
+      "committedAtIso": "2026-11-09T20:28:47-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28718,
+      "title": "ROUND 8.4/8.5: Insurance Landing board-identical vs Insurance.dc.html",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 12:41 AM CT",
-      "url": "",
-      "sha": "c7dc5e677f",
-      "committedAtIso": "2026-11-09T06:41:56Z"
+      "mergedAtCt": "11/09/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28718",
+      "sha": "b550cdf0be",
+      "committedAtIso": "2026-11-09T20:28:20-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28716,
+      "title": "ROUND 8.4: deepen Fuel, Factoring, and Dispatch design-label pins",
       "state": "merged",
-      "mergedAtCt": "11/08/2026, 10:27 PM CT",
-      "url": "",
-      "sha": "e1ca88fb2f",
-      "committedAtIso": "2026-11-09T04:27:13Z"
+      "mergedAtCt": "11/09/2026, 08:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28716",
+      "sha": "fe88c56385",
+      "committedAtIso": "2026-11-09T20:22:18-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28715,
+      "title": "ROUND 8.4: deepen Banking + Reports hub design-label pins",
       "state": "merged",
-      "mergedAtCt": "11/08/2026, 08:27 PM CT",
-      "url": "",
-      "sha": "e1b3bb53d4",
-      "committedAtIso": "2026-11-09T02:27:48Z"
+      "mergedAtCt": "11/09/2026, 08:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28715",
+      "sha": "c1f6c8c351",
+      "committedAtIso": "2026-11-09T20:21:03-06:00"
     }
   ]
 }

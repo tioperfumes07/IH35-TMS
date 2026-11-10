@@ -294,17 +294,23 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-home-policy-year"
         >
           {yearWindow ? (
-            // Insurance.dc.html — SVG geometry: labels at x=0, bars at x=190 (BESIDE labels, never stacked above),
-            // premium at right edge, today line through the track. Live numbers only.
+            // Insurance.dc.html — labels BESIDE bars (190px | track | premium); ONE red dashed Today
+            // line across all policy tracks (Codex ROUND 8.5 I1/I2). Live numbers only.
             <div style={{ padding: "12px 14px" }} data-testid="insurance-policy-year-timeline">
+              {(() => {
+                const span = Math.max(1, yearWindow.span);
+                const todayPct = Math.max(0, Math.min(100, (yearWindow.dayOfYear / span) * 100));
+                const premiumColPx = 88;
+                return (
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "190px minmax(0,1fr) auto",
+                  gridTemplateColumns: `190px minmax(0,1fr) ${premiumColPx}px`,
                   columnGap: 0,
                   rowGap: 10,
                   alignItems: "center",
                   fontFamily: V3.font,
+                  position: "relative",
                 }}
               >
                 <div style={{ gridColumn: "2 / 3", display: "flex", justifyContent: "space-between", fontSize: 10, color: V3.muted }}>
@@ -313,12 +319,10 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 </div>
                 <div style={{ gridColumn: "3 / 4" }} />
                 {activePolicies.map((p) => {
-                  const span = Math.max(1, yearWindow.span);
                   const leftDays = Math.max(0, daysBetween(yearWindow.start, p.effective_date));
                   const widthDays = Math.max(1, daysBetween(p.effective_date, p.expiry_date));
                   const leftPct = Math.max(0, Math.min(100, (leftDays / span) * 100));
                   const widthPct = Math.max(2, Math.min(100 - leftPct, (widthDays / span) * 100));
-                  const todayPct = Math.max(0, Math.min(100, (yearWindow.dayOfYear / span) * 100));
                   const filledPct = Math.max(0, Math.min(widthPct, todayPct - leftPct));
                   return (
                     <div key={p.id} style={{ display: "contents" }}>
@@ -359,18 +363,6 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                             borderRadius: 3,
                           }}
                         />
-                        <div
-                          title="Today"
-                          style={{
-                            position: "absolute",
-                            left: `${todayPct}%`,
-                            top: -2,
-                            bottom: -2,
-                            width: 2,
-                            marginLeft: -1,
-                            background: V3.live,
-                          }}
-                        />
                       </div>
                       <div
                         className="tabular-nums"
@@ -387,11 +379,27 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                     </div>
                   );
                 })}
+                {/* I2 — one shared red dashed Today line across the track column (not per-row green). */}
+                <div
+                  title="Today"
+                  aria-label="Today"
+                  data-testid="insurance-policy-year-today"
+                  style={{
+                    position: "absolute",
+                    left: `calc(190px + (100% - 190px - ${premiumColPx}px) * ${todayPct / 100})`,
+                    top: 22,
+                    bottom: 22,
+                    width: 0,
+                    borderLeft: `2px dashed ${V3.red}`,
+                    pointerEvents: "none",
+                    zIndex: 2,
+                  }}
+                />
                 <div
                   style={{
                     gridColumn: "2 / 4",
                     fontSize: 10,
-                    color: V3.live,
+                    color: V3.red,
                     fontFamily: V3.font,
                     marginTop: 2,
                   }}
@@ -399,6 +407,8 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                   today · day {yearWindow.dayOfYear} / {yearWindow.span}
                 </div>
               </div>
+                );
+              })()}
             </div>
           ) : (
             <div style={{ padding: "12px 14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
