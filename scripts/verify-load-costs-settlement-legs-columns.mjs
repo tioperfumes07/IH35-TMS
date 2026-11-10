@@ -95,13 +95,13 @@ function analyze(src) {
   // (TourLoadRows.tsx) instead of `board` (LoadCostsBoardPage.tsx) to follow where the columns
   // actually live now.
   // ROUND 8.5 T5/T6 board (Settlements-Open|Closed): overview is Settlement → Driver → Unit → Tour legs
-  // (TourLegsCell). Per-leg Load # columns stay via ...tourLoadColumns(...).map(defaultHidden) in the gear.
-  if (!/\.\.\.tourLoadColumns\(/.test(setl)) errors.push("SettlementsToursRegister must keep shared per-leg Load # columns (secondary/defaultHidden)");
+  // (TourLegsCell). Per-leg Load # columns stay via ...tourLoadColumns(...) after Tour legs.
+  // LST-F11137: #28767 also required them defaultHidden here. That contradicts the ADDITIVE-ONLY LAW
+  // (docs/LAW.md L379; verify-additive-only + verify-settlements-tours-columns-visible): they were
+  // shipped visible and no OWNER-REMOVE line exists. This guard requires presence and order only.
+  if (!/\.\.\.tourLoadColumns\(/.test(setl)) errors.push("SettlementsToursRegister must keep shared per-leg Load # columns (after Tour legs)");
   if (!/<TourLegsCell\b/.test(setl) || !/label:\s*"Tour legs"/.test(setl)) {
     errors.push("SettlementsToursRegister overview must render a Tour legs column via TourLegsCell (board T5/T6)");
-  }
-  if (!/defaultHidden:\s*true/.test(setl)) {
-    errors.push("SettlementsToursRegister must defaultHidden the expanded per-leg Load # columns (board overview)");
   }
   // Board order: Driver/Unit before Tour legs; tourLoadColumns (secondary) after Tour legs.
   const setlTour = setl.indexOf('key: "tour"');
@@ -110,7 +110,7 @@ function analyze(src) {
   const setlLegs = setl.indexOf('label: "Tour legs"');
   const setlLoadCols = setl.indexOf("...tourLoadColumns(");
   if (!(setlTour < setlDriver && setlDriver < setlUnit && setlUnit < setlLegs && setlLegs < setlLoadCols)) {
-    errors.push("SettlementsToursRegister board order must be Settlement → Driver → Unit → Tour legs → (hidden) tourLoadColumns");
+    errors.push("SettlementsToursRegister board order must be Settlement → Driver → Unit → Tour legs → tourLoadColumns");
   }
   if (!/key:\s*"revenue"[\s\S]{0,160}?whitespace-nowrap text-right tabular-nums/.test(setl)) {
     errors.push('SettlementsToursRegister money cells must be whitespace-nowrap (Revenue) so "$12,595.90" never wraps');
