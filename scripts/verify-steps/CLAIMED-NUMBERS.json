@@ -17659,5 +17659,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
+  },
+  "20045": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relationship-scorer-batched (ACCT-F11129)"
   }
 }
