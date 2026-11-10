@@ -231,12 +231,9 @@ export function DispatchPage({
     setSearchParams(next, { replace: true });
   }, [boardScope, view, searchParams, setSearchParams]);
 
-  // L.4b — defensive default: the "Loads history" button's onClick already sets a 30-day default
-  // range when it flips board_scope to history, but that is the ONLY entry point that does — a
-  // direct/bookmarked URL with ?board_scope=history and no date_from/date_to (e.g. a saved link,
-  // or a future nav item that only sets board_scope) would silently render an UNBOUNDED history
-  // list with no date filter at all. This effect closes that gap at the state level rather than
-  // per-entry-point, using the exact same default the button already computes.
+  // L.4b — defensive default for legacy ?board_scope=history deep links (D6 primary CTA now opens
+  // /dispatch/load-history). A bookmarked URL with board_scope=history and no date_from/date_to
+  // would otherwise render an unbounded history list; this effect applies the same 30-day default.
   useEffect(() => {
     if (boardScope !== "history") return;
     if (searchParams.get("date_from") || searchParams.get("date_to")) return;
@@ -439,26 +436,15 @@ export function DispatchPage({
             >
               Live
             </Button>
+            {/* D6 — canonical approved board is /dispatch/load-history (not legacy ?board_scope=history list).
+                Legacy history list stays reachable via bookmarks / deep links; primary CTA opens the board. */}
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className={boardScope === "history" ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
+              className={location.pathname.startsWith("/dispatch/load-history") ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
               data-testid="dispatch-board-scope-history"
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("board_scope", "history");
-                next.set("view", "list");
-                next.delete("statuses");
-                next.delete("offset");
-                if (!next.get("date_mode")) next.set("date_mode", "delivery");
-                if (!next.get("date_from") && !next.get("date_to")) {
-                  const today = companyToday();
-                  next.set("date_from", addDaysIso(today, -30));
-                  next.set("date_to", today);
-                }
-                setSearchParams(next);
-              }}
+              onClick={() => navigate("/dispatch/load-history")}
             >
               Loads history
             </Button>

@@ -326,7 +326,7 @@ export function TrialBalancePage() {
       <style>{`
         @media print { .no-print { display: none !important; } body { background: white; } }
       `}</style>
-      <ReportsSubNav />
+      {/* R1 — title before navy Reports navigation. */}
       <PageHeader
         title="Trial balance"
         subtitle={`Ledger debits and credits by account · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
@@ -380,6 +380,7 @@ export function TrialBalancePage() {
           </div>
         }
       />
+      <ReportsSubNav />
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}

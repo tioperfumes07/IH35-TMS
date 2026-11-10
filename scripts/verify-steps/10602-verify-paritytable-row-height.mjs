@@ -40,9 +40,13 @@ export default {
     }
 
     // REGRESSION GUARD 2: the allowWrap-aware truncate default must be present.
-    const hasAllowWrapGate =
-      src.includes("allowWrap?: boolean") &&
-      src.includes('column.allowWrap ? "wrap-break-word" : "whitespace-nowrap text-ellipsis"');
+    // The body <td> class is a ternary: allowWrap opts into wrap-break-word; every other column
+    // truncates. ROUND 8.5 B1 (#28764) inserted a money branch (money -> whitespace-nowrap, never
+    // ellipsis) between the two, so match the structure, not one literal line: allowWrap must gate
+    // wrap-break-word FIRST, and the final default must still be whitespace-nowrap text-ellipsis.
+    const tdClassGate =
+      /column\.allowWrap\s*\?\s*"wrap-break-word"\s*:(?:\s*isParityMoneyColumn\(column\)\s*\?\s*"whitespace-nowrap"\s*:)?\s*"whitespace-nowrap text-ellipsis"/;
+    const hasAllowWrapGate = src.includes("allowWrap?: boolean") && tdClassGate.test(src);
     if (!hasAllowWrapGate) {
       console.error(
         "FAIL verify-paritytable-row-height: ParityTable.tsx no longer carries the ROUND 16.25 " +

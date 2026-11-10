@@ -62,7 +62,8 @@ describe("VendorsHomeBoard (443.280)", () => {
     // top three categories plus one rolled-up "Other" line (Parts + Misc)
     expect(screen.getByText("Other")).toBeTruthy();
     expect(screen.getByText("2 since 09/21/2026")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Loves" }).getAttribute("href")).toBe("/vendors/v1");
+    // One-word ALL-CAPS vendor names stay as typed (formatCompanyName org-casing rule).
+    expect(screen.getByRole("link", { name: "LOVES" }).getAttribute("href")).toBe("/vendors/v1");
     // the Pays through panel row and the vendor row's Pays through cell both open the account
     for (const l of screen.getAllByRole("link", { name: "Dreamline Diesel Card Payable" })) expect(l.getAttribute("href")).toContain("/accounting/chart-of-accounts/register/a1");
     expect(screen.getAllByRole("link", { name: "Dreamline Diesel Card Payable" }).length).toBe(2);

@@ -17,7 +17,7 @@ export function ReportsHomePage() {
 
   return (
     <div className="space-y-3">
-      <ReportsSubNav />
+      {/* R1 — title before navy Reports navigation. */}
       <PageHeader
         title="Reports"
         subtitle="Choose a domain category, then open a report to run"
@@ -28,6 +28,7 @@ export function ReportsHomePage() {
           </div>
         }
       />
+      <ReportsSubNav />
       {companyId ? (
         <ReportsHomeBoard companyId={companyId} />
       ) : (

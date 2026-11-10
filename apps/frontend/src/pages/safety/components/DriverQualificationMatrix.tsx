@@ -28,16 +28,37 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
   });
   const kpis = useQuery({ queryKey: ["safety", "kpis", companyId], queryFn: () => getSafetyKpis(companyId), enabled: Boolean(companyId) });
   const columns = useMemo<ParityColumn<Driver>[]>(() => {
+    // SF2 — board status dots (green on file / amber missing / slate unknown). Never invent dates.
+    const statusDot = (tone: "ok" | "missing" | "unknown") => (
+      <span
+        aria-hidden
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          display: "inline-block",
+          background: tone === "ok" ? "#15803D" : tone === "missing" ? "#B45309" : "#94A3B8",
+          flexShrink: 0,
+        }}
+      />
+    );
+    const statusCell = (row: Driver, label: string, tone: "ok" | "missing" | "unknown") => (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", textAlign: "left" }}>
+        {statusDot(tone)}
+        <EntityLink kind="driver" id={row.id} label={label} />
+      </span>
+    );
     const record = (row: Driver, label: string) => <EntityLink kind="driver" id={row.id} label={label} />;
-    const date = (row: Driver, value: string | null) => record(row, value ? formatDateUS(value) : "Add date");
+    const date = (row: Driver, value: string | null) =>
+      statusCell(row, value ? formatDateUS(value) : "Add date", value ? "ok" : "missing");
     return [
-      { key: "first_name", label: "Driver", render: (row) => record(row, formatPersonName(`${row.first_name} ${row.last_name}`)), sortValue: (row) => `${row.first_name} ${row.last_name}`, exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`) },
-      { key: "cdl_expires_at", label: "CDL", sortable: true, sortValue: (row) => row.cdl_expires_at ?? "", render: (row) => date(row, row.cdl_expires_at) },
-      { key: "dot_medical_expires_at", label: "DOT medical", sortable: true, sortValue: (row) => row.dot_medical_expires_at ?? "", render: (row) => date(row, row.dot_medical_expires_at) },
-      { key: "visa_expires_at", label: "B-1 visa", sortable: true, sortValue: (row) => row.visa_expires_at ?? "", render: (row) => date(row, row.has_b1_visa || /^b[- ]?1$/i.test(row.visa_type ?? "") ? row.visa_expires_at || row.b1_visa_expires_date : null) },
-      { key: "emergency_contact_name", label: "Emergency contact", sortable: true, sortValue: (row) => (hasContact(row) ? "On file" : "Add contact"), render: (row) => record(row, hasContact(row) ? "On file" : "Add contact") },
-      { key: "samsara_driver_id", label: "Samsara", sortable: true, sortValue: (row) => (row.samsara_driver_id ? "Linked" : "Link driver"), render: (row) => record(row, row.samsara_driver_id ? "Linked" : "Link driver") },
-      { key: "dq_file", label: "DQ file", render: (row) => record(row, "Review records"), sortable: false, exportValue: () => "Status not supplied by roster" },
+      { key: "first_name", label: "Driver", className: "text-left", render: (row) => record(row, formatPersonName(`${row.first_name} ${row.last_name}`)), sortValue: (row) => `${row.first_name} ${row.last_name}`, exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`) },
+      { key: "cdl_expires_at", label: "CDL", className: "text-left", sortable: true, sortValue: (row) => row.cdl_expires_at ?? "", render: (row) => date(row, row.cdl_expires_at) },
+      { key: "dot_medical_expires_at", label: "DOT medical", className: "text-left", sortable: true, sortValue: (row) => row.dot_medical_expires_at ?? "", render: (row) => date(row, row.dot_medical_expires_at) },
+      { key: "visa_expires_at", label: "B-1 visa", className: "text-left", sortable: true, sortValue: (row) => row.visa_expires_at ?? "", render: (row) => date(row, row.has_b1_visa || /^b[- ]?1$/i.test(row.visa_type ?? "") ? row.visa_expires_at || row.b1_visa_expires_date : null) },
+      { key: "emergency_contact_name", label: "Emergency contact", className: "text-left", sortable: true, sortValue: (row) => (hasContact(row) ? "On file" : "Add contact"), render: (row) => statusCell(row, hasContact(row) ? "On file" : "Add contact", hasContact(row) ? "ok" : "missing") },
+      { key: "samsara_driver_id", label: "Samsara", className: "text-left", sortable: true, sortValue: (row) => (row.samsara_driver_id ? "Linked" : "Link driver"), render: (row) => statusCell(row, row.samsara_driver_id ? "Linked" : "Link driver", row.samsara_driver_id ? "ok" : "missing") },
+      { key: "dq_file", label: "DQ file", className: "text-left", render: (row) => statusCell(row, "Review records", "unknown"), sortable: false, exportValue: () => "Status not supplied by roster" },
     ];
   }, []);
   if (!companyId) return <p className="text-xs text-slate-600">Select a company to view driver qualification files.</p>;
