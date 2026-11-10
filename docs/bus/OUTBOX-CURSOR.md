@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:20 PM CT) — T4 Settlements Week-of Closed status engine
+- **PRIOR:** #28798 D3/D4 TruckPlanner filters + Driver header + side truck.
+- **THIS:** Week-of Status uses tour-close + payment (weekOfBoardStatus): Closed unpaid tours read Closed (not payment Open); Paid/Held still win. CSV export matches. R4–R6 remain Cascade surface (pages/reports) — Cursor does not breach.
+- **NEXT:** residual Cursor-owned boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:15 PM CT) — D3/D4 TruckPlanner entity filters + Driver header + side truck
 - **PRIOR:** #28796 D1/D2 Book Load A–E rail + side-by-side charges.
 - **THIS:** D3 Filters popover Status · Driver · Unit · Customer heading + Status select + Driver EntityPicker; entityFilters in PlannerRangeContext filter TruckPlanner rows. D4 PlannerGrid separate Driver columnheader (no Unit span); board PlannerSideTruckGlyph replaces lucide outline. Status/Action preserved additive.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~8:30 PM CT) — U12 Coverage Gap by-type MultiSelect
 - **PRIOR:** #28602 QBO Sync Status U12.
 - **THIS:** CoverageGapDashboard per-type Covered/Missing SelectCombobox → MultiSelectDropdown (empty/both=all). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:25 PM CT) — U12 QBO Sync Status MultiSelect
-- **PRIOR:** #28600 Driver/Teams/Brokers U12.
-- **THIS:** QBOSyncStatusDashboardPage status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
