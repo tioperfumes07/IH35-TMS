@@ -44,7 +44,7 @@ describe("443.200: complete an adopted signed leg before booking the next leg", 
     const query = vi.fn(async (sql: string, values: unknown[] = []) => {
       if (/SELECT id::text FROM mdata.loads/.test(sql)) return { rows: values[1] === "prior" ? [{ id: "prior-id" }] : [] };
       if (/SELECT EXISTS/.test(sql)) return { rows: [{ ok: eligible }] };
-      if (/FROM driver_finance.driver_bills\s+WHERE operating_company_id/.test(sql)) return { rows: [{ id: "bill", gross: "400", driver_id: "drv", team_driver_id: null }] };
+      if (/FROM driver_finance\.driver_bills(?:\s+db)?\s+WHERE (?:db\.)?operating_company_id/.test(sql)) return { rows: [{ id: "bill", gross: "400", driver_id: "drv", team_driver_id: null }] };
       if (/AS settled/.test(sql)) return { rows: [{ status: "open", settled: null, accrued: accrued ? "accrual" : null }] };
       if (/UPDATE driver_finance\.driver_bills[\s\S]*RETURNING id/.test(sql)) return { rows: [{ id: "bill" }] };
       if (/INSERT INTO driver_finance.driver_bills/.test(sql)) order.push("restate");
@@ -89,7 +89,7 @@ function client(bill: { gross: string; status?: string; settled?: string | null;
   const calls: Array<[string, unknown[]]> = [];
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
     calls.push([sql, values]);
-    if (/FROM driver_finance\.driver_bills\s+WHERE operating_company_id/.test(sql)) return { rows: bill ? [{ id: "b1", gross: bill.gross, driver_id: "drv", team_driver_id: null }] : [] };
+    if (/FROM driver_finance\.driver_bills(?:\s+db)?\s+WHERE (?:db\.)?operating_company_id/.test(sql)) return { rows: bill ? [{ id: "b1", gross: bill.gross, driver_id: "drv", team_driver_id: null }] : [] };
     if (/AS settled/.test(sql)) return { rows: [{ status: bill?.status ?? "open", settled: bill?.settled ?? null, accrued: bill?.accrued ?? null }] };
     // stampDriverBillVoidedInClientTx refuses an empty RETURNING ("Driver bill changed while restating").
     if (/UPDATE driver_finance\.driver_bills[\s\S]*RETURNING id/.test(sql)) return { rows: [{ id: "b1" }] };

@@ -497,7 +497,16 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     };
     const after = await runCreatorAfterCommit(user.uuid, afterInput);
     await recordAfterCommit(user.uuid, afterInput, after);
-    return reply.code(200).send({ ok: true, dry_run: false, ...rest, journal_entry_ids: result.journal_entry_ids, close_totals: result.close_totals ?? null, stages: after });
+    // LST-F11148: the post committed; ok is the four stages' verdict (documents/ledger/factoring/billing), never a literal —
+    // the same stage shape and verdict the /post route answers.
+    const stages: CreatorStages = {
+      documents: { ok: true, status: "committed", message: `Settlement ${result.display_id} and its documents are saved.` },
+      ledger: result.journal_entry_ids.length > 0
+        ? { ok: true, status: "posted", message: `${result.journal_entry_ids.length} journal entr${result.journal_entry_ids.length === 1 ? "y" : "ies"} posted.` }
+        : { ok: false, status: "not_posted", message: "Nothing was posted to the ledger for this settlement." },
+      ...after,
+    };
+    return reply.code(200).send({ ok: overallOk(stages), dry_run: false, ...rest, journal_entry_ids: result.journal_entry_ids, close_totals: result.close_totals ?? null, stages });
   });
 
   // RULING 443.66 — bring a POSTED Creator settlement's documents to the categorization the engine now writes at post
