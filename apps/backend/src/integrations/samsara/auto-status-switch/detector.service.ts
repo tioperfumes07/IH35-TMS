@@ -563,6 +563,14 @@ export function autoStatusApplyEnabled(): boolean {
   return process.env.AUTO_STATUS_SWITCH_APPLY === "true";
 }
 
+/**
+ * ACCT-F11121 — a snapshot is taken only for a unit that exists. integrations.samsara_vehicle_positions had no foreign key
+ * to mdata.units, so the 9 phantom SAM-/gateway units purged 11-03 (pending row 258) left 10 position rows behind
+ * (3 USMCA, 7 frozen entities; last recorded 2026-08-31). auto_status_position_snapshots DOES reference mdata.units, so
+ * copying those rows failed every tick with auto_status_position_snapshots_unit_uuid_fkey: the auto-status engine last
+ * succeeded 2026-11-03 16:05Z and failed every 5 minutes after (13 runs on 11-09 alone), and no load was checked for
+ * status drift since. The reader joins the unit (migration 202616440100 adds the cascade so a purge removes the cache).
+ */
 export async function recordPositionSnapshotsForCompany(client: DbClient, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ unit_uuid: string; lat: string; lng: string; speed_mph: string | null }>(
     `
@@ -572,6 +580,7 @@ export async function recordPositionSnapshotsForCompany(client: DbClient, operat
         p.lng::text,
         p.speed_mph::text
       FROM integrations.samsara_vehicle_positions p
+      JOIN mdata.units u ON u.id = p.unit_uuid
       WHERE p.operating_company_id = $1::uuid
       ORDER BY p.unit_uuid
     `,
