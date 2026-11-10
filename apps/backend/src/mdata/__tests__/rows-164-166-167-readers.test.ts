@@ -48,7 +48,7 @@ describe("row 167 — merged shell credentials", () => {
 describe("row 166 — unit driver + HOS through the survivor", () => {
   it("unit→driver resolver joins the survivor of the resolved id", () => {
     const sql = unitCurrentDriverSql("u", "$1::uuid");
-    expect(sql).toContain(survivorDriverIdSql("COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)"));
+    expect(sql).toContain(survivorDriverIdSql("COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)", "$1::uuid"));
   });
   it("scheduler grid vacant trucks carry the resolver's driver; Truck planner uses it", () => {
     const svc = read("apps/backend/src/safety/driver-scheduler.service.ts");
