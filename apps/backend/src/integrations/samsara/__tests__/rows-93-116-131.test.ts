@@ -11,12 +11,14 @@ const SURVIVOR = "3e138476-06db-4b08-9ebe-527a5d8c591d";
 describe("row 93 — HOS writers never write onto a merged shell", () => {
   it("resolveSurvivorDriverId follows merged_into_driver_id; a survivor / unknown id is unchanged", async () => {
     const q = (rows: Array<{ id: string }>) => ({ query: vi.fn(async () => ({ rows })) });
-    expect(await resolveSurvivorDriverId(q([{ id: SURVIVOR }]) as never, SHELL)).toBe(SURVIVOR);
-    expect(await resolveSurvivorDriverId(q([{ id: SURVIVOR }]) as never, SURVIVOR)).toBe(SURVIVOR);
-    expect(await resolveSurvivorDriverId(q([]) as never, "unknown")).toBe("unknown");
+    expect(await resolveSurvivorDriverId(q([{ id: SURVIVOR }]) as never, SHELL, CO)).toBe(SURVIVOR);
+    expect(await resolveSurvivorDriverId(q([{ id: SURVIVOR }]) as never, SURVIVOR, CO)).toBe(SURVIVOR);
+    expect(await resolveSurvivorDriverId(q([]) as never, "unknown", CO)).toBe("unknown");
     const c = q([]);
-    await resolveSurvivorDriverId(c as never, SHELL);
+    await resolveSurvivorDriverId(c as never, SHELL, CO);
     expect(String((c.query.mock.calls[0] as unknown[])[0])).toContain("COALESCE(d.merged_into_driver_id, d.id)");
+    expect(String((c.query.mock.calls[0] as unknown[])[0])).toContain("d.operating_company_id = $2::uuid");
+    expect((c.query.mock.calls[0] as unknown[])[1]).toEqual([SHELL, CO]);
   });
 
   it("the webhook projector writes the duty event onto the survivor when the mapping names a shell", async () => {

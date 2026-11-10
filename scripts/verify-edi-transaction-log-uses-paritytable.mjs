@@ -98,7 +98,7 @@ function selftest() {
     ];
     fetch("/api/integrations/edi/messages");
     <div data-testid="edi-transaction-log">
-      <option value="failed">Failed</option>
+      <MultiSelectDropdown options={[{ value: "failed", label: "Failed" }]} />
       <ListErrorState title="Couldn't load EDI messages" status={0} onRetry={() => {}} />
       <h3>Raw EDI viewer</h3>
       <ParityTable

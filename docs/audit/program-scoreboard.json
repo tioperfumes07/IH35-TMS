@@ -1,10 +1,10 @@
 {
-  "healthzSha": "602abba",
-  "generated_at": "2026-11-10T04:31:22.710Z",
+  "healthzSha": "caf3ce1",
+  "generated_at": "2026-11-10T20:24:22.601Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "602abba",
+    "deployedSha": "caf3ce1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28765,
-      "title": "FINDING: UI-F11125 R3 empty-miles engine + D6 Load history board",
+      "number": 28793,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28765",
-      "sha": "490971951a",
-      "committedAtIso": "2026-11-09T22:30:29-06:00"
+      "mergedAtCt": "11/10/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28793",
+      "sha": "caf3ce14d5",
+      "committedAtIso": "2026-11-10T12:26:08-06:00"
     },
     {
-      "number": 28764,
-      "title": "FINDING: UI-F11125 CF2–CF6 + V1/V2 + SF2 + R1 board engines",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28764",
-      "sha": "602abba7d5",
-      "committedAtIso": "2026-11-09T22:23:40-06:00"
+      "mergedAtCt": "11/10/2026, 12:24 PM CT",
+      "url": "",
+      "sha": "0e15126292",
+      "committedAtIso": "2026-11-10T18:24:54Z"
     },
     {
-      "number": 28763,
-      "title": "FIX: fuel.relay_fill_records skips already-recorded voided-duplicate fills; engine status re-measured",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28763",
-      "sha": "a316ce0b6f",
-      "committedAtIso": "2026-11-09T22:19:43-06:00"
+      "mergedAtCt": "11/10/2026, 10:24 AM CT",
+      "url": "",
+      "sha": "1613c898a4",
+      "committedAtIso": "2026-11-10T16:24:15Z"
     },
     {
-      "number": 28762,
-      "title": "FIX: guard verify-relay-deposits-posted (known-card relay_deposit rows posted within 24h)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28762",
-      "sha": "ec231b764c",
-      "committedAtIso": "2026-11-09T22:15:14-06:00"
+      "mergedAtCt": "11/10/2026, 08:24 AM CT",
+      "url": "",
+      "sha": "e4c17e477a",
+      "committedAtIso": "2026-11-10T14:24:24Z"
     },
     {
-      "number": 28761,
-      "title": "FIX: owner import buttons for load history and Faro purchase report",
+      "number": 28792,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28761",
-      "sha": "4f9dd052ff",
-      "committedAtIso": "2026-11-09T22:12:04-06:00"
+      "mergedAtCt": "11/10/2026, 06:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28792",
+      "sha": "a388e943ea",
+      "committedAtIso": "2026-11-10T12:29:17Z"
     },
     {
-      "number": 28760,
-      "title": "BUS: ROUND 8.9 all coders — owner order: complete all engine builds now, bus is the channel, tiered model, 4-minute merge",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28760",
-      "sha": "dfc12b8984",
-      "committedAtIso": "2026-11-09T22:09:10-06:00"
+      "mergedAtCt": "11/10/2026, 06:28 AM CT",
+      "url": "",
+      "sha": "384f152452",
+      "committedAtIso": "2026-11-10T12:28:27Z"
     },
     {
-      "number": 28759,
-      "title": "FINDING: UI-F11125 D5 test + CF1 Related + C1/SF1 chrome",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28759",
-      "sha": "772728f06e",
-      "committedAtIso": "2026-11-09T22:01:09-06:00"
+      "mergedAtCt": "11/10/2026, 04:23 AM CT",
+      "url": "",
+      "sha": "c4b7ab4850",
+      "committedAtIso": "2026-11-10T10:23:57Z"
     },
     {
-      "number": 28758,
-      "title": "BUS: CC-1 ROUND 8.7 post signed settlements 5853-5872 + CC-2 ROUND 8.8 reefer reclass and 99149999",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 09:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28758",
-      "sha": "ef77cd4c23",
-      "committedAtIso": "2026-11-09T21:59:10-06:00"
+      "mergedAtCt": "11/10/2026, 02:27 AM CT",
+      "url": "",
+      "sha": "15c2ddad7a",
+      "committedAtIso": "2026-11-10T08:27:28Z"
     },
     {
-      "number": 28757,
-      "title": "FINDING: UI-F11125 D5 Load History SQL + Legal L1–L3 + census OVERHEAD DOOR",
+      "number": 28790,
+      "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post of 5853–5872 until the #28788 engine reds are fixed",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 09:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28757",
-      "sha": "bf8f5311f9",
-      "committedAtIso": "2026-11-09T21:57:46-06:00"
+      "mergedAtCt": "11/10/2026, 01:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28790",
+      "sha": "f736860ab1",
+      "committedAtIso": "2026-11-10T01:10:10-06:00"
     },
     {
-      "number": 28756,
-      "title": "FIX: main red — verify:guard-wired: verify-complete-design-build-law was an orphan; wire it (step 20057) and fix its F3 pin (LST-F11133)",
+      "number": 28789,
+      "title": "FIX: post-as-signed engine (#28788) — 4 entity-unscoped reads: truck lookup, two settlement-line→load hops, presettlement link (LST-F11144)",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 09:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28756",
-      "sha": "85d9f067aa",
-      "committedAtIso": "2026-11-09T21:55:55-06:00"
+      "mergedAtCt": "11/10/2026, 01:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28789",
+      "sha": "96c3f9dcde",
+      "committedAtIso": "2026-11-10T01:02:32-06:00"
     }
   ]
 }

@@ -86,10 +86,10 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
       <V3Panel title="Pay this week · open pre-settlement" onViewAll={() => navigate(driverProfileTabHref(driverId, "Settlements"))}>
         <div className="space-y-1.5 p-3 text-xs">
           {pay.isError ? <ListErrorState title="Couldn't load open pre-settlement" status={0} onRetry={() => void pay.refetch()} /> : pay.isPending ? <p>Loading open pre-settlement…</p> : settlement ? <>
-            <div className="text-[22px] font-bold tabular-nums leading-none">
+            <div className="text-page-title font-bold tabular-nums leading-none">
               <EntityLink kind="settlement" id={settlement.id} label={formatUsdTable(settlement.net_pay)} />
             </div>
-            <p className="text-[11px] text-slate-600">
+            <p className="text-section-header text-slate-600">
               <EntityLink kind="settlement" id={settlement.id} label={`${formatUsdTable(settlement.gross_pay)} gross · ${formatUsdTable(settlement.deductions_total)} deductions`} />
             </p>
             <div className="flex flex-wrap gap-2">{pay.data?.legs?.map((leg) => <EntityLink key={leg.load_id} kind="load" id={leg.load_id} label={leg.load_number} />)}</div>

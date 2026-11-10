@@ -62,7 +62,9 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     deferredCents: 0,
   };
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return empty;
+  // CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: a money path. Without settlement_lines no gross can be read, so returning `empty`
+  // would post a settlement with every approved chargeback silently skipped. Fail closed.
+  if (!reg.rows[0]?.ok) throw new Error("settlement_lines_unavailable: driver_finance.settlement_lines is absent — abandonment chargebacks cannot be applied");
 
   // Same gross/floor shape as settlement-deduction-cap.service.ts's
   // applyPendingDeductionsToSettlementWithNetFloor — gross from earnings-type lines only.
