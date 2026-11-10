@@ -17649,5 +17649,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
+  },
+  "20033": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-faro-purchase-report-seed (ACCT-F11108)"
   }
 }

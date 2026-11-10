@@ -424,7 +424,11 @@ export async function enrichFaroPreviewLines(
           FROM po_keys pk
           JOIN mdata.loads l
             ON l.operating_company_id = $1::uuid
-           AND (l.customer_wo_number = pk.match_key OR l.customer_po_number = pk.match_key)
+           -- ACCT-F11108: spaces are not part of a PO (Faro prints "001527576" for WO "001 527576"), and a voided load is
+           -- not a candidate (it would make the one live load "ambiguous").
+           AND l.voided_at IS NULL
+           AND (regexp_replace(l.customer_wo_number, '\\s', '', 'g') = regexp_replace(pk.match_key, '\\s', '', 'g')
+                OR regexp_replace(l.customer_po_number, '\\s', '', 'g') = regexp_replace(pk.match_key, '\\s', '', 'g'))
         )
         SELECT
           ml.match_key,
