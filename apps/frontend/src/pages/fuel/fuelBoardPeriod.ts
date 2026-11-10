@@ -1,4 +1,6 @@
-/** ROUND 443.282 / ROUND 8.5 F3 — period windows (Fuel.dc.html). Labels follow the live calendar month, never static Oct/Sep. */
+import { companyToday, localDateFromIso } from "../../lib/businessDate";
+
+/** Board period IDs are legacy keys; labels follow the actual business month. */
 export type FuelBoardPeriodId = "oct" | "sep" | "ytd";
 
 function pad2(n: number) {
@@ -19,11 +21,12 @@ function formatShortRange(from: Date, to: Date) {
 }
 
 export function fuelBoardPeriodRange(period: FuelBoardPeriodId, now = new Date()) {
+  now = localDateFromIso(companyToday(now));
   const y = now.getFullYear();
   const m = now.getMonth();
   if (period === "ytd") {
     const from = new Date(y, 0, 1);
-    return { from: isoDate(from), to: isoDate(now), labelSuffix: `Jan 1–${MO[now.getMonth()]} ${now.getDate()}` };
+    return { from: isoDate(from), to: isoDate(now), labelSuffix: formatShortRange(from, now) };
   }
   if (period === "sep") {
     const prev = m === 0 ? 11 : m - 1;
@@ -38,6 +41,7 @@ export function fuelBoardPeriodRange(period: FuelBoardPeriodId, now = new Date()
 
 /** Option labels: current month / previous month / YTD (ids stay oct/sep/ytd for URL/storage stability). */
 export function fuelBoardPeriodOptions(now = new Date()): { id: FuelBoardPeriodId; label: string }[] {
+  now = localDateFromIso(companyToday(now));
   const m = now.getMonth();
   const prev = m === 0 ? 11 : m - 1;
   return [
