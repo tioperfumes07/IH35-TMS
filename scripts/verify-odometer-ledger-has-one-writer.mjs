@@ -121,13 +121,41 @@ export function checkManualRouteNeverSetsSamsara(source) {
   return problems;
 }
 
-export function checkOnlyTwoOdometerWriters(files) {
+// sweepA (2026-11-10) — #28450 (E11 / ENG-29) added a THIRD kind of read: Samsara's own odometer reads at a load boundary,
+// stored by odometer-history-backfill.service.ts under their own source 'samsara_boundary', which migration 202616340100
+// put OUTSIDE the one-row-per-day key (the reason rule 6 exists: a plain INSERT collides with that key). Routing them
+// through upsertManualOdometerReading would relabel Samsara measurements as source='manual'. The boundary writer is the
+// one named writer of that kind and is accepted ONLY while every INSERT it makes hardcodes source='samsara_boundary',
+// confidence='measured', ON CONFLICT DO NOTHING, and the migration still exempts that source from the per-day key.
+const BOUNDARY_WRITER = "apps/backend/src/telematics/odometer-history-backfill.service.ts";
+const BOUNDARY_MIGRATION = "db/migrations/202616340100_hos_shell_repoint_and_odometer_boundary_source.sql";
+export function boundaryWriterProblems(src, migrationSrc) {
+  const problems = [];
+  const inserts = [...src.matchAll(/INSERT INTO telematics\.odometer_readings[\s\S]*?RETURNING/g)].map((m) => m[0]);
+  if (!inserts.length) return problems;
+  for (const ins of inserts) {
+    if (!/VALUES \([^)]*'samsara_boundary', 'measured'\)/.test(ins)) problems.push(`${BOUNDARY_WRITER}: an odometer INSERT does not hardcode source='samsara_boundary' / confidence='measured'`);
+    if (!/ON CONFLICT DO NOTHING/.test(ins)) problems.push(`${BOUNDARY_WRITER}: an odometer INSERT overwrites on conflict (a boundary read is never an upsert)`);
+  }
+  if (!/source <> 'samsara_boundary'/.test(migrationSrc ?? "")) problems.push(`${BOUNDARY_MIGRATION}: the per-day key no longer exempts 'samsara_boundary' — boundary reads would collide with the day slot`);
+  return problems;
+}
+
+export function checkOnlyTwoOdometerWriters(files, read = (f) => readFileSync(f, "utf8"), migrationSrc = null) {
+  const problems = [];
   const extra = files.filter((f) => !ODOMETER_WRITERS.some((w) => f.endsWith(w))).filter((f) => {
-    try { return /INSERT INTO telematics\.odometer_readings/.test(readFileSync(f, "utf8")); } catch { return false; }
+    try { return /INSERT INTO telematics\.odometer_readings/.test(read(f)); } catch { return false; }
   });
-  return extra.length
-    ? [`odometer_readings has a third writer: ${extra.map((f) => f.replace(ROOT + "/", "")).join(", ")} -- call upsertManualOdometerReading() (telematics/odometer-manual-upsert.service.ts) instead.`]
-    : [];
+  const third = extra.filter((f) => !f.endsWith(BOUNDARY_WRITER));
+  const boundary = extra.find((f) => f.endsWith(BOUNDARY_WRITER));
+  if (boundary) {
+    const mig = migrationSrc ?? (() => { try { return readFileSync(resolve(ROOT, BOUNDARY_MIGRATION), "utf8"); } catch { return ""; } })();
+    problems.push(...boundaryWriterProblems(read(boundary), mig));
+  }
+  if (third.length) {
+    problems.push(`odometer_readings has a third writer: ${third.map((f) => f.replace(ROOT + "/", "")).join(", ")} -- call upsertManualOdometerReading() (telematics/odometer-manual-upsert.service.ts) instead.`);
+  }
+  return problems;
 }
 
 export function checkExactlyOneFaultProcessor(files) {
@@ -187,7 +215,7 @@ export function run() {
     ok: problems.length === 0,
     message:
       problems.length === 0
-        ? "verify-odometer-ledger-has-one-writer: OK -- one snapshot writer, one manual writer, one fault processor."
+        ? "verify-odometer-ledger-has-one-writer: OK -- one snapshot writer, one manual writer, one samsara_boundary writer, one fault processor."
         : `verify-odometer-ledger-has-one-writer FAILED:\n  - ${problems.join("\n  - ")}`,
   };
 }
@@ -285,6 +313,17 @@ function selftest() {
     unlinkSync(fixturePath);
   }
   expect("no second fault processor", checkExactlyOneFaultProcessor([resolve(ROOT, FAULT_PROCESSOR)]), false);
+
+  // 6. (sweepA) the boundary writer is held to its own kind; any other file inserting is still a third writer.
+  const realBoundary = readFileSync(resolve(ROOT, BOUNDARY_WRITER), "utf8");
+  const realMig = readFileSync(resolve(ROOT, BOUNDARY_MIGRATION), "utf8");
+  const fake = (map) => (f) => map[f];
+  const bw = "/x/" + BOUNDARY_WRITER;
+  expect("boundary writer as written", checkOnlyTwoOdometerWriters([bw], fake({ [bw]: realBoundary }), realMig), false);
+  expect("boundary writer relabels as samsara", checkOnlyTwoOdometerWriters([bw], fake({ [bw]: realBoundary.replace("'samsara_boundary', 'measured'", "'samsara', 'measured'") }), realMig), true);
+  expect("boundary writer upserts", checkOnlyTwoOdometerWriters([bw], fake({ [bw]: realBoundary.replace(/(INSERT INTO telematics\.odometer_readings[\s\S]*?)ON CONFLICT DO NOTHING/, "$1ON CONFLICT (unit_id) DO UPDATE SET odometer_miles = EXCLUDED.odometer_miles") }), realMig), true);
+  expect("per-day key exemption dropped", checkOnlyTwoOdometerWriters([bw], fake({ [bw]: realBoundary }), realMig.replace("source <> 'samsara_boundary'", "true")), true);
+  expect("another file inserting is a third writer", checkOnlyTwoOdometerWriters(["/x/apps/backend/src/telematics/other.ts"], fake({ "/x/apps/backend/src/telematics/other.ts": "INSERT INTO telematics.odometer_readings (x) VALUES (1)" }), realMig), true);
 
   return ok;
 }

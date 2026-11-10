@@ -22,6 +22,7 @@ const FILES = {
   routes: path.join(ROOT, "apps/backend/src/dispatch/loads.routes.ts"),
   modal: path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx"),
   api: path.join(ROOT, "apps/frontend/src/api/loads.ts"),
+  record: path.join(ROOT, "apps/backend/src/overrides/record-override.service.ts"),
 };
 
 function read(p) {
@@ -30,7 +31,7 @@ function read(p) {
 
 export function assertOwnerLockOverridePropagates(srcs) {
   const fails = [];
-  const { service, propagation, routes, modal, api } = srcs;
+  const { service, propagation, routes, modal, api, record = "" } = srcs;
 
   if (!/export function isOwnerFullLockOverridePatch/.test(service)) {
     fails.push("update-load.service.ts must export isOwnerFullLockOverridePatch");
@@ -76,8 +77,22 @@ export function assertOwnerLockOverridePropagates(srcs) {
     fails.push("trip_type change must surface presettlement_relinked propagation item");
   }
   // Audit without reason is forbidden: full override gate requires reason length >= 10
-  if (!/reason\.length < 10/.test(service) && !/trim\(\)\.length < 10/.test(service)) {
-    fails.push("isOwnerFullLockOverridePatch must require override_reason length >= 10");
+  // sweepA (2026-11-10) — Row 28 (#28621, ACCT-F11073): nobody types an override reason any more; every override records
+  // through ONE engine (confirmDispatchOverride -> recordOverride) with a catalogs.override_reasons code (Owner/Accountant
+  // get their role's own code). The rule is unchanged — no override audit without a reason — and is now held by:
+  // the lock path calls confirmDispatchOverride in the edit's transaction BEFORE the audit, refuses when it is not ok,
+  // the audit carries the recorded reason, and recordOverride refuses an override with no code at all.
+  const legacyTypedReason = /reason\.length < 10/.test(service) || /trim\(\)\.length < 10/.test(service);
+  const conf = service.indexOf("const lockOverride = await confirmDispatchOverride(client, {");
+  const refuse = service.indexOf("if (!lockOverride.ok) throw new DispatchOverrideRefusedError(", conf);
+  const audit = service.indexOf('"dispatch.load_edit_lock_overridden"', conf);
+  const recordedReason =
+    conf >= 0 && refuse > conf && audit > refuse &&
+    /reasonCode: input\.override_reason_code,/.test(service.slice(conf, refuse)) &&
+    /override_reason: lockOverride\.text,/.test(service.slice(audit, audit + 400)) &&
+    /if \(!code\) return \{ ok: false, error: "reason_required" \};/.test(record);
+  if (!legacyTypedReason && !recordedReason) {
+    fails.push("isOwnerFullLockOverridePatch must require override_reason length >= 10 (or record a catalog reason through confirmDispatchOverride / recordOverride before the audit)");
   }
 
   if (!/OwnerLockPropagationRefuseError/.test(routes)) {
@@ -113,6 +128,7 @@ if (process.argv.includes("--selftest")) {
     routes: read(FILES.routes),
     modal: read(FILES.modal),
     api: read(FILES.api),
+    record: read(FILES.record),
   };
   if (assertOwnerLockOverridePropagates(srcs).length) {
     console.error(`${LABEL} SELFTEST FAIL — current sources should pass`);
@@ -127,6 +143,19 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — planted missing re-derive should fail`);
     process.exit(1);
   }
+  // sweepA plants — an override with no recorded reason.
+  const reasonPlants = [
+    ["recordOverride accepts a missing code", { ...srcs, record: srcs.record.replace('if (!code) return { ok: false, error: "reason_required" };', "") }],
+    ["refusal ignored", { ...srcs, service: srcs.service.replace("if (!lockOverride.ok) throw new DispatchOverrideRefusedError(", "if (false) throw new DispatchOverrideRefusedError(") }],
+    ["audit drops the reason", { ...srcs, service: srcs.service.replace("override_reason: lockOverride.text,", "") }],
+    ["override confirmed after the audit", { ...srcs, service: srcs.service.replace("const lockOverride = await confirmDispatchOverride(client, {", "const lockOverride = await noEngine(client, {") }],
+  ];
+  for (const [name, planted] of reasonPlants) {
+    if (!assertOwnerLockOverridePropagates(planted).some((f) => f.includes("override_reason length"))) {
+      console.error(`${LABEL} SELFTEST FAIL — plant not caught: ${name}`);
+      process.exit(1);
+    }
+  }
   console.log(`${LABEL} selftest PASS`);
   process.exit(0);
 }
@@ -137,6 +166,7 @@ const fails = assertOwnerLockOverridePropagates({
   routes: read(FILES.routes),
   modal: read(FILES.modal),
   api: read(FILES.api),
+  record: read(FILES.record),
 });
 if (fails.length) {
   console.error(`${LABEL} FAIL`);

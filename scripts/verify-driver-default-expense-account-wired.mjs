@@ -32,9 +32,11 @@ export function check({ routes, banking, auto, types }) {
     if (!/RECOMMENDATION ONLY/.test(routes)) {
       f.push(`${ROUTES}: must document Option-B RECOMMENDATION ONLY`);
     }
+    // sweepA (2026-11-10) — #28503 added a LATERAL identity.users join to the list SELECT and qualified the column as
+    // mdata.drivers.operating_company_id; the qualified spelling is the same predicate and is accepted.
     // List SELECT must keep entity predicate IN the template (not only in ${whereClause}) —
     // verify-mdata-entity-scope fails when the hash changes without a visible predicate.
-    const canonicalListScopes = routes.match(/WHERE \(operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \([\s\S]{0,360}?canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid[\s\S]{0,180}?canonical_list_dca\.is_authorized = true[\s\S]{0,120}?canonical_list_dca\.deactivated_at IS NULL/g) ?? [];
+    const canonicalListScopes = routes.match(/WHERE \((?:mdata\.drivers\.)?operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \([\s\S]{0,360}?canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid[\s\S]{0,180}?canonical_list_dca\.is_authorized = true[\s\S]{0,120}?canonical_list_dca\.deactivated_at IS NULL/g) ?? [];
     if (canonicalListScopes.length !== 2) {
       f.push(`${ROUTES}: count + list SELECTs must carry canonical ownership/active-authorization scope`);
     }
@@ -120,6 +122,15 @@ default_expense_account_id`,
     [
       "missing active authorization scope caught",
       check({ ...good, routes: good.routes.replaceAll("canonical_list_dca.is_authorized = true", "true") }).some((x) => x.includes("count + list")),
+    ],
+    // sweepA — the #28503 qualified spelling passes; dropping the ownership arm from the qualified list SELECT is caught.
+    [
+      "qualified mdata.drivers.operating_company_id passes",
+      check({ ...good, routes: good.routes.replace("WHERE (operating_company_id", "WHERE (mdata.drivers.operating_company_id") }).length === 0,
+    ],
+    [
+      "qualified list SELECT without the ownership arm caught",
+      check({ ...good, routes: good.routes.replace("WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS", "WHERE (mdata.drivers.id IS NOT NULL OR EXISTS") }).some((x) => x.includes("count + list")),
     ],
   ];
   const bad = checks.filter(([, ok]) => !ok);
