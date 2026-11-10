@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~7:20 PM CT) — Factoring+FuelIntegrity board ParityTables
+- **PRIOR:** #28819 Factoring Payments/Repurchase appearance=board.
+- **THIS:** FactoringHome (20) + SubmitToFactorTab (2) + FuelIntegrityPage (3) ParityTables appearance=board — board anti-clip grammar across factoring tabs + fuel integrity. Engines unchanged. R4–R6 Cascade.
+- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~7:10 PM CT) — Factoring Payments/Repurchase board tables
 - **PRIOR:** #28818 Fuel diesel Spend bar track off slate.
 - **THIS:** PaymentsToYouPanel (3) + RepurchaseDuePanel ParityTables appearance=board so money/party columns follow board anti-clip grammar. Engines unchanged. R4–R6 Cascade.
@@ -188,11 +193,6 @@
 - **PRIOR:** #28701 V3KpiTile 78px.
 - **THIS:** Census pins Accounting/Banking/Fuel/Factoring hub KPI+section labels from v3 .dc.html + V3_KPI.heightPx lock. failing_routes stays 0.
 - **NEXT:** Settlements/CashFlow hub label pins + element-complete builds; no match/Dreamline.
-
-## OUTBOX (11-09-2026 ~8:25 PM CT) — ROUND 8.4 V3KpiTile 78px (design law #6)
-- **PRIOR:** #28700 census static floor 0.
-- **THIS:** V3_KPI.heightPx=78; V3KpiTile minHeight/height locked. OUTBOX diet ≤200. Accounting/Banking hubs already match v3 section/KPI labels — next deepen element coverage.
-- **NEXT:** Accounting/Banking element-complete builds + screenshots; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
 ## OUTBOX (11-03-2026 ~7:25 PM CT) — U12 Cursor wave tip; Cascade handoff Accounting lists

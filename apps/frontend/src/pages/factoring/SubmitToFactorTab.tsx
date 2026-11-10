@@ -811,7 +811,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
 
       {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
 
-      <ParityTable
+      <ParityTable appearance="board"
         title={editing ? "Invoices on this purchase — and eligible to add" : "Invoices ready to factor"}
         rows={rows}
         rowKey={(r) => r.invoice_id}
@@ -966,7 +966,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
                 </InfoPopover>
               </p>
               {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). */}
-              <ParityTable<PurchaseCandidate>
+              <ParityTable<PurchaseCandidate> appearance="board"
                 embedded
                 rows={selectedRows}
                 rowKey={(r) => r.invoice_id}
