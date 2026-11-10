@@ -410,7 +410,7 @@ export function EscrowRegisterPage() {
             testId="escrow-register-board-section"
             footer="Each line opens its settlement or journal entry."
           >
-            <ParityTable<RegisterRow>
+            <ParityTable<RegisterRow> appearance="board"
               title={`Escrow register — ${driverName}`}
               columns={columns}
               rows={filteredRows}

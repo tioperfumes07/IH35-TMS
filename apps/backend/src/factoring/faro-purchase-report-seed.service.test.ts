@@ -117,11 +117,39 @@ describe("ACCT-F11108 Faro purchase report seed", () => {
     expect(postPurchase).not.toHaveBeenCalled();
   });
 
-  it("preview runs the engine and rolls back: nothing posted, no feed gate rows", async () => {
-    const out = await run(false);
+  it("preview runs the engine and rolls back: nothing posted; the feed gate runs inside a rolled-back scope", async () => {
+    runPurchaseFeedGate.mockReset().mockImplementation(async (_c: unknown, _o: string, ids: string[]) => ids.map((id) => ({ invoice_id: id, passed: true })));
+    const rolledBack: string[] = [];
+    const out = await seedFaroPurchaseReport({
+      actorUserId: "owner-1",
+      operatingCompanyId: "5c854333-6ea5-4faa-af31-67cb272fef80",
+      csvText: CSV,
+      sourceFilename: "faro purchase report.csv",
+      commit: false,
+      scope: async (fn) => {
+        try {
+          return await fn(client() as never);
+        } catch (e) {
+          rolledBack.push((e as Error).message);
+          throw e;
+        }
+      },
+      syncLoads: async () => {},
+    });
     expect(out.dates.map((d) => d.outcome)).toEqual(["would_post", "would_post"]);
     expect(postPurchase).not.toHaveBeenCalled();
-    expect(runPurchaseFeedGate).not.toHaveBeenCalled();
+    expect(runPurchaseFeedGate).toHaveBeenCalledTimes(2);
+    expect(rolledBack.filter((m) => m === "preview_gate_rollback")).toHaveLength(2);
+  });
+
+  it("preview answers what the commit does: a red feed gate holds the date in the preview too (real 10-15 / 152-13680)", async () => {
+    runPurchaseFeedGate.mockReset().mockImplementation(async (_c: unknown, _o: string, ids: string[]) =>
+      ids.map((id) => ({ invoice_id: id, passed: false, error: "feed_gate_blocked", reds: [{ check_key: "purchase.invoice_billing_docs" }] })),
+    );
+    const out = await run(false);
+    expect(out.posted.count).toBe(0);
+    expect(out.dates.every((d) => String(d.reason).startsWith("feed_gate_blocked"))).toBe(true);
+    expect(createPurchaseDraft).not.toHaveBeenCalled();
   });
 
   it("a red feed gate holds the date (no owner override is ever supplied)", async () => {

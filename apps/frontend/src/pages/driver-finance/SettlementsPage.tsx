@@ -964,7 +964,8 @@ function OpenDriverBillsPanel({
       ) : items.length === 0 ? (
         <p className="px-3 py-2 text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
+           
           storageKey="settlements-open-driver-bills"
           columns={columns}
           rows={items}

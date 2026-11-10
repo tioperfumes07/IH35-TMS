@@ -517,7 +517,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
           </div>
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
+           
             columns={TOUR_COLUMNS(state, companyId, filteredRows)}
             rows={filteredRows}
             rowKey={(r) => r.settlement_id}

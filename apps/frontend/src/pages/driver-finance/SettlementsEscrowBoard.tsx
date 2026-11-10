@@ -324,7 +324,7 @@ export function SettlementsEscrowBoard() {
           testId="settlements-escrow-board-section"
           footer="Live balances from Accounting › Escrow. Click a driver name to open that driver's escrow register."
         >
-          <ParityTable<DriverEscrowRow>
+          <ParityTable<DriverEscrowRow> appearance="board"
             title="Escrow by driver — click a driver to open his register"
             columns={columns}
             rows={driverRows}

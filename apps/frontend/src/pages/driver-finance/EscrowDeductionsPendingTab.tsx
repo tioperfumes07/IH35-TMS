@@ -240,7 +240,7 @@ export function EscrowDeductionsPendingTab() {
             <span />
           </MoneyListToolbar>
           <BoardSection title="Escrow deductions — pending" testId="escrow-deductions-pending-board-section">
-          <ParityTable<EscrowPendingDeduction>
+          <ParityTable<EscrowPendingDeduction> appearance="board"
             columns={columns}
             rows={filteredRows}
             rowKey={(row) => row.id}

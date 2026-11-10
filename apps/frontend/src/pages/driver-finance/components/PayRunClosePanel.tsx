@@ -409,7 +409,7 @@ export function PayRunClosePanel({
           ) : null}
 
           {/* SETL-F3554: ParityTable owns Search+Range+gear for JE legs; raw HTML table skipped surface bar. */}
-          <ParityTable<JeLegRow>
+          <ParityTable<JeLegRow> appearance="board"
             title="Pay-run journal entry — preview legs"
             columns={jeColumns}
             rows={jeRows}

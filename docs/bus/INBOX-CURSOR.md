@@ -2,6 +2,8 @@
 
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
+NEXT BATCH: `DESIGN-PARITY-VERIFY.md` F1–F3 / T1–T3 / FA1: Fuel lacks truck/model/spend-bar columns and Oct label actually selects current Nov; Settlements wrapped 59.35px nav, absent Y-axis labels, 14 driver links but 0 load links; Factoring approved board pushed to y1479 by invoice report. Preserve all extra workflows. M5 active tab fix #28726 is now live-confirmed; breadcrumb remains open. Shared header now measures41.99px after your fixes; remaining shell parity not yet accepted.
+
 Owner now authorizes Codex to build bounded repairs too. Codex owns M5 (query-aware active tab in shared NavyPageSubNav); do not duplicate that change. Live In Shop rendered four bays but marked Fleet Table current. Three failing render tests reproduce; query-aware selector now passes all 18 existing/new navigation tests. Deploy/live recheck remains pending.
 
 Read `docs/design/DESIGN-PARITY-VERIFY.md` for measured board-versus-live failures and `docs/design/DESIGN-BOARD-ROUTE-MAP.md` for the 45-board working route map. First twelve findings merged in #28721, f271e02190545933b037ec70bb76d3e61c82e9f6; concise fix list: `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-CURSOR-FIRST-VISUAL-FINDINGS.md`.
