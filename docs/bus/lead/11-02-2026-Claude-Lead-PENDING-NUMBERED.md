@@ -2,6 +2,32 @@
 
 Sources: docs/bus/lead/LEAD-PENDING-REGISTER.md (last written 10-28, rows NOT re-measured since) + docs/bus/lead/ENGINE-REGISTER.json (11-02 17:12Z) + items measured today. Every non-DONE row is listed. CODED / MERGED-UNVERIFIED = code exists, live proof missing.
 
+## 11-04 12:00 CT
+
+- ACCT-F11100 banking cleared-only tiles: PR #28656 open, not merged.
+  - USMCA FREIGHT money out, old reader → new reader: Oct $285,153.62 → $284,129.85; Nov 1–4 $41,194.89 → $19,199.76 (9 pending lines shown separately: out $21,995.13, in $4,076.00).
+  - 2 stale pending rows voided and linked (audits ff22835a-3c39-46c0-89ce-41977fd1812f, d7ff5539-a206-430e-a4be-eed78a02a339).
+  - Waits on #28661.
+- ACCT-F11101/F11102: MERGED #28657 (33c2dc65).
+  - Credit memo corrects sent invoices.
+  - Bill 13693 repriced $979.45 → $940.27, audit 88278135-be70-49de-b00f-a8427ebf4727.
+  - TB 0 → 0. A/P 2000 unchanged (the bill was never accrued).
+- ACCT-F11103: MERGED #28655 (d0d20344) and #28660 (2811ac7a), claim #28658.
+  - #28655 counted payment-less applications with no live source; #28660 is the root fix.
+  - A/R aging = A/R 1100 = $621,076.72 (78 customers).
+- ACCT-F11104: MERGED #28659 (3493aeb8), read-only QBO bill-payment evidence page.
+  - Groups vs the 08-15 mirror: 11 exact $5,128.42 / 1 ambiguous $543.76 / 179 none $128,863.46 / postable 0.
+  - QBO checks 1525/1526/1527/1529 have no USMCA bank debit; drivers were paid via Zelle through Alberto or from the Transportation bank.
+  - The mirror pull has been blocked since 09-28 (flag in catalogs.blocked_feature_flags).
+  - OWNER/ACCOUNTANT: how to record Alberto- or Transportation-paid driver payouts.
+- ACCT-F11105 fuel live guards: PR #28661 open. All checks green except verify-additive-only (owner-gated).
+  - Root cause: the ENG-65 first run at 11-04 12:00Z recorded Relay fills already on DREAMLINE tickets on other trucks.
+  - 18 fuel rows voided, $5,112.14, 0 GL, 18 audit events.
+  - OWNER: void DREAMLINE ($5,800.15) or Relay ($5,138.14) expense docs for the 13 double-booked purchases; 12 more matching fills; T176 Mandeville 09-11 near-pair; load 13569 attribution of Aug 4–5 rows.
+- Main-side reds consolidated into #28661 (via #28662): stale battery doc, customer-detail proper-case test, savepoints teardown, 5 board-guard selftests, *_ack_at rename, is_credit in the QBO evidence service, floor-override guard, navy hex.
+- OWNER: verify-additive-only 70→78. It needs an OWNER-REMOVE line for 8 gear-hidden columns (TripPairing ×3, CompanySettlements ×2, Deductions Started ×2, Insurance Expires).
+- Still owner-side: void bills 13544 $3.46 / 13563 $3.24; Relay CSV upload; advances CA-0001..0012 on hold (accountant).
+
 ## Lead re-measure 2026-11-02 5:00 PM CT
 
 20 Lead rows proved DONE-LIVE (15, 31, 32, 36, 39, 40, 41, 42, 106, 107, 108, 118, 135, 136, 147, 170, 171, 178, 209, 211); row 44 PARTIAL. Also found: migration 202615210200 (complete delete route) is not in the prod migrations ledger, but every object it creates is present in prod (purge_authorized_rows, audit.record_deletions, loads.source_entity_code, delete_cancelled_load_revrec).
