@@ -340,6 +340,19 @@ if (worse.length) {
   process.exit(1);
 }
 
+// GLB-04 batch82 (2026-11-10): these exact off-scale literals were present in BookLoadModalV4.tsx
+// and have been replaced with locked-scale classes — lock the regression out permanently.
+const BOOKLADMODALV4 = path.join(SRC, "pages/dispatch/components/BookLoadModalV4.tsx");
+if (fs.existsSync(BOOKLADMODALV4)) {
+  const blSource = fs.readFileSync(BOOKLADMODALV4, "utf8");
+  const blForbidden = ["text-[10px]", "text-[10.5px]", "text-[11.5px]", "text-[12.5px]"];
+  const blViolations = blForbidden.filter((f) => blSource.includes(f));
+  if (blViolations.length) {
+    console.error(`${LABEL}: FAIL — GLB-04 batch82 regression in BookLoadModalV4.tsx: ${blViolations.join(", ")} must not reappear (fixed 2026-11-10; use text-section-header or text-xs)`);
+    process.exit(1);
+  }
+}
+
 console.log(`${LABEL}: PASS`);
 for (const b of better) console.log(`  improved  ${b}`);
 if (better.length) console.log(`  run with --lower to bank it into the baseline`);
