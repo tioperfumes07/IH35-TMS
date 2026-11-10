@@ -4,6 +4,7 @@
 // drills to exactly those rows (getBankingKpiDrill); the value and the drill share one predicate so they cannot disagree.
 //
 import { bankLineHasLiveDocumentPointerSql, bankLineIsUnmatchedSql } from "./bank-line-match-pointer.js";
+import { clearedBankLine } from "./cleared-bank-line.sql.js";
 
 // ENG-MATCH: unmatched / match_rate follow the live document pointer, not review_state and
 // not coa_account_id. Categorize is GL mapping. Match is a pointer (ROUND 368.2 + deposit).
@@ -53,8 +54,8 @@ const num = (v: unknown) => (v == null ? 0 : Number(v));
 
 // ---- SQL, shared by each KPI value and its drill --------------------------------------------------------------------
 /** A real, live bank line in range: not voided, not merged into another line, not sample data. */
-const LIVE = `b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL
-  AND NOT COALESCE(b.is_sample_data, false) AND b.transaction_date BETWEEN $2::date AND $3::date`;
+/** ACCT-F11100: cleared only — a pending bank-feed line is never counted (QuickBooks parity). */
+const LIVE = `b.operating_company_id = $1::uuid AND ${clearedBankLine("b")} AND b.transaction_date BETWEEN $2::date AND $3::date`;
 const IN_SCOPE = `${LIVE} AND b.review_state IS DISTINCT FROM 'excluded'`;
 const RESOLVED = bankLineHasLiveDocumentPointerSql("b");
 const UNMATCHED = bankLineIsUnmatchedSql("b");

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { clearedBankLine, pendingBankLine } from "../../banking/cleared-bank-line.sql.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -95,6 +96,9 @@ const companyTransactionsQuerySchema = z.object({
   // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle, same as the
   // account register — default false keeps the 34 GO-11 fixture rows out of this list.
   include_sample_data: queryBoolean().default(false),
+  // ACCT-F11100 (QuickBooks parity): the register and For Review list cleared (posted) lines only. A pending
+  // bank-feed line is listed only when the caller asks for the Pending list (feed_state=pending) or all.
+  feed_state: z.enum(["cleared", "pending", "all"]).default("cleared"),
 });
 
 const updateLinkBodySchema = z.object({
@@ -666,6 +670,14 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           : "bt.voided_at IS NULL",
         "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
       ];
+      // ACCT-F11100 — one shared predicate pair (cleared-bank-line.sql.ts). include_sample_data keeps its reveal:
+      // the sample clause of the predicate is dropped only when the owner asked to see sample rows.
+      if (query.data.feed_state !== "all") {
+        const statePred = query.data.feed_state === "pending" ? pendingBankLine("bt") : clearedBankLine("bt");
+        predicates.push(
+          query.data.include_sample_data ? `(${statePred} OR bt.is_sample_data = true)` : statePred,
+        );
+      }
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
       if (query.data.bank_account_id) {

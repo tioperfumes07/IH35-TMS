@@ -1,0 +1,1 @@
+export default { name: "verify:verify-pending-bank-lines-never-counted", run(ctx) { ctx.run("node", ["scripts/verify-pending-bank-lines-never-counted.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-pending-bank-lines-never-counted.mjs"]); } };

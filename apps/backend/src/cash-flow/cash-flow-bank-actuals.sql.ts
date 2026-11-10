@@ -23,6 +23,7 @@
  * $216,532.56 in, 209 debits $239,059.03 out (incl. pending).
  */
 import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { clearedBankLine } from "../banking/cleared-bank-line.sql.js";
 export function operatingBankAccountSetSql(baAlias: string, hideFilterOnBaAlias: string): string {
   if (!/^[a-z_][a-z0-9_]*$/i.test(baAlias)) throw new Error(`invalid SQL alias: ${baAlias}`);
   const a = baAlias;
@@ -48,10 +49,8 @@ export function operatingBankActualsByDaySql(hideFilterOnBaAlias: string): strin
     WHERE bt.operating_company_id = $1::uuid
       AND bt.transaction_date BETWEEN $2::date AND $3::date
       AND ${operatingBankAccountSetSql("ba", hideFilterOnBaAlias)}
-      AND ${notVoided("bt")}
-      AND bt.merged_into_bank_transaction_id IS NULL
-      AND COALESCE(bt.pending, false) = false
-      AND COALESCE(bt.is_sample_data, false) = false
+      -- ACCT-F11100: the one shared cleared-line predicate (Banking money-map, balances, registers, For Review).
+      AND ${clearedBankLine("bt")}
       AND NOT EXISTS (
         SELECT 1 FROM banking.bank_accounts xa
         WHERE xa.id = bt.destination_bank_account_id
