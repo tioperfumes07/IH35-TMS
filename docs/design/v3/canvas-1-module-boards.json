@@ -1,0 +1,765 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Accounting-PREVIOUS.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "PREVIOUS \u00b7 4 \u00b7 Accounting \u2014 close, AR, AP",
+      "w": 1440,
+      "x": 3040,
+      "y": 1620
+    },
+    "Accounting.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "NEW \u00b7 4 \u00b7 Accounting \u2014 close, AR, AP",
+      "w": 1440,
+      "x": 1520,
+      "y": 1620
+    },
+    "CashFlow.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 10a \u00b7 Cash flow \u2014 Home",
+      "w": 1440,
+      "x": 1520,
+      "y": 5860
+    },
+    "CashFlowActualVsProjected.dc.html": {
+      "expand": "fill",
+      "h": 950,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 10c \u00b7 Cash flow \u2014 Actual vs Projected",
+      "w": 1440,
+      "x": 4560,
+      "y": 5860
+    },
+    "CashFlowActualVsProjectedV2.dc.html": {
+      "expand": "fill",
+      "h": 1450,
+      "title": "V2 \u00b7 Cash flow \u2014 Actual vs Projected",
+      "w": 1440,
+      "x": 3040,
+      "y": 11400
+    },
+    "CashFlowLedger.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 10d \u00b7 Cash flow \u2014 Rolling Ledger",
+      "w": 1440,
+      "x": 3040,
+      "y": 7240
+    },
+    "CashFlowLedgerV2.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "V2 \u00b7 Cash flow \u2014 Rolling Ledger",
+      "w": 1440,
+      "x": 0,
+      "y": 13020
+    },
+    "CashFlowManual.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 10e \u00b7 Cash flow \u2014 Manual Daily Projections",
+      "w": 1440,
+      "x": 4560,
+      "y": 7240
+    },
+    "CashFlowManualV2.dc.html": {
+      "expand": "fill",
+      "h": 850,
+      "title": "V2 \u00b7 Cash flow \u2014 Manual Projections",
+      "w": 1440,
+      "x": 1520,
+      "y": 13020
+    },
+    "CashFlowProjected.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 10b \u00b7 Cash flow \u2014 Projected (Auto)",
+      "w": 1440,
+      "x": 3040,
+      "y": 5860
+    },
+    "CashFlowProjectedV2.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "V2 \u00b7 Cash flow \u2014 Projected (Auto) calendar",
+      "w": 1440,
+      "x": 1520,
+      "y": 11400
+    },
+    "CashFlowV2.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "V2 \u00b7 Cash flow \u2014 Overview (13-week)",
+      "w": 1440,
+      "x": 0,
+      "y": 11400
+    },
+    "Customers.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 13 \u00b7 Customers",
+      "w": 1440,
+      "x": 1520,
+      "y": 8720
+    },
+    "CustomersV2.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "V2 \u00b7 Customers \u2014 receivables",
+      "w": 1440,
+      "x": 0,
+      "y": 14490
+    },
+    "Dispatch.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 12 \u00b7 Dispatch \u2014 load board",
+      "w": 1440,
+      "x": 0,
+      "y": 8720
+    },
+    "DispatchV2.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "V2 \u00b7 Dispatch \u2014 visual planner",
+      "w": 1440,
+      "x": 3040,
+      "y": 13020
+    },
+    "DriverProfile.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "3 \u00b7 Driver profile \u2014 the driver, the truck, the trip",
+      "w": 1440,
+      "x": 0,
+      "y": 1620
+    },
+    "Factoring.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "2 \u00b7 Factoring \u2014 invoice to cash",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Fuel-PREVIOUS.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "PREVIOUS \u00b7 8 \u00b7 Fuel \u2014 every gallon on a truck, on a load",
+      "w": 1440,
+      "x": 3040,
+      "y": 4480
+    },
+    "Fuel.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "NEW \u00b7 8 \u00b7 Fuel \u2014 every gallon on a truck, on a load",
+      "w": 1440,
+      "x": 1520,
+      "y": 4480
+    },
+    "Insurance.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "6 \u00b7 Insurance \u2014 coverage timeline",
+      "w": 1440,
+      "x": 1520,
+      "y": 3000
+    },
+    "Legal.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "5 \u00b7 Legal \u2014 matters, deadlines, contracts",
+      "w": 1440,
+      "x": 0,
+      "y": 3000
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "1 \u00b7 Banking \u2014 where the money moves",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Reports.dc.html": {
+      "expand": "fill",
+      "h": 950,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 15 \u00b7 Reports library",
+      "w": 1440,
+      "x": 1520,
+      "y": 10100
+    },
+    "ReportsV2.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "V2 \u00b7 Reports center",
+      "w": 1440,
+      "x": 3040,
+      "y": 14490
+    },
+    "Safety-PREVIOUS.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "PREVIOUS \u00b7 7 \u00b7 Safety & compliance \u2014 who is legal to drive",
+      "w": 1440,
+      "x": -1520,
+      "y": 4480
+    },
+    "Safety.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "NEW \u00b7 7 \u00b7 Safety & compliance \u2014 who is legal to drive",
+      "w": 1440,
+      "x": 0,
+      "y": 4480
+    },
+    "Settlements-PREVIOUS.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "PREVIOUS \u00b7 9 \u00b7 Settlements \u2014 driver pay by week",
+      "w": 1440,
+      "x": -1520,
+      "y": 5860
+    },
+    "Settlements.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "NEW \u00b7 9 \u00b7 Settlements \u2014 driver pay by week",
+      "w": 1440,
+      "x": 0,
+      "y": 5860
+    },
+    "Unexpected.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "11 \u00b7 Unexpected expenses \u2014 surprises on the truck they hit",
+      "w": 1440,
+      "x": 0,
+      "y": 7340
+    },
+    "V3-Accounting-Unexpected.dc.html": {
+      "expand": "fill",
+      "h": 700,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Accounting \u203a Unexpected expenses",
+      "w": 1456,
+      "x": 1540,
+      "y": -24240
+    },
+    "V3-Accounting.dc.html": {
+      "expand": "fill",
+      "h": 800,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Accounting",
+      "w": 1456,
+      "x": 0,
+      "y": -24240
+    },
+    "V3-Banking.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Banking \u203a Home",
+      "w": 1456,
+      "x": 3080,
+      "y": -24240
+    },
+    "V3-CashFlow-ActualVsProjected.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Cash Flow \u203a Actual vs Projected",
+      "w": 1456,
+      "x": 1540,
+      "y": -28410
+    },
+    "V3-CashFlow-Home.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Cash Flow \u203a Home",
+      "w": 1456,
+      "x": 3080,
+      "y": -30000
+    },
+    "V3-CashFlow-Manual.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Cash Flow \u203a Manual Daily Projections",
+      "w": 1456,
+      "x": 0,
+      "y": -26770
+    },
+    "V3-CashFlow-Projected.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Cash Flow \u203a Projected (Auto)",
+      "w": 1456,
+      "x": 0,
+      "y": -28410
+    },
+    "V3-CashFlow-RollingLedger.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Cash Flow \u203a Rolling Ledger",
+      "w": 1456,
+      "x": 3080,
+      "y": -28410
+    },
+    "V3-Customers.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Customers",
+      "w": 1456,
+      "x": 3080,
+      "y": -26770
+    },
+    "V3-Dispatch-TruckPlanner.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Dispatch \u203a Planners \u203a Truck Planner",
+      "w": 1456,
+      "x": 1540,
+      "y": -26770
+    },
+    "V3-DriverProfile.dc.html": {
+      "expand": "fill",
+      "h": 800,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Driver profile",
+      "w": 1456,
+      "x": 3080,
+      "y": -23200
+    },
+    "V3-Factoring.dc.html": {
+      "expand": "fill",
+      "h": 850,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Factoring \u203a Account summary",
+      "w": 1456,
+      "x": 0,
+      "y": -23200
+    },
+    "V3-Fuel.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Fuel \u203a By truck",
+      "w": 1456,
+      "x": 0,
+      "y": -21910
+    },
+    "V3-Insurance.dc.html": {
+      "expand": "fill",
+      "h": 650,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Insurance",
+      "w": 1456,
+      "x": 0,
+      "y": -20870
+    },
+    "V3-Legal.dc.html": {
+      "expand": "fill",
+      "h": 700,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Legal \u203a Contracts",
+      "w": 1456,
+      "x": 3080,
+      "y": -21910
+    },
+    "V3-Maintenance-Home.dc.html": {
+      "expand": "fill",
+      "h": 1450,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Maintenance \u203a Home",
+      "w": 1456,
+      "x": 0,
+      "y": -30000
+    },
+    "V3-Maintenance-InShop.dc.html": {
+      "expand": "fill",
+      "h": 700,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Maintenance \u203a In Shop",
+      "w": 1456,
+      "x": 1540,
+      "y": -30000
+    },
+    "V3-Reports-Viewer-TrialBalance.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Reports \u203a Trial balance (viewer)",
+      "w": 1456,
+      "x": 3080,
+      "y": -25480
+    },
+    "V3-Reports.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Reports",
+      "w": 1456,
+      "x": 1540,
+      "y": -25480
+    },
+    "V3-Safety-DriverFiles.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Safety \u203a Driver files",
+      "w": 1456,
+      "x": 1540,
+      "y": -21910
+    },
+    "V3-Settlements.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Settlements",
+      "w": 1456,
+      "x": 1540,
+      "y": -23200
+    },
+    "V3-Vendors.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "V3 \u00b7 IN THE LIVE APP \u00b7 Vendors",
+      "w": 1456,
+      "x": 0,
+      "y": -25480
+    },
+    "Vendors.dc.html": {
+      "expand": "fill",
+      "h": 1050,
+      "title": "PREVIOUS (rejected 4:41 PM) \u00b7 14 \u00b7 Vendors",
+      "w": 1440,
+      "x": 0,
+      "y": 10100
+    },
+    "VendorsV2.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "V2 \u00b7 Vendors",
+      "w": 1440,
+      "x": 1520,
+      "y": 14490
+    },
+    "V3-Settlements-Open.dc.html": {
+      "x": 0,
+      "y": -19800,
+      "w": 1456,
+      "h": 900,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Settlements (Open) \u2014 number column",
+      "expand": "fill"
+    },
+    "V3-Settlements-Closed.dc.html": {
+      "x": 1540,
+      "y": -19800,
+      "w": 1456,
+      "h": 760,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Settlements (Closed)",
+      "expand": "fill"
+    },
+    "V3-Settlements-Statement.dc.html": {
+      "x": 3080,
+      "y": -19800,
+      "w": 1456,
+      "h": 900,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Statement 5851 (click the number)",
+      "expand": "fill"
+    },
+    "V3-Settlements-PreSettlements.dc.html": {
+      "x": 0,
+      "y": -18760,
+      "w": 1456,
+      "h": 800,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Pre-Settlements",
+      "expand": "fill"
+    },
+    "V3-Settlements-Close.dc.html": {
+      "x": 1540,
+      "y": -18760,
+      "w": 1456,
+      "h": 650,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Settlement Close",
+      "expand": "fill"
+    },
+    "V3-Settlements-CashAdvances.dc.html": {
+      "x": 3080,
+      "y": -18760,
+      "w": 1456,
+      "h": 650,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Cash Advances",
+      "expand": "fill"
+    },
+    "V3-Settlements-Escrow.dc.html": {
+      "x": 0,
+      "y": -17820,
+      "w": 1456,
+      "h": 900,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Escrow",
+      "expand": "fill"
+    },
+    "V3-Settlements-Deductions.dc.html": {
+      "x": 1540,
+      "y": -17820,
+      "w": 1456,
+      "h": 600,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Deductions",
+      "expand": "fill"
+    },
+    "V3-Settlements-Company.dc.html": {
+      "x": 3080,
+      "y": -17820,
+      "w": 1456,
+      "h": 600,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Settlements \u203a Company Settlements",
+      "expand": "fill"
+    },
+    "V3-Settlements-EscrowRegister.dc.html": {
+      "x": 0,
+      "y": -16780,
+      "w": 1456,
+      "h": 700,
+      "title": "V3 \u00b7 SETTLEMENTS MODULE \u00b7 Escrow \u203a driver register (click a driver)",
+      "expand": "fill"
+    },
+    "V3-Dispatch-LoadWizard-Modal.dc.html": {
+      "x": 0,
+      "y": -36800,
+      "w": 1456,
+      "h": 1640,
+      "title": "PREVIOUS (not verified live, 7:20 PM) \u00b7 V3 \u00b7 DISPATCH \u00b7 Load wizard \u2014 center modal (full form, T163, usual driver suggested)",
+      "expand": "fill"
+    },
+    "V3-Dispatch-LoadWizard-SidePanel.dc.html": {
+      "x": 1540,
+      "y": -36800,
+      "w": 1456,
+      "h": 1180,
+      "title": "PREVIOUS (not verified live, 7:20 PM) \u00b7 V3 \u00b7 DISPATCH \u00b7 Load wizard \u2014 side panel from Truck Line (T122, no driver yet \u2192 pick any free driver)",
+      "expand": "fill"
+    },
+    "V3-Dispatch-LoadWizard-Spec.dc.html": {
+      "x": 3080,
+      "y": -36800,
+      "w": 1456,
+      "h": 760,
+      "title": "PREVIOUS (not verified live, 7:20 PM) \u00b7 V3 \u00b7 DISPATCH \u00b7 Load wizard \u2014 field sizes & QuickBooks formats",
+      "expand": "fill"
+    },
+    "V3-Dispatch-BookLoad-Modal.dc.html": {
+      "x": 0,
+      "y": -32800,
+      "w": 1456,
+      "h": 2310,
+      "title": "V3 \u00b7 DISPATCH \u00b7 Book load \u2014 center modal \u00b7 built from the LIVE wizard (sections A\u2013E), measured 7:11 PM",
+      "expand": "fill"
+    },
+    "V3-Dispatch-BookLoad-SidePanel.dc.html": {
+      "x": 1540,
+      "y": -32800,
+      "w": 1456,
+      "h": 1960,
+      "title": "V3 \u00b7 DISPATCH \u00b7 Book load \u2014 side panel from Truck Line (T122) \u00b7 live structure",
+      "expand": "fill"
+    },
+    "V3-Dispatch-BookLoad-Spec.dc.html": {
+      "x": 3080,
+      "y": -32800,
+      "w": 1456,
+      "h": 760,
+      "title": "V3 \u00b7 DISPATCH \u00b7 Book load \u2014 live measurement \u2192 fix, every field",
+      "expand": "fill"
+    },
+    "V3-Dispatch-BookLoad-TripType.dc.html": {
+      "x": 4620,
+      "y": -32800,
+      "w": 1456,
+      "h": 900,
+      "title": "V3 \u00b7 DISPATCH \u00b7 Book load \u2014 trip type NB / TR / SB (live behaviour)",
+      "expand": "fill"
+    },
+    "V3-Dispatch-LoadHistory.dc.html": {
+      "x": 0,
+      "y": -42800,
+      "w": 1456,
+      "h": 1500,
+      "title": "NEW \u00b7 V3 \u00b7 Dispatch \u203a Load history (every load, every link both ways)",
+      "expand": "fill"
+    },
+    "V3-Reports-Loads.dc.html": {
+      "x": 1540,
+      "y": -42800,
+      "w": 1456,
+      "h": 1250,
+      "title": "NEW \u00b7 V3 \u00b7 Reports \u203a Loads report",
+      "expand": "fill"
+    },
+    "V3-Reports-DriverSettlements.dc.html": {
+      "x": 3080,
+      "y": -42800,
+      "w": 1456,
+      "h": 1150,
+      "title": "NEW \u00b7 V3 \u00b7 Reports \u203a Driver settlement report",
+      "expand": "fill"
+    },
+    "V3-Reports-CompanySettlements.dc.html": {
+      "x": 0,
+      "y": -41100,
+      "w": 1456,
+      "h": 1100,
+      "title": "NEW \u00b7 V3 \u00b7 Reports \u203a Company settlement report",
+      "expand": "fill"
+    },
+    "V3-Reports-Customers.dc.html": {
+      "x": 1540,
+      "y": -41100,
+      "w": 1456,
+      "h": 1200,
+      "title": "NEW \u00b7 V3 \u00b7 Reports \u203a Customer report",
+      "expand": "fill"
+    },
+    "V3-Reports-Vendors.dc.html": {
+      "x": 3080,
+      "y": -41100,
+      "w": 1456,
+      "h": 1050,
+      "title": "NEW \u00b7 V3 \u00b7 Reports \u203a Vendor report",
+      "expand": "fill"
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-22T20:40:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "IH35 module graphics \u2014 USMCA live data, Oct 22 2026",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "v2": {
+      "kind": "title1",
+      "maxW": 4400,
+      "text": "V2 \u2014 redesigned 10-22 4:41 PM (rejected V1 boards kept above)",
+      "w": 240,
+      "x": 0,
+      "y": 11140
+    },
+    "v3": {
+      "kind": "title1",
+      "maxW": 4600,
+      "text": "V3 \u2014 every design shown inside the live app (10-22 5:34 PM CT). Older versions kept below.",
+      "w": 240,
+      "x": 0,
+      "y": -30300
+    },
+    "v3s": {
+      "kind": "title1",
+      "maxW": 4600,
+      "text": "V3 \u2014 Settlements module, every tab (10-22 6:15 PM CT)",
+      "x": 0,
+      "y": -20100
+    },
+    "v3w": {
+      "kind": "title1",
+      "maxW": 4600,
+      "text": "V3 \u2014 Book load wizard, built from the live wizard measured in Chrome 7:11 PM CT (side panel + center modal)",
+      "x": 0,
+      "y": -33100
+    },
+    "v3wp": {
+      "kind": "title1",
+      "maxW": 4600,
+      "text": "PREVIOUS \u2014 first wizard design (7:20 PM, not verified live) \u2014 kept, not erased",
+      "x": 0,
+      "y": -37100
+    },
+    "v3r": {
+      "kind": "title1",
+      "maxW": 4600,
+      "text": "NEW 10-23 4:30 PM CT \u2014 Load history + the missing reports (live USMCA data) \u2014 for approval",
+      "x": 0,
+      "y": -43100
+    }
+  },
+  "order": [
+    "V3-Reports-Vendors.dc.html",
+    "V3-Reports-Customers.dc.html",
+    "V3-Reports-CompanySettlements.dc.html",
+    "V3-Reports-DriverSettlements.dc.html",
+    "V3-Reports-Loads.dc.html",
+    "V3-Dispatch-LoadHistory.dc.html",
+    "V3-Dispatch-BookLoad-TripType.dc.html",
+    "V3-Dispatch-BookLoad-Spec.dc.html",
+    "V3-Dispatch-BookLoad-SidePanel.dc.html",
+    "V3-Dispatch-BookLoad-Modal.dc.html",
+    "V3-Dispatch-LoadWizard-Spec.dc.html",
+    "V3-Dispatch-LoadWizard-SidePanel.dc.html",
+    "V3-Dispatch-LoadWizard-Modal.dc.html",
+    "V3-Maintenance-Home.dc.html",
+    "V3-Maintenance-InShop.dc.html",
+    "V3-CashFlow-Home.dc.html",
+    "V3-CashFlow-Projected.dc.html",
+    "V3-CashFlow-ActualVsProjected.dc.html",
+    "V3-CashFlow-RollingLedger.dc.html",
+    "V3-CashFlow-Manual.dc.html",
+    "V3-Dispatch-TruckPlanner.dc.html",
+    "V3-Customers.dc.html",
+    "V3-Vendors.dc.html",
+    "V3-Reports.dc.html",
+    "V3-Reports-Viewer-TrialBalance.dc.html",
+    "V3-Accounting.dc.html",
+    "V3-Accounting-Unexpected.dc.html",
+    "V3-Banking.dc.html",
+    "V3-Factoring.dc.html",
+    "V3-Settlements.dc.html",
+    "V3-DriverProfile.dc.html",
+    "V3-Fuel.dc.html",
+    "V3-Safety-DriverFiles.dc.html",
+    "V3-Legal.dc.html",
+    "V3-Insurance.dc.html",
+    "V3-Settlements-EscrowRegister.dc.html",
+    "V3-Settlements-Company.dc.html",
+    "V3-Settlements-Deductions.dc.html",
+    "V3-Settlements-Escrow.dc.html",
+    "V3-Settlements-CashAdvances.dc.html",
+    "V3-Settlements-Close.dc.html",
+    "V3-Settlements-PreSettlements.dc.html",
+    "V3-Settlements-Statement.dc.html",
+    "V3-Settlements-Closed.dc.html",
+    "V3-Settlements-Open.dc.html",
+    "Main.dc.html",
+    "Factoring.dc.html",
+    "DriverProfile.dc.html",
+    "Accounting-PREVIOUS.dc.html",
+    "Accounting.dc.html",
+    "Legal.dc.html",
+    "Insurance.dc.html",
+    "Safety-PREVIOUS.dc.html",
+    "Safety.dc.html",
+    "Fuel-PREVIOUS.dc.html",
+    "Fuel.dc.html",
+    "Settlements-PREVIOUS.dc.html",
+    "Settlements.dc.html",
+    "CashFlow.dc.html",
+    "Unexpected.dc.html",
+    "CashFlowProjected.dc.html",
+    "CashFlowActualVsProjected.dc.html",
+    "CashFlowLedger.dc.html",
+    "CashFlowManual.dc.html",
+    "Dispatch.dc.html",
+    "Customers.dc.html",
+    "Vendors.dc.html",
+    "Reports.dc.html",
+    "CashFlowV2.dc.html",
+    "CashFlowProjectedV2.dc.html",
+    "CashFlowActualVsProjectedV2.dc.html",
+    "CashFlowLedgerV2.dc.html",
+    "CashFlowManualV2.dc.html",
+    "DispatchV2.dc.html",
+    "CustomersV2.dc.html",
+    "VendorsV2.dc.html",
+    "ReportsV2.dc.html"
+  ],
+  "pages": [],
+  "title": "IH35 Module Graphics \u2014 Banking, Factoring, Driver, Accounting, Legal, Insurance, Safety, Fuel, Settlements"
+}
