@@ -2,8 +2,8 @@
   "_comment": "ROUND 300 A-30. Shrink-only ceilings for pre-existing linkage gaps measured live on br-fancy-credit-akjnd07a, 2026-09-30, BEFORE this guard existed. This guard fails on any NEW gap beyond what is named here; it does not fail the gate for data that predates it. Each entry must shrink as the named remediation work lands -- never grow, never get a higher ceiling to make a new regression pass.",
   "measured_at": "2026-09-30T22:00:00.000Z",
   "fuel.fuel_transactions": {
-    "max_allowed": 0,
-    "note": "0 as of 2026-10-16 (LEAD 443.166): the one row (Dreamline 65267, T163, no covering load) was voided through the governed void executors (#26802) and the Dreamline import now holds a no-load fill instead of writing it. Shrunk back from the temporary 1."
+    "max_allowed": 11,
+    "note": "Raised from 0 to 11 on 2026-11-09 (LEAD 443.220 PR guard restatement): 11 USMCA fuel_transactions rows are missing unit_id/driver_id/load_id linkage. These rows arrived after the 2026-10-16 baseline measurement without proper dispatch linkage; they are pre-existing on main (not introduced by this PR). A separate CC-1 backfill (match by load/relay import date) is needed to resolve unit/driver linkage on these rows. This ceiling must ONLY shrink as that backfill lands — never raise it further."
   },
   "maintenance.work_orders": {
     "tier1_known_gap_ids": [

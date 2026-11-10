@@ -46,7 +46,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 61 AND 90) AS a_61_90,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date > 90) AS a_90
            FROM accounting.invoices i
-          WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
+          WHERE i.operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
           GROUP BY customer_id),
        collected AS (
          SELECT p.customer_id, coalesce(sum(pa.amount_cents), 0)::bigint AS collected
@@ -65,7 +65,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
          FROM mdata.customers c
          LEFT JOIN inv ON inv.customer_id = c.id
          LEFT JOIN collected ON collected.customer_id = c.id
-         LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id
+         LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id AND fv.operating_company_id = c.operating_company_id
         WHERE c.operating_company_id = $1::uuid
         ORDER BY coalesce(inv.open, 0) DESC, coalesce(inv.billed, 0) DESC, c.customer_name`,
       [oc]
@@ -113,13 +113,13 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
       `WITH exp AS (
          SELECT e.vendor_uuid AS vendor_id, count(*)::int AS txns, sum(e.total_amount_cents) AS spend, max(e.transaction_date) AS last_paid,
                 mode() WITHIN GROUP (ORDER BY pa.account_name) AS pays_through
-           FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid
+           FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
           GROUP BY e.vendor_uuid),
        cat AS (
          SELECT DISTINCT ON (e.vendor_uuid) e.vendor_uuid AS vendor_id, a.account_name AS category, a.id AS category_account_id
            FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
-           LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+           LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid AND a.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
           GROUP BY e.vendor_uuid, a.id, a.account_name
           ORDER BY e.vendor_uuid, sum(coalesce(el.amount_cents, round(el.amount * 100))) DESC NULLS LAST),
@@ -144,7 +144,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
          LEFT JOIN bills ON bills.vendor_key = v.id::text
          LEFT JOIN LATERAL (
            SELECT e2.payment_account_uuid AS account_id
-             FROM accounting.expenses e2 JOIN catalogs.accounts a2 ON a2.id = e2.payment_account_uuid
+             FROM accounting.expenses e2 JOIN catalogs.accounts a2 ON a2.id = e2.payment_account_uuid AND a2.operating_company_id = e2.operating_company_id
             WHERE e2.operating_company_id = $1::uuid AND e2.vendor_uuid = v.id AND e2.voided_at IS NULL
               AND e2.transaction_date >= ${from} AND a2.account_name = exp.pays_through
             GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1) pt ON exp.pays_through IS NOT NULL

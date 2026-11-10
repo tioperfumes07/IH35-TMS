@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { liveDriverBill, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { loadMatchesEquipmentSql, resolveEquipmentTypeAliases } from "./equipment-type-aliases.js";
@@ -85,7 +86,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           FROM mdata.loads l
           WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
-            AND l.voided_at IS NULL
+            AND ${notVoided("l")}
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
             AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})
@@ -100,7 +101,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           FROM mdata.loads l
           WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
-            AND l.voided_at IS NULL
+            AND ${notVoided("l")}
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
             AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})
@@ -118,10 +119,9 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           JOIN mdata.loads l ON l.id = db.load_id
                             AND l.operating_company_id = db.operating_company_id
           WHERE db.operating_company_id = $1::uuid
-            AND db.voided_at IS NULL
-            AND db.status NOT IN ('void', 'voided')
+            AND ${liveDriverBill("db")}
             AND l.soft_deleted_at IS NULL
-            AND l.voided_at IS NULL
+            AND ${notVoided("l")}
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
             AND ($4::text[] IS NULL OR ${loadMatchesEquipmentSql("$4")})

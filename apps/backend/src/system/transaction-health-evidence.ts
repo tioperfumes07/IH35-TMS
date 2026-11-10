@@ -132,7 +132,7 @@ const GL_LINE_SELECT = `
   p.journal_entry_uuid::text AS journal_entry_id,
   (SELECT COALESCE(NULLIF(btrim(regexp_replace(je.memo, '[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}[0-9a-f-]*…?', '', 'gi')), ''),
                    'Journal entry · ' || to_char(je.entry_date,'MM/DD/YYYY'))
-     FROM accounting.journal_entries je WHERE je.id = p.journal_entry_uuid) AS journal_entry_label,
+     FROM accounting.journal_entries je WHERE je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id) AS journal_entry_label,
   a.id::text AS account_id,
   a.account_number AS account_code,
   a.account_name,

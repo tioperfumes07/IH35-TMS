@@ -50,6 +50,32 @@ function handlerFrom(source, catchBraceIndex) {
   return source.slice(catchBraceIndex + 1);
 }
 
+// LST sweepA (2026-11-10) — the class is a read INSIDE a transaction whose error is discarded, so the NEXT statement on
+// that same transaction dies with 25P02. A try whose every DB touch is inside the callback of a transaction OPENER
+// (withLuciaBypass / withCompanyScope / withCurrentUser / a `scope` runner) is the opposite shape: the opener rolls its own
+// transaction back and releases the connection before the error reaches the catch, so nothing is left poisoned. Measured:
+// #28444 fuel-follows-truck-sweep, #28695 alwaystrack-load-history-import and #28722 relay-fuel-ingest.cron each catch
+// around one whole per-item transaction and record the failure (summary.failures / a refused row / the failures[] the
+// cron throws). Only those callbacks are cut out of the body; any client.query left outside them is still measured.
+const TX_OPENER = /\b(?:withLuciaBypass|withCompanyScope|withCurrentUser|scope)\s*\(\s*(?:async\s*)?\(\s*client\b/g;
+function stripOpenerCallbacks(body) {
+  let out = "";
+  let last = 0;
+  for (const m of body.matchAll(TX_OPENER)) {
+    if (m.index < last) continue;
+    const open = body.indexOf("(", m.index);
+    let depth = 0;
+    let end = body.length;
+    for (let i = open; i < body.length; i++) {
+      if (body[i] === "(") depth++;
+      else if (body[i] === ")" && --depth === 0) { end = i + 1; break; }
+    }
+    out += body.slice(last, m.index);
+    last = end;
+  }
+  return out + body.slice(last);
+}
+
 export function offendingSites(source) {
   const out = [];
   for (const m of source.matchAll(TRY_CATCH)) {
@@ -58,7 +84,7 @@ export function offendingSites(source) {
     const handlerOpen = source.indexOf("{", m.index + m[0].indexOf("catch"));
     const handler = handlerOpen === -1 ? m[2] : handlerFrom(source, handlerOpen);
     if (body.length > 4000) continue; // a whole route body, not an isolated read
-    if (!TOUCHES_DB.test(body)) continue;
+    if (!TOUCHES_DB.test(stripOpenerCallbacks(body))) continue;
     if (body.includes("SAVEPOINT") || handler.includes("SAVEPOINT")) continue;
     if (HANDLED.test(handler)) continue;
     out.push(source.slice(0, m.index).split("\n").length);
@@ -97,6 +123,11 @@ if (process.argv.includes("--selftest")) {
     ["const a = async () => { await client.query('SAVEPOINT s'); try { await client.query('x'); } catch { await client.query('ROLLBACK TO SAVEPOINT s'); } }", 0],
     ["const a = async () => { try { notADbCall(); } catch { v = null; } }", 0],
     ["const a = async () => { try { await listThings(client, {}); } catch { v = null; } }", 1],
+    // sweepA — a catch around a whole opener-owned transaction cannot poison it; a read beside the opener still can.
+    ["const a = async () => { try { const r = await withLuciaBypass(async (client) => { await client.query('x'); }); } catch (err) { failed += 1; } }", 0],
+    ["const a = async () => { try { await scope((client) => processRow(client, row)); } catch (err) { results.push(err); } }", 0],
+    ["const a = async () => { try { await withLuciaBypass(async (client) => client.query('x')); await client.query('y'); } catch { v = null; } }", 1],
+    ["const a = async () => { try { await withLuciaBypass(async (c2) => c2.query('x')); await listThings(client, {}); } catch { v = null; } }", 1],
   ];
   let bad = 0;
   for (const [src, want] of cases) {
@@ -106,7 +137,7 @@ if (process.argv.includes("--selftest")) {
       bad += 1;
     }
   }
-  console.log(`${LABEL} SELFTEST: ${cases.length - bad}/${cases.length} cases (2 planted swallows caught, 4 honest handlers pass)`);
+  console.log(`${LABEL} SELFTEST: ${cases.length - bad}/${cases.length} cases (4 planted swallows caught, 6 honest handlers pass)`);
   process.exit(bad ? 1 : 0);
 }
 

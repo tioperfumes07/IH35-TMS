@@ -302,6 +302,15 @@ function selftest() {
       expectFail: true,
     },
     {
+      label: "(v-b) sweepA: payment-less payment_applications INSERT with no poster and no exemption → FAIL",
+      files: {
+        "accounting/invoice-relief-application.service.ts": `
+          await client.query(\`INSERT INTO accounting.payment_applications (operating_company_id, payment_id, invoice_id) VALUES ($1, NULL, $2)\`, [a, b]);
+        `,
+      },
+      expectFail: true,
+    },
+    {
       label: "(vi) __tests__ money INSERT → not evaluated",
       files: {
         "accounting/__tests__/bill.db.test.ts": `

@@ -191,7 +191,7 @@ export async function projectHosEvent(client: DbClient, event: SamsaraWebhookEve
   const mappedDriverId = await resolveLocalDriverId(client, event.operating_company_id, driverSamsaraId);
   // Register row 93: the mirror fallback (integrations.samsara_drivers.local_driver_id) and a not-yet-deactivated merged
   // record can both name a shell — the event is written onto the survivor, never the shell.
-  const localDriverId = mappedDriverId ? await resolveSurvivorDriverId(client as never, mappedDriverId) : null;
+  const localDriverId = mappedDriverId ? await resolveSurvivorDriverId(client as never, mappedDriverId, event.operating_company_id) : null;
   if (!localDriverId) {
     return {
       success: false,

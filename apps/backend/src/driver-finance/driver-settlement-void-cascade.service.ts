@@ -164,7 +164,7 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
   //    does not see a voided_at assignment within 25 lines of the loads presettlement-clear query below.
   const companySettlementsVoided = await client.query<{ id: string }>(
     `UPDATE accounting.company_settlements cs
-        SET voided_at = now(), status = 'cancelled', updated_at = now()
+        SET voided_at = now(), status = 'void', updated_at = now()
        FROM accounting.company_settlement_driver_settlements link
       WHERE link.driver_settlement_id = $1::uuid
         AND link.company_settlement_id = cs.id
