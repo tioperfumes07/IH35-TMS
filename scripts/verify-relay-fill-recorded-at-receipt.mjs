@@ -46,7 +46,9 @@ export function findDefects(s) {
   const caught = rec.slice(rec.indexOf("} catch (err) {"));
   if (rec.indexOf("} catch (err) {") < 0 || !/ROLLBACK TO SAVEPOINT relay_fill_record_at_receipt/.test(caught) || !/fuel\.relay_fill_record_refused/.test(caught)) out.push("a refused record is not rolled back to its savepoint and audited");
   const adopt = fn(s.doc, "adoptRelayFillExpenseDocument");
-  if (!/if \(!fills\.rows\.length\) \{\s*const recorded = await recordRelayFillAtReceipt\(/.test(adopt)) out.push("the receipt adopt does not record a record-less fill");
+  // sweepA (2026-11-10) — ACCT-F11127 (#28722): a Relay SERVICE code (lumper / scale ticket) is an expense document with no
+  // fuel record, so the adopt skips the record for `is_service` rows only. Any other extra condition is still a skip.
+  if (!/if \(!fills\.rows\.length(?: && !relayRow\.rows\[0\]\?\.is_service)?\) \{\s*const recorded = await recordRelayFillAtReceipt\(/.test(adopt)) out.push("the receipt adopt does not record a record-less fill");
   const hookStep = s.hook.slice(s.hook.indexOf('"fuel.relay_fill_records"'));
   if (!/listRelayFillDocumentsWithoutRecords\(/.test(hookStep) || !/recordAndLinkRelayFillDocument\(/.test(hookStep)) out.push("the ingest hook does not record and link record-less Relay documents");
   if (s.hook.indexOf('"fuel.relay_fill_records"') < 0 || s.hook.indexOf('"fuel.relay_fill_records"') > s.hook.indexOf('"fuel.follows_truck"')) out.push("record-less fills are not recorded before the fill engine runs");
@@ -62,7 +64,8 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["ensure writes over live rows", plant("rows", "if (live.length) return { written: false, rows: live };", "")],
     ["ensure guesses the moment", plant("rows", "purchasedAt: fill.relay_created_at", "purchasedAt: new Date().toISOString()")],
-    ["receipt adopt skips the record", plant("doc", "if (!fills.rows.length) {\n    const recorded = await recordRelayFillAtReceipt(", "if (false) {\n    const recorded = await recordRelayFillAtReceipt(")],
+    ["receipt adopt skips the record", plant("doc", /if \(!fills\.rows\.length(?: && !relayRow\.rows\[0\]\?\.is_service)?\) \{(?=\s*const recorded = await recordRelayFillAtReceipt\()/, "if (false) {")],
+    ["receipt adopt skips a fuel fill on another condition", plant("doc", /if \(!fills\.rows\.length(?: && !relayRow\.rows\[0\]\?\.is_service)?\) \{(?=\s*const recorded = await recordRelayFillAtReceipt\()/, "if (!fills.rows.length && input.relay_fill_id === null) {")],
     ["refusal not audited", { ...src, doc: (() => { const i = src.doc.indexOf("} catch (err) {", src.doc.indexOf("export async function recordRelayFillAtReceipt(")); return src.doc.slice(0, i) + src.doc.slice(i).replace('"fuel.relay_fill_record_refused"', '"x"'); })() }],
     ["Creator adopts only on Edit", plant("creator", "      if (!rows) {\n        const existing = ", "      if (!rows && draft.edit_void_repost) {\n        const existing = ")],
     ["hook swallows refusals", plant("hook", "if (refused.length) throw new Error(`relay_fill_records_refused", "if (false) throw new Error(`x")],

@@ -91,7 +91,9 @@ export function check(files) {
   if (!/if \(hit\.rail === "other_rail"\) \{ record\(line, "cross_rail"/.test(walk)) p.push(`${ENGINE}: a receipt on another fuel rail is not listed cross_rail`);
 
   // 3. idempotent
-  if (!/if \(lineIsLive\(hash\) \|\| adoptedMarkers\.has\(marker\)\)/.test(walk)) p.push(`${ENGINE}: a line already imported / adopted is not skipped`);
+  // sweepA (2026-11-10) — #28698 (ACCT-F11112) added a third skip, the WEX card+invoice+product delta
+  // (`|| seq <= liveProviderKeys…`). Further OR-ed skips are accepted; both original skips must stay in the same test.
+  if (!/if \(lineIsLive\(hash\) \|\| adoptedMarkers\.has\(marker\)(?: \|\| [^{\n]+)?\) \{/.test(walk)) p.push(`${ENGINE}: a line already imported / adopted is not skipped`);
   if (!/hash: dreamlineLineHash\(line, seq, rail\), marker: dreamlineAdoptMarker\(line, seq, rail\)/.test(walk)) p.push(`${ENGINE}: the line hash / marker is not keyed on the rail`);
   if (!/\.update\(`\$\{rail\.key\}:\$\{line\.card_number\}/.test(engine)) p.push(`${ENGINE}: dreamlineLineHash does not prefix the rail key`);
   const lookup = walk.indexOf("findLiveFuelByProviderTransactionId(client as never, {");
@@ -164,7 +166,8 @@ if (process.argv.includes("--selftest")) {
     ["exact-only stop removed", plant(ENGINE, 'if (scope === "any_truck_exact") return null;', "")],
     ["payable by account number", plant(ENGINE, "const payableId = await resolveRoleAccountOptional(client as never, companyId, rail.payable_role)", 'const payableId = await companyAccountId(client, companyId, "2510")')],
     ["cross-rail receipt adopted", plant(ENGINE, 'if (hit.rail === "other_rail") { record(line, "cross_rail"', 'if (false) { record(line, "cross_rail"')],
-    ["re-run imports again", plant(ENGINE, "if (lineIsLive(hash) || adoptedMarkers.has(marker))", "if (adoptedMarkers.has(marker))")],
+    ["re-run imports again", plant(ENGINE, "if (lineIsLive(hash) || adoptedMarkers.has(marker)", "if (adoptedMarkers.has(marker)")],
+    ["re-run re-imports an adopted line", plant(ENGINE, "if (lineIsLive(hash) || adoptedMarkers.has(marker)", "if (lineIsLive(hash) || false")],
     ["hash not keyed on the rail", plant(ENGINE, "hash: dreamlineLineHash(line, seq, rail)", "hash: dreamlineLineHash(line, seq)")],
     ["insert without conflict guard", plant(ENGINE, "ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING\n       RETURNING id::text`,\n      [\n        companyId, line.transaction_at", "RETURNING id::text`,\n      [\n        companyId, line.transaction_at")],
     ["fill without card type", plant(ENGINE, "cardType.id, line.product", "null, line.product")],
