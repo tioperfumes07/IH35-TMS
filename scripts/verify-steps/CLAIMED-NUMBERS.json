@@ -15590,6 +15590,21 @@
     "claimed_at": "2026-11-09",
     "purpose": "verify-alwaystrack-load-history-import"
   },
+  "19993": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-insert-select-param-types (ACCT-F11120 D&A random draw)"
+  },
+  "19997": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-auto-status-snapshots-real-units (ACCT-F11121)"
+  },
+  "20001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-relay-fill-dates-central (ACCT-F11122)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
