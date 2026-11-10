@@ -4,6 +4,23 @@
 
 **NOT COMPLETE. No board is certified exact or fully wired.** Three home boards have initial live visual evidence; remaining boards and exhaustive element counts are UNVERIFIED. A static label census is not visual or functional acceptance.
 
+### Maintenance continuation — 2026-11-09 evening
+
+Fourth home board inspected live at measured 1440×900 CSS pixels. Screenshot: private `~/Downloads/codex-round8-5-design-parity/Maintenance-Home-live.jpg`. Four additional distinct findings (confirmed total 16, repaired 0); exhaustive census and interaction verification still pending.
+
+| ID | Approved board | Live observation | Repair target |
+|---|---|---|---|
+| M1 | Fleet-health filters All / Moving / PM soon / No clock | Moving absent; only three filters rendered | `FleetHealthLine.tsx:60`: add real canonical moving predicate; never infer/mock missing telemetry |
+| M2 | Truck graphic beside unit identity in a wide row cell | Graphic below unit number; make/model clipped in narrow unit column | `FleetHealthLine.tsx:49`: horizontal identity grouping with sufficient column width |
+| M3 | Readable unit identity and status | 50 cells have scrollWidth greater than clientWidth across the first 25 fleet rows at 1440px | `FleetHealthLine.tsx:48–57`, shared table width contract; preserve complete values and actions |
+| M4 | Compact fleet overview, arrivals and risk panels below it | Arrivals/risk table headers at viewport y2937; recent/completed work orders y3221 | `FleetHealthLine.tsx:62`: bounded overview with complete reachable fleet list, no silent data cap |
+
+The live overview reports 39 units and displays 25 on the current page. Population changes versus the old board are not design failures. Missing PM bars when readings are unavailable are not permission to insert the board's sample readings. Five monitor cards, four KPI labels and six fleet table headers are present; their entire wiring is NOT yet certified.
+
+### Maintenance In Shop — M5 repair in progress
+
+Following the actual In Shop link opens `/maintenance/fleet-table?status=in-shop`, with four open bays. However Fleet Table has `aria-current="page"` and In Shop has no current marker; breadcrumb also says Fleet Table. Approved board identifies In Shop. Root cause for active-tab mismatch: shared `mostSpecificActiveTo` compared pathname against links containing query strings, so query-specific tabs could never match. Codex repair passes pathname plus search, preferring matching query constraints over the same bare path. Three new rendered tests fail on old code; 18 navigation tests pass on repaired code. Breadcrumb remains separately OPEN. No sample work orders created to fill empty bays. Private screenshot: `~/Downloads/codex-round8-5-design-parity/Maintenance-InShop-live.jpg`. Post-deploy visual verification pending; not DONE-LIVE.
+
 Reference: owner's `11-09-2026-IH35-ALL-PAGE-DESIGNS` export, approved V3 renders and `.dc.html`, and `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-Design-Parity-Verify-All-Boards.md`. Exclude old LoadWizard, V2 and PREVIOUS boards. Keep legitimate additive functionality; do not delete columns or data to imitate a screenshot.
 
 Browser: authenticated USMCA, Chrome, measured `innerWidth=1440`, `innerHeight=900`. Browser zoom was 80%; a requested 1440×900 override initially produced 1800×1125 CSS pixels. Corrected using a 1152×720 override and verified actual CSS dimensions before grading. Screenshots may have a different physical pixel scale; raw pixel differences are NOT yet normalized or scored. Banking/Accounting inspected after the new-version Reload. Private screenshots are under `~/Downloads/codex-round8-5-design-parity/`; do not commit production personal/financial data.

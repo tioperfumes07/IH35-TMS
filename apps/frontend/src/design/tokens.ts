@@ -126,10 +126,11 @@ export const typography = {
 } as const;
 
 export const spacing = {
-  topbarHeight: 48,
-  topbarPaddingY: 12,
-  topbarPaddingX: 18,
-  sidebarWidth: 80,
+  // ROUND 8.5 S1 — approved V3 boards: 42px top header, 66px icon rail (Banking.dc.html chrome).
+  topbarHeight: 42,
+  topbarPaddingY: 0,
+  topbarPaddingX: 12,
+  sidebarWidth: 66,
   sidebarItemHeight: 56,
   sidebarItemPaddingY: 8,
   pageContentPadding: 24,

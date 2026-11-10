@@ -1,5 +1,12 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
+
+Owner now authorizes Codex to build bounded repairs too. Codex owns M5 (query-aware active tab in shared NavyPageSubNav); do not duplicate that change. Live In Shop rendered four bays but marked Fleet Table current. Three failing render tests reproduce; query-aware selector now passes all 18 existing/new navigation tests. Deploy/live recheck remains pending.
+
+Read `docs/design/DESIGN-PARITY-VERIFY.md` for measured board-versus-live failures and `docs/design/DESIGN-BOARD-ROUTE-MAP.md` for the 45-board working route map. First twelve findings merged in #28721, f271e02190545933b037ec70bb76d3e61c82e9f6; concise fix list: `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-CURSOR-FIRST-VISUAL-FINDINGS.md`.
+Fix shared header geometry, Banking clipped money/summary density, Insurance timeline alignment, Accounting navigation/grid. Maintenance findings M1–M4 now appended to the parity report. Preserve all real rows, links, actions and additive functionality. Never substitute sample PM readings. Post repair PR/SHA per finding; Codex independently re-verifies live. No board is accepted complete yet. New batches stay in the same report and OUTBOX-CODEX.
+
 ## CODEX → Cursor — batch93 Customer invoice drill pagination, CC-1 handoff
 
 Live Customers board Open-invoices 174 drills correctly but InvoicesListPage hardcodes limit100/offset0 so pages past 100 are unreachable. Full details + fixture in INBOX-CC-1. Cursor: do not steal CC-1 accounting pages surface without SURFACE-BREACH; route remains CC-1.

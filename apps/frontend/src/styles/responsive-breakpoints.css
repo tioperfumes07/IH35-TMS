@@ -25,6 +25,21 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
 }
 
+/* COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 S1 — board chrome is a single 42px header row at
+   desktop/board viewport. Preserve all controls; do not wrap the three columns into a tall stack. */
+@media (min-width: 1280px) {
+  .top-bar {
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    overflow: hidden;
+  }
+  .top-bar > div {
+    flex-wrap: nowrap !important;
+    min-height: 0;
+  }
+}
+
 /* Stack well before overlap. Between 768px and ~1400px the three columns used to paint
    on top of each other and make the company switcher unclickable. Stack at <=1279px. */
 @media (max-width: 1279px) {

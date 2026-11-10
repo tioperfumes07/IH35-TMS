@@ -237,7 +237,7 @@ export function TruckServiceMap(props: {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-semibold text-[#0F1B2D]">{sys.name}</span>
                       <span
-                        className={`inline-flex rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATE_CHIP[sys.state]}`}
+                        className={`inline-flex rounded-sm border px-1.5 py-0.5 text-section-header font-semibold uppercase tracking-wide ${STATE_CHIP[sys.state]}`}
                       >
                         {STATE_LABEL[sys.state]}
                       </span>

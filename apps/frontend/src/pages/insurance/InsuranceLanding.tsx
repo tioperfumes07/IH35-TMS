@@ -19,7 +19,7 @@ export function InsuranceLanding() {
         <PageHeader
           breadcrumb={["Insurance"]}
           title="Insurance"
-          subtitle="Policies, fleet coverage, claims, and lawsuits"
+          subtitle="Policies · fleet covered · claims · coverage gaps"
         />
         <BoardSection title="Insurance home" testId="insurance-landing-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view insurance metrics.</p>
@@ -33,7 +33,7 @@ export function InsuranceLanding() {
       <PageHeader
         breadcrumb={["Insurance"]}
         title="Insurance"
-        subtitle="Policies, fleet coverage, claims, and lawsuits"
+        subtitle="Policies · fleet covered · claims · coverage gaps"
       />
       <InsuranceModuleTabs />
       <InsuranceHomeBoard companyId={companyId} />
