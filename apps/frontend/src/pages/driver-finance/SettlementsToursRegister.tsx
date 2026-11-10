@@ -155,7 +155,7 @@ function CompanySettlementCell({ row }: { row: TourListRow }) {
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [
   // T5/T6 board order (Settlements-Open|Closed.dc.html): Settlement → Driver → Unit → Tour legs → PU → DEL → …
-  // Per-leg Load # columns + check counts stay reachable via column gear (defaultHidden), not overview width.
+  // Per-leg Load # columns, Date started, Margin %, check counts and Post stay visible by default (ADDITIVE-ONLY LAW L379: #28767 hid 6 shipped columns; restored).
   { key: "tour", label: "Settlement", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <SettlementCell row={r} /> },
   {
     key: "driver",
@@ -201,27 +201,27 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
     render: (r) => <TourLegsCell legs={r.legs} />,
   },
   // Secondary: one column per load (legacy overview expansion) — gear to show; two-way load links preserved.
-  ...tourLoadColumns("setl-tour-col", rows).map((c) => ({ ...c, defaultHidden: true, alwaysVisible: false })),
+  ...tourLoadColumns("setl-tour-col", rows),
   { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? formatDateUS(r.origin_pickup_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_pickup_date} /> },
   { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? formatDateUS(r.origin_delivery_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_delivery_date} /> },
-  { key: "started", label: "Date started", defaultHidden: true, testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp)", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
+  { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp)", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
   ...(state === "closed" ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
   { key: "costs", label: "Costs", testId: "setl-tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
   { key: "driver_pay", label: "Driver pay", testId: "setl-tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
   { key: "margin", label: "Margin", testId: "setl-tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
-  { key: "margin_pct", label: "Margin %", defaultHidden: true, testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{formatQuantityTable(r.margin_pct, 1)}%</span> },
+  { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{formatQuantityTable(r.margin_pct, 1)}%</span> },
   { key: "miles_practical", label: "Practical mi", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : formatQuantityTable(r.miles_practical, 0) },
   { key: "miles_real", label: "Real mi", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : formatQuantityTable(r.miles_real, 0) },
   ...(state === "open" ? [
-    { key: "ready_ok", label: "Checks passed", defaultHidden: true, testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
-    { key: "ready_total", label: "Checks required", defaultHidden: true, testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
+    { key: "ready_ok", label: "Checks passed", testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
+    { key: "ready_total", label: "Checks required", testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
     { key: "ready", label: "Ready", testId: "setl-tour-col-ready", sortable: true, minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <ReadyDots ok={r.ready_ok} total={r.ready_total || 6} /> } as ParityColumn<TourListRow>,
     { key: "close_blockers", label: "Waiting on", testId: "setl-tour-col-open-items", sortable: true, minWidth: 160, maxWidth: 280, sortValue: (r: TourListRow) => waitingOnReason(r), render: (r: TourListRow) => {
       const reason = waitingOnReason(r);
       return reason ? <span title={r.close_blockers.join("\n")} data-testid="setl-tour-first-blocker" className="block max-w-[260px] truncate text-left">{reason}</span> : DASH;
     } } as ParityColumn<TourListRow>,
-    { key: "post", label: "Post", defaultHidden: true, testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>,
+    { key: "post", label: "Post", testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>,
   ] : [
     { key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums font-bold", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : <span className="font-bold tabular-nums">{fmt(r.driver_net_cents)}</span> } as ParityColumn<TourListRow>,
     { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <CompanySettlementCell row={r} /> } as ParityColumn<TourListRow>,
