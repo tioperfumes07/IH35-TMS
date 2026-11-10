@@ -12,6 +12,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { SelectCombobox } from "../../../components/Combobox";
 import { formatDateUS } from "../../../lib/formatDate";
+import { ShopBayFloorSvg } from "./ShopBayFloorSvg";
 
 /** Bay status words on the board (§7 palette: navy / §7 amber #854F0B / slate — no new amber/emerald classes). A finished work order still holding its bay is "Ready" (truck not rolled out). */
 export function bayStatusLabel(status: string): { label: string; dot: string } {
@@ -60,8 +61,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
   const openBays = bays.filter((b) => !b.work_order).map((b) => b.bay_number);
   const busy = assign.isPending || release.isPending;
 
-  // ShopBays.dc.html chrome: MAINTENANCE · SHOP FLOOR / The shop, from above — N bays / Check a truck in /
-  // OVERHEAD DOOR · OPEN BAY / YARD LANE · NEXT IN, BY PM URGENCY. Numbers from live shop-bays only.
+  // ShopBays.dc.html — floor plan SVG per bay (300×330) + chrome + yard lane. Live shop-bays only.
   return <section className="min-w-0 space-y-3" aria-label="Shop floor plan" data-testid="in-shop-bay-board">
     <header className="flex flex-wrap items-start justify-between gap-2" data-testid="in-shop-floor-chrome">
       <div>
@@ -72,18 +72,16 @@ export function InShopBoard({ companyId }: { companyId: string }) {
       </div>
       <Link
         to="/maintenance/arriving-soon"
-        className="rounded-sm border border-[#C6D1DC] bg-white px-3 py-1.5 text-xs font-semibold text-[#14314F] hover:bg-[#F6F9FB]"
+        className="rounded-sm border border-[#C6D1DC] bg-[#2C3A4E] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
         data-testid="in-shop-check-truck-in"
       >
         Check a truck in
       </Link>
     </header>
-    <p className="text-section-header font-semibold uppercase tracking-wide text-[#64748B]" data-testid="in-shop-overhead-door">
-      OVERHEAD DOOR
-    </p>
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="in-shop-bays">
       {bays.map(({ bay_number, work_order: wo }) => {
         const st = wo ? bayStatusLabel(wo.status) : null;
+        const unitLabel = wo?.unit_number ?? (wo ? "Truck" : "");
         return <article
           key={bay_number}
           data-testid={`in-shop-bay-${bay_number}`}
@@ -91,7 +89,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           onDragOver={(e) => { if (!wo && e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); setDragOver(bay_number); } }}
           onDragLeave={() => setDragOver((v) => (v === bay_number ? null : v))}
           onDrop={(e) => { e.preventDefault(); setDragOver(null); const id = e.dataTransfer.getData(DRAG_TYPE); if (id && !wo) assign.mutate({ woId: id, bay: bay_number }); }}
-          className={`flex min-h-[148px] min-w-0 flex-col gap-2 rounded-sm border bg-white p-3 ${wo ? "border-slate-200" : "border-dashed border-slate-300"} ${dragOver === bay_number ? "ring-2 ring-[#14314F]" : ""}`}
+          className={`flex min-w-0 flex-col gap-2 rounded-sm border bg-white p-2 ${wo ? "border-slate-200" : "border-dashed border-slate-300"} ${dragOver === bay_number ? "ring-2 ring-[#14314F]" : ""}`}
         >
           <header className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-bold uppercase tracking-wide text-slate-700">
@@ -99,19 +97,22 @@ export function InShopBoard({ companyId }: { companyId: string }) {
             </span>
             {st ? <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span> : <span className="text-slate-500">OPEN BAY</span>}
           </header>
+          <ShopBayFloorSvg
+            bayNumber={bay_number}
+            occupied={Boolean(wo)}
+            unitLabel={unitLabel}
+            status={wo?.status ?? null}
+          />
           {wo ? <>
             <WoLine wo={wo} />
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs text-slate-600">
-              <dt>In shop</dt><dd>{wo.in_shop_at ? formatDateUS(wo.in_shop_at) : "Not recorded"}</dd>
-              <dt>Expected release</dt><dd>{wo.expected_release_at ? formatDateUS(wo.expected_release_at) : "Not recorded"}</dd>
+              <dt>In shop</dt><dd>{wo.in_shop_at ? formatDateUS(wo.in_shop_at) : "—"}</dd>
+              <dt>Expected release</dt><dd>{wo.expected_release_at ? formatDateUS(wo.expected_release_at) : "—"}</dd>
             </dl>
             <button type="button" disabled={busy} onClick={() => release.mutate(wo.work_order_id)}
               className="mt-auto self-start rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50"
               data-testid={`in-shop-bay-${bay_number}-release`}>Release bay</button>
-          </> : <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-xs text-slate-500">
-            <span className="font-semibold">OPEN BAY</span>
-            <span>Drag a truck in from the yard lane</span>
-          </div>}
+          </> : <p className="text-center text-xs text-slate-500">Drag a truck in from the yard lane</p>}
         </article>;
       })}
     </div>

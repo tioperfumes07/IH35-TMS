@@ -54,10 +54,15 @@ const COMPLETED: R = { load: 13701, customer: "Glg II LTD", wo: "164741", od: "M
 const EXISTING: R = { ...COMPLETED, load: 13690, wo: "FL-13643", od: "MONTE VISTA, CO - HIDALGO, TX", pickup: "2026-10-21", charges: 3600 };
 const DISPATCHED: R = { ...COMPLETED, load: 13736, wo: "16655412", od: "LAGNHORNE, PA - SCHERTZ, TX", pickup: "2026-11-09", delivery: "2026-11-12", status: "Dispatched", truck: "T175", charges: 4000 };
 
+let openTrip: { id: string; display_id: string; loads: string; in_motion: boolean } | null = null;
+let proposedExpenses: Array<{ expense_id: string; expense_number: string; load_id: string; total_cents: string }> = [];
+
 function fakeClient(existing: Set<string>) {
   return {
     query: async (sql: string, values: unknown[] = []) => {
       if (sql.includes("FROM org.companies")) return { rows: [{ code: "USMCA" }] };
+      if (sql.includes("FROM driver_finance.driver_settlements s")) return { rows: openTrip && values[1] === "drv-hugo" ? [openTrip] : [] };
+      if (sql.includes("load_confirmation = 'proposed'")) return { rows: proposedExpenses };
       if (sql.includes("FROM mdata.loads")) return { rows: existing.has(String(values[1])) ? [{ id: `load-${values[1]}`, rate_total_cents: "300000" }] : [] };
       if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: "drv-hugo", k: "hugogaytan", inactive: false }, { id: "drv-old", k: "hugogaytan", inactive: true }] };
       if (sql.includes("FROM mdata.units")) return { rows: [{ id: `unit-${values[1]}` }] };
@@ -125,6 +130,8 @@ describe("ACCT-F11108 AlwaysTrack LOAD HISTORY import", () => {
     }));
     deliverLoadThroughDispatch.mockReset().mockResolvedValue(undefined);
     stampStopsFromTracking.mockReset().mockResolvedValue([]);
+    openTrip = null;
+    proposedExpenses = [];
   });
 
   const run = async (rows: R[], commit: boolean, existing = new Set<string>(), sourceCompanyCode = "USMCA") =>
@@ -166,10 +173,39 @@ describe("ACCT-F11108 AlwaysTrack LOAD HISTORY import", () => {
   });
 
   it("refuses a customer the company does not have by name, and keeps going", async () => {
-    const out = await run([{ ...COMPLETED, customer: "Ghost Broker" }, DISPATCHED], true);
+    const out = await run([{ ...COMPLETED, customer: "Ghost Broker" }, { ...COMPLETED, load: 13738, wo: "X2", pickup: "2026-10-27", delivery: "2026-10-28" }], true);
     expect(out.refused.count).toBe(1);
     expect(out.rows.find((r) => r.load_number === "13701")!.refusal!.code).toBe("customer_unmatched");
     expect(bookLoadOnClient).toHaveBeenCalledTimes(1);
+  });
+
+  it("preview refuses a new trip while the driver's current trip is open (uq_driver_settlements_one_open_per_driver), naming it — real 13701 / P-0114", async () => {
+    openTrip = { id: "s-114", display_id: "P-0114", loads: "13688 delivered_pending_docs, 13694 delivered_pending_docs", in_motion: false };
+    proposedExpenses = [{ expense_id: "e1", expense_number: "13694", load_id: "l1", total_cents: "100" }];
+    for (const commit of [false, true]) {
+      bookLoadOnClient.mockClear();
+      const out = await run([COMPLETED], commit);
+      expect(out.rows[0]!.outcome).toBe("refused");
+      expect(out.rows[0]!.refusal!.code).toBe("driver_trip_open");
+      expect(out.rows[0]!.refusal!.message).toContain("P-0114");
+      expect(out.rows[0]!.refusal!.message).toContain("OWNER RULING 443.288");
+      expect(bookLoadOnClient).not.toHaveBeenCalled();
+    }
+    openTrip = { id: "s-128", display_id: "P-0128", loads: "13727 dispatched", in_motion: true };
+    const out = await run([COMPLETED], false);
+    expect(out.rows[0]!.refusal!.message).toContain("still in motion");
+  });
+
+  it("never books a later in-motion load ahead of an earlier refused load of the same driver or truck (real 13708 -> 13727)", async () => {
+    const out = await run([{ ...COMPLETED, customer: "Ghost Broker" }, DISPATCHED, { ...DISPATCHED, load: 13737, truck: "T148", driver: "Nobody Known", wo: "X1" }], true);
+    expect(out.rows.find((r) => r.load_number === "13701")!.refusal!.code).toBe("customer_unmatched");
+    // 13736 is Hugo's (same driver) -> held; 13737 is on T148 (same truck) -> held.
+    expect(out.rows.find((r) => r.load_number === "13736")!.refusal!.code).toBe("earlier_load_refused");
+    expect(out.rows.find((r) => r.load_number === "13737")!.refusal!.code).toBe("earlier_load_refused");
+    expect(bookLoadOnClient).not.toHaveBeenCalled();
+    // A later COMPLETED row is delivered in its own transaction and still books.
+    const out2 = await run([{ ...COMPLETED, customer: "Ghost Broker" }, { ...COMPLETED, load: 13738, wo: "X2", pickup: "2026-10-27", delivery: "2026-10-28" }], true);
+    expect(out2.rows.find((r) => r.load_number === "13738")!.outcome).toBe("booked_delivered");
   });
 
   it("refuses an export named for another company", async () => {

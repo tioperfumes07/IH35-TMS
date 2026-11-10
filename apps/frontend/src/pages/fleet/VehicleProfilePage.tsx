@@ -375,6 +375,10 @@ export function VehicleProfilePage() {
               openWoTotal={Number(profile.open_wo_count?.total ?? 0)}
               activeFaultCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}
               compliance={(profile.compliance as Record<string, unknown>) ?? null}
+              samsara={telemetry?.samsara ?? null}
+              latestPosition={telemetry?.latest_position ?? null}
+              currentDriver={profile.current_driver}
+              currentLoad={profile.current_load}
             />
             {faultSummaryQuery.isError ? (
               <ListErrorState

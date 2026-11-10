@@ -330,7 +330,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       ) : (
         // ACCT-F3536 + 443.280 — ParityTable in shared BoardSection.
         <BoardSection title="Settlement disputes" testId="settlement-disputes-board-section">
-          <ParityTable<SettlementDisputeRow>
+          <ParityTable<SettlementDisputeRow> appearance="board"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.id}
