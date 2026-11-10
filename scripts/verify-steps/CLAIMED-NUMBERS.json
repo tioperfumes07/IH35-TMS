@@ -15665,6 +15665,16 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-load-fk-invariant-fuel-refusal (ACCT-F11107, migration 202616460100, #28734)"
   },
+  "20053": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100, #28673)"
+  },
+  "20057": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-complete-design-build-law wired into CI (was orphan; LST-F11133)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17669,5 +17679,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1100
+  "total_claimed": 1102
 }

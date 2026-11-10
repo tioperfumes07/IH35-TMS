@@ -16,7 +16,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
@@ -129,7 +129,7 @@ export function CompanySettlementsReportBoard() {
           : by === "truck"
             ? first.unit_number ?? "No truck"
             : by === "week"
-              ? `Week of ${formatDateUS(key)}`
+              ? `Week of ${mmmDd(key)}`
               : `${key.slice(5, 7)}/${key.slice(0, 4)}`;
       const link =
         by === "driver" && first.driver_id ? ({ kind: "driver", id: first.driver_id } as const) : by === "truck" && first.unit_id ? ({ kind: "unit", id: first.unit_id } as const) : null;
@@ -187,7 +187,7 @@ export function CompanySettlementsReportBoard() {
           </span>
         ),
       },
-      { key: "closed_date", label: "Closed", sortable: true, render: (t) => formatDateUS(t.closed_date) || "—" },
+      { key: "closed_date", label: "Closed", sortable: true, render: (t) => mmmDd(t.closed_date) || "—" },
       { key: "revenue_cents", label: "Revenue", sortable: true, cellClass: "text-right", className: "text-right", render: (t) => money(t.revenue_cents) },
       { key: "costs_cents", label: "Costs", sortable: true, cellClass: "text-right", className: "text-right", render: (t) => money(t.costs_cents) },
       { key: "driver_pay_cents", label: "Driver pay", sortable: true, cellClass: "text-right", className: "text-right", render: (t) => money(t.driver_pay_cents) },
@@ -247,7 +247,7 @@ export function CompanySettlementsReportBoard() {
             formatPersonName(t.driver_name ?? ""),
             t.unit_number ?? "",
             t.legs.map((l) => `${l.trip_type ?? ""} ${l.load_number}`.trim()).join(" → "),
-            formatDateUS(t.closed_date),
+            mmmDd(t.closed_date),
             t.revenue_cents / 100,
             t.costs_cents / 100,
             t.driver_pay_cents / 100,

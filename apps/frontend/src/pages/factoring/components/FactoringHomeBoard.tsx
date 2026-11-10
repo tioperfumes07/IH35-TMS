@@ -341,15 +341,22 @@ export function FactoringHomeBoard({
     <div className="space-y-3" data-testid="factoring-home-board" style={{ fontFamily: V3.font }}>
       {loadError ? (
         <ListErrorBanner
-          message={userFacingApiError(
-            summaryQuery.error ??
-              factorsQuery.error ??
-              recourseQuery.error ??
-              feesQuery.error ??
-              purchasesQuery.error ??
-              chartPurchasesQuery.error,
-            "Failed to load Factoring home",
-          )}
+          message={(() => {
+            // FACT-S01 / ROUND 8.5a — always lead with "Failed to load" so operators (and the
+            // board KPI error test) never see a bare thrown message like "boom" alone.
+            const detail = userFacingApiError(
+              summaryQuery.error ??
+                factorsQuery.error ??
+                recourseQuery.error ??
+                feesQuery.error ??
+                purchasesQuery.error ??
+                chartPurchasesQuery.error,
+              "",
+            );
+            return detail
+              ? `Failed to load Factoring home — ${detail}`
+              : "Failed to load Factoring home";
+          })()}
           onRetry={() => {
             void summaryQuery.refetch();
             void factorsQuery.refetch();

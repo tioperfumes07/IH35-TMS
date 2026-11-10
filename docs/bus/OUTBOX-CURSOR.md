@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:55 PM CT) — ROUND 8.5a FactoringHome 34/34 + FA1 section focus + F3 law lock
+- **PRIOR:** #28745 T1/M5/FuelDiesel; Lead ROUND 8.5a — 3 FactoringHome tests red; F3 law lock used wrong needle.
+- **THIS:** Factoring home default = account_summary (board); show() only mounts absorbed children via ?section=/own URL (FA1 — Invoice Status no longer stacks under board); FactoringKpiPanel on Reserve; no duplicate Failed-to-load banners; F3 law locks MO[] live month labels. `npx vitest run src/pages/factoring` → 34/34; `npx tsc --noEmit -p .` → 0.
+- **NEXT:** remaining mapped boards board-identical; Codex re-verify. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~10:40 PM CT) — T1 nav nowrap + M5 In Shop breadcrumb + FuelDiesel compile fix
 - **PRIOR:** #28742 claimed In Shop breadcrumb + board tables; tip lacked breadcrumb source; #28739 broke FuelDieselByTruckPanel ParityTable generic (`appearance="board"<DieselRow>`).
 - **THIS:** T1 HoverDropdownNav menuitem white-space:nowrap + flex-shrink:0 (Settlements one-line strip); structuralCrumbsForPath(pathname, search) labels In Shop for fleet-table?status=in-shop; StructuralBreadcrumb passes search; FuelDiesel ParityTable&lt;DieselRow&gt; appearance=board restored; Maintenance home Arrivals/Risk tables appearance=board; anti-drift law locks T1/M1–M5/F1–F3.
@@ -189,38 +194,4 @@
 - **THIS:** EdiTransactionLog status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Shared integrations surface.
 - **NEXT:** Accounting list Active-Inactive need SURFACE-BREACH Cascade/CC-1; live DONE-LIVE; no match/Dreamline.
 
-## OUTBOX (11-03-2026 ~7:15 PM CT) — U12 Load Cancellation + Exception Reasons MultiSelect
-- **PRIOR:** #28589 Dispatch/Termination U12.
-- **THIS:** LoadCancellationReasonsListPage + LoadExceptionReasonsListPage status → MultiSelectDropdown; filter-surfaces matchesStatus retarget.
-- **NEXT:** Accounting/DetailTypes/VoidCancel (CC-1) / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:10 PM CT) — U12 Dispatch + Termination Reasons MultiSelect
-- **PRIOR:** #28588 Safety catalog U12.
-- **THIS:** DispatchCatalogListPage + TerminationReasonsListPage status → MultiSelectDropdown; filter-surfaces Termination matchesStatus retarget.
-- **NEXT:** Accounting/VoidCancel/LoadCancellation Active-Inactive (CC-1/dispatch siblings) / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:05 PM CT) — U12 Safety catalog status MultiSelect
-- **PRIOR:** #28587 Maintenance catalog U12.
-- **THIS:** CatalogStatusFilterCombobox → MultiSelectDropdown; apiStatusFromMulti in shared; SafetyGeneric + 6 scoped Safety catalog lists. filter-surfaces Safety fetchMust retargeted.
-- **NEXT:** remaining list Active/Inactive singles / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:00 PM CT) — U12 Maintenance catalog status MultiSelect
-- **PRIOR:** #28586 Fuel+Fleet catalog U12.
-- **THIS:** MaintenanceCatalogListPage Active/Inactive → MultiSelectDropdown + apiStatus; filter-surfaces retarget; U12 register residual → Safety CatalogStatusFilterCombobox.
-- **NEXT:** Safety catalog shared Combobox → MultiSelect; live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:55 PM CT) — U12 Fuel+Fleet catalog status MultiSelect + bus-diet
-- **PRIOR:** #28584 DriversTable U12.
-- **THIS:** FuelCatalogListPage + FleetCatalogListPage Active/Inactive → MultiSelectDropdown (API maps 0/2→all, 1→scalar); Show voided syncs both. Also archived older OUTBOX tips under post-28584-diet.
-- **NEXT:** more catalog/list U12 / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:45 PM CT) — U12 DriversTable status MultiSelect
-- **PRIOR:** #28582 Card Overage U12 re-ship.
-- **THIS:** DriversTable status Combobox → MultiSelectDropdown; retarget verify-driver-roster-status-filter-combobox to U12 contract.
-- **NEXT:** catalog Active/Inactive singles / more live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:40 PM CT) — U12 Card Overage MultiSelect (re-ship after empty #28581)
-- **PRIOR:** #28581 empty squash (push flake; title only).
-- **THIS:** Re-land CardOverageQueuePage status → MultiSelectDropdown + U12 register note (code that #28581 missed).
-- **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
-
+… older OUTBOX tips truncated for bus-diet cap (ROUND 8.4 V3KpiTile diet ≤200).
