@@ -125,6 +125,18 @@ Static October/September captions were applied to dynamic current/previous month
 
 ### Dispatch continuation — 2026-11-09 21:35 CT
 
+### Driver Profile continuation — 2026-11-09 21:39 CT
+
+### Settlements continuation — 2026-11-09 21:42 CT
+
+T1 single-line nav repair verified: height26.98px (formerly59.35), horizontal content2341px within1342px viewport. T2 money axis now contains five formatted currency labels. T3 selected closed-week panel now provides16 load links alongside driver links. These bounded defects are CLOSED-LIVE, not whole-board acceptance. New T4: selected `Settlement (Closed)` panel renders16 rows labeled `Open`; underlying business-state mapping requires source/engine review, not automatic reclassification. Screenshot Settlements-chart-links-recheck-live.jpg.
+
+T5 Open board: four loaded rows,22 columns/2571px table, eight clipped cells. Reference groups tour legs into one column and places Driver/Unit immediately after Settlement; live splits load legs across columns before Driver/Unit, then adds counts/check columns. Preserve extra data via accessible secondary/detail presentation while restoring the approved overview. T6 Closed board:22columns/2453px,25 rendered rows/25clipped cells; same ordering/expansion mismatch. Readiness prose still says six checks while loaded Open rows show eight required; update prose to canonical checklist rather than reduce checks. Private Settlements-Open-live.jpg and Settlements-Closed-live.jpg. No Verify & Post or financial action invoked.
+
+DP1: all eleven approved tab labels/order exist, plus an additive More menu, but live strip is white with underline rather than navy. DP2: top unit/pay panels are equal height; reference pay panel is compact. Pay heading reads Open pre-settlement, not Pay this week; population/time-window equivalence is not inferred. DP3: trip table uses separate Pickup/Delivery columns and expanded shared controls, with Booked rate outside initial panel width; one lane cell clips. Both trip/document headers are y532.11 versus reference y405. DP4: document status dots absent; non-blocking explanation is present. Actual recorded data must not be replaced by reference example values or unsupported Valid labels.
+
+Private DriverProfile-live.jpg. Live unit link, speed link with explicit last-reported disclaimer, settlement/load links, HOS detail/Edit controls and five document rows are present. Current location unavailable is accurately disclosed. Exact payment correctness, all tab contents and reverse links remain unverified. No edit or submission performed.
+
 **D5 BLOCKING, canonical Load History:** `/dispatch/load-history` loads its header/filter/table structure, then HTTP500 `missing FROM-clause entry for table "lc"`. The table simultaneously says no matching loads and totals zero; these are not measured zero populations. Root source: `apps/backend/src/reports/loads-history.service.ts:314-317` totals refer to `lc.lc_revenue_cents` and siblings while its join at line328 produces alias `lcr`, with unprefixed fields (`load-cost-rollup.sql.ts:100,112-119`). Owning backend seat must fix this read query with an execution-level SQL regression; no ledger changes required. Private evidence Dispatch-LoadHistory-sql-error-live.jpg. All row/drill/aggregate acceptance remains UNVERIFIED until query succeeds.
 
 **D6 navigation divergence:** Dispatch's top `Loads history` button opens `/dispatch?board_scope=history&view=list&date_mode=delivery...` (legacy live-load table, 50 of51 rows in observed date range). Its `Load history` menu opens `/dispatch/load-history`, the dedicated approved board. Preserve existing views but make the canonical history destination unambiguous. Do not score the legacy table as the approved board.
