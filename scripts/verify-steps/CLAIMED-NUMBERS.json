@@ -17609,5 +17609,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099
+  "total_claimed": 1099,
+  "19989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-wex-transaction-report-import"
+  },
+  "20005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-fuel-card-inactive-from-refused"
+  }
 }
