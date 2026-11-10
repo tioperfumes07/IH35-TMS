@@ -16,6 +16,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
+import { isUsmcaOperatingCompany } from "../integrations/relay-payments/relay-usmca-date-floor.js";
 import {
   listActiveLoadsForAutoStatus,
   processDriftForLoad,
@@ -61,7 +62,9 @@ export async function runAutoStatusSwitchTick(): Promise<AutoStatusSwitchTickSum
       `
     );
 
-    for (const company of companies.rows) {
+    // ACCT-F11121: IH 35 Transportation / IH 35 Trucking are frozen — the engine never writes snapshots, in-transit
+    // issues or load statuses for them (same rule as the fuel hooks, #28648). USMCA only.
+    for (const company of companies.rows.filter((c) => isUsmcaOperatingCompany(c.id))) {
       assertTenantContext(company.id, CRON_NAME);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 

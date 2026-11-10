@@ -1,0 +1,1 @@
+export default { name: "verify:verify-fuel-receipt-reversal-never-registers", run(ctx) { ctx.run("node", ["scripts/verify-fuel-receipt-reversal-never-registers.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-fuel-receipt-reversal-never-registers.mjs"]); } };
