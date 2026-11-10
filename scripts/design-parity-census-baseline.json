@@ -6,7 +6,9 @@
     "status_select_not_multiselect": 0,
     "missing_em_dash_empty": 0,
     "parity_table_without_export_or_gear": 0,
-    "unresolved_page": 219
+    "missing_design_labels": 0,
+    "unresolved_page": 219,
+    "v3_kpi_height_unlocked": 0
   },
-  "updated_at": "2026-11-10T02:02:07.384Z"
+  "updated_at": "2026-11-10T02:05:11.411Z"
 }
