@@ -1,0 +1,1 @@
+export default { name: "verify:verify-engines-run-live-companies-only", run(ctx) { ctx.run("node", ["scripts/verify-engines-run-live-companies-only.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-engines-run-live-companies-only.mjs"]); } };

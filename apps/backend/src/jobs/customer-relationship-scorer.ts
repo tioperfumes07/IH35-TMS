@@ -15,6 +15,7 @@ import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { computeRelationshipScore, upsertRelationshipScore } from "../customers/relationship-score/scorer.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "customers.relationship_score_worker";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -55,7 +56,7 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
       `
     );
     const out: Array<{ companyId: string; customerIds: string[] }> = [];
-    for (const company of companies.rows) {
+    for (const company of companies.rows.filter((c) => isLiveEngineCompany(c.id))) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const customers = await client.query<{ id: string }>(
         `

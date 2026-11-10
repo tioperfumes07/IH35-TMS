@@ -5,6 +5,7 @@ import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { registerRepurchaseDueEvents } from "../factoring/repurchase-due.service.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 // FACTORING (Faro) daily day-95 cron — ALERT ONLY. Lead ROUND 296 / 297 + owner (2026-10-02): "WHEN RECOURSE TIME
 // ARRIVES IT MUST ASK, NOT RECOURSE AUTOMATICALLY." Each morning it registers, per company, every purchased account
@@ -31,7 +32,7 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
       ORDER BY id
     `
   );
-  return res.rows.map((row) => row.operating_company_id);
+  return filterLiveEngineCompanies(res.rows.map((row) => row.operating_company_id));
 }
 
 export async function runFactoringDefaultInterestCronTick(deps?: {
