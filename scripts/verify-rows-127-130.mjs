@@ -7,7 +7,8 @@
 //           (company_fuel_advance_expense, fuel_card_payable_dreamline); no number-keyed helper, no '5000' / '2510' literal.
 //   R127-b  verify-fuel-expense-one-to-one grains to the PURCHASE (Relay fill) and reads each document along its posting chain
 //           (never "own entry minus line-reversed lines", which read every reclassified document as 0¢ — 13563-1).
-//   R127-c  verify-diesel-expense-fuel-dedupe baseline: duplicate_fill_pairs <= 4 and live_diesel_expenses <= 314 (measured 11-03).
+//   R127-c  verify-diesel-expense-fuel-dedupe baseline: duplicate_fill_pairs <= 4 (measured 11-03) and diesel_expenses_off_fuel_source = 0
+//           (ACCT-F11107 2026-11-10: replaces the retired live_diesel_expenses <= 314 count, which grew with every ingest).
 //   R128    every per-load / per-settlement expense cost read model signs a CREDIT document negative (signedExpenseCentsSql /
 //           expenseSignSql) and buckets a statement adjustment with its receipt (expenseEffectiveFuelRowIdSql); no bare
 //           SUM(e.total_amount_cents). The AlwaysTrack parity guard uses the same rule.
@@ -70,7 +71,7 @@ export function problems(g, sources) {
   try {
     const b = JSON.parse(g.dedupeBaseline);
     if (!(Number(b.duplicate_fill_pairs) <= 4)) p.push(`R127-c dedupe baseline duplicate_fill_pairs ${b.duplicate_fill_pairs} > 4 (measured 11-03)`);
-    if (!(Number(b.live_diesel_expenses) <= 314)) p.push(`R127-c dedupe baseline live_diesel_expenses ${b.live_diesel_expenses} > 314 (measured 11-03)`);
+    if (Number(b.diesel_expenses_off_fuel_source) !== 0) p.push(`R127-c dedupe baseline diesel_expenses_off_fuel_source ${b.diesel_expenses_off_fuel_source} is not 0 (measured 0 on 2026-11-10)`);
   } catch { p.push("R127-c dedupe baseline unreadable"); }
   // R128
   if (!/export function signedExpenseCentsSql/.test(g.signed) || !/is_credit IS TRUE THEN -/.test(g.signed)) p.push("R128 the signed-cost rule is missing");
@@ -107,6 +108,7 @@ function selftest() {
     ["R127-a an account_number = '5000' literal fails", problems({ ...g, repair: g.repair + "\n// a.account_number = '5000'" }, s).some((x) => x.startsWith("R127-a"))],
     ["R127-b the old reversed-line rule fails", problems({ ...g, oneToOne: g.oneToOne.replace("JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL AND je.status = 'posted'", "JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND p.reversed_by_line_id IS NULL") }, s).some((x) => x.startsWith("R127-b"))],
     ["R127-b a per-row grain fails", problems({ ...g, oneToOne: g.oneToOne.replace("export function purchaseKey(", "export function rowKey(") }, s).some((x) => x.startsWith("R127-b"))],
+    ["R127-c a raised off-source ceiling fails", problems({ ...g, dedupeBaseline: g.dedupeBaseline.replace(/"diesel_expenses_off_fuel_source":\s*\d+/, '"diesel_expenses_off_fuel_source": 1') }, s).some((x) => x.startsWith("R127-c"))],
     ["R127-c a raised pair ceiling fails", problems({ ...g, dedupeBaseline: g.dedupeBaseline.replace(/"duplicate_fill_pairs":\s*\d+/, '"duplicate_fill_pairs": 6') }, s).some((x) => x.startsWith("R127-c"))],
     ["R128 an unsigned rollup fails", problems({ ...g, rollup: g.rollup + "\nCOALESCE(SUM(e.total_amount_cents), 0)" }, s).some((x) => x.startsWith("R128"))],
     ["R128 unsigned cost documents fail", problems({ ...g, costDocs: g.costDocs.replaceAll('expenseSignSql("e")', "1") }, s).some((x) => x.startsWith("R128"))],
@@ -127,5 +129,5 @@ if (process.argv.includes("--selftest")) selftest();
 else {
   const p = problems(load(), backendSources());
   if (p.length) { console.error(`${LABEL} FAIL\n- ${p.join("\n- ")}`); process.exit(1); }
-  console.log(`${LABEL} PASS — R127 role-resolved repair accounts, purchase-grained + chain-aware one-to-one, dedupe ceilings 4/314; R128 signed expense cost on every load / settlement read model; R129 one writer of amount_paid_cents; R130 booked miles carry their source`);
+  console.log(`${LABEL} PASS — R127 role-resolved repair accounts, purchase-grained + chain-aware one-to-one, dedupe ceilings 4 pairs / 0 off-source; R128 signed expense cost on every load / settlement read model; R129 one writer of amount_paid_cents; R130 booked miles carry their source`);
 }

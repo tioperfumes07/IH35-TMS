@@ -77,4 +77,50 @@ Initial comparison of the 43 unprefixed files with the export: 6 exact; 30 equal
 
 ## Remaining acceptance work
 
+### Safety / Cash Flow / Reports continuation — 2026-11-09 21:06–21:25 CT
+
+Read-only USMCA at measured CSS viewport 1440×900. Private screenshots remain under Downloads/codex-round8-5-design-parity; no production financial screenshots committed. These are measured partial comparisons, not whole-board acceptance or accounting tie-outs.
+
+| ID | Board | Expected | Observed / required repair |
+|---|---|---|---|
+| SF1 | Safety-DriverFiles | Compact navy navigation below title/subtitle | White oversized two-band header, duplicate breadcrumb, subtitle pushed right; qualification table header y404.63 versus reference y274 |
+| SF2 | Safety-DriverFiles | Left-aligned driver/status cells with colored status dots | Body centered; dots absent; 11 real rows, 77 links, zero clipped cells. Do not invent historical dates/statuses |
+| CF1 | All five Cash Flow boards | Related links above tab strip | Related links below strip, reversing reference order |
+| CF2 | CashFlow-Home | Source drill from cash-flow cells | 26 weekly Net cash flow/Ending balance cells lack semantic controls; other metric cells have buttons. Source/interaction confirmation still needed before declaring dead |
+| CF3 | CashFlow-Projected | Seven separate day tiles with gaps | Joined seven-day strip plus extra heading |
+| CF4 | CashFlow-ActualVsProjected | KPI titles inside tiles; readable chart axis | Titles above tile top; chart left x82.62, four money-axis labels start x73–76 and clip; by-date table y895.41 versus reference y685 |
+| CF5 | CashFlow-RollingLedger | Readable party/document columns | Income 1 clipped cell, expenses 4 clipped cells. Preserve additional columns/actions while restoring proportions; carried tables y1059.71, day grid y1334.24 |
+| CF6 | CashFlow-Manual | Empty tables retain headings and priority groups | Two blank panels without column headers or six expense headings; duplicated Measured label |
+| R1 | Reports and report viewers | Title before navy navigation | Reports nav y90.61 precedes title y138.59; Trial Balance nav y66.61 precedes title y134.59. Loads and settlement reports also add a second five-link strip |
+| R2 | Reports-Viewer-TrialBalance | Compact account table; left-aligned labels | Table starts y419.30 vs reference y356; centered account/type body. Five header names/order match, 52 rows and 208 semantic links observed; Collapse works |
+| R3 | Reports-Loads | Empty miles KPI; Empty mi / Empty % columns; revenue-by-week chart | Empty-mile KPI replaced by Margin; both empty-mile columns absent; no revenue chart heading or chart in loaded view. Preserve Fuel/Margin additions, do not substitute fabricated empty miles |
+| R4 | Reports-Loads / Reports-DriverSettlements | Fully readable values and names | Loads 15 clipped table cells; Driver report 27 clipped cells among 25 rendered rows. Driver report all 13 column names/order match reference |
+| R5 | Reports-Customers | Date range controls, Loads/Avg per load and advanced-Faro amount | Only YTD/Last 12 months/All time presets; Invoices/Avg per invoice replace load metrics; customer-count tile replaces advanced amount; Factored column is factor label rather than amount. Requires canonical data, not relabeling invoice counts as loads |
+| R6 | Reports-Vendors | Explicit dates, Truck filter, Card payables tile | Only YTD/Last 12 months/All time presets; Truck absent; 1099-count tile replaces Card payables. Nine columns/25 rendered rows, zero clipped cells; preserve Pays through and transaction links |
+
+Functional proof: Cash Flow Monthly changes 13 weekly columns to four months. Projected shows all six priority categories and customer/load links. Actual vs Projected loaded chart/four KPIs/eight rows. Loads Month changes 15 weekly rows to five monthly groups. Company report loaded 12 columns (added Number preserved), 25 rendered rows, zero clipped cells; exhaustive group/drill checks pending. Customer report loaded 10 columns, 25 rendered rows, zero clipped cells. No Save, Pull, Create, Roll over or financial submission used. No numerical ledger correctness inferred from these UI observations.
+
+Fuel F3 code merged #28740 at 373dd9fdc026410cfebd55f55077562b6c7b66e6. Final workspace TypeScript build and Fuel tests 14/14 passed; affected guard comparison has zero regressions. Both concurrent TSX repairs independently landed on main (#28743/#28745). Repaired deployed labels remain UNVERIFIED, not an accepted Fuel board.
+
+M5 navigation recheck after hard reload, 21:26 CT: breadcrumb now `Maintenance›In Shop`; only In Shop has `aria-current=page`; all four open bay articles loaded. Navigation defect CLOSED-LIVE, not full In Shop/ShopBays acceptance. Private screenshot Maintenance-InShop-breadcrumb-fixed-live.jpg. Maintenance Home Moving filter is now present; movement population/behavior still needs separate proof.
+
+### Customers / Vendors / Legal continuation — 2026-11-09 ~21:00–21:05 CT
+
+CSS viewport 1440×900. Private evidence: Customers-live.jpg, Vendors-live.jpg, Legal-live.jpg in the same Downloads folder. No production submissions.
+
+| ID | Board expectation | Measured live result | Required repair |
+|---|---|---|---|
+| C1 | One Customers breadcrumb above the heading | Outer breadcrumb plus another Customers label before Back/title | Remove redundant chrome without removing navigation |
+| V1 | Compact Pays through panel and vendor overview below | Four-account summary table starts y343; vendor table starts y641; approved vendor section starts approximately y428 | Compact summary controls/spacing, preserve settings and full data access |
+| V2 | Vendor board columns visible in the overview | Suggested category/action column expands table; Last paid/Pays through require horizontal scrolling | Preserve suggestions in reachable detail/secondary layout while restoring approved overview geometry |
+| L1 | Legal pipeline colored stage markers | Five live stages have plain labels with no status dots | Restore stage markers without inventing status data |
+| L2 | Matters empty state retains Matter / Next date / At risk headings | Empty panel shows explanatory paragraph only | Retain board table header/empty-state structure |
+| L3 | Pipeline drill accessible as a link/control | Five clickable rows, zero anchors/buttons and no tabindex/role; mouse Draft click opens /legal/contracts | Preserve existing drill and add keyboard-accessible semantic links; not a dead-button finding |
+
+Customers has nine correctly ordered overview column labels and 90 rendered records; exhaustive wiring remains unverified. Vendors has thirty current records and zero measured clipped cells, but rightmost columns extend outside the initial view. Current populations are not required to equal historical sample counts. Legal Create Contract opens the five-stage Send Contract wizard with a template picker; Cancel closes it without saving. Draft mouse-row navigation succeeds; lack of anchors alone does not prove broken navigation.
+
+### F3 bounded Codex repair
+
+Static October/September captions were applied to dynamic current/previous month queries. Shared period-option generation now derives captions from the same business-date range, preserves legacy period keys, uses canonical Central company date, and includes the missing YTD ending month. Old YTD behavior fails the new test (Jan 1–9 instead of Jan 1 – Nov 9). Repaired period and existing Fuel tests: 14/14. Live deployment acceptance remains pending; no accounting writes or data changes.
+
 Complete the 45-board route/trigger map, reviewed element census, all live interactions safe to exercise without production writes, same-scale board/live/diff artifacts with privacy protection, and the claimed/registered fail-closed guard. Missing evidence must remain UNVERIFIED and block completion. No implementation or production data changed in this first batch.
