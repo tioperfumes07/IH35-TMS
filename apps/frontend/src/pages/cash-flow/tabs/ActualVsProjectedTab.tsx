@@ -811,7 +811,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           onRetry={() => void avpQ.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Actual vs projected — by date"
           columns={COLUMNS}
           rows={filteredGroups}
