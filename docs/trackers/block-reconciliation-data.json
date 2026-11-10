@@ -1,12 +1,12 @@
 {
- "date": "2026-11-03",
- "generated_at_iso": "2026-11-03T19:36:45.944Z",
+ "date": "2026-11-10",
+ "generated_at_iso": "2026-11-10T00:41:11.951Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
-  "NEEDS-VERIFY": 64,
+  "NEEDS-VERIFY": 66,
   "DONE": 546,
-  "AUDIT-NOTE": 587
+  "AUDIT-NOTE": 585
  },
  "universe": {
   "total_blocks_after_dedup": 1246,
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -882,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -893,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -915,10 +915,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1036,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1047,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1058,10 +1058,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1069,10 +1069,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1080,10 +1080,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28330 title-match only, unverified",
+   "evidence": "PR #28547 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "CHAIN-04-bill-payment-tieout",
@@ -1192,6 +1192,39 @@
    "name": "",
    "registered_on": "2026-07-11",
    "pr": 2367
+  },
+  {
+   "id": "f-01-fuel-home-stub",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #28498 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 28498
+  },
+  {
+   "id": "factoring-asc860-cpa-control-test-open",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #28615 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 28615
+  },
+  {
+   "id": "factoring-asc860-determination-memo",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #28615 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 28615
   },
   {
    "id": "FEAT-DISP-DRAWER-WIRE",
@@ -1401,17 +1434,6 @@
    "name": "Docs-only PR permanently recording owner-locked delivery revenue recognition decisions (LOCKED 2026-07-19): two-event la",
    "registered_on": null,
    "pr": null
-  },
-  {
-   "id": "s-10-no-type-filter-incidents",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #25548 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 25548
   },
   {
    "id": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH",
@@ -2995,7 +3017,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -3006,7 +3028,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3017,7 +3039,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3028,7 +3050,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 28330
+   "pr": 28547
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -11481,17 +11503,6 @@
    "pr": null
   },
   {
-   "id": "f-01-fuel-home-stub",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "f-02-jump-to-tab-nonstandard",
    "source": ".block-ready",
    "fin": true,
@@ -11539,28 +11550,6 @@
    "id": "FACT-PAR-2",
    "source": ".block-ready",
    "fin": false,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "factoring-asc860-cpa-control-test-open",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "factoring-asc860-determination-memo",
-   "source": ".block-ready",
-   "fin": true,
    "tier": "",
    "status": "AUDIT-NOTE",
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
@@ -13054,6 +13043,17 @@
    "pr": null
   },
   {
+   "id": "s-10-no-type-filter-incidents",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "s-12-log-event-button-navy-cta",
    "source": ".block-ready",
    "fin": true,
@@ -13737,6 +13737,1512 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 28660,
+   "title": "FIX: A/R open balance counts only non-voided payments, live-sourced relief and non-voided credit memos (ACCT-F11103 part 2)",
+   "mergedAt": "2026-11-04T15:31:41Z",
+   "branch": "claude/acct-f11103-part2-live-source"
+  },
+  {
+   "number": 28659,
+   "title": "FIX: live QuickBooks bill-payment evidence for open USMCA bills (ACCT-F11104)",
+   "mergedAt": "2026-11-04T15:25:58Z",
+   "branch": "claude/acct-f11104-qbo-bill-payment-evidence"
+  },
+  {
+   "number": 28658,
+   "title": "CLAIM-RESERVE: migration 202616410100, verify-step 19961 (ACCT-F11103 part 2)",
+   "mergedAt": "2026-11-04T15:23:06Z",
+   "branch": "claude/claim-acct-f11103-part2"
+  },
+  {
+   "number": 28657,
+   "title": "FIX: sent invoice corrected by credit memo (QBO rule) + driver bill re-prices to its settlement line (ACCT-F11101/F11102)",
+   "mergedAt": "2026-11-04T15:20:22Z",
+   "branch": "claude/acct-f11101-credit-memo-sent-invoice-13693"
+  },
+  {
+   "number": 28655,
+   "title": "FIX: A/R readers count payment-less relief applications (ACCT-F11103)",
+   "mergedAt": "2026-11-04T15:13:11Z",
+   "branch": "claude/acct-f11103-payment-less-applications"
+  },
+  {
+   "number": 28654,
+   "title": "CLAIM-RESERVE: migration 202616400100, verify-step 19949 (ACCT-F11103)",
+   "mergedAt": "2026-11-04T14:56:30Z",
+   "branch": "claude/claim-acct-f11103"
+  },
+  {
+   "number": 28653,
+   "title": "FIX: one settlement-line reinstate engine; SET-24 LINE-DUP keys on the load (ACCT-F11098)",
+   "mergedAt": "2026-11-04T14:54:23Z",
+   "branch": "claude/acct-f11098-settlement-line-reinstate"
+  },
+  {
+   "number": 28652,
+   "title": "FIX: a customer payment moves a factored invoice to partial/paid; A/R readers use the factoring identity (ACCT-F11099)",
+   "mergedAt": "2026-11-04T14:52:47Z",
+   "branch": "claude/acct-f11099-factored-invoice-paid"
+  },
+  {
+   "number": 28651,
+   "title": "CLAIM-RESERVE: migration 202616390100, verify-step 19945 (ACCT-F11098)",
+   "mergedAt": "2026-11-04T14:44:19Z",
+   "branch": "claude/claim-acct-f11098"
+  },
+  {
+   "number": 28650,
+   "title": "CLAIM-RESERVE: migration 202616380100, verify-step 19941 (ACCT-F11099)",
+   "mergedAt": "2026-11-04T14:42:28Z",
+   "branch": "claude/claim-acct-f11099"
+  },
+  {
+   "number": 28649,
+   "title": "BUS: Lead register 11-04 12:15Z",
+   "mergedAt": "2026-11-04T12:14:12Z",
+   "branch": "claude/bus-register-1215z"
+  },
+  {
+   "number": 28648,
+   "title": "FIX: fuel sweep + Relay fill records USMCA only (E9 hit frozen Transportation)",
+   "mergedAt": "2026-11-04T12:13:09Z",
+   "branch": "claude/fuel-sweep-usmca-only"
+  },
+  {
+   "number": 28647,
+   "title": "BUS: Lead register 11-04 05:05Z",
+   "mergedAt": "2026-11-04T05:02:48Z",
+   "branch": "claude/bus-register-0505z"
+  },
+  {
+   "number": 28646,
+   "title": "MAIN-GREEN: escrow register guard follows the recorded per-load split",
+   "mergedAt": "2026-11-04T04:27:10Z",
+   "branch": "claude/main-green-escrow-register-guard"
+  },
+  {
+   "number": 28645,
+   "title": "MAIN-GREEN: schema-parity baseline for escrow_posting_loads",
+   "mergedAt": "2026-11-04T04:15:50Z",
+   "branch": "claude/main-green-schema-parity-0415"
+  },
+  {
+   "number": 28644,
+   "title": "MAIN-GREEN: escrow_posting_loads canonical-ledger declaration (relocated)",
+   "mergedAt": "2026-11-04T04:14:33Z",
+   "branch": "claude/main-green-escrow-split-decl"
+  },
+  {
+   "number": 28643,
+   "title": "FIX: heavy CI red — view security_invoker, payment_id prod parity, fuel vendor lookup + stale fixtures (ACCT-F11094 row 257)",
+   "mergedAt": "2026-11-04T14:30:42Z",
+   "branch": "claude/acct-f11094-heavy-ci-green"
+  },
+  {
+   "number": 28642,
+   "title": "FIX: escrow postings carry their load and document date; register reads them (ACCT-F11093, row 22)",
+   "mergedAt": "2026-11-04T03:56:18Z",
+   "branch": "claude/acct-f11093-escrow-load-date"
+  },
+  {
+   "number": 28641,
+   "title": "CLAIM-RESERVE: migrations 202616360100 + 202616360200, verify-step 19925 (ACCT-F11094)",
+   "mergedAt": "2026-11-04T03:50:55Z",
+   "branch": "claude/chore/claim-reserve-acct-f11094"
+  },
+  {
+   "number": 28640,
+   "title": "FIX: ENG-04 2170 reclass evidence counted voided and double-claimed bank lines (ACCT-F11091)",
+   "mergedAt": "2026-11-04T03:37:48Z",
+   "branch": "claude/acct-f11091-eng04-evidence"
+  },
+  {
+   "number": 28639,
+   "title": "MAIN-GREEN: vehicle photo route guard reads the whole handler",
+   "mergedAt": "2026-11-04T03:07:40Z",
+   "branch": "claude/main-green-unit-photos-guard"
+  },
+  {
+   "number": 28638,
+   "title": "MAIN-GREEN: locked-guards-heavy live money steps get the read-only DB credential",
+   "mergedAt": "2026-11-04T02:37:59Z",
+   "branch": "claude/main-green-locked-db-env"
+  },
+  {
+   "number": 28637,
+   "title": "MAIN-GREEN: driver list scope guard follows the qualified column (#28503)",
+   "mergedAt": "2026-11-04T02:31:00Z",
+   "branch": "claude/main-green-driver-scope"
+  },
+  {
+   "number": 28636,
+   "title": "BUS: Lead register 11-04 02:40Z",
+   "mergedAt": "2026-11-04T02:28:23Z",
+   "branch": "claude/bus-register-0240z"
+  },
+  {
+   "number": 28635,
+   "title": "MAIN-GREEN: locked-guards-heavy — 3 stale pins + Relay external id",
+   "mergedAt": "2026-11-04T02:27:21Z",
+   "branch": "claude/main-green-locked-heavy"
+  },
+  {
+   "number": 28634,
+   "title": "FIX: settlement paid status rolls up from its real bill payments (ACCT-F11081)",
+   "mergedAt": "2026-11-04T14:35:51Z",
+   "branch": "claude/acct-f11081-settlement-paid-rollup"
+  },
+  {
+   "number": 28633,
+   "title": "FIX: ACCT-F11086 Relay deposit CSV upload — the only deposit feed had no button",
+   "mergedAt": "2026-11-04T14:35:04Z",
+   "branch": "claude/acct-f11086-relay-deposit-csv-upload"
+  },
+  {
+   "number": 28632,
+   "title": "MAIN-GREEN: phantom guard knows SQL functions; off-scale class; battery doc without line numbers",
+   "mergedAt": "2026-11-04T02:04:54Z",
+   "branch": "claude/main-green-guards-0200z"
+  },
+  {
+   "number": 28630,
+   "title": "FIX: \"Void practical-miles bill\" action on the driver bill detail page (ACCT-F11079)",
+   "mergedAt": "2026-11-04T01:32:59Z",
+   "branch": "claude/acct-f11079-void-practical-ui"
+  },
+  {
+   "number": 28629,
+   "title": "BUS: Lead register 11-04 01:30Z checkpoint",
+   "mergedAt": "2026-11-04T01:26:05Z",
+   "branch": "claude/bus-register-0130z"
+  },
+  {
+   "number": 28628,
+   "title": "MAIN-GREEN: regenerate stale derived artifacts",
+   "mergedAt": "2026-11-04T01:21:13Z",
+   "branch": "claude/main-green-derived-artifacts"
+  },
+  {
+   "number": 28627,
+   "title": "FIX: deadhead never measured across overlapping loads of one truck",
+   "mergedAt": "2026-11-04T01:18:30Z",
+   "branch": "claude/deadhead-prior-overlap"
+  },
+  {
+   "number": 28626,
+   "title": "MAIN-GREEN: frontend typecheck red on main (U12 string[] remnants)",
+   "mergedAt": "2026-11-04T01:12:44Z",
+   "branch": "claude/main-green-u12-typecheck"
+  },
+  {
+   "number": 28625,
+   "title": "FIX: load-costs board set-based; settlement period year; diesel by truck paging; calendar dates never shift; 40px filter; Load Costs salary labels (rows 203 167",
+   "mergedAt": "2026-11-04T01:20:58Z",
+   "branch": "lead/live-fails-2"
+  },
+  {
+   "number": 28624,
+   "title": "MAIN-GREEN: wire 5 orphan guards (verify-steps 19903-19911)",
+   "mergedAt": "2026-11-04T01:05:01Z",
+   "branch": "claude/wire-orphan-guards-19903"
+  },
+  {
+   "number": 28623,
+   "title": "FIX: fuel-expense one-to-one; settlement 5787 non-diesel; invoice amount_paid derived from applications; composite memos (rows 127 128 129 130)",
+   "mergedAt": "2026-11-04T00:43:31Z",
+   "branch": "claude/lead-rows-127-130"
+  },
+  {
+   "number": 28622,
+   "title": "FIX: HOS writes to the survivor; shell events repointed; miles gaps (rows 93 116 131)",
+   "mergedAt": "2026-11-04T00:36:52Z",
+   "branch": "lead/rows-93-116-131"
+  },
+  {
+   "number": 28621,
+   "title": "FIX: every override records through recordOverride; Book Load hard-block owner/accountant; 425C and Reclassify use the shared button (row 28)",
+   "mergedAt": "2026-11-04T00:31:50Z",
+   "branch": "lead/row-28-finish"
+  },
+  {
+   "number": 28620,
+   "title": "MAIN-GREEN: UI4 step to claimed 19887 (duplicate 19851)",
+   "mergedAt": "2026-11-04T00:30:34Z",
+   "branch": "claude/rehome-ui4-step"
+  },
+  {
+   "number": 28619,
+   "title": "CLAIM-RESERVE: verify-step 19887 (LEAD)",
+   "mergedAt": "2026-11-04T00:30:03Z",
+   "branch": "chore/claim-reserve-19887"
+  },
+  {
+   "number": 28618,
+   "title": "FIX: cash forecast carries card payables; one opening-cash figure; cash excludes card payables and Faro (rows 91 148 149)",
+   "mergedAt": "2026-11-04T00:28:32Z",
+   "branch": "lead/rows-91-148-149"
+  },
+  {
+   "number": 28617,
+   "title": "CLAIM-RESERVE: verify-step 19901 (LEAD) — rows 127-130 static guard",
+   "mergedAt": "2026-11-04T00:27:00Z",
+   "branch": "claude/claim-reserve-19901"
+  },
+  {
+   "number": 28616,
+   "title": "U12: Accounting lists status MultiSelectDropdown (SURFACE-BREACH Cascade)",
+   "mergedAt": "2026-11-04T00:21:45Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28615,
+   "title": "FIX: factoring A/R and undeposited engines (rows 89 90 112)",
+   "mergedAt": "2026-11-04T00:20:05Z",
+   "branch": "lead/rows-89-90-112"
+  },
+  {
+   "number": 28614,
+   "title": "CLAIM-RESERVE: verify-step 19889 (LEAD) — rows 89 90 112 guard",
+   "mergedAt": "2026-11-04T00:18:12Z",
+   "branch": "chore/claim-reserve-19889"
+  },
+  {
+   "number": 28613,
+   "title": "MAIN-GREEN: Load history board table uses the board appearance",
+   "mergedAt": "2026-11-04T00:10:14Z",
+   "branch": "claude/load-history-board-appearance"
+  },
+  {
+   "number": 28612,
+   "title": "CLAIM-RESERVE: verify-step 19885 (LEAD) — rows 89 90 112 guard",
+   "mergedAt": "2026-11-04T00:12:57Z",
+   "branch": "chore/claim-reserve-19885"
+  },
+  {
+   "number": 28611,
+   "title": "U12: Maint Parts + OEM Parts brand/category MultiSelectDropdown",
+   "mergedAt": "2026-11-04T00:07:54Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28610,
+   "title": "FIX: vendor suggested category; duplicate-customer rule and one billed figure; Loves price sync state; profile photos (rows 97 157 163 3)",
+   "mergedAt": "2026-11-04T00:08:24Z",
+   "branch": "lead/rows-97-157-163-3"
+  },
+  {
+   "number": 28609,
+   "title": "U12: Locations + Maintenance services filter MultiSelectDropdown",
+   "mergedAt": "2026-11-04T00:05:51Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28608,
+   "title": "U12: Drivers Reference catalog Active/Archived MultiSelectDropdown",
+   "mergedAt": "2026-11-04T00:04:06Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28607,
+   "title": "CLAIM-RESERVE: migration 202616350100 (LEAD) — row 28 override_reasons 425c seed",
+   "mergedAt": "2026-11-04T00:03:41Z",
+   "branch": "claude/row-28-claim-202616350100"
+  },
+  {
+   "number": 28606,
+   "title": "U12: Compliance filings Program MultiSelectDropdown",
+   "mergedAt": "2026-11-04T00:02:58Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28605,
+   "title": "FIX: driver bills always carry a due date; salaried stray bills voided; presettlement autolink; live_load_number (rows 94 124)",
+   "mergedAt": "2026-11-04T00:03:02Z",
+   "branch": "lead/rows-94-124"
+  },
+  {
+   "number": 28604,
+   "title": "U12: Coverage Gap by-type Covered/Missing MultiSelectDropdown",
+   "mergedAt": "2026-11-04T00:00:56Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28603,
+   "title": "CLAIM-RESERVE: migration 202616340100 (LEAD) — rows 93/116 HOS shell repoint carve-out + odometer boundary source",
+   "mergedAt": "2026-11-04T00:00:19Z",
+   "branch": "lead/claim-202616340100"
+  },
+  {
+   "number": 28602,
+   "title": "U12: QBO Sync Status dashboard status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:59:38Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28601,
+   "title": "FIX: Reports Home is the board (no layering, rows link); one Override button + reasons catalog (rows 53 28)",
+   "mergedAt": "2026-11-03T23:59:03Z",
+   "branch": "lead/rows-53-28"
+  },
+  {
+   "number": 28600,
+   "title": "U12: Driver catalog, Teams, Brokers status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:58:17Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28599,
+   "title": "FINDING ENG-34: wire balanced-ledger 19885 + CLOSE-ALL sync",
+   "mergedAt": "2026-11-03T23:55:44Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28598,
+   "title": "FINDING ENG-34: wire bus-diet Cursor seat via verify-steps 19883",
+   "mergedAt": "2026-11-03T23:53:43Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28597,
+   "title": "FINDING ENG-34: wire load-driven-miles via verify-steps 19881",
+   "mergedAt": "2026-11-03T23:51:03Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28596,
+   "title": "BUS: ROUND 7.30j — Lead takes 22 rows",
+   "mergedAt": "2026-11-03T23:50:45Z",
+   "branch": "lead/bus-730j"
+  },
+  {
+   "number": 28595,
+   "title": "U12: Settlement Disputes status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:48:09Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28594,
+   "title": "BUS: tip U12 register residual after FraudAlerts MultiSelect",
+   "mergedAt": "2026-11-03T23:46:44Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28593,
+   "title": "U12: Fuel Fraud Alerts status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:45:46Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28592,
+   "title": "BUS: tip U12 Cursor wave + Cascade handoff for Accounting list Active-Inactive",
+   "mergedAt": "2026-11-03T23:44:40Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28591,
+   "title": "U12: EDI Transaction Log status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:43:40Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28590,
+   "title": "U12: Load Cancellation + Exception Reasons status MultiSelect",
+   "mergedAt": "2026-11-03T23:42:25Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28589,
+   "title": "U12: Dispatch catalog + Termination Reasons status MultiSelect",
+   "mergedAt": "2026-11-03T23:41:33Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28588,
+   "title": "U12: Safety catalog status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:40:20Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28587,
+   "title": "U12: Maintenance catalog status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:38:57Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28586,
+   "title": "U12: Fuel+Fleet catalog status MultiSelect; Cursor OUTBOX diet",
+   "mergedAt": "2026-11-03T23:37:51Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28585,
+   "title": "BUS: ROUND 7.30i — register",
+   "mergedAt": "2026-11-03T23:35:02Z",
+   "branch": "lead/bus-730i"
+  },
+  {
+   "number": 28584,
+   "title": "U12: DriversTable status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:34:16Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28583,
+   "title": "FIX: every delivered load accrues; empty settlements refused; closed settlements numbered and company settlement opened (rows 85 24 98)",
+   "mergedAt": "2026-11-03T23:34:06Z",
+   "branch": "lead/rows-85-24-98"
+  },
+  {
+   "number": 28582,
+   "title": "U12: Fuel Card Overage MultiSelect (re-ship after empty #28581)",
+   "mergedAt": "2026-11-03T23:33:05Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28581,
+   "title": "U12: Fuel Card Overage status MultiSelectDropdown",
+   "mergedAt": "2026-11-03T23:31:55Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28580,
+   "title": "BUS: tip PENDING #57/#159 DONE-LIVE (Codex batch96 Settlements caption)",
+   "mergedAt": "2026-11-03T23:30:32Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28579,
+   "title": "ENG-34: wire cash-basis pair via 19877/19879",
+   "mergedAt": "2026-11-03T23:28:59Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28578,
+   "title": "ENG-34: wire batch70 static orphans via 19871/19873/19875",
+   "mergedAt": "2026-11-03T23:28:05Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28577,
+   "title": "BUS: diet Cursor INBOX/OUTBOX under caps (archive pre-diet)",
+   "mergedAt": "2026-11-03T23:24:57Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28576,
+   "title": "FIX: Dispatch Load history board; Bill Payments lists bill payments only (rows 78 23)",
+   "mergedAt": "2026-11-03T23:24:42Z",
+   "branch": "lead/rows-78-23"
+  },
+  {
+   "number": 28575,
+   "title": "BUS: tip PENDING #241 DONE-LIVE (Codex batch94 Class/Debit 4px gap)",
+   "mergedAt": "2026-11-03T23:23:44Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28574,
+   "title": "ENG-34: exempt match-vendor orphan (OWNER BUILD-FIRST no match); tip #57/#159 week TZ",
+   "mergedAt": "2026-11-03T23:22:48Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28573,
+   "title": "FINDING: Codex settlement selected-week caption live acceptance",
+   "mergedAt": "2026-11-03T23:21:55Z",
+   "branch": "codex/round7-independent-qa-batch96"
+  },
+  {
+   "number": 28572,
+   "title": "ENG-34: wire verify-rows-250-255 (orphan → CI)",
+   "mergedAt": "2026-11-03T23:21:37Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28571,
+   "title": "FILL: System EngineStatus + SystemModule BoardSection need-company",
+   "mergedAt": "2026-11-03T23:20:59Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28570,
+   "title": "BUS: tip ROUND #29/#241 MERGED-UNVERIFIED; PENDING #241 cites #28557",
+   "mergedAt": "2026-11-03T23:19:38Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28569,
+   "title": "FINDING: Codex settlement timezone and historical fuel repair verification",
+   "mergedAt": "2026-11-03T23:19:36Z",
+   "branch": "codex/round7-independent-qa-batch95"
+  },
+  {
+   "number": 28568,
+   "title": "BUS: tip PENDING #27 MERGED-UNVERIFIED after CreateMultipleBills need-company",
+   "mergedAt": "2026-11-03T23:19:07Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28567,
+   "title": "FIX: Truck Line requests set-based, P&L classification labels (rows 250 255)",
+   "mergedAt": "2026-11-03T23:19:18Z",
+   "branch": "lead/rows-250-255"
+  },
+  {
+   "number": 28566,
+   "title": "ROUND 7.30 #27: CreateMultipleBills + VendorBillCreate BoardSection need-company",
+   "mergedAt": "2026-11-03T23:18:33Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28565,
+   "title": "CLAIM-RESERVE: verify-step 19851 (LEAD)",
+   "mergedAt": "2026-11-03T23:17:25Z",
+   "branch": "lead/claim-19851"
+  },
+  {
+   "number": 28564,
+   "title": "ENG-34: wire verify-live-fails-225-229-233-241 (orphan → CI)",
+   "mergedAt": "2026-11-03T23:16:52Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28563,
+   "title": "GUARD: unmatched-7d D066 z-index selftest plant (Codex inbox)",
+   "mergedAt": "2026-11-03T23:15:58Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28562,
+   "title": "FINDING: Codex independent live Manual JE repair acceptance",
+   "mergedAt": "2026-11-03T23:15:41Z",
+   "branch": "codex/round7-independent-qa-batch94"
+  },
+  {
+   "number": 28561,
+   "title": "FIX: Settlements week company-calendar ISO + selected-week deductions caption (Codex batch91/92)",
+   "mergedAt": "2026-11-03T23:14:56Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28560,
+   "title": "FIX: org names keep acronyms + legal suffixes (one casing path); Users never \"User\"; Manual JE grid never overlaps; residual ISO dates (rows 223 225 229 233 241",
+   "mergedAt": "2026-11-03T23:14:32Z",
+   "branch": "lead/live-fails-1"
+  },
+  {
+   "number": 28559,
+   "title": "BUS: ROUND 7.30h — second live pass in the register",
+   "mergedAt": "2026-11-03T23:12:53Z",
+   "branch": "lead/bus-730h"
+  },
+  {
+   "number": 28558,
+   "title": "FINDING: Codex customer invoice drill pagination live failure",
+   "mergedAt": "2026-11-03T23:12:19Z",
+   "branch": "codex/round7-independent-qa-batch93"
+  },
+  {
+   "number": 28557,
+   "title": "FIX: Manual JE Step 2 size=sm drops FILTER min-w so Class no longer overlaps Debit (#241 D065)",
+   "mergedAt": "2026-11-03T23:08:46Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28556,
+   "title": "FINDING: Codex settlement timezone counterexample and historical checks",
+   "mergedAt": "2026-11-03T23:07:00Z",
+   "branch": "codex/round7-independent-qa-batch92"
+  },
+  {
+   "number": 28555,
+   "title": "FINDING: Codex settlement chart and reimbursement guard independent verification",
+   "mergedAt": "2026-11-03T23:04:07Z",
+   "branch": "codex/round7-independent-qa-batch91"
+  },
+  {
+   "number": 28554,
+   "title": "BUS: ROUND 7.30g — live check results in the register",
+   "mergedAt": "2026-11-03T23:01:02Z",
+   "branch": "lead/bus-730g"
+  },
+  {
+   "number": 28553,
+   "title": "BUS: ROUND 7.30f — register + CC-1/Cursor notes",
+   "mergedAt": "2026-11-03T22:59:58Z",
+   "branch": "lead/bus-730f"
+  },
+  {
+   "number": 28552,
+   "title": "ENG-34: wire person-confirms-load + customers-vendors boards",
+   "mergedAt": "2026-11-03T22:58:48Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28551,
+   "title": "ENG-34: wire remaining orphans (6→1; match deferred)",
+   "mergedAt": "2026-11-03T22:58:06Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28550,
+   "title": "FIX: 443.288 person-confirms-load guards; stops-geocoded named exception; notes payload (rows 102 174 101)",
+   "mergedAt": "2026-11-03T22:57:54Z",
+   "branch": "lead/rows-102-174-101"
+  },
+  {
+   "number": 28549,
+   "title": "FIX: Customers Home and Vendors Home built to their boards (rows 55 56)",
+   "mergedAt": "2026-11-03T22:57:22Z",
+   "branch": "lead/customers-vendors-home"
+  },
+  {
+   "number": 28548,
+   "title": "ENG-34: wire Cursor orphan guards (11→6)",
+   "mergedAt": "2026-11-03T22:57:05Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28547,
+   "title": "BUS: ROUND 7.30e — register + CC-2 E13 remainder",
+   "mergedAt": "2026-11-03T22:56:44Z",
+   "branch": "lead/bus-730e"
+  },
+  {
+   "number": 28546,
+   "title": "ROUND 7.30 tip #103 static ratchet MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:55:45Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28545,
+   "title": "FIX: canonical-relations carries relay_driver_links — phantom guard green",
+   "mergedAt": "2026-11-03T22:55:12Z",
+   "branch": "claude/canonical-relay-driver-links"
+  },
+  {
+   "number": 28544,
+   "title": "ROUND 7.30 tip #27 Accounting MERGED-UNVERIFIED + ItemsCatalog",
+   "mergedAt": "2026-11-03T22:54:54Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28543,
+   "title": "ROUND 7.30 #27: Accounting detail need-company wave 7",
+   "mergedAt": "2026-11-03T22:54:03Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28542,
+   "title": "FIX: E1 follow-up — Relay driver rematch route USMCA-only, audited under the person",
+   "mergedAt": "2026-11-03T22:52:53Z",
+   "branch": "claude/rematch-route-actor"
+  },
+  {
+   "number": 28541,
+   "title": "FIX: loads carry a real equipment type id; trial balance viewer to its board (rows 113 54)",
+   "mergedAt": "2026-11-03T22:52:42Z",
+   "branch": "lead/rows-113-54"
+  },
+  {
+   "number": 28540,
+   "title": "ROUND 7.30 tip #27 Accounting PARTIAL status",
+   "mergedAt": "2026-11-03T22:52:19Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28539,
+   "title": "ROUND 7.30 tip #29 popup standard MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:51:36Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28538,
+   "title": "ROUND 7.30: reimbursements formatUsd row+subtotal guard (batch90)",
+   "mergedAt": "2026-11-03T22:50:08Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28537,
+   "title": "ROUND 7.30 #27: Accounting need-company wave 6",
+   "mergedAt": "2026-11-03T22:49:10Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28536,
+   "title": "FIX: rows 198 203 222 + 38 — expense-category-map pool wait, Load Costs settlement labels, drift account names, banking tests",
+   "mergedAt": "2026-11-03T22:49:07Z",
+   "branch": "lead/cc1-small-rows"
+  },
+  {
+   "number": 28535,
+   "title": "ROUND 7.30: Settlements week chart selects Week-of",
+   "mergedAt": "2026-11-03T22:47:00Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28534,
+   "title": "ROUND 7.30 #27: Accounting need-company wave 5",
+   "mergedAt": "2026-11-03T22:44:52Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28533,
+   "title": "BUS: ROUND 7.30d — register updates + CC-3 skip list",
+   "mergedAt": "2026-11-03T22:43:56Z",
+   "branch": "lead/bus-730d"
+  },
+  {
+   "number": 28532,
+   "title": "ROUND 7.30 #27: Accounting need-company wave 4",
+   "mergedAt": "2026-11-03T22:42:15Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28531,
+   "title": "FIX: E1 row 162 — Relay fills take their driver from Relay's own id (relay_driver_links)",
+   "mergedAt": "2026-11-03T22:40:52Z",
+   "branch": "claude/e1-relay-driver-links"
+  },
+  {
+   "number": 28530,
+   "title": "FIX: HOS + planner driver columns, driver current truck + documents, one MTD fuel figure (rows 164 166 167)",
+   "mergedAt": "2026-11-03T22:40:44Z",
+   "branch": "lead/rows-164-166-167"
+  },
+  {
+   "number": 28529,
+   "title": "FIX: Reports — Loads, Driver settlement, Company settlement, Customer, Vendor reports + catalog (rows 79 80 81 82 83 84)",
+   "mergedAt": "2026-11-03T22:39:15Z",
+   "branch": "lead/reports-five"
+  },
+  {
+   "number": 28528,
+   "title": "ROUND 7.30 #27: Accounting need-company wave 3",
+   "mergedAt": "2026-11-03T22:35:56Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28527,
+   "title": "FINDING: Codex settlement formatter audit and escaped guard plant",
+   "mergedAt": "2026-11-03T22:35:37Z",
+   "branch": "codex/round7-independent-qa-batch90"
+  },
+  {
+   "number": 28526,
+   "title": "fix: land MyAccountant need-company early return",
+   "mergedAt": "2026-11-03T22:33:34Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28525,
+   "title": "fix: MyAccountant need-company early return (fill-shell)",
+   "mergedAt": "2026-11-03T22:32:48Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28524,
+   "title": "FINDING: Codex scheduled miles and populated settlement register proof",
+   "mergedAt": "2026-11-03T22:32:15Z",
+   "branch": "codex/round7-independent-qa-batch89"
+  },
+  {
+   "number": 28523,
+   "title": "fix: MyAccountant need-company (fill-shell red)",
+   "mergedAt": "2026-11-03T22:32:02Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28522,
+   "title": "BUS: ROUND 7.30 tip #27 Accounting inspect PARTIAL",
+   "mergedAt": "2026-11-03T22:30:55Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28521,
+   "title": "ROUND 7.30 #27: Accounting need-company wave 2",
+   "mergedAt": "2026-11-03T22:30:21Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28520,
+   "title": "FINDING: Codex live settlement drill-through and Cursor guard retests",
+   "mergedAt": "2026-11-03T22:30:04Z",
+   "branch": "codex/round7-independent-qa-batch88"
+  },
+  {
+   "number": 28519,
+   "title": "CLAIM-RESERVE: migration 202616330100 (LEAD) — E1",
+   "mergedAt": "2026-11-03T22:30:00Z",
+   "branch": "chore/claim-migration-202616330100-relay-driver-links"
+  },
+  {
+   "number": 28518,
+   "title": "ROUND 7.30 #27: Accounting need-company (Leases/Disputes/Receipts/FixedAssets)",
+   "mergedAt": "2026-11-03T22:29:06Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28517,
+   "title": "BUS: ROUND 7.30 tip #25 statement 5753 MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:27:09Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28516,
+   "title": "BUS: ROUND 7.30 tip #16 443.282 MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:26:33Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28515,
+   "title": "BUS: ROUND 7.30 tip OPEN Factoring/Fuel/Settlements boards",
+   "mergedAt": "2026-11-03T22:25:59Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28514,
+   "title": "Claude-1-E3 diesel baseline fix: 4→5 (live post-repair count 5 not 4)",
+   "mergedAt": "2026-11-03T22:25:30Z",
+   "branch": "cc-1/e3-diesel-baseline-fix-4-to-5"
+  },
+  {
+   "number": 28513,
+   "title": "FINDING: Codex zero-value invoice and settlement health classification",
+   "mergedAt": "2026-11-03T22:25:15Z",
+   "branch": "codex/round7-independent-qa-batch87"
+  },
+  {
+   "number": 28512,
+   "title": "BUS: ROUND 7.30 tip rebuilt PARTIAL boards MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:25:12Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28511,
+   "title": "ROUND 7.30: Fuel Integrity KPI qty + tip #76 Opening balance",
+   "mergedAt": "2026-11-03T22:24:25Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28510,
+   "title": "BUS: ROUND 7.30c — Lead took rows",
+   "mergedAt": "2026-11-03T22:23:54Z",
+   "branch": "lead/bus-730c"
+  },
+  {
+   "number": 28509,
+   "title": "BUS: ROUND 7.30 tip D061 #26 CF boards MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:23:10Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28508,
+   "title": "BUS: ROUND 7.30 tip #18 D021 D062 MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:21:50Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28507,
+   "title": "ROUND 7.30 #160: Company Settlements pending KPIs + D007-D014 tip",
+   "mergedAt": "2026-11-03T22:20:38Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28506,
+   "title": "FINDING: ACCT-F11044 bank-match candidates join vendors without the company scope",
+   "mergedAt": "2026-11-03T22:19:35Z",
+   "branch": "lead/match-vendor-scope"
+  },
+  {
+   "number": 28505,
+   "title": "ROUND 7.30: qty wave + tip CODED format rows",
+   "mergedAt": "2026-11-03T22:19:13Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28504,
+   "title": "ROUND 7.30 #159: Week-of closed + Fuel/Settlements qty",
+   "mergedAt": "2026-11-03T22:17:23Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28503,
+   "title": "FIX: driver-day-summary and mdata/drivers are set-based (rows 184 197)",
+   "mergedAt": "2026-11-03T22:16:47Z",
+   "branch": "lead/driver-endpoints-perf"
+  },
+  {
+   "number": 28502,
+   "title": "FIX: Manual JE line grid, bill journal entity names, match payee case, escrow holder names (rows 241 244 247 252)",
+   "mergedAt": "2026-11-03T22:13:01Z",
+   "branch": "lead/ui4-fixes"
+  },
+  {
+   "number": 28501,
+   "title": "fill-not-shell: Drivers need-company + KPI quantity",
+   "mergedAt": "2026-11-03T22:12:33Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28500,
+   "title": "FIX: names proper case on 12 screens (rows 182 200 202 207 212 214 220 223 225 229 231 233)",
+   "mergedAt": "2026-11-03T22:12:22Z",
+   "branch": "lead/names-proper-case"
+  },
+  {
+   "number": 28499,
+   "title": "BUS: ROUND 7.30 Cursor tip — D066/D067 MERGED-UNVERIFIED",
+   "mergedAt": "2026-11-03T22:09:21Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28498,
+   "title": "FINDING: ACCT-F6301 D067 payment labels + BANK-F01 D066 attention z-index",
+   "mergedAt": "2026-11-03T22:08:16Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28497,
+   "title": "Claude-1-E3 diesel dedupe: void 2 duplicate-fill-pair manual entries; baseline 6→4",
+   "mergedAt": "2026-11-03T22:08:11Z",
+   "branch": "cc-1/e3-diesel-dedupe-fill-pairs-6-to-4"
+  },
+  {
+   "number": 28496,
+   "title": "FINDING: Codex full health population audit and Cursor selftest retest",
+   "mergedAt": "2026-11-03T22:07:55Z",
+   "branch": "codex/round7-independent-qa-batch86"
+  },
+  {
+   "number": 28495,
+   "title": "FIX: dates render MM/DD/YYYY through the shared formatter on 10 screens (rows 183 201 205 206 219 228 245 246 251 253)",
+   "mergedAt": "2026-11-03T22:07:37Z",
+   "branch": "lead/dates-us-format"
+  },
+  {
+   "number": 28494,
+   "title": "FIX: single-line inputs use the shared height and width on 7 screens (rows 196 204 208 226 227 232 234)",
+   "mergedAt": "2026-11-03T22:04:14Z",
+   "branch": "lead/inputs-shared-height"
+  },
+  {
+   "number": 28493,
+   "title": "FINDING: Codex deployed noncash health independent verification",
+   "mergedAt": "2026-11-03T22:04:00Z",
+   "branch": "codex/round7-independent-qa-batch85"
+  },
+  {
+   "number": 28492,
+   "title": "fix(guards,cash-flow): batch83 validator selftests + chart axis dollars",
+   "mergedAt": "2026-11-03T22:02:35Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28491,
+   "title": "FINDING: Codex Fuel Review live acceptance and baseline-growth rejection",
+   "mergedAt": "2026-11-03T22:00:12Z",
+   "branch": "codex/round7-independent-qa-batch84"
+  },
+  {
+   "number": 28490,
+   "title": "BUS: ROUND 7.30b Cursor re-assignment",
+   "mergedAt": "2026-11-03T21:59:11Z",
+   "branch": "lead/bus-730b"
+  },
+  {
+   "number": 28489,
+   "title": "fix(factoring,fuel,dispatch): whole-int count quantity house format",
+   "mergedAt": "2026-11-03T21:59:05Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28488,
+   "title": "BUS: ROUND 7.30a CC-3 re-assignment",
+   "mergedAt": "2026-11-03T21:58:00Z",
+   "branch": "lead/bus-730a"
+  },
+  {
+   "number": 28487,
+   "title": "FINDING: Codex proof-trail live coverage and guard selftest audit",
+   "mergedAt": "2026-11-03T21:57:16Z",
+   "branch": "codex/round7-independent-qa-batch83"
+  },
+  {
+   "number": 28486,
+   "title": "fix(legal,factoring,dispatch,df,home): day/version quantity house format",
+   "mergedAt": "2026-11-03T21:54:30Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28485,
+   "title": "FIX: regenerate stale USMCA-EXHAUSTIVE-BATTERY.md (required-live-load-guard red on every PR)",
+   "mergedAt": "2026-11-03T21:54:09Z",
+   "branch": "lead/regen-battery"
+  },
+  {
+   "number": 28484,
+   "title": "FINDING: Codex Customer and Vendor activity correlation audit",
+   "mergedAt": "2026-11-03T21:52:31Z",
+   "branch": "codex/round7-independent-qa-batch82"
+  },
+  {
+   "number": 28483,
+   "title": "BUS: ROUND 7.30 — close all 225 pending rows tonight",
+   "mergedAt": "2026-11-03T21:52:05Z",
+   "branch": "lead/bus-730"
+  },
+  {
+   "number": 28482,
+   "title": "FINDING: ACCT-F11043 row 105 — a truck parked at the pump is found by its bracketing fixes",
+   "mergedAt": "2026-11-03T21:51:11Z",
+   "branch": "lead/row105-parked"
+  },
+  {
+   "number": 28481,
+   "title": "fix(factoring,dispatch,legal): day chips + template version quantity",
+   "mergedAt": "2026-11-03T21:51:34Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28480,
+   "title": "Claude-1-INBOX-11:55 auth-wrapper contract + noncash tx-health JE read path + accrual ops script loads 13663/13687/13688",
+   "mergedAt": "2026-11-03T21:55:48Z",
+   "branch": "cc-1/inbox-1155-auth-wrapper-txhealth-accrual"
+  },
+  {
+   "number": 28479,
+   "title": "fix(dispatch): Truck Line duration formatQuantityTable",
+   "mergedAt": "2026-11-03T21:49:12Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28478,
+   "title": "FINDING: Codex live Vendor and E9 queue independent verification",
+   "mergedAt": "2026-11-03T21:48:01Z",
+   "branch": "codex/round7-independent-qa-batch81"
+  },
+  {
+   "number": 28476,
+   "title": "fix(dispatch): Overview maxDaysIdle formatQuantityTable",
+   "mergedAt": "2026-11-03T21:47:43Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28475,
+   "title": "fix(legal,dispatch): template_version + up_north_days quantity",
+   "mergedAt": "2026-11-03T21:46:43Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28474,
+   "title": "fix(legal): Templates list version formatQuantityTable",
+   "mergedAt": "2026-11-03T21:45:30Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28473,
+   "title": "fix(legal): Attorney Review version formatQuantityTable",
+   "mergedAt": "2026-11-03T21:44:42Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28472,
+   "title": "BUS: ROUND 7.29 Lead → Codex",
+   "mergedAt": "2026-11-03T21:43:50Z",
+   "branch": "lead/bus-729"
+  },
+  {
+   "number": 28471,
+   "title": "fix(dispatch): expense load confirmations page need-company",
+   "mergedAt": "2026-11-03T21:43:37Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28470,
+   "title": "fix(factoring): workqueue need-company + quantity days",
+   "mergedAt": "2026-11-03T21:42:34Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28469,
+   "title": "fix(legal): template + matter detail need-company boards",
+   "mergedAt": "2026-11-03T21:40:58Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28468,
+   "title": "fix(home): Driver Hub BoardSection need-company",
+   "mergedAt": "2026-11-03T21:39:39Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28467,
+   "title": "fix(legal): templates + contracts list need-company boards",
+   "mergedAt": "2026-11-03T21:38:44Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28466,
+   "title": "FINDING: Codex Vendor fix retest and Relay receipt live backlog",
+   "mergedAt": "2026-11-03T21:37:55Z",
+   "branch": "codex/round7-independent-qa-batch80"
+  },
+  {
+   "number": 28465,
+   "title": "fix(legal): Attorney Review BoardSection need-company",
+   "mergedAt": "2026-11-03T21:37:16Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28464,
+   "title": "fix(legal): Policies page BoardSection need-company",
+   "mergedAt": "2026-11-03T21:36:17Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28463,
+   "title": "FINDING: ACCT-F11042 E9 queue — the fill-engine sweep reads every eligible fill in keyset pages and excludes person-confirmed fills on the read side (Codex batc",
+   "mergedAt": "2026-11-03T21:34:41Z",
+   "branch": "lead/e9-queue-keyset"
+  },
+  {
+   "number": 28462,
+   "title": "docs(bus): tip #28460 vendors multi-status + CC-1 handoff for batch75",
+   "mergedAt": "2026-11-03T21:34:25Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28461,
+   "title": "FINDING: Codex bank tie-out coverage and Cursor repair verification",
+   "mergedAt": "2026-11-03T21:33:33Z",
+   "branch": "codex/round7-independent-qa-batch79"
+  },
+  {
+   "number": 28460,
+   "title": "fix(vendors): batch76 multi-status comma-union before LIMIT",
+   "mergedAt": "2026-11-03T21:32:46Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28459,
+   "title": "FINDING: Codex E13 independent live source contradiction",
+   "mergedAt": "2026-11-03T21:30:57Z",
+   "branch": "codex/round7-independent-qa-batch78"
+  },
+  {
+   "number": 28458,
+   "title": "fix(guards): batch72 ENG17 selftest + ENG-34 inline/inert holes",
+   "mergedAt": "2026-11-03T21:29:13Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28457,
+   "title": "FINDING: ACCT-F11041 ENG-65 residual — every Relay fill is recorded from its own Relay lines at receipt; the Creator adopts, never writes a second set (48 fills",
+   "mergedAt": "2026-11-03T21:27:20Z",
+   "branch": "lead/eng65-receipt-records"
+  },
+  {
+   "number": 28456,
+   "title": "CLAIM-RESERVE: verify-step 19841 (LEAD) — ENG-65 guard",
+   "mergedAt": "2026-11-03T21:22:19Z",
+   "branch": "chore/claim-reserve-19841-lead"
+  },
+  {
+   "number": 28455,
+   "title": "FINDING: Codex E13 period and gate-scope counterexamples",
+   "mergedAt": "2026-11-03T21:18:14Z",
+   "branch": "codex/round7-independent-qa-batch77"
+  },
+  {
+   "number": 28454,
+   "title": "FINDING: Codex Vendor filter boundary and historical audit",
+   "mergedAt": "2026-11-03T21:10:36Z",
+   "branch": "codex/round7-independent-qa-batch76"
+  },
+  {
+   "number": 28453,
+   "title": "FINDING: Codex historical audit and Reclassify date-only refusal",
+   "mergedAt": "2026-11-03T21:07:03Z",
+   "branch": "codex/round7-independent-qa-batch75"
+  },
+  {
+   "number": 28452,
+   "title": "CC-2- E13 (row 161): seed fuel.fuel_card_assignments 27 USMCA card-unit periods from Relay fill history",
+   "mergedAt": "2026-11-03T21:02:22Z",
+   "branch": "cc-2/e13-fuel-card-assignments"
+  },
+  {
+   "number": 28451,
+   "title": "FINDING: Codex Legal live acceptance and E9 boundary audit",
+   "mergedAt": "2026-11-03T21:01:22Z",
+   "branch": "codex/round7-independent-qa-batch74"
+  },
+  {
+   "number": 28450,
+   "title": "FIX: E11 / ENG-29 — real-driven-miles boundaries without an odometer read get Samsara's own reads (91 of 148 loads without miles carry the gap)",
+   "mergedAt": "2026-11-03T20:57:06Z",
+   "branch": "lead/e11-odometer-history"
+  },
+  {
+   "number": 28449,
+   "title": "CLAIM-RESERVE: verify-step 19837 (LEAD) — E11 guard",
+   "mergedAt": "2026-11-03T20:54:47Z",
+   "branch": "chore/claim-reserve-19837-lead"
+  },
+  {
+   "number": 28448,
+   "title": "FINDING: Codex independent Legal and E9 verification",
+   "mergedAt": "2026-11-03T20:46:59Z",
+   "branch": "codex/round7-independent-qa-batch73"
+  },
+  {
+   "number": 28447,
+   "title": "BUS: E9 / row 145 — ENG-64 shipped (#28444)",
+   "mergedAt": "2026-11-03T20:44:46Z",
+   "branch": "lead/bus-e9"
+  },
+  {
+   "number": 28446,
+   "title": "fix(legal): batch71 allowlisted comma-union status at HTTP routes",
+   "mergedAt": "2026-11-03T20:44:13Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28445,
+   "title": "FINDING: Codex guard coverage independent recheck",
+   "mergedAt": "2026-11-03T20:43:43Z",
+   "branch": "codex/round7-independent-qa-batch72"
+  },
+  {
+   "number": 28444,
+   "title": "FINDING: ACCT-F11040 E9 / ENG-64 — every fill goes through the one fill engine; owner rulings and confirmed loads are never moved",
+   "mergedAt": "2026-11-03T20:41:30Z",
+   "branch": "lead/e9-fuel-follows-truck"
+  },
+  {
+   "number": 28443,
+   "title": "FIX: ENG-34 guard-wired ignores comment-only CI mentions",
+   "mergedAt": "2026-11-03T20:39:09Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28442,
+   "title": "FINDING: Codex Legal union HTTP validation regression",
+   "mergedAt": "2026-11-03T20:38:05Z",
+   "branch": "codex/round7-independent-qa-batch71"
+  },
+  {
+   "number": 28441,
+   "title": "CLAIM-RESERVE: verify-step 19833 (LEAD) — E9 ENG-64 guard",
+   "mergedAt": "2026-11-03T20:37:34Z",
+   "branch": "chore/claim-reserve-19833-lead"
+  },
+  {
+   "number": 28440,
+   "title": "Claude-1- FINDING: N/A LANE: NON-FINANCIAL — FIX ROSTER-DUP-PLACEHOLDERS phoneKey rejects placeholder numbers",
+   "mergedAt": "2026-11-03T20:26:28Z",
+   "branch": "cc-1/roster-dup-placeholders"
+  },
+  {
+   "number": 28439,
+   "title": "BUS: Legal multi-status closed; Invoice Search → Cascade",
+   "mergedAt": "2026-11-03T20:18:47Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28438,
+   "title": "FINDING: Codex ENG34 comment-only coverage counterexample",
+   "mergedAt": "2026-11-03T20:18:04Z",
+   "branch": "codex/round7-independent-qa-batch70"
+  },
+  {
+   "number": 28437,
+   "title": "FIX: Legal templates multi-status uses server status union",
+   "mergedAt": "2026-11-03T20:17:12Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28436,
+   "title": "FINDING: Codex capped invoice and contract filter audit",
+   "mergedAt": "2026-11-03T20:15:58Z",
+   "branch": "codex/round7-independent-qa-batch69"
+  },
+  {
+   "number": 28435,
+   "title": "FIX: Legal contracts multi-status filters before LIMIT 300",
+   "mergedAt": "2026-11-03T20:15:06Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28434,
+   "title": "FINDING: Codex historical control limits and trip predicates",
+   "mergedAt": "2026-11-03T20:13:54Z",
+   "branch": "codex/round7-independent-qa-batch68"
+  },
+  {
+   "number": 28433,
+   "title": "BUS: tip after #28432 Legal multi-status server union",
+   "mergedAt": "2026-11-03T20:13:11Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28432,
+   "title": "FIX: Legal matters multi-status filters before COUNT/LIMIT",
+   "mergedAt": "2026-11-03T20:12:44Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28431,
+   "title": "BUS: tip after #28428/#28430 factoring qty + trip voided",
+   "mergedAt": "2026-11-03T20:09:25Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28430,
+   "title": "FORMAT: factoring submit + tour footer counts house quantity",
+   "mergedAt": "2026-11-03T20:07:38Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28429,
+   "title": "FINDING: Codex Relay live linkage and status-pagination evidence",
+   "mergedAt": "2026-11-03T20:06:03Z",
+   "branch": "codex/round7-independent-qa-batch67"
+  },
+  {
+   "number": 28428,
+   "title": "FIX: trip profitability excludes voided/cancelled loads",
+   "mergedAt": "2026-11-03T20:05:40Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28427,
+   "title": "FORMAT: reverse/home/fleet count badges house quantity",
+   "mergedAt": "2026-11-03T20:03:53Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28426,
+   "title": "FINDING: Codex maintenance multi-status pagination audit",
+   "mergedAt": "2026-11-03T20:03:08Z",
+   "branch": "codex/round7-independent-qa-batch66"
+  },
+  {
+   "number": 28425,
+   "title": "FINDING: Codex independent audit query and consumer corrections",
+   "mergedAt": "2026-11-03T19:59:52Z",
+   "branch": "codex/round7-independent-qa-batch65"
+  },
+  {
+   "number": 28424,
+   "title": "FIX: AvP expense-accuracy tile uses matched coverage (batch64)",
+   "mergedAt": "2026-11-03T19:56:04Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28423,
+   "title": "BUS: register 146/261 + CC-1 queue",
+   "mergedAt": "2026-11-03T19:55:14Z",
+   "branch": "lead/bus-1400"
+  },
+  {
+   "number": 28422,
+   "title": "FINDING: ACCT-F11039 ENG-65 — Relay fill documents link their fuel record on every adopt",
+   "mergedAt": "2026-11-03T19:53:53Z",
+   "branch": "lead/eng65"
+  },
+  {
+   "number": 28421,
+   "title": "FORMAT: compliance HOS/2290 count badges house quantity",
+   "mergedAt": "2026-11-03T19:53:47Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28420,
+   "title": "FINDING: Codex expense accuracy consumer audit",
+   "mergedAt": "2026-11-03T19:53:18Z",
+   "branch": "codex/round7-independent-qa-batch64"
+  },
+  {
+   "number": 28419,
+   "title": "FIX: customer profitability excludes voided loads",
+   "mergedAt": "2026-11-03T19:52:47Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28418,
+   "title": "FIX: lane profitability excludes cancelled/voided loads (batch63)",
+   "mergedAt": "2026-11-03T19:51:51Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28417,
+   "title": "CLAIM-RESERVE: verify-step 19829 (LEAD) ENG-65",
+   "mergedAt": "2026-11-03T19:51:17Z",
+   "branch": "chore/claim-step-19829-eng65"
+  },
+  {
+   "number": 28416,
+   "title": "FORMAT: factoring/remint/fuel/settlement count badges house quantity",
+   "mergedAt": "2026-11-03T19:50:24Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28415,
+   "title": "FINDING: Codex Neon recovery and lane population audit",
+   "mergedAt": "2026-11-03T19:48:41Z",
+   "branch": "codex/round7-independent-qa-batch63"
+  },
+  {
+   "number": 28414,
+   "title": "FINDING: ACCT-F11038 E8 — AvP projected expense = daily engine; snapshot captures expense",
+   "mergedAt": "2026-11-03T19:46:50Z",
+   "branch": "lead/e8-v2-ship"
+  },
+  {
+   "number": 28413,
+   "title": "FORMAT: reverse/factoring/settlements/legal count badges house quantity",
+   "mergedAt": "2026-11-03T19:46:19Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28412,
+   "title": "FORMAT: kanban/presettle/home/system count badges house quantity",
+   "mergedAt": "2026-11-03T19:43:04Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28411,
+   "title": "BUS: restore CLAIMED-NUMBERS characters (formatting only)",
+   "mergedAt": "2026-11-03T19:40:00Z",
+   "branch": "lead/claim-json-unescape"
+  },
+  {
+   "number": 28410,
+   "title": "FIX: profitability equipment filter hooks + real dimension (batch61)",
+   "mergedAt": "2026-11-03T19:38:43Z",
+   "branch": "cursor/eng-build-shells47"
+  },
+  {
+   "number": 28409,
+   "title": "CLAIM-RESERVE: verify-step 19827 (LEAD) E8",
+   "mergedAt": "2026-11-03T19:38:39Z",
+   "branch": "chore/claim-step-19827-e8"
+  },
+  {
+   "number": 28408,
+   "title": "CLAIM-RESERVE: migration 202616320100 (LEAD) E8",
+   "mergedAt": "2026-11-03T19:37:20Z",
+   "branch": "chore/claim-migration-202616320100-e8-expense-snapshot"
+  },
+  {
+   "number": 28407,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-03T20:32:39Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
   {
    "number": 28406,
    "title": "FINDING: Codex scheduled delivery and consumer guard audit",
@@ -14866,10 +16372,22 @@
    "branch": "claude/round-7-26-codex"
   },
   {
+   "number": 28218,
+   "title": "chore(deps): bump the npm_and_yarn group across 3 directories with 2 updates",
+   "mergedAt": "2026-11-04T14:31:17Z",
+   "branch": "dependabot/npm_and_yarn/apps/backend/npm_and_yarn-09861b8c0c"
+  },
+  {
    "number": 28217,
    "title": "FINDING: DataTable + ColumnChooser page size SelectCombobox; baseline 4",
    "mergedAt": "2026-11-03T00:02:22Z",
    "branch": "cursor/eng-build-shells30"
+  },
+  {
+   "number": 28216,
+   "title": "chore(deps): bump follow-redirects from 1.16.1 to 1.16.2",
+   "mergedAt": "2026-11-04T14:31:01Z",
+   "branch": "dependabot/npm_and_yarn/follow-redirects-1.16.2"
   },
   {
    "number": 28215,
@@ -15818,1524 +17336,6 @@
    "title": "FINDING: Fuel Integrity U29 Unit/Vendor EntityLinks + bus tip",
    "mergedAt": "2026-11-02T20:21:47Z",
    "branch": "cursor/eng-build-bus-tip-u29"
-  },
-  {
-   "number": 28056,
-   "title": "FINDING: U29 Dispatch exception queues EntityLink customer/invoice/driver",
-   "mergedAt": "2026-11-02T20:18:31Z",
-   "branch": "cursor/eng-build-shells-continue"
-  },
-  {
-   "number": 28055,
-   "title": "FINDING: Codex Round 7 filtered Bills count and independent retests",
-   "mergedAt": "2026-11-02T20:17:37Z",
-   "branch": "codex/round7-independent-qa-batch5"
-  },
-  {
-   "number": 28054,
-   "title": "FINDING: Dispatch Load Costs U29 Truck link + honest margin caption",
-   "mergedAt": "2026-11-02T20:14:56Z",
-   "branch": "cursor/eng-build-u28-shells"
-  },
-  {
-   "number": 28053,
-   "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF/U-rows + OUTBOX updates",
-   "mergedAt": "2026-11-02T20:13:07Z",
-   "branch": "cc-2/round7-inbox-codex-writes"
-  },
-  {
-   "number": 28052,
-   "title": "CC-2- ROUND 7.17 write-outs: INBOX-CODEX SAF-ORPH-05/B08/U-rows + OUTBOX records",
-   "mergedAt": "2026-11-02T20:12:44Z",
-   "branch": "cc-2/round7-inbox-codex-writes"
-  },
-  {
-   "number": 28051,
-   "title": "CC-2- ENG-DEADLOCK-01 fix load_stops lock order in dwell evidence cron",
-   "mergedAt": "2026-11-02T20:11:54Z",
-   "branch": "cc-2/round7-deadlock-fix"
-  },
-  {
-   "number": 28050,
-   "title": "FINDING: CashFlow money/date format + report preset remount (shared)",
-   "mergedAt": "2026-11-02T20:11:25Z",
-   "branch": "cursor/eng-build-cashflow-invoice-search"
-  },
-  {
-   "number": 28049,
-   "title": "FINDING: Codex Round 7 QA adopted-journal proof and deployed retests",
-   "mergedAt": "2026-11-02T20:10:50Z",
-   "branch": "codex/round7-independent-qa-batch4"
-  },
-  {
-   "number": 28048,
-   "title": "CC-2- U9 CheckPrintPage editableNumbers — retarget SelectCombobox test helper",
-   "mergedAt": "2026-11-02T20:09:49Z",
-   "branch": "cc-2/round7-u9-checkprint-test-fix"
-  },
-  {
-   "number": 28047,
-   "title": "CC-2- ACCT-F2026110201 U9 CheckPrint editableNumbers test — retarget SelectCombobox interaction",
-   "mergedAt": "2026-11-02T20:09:40Z",
-   "branch": "cc-2/round7-u9-checkprint-test-fix"
-  },
-  {
-   "number": 28046,
-   "title": "FINDING: Fleet Covered dates + Fleet Home status labels",
-   "mergedAt": "2026-11-02T20:00:55Z",
-   "branch": "cursor/eng-build-fleet-covered-dates"
-  },
-  {
-   "number": 28045,
-   "title": "FINDING: U12 Vendor/Customer txn Status multi-select",
-   "mergedAt": "2026-11-02T19:56:04Z",
-   "branch": "cursor/eng-build-u12-txn-status"
-  },
-  {
-   "number": 28044,
-   "title": "FINDING: Round 7 Codex QA calendar regression and Insurance depth",
-   "mergedAt": "2026-11-02T19:52:52Z",
-   "branch": "codex/round7-independent-qa-batch3"
-  },
-  {
-   "number": 28043,
-   "title": "FINDING: U12 Tasks Mine multi-select + Qbo home Expenses A/P buckets",
-   "mergedAt": "2026-11-02T19:50:01Z",
-   "branch": "cursor/eng-build-shells-u28"
-  },
-  {
-   "number": 28042,
-   "title": "FINDING: ACCT-F28040 — U19 Reclassify register no unscoped Loading hang",
-   "mergedAt": "2026-11-02T19:46:58Z",
-   "branch": "cursor/eng-build-u19-reclassify"
-  },
-  {
-   "number": 28041,
-   "title": "FINDING: ROUND 7.17 — CC-2 blockers + next build",
-   "mergedAt": "2026-11-02T19:46:32Z",
-   "branch": "claude/bus-7-17-cc2-blockers"
-  },
-  {
-   "number": 28040,
-   "title": "FIX: lock DrillKpiCard value-shown fix with a test",
-   "mergedAt": "2026-11-02T19:45:00Z",
-   "branch": "claude/kpi-card-value-test"
-  },
-  {
-   "number": 28039,
-   "title": "FINDING: ACCT-F28038 — Expenses/Bills ReceiptAttach no fan-out + aging U30",
-   "mergedAt": "2026-11-02T19:44:14Z",
-   "branch": "cursor/eng-build-expenses-receipt-fanout"
-  },
-  {
-   "number": 28038,
-   "title": "FINDING: Round 7 Codex independent QA runtime and report defects",
-   "mergedAt": "2026-11-02T19:40:19Z",
-   "branch": "codex/round7-independent-qa-batch2"
-  },
-  {
-   "number": 28037,
-   "title": "FINDING: U30 Banking Home sortable headers + money KPI tip-reds",
-   "mergedAt": "2026-11-02T19:37:05Z",
-   "branch": "cursor/eng-build-u30-banking"
-  },
-  {
-   "number": 28036,
-   "title": "FIX: Render frontend build red — 3 TS errors (#28026 + Finance Scenarios)",
-   "mergedAt": "2026-11-02T19:28:37Z",
-   "branch": "claude/fe-build-28026-fix"
-  },
-  {
-   "number": 28035,
-   "title": "FINDING: Shell honesty — Expenses KPI values + Fuel Home error scope",
-   "mergedAt": "2026-11-02T19:28:11Z",
-   "branch": "cursor/eng-build-shell-expenses-fuel"
-  },
-  {
-   "number": 28034,
-   "title": "CC-2- FINDING: U21 — Reclassify date pickers lock to fiscal year (year cannot change)",
-   "mergedAt": "2026-11-02T19:27:16Z",
-   "branch": "cc-2/u21-datepicker-year-lock"
-  },
-  {
-   "number": 28033,
-   "title": "FINDING: Shell honesty — Premium label + customer document scopes",
-   "mergedAt": "2026-11-02T19:26:57Z",
-   "branch": "cursor/eng-build-bus-tip"
-  },
-  {
-   "number": 28032,
-   "title": "FINDING: ENG-17 — Faro 1090 wire proposal engine BUILD-ONLY",
-   "mergedAt": "2026-11-02T19:25:02Z",
-   "branch": "cursor/eng-17-faro-proposal-engine"
-  },
-  {
-   "number": 28031,
-   "title": "Claude-1-FINDING: ENG-34 — batch-wire 53 exempt guards, verify-guard-wired 0 exempt",
-   "mergedAt": "2026-11-02T19:22:41Z",
-   "branch": "cc-1/eng34-exempt-batch-wire"
-  },
-  {
-   "number": 28030,
-   "title": "FINDING: Codex Round 7 independent QA batch 1 evidence and defects",
-   "mergedAt": "2026-11-02T19:21:52Z",
-   "branch": "codex/round7-independent-qa"
-  },
-  {
-   "number": 28029,
-   "title": "CLAIM-RESERVE: cc-1 18929 (ENG-34 exempt-batch-wire)",
-   "mergedAt": "2026-11-02T19:21:06Z",
-   "branch": "chore/claim-reserve-18929"
-  },
-  {
-   "number": 28028,
-   "title": "CC-2- ROUND 7.14-A: Accounting UI rows U1-U26 code-built status + OUTBOX",
-   "mergedAt": "2026-11-02T19:20:10Z",
-   "branch": "cc-2/round7-u-rows-status"
-  },
-  {
-   "number": 28027,
-   "title": "FINDING: U12 — Finance Scenarios + Legal Contracts status multi-select",
-   "mergedAt": "2026-11-02T19:19:02Z",
-   "branch": "cursor/eng-build-u12-wave7"
-  },
-  {
-   "number": 28026,
-   "title": "FINDING: U12 — Policies / Templates / Loads / Invoice / Customers multi-select",
-   "mergedAt": "2026-11-02T19:17:40Z",
-   "branch": "cursor/eng-build-u12-wave6"
-  },
-  {
-   "number": 28025,
-   "title": "CC-2- ROUND 7 verify: Safety HOLDs (ORPH-01/02/B08/ORPH-05) + PROD-5Y + ENG-13",
-   "mergedAt": "2026-11-02T19:17:30Z",
-   "branch": "cc-2/round7-verify-results"
-  },
-  {
-   "number": 28024,
-   "title": "FINDING: ROUND 7.16 — fast-merge requires tsc/build exit 0",
-   "mergedAt": "2026-11-02T19:14:05Z",
-   "branch": "claude/bus-7-16-fastmerge-tsc"
-  },
-  {
-   "number": 28023,
-   "title": "Claude-1-FINDING: Fix silent catch — verify-no-swallow-on-money-paths main red",
-   "mergedAt": "2026-11-02T19:13:46Z",
-   "branch": "cc-1/fix-swallow-eng48-eng34"
-  },
-  {
-   "number": 28022,
-   "title": "FINDING: U12 — Fines / Integrity / Legal / Inventory status multi-select",
-   "mergedAt": "2026-11-02T19:13:40Z",
-   "branch": "cursor/eng-build-u12-wave5"
-  },
-  {
-   "number": 28021,
-   "title": "CC-2- BANK-TIEOUT-01 — update tieout to 9 live USMCA accounts + ROUND 7 verify results",
-   "mergedAt": "2026-11-02T19:12:51Z",
-   "branch": "cc-2/round7-bank-tieout-fix"
-  },
-  {
-   "number": 28020,
-   "title": "FIX: Render frontend build red — unused colors import (TS6133)",
-   "mergedAt": "2026-11-02T19:12:42Z",
-   "branch": "claude/fe-build-unused-colors"
-  },
-  {
-   "number": 28019,
-   "title": "CC-2- FINDING: BANK-TIEOUT-01 — update tieout to 9 live USMCA accounts, replace stale Faro 1296 check",
-   "mergedAt": "2026-11-02T19:11:14Z",
-   "branch": "cc-2/round7-bank-tieout-fix"
-  },
-  {
-   "number": 28018,
-   "title": "FINDING: U12 — Driver Reports Queue status multi-select",
-   "mergedAt": "2026-11-02T19:11:01Z",
-   "branch": "cursor/eng-build-u12-wave4"
-  },
-  {
-   "number": 28017,
-   "title": "FINDING: U12 — insurance Payment Schedule status multi-select",
-   "mergedAt": "2026-11-02T19:08:11Z",
-   "branch": "cursor/eng-build-u12-wave3"
-  },
-  {
-   "number": 28016,
-   "title": "FINDING: U12 — COI Status filter becomes multi-select",
-   "mergedAt": "2026-11-02T19:07:16Z",
-   "branch": "cursor/eng-build-u12-wave2"
-  },
-  {
-   "number": 28015,
-   "title": "FINDING: ROUND 7.15 — CC-1 P0 diesel dedupe pairs",
-   "mergedAt": "2026-11-02T19:06:51Z",
-   "branch": "claude/bus-7-15-cc1-diesel-p0"
-  },
-  {
-   "number": 28014,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — Cursor bus tip after BUILD-FIRST wave",
-   "mergedAt": "2026-11-02T19:05:54Z",
-   "branch": "cursor/bus-tip-session"
-  },
-  {
-   "number": 28013,
-   "title": "FINDING: U12 — driver Load History status becomes multi-select",
-   "mergedAt": "2026-11-02T19:05:26Z",
-   "branch": "cursor/eng-build-u12-status-multiselect"
-  },
-  {
-   "number": 28012,
-   "title": "FIX: settlement-net guard follows owner ruling 443.167-R2 — 5796 is USMCA",
-   "mergedAt": "2026-11-02T19:04:58Z",
-   "branch": "claude/settlement-guard-5796-owner-ruling"
-  },
-  {
-   "number": 28011,
-   "title": "FINDING: U18 detail PageHeaders get structural back + breadcrumb",
-   "mergedAt": "2026-11-02T19:03:58Z",
-   "branch": "cursor/eng-build-u18-breadcrumbs"
-  },
-  {
-   "number": 28010,
-   "title": "FINDING: ROUND 7.13 orphan migration ledger DONE-LIVE",
-   "mergedAt": "2026-11-02T19:01:53Z",
-   "branch": "cursor/eng-build-shells14"
-  },
-  {
-   "number": 28009,
-   "title": "FINDING: ROUND 7.14 — full CC-1 / CC-2 lists in inboxes",
-   "mergedAt": "2026-11-02T19:01:26Z",
-   "branch": "claude/bus-7-14-cc1-cc2-full"
-  },
-  {
-   "number": 28008,
-   "title": "FINDING: fill-not-shell master-detail DataPanel→BoardSection",
-   "mergedAt": "2026-11-02T19:00:35Z",
-   "branch": "cursor/eng-build-shells13"
-  },
-  {
-   "number": 28007,
-   "title": "FIX: main red — PolicyDetail internal-language label; ROUND 7.13 orphan ledger SQL to Cursor",
-   "mergedAt": "2026-11-02T18:57:48Z",
-   "branch": "claude/main-red-build-typecheck"
-  },
-  {
-   "number": 28006,
-   "title": "FINDING: ROUND 7.12 — Accounting UI rows to CC-2; build-typecheck root cause corrected",
-   "mergedAt": "2026-11-02T18:55:59Z",
-   "branch": "claude/bus-7-12-cc2-accounting"
-  },
-  {
-   "number": 28005,
-   "title": "FINDING: ACCT-F28005 — fill-not-shell DataPanel→BoardSection wave",
-   "mergedAt": "2026-11-02T18:54:03Z",
-   "branch": "cursor/eng-build-shells12"
-  },
-  {
-   "number": 28004,
-   "title": "FINDING: ROUND 7.11 Q8 emailer null-Next + BoardSection shells",
-   "mergedAt": "2026-11-02T18:49:30Z",
-   "branch": "cursor/eng-build-shells11"
-  },
-  {
-   "number": 28003,
-   "title": "FINDING: fill-not-shell SubscriptionManager delivery BoardSection",
-   "mergedAt": "2026-11-02T18:43:42Z",
-   "branch": "cursor/eng-build-shells10"
-  },
-  {
-   "number": 28002,
-   "title": "FINDING: ROUND 7.11 — owner UI register (28 open) + 3 code shells assigned",
-   "mergedAt": "2026-11-02T18:43:24Z",
-   "branch": "claude/bus-round-7-11-ui-register"
-  },
-  {
-   "number": 28001,
-   "title": "FINDING: BANK-F28001 LANE: NON-FINANCIAL — Banking auto-vendor BoardSection",
-   "mergedAt": "2026-11-02T18:40:28Z",
-   "branch": "cursor/eng-build-shells9"
-  },
-  {
-   "number": 28000,
-   "title": "FINDING: fill-not-shell ELD live tabs BoardSection",
-   "mergedAt": "2026-11-02T18:35:47Z",
-   "branch": "cursor/eng-build-shells8"
-  },
-  {
-   "number": 27999,
-   "title": "FINDING: ROUND 7 amended — Codex check-all + visual QA; main-red owners; tiered models; build first",
-   "mergedAt": "2026-11-02T18:34:43Z",
-   "branch": "claude/bus-round-7-amend"
-  },
-  {
-   "number": 27998,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — Cursor bus tip after #27990–#27997 BUILD-FIRST wave",
-   "mergedAt": "2026-11-02T18:34:21Z",
-   "branch": "cursor/eng-build-shells7"
-  },
-  {
-   "number": 27997,
-   "title": "FINDING: fill-not-shell ELD Certifications/Settings BoardSection honest empty",
-   "mergedAt": "2026-11-02T18:33:38Z",
-   "branch": "cursor/eng-build-shells6"
-  },
-  {
-   "number": 27996,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — Cursor INBOX tip after ROUND 7.2 + Profitability/MapView",
-   "mergedAt": "2026-11-02T18:32:15Z",
-   "branch": "cursor/eng-build-shells5"
-  },
-  {
-   "number": 27995,
-   "title": "FINDING: fill-not-shell MapView BoardSection (provider empty + GPS list)",
-   "mergedAt": "2026-11-02T18:31:47Z",
-   "branch": "cursor/eng-build-shells4"
-  },
-  {
-   "number": 27994,
-   "title": "FINDING: fill-not-shell Profitability hub — tabs+KPI wired to live engines",
-   "mergedAt": "2026-11-02T18:30:58Z",
-   "branch": "cursor/eng-build-shells3"
-  },
-  {
-   "number": 27993,
-   "title": "CLAIM-RESERVE: cursor 18932 (verify-profitability-hub-wired)",
-   "mergedAt": "2026-11-02T18:28:25Z",
-   "branch": "cursor/claim-18932"
-  },
-  {
-   "number": 27992,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-02T18:26:36Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27991,
-   "title": "FINDING: ENG-13 AUTH-473 DONE-LIVE + ENG-22 trailer-type prevention (ROUND 7.2)",
-   "mergedAt": "2026-11-02T18:23:08Z",
-   "branch": "cursor/eng-22-trailer-type-prevent"
-  },
-  {
-   "number": 27990,
-   "title": "CLAIM-RESERVE: cursor 18930 (ENG-22 booked-trailer-matches-company-equipment)",
-   "mergedAt": "2026-11-02T18:19:53Z",
-   "branch": "cursor/claim-18930"
-  },
-  {
-   "number": 27989,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — ROUND 6.4 CC-2: 6.4-D + 6.4-E verified on prod",
-   "mergedAt": "2026-11-02T18:06:28Z",
-   "branch": "cc-2/round6-verify-outbox"
-  },
-  {
-   "number": 27988,
-   "title": "fill-not-shell: customer tabs + recon BoardSection (build-first)",
-   "mergedAt": "2026-11-02T18:06:24Z",
-   "branch": "cursor/eng-build-shells"
-  },
-  {
-   "number": 27987,
-   "title": "CLAIM-RESERVE: lead 18913 18917 18921 18925 (ENG-13/60/23/25b)",
-   "mergedAt": "2026-11-02T18:01:12Z",
-   "branch": "claude/claim-reserve-18913-18925"
-  },
-  {
-   "number": 27986,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2- 443.326: fix 8 guard selftests (drift + path + perf + live-split)",
-   "mergedAt": "2026-11-02T18:00:01Z",
-   "branch": "cc-2/factoring-surface-guard-443326"
-  },
-  {
-   "number": 27985,
-   "title": "FINDING: stop-dwell evidence never links onto a date_only stop (PROD-5Y CHECK violation, 13698 miles)",
-   "mergedAt": "2026-11-02T18:06:21Z",
-   "branch": "claude/stop-dwell-respect-date-only"
-  },
-  {
-   "number": 27984,
-   "title": "ENG-60: insurance lawsuit mutate routes → 410 Gone",
-   "mergedAt": "2026-11-02T17:46:05Z",
-   "branch": "cursor/eng60-mutate-410"
-  },
-  {
-   "number": 27983,
-   "title": "FINDING: ROUND 7 — every pending engine + module shell assigned to all seats; fast-merge law",
-   "mergedAt": "2026-11-02T18:05:41Z",
-   "branch": "claude/bus-round-6-all-seats"
-  },
-  {
-   "number": 27982,
-   "title": "ENG-60: status — FE done; mutate 410 + drop remain",
-   "mergedAt": "2026-11-02T17:44:06Z",
-   "branch": "cursor/eng60-status"
-  },
-  {
-   "number": 27981,
-   "title": "bus: ENG-34 123→53 + AUTH seats pointer",
-   "mergedAt": "2026-11-02T17:43:35Z",
-   "branch": "cursor/eng-bus-auth-seats"
-  },
-  {
-   "number": 27980,
-   "title": "ENG-34: wire 30 more static exempts (83→53)",
-   "mergedAt": "2026-11-02T17:43:11Z",
-   "branch": "cursor/eng34-wave3-53"
-  },
-  {
-   "number": 27979,
-   "title": "ENG-34: wire 25 more static exempts (108→83)",
-   "mergedAt": "2026-11-02T17:42:21Z",
-   "branch": "cursor/eng34-wave2-83"
-  },
-  {
-   "number": 27978,
-   "title": "ENG-34: exempt 123→108 + ENG-49 5787 measure",
-   "mergedAt": "2026-11-02T17:41:29Z",
-   "branch": "cursor/eng-continue-wave"
-  },
-  {
-   "number": 27977,
-   "title": "CLAIM-MIGRATION: claude 202616310100 (ENG-60 retire insurance.lawsuit)",
-   "mergedAt": "2026-11-02T18:01:43Z",
-   "branch": "chore/claim-migration-202616310100-eng60"
-  },
-  {
-   "number": 27976,
-   "title": "ENG-29/53: cron SAVEPOINT so 13690 miles persist",
-   "mergedAt": "2026-11-02T17:38:00Z",
-   "branch": "cursor/eng-continue-wave"
-  },
-  {
-   "number": 27975,
-   "title": "FINDING: ENG-13 load 13595 broker trailer 445 (Edit Load engine) + AUTH-473 + guard 18913",
-   "mergedAt": "2026-11-02T18:07:21Z",
-   "branch": "claude/eng13-13595-broker-trailer-445"
-  },
-  {
-   "number": 27973,
-   "title": "FINDING: bus Codex FULL-COMPLETE finish orders — no half shells",
-   "mergedAt": "2026-11-02T17:17:52Z",
-   "branch": "cursor/codex-full-finish-orders"
-  },
-  {
-   "number": 27972,
-   "title": "FINDING: bus Codex START NOW after ENG-51",
-   "mergedAt": "2026-11-02T17:13:45Z",
-   "branch": "cursor/eng-finish-wave7"
-  },
-  {
-   "number": 27971,
-   "title": "FINDING: ACCT-F443323 ENG-51 DONE-LIVE — composite-memo 948→0",
-   "mergedAt": "2026-11-02T17:13:03Z",
-   "branch": "cursor/eng-finish-wave6"
-  },
-  {
-   "number": 27970,
-   "title": "FINDING: bus Codex FINISH-ALL refresh 5 after ENG-44/46/47/50/60/29",
-   "mergedAt": "2026-11-02T16:37:20Z",
-   "branch": "cursor/eng-finish-wave5"
-  },
-  {
-   "number": 27969,
-   "title": "FINDING: ACCT-F443323 ENG-29 shrink missing miles 182→149",
-   "mergedAt": "2026-11-02T16:36:49Z",
-   "branch": "cursor/eng-finish-wave4"
-  },
-  {
-   "number": 27968,
-   "title": "FINDING: ACCT-F443323 ENG-46 DONE-LIVE — escrow Δ named + ENG-34 unaccounted 0",
-   "mergedAt": "2026-11-02T16:35:01Z",
-   "branch": "cursor/eng-finish-wave3"
-  },
-  {
-   "number": 27967,
-   "title": "FINDING: ACCT-F443323 ENG-47 DONE-LIVE + ENG-53 PARTIAL",
-   "mergedAt": "2026-11-02T16:33:28Z",
-   "branch": "cursor/eng-finish-wave2"
-  },
-  {
-   "number": 27966,
-   "title": "FINDING: ACCT-F443323 ENG-60 FE + ENG-46 spine 0 + ENG-44/50 DONE-LIVE",
-   "mergedAt": "2026-11-02T16:32:05Z",
-   "branch": "cursor/eng-finish-all"
-  },
-  {
-   "number": 27965,
-   "title": "chore(deps): bump the production-dependencies group across 1 directory with 20 updates",
-   "mergedAt": "2026-11-02T23:23:26Z",
-   "branch": "dependabot/npm_and_yarn/production-dependencies-326ee422b3"
-  },
-  {
-   "number": 27963,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-02T12:30:23Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27962,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-02T06:41:54Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27961,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-02T00:44:58Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27960,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-01T18:24:32Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27959,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-01T12:26:55Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27958,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-01T06:30:36Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27957,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-01T00:48:55Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27956,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-31T18:25:05Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27955,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-31T12:26:28Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27954,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-31T06:29:35Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27953,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-31T00:42:02Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27952,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-30T18:25:36Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27951,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-30T12:34:54Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27950,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-30T06:37:50Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27949,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-30T00:50:50Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27948,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-29T18:31:02Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27946,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-29T12:34:52Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27945,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-29T06:37:24Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27944,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-29T00:49:56Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27943,
-   "title": "FINDING: ACCT-F443323 ENG-47 PARTIAL + Codex FINISH-ALL refresh",
-   "mergedAt": "2026-10-28T22:37:10Z",
-   "branch": "cursor/eng-47-measure"
-  },
-  {
-   "number": 27942,
-   "title": "FINDING: ACCT-F443323 ENG-46 PARTIAL — P-0102 USMCA tip-OK; escrow/ad02cc37 measured",
-   "mergedAt": "2026-10-28T22:36:08Z",
-   "branch": "cursor/eng-46-measure"
-  },
-  {
-   "number": 27941,
-   "title": "FINDING: ACCT-F443323 ENG-60 PARTIAL — insurance.lawsuit empty; FE cutover remains",
-   "mergedAt": "2026-10-28T22:35:22Z",
-   "branch": "cursor/eng-60-measure"
-  },
-  {
-   "number": 27940,
-   "title": "FINDING: ACCT-F443323 ENG-27 PARTIAL — 290 bank-cat ceiling + Codex FINISH-ALL refresh",
-   "mergedAt": "2026-10-28T22:33:26Z",
-   "branch": "cursor/eng-27-46-measure"
-  },
-  {
-   "number": 27939,
-   "title": "FINDING: ACCT-F443323 ENG-26 DONE-LIVE — factoring load resolver RULE3 + stamp backfill",
-   "mergedAt": "2026-10-28T22:31:54Z",
-   "branch": "cursor/eng-46-47-27-measure"
-  },
-  {
-   "number": 27938,
-   "title": "FINDING: ACCT-F443323 ENG-26 PARTIAL — posting_source_load_id factoring deposit resolver",
-   "mergedAt": "2026-10-28T22:26:54Z",
-   "branch": "cursor/eng-46-47-26-measure"
-  },
-  {
-   "number": 27937,
-   "title": "FINDING: ACCT-F443323 ENG-44 PARTIAL — stamp due_date at delivery for pre-settlement bills",
-   "mergedAt": "2026-10-28T22:21:28Z",
-   "branch": "cursor/eng-44-46-47-measure"
-  },
-  {
-   "number": 27936,
-   "title": "FINDING: ACCT-F443323 ENG-43/45 DONE-LIVE — salaried load-activity + vendor guard",
-   "mergedAt": "2026-10-28T22:17:25Z",
-   "branch": "cursor/eng-43-45-measure"
-  },
-  {
-   "number": 27935,
-   "title": "FINDING: ACCT-F443323 ENG-01c/24/39/40 DONE-LIVE + Codex FINISH-ALL refresh",
-   "mergedAt": "2026-10-28T22:13:17Z",
-   "branch": "cursor/eng-01c-39-40-24"
-  },
-  {
-   "number": 27934,
-   "title": "FINDING: ACCT-F443323 Codex FINISH-ALL + ENG-18/28/41/42/61 close",
-   "mergedAt": "2026-10-28T22:06:34Z",
-   "branch": "cursor/engine-finish-wave"
-  },
-  {
-   "number": 27933,
-   "title": "FINDING: Codex ENG-28 single validated posting engine door",
-   "mergedAt": "2026-10-28T21:59:05Z",
-   "branch": "codex/eng28-single-posting-door"
-  },
-  {
-   "number": 27932,
-   "title": "FINDING: ACCT-F443323 refresh INBOX-CODEX tip",
-   "mergedAt": "2026-10-28T21:53:45Z",
-   "branch": "cursor/inbox-pm"
-  },
-  {
-   "number": 27931,
-   "title": "FINDING: ACCT-F443323 ENG-52 DONE + ENG-29 miles PARTIAL",
-   "mergedAt": "2026-10-28T21:53:13Z",
-   "branch": "cursor/next-wave"
-  },
-  {
-   "number": 27930,
-   "title": "FINDING: ACCT-F443323 ENG-34 shrink guard-exempt 918→122",
-   "mergedAt": "2026-10-28T21:52:25Z",
-   "branch": "cursor/eng-34-exempt-shrink"
-  },
-  {
-   "number": 27929,
-   "title": "FINDING: ACCT-F443323 ENG-06/25/34/35 measure-close",
-   "mergedAt": "2026-10-28T21:51:05Z",
-   "branch": "cursor/eng-06-35-next"
-  },
-  {
-   "number": 27928,
-   "title": "FINDING: ACCT-F443323 ENG-37 DONE + ENG-04 dry-run PARTIAL",
-   "mergedAt": "2026-10-28T21:40:15Z",
-   "branch": "cursor/eng-37-04-next"
-  },
-  {
-   "number": 27927,
-   "title": "FINDING: ACCT-F443323 ENG-36 measure 21 negatives + ratchet guard path",
-   "mergedAt": "2026-10-28T18:57:21Z",
-   "branch": "cursor/eng-36-measure-guard-fix"
-  },
-  {
-   "number": 27926,
-   "title": "FINDING: ACCT-F443323 measure-close ENG-31/32/33/56 DONE",
-   "mergedAt": "2026-10-28T18:55:02Z",
-   "branch": "cursor/eng-31-56-measure"
-  },
-  {
-   "number": 27925,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-28T18:31:49Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27924,
-   "title": "FINDING: ACCT-F443323 measure-close ENG-12/07/13/22/30",
-   "mergedAt": "2026-10-28T12:42:27Z",
-   "branch": "cursor/eng-12-13-measure"
-  },
-  {
-   "number": 27923,
-   "title": "FINDING: ACCT-F443323 measure-close ENG-12/07/13/22/30",
-   "mergedAt": "2026-10-28T12:38:14Z",
-   "branch": "cursor/eng-12-13-measure"
-  },
-  {
-   "number": 27922,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-28T12:34:46Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27921,
-   "title": "FINDING: ACCT-F443323 Lead→Codex ENG-28 YES / 13595 trailer 445 / ENG-17 paths",
-   "mergedAt": "2026-10-28T12:33:13Z",
-   "branch": "cursor/lead-codex-answers"
-  },
-  {
-   "number": 27920,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-28T06:37:04Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27919,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-28T00:49:49Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27918,
-   "title": "FINDING: Codex restore frontend deploy with complete recovery role labels",
-   "mergedAt": "2026-10-27T23:07:39Z",
-   "branch": "codex/fix-coa-recovery-labels-deploy"
-  },
-  {
-   "number": 27917,
-   "title": "FINDING: ACCT-F443323 ENG-16/15 DONE-LIVE — Check Creator commissioned",
-   "mergedAt": "2026-10-27T21:01:07Z",
-   "branch": "cursor/eng-16-measure-close"
-  },
-  {
-   "number": 27916,
-   "title": "FINDING: ACCT-F443323 ENG-12 Fine + I-94 deductions leave 7200 admin-fee path",
-   "mergedAt": "2026-10-27T20:57:30Z",
-   "branch": "cursor/eng-12-deduction-types"
-  },
-  {
-   "number": 27915,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-27T18:28:22Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27914,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-27T12:45:47Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27913,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-27T06:50:17Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27912,
-   "title": "FINDING: Codex ENG-06 consolidate full spine gate without lost assertions",
-   "mergedAt": "2026-10-27T02:02:40Z",
-   "branch": "codex/eng06-one-spine-gate"
-  },
-  {
-   "number": 27911,
-   "title": "FINDING: Codex ENG-18 explicit commit intent without amend guessing",
-   "mergedAt": "2026-10-27T01:57:45Z",
-   "branch": "codex/eng18-explicit-commit-intent"
-  },
-  {
-   "number": 27910,
-   "title": "FINDING: Codex ENG-06 restore inline spine regression plant",
-   "mergedAt": "2026-10-27T01:53:21Z",
-   "branch": "codex/eng06-spine-plant-coverage"
-  },
-  {
-   "number": 27909,
-   "title": "FINDING: Codex ENG-09 require unwired sentinel mutation",
-   "mergedAt": "2026-10-27T01:51:24Z",
-   "branch": "codex/eng09-unwired-sentinel"
-  },
-  {
-   "number": 27908,
-   "title": "FINDING: ENG-25 guard must verify actual shared resolver calls on both paths",
-   "mergedAt": "2026-10-27T01:38:32Z",
-   "branch": "codex/eng25-fuel-helper-call-guard"
-  },
-  {
-   "number": 27907,
-   "title": "FINDING: ENG-15 prove work-order bill stamp values through shared writer",
-   "mergedAt": "2026-10-27T01:35:38Z",
-   "branch": "codex/eng15-wo-stamp-behavior"
-  },
-  {
-   "number": 27906,
-   "title": "FINDING: ENG-17 first Faro batch ties; remaining owner matches explicit",
-   "mergedAt": "2026-10-27T01:33:57Z",
-   "branch": "claude/eng-17-faro-residual-batch1"
-  },
-  {
-   "number": 27905,
-   "title": "FINDING: N/A (CLAIM-RESERVE migrations 202616301200/1201 — ENG-12)",
-   "mergedAt": "2026-10-27T01:33:54Z",
-   "branch": "chore/claim-migration-202616301200"
-  },
-  {
-   "number": 27904,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-27T01:05:40Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27903,
-   "title": "FINDING: ENG-08 DONE-LIVE — lumper advance posts as load expense",
-   "mergedAt": "2026-10-27T01:00:22Z",
-   "branch": "cursor/eng-08-measure-close"
-  },
-  {
-   "number": 27902,
-   "title": "FINDING: ENG-04 advances never credit 2170 Driver Net-Pay Clearing",
-   "mergedAt": "2026-10-26T21:33:25Z",
-   "branch": "cursor/eng-04-no-2170-advance"
-  },
-  {
-   "number": 27901,
-   "title": "FINDING: ENG-07 Book/Edit Load refuses city-only stop",
-   "mergedAt": "2026-10-26T21:22:35Z",
-   "branch": "cursor/eng-07-city-only-stop"
-  },
-  {
-   "number": 27900,
-   "title": "FINDING: Codex Wave 0 measured closures ENG-11 ENG-14 ENG-63",
-   "mergedAt": "2026-10-26T21:21:44Z",
-   "branch": "codex/1026-engine-wave0-measure"
-  },
-  {
-   "number": 27899,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-26T18:47:29Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27898,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-26T14:11:38Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27897,
-   "title": "FINDING: N/A (CLAIM-RESERVE 18802 — ENG-07 book stop street/place)",
-   "mergedAt": "2026-10-26T12:38:24Z",
-   "branch": "chore/claim-reserve-18802"
-  },
-  {
-   "number": 27896,
-   "title": "FINDING: Lead — Codex ENGINE WAVE ASAP + WAVE 0 closes ENG-01/02/03/05/09/10",
-   "mergedAt": "2026-10-26T12:32:44Z",
-   "branch": "cursor/lead-codex-engine-wave"
-  },
-  {
-   "number": 27895,
-   "title": "FINDING: Codex C2 dependency-inverted load-transition hooks",
-   "mergedAt": "2026-10-26T12:25:45Z",
-   "branch": "codex/1026-c2-load-transition-hooks"
-  },
-  {
-   "number": 27890,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-26T07:02:01Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 27889,
-   "title": "FINDING: Codex B4 shared lg match popup and full-page toggle",
-   "mergedAt": "2026-10-26T06:57:26Z",
-   "branch": "codex/1026-b4-match-modal-size"
-  },
-  {
-   "number": 27888,
-   "title": "FINDING: Lead seat lists refresh — B2/B3 done, remaining B1/B4/C2 + CC reds",
-   "mergedAt": "2026-10-26T06:56:53Z",
-   "branch": "cursor/lead-seat-lists-refresh"
-  },
-  {
-   "number": 27887,
-   "title": "FINDING: Lead tip reds — ReportsHome gear/sort · SAVEPOINT period refresh · live_loads · OUTBOX diet",
-   "mergedAt": "2026-10-26T06:55:32Z",
-   "branch": "cursor/lead-tip-reds"
-  },
-  {
-   "number": 27886,
-   "title": "FINDING: Codex B3 shared modal and drawer open-order layers",
-   "mergedAt": "2026-10-26T06:52:03Z",
-   "branch": "codex/1026-b3-shared-overlay-order"
-  },
-  {
-   "number": 27885,
-   "title": "FINDING: Codex B2 typeable multi-select bank match filter",
-   "mergedAt": "2026-10-26T06:46:04Z",
-   "branch": "codex/1026-b2-typeable-match-filter"
-  },
-  {
-   "number": 27884,
-   "title": "FINDING: Lead seat lists — Cursor Lead P0 measured + exact lists per seat",
-   "mergedAt": "2026-10-26T06:40:00Z",
-   "branch": "cursor/lead-seat-lists"
-  },
-  {
-   "number": 27883,
-   "title": "FINDING: Cursor-19 — hand-rolled tables → ParityTable (ReportsHome · MilesStrip · Settlements deductions)",
-   "mergedAt": "2026-10-26T06:37:24Z",
-   "branch": "cursor/finish-cursor19-table-header"
-  },
-  {
-   "number": 27882,
-   "title": "FINDING: Codex B1 canonical checks in bank match candidates",
-   "mergedAt": "2026-10-26T06:36:56Z",
-   "branch": "codex/1026-b1-check-match"
-  },
-  {
-   "number": 27881,
-   "title": "Claude-3-FINDING: verify-popups-one-format baseline 3→0 + factoring selftest re-anchored",
-   "mergedAt": "2026-10-26T06:12:34Z",
-   "branch": "cc-3/popups-baseline-zero"
-  },
-  {
-   "number": 27880,
-   "title": "FINDING: Lead handoff — Cursor new Lead, Codex instructions, pending list",
-   "mergedAt": "2026-10-26T05:02:49Z",
-   "branch": "lead-handoff-1026"
-  },
-  {
-   "number": 27879,
-   "title": "FINDING: P0 — tracked dist symlink broke every API build",
-   "mergedAt": "2026-10-26T05:01:14Z",
-   "branch": "lead-rm-dist-symlink"
-  },
-  {
-   "number": 27878,
-   "title": "FINDING: ACCT-F220 — MultiEntity + QBO reconcile BoardSection fill",
-   "mergedAt": "2026-10-26T04:10:42Z",
-   "branch": "cursor/fill-batch-3"
-  },
-  {
-   "number": 27877,
-   "title": "FINDING: bank-line Check No also parsed from FOR CHECK #XXXXX001091 (cashed-check holds)",
-   "mergedAt": "2026-10-26T04:08:25Z",
-   "branch": "lead-bm-checkno"
-  },
-  {
-   "number": 27876,
-   "title": "FINDING: claim migration 202616290000 (bank-line check number from cashed-check text)",
-   "mergedAt": "2026-10-26T04:06:56Z",
-   "branch": "lead-bm-claim"
-  },
-  {
-   "number": 27875,
-   "title": "FINDING: 2 import cycles broken, load-transition cycle 17 -> 11 files; invented owner-gated allowlist withdrawn",
-   "mergedAt": "2026-10-26T04:05:41Z",
-   "branch": "lead-cycles"
-  },
-  {
-   "number": 27874,
-   "title": "Claude-1-FINDING: Row 213 — Tour period dates stale; compute period_end as today for open tours",
-   "mergedAt": "2026-10-26T04:04:25Z",
-   "branch": "cc-1/row213-tour-dates"
-  },
-  {
-   "number": 27873,
-   "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
-   "mergedAt": "2026-10-26T04:03:47Z",
-   "branch": "cc-1/cc1-done-outbox-final"
-  },
-  {
-   "number": 27872,
-   "title": "FINDING: ACCT-F220 — Collections/VendorBalances/Waterfall/ImportFuel BoardSection",
-   "mergedAt": "2026-10-26T04:05:40Z",
-   "branch": "cursor/fill-batch-2"
-  },
-  {
-   "number": 27871,
-   "title": "FINDING: CC1 DONE — all 20 FINAL-2 rows merged to origin/main",
-   "mergedAt": "2026-10-26T04:01:53Z",
-   "branch": "cc-1/cc1-done-outbox-final"
-  },
-  {
-   "number": 27870,
-   "title": "FINDING: table-header ratchet — 16 date-column sites honest, 10 hand-rolled tables to ParityTable",
-   "mergedAt": "2026-10-26T04:00:39Z",
-   "branch": "lead-cur19-g"
-  },
-  {
-   "number": 27869,
-   "title": "Claude-1-FINDING: Row 212 — Pre-settlement number shows P-series; replace with PENDING/AT label",
-   "mergedAt": "2026-10-26T04:00:17Z",
-   "branch": "cc-1/row212-settlement-pending-label"
-  },
-  {
-   "number": 27867,
-   "title": "FINDING: ACCT-F220 — Settlements detail + Accounting remaining BoardSection fill",
-   "mergedAt": "2026-10-26T03:56:04Z",
-   "branch": "cursor/fill-all-remaining"
-  },
-  {
-   "number": 27866,
-   "title": "FINDING: CC-3 reds batch 6 — safety DatePicker selftests in memory, expiry every mount, wave-a floors",
-   "mergedAt": "2026-10-26T03:55:14Z",
-   "branch": "lead-cc3x-b6"
-  },
-  {
-   "number": 27865,
-   "title": "Claude-1- FINDING: D046 — Banking Home drift alerts show generic 'Account' label; fix to use display_name",
-   "mergedAt": "2026-10-26T03:55:27Z",
-   "branch": "cc-1/d046-drift-account-display-name"
-  },
-  {
-   "number": 27864,
-   "title": "FINDING: CC-3 reds batch 5 — trailer-equipment INSERT, planner title, predispatch catch plants",
-   "mergedAt": "2026-10-26T03:52:46Z",
-   "branch": "lead-cc3x-b5"
-  },
-  {
-   "number": 27863,
-   "title": "FINDING: CC-3 reds batch 4 — fleet roster guards cover every row derivation",
-   "mergedAt": "2026-10-26T03:49:59Z",
-   "branch": "lead-cc3x-b4"
-  },
-  {
-   "number": 27862,
-   "title": "FINDING: CC-3 reds batch 3 — fleet counters + fault-summary guards check every consumer",
-   "mergedAt": "2026-10-26T03:48:05Z",
-   "branch": "lead-cc3x-b3"
-  },
-  {
-   "number": 27861,
-   "title": "FINDING: CC-3 reds batch 2 — ocr-queue, phone-login CAS, driver-profile dp2 selftests re-anchored",
-   "mergedAt": "2026-10-26T03:46:47Z",
-   "branch": "lead-cc3x-b2"
-  },
-  {
-   "number": 27860,
-   "title": "CC-2-FACTORING-SURFACE: verify-factoring-surface updated for ROUND 443.326 chrome contract",
-   "mergedAt": "2026-10-26T03:45:34Z",
-   "branch": "cc-2/factoring-surface-guard-443326"
-  },
-  {
-   "number": 27859,
-   "title": "FINDING: CC-3 reds batch 1 — load-report live flag, picker-law + stale-token selftests",
-   "mergedAt": "2026-10-26T03:45:07Z",
-   "branch": "lead-cc3x-b1"
-  },
-  {
-   "number": 27858,
-   "title": "FINDING: BANK-F038 — Banking Home BoardSection panels + FORM_SELECT",
-   "mergedAt": "2026-10-26T03:44:55Z",
-   "branch": "cursor/fill-banking-home-boards"
-  },
-  {
-   "number": 27857,
-   "title": "FINDING: staged-filter pass-through wrappers audited through (Customers/Vendors back in the Apply law); accounting on the money toolbar",
-   "mergedAt": "2026-10-26T03:38:43Z",
-   "branch": "lead-cur19-f"
-  },
-  {
-   "number": 27856,
-   "title": "FINDING: Pre-Settlements governed columns restored as gear columns; parts create drawer guard on the shared drawer",
-   "mergedAt": "2026-10-26T03:36:24Z",
-   "branch": "lead-cur19-e"
-  },
-  {
-   "number": 27855,
-   "title": "FINDING: Customers/Vendors tab guards re-anchored to the V3 board tab strips (443.326)",
-   "mergedAt": "2026-10-26T03:32:40Z",
-   "branch": "lead-cur19-d"
-  },
-  {
-   "number": 27854,
-   "title": "FINDING: six guard selftests can fail again (stale anchors, weak checks tightened)",
-   "mergedAt": "2026-10-26T03:30:42Z",
-   "branch": "lead-cur19-c"
-  },
-  {
-   "number": 27853,
-   "title": "FINDING: Reports custom builder door mounted + Frequently run restored (Rule 07)",
-   "mergedAt": "2026-10-26T03:27:03Z",
-   "branch": "lead-cur19-b"
-  },
-  {
-   "number": 27852,
-   "title": "FINDING: N/A LANE: CC-1 — surface-bar-create-drawer-inventory: scan owned_surface_paths + map 4 unmapped pages",
-   "mergedAt": "2026-10-26T03:26:55Z",
-   "branch": "cc-1/surface-bar-create-drawer-owned-paths"
-  },
-  {
-   "number": 27851,
-   "title": "FINDING: GPS-dwell stop engine end to end — stop evidence, -gps fence, replayed crossings, odometer captures, driven miles from the cron",
-   "mergedAt": "2026-10-26T03:25:15Z",
-   "branch": "lead-dwell-e2e"
-  },
-  {
-   "number": 27850,
-   "title": "FINDING: five guards get real selftests (two had none, three could never fail)",
-   "mergedAt": "2026-10-26T03:23:43Z",
-   "branch": "lead-n10-selftests"
-  },
-  {
-   "number": 27849,
-   "title": "FINDING: restore 4 verify-steps the Lead deleted in #27828; fast merge refuses undeclared deletions",
-   "mergedAt": "2026-10-26T03:22:22Z",
-   "branch": "lead-n10-wire"
-  },
-  {
-   "number": 27848,
-   "title": "FINDING: create surfaces are drawers, insurance back target, one 40px field height (owner law)",
-   "mergedAt": "2026-10-26T03:21:26Z",
-   "branch": "lead-cur19"
-  },
-  {
-   "number": 27847,
-   "title": "FINDING: main tsc red — missing activeSettlementLine import",
-   "mergedAt": "2026-10-26T03:21:19Z",
-   "branch": "lead-fix-main-import"
-  },
-  {
-   "number": 27846,
-   "title": "FINDING: fuel office create modal selftest covers the FORM_INPUT_CLASS rule it enforces",
-   "mergedAt": "2026-10-26T03:20:12Z",
-   "branch": "lead-n10-fuelmodal"
-  },
-  {
-   "number": 27845,
-   "title": "FINDING: N/A LANE: CC-1 — verify-settled-load-stops: scope LIVE_SQL to settlements with a signed document",
-   "mergedAt": "2026-10-26T03:20:01Z",
-   "branch": "cc-1/settled-stops-escrow-guard-fixes-1792984769"
-  },
-  {
-   "number": 27844,
-   "title": "FINDING: card-overage need-company marker read through FuelBoardSection testId (#27800)",
-   "mergedAt": "2026-10-26T03:19:24Z",
-   "branch": "lead-n10-overage"
-  },
-  {
-   "number": 27843,
-   "title": "fill-not-shell: Accounting tools BoardSection + Factoring FORM_INPUT",
-   "mergedAt": "2026-10-26T03:37:29Z",
-   "branch": "cursor/fill-acct-tools-boards"
-  },
-  {
-   "number": 27842,
-   "title": "FINDING: Expenses On-these-accounts column sorts like every other column",
-   "mergedAt": "2026-10-26T03:18:35Z",
-   "branch": "lead-n10-sort"
-  },
-  {
-   "number": 27841,
-   "title": "FINDING: hide-voided guard reads the bills status constant (#27807 multi-status)",
-   "mergedAt": "2026-10-26T03:16:18Z",
-   "branch": "lead-n10-hidevoided"
-  },
-  {
-   "number": 27840,
-   "title": "FINDING: Cursor inbox — Lead takes the 19 FINAL-4 reds",
-   "mergedAt": "2026-10-26T03:15:10Z",
-   "branch": "lead-cursor-handover"
-  },
-  {
-   "number": 27839,
-   "title": "CC-2-FINAL-4 443.ENG-50: 10 guard fixes — settlements, cash-flow, cash-advances, factoring",
-   "mergedAt": "2026-10-26T03:29:57Z",
-   "branch": "cc-2/final4-guards-batch"
-  },
-  {
-   "number": 27838,
-   "title": "FINDING: ACCT-F443280 — FILL-SETTLEMENT-CREATOR-BOARD — Settlement Creator sections → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T03:05:16Z",
-   "branch": "cursor/fill-settlements-open-closed"
-  },
-  {
-   "number": 27837,
-   "title": "FINDING: N/A LANE: CC-1 — update verify-creator-advance guard for ENG-04 posting-engine contract",
-   "mergedAt": "2026-10-26T02:57:14Z",
-   "branch": "cc-1/creator-advance-bill-payment-fix-1792983319"
-  },
-  {
-   "number": 27836,
-   "title": "FINDING: N/A LANE: CC-1 — bills-settlement static literals; cash-flow predicate consumer; cash-advances staged filters; proforma-timing guard needle",
-   "mergedAt": "2026-10-26T02:55:11Z",
-   "branch": "cc-1/batch4-bills-settlement-advances-proforma-fix-1792983121"
-  },
-  {
-   "number": 27835,
-   "title": "FINDING: ACCT-F443293 — FILL-ACCT-220-MONEY-LIST-BOARDS — 12 Accounting registers → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:54:37Z",
-   "branch": "cursor/fill-acct-expenses-board-real"
-  },
-  {
-   "number": 27834,
-   "title": "FINDING: shared input height follows the form-field token (h-10) — NumberInput aligned, guards stop pinning literals",
-   "mergedAt": "2026-10-26T02:49:13Z",
-   "branch": "lead-n1x-heights"
-  },
-  {
-   "number": 27833,
-   "title": "FINDING: GPS dwell is the stop boundary when the fence was never entered — automatic in the real-driven-miles cron",
-   "mergedAt": "2026-10-26T02:48:06Z",
-   "branch": "lead-dwell"
-  },
-  {
-   "number": 27832,
-   "title": "FINDING: restore CLAIMED-NUMBERS.json escaping (no content change)",
-   "mergedAt": "2026-10-26T02:47:24Z",
-   "branch": "lead-claim-18909-fmt"
-  },
-  {
-   "number": 27831,
-   "title": "Claude-3-FINAL2-d032-picker-size",
-   "mergedAt": "2026-10-26T02:47:19Z",
-   "branch": "cc-3/final2-d032-picker-size"
-  },
-  {
-   "number": 27830,
-   "title": "FINDING: claim verify-step 18909 (stop dwell boundary)",
-   "mergedAt": "2026-10-26T02:46:49Z",
-   "branch": "lead-claim-18909"
-  },
-  {
-   "number": 27829,
-   "title": "FINDING: owner no-HOLD ruling — hold-merge-gate retired as a required CI check",
-   "mergedAt": "2026-10-26T02:46:22Z",
-   "branch": "lead-nohold"
-  },
-  {
-   "number": 27828,
-   "title": "FINDING: fast merge refuses regressions — runs every guard that reads a changed file",
-   "mergedAt": "2026-10-26T02:44:59Z",
-   "branch": "lead-no-regress"
-  },
-  {
-   "number": 27827,
-   "title": "FINDING: reefer-lumper guard pins the INSERT value line, not any trailer_type mention (plant #3 escaped since row 257)",
-   "mergedAt": "2026-10-26T02:44:32Z",
-   "branch": "lead-n1x-reefer"
-  },
-  {
-   "number": 27826,
-   "title": "FINDING: N/A LANE: CC-1 — RollingLedger isFactoringRow + days_overdue + invoice_date; company-settlements lcl2→lcl",
-   "mergedAt": "2026-10-26T02:44:25Z",
-   "branch": "cc-1/rolling-ledger-settlements-fix"
-  },
-  {
-   "number": 27825,
-   "title": "FINDING: four orphan fill guards wired through claimed verify-steps",
-   "mergedAt": "2026-10-26T02:43:26Z",
-   "branch": "claude/wire-fill-guards-18861"
-  },
-  {
-   "number": 27824,
-   "title": "FINDING: gear-hidden columns allowed (owner) + AUTH-472 closed",
-   "mergedAt": "2026-10-26T02:42:53Z",
-   "branch": "lead-gear-columns"
-  },
-  {
-   "number": 27823,
-   "title": "FINDING: CLAIM-RESERVE 18861 18873 18885 18897 — wire four orphan fill guards",
-   "mergedAt": "2026-10-26T02:42:43Z",
-   "branch": "claude/claim-reserve-18861-18897"
-  },
-  {
-   "number": 27822,
-   "title": "FINDING: money KPI strips judged on code, not comments — four comment needles removed; acct-surf-03/04 green",
-   "mergedAt": "2026-10-26T02:41:24Z",
-   "branch": "lead-n1x-rest"
-  },
-  {
-   "number": 27821,
-   "title": "FINDING: N/A LANE: CC-1 — ReserveTracker settled-only empty state",
-   "mergedAt": "2026-10-26T02:40:35Z",
-   "branch": "cc-1/final4-batch4"
-  },
-  {
-   "number": 27820,
-   "title": "FINDING: V3 grammar + factoring/banking/fuel regressions, doc-vocab live split, cash-flow canonical, matrix guard 23s->1s",
-   "mergedAt": "2026-10-26T02:39:37Z",
-   "branch": "lead-n3"
-  },
-  {
-   "number": 27819,
-   "title": "Claude-3-FINAL2-input-heights-names",
-   "mergedAt": "2026-10-26T02:40:56Z",
-   "branch": "cc-3/final2-input-heights-names"
-  },
-  {
-   "number": 27818,
-   "title": "FINDING: FB trailers FB-56707/FB-56711/56702 are flatbeds (AUTH-472)",
-   "mergedAt": "2026-10-26T02:38:20Z",
-   "branch": "lead-fb-flatbed"
-  },
-  {
-   "number": 27817,
-   "title": "FINDING: N/A LANE: CC-1 — accounting-autoload-coverage skip dist when dir absent",
-   "mergedAt": "2026-10-26T02:38:04Z",
-   "branch": "cc-1/final4-batch4"
-  },
-  {
-   "number": 27816,
-   "title": "FINDING: Trip Pairing uses THE unit gate again; mdata loads list keeps the load-service trailer label (customer trailers)",
-   "mergedAt": "2026-10-26T02:37:59Z",
-   "branch": "lead-n1x-dispatch"
-  },
-  {
-   "number": 27815,
-   "title": "FINDING: N/A LANE: CC-1 — wall-clock ratchet 10→12 (12 live-DB guards)",
-   "mergedAt": "2026-10-26T02:37:31Z",
-   "branch": "cc-1/final4-batch4"
-  },
-  {
-   "number": 27814,
-   "title": "FINDING: Creator owed-bill amend reads bill_lines.amount (no amount_cents) — 42703 on every Edit",
-   "mergedAt": "2026-10-26T02:36:55Z",
-   "branch": "lead-n1x-amt"
-  },
-  {
-   "number": 27813,
-   "title": "FINDING: N/A LANE: CC-1 — MoneyInput h-7→h-9 revert (IH35-347-A)",
-   "mergedAt": "2026-10-26T02:36:44Z",
-   "branch": "cc-1/final4-batch4"
-  },
-  {
-   "number": 27812,
-   "title": "FINDING: HOS manual-edit, scenario-tracker and merged-shell guards re-anchored to row 81 / 443.206R shapes",
-   "mergedAt": "2026-10-26T02:36:29Z",
-   "branch": "lead-n2-c"
-  },
-  {
-   "number": 27811,
-   "title": "FINDING: queue entity filters back on EntityMultiSelect; planner Book button back to 28px",
-   "mergedAt": "2026-10-26T02:36:17Z",
-   "branch": "lead-n2-b"
-  },
-  {
-   "number": 27810,
-   "title": "FINDING: money guards re-anchored to the canonical predicates and ENG-24/28 doors; two 42703 column reads fixed",
-   "mergedAt": "2026-10-26T02:36:02Z",
-   "branch": "lead-n1x"
-  },
-  {
-   "number": 27809,
-   "title": "FINDING: board unit gate + canonical load sets restored after #27749/#27777 regressions",
-   "mergedAt": "2026-10-26T02:35:49Z",
-   "branch": "lead-n2-a"
-  },
-  {
-   "number": 27808,
-   "title": "FINDING: fast-merge never blocks a tested merge",
-   "mergedAt": "2026-10-26T02:34:58Z",
-   "branch": "lead-fm-nonblocking"
-  },
-  {
-   "number": 27807,
-   "title": "FINDING: board figures drill to server-filtered lists that total to them — expenses, bills multi-status, Faro debtor, KPI tiles",
-   "mergedAt": "2026-10-26T02:26:21Z",
-   "branch": "lead-f4-g5"
-  },
-  {
-   "number": 27806,
-   "title": "FINDING: phantom writes — pm-schedule set-last-pm columns + notification queue prod drift",
-   "mergedAt": "2026-10-26T02:26:11Z",
-   "branch": "lead-phantom-writes"
-  },
-  {
-   "number": 27805,
-   "title": "FINDING: claim migration 202616280000 (notification queue prod drift)",
-   "mergedAt": "2026-10-26T02:24:24Z",
-   "branch": "lead-claim-mig"
-  },
-  {
-   "number": 27804,
-   "title": "FINDING: Cursor inbox — 19 remaining FINAL-4 reds",
-   "mergedAt": "2026-10-26T02:22:32Z",
-   "branch": "lead-cursor-final4-left"
-  },
-  {
-   "number": 27803,
-   "title": "FINDING: FILL-ACCT-EXPENSES-BOARD — Expenses register → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:19:07Z",
-   "branch": "cursor/fill-expenses-list-board"
-  },
-  {
-   "number": 27802,
-   "title": "FINDING: FILL-FUEL-ASSIGNMENT-BOARD-SECTION — ModalSection → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:17:33Z",
-   "branch": "cursor/fill-fuel-assignment-board-section"
-  },
-  {
-   "number": 27801,
-   "title": "FINDING: FILL-SUBMIT-FACTOR-EDIT-BANNER — edit banner → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:13:08Z",
-   "branch": "cursor/fill-submit-edit-banner"
-  },
-  {
-   "number": 27800,
-   "title": "FINDING: FILL-FUEL-FRAUD-OVERAGE-PLANNER-EMPTY — need-company → FuelBoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:10:59Z",
-   "branch": "cursor/fill-fuel-fraud-overage-empty"
-  },
-  {
-   "number": 27799,
-   "title": "FINDING: FILL-DATAPANEL-UNWRAP-SUBMIT-REPURCHASE-CLOSE — DataPanel → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:08:30Z",
-   "branch": "cursor/fill-settlements-close-unlayer"
-  },
-  {
-   "number": 27798,
-   "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2 ENG-15/12/14 guards + ops scripts (verify-steps 18815/18819/18823 443.323)",
-   "mergedAt": "2026-10-26T02:06:28Z",
-   "branch": "cc-2/eng15-14-12-guards"
-  },
-  {
-   "number": 27797,
-   "title": "FINDING: FILL-SUBMIT-FACTOR-BOARD-FORM — owner/posted BoardSection + FORM_INPUT LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:05:07Z",
-   "branch": "cursor/fill-submit-factor-form-input"
-  },
-  {
-   "number": 27796,
-   "title": "FINDING: FILL-FUEL-FACTORING-ESCROW-EMPTY-BOARD — empties → BoardSection LANE: NON-FINANCIAL",
-   "mergedAt": "2026-10-26T02:02:50Z",
-   "branch": "cursor/fill-fuel-empty-factoring-nofactor"
   }
  ],
  "merged_pr_total": 3000,
