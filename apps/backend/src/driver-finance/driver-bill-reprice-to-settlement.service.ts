@@ -21,8 +21,9 @@
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
-import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
+import { liveSettlement, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { releaseDriverPayAccrualInClientTx, reaccrueDriverPayInClientTx, type DeliveryAccrual } from "./driver-pay-restate.service.js";
+import { milesTimesRateCents } from "./deadhead-rule.js";
 
 type Db = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -33,9 +34,12 @@ export class DriverBillRepriceRefused extends Error {
   }
 }
 
-/** Pure: the cents a per-mile rate pays on these miles (rounded to the cent, half up). */
+/**
+ * Pure: the cents a per-mile rate pays on these miles — THE one driver-pay rounding rule (deadhead-rule.ts
+ * milesTimesRateCents), so "the rate reproduces the settlement line" is judged by the same rule that priced the line.
+ */
 export function perMilePayCents(miles: number, rateCents: number): number {
-  return Math.round(Number(miles) * Number(rateCents) + 1e-9);
+  return milesTimesRateCents(Number(miles), Number(rateCents));
 }
 
 export type RepriceToSettlementResult = {
@@ -87,7 +91,7 @@ export async function repriceDriverBillToSettlementLineInClientTx(
        FROM driver_finance.settlement_lines sl
        JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = sl.operating_company_id
       WHERE sl.id = $1::uuid AND sl.operating_company_id = $2::uuid AND sl.source_driver_bill_id = $3::uuid
-        AND sl.is_active AND sl.voided_at IS NULL AND sl.line_type = 'earnings' AND ${liveSettlement("s")}`,
+        AND sl.is_active AND ${notVoided("sl")} AND sl.line_type = 'earnings' AND ${liveSettlement("s")}`,
     [input.settlementLineId, opco, bill.id]
   )).rows[0];
   if (!line) throw new DriverBillRepriceRefused("settlement_line_not_this_bill", "That line is not this bill's live earnings line on a live settlement.");
@@ -115,7 +119,7 @@ export async function repriceDriverBillToSettlementLineInClientTx(
   const upd = await client.query(
     `UPDATE driver_finance.driver_bills
         SET gross_amount_cents = $3, rate_per_mile_cents = $4, loaded_pay_cents = $3, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND ${notVoided()}`,
     [bill.id, opco, target, input.ratePerMileCents]
   );
   if ((upd.rowCount ?? 0) !== 1) throw new DriverBillRepriceRefused("driver_bill_raced", "Driver bill changed while it was re-priced.");

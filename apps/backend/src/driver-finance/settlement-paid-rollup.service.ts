@@ -19,6 +19,7 @@
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { liveBill, notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 
 type Queryable = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -63,9 +64,8 @@ export const SETTLEMENT_NET_PAID_SQL = `
     SELECT l.settlement_id,
            count(*)::bigint AS bill_count,
            coalesce(sum(GREATEST(b.amount_cents - coalesce(b.paid_cents, 0), 0))
-                    FILTER (WHERE b.voided_at IS NULL AND b.revoked_at IS NULL), 0)::bigint AS open_cents,
-           count(*) FILTER (WHERE b.voided_at IS NOT NULL OR b.revoked_at IS NOT NULL
-                              OR b.status::text IN ('void', 'voided'))::bigint AS dead_bills
+                    FILTER (WHERE ${notVoided("b")} AND b.revoked_at IS NULL), 0)::bigint AS open_cents,
+           count(*) FILTER (WHERE NOT ${liveBill("b")})::bigint AS dead_bills
       FROM live l
       JOIN accounting.bills b ON b.id = l.accounting_bill_id AND b.operating_company_id = $1::uuid
      GROUP BY l.settlement_id
@@ -79,7 +79,7 @@ export const SETTLEMENT_NET_PAID_SQL = `
       FROM live l
       JOIN accounting.bill_payments bp ON bp.bill_id = l.accounting_bill_id AND bp.operating_company_id = $1::uuid
      WHERE bp.status::text = 'posted'
-       AND bp.voided_at IS NULL
+       AND ${notVoided("bp")}
        AND bp.revoked_at IS NULL
        AND coalesce(bp.settlement_deduction_noncash, false) = false
        AND coalesce(bp.is_sample_data, false) = false
@@ -99,7 +99,7 @@ export const SETTLEMENT_NET_PAID_SQL = `
          coalesce(bills.dead_bills, 0)::text AS dead_bills,
          coalesce(cash.cash_cents, 0)::text AS cash_cents,
          cash.last_payment_date, cash.bill_payment_ids, cash.last_method, cash.last_reference,
-         (s.voided_at IS NULL AND s.status <> 'cancelled'
+         (${notVoided("s")} AND ${statusNotCancelled("s")}
           AND coalesce(bills.bill_count, 0) > 0
           AND round(coalesce(s.net_pay, 0) * 100) > 0
           AND coalesce(bills.dead_bills, 0) = 0

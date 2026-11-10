@@ -15,6 +15,12 @@
 // --selftest plants each defect and proves the guard fails on it.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { expandWith, loadPredicates } from "./lib/expand-live-document-predicates.mjs";
+// sweepA (2026-11-10) — sources are read through the canonical predicate expander: a reader that spells the exclusion
+// with the shared helper (`${notVoided("x")}`, `${liveDriverBill("db")}`, …, required by
+// verify-live-document-predicates-single-source) is judged on the SQL the REAL helper emits. Deleting the helper call,
+// or a helper body that stops emitting the predicate, still fails this guard.
+const LIVE_PREDICATES = await loadPredicates();
 
 const LABEL = "verify-settlement-line-dedupe-keys-on-load";
 const ROOT = process.cwd();
@@ -113,7 +119,7 @@ export function judgeStatementReader(file, text) {
 }
 
 function read(rel) {
-  return readFileSync(join(ROOT, rel), "utf8");
+  return expandWith(LIVE_PREDICATES, readFileSync(join(ROOT, rel), "utf8"));
 }
 
 function runLive() {
@@ -154,6 +160,9 @@ function selftest() {
   const r = read(STATEMENT_READERS[1]);
   cases.push(["C0 reader passes", judgeStatementReader("r", r).length === 0]);
   cases.push(["C1 reader prints voided lines", judgeStatementReader("r", r.replace(/\n\s*-- ACCT-F11098[^\n]*\n\s*AND is_active = true\n\s*AND voided_at IS NULL/, "")).length > 0]);
+  // sweepA — the reader spells the predicate with the shared helper; deleting the helper call is still caught.
+  const rawDoc = readFileSync(join(ROOT, STATEMENT_READERS[0]), "utf8");
+  cases.push(["C2 helper call deleted", rawDoc.includes('AND ${notVoided("sl")}') && judgeStatementReader("d", expandWith(LIVE_PREDICATES, rawDoc.replace('AND ${notVoided("sl")}', ""))).length > 0]);
   let ok = true;
   for (const [name, pass] of cases) {
     console.log(`${pass ? "PASS" : "FAIL"}  ${name}`);

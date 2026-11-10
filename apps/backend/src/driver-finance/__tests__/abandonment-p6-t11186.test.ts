@@ -296,7 +296,7 @@ describe("P6-T11186 abandonment chargeback computation", () => {
     expect(calls.some((c) => c.includes("audit.append_event"))).toBe(true);
   });
 
-  it("skips settlement inserts when settlement_lines table is missing", async () => {
+  it("fails closed (never a silent zero-applied result) when settlement_lines table is missing", async () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes("to_regclass('driver_finance.settlement_lines')")) return { rows: [{ ok: false }] };
@@ -304,13 +304,15 @@ describe("P6-T11186 abandonment chargeback computation", () => {
       }),
     };
 
-    const applied = await applyApprovedAbandonmentChargebacksToSettlement(client as never, {
-      settlementId: "set-1",
-      driverId: "drv-1",
-      operatingCompanyId: "co-1",
-      actorUserId: "actor-1",
-    });
-    expect(applied.appliedCount).toBe(0);
-    expect(applied.deferredCount).toBe(0);
+    await expect(
+      applyApprovedAbandonmentChargebacksToSettlement(client as never, {
+        settlementId: "set-1",
+        driverId: "drv-1",
+        operatingCompanyId: "co-1",
+        actorUserId: "actor-1",
+      })
+    ).rejects.toThrow(/settlement_lines_unavailable/);
+    // Only the probe ran — no settlement insert, no chargeback write.
+    expect(client.query).toHaveBeenCalledTimes(1);
   });
 });

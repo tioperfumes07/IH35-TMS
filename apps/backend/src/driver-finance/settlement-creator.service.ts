@@ -318,7 +318,7 @@ export function advanceIdsUndoneOnEdit(prior: { advance_ids?: string[]; overflow
  * voidDocument (expense/invoice/factoring_advance) + reverseDriverAdvanceInClientTx +
  * reverseSettlementForVoid. Companion ids come from the prior settlement_creator.posted audit.
  */
-async function voidPriorCreatorSettlementForEdit(
+export async function voidPriorCreatorSettlementForEdit(
   client: DbClient,
   actorUserId: string,
   opco: string,
@@ -998,7 +998,12 @@ export async function postSettlementCreatorInClientTx(
   draft: SettlementCreatorDraft,
   /** R14 — rehearsal: the preview runs THIS post (no other code path) in a savepoint it rolls back. Only the up-front
    *  can_post refusal is skipped, so every engine refusal is reached and reported. */
-  opts: { rehearsal?: boolean } = {},
+  opts: {
+    rehearsal?: boolean;
+    /** ACCT-F11141 — post-as-signed: live fill rows a superseded (reversed) settlement left on these loads, re-used by the fuel
+     *  loop exactly like an Edit's own prior fills (Option 1, 5769 repair): one provider transaction, never a second row. */
+    reuseFuelIds?: string[];
+  } = {},
 ): Promise<SettlementCreatorPostResult> {
   // ROUND 443.7 a (Option A) — the Creator closes the settlement itself through the pay-run close; the load-bookended
   // settlement ping (open on in_transit, close on delivery) steps aside for the rest of this transaction.
@@ -1038,7 +1043,7 @@ export async function postSettlementCreatorInClientTx(
   const postsThroughClose = !(typedNo && isPresettlementPSeries(typedNo));
   let settlementId: string;
   // Option 1 — fill rows of the settlement this Edit replaces, re-used (never re-inserted) by the fuel loop below.
-  let priorFuelIds: string[] = [];
+  let priorFuelIds: string[] = [...(opts.reuseFuelIds ?? [])];
   // ENG-24 — prior owed bills deferred from the void step; the write loop amends matching bills, then voids the rest.
   let priorOwedBillIds: string[] = [];
   let priorOwedBillKeys: PriorOwedBillKey[] = [];
@@ -1074,7 +1079,7 @@ export async function postSettlementCreatorInClientTx(
         found.rows[0].id,
         targetDisplay,
       );
-      priorFuelIds = priorEdit.fuelIds;
+      priorFuelIds = [...priorFuelIds, ...priorEdit.fuelIds];
       priorOwedBillIds = priorEdit.priorOwedBillIds;
       priorOwedBillKeys = await fetchPriorOwedBillKeys(client, draft.operating_company_id, priorOwedBillIds);
     }
@@ -1142,7 +1147,7 @@ export async function postSettlementCreatorInClientTx(
           existing.rows[0].id,
           typedNo,
         );
-        priorFuelIds = priorEdit2.fuelIds;
+        priorFuelIds = [...priorFuelIds, ...priorEdit2.fuelIds];
         priorOwedBillIds = priorEdit2.priorOwedBillIds;
         priorOwedBillKeys = await fetchPriorOwedBillKeys(client, draft.operating_company_id, priorOwedBillIds);
       }
@@ -1181,10 +1186,12 @@ export async function postSettlementCreatorInClientTx(
       settlementId = shells[0]!.id;
       displayId = shells[0]!.display_id;
       await client.query(
-        // The tour is complete per the signed settlement: close its trip exactly as createBareSettlementForDocument
-        // creates an AlwaysTrack settlement (status 'closed', trip_closed_at = period end); the pay-run close posts it.
+        // The tour is complete per the signed settlement: its trip closes (trip_closed_at = period end) and the pay-run close
+        // below flips status to 'closed' in the SAME UPDATE that stamps posted_at — ACCT-F11141: setting status 'closed' here
+        // is refused by tg_settlement_close_requires_posting (ENG-01, 443.322), so every Creator post that booked an NB load
+        // (a born tour shell) failed. ENG-01's own pattern: status stays 'open' + trip_closed_at (closeSettlementPayRun tripClosedOpen).
         `UPDATE driver_finance.driver_settlements
-            SET period_start = $2::date, period_end = $3::date, status = 'closed',
+            SET period_start = $2::date, period_end = $3::date,
                 trip_closed_at = COALESCE(trip_closed_at, $3::date), updated_at = now()
           WHERE id = $1::uuid`,
         [settlementId, draft.period_start, draft.period_end],
@@ -1707,6 +1714,17 @@ export async function postSettlementCreatorInClientTx(
             throw new SettlementCreatorError("relay_fill_load_move_refused", `Fuel line: the Relay fill already posted on another load and cannot move to load ${fillLoad.loadNumber} — ${(err as Error)?.message ?? err}`);
           }
         }
+        // ACCT-F11141 — the carry answers "in_place" when the fill's postings already follow its record onto this load; the
+        // document header then still named no load and the settlement number below was refused
+        // (expenses_settlement_no_requires_load; measured on a prod fork, signed #5870 Relay fill 2026-11-06). The header
+        // names the load its postings carry (fill-once, the same header write attachFuelReceiptToLoad makes).
+        if (loadId) {
+          await client.query(
+            `UPDATE accounting.expenses SET load_id = $3::uuid, updated_at = now()
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND ${notVoided()}`,
+            [fillDoc.expense_id, draft.operating_company_id, loadId],
+          );
+        }
         // LEAD 443.203 (19:52Z) — this settlement prints the fill and its document now sits on this settlement's load: a
         // reference to a settlement that no longer holds it (the fill's earlier settlement, or a cancelled one) is restamped
         // to this one, old reference audited. Only here — never for a fill this settlement does not print.
@@ -1745,12 +1763,40 @@ export async function postSettlementCreatorInClientTx(
       expenseIds.push(doc.expense_id);
       // LEAD 443.121 #1 — ONE fuel receipt identity: if this receipt already posted through any writer (received at
       // import, matched at the bank), the document adopts that entry; the Creator never posts the same receipt twice.
+      if (fuel.card === "relay" && relayFillId && doc.outcome === "already_exists") {
+        // The fill's document follows the load this settlement prints it on (the same carry the relay_link path runs), so
+        // the settlement number stamped on it below always has its load (expenses_settlement_no_requires_load).
+        if (loadId) {
+          const { carryFuelReceiptToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
+          try {
+            await carryFuelReceiptToLoad(client as never, {
+              operatingCompanyId: draft.operating_company_id, actorUserId, fillKind: "relay_fuel", fillId: relayFillId,
+              toLoadId: loadId, toLoadNumber: fillLoad.loadNumber,
+              reason: `ACCT-F11141 — Settlement ${sourceDocumentRef ?? displayId} carries Relay fill to load ${fillLoad.loadNumber}`,
+            });
+          } catch (err) {
+            throw new SettlementCreatorError("relay_fill_load_move_refused", `Fuel line ${fuel.date}: the Relay fill cannot move to load ${fillLoad.loadNumber} — ${(err as Error)?.message ?? err}`);
+          }
+          // Postings already on the load ("in_place": they follow the fill's record) — the document header names it too, the
+          // same header write attachFuelReceiptToLoad makes (fill-once: only a document with no load).
+          await client.query(
+            `UPDATE accounting.expenses SET load_id = $3::uuid, updated_at = now()
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND ${notVoided()}`,
+            [doc.expense_id, draft.operating_company_id, loadId],
+          );
+        }
+      }
       const receiptPosted = await findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id);
       if (receiptPosted?.journal_entry_id) {
         await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, receiptPosted.journal_entry_id);
         journalEntryIds.push(receiptPosted.journal_entry_id);
         continue;
       }
+      // ACCT-F11141 — a Relay fill's record already carries its document (written at receipt) that is not posted yet: the
+      // Relay fill posts only through itself when its wallet line is matched in Banking (ACCT-F403 — the settlement line
+      // LINKS to the fill and posts NO fuel). Posting the document here credited the wallet from an expense and the ledger
+      // refused it (relay_wallet_consumed_only_by_a_relay_fill; measured on a prod fork, signed #5859 2026-10-27).
+      if (fuel.card === "relay" && relayFillId && doc.outcome === "already_exists") continue;
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
       try {
         // 443.182 C — the one expense engine posts it on this transaction; the Creator keeps its own posted stamp.
@@ -2193,7 +2239,11 @@ export async function postSettlementCreatorInClientTx(
         INSERT INTO driver_finance.settlement_lines
           (settlement_id, operating_company_id, line_type, description, amount, load_id, source_table, source_reference_id,
            posting_account_id, approval_status, is_sample_data)
-        VALUES ($1::uuid, $2::uuid, 'deduction', $3, $4, $5::uuid, $6, $7::uuid, $8::uuid, 'pending', false)
+        SELECT $1::uuid, $2::uuid, 'deduction', $3, $4, $5::uuid, $6, $7::uuid, $8::uuid, 'pending', false
+        -- ACCT-F11141: createSettlementDeduction materializes this same line when the settlement is an OPEN load_bookended
+        -- tour (the born tour shell stays open until the pay-run close: ENG-01). One deduction, one line.
+         WHERE NOT EXISTS (SELECT 1 FROM driver_finance.settlement_lines x
+                            WHERE x.settlement_id = $1::uuid AND x.source_reference_id = $7::uuid AND ${notVoided("x")} AND x.is_active)
       `,
       [
         settlementId, draft.operating_company_id, reason.slice(0, 500), amountCents / 100, loadId,

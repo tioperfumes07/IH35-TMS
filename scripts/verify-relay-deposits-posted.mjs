@@ -60,7 +60,9 @@ export function evaluate(rows, knownCards, now) {
 
 async function measure(client, codeCards) {
   await client.query("BEGIN");
-  await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+  // Transaction-local (is_local=true) inside the BEGIN above: a session-scoped GUC is lost on a pooled backend and FORCE-RLS
+  // then returns zero rows — a false LIVE PASS (verify-no-session-scoped-rls-bypass, DB-F01).
+  await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
   const cards = await client.query(
     `SELECT card_last4 FROM integrations.relay_company_cards
       WHERE operating_company_id = $1::uuid AND is_active AND voided_at IS NULL`,
@@ -74,7 +76,8 @@ async function measure(client, codeCards) {
        LEFT JOIN integrations.relay_deposits rd
               ON rd.operating_company_id = bt.operating_company_id AND 'relay_deposit:' || rd.deposit_id = bt.source_ref
        LEFT JOIN accounting.journal_entries je
-              ON je.id = rd.posted_journal_entry_id AND je.status = 'posted' AND je.voided_at IS NULL
+              ON je.id = rd.posted_journal_entry_id AND je.operating_company_id = bt.operating_company_id
+             AND je.status = 'posted' AND je.voided_at IS NULL
       WHERE bt.operating_company_id = $1::uuid
         AND bt.source_ref LIKE 'relay_deposit:%'
         AND bt.voided_at IS NULL

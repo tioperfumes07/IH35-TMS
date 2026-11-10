@@ -44,11 +44,14 @@ export function audit(s) {
   const f = [];
   // R93a
   if (!/COALESCE\(d\.merged_into_driver_id, d\.id\)/.test(s.resolver)) f.push("R93a: resolveSurvivorDriverId does not follow merged_into_driver_id");
-  if (!/const localDriverId = await resolveSurvivorDriverId\(client as never, mappedDriverId\)/.test(s.pull) || !before(s.pull, "resolveSurvivorDriverId(client as never, mappedDriverId)", "INSERT INTO hos.duty_status_events"))
+  // CLS-JOIN-ENTITY-UNSCOPED: the shell is read in the writer's company (merges never cross companies) — an id from another
+  // entity is never followed onto this company's HOS ledger.
+  if (!/FROM mdata\.drivers d WHERE d\.id = \$1::uuid AND d\.operating_company_id = \$2::uuid/.test(s.resolver)) f.push("R93a: resolveSurvivorDriverId reads the shell without the writer's company");
+  if (!/const localDriverId = await resolveSurvivorDriverId\(client as never, mappedDriverId, operatingCompanyId\)/.test(s.pull) || !before(s.pull, "resolveSurvivorDriverId(client as never, mappedDriverId, operatingCompanyId)", "INSERT INTO hos.duty_status_events"))
     f.push("R93a: the Samsara HOS poll writes the mapped id without resolving the survivor");
-  if (!/const localDriverId = mappedDriverId \? await resolveSurvivorDriverId\(client as never, mappedDriverId\) : null/.test(s.projector))
+  if (!/const localDriverId = mappedDriverId \? await resolveSurvivorDriverId\(client as never, mappedDriverId, event\.operating_company_id\) : null/.test(s.projector))
     f.push("R93a: the HOS webhook projector writes the mapped id without resolving the survivor");
-  if (!/const driverUuid = await resolveSurvivorDriverId\(client as never, map\.local\)/.test(s.clocks) || !/operatingCompanyId, driverUuid, map\.unit,/.test(s.clocks))
+  if (!/const driverUuid = await resolveSurvivorDriverId\(client as never, map\.local, operatingCompanyId\)/.test(s.clocks) || !/operatingCompanyId, driverUuid, map\.unit,/.test(s.clocks))
     f.push("R93a: the HOS clocks snapshot writes the mapped id without resolving the survivor");
   // R93b
   if (!/NOT EXISTS[\s\S]*s\.duty_status = e\.duty_status[\s\S]*s\.started_at = e\.started_at[\s\S]*s\.source = e\.source/.test(s.repoint)) f.push("R93b: the HOS repoint can move a duplicate onto the survivor");
@@ -78,8 +81,9 @@ if (process.argv.includes("--selftest")) {
   const plant = (k, a, b) => (src[k].includes(a) ? audit({ ...src, [k]: src[k].replace(a, b) }).length > 0 : null);
   const cases = [
     ["clean sources pass", audit(src).length === 0],
-    ["93a poll writes the shell FAILS", plant("pull", "const localDriverId = await resolveSurvivorDriverId(client as never, mappedDriverId);", "const localDriverId = mappedDriverId;")],
-    ["93a projector writes the shell FAILS", plant("projector", "const localDriverId = mappedDriverId ? await resolveSurvivorDriverId(client as never, mappedDriverId) : null;", "const localDriverId = mappedDriverId;")],
+    ["93a poll writes the shell FAILS", plant("pull", "const localDriverId = await resolveSurvivorDriverId(client as never, mappedDriverId, operatingCompanyId);", "const localDriverId = mappedDriverId;")],
+    ["93a projector writes the shell FAILS", plant("projector", "const localDriverId = mappedDriverId ? await resolveSurvivorDriverId(client as never, mappedDriverId, event.operating_company_id) : null;", "const localDriverId = mappedDriverId;")],
+    ["93a resolver reads the shell unscoped FAILS", plant("resolver", " AND d.operating_company_id = $2::uuid`", "`")],
     ["93a snapshot writes the shell FAILS", plant("clocks", "operatingCompanyId, driverUuid, map.unit,", "operatingCompanyId, map.local, map.unit,")],
     ["93a resolver stops following merges FAILS", plant("resolver", "COALESCE(d.merged_into_driver_id, d.id)", "d.id")],
     ["93b duplicate moved FAILS", plant("repoint", "AND s.started_at = e.started_at", "")],

@@ -6,6 +6,7 @@
  */
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { liveDriverBill, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 
 const querySchema = companyQuerySchema.extend({
@@ -52,7 +53,7 @@ export async function registerEquipmentTypeProfitabilityRoutes(app: FastifyInsta
             FROM mdata.loads l
            WHERE l.operating_company_id = $1::uuid
              AND l.soft_deleted_at IS NULL
-             AND l.voided_at IS NULL
+             AND ${notVoided("l")}
              AND l.status::text <> 'cancelled'
              AND l.created_at::date BETWEEN $2::date AND $3::date
         ),
@@ -62,8 +63,7 @@ export async function registerEquipmentTypeProfitabilityRoutes(app: FastifyInsta
            WHERE db.operating_company_id = $1::uuid
              AND db.load_id IN (SELECT id FROM loads)
              -- Live driver pay only (Codex batch54): void/voided bills are not cost.
-             AND db.voided_at IS NULL
-             AND db.status NOT IN ('void', 'voided')
+             AND ${liveDriverBill("db")}
            GROUP BY db.load_id
         ),
         fuel AS (

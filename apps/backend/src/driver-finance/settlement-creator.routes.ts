@@ -25,6 +25,7 @@ import { peekNextSettlementSourceDocumentRef } from "./settlement-source-documen
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { loadLastAfterCommit, overallOk, recordAfterCommit, runCreatorAfterCommit, type CreatorStages } from "./settlement-creator-after-commit.js";
+import { postSignedSettlementAsSigned, type SignedSettlement } from "./settlement-creator-post-as-signed.js";
 
 /** Lead 443.57 — one miles field's source for the LOAD's saved operating miles (CC-2's engine). Manual needs a value + reason. */
 const milesFieldChoiceSchema = z
@@ -421,6 +422,91 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       }
       throw err;
     }
+  });
+
+  // ACCT-F11141 (ROUND 8.7) — post a signed AlwaysTrack settlement EXACTLY as signed, in one transaction: whatever the app
+  // holds for its number or its loads gives way (open P-trip lines voided, a wrong-numbered or wrong settlement reversed by
+  // the settlement engine), then the Settlement Creator posts it with settlement_no = the signed number and the posted net,
+  // gross, reimbursements and deductions must equal the document penny-exact. Idempotent: the same document again answers
+  // "already_as_signed" and writes nothing. dry_run = the whole post, rolled back.
+  app.post("/api/v1/driver-finance/settlement-creator/post-as-signed", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+    const parsed = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        dry_run: z.boolean().default(true),
+        signed: z
+          .object({
+            num: z.union([z.string().regex(/^\d{3,10}$/), z.number().int().positive()]),
+            start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            stops: z.array(z.object({}).passthrough()).min(2).max(200),
+            charges: z.array(z.object({}).passthrough()).min(1).max(50),
+            driver_pay: z.array(z.object({}).passthrough()).max(400),
+            fuel: z.array(z.object({}).passthrough()).max(400),
+            expenses: z.array(z.object({}).passthrough()).max(400),
+            drv: z.object({ driver: z.string().min(2), total_due: z.number() }).passthrough(),
+          })
+          .passthrough(),
+      })
+      .safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    if (b.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    const ROLLBACK = Symbol("post_as_signed_dry_run");
+    let outcome: Awaited<ReturnType<typeof postSignedSettlementAsSigned>> | null = null;
+    try {
+      await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.operating_company_id]);
+        outcome = await postSignedSettlementAsSigned(client as never, { uuid: user.uuid, role: user.role }, {
+          operating_company_id: b.operating_company_id,
+          signed: b.signed as unknown as SignedSettlement,
+        });
+        if (b.dry_run) throw ROLLBACK;
+      });
+    } catch (err) {
+      if (err !== ROLLBACK) {
+        if (err instanceof FeedGateError) return reply.code(409).send({ error: err.code, message: err.message, feed_gate: err.details ?? null });
+        if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
+          return reply.code(err.code === "not_as_signed" || err.code === "signed_document_unresolved" ? 422 : 400).send({ error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+    const done = outcome as Awaited<ReturnType<typeof postSignedSettlementAsSigned>> | null;
+    if (!done) return reply.code(500).send({ error: "post_as_signed_no_result" });
+    if (done.status === "already_as_signed") return reply.code(200).send({ ok: true, dry_run: b.dry_run, ...done });
+    const { result, after_commit, ...rest } = done;
+    if (b.dry_run) return reply.code(200).send({ ok: true, dry_run: true, ...rest, journal_entry_ids: result.journal_entry_ids, close_totals: result.close_totals ?? null });
+    // COMMITTED — only now the booked loads' after-book extras and the Creator's after-commit stages (never after a rollback).
+    for (const run of after_commit) run();
+    const afterInput = {
+      operating_company_id: b.operating_company_id,
+      settlement_id: result.settlement_id,
+      loads: result.load_ids.map((load_id, i) => {
+        const loadNumbers = [...new Set((b.signed.charges as Array<{ load?: unknown }>).map((c) => String(c.load ?? "").trim()))];
+        const meta = (b.signed as { loads_meta?: Record<string, { factoring?: string }> }).loads_meta ?? {};
+        return { load_id, load_number: loadNumbers[i] ?? "", factoring: meta[loadNumbers[i] ?? ""]?.factoring ?? "direct", delivered: true };
+      }),
+    };
+    const after = await runCreatorAfterCommit(user.uuid, afterInput);
+    await recordAfterCommit(user.uuid, afterInput, after);
+    // LST-F11148: the post committed; ok is the four stages' verdict (documents/ledger/factoring/billing), never a literal —
+    // the same stage shape and verdict the /post route answers.
+    const stages: CreatorStages = {
+      documents: { ok: true, status: "committed", message: `Settlement ${result.display_id} and its documents are saved.` },
+      ledger: result.journal_entry_ids.length > 0
+        ? { ok: true, status: "posted", message: `${result.journal_entry_ids.length} journal entr${result.journal_entry_ids.length === 1 ? "y" : "ies"} posted.` }
+        : { ok: false, status: "not_posted", message: "Nothing was posted to the ledger for this settlement." },
+      ...after,
+    };
+    return reply.code(200).send({ ok: overallOk(stages), dry_run: false, ...rest, journal_entry_ids: result.journal_entry_ids, close_totals: result.close_totals ?? null, stages });
   });
 
   // RULING 443.66 — bring a POSTED Creator settlement's documents to the categorization the engine now writes at post

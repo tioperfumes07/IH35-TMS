@@ -83,12 +83,26 @@ export function halfReleasedWhereClause() {
  * matched_journal_entry_id (sets it to NULL, in a SQL string) must also reference
  * reverseJournalEntryNoFlip somewhere in the same file — the reversal engine that must run first.
  */
+//
+// LST sweepA (2026-11-10) — #27933 (ENG-28) moved BANK_TX_UNMATCH_RESET_SQL + releaseBankLinesNamingDocument
+// verbatim out of void.service.ts into the dependency-only module posting-reversal-context.ts (to break an import
+// cycle). The rule is unchanged: the pointer may only be dropped on a path that reverses. A dependency-only module
+// that clears the pointer passes ONLY when it has at least one importer and EVERY non-test importer of it calls
+// reverseJournalEntryNoFlip itself — exactly the coverage the guard gave when the code lived in void.service.ts.
+// A clearing module nobody imports, or one imported by any file that never reverses, is still an orphan path.
+function moduleImporters(files, relativePath) {
+  const base = path.basename(relativePath).replace(/\.tsx?$/, "");
+  const spec = new RegExp(`from\\s+["'][^"']*/${base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\.js)?["']`);
+  return files.filter((f) => f.relativePath !== relativePath && spec.test(f.source));
+}
 export function findOrphanJeClearPaths(files) {
   const CLEAR_RE = /matched_journal_entry_id\s*=\s*NULL/i;
   const violations = [];
   for (const { relativePath, source } of files) {
     if (!CLEAR_RE.test(source)) continue;
     if (source.includes("reverseJournalEntryNoFlip")) continue;
+    const importers = moduleImporters(files, relativePath);
+    if (importers.length > 0 && importers.every((f) => f.source.includes("reverseJournalEntryNoFlip"))) continue;
     violations.push(relativePath);
   }
   return violations;
@@ -200,6 +214,13 @@ function selftest() {
   if (findOrphanJeClearPaths(bad).length !== 1) failures.push("findOrphanJeClearPaths did not flag the bad fixture");
   if (findOrphanJeClearPaths(good).length !== 0) failures.push("findOrphanJeClearPaths wrongly flagged the good fixture");
   if (findOrphanJeClearPaths(unrelated).length !== 0) failures.push("findOrphanJeClearPaths flagged a file that never clears the pointer at all — false positive");
+  // sweepA — a dependency-only clearing module is judged by its importers.
+  const lib = { relativePath: "apps/backend/src/x/reset-lib.ts", source: "export const RESET = `UPDATE t SET matched_journal_entry_id = NULL`;" };
+  const reversingImporter = { relativePath: "apps/backend/src/x/void.ts", source: `import { RESET } from "./reset-lib.js";\nawait reverseJournalEntryNoFlip(c, {});` };
+  const orphanImporter = { relativePath: "apps/backend/src/x/orphan.ts", source: `import { RESET } from "../x/reset-lib.js";\nawait c.query(RESET);` };
+  if (findOrphanJeClearPaths([lib, reversingImporter]).length !== 0) failures.push("a clearing module imported only by a reversing file was flagged");
+  if (findOrphanJeClearPaths([lib]).length !== 1) failures.push("a clearing module with no importer at all was not flagged");
+  if (findOrphanJeClearPaths([lib, reversingImporter, orphanImporter]).length !== 1) failures.push("a clearing module imported by a file that never reverses was not flagged");
 
   // Arm C — a source string missing the bindings must be flagged; the real file must not be.
   const emptySource = "export function X() { return null; }";

@@ -14,6 +14,26 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+/** The escrow holder-driver join rule (D076 + CLS-JOIN-ENTITY-UNSCOPED). Pure — selftest plants against it. */
+export function holderJoinErrors(service) {
+  const errors = [];
+  // D076 — a strict same-company join left 1 USMCA holder "Driver — not visible": its holder row is a TRANSPORTATION shell
+  // merged into a USMCA driver. #27610 fixed that by joining on id ALONE, which admitted ANY other entity's driver
+  // (CLS-JOIN-ENTITY-UNSCOPED). The rule both guards hold: the holder join admits this company's driver OR a shell merged
+  // into this company's driver — never a bare id-only join, never strict-same-company-only.
+  const drvJoinMatch = service.match(/LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id([\s\S]*?)\n\s*(?:--|LEFT JOIN)/);
+  if (!drvJoinMatch) {
+    errors.push("escrow/service D076: listEscrowAccounts must LEFT JOIN mdata.drivers d ON holder_type=driver AND d.id = ea.holder_id");
+  } else {
+    const on = drvJoinMatch[1];
+    if (!/d\.operating_company_id\s*=\s*ea\.operating_company_id/.test(on))
+      errors.push("escrow/service: driver holder join is id-only — another entity's driver name would render on a USMCA escrow (CLS-JOIN-ENTITY-UNSCOPED)");
+    if (!/OR EXISTS \(\s*SELECT 1 FROM mdata\.drivers (\w+)\s+WHERE \1\.id = d\.merged_into_driver_id\s+AND \1\.operating_company_id = ea\.operating_company_id/.test(on))
+      errors.push("escrow/service D076: driver holder join must also admit a shell merged into this company's driver (else the merged holder reads \"Driver — not visible\")");
+  }
+  return errors;
+}
+
 export function assertEscrowPostingEntitylinkReverse() {
   const errors = [];
   const escrow = read(ESCROW_PAGE);
@@ -57,17 +77,7 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!/holder_label/.test(service) || !/LEFT JOIN mdata\.drivers/.test(service)) {
     errors.push("escrow/service listEscrowAccounts must JOIN drivers/vendors for holder_label");
   }
-  // D076 — join driver by id only. Escrow rows are already OCI-scoped; requiring
-  // d.operating_company_id = ea.operating_company_id left USMCA holders as "Driver — not visible"
-  // when the driver row lives under another company tag.
-  const drvJoinMatch = service.match(
-    /LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id([\s\S]{0,160}?)(?:--|LEFT JOIN)/,
-  );
-  if (!drvJoinMatch) {
-    errors.push("escrow/service D076: listEscrowAccounts must LEFT JOIN mdata.drivers d ON holder_type=driver AND d.id = ea.holder_id");
-  } else if (/d\.operating_company_id\s*=\s*ea\.operating_company_id/.test(drvJoinMatch[1])) {
-    errors.push("escrow/service D076: driver holder join must NOT require d.operating_company_id = ea.operating_company_id");
-  }
+  errors.push(...holderJoinErrors(service));
   if (!/source_label/.test(service) || !/driver_finance\.driver_settlements/.test(service)) {
     errors.push("escrow/service listEscrowPostings must JOIN settlements/bills/advances for source_label");
   }
@@ -114,7 +124,22 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: V3 strip removal should clear V3KpiTile + data-escrow-v3-kpis`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS (entitylink + V3 escrow strip)`);
+  // Plants against the holder join: the #27610 id-only join (leak) and the pre-D076 strict join (merged holder hidden) both FAIL.
+  const svc = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/escrow/service.ts"), "utf8");
+  const joinRe = /(LEFT JOIN mdata\.drivers d\s+ON ea\.holder_type = 'driver'\s+AND d\.id = ea\.holder_id)[\s\S]*?(\n\s*(?:--|LEFT JOIN))/;
+  const idOnly = svc.replace(joinRe, "$1$2");
+  const strictOnly = svc.replace(joinRe, "$1\n         AND d.operating_company_id = ea.operating_company_id$2");
+  for (const [name, planted] of [["id-only holder join (#27610 leak)", idOnly], ["strict same-company-only holder join (pre-D076)", strictOnly]]) {
+    if (planted === svc || holderJoinErrors(planted).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL: planted ${name} was not caught`);
+      process.exit(1);
+    }
+  }
+  if (holderJoinErrors(svc).length !== 0) {
+    console.error(`${LABEL} SELFTEST FAIL: real holder join flagged: ${holderJoinErrors(svc).join(" | ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS (entitylink + V3 escrow strip + holder join: id-only and strict-only plants caught)`);
 }
 
 if (process.argv.includes("--selftest")) {

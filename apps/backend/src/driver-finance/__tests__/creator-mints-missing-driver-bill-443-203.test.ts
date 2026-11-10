@@ -17,7 +17,7 @@ function client(bills: unknown[], driver: string | null = "drv") {
     sql,
     query: vi.fn(async (q: string) => {
       sql.push(q);
-      if (/FROM driver_finance\.driver_bills\s+WHERE operating_company_id/.test(q)) return { rows: bills };
+      if (/FROM driver_finance\.driver_bills(?:\s+db)?\s+WHERE (?:db\.)?operating_company_id/.test(q)) return { rows: bills };
       if (/FROM mdata\.loads WHERE id/.test(q)) return { rows: driver ? [{ driver, team: null }] : [{ driver: null, team: null }] };
       return { rows: [] };
     }),

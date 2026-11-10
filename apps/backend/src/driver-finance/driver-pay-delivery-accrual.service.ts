@@ -25,7 +25,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolvePayComponentItem } from "./pay-component-items.js";
 import { resolveTeamSplitForLoad } from "../settlements/team-splits/apply.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
-import { activeSettlementLine, liveSettlement } from "../accounting/live-document-predicates.sql.js";
+import { activeSettlementLine, liveDriverBill, liveSettlement } from "../accounting/live-document-predicates.sql.js";
 import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/additional-only-driver-pay.js";
 
 export class DriverPayAccrualError extends Error {
@@ -134,14 +134,13 @@ export async function accrueDriverPayAtDeliveryInClientTx(
   // at close), but cash-flow / A/P aging / verify-driver-bill-due-date-matches-delivery need the
   // due_date flipped from 'projected' the moment delivery evidence exists (13690/13698 residual).
   await client.query(
-    `UPDATE driver_finance.driver_bills
+    `UPDATE driver_finance.driver_bills db
         SET due_date = $3::date,
             due_date_basis = 'delivered',
             updated_at = now()
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
-        AND voided_at IS NULL
-        AND status <> 'void'
+      WHERE db.operating_company_id = $1::uuid
+        AND db.load_id = $2::uuid
+        AND ${liveDriverBill("db")}
         AND (due_date IS DISTINCT FROM $3::date OR due_date_basis IS DISTINCT FROM 'delivered')`,
     [opco, input.loadId, deliveryDate]
   );
