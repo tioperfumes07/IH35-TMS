@@ -6,6 +6,7 @@ import { getArrivingSoon } from "../api/maintenance";
 import { listQuicksaveDrafts } from "../api/dispatch";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors, spacing } from "../design/tokens";
+// spacing.sidebarWidth locked at 66 (ROUND 8.5 S1 / V3 boards).
 import type { UserRole } from "../types/api";
 import { rememberModuleHref } from "../lib/lastModuleNav";
 import { resolveSidebarOrder, SIDEBAR_ITEM_META } from "./layout/sidebar-config";
@@ -73,14 +74,19 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
       ) : null}
       <aside
         className={`sidebar z-50 min-h-0 shrink-0 flex-col overflow-y-auto overscroll-contain text-white md:z-auto md:flex max-lg:overflow-x-hidden ${
-          mobileOpen ? "fixed inset-y-0 left-0 flex w-20 md:relative md:inset-auto" : "hidden md:flex"
+          mobileOpen ? "fixed inset-y-0 left-0 flex md:relative md:inset-auto" : "hidden md:flex"
         }`}
         // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — was a hardcoded rgb(27, 35, 51) / #1B2333
         // literal that bypassed the shared token entirely (colors.sidebarBg existed and was never
         // read here). #1B2333 is technically navy but low-saturation enough to read as near-black
         // on most monitors — the owner's own complaint. Now reads colors.sidebarBg, the same blue
         // already owner-approved for the table header row (#14314F, 2026-09-03).
-        style={{ background: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
+        // ROUND 8.5 S1 — board rail is 66px (V3 chrome), not Tailwind w-20 (80px).
+        style={{
+          width: spacing.sidebarWidth,
+          background: colors.sidebarBg,
+          borderRight: `1px solid ${colors.sidebarBorder}`,
+        }}
       >
         <div className="flex min-h-full flex-col items-center gap-1 py-2">
           {visibleMetas.map((meta) => {
@@ -125,11 +131,17 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                         ) : null}
                       </div>
                       <span
-                        className="mt-1 text-xs leading-none uppercase"
+                        className="mt-1 leading-none uppercase"
                         style={{
                           color: "white",
-                          letterSpacing: "0.4px",
+                          fontSize: 8.5,
                           fontWeight: isActive || forceActive ? 600 : 400,
+                          letterSpacing: "0.03em",
+                          textAlign: "center",
+                          maxWidth: "100%",
+                          padding: "0 2px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {meta.label}
