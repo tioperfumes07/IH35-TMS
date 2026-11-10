@@ -1721,7 +1721,7 @@ export async function postSettlementCreatorInClientTx(
         if (loadId) {
           await client.query(
             `UPDATE accounting.expenses SET load_id = $3::uuid, updated_at = now()
-              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND voided_at IS NULL`,
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND ${notVoided()}`,
             [fillDoc.expense_id, draft.operating_company_id, loadId],
           );
         }
@@ -1781,7 +1781,7 @@ export async function postSettlementCreatorInClientTx(
           // same header write attachFuelReceiptToLoad makes (fill-once: only a document with no load).
           await client.query(
             `UPDATE accounting.expenses SET load_id = $3::uuid, updated_at = now()
-              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND voided_at IS NULL`,
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND ${notVoided()}`,
             [doc.expense_id, draft.operating_company_id, loadId],
           );
         }
@@ -2243,7 +2243,7 @@ export async function postSettlementCreatorInClientTx(
         -- ACCT-F11141: createSettlementDeduction materializes this same line when the settlement is an OPEN load_bookended
         -- tour (the born tour shell stays open until the pay-run close: ENG-01). One deduction, one line.
          WHERE NOT EXISTS (SELECT 1 FROM driver_finance.settlement_lines x
-                            WHERE x.settlement_id = $1::uuid AND x.source_reference_id = $7::uuid AND x.voided_at IS NULL AND x.is_active)
+                            WHERE x.settlement_id = $1::uuid AND x.source_reference_id = $7::uuid AND ${notVoided("x")} AND x.is_active)
       `,
       [
         settlementId, draft.operating_company_id, reason.slice(0, 500), amountCents / 100, loadId,

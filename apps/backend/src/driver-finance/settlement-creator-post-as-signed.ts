@@ -26,7 +26,7 @@
  * No GL math here: every dollar is posted or reversed by the existing engines.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { reverseDeductionForVoid, reverseSettlementForVoid } from "./void-document-callees.service.js";
 import { recomputeSettlementHeader } from "./settlement-load-reassignment.service.js";
 import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads.js";
@@ -222,8 +222,8 @@ export async function findReceivedFill(
        LEFT JOIN integrations.relay_fuel_transactions r ON r.id = f.relay_fuel_transaction_id
        LEFT JOIN LATERAL (SELECT x.* FROM accounting.expenses x
                            WHERE x.source_fuel_transaction_id = f.id AND x.operating_company_id = f.operating_company_id
-                             AND x.voided_at IS NULL AND x.parent_expense_id IS NULL ORDER BY x.created_at LIMIT 1) e ON true
-      WHERE f.operating_company_id = $1::uuid AND f.voided_at IS NULL AND f.fuel_type::text = ANY($2::text[])
+                             AND ${notVoided("x")} AND x.parent_expense_id IS NULL ORDER BY x.created_at LIMIT 1) e ON true
+      WHERE f.operating_company_id = $1::uuid AND ${notVoided("f")} AND f.fuel_type::text = ANY($2::text[])
         AND (f.source <> 'manual' OR r.transaction_id IS NOT NULL)
         AND ($6::uuid IS NULL OR f.unit_id = $6::uuid)
         AND (COALESCE(f.purchased_at, f.transaction_at) AT TIME ZONE 'America/Chicago')::date BETWEEN $3::date - 1 AND $3::date + 1
@@ -427,7 +427,7 @@ export async function signedToCreatorDraft(
     let fuelType = f.fuel_type;
     const relay = received ? null : (await client.query<{ txn: string }>(
       `SELECT transaction_id AS txn FROM integrations.relay_fuel_transactions
-        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND is_active
+        WHERE operating_company_id = $1::uuid AND ${notVoided()} AND is_active
           AND (relay_created_at AT TIME ZONE 'America/Chicago')::date BETWEEN $2::date - 1 AND $2::date + 1
           AND $3::bigint IN (total_amount_paid_cents, total_retail_price_cents)
         ORDER BY abs((relay_created_at AT TIME ZONE 'America/Chicago')::date - $2::date) LIMIT 2`,
@@ -604,9 +604,9 @@ export async function findAlreadyAsSigned(
   const live = (await client.query<{ id: string; display_id: string; driver_id: string; net_cents: string; loads: string[] | null }>(
     `SELECT s.id::text, s.display_id, s.driver_id::text, round(s.net_pay * 100)::text AS net_cents,
             (SELECT array_agg(DISTINCT l.load_number ORDER BY l.load_number) FROM driver_finance.settlement_lines sl
-               JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = s.operating_company_id WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL) AS loads
+               JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = s.operating_company_id WHERE sl.settlement_id = s.id AND ${notVoided("sl")}) AS loads
        FROM driver_finance.driver_settlements s
-      WHERE s.operating_company_id = $1::uuid AND s.source_document_ref = $2 AND ${notVoided("s")} AND s.status <> 'cancelled'`,
+      WHERE s.operating_company_id = $1::uuid AND s.source_document_ref = $2 AND ${notVoided("s")} AND ${statusNotCancelled("s")}`,
     [co, id.settlement_no],
   )).rows;
   const hit = live.find((r) => r.driver_id === driverId && Number(r.net_cents) === id.net_cents
@@ -641,7 +641,7 @@ export async function supersedeForSignedSettlement(
       // deduction would be withheld a second time), then the settlement engine reverse (equal-and-opposite JEs).
       const deds = (await client.query<{ id: string }>(
         `SELECT id::text FROM driver_finance.driver_settlement_deductions
-          WHERE operating_company_id = $1::uuid AND applied_to_settlement_id = $2::uuid AND voided_at IS NULL`,
+          WHERE operating_company_id = $1::uuid AND applied_to_settlement_id = $2::uuid AND ${notVoided()}`,
         [co, row.id],
       )).rows;
       for (const d of deds) {
@@ -655,7 +655,7 @@ export async function supersedeForSignedSettlement(
   // a. this number, held by a settlement that is not the signed one
   const sameNo = (await client.query<{ id: string; display_id: string; ref: string | null }>(
     `SELECT id::text, display_id, source_document_ref AS ref FROM driver_finance.driver_settlements
-      WHERE operating_company_id = $1::uuid AND source_document_ref = $2 AND ${notVoided()} AND status <> 'cancelled'`,
+      WHERE operating_company_id = $1::uuid AND source_document_ref = $2 AND ${notVoided()} AND ${statusNotCancelled()}`,
     [co, no],
   )).rows;
   for (const r of sameNo) await reverse(r, `number ${no} differs from the signed document`);
@@ -666,11 +666,11 @@ export async function supersedeForSignedSettlement(
             (s.posted_at IS NOT NULL OR EXISTS (SELECT 1 FROM driver_finance.payrun_gl_runs g WHERE g.settlement_id = s.id AND g.status = 'posted')) AS posted,
             array_agg(DISTINCT l.load_number) FILTER (WHERE l.load_number = ANY($2::text[])) AS load_numbers,
             (SELECT array_agg(DISTINCT l2.load_number) FROM driver_finance.settlement_lines sl2 JOIN mdata.loads l2 ON l2.id = sl2.load_id AND l2.operating_company_id = s.operating_company_id
-              WHERE sl2.settlement_id = s.id AND sl2.voided_at IS NULL AND sl2.is_active) AS all_loads
+              WHERE sl2.settlement_id = s.id AND ${notVoided("sl2")} AND sl2.is_active) AS all_loads
        FROM driver_finance.driver_settlements s
-       JOIN driver_finance.settlement_lines sl ON sl.settlement_id = s.id AND sl.voided_at IS NULL AND sl.is_active
+       JOIN driver_finance.settlement_lines sl ON sl.settlement_id = s.id AND ${notVoided("sl")} AND sl.is_active
        JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = s.operating_company_id
-      WHERE s.operating_company_id = $1::uuid AND ${notVoided("s")} AND s.status <> 'cancelled' AND l.load_number = ANY($2::text[])
+      WHERE s.operating_company_id = $1::uuid AND ${notVoided("s")} AND ${statusNotCancelled("s")} AND l.load_number = ANY($2::text[])
       GROUP BY s.id`,
     [co, signedLoads],
   )).rows;
@@ -694,7 +694,7 @@ export async function supersedeForSignedSettlement(
       `UPDATE driver_finance.settlement_lines sl
           SET is_active = false, voided_at = COALESCE(sl.voided_at, now()), void_reason = COALESCE(sl.void_reason, $3),
               voided_by_user_id = COALESCE(sl.voided_by_user_id, $4::uuid), updated_at = now()
-        WHERE sl.settlement_id = $1::uuid AND sl.voided_at IS NULL
+        WHERE sl.settlement_id = $1::uuid AND ${notVoided("sl")}
           AND sl.load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = $2::uuid AND load_number = ANY($5::text[]))
         RETURNING sl.id::text`,
       [h.id, co, reason, actorUserId, h.load_numbers],
@@ -708,7 +708,7 @@ export async function supersedeForSignedSettlement(
     await client.query(
       `UPDATE driver_finance.driver_reimbursements r SET applied_to_settlement_id = NULL, settlement_line_id = NULL,
               status = CASE WHEN r.status = 'settled' THEN 'pending' ELSE r.status END, updated_at = now()
-        WHERE r.operating_company_id = $1::uuid AND r.applied_to_settlement_id = $2::uuid AND r.voided_at IS NULL AND r.status <> 'paid'
+        WHERE r.operating_company_id = $1::uuid AND r.applied_to_settlement_id = $2::uuid AND ${notVoided("r")} AND r.status <> 'paid'
           AND r.load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = ANY($3::text[]))`,
       [co, h.id, h.load_numbers],
     );
@@ -731,7 +731,7 @@ export async function supersedeForSignedSettlement(
   await client.query(
     `UPDATE mdata.loads l SET presettlement_link_id = NULL, updated_at = now()
       WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND l.presettlement_link_id IS NOT NULL
-        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id AND (s.voided_at IS NOT NULL OR s.status = 'cancelled'))`,
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id AND NOT (${notVoided("s")} AND ${statusNotCancelled("s")}))`,
     [co, signedLoads],
   );
 
@@ -751,10 +751,10 @@ export async function supersedeForSignedSettlement(
   report.reused_fill_ids = (await client.query<{ id: string }>(
     `SELECT f.id::text FROM fuel.fuel_transactions f
        JOIN mdata.loads l ON l.id = f.load_id AND l.operating_company_id = f.operating_company_id
-      WHERE f.operating_company_id = $1::uuid AND f.voided_at IS NULL AND l.load_number = ANY($2::text[])
+      WHERE f.operating_company_id = $1::uuid AND ${notVoided("f")} AND l.load_number = ANY($2::text[])
         -- a Relay fill's rows are adopted by the Creator's Relay path (by the fill), never re-posted as a card fill
         AND f.relay_fuel_transaction_id IS NULL
-        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL)`,
+        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND ${notVoided("e")})`,
     [co, signedLoads],
   )).rows.map((r) => r.id);
 
@@ -840,7 +840,7 @@ export async function postSignedSettlementAsSigned(
       const row = (await client.query<{ id: string; load_id: string | null }>(
         `SELECT e.id::text, COALESCE((SELECT l.id::text FROM mdata.loads l WHERE l.operating_company_id = e.operating_company_id
                                         AND l.load_number = $3 AND l.soft_deleted_at IS NULL LIMIT 1), e.load_id::text) AS load_id
-           FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.expense_number = $2 AND e.voided_at IS NULL`,
+           FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.expense_number = $2 AND ${notVoided("e")}`,
         [co, c.expense_number, c.load_number ?? null],
       )).rows;
       if (rows1(row) !== 1) throw new SettlementCreatorError("confirm_expense_unknown", `Signed settlement ${draft.settlement_no}: expense ${c.expense_number} is not exactly one live expense of this company.`);
