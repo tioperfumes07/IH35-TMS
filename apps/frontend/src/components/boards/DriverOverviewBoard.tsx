@@ -2,7 +2,7 @@
  * DRV-F420 / F416 / F421 / F422 / F415 — driver profile shell.
  * All 17 tabs render here, scoped to this driver. Active tab is ?tab=.
  */
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddPayLineModal } from "../driver-finance/AddPayLineModal";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -23,6 +23,7 @@ import {
 } from "../../pages/drivers/driverProfileTabs";
 import { CollapsibleProfileCard } from "./CollapsibleProfileCard";
 import { NumLink } from "./partyBoardKit";
+import { V3 } from "../../design/v3-tokens";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
@@ -63,12 +64,29 @@ const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.
 function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab: DriverProfileTab }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreActive = DRIVER_PROFILE_MORE_TABS.includes(activeTab as (typeof DRIVER_PROFILE_MORE_TABS)[number]);
+  // DP1 — board navy strip (DriverProfile.dc.html), not white underline pb-tab chrome.
+  const tabStyle = (active: boolean): CSSProperties => ({
+    padding: "8px 8px",
+    font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif",
+    color: "#fff",
+    opacity: active ? 1 : 0.85,
+    textDecoration: "none",
+    borderBottom: active ? "2px solid #fff" : "2px solid transparent",
+    background: active ? "rgba(255,255,255,0.16)" : "transparent",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+  });
   return (
-    <nav className="dd-tabs" aria-label="Driver" data-testid="driver-profile-tab-strip">
+    <nav
+      aria-label="Driver"
+      data-testid="driver-profile-tab-strip"
+      className="flex flex-nowrap gap-0.5 overflow-x-auto"
+      style={{ background: V3.shell, borderRadius: 2, padding: "0 6px", marginTop: 4 }}
+    >
       {DRIVER_PROFILE_STRIP_TABS.map((label) => (
         <Link
           key={label}
-          className="pb-tab"
+          style={tabStyle(activeTab === label)}
           to={driverProfileTabHref(driverId, label)}
           aria-current={activeTab === label ? "page" : undefined}
         >
@@ -78,7 +96,7 @@ function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab:
       <div className="relative">
         <button
           type="button"
-          className="pb-tab"
+          style={{ ...tabStyle(moreActive), border: "none", cursor: "pointer" }}
           aria-expanded={moreOpen}
           aria-haspopup="menu"
           data-testid="driver-profile-more"

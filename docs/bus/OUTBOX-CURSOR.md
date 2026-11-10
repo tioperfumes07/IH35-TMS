@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:40 PM CT) — DP1–DP4 Driver Profile board engines
+- **PRIOR:** #28767 T5/T6 Settlements Open/Closed board columns.
+- **THIS:** DP1 navy V3.shell tab strip (not white underline). DP2 pay title "Pay this week · open pre-settlement" + compact asymmetric panel (net hero, gross/deductions, load EntityLinks). DP3 Trip Dates column + Rate (Pickup/Delivery folded into Dates). DP4 document status dots + board ParityTables. Real pre-settlement/dispatch/telematics engines; board-only + live tests retargeted.
+- **NEXT:** R2/R4–R6 / D1–D4 full engines. No match/Dreamline. Not chrome-only.
+
 ## OUTBOX (11-09-2026 ~10:35 PM CT) — T5/T6 Settlements Open/Closed board column engines
 - **PRIOR:** #28765 R3 empty-miles engine + D6 canonical Load history.
 - **THIS:** Settlements Open/Closed overview matches board order Settlement→Driver→Unit→Tour legs (grouped)→PU/DEL→money/miles→Ready/Waiting on. Per-leg Load # / check counts / Post stay in column gear (defaultHidden). Open footnote uses engine ready_total (not hard-coded six).
@@ -182,16 +187,6 @@
 ## OUTBOX (11-03-2026 ~8:15 PM CT) — U12 Driver catalog + Teams + Brokers MultiSelect
 - **PRIOR:** #28599 balanced-ledger 19885 + CLOSE-ALL sync.
 - **THIS:** DriverCatalogListPage + DriverTeamsPage + BrokersListPage status → MultiSelectDropdown (apiStatus/apiIsActive). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:05 PM CT) — ENG-34 balanced-ledger 19885 + CLOSE-ALL sync
-- **PRIOR:** #28598 bus-diet Cursor 19883.
-- **THIS:** verify-balanced-ledger --selftest + verify-steps 19885; removed from .guard-exempt. Synced ROUND 7.30 CLOSE-ALL Cursor OPEN/CODED date+D066/D067/D068–D077 rows to PENDING (DONE-LIVE / MERGED-UNVERIFIED). match / verify-static stay exempt.
-- **NEXT:** live walks for remaining MERGED-UNVERIFIED; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:55 PM CT) — ENG-34 wire bus-diet Cursor seat 19883
-- **PRIOR:** #28597 load-driven-miles 19881.
-- **THIS:** verify-bus-diet --seat=cursor + selftest plants; verify-steps 19883; removed from .guard-exempt. Other seats' over-cap bus untouched. balanced-ledger / match / verify-static stay exempt.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

@@ -253,6 +253,12 @@ if (process.argv.includes("--selftest")) {
     "<p>Uploads are stored in docs.file_links after Save.</p>",
     "apps/frontend/src/pages/example.tsx",
   );
+  // LST-F11135: #28765 shipped "Empty miles are mdata.loads.miles_deadhead summed ..." in a
+  // <ReportMeasuredNote>; a schema.table.column inside report-note prose must be caught.
+  const badReportNote = visibleSchemaNames(
+    "<ReportMeasuredNote>\n  Empty miles are mdata.loads.miles_deadhead summed over the rows.\n</ReportMeasuredNote>",
+    "apps/frontend/src/pages/reports/boards/Example.tsx",
+  );
   const protectedExisting = visibleSchemaNames(
     '<code className="text-xs">accounting.bills</code>',
     "apps/frontend/src/pages/system/SystemModulePage.tsx",
@@ -265,6 +271,8 @@ if (process.argv.includes("--selftest")) {
     badMultiline[0]?.token !== "mdata.customers" ||
     badDocsSchema.length !== 1 ||
     badDocsSchema[0]?.token !== "docs.file_links" ||
+    badReportNote.length !== 1 ||
+    badReportNote[0]?.token !== "mdata.loads" ||
     protectedExisting.length !== 0
   ) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — visible schema-name mutation escaped");

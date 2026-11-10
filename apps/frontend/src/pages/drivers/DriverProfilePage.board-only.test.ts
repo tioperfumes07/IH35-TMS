@@ -6,10 +6,13 @@ import liveText from "../../components/driver-profile/DriverLiveOverview.tsx?raw
 import { DRIVER_PROFILE_STRIP_TABS, DRIVER_PROFILE_MORE_TABS, DRIVER_PROFILE_BOARD_LABELS, parseDriverProfileTab, driverProfileTabHref } from "./driverProfileTabs";
 
 describe("443.280 Driver Profile replaces rather than layers the landing", () => {
-  it("uses the four shared board panels without mislabeling pre-settlement pay as weekly pay", () => {
+  it("uses the four shared board panels with board pay heading (Pay this week · open pre-settlement)", () => {
     expect(liveText.match(/<V3Panel\b/g)).toHaveLength(4);
-    expect(liveText).toContain('title="Open pre-settlement"');
-    expect(liveText).not.toContain('title="Pay this week"');
+    // DP2 board title — DriverProfile.dc.html; "open pre-settlement" remains in the label (population not inferred).
+    expect(liveText).toContain('title="Pay this week · open pre-settlement"');
+    expect(liveText).toContain('label: "Dates"');
+    expect(liveText).toContain("statusDot");
+    expect(boardText).toContain("V3.shell");
   });
   it("landing has no page-level Overview legacy blocks or details", () => {
     const page = ts.createSourceFile("page.tsx", pageText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);

@@ -17,3 +17,18 @@ OPEN ROUNDS (execute now, deadline 2026-11-10 12:00Z unless the round says other
 - Cursor: ROUND 8.4 design build + 8.4a type scale.
 - Codex: ROUND 8.5 parity verifier + 8.5a.
 Report in your OUTBOX with proof: PR, sha, live row/screen.
+
+## ROUND 8.9a — LOCAL GATE ADDITION (2026-11-09 10:40 PM CT / 11-10 04:40Z) — ALL CODERS
+
+Measured: main went red twice tonight on UI merges that skipped two ratchets.
+- #28764 broke step 10602 (ParityTable row-height pin). Fixed in #28766 `5dd4d04`.
+- #28765 added `text-[11px]` and `text-[10px]` to `LoadsReportBoard.tsx`. `raw_font_sizes` went 129 -> 130 and `raw_text_off_locked_scale` went 0 -> 1. Fixed in #28768 `7c177a1`.
+
+Rule, effective now. Any PR touching `apps/frontend/**` must have these exit 0 locally before the fast-merge PUT:
+1. `node scripts/verify-ui-design-system-ratchet.mjs`
+2. `node scripts/verify-go26-consolidation-ratchet.mjs`
+3. `(cd apps/frontend && npx tsc --noEmit -p .)`
+
+Type scale: 11 / 12 / 22 px only. Use `.text-section-header` (11px) or `text-xs` (12px). Never write a raw `text-[Npx]`.
+
+If a ratchet is red on main after your merge, the merging seat fixes it inside 15 minutes. If it does not, Claude-Lead takes the fix.
