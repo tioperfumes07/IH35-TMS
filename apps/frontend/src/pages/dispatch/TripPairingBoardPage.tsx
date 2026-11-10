@@ -238,7 +238,6 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
   {
     key: "customer",
     label: "Customer",
-    defaultHidden: true,
     sortable: true,
     sortValue: (t) => t.customer_name ?? "",
     render: (t) =>
@@ -299,7 +298,6 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
   {
     key: "miles_total",
     label: "Miles",
-    defaultHidden: true,
     sortable: true,
     cellClass: "text-right tabular-nums",
     sortValue: (t) => t.miles_total ?? -1,
@@ -313,7 +311,6 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
   {
     key: "rate_total_cents",
     label: "Revenue",
-    defaultHidden: true,
     sortable: true,
     kind: "money",
     cellClass: "text-right tabular-nums",

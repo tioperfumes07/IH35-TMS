@@ -1,0 +1,1 @@
+export default { name: "verify:verify-added-columns-visible-by-default", run(ctx) { ctx.run("node", ["scripts/verify-added-columns-visible-by-default.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-added-columns-visible-by-default.mjs"]); } };

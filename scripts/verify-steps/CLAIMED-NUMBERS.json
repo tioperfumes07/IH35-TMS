@@ -17574,5 +17574,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-relay-fill-not-recorded-twice"
+  },
+  "19973": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-added-columns-visible-by-default"
   }
 }

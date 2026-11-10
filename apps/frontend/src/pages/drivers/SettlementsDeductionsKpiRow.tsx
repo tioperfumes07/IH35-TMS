@@ -266,7 +266,6 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
       key: "created_at",
       label: "Started",
       sortable: true,
-      defaultHidden: true,
       sortValue: (row) => row.created_at ?? "",
       render: (row) => (row.created_at ? formatDateUS(row.created_at) : "—"),
     },
