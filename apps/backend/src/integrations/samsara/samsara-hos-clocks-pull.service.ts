@@ -54,7 +54,7 @@ export async function syncSamsaraHosClocks(client: PgClient, operatingCompanyId:
     try {
       // Register row 93: the snapshot lands on the survivor, never a merged shell (prod 11-03: 49,486 snapshots on 8 shells;
       // e6933af3 took 2 snapshots 4 minutes after its merge).
-      const driverUuid = await resolveSurvivorDriverId(client as never, map.local);
+      const driverUuid = await resolveSurvivorDriverId(client as never, map.local, operatingCompanyId);
       // Verbatim into the (already-migrated) snapshot columns — values stored in MINUTES.
       const res = await client.query(
         `INSERT INTO samsara.hos_snapshots

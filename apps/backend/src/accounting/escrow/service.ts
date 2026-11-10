@@ -169,12 +169,21 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
             ELSE NULL
           END AS holder_label
         FROM accounting.escrow_accounts ea
-        -- D076: join driver by id only. Escrow rows are already OCI-scoped; requiring
-        -- d.operating_company_id = ea.operating_company_id left 1 USMCA holder as
-        -- "Driver — not visible" when the driver row lives under another company tag.
+        -- CLS-JOIN-ENTITY-UNSCOPED: #27610 (D076) joined the holder by id alone, so ANY other entity's driver id on a USMCA
+        -- escrow rendered that entity's driver name on a money record. The holder is admitted only when it is this company's
+        -- driver, or a shell merged into this company's driver (D076: USMCA escrow 3d527c58 holds TRANSPORTATION shell
+        -- dcd683f5, merged into USMCA driver 40823a77 — the same person, so it stays visible).
         LEFT JOIN mdata.drivers d
           ON ea.holder_type = 'driver'
          AND d.id = ea.holder_id
+         AND (
+           d.operating_company_id = ea.operating_company_id
+           OR EXISTS (
+             SELECT 1 FROM mdata.drivers holder_survivor
+              WHERE holder_survivor.id = d.merged_into_driver_id
+                AND holder_survivor.operating_company_id = ea.operating_company_id
+           )
+         )
         -- D076: the merge survivor in THIS company (USMCA escrow 3d527c58 holds TRANSPORTATION driver dcd683f5, merged
         -- into USMCA driver 40823a77) — its name is the holder's same-company name.
         LEFT JOIN mdata.drivers ds

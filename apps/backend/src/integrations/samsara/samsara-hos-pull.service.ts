@@ -117,7 +117,7 @@ export async function syncSamsaraHosLogs(
     }
     // Register row 93: never write onto a merged shell — the person's ONE profile is the survivor (measured 11-03 on prod,
     // USMCA: 9,035 duty events on 15 shells; shell e6933af3 took events up to its merge day).
-    const localDriverId = await resolveSurvivorDriverId(client as never, mappedDriverId);
+    const localDriverId = await resolveSurvivorDriverId(client as never, mappedDriverId, operatingCompanyId);
     const pairedUnit = unitByLocalDriver.get(mappedDriverId);
     if (pairedUnit && !unitByLocalDriver.has(localDriverId)) unitByLocalDriver.set(localDriverId, pairedUnit);
     mapped += 1;

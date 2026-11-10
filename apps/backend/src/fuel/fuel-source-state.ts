@@ -46,9 +46,20 @@ export function fuelGapReason(input: {
 
 export async function readFuelSourceGap(client: Q, companyId: string, sourceMissing: boolean): Promise<FuelSourceGap> {
   const exists = (await client.query(`SELECT to_regclass('fuel.loves_prices_daily') IS NOT NULL AS ok`)).rows[0]?.ok === true;
+  const feedConfigured = lovesFeedConfigured();
+  if (!exists) {
+    // CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: an absent price table is NOT "0 rows, never synced" — it is a source that
+    // cannot be read. Say so (loves_prices_daily_unavailable), never a false empty.
+    return {
+      reason: "loves_prices_daily_unavailable: the Loves price table (fuel.loves_prices_daily) does not exist on this database, so no price can be read.",
+      loves_rows: 0,
+      loves_last_synced_at: null,
+      feed_configured: feedConfigured,
+    };
+  }
   let rows = 0;
   let last: string | null = null;
-  if (exists) {
+  {
     const r = (
       await client.query(
         `SELECT count(*)::int AS n, max(updated_at)::text AS last FROM fuel.loves_prices_daily WHERE operating_company_id = $1::uuid`,
@@ -58,7 +69,6 @@ export async function readFuelSourceGap(client: Q, companyId: string, sourceMiss
     rows = Number(r?.n ?? 0);
     last = (r?.last as string | null) ?? null;
   }
-  const feedConfigured = lovesFeedConfigured();
   return {
     reason: fuelGapReason({ sourceMissing, lovesRows: rows, lovesLastSyncedAt: last, feedConfigured }),
     loves_rows: rows,
