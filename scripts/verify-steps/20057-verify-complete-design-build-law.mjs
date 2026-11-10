@@ -1,0 +1,1 @@
+export default { name: "verify:verify-complete-design-build-law", run(ctx) { ctx.run("node", ["scripts/verify-complete-design-build-law.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-complete-design-build-law.mjs"]); } };

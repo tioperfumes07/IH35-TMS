@@ -17669,5 +17669,10 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100, #28673)"
   },
-  "total_claimed": 1101
+  "20057": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-complete-design-build-law wired into CI (was orphan; LST-F11133)"
+  },
+  "total_claimed": 1102
 }
