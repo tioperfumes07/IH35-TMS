@@ -24,7 +24,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { formatCompanyName } from "../../../lib/formatCompanyName";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
@@ -117,7 +117,7 @@ export function CustomerReportBoard() {
     { key: "open_cents", label: "Open", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.open_cents) },
     { key: "past_due", label: "Past due", sortable: true, sortValue: pastDue, cellClass: "text-right", className: "text-right", render: (r) => (pastDue(r) ? money(pastDue(r)) : "—") },
     { key: "factored", label: "Factored", sortable: true, render: (r) => r.factored ?? "—" },
-    { key: "last_invoice", label: "Last invoice", sortable: true, render: (r) => formatDateUS(r.last_invoice) || "—" },
+    { key: "last_invoice", label: "Last invoice", sortable: true, render: (r) => mmmDd(r.last_invoice) || "—" },
   ];
 
   const openColumns: ParityColumn<CustomerBoardReportRow>[] = [
@@ -129,6 +129,8 @@ export function CustomerReportBoard() {
     {
       key: "invoices_link",
       label: "Invoices",
+      sortable: true,
+      sortValue: (r) => r.invoices,
       render: (r) => (
         <Link className="text-[#1D4ED8] hover:underline" to={`/accounting/invoices?customer_id=${encodeURIComponent(r.id)}&live_open=true`}>
           Open invoices
@@ -138,6 +140,8 @@ export function CustomerReportBoard() {
     {
       key: "statement",
       label: "Statement",
+      sortable: true,
+      sortValue: (r) => name(r.name),
       render: (r) => (
         <Link className="text-[#1D4ED8] hover:underline" to={`/customers/${encodeURIComponent(r.id)}/statement`}>
           Statement
@@ -166,6 +170,8 @@ export function CustomerReportBoard() {
     {
       key: "statement",
       label: "Statement",
+      sortable: true,
+      sortValue: (r) => name(r.name),
       render: (r) => (
         <Link className="font-semibold text-[#1D4ED8] hover:underline" to={`/customers/${encodeURIComponent(r.id)}/statement`} data-testid={`customer-report-statement-${r.id}`}>
           Open statement →
@@ -195,7 +201,7 @@ export function CustomerReportBoard() {
     return {
       filename: `customer-report-${view}`,
       header: ["Customer", "Invoices", "Billed", "Collected", "Open", "Past due", "Factored", "Last invoice"],
-      body: list.map((r) => [name(r.name), r.invoices, r.billed_cents / 100, r.collected_cents / 100, r.open_cents / 100, pastDue(r) / 100, r.factored ?? "", formatDateUS(r.last_invoice)]),
+      body: list.map((r) => [name(r.name), r.invoices, r.billed_cents / 100, r.collected_cents / 100, r.open_cents / 100, pastDue(r) / 100, r.factored ?? "", mmmDd(r.last_invoice)]),
     };
   };
 
@@ -252,7 +258,7 @@ export function CustomerReportBoard() {
           testId="cr-kpi-open-ar"
           label="Open A/R"
           value={aging.data ? money(agingTotals.total) : "…"}
-          sub={`${agingTotals.invoices} invoices · as of ${formatDateUS(asOf)}`}
+          sub={`${agingTotals.invoices} invoices · as of ${mmmDd(asOf)}`}
           onClick={() => setView("aging")}
         />
         <V3KpiTile
@@ -316,7 +322,7 @@ export function CustomerReportBoard() {
       {view === "aging" ? (
         <ParityTable
           rows={agingRows}
-          title={`A/R aging · as of ${formatDateUS(asOf)} · by due date`}
+          title={`A/R aging · as of ${mmmDd(asOf)} · by due date`}
           columns={agingColumns}
           rowKey={(r) => r.customer_id}
           loading={aging.isPending}

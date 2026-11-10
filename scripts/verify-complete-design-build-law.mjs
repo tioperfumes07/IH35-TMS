@@ -118,8 +118,8 @@ function checkFindings() {
   }
 
   const fuelPeriod = read("apps/frontend/src/pages/fuel/fuelBoardPeriod.ts");
-  // #28740 derives the month from companyToday() + a MO[] table (CT law), not toLocaleString — either is a live month name.
-  if (!/export function fuelBoardPeriodOptions/.test(fuelPeriod) || !/toLocaleString\(|MO\[m\]/.test(fuelPeriod)) {
+  // Live month labels via MO[] (not static "Oct"/"Sep" option strings).
+  if (!/fuelBoardPeriodOptions/.test(fuelPeriod) || !/const MO = \[/.test(fuelPeriod) || !/label: MO\[/.test(fuelPeriod)) {
     fails.push("F3: fuelBoardPeriod.ts must export fuelBoardPeriodOptions() with live month names");
   }
 

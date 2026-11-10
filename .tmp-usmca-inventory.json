@@ -438,19 +438,19 @@
       "path": "/api/v1/banking/accounts/faro-reserve",
       "kind": "create",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 368
+      "line": 369
     },
     {
       "path": "/api/v1/banking/accounts/petty-cash",
       "kind": "create",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 315
+      "line": 316
     },
     {
       "path": "/api/v1/banking/accounts/visibility",
       "kind": "create",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 395
+      "line": 396
     },
     {
       "path": "/api/v1/banking/categorization-rules",
@@ -510,25 +510,25 @@
       "path": "/api/v1/banking/plaid/create-link-token",
       "kind": "create",
       "file": "apps/backend/src/integrations/plaid/link.routes.ts",
-      "line": 186
+      "line": 190
     },
     {
       "path": "/api/v1/banking/plaid/create-update-link-token",
       "kind": "create",
       "file": "apps/backend/src/integrations/plaid/link.routes.ts",
-      "line": 537
+      "line": 541
     },
     {
       "path": "/api/v1/banking/plaid/exchange-public-token",
       "kind": "create",
       "file": "apps/backend/src/integrations/plaid/link.routes.ts",
-      "line": 208
+      "line": 212
     },
     {
       "path": "/api/v1/banking/plaid/items/disconnect",
       "kind": "create",
       "file": "apps/backend/src/integrations/plaid/link.routes.ts",
-      "line": 553
+      "line": 557
     },
     {
       "path": "/api/v1/banking/reconciliation-sessions",
@@ -1260,13 +1260,13 @@
       "path": "/api/v1/fuel/dreamline/statement-import",
       "kind": "create",
       "file": "apps/backend/src/fuel/fuel-transaction-import.routes.ts",
-      "line": 185
+      "line": 187
     },
     {
       "path": "/api/v1/fuel/fill-truck-and-load/rerun",
       "kind": "create",
       "file": "apps/backend/src/fuel/fuel-transaction-import.routes.ts",
-      "line": 239
+      "line": 241
     },
     {
       "path": "/api/v1/fuel/gl/reflush-unposted",
@@ -1308,7 +1308,7 @@
       "path": "/api/v1/fuel/wex/statement-import",
       "kind": "create",
       "file": "apps/backend/src/fuel/fuel-transaction-import.routes.ts",
-      "line": 257
+      "line": 259
     },
     {
       "path": "/api/v1/geocoding/route-reference",
@@ -2438,13 +2438,13 @@
       "path": "/api/v1/banking/accounts/:id/hide",
       "kind": "nested",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 881
+      "line": 884
     },
     {
       "path": "/api/v1/banking/accounts/:id/unhide",
       "kind": "nested",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 906
+      "line": 909
     },
     {
       "path": "/api/v1/banking/categorization-rules/:id/apply-historical",
@@ -2468,7 +2468,7 @@
       "path": "/api/v1/banking/plaid/accounts/:id/disconnect",
       "kind": "nested",
       "file": "apps/backend/src/integrations/plaid/link.routes.ts",
-      "line": 446
+      "line": 450
     },
     {
       "path": "/api/v1/banking/plaid/items/:itemId/disconnect",
@@ -2528,7 +2528,7 @@
       "path": "/api/v1/banking/transactions/:id/undo-categorization",
       "kind": "nested",
       "file": "apps/backend/src/banking/banking.routes.ts",
-      "line": 730
+      "line": 733
     },
     {
       "path": "/api/v1/cash-advances/hub/requests/:id/deny",

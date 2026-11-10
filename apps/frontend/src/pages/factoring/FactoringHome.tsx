@@ -347,15 +347,21 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const companyId = selectedCompanyId ?? "";
   const [tab, setTab] = useState<FactoringTabId>(initialTab);
   useEffect(() => {
-    // An embedded board has no factoring URL to resolve. Keep its requested section;
-    // real factoring routes still select their canonical section, including submit-invoice.
+    // An embedded board / jsdom "/" has no factoring URL to resolve. Keep its requested section
+    // (ROUND 8.5a KPI tests mount FactoringHomePage on "/" with initialTab=account_summary).
+    // Real factoring routes still select their canonical section.
     const isFactoringRoute = location.pathname === "/factoring" || location.pathname.startsWith("/factoring/");
-    setTab(isFactoringRoute ? factoringTabFromPath(location.pathname) as FactoringTabId : initialTab);
+    setTab(isFactoringRoute ? (factoringTabFromPath(location.pathname) as FactoringTabId) : initialTab);
   }, [location.pathname, initialTab]);
   // ROUND 435 — the ten Faro tabs. `tab` is the SECTION the URL names; `activeFaroTab` is the one tab that shows it.
   // An absorbed section's own URL (e.g. /factoring/funds-due) redirects to its parent tab with ?section=<id>, so the
   // strip highlights the right tab and the section is scrolled into view. A non-Faro tool (parent null) renders alone.
+  // ROUND 8.5 FA1 — on the parent board URL with no ?section=, show ONLY the parent board body. Absorbed children
+  // (Invoice Status, Messages, …) stay reachable via their own URL / ?section= — they must not stack under the board
+  // and displace it (Codex: Account-summary started with Invoice Status).
   const navigateToTab = useNavigate();
+  const [faroSearchParams] = useSearchParams();
+  const sectionFocus = faroSearchParams.get("section");
   const sectionParent = FACTORING_SECTION_PARENT[tab];
   const activeFaroTab: string | null = sectionParent === undefined ? tab : sectionParent;
   useEffect(() => {
@@ -363,8 +369,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       navigateToTab(`${FACTORING_TAB_PATH[sectionParent]}?section=${tab}`, { replace: true });
     }
   }, [sectionParent, tab, navigateToTab]);
-  const show = (section: FactoringTabId): boolean =>
-    activeFaroTab === null ? tab === section : FACTORING_SECTION_PARENT[section] === activeFaroTab;
+  const show = (section: FactoringTabId): boolean => {
+    if (activeFaroTab === null) return tab === section;
+    if (FACTORING_SECTION_PARENT[section] !== activeFaroTab) return false;
+    if (section === activeFaroTab) return true;
+    if (sectionFocus) return sectionFocus === section;
+    if (tab !== activeFaroTab) return tab === section;
+    return false;
+  };
   const [deactivating, setDeactivating] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   // NEW-25 (owner 2026-09-07): "Statements/Settings need a summary-totals vs. detailed-view
@@ -1054,13 +1066,16 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   return (
     <div className="space-y-3">
       <FactoringBoardChrome
-        title={`Factoring (${summary?.active_factor_name || "No active factor"})`}
+        // Board title is "Factoring"; active factor identity lives on FactoringHomeBoard (ROUND 8.5 FA1).
+        title="Factoring"
         subtitle={factoringChromeSubtitle}
         actions={factoringHeaderActions}
         subnavItems={factoringSubnavItems}
       />
 
-      {summaryQuery.isError ? (
+      {/* Account-summary mounts FactoringHomeBoard which owns the summary error banner + KPI strip.
+          A second page-level "Failed to load" banner would duplicate (ROUND 8.5a KPI error tests). */}
+      {summaryQuery.isError && !show("account_summary") ? (
         <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
       ) : null}
 
@@ -1591,9 +1606,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 </BoardSection>
               ) : null}
               <div data-testid="factoring-account-summary">
-              {summaryQuery.isError ? (
-                <p role="status">Account summary unavailable. Use the summary refresh above to retry.</p>
-              ) : (
+              {/* Summary error is owned by FactoringHomeBoard above — do not double-banner (ROUND 8.5a). */}
+              {summaryQuery.isError ? null : (
                 <BoardSection
                   title="Account Summary"
                   testId="factoring-account-summary"
@@ -1867,10 +1881,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       ) : null}
 
       {/* ROUND 315 / Lead B7 — Reserve tab mounts the SAME shared panel Banking Home uses
-          (escrow/cash from purchases + reserve ledger + CCG loans + categorize/transfer/apply). */}
+          (escrow/cash from purchases + reserve ledger + CCG loans + categorize/transfer/apply).
+          ROUND 435 / 8.5a — page-level escrow+cash KPIs come from FactoringKpiPanel (ledger engine);
+          the shared panel then shows Total only on the Factoring host (no KPI twice). */}
       {show("reserve") && companyId ? (
-        <div data-testid="factoring-reserve-report">
-          <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
+        <div data-testid="factoring-reserve-report" className="space-y-3">
+          <BoardSection title="Factoring KPIs" testId="factoring-reserve-kpi-board-section">
+            <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
+          </BoardSection>
           <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
       ) : null}

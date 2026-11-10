@@ -294,7 +294,8 @@ export const FACTORING_SECTION_PARENT: Record<string, FaroTabId | null> = {
 
 export function factoringTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  if (norm === "/factoring") return "submit_invoice";
+  // ROUND 8.5 FA1 / DESIGN-BOARD-ROUTE-MAP — Factoring home IS Account summary (board), not Submit.
+  if (norm === "/factoring") return "account_summary";
   for (const [id, routePath] of Object.entries(FACTORING_TAB_PATH)) {
     if (routePath === norm) return id;
   }
