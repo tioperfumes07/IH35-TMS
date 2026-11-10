@@ -17679,5 +17679,10 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-deposits-posted (known-card relay_deposit bank rows must have a posted JE within 24h; unknown card reported)"
   },
-  "total_claimed": 1103
+  "20065": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-fill-records-idempotent (ACCT-F11107: fuel.relay_fill_records skips already-recorded voided-duplicate lines)"
+  },
+  "total_claimed": 1104
 }

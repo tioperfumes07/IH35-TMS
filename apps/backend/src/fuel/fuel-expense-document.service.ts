@@ -839,6 +839,13 @@ export async function linkRelayFillExpenseToFuelRow(
   return primary.id;
 }
 
+/** Postgres 23505 on fuel_tx_source_row_hash_uk: the Relay line's row (live or voided) already exists. */
+export function isRelayLineAlreadyRecordedError(err: unknown): boolean {
+  const e = err as { code?: string; constraint?: string; message?: string } | null;
+  if (!e || e.code !== "23505") return false;
+  return e.constraint === "fuel_tx_source_row_hash_uk" || /fuel_tx_source_row_hash_uk/.test(String(e.message ?? ""));
+}
+
 /**
  * ENG-65 — record a Relay fill at receipt (ensureRelayFillFuelRecords) inside a savepoint: a refusal (lines that do not foot,
  * a product repeated, no Relay time) is audited by name and leaves the transaction usable; it is never swallowed silently.
@@ -846,7 +853,7 @@ export async function linkRelayFillExpenseToFuelRow(
 export async function recordRelayFillAtReceipt(
   client: QueryableClient,
   input: { operating_company_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; actor_user_uuid: string | null },
-): Promise<{ written: boolean; refused: string | null }> {
+): Promise<{ written: boolean; refused: string | null; already_recorded?: true }> {
   // TRANSACTION-LINKAGE-LAW TIER1: a working truck's fill carries its driver. When neither the document nor Relay named one,
   // the one fill-driver rule (card assignment → the truck's one driver assignment → the load's driver) at Relay's moment.
   let unitId = input.unit_id;
@@ -910,6 +917,9 @@ export async function recordRelayFillAtReceipt(
   } catch (err) {
     await client.query("ROLLBACK TO SAVEPOINT relay_fill_record_at_receipt");
     await client.query("RELEASE SAVEPOINT relay_fill_record_at_receipt");
+    // ACCT-F11107 — the fill's line was already recorded and that record is voided (the Relay-rail record of a purchase another
+    // rail also records). The unique index on the line's source_row_hash says so: this is "done", not a refusal — idempotent skip.
+    if (isRelayLineAlreadyRecordedError(err)) return { written: false, refused: null, already_recorded: true };
     const reason = err instanceof RelayFillFuelRowsError ? `${err.code}: ${err.message}` : String((err as Error)?.message ?? err);
     await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
       operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
@@ -936,6 +946,13 @@ export async function listRelayFillDocumentsWithoutRecords(client: QueryableClie
         AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions f
                          WHERE f.operating_company_id = e.operating_company_id AND f.relay_fuel_transaction_id = r.id
                            AND f.voided_at IS NULL AND f.archived_at IS NULL)
+        -- ACCT-F11107: a fill whose line already has its (voided) record cannot be written again — the line's source_row_hash is
+        -- taken (fuel_tx_source_row_hash_uk). It is recorded; nothing for this worker to do.
+        AND NOT EXISTS (SELECT 1 FROM integrations.relay_fuel_transaction_lines l
+                          JOIN fuel.fuel_transactions fv
+                            ON fv.operating_company_id = e.operating_company_id
+                           AND fv.source_row_hash = 'relay-line:' || e.operating_company_id::text || ':' || l.id::text
+                         WHERE l.relay_fuel_transaction_id = r.id AND l.operating_company_id = e.operating_company_id)
       ORDER BY r.relay_created_at, r.id`,
     [operatingCompanyId],
   )).rows;
@@ -944,9 +961,10 @@ export async function listRelayFillDocumentsWithoutRecords(client: QueryableClie
 export async function recordAndLinkRelayFillDocument(
   client: QueryableClient,
   input: { operating_company_id: string; expense_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; actor_user_uuid: string },
-): Promise<{ outcome: "linked" | "refused" | "not_linked"; reason: string | null }> {
+): Promise<{ outcome: "linked" | "refused" | "not_linked" | "already_recorded"; reason: string | null }> {
   const rec = await recordRelayFillAtReceipt(client, { ...input });
   if (rec.refused) return { outcome: "refused", reason: rec.refused };
+  if (rec.already_recorded) return { outcome: "already_recorded", reason: "the fill's line already has its record (voided) — idempotent skip" };
   const linked = await linkRelayFillExpenseToFuelRow(client, {
     operating_company_id: input.operating_company_id, expense_id: input.expense_id, relay_fill_id: input.relay_fill_id, actor_user_uuid: input.actor_user_uuid,
   });
@@ -1158,4 +1176,22 @@ export async function adoptRelayFillExpenseDocument(
   if (!written) throw new Error("relay_fill_expense_insert_failed");
   const expenseId = written.expenseId;
   return { outcome: "created", expense_id: expenseId, expense_number: expenseNumber, journal_entry_id: input.journal_entry_id, amount_cents: totalCents };
+}
+
+/**
+ * ACCT-F11107 — what a pass of the fuel.relay_fill_records worker owes the job record. A linked or already-recorded fill is
+ * done. A fill refused BY NAME (audited fuel.relay_fill_record_refused: no truck, no driver, a product repeated at two prices…)
+ * is a recorded decision for a person, not a failed run — it is logged with its reason every pass. Only an unexplained
+ * "not_linked" fails the run.
+ */
+export function relayFillRunVerdict(results: Array<{ relay_fill_id: string; outcome: string; reason: string | null }>): { failures: string[]; refusals: string[] } {
+  const failures: string[] = [];
+  const refusals: string[] = [];
+  for (const r of results) {
+    if (r.outcome === "linked" || r.outcome === "already_recorded") continue;
+    const line = `${r.relay_fill_id}: ${r.reason}`;
+    if (r.outcome === "refused") refusals.push(line);
+    else failures.push(line);
+  }
+  return { failures, refusals };
 }
