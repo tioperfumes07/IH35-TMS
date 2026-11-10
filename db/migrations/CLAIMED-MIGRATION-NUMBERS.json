@@ -1051,7 +1051,8 @@
     "202616420100",
     "202616430100",
     "202616440100",
-    "202616450100"
+    "202616450100",
+    "202616460100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1097,5 +1098,10 @@
     "claimed_at": "2026-11-04",
     "claimed_by": "claude",
     "purpose": "ACCT-F11103: accounting.invoice_applied_cents_as_of() counts payment-less (relief) applications; ar_aging_as_of + recompute_invoice_paid() repointed to it."
+  },
+  "202616460100": {
+    "claimed_at": "2026-11-10",
+    "claimed_by": "claude",
+    "purpose": "ACCT-F11107: accounting.enforce_load_fk_invariant raises its real refusal on fuel.fuel_transactions (no NEW.line_category on that table)"
   }
 }
