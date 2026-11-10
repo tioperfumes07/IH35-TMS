@@ -119,6 +119,7 @@ const GeofencesPage = React.lazy(() => import("../pages/operations/GeofencesPage
 const DispatchAlertsPage = React.lazy(() => import("../pages/dispatch/DispatchAlertsPage").then((m) => ({ default: m.DispatchAlertsPage })));
 const LateArrivalsPage = React.lazy(() => import("../pages/dispatch/LateArrivalsPage").then((m) => ({ default: m.LateArrivalsPage })));
 const AtRiskQueuePage = React.lazy(() => import("../pages/dispatch/AtRiskQueuePage").then((m) => ({ default: m.AtRiskQueuePage })));
+const AvailableTrucksPage = React.lazy(() => import("../pages/dispatch/AvailableTrucksPage").then((m) => ({ default: m.AvailableTrucksPage })));
 const LoadsWithoutDriverBillPage = React.lazy(() => import("../pages/dispatch/LoadsWithoutDriverBillPage").then((m) => ({ default: m.LoadsWithoutDriverBillPage })));
 const LoadsWithoutTourPage = React.lazy(() => import("../pages/dispatch/LoadsWithoutTourPage").then((m) => ({ default: m.LoadsWithoutTourPage })));
 const FactoringQueuePage = React.lazy(() => import("../pages/dispatch/FactoringQueuePage").then((m) => ({ default: m.FactoringQueuePage })));
@@ -1392,6 +1393,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AtRiskQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/available-trucks"
+          element={
+            <ProtectedRoute>
+              <AvailableTrucksPage />
             </ProtectedRoute>
           }
         />
