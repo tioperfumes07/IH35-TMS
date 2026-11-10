@@ -14,7 +14,7 @@ import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
-import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
+import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
@@ -147,7 +147,7 @@ export function FuelDieselByTruckPanel({
       >
         <V3Segmented
           value={period}
-          options={FUEL_BOARD_PERIOD_OPTIONS}
+          options={fuelBoardPeriodOptions()}
           onChange={setPeriod}
           testId="fuel-diesel-by-truck-period"
         />

@@ -77,4 +77,23 @@ Initial comparison of the 43 unprefixed files with the export: 6 exact; 30 equal
 
 ## Remaining acceptance work
 
+### Customers / Vendors / Legal continuation — 2026-11-09 ~21:00–21:05 CT
+
+CSS viewport 1440×900. Private evidence: Customers-live.jpg, Vendors-live.jpg, Legal-live.jpg in the same Downloads folder. No production submissions.
+
+| ID | Board expectation | Measured live result | Required repair |
+|---|---|---|---|
+| C1 | One Customers breadcrumb above the heading | Outer breadcrumb plus another Customers label before Back/title | Remove redundant chrome without removing navigation |
+| V1 | Compact Pays through panel and vendor overview below | Four-account summary table starts y343; vendor table starts y641; approved vendor section starts approximately y428 | Compact summary controls/spacing, preserve settings and full data access |
+| V2 | Vendor board columns visible in the overview | Suggested category/action column expands table; Last paid/Pays through require horizontal scrolling | Preserve suggestions in reachable detail/secondary layout while restoring approved overview geometry |
+| L1 | Legal pipeline colored stage markers | Five live stages have plain labels with no status dots | Restore stage markers without inventing status data |
+| L2 | Matters empty state retains Matter / Next date / At risk headings | Empty panel shows explanatory paragraph only | Retain board table header/empty-state structure |
+| L3 | Pipeline drill accessible as a link/control | Five clickable rows, zero anchors/buttons and no tabindex/role; mouse Draft click opens /legal/contracts | Preserve existing drill and add keyboard-accessible semantic links; not a dead-button finding |
+
+Customers has nine correctly ordered overview column labels and 90 rendered records; exhaustive wiring remains unverified. Vendors has thirty current records and zero measured clipped cells, but rightmost columns extend outside the initial view. Current populations are not required to equal historical sample counts. Legal Create Contract opens the five-stage Send Contract wizard with a template picker; Cancel closes it without saving. Draft mouse-row navigation succeeds; lack of anchors alone does not prove broken navigation.
+
+### F3 bounded Codex repair
+
+Static October/September captions were applied to dynamic current/previous month queries. Shared period-option generation now derives captions from the same business-date range, preserves legacy period keys, uses canonical Central company date, and includes the missing YTD ending month. Old YTD behavior fails the new test (Jan 1–9 instead of Jan 1 – Nov 9). Repaired period and existing Fuel tests: 14/14. Live deployment acceptance remains pending; no accounting writes or data changes.
+
 Complete the 45-board route/trigger map, reviewed element census, all live interactions safe to exercise without production writes, same-scale board/live/diff artifacts with privacy protection, and the claimed/registered fail-closed guard. Missing evidence must remain UNVERIFIED and block completion. No implementation or production data changed in this first batch.

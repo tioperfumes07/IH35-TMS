@@ -1,4 +1,6 @@
-/** ROUND 443.282 — board period windows (Fuel.dc.html Oct / Sep / YTD). */
+import { companyToday, localDateFromIso } from "../../lib/businessDate";
+
+/** Board period IDs are legacy keys; labels follow the actual business month. */
 export type FuelBoardPeriodId = "oct" | "sep" | "ytd";
 
 function pad2(n: number) {
@@ -18,11 +20,12 @@ function formatShortRange(from: Date, to: Date) {
 }
 
 export function fuelBoardPeriodRange(period: FuelBoardPeriodId, now = new Date()) {
+  now = localDateFromIso(companyToday(now));
   const y = now.getFullYear();
   const m = now.getMonth();
   if (period === "ytd") {
     const from = new Date(y, 0, 1);
-    return { from: isoDate(from), to: isoDate(now), labelSuffix: `Jan 1–${now.getDate()}` };
+    return { from: isoDate(from), to: isoDate(now), labelSuffix: formatShortRange(from, now) };
   }
   if (period === "sep") {
     const prev = m === 0 ? 11 : m - 1;
@@ -35,8 +38,11 @@ export function fuelBoardPeriodRange(period: FuelBoardPeriodId, now = new Date()
   return { from: isoDate(from), to: isoDate(now), labelSuffix: formatShortRange(from, now) };
 }
 
-export const FUEL_BOARD_PERIOD_OPTIONS: { id: FuelBoardPeriodId; label: string }[] = [
-  { id: "oct", label: "Oct" },
-  { id: "sep", label: "Sep" },
-  { id: "ytd", label: "YTD" },
-];
+export function fuelBoardPeriodOptions(now = new Date()): { id: FuelBoardPeriodId; label: string }[] {
+  const month = (id: FuelBoardPeriodId) => fuelBoardPeriodRange(id, now).labelSuffix.split(" ")[0];
+  return [
+    { id: "oct", label: month("oct") },
+    { id: "sep", label: month("sep") },
+    { id: "ytd", label: "YTD" },
+  ];
+}
