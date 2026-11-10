@@ -646,7 +646,7 @@ export function LoadsReportBoard() {
         )}
 
         <ReportMeasuredNote>
-          Empty miles are mdata.loads.miles_deadhead summed over the same filtered rows as Loaded miles and Revenue.
+          Empty miles are each load's deadhead miles, summed over the same filtered rows as Loaded miles and Revenue.
           Fuel and Margin stay as additive columns. Each group opens its loads; each load, customer, driver, truck,
           invoice, advance and settlement opens its record.
         </ReportMeasuredNote>
