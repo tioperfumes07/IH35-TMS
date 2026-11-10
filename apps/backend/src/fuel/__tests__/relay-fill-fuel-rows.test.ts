@@ -26,9 +26,14 @@ describe("relayFillRowsFromLines (443.198)", () => {
     expect(rows.reduce((s, r) => s + r.total_cents, 0)).toBe(2984);
   });
 
-  it("reefer by Relay's product code is reefer_diesel", () => {
-    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "other", fuel_product_code: "033" })], { fuelPaidCents: 50000, feeCents: 0 });
+  it("reefer by Relay's product code is reefer_diesel (a reefer-tank volume)", () => {
+    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "other", fuel_product_code: "033", volume: "40.000" })], { fuelPaidCents: 50000, feeCents: 0 });
     expect(rows[0]!.fuel_type).toBe("reefer_diesel");
+  });
+
+  it("ACCT-F11107: a 033 line over 60 gal is truck diesel (no reefer tank takes it)", () => {
+    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "reefer", fuel_product_code: "033", volume: "100.000" })], { fuelPaidCents: 50000, feeCents: 0 });
+    expect(rows[0]!.fuel_type).toBe("diesel");
   });
 
   it("lines that do not foot to Relay's paid are refused by name — never a typed amount", () => {

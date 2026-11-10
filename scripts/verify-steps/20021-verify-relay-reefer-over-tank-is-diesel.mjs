@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relay-reefer-over-tank-is-diesel", run(ctx) { ctx.run("node", ["scripts/verify-relay-reefer-over-tank-is-diesel.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relay-reefer-over-tank-is-diesel.mjs"]); } };
