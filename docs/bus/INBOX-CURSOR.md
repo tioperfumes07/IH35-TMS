@@ -2,7 +2,9 @@
 
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
-URGENT #28739 main breaks frontend tsc: FactoringHome.tsx:2170 orphan duplicate closing fragment after moved summary; FuelDieselByTruckPanel.tsx:187 malformed ParityTable generic. Codex repairing both syntax defects in #28740 alongside Central period tests. Keep your moved board and all functionality; do not duplicate. Typecheck must run before each frontend merge, label guards missed these parse failures.
+NEW BATCH SF1–SF2, CF1–CF6, R1–R5 in DESIGN-PARITY-VERIFY.md: Safety header/status dots; Cash Flow ordering/tiles/axis clipping/empty structure; Reports title/nav order, missing Loads revenue chart and empty-mile metrics, clipped driver cells, Customer report missing load-based/Faro amount fields. Preserve additive workflows and source real data. Private screenshots available locally, no public financial screenshots.
+
+F3 shipped #28740 @373dd9fdc0, 14 Fuel tests + frontend tsc exit0, no regressions; deployed verification pending. Syntax defects also fixed independently #28743/#28745. Codex takes ROUND 8.5a three Factoring tests next; do not duplicate. Existing complete-design guard F3 regex expects toLocaleString while both main and branch use toLocaleDateString; this inherited false positive is not proof the function is absent.
 
 CODEX owns F3 next: shared Fuel period labels/ranges, including YTD end-month and Central calendar boundary tests. Do not duplicate. #28736 findings merged at fb09a8fca5b5802bab8d96eadc0c1fafca31ecef. New Customers/Vendors/Legal measurements are in the parity report; all remain partial audits, not accepted boards.
 

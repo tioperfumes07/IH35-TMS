@@ -77,6 +77,30 @@ Initial comparison of the 43 unprefixed files with the export: 6 exact; 30 equal
 
 ## Remaining acceptance work
 
+### Safety / Cash Flow / Reports continuation — 2026-11-09 21:06–21:25 CT
+
+Read-only USMCA at measured CSS viewport 1440×900. Private screenshots remain under Downloads/codex-round8-5-design-parity; no production financial screenshots committed. These are measured partial comparisons, not whole-board acceptance or accounting tie-outs.
+
+| ID | Board | Expected | Observed / required repair |
+|---|---|---|---|
+| SF1 | Safety-DriverFiles | Compact navy navigation below title/subtitle | White oversized two-band header, duplicate breadcrumb, subtitle pushed right; qualification table header y404.63 versus reference y274 |
+| SF2 | Safety-DriverFiles | Left-aligned driver/status cells with colored status dots | Body centered; dots absent; 11 real rows, 77 links, zero clipped cells. Do not invent historical dates/statuses |
+| CF1 | All five Cash Flow boards | Related links above tab strip | Related links below strip, reversing reference order |
+| CF2 | CashFlow-Home | Source drill from cash-flow cells | 26 weekly Net cash flow/Ending balance cells lack semantic controls; other metric cells have buttons. Source/interaction confirmation still needed before declaring dead |
+| CF3 | CashFlow-Projected | Seven separate day tiles with gaps | Joined seven-day strip plus extra heading |
+| CF4 | CashFlow-ActualVsProjected | KPI titles inside tiles; readable chart axis | Titles above tile top; chart left x82.62, four money-axis labels start x73–76 and clip; by-date table y895.41 versus reference y685 |
+| CF5 | CashFlow-RollingLedger | Readable party/document columns | Income 1 clipped cell, expenses 4 clipped cells. Preserve additional columns/actions while restoring proportions; carried tables y1059.71, day grid y1334.24 |
+| CF6 | CashFlow-Manual | Empty tables retain headings and priority groups | Two blank panels without column headers or six expense headings; duplicated Measured label |
+| R1 | Reports and report viewers | Title before navy navigation | Reports nav y90.61 precedes title y138.59; Trial Balance nav y66.61 precedes title y134.59. Loads and settlement reports also add a second five-link strip |
+| R2 | Reports-Viewer-TrialBalance | Compact account table; left-aligned labels | Table starts y419.30 vs reference y356; centered account/type body. Five header names/order match, 52 rows and 208 semantic links observed; Collapse works |
+| R3 | Reports-Loads | Empty miles KPI; Empty mi / Empty % columns; revenue-by-week chart | Empty-mile KPI replaced by Margin; both empty-mile columns absent; no revenue chart heading or chart in loaded view. Preserve Fuel/Margin additions, do not substitute fabricated empty miles |
+| R4 | Reports-Loads / Reports-DriverSettlements | Fully readable values and names | Loads 15 clipped table cells; Driver report 27 clipped cells among 25 rendered rows. Driver report all 13 column names/order match reference |
+| R5 | Reports-Customers | Date range controls, Loads/Avg per load and advanced-Faro amount | Only YTD/Last 12 months/All time presets; Invoices/Avg per invoice replace load metrics; customer-count tile replaces advanced amount; Factored column is factor label rather than amount. Requires canonical data, not relabeling invoice counts as loads |
+
+Functional proof: Cash Flow Monthly changes 13 weekly columns to four months. Projected shows all six priority categories and customer/load links. Actual vs Projected loaded chart/four KPIs/eight rows. Loads Month changes 15 weekly rows to five monthly groups. Company report loaded 12 columns (added Number preserved), 25 rendered rows, zero clipped cells; exhaustive group/drill checks pending. Customer report loaded 10 columns, 25 rendered rows, zero clipped cells. No Save, Pull, Create, Roll over or financial submission used. No numerical ledger correctness inferred from these UI observations.
+
+Fuel F3 code merged #28740 at 373dd9fdc026410cfebd55f55077562b6c7b66e6. Final workspace TypeScript build and Fuel tests 14/14 passed; affected guard comparison has zero regressions. Both concurrent TSX repairs independently landed on main (#28743/#28745). Repaired deployed labels remain UNVERIFIED, not an accepted Fuel board.
+
 ### Customers / Vendors / Legal continuation — 2026-11-09 ~21:00–21:05 CT
 
 CSS viewport 1440×900. Private evidence: Customers-live.jpg, Vendors-live.jpg, Legal-live.jpg in the same Downloads folder. No production submissions.
