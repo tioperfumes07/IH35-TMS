@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -189,14 +190,12 @@ export function SettlementsEscrowBoard() {
         sortable: true,
         sortValue: (r) => r.driverName,
         render: (r) => (
-          <Link
-            to={settlementsEscrowRegisterHref(r.holderId)}
-            className="font-semibold underline"
-            style={{ color: V3.link }}
+          <EntityLink
+            kind="driver"
+            id={r.holderId}
+            label={r.driverName}
             data-testid="settlements-escrow-driver-link"
-          >
-            {r.driverName}
-          </Link>
+          />
         ),
       },
       {

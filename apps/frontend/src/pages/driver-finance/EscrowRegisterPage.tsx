@@ -15,6 +15,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
@@ -364,6 +365,11 @@ export function EscrowRegisterPage() {
             Release escrow
           </Button>
         </MoneyListToolbar>
+
+        {/* Record-naming law: the driver this register belongs to opens the driver record. */}
+        <p className="text-xs text-[#4B5563]" data-testid="escrow-register-driver">
+          Driver: <EntityLink kind="driver" id={driverId} label={driverName} data-testid="escrow-register-driver-link" />
+        </p>
 
         {/* ROUND 443.282 — Target from getDriverEscrowTarget; Release = last settlement + window. */}
         <div

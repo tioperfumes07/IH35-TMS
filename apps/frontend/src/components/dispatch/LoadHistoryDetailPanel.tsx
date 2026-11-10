@@ -23,6 +23,9 @@ import { loadStatusLabel } from "../../lib/load-status";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
 
+/** Linked-record chips shown beside one timeline event. */
+const MAX_EVENT_LINKS = 3;
+
 /** Timeline kinds the panel shows as milestones (field edits stay on the full change history page). */
 export const PANEL_TIMELINE_KINDS: ReadonlyArray<LoadHistoryRow["kind"]> = [
   "status_transition",
@@ -150,7 +153,7 @@ export function LoadHistoryDetailPanel({
                   <span className="ml-1 inline-flex flex-wrap gap-1">
                     {ev.links
                       .filter((l) => LINK_KINDS.has(l.kind) && l.id !== loadId)
-                      .slice(0, 3)
+                      .slice(0, MAX_EVENT_LINKS)
                       .map((l) => (
                         <EntityLink key={`${l.kind}:${l.id}`} kind={l.kind as EntityKind} id={l.id} label={l.label ?? undefined} />
                       ))}

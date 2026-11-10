@@ -97,6 +97,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -2624,18 +2625,22 @@ export function BookLoadModalV4({
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Accessorial</td>
                           <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>
-                            {formatUsdCents(sumAccessorialCents(accessorialRows ?? []))}
+                            <MoneyCell cents={sumAccessorialCents(accessorialRows ?? [])} drill={{ none: "Booking form preview of the accessorial rows entered below; the load does not exist until you book it" }} />
                           </td>
                         </tr>
                         {extraRatesCents !== 0 ? (
                           <tr className="border-b border-gray-100">
                             <td className="px-2 py-1.5">Per-stop extra rates</td>
-                            <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(extraRatesCents)}</td>
+                            <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>
+                              <MoneyCell cents={extraRatesCents} drill={{ none: "Booking form preview of the per-stop extra rates entered on the stops; the load does not exist until you book it" }} />
+                            </td>
                           </tr>
                         ) : null}
                         <tr className="bg-[#F7F8FA] font-semibold">
                           <td className="px-2 py-1.5">Total customer invoice</td>
-                          <td className={`px-2 py-1.5 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(customerInvoiceTotal)}</td>
+                          <td className={`px-2 py-1.5 ${QBO_MONEY_CELL_CLASS}`}>
+                            <MoneyCell cents={customerInvoiceTotal} drill={{ none: "Booking form preview of the invoice this load will bill; the invoice is created only after the load is booked" }} />
+                          </td>
                         </tr>
                       </tbody>
                     </table>

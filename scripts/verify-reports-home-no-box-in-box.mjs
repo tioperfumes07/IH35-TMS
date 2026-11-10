@@ -84,7 +84,8 @@ export function collectManagementProblems(section) {
 export function collectBoardProblems(boardSrc) {
   const problems = [];
   const body = stripComments(boardSrc);
-  if (!body.includes('title="Accounting &amp; financial"') && !body.includes("Accounting + financial reports")) {
+  // The v3 title is written `Accounting & financial` (raw & is valid in a JSX attribute); `&amp;` is the same string.
+  if (!/title="Accounting (?:&amp;|&) financial"/.test(body) && !body.includes("Accounting + financial reports")) {
     problems.push(`${BOARD}: missing Accounting + financial reports panel`);
   }
   if (!body.includes("What it shows")) {
