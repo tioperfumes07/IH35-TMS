@@ -311,10 +311,11 @@ export async function getLoadsHistoryPage(
     `
       SELECT
         COUNT(DISTINCT l.id)::int AS load_count,
-        COALESCE(SUM(lc.lc_revenue_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS revenue_cents,
-        COALESCE(SUM(lc.lc_driver_pay_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS driver_pay_cents,
-        COALESCE(SUM(lc.lc_fuel_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS fuel_cents,
-        COALESCE(SUM(lc.lc_margin_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS margin_cents,
+        /* ROUND 8.5 D5 — loadCostRollupLateral aliases lateral as lcr (revenue_cents…), not lc.lc_* */
+        COALESCE(SUM(lcr.revenue_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS revenue_cents,
+        COALESCE(SUM(lcr.driver_pay_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS driver_pay_cents,
+        COALESCE(SUM(lcr.fuel_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS fuel_cents,
+        COALESCE(SUM(lcr.margin_cents) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::bigint AS margin_cents,
         COUNT(DISTINCT inv.id)::int AS ar_invoice_count,
         COALESCE(SUM(inv.total_cents), 0)::bigint AS ar_invoice_amount_cents,
         COALESCE(SUM(l.miles_practical) FILTER (WHERE inv.id IS NULL OR inv.id = first_inv.id), 0)::numeric AS loaded_miles,
