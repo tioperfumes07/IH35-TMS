@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import {
   AvpCompareChart,
   ProjectedExpenseCell,
@@ -13,6 +15,11 @@ import {
   rawActualNetFromGroups,
 } from "./ActualVsProjectedTab";
 import type { AvpLineItem } from "../../../api/cashFlow";
+
+// ProjectedExpenseCell / AvpCompareChart live beside the tab's useQuery; supply the provider the module consumes.
+function renderWithQuery(ui: ReactElement) {
+  return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>);
+}
 
 // E8 11-03 (row 261): a past day before expense capture is "not captured", never a projected $0.
 const base: AvpLineItem = { date: "2026-10-05", category: "expenses", projected_cents: 0, actual_cents: 9999, variance_cents: 0, variance_pct: null };
@@ -65,13 +72,13 @@ function dayGroup(opts: {
 
 describe("ProjectedExpenseCell", () => {
   it("not_captured renders 'not captured', never $0", () => {
-    render(<ProjectedExpenseCell line={{ ...base, projected_basis: "not_captured", projected_unavailable: true }} />);
+    renderWithQuery(<ProjectedExpenseCell line={{ ...base, projected_basis: "not_captured", projected_unavailable: true }} />);
     expect(screen.getByTestId("cash-flow-avp-proj-exp-not-captured").textContent).toBe("not captured");
     expect(screen.queryByText("$0.00")).toBeNull();
   });
 
   it("snapshot renders the amount plus its capture provenance", () => {
-    render(
+    renderWithQuery(
       <ProjectedExpenseCell
         line={{ ...base, projected_cents: 70_200, projected_basis: "snapshot", projected_captured_at: "2026-11-04T12:10:00Z" }}
       />
@@ -81,11 +88,11 @@ describe("ProjectedExpenseCell", () => {
   });
 
   it("engine (today/later) renders the amount with no snapshot label; older servers (no basis) still render the amount", () => {
-    const { unmount } = render(<ProjectedExpenseCell line={{ ...base, projected_cents: 5_000, projected_basis: "engine" }} />);
+    const { unmount } = renderWithQuery(<ProjectedExpenseCell line={{ ...base, projected_cents: 5_000, projected_basis: "engine" }} />);
     expect(screen.getByText(/50\.00/)).toBeTruthy();
     expect(screen.queryByText(/^snapshot /)).toBeNull();
     unmount();
-    render(<ProjectedExpenseCell line={{ ...base, projected_cents: 5_000 }} />);
+    renderWithQuery(<ProjectedExpenseCell line={{ ...base, projected_cents: 5_000 }} />);
     expect(screen.getByText(/50\.00/)).toBeTruthy();
   });
 });
@@ -205,7 +212,7 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
       dayGroup({ date: "2026-10-06", actInc: 200, actExp: 80, projInc: 180, projExp: 70 }),
     ];
     const points = buildAvpChartPoints(groups);
-    render(<AvpCompareChart points={points} grain="daily" expNotCapturedDays={1} />);
+    renderWithQuery(<AvpCompareChart points={points} grain="daily" expNotCapturedDays={1} />);
     expect(screen.getByTestId("cash-flow-avp-proj-exp-legend").textContent).toMatch(/Projected expenses/i);
     expect(screen.getAllByTestId("cash-flow-avp-proj-exp-polyline").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("cash-flow-avp-chart-svg").querySelectorAll("polyline").length).toBeGreaterThanOrEqual(4);

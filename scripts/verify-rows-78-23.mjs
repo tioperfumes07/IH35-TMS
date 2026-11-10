@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["load","connectivity"],"leaves":["dispatch.panel.load_history_detail"],"task":"LST-F11139-LOAD-HISTORY-DETAIL-PANEL-LEAF","vertical":"class-sweep"} */
 /**
  * Rows 78 + 23 (LEAD 11-03, ACCT-F11057).
  *
