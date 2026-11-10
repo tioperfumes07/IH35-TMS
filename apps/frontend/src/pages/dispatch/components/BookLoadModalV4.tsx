@@ -2661,30 +2661,14 @@ export function BookLoadModalV4({
                     <div className="grid grid-cols-2 items-end gap-2.5 py-1.5 sm:grid-cols-4">
                       <label className="min-w-0">
                         <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Linehaul</span>
-                        <MoneyInput
-                          valueCents={form.watch("linehaul_cents")}
-                          onChangeCents={(c) => {
-                            form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true });
-                            form.clearErrors("linehaul_cents");
-                          }}
-                          className="w-full"
-                          ariaLabel="Linehaul"
-                        />
+                        <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => { form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("linehaul_cents"); }} className="w-full" ariaLabel="Linehaul" />
                         {form.formState.errors.linehaul_cents ? (
                           <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.linehaul_cents.message)}</p>
                         ) : null}
                       </label>
                       <label className="min-w-0">
                         <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Fuel surcharge</span>
-                        <MoneyInput
-                          valueCents={form.watch("fuel_surcharge_cents")}
-                          onChangeCents={(c) => {
-                            form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true });
-                            form.clearErrors("fuel_surcharge_cents");
-                          }}
-                          className="w-full"
-                          ariaLabel="Fuel surcharge"
-                        />
+                        <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => { form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("fuel_surcharge_cents"); }} className="w-full" ariaLabel="Fuel surcharge" />
                         {form.formState.errors.fuel_surcharge_cents ? (
                           <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.fuel_surcharge_cents.message)}</p>
                         ) : null}

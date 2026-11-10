@@ -31,8 +31,6 @@ function assertSource() {
   // ROUND 443.267 — board KPI strip + Measured callout (piggyback; no new EVEN claim).
   if (!page.includes("TrialBalanceBoard")) fail("TrialBalancePage must mount TrialBalanceBoard");
   if (!page.includes("getTrialBalanceReport")) fail("TrialBalancePage must keep getTrialBalanceReport engine");
-  // R2 — board-compact left-aligned account table (not centered default ParityTable chrome).
-  if (!/appearance=["']board["']/.test(page)) fail("R2: TrialBalancePage ParityTable must use appearance=\"board\"");
   const board = fs.readFileSync(BOARD, "utf8");
   if (!board.includes("V3KpiTile")) fail("TrialBalanceBoard must use V3KpiTile");
   if (!board.includes("debits = credits")) fail("TrialBalanceBoard Balance check must sub 'debits = credits'");

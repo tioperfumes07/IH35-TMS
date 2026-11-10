@@ -1,7 +1,7 @@
-## OUTBOX (11-10-2026 ~4:05 PM CT) — D1/D2 Book Load rail+charges + R2 Trial Balance board
+## OUTBOX (11-10-2026 ~4:05 PM CT) — D1/D2 Book Load A–E rail + side-by-side charges
 - **PRIOR:** #28769 DP1–DP4 Driver Profile board engines.
-- **THIS:** D1 center Book Load sticky A–E section rail (jump to section anchors; side panel unchanged). D2 four charge amounts side-by-side grid (Linehaul/Fuel/Accessorial/Total) with live MoneyInput + engine totals; AccessorialEditor/extras stay additive. R2 Trial Balance ParityTable appearance=board. Guards: verify-book-load-money-and-controls (+selftest), verify-trial-balance-print-letter.
-- **NEXT:** D3–D4 TruckPlanner / R4–R6 full engines. No match/Dreamline. Not chrome-only.
+- **THIS:** D1 center Book Load sticky A–E section rail (jump to section anchors; side panel unchanged). D2 four charge amounts side-by-side grid (Linehaul/Fuel/Accessorial/Total) with live MoneyInput + engine totals; AccessorialEditor/extras stay additive. R2 Trial Balance left for Cascade surface. Guards: verify-book-load-money-and-controls (+selftest).
+- **NEXT:** D3–D4 TruckPlanner / R4–R6 (Cascade owns R2 TB). No match/Dreamline. Not chrome-only.
 
 ## OUTBOX (11-09-2026 ~10:40 PM CT) — DP1–DP4 Driver Profile board engines
 - **PRIOR:** #28767 T5/T6 Settlements Open/Closed board columns.
