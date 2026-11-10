@@ -1,0 +1,1 @@
+export default { name: "verify:verify-wex-transaction-report-import", run(ctx) { ctx.run("node", ["scripts/verify-wex-transaction-report-import.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-wex-transaction-report-import.mjs"]); } };

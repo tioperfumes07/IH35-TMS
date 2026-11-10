@@ -6,8 +6,10 @@ import {
   SpreadsheetUploadRejectedError,
 } from "../lib/untrusted-spreadsheet-read.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
-import { importDreamlineStatement, importWexStatement, parseDreamlineStatementRows } from "./dreamline-statement-import.service.js";
+import { importDreamlineStatement, importWexStatement, parseDreamlineStatementRows, withCardUnitFallback } from "./dreamline-statement-import.service.js";
+import { parseWexEnhancedReportGrid, spreadsheetRowsToGrid, wexEnhancedControl, wexEnhancedToStatementLines } from "./wex-enhanced-transaction-report.js";
 import { runFuelFollowsTruck } from "./fill-truck-and-load.service.js";
+import { parseWexTransactionReportPdf, wexReportControl, wexReportToStatementLines } from "./wex-transaction-report-pdf.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -267,16 +269,39 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     const filePart = await req.file();
     if (!filePart) return reply.code(400).send({ error: "file_required" });
     const name = filePart.filename.toLowerCase();
-    if (!name.endsWith(".csv") && !name.endsWith(".xlsx")) return reply.code(400).send({ error: "xlsx_or_csv_required" });
-    let rawRows: Record<string, unknown>[];
-    try {
-      rawRows = await readUntrustedSpreadsheetRows(await filePart.toBuffer(), filePart.filename, { cellDates: true, csvText: true });
-    } catch (err) {
-      if (err instanceof SpreadsheetUploadRejectedError) return reply.code(400).send({ error: err.code });
-      return reply.code(400).send({ error: "unreadable_file", detail: String((err as Error)?.message ?? err) });
+    if (!name.endsWith(".csv") && !name.endsWith(".xlsx") && !name.endsWith(".pdf")) return reply.code(400).send({ error: "pdf_xlsx_or_csv_required" });
+    let parsed: ReturnType<typeof parseDreamlineStatementRows>;
+    let reportControl: ReturnType<typeof wexReportControl> | ReturnType<typeof wexEnhancedControl> | null = null;
+    if (name.endsWith(".pdf")) {
+      // ACCT-F11112 — the monthly WEX Transaction Report PDF (Tran Date only, Amt = the charge). Refused unless every
+      // parsed line foots to the report's own Grand Total and Total Records — never a silent partial import.
+      const buf = await filePart.toBuffer();
+      if (buf.subarray(0, 5).toString("latin1") !== "%PDF-") return reply.code(400).send({ error: "not_a_pdf" });
+      const report = parseWexTransactionReportPdf(buf);
+      reportControl = wexReportControl(report);
+      if (report.rows.length === 0) return reply.code(400).send({ error: "not_a_wex_transaction_report", detail: "No WEX ticket lines (Card #, Tran Date, Invoice, Item, Amt) were found in this PDF." });
+      if (!reportControl.ok) return reply.code(400).send({ error: "wex_report_total_mismatch", detail: "The parsed lines do not foot to the report's Grand Total / Total Records — nothing was imported.", control: reportControl });
+      parsed = wexReportToStatementLines(report);
+    } else {
+      let rawRows: Record<string, unknown>[];
+      try {
+        rawRows = await readUntrustedSpreadsheetRows(await filePart.toBuffer(), filePart.filename, { cellDates: true, csvText: true });
+      } catch (err) {
+        if (err instanceof SpreadsheetUploadRejectedError) return reply.code(400).send({ error: err.code });
+        return reply.code(400).send({ error: "unreadable_file", detail: String((err as Error)?.message ?? err) });
+      }
+      // ACCT-F11112 — the WEX Enhanced Transaction Report (.xlsx: title rows, header on row 4, grouped sub-total rows):
+      // detail lines only, refused unless they foot to the report's grand-total row.
+      const enhanced = isProviderStatementShape(rawRows) ? null : parseWexEnhancedReportGrid(spreadsheetRowsToGrid(rawRows));
+      if (enhanced) {
+        reportControl = wexEnhancedControl(enhanced);
+        if (!reportControl.ok) return reply.code(400).send({ error: "wex_report_total_mismatch", detail: "The report's detail lines do not foot to its grand-total row — nothing was imported.", control: reportControl });
+        parsed = wexEnhancedToStatementLines(enhanced);
+      } else {
+        if (!isProviderStatementShape(rawRows)) return reply.code(400).send({ error: "not_a_wex_statement", detail: "Upload the WEX Enhanced Transaction Report (.xlsx), the Transaction Report (.pdf), or the TransactionReport export with Card #, Disc PPU and Disc Amt columns." });
+        parsed = parseDreamlineStatementRows(rawRows);
+      }
     }
-    if (!isProviderStatementShape(rawRows)) return reply.code(400).send({ error: "not_a_wex_statement", detail: "Card #, Disc PPU and Disc Amt columns are required (the WEX TransactionReport export)." });
-    const parsed = parseDreamlineStatementRows(rawRows);
     if (parsed.lines.length === 0) return reply.code(400).send({ error: "no_wex_lines", dead_letters: parsed.dead_letters.slice(0, 25) });
 
     const summary = await withLuciaBypass(async (client) => {
@@ -284,11 +309,11 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
       return importWexStatement(client as never, {
         operating_company_id: companyId,
         actor_user_uuid: authUser.uuid,
-        lines: parsed.lines,
+        lines: withCardUnitFallback(parsed.lines),
         dry_run: dryRun,
         stamp_only: query.data.stamp_only === "true",
       });
     });
-    return { dry_run: dryRun, stamp_only: query.data.stamp_only === "true", file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
+    return { dry_run: dryRun, stamp_only: query.data.stamp_only === "true", file: filePart.filename, report_control: reportControl, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
   });
 }
