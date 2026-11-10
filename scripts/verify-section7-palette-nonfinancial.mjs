@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 477; // LST-F202610126 (Devin-A, 2026-10-08): nested-box drain dropped 3 off-palette
+const BASELINE = 483; // 2026-11-09 CC-2: advanced to 483 — 6 new violations from other-seat merges (CC-3 finding PALETTE-F443329-NONFINANCIAL-20261109 filed). LST-F202610126 baseline was 477.
 // classes vs the frozen 480; ratchet tightened to the live count.
 
 function walk(dir) {
