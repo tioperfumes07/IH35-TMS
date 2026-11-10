@@ -15635,6 +15635,36 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relationship-scorer-scan-once-per-candidate (ACCT-F11126, #28699)"
   },
+  "20025": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
+  },
+  "20029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
+  },
+  "20033": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-faro-purchase-report-seed (ACCT-F11108)"
+  },
+  "20037": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
+  },
+  "20041": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-da-random-pool-active-drivers (ACCT-F11128)"
+  },
+  "20049": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-load-fk-invariant-fuel-refusal (ACCT-F11107, migration 202616460100, #28734)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17639,30 +17669,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099,
-  "20025": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
-  },
-  "20029": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
-  },
-  "20033": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-faro-purchase-report-seed (ACCT-F11108)"
-  },
-  "20037": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
-  },
-  "20041": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-da-random-pool-active-drivers (ACCT-F11128)"
-  }
+  "total_claimed": 1100
 }
