@@ -565,7 +565,7 @@ export function LoadsReportBoard() {
         <section className="rounded-sm border border-[#DDE1E7] bg-white p-3" data-testid="loads-report-revenue-by-week">
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <h3 className="text-xs font-bold text-[#111827]">Revenue by week</h3>
-            <span className="text-[11px] text-[#5B6576]">same filtered loads · {applied.dateField} date</span>
+            <span className="text-section-header text-[#5B6576]">same filtered loads · {applied.dateField} date</span>
           </div>
           {revenueByWeek.weeks.length === 0 ? (
             <p className="text-xs text-[#5B6576]">No weekly revenue in range.</p>
@@ -578,7 +578,7 @@ export function LoadsReportBoard() {
                     style={{ height: `${Math.max(4, Math.round((g.revenue / revenueByWeek.max) * 100))}%` }}
                     data-testid={`loads-report-week-bar-${g.key}`}
                   />
-                  <span className="truncate text-[10px] text-[#5B6576]">{g.label.replace("Week of ", "")}</span>
+                  <span className="truncate text-section-header text-[#5B6576]">{g.label.replace("Week of ", "")}</span>
                 </div>
               ))}
             </div>
