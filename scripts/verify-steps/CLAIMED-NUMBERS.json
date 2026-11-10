@@ -15590,6 +15590,11 @@
     "claimed_at": "2026-11-09",
     "purpose": "verify-alwaystrack-load-history-import"
   },
+  "19989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-wex-transaction-report-import"
+  },
   "19993": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-09",
@@ -15604,6 +15609,16 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-09",
     "purpose": "verify-relay-fill-dates-central (ACCT-F11122)"
+  },
+  "20005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-fuel-card-inactive-from-refused"
+  },
+  "20009": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-void-block-counts-line-level-liveness"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -17609,20 +17624,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099,
-  "19989": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-wex-transaction-report-import"
-  },
-  "20005": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-fuel-card-inactive-from-refused"
-  },
-  "20009": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-09",
-    "purpose": "verify-tracker-sync-regenerates-dependents"
-  }
+  "total_claimed": 1099
 }
