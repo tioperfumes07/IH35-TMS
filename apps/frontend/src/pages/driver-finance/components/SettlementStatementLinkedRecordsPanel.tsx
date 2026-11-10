@@ -174,9 +174,8 @@ export function SettlementStatementLinkedRecordsPanel({
       testId="settlement-statement-panel-linked"
       footer={L.panelFooter}
     >
-      <ParityTable<LinkedRow>
+      <ParityTable<LinkedRow> appearance="board"
         tableTestId="settlement-statement-linked-table"
-        appearance="board"
         hidePager
         density="compact"
         suppressToolbarSearch

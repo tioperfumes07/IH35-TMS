@@ -16,6 +16,7 @@ import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 import { FuelBoardSection } from "../FuelBoardSection";
+import { FleetTruck } from "../../maintenance/components/FleetHealthLine";
 
 type Props = {
   companyId: string;
@@ -79,21 +80,40 @@ export function FuelDieselByTruckPanel({
         key: "unit_number",
         label: "Unit",
         sortable: true,
+        minWidth: 220,
         sortValue: (r) => r.unit_number,
-        render: (r) =>
-          r.unit_id ? (
-            <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#1F2A44]" />
-          ) : (
-            <span className="font-semibold">{r.unit_number}</span>
-          ),
+        render: (r) => (
+          <div className="flex min-w-0 items-center gap-2">
+            <FleetTruck row={{ state: "ok", body_style: "aero" }} />
+            <div className="min-w-0">
+              {r.unit_id ? (
+                <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#1F2A44]" />
+              ) : (
+                <span className="font-semibold">{r.unit_number}</span>
+              )}
+            </div>
+          </div>
+        ),
       },
       {
         key: "spend_cents",
         label: "Spend",
         sortable: true,
+        minWidth: 160,
         className: QBO_MONEY_CELL_CLASS,
         sortValue: (r) => r.spend_cents,
-        render: (r) => formatMoneyCents(r.spend_cents),
+        render: (r) => {
+          const max = Math.max(1, ...rows.map((x) => x.spend_cents));
+          const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
+          return (
+            <div className="flex min-w-0 items-center gap-2" data-testid="fuel-diesel-spend-bar">
+              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-slate-100" aria-hidden>
+                <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+            </div>
+          );
+        },
       },
       {
         key: "gallons",
@@ -132,7 +152,7 @@ export function FuelDieselByTruckPanel({
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [],
+    [rows],
   );
 
   return (
@@ -164,7 +184,7 @@ export function FuelDieselByTruckPanel({
 
       <FuelBoardSection title="Diesel by truck" testId="fuel-diesel-by-truck-section">
         {aggQuery.isError ? <ListErrorBanner onRetry={() => void aggQuery.refetch()} /> : null}
-        <ParityTable<DieselRow>
+        <ParityTable appearance="board"<DieselRow>
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}
