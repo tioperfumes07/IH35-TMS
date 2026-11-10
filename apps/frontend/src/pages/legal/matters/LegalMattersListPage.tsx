@@ -268,7 +268,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
             </button>
           </span>
         </div>
-        <ParityTable
+        <ParityTable appearance="board"
           title={fixedType ? "Lawsuits" : "Legal matters"}
           rows={rows}
           columns={columns}

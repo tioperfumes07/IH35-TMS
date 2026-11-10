@@ -357,7 +357,7 @@ export function LegalContractInstancesPage() {
                   {label} <span className="font-normal normal-case text-gray-500">({formatQuantityTable(sectionRows.length, 0)})</span>
                 </h2>
               ) : null}
-            <ParityTable
+            <ParityTable appearance="board"
               rows={sectionRows}
               columns={columns}
               rowKey={(row) => row.id}

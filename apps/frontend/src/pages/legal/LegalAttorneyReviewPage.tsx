@@ -76,7 +76,7 @@ export function LegalAttorneyReviewPage() {
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Attorney review queue"
             rows={rows}
             columns={columns}

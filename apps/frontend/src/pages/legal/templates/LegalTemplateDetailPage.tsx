@@ -403,7 +403,7 @@ export function LegalTemplateDetailPage() {
 
         <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
           <div className="divide-y divide-[#E5E7EB] px-3 py-3">
-            <ParityTable
+            <ParityTable appearance="board"
               title="Template version history"
               rows={versionRows}
               columns={VERSION_COLUMNS}
@@ -462,7 +462,7 @@ export function LegalTemplateDetailPage() {
 
       <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
         <div className="px-3 py-3">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Template audit log"
             rows={auditLogRows}
             columns={AUDIT_LOG_COLUMNS}
