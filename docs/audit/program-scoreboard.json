@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f736860",
-  "generated_at": "2026-11-10T08:27:28.014Z",
+  "healthzSha": "15c2dda",
+  "generated_at": "2026-11-10T10:23:57.055Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f736860",
+    "deployedSha": "15c2dda",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 02:27 AM CT",
+      "url": "",
+      "sha": "15c2ddad7a",
+      "committedAtIso": "2026-11-10T08:27:28Z"
+    },
+    {
       "number": 28790,
       "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post of 5853–5872 until the #28788 engine reds are fixed",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28774",
       "sha": "da007a8002",
       "committedAtIso": "2026-11-09T23:34:10-06:00"
-    },
-    {
-      "number": 28773,
-      "title": "FIX: main red — verify-additive-only 70 -> 76: #28767 default-hid 6 shipped Settlements Tours columns incl. Post (LST-F11136)",
-      "state": "merged",
-      "mergedAtCt": "11/09/2026, 11:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28773",
-      "sha": "492eaf8f81",
-      "committedAtIso": "2026-11-09T23:16:46-06:00"
     }
   ]
 }
