@@ -1,3 +1,7 @@
+## 2026-11-09 — ROUND 8.5 first design comparison (INCOMPLETE)
+
+45-board inventory in `docs/design/DESIGN-BOARD-ROUTE-MAP.md`; candidate modal bindings explicitly pending. Three initial live board comparisons at measured 1440×900 CSS pixels: Insurance FAIL, Banking FAIL, Accounting FAIL. No board certified fully wired. See `docs/design/DESIGN-PARITY-VERIFY.md` and Cursor handoff `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-CURSOR-FIRST-VISUAL-FINDINGS.md` for 12 specific differences (2 shared + 5 Insurance + 3 Banking + 2 Accounting), source locations and acceptance requirements. Banking has 10 clipped reconciliation cells, Latest lines table y=2196; shared header 103.21px vs board42; Accounting lower panels 425px each. Insurance View all navigation verified with 3 loaded policy rows, no write. Screenshots private in Downloads; no production personal/financial evidence committed. Static census zero is NOT visual parity. Remaining: exhaustive census, full45 live proof, normalized safe screenshots/diffs, guard claim and wiring. No runtime/data changes.
+
 ## 2026-11-03 — ROUND7.30 batch96: settlement selected-week caption LIVE acceptance
 
 Batch95 merged #28569 fb6bdb1d27597d35850027383f95ef6eec22d8ac,normal hooks,1affected/0regressions. PR body endpoint evidence corrected after advisory metadata warning;no runtime/guard bypass.
