@@ -433,6 +433,8 @@ export function TrialBalancePage() {
         }}
       >
         <ParityTable
+          // R2 — board-compact left-aligned account/type body (Reports-Viewer-TrialBalance.dc.html).
+          appearance="board"
           rows={rows}
           columns={tbColumns}
           rowKey={(row) => row.account_id}

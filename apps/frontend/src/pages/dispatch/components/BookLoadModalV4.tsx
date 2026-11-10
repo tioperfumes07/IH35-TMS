@@ -313,6 +313,15 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 [data-wizard-v5="on"] .space-y-2>*+*{margin-top:4px}
 `;
 
+/** D1 — board left A–E section rail (Dispatch-BookLoad-Modal.dc.html). Side panel stays single-column. */
+const BOOK_LOAD_SECTION_RAIL = [
+  { id: "book-load-section-a", letter: "A", label: "Customer · invoice · charges" },
+  { id: "book-load-section-b", letter: "B", label: "Equipment · driver · trailer" },
+  { id: "book-load-section-c", letter: "C", label: "Stops and miles" },
+  { id: "book-load-section-d", letter: "D", label: "Pre-dispatch validation" },
+  { id: "book-load-documents", letter: "E", label: "Documents" },
+] as const;
+
 // LDT-1 (owner ruling 2026-09-05, ONE-ITEM-INSTRUCTIONS-ALL-SEATS §2): the Empty (deadhead) leg's
 // origin is the USMCA yard — 23918 Mines Rd, Laredo (geofence 188cf90c centroid). The canonical
 // source is the `mdata.locations WHERE is_ih35_yard = true` row that Codex TEL-42 creates, read via
@@ -391,6 +400,12 @@ export function BookLoadModalV4({
     } catch {
       /* ignore quota / private mode */
     }
+  }, []);
+  // D1 — highlight the section the dispatcher just jumped to from the board A–E rail.
+  const [activeBookLoadSection, setActiveBookLoadSection] = useState<string>(BOOK_LOAD_SECTION_RAIL[0].id);
+  const jumpBookLoadSection = useCallback((sectionId: string) => {
+    setActiveBookLoadSection(sectionId);
+    document.querySelector<HTMLElement>(`[data-testid="${sectionId}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
   const [saveProof, setSaveProof] = useState<LoadSaveProof | null>(null);
   const [saveProofCreated, setSaveProofCreated] = useState<{ id: string; label?: string } | null>(null);
@@ -2323,7 +2338,44 @@ export function BookLoadModalV4({
             </div>
           ) : null}
 
-          <div className="space-y-3 bg-[#E9EBEF] px-4 py-3">
+          <div
+            className={
+              bookLoadPresentation === "center"
+                ? "grid grid-cols-1 gap-3.5 bg-[#E9EBEF] px-4 py-3 lg:grid-cols-[200px_minmax(0,1fr)]"
+                : "space-y-3 bg-[#E9EBEF] px-4 py-3"
+            }
+            data-testid="book-load-body-layout"
+          >
+            {/* D1 — board sticky A–E section rail beside the form (center only; side panel width preserves workflow). */}
+            {bookLoadPresentation === "center" ? (
+              <nav
+                aria-label="Book load sections"
+                data-testid="book-load-section-rail"
+                className="sticky top-0 flex h-fit flex-col gap-0.5 self-start"
+              >
+                {BOOK_LOAD_SECTION_RAIL.map((sec) => {
+                  const active = activeBookLoadSection === sec.id;
+                  return (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      data-testid={`book-load-rail-${sec.letter.toLowerCase()}`}
+                      aria-current={active ? "true" : undefined}
+                      onClick={() => jumpBookLoadSection(sec.id)}
+                      className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11.5px] font-semibold ${
+                        active ? "border border-[#DDE1E7] bg-white" : "border border-transparent"
+                      }`}
+                    >
+                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-[10px] font-bold text-white">
+                        {sec.letter}
+                      </span>
+                      <span className="min-w-0 flex-1 leading-snug text-[#0F1219]">{sec.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            ) : null}
+            <div className={bookLoadPresentation === "center" ? "min-w-0 space-y-3" : "contents"}>
             {/* 443.265-A (Lead 5:52 AM) — A and B end level: both columns stretch, and A's last field (Special notes)
                 grows into the remaining height instead of leaving a white block under it. */}
             <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]" data-testid="book-load-ab-grid">
@@ -2600,45 +2652,67 @@ export function BookLoadModalV4({
                         and the edit patch never writes it, so a registered input only made it look like a silently
                         discarded entry (443.101, verify-form-field-roundtrip). */}
 
-                  <div className="overflow-x-auto border-t border-b border-gray-200">
-                    <table className="w-full border-collapse text-xs">
-                      <tbody>
-                        <tr className="border-b border-gray-100">
-                          <td className="px-2 py-1.5">Linehaul</td>
-                          <td className="px-2 py-1.5 text-right">
-                            <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => { form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("linehaul_cents"); }} className="ml-auto w-28" ariaLabel="Linehaul" />
-                            {form.formState.errors.linehaul_cents ? (
-                              <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.linehaul_cents.message)}</p>
-                            ) : null}
-                          </td>
-                        </tr>
-                        <tr className="border-b border-gray-100">
-                          <td className="px-2 py-1.5">Fuel surcharge</td>
-                          <td className="px-2 py-1.5 text-right">
-                            <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => { form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("fuel_surcharge_cents"); }} className="ml-auto w-28" ariaLabel="Fuel surcharge" />
-                            {form.formState.errors.fuel_surcharge_cents ? (
-                              <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.fuel_surcharge_cents.message)}</p>
-                            ) : null}
-                          </td>
-                        </tr>
-                        <tr className="border-b border-gray-100">
-                          <td className="px-2 py-1.5">Accessorial</td>
-                          <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>
-                            {formatUsdCents(sumAccessorialCents(accessorialRows ?? []))}
-                          </td>
-                        </tr>
-                        {extraRatesCents !== 0 ? (
-                          <tr className="border-b border-gray-100">
-                            <td className="px-2 py-1.5">Per-stop extra rates</td>
-                            <td className={`px-2 py-1.5 font-mono text-gray-800 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(extraRatesCents)}</td>
-                          </tr>
+                  {/* D2 — board four charge amounts side by side (Linehaul | Fuel | Accessorial | Total).
+                      AccessorialEditor + per-stop extras stay below as additive workflow (not stacked legacy). */}
+                  <div
+                    className="rounded-md border border-[#ECEEF2] px-3 py-1"
+                    data-testid="book-load-charges-grid"
+                  >
+                    <div className="grid grid-cols-2 items-end gap-2.5 py-1.5 sm:grid-cols-4">
+                      <label className="min-w-0">
+                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Linehaul</span>
+                        <MoneyInput
+                          valueCents={form.watch("linehaul_cents")}
+                          onChangeCents={(c) => {
+                            form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true });
+                            form.clearErrors("linehaul_cents");
+                          }}
+                          className="w-full"
+                          ariaLabel="Linehaul"
+                        />
+                        {form.formState.errors.linehaul_cents ? (
+                          <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.linehaul_cents.message)}</p>
                         ) : null}
-                        <tr className="bg-[#F7F8FA] font-semibold">
-                          <td className="px-2 py-1.5">Total customer invoice</td>
-                          <td className={`px-2 py-1.5 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(customerInvoiceTotal)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                      </label>
+                      <label className="min-w-0">
+                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Fuel surcharge</span>
+                        <MoneyInput
+                          valueCents={form.watch("fuel_surcharge_cents")}
+                          onChangeCents={(c) => {
+                            form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true });
+                            form.clearErrors("fuel_surcharge_cents");
+                          }}
+                          className="w-full"
+                          ariaLabel="Fuel surcharge"
+                        />
+                        {form.formState.errors.fuel_surcharge_cents ? (
+                          <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.fuel_surcharge_cents.message)}</p>
+                        ) : null}
+                      </label>
+                      <div className="min-w-0">
+                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Accessorial</span>
+                        <div
+                          className={`flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-white px-2.5 text-[12.5px] font-medium tabular-nums text-[#111827] ${QBO_MONEY_CELL_CLASS}`}
+                          data-testid="book-load-accessorial-total"
+                        >
+                          {formatUsdCents(sumAccessorialCents(accessorialRows ?? []))}
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Total customer invoice</span>
+                        <div
+                          className={`flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-[#F7F8FA] px-2.5 text-[12.5px] font-semibold tabular-nums text-[#111827] ${QBO_MONEY_CELL_CLASS}`}
+                          data-testid="book-load-invoice-total"
+                        >
+                          {formatUsdCents(customerInvoiceTotal)}
+                        </div>
+                      </div>
+                    </div>
+                    {extraRatesCents !== 0 ? (
+                      <p className="border-t border-[#ECEEF2] py-1.5 text-[11px] text-[#5B6576]" data-testid="book-load-extra-rates-note">
+                        Per-stop extra rates {formatUsdCents(extraRatesCents)} included in invoice total
+                      </p>
+                    ) : null}
                   </div>
                   {/* ARCHIVE-not-DELETE: B21 RBC dead + Add charge / orphan charge-type select — replaced by AccessorialEditor (B21-D3). Sunset: 2026-09. */}
                   <AccessorialEditor
@@ -2792,7 +2866,7 @@ export function BookLoadModalV4({
               </section>
 
               <div className="space-y-3">
-                <section className="blw-sec">
+                <section className="blw-sec" data-testid="book-load-section-b">
                   <div className="blw-sec-hd">
                     <span className="blw-sec-chip">B</span>
                     <span className="blw-sec-name">Equipment · Driver · Trailer</span>
@@ -2816,7 +2890,7 @@ export function BookLoadModalV4({
               </div>
             </div>
 
-            <section className="blw-sec">
+            <section className="blw-sec" data-testid="book-load-section-c">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">C</span>
                 <span className="blw-sec-name">Stops and miles</span>
@@ -2963,7 +3037,7 @@ export function BookLoadModalV4({
               </div>
             </section>
 
-            <section className="blw-sec">
+            <section className="blw-sec" data-testid="book-load-section-d">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">D</span>
                 <span className="blw-sec-name">Pre-dispatch validation</span>
@@ -3111,6 +3185,7 @@ export function BookLoadModalV4({
                 </p>
               </div>
             </section>
+            </div>
           </div>
 
           {saveAck ? (
