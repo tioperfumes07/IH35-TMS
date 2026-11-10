@@ -152,6 +152,10 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (/<td className="px-2 py-1\.5">Linehaul<\/td>/.test(wizard)) {
     errors.push("D2: legacy vertical Linehaul charge table row must not remain as the overview");
   }
+  // Spec residual — dialog semantics for center/side Book Load panel (Codex: zero role=dialog).
+  if (!/role="dialog"/.test(wizard) || !/aria-modal="true"/.test(wizard) || !/book-load-dialog-title/.test(wizard)) {
+    errors.push("Book Load panel must expose role=dialog aria-modal labelled by book-load-dialog-title");
+  }
   return errors;
 }
 
@@ -191,6 +195,7 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard, equipment + '\n// mutation: {...register("driver_pay_rate_per_mile")}', timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('data-testid="book-load-section-rail"', 'data-testid="book-load-section-rail-REMOVED"').replace("BOOK_LOAD_SECTION_RAIL", "BOOK_LOAD_SECTION_RAIL_REMOVED"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('data-testid="book-load-charges-grid"', 'data-testid="book-load-charges-REMOVED"'), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace('role="dialog"', 'role="region"').replace('aria-modal="true"', 'aria-modal="false"'), equipment, timeWindow, moneyInput, numberInput],
   ];
   let caught = 0;
   for (const [index, args] of mutations.entries()) {
