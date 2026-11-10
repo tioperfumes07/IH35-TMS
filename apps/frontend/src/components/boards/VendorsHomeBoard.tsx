@@ -71,6 +71,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
     rememberPartyBoardReturn("vendors", `${location.pathname}${location.search}`);
   }, [location.pathname, location.search]);
   const exportRef = useRef<() => void>(() => undefined);
+  const paysExportRef = useRef<() => void>(() => undefined);
   const q = useQuery({
     queryKey: ["party-board", "vendors", props.operatingCompanyId, "ytd"],
     queryFn: () => apiRequest<VendorBoard>(`/api/v1/mdata/boards/vendors?operating_company_id=${props.operatingCompanyId}&range=ytd`),
@@ -189,55 +190,11 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
               })}
             </div>
           </V3Panel>
-          {/* V1 — compact Pays through (board table, no ParityTable chrome) so vendor overview sits closer. */}
           <V3Panel title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
-            <div style={{ overflowX: "auto" }} data-testid="party-board-pays-table">
-              <table className="w-full" style={{ borderCollapse: "collapse", fontFamily: V3.font }}>
-                <thead>
-                  <tr>
-                    {paysCols.map((c) => (
-                      <th
-                        key={c.key}
-                        className={c.num ? "text-right" : "text-left"}
-                        style={{
-                          font: "600 11px Inter",
-                          color: V3.muted,
-                          padding: "7px 12px",
-                          borderBottom: `1px solid ${V3.border}`,
-                          background: V3.headerBg,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {c.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paysRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={paysCols.length} className="text-left" style={{ padding: "10px 12px", fontSize: 12, color: V3.muted }}>
-                        No payments in range.
-                      </td>
-                    </tr>
-                  ) : (
-                    paysRows.map((r) => (
-                      <tr key={r.id}>
-                        <td className="text-left" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12, whiteSpace: "nowrap" }}>
-                          {r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : r.account_name}
-                        </td>
-                        <td data-quantity className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
-                          {int(r.vendors)}
-                        </td>
-                        <td className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
-                          <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>{usd(r.spend_cents)}</NumLink>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <PartyTable<PaysRow> storageKey="party-board-pays-through-table" testId="party-board-pays-table"
+              cols={paysCols} rows={paysRows} exportRef={paysExportRef}
+              exportName="pays-through.csv" emptyText="No payments in range."
+              renderFirst={(r) => r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : <span>{r.account_name}</span>} />
           </V3Panel>
         </div>
 

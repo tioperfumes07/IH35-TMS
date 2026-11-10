@@ -1056,6 +1056,7 @@
     "202616470100",
     "202616480100",
     "202616490100",
+    "202616490900",
     "202616501200"
   ],
   "202616330100": {
@@ -1117,6 +1118,11 @@
     "claimed_at": "2026-11-12",
     "claimed_by": "claude",
     "purpose": "PERFUME-DESK: owner-only hidden perfume price desk — new isolated schema perfume.* (items, UPCs, aliases, vendors, price lists, rows, matches); no carrier, USMCA or GL linkage"
+  },
+  "202616490900": {
+    "claimed_at": "2026-11-11",
+    "claimed_by": "claude",
+    "purpose": "dispatch capacity audit triggers — audit.tg_audit_row() on 5 dispatch.capacity_* tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_postings); additive guard fix for verify-dispatch-tables-audited-and-rls-forced"
   },
   "202616501200": {
     "claimed_at": "2026-11-12",

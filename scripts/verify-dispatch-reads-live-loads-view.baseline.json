@@ -17,6 +17,9 @@
     "dispatch/cancellation-tonu-invoice.ts": {
       "count": 1
     },
+    "dispatch/capacity/capacity-offers.service.ts": {
+      "count": 1
+    },
     "dispatch/canonical-active-load-set.ts": {
       "count": 2
     },

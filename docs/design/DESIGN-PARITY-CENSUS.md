@@ -1,14 +1,14 @@
 # DESIGN-PARITY-CENSUS
 
-Generated: 2026-11-10T23:29:18.601Z
+Generated: 2026-11-12T07:35:37.709Z
 Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · boards (banking, driver-customers-vendors, maintenance, settlements) · approved-screens (13).
 
 ## Totals
 
 | Metric | Count |
 |---|---:|
-| Routes in manifest | 688 |
-| Passing (static app-wide rules) | 688 |
+| Routes in manifest | 690 |
+| Passing (static app-wide rules) | 690 |
 | Failing (rule hits on resolved pages) | 0 |
 | Unresolved page binding (informational) | 219 |
 | v3 .dc.html designs | 50 |
@@ -53,7 +53,7 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | documents | 1 | 1 | 0 | 0 |
 | driver | 7 | 7 | 0 | 5 |
 | driver-app | 1 | 1 | 0 | 0 |
-| driver-finance | 20 | 20 | 0 | 2 |
+| driver-finance | 21 | 21 | 0 | 2 |
 | driver-hub | 2 | 2 | 0 | 0 |
 | drivers | 24 | 24 | 0 | 15 |
 | eld | 1 | 1 | 0 | 0 |
@@ -78,6 +78,7 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | notifications | 1 | 1 | 0 | 0 |
 | onboarding | 1 | 1 | 0 | 0 |
 | owner-approval | 1 | 1 | 0 | 0 |
+| perfume | 1 | 1 | 0 | 0 |
 | portal | 5 | 5 | 0 | 5 |
 | profitability | 1 | 1 | 0 | 0 |
 | program | 8 | 8 | 0 | 1 |

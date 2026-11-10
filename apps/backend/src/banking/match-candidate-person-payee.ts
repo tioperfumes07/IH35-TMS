@@ -20,7 +20,7 @@ export type PersonFlaggable = {
 };
 
 /** Pure: stamp counterparty_is_person on every candidate from a resolved id set. */
-export function applyCounterpartyPersonFlag<T extends PersonFlaggable>(candidates: T[], personIds: ReadonlySet<string>): T[] {
+export function applyCounterpartyPersonFlag<T extends PersonFlaggable>(candidates: T[], personIds: ReadonlySet<string>): Array<T & { counterparty_is_person: boolean }> {
   return candidates.map((c) => ({
     ...c,
     counterparty_is_person: Boolean(c.counterparty_id && personIds.has(String(c.counterparty_id))),

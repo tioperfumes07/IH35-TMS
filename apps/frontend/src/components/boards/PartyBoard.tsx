@@ -164,7 +164,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     note = (
       <MeasuredNote testId="party-board-note">
         <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)}</NumLink> invoices issued (open and paid) since {day(b.range_from)},{" "}
-        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed (issued invoices only){(b.kpis.proforma_cents ?? 0) > 0 ? <>, plus <span data-testid="party-board-proforma">{tileUsd(b.kpis.proforma_cents ?? 0)}</span> of draft / proforma invoices not yet billed</> : null}.{" "}
+        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed (issued invoices only){(b.kpis.proforma_cents ?? 0) > 0 ? <>, plus <NumLink to={`/customers?chip=with_transactions&range=${range}`} data-testid="party-board-proforma">{tileUsd(b.kpis.proforma_cents ?? 0)}</NumLink> of draft / proforma invoices not yet billed</> : null}.{" "}
         {b.kpis.collected_cents === 0 ? (
           <>
             Collected is <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(0)}</NumLink> for every customer: no payment has been
