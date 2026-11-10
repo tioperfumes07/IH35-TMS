@@ -221,6 +221,8 @@ const HUB_DESIGN_LABELS = [
       "apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx",
       "apps/frontend/src/pages/maintenance/components/RMStatStrip.tsx",
       "apps/frontend/src/pages/maintenance/components/InShopBoard.tsx",
+      // ShopBays board floor SVG owns OVERHEAD DOOR / OPEN BAY chrome (ROUND 8.5).
+      "apps/frontend/src/pages/maintenance/components/ShopBayFloorSvg.tsx",
     ],
     labels: [
       "PM due soon",
@@ -237,7 +239,10 @@ const HUB_DESIGN_LABELS = [
   },
   {
     route: "/maintenance/fleet-table",
-    files: ["apps/frontend/src/pages/maintenance/components/InShopBoard.tsx"],
+    files: [
+      "apps/frontend/src/pages/maintenance/components/InShopBoard.tsx",
+      "apps/frontend/src/pages/maintenance/components/ShopBayFloorSvg.tsx",
+    ],
     labels: [
       "MAINTENANCE · SHOP FLOOR",
       "Check a truck in",
