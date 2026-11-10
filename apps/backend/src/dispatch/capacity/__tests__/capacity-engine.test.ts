@@ -11,6 +11,8 @@ import {
 } from "../capacity-offers.service.js";
 import { UNIT_IN_SERVICE_SQL } from "../../unit-in-service.js";
 import { canonicalDispatchWorkWhereClause } from "../../canonical-active-load-set.js";
+import { renderEmailTemplate } from "../../../email/render.js";
+import { buildOfferTemplateVars } from "../capacity-offers.service.js";
 import { boardStatus, desiredPostings, diffPostings } from "../load-board-posting.service.js";
 
 const NOW = new Date("2026-11-10T15:00:00Z");
@@ -123,6 +125,20 @@ describe("capacity offers — audience, lanes, cap", () => {
   it("subject names the count, day and cities", () => {
     const plan = planOffers({ kind: "morning", recipients: [R1], laneStatesByCustomer: lanes, capacity, sentToday: new Map(), now: NOW });
     expect(offerSubject("USMCA", plan[0].trucks, "morning", NOW)).toBe("USMCA — 1 truck available Tue (Laredo)");
+  });
+
+  it("the rendered email carries the trucks, the legal footer and the unsubscribe link", () => {
+    const plan = planOffers({ kind: "morning", recipients: [R1], laneStatesByCustomer: lanes, capacity, sentToday: new Map(), now: NOW });
+    const vars = buildOfferTemplateVars({
+      recipient: R1, trucks: plan[0].trucks, kind: "morning", now: NOW, unsubscribeUrl: "https://api.example.test/u?t=abc",
+      footer: { legal_name: "Example Legal LLC", short_name: "EX", address: "1 Main St, Laredo, TX 78040", mc: "123", dot: "456" },
+    });
+    const { html } = renderEmailTemplate("capacity-offer", vars);
+    expect(html).toContain("T100");
+    expect(html).toContain("Laredo, TX");
+    expect(html).toContain("Example Legal LLC");
+    expect(html).toContain("1 Main St, Laredo, TX 78040");
+    expect(html).toContain("https://api.example.test/u?t=abc");
   });
 
   it("unsubscribe token round-trips and rejects tampering", () => {
