@@ -215,6 +215,11 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
     const retryCount = Number(row.retry_count ?? 0);
     const maxRetries = Number(row.max_retries ?? 5);
     const attachments = parseAttachments(row.attachments);
+    const replyTo = typeof row.reply_to === "string" && row.reply_to.trim() ? row.reply_to.trim() : undefined;
+    const extraHeaders =
+      row.headers && typeof row.headers === "object" && !Array.isArray(row.headers)
+        ? (row.headers as Record<string, string>)
+        : undefined;
 
     let html: string;
     let text: string | undefined;
@@ -252,6 +257,8 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
         html,
         text,
         attachments,
+        replyTo,
+        headers: extraHeaders,
       });
       // G10-C4: the message is already sent — if persisting the 'sent' status throws, do NOT fall into
       // the failure path (that would re-send). Log it; the stale-lock reclaim above will pick the row

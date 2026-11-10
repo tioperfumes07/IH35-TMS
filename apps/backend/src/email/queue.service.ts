@@ -12,6 +12,10 @@ export type EnqueueEmailInput = {
   templateVars: Record<string, unknown>;
   attachments?: EmailAttachment[] | null;
   queuedByUserId?: string | null;
+  /** Reply-To for this message (capacity offers: the dispatch mailbox). */
+  replyTo?: string | null;
+  /** Extra headers carried to the provider (capacity offers: List-Unsubscribe / List-Unsubscribe-Post). */
+  headers?: Record<string, string> | null;
 };
 
 type EmailQueueClient = {
@@ -53,9 +57,11 @@ export async function enqueueEmailWithClient(
           template_vars,
           attachments,
           status,
-          queued_by_user_id
+          queued_by_user_id,
+          reply_to,
+          headers
         )
-        VALUES ($1,$2::text[],$3::text[],$4::text[],$5,$6,$7::jsonb,$8::jsonb,'queued',$9)
+        VALUES ($1,$2::text[],$3::text[],$4::text[],$5,$6,$7::jsonb,$8::jsonb,'queued',$9,$10,$11::jsonb)
         RETURNING id
       `,
       [
@@ -68,6 +74,8 @@ export async function enqueueEmailWithClient(
         JSON.stringify(input.templateVars ?? {}),
         input.attachments ? JSON.stringify(input.attachments) : null,
         input.queuedByUserId ?? null,
+        input.replyTo ?? null,
+        input.headers ? JSON.stringify(input.headers) : null,
       ]
     );
   const queueId = String(insertRes.rows[0]?.id ?? "");

@@ -13,9 +13,14 @@ export function createSesEmailProvider(args: { region: string; fromAddress: stri
       if (input.attachments?.length) {
         throw new Error("ses_provider_attachments_not_supported_use_postmark");
       }
+      if (input.headers && Object.keys(input.headers).length) {
+        // SendEmailCommand has no custom headers — never drop List-Unsubscribe silently.
+        throw new Error("ses_provider_custom_headers_not_supported_use_postmark_or_google");
+      }
       const bodyText = input.text?.trim() ? input.text : stripHtml(input.html);
       const cmd = new SendEmailCommand({
         Source: args.fromAddress,
+        ReplyToAddresses: input.replyTo ? [input.replyTo] : undefined,
         Destination: {
           ToAddresses: input.to,
           CcAddresses: input.cc?.length ? input.cc : undefined,

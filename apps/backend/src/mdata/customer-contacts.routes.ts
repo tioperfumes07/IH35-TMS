@@ -35,6 +35,8 @@ const createContactSchema = z.object({
   department: departmentSchema.default("other"),
   is_primary: z.boolean().optional(),
   notes: z.string().trim().max(2000).optional(),
+  // Capacity engine (spec 11-10): only contacts flagged here receive the daily truck-offer email.
+  receives_truck_offers: z.boolean().optional(),
 });
 
 const updateContactSchema = z
@@ -47,6 +49,7 @@ const updateContactSchema = z
     department: departmentSchema.optional(),
     is_primary: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
+    receives_truck_offers: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, {
     message: "at least one field is required",
@@ -149,6 +152,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
             cc.department,
             cc.is_primary,
             cc.notes,
+            cc.receives_truck_offers,
             cc.deactivated_at,
             cc.created_at,
             cc.updated_at,
@@ -184,6 +188,9 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
         parsedQuery.data.operating_company_id
       );
       if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
+      if (parsedBody.data.receives_truck_offers === true && !parsedBody.data.email) {
+        return reply.code(400).send({ error: "truck_offers_require_email" });
+      }
 
       if (parsedBody.data.is_primary === true) {
         await client.query(
@@ -203,11 +210,12 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           INSERT INTO mdata.customer_contacts (
-            customer_uuid, name, title, email, phone, mobile, department, is_primary, notes, created_by_uuid, updated_by_uuid
+            customer_uuid, name, title, email, phone, mobile, department, is_primary, notes, created_by_uuid, updated_by_uuid,
+            receives_truck_offers
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,$11)
           RETURNING
-            uuid AS id, customer_uuid AS customer_id, name, title, email, phone, mobile, department, is_primary, notes, deactivated_at, created_at, updated_at
+            uuid AS id, customer_uuid AS customer_id, name, title, email, phone, mobile, department, is_primary, notes, receives_truck_offers, deactivated_at, created_at, updated_at
         `,
         [
           parsedParams.data.customer_id,
@@ -220,6 +228,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
           parsedBody.data.is_primary ?? false,
           parsedBody.data.notes ?? null,
           authUser.uuid,
+          parsedBody.data.receives_truck_offers ?? false,
         ]
       );
       const contact = res.rows[0];
@@ -279,7 +288,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
 
         const existingRes = await client.query(
           `
-            SELECT uuid, customer_uuid, is_primary
+            SELECT uuid, customer_uuid, is_primary, email, receives_truck_offers
             FROM mdata.customer_contacts
             WHERE uuid = $1
               AND customer_uuid = $2
@@ -288,6 +297,13 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
           [parsedParams.data.id, parsedParams.data.customer_id]
         );
         if (existingRes.rows.length === 0) return reply.code(404).send({ error: "mdata_customer_contact_not_found" });
+        {
+          // A contact flagged for truck offers must keep an email address (capacity engine audience).
+          const existing = existingRes.rows[0] as { email: string | null; receives_truck_offers: boolean };
+          const nextEmail = parsedBody.data.email !== undefined ? parsedBody.data.email : existing.email;
+          const nextFlag = parsedBody.data.receives_truck_offers ?? existing.receives_truck_offers;
+          if (nextFlag && !nextEmail) return reply.code(400).send({ error: "truck_offers_require_email" });
+        }
 
         if (parsedBody.data.is_primary === true) {
           await client.query(
@@ -326,7 +342,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
             WHERE uuid = $${values.length - 1}
               AND customer_uuid = $${values.length}
             RETURNING
-              uuid AS id, customer_uuid AS customer_id, name, title, email, phone, mobile, department, is_primary, notes, deactivated_at, created_at, updated_at
+              uuid AS id, customer_uuid AS customer_id, name, title, email, phone, mobile, department, is_primary, notes, receives_truck_offers, deactivated_at, created_at, updated_at
           `,
           values
         );

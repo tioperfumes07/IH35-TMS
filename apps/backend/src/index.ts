@@ -148,6 +148,9 @@ import { initializeLayoverDetectorWorker } from "./jobs/layover-detector-worker.
 import { registerEquipmentTransferRoutes } from "./dispatch/equipment-transfer/routes.js";
 import { registerLoadStopExtraRateRoutes } from "./dispatch/loads/multi-stop/extra-rate.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
+import { registerCapacityRoutes } from "./dispatch/capacity/capacity.routes.js";
+import { initializeCapacityOffersCron } from "./dispatch/capacity/capacity-offers.cron.js";
+import { initializeLoadBoardPostingCron } from "./dispatch/capacity/load-board-posting.cron.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
 import { registerManualDeliveryAuthorizationRoutes } from "./dispatch/manual-delivery-authorization.routes.js";
@@ -1084,6 +1087,7 @@ async function main() {
   await registerAnomalyDetectionRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
+  await registerCapacityRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
   await registerManualDeliveryAuthorizationRoutes(app);
@@ -2049,6 +2053,20 @@ async function main() {
       app.log.info("[STARTUP] email-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] email-cron failed");
+    }
+
+    try {
+      initializeCapacityOffersCron(app);
+      app.log.info("[STARTUP] capacity-offers-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] capacity-offers-cron failed");
+    }
+
+    try {
+      initializeLoadBoardPostingCron(app);
+      app.log.info("[STARTUP] load-board-posting-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] load-board-posting-cron failed");
     }
 
     try {

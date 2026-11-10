@@ -14,6 +14,8 @@ export function createConsoleEmailProvider(): EmailProvider {
         text_preview: input.text?.slice(0, 240),
         html_preview: input.html.slice(0, 240),
         attachment_count: input.attachments?.length ?? 0,
+        reply_to: input.replyTo,
+        headers: input.headers,
       });
       return { messageId };
     },

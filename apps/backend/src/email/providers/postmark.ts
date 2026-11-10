@@ -17,6 +17,8 @@ export function createPostmarkEmailProvider(args: { serverToken: string; fromAdd
           Cc: input.cc?.length ? input.cc.join(",") : undefined,
           Bcc: input.bcc?.length ? input.bcc.join(",") : undefined,
           Subject: input.subject,
+          ReplyTo: input.replyTo,
+          Headers: input.headers ? Object.entries(input.headers).map(([Name, Value]) => ({ Name, Value })) : undefined,
           HtmlBody: input.html,
           TextBody: input.text,
           Attachments: input.attachments?.map((a) => ({
