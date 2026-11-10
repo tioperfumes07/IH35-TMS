@@ -1052,7 +1052,8 @@
     "202616430100",
     "202616440100",
     "202616450100",
-    "202616460100"
+    "202616460100",
+    "202616470100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1103,5 +1104,10 @@
     "claimed_at": "2026-11-10",
     "claimed_by": "claude",
     "purpose": "ACCT-F11107: accounting.enforce_load_fk_invariant raises its real refusal on fuel.fuel_transactions (no NEW.line_category on that table)"
+  },
+  "202616470100": {
+    "claimed_at": "2026-11-10",
+    "claimed_by": "claude",
+    "purpose": "ACCT-F11141: a voided company settlement frees its display_id (uq_company_settlements_display_id live rows only) so a signed settlement posted as signed takes its number"
   }
 }
