@@ -81,6 +81,12 @@ const ALLOWLIST = new Map([
   ["dispatch/short-miles-fallback.ts", "443.220/240 short-miles fallback: reads ONE load by id (and its own lane history) to fill a missing short-miles value — settled loads included. Single-record engine, not a list/board read."],
   ["dispatch/unit-current-driver.ts", "443.231b unit current driver: a unit's LAST DELIVERED load names its usual driver — delivered/settled loads are exactly what it reads, which views.live_loads excludes. Lookup SQL fragment, not a list/board read."],
   ["dispatch/presettlement-link.service.ts", "SET-01 / 443.243 pre-settlement link engine: links ONE load to its driver's trip and reads that driver's other trip loads (settled ones included) — views.live_loads would drop the settled legs of an open trip. Single-record engine, not a list/board read."],
+  // ACCT-F11108 (#28761, 2026-11-09) — the AlwaysTrack LOAD HISTORY importer. Proof from the code: its two mdata.loads reads
+  // are (a) processRow's dedupe by load_number — "a load number already in the company (live or voided — never re-booked
+  // under the same number) is skipped"; reading views.live_loads would hide a settled load and RE-BOOK its number; and
+  // (b) openTripHoldingNb — the open pre-settlement's own legs, the exact set presettlement-link.service.ts (above) reads,
+  // settled legs included. It books through bookLoadOnClient; nothing here renders a board.
+  ["dispatch/alwaystrack-load-history-import.service.ts", "ACCT-F11108 historical importer: dedupes by load_number across ALL of the company's loads (settled ones too — views.live_loads would re-book them) and reads an open trip's own legs like presettlement-link.service.ts. Writer path through bookLoadOnClient, not a list/board read."],
 ]);
 
 function loadBaseline() {

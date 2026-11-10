@@ -78,12 +78,18 @@ export async function rematchRelayFuelDrivers(
   for (const row of res.rows) {
     let driverId: string | null = null;
     let source: "integration_id" | "fuel_row" | "load_at_fill_time" | null = null;
+    let link: { link_id: string; relay_name: string | null; evidence: string; confirmed_by: string; created_by: string | null } | null = null;
     // 1. Relay's own id (direct or through the E1 link table) — who actually carded the fill.
     const intMatch = await resolveRelayDriverMatch(client, row.operating_company_id, row.relay_driver_integration_id);
     let unresolvedReason: string = intMatch.unresolved_reason ?? "no_load_driver_match";
     if (intMatch.driver_id !== null) {
       driverId = intMatch.driver_id;
       source = "integration_id";
+      // E1: a match through the link table names the link it rode on (Relay's name, the evidence, who confirmed / recorded it).
+      if (intMatch.link) {
+        const { link_id, relay_name, evidence, confirmed_by, created_by } = intMatch.link;
+        link = { link_id, relay_name, evidence, confirmed_by, created_by };
+      }
     } else {
       // 2. The canonical fuel row may already carry driver_id (set by other means).
       const fuelRow = await client.query<{ driver_id: string }>(
@@ -128,7 +134,7 @@ export async function rematchRelayFuelDrivers(
     if ((relayUp.rowCount ?? 0) > 0) {
       await appendCrudAudit(client as never, opts?.actor_user_id ?? SYSTEM_ACTOR_USER_ID, "relay.fill_driver_matched", {
         operating_company_id: row.operating_company_id, relay_fuel_transaction_id: row.id, transaction_id: row.transaction_id,
-        driver_id: driverId, source,
+        driver_id: driverId, source, ...(link ? { relay_driver_link: link } : {}),
       }, "info", "E1");
     }
 
