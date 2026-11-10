@@ -1,0 +1,1 @@
+export default { name: "verify:verify-auto-status-snapshots-real-units", run(ctx) { ctx.run("node", ["scripts/verify-auto-status-snapshots-real-units.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-auto-status-snapshots-real-units.mjs"]); } };
