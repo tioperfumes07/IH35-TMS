@@ -5,6 +5,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
 import { relayFillPostedSql } from "./relay-fill-posted.sql.js";
+import { relayFillOnOrAfterDaySql, relayFillOnOrBeforeDaySql } from "./relay-fill-day.sql.js";
 
 /**
  * Linkage law §6 for Relay fills (integrations.relay_fuel_transactions). Relay rows never become
@@ -53,13 +54,14 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
       }
       if (d.unmatched === "true") where.push("(r.matched_unit_id IS NULL OR r.matched_driver_id IS NULL)");
       if (d.unposted === "true") where.push(`NOT ${relayFillPostedSql("r")}`);
+      // ACCT-F11122: from / to are Central business days (Relay's export day), never UTC midnights.
       if (d.from) {
         values.push(d.from);
-        where.push(`r.relay_created_at >= $${values.length}::date`);
+        where.push(relayFillOnOrAfterDaySql("r", `$${values.length}`));
       }
       if (d.to) {
         values.push(d.to);
-        where.push(`r.relay_created_at < ($${values.length}::date + 1)`);
+        where.push(relayFillOnOrBeforeDaySql("r", `$${values.length}`));
       }
       const total = await client.query<{ n: number; cents: string }>(
         `SELECT count(*)::int AS n, coalesce(sum(r.total_amount_paid_cents), 0)::bigint AS cents
