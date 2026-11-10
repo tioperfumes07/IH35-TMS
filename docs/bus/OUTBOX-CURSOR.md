@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:15 PM CT) — ROUND 8.4 census floor → 0 static fails
+- **PRIOR:** #28697 design-parity census.
+- **THIS:** Retune census (no false coming-soon/testid; ParityTable gear defaults; print hidePager exempt). emptyText — on Documents + 4 catalog lists. Baseline failing_routes 48→0.
+- **NEXT:** Accounting complete design build vs Accounting.dc.html; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:05 PM CT) — ROUND 8.4 design-parity census (PR 1)
 - **PRIOR:** #28693 System Program phase U12.
 - **THIS:** scripts/verify-design-parity-census.mjs + docs/design/DESIGN-PARITY-CENSUS.md + baseline ratchet (failing_routes may only go down). ROUND 8.4 UI-F11125 census floor before module builds.
