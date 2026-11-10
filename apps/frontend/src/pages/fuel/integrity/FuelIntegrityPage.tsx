@@ -302,7 +302,7 @@ export function FuelIntegrityPage() {
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               rows={cardRows}
               columns={cardCols}
               loading={verdictsQuery.isPending}
@@ -320,7 +320,7 @@ export function FuelIntegrityPage() {
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               rows={relayRows}
               columns={relayCols}
               loading={verdictsQuery.isPending}
@@ -352,7 +352,7 @@ export function FuelIntegrityPage() {
                     ? "Loading…"
                     : "Summary unavailable."}
               </p>
-              <ParityTable
+              <ParityTable appearance="board"
                 rows={derivedRows}
                 columns={derivedCols}
                 loading={derivationsQuery.isPending}
