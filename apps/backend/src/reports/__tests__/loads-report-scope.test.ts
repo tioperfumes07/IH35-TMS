@@ -48,4 +48,12 @@ describe("LEAD 443.206 — the loads report scope and date", () => {
       expect(out.date_field).toBe(dateField === "delivery" ? "delivery" : "pickup");
     }
   });
+
+  it("selects miles_deadhead and totals empty_miles / loaded_miles (R3 board)", async () => {
+    const { client, sql } = captureClient();
+    const out = await getLoadsReport(client as never, { operatingCompanyId: OPCO, from: "2026-10-01", to: "2026-10-31", dateField: "pickup" });
+    expect(sql[0]).toContain("l.miles_deadhead");
+    expect(out.totals).toMatchObject({ empty_miles: 0, loaded_miles: 0, load_count: 0 });
+  });
+
 });

@@ -55,8 +55,13 @@ function runChecks(rootDir) {
   if (!dispatchPage.includes("board_scope: boardScope")) {
     errors.push("Dispatch page must pass board_scope into useLoadsList");
   }
-  if (!/next\.set\("board_scope", "history"\)[\s\S]{0,120}next\.set\("view", "list"\)/.test(dispatchPage)) {
-    errors.push("History toggle must force list view for terminal-only board");
+  // D6 — primary "Loads history" CTA opens the approved Load history board (not legacy board_scope flip).
+  if (!/data-testid="dispatch-board-scope-history"[\s\S]{0,400}navigate\("\/dispatch\/load-history"\)/.test(dispatchPage)) {
+    errors.push("History toggle must navigate to /dispatch/load-history (D6 canonical board)");
+  }
+  // Legacy ?board_scope=history deep links still force list view (DSP-03).
+  if (!/boardScope !== "history" \|\| view === "list"[\s\S]{0,80}next\.set\("view", "list"\)/.test(dispatchPage)) {
+    errors.push("Legacy board_scope=history must still force list view (DSP-03)");
   }
   if (!dispatchPage.includes("disabled={boardScope === \"history\"}")) {
     errors.push("Live-only dispatch views must disable when boardScope=history");
@@ -109,11 +114,8 @@ function selftest() {
   const tmp = mkdtempSync(join(tmpdir(), "dispatch-live-history-selftest-"));
   try {
     const poisonDispatch = read("apps/frontend/src/pages/Dispatch.tsx").replace(
-      `next.set("board_scope", "history");
-                next.set("view", "list");
-                next.delete("statuses");`,
-      `next.set("board_scope", "history");
-                next.delete("statuses");`,
+      `onClick={() => navigate("/dispatch/load-history")}`,
+      `onClick={() => { const next = new URLSearchParams(searchParams); next.set("board_scope", "history"); setSearchParams(next); }}`,
     );
     for (const rel of [
       "apps/frontend/src/api/loads.ts",
@@ -130,8 +132,8 @@ function selftest() {
     mkdirSync(dirname(tmpPoisonAbs), { recursive: true });
     writeFileSync(tmpPoisonAbs, poisonDispatch);
     const planted = runChecks(tmp);
-    if (!planted.some((e) => e.includes("force list view"))) {
-      console.error(`${LABEL} SELFTEST FAIL — planted history/list regression not caught`);
+    if (!planted.some((e) => e.includes("load-history"))) {
+      console.error(`${LABEL} SELFTEST FAIL — planted D6 load-history navigation regression not caught`);
       process.exit(1);
     }
     // 443.187 plants: a closed status leaking into the live allow-list, and listLoads dropping board_scope.

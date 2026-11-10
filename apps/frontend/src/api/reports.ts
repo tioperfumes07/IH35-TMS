@@ -1346,6 +1346,7 @@ export type LoadsReportRow = {
   miles_practical: number | null;
   miles_shortest: number | null;
   miles_driven_actual: number | null;
+  miles_deadhead: number | null;
   revenue_cents: number;
   driver_pay_cents: number;
   fuel_cents: number;
@@ -1368,6 +1369,8 @@ export type LoadsReportResponse = {
     driver_pay_cents: number;
     fuel_cents: number;
     margin_cents: number;
+    empty_miles: number;
+    loaded_miles: number;
   };
   rows: LoadsReportRow[];
 };
