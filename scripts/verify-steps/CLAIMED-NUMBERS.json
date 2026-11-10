@@ -15655,6 +15655,11 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
   },
+  "20049": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-load-fk-invariant-fuel-refusal (ACCT-F11107, migration 202616460100, #28734)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17659,5 +17664,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099
+  "total_claimed": 1100
 }

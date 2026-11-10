@@ -1,0 +1,1 @@
+export default { name: "verify:verify-load-fk-invariant-fuel-refusal", run(ctx) { ctx.run("node", ["scripts/verify-load-fk-invariant-fuel-refusal.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-load-fk-invariant-fuel-refusal.mjs"]); } };
