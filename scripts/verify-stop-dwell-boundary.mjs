@@ -67,7 +67,9 @@ export function check(src) {
   if (!/await fetchStopDwells\(client, operatingCompanyId, dwellReqs\)/.test(miles)) p.push(`${MILES}: computeLoadRealDrivenMiles no longer requests GPS dwells.`);
   if (!/if \(pick\.hit\) timed\.push\(\{ key, unit_id: unit, at: pick\.hit\.at \}\)/.test(miles)) p.push(`${MILES}: a dwell's odometer no longer goes through the shared fetchOdometerAnchors.`);
   if (!/fetchOdometerAnchors\(client, operatingCompanyId, timed\)/.test(miles)) p.push(`${MILES}: fetchOdometerAnchors is no longer the odometer source.`);
-  if (!/resolveStopBoundary\(w\.side, w\.stop, hits\.get\(w\.key\), anchors\.get\(w\.key\), dwells\.get\(w\.key\)\)/.test(miles)) p.push(`${MILES}: the dwell pick is not passed to resolveStopBoundary.`);
+  // #28622 (row 116) appended the fence-crossing anchor and the stop label AFTER the dwell pick; the rule is the dwell pick
+  // still reaches the resolver in its 5th position, whatever trails it.
+  if (!/resolveStopBoundary\(w\.side, w\.stop, hits\.get\(w\.key\), anchors\.get\(w\.key\), dwells\.get\(w\.key\)\s*[,)]/.test(miles)) p.push(`${MILES}: the dwell pick is not passed to resolveStopBoundary.`);
   const resolver = miles.match(/export function resolveStopBoundary\([\s\S]*?\n\}/);
   if (!resolver) p.push(`${MILES}: resolveStopBoundary is gone.`);
   else {
@@ -132,6 +134,7 @@ function selftest() {
     ["short pause accepted", "dwell", (s) => s.replace("d.dwellMinutes >= DWELL_BOUNDARY_MIN_MINUTES", "d.dwellMinutes >= 0")],
     ["fuel stops not excluded", "dwell", (s) => s.replace("!zones.some(", "!([]).some(")],
     ["engine stops requesting dwells", "miles", (s) => s.replace("await fetchStopDwells(client, operatingCompanyId, dwellReqs)", "new Map()")],
+    ["dwell pick not passed to the resolver", "miles", (s) => s.replace("anchors.get(w.key), dwells.get(w.key), anchors.get(`${w.key}:fence`)", "anchors.get(w.key), undefined, anchors.get(`${w.key}:fence`)")],
     ["dwell beats device time", "miles", (s) => s.replace("if (!deviceTime && dwell?.hit)", "if (dwell?.hit)")],
     ["dwell odometer invented", "miles", (s) => s.replace("anchor: timeAnchor?.anchor ?? null,", "anchor: { odometer_mi: 0, read_at: dwell.hit.at, source: \"vehicle_locations\" },")],
     ["cron unwired", "cron", (s) => s.split("runLoadRealDrivenMilesCronTick").join("noop")],

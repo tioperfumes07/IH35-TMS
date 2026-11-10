@@ -72,12 +72,16 @@ if (process.argv.includes("--selftest")) {
   const real = readAll();
   const base = check(real);
   if (base.length) { console.error(`${LABEL} --selftest: real tree not clean:\n  ${base.slice(0, 10).join("\n  ")}`); process.exit(1); }
+  const STRAY = `${FE}/pages/driver-finance/VoidStrayPracticalBillAction.tsx`;
+  if (!real.scoped[STRAY]?.includes("meta: { loads: true },")) { console.error(`${LABEL} --selftest: ${STRAY} plant anchor missing`); process.exit(1); }
   const anyScoped = Object.keys(real.scoped).find((f) => /meta: \{ loads: true \}/.test(real.scoped[f]));
   const plants = [
     ["mutation without meta", { ...real, scoped: { ...real.scoped, [anyScoped]: real.scoped[anyScoped].replace("meta: { loads: true },", "") } }],
     ["unreadable mutation", { ...real, scoped: { ...real.scoped, "x.tsx": "const m = useMutation(opts);" } }],
     ["detail key without company", { ...real, all: { ...real.all, "y.tsx": 'qc.invalidateQueries({ queryKey: ["loads", "detail", input.loadId] });' } }],
     ["MutationCache unwired", { ...real, main: real.main.replace("invalidateLoadViews(queryClient)", "void 0") }],
+    // #28630 shape: the Void practical-miles bill action shipped with no meta.loads.
+    ["void-stray-practical bill without meta", { ...real, scoped: { ...real.scoped, [STRAY]: real.scoped[STRAY].replace("meta: { loads: true },", "") } }],
   ];
   let ok = 0;
   for (const [name, f] of plants) {

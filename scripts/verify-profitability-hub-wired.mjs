@@ -20,6 +20,19 @@ function read(rel) {
   return expandWith(LIVE_PREDICATES, fs.readFileSync(path.join(ROOT, rel), "utf8"));
 }
 
+/**
+ * The cancelled exclusion on alias `a`: the inline `a.status::text <> 'cancelled'`, or the canonical mount
+ * ${canonicalNotCancelledLoadClause("a")} (verify-one-canonical-active-load-set forbids the inline form outside the canonical
+ * module). A mount counts ONLY while the canonical helper still emits that exact predicate — re-read every run.
+ */
+export function notCancelledCount(src, a, canonSrc) {
+  const inline = (src.match(new RegExp(`\\b${a}\\.status::text\\s*<>\\s*'cancelled'`, "g")) || []).length;
+  const body = (canonSrc.match(/export function canonicalNotCancelledLoadClause\([\s\S]*?\n}/) || [""])[0];
+  const helperEmits = body.includes("`${alias}.status::text <> 'cancelled'`");
+  const mounts = helperEmits ? (src.match(new RegExp(`\\$\\{canonicalNotCancelledLoadClause\\("${a}"\\)\\}`, "g")) || []).length : 0;
+  return inline + mounts;
+}
+
 export function verdict(files) {
   const problems = [];
   if (!files.manifest.includes('path="/profitability"') || !files.manifest.includes("ProfitabilityHubPage")) {
@@ -118,19 +131,20 @@ export function verdict(files) {
     problems.push("customer-profitability load queries must exclude voided loads (rev/prev/cost)");
   }
   const laneSvc = read("apps/backend/src/reports/lane-profitability.service.ts");
+  const canonSrc = read("apps/backend/src/dispatch/canonical-active-load-set.ts");
   if ((laneSvc.match(/voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/status\s+NOT\s+IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/g) || []).length < 2) {
     problems.push("lane-profitability pay CTEs must exclude void/voided driver bills (both aggregations)");
   }
   // Codex batch63 — lane load_scope must match equipment-type live population (no cancelled/voided loads).
-  if ((laneSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || (laneSvc.match(/l\.status::text\s*<>\s*'cancelled'/g) || []).length < 2) {
+  if ((laneSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || notCancelledCount(laneSvc, "l", canonSrc) < 2) {
     problems.push("lane-profitability load_scope must exclude voided/cancelled loads (compute + detail)");
   }
   // Sibling of batch63 — trip/By-Load report joins must exclude voided/cancelled loads.
   const tripSvc = read("apps/backend/src/dispatch/load-profitability.service.ts");
-  if ((tripSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || (tripSvc.match(/l\.status::text\s*<>\s*'cancelled'/g) || []).length < 2) {
+  if ((tripSvc.match(/l\.voided_at\s+IS\s+NULL/g) || []).length < 2 || notCancelledCount(tripSvc, "l", canonSrc) < 2) {
     problems.push("trip-profitability load joins must exclude voided/cancelled loads (rollup + northbound)");
   }
-  if ((tripSvc.match(/lx\.voided_at\s+IS\s+NULL/g) || []).length < 1 || (tripSvc.match(/lx\.status::text\s*<>\s*'cancelled'/g) || []).length < 1) {
+  if ((tripSvc.match(/lx\.voided_at\s+IS\s+NULL/g) || []).length < 1 || notCancelledCount(tripSvc, "lx", canonSrc) < 1) {
     problems.push("trip-profitability equipment filter must exclude voided/cancelled loads");
   }
   return problems;
@@ -157,6 +171,9 @@ if (process.argv.includes("--selftest")) {
     ["missing route mount fails", verdict({ ...good, manifest: "" }).some((p) => p.includes("/profitability"))],
     ["missing equipmentType key fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection" }).some((p) => p.includes("equipmentType"))],
     ["ByType early-return fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nif (filters.equipmentType) {\n  return <ByTypeView filters={filters} />;\n}\nuseQuery(" }).some((p) => p.includes("early-return") || p.includes("rules-of-hooks"))],
+    ["canonical not-cancelled mount counts", notCancelledCount('AND ${canonicalNotCancelledLoadClause("l")} AND ${canonicalNotCancelledLoadClause("l")}', "l", read("apps/backend/src/dispatch/canonical-active-load-set.ts")) === 2],
+    ["mount does not count once the helper stops excluding cancelled", notCancelledCount('AND ${canonicalNotCancelledLoadClause("l")}', "l", read("apps/backend/src/dispatch/canonical-active-load-set.ts").replace("`${alias}.status::text <> 'cancelled'`", "`TRUE`")) === 0],
+    ["dropped exclusion counts zero", notCancelledCount("AND l.voided_at IS NULL", "l", read("apps/backend/src/dispatch/canonical-active-load-set.ts")) === 0],
     ["missing equipment_type param fails", verdict({ ...good, lane: "getLaneProfitability\nBoardSection\nfilters.equipmentType\nuseQuery(" }).some((p) => p.includes("equipment_type"))],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);

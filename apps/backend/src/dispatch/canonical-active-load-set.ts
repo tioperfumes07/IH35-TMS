@@ -375,6 +375,14 @@ export function canonicalBookedNotCancelledLoadClause(alias = "l"): string {
 }
 
 /**
+ * BOOKED OR CANCELLED, NOT VOIDED — Loads history "View all" (row 78): every load that was really booked, a cancelled one
+ * included (shown as cancelled), never an unfinished draft and never a voided row.
+ */
+export function canonicalBookedOrCancelledNotVoidedLoadClause(alias = "l"): string {
+  return `${alias}.status::text NOT IN ('draft', 'voided')`;
+}
+
+/**
  * HAPPENED AND NOT VOIDED — every load except a cancelled or a voided one, whatever stage it reached (settled included).
  * The miles engines (443.55) learn from a unit's previous real load; a voided load's status is 'voided' and nothing ties
  * that status to voided_at at the table, so both are excluded by status here. 'cancelled' and 'voided' are the only two
