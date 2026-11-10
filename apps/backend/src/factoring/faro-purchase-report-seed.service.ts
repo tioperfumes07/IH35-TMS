@@ -72,6 +72,12 @@ export class FaroSeedError extends Error {
   }
 }
 
+class GatePreviewRollback extends Error {
+  constructor(readonly gate: Awaited<ReturnType<typeof runPurchaseFeedGate>>) {
+    super("preview_gate_rollback");
+  }
+}
+
 class PreviewRollback extends Error {
   constructor(readonly payload: { purchaseId: string; displayId: string | null; netCents: number }) {
     super("preview_rollback");
@@ -238,9 +244,18 @@ export async function seedFaroPurchaseReport(input: {
     try {
       // FEED GATE first, in its own committed scope (its intake/check rows are WORM evidence even when red) — the same
       // order as POST /api/v1/factoring/purchases. No owner override is ever supplied here.
+      // ACCT-F11108 part 3 (measured 2026-11-09 on a prod fork: the preview said 10-15 "would_post", the commit then held it
+      // feed_gate_blocked "load missing BOL, POD, Rate confirmation"). The preview runs the SAME gate inside a scope that is
+      // rolled back (GatePreviewRollback), so its rows never persist and the preview answers what the commit will.
+      const feedGate = (client: Q) => runPurchaseFeedGate(client as never, oci, invoiceIds, input.actorUserId, null, { actorIsOwner: true });
       const gate = input.commit
-        ? await scope((client) => runPurchaseFeedGate(client as never, oci, invoiceIds, input.actorUserId, null, { actorIsOwner: true }))
-        : null;
+        ? await scope(feedGate)
+        : await scope(async (client) => {
+            throw new GatePreviewRollback(await feedGate(client));
+          }).catch((err: unknown) => {
+            if (err instanceof GatePreviewRollback) return err.gate;
+            throw err;
+          });
       const red = gate?.filter((g) => !g.passed) ?? [];
       if (red.length) {
         const reason = `feed_gate_blocked: ${JSON.stringify(red.map((r) => ({ invoice_id: r.invoice_id, error: r.error, reds: r.reds })))}`;

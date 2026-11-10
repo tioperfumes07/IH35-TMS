@@ -17,13 +17,21 @@
 //          miles are loaded + empty: miles_shortest is loadedPayMiles (paid less E.Miles) and E.Miles goes to miles_deadhead;
 //          the raw payMiles total is never booked as miles_shortest.
 // RULE 8 — the service checks short <= practical itself (pay_miles_over_practical) so a preview answers what a commit does.
+// RULE 9 (part 3, measured 2026-11-09: 13 of 18 rows previewed "would book", the commit refused
+//          uq_driver_settlements_one_open_per_driver) — a new NB trip is refused driver_trip_open BEFORE the preview returns
+//          while the driver's current trip is open; the service never closes a trip (SET-01: closing is human-confirmed).
+// RULE 10 (part 3) — a later in-motion row of a driver/truck whose earlier row was refused is held (earlier_load_refused).
+// RULE 11 (part 3, 13708/13714/13715/13728 refused "unit already active on 13727/13729/13735") — bookLoad passes the
+//          historical stop window to assertUnitNotActiveOnAnotherLoad for historical_backfill only; live_feed stays strict.
 import fs from "node:fs";
 
 const PARSER = "apps/backend/src/dispatch/alwaystrack-load-history-import.ts";
 const SERVICE = "apps/backend/src/dispatch/alwaystrack-load-history-import.service.ts";
 const ROUTES = "apps/backend/src/dispatch/alwaystrack-load-history-import.routes.ts";
 const INDEX = "apps/backend/src/index.ts";
-const FILES = [PARSER, SERVICE, ROUTES, INDEX];
+const BOOK = "apps/backend/src/dispatch/book-load.service.ts";
+const GUARD = "apps/backend/src/dispatch/unit-active-load-guard.ts";
+const FILES = [PARSER, SERVICE, ROUTES, INDEX, BOOK, GUARD];
 
 export function audit(files) {
   const out = [];
@@ -64,6 +72,22 @@ export function audit(files) {
   const previewAt = svc.indexOf("if (!ctx.commit) {");
   if (overAt < 0 || !/short > practical/.test(svc)) out.push("RULE 8: the service no longer refuses short > practical itself");
   else if (previewAt >= 0 && overAt > previewAt) out.push("RULE 8: the short <= practical check runs after the preview returns");
+  const tripAt = svc.indexOf('"driver_trip_open"');
+  if (tripAt < 0 || !/uq_driver_settlements_one_open_per_driver/.test(svc) || !/s\.trip_closed_at IS NULL/.test(svc)) {
+    out.push("RULE 9: the service no longer refuses a new trip while the driver's current trip is open");
+  } else if (previewAt >= 0 && tripAt > previewAt) out.push("RULE 9: the open-trip check runs after the preview returns");
+  if (/stampTripClosedForBookendedSettlement|SET\s+trip_closed_at/i.test(svc)) out.push("RULE 9: the importer closes a trip itself (closing is human-confirmed)");
+  if (!/code: "earlier_load_refused"/.test(svc) || !/dispositionFor\(row\.at_status\) === "dispatch" \? refusedDriver\.get\(dKey\) \?\? refusedTruck\.get\(tKey\)/.test(svc)) {
+    out.push("RULE 10: a later in-motion row is no longer held behind an earlier refused row of its driver/truck");
+  }
+  const book = files[BOOK];
+  const guard = files[GUARD];
+  if (!/historical_window: source === "historical_backfill" \? historicalStopWindow\(input\.stops\) : null,/.test(book)) {
+    out.push("RULE 11: bookLoad no longer passes the historical stop window (or passes it for live_feed)");
+  }
+  if (!/\$\{excludeSql\}\$\{sameTourSql\}\$\{historicalSql\}/.test(guard) || !/\$\{cs\} IS NOT NULL/.test(guard)) {
+    out.push("RULE 11: the unit guard no longer applies the overlap-only window, or excuses a conflicting load with no stop dates");
+  }
   if (!/totals_count_mismatch/.test(parser) || !/totals_charges_mismatch/.test(parser)) out.push("RULE 5: the parser no longer ties to the export's Totals line");
   if (/\bfindIndex\(\(l\) => l && l\[0\] === "Load#"\)/.test(parser) === false) out.push("RULE 5: the header is no longer found by content");
   return out;
@@ -104,6 +128,11 @@ if (process.argv.includes("--selftest")) {
     ["empty miles dropped", plant(SERVICE, "miles_deadhead: empty ?? undefined,", "")],
     ["loaded miles not net of empty", plant(PARSER, "return Math.round((paid - (emptyPayMiles(row) ?? 0)) * 10) / 10;", "return paid;")],
     ["preview blind to the CHECK", plant(SERVICE, "if (short != null && practical != null && short > practical) {", "if (false) {")],
+    ["open trip not refused", plant(SERVICE, '"driver_trip_open"', '"driver_trip_ignored"')],
+    ["importer closes the trip", plant(SERVICE, "const open = await openTripHoldingNb(client, ctx.opco, driverId);", "const open = await openTripHoldingNb(client, ctx.opco, driverId); await stampTripClosedForBookendedSettlement(client as never, {} as never);")],
+    ["in-motion row booked ahead", plant(SERVICE, 'dispositionFor(row.at_status) === "dispatch" ? refusedDriver.get(dKey) ?? refusedTruck.get(tKey) : undefined', "undefined")],
+    ["window for live_feed too", plant(BOOK, 'historical_window: source === "historical_backfill" ? historicalStopWindow(input.stops) : null,', "historical_window: historicalStopWindow(input.stops),")],
+    ["undated conflict excused", plant(GUARD, "${cs} IS NOT NULL", "TRUE")],
   ];
   let caught = 0;
   for (const [name, files] of cases) {

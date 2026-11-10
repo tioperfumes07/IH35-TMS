@@ -49,11 +49,15 @@ export function run(root = ROOT) {
   if (!/ReportsHomeBoard/.test(homeSrc)) {
     failures.push(`${FILE}: must mount ReportsHomeBoard`);
   }
-  if (!/Accounting \+ financial reports/.test(boardSrc) && !/title="Accounting &amp; financial"/.test(boardSrc)) {
+  // JSX attributes do not decode entities: "&amp;" renders literally, so the correct source is a bare "&" (#28715).
+  if (!/Accounting \+ financial reports/.test(boardSrc) && !/title="Accounting & financial"/.test(boardSrc)) {
     failures.push(`${BOARD}: must render an accounting/financial reports section`);
   }
   if (!/Management reports/.test(hubSrc)) {
     failures.push(`${FILE}: must render a management reports section`);
+  }
+  if (/title="Accounting &amp; financial"/.test(boardSrc)) {
+    failures.push(`${BOARD}: "&amp;" inside a JSX attribute renders literally — write "&"`);
   }
   if (/QBO-standard branded compilations/.test(hubSrc)) {
     failures.push(`${FILE}: USMCA-visible management report copy must not claim a QBO standard`);
@@ -112,7 +116,7 @@ function main() {
     const boardBackup = fs.readFileSync(boardPath, "utf8");
     const homeBackup = fs.readFileSync(homePath, "utf8");
     try {
-      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/Accounting \+ financial reports/g, "").replace('title="Accounting &amp; financial"', 'title="Reports"'), "utf8");
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/Accounting \+ financial reports/g, "").replace('title="Accounting & financial"', 'title="Reports"'), "utf8");
       const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted missing section did not fail");

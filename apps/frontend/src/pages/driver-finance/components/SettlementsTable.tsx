@@ -238,7 +238,7 @@ export function SettlementsTable({
   return (
     // 443.280 — Payments list uses shared BoardSection (not ParityTable title chrome alone).
     <BoardSection title="Driver settlements" testId="settlements-payments-list-board-section">
-      <ParityTable<SettlementListRow>
+      <ParityTable<SettlementListRow> appearance="board"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

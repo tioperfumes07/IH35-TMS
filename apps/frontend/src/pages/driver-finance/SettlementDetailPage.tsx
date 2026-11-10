@@ -508,7 +508,8 @@ export function SettlementDetailPage() {
       >
         <span />
       </MoneyListToolbar>
-      <ParityTable
+      <ParityTable appearance="board"
+           
         title="Settlement lines"
         columns={lineSummaryColumns}
         rows={filteredLineSummaryRows}

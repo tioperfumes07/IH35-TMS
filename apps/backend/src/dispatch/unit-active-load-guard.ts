@@ -73,9 +73,28 @@ type QueryableClient = {
  */
 export type SameTourNextLeg = { tour_id: string | null | undefined; pickup_at: string | null | undefined };
 
+/**
+ * ACCT-F11108 part 3 (measured 2026-11-09 on the AlwaysTrack LOAD HISTORY import: 13708 / 13714 / 13715 / 13728 refused
+ * "unit already active on 13727 / 13729 / 13735" — loads that RAN and DELIVERED before those in-motion loads picked up).
+ * A load that already ran (historical_backfill) is booked at 'dispatched' and delivered in the same transaction, so a later
+ * in-motion load on the truck is a conflict only when the two stop-date windows overlap — the database trigger's own rule
+ * (mdata.refuse_overlapping_unit_assignment, daterange '[)'); a one-day window is taken inclusive ('[]') so it can never be
+ * an empty range that overlaps nothing. Excused ONLY when the conflicting load HAS dated stops; no dates -> still a conflict.
+ */
+/** The new load's earliest and latest stop scheduled_arrival_at (instants; cast to date like the trigger does). */
+export type HistoricalWindow = { starts_on: string; ends_on: string };
+
+export const HISTORICAL_WINDOW_RANGE_SQL = (s: string, e: string) => `daterange(${s}, ${e}, CASE WHEN ${s} = ${e} THEN '[]' ELSE '[)' END)`;
+
 export async function assertUnitNotActiveOnAnotherLoad(
   client: QueryableClient,
-  input: { operating_company_id: string; unit_id: string | null | undefined; exclude_load_id?: string | null; same_tour_next_leg?: SameTourNextLeg | null }
+  input: {
+    operating_company_id: string;
+    unit_id: string | null | undefined;
+    exclude_load_id?: string | null;
+    same_tour_next_leg?: SameTourNextLeg | null;
+    historical_window?: HistoricalWindow | null;
+  }
 ): Promise<void> {
   if (!input.unit_id) return;
   const values: unknown[] = [input.operating_company_id, input.unit_id, ACTIVE_UNIT_STATUSES];
@@ -102,6 +121,19 @@ export async function assertUnitNotActiveOnAnotherLoad(
                  FROM mdata.load_stops s2 WHERE s2.load_id = l.id) <= $${t + 1}::timestamptz
         )`;
   }
+  let historicalSql = "";
+  const win = input.historical_window;
+  if (win?.starts_on && win.ends_on) {
+    values.push(win.starts_on, win.ends_on);
+    const h = values.length - 1;
+    const cs = `(SELECT min(hs.scheduled_arrival_at)::date FROM mdata.load_stops hs WHERE hs.load_id = l.id)`;
+    const ce = `(SELECT max(hs.scheduled_arrival_at)::date FROM mdata.load_stops hs WHERE hs.load_id = l.id)`;
+    historicalSql = `
+        AND NOT (
+          ${cs} IS NOT NULL
+          AND NOT (${HISTORICAL_WINDOW_RANGE_SQL(cs, ce)} && ${HISTORICAL_WINDOW_RANGE_SQL(`$${h}::timestamptz::date`, `$${h + 1}::timestamptz::date`)})
+        )`;
+  }
   const res = await client.query<{ id: string; load_number: string | null }>(
     `
       SELECT l.id, l.load_number
@@ -110,7 +142,7 @@ export async function assertUnitNotActiveOnAnotherLoad(
         AND l.assigned_unit_id = $2::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status = ANY($3::mdata.load_status_enum[])
-        ${excludeSql}${sameTourSql}
+        ${excludeSql}${sameTourSql}${historicalSql}
       LIMIT 1
     `,
     values

@@ -389,9 +389,8 @@ export function SettlementsDeductionsBoard() {
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-by-type-body">
-            <ParityTable<(typeof TYPE_ROWS)[number]>
+            <ParityTable<(typeof TYPE_ROWS)[number]> appearance="board"
               tableTestId="settlements-deductions-by-type-table"
-              appearance="board"
               hidePager
               density="compact"
               suppressToolbarSearch
@@ -461,7 +460,7 @@ export function SettlementsDeductionsBoard() {
           onViewAll={() => navigate(root)}
           footer={S443326.deductions.scheduleFooter}
         >
-          <ParityTable<ScheduleRow>
+          <ParityTable<ScheduleRow> appearance="board"
             columns={scheduleColumns}
             rows={filteredSchedule}
             rowKey={(r) => r.id}
