@@ -39,12 +39,12 @@ describe("Driver live overview reuses source documents", () => {
     expect(screen.queryByText("Paper")).not.toBeInTheDocument();
     expect(screen.getByText("06/15/2027")).toBeInTheDocument();
   });
-  it("renders source gross and net without recomputing, with settlement and leg links", async () => {
+  it("renders board compact pay (net hero + gross/deductions) with settlement and leg links", async () => {
     vi.mocked(getPreSettlementForDriver).mockResolvedValue({ settlement: { id: "settlement-fixture", display_id: "P-fixture", driver_id: "driver-fixture", status: "open", gross_pay: 1234.56, deductions_total: 12.34, reimbursements_total: 1, net_pay: 1223.22, first_load_id: null, first_load_number: null, last_load_id: null, last_load_number: null, trip_started_at: null, trip_closed_at: null, period_start: "2026-10-19", period_end: "2026-10-25" }, legs: [{ load_id: "load-fixture", load_number: "Load fixture", trip_type: "NB" }], lines: [] });
     mount();
-    expect(await screen.findByRole("link", { name: "$1,234.56 gross" })).toHaveAttribute("href", expect.stringContaining("settlement-fixture"));
-    expect(screen.getByRole("link", { name: "$12.34 deductions · $1,223.22 net" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "PENDING" })).toBeInTheDocument();
+    // DP2 board: net as hero figure; gross/deductions compact secondary — never recompute.
+    expect(await screen.findByRole("link", { name: "$1,223.22" })).toHaveAttribute("href", expect.stringContaining("settlement-fixture"));
+    expect(screen.getByRole("link", { name: "$1,234.56 gross · $12.34 deductions" })).toBeInTheDocument();
     expect(screen.queryByText("P-fixture")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Load fixture" })).toHaveAttribute("href", "/dispatch/loads/load-fixture");
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
