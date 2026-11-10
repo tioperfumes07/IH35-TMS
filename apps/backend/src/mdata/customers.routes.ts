@@ -640,7 +640,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       // A-21 (2026-09-30, owner): the ONE "has transactions" predicate, shared with
       // mdata/vendors.routes.ts via customerHasTransactionsSql — see A-16.
       if (has_transactions) {
-        filters.push(customerHasTransactionsSql("id"));
+        filters.push(customerHasTransactionsSql("id", `$${companyScopeIdx}::uuid`));
       }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 
@@ -734,7 +734,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const counts = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const base = `${EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL} AND is_sample_data IS NOT TRUE AND operating_company_id = $1::uuid`;
-      const withTxnPred = customerHasTransactionsSql("id");
+      const withTxnPred = customerHasTransactionsSql("id", "$1::uuid");
       const res = await client.query<{
         all_active: number;
         with_transactions: number;

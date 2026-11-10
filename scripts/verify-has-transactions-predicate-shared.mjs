@@ -13,6 +13,9 @@
  *   4. The vendor predicate casts vendor_credits.vendor_id — NOT vendor_uuid (the real bug this
  *      exact wording fixed in the A-16 doc: vendor_credits has no vendor_uuid column and a query
  *      referencing it throws at runtime instead of returning a false result).
+ *   5. Both predicates scope each EXISTS source by operating_company_id (batch82 fix 2026-11-10 —
+ *      the inner tables are RLS-protected; without an explicit company predicate the query returns
+ *      0 rows whenever the connection GUC is not set, as measured live on USMCA prod).
  *
  * Self-test: node scripts/verify-has-transactions-predicate-shared.mjs --selftest
  */
@@ -68,9 +71,9 @@ const CHECKS = [
     pattern: /import \{ customerHasTransactionsSql \} from "\.\.\/accounting\/has-transactions-predicate\.js"/,
   },
   {
-    name: "customers.routes.ts calls the shared predicate under has_transactions",
+    name: "customers.routes.ts calls the shared predicate with opco scope (batch82)",
     file: CUSTOMERS_ROUTE,
-    pattern: /if \(has_transactions\) \{\s*filters\.push\(customerHasTransactionsSql\("id"\)\);/,
+    pattern: /filters\.push\(customerHasTransactionsSql\("id",/,
   },
   {
     name: "vendors.routes.ts imports the shared vendor predicate",
@@ -78,9 +81,19 @@ const CHECKS = [
     pattern: /import \{ vendorHasTransactionsSql \} from "\.\.\/accounting\/has-transactions-predicate\.js"/,
   },
   {
-    name: "vendors.routes.ts calls the shared predicate under has_transactions",
+    name: "vendors.routes.ts calls the shared predicate with opco scope (batch82)",
     file: VENDORS_ROUTE,
-    pattern: /if \(has_transactions\) \{\s*filters\.push\(vendorHasTransactionsSql\("id"\)\);/,
+    pattern: /filters\.push\(vendorHasTransactionsSql\("id",/,
+  },
+  {
+    name: "customer predicate scopes invoices by operating_company_id (batch82)",
+    file: SHARED,
+    pattern: /i\.operating_company_id = \$\{opcoExpr\}/,
+  },
+  {
+    name: "vendor predicate scopes bills by operating_company_id (batch82)",
+    file: SHARED,
+    pattern: /b\.operating_company_id = \$\{opcoExpr\}/,
   },
 ];
 
@@ -90,6 +103,18 @@ const FORBIDDEN = [
     file: SHARED,
     pattern: /vc\.vendor_uuid/,
     mutate: (source) => source.replace("vc.vendor_id::text", "vc.vendor_uuid::text"),
+  },
+  {
+    name: "customers.routes.ts must not call customerHasTransactionsSql with only one argument (batch82 regression guard)",
+    file: CUSTOMERS_ROUTE,
+    pattern: /customerHasTransactionsSql\("id"\)/,
+    mutate: (source) => source.replace(/customerHasTransactionsSql\("id", `\$\$\{companyScopeIdx\}::uuid`\)/, 'customerHasTransactionsSql("id")'),
+  },
+  {
+    name: "vendors.routes.ts must not call vendorHasTransactionsSql with only one argument (batch82 regression guard)",
+    file: VENDORS_ROUTE,
+    pattern: /vendorHasTransactionsSql\("id"\)/,
+    mutate: (source) => source.replace(/vendorHasTransactionsSql\("id", `\$\$\{companyScopeIdx\}::uuid`\)/, 'vendorHasTransactionsSql("id")'),
   },
 ];
 
