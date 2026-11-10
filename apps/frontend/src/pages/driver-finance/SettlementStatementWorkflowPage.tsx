@@ -690,7 +690,8 @@ export function SettlementStatementWorkflowPage() {
       >
         <span />
       </MoneyListToolbar>
-      <ParityTable
+      <ParityTable appearance="board"
+           
         title="Settlement lines"
         columns={lineSummaryColumns}
         rows={filteredLineSummaryRows}

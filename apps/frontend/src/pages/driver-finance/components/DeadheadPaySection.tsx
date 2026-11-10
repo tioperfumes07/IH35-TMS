@@ -167,7 +167,8 @@ export function DeadheadPaySection({ lines, isOpen: _isOpen, operatingCompanyId 
       subtitle="deadhead to the pickup · same rate today, never hardcoded"
       testId="settlement-deadhead-pay-board"
     >
-      <ParityTable
+      <ParityTable appearance="board"
+           
         columns={COLUMNS}
         rows={lines}
         rowKey={(line) => line.id}

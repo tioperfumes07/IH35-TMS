@@ -91,7 +91,7 @@ export function LiabilityBreakdownModal({
           />
         </p>
       ) : null}
-      <ParityTable<Liability>
+      <ParityTable<Liability> appearance="board"
         columns={COLUMNS}
         rows={liabilities}
         rowKey={(item) => item.id}

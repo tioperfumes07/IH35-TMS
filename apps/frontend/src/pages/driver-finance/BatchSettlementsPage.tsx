@@ -313,7 +313,7 @@ export function BatchSettlementsPage() {
 
           {/* 443.99 + 443.280 — ParityTable in shared BoardSection (no NavyPageSubNav / PageHeader). */}
           <BoardSection title="Settlements — batch entry" testId="batch-settlements-board-section">
-          <ParityTable<BatchRow>
+          <ParityTable<BatchRow> appearance="board"
             embedded
             rows={rows}
             rowKey={(row) => row.key}

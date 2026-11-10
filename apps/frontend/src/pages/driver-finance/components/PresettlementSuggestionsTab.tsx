@@ -147,7 +147,7 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
       ) : (
         // 443.280 — Needs Review tab: ParityTable in shared BoardSection.
         <BoardSection title="Pre-settlement suggestions" testId="presettlement-suggestions-board-section">
-          <ParityTable<PresettlementSuggestionRow>
+          <ParityTable<PresettlementSuggestionRow> appearance="board"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.id}

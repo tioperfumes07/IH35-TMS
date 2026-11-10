@@ -121,7 +121,8 @@ export function FuelPurchasesSection({ rows }: Props) {
       subtitle="one line per purchase · qty x rate = amount · diesel and DEF are separate items"
       testId="settlement-fuel-purchases-board"
     >
-      <ParityTable
+      <ParityTable appearance="board"
+           
         columns={COLUMNS}
         rows={withIds}
         rowKey={(row) => row.id}
