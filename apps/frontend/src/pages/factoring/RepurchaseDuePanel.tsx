@@ -132,6 +132,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
         />
       ) : (
         <ParityTable<RepurchaseDueRow>
+          appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

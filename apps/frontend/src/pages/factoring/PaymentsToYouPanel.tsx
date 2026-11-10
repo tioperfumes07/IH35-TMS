@@ -329,6 +329,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
           <div className="overflow-x-auto">
             {view === "summary" ? (
             <ParityTable
+              appearance="board"
               title="Payments to you — by month"
               columns={MONTH_COLUMNS}
               rows={monthRows}
@@ -345,6 +346,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
             />
             ) : (
             <ParityTable
+              appearance="board"
               title="Payments to you — by purchase"
               columns={columns}
               rows={rows}
@@ -521,6 +523,7 @@ function PurchaseDetailCard(props: {
             </div>
           ) : null}
           <ParityTable
+            appearance="board"
             title="Invoices on this purchase"
             columns={[
               {
