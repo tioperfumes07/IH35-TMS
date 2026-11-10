@@ -6,7 +6,7 @@
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { legalContractsApi, type LegalContractSummary } from "../../../api/legal-contracts";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { legalTemplatesApi } from "../../../api/legal-templates";
@@ -85,6 +85,16 @@ type PipelineRow = {
   count: number;
   oldest: string | null;
   href: string;
+  /** Legal.dc.html stage marker colors (ROUND 8.5 L1). */
+  dot: string;
+};
+
+const PIPELINE_DOT: Record<string, string> = {
+  Draft: "#94A3B8",
+  "Attorney review": "#1D4ED8",
+  "Out for signature": "#B45309",
+  Signed: "#15803D",
+  Voided: "#B91C1C",
 };
 
 export function LegalHomeBoard({ companyId }: { companyId: string }) {
@@ -151,30 +161,35 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
         count: drafts.length,
         oldest: oldestIso(drafts.map((c) => c.created_at)),
         href: "/legal/contracts",
+        dot: PIPELINE_DOT.Draft!,
       },
       {
         stage: "Attorney review",
         count: attorney.length,
         oldest: oldestIso(attorney.map((t) => t.updated_at ?? t.created_at)),
         href: "/legal/attorney-review",
+        dot: PIPELINE_DOT["Attorney review"]!,
       },
       {
         stage: "Out for signature",
         count: out.length,
         oldest: oldestIso(out.map((c) => c.sent_at ?? c.created_at)),
         href: "/legal/contracts",
+        dot: PIPELINE_DOT["Out for signature"]!,
       },
       {
         stage: "Signed",
         count: signed.length,
         oldest: oldestIso(signed.map((c) => c.signed_at ?? c.created_at)),
         href: "/legal/contracts",
+        dot: PIPELINE_DOT.Signed!,
       },
       {
         stage: "Voided",
         count: voided.length,
         oldest: oldestIso(voided.map((c) => c.voided_at ?? c.created_at)),
         href: "/legal/contracts",
+        dot: PIPELINE_DOT.Voided!,
       },
     ];
   }, [contracts, templates]);
@@ -285,7 +300,34 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               onRowClick={(row) => navigate(row.href)}
               emptyText="No contracts."
               columns={[
-                { key: "stage", label: "Stage", sortable: true, sortValue: (row) => row.stage, render: (row) => row.stage },
+                {
+                  key: "stage",
+                  label: "Stage",
+                  sortable: true,
+                  sortValue: (row) => row.stage,
+                  // ROUND 8.5 L1/L3 — colored stage marker + real Link (keyboard/screen-reader).
+                  render: (row) => (
+                    <Link
+                      to={row.href}
+                      className="inline-flex items-center gap-2 text-inherit no-underline hover:underline"
+                      data-testid={`legal-pipeline-link-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: row.dot,
+                          display: "inline-block",
+                          flexShrink: 0,
+                        }}
+                      />
+                      {row.stage}
+                    </Link>
+                  ),
+                },
                 {
                   key: "count",
                   label: "Contracts",
@@ -313,25 +355,23 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           onViewAll={() => navigate("/legal/matters")}
           testId="legal-home-matters-deadlines"
         >
-          {matterRows.length === 0 ? (
-            <div style={{ padding: "12px 14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
-              {loading
-                ? "Loading matters…"
-                : "No open matters. When one is opened it shows here with: type · our role · court · next hearing · statute date · claimed vs reserve, linked to driver, unit, load, accident and insurance claim."}
-            </div>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <ParityTable<(typeof matterRows)[number]>
-                tableTestId="legal-home-matters-table"
-                appearance="board"
+          {/* ROUND 8.5 L2 — empty state keeps Matter / Next date / At risk headers (board table). */}
+          <div style={{ overflowX: "auto" }}>
+            <ParityTable<(typeof matterRows)[number]>
+              tableTestId="legal-home-matters-table"
+              appearance="board"
               hidePager
               density="compact"
               suppressToolbarSearch
               suppressToolbarRange
-                rows={matterRows}
-                rowKey={({ m }) => String(m.id ?? "") || matterLabel(m)}
-                emptyText="No open matters."
-                columns={[
+              rows={matterRows}
+              rowKey={({ m }) => String(m.id ?? "") || matterLabel(m)}
+              emptyText={
+                loading
+                  ? "Loading matters…"
+                  : "No open matters. When one is opened it shows here with type · our role · court · next hearing · statute date · claimed vs reserve."
+              }
+              columns={[
                   {
                     key: "matter",
                     label: "Matter",
@@ -376,7 +416,6 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
                 ]}
               />
             </div>
-          )}
         </BoardSection>
 
         <BoardSection

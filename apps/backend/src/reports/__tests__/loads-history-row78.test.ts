@@ -138,6 +138,7 @@ describe("Row 78 — loads-history additions", () => {
   it("totals de-duplicate the invoice fan-out (sums count each load once)", async () => {
     await app.inject({ method: "GET", url: `/api/v1/reports/loads-history?operating_company_id=${COMPANY_ID}&from=2000-01-01&to=2026-11-03` });
     expect(calls[1].sql).toContain("first_inv");
-    expect(calls[1].sql).toMatch(/SUM\(lc\.lc_revenue_cents\) FILTER \(WHERE inv\.id IS NULL OR inv\.id = first_inv\.id\)/);
+    // ROUND 8.5 D5 — loadCostRollupLateral aliases as lcr with revenue_cents (not lc.lc_*).
+    expect(calls[1].sql).toMatch(/SUM\(lcr\.revenue_cents\) FILTER \(WHERE inv\.id IS NULL OR inv\.id = first_inv\.id\)/);
   });
 });

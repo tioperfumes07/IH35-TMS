@@ -1,4 +1,5 @@
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
+import { ImportFaroPurchaseReportAction } from "../../components/imports/OwnerImportActions";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
@@ -972,6 +973,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   );
   const factoringHeaderActions = (
     <div className="flex items-center gap-2">
+      <ImportFaroPurchaseReportAction />
       <Link
         to={FACTORING_TAB_PATH.submit_invoice}
         className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"

@@ -46,8 +46,10 @@ export const primaryButton: CSSProperties = { ...button, background: V3.shell, c
 export function PartyHomeHeader(props: { crumb: string; title: string; subtitle: string; createLabel: string; onBack: () => void; onCreate: () => void }) {
   return (
     <>
-      <div style={{ fontSize: 11, color: V3.muted }}>{props.crumb}</div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+      {/* ROUND 8.5 C1 — board has ← Back + title only; StructuralBreadcrumb owns the module crumb.
+          Empty crumb skips the duplicate "Customers"/"Vendors" label above the heading. */}
+      {props.crumb ? <div style={{ fontSize: 11, color: V3.muted }}>{props.crumb}</div> : null}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: props.crumb ? 12 : 0, gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <button type="button" onClick={props.onBack} style={{ fontSize: 11, color: V3.muted, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: V3.font }}>{"← Back"}</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: V3.ink }}>{props.title}</h1>
