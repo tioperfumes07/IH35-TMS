@@ -105,7 +105,7 @@ function PlannerEntityFilters({
   value: PlannerEntityFilterState;
   onChange: (next: PlannerEntityFilterState) => void;
 }) {
-  const { operatingCompanyId } = useCompanyContext();
+  const { selectedCompanyId: operatingCompanyId } = useCompanyContext();
   return (
     <div className="space-y-1.5" data-testid="planner-entity-filters">
       <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
