@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~8:20 PM CT) — Legal ParityTables appearance=board
+- **PRIOR:** #28824 Fuel+AVP appearance=board.
+- **THIS:** Legal module ParityTables appearance=board (matters/templates/contracts/alerts/policies/attorney). Engines unchanged. R4–R6 Cascade.
+- **NEXT:** Maint/Insurance/Compliance/Safety board tables; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~7:55 PM CT) — Fuel+AVP ParityTables appearance=board
 - **PRIOR:** #28823 Factoring residual appearance=board.
 - **THIS:** Fuel transactions/cards/fraud/overage/relay/questions + ActualVsProjected table appearance=board (13). Engines unchanged. R4–R6 Cascade.
