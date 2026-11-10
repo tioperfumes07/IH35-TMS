@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~6:45 PM CT) — F1/F2 Fuel Home diesel board engines
+- **PRIOR:** #28815 U12 Filings status tiles multi-select.
+- **THIS:** FuelHome Diesel by truck gets FleetTruck unit graphic + Spend bar (F1/F2), appearance=board, kind money + nowrap; $/gal uses formatUsdRateTable (same engines as FuelDieselByTruckPanel). R4–R6 Cascade.
+- **NEXT:** residual boards/U12; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~6:25 PM CT) — U12 Truck Planner Status multi-select
 - **PRIOR:** #28811 U12 DVIR Defects triage Status multi-select.
 - **THIS:** PlannerEntityFilters Status native select → MultiSelectDropdown (U12); entityFilters.status string[] (empty=all); TruckPlanner OR filter; chips join labels. D3 heading/Driver picker retained. R4–R6 Cascade.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-09-2026 ~8:25 PM CT) — U12 System Program phase MultiSelect
 - **PRIOR:** #28691 Legal contracts Template/Signer U12.
 - **THIS:** SystemModulePage Program Tracker phase progress SelectCombobox → MultiSelectDropdown (empty/both=all).
-- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
-
-## OUTBOX (11-09-2026 ~8:15 PM CT) — U12 Legal contracts Template + Signer MultiSelect
-- **PRIOR:** #28690 Users Role U12.
-- **THIS:** LegalContractInstancesPage Template + Signer type SelectCombobox → MultiSelectDropdown (empty=all; includes filter). Status already MultiSelect.
 - **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
