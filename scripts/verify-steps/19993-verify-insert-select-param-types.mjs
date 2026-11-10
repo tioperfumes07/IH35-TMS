@@ -1,0 +1,1 @@
+export default { name: "verify:verify-insert-select-param-types", run(ctx) { ctx.run("node", ["scripts/verify-insert-select-param-types.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-insert-select-param-types.mjs"]); } };

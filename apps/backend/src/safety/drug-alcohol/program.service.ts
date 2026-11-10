@@ -178,9 +178,12 @@ export async function scheduleTest(
 ): Promise<DaTestRecord> {
   const res = await client.query<DaTestRecord>(
     `
+      -- ACCT-F11120: safety.da_test_records.operating_company_id is TEXT, so a bare $1 here was deduced text while
+      -- the WHERE below casts it to uuid — Postgres refused the statement ("inconsistent types deduced for parameter
+      -- $1", 42P08) and the 2026-10-01 quarterly FMCSA random draw failed. One type for $1 everywhere.
       INSERT INTO safety.da_test_records
         (operating_company_id, driver_uuid, test_type, test_kind, scheduled_at, result)
-      SELECT $1, d.id, $3, $4, $5::timestamptz, 'pending'
+      SELECT $1::uuid, d.id, $3, $4, $5::timestamptz, 'pending'
       FROM mdata.drivers d
       WHERE d.id = $2::uuid
         AND d.operating_company_id = $1::uuid
