@@ -15625,6 +15625,11 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-engines-run-live-companies-only (ACCT-F11123)"
   },
+  "20017": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
