@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:35 PM CT) — T5/T6 Settlements Open/Closed board column engines
+- **PRIOR:** #28765 R3 empty-miles engine + D6 canonical Load history.
+- **THIS:** Settlements Open/Closed overview matches board order Settlement→Driver→Unit→Tour legs (grouped)→PU/DEL→money/miles→Ready/Waiting on. Per-leg Load # / check counts / Post stay in column gear (defaultHidden). Open footnote uses engine ready_total (not hard-coded six).
+- **NEXT:** R2/R4–R6 / DP1–DP4 / D1–D4 full engines. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~10:30 PM CT) — R3 empty-miles engine + D6 canonical Load history
 - **PRIOR:** #28764 CF2–CF6 + V1/V2 + SF2 + R1 (board engines + guard retarget for CF3).
 - **THIS:** R3 Loads report: backend miles_deadhead → empty_miles/loaded_miles totals; Empty miles KPI + Empty mi/Empty % columns; revenue-by-week chart from filtered rows; Fuel/Margin preserved additive. D6 Dispatch "Loads history" primary CTA → /dispatch/load-history (approved board), legacy ?board_scope=history remains deep-linkable.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~7:55 PM CT) — ENG-34 wire bus-diet Cursor seat 19883
 - **PRIOR:** #28597 load-driven-miles 19881.
 - **THIS:** verify-bus-diet --seat=cursor + selftest plants; verify-steps 19883; removed from .guard-exempt. Other seats' over-cap bus untouched. balanced-ledger / match / verify-static stay exempt.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:50 PM CT) — ENG-34 wire load-driven-miles 19881
-- **PRIOR:** #28595 Settlement Disputes U12.
-- **THIS:** verify-steps 19881 (load-driven-miles --selftest); removed from .guard-exempt. LIVE half stays money-pr via e7-batch2. balanced-ledger / bus-diet / match stay exempt.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
