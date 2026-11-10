@@ -154,7 +154,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Premium payment schedule"
           rows={rows}
           columns={columns}

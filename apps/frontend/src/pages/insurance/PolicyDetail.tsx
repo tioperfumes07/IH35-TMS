@@ -414,7 +414,7 @@ export function PolicyDetail() {
       ) : null}
 
       <BoardSection title="Units Assigned" testId="policy-detail-units-board">
-        <ParityTable
+        <ParityTable appearance="board"
           rows={policy.units}
           columns={unitColumns}
           rowKey={(unit) => unit.id}
@@ -437,7 +437,7 @@ export function PolicyDetail() {
             onRetry={() => void coiQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             rows={coiRows}
             columns={coiColumns}
             rowKey={(row) => row.id}
@@ -459,7 +459,7 @@ export function PolicyDetail() {
               onRetry={() => void claimsQuery.refetch()}
             />
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               rows={claims}
               columns={claimColumns}
               rowKey={(claim) => claim.id}
@@ -487,7 +487,7 @@ export function PolicyDetail() {
                 total={lawsuitsQuery.data?.total}
                 hint="Open each claim to see all of its lawsuits."
               />
-              <ParityTable
+              <ParityTable appearance="board"
                 rows={lawsuitRows}
                 columns={lawsuitColumns}
                 rowKey={(row) => String(row.id ?? "")}

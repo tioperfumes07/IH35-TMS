@@ -97,7 +97,7 @@ export function FleetCoveredPage() {
               own spec: "footer rendered from the same ordered visible column list as the header"), so
               that comparison line moves to its own paragraph right below the table -- same information,
               same order on the page, no longer inside ParityTable's own footer machinery. */}
-          <ParityTable
+          <ParityTable appearance="board"
             rows={rows}
             columns={columns}
             rowKey={(row) => row.asset_id}

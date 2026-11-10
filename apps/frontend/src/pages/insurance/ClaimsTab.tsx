@@ -502,7 +502,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
         title="Insurance claims"
         rows={rows}
         columns={columns}
