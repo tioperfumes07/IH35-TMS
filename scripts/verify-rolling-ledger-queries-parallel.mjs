@@ -14,12 +14,13 @@
 // Promise.all, then processing results in the SAME original order -- output row content/order is
 // unchanged, only the wall-clock shape changed (sum of N round-trips -> max of N). 443.140 #8(b)
 // added cardPayable2510 + relayTopup (10 total after expenses removed per 443.265-E3); 443.310
-// added cardPayable2520 (12 total). Only applyRowAdjustments() (which overlays
+// added cardPayable2520 (12 total); #28618 (rows 91/149) folded BOTH card payables into the ONE shared reader
+// readCardPayableBalances (card-payables.ts) -> cardPayablesPromise (11 total). Only applyRowAdjustments() (which overlays
 // adjustments onto the merged `rows`) genuinely depends on all finishing first, and it still runs
 // after the Promise.all resolves.
 //
-// This guard locks: (1) all 12 query promises are started (not awaited) before a single
-// `await Promise.all([...])` that references all 12; (2) no sequential `await client.query(` remains
+// This guard locks: (1) all 11 query promises are started (not awaited) before a single
+// `await Promise.all([...])` that references all 11; (2) no sequential `await client.query(` remains
 // between the start of getRollingLedgerRows and that Promise.all call (a regression back to serial
 // awaits would silently reintroduce the multi-second load); (3) the 3 queries that previously had
 // their own try/catch (driver_settlements, driver_bills, loan_amortization_rows) still degrade
@@ -43,8 +44,7 @@ const PROMISE_VARS = [
   "advancesPromise",
   "reservesPromise",
   "notInvoicedPromise",
-  "cardPayable2510Promise",
-  "cardPayable2520Promise",
+  "cardPayablesPromise",
   "relayTopupPromise",
   "fuelAvgPromise",
 ];
@@ -60,7 +60,7 @@ export function analyze(src) {
 
   const promiseAllMatch = /await Promise\.all\(\[([\s\S]*?)\]\)/.exec(fn);
   if (!promiseAllMatch) {
-    failures.push(`${FILE}: getRollingLedgerRows no longer fires its 10 independent reads via a single 'await Promise.all([...])' -- the multi-second sequential-round-trip regression may be back.`);
+    failures.push(`${FILE}: getRollingLedgerRows no longer fires its 11 independent reads via a single 'await Promise.all([...])' -- the multi-second sequential-round-trip regression may be back.`);
     return failures;
   }
   const promiseAllArgs = promiseAllMatch[1];
@@ -68,7 +68,7 @@ export function analyze(src) {
 
   for (const varName of PROMISE_VARS) {
     if (!fn.includes(`const ${varName} =`)) {
-      failures.push(`${FILE}: ${varName} is missing -- one of the 10 independent rolling-ledger queries was dropped or renamed.`);
+      failures.push(`${FILE}: ${varName} is missing -- one of the 11 independent rolling-ledger queries was dropped or renamed.`);
     }
     if (!promiseAllArgs.includes(varName)) {
       failures.push(`${FILE}: ${varName} is not passed into the Promise.all([...]) array -- it would still run sequentially (awaited elsewhere) or never run.`);
@@ -111,8 +111,8 @@ function selftest() {
 
   // Mutation 1: revert to sequential awaits (drop the Promise.all fan-out entirely).
   const noPromiseAll = real.replace(
-    /const \[billRows, settlementRows, driverBillRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, cardPayable2520Rows, relayTopupRows, fuelAvgResult\] =\s*\n\s*await Promise\.all\(\[[\s\S]*?\]\);/,
-    "const billRows = await billsPromise; const settlementRows = await settlementsPromise; const driverBillRows = await driverBillsPromise; const loanRows = await loansPromise; const invoiceRows = await invoicesPromise; const advanceRows = await advancesPromise; const reserveRows = await reservesPromise; const notInvoicedRows = await notInvoicedPromise; const cardPayable2510Rows = await cardPayable2510Promise; const cardPayable2520Rows = await cardPayable2520Promise; const relayTopupRows = await relayTopupPromise; const fuelAvgResult = await fuelAvgPromise;"
+    /const \[billRows, settlementRows, driverBillRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayableAll, relayTopupRows, fuelAvgResult\] =\s*\n\s*await Promise\.all\(\[[\s\S]*?\]\);/,
+    "const billRows = await billsPromise; const settlementRows = await settlementsPromise; const driverBillRows = await driverBillsPromise; const loanRows = await loansPromise; const invoiceRows = await invoicesPromise; const advanceRows = await advancesPromise; const reserveRows = await reservesPromise; const notInvoicedRows = await notInvoicedPromise; const cardPayableAll = await cardPayablesPromise; const relayTopupRows = await relayTopupPromise; const fuelAvgResult = await fuelAvgPromise;"
   );
   if (noPromiseAll === real) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: Promise.all anchor not found`);
@@ -151,7 +151,18 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS (3/3 planted regressions caught, real file clean)`);
+  // Mutation 4 (#28618 shape): the shared card-payables read awaited on its own instead of inside the fan-out.
+  const cardSerial = real.replace("      cardPayablesPromise,\n", "");
+  if (cardSerial === real) {
+    console.error(`${LABEL} SELFTEST SETUP FAILED: cardPayablesPromise array-entry anchor not found`);
+    process.exit(1);
+  }
+  if (!analyze(cardSerial).some((f) => f.includes("cardPayablesPromise") && f.includes("not passed into"))) {
+    console.error(`${LABEL} SELFTEST FAILED: dropping cardPayablesPromise from the array was not caught`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS (4/4 planted regressions caught, real file clean)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -163,5 +174,5 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} FAILED:\n` + failures.map((f) => `  - ${f}`).join("\n"));
     process.exit(1);
   }
-  console.log(`${LABEL} OK — getRollingLedgerRows fires its 10 independent reads concurrently via Promise.all, with graceful per-source degradation preserved.`);
+  console.log(`${LABEL} OK — getRollingLedgerRows fires its 11 independent reads concurrently via Promise.all, with graceful per-source degradation preserved.`);
 }

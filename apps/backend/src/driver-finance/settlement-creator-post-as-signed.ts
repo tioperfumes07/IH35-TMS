@@ -29,6 +29,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import { reverseDeductionForVoid, reverseSettlementForVoid } from "./void-document-callees.service.js";
 import { recomputeSettlementHeader } from "./settlement-load-reassignment.service.js";
+import { rederiveSettlementBoundariesInClientTx } from "./settlement-boundaries.service.js";
+import { assertDriverQualifiedForLoad } from "../dispatch/driver-qualification.service.js";
 import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads.js";
 import { postSettlementCreatorInClientTx, voidPriorCreatorSettlementForEdit } from "./settlement-creator.service.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
@@ -277,7 +279,8 @@ export async function signedToCreatorDraft(
   const truck = s.stops[0]?.truck ?? "";
   const unit = (await client.query<{ id: string }>(
     `SELECT u.id::text FROM mdata.units u
-      WHERE u.unit_number = $2 AND COALESCE(u.is_sample_data, false) IS NOT TRUE
+      WHERE u.unit_number = $2 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        AND COALESCE(u.is_sample_data, false) IS NOT TRUE
       ORDER BY (SELECT count(*) FROM mdata.loads l WHERE l.assigned_unit_id = u.id AND l.operating_company_id = $1::uuid) DESC LIMIT 1`,
     [co, truck],
   )).rows[0];
@@ -603,7 +606,7 @@ export async function findAlreadyAsSigned(
   const live = (await client.query<{ id: string; display_id: string; driver_id: string; net_cents: string; loads: string[] | null }>(
     `SELECT s.id::text, s.display_id, s.driver_id::text, round(s.net_pay * 100)::text AS net_cents,
             (SELECT array_agg(DISTINCT l.load_number ORDER BY l.load_number) FROM driver_finance.settlement_lines sl
-               JOIN mdata.loads l ON l.id = sl.load_id WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL) AS loads
+               JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = s.operating_company_id WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL) AS loads
        FROM driver_finance.driver_settlements s
       WHERE s.operating_company_id = $1::uuid AND s.source_document_ref = $2 AND ${notVoided("s")} AND s.status <> 'cancelled'`,
     [co, id.settlement_no],
@@ -664,7 +667,7 @@ export async function supersedeForSignedSettlement(
     `SELECT s.id::text, s.display_id, s.source_document_ref AS ref, s.status::text,
             (s.posted_at IS NOT NULL OR EXISTS (SELECT 1 FROM driver_finance.payrun_gl_runs g WHERE g.settlement_id = s.id AND g.status = 'posted')) AS posted,
             array_agg(DISTINCT l.load_number) FILTER (WHERE l.load_number = ANY($2::text[])) AS load_numbers,
-            (SELECT array_agg(DISTINCT l2.load_number) FROM driver_finance.settlement_lines sl2 JOIN mdata.loads l2 ON l2.id = sl2.load_id
+            (SELECT array_agg(DISTINCT l2.load_number) FROM driver_finance.settlement_lines sl2 JOIN mdata.loads l2 ON l2.id = sl2.load_id AND l2.operating_company_id = s.operating_company_id
               WHERE sl2.settlement_id = s.id AND sl2.voided_at IS NULL AND sl2.is_active) AS all_loads
        FROM driver_finance.driver_settlements s
        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = s.id AND sl.voided_at IS NULL AND sl.is_active
@@ -716,12 +719,12 @@ export async function supersedeForSignedSettlement(
         WHERE operating_company_id = $1::uuid AND presettlement_link_id = $2::uuid AND load_number = ANY($3::text[])`,
       [co, h.id, h.load_numbers],
     );
-    await client.query(
-      `UPDATE driver_finance.driver_settlements SET first_load_id = NULL, last_load_id = NULL, updated_at = now()
-        WHERE id = $1::uuid AND (first_load_id IN (SELECT id FROM mdata.loads WHERE load_number = ANY($2::text[]) AND operating_company_id = $3::uuid)
-           OR last_load_id IN (SELECT id FROM mdata.loads WHERE load_number = ANY($2::text[]) AND operating_company_id = $3::uuid))`,
-      [h.id, h.load_numbers, co],
-    );
+    // The trip's first / last load boundary is re-derived from the loads it still holds (THE boundary writer: ids + numbers
+    // together, audited) — never a raw NULL on the header.
+    await rederiveSettlementBoundariesInClientTx(client as never, {
+      operatingCompanyId: co, settlementId: h.id, actorUserId, clearWhenNoLoads: true,
+      reason: `${reason}: signed load(s) ${h.load_numbers.join(", ")} left this trip`,
+    });
     await recomputeSettlementHeader(client as never, h.id, co);
     report.trimmed_trips.push({ settlement_id: h.id, display_id: h.display_id, load_numbers: h.load_numbers, lines_voided: lineIds.length });
   }
@@ -730,7 +733,7 @@ export async function supersedeForSignedSettlement(
   await client.query(
     `UPDATE mdata.loads l SET presettlement_link_id = NULL, updated_at = now()
       WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND l.presettlement_link_id IS NOT NULL
-        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND (s.voided_at IS NOT NULL OR s.status = 'cancelled'))`,
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id AND (s.voided_at IS NOT NULL OR s.status = 'cancelled'))`,
     [co, signedLoads],
   );
 
@@ -745,6 +748,36 @@ export async function supersedeForSignedSettlement(
     [co, signedLoads, draft.driver_id, draft.unit_id ?? null],
   )).rows;
   report.reassigned_loads.push(...moved);
+  // The SAME driver-qualification gate every load write path runs (FAIL-D1). These loads already ran on the signed document:
+  // FEED PARITY (book-load historical_backfill) — a block is recorded as a gate exception, never a refusal, because the gate
+  // reads CURRENT credentials, which say nothing about the day the load ran.
+  if (moved.length && draft.driver_id) {
+    for (const m of moved) {
+      const hazmat = (await client.query<{ is_hazmat: boolean }>(
+        `SELECT COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+           FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL LIMIT 1`,
+        [co, m.load_number],
+      )).rows[0];
+      const block = await assertDriverQualifiedForLoad(client as never, {
+        driverId: draft.driver_id, operatingCompanyId: co, isHazmat: Boolean(hazmat?.is_hazmat),
+        actorUserId, loadNumber: m.load_number, via: "settlement_creator",
+      });
+      if (!block) continue;
+      await appendCrudAudit(client as never, actorUserId, "dispatch.historical_backfill_gate_exception", {
+        operating_company_id: co,
+        gate: "driver_qualification",
+        driver_id: block.driverId,
+        driver_name: block.driverName,
+        reasons: block.reasons,
+        cdl_expires_at: block.cdlExpiresAt,
+        medical_expiry_date: block.medicalExpiryDate,
+        hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+        historical_backfill_gate_exception: true,
+        load_number: m.load_number,
+        settlement_no: no,
+      }, "warning", "BT-3-DISPATCH-AUTH-GATES");
+    }
+  }
 
   // c. fills a reversed settlement left live on these loads (no live expense document): re-used by the post.
   report.reused_fill_ids = (await client.query<{ id: string }>(
