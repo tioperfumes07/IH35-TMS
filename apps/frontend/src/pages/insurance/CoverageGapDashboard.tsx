@@ -339,7 +339,7 @@ export function CoverageGapDashboard() {
           ))}
         </div>
         <div className="mt-2" data-testid="kpi-drill-row-count">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Units — insurance coverage by type"
             rows={visibleRows}
             columns={gapColumns}
