@@ -39,6 +39,8 @@ DO:
    - Write docs/design/DESIGN-PARITY-CENSUS.md with per-module counts. Wire it as a ratchet: failing count may only go down.
 2. BUILD (one PR per module, highest money first):
    - Order: Accounting, Banking, Settlements/Driver Finance, Factoring, Customers, Vendors, Maintenance, Fuel, Dispatch, Safety/Compliance, Drivers, Fleet, Insurance, Reports, Lists/Catalogs, Home, Driver app.
+   - MAINTENANCE graphics (added 11-09 8:06 PM CT): docs/design/v3/maintenance-vehicle-graphics/ — Main.dc.html (Fleet Health Line), TruckProfile.dc.html (truck service map), ShopBays.dc.html (shop floor from above). Source canvas https://claude.ai/artifact/WMxdAZS32A9ww8G63Ncvng. Build all three into the Maintenance module, wired to live maintenance.* / mdata.units data, census-scored like every other board.
+   - DO NOT BUILD: *V2, *-PREVIOUS, boards marked PREVIOUS (rejected 4:41 PM), and V3-Dispatch-LoadWizard-* (superseded by BookLoad).
    - For each tab and subtab: make it identical to its design source, then apply every app-wide rule. Screenshot proof against the board at 1440×900 (Playwright) in the PR.
    - No functional regressions; additive-only law holds.
 3. Each PR follows the fast merge law (branch test → green → squash-merge) and lowers the census failing count.
