@@ -3,7 +3,8 @@
  * legs + new legs on the right load) could not be voided: postVoidReversal took EVERY line of every live entry touching the
  * source — the already-reversed original lines and the reclass's own reversal lines — and reversed them again
  * (23505 uq_jep_one_reversal_per_line). Real Postgres, rolled back. Main: the void throws. Branch: it reverses only the live
- * original lines, and every account nets to zero for the source.
+ * original lines, and every account nets to zero for the source. ACCT-F11107 part 2: the 282.1 void block then lets the void
+ * stamp through (line-level liveness).
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
@@ -69,6 +70,14 @@ describeIntegration("void after reclassify (443.232, real Postgres)", () => {
            FROM accounting.journal_entry_postings p JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'
           WHERE p.source_transaction_type = 'fuel_event' AND p.source_transaction_id = $1 GROUP BY 1`, [fuelId])).rows;
       for (const n of nets) expect(Number(n.net), `account ${n.account_id}`).toBe(0);
+      // ACCT-F11107 part 2 — the void block (282.1) must let the stamp through once every line is reversed at LINE level,
+      // even when the reclass entry carries no entry-level reversal link. The real trigger function on a scratch table.
+      await db.query(`CREATE TEMP TABLE f11107_void_probe (id uuid PRIMARY KEY, voided_at timestamptz) ON COMMIT DROP`);
+      await db.query(`CREATE CONSTRAINT TRIGGER f11107_probe AFTER INSERT OR UPDATE OF voided_at ON f11107_void_probe
+                        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION accounting.fn_block_void_with_live_postings('fuel_event')`);
+      await db.query(`INSERT INTO f11107_void_probe (id, voided_at) VALUES ($1::uuid, now())`, [fuelId]);
+      const blocked = await db.query("SET CONSTRAINTS ALL IMMEDIATE").then(() => "ok", (e: { message?: string }) => e.message ?? "error");
+      expect(blocked).toBe("ok"); // 202614610000 alone: "BLOCKED (282.1) … live" — entry-level liveness only
     } finally {
       await db.query("ROLLBACK").catch(() => {});
       await db.end().catch(() => {});
