@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:25 PM CT) — Load History board anti-clip money/names
+- **PRIOR:** #28800 T4 Settlements Week-of Closed status.
+- **THIS:** Dispatch Load History ParityTable money/miles/names whitespace-nowrap + kind money/number so Rate/$/mi/Driver pay/lanes stay readable (board columns). Engines unchanged (loads-history lcr). R4–R6 still Cascade pages/reports.
+- **NEXT:** residual Cursor-owned boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:20 PM CT) — T4 Settlements Week-of Closed status engine
 - **PRIOR:** #28798 D3/D4 TruckPlanner filters + Driver header + side truck.
 - **THIS:** Week-of Status uses tour-close + payment (weekOfBoardStatus): Closed unpaid tours read Closed (not payment Open); Paid/Held still win. CSV export matches. R4–R6 remain Cascade surface (pages/reports) — Cursor does not breach.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~8:35 PM CT) — U12 Compliance filings Program MultiSelect
 - **PRIOR:** #28604 Coverage Gap U12.
 - **THIS:** FilingsComplianceDueSection Program SelectCombobox → MultiSelectDropdown (empty=all). Status KPI tiles stay single-toggle. Accounting lists still Cascade (SURFACE-BREACH).
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:30 PM CT) — U12 Coverage Gap by-type MultiSelect
-- **PRIOR:** #28602 QBO Sync Status U12.
-- **THIS:** CoverageGapDashboard per-type Covered/Missing SelectCombobox → MultiSelectDropdown (empty/both=all). Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
