@@ -15420,161 +15420,6 @@
     "purpose": "ROSTER-DUP-PLACEHOLDERS: phoneKey rejects placeholder numbers (static guard)",
     "claimed_at": "2026-11-03"
   },
-  "19827": {
-    "claimed_by": "lead",
-    "purpose": "E8 row 261: AvP projected expense reads the daily engine (getDailyExpenseItems) + snapshot projected_expense_cents (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19829": {
-    "claimed_by": "lead",
-    "purpose": "ENG-65: a Relay fill document links its fuel record on every adopt (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19833": {
-    "claimed_by": "lead",
-    "purpose": "E9 ENG-64: the fill engine runs on every unresolved fill; owner rulings + person-confirmed loads never moved; rerun compares the current unit (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19837": {
-    "claimed_by": "lead",
-    "purpose": "E11 ENG-29: boundaries the odometer anchor could not measure get Samsara's own reads, fetched outside a DB transaction, measured only (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19841": {
-    "claimed_by": "lead",
-    "purpose": "ENG-65 residual: every Relay fill is recorded from its own lines at receipt; the Creator adopts, never writes a second set (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19851": {
-    "claimed_by": "lead",
-    "purpose": "Rows 78 + 23: Dispatch Load history board reads the loads-history hub + existing load panels; Bill Payments lists A/P bill payments only (settlement deductions/escrow excluded on every list reader) (static guard)",
-    "claimed_at": "2026-11-03"
-  },
-  "19885": {
-    "claimed_by": "lead",
-    "purpose": "COLLISION: occupied on main by scripts/verify-steps/19885-verify-balanced-ledger.mjs (#28599, merged 2026-11-03 23:55Z without a claim) before this claim (#28612) landed; the rows 89/90/112 guard moved to 19889",
-    "claimed_at": "2026-11-03"
-  },
-  "19887": {
-    "claimed_by": "lead",
-    "purpose": "Re-home verify-ui4-d065-d068-d071-d076 (was wired at 19851 without a claim, colliding with Lead's claimed 19851 rows 78/23)",
-    "claimed_at": "2026-11-03"
-  },
-  "19889": {
-    "claimed_by": "lead",
-    "purpose": "Rows 89 + 90 + 112 (ACCT-F11071): Faro 1090 wire proposals anchored on purchase dates; PROPOSED = one exclusive exact wire; deposit sweep by live match only; Undo skips reversal entries; one A/R relief per factored invoice (static guard verify-rows-89-90-112)",
-    "claimed_at": "2026-11-03"
-  },
-  "19901": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-rows-127-130"
-  },
-  "19903": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-match-vendor-joins-company-scoped"
-  },
-  "19905": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-rows-53-28"
-  },
-  "19907": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-rows-97-157-163-3"
-  },
-  "19909": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-rows-91-148-149"
-  },
-  "19911": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-rows-93-116-131"
-  },
-  "19913": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-deadhead-prior-overlap-refused"
-  },
-  "19917": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-void-stray-practical-ui-wired"
-  },
-  "19921": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-eng04-advance-bank-evidence"
-  },
-  "19925": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-migration-views-security-invoker"
-  },
-  "19929": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-03",
-    "purpose": "verify-escrow-posting-load-and-date"
-  },
-  "19933": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-relay-deposit-csv-upload-wired"
-  },
-  "19937": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-settlement-paid-rollup"
-  },
-  "19941": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-factored-invoice-payment-status"
-  },
-  "19945": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-settlement-line-dedupe-keys-on-load"
-  },
-  "19949": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-invoice-applied-cents-payment-less"
-  },
-  "19953": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-sent-invoice-corrected-by-credit-memo"
-  },
-  "19957": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-driver-bill-reprices-to-settlement-line"
-  },
-  "19961": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-ar-applications-need-live-source"
-  },
-  "19965": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-qbo-bill-payment-evidence-readonly"
-  },
-  "19969": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-04",
-    "purpose": "verify-pending-bank-lines-never-counted"
-  },
-  "19973": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-09",
-    "purpose": "verify-added-columns-visible-by-default"
-  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17579,5 +17424,165 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099
+  "total_claimed": 1099,
+  "19827": {
+    "claimed_by": "lead",
+    "purpose": "E8 row 261: AvP projected expense reads the daily engine (getDailyExpenseItems) + snapshot projected_expense_cents (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19829": {
+    "claimed_by": "lead",
+    "purpose": "ENG-65: a Relay fill document links its fuel record on every adopt (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19833": {
+    "claimed_by": "lead",
+    "purpose": "E9 ENG-64: the fill engine runs on every unresolved fill; owner rulings + person-confirmed loads never moved; rerun compares the current unit (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19837": {
+    "claimed_by": "lead",
+    "purpose": "E11 ENG-29: boundaries the odometer anchor could not measure get Samsara's own reads, fetched outside a DB transaction, measured only (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19841": {
+    "claimed_by": "lead",
+    "purpose": "ENG-65 residual: every Relay fill is recorded from its own lines at receipt; the Creator adopts, never writes a second set (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19851": {
+    "claimed_by": "lead",
+    "purpose": "Rows 78 + 23: Dispatch Load history board reads the loads-history hub + existing load panels; Bill Payments lists A/P bill payments only (settlement deductions/escrow excluded on every list reader) (static guard)",
+    "claimed_at": "2026-11-03"
+  },
+  "19885": {
+    "claimed_by": "lead",
+    "purpose": "COLLISION: occupied on main by scripts/verify-steps/19885-verify-balanced-ledger.mjs (#28599, merged 2026-11-03 23:55Z without a claim) before this claim (#28612) landed; the rows 89/90/112 guard moved to 19889",
+    "claimed_at": "2026-11-03"
+  },
+  "19889": {
+    "claimed_by": "lead",
+    "purpose": "Rows 89 + 90 + 112 (ACCT-F11071): Faro 1090 wire proposals anchored on purchase dates; PROPOSED = one exclusive exact wire; deposit sweep by live match only; Undo skips reversal entries; one A/R relief per factored invoice (static guard verify-rows-89-90-112)",
+    "claimed_at": "2026-11-03"
+  },
+  "19901": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-127-130"
+  },
+  "19887": {
+    "claimed_by": "lead",
+    "purpose": "Re-home verify-ui4-d065-d068-d071-d076 (was wired at 19851 without a claim, colliding with Lead's claimed 19851 rows 78/23)",
+    "claimed_at": "2026-11-03"
+  },
+  "19903": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-match-vendor-joins-company-scoped"
+  },
+  "19905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-53-28"
+  },
+  "19907": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-97-157-163-3"
+  },
+  "19909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-91-148-149"
+  },
+  "19911": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-rows-93-116-131"
+  },
+  "19913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-deadhead-prior-overlap-refused"
+  },
+  "19917": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-void-stray-practical-ui-wired"
+  },
+  "19921": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-eng04-advance-bank-evidence"
+  },
+  "19925": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-migration-views-security-invoker"
+  },
+  "19929": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-03",
+    "purpose": "verify-escrow-posting-load-and-date"
+  },
+  "19933": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-relay-deposit-csv-upload-wired"
+  },
+  "19937": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-settlement-paid-rollup"
+  },
+  "19941": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-factored-invoice-payment-status"
+  },
+  "19945": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-settlement-line-dedupe-keys-on-load"
+  },
+  "19949": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-invoice-applied-cents-payment-less"
+  },
+  "19953": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-sent-invoice-corrected-by-credit-memo"
+  },
+  "19957": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-driver-bill-reprices-to-settlement-line"
+  },
+  "19961": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-ar-applications-need-live-source"
+  },
+  "19965": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-qbo-bill-payment-evidence-readonly"
+  },
+  "19969": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-04",
+    "purpose": "verify-relay-fill-not-recorded-twice"
+  },
+  "19973": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-added-columns-visible-by-default"
+  },
+  "19977": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-09",
+    "purpose": "verify-pending-bank-lines-never-counted"
+  }
 }
