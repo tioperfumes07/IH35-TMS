@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2ff9050",
-  "generated_at": "2026-11-10T06:32:02.313Z",
+  "healthzSha": "caf3ce1",
+  "generated_at": "2026-11-10T20:24:22.601Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2ff9050",
+    "deployedSha": "caf3ce1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28776,
-      "title": "FINDING: LST-F11139 bus ROUND 8.9b — main chain red register: 55 guards fail on main, owners assigned",
+      "number": 28793,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28776",
-      "sha": "2ff9050e26",
-      "committedAtIso": "2026-11-10T00:04:35-06:00"
+      "mergedAtCt": "11/10/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28793",
+      "sha": "caf3ce14d5",
+      "committedAtIso": "2026-11-10T12:26:08-06:00"
     },
     {
-      "number": 28775,
-      "title": "FIX: main red — step 312 EDI transaction log guard selftest fixture never updated by #28591 (LST-F11138)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28775",
-      "sha": "9235b87887",
-      "committedAtIso": "2026-11-10T00:00:32-06:00"
+      "mergedAtCt": "11/10/2026, 12:24 PM CT",
+      "url": "",
+      "sha": "0e15126292",
+      "committedAtIso": "2026-11-10T18:24:54Z"
     },
     {
-      "number": 28774,
-      "title": "FIX: main red — step 10520 required Settlements Tours per-leg columns hidden; the additive guard requires them visible (LST-F11137)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 11:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28774",
-      "sha": "da007a8002",
-      "committedAtIso": "2026-11-09T23:34:10-06:00"
+      "mergedAtCt": "11/10/2026, 10:24 AM CT",
+      "url": "",
+      "sha": "1613c898a4",
+      "committedAtIso": "2026-11-10T16:24:15Z"
     },
     {
-      "number": 28773,
-      "title": "FIX: main red — verify-additive-only 70 -> 76: #28767 default-hid 6 shipped Settlements Tours columns incl. Post (LST-F11136)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 11:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28773",
-      "sha": "492eaf8f81",
-      "committedAtIso": "2026-11-09T23:16:46-06:00"
+      "mergedAtCt": "11/10/2026, 08:24 AM CT",
+      "url": "",
+      "sha": "e4c17e477a",
+      "committedAtIso": "2026-11-10T14:24:24Z"
     },
     {
-      "number": 28772,
-      "title": "FINDING: ACCT-F11141 — CLAIM-RESERVE: verify-step 20069 + migration 202616470100 (post signed settlement as signed)",
+      "number": 28792,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 11:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28772",
-      "sha": "034b1ae212",
-      "committedAtIso": "2026-11-09T23:07:29-06:00"
+      "mergedAtCt": "11/10/2026, 06:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28792",
+      "sha": "a388e943ea",
+      "committedAtIso": "2026-11-10T12:29:17Z"
     },
     {
-      "number": 28771,
-      "title": "FIX: main red — LoadsReportBoard shows \"mdata.loads\" to the operator (#28765) + DriverLiveOverview raw text-[22px]/text-[11px] (#28769) (LST-F11135)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28771",
-      "sha": "806c2e3a72",
-      "committedAtIso": "2026-11-09T22:50:48-06:00"
+      "mergedAtCt": "11/10/2026, 06:28 AM CT",
+      "url": "",
+      "sha": "384f152452",
+      "committedAtIso": "2026-11-10T12:28:27Z"
     },
     {
-      "number": 28770,
-      "title": "FINDING: LST-F11134 bus ROUND 8.9a — local gate adds the two UI ratchets for frontend PRs",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28770",
-      "sha": "aa1e8e92dd",
-      "committedAtIso": "2026-11-09T22:41:28-06:00"
+      "mergedAtCt": "11/10/2026, 04:23 AM CT",
+      "url": "",
+      "sha": "c4b7ab4850",
+      "committedAtIso": "2026-11-10T10:23:57Z"
     },
     {
-      "number": 28769,
-      "title": "FINDING: UI-DP1-DP4 Driver Profile board engines (navy strip, pay, Dates, dots)",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28769",
-      "sha": "6afa513605",
-      "committedAtIso": "2026-11-09T22:40:26-06:00"
+      "mergedAtCt": "11/10/2026, 02:27 AM CT",
+      "url": "",
+      "sha": "15c2ddad7a",
+      "committedAtIso": "2026-11-10T08:27:28Z"
     },
     {
-      "number": 28768,
-      "title": "FIX: main red — ui-design-system-ratchet raw_font_sizes 129 -> 130: LoadsReportBoard raw text-[11px]/text-[10px] from #28765 (LST-F11133)",
+      "number": 28790,
+      "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post of 5853–5872 until the #28788 engine reds are fixed",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28768",
-      "sha": "7c177a1513",
-      "committedAtIso": "2026-11-09T22:37:00-06:00"
+      "mergedAtCt": "11/10/2026, 01:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28790",
+      "sha": "f736860ab1",
+      "committedAtIso": "2026-11-10T01:10:10-06:00"
     },
     {
-      "number": 28767,
-      "title": "FINDING: UI-F11125 T5/T6 Settlements Open/Closed board columns",
+      "number": 28789,
+      "title": "FIX: post-as-signed engine (#28788) — 4 entity-unscoped reads: truck lookup, two settlement-line→load hops, presettlement link (LST-F11144)",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 10:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28767",
-      "sha": "6e736691ac",
-      "committedAtIso": "2026-11-09T22:34:56-06:00"
+      "mergedAtCt": "11/10/2026, 01:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28789",
+      "sha": "96c3f9dcde",
+      "committedAtIso": "2026-11-10T01:02:32-06:00"
     }
   ]
 }
