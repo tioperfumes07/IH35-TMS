@@ -1,10 +1,10 @@
 {
-  "healthzSha": "caf3ce1",
-  "generated_at": "2026-11-10T20:24:22.601Z",
+  "healthzSha": "732c172",
+  "generated_at": "2026-11-10T22:31:25.318Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "caf3ce1",
+    "deployedSha": "732c172",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28793,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28812,
+      "title": "FIX: main red — settlement guards read the right code after post-as-signed: reversal-atomicity checks every 'reversed' transition; multistop reads the draft schema only (LST-F11155)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28793",
-      "sha": "caf3ce14d5",
-      "committedAtIso": "2026-11-10T12:26:08-06:00"
+      "mergedAtCt": "11/10/2026, 04:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28812",
+      "sha": "51359b5dc6",
+      "committedAtIso": "2026-11-10T16:31:20-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28811,
+      "title": "FINDING: U12 DVIR Defects triage Status multi-select",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:24 PM CT",
-      "url": "",
-      "sha": "0e15126292",
-      "committedAtIso": "2026-11-10T18:24:54Z"
+      "mergedAtCt": "11/10/2026, 04:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28811",
+      "sha": "98af0a538d",
+      "committedAtIso": "2026-11-10T17:31:10-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28810,
+      "title": "FINDING: U12 Road Service Status multi-select (OR via staged filters)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 10:24 AM CT",
-      "url": "",
-      "sha": "1613c898a4",
-      "committedAtIso": "2026-11-10T16:24:15Z"
+      "mergedAtCt": "11/10/2026, 04:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28810",
+      "sha": "9e7430b19c",
+      "committedAtIso": "2026-11-10T17:30:08-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28809,
+      "title": "FINDING: U12 Truck Line Status multi-select (OR buckets via legBuckets)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 08:24 AM CT",
-      "url": "",
-      "sha": "e4c17e477a",
-      "committedAtIso": "2026-11-10T14:24:24Z"
+      "mergedAtCt": "11/10/2026, 04:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28809",
+      "sha": "dd9a2a017e",
+      "committedAtIso": "2026-11-10T17:28:59-05:00"
     },
     {
-      "number": 28792,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 28808,
+      "title": "FINDING: LST-F11154 bus ROUND 8.9d — Cursor: planner filter multi-select + raw select (#28798) and Book Load nested box (#28796)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28792",
-      "sha": "a388e943ea",
-      "committedAtIso": "2026-11-10T12:29:17Z"
+      "mergedAtCt": "11/10/2026, 04:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28808",
+      "sha": "e6bc19e77d",
+      "committedAtIso": "2026-11-10T16:28:05-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28807,
+      "title": "FIX: main red — Lead's own guards: swallowed-DB baseline writer stamps measured_at; presettlement autolink counts a Creator-posting caller only while the Creator joins (LST-F11153)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:28 AM CT",
-      "url": "",
-      "sha": "384f152452",
-      "committedAtIso": "2026-11-10T12:28:27Z"
+      "mergedAtCt": "11/10/2026, 04:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28807",
+      "sha": "9f3a65b9ad",
+      "committedAtIso": "2026-11-10T16:27:24-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28806,
+      "title": "FINDING: UI-CF4 AVP chart money-axis 11px Inter nowrap",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 04:23 AM CT",
-      "url": "",
-      "sha": "c4b7ab4850",
-      "committedAtIso": "2026-11-10T10:23:57Z"
+      "mergedAtCt": "11/10/2026, 04:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28806",
+      "sha": "4c06725b9d",
+      "committedAtIso": "2026-11-10T17:24:19-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28805,
+      "title": "FINDING: UI-CF5 Rolling Ledger board tables anti-clip (appearance + nowrap)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 02:27 AM CT",
-      "url": "",
-      "sha": "15c2ddad7a",
-      "committedAtIso": "2026-11-10T08:27:28Z"
+      "mergedAtCt": "11/10/2026, 04:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28805",
+      "sha": "3b421b3e5f",
+      "committedAtIso": "2026-11-10T17:23:23-05:00"
     },
     {
-      "number": 28790,
-      "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post of 5853–5872 until the #28788 engine reds are fixed",
+      "number": 28727,
+      "title": "FIX: relationship scorer scores each company in five set-based reads per chunk, not seven-plus reads per customer — the run finishes (ACCT-F11129)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 01:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28790",
-      "sha": "f736860ab1",
-      "committedAtIso": "2026-11-10T01:10:10-06:00"
+      "mergedAtCt": "11/10/2026, 04:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28727",
+      "sha": "bcf286397b",
+      "committedAtIso": "2026-11-10T16:23:03-06:00"
     },
     {
-      "number": 28789,
-      "title": "FIX: post-as-signed engine (#28788) — 4 entity-unscoped reads: truck lookup, two settlement-line→load hops, presettlement link (LST-F11144)",
+      "number": 28804,
+      "title": "FINDING: UI-BL-DIALOG Book Load panel role=dialog aria-modal labelled title",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 01:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28789",
-      "sha": "96c3f9dcde",
-      "committedAtIso": "2026-11-10T01:02:32-06:00"
+      "mergedAtCt": "11/10/2026, 04:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28804",
+      "sha": "70203ab859",
+      "committedAtIso": "2026-11-10T17:22:16-05:00"
     }
   ]
 }
