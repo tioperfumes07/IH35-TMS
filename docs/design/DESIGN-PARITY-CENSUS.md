@@ -1,6 +1,6 @@
 # DESIGN-PARITY-CENSUS
 
-Generated: 2026-11-10T02:21:50.739Z
+Generated: 2026-11-10T03:30:54.494Z
 Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · boards (banking, driver-customers-vendors, maintenance, settlements) · approved-screens (13).
 
 ## Totals
@@ -8,8 +8,8 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | Metric | Count |
 |---|---:|
 | Routes in manifest | 687 |
-| Passing (static app-wide rules) | 687 |
-| Failing (rule hits on resolved pages) | 0 |
+| Passing (static app-wide rules) | 685 |
+| Failing (rule hits on resolved pages) | 2 |
 | Unresolved page binding (informational) | 219 |
 | v3 .dc.html designs | 50 |
 | Board sets | 4 |
@@ -23,7 +23,7 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | status_select_not_multiselect | 0 |
 | missing_em_dash_empty | 0 |
 | parity_table_without_export_or_gear | 0 |
-| missing_design_labels | 0 |
+| missing_design_labels | 2 |
 | unresolved_page | 219 |
 | v3_kpi_height_unlocked | 0 |
 
@@ -74,7 +74,7 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | lists | 96 | 96 | 0 | 8 |
 | loads | 1 | 1 | 0 | 1 |
 | login | 3 | 3 | 0 | 0 |
-| maintenance | 45 | 45 | 0 | 21 |
+| maintenance | 45 | 43 | 2 | 21 |
 | notifications | 1 | 1 | 0 | 0 |
 | onboarding | 1 | 1 | 0 | 0 |
 | owner-approval | 1 | 1 | 0 | 0 |
@@ -100,6 +100,8 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 
 | Route | Module | Design source | Page | Fails |
 |---|---|---|---|---|
+| `/maintenance` | maintenance | v3:Maintenance-Home.dc.html + approved:02-maintenance.png + board:maintenance | apps/frontend/src/pages/maintenance/MaintenanceHome.tsx | missing_design_labels:OVERHEAD DOOR |
+| `/maintenance/fleet-table` | maintenance | v3:Maintenance-Home.dc.html + approved:02-maintenance.png + board:maintenance | — | unresolved_page, missing_design_labels:OVERHEAD DOOR |
 
 ## Notes
 

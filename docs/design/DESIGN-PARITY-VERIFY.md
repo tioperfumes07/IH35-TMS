@@ -123,4 +123,23 @@ Customers has nine correctly ordered overview column labels and 90 rendered reco
 
 Static October/September captions were applied to dynamic current/previous month queries. Shared period-option generation now derives captions from the same business-date range, preserves legacy period keys, uses canonical Central company date, and includes the missing YTD ending month. Old YTD behavior fails the new test (Jan 1–9 instead of Jan 1 – Nov 9). Repaired period and existing Fuel tests: 14/14. Live deployment acceptance remains pending; no accounting writes or data changes.
 
-Complete the 45-board route/trigger map, reviewed element census, all live interactions safe to exercise without production writes, same-scale board/live/diff artifacts with privacy protection, and the claimed/registered fail-closed guard. Missing evidence must remain UNVERIFIED and block completion. No implementation or production data changed in this first batch.
+### Dispatch continuation — 2026-11-09 21:35 CT
+
+Read-only USMCA, CSS viewport 1440×900. This is a partial element comparison, not board acceptance. Screenshots are private in Downloads/codex-round8-5-design-parity.
+
+| ID | Board | Reference | Live observation / repair |
+|---|---|---|---|
+| D1 | Dispatch-BookLoad-Modal | Left A–E section/navigation rail beside the form | Center mode has two A/B form columns but no left section rail; preserve all extra workflow fields while restoring board structure |
+| D2 | Dispatch-BookLoad-Modal | Four charge amounts side by side | Charges render as a vertical four-row table; preserve calculations and engine wiring |
+| D3 | Dispatch-TruckPlanner | Filter popover includes Status and Driver selectors, with entity-filter heading | Loaded Filters contains only period, date range, duplicate range presets, and weekday toggles; no status or driver control. DispatchPlannersLayout.tsx PlannerControls only supplies range/show-days to UniversalFilterBar |
+| D4 | Dispatch-TruckPlanner | Visible Driver header and detailed truck graphic beside Unit | Timeline has driver values and resize separator but no Driver heading in accessibility tree; live uses small outline truck glyph, not the approved detailed graphic. Preserve extra Status/Action columns |
+
+Planner Grid→List works: 16 real unit rows, five sortable/resizable columns, linked units/drivers and current-load link. This does not prove all planner filters or every load bar. No missing mileage was invented. Book Load Center/Side panel toggle and NB/TR cards respond; NB displays required port selector, TR replaces it with tour-join explanation. AlwaysTrack→reference→type-it source path is present. Load-number input measured 31.992px high and 110px wide. No book/save/dispatch submitted; only our unsaved local selections were discarded. Modal semantics (zero role=dialog observed) require source confirmation before repair. Side-panel and specification boards remain partially inspected.
+
+Evidence: Dispatch-BookLoad-Modal-live.jpg, Dispatch-BookLoad-TripType-live.jpg, Dispatch-BookLoad-SidePanel-live.jpg, Dispatch-TruckPlanner-live.jpg, Dispatch-TruckPlanner-filters-live.jpg. Raw screenshots contain private production data and are not committed.
+
+F3 live caption recheck: Fuel shows current/previous month names Nov/Oct; selecting YTD shows Jan 1–Nov 9. Caption defect CLOSED-LIVE; full Fuel board and accounting tie-out remain open. Evidence Fuel-period-YTD-fixed-live.jpg.
+
+Round 8.5a Factoring repair merged #28747 at cc904ea4ded8357090eedc43fe5f528813f12911: original 34 tests plus two route-authority regressions pass (36/36), frontend noEmit TypeScript exit0, 74 affected guards with zero regressions. Four inherited failures were reported, not relabeled green. Deployment/live Factoring recheck remains pending.
+
+Complete the 45-board route/trigger map, reviewed element census, all live interactions safe to exercise without production writes, same-scale board/live/diff artifacts with privacy protection, and the claimed/registered fail-closed guard. Missing evidence must remain UNVERIFIED and block completion.
