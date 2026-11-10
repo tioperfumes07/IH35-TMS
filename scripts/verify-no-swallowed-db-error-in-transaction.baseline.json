@@ -72,5 +72,7 @@
     "apps/backend/src/sync/qbo-accounts-push.ts": 1,
     "apps/backend/src/sync/qbo-customers-push.ts": 1,
     "apps/backend/src/sync/qbo-vendors-push.ts": 1
-  }
+  },
+  "_comment": "verify-no-swallowed-db-error-in-transaction shrink-only ratchet (ENG-05 443.322). Written by --write-baseline; measured_at is the write time.",
+  "measured_at": "2026-11-10T22:26:45.000Z"
 }

@@ -143,7 +143,14 @@ if (process.argv.includes("--selftest")) {
 
 const now = measure();
 if (process.argv[2] === "--write-baseline") {
-  writeFileSync(BASELINE, `${JSON.stringify(now, null, 2)}\n`);
+  // LST-F11153: the writer stamps measured_at + _comment itself. #28778 rewrote the baseline with the bare measure()
+  // object and dropped both, which reddened verify-no-stale-literals-in-guards (pattern b) on main.
+  const stamped = {
+    ...now,
+    _comment: "verify-no-swallowed-db-error-in-transaction shrink-only ratchet (ENG-05 443.322). Written by --write-baseline; measured_at is the write time.",
+    measured_at: new Date().toISOString(),
+  };
+  writeFileSync(BASELINE, `${JSON.stringify(stamped, null, 2)}\n`);
   console.log(`${LABEL} baseline written: ${now.total} sites in ${now.files} files`);
   process.exit(0);
 }
