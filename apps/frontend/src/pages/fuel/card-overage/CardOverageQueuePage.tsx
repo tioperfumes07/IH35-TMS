@@ -498,7 +498,7 @@ export function CardOverageQueuePage() {
           subtitle="Approve-then-recover over-limit / non-fuel card charges"
           testId="fuel-card-overage-v3-panel"
         >
-          <ParityTable
+          <ParityTable appearance="board"
             title="Card overage events"
             rows={visibleRows}
             columns={columns}

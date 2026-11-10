@@ -192,7 +192,7 @@ export function RelayWalletRollForwardPage() {
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="The Relay wallet roll-forward could not be loaded." />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             rows={days}
             columns={columns}
             loading={query.isPending}
@@ -214,7 +214,7 @@ export function RelayWalletRollForwardPage() {
             </button>
           }
         >
-          <ParityTable
+          <ParityTable appearance="board"
             rows={openDay[open.bucket]}
             columns={docColumns}
             loading={false}

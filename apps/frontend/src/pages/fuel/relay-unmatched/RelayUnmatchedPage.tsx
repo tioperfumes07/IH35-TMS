@@ -177,7 +177,7 @@ export function RelayUnmatchedPage() {
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="Unmatched Relay fills could not be loaded." />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             rows={rows}
             columns={columns}
             loading={query.isPending}

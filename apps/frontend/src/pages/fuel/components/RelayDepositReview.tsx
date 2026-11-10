@@ -345,7 +345,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
               will be booked separately as a loan/capital contribution (a separate, disabled step — not here).
             </InfoPopover>
           </p>
-          <ParityTable<RelayDepositByCardRow>
+          <ParityTable<RelayDepositByCardRow> appearance="board"
             columns={unclassifiedColumns}
             rows={unclassifiedCards}
             rowKey={(c) => c.funding_card_last4 ?? "none"}
@@ -428,7 +428,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
       {/* FUEL-F3550: always mount ParityTable for full deposit list. */}
       <FuelBoardSection title="All deposits" testId="fuel-relay-inbox-all-v3-panel">
         <div className="px-3 py-2">
-          <ParityTable<RelayDepositRow>
+          <ParityTable<RelayDepositRow> appearance="board"
             columns={depositColumns}
             rows={filteredDeposits}
             rowKey={(d) => d.id}

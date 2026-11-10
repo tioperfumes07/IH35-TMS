@@ -455,7 +455,7 @@ export function FraudAlertsListPage() {
         <ListErrorBanner onRetry={() => void alertsQuery.refetch()} />
       ) : (
         <FuelBoardSection title="Fuel fraud alerts" subtitle="Investigate, confirm, or dismiss" testId="fuel-fraud-alerts-v3-panel">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Fuel fraud alerts"
             rows={visibleRows}
             columns={columns}

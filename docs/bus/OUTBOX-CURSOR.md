@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~7:55 PM CT) — Fuel+AVP ParityTables appearance=board
+- **PRIOR:** #28823 Factoring residual appearance=board.
+- **THIS:** Fuel transactions/cards/fraud/overage/relay/questions + ActualVsProjected table appearance=board (13). Engines unchanged. R4–R6 Cascade.
+- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~7:40 PM CT) — Factoring residual ParityTables appearance=board
 - **PRIOR:** #28822 Cursor OUTBOX/INBOX bus-diet rebuild.
 - **THIS:** ReserveTracker/Chargebacks/Recourse/Submission/Batch/Faro/FactorAdmin/CashFlow (16) ParityTables appearance=board. FactoringHomeBoard already had it. Engines unchanged. R4–R6 Cascade.
