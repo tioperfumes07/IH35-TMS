@@ -11,32 +11,58 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 
+/** U12 — triage status multi-selector (was single SelectCombobox). Default = pending queue. */
+const TRIAGE_STATUS_OPTIONS: Array<{ value: DvirDefectTriageStatus; label: string }> = [
+  { value: "pending", label: "Pending" },
+  { value: "assigned", label: "Assigned" },
+  { value: "escalated", label: "Escalated" },
+  { value: "converted", label: "Converted" },
+  { value: "closed", label: "Closed (no action)" },
+];
+
 export function DefectsInboxPage() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<"pending" | DvirDefectTriageStatus | "all">("pending");
+  // U12: multi-select — API one status; 0 = all; 1 = pass through; 2+ fetch all then filter.
+  const [statusFilter, setStatusFilter] = useState<string[]>(["pending"]);
   const actionGenerationRef = useRef(0);
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "pending" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
+  const staged = useStagedListFilters({
+    applied: { statusFilter },
+    empty: { statusFilter: ["pending"] as string[] },
+    onApply: (next) => setStatusFilter(next.statusFilter),
+  });
+
+  const apiStatus =
+    statusFilter.length === 0
+      ? ("all" as const)
+      : statusFilter.length === 1
+        ? (statusFilter[0] as DvirDefectTriageStatus)
+        : ("all" as const);
 
   const q = useQuery({
-    queryKey: ["maintenance", "dvir-defects", operatingCompanyId, statusFilter],
+    queryKey: ["maintenance", "dvir-defects", operatingCompanyId, statusFilter.join(",")],
     queryFn: () =>
       listMaintenanceDvirDefects(operatingCompanyId, {
-        status: statusFilter === "all" ? "all" : statusFilter,
+        status: apiStatus,
       }),
     enabled: Boolean(operatingCompanyId),
   });
 
-  const rows = useMemo(() => q.data?.defects ?? [], [q.data?.defects]);
+  const rows = useMemo(() => {
+    const all = q.data?.defects ?? [];
+    if (statusFilter.length <= 1) return all;
+    const selected = new Set(statusFilter);
+    return all.filter((row) => selected.has(row.triage_status));
+  }, [q.data?.defects, statusFilter]);
 
   const triageMut = useMutation({
     mutationFn: (input: { id: string; companyId: string; generation: number; action: "assign" | "escalate" | "close_no_action" | "convert_to_wo" }) =>
@@ -136,26 +162,20 @@ export function DefectsInboxPage() {
       <PageHeader title="DVIR Defects" subtitle="Review driver-submitted defects and triage into work orders." />
       <div className="flex items-center justify-end" data-defects-inbox-filter-toolbar="collapsed">
         <CollapsedListFilters
-          activeFilterCount={statusFilter !== "pending" ? 1 : 0}
+          activeFilterCount={statusFilter.length !== 1 || statusFilter[0] !== "pending" ? 1 : 0}
           onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="defects-inbox"
         >
-          <label className="space-y-1 text-xs text-gray-600">
-            <span>Triage status</span>
-            <SelectCombobox
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.statusFilter}
-              onChange={(event) => staged.setDraft({ statusFilter: event.target.value as typeof statusFilter })}
-              aria-label="Triage status filter"
-            >
-              <option value="pending">Pending</option>
-              <option value="assigned">Assigned</option>
-              <option value="escalated">Escalated</option>
-              <option value="converted">Converted</option>
-              <option value="closed">Closed (no action)</option>
-              <option value="all">All</option>
-            </SelectCombobox>
-          </label>
+          <div className="min-w-[220px]" data-testid="defects-inbox-status-filter">
+            <MultiSelectDropdown
+              label="Triage status"
+              options={TRIAGE_STATUS_OPTIONS}
+              selected={staged.draft.statusFilter}
+              onChange={(next) => staged.setDraft({ statusFilter: next })}
+              allLabel="All statuses"
+              data-testid="defects-inbox-status-multiselect"
+            />
+          </div>
         </CollapsedListFilters>
       </div>
 
