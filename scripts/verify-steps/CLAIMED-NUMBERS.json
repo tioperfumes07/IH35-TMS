@@ -17674,5 +17674,10 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-complete-design-build-law wired into CI (was orphan; LST-F11133)"
   },
-  "total_claimed": 1102
+  "20061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-deposits-posted (known-card relay_deposit bank rows must have a posted JE within 24h; unknown card reported)"
+  },
+  "total_claimed": 1103
 }
