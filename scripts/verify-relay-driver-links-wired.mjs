@@ -34,7 +34,8 @@ export function findDefects(s) {
   if (iDirect < 0 || iLink < 0 || iLink < iDirect) out.push("the matcher does not read the link table after the driver's own id");
   const link = s.match.slice(s.match.indexOf("export async function resolveRelayDriverLink("), s.match.indexOf("export async function resolveRelayDriverFromLoad("));
   if (!/COALESCE\(d\.merged_into_driver_id, d\.id\)/.test(link)) out.push("a link to a merged driver does not resolve to the survivor");
-  if (!/linked_driver_not_active/.test(link)) out.push("an inactive linked driver is matched");
+  // The refusal itself (not merely the reason's name, which also appears in the type union).
+  if (!/if \(!(?:res\.rows|live)\[0\]\.active\) return \{ driver_id: null, unresolved_reason: "linked_driver_not_active"/.test(link)) out.push("an inactive linked driver is matched");
   if (!/l\.voided_at IS NULL/.test(link)) out.push("a voided link still matches");
   if (/phone|first_name|last_name|email/.test(link)) out.push("the link lookup keys on name/phone/email (a guess)");
   const iInt = s.rematch.indexOf("const intMatch = await resolveRelayDriverMatch(");
@@ -45,7 +46,10 @@ export function findDefects(s) {
   if (!/appendCrudAudit\([^)]*"relay\.fill_driver_matched"/.test(s.rematch)) out.push("a matched header is not audited");
   const iStep = s.hook.indexOf('"relay.fill_driver_match"');
   if (iStep < 0 || iStep > s.hook.indexOf('"fuel.relay_fill_records"')) out.push("the ingest hook does not match drivers before recording Relay fills");
-  if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(s.hook)) out.push("the driver match touches companies other than USMCA (frozen)");
+  // Scoped to the driver-match tick itself: the hook file carries the same USMCA filter for its OTHER ticks, so a file-wide
+  // test passed with this tick's filter removed (the selftest plant below MISSed on main).
+  const matchTick = iStep < 0 ? "" : s.hook.slice(iStep, (s.hook.indexOf("wrapBackgroundJobTick(", iStep) + 1 || s.hook.length + 1) - 1);
+  if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(matchTick)) out.push("the driver match touches companies other than USMCA (frozen)");
   if (!/!isUsmcaOperatingCompany\(operatingCompanyId\)/.test(s.route)) out.push("the rematch route can run over every company (frozen entities)");
   if (!/actor_user_id: actorUserId/.test(s.route)) out.push("the rematch route audits a person's run as the system");
   return out;
@@ -59,7 +63,7 @@ if (process.argv.includes("--selftest")) {
     ["delete allowed", plant("mig", "REVOKE DELETE ON integrations.relay_driver_links FROM ih35_app;", "")],
     ["matcher skips links", plant("match", "return resolveRelayDriverLink(client, operatingCompanyId, integrationId)", "return { driver_id: null, unresolved_reason: \"no_active_driver_with_integration_id\" }")],
     ["merged not followed", plant("match", "COALESCE(d.merged_into_driver_id, d.id)", "d.id")],
-    ["inactive matched", plant("match", 'if (!res.rows[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active" };', "")],
+    ["inactive matched", plant("match", 'if (!live[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active", ...(link ? { link } : {}) };', "")],
     ["fuel row before Relay id", { ...src, rematch: src.rematch.replace("const intMatch = await resolveRelayDriverMatch(", "/*x*/").replace("// 3. RC6", "const intMatch = await resolveRelayDriverMatch(\n// 3. RC6") }],
     ["audit dropped", plant("rematch", "SYSTEM_ACTOR_USER_ID, \"relay.fill_driver_matched\"", "SYSTEM_ACTOR_USER_ID, \"x\"")],
     ["route runs all companies", plant("route", "!operatingCompanyId || !isUsmcaOperatingCompany(operatingCompanyId)", "false")],

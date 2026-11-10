@@ -112,6 +112,8 @@ if (isMain) {
     const plants = [
       ["voided label dropped", plant("lib", (s) => s.replace('  voided: "Voided",\n', ""))],
       ["private label map", plantAll("pages/x.tsx", 'const M = {\n  delivered_pending_docs: "x",\n  in_transit: "y",\n};')],
+      // #28529 shape: the Loads report filter's own statusOptions({ ... }) label map.
+      ["report statusOptions label map", plantAll("pages/reports/boards/LoadsReportBoard.tsx", 'const STATUS_FILTER_OPTIONS = statusOptions({\n  in_transit: "In transit",\n  delivered_pending_docs: "Delivered pending docs",\n});')],
       ["raw underscore renderer", plantAll("pages/y.tsx", "const t = load.status.replace(/_/g, \" \");")],
       ["round-trips literal copy", plant("roundTrips", (s) => s.replace("export const RT_PAIRING_ACTIVE_STATUSES = [...DISPATCH_WORK_STATUSES] as const;", 'export const RT_PAIRING_ACTIVE_STATUSES = ["dispatched"] as const;'))],
       ["kanban literal copy", plant("kanban", (s) => s.replace("new Set<string>(TERMINAL_EXIT_STATUSES)", 'new Set(["cancelled"])'))],

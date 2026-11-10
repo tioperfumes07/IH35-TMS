@@ -46,6 +46,8 @@ export function VoidStrayPracticalBillAction({ billId, operatingCompanyId, billL
   const { pushToast } = useToast();
 
   const mutation = useMutation({
+    // A voided driver bill changes the load's pay / Load Costs / settlement views — refresh every load view (443.208R).
+    meta: { loads: true },
     mutationFn: () =>
       apiRequest(`/api/v1/driver-finance/driver-bills/${encodeURIComponent(billId)}/void-stray-practical`, {
         method: "POST",

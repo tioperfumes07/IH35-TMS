@@ -5,6 +5,7 @@
  * (same sources as lane profitability). Cancelled / soft-deleted / voided excluded.
  */
 import type { FastifyInstance } from "fastify";
+import { canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 
@@ -53,7 +54,7 @@ export async function registerEquipmentTypeProfitabilityRoutes(app: FastifyInsta
            WHERE l.operating_company_id = $1::uuid
              AND l.soft_deleted_at IS NULL
              AND l.voided_at IS NULL
-             AND l.status::text <> 'cancelled'
+             AND ${canonicalNotCancelledLoadClause("l")}
              AND l.created_at::date BETWEEN $2::date AND $3::date
         ),
         bills AS (

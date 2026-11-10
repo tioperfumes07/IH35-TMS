@@ -26,6 +26,7 @@ import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatNumber, formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { statusOptions } from "../../../lib/statusListParams";
+import { loadStatusLabel, type LoadStatusValue } from "../../../lib/load-status";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
 import { groupBy, monthKey, pct, pctLabel, sumBy, weekStartIso } from "./reportBoardGroup";
 
@@ -42,17 +43,11 @@ const GROUP_OPTIONS: Array<{ id: GroupBy; label: string }> = [
   { id: "load", label: "Load" },
 ];
 
-const STATUS_FILTER_OPTIONS = statusOptions({
-  booked: "Booked",
-  dispatched: "Dispatched",
-  in_transit: "In transit",
-  delivered: "Delivered",
-  delivered_pending_docs: "Delivered pending docs",
-  completed_docs_received: "Completed docs received",
-  closed: "Closed",
-  invoiced: "Invoiced",
-  paid: "Paid",
-});
+// RULE 1 (C5): the report's status filter names its statuses; the label is THE load status label (lib/load-status.ts).
+const LOADS_REPORT_FILTER_STATUSES: readonly LoadStatusValue[] = [
+  "booked", "dispatched", "in_transit", "delivered", "delivered_pending_docs", "completed_docs_received", "closed", "invoiced", "paid",
+];
+const STATUS_FILTER_OPTIONS = LOADS_REPORT_FILTER_STATUSES.map((value) => ({ value, label: loadStatusLabel(value) }));
 
 const TRIP_OPTIONS = statusOptions({ NB: "NB", TR: "TR", SB: "SB", LOCAL: "LOCAL" });
 

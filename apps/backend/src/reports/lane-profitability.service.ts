@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import type { PoolClient } from "pg";
+import { canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { logger } from "../observability/structured-logger.js";
 import { loadMatchesEquipmentSql } from "./equipment-type-aliases.js";
 
@@ -109,7 +110,7 @@ function buildLaneComputeSql(withEquipmentFilter: boolean): string {
     WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
       AND l.voided_at IS NULL
-      AND l.status::text <> 'cancelled'
+      AND ${canonicalNotCancelledLoadClause("l")}
       AND l.created_at::date BETWEEN $2::date AND $3::date
       AND p.origin_city IS NOT NULL
       AND p.origin_state IS NOT NULL
@@ -517,7 +518,7 @@ export async function getLaneLoadDetails(
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.voided_at IS NULL
-          AND l.status::text <> 'cancelled'
+          AND ${canonicalNotCancelledLoadClause("l")}
           AND l.created_at::date BETWEEN $2::date AND $3::date
           AND LOWER(p.origin_city) = LOWER($4)
           AND LOWER(p.origin_state) = LOWER($5)
