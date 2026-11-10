@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import puppeteer from "puppeteer";
 import { wrapPdfDocument } from "../render/pdf-template.js";
 import { buildDriverSettlementDocument } from "./settlement-document.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 /**
  * Used only when a caller did not thread its authenticated user through. Every route that reaches
@@ -130,7 +131,7 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
       WHERE settlement_id = $1
         -- ACCT-F11098: the PDF statement prints live lines only (same predicate as every total reader).
         AND is_active = true
-        AND voided_at IS NULL
+        AND ${notVoided()}
       ORDER BY created_at ASC
     `,
     [input.settlementId]

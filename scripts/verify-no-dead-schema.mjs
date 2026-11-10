@@ -398,6 +398,20 @@ function selftest() {
   const unread = analyze(viewSchema, noViewReader);
   if (!unread.some((f) => f.object === "t.pos_cache")) failures.push("table behind an UNREAD view passed as wired");
 
+  // E1 RELAY LINK LOCK (#28531 shape): integrations.relay_driver_links shipped relay_name / confirmed_by / created_by /
+  // voided_by with no reader. The real matcher now reads them; the same file with those reads stripped is dead again.
+  const matcherPath = join(ROOT, "apps/backend/src/integrations/relay-payments/relay-fuel-driver-match.ts");
+  const matcherIdx = buildSourceIndex([matcherPath]);
+  const linkCols = ["relay_name", "confirmed_by", "created_by", "voided_by"];
+  const ctxLinks = filesTouchingTable(matcherIdx, "integrations.relay_driver_links");
+  for (const c of linkCols) if (referenceKind(c, matcherIdx, ctxLinks) !== "strong") failures.push(`relay_driver_links.${c} not read by the real matcher`);
+  const stripped = matcherIdx.map((f) => {
+    const text = linkCols.reduce((t, c) => t.split(c).join("x"), f.text);
+    const tokens = new Set([...text.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g)].map((m) => normIdent(m[0])));
+    return { ...f, text, tokens };
+  });
+  for (const c of linkCols) if (referenceKind(c, stripped, filesTouchingTable(stripped, "integrations.relay_driver_links")) === "strong") failures.push(`planted unread relay_driver_links.${c} still scored as read`);
+
   if (failures.length) {
     console.error("verify-no-dead-schema SELFTEST FAILED:");
     for (const f of failures) console.error(`  • ${f}`);

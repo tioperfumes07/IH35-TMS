@@ -49,7 +49,10 @@ export const PAYMENT_DISPLAY_ID_PATTERN = /^PMT-[0-9]{4}-[0-9]{5}$/;
 // 443.110 G4: a vendor bill born on a load (the Settlement Creator's owed company expense) is numbered on that load's
 // spine — load-1, load-2 ... (expense-number.ts formatLoadExpenseNumber), the same series every load document uses; the
 // bare load number stays the driver bill's. Exactly that shape is added: digits, a dash, a sequence.
-export const BILL_DISPLAY_ID_PATTERN = /^(BILL-[0-9]{4}-[0-9]{5}|[0-9]{1,12}|[0-9]{1,12}-[0-9]{1,4})$/;
+// ACCT-F11141: the pay-run close's supplement bill above a delivery-accrued pay bill is numbered <load>-S
+// (settlement-ap-chain.service.ts) — refused by this pattern, so every close of a settlement whose load pay was accrued at
+// delivery and restated upward died here (measured on a prod fork, signed #5853 load 13694). Exactly that shape is added.
+export const BILL_DISPLAY_ID_PATTERN = /^(BILL-[0-9]{4}-[0-9]{5}|[0-9]{1,12}|[0-9]{1,12}-[0-9]{1,4}|[0-9]{1,12}-S)$/;
 
 function assertDisplayIdShape(value: string, pattern: RegExp, docType: string): string {
   if (!pattern.test(value)) {

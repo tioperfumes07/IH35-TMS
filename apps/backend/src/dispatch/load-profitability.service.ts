@@ -1,4 +1,5 @@
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { canonicalNotCancelledLoadClause } from "./canonical-active-load-set.js";
 import type { PoolClient } from "pg";
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): the same shared exclusion already required
 // on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here — a fixture unit must not
@@ -404,7 +405,7 @@ export async function computeTripProfitabilityReport(
        AND l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL
        AND l.voided_at IS NULL
-       AND l.status::text <> 'cancelled'
+       AND ${canonicalNotCancelledLoadClause("l")}
        AND l.is_sample_data = false
       ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       GROUP BY sl.settlement_id
@@ -481,7 +482,7 @@ export async function computeTripProfitabilityReport(
        AND l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL
        AND l.voided_at IS NULL
-       AND l.status::text <> 'cancelled'
+       AND ${canonicalNotCancelledLoadClause("l")}
        AND l.is_sample_data = false
       LEFT JOIN LATERAL (
         SELECT MIN(COALESCE(st.appointment_start_at, st.scheduled_arrival_at)) AS pickup_at
@@ -509,7 +510,7 @@ export async function computeTripProfitabilityReport(
            AND lx.operating_company_id = $1::uuid
            AND lx.soft_deleted_at IS NULL
            AND lx.voided_at IS NULL
-           AND lx.status::text <> 'cancelled'
+           AND ${canonicalNotCancelledLoadClause("lx")}
          WHERE slx.settlement_id = sip.id
            AND ${loadMatchesEquipmentSql("$4", "lx")}
       )

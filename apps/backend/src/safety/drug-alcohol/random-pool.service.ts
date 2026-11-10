@@ -94,8 +94,18 @@ export async function listActiveEnrolledDrivers(
       -- Postgres rejected the statement at parse time: "for SELECT DISTINCT, ORDER BY expressions
       -- must appear in select list". Reproduced verbatim against prod. Ordering by the output alias
       -- keeps the deterministic ordering the draw's auditability depends on.
+      -- ACCT-F11128: the pool is ACTIVE drivers only — the same rule scheduleTest applies to every drawn driver. An
+      -- enrollment left active for a driver deactivated later (USMCA prod 11-10: 1 of 14, deactivated 09-07) put him in
+      -- the pool; the draw picked him, scheduleTest threw active_driver_not_in_operating_company and the whole draw
+      -- rolled back. A driver who is not active is not a driver position (49 CFR 382.305) and is never drawn.
       SELECT DISTINCT e.driver_uuid::text AS driver_uuid
       FROM safety.da_program_enrollments e
+      JOIN mdata.drivers d
+        ON d.id = e.driver_uuid
+       AND d.operating_company_id = $1::uuid
+       AND d.status = 'Active'
+       AND d.deactivated_at IS NULL
+       AND d.archived_at IS NULL
       WHERE e.operating_company_id::text = $1::uuid::text
         AND e.is_active = true
       ORDER BY driver_uuid

@@ -1,3 +1,23 @@
+## OUTBOX (11-10-2026 ~5:25 PM CT) — Load History board anti-clip money/names
+- **PRIOR:** #28800 T4 Settlements Week-of Closed status.
+- **THIS:** Dispatch Load History ParityTable money/miles/names whitespace-nowrap + kind money/number so Rate/$/mi/Driver pay/lanes stay readable (board columns). Engines unchanged (loads-history lcr). R4–R6 still Cascade pages/reports.
+- **NEXT:** residual Cursor-owned boards; Cascade owns R*. No match/Dreamline.
+
+## OUTBOX (11-10-2026 ~5:20 PM CT) — T4 Settlements Week-of Closed status engine
+- **PRIOR:** #28798 D3/D4 TruckPlanner filters + Driver header + side truck.
+- **THIS:** Week-of Status uses tour-close + payment (weekOfBoardStatus): Closed unpaid tours read Closed (not payment Open); Paid/Held still win. CSV export matches. R4–R6 remain Cascade surface (pages/reports) — Cursor does not breach.
+- **NEXT:** residual Cursor-owned boards; Cascade owns R*. No match/Dreamline.
+
+## OUTBOX (11-10-2026 ~5:15 PM CT) — D3/D4 TruckPlanner entity filters + Driver header + side truck
+- **PRIOR:** #28796 D1/D2 Book Load A–E rail + side-by-side charges.
+- **THIS:** D3 Filters popover Status · Driver · Unit · Customer heading + Status select + Driver EntityPicker; entityFilters in PlannerRangeContext filter TruckPlanner rows. D4 PlannerGrid separate Driver columnheader (no Unit span); board PlannerSideTruckGlyph replaces lucide outline. Status/Action preserved additive.
+- **NEXT:** R4–R6 / residual boards. No match/Dreamline. Not chrome-only.
+
+## OUTBOX (11-10-2026 ~4:05 PM CT) — D1/D2 Book Load A–E rail + side-by-side charges
+- **PRIOR:** #28769 DP1–DP4 Driver Profile board engines.
+- **THIS:** D1 center Book Load sticky A–E section rail (jump to section anchors; side panel unchanged). D2 four charge amounts side-by-side grid (Linehaul/Fuel/Accessorial/Total) with live MoneyInput + engine totals; AccessorialEditor/extras stay additive. R2 Trial Balance left for Cascade surface. Guards: verify-book-load-money-and-controls (+selftest).
+- **NEXT:** D3–D4 TruckPlanner / R4–R6 (Cascade owns R2 TB). No match/Dreamline. Not chrome-only.
+
 ## OUTBOX (11-09-2026 ~10:40 PM CT) — DP1–DP4 Driver Profile board engines
 - **PRIOR:** #28767 T5/T6 Settlements Open/Closed board columns.
 - **THIS:** DP1 navy V3.shell tab strip (not white underline). DP2 pay title "Pay this week · open pre-settlement" + compact asymmetric panel (net hero, gross/deductions, load EntityLinks). DP3 Trip Dates column + Rate (Pickup/Delivery folded into Dates). DP4 document status dots + board ParityTables. Real pre-settlement/dispatch/telematics engines; board-only + live tests retargeted.
@@ -172,21 +192,6 @@
 ## OUTBOX (11-03-2026 ~8:35 PM CT) — U12 Compliance filings Program MultiSelect
 - **PRIOR:** #28604 Coverage Gap U12.
 - **THIS:** FilingsComplianceDueSection Program SelectCombobox → MultiSelectDropdown (empty=all). Status KPI tiles stay single-toggle. Accounting lists still Cascade (SURFACE-BREACH).
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:30 PM CT) — U12 Coverage Gap by-type MultiSelect
-- **PRIOR:** #28602 QBO Sync Status U12.
-- **THIS:** CoverageGapDashboard per-type Covered/Missing SelectCombobox → MultiSelectDropdown (empty/both=all). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:25 PM CT) — U12 QBO Sync Status MultiSelect
-- **PRIOR:** #28600 Driver/Teams/Brokers U12.
-- **THIS:** QBOSyncStatusDashboardPage status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:15 PM CT) — U12 Driver catalog + Teams + Brokers MultiSelect
-- **PRIOR:** #28599 balanced-ledger 19885 + CLOSE-ALL sync.
-- **THIS:** DriverCatalogListPage + DriverTeamsPage + BrokersListPage status → MultiSelectDropdown (apiStatus/apiIsActive). Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

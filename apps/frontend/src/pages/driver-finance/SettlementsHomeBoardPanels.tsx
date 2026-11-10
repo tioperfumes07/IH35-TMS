@@ -19,6 +19,7 @@ import {
   settlementPaymentLabel,
   settlementsDerivedReimb,
   settlementsWeekLoadsLabel,
+  settlementsWeekOfStatusLabel,
   type SettlementsWeekBucket,
 } from "./settlementsHomeBoardHelpers";
 
@@ -40,8 +41,7 @@ function exportWeekOfSettlementsCsv(
     .join(",");
   const body = rows
     .map((s) => {
-      const pay = settlementPaymentLabel(s);
-      const status = pay === "Paid" ? "Paid" : pay === "Held" ? "Held" : "Open";
+      const status = weekOfBoardStatus(s).label;
       return [
         s.driver_full_name || "Driver",
         settlementsWeekLoadsLabel(s),
@@ -96,13 +96,16 @@ export type SettlementsHomeBoardPanelsProps = {
 };
 
 /**
- * Board Status column: ● Paid (green) / ● Open (blue) — payment-facing (v3 Settlements board).
- * Week-of Open/Closed *pills* use settlementsRowTourClosed (tour phase) — REG-102 / #159.
+ * T4 / REG-102 — Week-of Status must agree with Open/Closed pills (tour close), not payment-only.
+ * Paid/Held still win when payment_state says so; otherwise tour-closed → Closed (never "Open" on the Closed pill).
  */
-function boardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held"; color: string } {
+export function weekOfBoardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held" | "Closed" | "Cancelled"; color: string } {
   const pay = settlementPaymentLabel(s);
   if (pay === "Paid") return { label: "Paid", color: V3.green };
   if (pay === "Held") return { label: "Held", color: V3.red };
+  const phase = settlementsWeekOfStatusLabel(s);
+  if (phase === "Cancelled") return { label: "Cancelled", color: V3.muted };
+  if (phase === "Closed") return { label: "Closed", color: V3.shell };
   return { label: "Open", color: V3.link };
 }
 
@@ -361,7 +364,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               </div>
             ) : (
               weekOfRows.map((s) => {
-                const status = boardStatus(s);
+                const status = weekOfBoardStatus(s);
                 return (
                   <div
                     key={s.id}

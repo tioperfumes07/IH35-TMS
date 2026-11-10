@@ -2,6 +2,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 import { forfeitDriverEscrowOnClient } from "./escrow-forfeit.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -62,7 +63,9 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     deferredCents: 0,
   };
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return empty;
+  // CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: a money path. Without settlement_lines no gross can be read, so returning `empty`
+  // would post a settlement with every approved chargeback silently skipped. Fail closed.
+  if (!reg.rows[0]?.ok) throw new Error("settlement_lines_unavailable: driver_finance.settlement_lines is absent — abandonment chargebacks cannot be applied");
 
   // Same gross/floor shape as settlement-deduction-cap.service.ts's
   // applyPendingDeductionsToSettlementWithNetFloor — gross from earnings-type lines only.
@@ -73,7 +76,7 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
       WHERE settlement_id = $1
         AND line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary')
         AND is_active = true
-        AND voided_at IS NULL
+        AND ${notVoided()}
     `,
     [input.settlementId]
   );

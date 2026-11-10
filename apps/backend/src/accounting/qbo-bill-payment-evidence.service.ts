@@ -68,7 +68,7 @@ async function loadAppSide(userId: string, operatingCompanyId: string, cutover: 
               COALESCE(b.paid_cents, 0)::text AS paid_cents, v.vendor_name, b.bill_category,
               db.id::text AS driver_bill_id, db.settled_in_settlement_id::text AS settlement_id
          FROM accounting.bills b
-         LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id
+         LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id AND v.operating_company_id = b.operating_company_id
          LEFT JOIN LATERAL (
            SELECT d.id, d.settled_in_settlement_id
              FROM driver_finance.driver_bills d
@@ -77,6 +77,7 @@ async function loadAppSide(userId: string, operatingCompanyId: string, cutover: 
          ) db ON true
         WHERE b.operating_company_id = $1::uuid
           AND b.voided_at IS NULL
+          AND b.revoked_at IS NULL
           AND COALESCE(b.is_sample_data, false) = false
           AND b.status IN ('unpaid', 'partially_paid')
         ORDER BY b.bill_date, b.bill_number`,

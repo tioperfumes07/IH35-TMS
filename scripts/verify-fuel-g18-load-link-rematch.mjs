@@ -56,7 +56,14 @@ export function checkOneFuelLoadRule(src) {
       if (!/sameEntityLoadUnitSql\(/.test(cf) || !/assigned_primary_driver_id/.test(cf)) p.push("creatorFillLoad must take the unit (same-entity rule) and driver from the load");
     }
     if ((src.creator.match(/await creatorFillLoad\(client, draft,/g) ?? []).length < 2) p.push("the Creator fuel fill AND paid company expense must both resolve through creatorFillLoad");
-    if (!/fillLoad\.driverId,\s*fillLoad\.unitId,/.test(src.creator)) p.push("the Creator fuel row must carry the load's driver + unit (fillLoad), not the draft's");
+    // sweepA (2026-11-10) — ENG-65 (#28457) added the Relay adopt UPDATE, whose params also read `fillLoad.driverId,
+    // fillLoad.unitId,`; a file-wide match let it stand in for the fuel INSERT (the selftest plant on the INSERT passed).
+    // The rule is per write site: the INSERT INTO fuel.fuel_transactions params, and every fuel row write that sets
+    // driver_id / unit_id, carry the load's (fillLoad) — never the draft's.
+    const ins = src.creator.indexOf("INSERT INTO fuel.fuel_transactions");
+    const insParams = ins < 0 ? "" : src.creator.slice(ins, src.creator.indexOf("RETURNING id::text", ins) + 400);
+    if (ins < 0 || !/fillLoad\.driverId,\s*fillLoad\.unitId,/.test(insParams) || /draft\.(?:driver_id|unit_id)/.test(insParams))
+      p.push("the Creator fuel row must carry the load's driver + unit (fillLoad), not the draft's");
     if (!/driver_id: expLoad\.driverId/.test(src.creator) || !/unit_id: expLoad\.unitId/.test(src.creator)) p.push("the Creator paid company expense must carry the load's driver + unit (expLoad)");
   }
   return p;
@@ -137,6 +144,7 @@ function selftest() {
     ["Creator fill load back on the date window only is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace(/const atTime = await resolveFuelLoadAtTime\(/, "const atTime = null && await noRule(") }).length > 0],
     ["Creator accepting a load off the settlement is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace('"line_load_not_on_settlement"', '"x"') }).length > 0],
     ["Creator fuel row stamping the draft's driver/unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("fillLoad.driverId,\n        fillLoad.unitId,", "draft.driver_id,\n        draft.unit_id ?? null,") }).length > 0],
+    ["Creator fuel INSERT stamping the draft's driver (adopt UPDATE intact) is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace(/(INSERT INTO fuel\.fuel_transactions[\s\S]*?)fillLoad\.driverId,(\s*)fillLoad\.unitId,/, "$1draft.driver_id,$2fillLoad.unitId,") }).length > 0],
     ["Creator company expense stamping the draft's unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("unit_id: expLoad.unitId", "unit_id: draft.unit_id ?? null") }).length > 0],
     // LEAD 443.121 #2
     ...(() => {

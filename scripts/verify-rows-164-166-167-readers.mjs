@@ -48,7 +48,7 @@ export function audit(s) {
   if (!/getFuelSpendSummary\(companyId, range\.from, range\.to\)/.test(s.strip)) f.push("R164c: Fuel board strip does not read getFuelSpendSummary");
   if (/agg\.total_spend_cents/.test(s.strip)) f.push("R164c: Fuel board strip still sums spend client-side");
   // R166a
-  if (!/ON ud\.id = \$\{survivorDriverIdSql\("COALESCE\(unit_vda\.driver_id, unit_last_drv\.driver_id\)"\)\}/.test(s.unitDriver)) f.push("R166a: unit→driver resolver does not resolve merged shells to the survivor");
+  if (!/ON ud\.id = \$\{survivorDriverIdSql\("COALESCE\(unit_vda\.driver_id, unit_last_drv\.driver_id\)", companyParam\)\}/.test(s.unitDriver)) f.push("R166a: unit→driver resolver does not resolve merged shells to the survivor (in the company)");
   // R166b
   if (!/ud\.id::text AS driver_id[\s\S]{0,200}FROM mdata\.units u\s+\$\{unitCurrentDriverSql\("u", "\$1::uuid"\)\}/.test(s.scheduler)) f.push("R166b: scheduler vacant trucks do not carry the unit→driver resolver's driver");
   if (!/driverId: u\.driver_id \? String\(u\.driver_id\) : null/.test(s.truckPlanner)) f.push("R166b: Truck planner drops the vacant truck's driver");
@@ -75,7 +75,7 @@ if (process.argv.includes("--selftest")) {
     ["164b archived/voided counted FAILS", plant("spend", "${fuelLiveRowSql(\"ft\")}", "true")],
     ["164b unweighted avg FAILS", plant("spend", "(sum(ft.total_cost) FILTER (WHERE ft.gallons > 0) / NULLIF(sum(ft.gallons) FILTER (WHERE ft.gallons > 0), 0))", "avg(ft.price_per_gallon)")],
     ["164c board client-side sum FAILS", plant("strip", "getFuelSpendSummary(companyId, range.from, range.to)", "Promise.resolve(agg.total_spend_cents)")],
-    ["166a shell driver not resolved FAILS", plant("unitDriver", "ON ud.id = ${survivorDriverIdSql(\"COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)\")}", "ON ud.id = COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)")],
+    ["166a shell driver not resolved FAILS", plant("unitDriver", "ON ud.id = ${survivorDriverIdSql(\"COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)\", companyParam)}", "ON ud.id = COALESCE(unit_vda.driver_id, unit_last_drv.driver_id)")],
     ["166b vacant driver dropped (backend) FAILS", plant("scheduler", "      ${unitCurrentDriverSql(\"u\", \"$1::uuid\")}\n", "\n")],
     ["166b vacant driver dropped (planner) FAILS", plant("truckPlanner", "driverId: u.driver_id ? String(u.driver_id) : null", "driverId: null")],
     ["166c HOS ignores shells FAILS", plant("hosClocks", "h.driver_uuid = ids.id", "h.driver_uuid = d.id")],

@@ -15655,6 +15655,11 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
   },
+  "20041": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-da-random-pool-active-drivers (ACCT-F11128)"
+  },
   "20045": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",

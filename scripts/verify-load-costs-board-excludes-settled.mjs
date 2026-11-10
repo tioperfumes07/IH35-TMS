@@ -12,8 +12,19 @@ const { canonicalLoadCostsOpenClause } = await import('../apps/backend/src/dispa
 const USMCA='5c854333-6ea5-4faa-af31-67cb272fef80';
 const LABEL='verify-load-costs-board-excludes-settled';
 const boardScope=canonicalLoadCostsOpenClause('l');
+// #28625 (ACCT-F11062) moved the board statement into buildLoadCostsBoardSql(sortSql, showVoided). The RULE is unchanged:
+// the statement the board RUNS mounts the guarded scope for the request's show_voided. Checked on the built SQL, not a literal.
 const route=fs.readFileSync('apps/backend/src/accounting/load-costs-board.routes.ts','utf8');
-assert(route.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)'), 'actual board must use guarded scope');
+const { buildLoadCostsBoardSql } = await import('../apps/backend/src/accounting/load-costs-board.routes.ts');
+export function boardFailures(build, routeSrc) {
+  const f = [];
+  for (const sv of [false, true]) {
+    if (!build('l.load_number ASC', sv).includes(canonicalLoadCostsOpenClause('l', sv))) f.push(`board SQL (show_voided=${sv}) does not mount canonicalLoadCostsOpenClause("l", ${sv})`);
+  }
+  if (!/buildLoadCostsBoardSql\(sortSql, parsed\.data\.show_voided\)/.test(routeSrc)) f.push('board handler must run buildLoadCostsBoardSql with the request show_voided');
+  return f;
+}
+assert.deepEqual(boardFailures(buildLoadCostsBoardSql, route), [], 'actual board must use guarded scope');
 const required=["sl.is_active IS TRUE","ds.voided_at IS NULL","ds.status='closed'",
   'ds.operating_company_id=l.operating_company_id','db.voided_at IS NULL',
   "db.status NOT IN ('void','voided')",'l.is_sample_data IS NOT TRUE','l.soft_deleted_at IS NULL'];
@@ -22,7 +33,11 @@ assert.deepEqual(scopeFailures(boardScope),[]);
 if(process.argv.includes('--selftest')) {
   for(const needle of required) assert(scopeFailures(boardScope.split(needle).join('MUTATED')).length>0,needle);
   assert(!boardScope.includes('accounting.invoices'),'issued invoice must not hide unsettled costs');
-  console.log(LABEL+' SELFTEST: '+required.length+'/'+required.length+' mutations caught');
+  // Plants: a builder that drops the guarded scope, one that ignores show_voided, a handler that hard-codes it — all caught.
+  assert(boardFailures((o, sv) => buildLoadCostsBoardSql(o, sv).split(canonicalLoadCostsOpenClause('l', sv)).join('TRUE'), route).length > 0, 'dropped scope escaped');
+  assert(boardFailures((o) => buildLoadCostsBoardSql(o, false), route).length > 0, 'ignored show_voided escaped');
+  assert(boardFailures(buildLoadCostsBoardSql, route.replace('buildLoadCostsBoardSql(sortSql, parsed.data.show_voided)', 'buildLoadCostsBoardSql(sortSql, true)')).length > 0, 'hard-coded show_voided escaped');
+  console.log(LABEL+' SELFTEST: '+required.length+'/'+required.length+' scope mutations + 3 board-wiring plants caught');
 } else {
   const url=process.env.DATABASE_URL;
   if(!url) throw new Error(LABEL+': DATABASE_URL required (not a pass)');

@@ -9,6 +9,8 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import type { PoolClient } from "pg";
+import { liveDriverBill, notVoided } from "../accounting/live-document-predicates.sql.js";
+import { canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { logger } from "../observability/structured-logger.js";
 import { loadMatchesEquipmentSql } from "./equipment-type-aliases.js";
 
@@ -108,8 +110,8 @@ function buildLaneComputeSql(withEquipmentFilter: boolean): string {
     JOIN delivery d ON d.load_id = l.id
     WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
-      AND l.voided_at IS NULL
-      AND l.status::text <> 'cancelled'
+      AND ${notVoided("l")}
+      AND ${canonicalNotCancelledLoadClause("l")}
       AND l.created_at::date BETWEEN $2::date AND $3::date
       AND p.origin_city IS NOT NULL
       AND p.origin_state IS NOT NULL
@@ -145,8 +147,7 @@ function buildLaneComputeSql(withEquipmentFilter: boolean): string {
     FROM driver_finance.driver_bills db
     JOIN load_scope ls ON ls.id = db.load_id
     WHERE db.operating_company_id = $1::uuid
-      AND db.voided_at IS NULL
-      AND db.status NOT IN ('void', 'voided')
+      AND ${liveDriverBill("db")}
     GROUP BY ls.origin_city, ls.origin_state, ls.destination_city, ls.destination_state
   ),
   maint AS (
@@ -516,8 +517,8 @@ export async function getLaneLoadDetails(
         JOIN delivery d ON d.load_id = l.id
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.voided_at IS NULL
-          AND l.status::text <> 'cancelled'
+          AND ${notVoided("l")}
+          AND ${canonicalNotCancelledLoadClause("l")}
           AND l.created_at::date BETWEEN $2::date AND $3::date
           AND LOWER(p.origin_city) = LOWER($4)
           AND LOWER(p.origin_state) = LOWER($5)
@@ -528,8 +529,7 @@ export async function getLaneLoadDetails(
         SELECT ls.id AS load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
         FROM driver_finance.driver_bills db
         JOIN load_scope ls ON ls.id = db.load_id
-        WHERE db.voided_at IS NULL
-          AND db.status NOT IN ('void', 'voided')
+        WHERE ${liveDriverBill("db")}
         GROUP BY ls.id
       ),
       maint AS (

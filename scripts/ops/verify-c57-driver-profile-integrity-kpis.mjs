@@ -104,7 +104,8 @@ if (SELFTEST) {
   const boardSrc = read(BOARD_FILE);
   const kpiFirst = profileSrc.replace(/<DriverOverviewBoard\b[^>]*\bhideChrome\b/, "<DriverOverviewBoard").replace('data-testid="driver-profile-kpi-strip"', 'data-testid="driver-profile-kpi-strip" /* <DriverOverviewBoard hideChrome */');
   const plants = [
-    ["KPI band above the tab strip", tabsFirstFailures(profileSrc.replace(/<DriverOverviewBoard\b[^>]*\bhideChrome\b[^>]*\/>/, ""), boardSrc)],
+    // the board element carries a multi-line-free JSX prop with "=>" and nested "/>", so strip its whole source line (a [^>]* match no longer reaches the closing "/>" and the plant silently no-oped)
+    ["KPI band above the tab strip", tabsFirstFailures(profileSrc.replace(/<DriverOverviewBoard\b[^\n]*\bhideChrome\b[^\n]*\n/, ""), boardSrc)],
     ["board renders no tab strip", tabsFirstFailures(profileSrc, boardSrc.replaceAll("<ProfileTabStrip", "<NoStrip"))],
     ["strip mounted after the KPI band", tabsFirstFailures(kpiFirst, boardSrc)],
   ];

@@ -6,8 +6,10 @@ import {
   formatWeekOfTitle,
   resolveSelectedWeekBucket,
   settlementPeriodEndIso,
+  settlementsWeekOfStatusLabel,
   weekBucketLabelFromIso,
 } from "../settlementsHomeBoardHelpers";
+import { weekOfBoardStatus } from "../SettlementsHomeBoardPanels";
 import type { SettlementListRow } from "../../../api/driverFinance";
 
 /** Codex batch92 probe instant — noon UTC on a Tuesday → Chicago still Mon/Tue same calendar week starting Sun 10/18. */
@@ -61,5 +63,21 @@ describe("settlementsHomeBoardHelpers company-calendar weeks (Codex batch91/92)"
     expect(settlementPeriodEndIso("2026-10-18T15:30:00")).toBe("2026-10-18");
     // 2026-10-18T04:00:00.000Z = 2026-10-17 23:00 CDT → company day 10/17
     expect(settlementPeriodEndIso("2026-10-18T04:00:00.000Z")).toBe("2026-10-17");
+  });
+
+  // T4 — Closed-week rows must not read payment "Open" when the tour is closed.
+  it("weekOfBoardStatus labels tour-closed unpaid as Closed (not Open)", () => {
+    const closedUnpaid = {
+      id: "s-closed",
+      status: "closed",
+      payment_state: "unpaid",
+      trip_closed_at: "2026-10-20T12:00:00.000Z",
+    } as SettlementListRow;
+    expect(settlementsWeekOfStatusLabel(closedUnpaid)).toBe("Closed");
+    expect(weekOfBoardStatus(closedUnpaid).label).toBe("Closed");
+    const openTour = { id: "s-open", status: "open", payment_state: "unpaid" } as SettlementListRow;
+    expect(weekOfBoardStatus(openTour).label).toBe("Open");
+    const paid = { id: "s-paid", status: "paid", payment_state: "cleared", trip_closed_at: "2026-10-20T12:00:00.000Z" } as SettlementListRow;
+    expect(weekOfBoardStatus(paid).label).toBe("Paid");
   });
 });
