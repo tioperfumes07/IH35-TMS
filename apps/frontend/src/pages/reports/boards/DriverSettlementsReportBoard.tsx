@@ -17,7 +17,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatUsdCents } from "../../../lib/money";
 import { statusOptions } from "../../../lib/statusListParams";
@@ -59,7 +59,7 @@ function loadsRange(r: DriverSettlementsReportRow) {
 }
 
 function periodLabel(r: DriverSettlementsReportRow) {
-  return `${formatDateUS(r.period_start)}–${formatDateUS(r.period_end)}`;
+  return `${mmmDd(r.period_start)}–${mmmDd(r.period_end)}`;
 }
 
 function isClosedUnpaid(r: DriverSettlementsReportRow) {
@@ -127,7 +127,7 @@ export function DriverSettlementsReportBoard() {
         by === "driver"
           ? formatPersonName(list[0].driver_name)
           : by === "week"
-            ? `Week of ${formatDateUS(key)}`
+            ? `Week of ${mmmDd(key)}`
             : `${key.slice(5, 7)}/${key.slice(0, 4)}`;
       out.push({
         key,
@@ -190,8 +190,8 @@ export function DriverSettlementsReportBoard() {
       { key: "deductions_cents", label: "Deductions", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.deductions_cents ? money(-r.deductions_cents) : "—") },
       { key: "advances_cents", label: "Reimb.", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.advances_cents ? money(r.advances_cents) : "—") },
       { key: "net_cents", label: "Net", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.net_cents) },
-      { key: "paid_at", label: "Paid", sortable: true, render: (r) => (r.paid_at ? `Paid ${formatDateUS(r.paid_at)}` : "Unpaid") },
-      { key: "statement", label: "Statement", render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label="Open" /> },
+      { key: "paid_at", label: "Paid", sortable: true, render: (r) => (r.paid_at ? `Paid ${mmmDd(r.paid_at)}` : "Unpaid") },
+      { key: "statement", label: "Statement", sortable: true, sortValue: (r) => r.settlement_id, render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label="Open" /> },
     ],
     []
   );
@@ -252,7 +252,7 @@ export function DriverSettlementsReportBoard() {
             -r.deductions_cents / 100,
             r.advances_cents / 100,
             r.net_cents / 100,
-            r.paid_at ? formatDateUS(r.paid_at) : "Unpaid",
+            r.paid_at ? mmmDd(r.paid_at) : "Unpaid",
           ]),
         }
       : {

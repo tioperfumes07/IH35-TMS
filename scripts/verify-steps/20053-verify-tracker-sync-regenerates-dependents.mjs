@@ -1,0 +1,1 @@
+export default { name: "verify:verify-tracker-sync-regenerates-dependents", run(ctx) { ctx.run("node", ["scripts/verify-tracker-sync-regenerates-dependents.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-tracker-sync-regenerates-dependents.mjs"]); } };

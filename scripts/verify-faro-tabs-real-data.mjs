@@ -183,13 +183,18 @@ export function checkAccountSummaryReal(src) {
   if (stubMatch && /show\("account_summary"\)/.test(stubMatch[0])) {
     failures.push(`${HOME}: Account Summary is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'show("account_summary") ?';
+  // Prefer the JSX mount `{show("account_summary") ? (` — not the page-level
+  // `!show("account_summary") ?` error-banner gate (ROUND 8.5 FA1 / 8.5a).
+  const marker = '{show("account_summary") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Account Summary ("tab === \"account_summary\" ?") block.`);
     return failures;
   }
-  const section = src.slice(idx, idx + 8000);
+  // ROUND 8.5 FA1 — FactoringHomeBoard mounts first inside this block (board-identical home),
+  // so the ledger Account Summary bindings sit further down than the old 8000-char window.
+  const nextShow = src.indexOf('\n      {show("', idx + marker.length);
+  const section = src.slice(idx, nextShow === -1 ? idx + 60000 : nextShow);
   const requiredRealBindings = [
     { pattern: /summary\?\.outstanding_liability_balance/, label: "Ending AR Balance bound to summary.outstanding_liability_balance" },
     // ROUND 326.2 item 4: the book reserve is the factoring KPI engine (GL 1230 + 1235), not views.factoring_summary.

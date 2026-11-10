@@ -21,7 +21,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatCompanyName } from "../../../lib/formatCompanyName";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatNumber, formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
@@ -107,7 +107,7 @@ function keyOf(row: LoadsReportRow, by: GroupBy, field: "pickup" | "delivery"): 
   switch (by) {
     case "week": {
       const w = d ? weekStartIso(d) : "";
-      return { key: w || "none", label: w ? `Week of ${formatDateUS(w)}` : "No stop date", link: null };
+      return { key: w || "none", label: w ? `Week of ${mmmDd(w)}` : "No stop date", link: null };
     }
     case "month": {
       const m = d ? monthKey(d) : "";
@@ -321,8 +321,8 @@ export function LoadsReportBoard() {
       { key: "unit_number", label: "Truck", sortable: true, render: (r) => <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} /> },
       { key: "trailer_number", label: "Trailer", sortable: true, render: (r) => <EntityLink kind="trailer" id={r.trailer_id} label={entityLabel(r.trailer_number, r.trailer_id, "Trailer")} /> },
       { key: "lane", label: "Lane", sortable: true, sortValue: (r) => laneLabel(r), render: (r) => laneLabel(r) },
-      { key: "pickup_date", label: "Pickup", sortable: true, render: (r) => formatDateUS(r.pickup_date) || "—" },
-      { key: "delivery_date", label: "Delivery", sortable: true, render: (r) => formatDateUS(r.delivery_date) || "—" },
+      { key: "pickup_date", label: "Pickup", sortable: true, render: (r) => mmmDd(r.pickup_date) || "—" },
+      { key: "delivery_date", label: "Delivery", sortable: true, render: (r) => mmmDd(r.delivery_date) || "—" },
       { key: "miles_practical", label: "Loaded mi", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.miles_practical == null ? "—" : formatNumber(r.miles_practical)) },
       { key: "revenue_cents", label: "Revenue", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.revenue_cents) },
       { key: "driver_pay_cents", label: "Driver pay", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.driver_pay_cents) },
@@ -373,8 +373,8 @@ export function LoadsReportBoard() {
           formatPersonName(r.driver_name ?? ""),
           r.unit_number ?? "",
           laneLabel(r),
-          formatDateUS(r.pickup_date),
-          formatDateUS(r.delivery_date),
+          mmmDd(r.pickup_date),
+          mmmDd(r.delivery_date),
           r.miles_practical ?? 0,
           r.revenue_cents / 100,
           r.driver_pay_cents / 100,
