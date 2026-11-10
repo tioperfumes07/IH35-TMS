@@ -106,6 +106,7 @@ export function InternalFineReasonsListPage() {
             setModalOpen(true);
           }}
           loading={query.isLoading}
+          emptyText="No internal fine reasons — create one or clear filters."
           storageKey="safety-internal-fine-reasons"
           title="Internal fine reasons"
           allowAllPageSize

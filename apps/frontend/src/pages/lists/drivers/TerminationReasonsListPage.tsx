@@ -241,6 +241,7 @@ export function TerminationReasonsListPage() {
             setModalOpen(true);
           }}
           loading={listQuery.isLoading}
+          emptyText="No termination reasons — create one or clear filters."
           storageKey="driver-termination-reasons"
           title={!status.length || status.length === 2 ? "All entries" : status[0] === "inactive" ? "Inactive entries" : "Active entries"}
           allowAllPageSize

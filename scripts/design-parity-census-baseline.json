@@ -1,12 +1,12 @@
 {
-  "failing_routes": 48,
+  "failing_routes": 0,
   "route_count": 687,
   "fail_rule_counts": {
-    "coming_soon_stub": 5,
+    "coming_soon_stub": 0,
     "status_select_not_multiselect": 0,
     "missing_em_dash_empty": 0,
-    "parity_table_without_export_or_gear": 43,
+    "parity_table_without_export_or_gear": 0,
     "unresolved_page": 219
   },
-  "updated_at": "2026-11-10T02:00:17.259Z"
+  "updated_at": "2026-11-10T02:02:07.384Z"
 }

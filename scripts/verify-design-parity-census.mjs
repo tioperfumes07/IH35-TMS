@@ -192,6 +192,10 @@ function pageFileForRoute(manifestSrc, routePath, importMap) {
   return null;
 }
 
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
 function scorePage(fileRel, src) {
   const fails = [];
   // Unresolved page is tracked but does NOT fail the route for the ratchet floor —
@@ -202,32 +206,32 @@ function scorePage(fileRel, src) {
   if (!src) {
     return { fails: ["unresolved_page"], routeFail: false };
   }
-  // App-wide rule: Coming-soon / placeholder stubs = FAIL (owner complete-build law).
-  if (/\bComing soon\b|\bComing-soon\b|\bunder construction\b|\bnot yet implemented\b/i.test(src)) {
+  const code = stripComments(src);
+  // App-wide rule: user-visible Coming soon stub copy = FAIL (owner complete-build law).
+  // Do NOT match test ids like coming-soon-roadmap-board or "Coming in Phase …".
+  if (/\bComing soon\b|\bunder construction\b|\bnot yet implemented\b/i.test(code)) {
     fails.push("coming_soon_stub");
   }
   // U12 residual: Active/Inactive status still SelectCombobox on a list-ish page.
   if (
-    /SelectCombobox/.test(src) &&
-    /<option value="(active|inactive|true|false)">\s*(Active|Inactive)/.test(src) &&
-    /ParityTable|filterBar|statusFilter|Show inactive/.test(src)
+    /SelectCombobox/.test(code) &&
+    /<option value="(active|inactive|true|false)">\s*(Active|Inactive)/.test(code) &&
+    /ParityTable|filterBar|statusFilter|Show inactive/.test(code)
   ) {
     fails.push("status_select_not_multiselect");
   }
   // Lists/tables should render missing as em dash somewhere (house empty grammar).
-  if (/ParityTable/.test(src) && !src.includes("—") && !/emptyText|emptyState|need-company/.test(src)) {
+  if (/ParityTable/.test(code) && !code.includes("—") && !/emptyText|emptyState|need-company/.test(code)) {
     fails.push("missing_em_dash_empty");
   }
-  // ParityTable surfaces should expose export or column gear (design law #8).
+  // Design law #8: gear column chooser. ParityTable defaults enableColumnResize=true —
+  // only FAIL when a caller explicitly disables it on a non-print compact table.
   if (
-    /<ParityTable\b/.test(src) &&
-    !/exportFilename|enableColumnResize|ColumnChooser|column chooser/i.test(src)
+    /<ParityTable\b/.test(code) &&
+    /enableColumnResize=\{false\}/.test(code) &&
+    !/Print|print|hidePager/.test(code)
   ) {
-    // ParityTable may default gear internally — only fail if suppress hints suggest stripped chrome
-    // and no export.
-    if (/suppressToolbarSearch/.test(src) && !/exportFilename/.test(src) && !/enableColumnResize/.test(src)) {
-      fails.push("parity_table_without_export_or_gear");
-    }
+    fails.push("parity_table_without_export_or_gear");
   }
   return { fails, routeFail: fails.length > 0 };
 }

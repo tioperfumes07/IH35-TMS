@@ -235,6 +235,7 @@ export function OverrideReasonsListPage() {
           }}
           loading={listQuery.isLoading}
           title="Override reasons"
+          emptyText="No override reasons — create one or clear filters."
           storageKey="override-reasons"
           allowAllPageSize
         />
