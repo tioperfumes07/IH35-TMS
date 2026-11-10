@@ -1,0 +1,1 @@
+export default { name: "verify:verify-alwaystrack-load-history-import", run(ctx) { ctx.run("node", ["scripts/verify-alwaystrack-load-history-import.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-alwaystrack-load-history-import.mjs"]); } };
