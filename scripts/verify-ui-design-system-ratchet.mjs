@@ -324,6 +324,8 @@ if (argv.includes("--lower")) {
 if (worse.length) {
   console.error(`${LABEL}: FAIL — a design-system count went UP.`);
   for (const w of worse) console.error(`  ${w}`);
+  // Name the offending files so the fix is a lookup, not a hunt (LST-F11129).
+  for (const [f, n] of measured.off_per_file) console.error(`  off-scale raw size: ${path.relative(ROOT, f)} (${n}) — use .text-section-header (11px) or text-xs (12px)`);
   console.error("");
   console.error("  THE SCALE IS ALREADY LOCKED: docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md");
   console.error("  (Claude + Jorge approved 2026-06-07). Body 12px. Column and section");
