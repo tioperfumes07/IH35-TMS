@@ -15660,6 +15660,11 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-da-random-pool-active-drivers (ACCT-F11128)"
   },
+  "20045": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relationship-scorer-batched (ACCT-F11129)"
+  },
   "20049": {
     "claimed_by": "lead",
     "claimed_at": "2026-11-10",

@@ -97,3 +97,43 @@ describe("ACCT-F11126 — the company-wide arrival scan runs only for a customer
     expect(r.score.service_quality_subscore).toBe(75);
   });
 });
+
+describe("ACCT-F11129 — company batch scorer", () => {
+  it("scores N customers in a fixed number of reads (5 probes + 4 set reads), the same as the per-customer path", async () => {
+    const { computeRelationshipScoresForCompany } = await import("../scorer.service.js");
+    const calls: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        calls.push(sql);
+        if (sql.includes("information_schema.tables")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
+        if (sql.includes("FROM mdata.loads\n")) return { rows: [{ customer_id: "c1", loads_30d: "3", loads_90d: "9", revenue_30: "300000", miles_30: "1000", revenue_180: "1800000", miles_180: "6000" }] };
+        if (sql.includes("FROM accounting.invoices i")) return { rows: [{ customer_id: "c1", weighted_days: "3000", open_cents: "100" }] };
+        if (sql.includes("WITH completed AS")) return { rows: [{ customer_id: "c1", total_count: "4", late_count: "1" }] };
+        if (sql.includes("customer_quality_events")) return { rows: [{ customer_id: "c1", complaint_count: "2" }] };
+        return { rows: [] };
+      },
+    };
+    const ids = ["c1", ...Array.from({ length: 500 }, (_, i) => `x${i}`)];
+    const out = await computeRelationshipScoresForCompany(client as never, "co", ids);
+    expect(calls.length).toBe(9);
+    expect(out).toHaveLength(501);
+    const c1 = out[0]!;
+    expect(c1.engagement_subscore).toBe(100);
+    expect(c1.payment_behavior_subscore).toBe(50);
+    expect(c1.service_quality_subscore).toBe(75);
+    expect(c1.margin_trend_subscore).toBe(50);
+    expect(c1.complaint_subscore).toBe(80);
+    const x = out[1]!;
+    expect(x.engagement_subscore).toBeNull();
+    expect(x.payment_behavior_subscore).toBe(100);
+    expect(x.service_quality_subscore).toBeNull();
+    expect(x.complaint_subscore).toBe(100);
+  });
+
+  it("the worker scores through the company batch, never one customer at a time", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync(new URL("../../../jobs/customer-relationship-scorer.ts", import.meta.url), "utf8");
+    expect(src).toMatch(/computeRelationshipScoresForCompany\(client, companyId, chunk\)/);
+    expect(src).not.toMatch(/computeRelationshipScore\(client/);
+  });
+});

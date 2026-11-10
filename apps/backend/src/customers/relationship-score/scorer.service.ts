@@ -91,6 +91,33 @@ export function computeWeightedOverallScore(subscores: RelationshipScoreSubscore
   return round2(weightedSum / weightTotal);
 }
 
+// ACCT-F11129 — ONE formula per subscore, shared by the single-customer path (computeRelationshipScore, the route) and
+// the company batch (computeRelationshipScoresForCompany, the worker), so the two can never drift.
+export function engagementFromCounts(loads30: number, loads90: number): number | null {
+  if (loads90 <= 0) return null;
+  // Relative activity versus trailing baseline (90d / 3) as a 0..100 score.
+  const baseline30 = Math.max(loads90 / 3, 1);
+  return normalizeLinear(loads30 / baseline30, 0, 1);
+}
+export function paymentFromOpen(weightedDays: number, openCents: number): number {
+  if (openCents <= 0) return 100;
+  return normalizeInverse(weightedDays / openCents, 60);
+}
+export function serviceFromArrivals(totalCount: number, lateCount: number): number | null {
+  if (totalCount <= 0) return null;
+  return clamp(round2(100 - (lateCount / totalCount) * 100), 0, 100);
+}
+export function marginFromRevenue(revenue30: number, miles30: number, revenue180: number, miles180: number): number | null {
+  if (miles30 <= 0 || miles180 <= 0) return null;
+  const rpm30 = revenue30 / miles30;
+  const rpm180 = revenue180 / miles180;
+  if (!Number.isFinite(rpm30) || !Number.isFinite(rpm180) || rpm180 <= 0) return null;
+  return clamp(round2(50 + ((rpm30 - rpm180) / rpm180) * 100 * 2.5), 0, 100);
+}
+export function complaintFromCount(complaintCount: number): number {
+  return clamp(round2(100 - complaintCount * 10), 0, 100);
+}
+
 async function computeEngagementSubscore(
   client: DbClient,
   operatingCompanyId: string,
@@ -112,13 +139,7 @@ async function computeEngagementSubscore(
     [operatingCompanyId, customerUuid]
   );
 
-  const loads30 = Number(res.rows[0]?.loads_30d ?? 0);
-  const loads90 = Number(res.rows[0]?.loads_90d ?? 0);
-  if (loads90 <= 0) return null;
-
-  // Relative activity versus trailing baseline (90d / 3) as a 0..100 score.
-  const baseline30 = Math.max(loads90 / 3, 1);
-  return normalizeLinear(loads30 / baseline30, 0, 1);
+  return engagementFromCounts(Number(res.rows[0]?.loads_30d ?? 0), Number(res.rows[0]?.loads_90d ?? 0));
 }
 
 async function computePaymentBehaviorSubscore(
@@ -153,12 +174,7 @@ async function computePaymentBehaviorSubscore(
     [operatingCompanyId, customerUuid]
   );
 
-  const weightedDays = Number(res.rows[0]?.weighted_days ?? 0);
-  const openCents = Number(res.rows[0]?.open_cents ?? 0);
-  if (openCents <= 0) return 100;
-
-  const dsoDays = weightedDays / openCents;
-  return normalizeInverse(dsoDays, 60);
+  return paymentFromOpen(Number(res.rows[0]?.weighted_days ?? 0), Number(res.rows[0]?.open_cents ?? 0));
 }
 
 async function computeServiceQualitySubscore(
@@ -217,11 +233,7 @@ async function computeServiceQualitySubscore(
     [operatingCompanyId, customerUuid]
   );
 
-  const totalCount = Number(res.rows[0]?.total_count ?? 0);
-  const lateCount = Number(res.rows[0]?.late_count ?? 0);
-  if (totalCount <= 0) return null;
-  const latePct = lateCount / totalCount;
-  return clamp(round2(100 - latePct * 100), 0, 100);
+  return serviceFromArrivals(Number(res.rows[0]?.total_count ?? 0), Number(res.rows[0]?.late_count ?? 0));
 }
 
 async function computeMarginTrendSubscore(
@@ -261,18 +273,12 @@ async function computeMarginTrendSubscore(
     [operatingCompanyId, customerUuid]
   );
 
-  const revenue30 = Number(res.rows[0]?.revenue_30 ?? 0);
-  const miles30 = Number(res.rows[0]?.miles_30 ?? 0);
-  const revenue180 = Number(res.rows[0]?.revenue_180 ?? 0);
-  const miles180 = Number(res.rows[0]?.miles_180 ?? 0);
-  if (miles30 <= 0 || miles180 <= 0) return null;
-
-  const rpm30 = revenue30 / miles30;
-  const rpm180 = revenue180 / miles180;
-  if (!Number.isFinite(rpm30) || !Number.isFinite(rpm180) || rpm180 <= 0) return null;
-
-  const trendPct = ((rpm30 - rpm180) / rpm180) * 100;
-  return clamp(round2(50 + trendPct * 2.5), 0, 100);
+  return marginFromRevenue(
+    Number(res.rows[0]?.revenue_30 ?? 0),
+    Number(res.rows[0]?.miles_30 ?? 0),
+    Number(res.rows[0]?.revenue_180 ?? 0),
+    Number(res.rows[0]?.miles_180 ?? 0)
+  );
 }
 
 async function computeComplaintSubscore(
@@ -300,8 +306,7 @@ async function computeComplaintSubscore(
     [operatingCompanyId, customerUuid]
   );
 
-  const complaintCount = Number(res.rows[0]?.complaint_count ?? 0);
-  return clamp(round2(100 - complaintCount * 10), 0, 100);
+  return complaintFromCount(Number(res.rows[0]?.complaint_count ?? 0));
 }
 
 export async function computeRelationshipScore(
@@ -354,6 +359,123 @@ export async function computeRelationshipScore(
     margin_trend_subscore,
     complaint_subscore,
   };
+}
+
+/**
+ * ACCT-F11129 — the whole company in FIVE set-based reads (one per subscore, grouped by customer), not 7+ reads per
+ * customer. Measured on prod 11-10: the per-customer path ran ~10 s a customer (6 information_schema probes, 5 reads
+ * and the company-wide fence-event scan in the arrival set) over 1,217 USMCA customers — hours, longer than the gap
+ * between deploys, so the worker (which runs on boot) never reached its success record (last success 2026-10-25).
+ * Same filters and the same formulas (the *From* helpers above) as computeRelationshipScore, so a customer scores the
+ * same either way. Only the customers passed are returned.
+ */
+export async function computeRelationshipScoresForCompany(
+  client: DbClient,
+  operatingCompanyId: string,
+  customerUuids: string[]
+): Promise<RelationshipScoreResult[]> {
+  if (!customerUuids.length) return [];
+  const has = async (schema: string, table: string) => tableExists(client, schema, table);
+  const [hasLoads, hasInvoices, hasStops, hasFences, hasQuality] = [
+    await has("mdata", "loads"), await has("accounting", "invoices"), await has("mdata", "load_stops"),
+    await has("geo", "geofence_events"), await has("mdata", "customer_quality_events"),
+  ];
+  const byCustomer = <T extends { customer_id: string }>(rows: T[]) => new Map(rows.map((r) => [r.customer_id, r]));
+
+  const loads = hasLoads ? byCustomer((await client.query<{ customer_id: string; loads_30d: string; loads_90d: string; revenue_30: string; miles_30: string; revenue_180: string; miles_180: string }>(
+    `
+      SELECT customer_id::text AS customer_id,
+             COUNT(*) FILTER (WHERE created_at >= now() - interval '30 days')::int::text AS loads_30d,
+             COUNT(*) FILTER (WHERE created_at >= now() - interval '90 days')::int::text AS loads_90d,
+             COALESCE(SUM(rate_total_cents) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '30 days'), 0)::numeric::text AS revenue_30,
+             COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0)) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '30 days'), 0)::numeric::text AS miles_30,
+             COALESCE(SUM(rate_total_cents) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '180 days'), 0)::numeric::text AS revenue_180,
+             COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0)) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '180 days'), 0)::numeric::text AS miles_180
+        FROM mdata.loads
+       WHERE operating_company_id = $1::uuid AND customer_id = ANY($2::uuid[]) AND soft_deleted_at IS NULL
+       GROUP BY customer_id
+    `,
+    [operatingCompanyId, customerUuids]
+  )).rows) : new Map();
+
+  const invoices = hasInvoices ? byCustomer((await client.query<{ customer_id: string; weighted_days: string; open_cents: string }>(
+    `
+      SELECT i.customer_id::text AS customer_id,
+             COALESCE(SUM(GREATEST(current_date - i.issue_date, 0) * i.amount_open_cents), 0)::numeric::text AS weighted_days,
+             COALESCE(SUM(i.amount_open_cents), 0)::numeric::text AS open_cents
+        FROM accounting.invoices i
+       WHERE i.operating_company_id = $1::uuid AND i.customer_id = ANY($2::uuid[])
+         AND i.status IN ('sent', 'partial') AND i.issue_date >= current_date - interval '120 days' AND i.voided_at IS NULL
+       GROUP BY i.customer_id
+    `,
+    [operatingCompanyId, customerUuids]
+  )).rows) : new Map();
+
+  // The arrival set (company-wide fence-event scan) runs ONCE for the company, grouped by customer.
+  const arrivals = hasLoads && hasStops && hasFences ? byCustomer((await client.query<{ customer_id: string; total_count: string; late_count: string }>(
+    `
+      WITH completed AS (
+        SELECT l.customer_id,
+               COALESCE(sa.confirmed_at, sa.triggered_at) AS arrived_at,
+               COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) AS scheduled_at
+          FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
+          JOIN mdata.load_stops ls ON ls.id = sa.stop_id
+          JOIN mdata.loads l ON l.id = ls.load_id
+         WHERE sa.operating_company_id = $1::uuid
+           AND l.operating_company_id = $1::uuid
+           AND l.customer_id = ANY($2::uuid[])
+           AND l.soft_deleted_at IS NULL
+           AND COALESCE(sa.confirmed_at, sa.triggered_at) >= now() - interval '30 days'
+           AND COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) IS NOT NULL
+      )
+      SELECT customer_id::text AS customer_id,
+             COUNT(*)::int::text AS total_count,
+             COUNT(*) FILTER (WHERE arrived_at > scheduled_at + interval '30 minutes')::int::text AS late_count
+        FROM completed
+       GROUP BY customer_id
+    `,
+    [operatingCompanyId, customerUuids]
+  )).rows) : null;
+
+  const complaints = hasQuality ? byCustomer((await client.query<{ customer_id: string; complaint_count: string }>(
+    `
+      SELECT q.customer_id::text AS customer_id,
+             COUNT(*) FILTER (
+               WHERE q.event_type <> 'commendation' AND q.voided_at IS NULL AND q.event_date >= current_date - interval '30 days'
+             )::int::text AS complaint_count
+        FROM mdata.customer_quality_events q
+        JOIN mdata.customers c ON c.id = q.customer_id AND c.operating_company_id = $1::uuid
+       WHERE q.customer_id = ANY($2::uuid[])
+       GROUP BY q.customer_id
+    `,
+    [operatingCompanyId, customerUuids]
+  )).rows) : null;
+
+  const now = new Date().toISOString();
+  return customerUuids.map((customer_uuid) => {
+    const l = loads.get(customer_uuid);
+    const inv = invoices.get(customer_uuid);
+    const a = arrivals?.get(customer_uuid);
+    const q = complaints?.get(customer_uuid);
+    const subscores: RelationshipScoreSubscores = {
+      engagement_subscore: hasLoads ? engagementFromCounts(Number(l?.loads_30d ?? 0), Number(l?.loads_90d ?? 0)) : null,
+      payment_behavior_subscore: hasInvoices ? paymentFromOpen(Number(inv?.weighted_days ?? 0), Number(inv?.open_cents ?? 0)) : null,
+      service_quality_subscore: arrivals ? serviceFromArrivals(Number(a?.total_count ?? 0), Number(a?.late_count ?? 0)) : null,
+      margin_trend_subscore: hasLoads
+        ? marginFromRevenue(Number(l?.revenue_30 ?? 0), Number(l?.miles_30 ?? 0), Number(l?.revenue_180 ?? 0), Number(l?.miles_180 ?? 0))
+        : null,
+      complaint_subscore: complaints ? complaintFromCount(Number(q?.complaint_count ?? 0)) : null,
+    };
+    const overall_health_score = computeWeightedOverallScore(subscores);
+    return {
+      customer_uuid,
+      operating_company_id: operatingCompanyId,
+      computed_at: now,
+      overall_health_score,
+      health_tier: tierFromOverallScore(overall_health_score),
+      ...subscores,
+    };
+  });
 }
 
 export async function upsertRelationshipScore(

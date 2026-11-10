@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relationship-scorer-batched", run(ctx) { ctx.run("node", ["scripts/verify-relationship-scorer-batched.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relationship-scorer-batched.mjs"]); } };

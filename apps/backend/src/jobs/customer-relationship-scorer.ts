@@ -13,12 +13,13 @@
  */
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
-import { computeRelationshipScore, upsertRelationshipScore } from "../customers/relationship-score/scorer.service.js";
+import { computeRelationshipScoresForCompany, upsertRelationshipScore } from "../customers/relationship-score/scorer.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "customers.relationship_score_worker";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const SCORE_CHUNK = 400;
 
 let timer: NodeJS.Timeout | undefined;
 
@@ -73,17 +74,18 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
   });
   if (!work) return { companies_processed: 0, customers_scored: 0 };
 
+  // ACCT-F11129 — one SHORT transaction per chunk of customers, scored by the company batch (five set-based reads per
+  // chunk) instead of seven-plus reads per customer. Measured 11-10: ~10 s a customer x 1,217 USMCA customers = hours,
+  // longer than the gap between deploys (the worker runs on boot), so no run ever reached its success record.
   for (const { companyId, customerIds } of work) {
-    for (const customerId of customerIds) {
+    for (let i = 0; i < customerIds.length; i += SCORE_CHUNK) {
+      const chunk = customerIds.slice(i, i + SCORE_CHUNK);
       await withLuciaBypass(async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-        const computed = await computeRelationshipScore(client, {
-          operating_company_id: companyId,
-          customer_uuid: customerId,
-        });
-        await upsertRelationshipScore(client, computed);
+        const scores = await computeRelationshipScoresForCompany(client, companyId, chunk);
+        for (const computed of scores) await upsertRelationshipScore(client, computed);
       });
-      customersScored += 1;
+      customersScored += chunk.length;
     }
     companiesProcessed += 1;
   }
