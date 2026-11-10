@@ -258,7 +258,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
           onRetry={() => void filingsQ.refetch()}
         />
       ) : (
-        <ParityTable<Filing>
+        <ParityTable<Filing> appearance="board"
           title="Form 2290 filings"
           columns={columns}
           rows={filings}

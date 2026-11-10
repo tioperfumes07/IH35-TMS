@@ -232,7 +232,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             </div>
 
             {/* Duty-segment ELD log (the day's timeline) */}
-            <ParityTable<HosSegment>
+            <ParityTable<HosSegment> appearance="board"
               title="ELD log — duty segments this day"
               titleInfo={
                 <InfoPopover label="About this ELD log">

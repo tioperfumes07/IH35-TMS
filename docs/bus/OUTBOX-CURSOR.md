@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~8:40 PM CT) — Compliance ParityTables appearance=board
+- **PRIOR:** #28830 Insurance ParityTables appearance=board.
+- **THIS:** Compliance Filings/HOS/Form2290/PropertyTax/RequiredDocuments appearance=board. Engines unchanged. R4–R6 Cascade.
+- **NEXT:** Maint/Safety board tables; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~8:30 PM CT) — Insurance ParityTables appearance=board
 - **PRIOR:** #28829 Legal ParityTables appearance=board.
 - **THIS:** Insurance Policies/PolicyDetail/Claims/CoverageGap/FleetCovered/PaymentSchedule/TypeCatalog appearance=board. Engines unchanged. R4–R6 Cascade.
@@ -7,6 +12,10 @@
 - **PRIOR:** #28824 Fuel+AVP appearance=board.
 - **THIS:** Legal module ParityTables appearance=board (matters/templates/contracts/alerts/policies/attorney). Engines unchanged. R4–R6 Cascade.
 - **NEXT:** Maint/Insurance/Compliance/Safety board tables; Cascade owns R*. No match/Dreamline.
+## OUTBOX (11-10-2026 ~8:10 PM CT) — Legal/Maint/Insurance/Compliance/Safety board tables
+- **PRIOR:** #28824 Fuel+AVP appearance=board.
+- **THIS:** 125 ParityTables across Legal/Maintenance/Insurance/Compliance/Safety gain appearance=board (board anti-clip grammar). Engines unchanged. R4–R6 Cascade.
+- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
 
 ## OUTBOX (11-10-2026 ~7:55 PM CT) — Fuel+AVP ParityTables appearance=board
 - **PRIOR:** #28823 Factoring residual appearance=board.
