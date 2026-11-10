@@ -1,4 +1,4 @@
-# Financial blocks — buildable-vs-design split (2026-11-03)
+# Financial blocks — buildable-vs-design split (2026-11-10)
 
 Classifies every FINANCIAL, NOT-done block (status PENDING / PENDING (GATED)) from its .block-ready source spec.
 
