@@ -229,7 +229,8 @@ const contactSchema = z.object({
   department: z.enum(["sales", "billing", "dispatch", "operations", "owner", "other"]),
   is_primary: z.boolean().optional(),
   notes: z.string().trim().max(2000).optional(),
-});
+  receives_truck_offers: z.boolean().optional(),
+}).refine((c) => !c.receives_truck_offers || Boolean(c.email), { message: "A contact that receives truck offers needs an email address" });
 
 const laneSchema = z.object({
   lane_label: z.string().trim().min(1).max(150),
@@ -354,6 +355,7 @@ function emptyContactForm() {
     department: "other",
     is_primary: false,
     notes: "",
+    receives_truck_offers: false,
   };
 }
 
@@ -1668,6 +1670,7 @@ export function CustomerDetailPage() {
                                   department: contact.department,
                                   is_primary: contact.is_primary,
                                   notes: contact.notes ?? "",
+                                  receives_truck_offers: contact.receives_truck_offers ?? false,
                                 });
                                 setContactModalOpen(true);
                               }}
@@ -2112,6 +2115,7 @@ export function CustomerDetailPage() {
                           department: contact.department,
                           is_primary: contact.is_primary,
                           notes: contact.notes ?? "",
+                          receives_truck_offers: contact.receives_truck_offers ?? false,
                         });
                         setContactModalOpen(true);
                       }}
@@ -2152,6 +2156,13 @@ export function CustomerDetailPage() {
                 sortable: true,
                 sortValue: (contact) => (contact.is_primary ? 1 : 0),
                 render: (contact) => (contact.is_primary ? "Yes" : "No"),
+              },
+              {
+                key: "receives_truck_offers",
+                label: "Truck offers",
+                sortable: true,
+                sortValue: (contact) => (contact.receives_truck_offers ? 1 : 0),
+                render: (contact) => (contact.receives_truck_offers ? "Receives" : "No"),
               },
               {
                 key: "status",
@@ -2699,6 +2710,14 @@ export function CustomerDetailPage() {
             <label className="flex items-center gap-2 text-xs text-gray-700">
               <input type="checkbox" checked={contactForm.is_primary} onChange={(event) => setContactForm((current) => ({ ...current, is_primary: event.target.checked }))} />
               Primary contact
+            </label>
+            <label className="flex items-center gap-2 text-xs text-gray-700" data-testid="contact-receives-truck-offers">
+              <input
+                type="checkbox"
+                checked={contactForm.receives_truck_offers}
+                onChange={(event) => setContactForm((current) => ({ ...current, receives_truck_offers: event.target.checked }))}
+              />
+              Receives truck offers (daily available-trucks email)
             </label>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Notes</label>
