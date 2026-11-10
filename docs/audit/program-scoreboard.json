@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1613c89",
-  "generated_at": "2026-11-10T18:24:54.419Z",
+  "healthzSha": "caf3ce1",
+  "generated_at": "2026-11-10T20:24:22.601Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1613c89",
+    "deployedSha": "caf3ce1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28793,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28793",
+      "sha": "caf3ce14d5",
+      "committedAtIso": "2026-11-10T12:26:08-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 12:24 PM CT",
+      "url": "",
+      "sha": "0e15126292",
+      "committedAtIso": "2026-11-10T18:24:54Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28789",
       "sha": "96c3f9dcde",
       "committedAtIso": "2026-11-10T01:02:32-06:00"
-    },
-    {
-      "number": 28788,
-      "title": "FIX: post a signed settlement exactly as signed — supersede open P-trips and wrong-numbered settlements (ACCT-F11141)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28788",
-      "sha": "da70e271e7",
-      "committedAtIso": "2026-11-10T00:56:12-06:00"
-    },
-    {
-      "number": 28787,
-      "title": "FIX: main red — step 11186 pinned literal data-testid; #28755 moved Factoring sections into BoardSection testId (LST-F11143)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28787",
-      "sha": "6598c35724",
-      "committedAtIso": "2026-11-10T00:54:00-06:00"
     }
   ]
 }
