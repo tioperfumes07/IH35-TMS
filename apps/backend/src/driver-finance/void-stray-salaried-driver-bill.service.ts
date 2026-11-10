@@ -1,5 +1,6 @@
 import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 import { releaseDriverPayAccrualInClientTx } from "./driver-pay-restate.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 /**
  * void-stray-salaried-driver-bill.service.ts — LEAD RULING 443.44 Ask B (CC-3, 2026-10-11).
  *
@@ -133,7 +134,7 @@ export async function voidStrayPracticalBasisDriverBill(
   if (bill.settled_in_settlement_id) throw new StraySalariedBillVoidRefusedError("bill was settled in a settlement — not a stray bill");
   if (bill.basis !== "practical") throw new StraySalariedBillVoidRefusedError("bill is not priced on practical miles — not this stray class");
   const lines = (await client.query<{ n: string }>(
-    `SELECT count(*)::text AS n FROM driver_finance.settlement_lines sl WHERE sl.source_driver_bill_id = $1::uuid AND sl.voided_at IS NULL AND sl.is_active`,
+    `SELECT count(*)::text AS n FROM driver_finance.settlement_lines sl WHERE sl.source_driver_bill_id = $1::uuid AND ${notVoided("sl")} AND sl.is_active`,
     [input.driverBillId],
   )).rows[0];
   if (Number(lines?.n ?? 0) > 0) throw new StraySalariedBillVoidRefusedError(`bill has ${lines?.n} live settlement line(s) — not a stray bill`);

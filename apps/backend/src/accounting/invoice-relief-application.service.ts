@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: the accounting.payment_applications row here is the SUBLEDGER record of a journal entry that is
+// already posted — applyInvoiceRelief refuses (invoice_relief_source_journal_entry_required /
+// invoice_relief_source_not_live_ar_credit) unless sourceJournalEntryId names a LIVE JE crediting ar_control, and the row
+// carries that JE id. Posting a second JE here would double the A/R credit.
 /**
  * Row 129 / ENG-50 (11-03, ACCT-F11070) — accounting.invoices.amount_paid_cents is DERIVED from its applications, with ONE writer.
  *

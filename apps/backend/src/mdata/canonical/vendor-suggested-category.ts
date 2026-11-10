@@ -45,7 +45,7 @@ export const VENDOR_SUGGESTED_CATEGORY_SQL = `
   per AS (
     SELECT e.vendor_uuid AS vendor_id, el.expense_account_uuid AS account_id, count(DISTINCT e.id)::int AS n
       FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
-      JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+      JOIN catalogs.accounts a ON a.id = el.expense_account_uuid AND a.operating_company_id = e.operating_company_id
      WHERE e.operating_company_id = $1::uuid AND ${liveExpense("e")} AND e.vendor_uuid IS NOT NULL
        AND ($2::uuid IS NULL OR e.vendor_uuid = $2::uuid)
        AND a.account_type IN ('Expense', 'CostOfGoodsSold') AND a.deactivated_at IS NULL
@@ -56,7 +56,7 @@ export const VENDOR_SUGGESTED_CATEGORY_SQL = `
          top.n AS expenses, tot.total AS total_expenses, v.default_expense_account_id::text AS saved_account_id
     FROM top
     JOIN tot ON tot.vendor_id = top.vendor_id
-    JOIN catalogs.accounts a ON a.id = top.account_id
+    JOIN catalogs.accounts a ON a.id = top.account_id AND a.operating_company_id = $1::uuid
     JOIN mdata.vendors v ON v.id = top.vendor_id AND v.operating_company_id = $1::uuid`;
 
 /** vendorId omitted = every vendor of the company (the board); given = that vendor (the profile). */

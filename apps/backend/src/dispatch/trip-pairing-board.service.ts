@@ -184,7 +184,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
               AND trip_pairing_load_driver_dca.deactivated_at IS NULL
           )
         )
-       LEFT JOIN mdata.customers c ON c.id = l.customer_id
+       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
        LEFT JOIN LATERAL (
          SELECT scheduled_arrival_at FROM mdata.load_stops
          WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL

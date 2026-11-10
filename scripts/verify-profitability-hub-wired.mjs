@@ -6,12 +6,18 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { expandWith, loadPredicates } from "./lib/expand-live-document-predicates.mjs";
+// sweepA (2026-11-10) — sources are read through the canonical predicate expander: a reader that spells the exclusion
+// with the shared helper (`${notVoided("x")}`, `${liveDriverBill("db")}`, …, required by
+// verify-live-document-predicates-single-source) is judged on the SQL the REAL helper emits. Deleting the helper call,
+// or a helper body that stops emitting the predicate, still fails this guard.
+const LIVE_PREDICATES = await loadPredicates();
 
 const LABEL = "verify-profitability-hub-wired";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+  return expandWith(LIVE_PREDICATES, fs.readFileSync(path.join(ROOT, rel), "utf8"));
 }
 
 export function verdict(files) {

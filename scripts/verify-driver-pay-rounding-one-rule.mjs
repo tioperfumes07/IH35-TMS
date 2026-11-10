@@ -67,6 +67,8 @@ if (process.argv.includes("--selftest")) {
     ["raw override product", scan([[BOOK, "    const overrideCents = Math.round(perLoadRateDollars * 100 * perLoadMiles);"]])],
     ["raw creator product", scan([[SEED, "      ? Math.round(load.line_haul_rate_cents * Number(load.loaded_miles))"]])],
     ["raw abandonment product", scan([["apps/backend/src/driver-finance/abandonment.service.ts", "      : Math.round(miles * deadheadRate);"]])],
+    // sweepA — the exact #28657 defect: a second rounding rule in the re-price engine.
+    ["raw reprice product (#28657)", scan([["apps/backend/src/driver-finance/driver-bill-reprice-to-settlement.service.ts", "  return Math.round(Number(miles) * Number(rateCents) + 1e-9);"]])],
     ["loaded leg unwired", wiring(book.replace("milesTimesRateCents(miles, perMile)", "Math.round(perMile * miles)"), seed)],
     ["creator unwired", wiring(book, seed.replace("milesTimesRateCents(Number(load.loaded_miles), load.line_haul_rate_cents)", "0"))],
   ];
