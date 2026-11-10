@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
@@ -10,12 +11,12 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
-const STATUS_FILTERS: Array<{ id: RoadServiceStatus | "all"; label: string }> = [
-  { id: "all", label: "All" },
-  { id: "open", label: "Open" },
-  { id: "completed", label: "Completed" },
-  { id: "invoiced", label: "Invoiced" },
-  { id: "paid", label: "Paid" },
+/** U12 — Status multi-selector (was mutually exclusive All/Open/… pills). */
+const STATUS_FILTER_OPTIONS: Array<{ value: RoadServiceStatus; label: string }> = [
+  { value: "open", label: "Open" },
+  { value: "completed", label: "Completed" },
+  { value: "invoiced", label: "Invoiced" },
+  { value: "paid", label: "Paid" },
 ];
 
 function money(cents: number | null | undefined) {
@@ -40,16 +41,27 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
   const { pushToast } = useToast();
   const [searchParams] = useSearchParams();
   const highlightedTicketId = searchParams.get("ticket_id")?.trim() || "";
-  const [statusFilter, setStatusFilter] = useState<RoadServiceStatus | "all">("all");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
+  // U12: multi-select status — API takes one status; 0 = all; 1 = pass through; 2+ fetch all then filter.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const staged = useStagedListFilters({
+    applied: { statusFilter },
+    empty: { statusFilter: [] as string[] },
+    onApply: (next) => setStatusFilter(next.statusFilter),
+  });
   // Search is ONLY ParityTable UniversalListToolbar (LV-ROAD-SERVICE-DUPLICATE-SEARCH).
   const [createOpen, setCreateOpen] = useState(false);
+  const apiStatus =
+    statusFilter.length === 1 ? (statusFilter[0] as RoadServiceStatus) : undefined;
   const { tickets, isLoading, createWo } = useRoadServiceTickets({
-    status: statusFilter === "all" ? undefined : statusFilter,
+    status: apiStatus,
   });
 
-  const rows = tickets;
-  const totalCost = useMemo(() => tickets.reduce((sum, row) => sum + Number(row.total_cost_cents ?? 0), 0), [tickets]);
+  const rows = useMemo(() => {
+    if (statusFilter.length <= 1) return tickets;
+    const selected = new Set(statusFilter);
+    return tickets.filter((row) => selected.has(row.status));
+  }, [tickets, statusFilter]);
+  const totalCost = useMemo(() => rows.reduce((sum, row) => sum + Number(row.total_cost_cents ?? 0), 0), [rows]);
 
   // Universal-list columns (spec 02 Road Service) — every record cell links to its detail per 00-MASTER-LINK-MAP.
   const columns: Array<ParityColumn<RoadServiceTicket>> = [
@@ -125,26 +137,19 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
     <div className="space-y-3 px-2" data-testid="road-service-list">
       <div className="flex flex-wrap items-center justify-between gap-2" data-road-service-filter-toolbar="collapsed">
         <CollapsedListFilters
-          activeFilterCount={statusFilter !== "all" ? 1 : 0}
+          activeFilterCount={statusFilter.length > 0 ? 1 : 0}
           onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="road-service"
         >
-          <div className="flex flex-wrap gap-2" data-testid="road-service-status-filter">
-            {STATUS_FILTERS.map((filter) => (
-              <button
-                key={filter.id}
-                type="button"
-                data-testid={`road-service-status-filter-${filter.id}`}
-                onClick={() => staged.setDraft({ statusFilter: filter.id })}
-                className={`rounded border px-2 py-1 text-xs font-medium ${
-                  statusFilter === filter.id
-                    ? "border-[#4B5563] bg-[#F7F8FA] text-[#0F1219]"
-                    : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+          <div className="min-w-[200px]" data-testid="road-service-status-filter">
+            <MultiSelectDropdown
+              label="Status"
+              options={STATUS_FILTER_OPTIONS}
+              selected={staged.draft.statusFilter}
+              onChange={(next) => staged.setDraft({ statusFilter: next })}
+              allLabel="All statuses"
+              data-testid="road-service-status-multiselect"
+            />
           </div>
         </CollapsedListFilters>
         <div className="flex items-center gap-2">

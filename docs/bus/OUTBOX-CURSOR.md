@@ -1,3 +1,13 @@
+## OUTBOX (11-10-2026 ~6:15 PM CT) — U12 DVIR Defects triage Status multi-select
+- **PRIOR:** #28810 U12 Road Service Status multi-select.
+- **THIS:** DefectsInboxPage Triage status SelectCombobox → MultiSelectDropdown (U12); default pending; API one-status when 0/1, client OR when 2+. Staged CollapsedListFilters preserved. R4–R6 Cascade.
+- **NEXT:** residual U12/U28; Cascade owns R*. No match/Dreamline.
+
+## OUTBOX (11-10-2026 ~6:05 PM CT) — U12 Road Service Status multi-select
+- **PRIOR:** #28809 U12 Truck Line Status multi-select.
+- **THIS:** RoadServiceList Status pills → MultiSelectDropdown (U12); API one-status when 0/1 selected, client OR filter when 2+; staged CollapsedListFilters preserved. R4–R6 Cascade.
+- **NEXT:** residual U12/U28 Cursor modules; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:55 PM CT) — U12 Truck Line Status multi-select
 - **PRIOR:** #28806 CF4 AVP money-axis 11px.
 - **THIS:** TruckLineBoard Status filter is MultiSelectDropdown (U12); empty = all trucks; OR across Rolling/Stopped/Signal stale/Appointment past/Available with counts from same legBuckets(); Clear resets. On-time station Combobox retained (D6). R4–R6 Cascade.
@@ -183,15 +193,5 @@
 - **PRIOR:** #28688 CatalogTable U12.
 - **THIS:** Users Role SelectCombobox → MultiSelectDropdown (URL role comma-joined; roleFilter.includes). Retarget verify-users-root-staged-filters.
 - **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
-
-## OUTBOX (11-09-2026 ~7:55 PM CT) — U12 CatalogTable status MultiSelect
-- **PRIOR:** #28616 Accounting lists U12 SURFACE-BREACH Cascade.
-- **THIS:** CatalogTable Active/Inactive SelectCombobox → MultiSelectDropdown (matchesStatus; showInactive synced, no double-filter). Retarget verify-catalog-table-duplicate-search. Covers GenericCatalog + States + DispatchFlagColors.
-- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~9:05 PM CT) — U12 Accounting lists MultiSelect (SURFACE-BREACH Cascade)
-- **PRIOR:** #28611 Maint Parts + OEM Parts U12.
-- **THIS:** SURFACE-BREACH-AUTHORIZED: Cascade archived — AccountingCatalog + DetailTypes + VoidCancel + OverrideReasons + PostingTemplates status → MultiSelectDropdown (apiStatus/matchesStatus). verify-filter-surfaces VoidCancel retarget.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
