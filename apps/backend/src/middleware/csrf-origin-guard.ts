@@ -59,6 +59,8 @@ export const CSRF_EXEMPT_PREFIXES: readonly string[] = [
   "/api/v1/webhooks/plaid",
   "/api/v1/banking/plaid/webhook",
   "/api/v1/dispatch/ocr-intake/webhook/email",
+  // Truck-offer unsubscribe (RFC 8058 one-click POST from mail clients) — authenticated by the HMAC token in ?t=
+  "/api/v1/public/capacity/unsubscribe",
 ];
 
 /** True if the raw Cookie header contains an `ih35_session=` entry. */

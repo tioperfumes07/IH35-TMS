@@ -27,6 +27,8 @@ const allowedKeys = new Set([
   // scheduled-report-file.eta has existed in templates/ since scheduled reports shipped,
   // but was never registered here, so assertAllowedTemplateKey threw on every delivery.
   "scheduled-report-file",
+  // Capacity engine: the daily available-trucks offer to flagged customer contacts (dispatch/capacity).
+  "capacity-offer",
 ]);
 
 export function assertAllowedTemplateKey(templateKey: string): string {

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Available trucks</title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #1f2937; font-size: 14px;">
+    <p>Hello<% if (it.contactName) { %> <%= it.contactName %><% } %>,</p>
+    <p><%= it.intro %></p>
+    <table cellpadding="6" cellspacing="0" style="border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="text-align: left; border-bottom: 1px solid #d1d5db;">
+          <th style="font-weight: 600;">Truck</th>
+          <th style="font-weight: 600;">Available in</th>
+          <th style="font-weight: 600;">Available</th>
+          <th style="font-weight: 600;">Equipment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const t of it.trucks) { %>
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td><%= t.unitNumber %></td>
+            <td><%= t.city %>, <%= t.state %></td>
+            <td><%= t.availableLabel %></td>
+            <td><%= t.equipment %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <p>Reply to this email with the load details (pickup, delivery, dates, rate) and our dispatch team will confirm with a rate confirmation.</p>
+    <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">
+      <%= it.companyLegalName %><% if (it.companyMc) { %> · MC <%= it.companyMc %><% } %><% if (it.companyDot) { %> · USDOT <%= it.companyDot %><% } %><br />
+      <%= it.companyAddress %><br />
+      You receive this because your company works lanes our trucks run.
+      <a href="<%= it.unsubscribeUrl %>" style="color: #6b7280;">Unsubscribe</a>
+    </p>
+  </body>
+</html>

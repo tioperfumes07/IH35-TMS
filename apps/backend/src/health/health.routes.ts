@@ -540,6 +540,15 @@ export function backgroundJobRule(
     case "drivers.document_alert_engine_cron":
       // "35 7 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
+    case "dispatch.capacity_offers_morning":
+      // "0 7 * * *" = every 1440m -> two missed periods (ticks and records even while the Send-truck-offers switch is off)
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "dispatch.capacity_offers_change":
+      // "30 12 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "dispatch.load_board_posting_sync":
+      // "*/15 * * * *" = every 15m -> two missed periods (no-op tick while no board has API credentials)
+      return { enabled: true, maxStaleMinutes: 30 };
     case "fuel.fraud_detector_worker":
       // ROUND 306 E-21: no 15m timer — runs from fuel-ingest hooks (Loves daily import + statement
       // upload). A 30m window false-alarmed every quiet day (live: 615m LATE while armed + healthy).
