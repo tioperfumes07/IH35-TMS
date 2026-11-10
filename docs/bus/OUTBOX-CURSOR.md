@@ -1,3 +1,13 @@
+## OUTBOX (11-09-2026 ~9:45 PM CT) — ShopBays floor SVG re-ship + Settlements board tables (all subtabs)
+- **PRIOR:** #28735 title claimed ShopBays SVG but tip lacked ShopBayFloorSvg; TruckProfile #28733 OK.
+- **THIS:** Re-ship ShopBayFloorSvg + InShopBoard mount; Settlements module ParityTables appearance=board across all subtabs; home chart 11px + money nowrap; CashFlow DailyPrediction labels 11px; anti-drift locks TruckProfile+ShopBays.
+- **NEXT:** Factoring/Fuel/Customers/Vendors/Legal/Reports/Maintenance-Home. No match/Dreamline.
+
+## OUTBOX (11-09-2026 ~9:35 PM CT) — Settlements module board tables + type-scale (all subtabs)
+- **PRIOR:** #28735 ShopBays floor SVG.
+- **THIS:** All Settlements / driver-finance ParityTables use appearance="board" (left body, board tokens) across home + Open/Closed/Pre/Escrow/CashAdvances/Deductions/Company/Close/Statement subtabs; Settlements home chart labels 10→11 (8.4a); deduction amounts nowrap; CashFlow DailyPrediction labels 10→11. Anti-drift law locks TruckProfile + ShopBays.
+- **NEXT:** Factoring/Fuel/Customers/Vendors/Legal/Reports/Maintenance-Home board-identical continuation. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:05 PM CT) — TruckProfile board-identical rebuild (990×520 SVG + live chips)
 - **PRIOR:** #28730 permanent complete-design law + Codex batch-1 locks.
 - **THIS:** TruckServiceMap rebuilt to TruckProfile.dc.html — board SVG viewBox 0 0 990 520, Barlow header chips (Odometer/Now/Driver/Load) wired to live Samsara/position/driver/load, numbered system cards from PM/WO/fault/compliance. No board sample tread/miles.

@@ -316,7 +316,8 @@ export function SettlementsCashAdvancesBoard() {
                 {S443326.cashAdvances.requestsLoadFailed}
               </p>
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
+           
                 title={S443326.cashAdvances.sectionRequests}
                 storageKey="settlements-cash-advances-requests-v3"
                 columns={requestColumns}
@@ -348,7 +349,8 @@ export function SettlementsCashAdvancesBoard() {
                 onRetry={() => void listQuery.refetch()}
               />
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
+           
                 title={S443326.cashAdvances.sectionAdvances}
                 storageKey="settlements-cash-advances-roster-v3"
                 columns={advanceColumns}

@@ -169,7 +169,8 @@ export function EarningsSection({ lines, isOpen: _isOpen, operatingCompanyId }: 
       subtitle="one line per load · from the driver bill · edit the bill, not the line"
       testId="settlement-earnings-board"
     >
-      <ParityTable
+      <ParityTable appearance="board"
+           
         columns={COLUMNS}
         rows={lines}
         rowKey={(line) => line.id}

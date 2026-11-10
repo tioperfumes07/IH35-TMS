@@ -394,7 +394,8 @@ export function CompanySettlementsPage() {
           }}
           testId="company-settlements-board-section"
         >
-          <ParityTable
+          <ParityTable appearance="board"
+           
             columns={columns}
             rows={tourRows}
             rowKey={(r) => companySettlementsBoardRowKey(r)}

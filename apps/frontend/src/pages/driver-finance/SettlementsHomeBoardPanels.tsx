@@ -204,7 +204,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                           }
                         }}
                       />
-                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
+                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 11, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
                         {w.label}
                       </text>
                     </g>
@@ -272,7 +272,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   >
                     <span>{row.label}</span>
                     <span style={{ textAlign: "center", color: has ? V3.ink : V3.muted }}>{has ? bucket.drivers.size : "—"}</span>
-                    <span style={{ textAlign: "right", color: has ? V3.ink : V3.muted }}>
+                    <span style={{ textAlign: "right", color: has ? V3.ink : V3.muted, whiteSpace: "nowrap" }}>
                       {has ? formatSettlementsUsd(bucket.amount) : "—"}
                     </span>
                   </div>

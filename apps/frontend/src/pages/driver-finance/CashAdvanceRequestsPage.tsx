@@ -403,7 +403,7 @@ export function CashAdvanceRequestsPage() {
       ) : (
         // ACCT-F3532 + 443.280 — ParityTable in shared BoardSection (no PageHeader / NavyPageSubNav).
         <BoardSection title="Cash advance requests — pending" testId="cash-advance-requests-board-section">
-          <ParityTable<CashAdvanceRequestRow>
+          <ParityTable<CashAdvanceRequestRow> appearance="board"
             columns={columns}
             rows={sorted}
             rowKey={(row) => String(row.id ?? "")}
