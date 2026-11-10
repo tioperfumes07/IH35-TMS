@@ -45,6 +45,14 @@ export function missingRenderBlocks(home) {
   );
 }
 
+// LST-F11143: #28755 (ROUND 8.5a) moved these sections into <BoardSection testId="factoring-...">.
+// BoardSection renders that prop as data-testid on its <section> (components/v3/BoardSection.tsx), so the
+// rendered DOM carries the same id; accept either spelling. Not looser: a tab with neither still fails.
+export function hasRealTestId(home, tab) {
+  const dashedTab = tab.replace(/_/g, "-");
+  return new RegExp(`(?:data-testid|testId)="factoring-${dashedTab}[^"]*"`).test(home);
+}
+
 function selftest() {
   const home = readFileSync(FACTORING_HOME, "utf8");
   const clean = missingRenderBlocks(home);
@@ -52,7 +60,12 @@ function selftest() {
   const planted = SIX_TABS.map((tab) => [tab, home.replace(`{show("${tab}") ? (`, `{false ? (`)]);
   const escaped = planted.filter(([tab, src]) => !missingRenderBlocks(src).some((f) => f.includes(`"${tab}"`)));
   if (escaped.length) throw new Error(`selftest: removed render block not caught for ${escaped.map(([t]) => t).join(", ")}`);
-  console.log(`selftest OK — ${planted.length}/${planted.length} removed render blocks caught; real page passes`);
+  const missingIds = SIX_TABS.filter((tab) => !hasRealTestId(home, tab));
+  if (missingIds.length) throw new Error(`selftest: real FactoringHome.tsx missing testid for ${missingIds.join(", ")}`);
+  const strip = (src, tab) => src.replace(new RegExp(`(?:data-testid|testId)="factoring-${tab.replace(/_/g, "-")}[^"]*"`, "g"), 'data-testid="x"');
+  const idEscaped = SIX_TABS.filter((tab) => hasRealTestId(strip(home, tab), tab));
+  if (idEscaped.length) throw new Error(`selftest: removed testid not caught for ${idEscaped.join(", ")}`);
+  console.log(`selftest OK — ${planted.length}/${planted.length} removed render blocks caught; ${SIX_TABS.length}/${SIX_TABS.length} removed testids caught; real page passes`);
 }
 
 function main() {
@@ -80,8 +93,7 @@ function main() {
     }
     // Check for a real data-testid for this tab.
     const dashedTab = tab.replace(/_/g, "-");
-    const realTestIdRegex = new RegExp(`data-testid="factoring-${dashedTab}[^"]*"`);
-    if (!realTestIdRegex.test(factoringHome)) {
+    if (!hasRealTestId(factoringHome, tab)) {
       failures.push(`FactoringHome.tsx missing real data-testid for tab "${tab}" (expected pattern factoring-${dashedTab})`);
     }
   }
