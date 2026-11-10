@@ -4,7 +4,8 @@
  * 'fuel_event' posting and posted the SAME receipt again. Now: the match finds the receipt's live posting (any writer) and
  * posts 0; the database refuses a second live posting batch for the receipt (fuel_receipt_already_posted); a reversal frees
  * the receipt so a correction can post. On the old code the bank match returns "posted" (a second entry) — this test
- * fails there at the "already_posted" assertion.
+ * fails there at the "already_posted" assertion. ACCT-F11107: the document's own void reversal is never refused as a second
+ * posting (old trigger: 23505 fuel_receipt_already_posted).
  *
  * Fixtures are committed under an isolated company — never the shared company, never production.
  */
@@ -17,7 +18,7 @@ import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { postFuelFillOnBankMatch } from "../../bank-recon/bank-match-fuel-post.service.js";
 import { findPostedFuelReceipt } from "../poster.service.js";
 import { createExpenseFromFuelTransaction } from "../../../fuel/fuel-expense-document.service.js";
-import { postSourceTransactionInClientTx } from "../../posting-engine.service.js";
+import { postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "../../posting-engine.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -133,6 +134,20 @@ describeIntegration("one fuel receipt identity (443.121 #1, real Postgres)", () 
       await db.query("ROLLBACK");
       expect(refused?.code).toBe("23505");
       expect(refused?.message ?? "").toMatch(/fuel_receipt_already_posted/);
+
+      // ---- ACCT-F11107: the document's OWN void reversal (posting engine, source 'expense', key '…:reversal') is not refused
+      // as a second posting of the receipt; it releases the receipt. On 202615850910 alone this throws 23505
+      // fuel_receipt_already_posted (prod 2026-11-10: POST /api/v1/expenses/:id/void on expense 13586-1 -> 500).
+      await scope();
+      const ownReversal = await reversePostedSourceTransactionInClientTx(
+        db as never,
+        { operating_company_id: opco, source_transaction_type: "expense", source_transaction_id: expenseId },
+        { userId: TEST_OWNER_USER_ID },
+        new Date().toISOString().slice(0, 10),
+      );
+      expect(ownReversal.journal_entry_id).toBeTruthy();
+      expect(await findPostedFuelReceipt(db as never, opco, "expense", expenseId)).toBeNull();
+      await db.query("ROLLBACK");
 
       // ---- a reversal frees the receipt: a correction may post again --------------------------------------------
       await scope();
