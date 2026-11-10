@@ -189,6 +189,7 @@ const HUB_DESIGN_LABELS = [
       "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
       "apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx",
       "apps/frontend/src/pages/maintenance/components/RMStatStrip.tsx",
+      "apps/frontend/src/pages/maintenance/components/InShopBoard.tsx",
     ],
     labels: [
       "PM due soon",
@@ -196,6 +197,22 @@ const HUB_DESIGN_LABELS = [
       "Parts low-stock",
       "MTD cost",
       "Fleet health line — road to the next PM",
+      "MAINTENANCE · SHOP FLOOR",
+      "Check a truck in",
+      "YARD LANE · NEXT IN, BY PM URGENCY",
+      "OPEN BAY",
+      "OVERHEAD DOOR",
+    ],
+  },
+  {
+    route: "/maintenance/fleet-table",
+    files: ["apps/frontend/src/pages/maintenance/components/InShopBoard.tsx"],
+    labels: [
+      "MAINTENANCE · SHOP FLOOR",
+      "Check a truck in",
+      "YARD LANE · NEXT IN, BY PM URGENCY",
+      "OPEN BAY",
+      "OVERHEAD DOOR",
     ],
   },
   {
