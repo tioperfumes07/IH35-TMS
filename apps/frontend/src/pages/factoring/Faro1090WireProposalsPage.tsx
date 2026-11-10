@@ -240,7 +240,7 @@ export function Faro1090WireProposalsPage() {
               data-testid="faro-1090-class-filter"
             />
           </div>
-          <ParityTable
+          <ParityTable appearance="board"
             title="1090 wire proposals"
             rows={rows}
             columns={columns}

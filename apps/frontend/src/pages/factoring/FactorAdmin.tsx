@@ -428,7 +428,7 @@ export function FactorAdmin() {
           onRetry={() => void factorsQuery.refetch()}
         />
       ) : (
-        <ParityTable<Factor>
+        <ParityTable<Factor> appearance="board"
           title="Factoring companies"
           columns={FACTOR_COLUMNS}
           rows={factorRows}
@@ -547,7 +547,7 @@ export function FactorAdmin() {
                       onRetry={() => void customerFactorDetailQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable<CustomerFactorAssignment>
+                    <ParityTable<CustomerFactorAssignment> appearance="board"
                       title={`Factor assignment history${selectedCustomer ? ` — ${selectedCustomer.name}` : ""}`}
                       columns={ASSIGNMENT_COLUMNS}
                       rows={assignmentRows}
@@ -569,7 +569,7 @@ export function FactorAdmin() {
                       onRetry={() => void customerFactorDetailQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable<FactorBatchHistoryRow>
+                    <ParityTable<FactorBatchHistoryRow> appearance="board"
                       title="Factoring batches — selected customers"
                       columns={BATCH_COLUMNS}
                       rows={batchRows}
