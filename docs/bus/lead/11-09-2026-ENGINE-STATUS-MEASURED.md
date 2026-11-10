@@ -62,6 +62,26 @@ Live `GET https://api.ih35dispatch.com/api/v1/healthz` (11-10 02:28Z, sha `fe88c
 | `customers.relationship_score_worker` | last success 10-25 15:12Z; USMCA rescored 11-09 (862) / 11-10 (355) with no success record | ACCT-F11123 #28683 `f7642ab6` — the worker looped all 3 entities | MERGED — proof = a success after the deploy |
 | `fuel.relay_fill_records` | never succeeded; 16 refusals named every 06:00 CT run | none — 13 of 16 are the ACCT-F11107 fuel pairs (Relay-rail record voided by #28661 as a second record of the purchase; the fill document is still live). 3 refused by name: txn_EE9rkFekb8YWD4 $686.35 no truck · txn_2gAW9V27xqzpYB $232.12 no driver · txn_8LZfDKWFvFv1oD $40.89 two DEF lines | OPEN — F11107 lane |
 
+### 1b · Re-measure — 11-10 04:15Z (11-09 10:15 PM CT), prod `_system.background_jobs`
+
+145 engines. Last run failed: 3. No success in 48h: 39 (32 QBO, OFF by owner ruling 11-09 8:25 PM CT, excluded). Outside QBO, 7 engines have a failed last run or no success in 48h:
+
+| Engine | Last success (UTC) | Last fail (UTC) / error | Verdict | Action |
+|---|---|---|---|---|
+| `fuel.relay_fill_records` | never | 11-09 12:00 — `relay_fill_records_refused (16)`: 13 `fuel_tx_source_row_hash_uk` duplicate keys + 3 named | FAILING — fixed in this PR (ACCT-F11107) | idempotent skip of the 13; 3 named see below |
+| `customers.relationship_score_worker` | 10-25 15:12 | 10-08 19:17 `read ECONNABORTED` (last fail precedes last success) | STALE, not failing — fixed by ACCT-F11123 #28683 (USMCA only) | proof = a success after deploy |
+| `safety.da_random_pool.quarterly_draw` | 08-16 20:26 | 10-01 12:00 `inconsistent types deduced for parameter $1` | FAILING — fixed by ACCT-F11120 #28677; quarterly | OWNER: enroll active drivers, run the Q4 draw |
+| `compliance.csa_basic_pull_cron` | 06-30 10:30 | 08-16 10:30 `public_csa_basic_source_unavailable` (2 of 2 companies) | opt-in OFF (`ENABLE_CSA_BASIC_PULL_CRON`); FMCSA public source unavailable, not a code defect | none |
+| `accounting.depreciation_autopost` | 11-01 12:15 | 11-01 12:15:04 `permission denied for table depreciation_autopost_runs`, success 5 s later | monthly, on schedule (next 12-01) | none |
+| `insurance.monthly_report_by_5th` | 11-05 13:00 | 09-05 12:00 (fail precedes success) | monthly, on schedule | none |
+| `driver_finance.settlement_auto_pay_cron` | 11-06 12:00 | never | weekly (Fri), on schedule (next 11-13) | none |
+
+`fuel.relay_fill_records` root cause (measured): the 13 fills are the ACCT-F11107 pairs. Each has a live Relay fill document (`accounting.expenses`, `source_fuel_transaction_id IS NULL`) and a VOIDED Relay-rail `fuel.fuel_transactions` row (voided by #28661 as a second record of a purchase another rail records). The worker's list (`listRelayFillDocumentsWithoutRecords`) looked only for LIVE records, so it re-tried the write every run; the insert collided with the voided row's `source_row_hash` `relay-line:<company>:<line id>` (`fuel_tx_source_row_hash_uk`). Fix: the list leaves out a fill whose line hash is already taken, a 23505 on that index is outcome `already_recorded` (done), and a fill refused by name (audited `fuel.relay_fill_record_refused`) is logged with its reason and no longer fails the run; only an unexplained non-link throws. Guard `verify-relay-fill-records-idempotent` (step 20065), test `fuel/__tests__/relay-fill-records-idempotent.test.ts`.
+
+The 3 named fills, measured against prod 11-10 04:15Z with the fixed list query (13 voided-duplicate fills drop out, these 3 remain): txn_EE9rkFekb8YWD4 — document has no truck/driver, Relay matched both (`matched_unit_id`, `matched_driver_id` set); txn_2gAW9V27xqzpYB — document has a truck, Relay matched the driver; txn_8LZfDKWFvFv1oD — two DEF lines. All three are handled by the existing rules already on main (ACCT-F11125: provider match for truck and driver; DEF lines at the same unit price merge to one row). They post on the next 06:00 CT run; if one still refuses, it is audited by name and the run stays green.
+
+Before → after (`fuel.relay_fill_records`): never succeeded, 16 refusals per run → 3 candidates per run (13 skipped as already recorded); first success recorded on the first run after deploy (expected 11-10 06:00 CT, 12:00Z) — re-measure then.
+
 ## 2 · Engines fixed today (claude lane)
 
 - ACCT-F11120 #28677 `3a3f7e8b` — FMCSA random draw, `$1` one type. Guard `verify-insert-select-param-types` (step 19993).
