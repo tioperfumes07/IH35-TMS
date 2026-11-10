@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Truck } from "lucide-react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { PlannerSideTruckGlyph } from "./PlannerSideTruckGlyph";
 
 /** LEAD 443.244: a truck is IN USE by the load in motion (an advance booking is its next load, not a use). */
 const IN_MOTION_LOAD_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
@@ -60,7 +60,7 @@ export function TruckPlanner() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days, setRange } = usePlannerRange();
+  const { range, days, setRange, entityFilters } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const gridQuery = useQuery({
@@ -203,6 +203,18 @@ export function TruckPlanner() {
   const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError || loadsQuery.isError;
   const firstError = gridQuery.error ?? unitsQuery.error ?? reservedQuery.error ?? loadsQuery.error;
 
+  const filteredTruckRows = useMemo(() => {
+    return truckRows.filter((row) => {
+      if (entityFilters.driverId && row.driverId !== entityFilters.driverId) return false;
+      if (!entityFilters.status) return true;
+      if (entityFilters.status === "in-use") return row.status === "assigned";
+      if (entityFilters.status === "available") return row.status === "available";
+      if (entityFilters.status === "reserved") return row.status === "reserved-hold";
+      if (entityFilters.status === "in-shop") return row.status === "in-shop";
+      return true;
+    });
+  }, [truckRows, entityFilters]);
+
   const loadBarsByUnit = useMemo(() => {
     const loads = loadsQuery.data ?? [];
     const byId = new Map(loads.map((load) => [load.id, load]));
@@ -255,7 +267,7 @@ export function TruckPlanner() {
 
       {!isLoading && !isError && viewMode === "list" ? (
         (() => {
-          const listRows: TruckListRow[] = truckRows.map((row) => {
+          const listRows: TruckListRow[] = filteredTruckRows.map((row) => {
             const bars = loadBarsByUnit.get(row.unitId) ?? [];
             const statusLabel =
               row.status === "assigned" ? "In Use" :
@@ -314,14 +326,14 @@ export function TruckPlanner() {
           statusLabel="Status"
           actionLabel="Action"
           onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
-          rows={truckRows
+          rows={filteredTruckRows
             .filter((row) => row.status !== "in-shop")
             .map((row) => {
               const status = row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved";
               return {
               id: row.unitId,
               idle: row.status === "available",
-              name: <span className="flex min-w-0 items-center gap-1"><Truck className="h-5 w-8 shrink-0 text-gray-600" aria-hidden="true" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
+              name: <span className="flex min-w-0 items-center gap-1.5"><PlannerSideTruckGlyph className="shrink-0" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
               // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
               sortKey: row.unitNumber,
               statusSortKey: status,
@@ -337,7 +349,7 @@ export function TruckPlanner() {
               };
             })}
           empty={
-            truckRows.length === 0 ? (
+            filteredTruckRows.length === 0 ? (
             <span data-testid="dispatch-truck-planner-honest-empty">
               No units for this company in the planner range. Units leased/owned under Fleet appear here once listUnits
               / scheduler grid return rows for the active entity.
@@ -346,7 +358,7 @@ export function TruckPlanner() {
           }
         />
       ) : null}
-      {!isLoading && !isError && viewMode === "grid" && truckRows.some((row) => row.status === "in-shop") ? (
+      {!isLoading && !isError && viewMode === "grid" && filteredTruckRows.some((row) => row.status === "in-shop") ? (
         <div className="mt-3">
           <PlannerGrid
             days={days}
@@ -355,7 +367,7 @@ export function TruckPlanner() {
             frozenPx={320}
             statusLabel="Status"
             actionLabel="Action"
-            rows={truckRows
+            rows={filteredTruckRows
               .filter((row) => row.status === "in-shop")
               .map((row) => ({
                 id: `shop-${row.unitId}`,

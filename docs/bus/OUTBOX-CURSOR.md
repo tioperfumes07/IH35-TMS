@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:15 PM CT) — D3/D4 TruckPlanner entity filters + Driver header + side truck
+- **PRIOR:** #28796 D1/D2 Book Load A–E rail + side-by-side charges.
+- **THIS:** D3 Filters popover Status · Driver · Unit · Customer heading + Status select + Driver EntityPicker; entityFilters in PlannerRangeContext filter TruckPlanner rows. D4 PlannerGrid separate Driver columnheader (no Unit span); board PlannerSideTruckGlyph replaces lucide outline. Status/Action preserved additive.
+- **NEXT:** R4–R6 / residual boards. No match/Dreamline. Not chrome-only.
+
 ## OUTBOX (11-10-2026 ~4:05 PM CT) — D1/D2 Book Load A–E rail + side-by-side charges
 - **PRIOR:** #28769 DP1–DP4 Driver Profile board engines.
 - **THIS:** D1 center Book Load sticky A–E section rail (jump to section anchors; side panel unchanged). D2 four charge amounts side-by-side grid (Linehaul/Fuel/Accessorial/Total) with live MoneyInput + engine totals; AccessorialEditor/extras stay additive. R2 Trial Balance left for Cascade surface. Guards: verify-book-load-money-and-controls (+selftest).
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~8:25 PM CT) — U12 QBO Sync Status MultiSelect
 - **PRIOR:** #28600 Driver/Teams/Brokers U12.
 - **THIS:** QBOSyncStatusDashboardPage status SelectCombobox → MultiSelectDropdown (0/1 API, 2+ client filter). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:15 PM CT) — U12 Driver catalog + Teams + Brokers MultiSelect
-- **PRIOR:** #28599 balanced-ledger 19885 + CLOSE-ALL sync.
-- **THIS:** DriverCatalogListPage + DriverTeamsPage + BrokersListPage status → MultiSelectDropdown (apiStatus/apiIsActive). Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

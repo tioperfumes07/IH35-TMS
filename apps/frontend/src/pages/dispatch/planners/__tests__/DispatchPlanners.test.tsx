@@ -7,11 +7,19 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as driverSchedulerApi from "../../../../api/driver-scheduler";
 import * as dispatchApi from "../../../../api/dispatch";
+import { ToastProvider } from "../../../../components/Toast";
 import { DispatchPlannersLayout } from "../DispatchPlannersLayout";
 import { DriverPlanner } from "../DriverPlanner";
 
 vi.mock("../../../../contexts/CompanyContext", () => ({
-  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+  useCompanyContext: () => ({
+    selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    operatingCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+  }),
+}));
+
+vi.mock("../../../../components/EntityPicker", () => ({
+  EntityPicker: () => <div data-testid="planner-filter-driver-mock">All drivers</div>,
 }));
 
 const gridPayload: driverSchedulerApi.FleetScheduleResponse = {
@@ -28,7 +36,9 @@ function wrap(ui: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/dispatch/planners/driver"]}>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/dispatch/planners/driver"]}>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -62,6 +72,9 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     await userEvent.click(screen.getByTestId("planner-filters-toggle"));
     expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
     expect(screen.getByTestId("planner-show-days")).toBeTruthy();
+    // D3 — board entity filters (Status · Driver) inside the Filters popover.
+    expect(screen.getByTestId("planner-entity-filters")).toBeTruthy();
+    expect(screen.getByTestId("planner-filter-status")).toBeTruthy();
     expect(screen.getByTestId("planner-filter-chips")).toBeTruthy();
     expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
   });
