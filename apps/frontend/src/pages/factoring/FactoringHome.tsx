@@ -338,7 +338,7 @@ export function filterPurchaseReportByDebtors(
   return lines.filter((l) => l.customer_id && want.has(l.customer_id));
 }
 
-export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHomeProps = {}) {
+export function FactoringHomePage({ initialTab = "account_summary" }: FactoringHomeProps = {}) {
   const location = useLocation();
   const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
   const { user } = useAuth();
@@ -347,8 +347,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const companyId = selectedCompanyId ?? "";
   const [tab, setTab] = useState<FactoringTabId>(initialTab);
   useEffect(() => {
-    setTab(factoringTabFromPath(location.pathname) as FactoringTabId);
-  }, [location.pathname]);
+    // An embedded board has no factoring URL to resolve. Keep its requested section;
+    // real factoring routes still select their canonical section, including submit-invoice.
+    const isFactoringRoute = location.pathname === "/factoring" || location.pathname.startsWith("/factoring/");
+    setTab(isFactoringRoute ? factoringTabFromPath(location.pathname) as FactoringTabId : initialTab);
+  }, [location.pathname, initialTab]);
   // ROUND 435 — the ten Faro tabs. `tab` is the SECTION the URL names; `activeFaroTab` is the one tab that shows it.
   // An absorbed section's own URL (e.g. /factoring/funds-due) redirects to its parent tab with ?section=<id>, so the
   // strip highlights the right tab and the section is scrolled into view. A non-Faro tool (parent null) renders alone.
@@ -1589,7 +1592,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ) : null}
               <div data-testid="factoring-account-summary">
               {summaryQuery.isError ? (
-                <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+                <p role="status">Account summary unavailable. Use the summary refresh above to retry.</p>
               ) : (
                 <BoardSection
                   title="Account Summary"
@@ -1815,7 +1818,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {show("messages_support") ? (
         <BoardSection title="Messages & Support" testId="factoring-messages-support">
           {summaryQuery.isError ? (
-            <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+            <p role="status">Factor contact information unavailable. Use the summary refresh above to retry.</p>
           ) : null}
           {summaryQuery.isLoading ? (
             <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
@@ -1833,8 +1836,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               return (
                 <div className="space-y-3" data-testid="factoring-messages-support-content">
                   <div className="bg-gray-50 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Factor Company</div>
-                    <div className="text-xs font-medium text-gray-900">{factor.name}</div>
+                    <div className="text-xs font-medium text-gray-900">Factor Company: {factor.name}</div>
                     {factor.noa_remit_to_name ? (
                       <div className="mt-1 text-xs text-gray-700">Remit To: {factor.noa_remit_to_name}</div>
                     ) : null}
@@ -1868,6 +1870,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           (escrow/cash from purchases + reserve ledger + CCG loans + categorize/transfer/apply). */}
       {show("reserve") && companyId ? (
         <div data-testid="factoring-reserve-report">
+          <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
           <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
       ) : null}
