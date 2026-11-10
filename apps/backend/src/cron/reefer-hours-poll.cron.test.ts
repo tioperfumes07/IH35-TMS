@@ -54,7 +54,7 @@ describe("maintenance.reefer_hours_poll_cron", () => {
   });
 
   it("ingests reefer hours with tenant context for enabled Samsara tenants", async () => {
-    const TENANT = "11111111-1111-1111-1111-111111111111";
+    const TENANT = "5c854333-6ea5-4faa-af31-67cb272fef80";
     clientQueryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
       if (sql.includes("FROM org.companies")) return { rows: [{ operating_company_id: TENANT }] };

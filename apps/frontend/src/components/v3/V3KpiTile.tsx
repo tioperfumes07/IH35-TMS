@@ -59,6 +59,10 @@ export function V3KpiTile({
     alignItems: "flex-end",
     gap: 8,
     minWidth: 0,
+    // OWNER DESIGN LAW rule 6 / ROUND 8.4 — KPI tiles are 78px across, never bars down.
+    minHeight: V3_KPI.heightPx,
+    height: V3_KPI.heightPx,
+    boxSizing: "border-box",
     textAlign: "left",
     width: "100%",
     cursor: onClick || href ? "pointer" : undefined,

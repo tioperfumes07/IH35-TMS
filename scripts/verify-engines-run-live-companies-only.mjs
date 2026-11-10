@@ -12,7 +12,8 @@
 // RULE 2 — the REQUIRED engines filter their company loop through it.
 // RULE 3 — every other scheduled engine that lists active org.companies must filter through it (or the earlier
 //          isUsmcaOperatingCompany rule) unless it is in PINNED (non-money engines, 11-10, shrink-only: a pinned file
-//          that now complies or disappears must be removed).
+//          that now complies or disappears must be removed). ACCT-F11124 (11-10): 36 → 0 — every engine is on the list;
+//          each loop over active companies is filtered within its own statement window, not just imported.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -30,44 +31,7 @@ export const REQUIRED = {
   "jobs/customer-relationship-scorer.ts": /for \(const company of companies\.rows\.filter\(\(c\) => isLiveEngineCompany\(c\.id\)\)\)/,
 };
 
-export const PINNED = new Set([
-  "compliance/compliance-reminder.job.ts",
-  "compliance/csa-basic-pull.ts",
-  "cron/draft-crew-status-selfheal.cron.ts",
-  "cron/driver-leave-balance-rollover.cron.ts",
-  "cron/event-spine-heartbeat.cron.ts",
-  "cron/geofence-breach-detector.cron.ts",
-  "cron/qbo-token-refresh.ts",
-  "cron/reefer-hours-poll.cron.ts",
-  "cron/samsara-health-cron.ts",
-  "cron/samsara-remote-count-collector.cron.ts",
-  "cron/samsara-webhook-projection.cron.ts",
-  "drivers/document-alerts.cron.ts",
-  "factoring/packet-assemble.service.ts",
-  "integrations/samsara/fault-poll.cron.ts",
-  "integrations/samsara/fuel-purchase-push.cron.ts",
-  "jobs/active-driver-set-recompute.ts",
-  "jobs/booking-gap-aggregator-worker.ts",
-  "jobs/cap-12-tire-tread-worker.ts",
-  "jobs/cap-13-brake-wear-worker.ts",
-  "jobs/cap-14-cargo-sensor-worker.ts",
-  "jobs/da-random-pool-draw-worker.ts",
-  "jobs/driver-active-30d-worker.ts",
-  "jobs/driver-retention-scorer-worker.ts",
-  "jobs/driver-scoring-aggregator-worker.ts",
-  "jobs/layover-detector-worker.ts",
-  "jobs/predictive-alerts-worker.ts",
-  "jobs/todays-attention-worker.ts",
-  "jobs/vehicle-driver-pairing-worker.ts",
-  "qbo-sync/sync-scheduler.ts",
-  "reports/deadhead-refresh.job.ts",
-  "reports/lane-profitability-refresh.job.ts",
-  "safety/harsh-events-poll.cron.ts",
-  "safety/samsara-dvir-poll.cron.ts",
-  "tasks/task-alarm.job.ts",
-  "telematics/load-real-driven-miles.cron.ts",
-  "telematics/odometer-snapshot.cron.ts",
-]);
+export const PINNED = new Set([]);
 
 const ENGINE = /wrapBackgroundJobTick|cron\.schedule|setInterval|withJobLease/;
 const LISTS_ACTIVE_COMPANIES = /FROM\s+org\.companies[\s\S]{0,300}?is_active/;
@@ -92,7 +56,16 @@ export function audit(files) {
       if (PINNED.has(rel)) out.push(`RULE 3: ${rel} is pinned but no longer loops active companies — remove the pin (shrink-only)`);
       continue;
     }
-    const filtered = /live-engine-companies/.test(code) || /isUsmcaOperatingCompany/.test(code);
+    // Every active-companies query must be filtered in the window that follows it (its own loop / return).
+    const body = code.replace(/import[^;]*?from\s*["'][^"']*live-engine-companies[^"']*["'];?/g, (x) => " ".repeat(x.length));
+    const re = new RegExp(LISTS_ACTIVE_COMPANIES.source, "g");
+    let filtered = true;
+    for (let m; (m = re.exec(body)); ) {
+      const sqlEnd = body.indexOf("`", m.index);
+      if (/LIMIT\s+1\b/.test(body.slice(m.index, sqlEnd < 0 ? m.index + 400 : sqlEnd))) continue; // one named company, not a loop
+      const win = body.slice(Math.max(0, m.index - 300), m.index + 2500);
+      if (!/filterLiveEngineCompan|isLiveEngineCompany|isUsmcaOperatingCompany/.test(win)) filtered = false;
+    }
     if (filtered && PINNED.has(rel)) out.push(`RULE 3: ${rel} now runs live entities only — remove it from PINNED (shrink-only)`);
     if (!filtered && !PINNED.has(rel)) out.push(`RULE 3: ${rel} is a scheduled engine looping every active org.companies row (frozen entities included) — filter through lib/live-engine-companies.ts`);
   }
@@ -137,8 +110,9 @@ if (process.argv.includes("--selftest")) {
     ["late fee loop unfiltered", plant("insurance/late-fee.service.ts", "for (const company of companies.rows.filter((c) => isLiveEngineCompany(c.id))) {", "for (const company of companies.rows) {")],
     ["relationship scorer unfiltered", plant("jobs/customer-relationship-scorer.ts", "for (const company of companies.rows.filter((c) => isLiveEngineCompany(c.id))) {", "for (const company of companies.rows) {")],
     ["a new unfiltered engine", { ...good, "cron/new-money.cron.ts": newEngine }],
-    ["a pinned file that complies keeps its pin", { ...good, "jobs/todays-attention-worker.ts": good["jobs/todays-attention-worker.ts"] + "\nimport { isLiveEngineCompany } from \"../lib/live-engine-companies.js\";\n" }],
-    ["a pinned file deleted", (() => { const f = { ...good }; delete f["jobs/todays-attention-worker.ts"]; return f; })()],
+    ["a converted engine loses its filter", plant("jobs/todays-attention-worker.ts", "of filterLiveEngineCompanyRows(companies.rows))", "of companies.rows)")],
+    ["a telematics engine back to every company", plant("telematics/odometer-snapshot.cron.ts", "return filterLiveEngineCompanies(res.rows.map((r) => r.id));", "return res.rows.map((r) => r.id);")],
+    ["an engine that imports the helper but loops unfiltered", { ...good, "cron/import-only.cron.ts": "import { isLiveEngineCompany } from '../lib/live-engine-companies.js';\n" + newEngine }],
   ];
   let caught = 0;
   for (const [name, files] of cases) {
@@ -155,4 +129,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`verify-engines-run-live-companies-only: PASS — ${Object.keys(REQUIRED).length} money/scorer engines on the live-company list; ${PINNED.size} pinned non-money engines (shrink-only)`);
+console.log(`verify-engines-run-live-companies-only: PASS — ${Object.keys(REQUIRED).length} money/scorer engines on the live-company list; ${PINNED.size} pinned`);

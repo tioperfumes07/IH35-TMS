@@ -15,6 +15,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -204,7 +205,7 @@ export async function runPredictiveAlertsWorkerTick(
       `SELECT id::text FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
     );
 
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       const operatingCompanyId = String(company.id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, CRON_NAME);

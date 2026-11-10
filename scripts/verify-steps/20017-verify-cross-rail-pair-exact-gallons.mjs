@@ -1,0 +1,1 @@
+export default { name: "verify:verify-cross-rail-pair-exact-gallons", run(ctx) { ctx.run("node", ["scripts/verify-cross-rail-pair-exact-gallons.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-cross-rail-pair-exact-gallons.mjs"]); } };

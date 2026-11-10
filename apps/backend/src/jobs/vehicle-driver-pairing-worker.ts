@@ -19,6 +19,7 @@ import {
   syncFromSamsara,
   type SyncFromSamsaraResult,
 } from "../integrations/samsara/vehicle-driver-pairing/pairing.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -63,7 +64,7 @@ export async function runVehicleDriverPairingWorkerTick(): Promise<VehicleDriver
       `
     );
 
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       assertTenantContext(company.id, CRON_NAME);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 

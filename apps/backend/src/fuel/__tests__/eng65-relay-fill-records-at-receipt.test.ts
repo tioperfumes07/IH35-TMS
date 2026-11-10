@@ -9,7 +9,7 @@ import { recordRelayFillAtReceipt } from "../fuel-expense-document.service.js";
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FILL = "11111111-1111-4111-8111-111111111111";
 
-function db(opts: { live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number; otherRail?: Array<{ fuel_transaction_id: string; card: string | null }> }) {
+function db(opts: { relayUnit?: string | null; relayDriver?: string | null; live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number; otherRail?: Array<{ fuel_transaction_id: string; card: string | null }> }) {
   const calls: string[] = [];
   const inserts: unknown[][] = [];
   const audits: unknown[][] = [];
@@ -21,7 +21,7 @@ function db(opts: { live?: Array<{ id: string; fuel_type: string }>; relayAt?: s
       if (/\/\* cross_rail_rows \*\//.test(sql)) return { rows: opts.otherRail ?? [] };
       if (/FROM fuel\.fuel_transactions\s+WHERE operating_company_id = \$1::uuid AND relay_fuel_transaction_id = \$2::uuid AND voided_at IS NULL AND archived_at IS NULL/.test(sql)) return { rows: opts.live ?? [] };
       if (/SELECT transaction_id, relay_created_at::text, location_city AS city/.test(sql)) return { rows: [{ transaction_id: "txn_A", relay_created_at: opts.relayAt === undefined ? "2026-09-03T20:15:00+00" : opts.relayAt, city: "Natalia", state: "TX" }] };
-      if (/SELECT relay_created_at::text AS at FROM integrations\.relay_fuel_transactions/.test(sql)) return { rows: [{ at: opts.relayAt ?? "2026-09-03T20:15:00+00" }] };
+      if (/SELECT r\.relay_created_at::text AS at,/.test(sql)) return { rows: [{ at: opts.relayAt ?? "2026-09-03T20:15:00+00", unit_id: opts.relayUnit ?? null, driver_id: opts.relayDriver ?? null }] };
       if (/FROM mdata\.vendors/.test(sql)) return { rows: Array.from({ length: opts.vendors ?? 1 }, (_, i) => ({ id: `v${i}` })) };
       if (/SELECT assigned_unit_id::text AS u FROM mdata\.loads/.test(sql)) return { rows: [{ u: opts.loadUnit ?? null }] };
       if (/SELECT transaction_id, total_amount_paid_cents::text, fees, ingest_source/.test(sql)) return { rows: [{ transaction_id: "txn_A", total_amount_paid_cents: String(opts.paid ?? 50000), fees: [], ingest_source: "api" }] };
@@ -92,6 +92,18 @@ describe("ENG-65 recordRelayFillAtReceipt", () => {
     expect(r.refused).toMatch(/^relay_fill_lines_do_not_foot/);
     expect(d.calls.some((c) => c.startsWith("ROLLBACK TO SAVEPOINT relay_fill_rec"))).toBe(true);
     expect(d.inserts).toEqual([]);
+  });
+  it("ACCT-F11125: Relay's own driver match names the driver (txn_2gAW9V27xqzpYB shape: truck on the document, no driver)", async () => {
+    const d = db({ relayDriver: "relay-driver" });
+    const r = await recordRelayFillAtReceipt(d.client as never, { operating_company_id: CO, relay_fill_id: FILL, load_id: "L", driver_id: null, unit_id: "u", actor_user_uuid: null });
+    expect(r).toEqual({ written: true, refused: null });
+    expect(d.inserts[0]![3]).toBe("relay-driver");
+  });
+  it("ACCT-F11125: Relay's own truck match (a truck of this company) names the truck when the document and load have none", async () => {
+    const d = db({ relayUnit: "relay-unit" });
+    const r = await recordRelayFillAtReceipt(d.client as never, { operating_company_id: CO, relay_fill_id: FILL, load_id: null, driver_id: "d", unit_id: null, actor_user_uuid: null });
+    expect(r).toEqual({ written: true, refused: null });
+    expect(d.inserts[0]![4]).toBe("relay-unit");
   });
   it("writes when truck and driver are known", async () => {
     const d = db({});

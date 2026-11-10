@@ -72,6 +72,19 @@ export const RELAY_CARD_ROW_SQL = `EXISTS (SELECT 1 FROM catalogs.fuel_card_type
 const PAIR_SQL = `${PAIR_EVIDENCE_SQL}
     AND ${RELAY_CARD_ROW_SQL}`;
 
+/**
+ * ACCT-F11107 (Lead ruling 11-10, owner "use logic") — a CROSS-RAIL candidate needs the SAME metered gallons, not the 0.6-gal
+ * linking window. Old rule -> new rule -> why:
+ *   OLD: a live row on another rail paired with a Relay fill on the linking evidence alone (same truck, ±1 day, same product,
+ *        gallons within 0.6) and blocked the fill from posting ("the owner decides which rail paid").
+ *   NEW: the same evidence AND the row's gallons equal the fill's gallons for that product within 0.01 (the pump meter, read
+ *        twice); the any-truck TICKET rule (relay-fill-other-rail-ticket.ts: exact volume + ticket total = Relay retail) is
+ *        unchanged. A Relay-card row still LINKS on the 0.6 window (same rail, settlement-typed gallons).
+ *   WHY: prod 2026-11-10 — Relay txn_7a7vejuNqnqxMT (T170 09-10, DEF 10.331 gal) was refused because DREAMLINE ticket 99368358
+ *        (T170 09-11, DEF 10.168 gal, on the Dreamline statement) sat inside 0.6 gal: two purchases, two tickets, one false pair.
+ */
+export const CROSS_RAIL_EXACT_GALLONS_SQL = `abs(f.gallons - ${fillGallonsSql(MATCHED_KIND_SQL)}) <= 0.01`;
+
 /** Live fuel rows on ANOTHER rail (not the Relay card) that pair with this Relay fill — the owner decides; never linked. */
 export async function crossRailFuelRowsForRelayFill(
   client: DbClient,
@@ -85,7 +98,7 @@ export async function crossRailFuelRowsForRelayFill(
     `/* cross_rail_rows */
      SELECT f.id::text AS fuel_transaction_id,
             (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = f.fuel_card_id) AS card
-       ${PAIR_EVIDENCE_SQL} AND r.id = $2::uuid AND NOT ${RELAY_CARD_ROW_SQL}
+       ${PAIR_EVIDENCE_SQL} AND r.id = $2::uuid AND NOT ${RELAY_CARD_ROW_SQL} AND ${CROSS_RAIL_EXACT_GALLONS_SQL}
      UNION
      SELECT q.id::text AS fuel_transaction_id,
             (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = q.fuel_card_id) AS card

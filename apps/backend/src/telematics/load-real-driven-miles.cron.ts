@@ -19,6 +19,7 @@ import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.serv
 import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 /**
  * E11 (ENG-29): before the miles compute, the boundaries it could not measure ask Samsara for the truck's own odometer
@@ -26,7 +27,7 @@ import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
  */
 export async function runOdometerHistoryBackfillTick(log: { info: (o: unknown, m?: string) => void }): Promise<void> {
   const companies = await withLuciaBypass(async (client) =>
-    (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY 1`)).rows.map((r) => r.id));
+    filterLiveEngineCompanies((await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY 1`)).rows.map((r) => r.id)));
   for (const companyId of companies) {
     assertTenantContext(companyId, "telematics.odometer_history_backfill");
     const summary = await runOdometerHistoryBackfill(companyId, {

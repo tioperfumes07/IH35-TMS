@@ -61,6 +61,16 @@
 //   (2026-11-04 12:00Z) put 29 such rows on documented loads (red), 16 of them second records of 13 purchases already on
 //   DREAMLINE settlement rows on another truck — those were voided; the 13 others are real Relay fills on no document.
 //
+// ACCT-F11107 (2026-11-10) — a document line whose receipt was VOIDED AS A DUPLICATE OF A RELAY FILL. Old -> new -> why:
+//   OLD: a document line with no live row was "missing" unless purged / on another load / a listed second entry.
+//   NEW: a line whose fuel row was voided by the void engine as a duplicate of a Relay fill — the row's void_reason names
+//   the fill ("ACCT-F11107: … Relay [fill ]txn_…") or the voided row carries relay_fuel_transaction_id — is REPLACED, not
+//   missing, only while that Relay fill is live AND booked (a live, unreversed fuel_event posting on the fill). Same load,
+//   same invoice, same cents as the line. A replacement whose fill is not booked still fails (by name).
+//   WHY: owner rule "on the Relay statement = Relay" (11-09): 13 DREAMLINE settlement receipts double-booked with their
+//   Relay fill and 10 DREAMLINE-only receipts that were Relay fills were voided (the Relay fill carries the cost); every
+//   one read "missing" and turned required-live-load-guard red (job 129572504458).
+//
 // --selftest runs the pure comparator against fixtures (no DB). Live: fails closed with no DATABASE_URL
 // (requireLiveDbOrExit, ROUND 29.9-B); money-pr-local-gate.mjs runs it when its own domain paths change.
 import fs from "node:fs";
@@ -98,7 +108,7 @@ export function relayAtReceiptRow(r, relayTotals) {
   return Boolean(rt && !rt.dead && rt.txn && rt.txn === r.ref);
 }
 
-export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set(), statementIds = new Set(), statementBatches = [], otherRailByRelay = new Map() }) {
+export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set(), statementIds = new Set(), statementBatches = [], otherRailByRelay = new Map(), replacedByRelay = [] }) {
   const failures = [];
   const notes = [];
   for (const b of statementBatches) {
@@ -120,6 +130,7 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     if (!printedReceipts.has(k)) printedReceipts.set(k, { load: String(ln.load_number), settlement: d.settlement_no });
   }
   const purgedLeft = purged.map((p) => ({ ...p }));
+  const replacedUsed = new Set();
   const perLoad = new Map();
   let expectedRows = 0;
   for (const doc of documents) {
@@ -165,6 +176,19 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
       const dup = documentDuplicates.find((x) => String(x.load_number) === load && String(x.invoice) === String(line.invoice) && x.receipt_cents === line.receipt_cents);
       if (dup && live.some((r) => r.load_number === String(dup.kept_on_load) && baseInvoice(r.ref) === baseInvoice(dup.kept_invoice) && (!dup.fuel_type || r.fuel_type === dup.fuel_type))) {
         notes.push(`second entry of receipt ${dup.kept_invoice}: settlement ${doc.settlement_no} load ${load} ${money(line.receipt_cents)} — the receipt is on load ${dup.kept_on_load}`);
+        continue;
+      }
+      // ACCT-F11107: voided as a duplicate of a Relay fill — replaced while that fill is live and booked.
+      // Same load first; else the receipt on another load (443.73 #6(d): one receipt, posted once, on the load that carried it).
+      const repl = replacedByRelay.find((x) => !replacedUsed.has(x.id) && String(x.load_number) === load && x.cents === line.receipt_cents && baseRef(x.ref, load) === String(line.invoice))
+        ?? replacedByRelay.find((x) => !replacedUsed.has(x.id) && x.cents === line.receipt_cents && baseInvoice(x.ref) === baseInvoice(line.invoice));
+      if (repl) {
+        replacedUsed.add(repl.id);
+        if (repl.booked) {
+          notes.push(`replaced by Relay fill ${repl.relay_txn}: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — row ${String(repl.id).slice(0, 8)} voided as its duplicate (on the Relay statement = Relay)`);
+          continue;
+        }
+        failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — row ${String(repl.id).slice(0, 8)} was voided as a duplicate of Relay fill ${repl.relay_txn ?? "(unnamed)"}, but that fill is not live and booked`);
         continue;
       }
       failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} ${line.date} has no live fuel row`);
@@ -403,6 +427,19 @@ function selftest() {
     ["planted: a Creator Relay record on an undocumented load whose purchase another rail records fails",
       { documents: doc([]), live: [R({ load_number: "200", relay_id: "rX", cents: 2734 })], relayTotals: new Map([["rX", { paid_cents: 2734, dead: false, txn: "txn_X" }]]),
         otherRailByRelay: new Map([["rX", [{ id: "dddddddd-1", ref: "99671555", card: "DREAMLINE" }]]]) }, 1],
+    // ACCT-F11107 — a receipt voided as a duplicate of a Relay fill.
+    ["a line whose row was voided as a duplicate of a live, booked Relay fill is replaced, not missing",
+      { documents: doc([L()]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "100", ref: "A1", cents: 5000, relay_txn: "txn_X", booked: true }] }, 0],
+    ["planted: the Relay fill it names is not booked -> still fails",
+      { documents: doc([L()]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "100", ref: "A1", cents: 5000, relay_txn: "txn_X", booked: false }] }, 1],
+    ["planted: a replacement of a different amount does not excuse the line",
+      { documents: doc([L()]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "100", ref: "A1", cents: 4999, relay_txn: "txn_X", booked: true }] }, 1],
+    ["the same receipt voided on the load that carried it (another load) is replaced",
+      { documents: doc([L()]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "200", ref: "A1", cents: 5000, relay_txn: "txn_X", booked: true }] }, 0],
+    ["planted: a replacement with another invoice does not excuse the line",
+      { documents: doc([L()]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "100", ref: "B2", cents: 5000, relay_txn: "txn_X", booked: true }] }, 1],
+    ["planted: one replaced row never excuses two document lines",
+      { documents: doc([L(), L({ date: "2026-08-01" })]), live: [], replacedByRelay: [{ id: "vvvvvvvv-1", load_number: "100", ref: "A1", cents: 5000, relay_txn: "txn_X", booked: true }] }, 1],
     ["a statement fill does not excuse a Relay sum that differs",
       { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", relay_id: "r1" })], statementIds: new Set(["ssssssss-1"]),
         relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
@@ -538,6 +575,27 @@ async function live() {
     ) : { rows: [] };
     const otherRailByRelay = new Map();
     for (const o of otherRailRes.rows) otherRailByRelay.set(o.relay_id, [...(otherRailByRelay.get(o.relay_id) ?? []), o]);
+    // ACCT-F11107 — voided rows the void engine named as a duplicate of a Relay fill (void_reason, or the link column),
+    // and whether that fill is live and booked (a live, unreversed fuel_event posting on it).
+    const replacedRes = await client.query(
+      `SELECT ft.id::text AS id, ft.transaction_reference AS ref, round(ft.total_cost * 100)::bigint AS cents,
+              regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number,
+              r.transaction_id AS relay_txn,
+              (r.id IS NOT NULL AND r.voided_at IS NULL AND EXISTS (
+                 SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+                  WHERE p.operating_company_id = ft.operating_company_id AND p.source_transaction_type = 'fuel_event'
+                    AND p.source_transaction_id = r.id::text AND j.status = 'posted'
+                    AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL)) AS booked
+         FROM fuel.fuel_transactions ft
+         LEFT JOIN mdata.loads l ON l.id = ft.load_id
+         LEFT JOIN integrations.relay_fuel_transactions r
+           ON r.operating_company_id = ft.operating_company_id
+          AND (r.id = ft.relay_fuel_transaction_id
+               OR (ft.relay_fuel_transaction_id IS NULL AND r.transaction_id = substring(ft.void_reason from 'Relay (?:fill )?(txn_[A-Za-z0-9]+)')))
+        WHERE ft.operating_company_id = $1::uuid AND ft.voided_at IS NOT NULL
+          AND (ft.relay_fuel_transaction_id IS NOT NULL OR ft.void_reason ~ 'Relay (fill )?txn_[A-Za-z0-9]+')`,
+      [USMCA_COMPANY_ID]
+    );
     const creatorRes = await client.query(
       `SELECT DISTINCT jsonb_array_elements_text(payload->'fuel_transaction_ids') AS id
          FROM audit.audit_events
@@ -577,6 +635,7 @@ async function live() {
       purged: purgedRes.rows.map((r) => ({ ...r, cents: Number(r.cents) })),
       relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead, txn: r.txn }])),
       otherRailByRelay,
+      replacedByRelay: replacedRes.rows.map((r) => ({ ...r, cents: Number(r.cents), booked: r.booked === true })),
       creatorIds: new Set(creatorRes.rows.map((r) => r.id)),
       statementIds,
       statementBatches: stmtEvents.rows.map((e) => ({ event_id: e.event_id, at: e.at, declared_lines: e.declared_lines, rows: e.rows })),

@@ -71,6 +71,14 @@ describeIntegration("Relay fill links only Relay-card rows; cross-rail links are
       expect(linkedDream.r).toBeNull(); // old code: linked to fillA
       expect((await crossRailFuelRowsForRelayFill(db as never, opco, fillA)).map((r) => [r.fuel_transaction_id, r.card])).toEqual([[dream, "DREAMLINE"]]);
 
+      // 1b) ACCT-F11107: a DREAMLINE row inside the 0.6-gal linking window but NOT the same metered gallons (another ticket)
+      //     is not a cross-rail candidate (old code: it was, and the fill was refused).
+      await db.query(`UPDATE fuel.fuel_transactions SET gallons = 100.163 WHERE id = $1`, [dream]);
+      expect(await crossRailFuelRowsForRelayFill(db as never, opco, fillA)).toEqual([]);
+      await db.query(`UPDATE fuel.fuel_transactions SET gallons = 100.009 WHERE id = $1`, [dream]);
+      expect((await crossRailFuelRowsForRelayFill(db as never, opco, fillA)).map((r) => r.fuel_transaction_id)).toEqual([dream]);
+      await db.query(`UPDATE fuel.fuel_transactions SET gallons = 100.000 WHERE id = $1`, [dream]);
+
       // 2) A RELAY-card row still links exactly as before.
       const relayRow = await fillRow(relayCard, "R");
       const fillB = await relayFill("B");

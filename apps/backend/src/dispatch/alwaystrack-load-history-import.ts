@@ -206,6 +206,27 @@ export function payMiles(row: Pick<AlwaysTrackLoadHistoryRow, "driver_pay" | "dr
   return Math.round((pay / rpm) * 10) / 10;
 }
 
+/**
+ * ACCT-F11108 part 2 (measured on the owner's real export, 2026-11-09: 18 of 35 loads refused on the mdata.loads CHECK
+ * loads_miles_shortest_not_over_practical). AlwaysTrack's Driver Pay / Driver R.P.M is the miles of the WHOLE trip AT paid —
+ * loaded AND empty (13701: 657.7 paid = 520.3 loaded + 137.4 E.Miles; its L.Miles is 544.9). The app pays
+ * (miles_shortest x loaded rate) + (miles_deadhead x empty rate) (owner MILES SPEC 2026-09-02), so the E.Miles part is
+ * miles_deadhead and only the rest is short loaded miles — the same total pay to the cent, the empty leg never folded into
+ * miles_shortest. Null when the export carries no per-mile pay.
+ */
+export function emptyPayMiles(row: Pick<AlwaysTrackLoadHistoryRow, "driver_pay" | "driver_rpm" | "e_miles">): number | null {
+  if (payMiles(row) == null) return null;
+  const e = Number(row.e_miles ?? 0);
+  return e > 0 ? Math.round(e * 10) / 10 : null;
+}
+
+/** Short LOADED pay miles = AT's paid miles less the E.Miles it paid as empty. */
+export function loadedPayMiles(row: Pick<AlwaysTrackLoadHistoryRow, "driver_pay" | "driver_rpm" | "e_miles">): number | null {
+  const paid = payMiles(row);
+  if (paid == null) return null;
+  return Math.round((paid - (emptyPayMiles(row) ?? 0)) * 10) / 10;
+}
+
 /** Practical miles = the export's L.Miles; a 0 / blank figure is no figure. */
 export function practicalMiles(row: Pick<AlwaysTrackLoadHistoryRow, "l_miles">): number | null {
   const v = Number(row.l_miles ?? 0);

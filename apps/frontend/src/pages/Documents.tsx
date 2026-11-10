@@ -240,6 +240,7 @@ export function DocumentsPage() {
       ) : (
       <ParityTable<DocsFile>
         title="Document files"
+        emptyText="No documents — upload or clear filters."
         storageKey="documents-library-files"
         rows={files}
         suppressToolbarSearch

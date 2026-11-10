@@ -15,6 +15,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { aggregateForPeriod } from "../dispatch/analytics/booking-gap.service.js";
 import { addBusinessDateDays, companyBusinessDate } from "../lib/company-business-date.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "dispatch.booking_gap_aggregator";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -36,7 +37,7 @@ async function tick(app: FastifyInstance) {
       );
 
     let count = 0;
-    for (const { id } of companies.rows) {
+    for (const { id } of filterLiveEngineCompanyRows(companies.rows)) {
       try {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
         const result = await aggregateForPeriod(client, id, from, to);

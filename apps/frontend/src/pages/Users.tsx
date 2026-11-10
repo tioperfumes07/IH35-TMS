@@ -34,7 +34,7 @@ import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
-import { SelectCombobox } from "../components/Combobox";
+import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
@@ -213,13 +213,21 @@ export function UsersPage() {
     );
   };
 
-  const roleFilter = (searchParams.get("role") ?? "").trim();
-  const setRoleFilter = (next: string) => {
+  // U12: Role MultiSelect; URL `role` is comma-joined (empty = all).
+  const roleFilter = useMemo(
+    () =>
+      (searchParams.get("role") ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
+  const setRoleFilter = (next: string[]) => {
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev);
-        if (!next) p.delete("role");
-        else p.set("role", next);
+        if (!next.length) p.delete("role");
+        else p.set("role", next.join(","));
         return p;
       },
       { replace: false },
@@ -227,7 +235,7 @@ export function UsersPage() {
   };
   const staged = useStagedListFilters({
     applied: { roleFilter },
-    empty: { roleFilter: "" },
+    empty: { roleFilter: [] as string[] },
     onApply: (next) => {
       setRoleFilter(next.roleFilter);
     },
@@ -433,7 +441,7 @@ export function UsersPage() {
     if (listTab === "deactivated") list = list.filter((u) => u.deactivated_at);
     else if (listTab === "pending") list = list.filter((u) => userRowCategory(u) === "pending");
     else if (listTab === "active") list = list.filter((u) => userRowCategory(u) === "active");
-    if (roleFilter) list = list.filter((u) => u.role === roleFilter);
+    if (roleFilter.length) list = list.filter((u) => roleFilter.includes(u.role));
     return list;
   }, [allUsers, listTab, roleFilter]);
 
@@ -702,7 +710,7 @@ export function UsersPage() {
         filterBar={
           <div data-users-filter-toolbar="collapsed" data-testid="users-root-filter-panel">
             <CollapsedListFilters
-              activeFilterCount={roleFilter ? 1 : 0}
+              activeFilterCount={roleFilter.length}
               onApply={staged.apply}
               onReset={staged.reset}
               onCancel={staged.cancel}
@@ -710,21 +718,17 @@ export function UsersPage() {
               testIdPrefix="users"
             >
               <div className="flex flex-wrap items-end gap-3">
-                <label className="space-y-1 text-xs text-gray-600" data-testid="users-filter-role">
-                  <span>Role</span>
-                  <SelectCombobox
-                    className="min-h-12 w-full min-w-[12rem] rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
-                    value={staged.draft.roleFilter}
-                    onChange={(event) => staged.setDraft({ ...staged.draft, roleFilter: event.target.value })}
-                  >
-                    <option value="">All roles</option>
-                    {ROLE_OPTIONS.filter((role) => role !== "Viewer").map((role) => (
-                      <option key={role} value={role}>
-                        {ROLE_LABEL[role]}
-                      </option>
-                    ))}
-                  </SelectCombobox>
-                </label>
+                <div className="space-y-1 text-xs text-gray-600" data-testid="users-filter-role">
+                  <span className="block">Role</span>
+                  <MultiSelectDropdown
+                    label="Role"
+                    options={roleComboboxOptions}
+                    selected={staged.draft.roleFilter}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, roleFilter: next })}
+                    allLabel="All roles"
+                    data-testid="users-filter-role-multiselect"
+                  />
+                </div>
               </div>
             </CollapsedListFilters>
           </div>

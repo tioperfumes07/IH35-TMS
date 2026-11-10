@@ -1,3 +1,48 @@
+## OUTBOX (11-09-2026 ~8:45 PM CT) — ROUND 8.4 Settlements + CashFlow hub label pins
+- **PRIOR:** #28703 Accounting/Banking/Fuel/Factoring hub pins.
+- **THIS:** Census pins Settlements (driver-finance) + CashFlow Home KPI labels from v3. failing_routes stays 0.
+- **NEXT:** element-complete screenshots / remaining modules; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:35 PM CT) — ROUND 8.4 census hub design-label pins
+- **PRIOR:** #28701 V3KpiTile 78px.
+- **THIS:** Census pins Accounting/Banking/Fuel/Factoring hub KPI+section labels from v3 .dc.html + V3_KPI.heightPx lock. failing_routes stays 0.
+- **NEXT:** Settlements/CashFlow hub label pins + element-complete builds; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:25 PM CT) — ROUND 8.4 V3KpiTile 78px (design law #6)
+- **PRIOR:** #28700 census static floor 0.
+- **THIS:** V3_KPI.heightPx=78; V3KpiTile minHeight/height locked. OUTBOX diet ≤200. Accounting/Banking hubs already match v3 section/KPI labels — next deepen element coverage.
+- **NEXT:** Accounting/Banking element-complete builds + screenshots; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:15 PM CT) — ROUND 8.4 census floor → 0 static fails
+- **PRIOR:** #28697 design-parity census.
+- **THIS:** Retune census (no false coming-soon/testid; ParityTable gear defaults; print hidePager exempt). emptyText — on Documents + 4 catalog lists. Baseline failing_routes 48→0.
+- **NEXT:** Accounting complete design build vs Accounting.dc.html; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:05 PM CT) — ROUND 8.4 design-parity census (PR 1)
+- **PRIOR:** #28693 System Program phase U12.
+- **THIS:** scripts/verify-design-parity-census.mjs + docs/design/DESIGN-PARITY-CENSUS.md + baseline ratchet (failing_routes may only go down). ROUND 8.4 UI-F11125 census floor before module builds.
+- **NEXT:** Accounting design build (highest money); lower census fails; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:25 PM CT) — U12 System Program phase MultiSelect
+- **PRIOR:** #28691 Legal contracts Template/Signer U12.
+- **THIS:** SystemModulePage Program Tracker phase progress SelectCombobox → MultiSelectDropdown (empty/both=all).
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:15 PM CT) — U12 Legal contracts Template + Signer MultiSelect
+- **PRIOR:** #28690 Users Role U12.
+- **THIS:** LegalContractInstancesPage Template + Signer type SelectCombobox → MultiSelectDropdown (empty=all; includes filter). Status already MultiSelect.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:05 PM CT) — U12 Users Role MultiSelect
+- **PRIOR:** #28688 CatalogTable U12.
+- **THIS:** Users Role SelectCombobox → MultiSelectDropdown (URL role comma-joined; roleFilter.includes). Retarget verify-users-root-staged-filters.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~7:55 PM CT) — U12 CatalogTable status MultiSelect
+- **PRIOR:** #28616 Accounting lists U12 SURFACE-BREACH Cascade.
+- **THIS:** CatalogTable Active/Inactive SelectCombobox → MultiSelectDropdown (matchesStatus; showInactive synced, no double-filter). Retarget verify-catalog-table-duplicate-search. Covers GenericCatalog + States + DispatchFlagColors.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:05 PM CT) — U12 Accounting lists MultiSelect (SURFACE-BREACH Cascade)
 - **PRIOR:** #28611 Maint Parts + OEM Parts U12.
 - **THIS:** SURFACE-BREACH-AUTHORIZED: Cascade archived — AccountingCatalog + DetailTypes + VoidCancel + OverrideReasons + PostingTemplates status → MultiSelectDropdown (apiStatus/matchesStatus). verify-filter-surfaces VoidCancel retarget.
@@ -148,26 +193,3 @@
 - **THIS:** verify-steps 19869 wires verify-rows-250-255. ENG-34 orphans → match residual only.
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
 
-## OUTBOX (11-03-2026 ~5:50 PM CT) — System EngineStatus + SystemModule need-company
-- **PRIOR:** #28570 tip #29/#241.
-- **THIS:** EngineStatusBoardPage + SystemModulePage BoardSection need-company; fill-shell plants.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:45 PM CT) — tip #29/#241 ROUND sync
-- **PRIOR:** #28568 tip #27.
-- **THIS:** ROUND #29/#241 → MERGED-UNVERIFIED; PENDING #241 cites #28557 + Lead min-w-0.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:40 PM CT) — tip #27 after #28566
-- **PRIOR:** #28566 CreateMultipleBills + VendorBillCreate need-company.
-- **THIS:** PENDING/ROUND tip #27 MERGED-UNVERIFIED (~69 surfaces).
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:35 PM CT) — #27 CreateMultipleBills + VendorBillCreate need-company
-- **PRIOR:** #28564 ENG-34 live-fails wire.
-- **THIS:** CreateMultipleBillsPage + VendorBillCreatePage BoardSection need-company early return; fill-shell plants (~69). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Reclassify/match/LoadCosts still skipped.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-
-## ARCHIVE
-Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` + `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-post-28584-diet.md` (bus-diet OUTBOX≤200).

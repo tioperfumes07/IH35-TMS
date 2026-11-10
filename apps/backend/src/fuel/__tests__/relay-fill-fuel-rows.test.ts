@@ -26,9 +26,14 @@ describe("relayFillRowsFromLines (443.198)", () => {
     expect(rows.reduce((s, r) => s + r.total_cents, 0)).toBe(2984);
   });
 
-  it("reefer by Relay's product code is reefer_diesel", () => {
-    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "other", fuel_product_code: "033" })], { fuelPaidCents: 50000, feeCents: 0 });
+  it("reefer by Relay's product code is reefer_diesel (a reefer-tank volume)", () => {
+    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "other", fuel_product_code: "033", volume: "40.000" })], { fuelPaidCents: 50000, feeCents: 0 });
     expect(rows[0]!.fuel_type).toBe("reefer_diesel");
+  });
+
+  it("ACCT-F11107: a 033 line over 60 gal is truck diesel (no reefer tank takes it)", () => {
+    const rows = relayFillRowsFromLines(FILL, [L({ fuel_type: "reefer", fuel_product_code: "033", volume: "100.000" })], { fuelPaidCents: 50000, feeCents: 0 });
+    expect(rows[0]!.fuel_type).toBe("diesel");
   });
 
   it("lines that do not foot to Relay's paid are refused by name — never a typed amount", () => {
@@ -39,8 +44,16 @@ describe("relayFillRowsFromLines (443.198)", () => {
     expect(() => relayFillRowsFromLines(FILL, [L({ total_discounted_price_cents: "0" })], { fuelPaidCents: 0, feeCents: 0 })).toThrow(RelayFillFuelRowsError);
   });
 
-  it("two lines of the same product are refused (one row per product per ticket)", () => {
-    expect(() => relayFillRowsFromLines(FILL, [L({ id: "a" }), L({ id: "b", line_index: 1 })], { fuelPaidCents: 100000, feeCents: 0 })).toThrow(/two diesel lines/);
+  it("two lines of the same product at DIFFERENT prices are refused (one row per product per ticket)", () => {
+    expect(() => relayFillRowsFromLines(FILL, [L({ id: "a" }), L({ id: "b", line_index: 1, discounted_price_per_unit_cents: "510", total_discounted_price_cents: "51000" })], { fuelPaidCents: 101000, feeCents: 0 })).toThrow(/two diesel lines/);
+  });
+
+  it("ACCT-F11125: one product split into two lines at the SAME price is one row (txn_8LZfDKWFvFv1oD DEF 9.613 + 0.112 gal = $38.89)", () => {
+    const rows = relayFillRowsFromLines(FILL, [
+      L({ id: "a", line_index: 0, fuel_type: "def", volume: "9.613", discounted_price_per_unit_cents: "400", total_discounted_price_cents: "3844", fee_amount_cents: "200" }),
+      L({ id: "b", line_index: 1, fuel_type: "def", volume: "0.112", discounted_price_per_unit_cents: "400", total_discounted_price_cents: "45" }),
+    ], { fuelPaidCents: 3889, feeCents: 200 });
+    expect(rows.map((r) => [r.line_id, r.fuel_type, r.total_cents, r.gallons, r.fee_cents])).toEqual([["a", "def", 3889, 9.725, 200]]);
   });
 });
 

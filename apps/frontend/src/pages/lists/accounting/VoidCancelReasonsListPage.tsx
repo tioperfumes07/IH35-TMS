@@ -213,6 +213,7 @@ export function VoidCancelReasonsListPage() {
           }}
           loading={listQuery.isLoading}
           title="Void and cancel reasons"
+          emptyText="No void/cancel reasons — create one or clear filters."
           storageKey="void-cancel-reasons"
           allowAllPageSize
         />

@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runDocumentAlertEngineForTenant } from "./document-alerts.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -20,7 +21,7 @@ export async function runDocumentAlertEngineCronTick() {
     const companies = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       assertTenantContext(String(company.id ?? ""), "drivers.document_alert_engine_cron");
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       await runDocumentAlertEngineForTenant(client, company.id);

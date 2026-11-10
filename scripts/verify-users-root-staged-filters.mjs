@@ -31,8 +31,12 @@ function analyze(src) {
   if (!/searchParams\.get\("role"\)/.test(src)) {
     failures.push('applied role must come from URL searchParams "role"');
   }
-  if (!/u\.role === roleFilter/.test(src)) {
-    failures.push("filteredUsers must apply roleFilter to row.role");
+  // U12: Role MultiSelect — filter via roleFilter.includes(u.role); URL may be comma-joined.
+  if (!/roleFilter\.includes\(u\.role\)/.test(src)) {
+    failures.push("filteredUsers must apply roleFilter MultiSelect via roleFilter.includes(u.role)");
+  }
+  if (!/MultiSelectDropdown/.test(src)) {
+    failures.push("Users Role filter must be MultiSelectDropdown (U12)");
   }
   return failures;
 }
@@ -50,11 +54,13 @@ function selftest() {
   `;
   const good = `
     import { CollapsedListFilters, useStagedListFilters } from "../components/table";
-    const roleFilter = (searchParams.get("role") ?? "").trim();
-    const staged = useStagedListFilters({ applied: { roleFilter }, empty: { roleFilter: "" }, onApply: () => {} });
-    if (roleFilter) list = list.filter((u) => u.role === roleFilter);
+    import { MultiSelectDropdown } from "../components/forms/MultiSelectDropdown";
+    const roleFilter = (searchParams.get("role") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const staged = useStagedListFilters({ applied: { roleFilter }, empty: { roleFilter: [] }, onApply: () => {} });
+    if (roleFilter.length) list = list.filter((u) => roleFilter.includes(u.role));
     <div data-testid="users-root-filter-panel">
       <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} />
+      <MultiSelectDropdown label="Role" options={[]} selected={roleFilter} onChange={() => {}} />
     </div>
   `;
   if (analyze(bad).length === 0) fail("selftest expected BAD to fail");

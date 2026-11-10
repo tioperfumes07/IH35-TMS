@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { computeRetentionScore, upsertRetentionScore } from "../drivers/retention/scorer.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "drivers.retention_scorer_worker";
 const CRON_EXPRESSION = "0 4 * * 1";
@@ -21,7 +22,7 @@ export async function runDriverRetentionScorerTick(): Promise<{ drivers_scored: 
     const companies = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
     );
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const drivers = await client.query<{ id: string }>(
         `SELECT id::text AS id

@@ -47,6 +47,7 @@ import { SamsaraApiError, SamsaraClient } from "../integrations/samsara/samsara-
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.service.js";
 import { loadUnitIdBySamsaraVehicleId } from "../integrations/samsara/samsara-positions.service.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 const HARSH_EVENTS_POLL_AUDIT_SOURCE = "HARSH-EVENTS-POLL-CRON-1";
 
@@ -54,7 +55,7 @@ async function listActiveCompanyIds(client: PgClient): Promise<string[]> {
   const res = await client.query(
     `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return res.rows.map((r) => String(r.id));
+  return filterLiveEngineCompanies(res.rows.map((r) => String(r.id)));
 }
 
 function asObject(value: unknown): Record<string, unknown> | null {

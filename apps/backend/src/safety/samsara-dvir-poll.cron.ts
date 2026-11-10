@@ -26,6 +26,7 @@ import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.service.js";
 import { ingestSamsaraDvirs } from "./samsara-dvir-ingest.service.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 const AUDIT_SOURCE = "SAMSARA-DVIR-POLL-CRON-1";
 export const DVIR_POLL_LOOKBACK_DAYS = 1;
@@ -56,7 +57,7 @@ export async function runSamsaraDvirPollCronTick(tickAt = new Date(), lookbackDa
     const res = await client.query(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
-    return res.rows.map((r: { id: string }) => String(r.id));
+    return filterLiveEngineCompanies(res.rows.map((r: { id: string }) => String(r.id)));
   });
 
   for (const operatingCompanyId of companyIds) {

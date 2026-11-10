@@ -16,6 +16,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { applyDriverActive30dRule } from "../mdata/driver-active-30d.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "mdata.driver_active_30d";
 const DEFAULT_INTERVAL = "15 5 * * *"; // 05:15 America/Chicago-ish UTC morning
@@ -35,7 +36,7 @@ async function tick(app: FastifyInstance) {
       `
     );
 
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const ociId = String(row.id ?? "");
       if (!ociId) continue;
       try {

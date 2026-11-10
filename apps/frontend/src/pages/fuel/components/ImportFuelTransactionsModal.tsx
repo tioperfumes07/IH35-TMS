@@ -15,7 +15,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
 import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 import { SelectCombobox } from "../../../components/Combobox";
-import { formatQuantityTable } from "../../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 
 type ImportKind = "fleet" | "wex";
 
@@ -31,7 +31,7 @@ async function importFuelFile(kind: ImportKind, operatingCompanyId: string, file
 
 // LEAD 443.202 — what each England WEX statement line will do / did, in the owner's words.
 const WEX_OUTCOME_LABEL: Record<WexStatementOutcome, string> = {
-  imported: "New fill — posts Dr fuel / Cr England WEX (2520)",
+  imported: "New fill — posts Dr fuel / Cr WEX Fleet Card (England Logistics) (2520)",
   adopted: "Already on a settlement — adopted, no second row",
   already_imported: "Already imported",
   held_no_load: "Held — no load covers the truck at that time",
@@ -111,7 +111,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
 
   const submit = async () => {
     if (!file) {
-      pushToast("Select a .xlsx or .csv file first", "error");
+      pushToast(kind === "wex" ? "Select the WEX Enhanced Transaction Report (.xlsx), Transaction Report (.pdf) or .csv first" : "Select a .xlsx or .csv file first", "error");
       return;
     }
     const submissionGeneration = lifecycleGenerationRef.current;
@@ -184,7 +184,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
             }}
           >
             <option value="fleet">Fleet-card export</option>
-            <option value="wex">England WEX statement (TransactionReport)</option>
+            <option value="wex">WEX Enhanced Transaction Report (.xlsx) / Transaction Report (.pdf / .csv)</option>
           </SelectCombobox>
         </label>
         <label
@@ -201,7 +201,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         >
           <input
             type="file"
-            accept=".xlsx,.csv"
+            accept={kind === "wex" ? ".pdf,.xlsx,.csv" : ".xlsx,.csv"}
             className="hidden"
             onChange={(event) => {
               const picked = event.target.files?.[0] ?? null;
@@ -209,7 +209,9 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
               setWexPlan(null);
             }}
           />
-          Drag &amp; drop a fleet-card .xlsx or .csv export or click to pick file
+          {kind === "wex"
+            ? "Drag & drop the WEX Enhanced Transaction Report (.xlsx), the Transaction Report (.pdf) or the .csv export, or click to pick file"
+            : "Drag & drop a fleet-card .xlsx or .csv export or click to pick file"}
         </label>
         <BoardSection title="Selected file" testId="fuel-import-selected-board">
           <div className="px-2 py-1">
@@ -242,6 +244,9 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           <div data-testid="wex-statement-plan" className="space-y-2 p-3">
             <div className="font-semibold">
               Plan for {wexPlan.file}: {wexPlan.lines} lines ({wexPlan.fills} tickets) — nothing written yet
+              {wexPlan.report_control
+                ? ` · report Grand Total ${formatUsdCents(wexPlan.report_control.grand_total_cents ?? 0)} / ${wexPlan.report_control.total_records ?? wexPlan.report_control.parsed_lines} records — the file foots`
+                : ""}
             </div>
             <ParityTable<{ key: WexStatementOutcome; label: string; lines: number; cents: number }>
               tableTestId="wex-statement-plan-table"

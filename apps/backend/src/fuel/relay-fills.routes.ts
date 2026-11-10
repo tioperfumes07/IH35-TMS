@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
+import { relayLineIsGallonsSql, relayLineKindSql, relayLineReeferOverTankSql } from "./relay-product-kind.js";
 import { relayFillPostedSql } from "./relay-fill-posted.sql.js";
 import { relayFillOnOrAfterDaySql, relayFillOnOrBeforeDaySql } from "./relay-fill-day.sql.js";
 
@@ -92,7 +92,11 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
                     AND ${relayLineKindSql("l")} = 'reefer') AS reefer_gallons,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
                   WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
-                    AND ${relayLineKindSql("l")} = 'def') AS def_gallons
+                    AND ${relayLineKindSql("l")} = 'def') AS def_gallons,
+                -- ACCT-F11107 review flag: gallons Relay coded reefer on a line over 60 gal (counted as truck diesel above).
+                (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
+                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
+                    AND ${relayLineReeferOverTankSql("l")}) AS reefer_coded_over_tank_gallons
            FROM integrations.relay_fuel_transactions r
            LEFT JOIN mdata.units u ON u.id = r.matched_unit_id
            LEFT JOIN mdata.drivers dr ON dr.id = r.matched_driver_id AND dr.operating_company_id = r.operating_company_id

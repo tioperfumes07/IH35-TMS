@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relationship-scorer-scan-once-per-candidate", run(ctx) { ctx.run("node", ["scripts/verify-relationship-scorer-scan-once-per-candidate.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relationship-scorer-scan-once-per-candidate.mjs"]); } };

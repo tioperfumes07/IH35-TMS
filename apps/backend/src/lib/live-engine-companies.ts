@@ -20,7 +20,21 @@ export function isLiveEngineCompany(operatingCompanyId: string | null | undefine
   return typeof operatingCompanyId === "string" && LIVE_ENGINE_COMPANY_IDS.includes(operatingCompanyId.toLowerCase());
 }
 
+/** An empty company id in the list is scheduler-context corruption (B-017) — refused, never silently dropped. */
+function refuseEmpty(id: unknown): void {
+  if (typeof id !== "string" || id.trim().length === 0) {
+    throw new Error("[live-engine-companies] Refusing to run with empty operating_company_id. See B-017.");
+  }
+}
+
 /** Keep only the live entities, preserving order. */
 export function filterLiveEngineCompanies(operatingCompanyIds: readonly string[]): string[] {
+  for (const id of operatingCompanyIds) refuseEmpty(id);
   return operatingCompanyIds.filter((id) => isLiveEngineCompany(id));
+}
+
+/** Keep only the live entities' org.companies rows (the row carries `id` or `operating_company_id`), preserving order. */
+export function filterLiveEngineCompanyRows<T extends { id?: unknown; operating_company_id?: unknown }>(rows: readonly T[]): T[] {
+  for (const r of rows) refuseEmpty(r.id ?? r.operating_company_id);
+  return rows.filter((r) => isLiveEngineCompany(String(r.id ?? r.operating_company_id)));
 }

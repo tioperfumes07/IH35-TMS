@@ -71,12 +71,15 @@ describeIntegration("void after reclassify (443.232, real Postgres)", () => {
           WHERE p.source_transaction_type = 'fuel_event' AND p.source_transaction_id = $1 GROUP BY 1`, [fuelId])).rows;
       for (const n of nets) expect(Number(n.net), `account ${n.account_id}`).toBe(0);
       // ACCT-F11107 part 2 — the void block (282.1) must let the stamp through once every line is reversed at LINE level,
-      // even when the reclass entry carries no entry-level reversal link. The real trigger function on a scratch table.
+      // even when the reclass entry carries no entry-level reversal link. The real trigger function on a scratch table,
+      // NOT DEFERRABLE so it fires at the end of the INSERT and ONLY it fires: "SET CONSTRAINTS ALL IMMEDIATE" also fired every
+      // deferred check of the transaction, e.g. the spine-link rule on this fixture's hand-written receipt legs (heavy CI job
+      // 129572949261) — a test of the void block must not run (or weaken) unrelated commit-time rules.
       await db.query(`CREATE TEMP TABLE f11107_void_probe (id uuid PRIMARY KEY, voided_at timestamptz) ON COMMIT DROP`);
       await db.query(`CREATE CONSTRAINT TRIGGER f11107_probe AFTER INSERT OR UPDATE OF voided_at ON f11107_void_probe
-                        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION accounting.fn_block_void_with_live_postings('fuel_event')`);
-      await db.query(`INSERT INTO f11107_void_probe (id, voided_at) VALUES ($1::uuid, now())`, [fuelId]);
-      const blocked = await db.query("SET CONSTRAINTS ALL IMMEDIATE").then(() => "ok", (e: { message?: string }) => e.message ?? "error");
+                        NOT DEFERRABLE FOR EACH ROW EXECUTE FUNCTION accounting.fn_block_void_with_live_postings('fuel_event')`);
+      const blocked = await db.query(`INSERT INTO f11107_void_probe (id, voided_at) VALUES ($1::uuid, now())`, [fuelId])
+        .then(() => "ok", (e: { message?: string }) => e.message ?? "error");
       expect(blocked).toBe("ok"); // 202614610000 alone: "BLOCKED (282.1) … live" — entry-level liveness only
     } finally {
       await db.query("ROLLBACK").catch(() => {});

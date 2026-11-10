@@ -13,6 +13,10 @@
 // RULE 4 — delta only: the service looks the load number up in mdata.loads and skips it (skipped_existing) before booking.
 // RULE 5 — the parser ties the read rows to the export's own Totals line (count AND charges) and refuses a mismatch.
 // RULE 6 — nothing is created: no customer / driver / unit / equipment INSERT; an unmatched name is a refusal.
+// RULE 7 (part 2, measured 2026-11-09: 18 of 35 real loads refused by loads_miles_shortest_not_over_practical) — AT's paid
+//          miles are loaded + empty: miles_shortest is loadedPayMiles (paid less E.Miles) and E.Miles goes to miles_deadhead;
+//          the raw payMiles total is never booked as miles_shortest.
+// RULE 8 — the service checks short <= practical itself (pay_miles_over_practical) so a preview answers what a commit does.
 import fs from "node:fs";
 
 const PARSER = "apps/backend/src/dispatch/alwaystrack-load-history-import.ts";
@@ -52,6 +56,14 @@ export function audit(files) {
     out.push("RULE 4: the service no longer skips a load number already in the company");
   } else if (bookAt >= 0 && existAt > bookAt) out.push("RULE 4: the delta check runs after booking");
 
+  if (!/const short = loadedPayMiles\(row\) \?\? practical;/.test(svc)) out.push("RULE 7: miles_shortest is not loadedPayMiles (AT's paid miles include empty miles)");
+  if (/const short = payMiles\(row\)/.test(svc)) out.push("RULE 7: the raw paid-miles total (loaded + empty) is booked as miles_shortest");
+  if (!/miles_deadhead: empty \?\? undefined,/.test(svc) || !/const empty = emptyPayMiles\(row\);/.test(svc)) out.push("RULE 7: E.Miles is not booked as miles_deadhead");
+  if (!/return Math\.round\(\(paid - \(emptyPayMiles\(row\) \?\? 0\)\) \* 10\) \/ 10;/.test(parser)) out.push("RULE 7: loadedPayMiles no longer subtracts E.Miles");
+  const overAt = svc.indexOf('"pay_miles_over_practical"');
+  const previewAt = svc.indexOf("if (!ctx.commit) {");
+  if (overAt < 0 || !/short > practical/.test(svc)) out.push("RULE 8: the service no longer refuses short > practical itself");
+  else if (previewAt >= 0 && overAt > previewAt) out.push("RULE 8: the short <= practical check runs after the preview returns");
   if (!/totals_count_mismatch/.test(parser) || !/totals_charges_mismatch/.test(parser)) out.push("RULE 5: the parser no longer ties to the export's Totals line");
   if (/\bfindIndex\(\(l\) => l && l\[0\] === "Load#"\)/.test(parser) === false) out.push("RULE 5: the header is no longer found by content");
   return out;
@@ -88,6 +100,10 @@ if (process.argv.includes("--selftest")) {
     ["no tracking stamp", plant(SERVICE, "await stampStopsFromTracking(client as never, loadId,", "void (client as never, loadId,")],
     ["delta check removed", plant(SERVICE, 'outcome: "skipped_existing"', 'outcome: "refused"')],
     ["totals not tied", plant(PARSER, "totals_charges_mismatch", "totals_ignored")],
+    ["paid total booked as short", plant(SERVICE, "const short = loadedPayMiles(row) ?? practical;", "const short = payMiles(row) ?? practical;")],
+    ["empty miles dropped", plant(SERVICE, "miles_deadhead: empty ?? undefined,", "")],
+    ["loaded miles not net of empty", plant(PARSER, "return Math.round((paid - (emptyPayMiles(row) ?? 0)) * 10) / 10;", "return paid;")],
+    ["preview blind to the CHECK", plant(SERVICE, "if (short != null && practical != null && short > practical) {", "if (false) {")],
   ];
   let caught = 0;
   for (const [name, files] of cases) {

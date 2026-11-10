@@ -13,6 +13,7 @@ import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { detectLayovers } from "../dispatch/layovers/detection.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "dispatch.layover_detector";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -42,7 +43,7 @@ async function tick(app: FastifyInstance) {
     let count = 0;
     let resolvable = 0;
     const failures: Array<{ company_id: string; error: string }> = [];
-    for (const { id } of companies.rows) {
+    for (const { id } of filterLiveEngineCompanyRows(companies.rows)) {
       // ROUND 330.7: a savepoint per company — one company's SQL error used to leave the shared transaction aborted, so
       // every later company failed too ("current transaction is aborted").
       await client.query("SAVEPOINT layover_company");

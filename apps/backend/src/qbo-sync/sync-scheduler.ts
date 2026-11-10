@@ -13,6 +13,7 @@ import { pullArInvoicesFromQbo } from "./qbo-ar-invoices-puller.js";
 import { pullArPaymentsFromQbo } from "./qbo-ar-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -184,7 +185,7 @@ export async function runQboSyncSchedulerTick(log?: FastifyInstance["log"]): Pro
        GROUP BY c.id
        ORDER BY c.id`
     );
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       // B-A2 — per-COMPANY isolation: TRANSP failing must not block TRK. Every step is already isolated, so
       // runScheduledSyncForCompany should not throw; this outer guard is belt-and-suspenders for anything
       // unexpected (e.g. an error outside a step).

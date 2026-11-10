@@ -16,6 +16,7 @@ import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -56,7 +57,7 @@ export async function runDraftCrewStatusSelfHealTick(
     );
     companyCount = companies.rows.length;
 
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       assertTenantContext(String(company.id ?? ""), "dispatch.draft_crew_status_selfheal_cron");
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 

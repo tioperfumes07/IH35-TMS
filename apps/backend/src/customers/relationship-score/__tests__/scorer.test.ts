@@ -65,3 +65,35 @@ describe("computeRelationshipScore graceful degrade", () => {
     expect(score.health_tier).toBe("at_risk");
   });
 });
+
+describe("ACCT-F11126 — the company-wide arrival scan runs only for a customer with a scheduled stop", () => {
+  const run = async (hasStop: boolean) => {
+    const sqls: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        sqls.push(sql);
+        if (sql.includes("information_schema.tables")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
+        if (sql.includes("SELECT 1 AS n")) return { rows: hasStop ? [{ n: 1 }] : [], rowCount: hasStop ? 1 : 0 };
+        if (sql.includes("WITH completed AS")) return { rows: [{ total_count: "4", late_count: "1" }], rowCount: 1 };
+        return { rows: [], rowCount: 0 };
+      },
+    };
+    const score = await computeRelationshipScore(client, {
+      operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80",
+      customer_uuid: "22222222-2222-2222-2222-222222222222",
+    });
+    return { score, scanned: sqls.some((s) => s.includes("WITH completed AS")) };
+  };
+
+  it("a customer with no scheduled load stop: no scan, service-quality null (same as the scan's empty result)", async () => {
+    const r = await run(false);
+    expect(r.scanned).toBe(false);
+    expect(r.score.service_quality_subscore).toBeNull();
+  });
+
+  it("a customer with a scheduled load stop: the scan runs and scores it", async () => {
+    const r = await run(true);
+    expect(r.scanned).toBe(true);
+    expect(r.score.service_quality_subscore).toBe(75);
+  });
+});
