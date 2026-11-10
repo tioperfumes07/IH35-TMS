@@ -14,6 +14,31 @@ function LocationProbe() {
 
 afterEach(cleanup);
 
+describe("query-selected sibling tabs", () => {
+  const items = [
+    { label: "Fleet Table", to: "/maintenance/fleet-table" },
+    { label: "In Shop", to: "/maintenance/fleet-table?status=in-shop" },
+  ];
+  it.each([
+    ["/maintenance/fleet-table?status=in-shop", "In Shop"],
+    ["/maintenance/fleet-table?sort=unit&status=in-shop", "In Shop"],
+    ["/maintenance/fleet-table?status=ready", "Fleet Table"],
+    ["/maintenance/fleet-table", "Fleet Table"],
+  ])("selects one correct sibling for %s", (url, expected) => {
+    render(<MemoryRouter initialEntries={[url]}><NavyPageSubNav items={items} /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: expected }).getAttribute("aria-current")).toBe("page");
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
+  it("updates the selected tab when navigating both directions", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/maintenance/fleet-table"]}><NavyPageSubNav items={items} /></MemoryRouter>);
+    await user.click(screen.getByRole("link", { name: "In Shop" }));
+    expect(screen.getByRole("link", { name: "In Shop" }).getAttribute("aria-current")).toBe("page");
+    await user.click(screen.getByRole("link", { name: "Fleet Table" }));
+    expect(screen.getByRole("link", { name: "Fleet Table" }).getAttribute("aria-current")).toBe("page");
+  });
+});
+
 describe("responsive navigation containment", () => {
   it("lets the scroll container grow around fixed-height tabs and a classic scrollbar", () => {
     render(wrap(<NavyPageSubNav items={[{ label: "Accounts", to: "/banking/accounts" }]} />));
