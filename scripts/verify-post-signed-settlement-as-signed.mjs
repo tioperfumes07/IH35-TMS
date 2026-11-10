@@ -52,6 +52,12 @@ export function problems(t) {
   if (/journal_entry_postings|INSERT\s+INTO\s+accounting\.journal_entries|postValidatedPostingLines/i.test(e)) p.push("engine: writes GL itself (no new GL math — the posters and the reverse engine post)");
   if (/DELETE\s+FROM/i.test(e)) p.push("engine: deletes a row (void, never delete)");
   if (!/confirmation !== "proposed"\) continue/.test(e)) p.push("engine: a person-confirmed fill could be moved (only a machine's proposal is confirmed — OWNER RULING 443.288)");
+  // 2b. entity scope (LST-F11144): the truck lookup is the lease pair; every loads / settlements hop carries the company.
+  if (!/FROM mdata\.units u\s+WHERE u\.unit_number = \$2 AND COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$1::uuid/.test(e)) p.push("engine: the truck lookup is not scoped to this company (COALESCE(currently_leased_to_company_id, owner_company_id) = $1)");
+  for (const m of e.matchAll(/JOIN mdata\.loads (l2?) ON \1\.id = sl2?\.load_id([^\n]*)/g)) {
+    if (!/operating_company_id/.test(m[2])) p.push(`engine: a settlement-line -> mdata.loads ${m[1]} hop is not scoped to the settlement's company`);
+  }
+  if (/FROM driver_finance\.driver_settlements s WHERE s\.id = l\.presettlement_link_id AND \(/.test(e)) p.push("engine: the presettlement link lookup is not scoped to the load's company");
   // 3. the route.
   if (!/settlement-creator\/post-as-signed/.test(t.routes ?? "") || !/postSignedSettlementAsSigned\(/.test(t.routes ?? "")) p.push("route: POST /api/v1/driver-finance/settlement-creator/post-as-signed is not wired to the engine");
   if (!/dry_run:\s*z\.boolean\(\)\.default\(true\)/.test(t.routes ?? "")) p.push("route: dry_run must default to true");
@@ -93,6 +99,9 @@ function selftest() {
     ["PLANT: the net is not compared", problems(plant("engine", "got.net !== signedNet", "false")).length > 0 ? 1 : 0, 1],
     ["PLANT: the engine writes postings", problems({ ...real, engine: `${real.engine}\n// INSERT INTO accounting.journal_entries` }).length > 0 ? 1 : 0, 1],
     ["PLANT: a confirmed fill may move", problems(plant("engine", 'confirmation !== "proposed") continue', 'confirmation === "x") continue')).length > 0 ? 1 : 0, 1],
+    ["PLANT: truck lookup unscoped", problems(plant("engine", "WHERE u.unit_number = $2 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid", "WHERE u.unit_number = $2 AND TRUE")).length > 0 ? 1 : 0, 1],
+    ["PLANT: l2 hop unscoped", problems(plant("engine", "l2.id = sl2.load_id AND l2.operating_company_id = s.operating_company_id", "l2.id = sl2.load_id")).length > 0 ? 1 : 0, 1],
+    ["PLANT: presettlement link unscoped", problems(plant("engine", "s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id AND (", "s.id = l.presettlement_link_id AND (")).length > 0 ? 1 : 0, 1],
     ["PLANT: route unwired", problems(plant("routes", "settlement-creator/post-as-signed", "settlement-creator/post-x")).length > 0 ? 1 : 0, 1],
     ["PLANT: the shell closed without posting", problems(plant("service", "SET period_start = $2::date, period_end = $3::date,", "SET period_start = $2::date, period_end = $3::date, status = 'closed',")).length > 0 ? 1 : 0, 1],
     ["PLANT: the Creator posts a Relay fill's document", problems(plant("service", 'fuel.card === "relay" && relayFillId && doc.outcome === "already_exists") continue', "false")).length > 0 ? 1 : 0, 1],
