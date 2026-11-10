@@ -111,13 +111,17 @@ export function auditPreSettlementPanelSource(src) {
 /** Pure: do the two Tour register column arrays render Load immediately after Settlement? */
 export function auditColumnOrderSource(src, label) {
   const failures = [];
+  // ROUND 8.5 T5/T6: Settlements Open/Closed overview is Settlement → Driver → Unit → Tour legs.
+  // Per-leg Load # columns remain via ...tourLoadColumns (defaultHidden), after Tour legs.
   const tourIdx = src.indexOf('key: "tour"');
-  const loadColsIdx = src.indexOf("...tourLoadColumns(");
   const driverIdx = src.indexOf('key: "driver"');
-  if (tourIdx === -1 || loadColsIdx === -1 || driverIdx === -1) {
-    failures.push(`${label}: could not locate tour/tourLoadColumns/driver column definitions to check ordering`);
-  } else if (!(tourIdx < loadColsIdx && loadColsIdx < driverIdx)) {
-    failures.push(`${label}: tourLoadColumns() must render immediately after the Settlement/Tour column, ahead of Driver`);
+  const unitIdx = src.indexOf('key: "unit"');
+  const tourLegsIdx = src.indexOf('label: "Tour legs"');
+  const loadColsIdx = src.indexOf("...tourLoadColumns(");
+  if (tourIdx === -1 || driverIdx === -1 || unitIdx === -1 || tourLegsIdx === -1 || loadColsIdx === -1) {
+    failures.push(`${label}: could not locate tour/driver/unit/Tour legs/tourLoadColumns column definitions`);
+  } else if (!(tourIdx < driverIdx && driverIdx < unitIdx && unitIdx < tourLegsIdx && tourLegsIdx < loadColsIdx)) {
+    failures.push(`${label}: board order must be Settlement → Driver → Unit → Tour legs → (secondary) tourLoadColumns`);
   }
   return failures;
 }
@@ -177,10 +181,11 @@ function selftest() {
     throw new Error("live leftover tokens present on PreSettlementPanel");
   }
 
-  const badOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n...tourLoadColumns("p"),`;
-  assert.ok(auditColumnOrderSource(badOrder, "test").length >= 1, "Load-after-Driver ordering must be caught");
-  const goodOrder = `{ key: "tour", label: "x" },\n...tourLoadColumns("p"),\n{ key: "driver", label: "y" },`;
-  assert.ok(auditColumnOrderSource(goodOrder, "test").length === 0, "Load-next-to-Settlement ordering must pass");
+  // T5/T6 board: Settlement → Driver → Unit → Tour legs → secondary tourLoadColumns.
+  const badOrder = `{ key: "tour", label: "x" },\n...tourLoadColumns("p"),\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },`;
+  assert.ok(auditColumnOrderSource(badOrder, "test").length >= 1, "tourLoadColumns-before-Driver ordering must be caught");
+  const goodOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },\n...tourLoadColumns("p"),`;
+  assert.ok(auditColumnOrderSource(goodOrder, "test").length === 0, "T5/T6 Settlement→Driver→Unit→Tour legs ordering must pass");
 
   const badRows = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "load_number", label: "z" },`;
   assert.ok(auditTourLoadRowsOrderSource(badRows).length >= 1, "TourLoadRows Load-after-Driver ordering must be caught");

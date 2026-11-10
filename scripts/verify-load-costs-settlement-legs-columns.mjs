@@ -94,8 +94,24 @@ function analyze(src) {
   // factory — so it keeps the original check shape; the board's checks below point at `rows`
   // (TourLoadRows.tsx) instead of `board` (LoadCostsBoardPage.tsx) to follow where the columns
   // actually live now.
-  if (!/\.\.\.tourLoadColumns\(/.test(setl)) errors.push("SettlementsToursRegister must use the shared separate load/type/count columns");
-  if (/<TourLegsCell\b/.test(setl)) errors.push("SettlementsToursRegister must not restore the compound Legs summary cell");
+  // ROUND 8.5 T5/T6 board (Settlements-Open|Closed): overview is Settlement → Driver → Unit → Tour legs
+  // (TourLegsCell). Per-leg Load # columns stay via ...tourLoadColumns(...).map(defaultHidden) in the gear.
+  if (!/\.\.\.tourLoadColumns\(/.test(setl)) errors.push("SettlementsToursRegister must keep shared per-leg Load # columns (secondary/defaultHidden)");
+  if (!/<TourLegsCell\b/.test(setl) || !/label:\s*"Tour legs"/.test(setl)) {
+    errors.push("SettlementsToursRegister overview must render a Tour legs column via TourLegsCell (board T5/T6)");
+  }
+  if (!/defaultHidden:\s*true/.test(setl)) {
+    errors.push("SettlementsToursRegister must defaultHidden the expanded per-leg Load # columns (board overview)");
+  }
+  // Board order: Driver/Unit before Tour legs; tourLoadColumns (secondary) after Tour legs.
+  const setlTour = setl.indexOf('key: "tour"');
+  const setlDriver = setl.indexOf('key: "driver"');
+  const setlUnit = setl.indexOf('key: "unit"');
+  const setlLegs = setl.indexOf('label: "Tour legs"');
+  const setlLoadCols = setl.indexOf("...tourLoadColumns(");
+  if (!(setlTour < setlDriver && setlDriver < setlUnit && setlUnit < setlLegs && setlLegs < setlLoadCols)) {
+    errors.push("SettlementsToursRegister board order must be Settlement → Driver → Unit → Tour legs → (hidden) tourLoadColumns");
+  }
   if (!/key:\s*"revenue"[\s\S]{0,160}?whitespace-nowrap text-right tabular-nums/.test(setl)) {
     errors.push('SettlementsToursRegister money cells must be whitespace-nowrap (Revenue) so "$12,595.90" never wraps');
   }
