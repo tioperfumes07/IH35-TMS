@@ -1615,9 +1615,10 @@ export async function postSettlementCreatorInClientTx(
           total_discounted_price_cents: string | null;
           fee_amount_cents: string | null;
           fee_type: string | null;
+          volume: string | null;
         }>(
           `SELECT fuel_type, fuel_product_code, fuel_type_description,
-                  total_discounted_price_cents, fee_amount_cents, fee_type
+                  total_discounted_price_cents, fee_amount_cents, fee_type, volume
              FROM integrations.relay_fuel_transaction_lines
             WHERE relay_fuel_transaction_id = $1::uuid AND voided_at IS NULL
             ORDER BY line_index`,
