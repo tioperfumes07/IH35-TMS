@@ -15628,27 +15628,27 @@
   "20017": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
+    "purpose": "verify-relay-fill-records-provider-match (ACCT-F11125, #28692)"
   },
   "20021": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
+    "purpose": "verify-relationship-scorer-scan-once-per-candidate (ACCT-F11126, #28699)"
   },
   "20025": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-relationship-scorer-scan-once-per-candidate (ACCT-F11126; renumbered from duplicate 20021)"
+    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
   },
   "20029": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100)"
+    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
   },
   "20033": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-relay-fill-records-provider-match (renumbered from duplicate 20017)"
+    "purpose": "verify-faro-purchase-report-seed (ACCT-F11108)"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",

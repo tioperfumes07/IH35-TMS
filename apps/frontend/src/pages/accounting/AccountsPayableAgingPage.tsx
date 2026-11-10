@@ -41,11 +41,12 @@ function today() {
 }
 
 const MONEY_KEYS = ["current", "d1_30", "d31_60", "d61_90", "d90_plus", "total"] as const;
+// Design contract (accounts-payable-render.html / design-parity-contract) uses en-dashes.
 const MONEY_LABELS: Record<(typeof MONEY_KEYS)[number], string> = {
   current: "Current",
-  d1_30: "1-30",
-  d31_60: "31-60",
-  d61_90: "61-90",
+  d1_30: "1–30",
+  d31_60: "31–60",
+  d61_90: "61–90",
   d90_plus: "91+",
   total: "Total",
 };
@@ -132,7 +133,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
   },
   {
     key: "d1_30",
-    label: "1-30",
+    label: "1–30",
     sortable: true,
     cellClass: parityMoneyCellClass("d1_30"),
     sortValue: (v) => amount(v, "d1_30"),
@@ -140,7 +141,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
   },
   {
     key: "d31_60",
-    label: "31-60",
+    label: "31–60",
     sortable: true,
     cellClass: parityMoneyCellClass("d31_60"),
     sortValue: (v) => amount(v, "d31_60"),
@@ -148,7 +149,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
   },
   {
     key: "d61_90",
-    label: "61-90",
+    label: "61–90",
     sortable: true,
     cellClass: parityMoneyCellClass("d61_90"),
     sortValue: (v) => amount(v, "d61_90"),
@@ -269,7 +270,8 @@ export function AccountsPayableAgingPage() {
     });
   }, [typeFiltered, bucketFilter, search]);
 
-  const apAgingActiveFilterCount = (asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0);
+  const apAgingActiveFilterCount =
+    (asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0) + (bucketFilter !== "all" ? 1 : 0);
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (same contract as FleetTable / dispatch board), now feeding ParityTable's controlled-sort
@@ -278,7 +280,7 @@ export function AccountsPayableAgingPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   function exportCsv() {
-    const header = ["Vendor", "Vendor type", "Current", "1-30", "31-60", "61-90", "91+", "Total"];
+    const header = ["Vendor", "Vendor type", "Current", "1–30", "31–60", "61–90", "91+", "Total"];
     const lines = typeFiltered.map((v) =>
       [v.vendor_name, v.display_group, v.current, v.d1_30, v.d31_60, v.d61_90, v.d90_plus, v.total_outstanding]
         .map((c) => (typeof c === "number" ? (c / 100).toFixed(2) : `"${String(c).replace(/"/g, '""')}"`))
@@ -324,8 +326,8 @@ export function AccountsPayableAgingPage() {
           <thead>
             <tr>
               <th>Vendor</th><th>Type</th><th style="text-align:right">Current</th>
-              <th style="text-align:right">1-30</th><th style="text-align:right">31-60</th>
-              <th style="text-align:right">61-90</th><th style="text-align:right">91+</th>
+              <th style="text-align:right">1–30</th><th style="text-align:right">31–60</th>
+              <th style="text-align:right">61–90</th><th style="text-align:right">91+</th>
               <th style="text-align:right">Total</th>
             </tr>
           </thead>
@@ -373,6 +375,7 @@ export function AccountsPayableAgingPage() {
             setSearch("");
             setAsOf(today());
             setTypeFilter("all");
+            setBucketFilter("all");
           }}
           activeFilterCount={apAgingActiveFilterCount}
           testIdPrefix="ap-aging"
@@ -383,6 +386,22 @@ export function AccountsPayableAgingPage() {
             <div className="mt-1">
               <DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} />
             </div>
+          </label>
+          <label className="text-xs font-semibold text-[#4B5563]">
+            Aging
+            <SelectCombobox
+              className="mt-1 block"
+              value={bucketFilter}
+              onChange={(e) => setBucketFilter(e.target.value as BucketFilterKey)}
+              data-testid="ap-aging-bucket-select"
+            >
+              <option value="all">All</option>
+              {BUCKET_FILTER_KEYS.map((k) => (
+                <option key={k} value={k}>
+                  {MONEY_LABELS[k]}
+                </option>
+              ))}
+            </SelectCombobox>
           </label>
           <label className="text-xs font-semibold text-[#4B5563]">
             Vendor type

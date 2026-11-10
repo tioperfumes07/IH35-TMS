@@ -1,3 +1,33 @@
+## OUTBOX (11-09-2026 ~9:55 PM CT) — ROUND 8.4 Fuel/Factoring/Dispatch census deepen
+- **PRIOR:** #28715 Banking+Reports hub deepen.
+- **THIS:** Census deepens Fuel (Diesel by truck cols), Factoring (purchase/terms panels), Dispatch Load history KPIs + Planner nav labels. failing_routes stays 0.
+- **NEXT:** Accounting tab screenshots; remaining element fills; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~9:45 PM CT) — ROUND 8.4 Banking+Reports hub label deepen
+- **PRIOR:** #28714 ShopBays chrome.
+- **THIS:** Census deepens Banking (Accounts / Reconciliation drift / Latest lines / Feed) + Reports hub (Available reports / Accounting & financial / Trial balance …). Fix Reports board title amp entity. failing_routes stays 0.
+- **NEXT:** Accounting tab screenshots; remaining modules; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~9:35 PM CT) — ROUND 8.4 ShopBays.dc.html chrome on InShopBoard
+- **PRIOR:** #28712 TruckServiceMap on Vehicle Profile.
+- **THIS:** InShopBoard chrome matches ShopBays.dc.html (MAINTENANCE · SHOP FLOOR, Check a truck in, OVERHEAD DOOR, OPEN BAY, YARD LANE · NEXT IN, BY PM URGENCY). Census pins /maintenance + /maintenance/fleet-table shop labels.
+- **NEXT:** Accounting/Banking screenshots; Reports hub pins; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~9:25 PM CT) — ROUND 8.4 TruckServiceMap on Vehicle Profile
+- **PRIOR:** #28710 Accounting AP Aging design fill.
+- **THIS:** Truck service map (TruckProfile.dc.html) on /fleet/units/:id — SERVICE MAP chrome, OK/DUE SOON/DEFECT/NO RECORD legend, silhouette hotspots, New work order. Systems from live PM/WO/faults/DOT only (no board sample tread/miles). Census pins route labels.
+- **NEXT:** ShopBays graphic deepen; Accounting/Banking screenshots; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~9:10 PM CT) — ROUND 8.4 Accounting AP Aging design fill + census deepen
+- **PRIOR:** #28708 Maintenance/Customers/Vendors/Insurance/Legal/Safety hub pins.
+- **THIS:** Accounts Payable Aging — add design Aging filter (All/Current/1–30/…); en-dash bucket labels per accounts-payable-render.html + design-parity-contract. Census pins /accounting (aging cols + close marks), /accounting/unexpected, /accounting/accounts-payable. failing_routes stays 0.
+- **NEXT:** Accounting remaining tabs screenshots; TruckProfile service map; Banking element-complete; no match/Dreamline.
+
+## OUTBOX (11-09-2026 ~8:55 PM CT) — ROUND 8.4 hub pins wave 2 + Maintenance KPI casing
+- **PRIOR:** #28704 Settlements + CashFlow hub pins.
+- **THIS:** Census pins Maintenance/Customers/Vendors/Insurance/Legal/Safety-driver-files hub labels from v3. Maintenance KPI labels → design sentence case (PM due soon / Road service / Parts low-stock / MTD cost). failing_routes stays 0.
+- **NEXT:** Accounting element-complete build + screenshots; remaining module tabs; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:45 PM CT) — ROUND 8.4 Settlements + CashFlow hub label pins
 - **PRIOR:** #28703 Accounting/Banking/Fuel/Factoring hub pins.
 - **THIS:** Census pins Settlements (driver-finance) + CashFlow Home KPI labels from v3. failing_routes stays 0.
@@ -162,34 +192,4 @@
 - **PRIOR:** #28579 cash-basis wire.
 - **THIS:** PENDING/ROUND #57/#159 → DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED after #28561. Non-CT browser not claimed.
 - **NEXT:** U12 residuals / more live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:25 PM CT) — ENG-34 wire cash-basis pair 19877/19879
-- **PRIOR:** #28578 batch70 static 19871/73/75.
-- **THIS:** verify-steps 19877 (cash-basis-pl-from-transactions) + 19879 (cash-basis-drill-answers); removed from .guard-exempt. LIVE leftovers stay exempt.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:20 PM CT) — ENG-34 wire batch70 static orphans 19871/73/75
-- **PRIOR:** #28577 bus-diet Cursor.
-- **THIS:** verify-steps 19871 (every-poster --selftest/static), 19873 (one-fuel-to-load-helper), 19875 (row-actions-clickable); removed from .guard-exempt. LIVE leftovers stay exempt (balanced-ledger / load-driven-miles / bus-diet global / match).
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:10 PM CT) — bus-diet Cursor INBOX/OUTBOX
-- **PRIOR:** #28575 #241 DONE-LIVE.
-- **THIS:** Archived fat Cursor inbox/outbox under docs/bus/archive/*-pre-diet.md; hot OUTBOX 162≤200, INBOX 12≤40 (standing law kept). Other seats' bus files still over cap (not Cursor-owned).
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:05 PM CT) — #241 DONE-LIVE (Codex batch94)
-- **PRIOR:** #28574 ENG-34 match exempt.
-- **THIS:** PENDING/ROUND #241 → DONE-LIVE — Codex live USMCA 17:14CT Class/Debit 4px gap both viewports after #28557 reload.
-- **NEXT:** more live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:00 PM CT) — ENG-34 match orphan exempt; tip #57/#159 week TZ
-- **PRIOR:** #28572 wire rows-250-255.
-- **THIS:** verify-match-vendor exempt (OWNER BUILD-FIRST no match); PENDING #57/#159 cite #28561 company-calendar week + selected-week deductions. ENG-34 orphans → 0.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:55 PM CT) — ENG-34 wire rows-250-255
-- **PRIOR:** #28571 System need-company.
-- **THIS:** verify-steps 19869 wires verify-rows-250-255. ENG-34 orphans → match residual only.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
 

@@ -60,7 +60,27 @@ export function InShopBoard({ companyId }: { companyId: string }) {
   const openBays = bays.filter((b) => !b.work_order).map((b) => b.bay_number);
   const busy = assign.isPending || release.isPending;
 
-  return <section className="min-w-0 space-y-3" aria-label="Shop bays" data-testid="in-shop-bay-board">
+  // ShopBays.dc.html chrome: MAINTENANCE · SHOP FLOOR / The shop, from above — N bays / Check a truck in /
+  // OVERHEAD DOOR · OPEN BAY / YARD LANE · NEXT IN, BY PM URGENCY. Numbers from live shop-bays only.
+  return <section className="min-w-0 space-y-3" aria-label="Shop floor plan" data-testid="in-shop-bay-board">
+    <header className="flex flex-wrap items-start justify-between gap-2" data-testid="in-shop-floor-chrome">
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wide text-[#0F1B2D]">MAINTENANCE · SHOP FLOOR</h2>
+        <p className="mt-0.5 text-xs text-[#64748B]">
+          The shop, from above — {bay_count} bay{bay_count === 1 ? "" : "s"}
+        </p>
+      </div>
+      <Link
+        to="/maintenance/arriving-soon"
+        className="rounded-sm border border-[#C6D1DC] bg-white px-3 py-1.5 text-xs font-semibold text-[#14314F] hover:bg-[#F6F9FB]"
+        data-testid="in-shop-check-truck-in"
+      >
+        Check a truck in
+      </Link>
+    </header>
+    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#64748B]" data-testid="in-shop-overhead-door">
+      OVERHEAD DOOR
+    </p>
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="in-shop-bays">
       {bays.map(({ bay_number, work_order: wo }) => {
         const st = wo ? bayStatusLabel(wo.status) : null;
@@ -75,9 +95,9 @@ export function InShopBoard({ companyId }: { companyId: string }) {
         >
           <header className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-bold uppercase tracking-wide text-slate-700">
-              Bay {bay_number}{wo ? <> · {wo.unit_id ? <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} /> : (wo.unit_number ?? "No truck")}</> : null}
+              BAY {bay_number}{wo ? <> · {wo.unit_id ? <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} /> : (wo.unit_number ?? "No truck")}</> : null}
             </span>
-            {st ? <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span> : <span className="text-slate-500">Open</span>}
+            {st ? <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span> : <span className="text-slate-500">OPEN BAY</span>}
           </header>
           {wo ? <>
             <WoLine wo={wo} />
@@ -89,7 +109,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
               className="mt-auto self-start rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50"
               data-testid={`in-shop-bay-${bay_number}-release`}>Release bay</button>
           </> : <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-xs text-slate-500">
-            <span className="font-semibold">Open bay</span>
+            <span className="font-semibold">OPEN BAY</span>
             <span>Drag a truck in from the yard lane</span>
           </div>}
         </article>;
@@ -98,7 +118,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
 
     <section aria-label="Yard lane" className="min-w-0 space-y-2" data-testid="in-shop-yard-lane">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-bold uppercase text-slate-700">Yard lane · waiting for a bay ({yard.length})</h2>
+        <h2 className="text-xs font-bold uppercase text-slate-700">YARD LANE · NEXT IN, BY PM URGENCY ({yard.length})</h2>
         <Link className="text-xs" to="/maintenance/active-wos">View all work orders →</Link>
       </div>
       {yard.length === 0 ? <p className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">No active work orders are waiting for a bay.</p> :

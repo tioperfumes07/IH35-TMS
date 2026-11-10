@@ -345,7 +345,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           {activeCategory === "financial" ? (
             <>
               <V3Panel
-                title="Accounting &amp; financial"
+                title="Accounting & financial"
                 subtitle="Core accounting statements plus operational finance views"
                 onViewAll={() => setShowAll((v) => !v)}
                 viewAllLabel={showAll ? "Show primary →" : "View all →"}

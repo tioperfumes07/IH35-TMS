@@ -1,0 +1,1 @@
+export default { name: "verify:verify-faro-purchase-report-seed", run(ctx) { ctx.run("node", ["scripts/verify-faro-purchase-report-seed.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-faro-purchase-report-seed.mjs"]); } };

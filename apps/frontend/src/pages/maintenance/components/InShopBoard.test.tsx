@@ -28,7 +28,7 @@ const wrap = (ui: React.ReactElement) =>
 describe("InShopBoard (row 59)", () => {
   it("renders one card per bay with the truck, status and work; the empty bay is open", async () => {
     wrap(<InShopBoard companyId="c1" />);
-    expect(await screen.findByTestId("in-shop-bay-4")).toHaveTextContent("Open bay");
+    expect(await screen.findByTestId("in-shop-bay-4")).toHaveTextContent("OPEN BAY");
     expect(screen.getByTestId("in-shop-bay-1")).toHaveTextContent("T124");
     expect(screen.getByTestId("in-shop-bay-1")).toHaveTextContent("Working");
     expect(screen.getByTestId("in-shop-bay-2")).toHaveTextContent("Waiting parts");
@@ -62,6 +62,6 @@ describe("InShopBoard (row 59)", () => {
     vi.mocked(getShopBays).mockRejectedValueOnce(new Error("offline"));
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter><InShopBoard companyId="c1" /></MemoryRouter></QueryClientProvider>);
     expect(await screen.findByText("Couldn't load the shop bays")).toBeInTheDocument();
-    expect(screen.queryByText("Open bay")).not.toBeInTheDocument();
+    expect(screen.queryByText("OPEN BAY")).not.toBeInTheDocument();
   });
 });
