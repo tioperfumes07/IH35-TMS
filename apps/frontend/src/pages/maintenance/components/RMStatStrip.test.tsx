@@ -26,7 +26,7 @@ const KPIS = {
   parts_low_stock: 4,
 } as unknown as MaintenanceKpis;
 
-const LABELS = ["PM Due Soon", "Road Service", "Parts Low-Stock", "MTD Cost"];
+const LABELS = ["PM due soon", "Road service", "Parts low-stock", "MTD cost"];
 const REMOVED = ["Open WOs", "In Progress", "Awaiting Parts", "Severe / OOS"];
 
 const renderStrip = (kpis: MaintenanceKpis) =>
@@ -51,7 +51,7 @@ describe("RMStatStrip", () => {
     const { container } = renderStrip(KPIS);
     expect(container.querySelectorAll("[data-kpi-drill]")).toHaveLength(LABELS.length);
     expect(container.querySelectorAll(".board-kpi")).toHaveLength(LABELS.length);
-    expect(screen.getByLabelText("Road Service — view records")).toHaveAttribute(
+    expect(screen.getByLabelText("Road service — view records")).toHaveAttribute(
       "href",
       "/maintenance/road-service"
     );

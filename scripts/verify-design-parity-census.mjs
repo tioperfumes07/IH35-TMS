@@ -137,6 +137,85 @@ const HUB_DESIGN_LABELS = [
       "Lowest balance",
     ],
   },
+  {
+    route: "/maintenance",
+    files: [
+      "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+      "apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx",
+      "apps/frontend/src/pages/maintenance/components/RMStatStrip.tsx",
+    ],
+    labels: [
+      "PM due soon",
+      "Road service",
+      "Parts low-stock",
+      "MTD cost",
+      "Fleet health line — road to the next PM",
+    ],
+  },
+  {
+    route: "/customers",
+    files: [
+      "apps/frontend/src/components/boards/PartyBoard.tsx",
+      "apps/frontend/src/pages/Customers.tsx",
+    ],
+    labels: [
+      "With transactions",
+      "In the book",
+      "Open invoices",
+      "Billed",
+      "A/R open",
+      "Collected",
+    ],
+  },
+  {
+    route: "/vendors",
+    files: [
+      "apps/frontend/src/components/boards/VendorsHomeBoard.tsx",
+      "apps/frontend/src/pages/Vendors.tsx",
+    ],
+    labels: [
+      "With transactions",
+      "In the book",
+      "Spend YTD",
+      "Fuel share",
+      "Open bills",
+      "Unposted fuel",
+      "Spend by category · YTD",
+    ],
+  },
+  {
+    route: "/insurance",
+    files: ["apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx"],
+    labels: [
+      "Active policies",
+      "Annual premium",
+      "Open claims",
+      "Coverage gaps",
+      "Policy year",
+      "Premium by coverage",
+    ],
+  },
+  {
+    route: "/legal",
+    files: ["apps/frontend/src/pages/legal/components/LegalHomeBoard.tsx"],
+    labels: [
+      "Expiring contracts (60d)",
+      "Open matters",
+      "Contract pipeline",
+      "Matters & deadlines",
+      "Quick actions",
+    ],
+  },
+  {
+    route: "/safety/driver-files",
+    files: ["apps/frontend/src/pages/safety/components/DriverQualificationMatrix.tsx"],
+    labels: [
+      "Active drivers",
+      "DOT medical on file",
+      "Open fines",
+      "Driver qualification matrix",
+    ],
+  },
 ];
 
 function read(p) {
