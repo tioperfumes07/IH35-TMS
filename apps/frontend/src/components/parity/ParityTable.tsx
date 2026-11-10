@@ -1559,8 +1559,14 @@ export function ParityTable<T>({
                 ? String((row as Record<string, unknown>)[String(column.key)] ?? "")
                 : undefined
             }
-            className={`${column.overflowVisible ? "overflow-visible" : "overflow-hidden"} px-2 align-top text-gray-800 ${
-              column.allowWrap ? "wrap-break-word" : "whitespace-nowrap text-ellipsis"
+            className={`${column.overflowVisible || isParityMoneyColumn(column) ? "overflow-visible" : "overflow-hidden"} px-2 align-top text-gray-800 ${
+              // COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 B1 — moneyNeverEllipsis: kind:"money" (and *_cents)
+              // cells must show full amounts. Ellipsis on money is a board FAIL.
+              column.allowWrap
+                ? "wrap-break-word"
+                : isParityMoneyColumn(column)
+                  ? "whitespace-nowrap"
+                  : "whitespace-nowrap text-ellipsis"
             } ${parityMergedCellClass(column)}`}
             style={{
               paddingTop: d.padY,

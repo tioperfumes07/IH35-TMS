@@ -1,3 +1,9 @@
+## OUTBOX (11-09-2026 ~8:40 PM CT) — PERMANENT complete-design law + ROUND 8.5 Codex finding fixes
+- **READ FIRST EVERY DESIGN TURN:** `docs/design/00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md` + Codex findings `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-CURSOR-FIRST-VISUAL-FINDINGS.md` + `docs/design/DESIGN-PARITY-VERIFY.md` + `docs/design/DESIGN-BOARD-ROUTE-MAP.md`.
+- **PERMANENT ANTI-DRIFT:** `scripts/verify-complete-design-build-law.mjs` wired into design-parity census (20018). Census/label/chrome-only is NOT design-done. Same board concepts for ALL tabs/subtabs.
+- **THIS (board-identical, Codex batch 1):** S1 topbar 42 / rail 66; S2 Inter already locked; I2 shared red dashed Today + I5 coverage-gaps subtitle; B1 money never-ellipsis + minWidth 120; B2 Latest before Pending (pending scroll); B3 appearance=board left body; A1 single-row menubar ≥1280; A2 grid already 1.2/1.2/1.
+- **NEXT:** consume next Codex ROUND 8.5 fail batch; continue full board rebuilds (TruckProfile/ShopBays/Settlements/…) — never census pins. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~10:45 PM CT) — ROUND 8.4/8.5 Accounting hub board geometry + Inter titles
 - **PRIOR:** #28718 Insurance board-identical (Codex 8.5 fail list).
 - **THIS:** Accounting hub lower row restored to board 1.2fr/1.2fr/1fr (stack &lt;1100px); aging Amount/Share nowrap; .text-page-title + AccountingSubNav h1 → Inter 700 (board font, not serif). No census-label-only work.

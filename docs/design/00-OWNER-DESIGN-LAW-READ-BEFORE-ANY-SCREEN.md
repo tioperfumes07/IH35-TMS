@@ -189,3 +189,10 @@ A board is built when all of the following are true and pasted as proof:
 
 The owner walks every screen in Chrome himself. No coder claims a screen is done because it looked
 right — the proof is the measurements and the live queries above.
+
+
+---
+
+## CURSOR SEAT — COMPLETE BUILD (2026-11-09, permanent)
+
+See `docs/design/00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md`. Surface/census-only ships are not design-done. Same board concepts for every tab and subtab. Enforced by `scripts/verify-complete-design-build-law.mjs`.

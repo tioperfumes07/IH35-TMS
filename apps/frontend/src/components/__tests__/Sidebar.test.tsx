@@ -53,7 +53,8 @@ describe("Sidebar", () => {
       </MemoryRouter>
     );
     const aside = container.querySelector("aside");
-    expect(aside?.className).toContain("w-20");
+    // ROUND 8.5 S1 — board rail width token (66px), not Tailwind w-20.
+    expect((aside as HTMLElement).style.width).toBe("66px");
     const style = window.getComputedStyle(aside as HTMLElement);
     // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — #1B2333 (near-black) -> #14314F.
     expect(style.backgroundColor).toBe("rgb(20, 49, 79)");
