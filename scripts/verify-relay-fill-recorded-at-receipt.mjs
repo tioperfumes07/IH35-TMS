@@ -52,7 +52,12 @@ export function findDefects(s) {
   const hookStep = s.hook.slice(s.hook.indexOf('"fuel.relay_fill_records"'));
   if (!/listRelayFillDocumentsWithoutRecords\(/.test(hookStep) || !/recordAndLinkRelayFillDocument\(/.test(hookStep)) out.push("the ingest hook does not record and link record-less Relay documents");
   if (s.hook.indexOf('"fuel.relay_fill_records"') < 0 || s.hook.indexOf('"fuel.relay_fill_records"') > s.hook.indexOf('"fuel.follows_truck"')) out.push("record-less fills are not recorded before the fill engine runs");
-  if (!/relay_fill_records_refused/.test(s.hook)) out.push("refused Relay records do not fail the run (silent)");
+  // Owner ruling 2026-11-10 (Lead recommendation adopted; supersedes the ENG-65 wording): a Relay fill REFUSED BY NAME is
+  // audited (fuel.relay_fill_record_refused) and logged with its reason and does not fail fuel.relay_fill_records; an
+  // UNEXPLAINED non-link still throws and fails the run. Nothing is silent: both branches must exist.
+  if (!/const \{ failures, refusals \} = relayFillRunVerdict\(results\)/.test(s.hook)) out.push("the run verdict does not split named refusals from unexplained failures (relayFillRunVerdict)");
+  if (!/if \(refusals\.length\) log\.warn\(/.test(s.hook)) out.push("named refusals are not logged with their reasons (silent)");
+  if (!/if \(failures\.length\) throw new Error\(`relay_fill_records_unlinked/.test(s.hook)) out.push("an unexplained Relay non-link does not fail the run (silent)");
   const creatorBlock = s.creator.slice(s.creator.indexOf("let rows = relayRowsThisPost;"), s.creator.indexOf("const written = await writeRelayFillFuelRows("));
   if (/if \(!rows && draft\.edit_void_repost\)/.test(creatorBlock) || !/if \(!rows\) \{\s*const existing = /.test(creatorBlock)) out.push("the Creator adopts a fill's live records only on an Edit (a second set is written on a first post)");
   return out;
@@ -68,7 +73,9 @@ if (process.argv.includes("--selftest")) {
     ["receipt adopt skips a fuel fill on another condition", plant("doc", /if \(!fills\.rows\.length(?: && !relayRow\.rows\[0\]\?\.is_service)?\) \{(?=\s*const recorded = await recordRelayFillAtReceipt\()/, "if (!fills.rows.length && input.relay_fill_id === null) {")],
     ["refusal not audited", { ...src, doc: (() => { const i = src.doc.indexOf("} catch (err) {", src.doc.indexOf("export async function recordRelayFillAtReceipt(")); return src.doc.slice(0, i) + src.doc.slice(i).replace('"fuel.relay_fill_record_refused"', '"x"'); })() }],
     ["Creator adopts only on Edit", plant("creator", "      if (!rows) {\n        const existing = ", "      if (!rows && draft.edit_void_repost) {\n        const existing = ")],
-    ["hook swallows refusals", plant("hook", "if (refused.length) throw new Error(`relay_fill_records_refused", "if (false) throw new Error(`x")],
+    ["hook swallows unexplained failures", plant("hook", "if (failures.length) throw new Error(`relay_fill_records_unlinked", "if (false) throw new Error(`x")],
+    ["hook drops the refusal log", plant("hook", "if (refusals.length) log.warn(", "if (false) log.warn(")],
+    ["hook stops splitting the verdict", plant("hook", "const { failures, refusals } = relayFillRunVerdict(results)", "const failures = [], refusals = []")],
   ];
   let caught = 0;
   for (const [name, planted] of plants) {
