@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~9:10 PM CT) — ROUND 8.4 Accounting AP Aging design fill + census deepen
+- **PRIOR:** #28708 Maintenance/Customers/Vendors/Insurance/Legal/Safety hub pins.
+- **THIS:** Accounts Payable Aging — add design Aging filter (All/Current/1–30/…); en-dash bucket labels per accounts-payable-render.html + design-parity-contract. Census pins /accounting (aging cols + close marks), /accounting/unexpected, /accounting/accounts-payable. failing_routes stays 0.
+- **NEXT:** Accounting remaining tabs screenshots; TruckProfile service map; Banking element-complete; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:55 PM CT) — ROUND 8.4 hub pins wave 2 + Maintenance KPI casing
 - **PRIOR:** #28704 Settlements + CashFlow hub pins.
 - **THIS:** Census pins Maintenance/Customers/Vendors/Insurance/Legal/Safety-driver-files hub labels from v3. Maintenance KPI labels → design sentence case (PM due soon / Road service / Parts low-stock / MTD cost). failing_routes stays 0.
@@ -187,9 +192,4 @@
 - **PRIOR:** #28574 ENG-34 match exempt.
 - **THIS:** PENDING/ROUND #241 → DONE-LIVE — Codex live USMCA 17:14CT Class/Debit 4px gap both viewports after #28557 reload.
 - **NEXT:** more live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:00 PM CT) — ENG-34 match orphan exempt; tip #57/#159 week TZ
-- **PRIOR:** #28572 wire rows-250-255.
-- **THIS:** verify-match-vendor exempt (OWNER BUILD-FIRST no match); PENDING #57/#159 cite #28561 company-calendar week + selected-week deductions. ENG-34 orphans → 0.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
 
