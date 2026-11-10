@@ -74,11 +74,14 @@ function selftest() {
   if (!problems(m("routes", "ok: overallOk(stages),", "ok: true,")).some((x) => /literal ok: true/.test(x))) bad.push("a literal ok: true passed");
   if (!problems(m("routes", "await recordAfterCommit(user.uuid, afterInput, after);", "")).some((x) => /stored/.test(x))) bad.push("an unstored failure passed");
   if (!problems(m("after", 'results[i]?.reason === "error"', "false")).some((x) => /billing/.test(x))) bad.push("a swallowed billing error passed");
-  if (!problems(m("drawer", 'data-testid="sc-post-stages"', 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a hidden result passed");
+  // sweepA — #27838 moved the stages panel onto BoardSection (testId="sc-post-stages"); the plant hides EITHER spelling, and
+  // a drawer that drops Retry is still caught.
+  if (!problems(m("drawer", /(?:data-testid|testId)="sc-post-stages"/g, 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a hidden result passed");
+  if (!problems(m("drawer", 'data-testid="sc-post-retry"', 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a drawer with no Retry passed");
   if (!problems(m("seed", "bookLoadOnClient(client as never, input, { source: \"historical_backfill\" })", "bookLoad(input)")).some((x) => /bookLoadOnClient/.test(x))) bad.push("a separate-transaction booking passed");
   if (!problems(m("svc", "s.created_at = now()", "true")).some((x) => /Option A/.test(x))) bad.push("adopting an earlier tour passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 7/7 (real tree passes; literal ok, unstored failure, swallowed billing error, hidden result, separate-transaction booking, earlier-tour adoption each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 8/8 (real tree passes; literal ok, unstored failure, swallowed billing error, hidden result, missing Retry, separate-transaction booking, earlier-tour adoption each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();

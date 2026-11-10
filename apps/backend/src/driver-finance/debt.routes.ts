@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { escrowAccumulationPct, resolveDriverEscrowTarget } from "./escrow-target.service.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 
 const paramsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -129,7 +130,7 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
                 AND ci.signer_type = 'driver'
                 AND ci.status::text IN ('signed_electronically', 'signed_on_paper')
                 AND ci.signed_at IS NOT NULL
-                AND ci.voided_at IS NULL
+                AND ${notVoided("ci")}
                 AND (ci.status::text <> 'signed_on_paper' OR ci.signed_pdf_attachment_id IS NOT NULL)
             ) AS signed_clause_count
         `,

@@ -5,7 +5,7 @@
  * adoption path restates pay before delivery). No SQL, amount, posting or transaction-boundary change.
  * settlement-creator.service.ts re-exports both functions, so every existing caller is unchanged.
  */
-import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { liveDriverBill, notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
@@ -36,8 +36,8 @@ export async function restateCreatorDriverBillFromSignedLoad(
   if (additionalOnly) {
     const { setAdditionalOnlyDriverPayForLoad } = await import("../dispatch/book-load.service.js");
     await setAdditionalOnlyDriverPayForLoad(client, { loadId, operatingCompanyId: draft.operating_company_id, actorUserId, plan: additionalOnly });
-    const bills = (await client.query<{ gross: string }>(`SELECT gross_amount_cents::text AS gross FROM driver_finance.driver_bills
-      WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'`, [draft.operating_company_id, loadId])).rows;
+    const bills = (await client.query<{ gross: string }>(`SELECT db.gross_amount_cents::text AS gross FROM driver_finance.driver_bills db
+      WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid AND ${liveDriverBill("db")}`, [draft.operating_company_id, loadId])).rows;
     if (bills.length !== 1 || Number(bills[0]?.gross) !== additionalOnly.amount_cents) throw new SettlementCreatorError("additional_only_bill_mismatch", `Load ${load.load_number}: additional-only bill must equal its itemized pay.`);
     return;
   }
@@ -67,10 +67,10 @@ export async function restateOpenDriverBillToSignedPay(
   },
 ): Promise<void> {
   const bill = (await client.query<{ id: string; gross: string; driver_id: string; team_driver_id: string | null }>(
-    `SELECT id::text, gross_amount_cents::text AS gross, driver_id::text, team_driver_id::text
-       FROM driver_finance.driver_bills
-      WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'
-      ORDER BY created_at DESC`,
+    `SELECT db.id::text, db.gross_amount_cents::text AS gross, db.driver_id::text, db.team_driver_id::text
+       FROM driver_finance.driver_bills db
+      WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid AND ${liveDriverBill("db")}
+      ORDER BY db.created_at DESC`,
     [input.companyId, input.loadId],
   )).rows;
   const signed = input.loadedCents + input.emptyCents;
@@ -109,7 +109,7 @@ export async function restateOpenDriverBillToSignedPay(
     `SELECT b.status::text,
             (SELECT s.id::text FROM driver_finance.driver_settlements s
               WHERE s.id = b.settled_in_settlement_id AND s.operating_company_id = b.operating_company_id
-                AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settled,
+                AND ${notVoided("s")} AND ${statusNotCancelled("s")}) AS settled,
             b.accrued_bill_id::text AS accrued
        FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
     [b.id],
