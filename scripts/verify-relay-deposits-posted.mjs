@@ -60,7 +60,7 @@ export function evaluate(rows, knownCards, now) {
 
 async function measure(client, codeCards) {
   await client.query("BEGIN");
-  await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+  await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
   const cards = await client.query(
     `SELECT card_last4 FROM integrations.relay_company_cards
       WHERE operating_company_id = $1::uuid AND is_active AND voided_at IS NULL`,
