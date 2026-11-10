@@ -15628,12 +15628,12 @@
   "20017": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
+    "purpose": "verify-relay-fill-records-provider-match (ACCT-F11125, #28692)"
   },
   "20021": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
-    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
+    "purpose": "verify-relationship-scorer-scan-once-per-candidate (ACCT-F11126, #28699)"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -17639,5 +17639,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1099
+  "total_claimed": 1099,
+  "20025": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-cross-rail-pair-exact-gallons (ACCT-F11107)"
+  },
+  "20029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
+  }
 }
