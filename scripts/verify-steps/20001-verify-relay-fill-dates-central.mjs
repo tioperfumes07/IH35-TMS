@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relay-fill-dates-central", run(ctx) { ctx.run("node", ["scripts/verify-relay-fill-dates-central.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relay-fill-dates-central.mjs"]); } };

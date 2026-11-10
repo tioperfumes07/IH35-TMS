@@ -1,5 +1,6 @@
 import { loadAtTimeForDriverSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
+import { relayFillDaySql } from "./relay-fill-day.sql.js";
 
 // U25 (owner UI register 2026-10-03; owner 2026-10-03: "nothing on the books but it does affect the categorization. We can
 // receive a credit for the reefer fuel from the US government so we need to have it detailed — how many gallons etc.")
@@ -147,9 +148,10 @@ export async function listReeferFuelForCredit(client: Db, companyId: string, fro
      -- ROUND 391.2 — the Relay feed's own Reefer product lines (product code 033) that no reefer fuel row carries yet:
      -- real reefer purchases the fuel table never received. Counted from the feed so the quarter's gallons are whole;
      -- a feed line that matches a reefer_diesel fuel row (same unit, +/-1 day, same gallons) is counted once, from the row.
+     -- ACCT-F11122: a fill's day is its Central business day (Relay's export day), never the UTC date.
      feed AS (
        SELECT 'relay_feed'::text AS source, l.id::text AS source_id, NULL::text AS expense_id, NULL::text AS expense_line_id,
-              t.relay_fuel_code AS document_number, (t.relay_created_at)::date AS d, t.merchant_name AS vendor_name,
+              t.relay_fuel_code AS document_number, ${relayFillDaySql("t")} AS d, t.merchant_name AS vendor_name,
               NULLIF(concat_ws(', ', t.location_city, t.location_state), '') AS location,
               t.matched_unit_id AS unit_id, ${relayPromptReeferTrailerSql("t")} AS trailer_id, NULL::uuid AS load_id,
               l.volume::numeric AS gallons, COALESCE(l.total_discounted_price_cents, l.total_retail_price_cents, 0)::bigint AS cost_cents
@@ -158,12 +160,12 @@ export async function listReeferFuelForCredit(client: Db, companyId: string, fro
         WHERE l.operating_company_id = $1::uuid AND ${relayLineKindSql("l")} = 'reefer' AND ${relayLineIsGallonsSql("l")}
           AND l.voided_at IS NULL AND t.voided_at IS NULL
           AND l.volume > 0
-          AND (t.relay_created_at)::date BETWEEN $2::date AND $3::date
+          AND ${relayFillDaySql("t")} BETWEEN $2::date AND $3::date
           AND NOT EXISTS (
             SELECT 1 FROM fuel.fuel_transactions ft
              WHERE ft.operating_company_id = t.operating_company_id AND ft.fuel_type = 'reefer_diesel' AND ft.voided_at IS NULL
                AND ft.unit_id = t.matched_unit_id AND round(ft.gallons::numeric, 3) = round(l.volume::numeric, 3)
-               AND abs(COALESCE(ft.purchased_at, ft.transaction_at)::date - (t.relay_created_at)::date) <= 1)
+               AND abs(COALESCE(ft.purchased_at, ft.transaction_at)::date - ${relayFillDaySql("t")}) <= 1)
      )
      SELECT x.source, x.source_id, x.expense_id, x.expense_line_id, x.document_number, x.d::text AS date, x.vendor_name, x.location,
             x.unit_id::text, u.unit_number, x.trailer_id::text, tr.equipment_number AS trailer_number, tr.equipment_type AS trailer_type,
