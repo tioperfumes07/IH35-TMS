@@ -25,6 +25,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Combobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { transitionDispatchLoad } from "../../api/dispatch";
 import type { DispatchStatus } from "../../api/dispatch";
 import { formatMoneyCents } from "../../components/dispatch/constants";
@@ -121,10 +122,11 @@ const EXCEPTION_RED = "#991B1B";
 // 70px transit rail, which now spans BOTH grid rows (grid-row: 1 / 3). The text column's two stacked
 // lines are far shorter than 70px, so they sit inside the height the rail already dictated. The row
 // is exactly as tall as it was.
-/** TRUCKLINE-STATUS-COMBOBOX — one option table, so the control and the counts can never drift
- *  apart. Every value here is a bucket legBuckets() can actually return, plus "all". */
-const TRUCK_LINE_STATUS_FILTERS: ReadonlyArray<{ value: TruckLineStatusFilter; label: string }> = [
-  { value: "all", label: "All trucks" },
+/**
+ * TRUCKLINE-STATUS-FILTER options (buckets only — empty multi-select = all trucks).
+ * U12: Status is a multi-selector everywhere; counts stay derived from the same legBuckets().
+ */
+const TRUCK_LINE_STATUS_FILTERS: ReadonlyArray<{ value: Exclude<TruckLineStatusFilter, "all">; label: string }> = [
   { value: "rolling", label: "Rolling" },
   { value: "stopped", label: "Stopped" },
   { value: "signal_stale", label: "Signal stale" },
@@ -1029,7 +1031,8 @@ export function TruckLineBoard({
   });
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TruckLineStatusFilter>("all");
+  /** U12 — multi-select status; empty = all trucks (same view as prior "all"). */
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   // ROUND 23.1 D5 — a view preference only, never persisted (no storageKey — this board has none
   // by design and that stays true) and never re-fetched (sorting is client-side over rows already
   // in hand).
@@ -1128,10 +1131,11 @@ export function TruckLineBoard({
   // narrow together and the sort always orders what is actually on screen. A group whose legs are
   // all filtered out drops out entirely rather than rendering an empty unit header.
   const statusFilteredGroups = useMemo(() => {
-    if (statusFilter === "all") return searchedGroups;
+    if (statusFilter.length === 0) return searchedGroups;
+    const selected = new Set(statusFilter);
     return searchedGroups
       .map((g) => {
-        const legs = g.legs.filter((r) => legBuckets(g, r).includes(statusFilter));
+        const legs = g.legs.filter((r) => legBuckets(g, r).some((b) => b !== "all" && selected.has(b)));
         if (legs.length === 0) return null;
         return { ...g, legs };
       })
@@ -1514,37 +1518,30 @@ export function TruckLineBoard({
       ) : null}
 
       <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1.5 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
-          <span className="font-semibold uppercase tracking-[0.3px] text-[#4B5563] text-section-header">Status</span>
-          {/* TRUCKLINE-STATUS-COMBOBOX (Lead, 2026-09-30) — the owner asked for the house combo
-              drop-down here twice; it was still a bare <SelectCombobox>, which is why it looked and
-              behaved unlike every other filter in the app. This is components/Combobox, size
-              "sm" so it keeps the h-7 rhythm of the row it sits in, with the SAME data-testid
-              the previous control carried so every existing test and e2e selector still
-              resolves. Counts stay in the labels — they are what make this filter worth
-              opening. `null` (cleared) maps back to "all", the only honest neutral here: an
-              empty status filter and "all trucks" are the same view. */}
-          <div className="min-w-[200px]">
-            <Combobox
+        <div className="flex items-center gap-1.5 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
+          {/* U12 — Status multi-selector (owner: status is multi everywhere). Empty = all trucks.
+              Counts stay in option labels from the same legBuckets() classifier the filter uses.
+              On-time station still uses Combobox (verify-truck-line-board D6). */}
+          <div className="min-w-[200px]" data-testid="truck-line-status-filter">
+            <MultiSelectDropdown
+              label="Status"
               options={TRUCK_LINE_STATUS_FILTERS.map((f) => ({
                 value: f.value,
                 label: `${f.label} (${topBarStats[f.value]})`,
               }))}
-              value={statusFilter}
-              onChange={(v) => setStatusFilter((v as TruckLineStatusFilter | null) ?? "all")}
-              size="sm"
-              placeholder="All trucks"
-              ariaLabel="Status"
-              dataTestId="truck-line-status-filter"
+              selected={statusFilter}
+              onChange={setStatusFilter}
+              allLabel={`All trucks (${topBarStats.all})`}
+              data-testid="truck-line-status-multiselect"
             />
           </div>
-        </label>
-        {statusFilter !== "all" ? (
+        </div>
+        {statusFilter.length > 0 ? (
           <button
             type="button"
             className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#4B5563]"
             data-testid="truck-line-status-filter-clear"
-            onClick={() => setStatusFilter("all")}
+            onClick={() => setStatusFilter([])}
           >
             Clear
           </button>

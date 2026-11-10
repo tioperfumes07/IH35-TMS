@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:55 PM CT) — U12 Truck Line Status multi-select
+- **PRIOR:** #28806 CF4 AVP money-axis 11px.
+- **THIS:** TruckLineBoard Status filter is MultiSelectDropdown (U12); empty = all trucks; OR across Rolling/Stopped/Signal stale/Appointment past/Available with counts from same legBuckets(); Clear resets. On-time station Combobox retained (D6). R4–R6 Cascade.
+- **NEXT:** residual Cursor boards/U12/U28; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:40 PM CT) — CF4 AVP chart money-axis 11px
 - **PRIOR:** #28805 CF5 Rolling Ledger board anti-clip.
 - **THIS:** ActualVsProjected chart Y money labels 10→11 Inter (8.4a) with nowrap; left margin 96 retained. R4–R6 Cascade.
@@ -188,10 +193,5 @@
 - **PRIOR:** #28611 Maint Parts + OEM Parts U12.
 - **THIS:** SURFACE-BREACH-AUTHORIZED: Cascade archived — AccountingCatalog + DetailTypes + VoidCancel + OverrideReasons + PostingTemplates status → MultiSelectDropdown (apiStatus/matchesStatus). verify-filter-surfaces VoidCancel retarget.
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:50 PM CT) — U12 Maint Parts + OEM Parts MultiSelect
-- **PRIOR:** #28609 Locations + Maint services U12.
-- **THIS:** MaintenancePartsCatalog manufacturer/category + OemPartsCatalog brand/category → MultiSelectDropdown. Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
