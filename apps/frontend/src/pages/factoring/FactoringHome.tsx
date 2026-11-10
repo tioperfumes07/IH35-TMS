@@ -2167,17 +2167,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           </BoardSection>
         </div>
       ) : null}
-            rowKey={(row) => row.testId}
-                      />
-                    </div>
-                  </div>
-                </BoardSection>
-              )}
-              </div>
-            </div>
-          );
-        })()
-      ) : null}
 
       {/* FAC-09a Purchase Report: purchase-lines engine + debtor multi-select (?pr_customer_ids=).
           Columns without a backing field stay honest "—". "Include Non-Purchased Invoices" still
