@@ -7,6 +7,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { runDriftDetectors } from "../banking/drift-alerts.service.js";
 import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 const CRON_NAME = "banking.reconciliation_drift_alerts_nightly";
 const CRON_EXPRESSION = "40 5 * * *";
@@ -22,7 +23,7 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
   const result = await client.query<{ operating_company_id: string }>(
     `SELECT id::text AS operating_company_id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return result.rows.map((row) => row.operating_company_id);
+  return filterLiveEngineCompanies(result.rows.map((row) => row.operating_company_id));
 }
 
 export async function runBankDriftAlertsCronTick(deps?: { withLuciaBypassImpl?: typeof withLuciaBypass }) {

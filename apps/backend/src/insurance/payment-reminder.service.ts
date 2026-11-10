@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 export type DueWindow = "t7" | "t3" | "t1" | "due_today" | "overdue" | "future";
 
@@ -116,7 +117,7 @@ export async function runInsurancePaymentReminderTick(): Promise<void> {
       `
     );
     const today = toDateOnlyString(new Date());
-    for (const company of companies.rows) {
+    for (const company of companies.rows.filter((c) => isLiveEngineCompany(c.id))) {
       assertTenantContext(company.id, "insurance.payment_reminder_cron");
       await sendReminders(company.id, today);
     }
