@@ -1,10 +1,10 @@
 {
-  "healthzSha": "15c2dda",
-  "generated_at": "2026-11-10T10:23:57.055Z",
+  "healthzSha": "c4b7ab4",
+  "generated_at": "2026-11-10T12:28:27.612Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "15c2dda",
+    "deployedSha": "c4b7ab4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/10/2026, 04:23 AM CT",
+      "url": "",
+      "sha": "c4b7ab4850",
+      "committedAtIso": "2026-11-10T10:23:57Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/10/2026, 02:27 AM CT",
       "url": "",
       "sha": "15c2ddad7a",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28775",
       "sha": "9235b87887",
       "committedAtIso": "2026-11-10T00:00:32-06:00"
-    },
-    {
-      "number": 28774,
-      "title": "FIX: main red — step 10520 required Settlements Tours per-leg columns hidden; the additive guard requires them visible (LST-F11137)",
-      "state": "merged",
-      "mergedAtCt": "11/09/2026, 11:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28774",
-      "sha": "da007a8002",
-      "committedAtIso": "2026-11-09T23:34:10-06:00"
     }
   ]
 }
