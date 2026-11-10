@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:45 PM CT) — ROUND 8.4/8.5 Accounting hub board geometry + Inter titles
+- **PRIOR:** #28718 Insurance board-identical (Codex 8.5 fail list).
+- **THIS:** Accounting hub lower row restored to board 1.2fr/1.2fr/1fr (stack &lt;1100px); aging Amount/Share nowrap; .text-page-title + AccountingSubNav h1 → Inter 700 (board font, not serif). No census-label-only work.
+- **NEXT:** next Codex failing boards — full geometry rebuilds; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~10:30 PM CT) — ROUND 8.4/8.5 Insurance board-identical rebuild (Codex audit)
 - **PRIOR:** census label pins (surface) — owner/Codex: that drifted; not complete design builds.
 - **THIS:** Insurance Landing rebuilt to Insurance.dc.html geometry from Codex ROUND 8.5 fail list: Policy year labels BESIDE bars (190px label | track | premium); Premium table nowrap + board plain dollars; Fleet Covered footnote INSIDE Premium panel footer; PageHeader titles Inter 700 (not serif). Live engines unchanged.
@@ -186,10 +191,5 @@
 ## OUTBOX (11-03-2026 ~6:40 PM CT) — U12 Card Overage MultiSelect (re-ship after empty #28581)
 - **PRIOR:** #28581 empty squash (push flake; title only).
 - **THIS:** Re-land CardOverageQueuePage status → MultiSelectDropdown + U12 register note (code that #28581 missed).
-- **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:35 PM CT) — U12 Fuel Card Overage status MultiSelect
-- **PRIOR:** #28580 #57/#159 DONE-LIVE.
-- **THIS:** CardOverageQueuePage status pills → MultiSelectDropdown (default pending_review; 0/1 API pass-through, 2+ client filter). Owner UI register U12 note: PoliciesList already multi. (#28581 landed empty — see re-ship tip.)
 - **NEXT:** more U12 residuals / live DONE-LIVE; no match/Dreamline.
 
