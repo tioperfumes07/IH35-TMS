@@ -7,12 +7,14 @@ import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../../components/planner/UniversalFilterBar";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
   DEFAULT_PLANNER_RANGE_DAYS,
   buildPlannerRange,
   plannerPresetRange,
   type PlannerEntityFilterState,
+  type PlannerEntityStatus,
   type PlannerPresetKey,
 } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
@@ -81,7 +83,21 @@ function PlannerShowDays() {
   );
 }
 
-/** D3 — board entity-filter heading + Status / Driver selectors (Dispatch-TruckPlanner.dc.html). */
+const PLANNER_STATUS_OPTIONS: Array<{ value: PlannerEntityStatus; label: string }> = [
+  { value: "in-use", label: "In Use" },
+  { value: "available", label: "Available" },
+  { value: "reserved", label: "Reserved" },
+  { value: "in-shop", label: "In Shop" },
+];
+
+const PLANNER_STATUS_LABEL: Record<PlannerEntityStatus, string> = {
+  "in-use": "In Use",
+  available: "Available",
+  reserved: "Reserved",
+  "in-shop": "In Shop",
+};
+
+/** D3 + U12 — board entity-filter heading + Status multi-select / Driver picker (Dispatch-TruckPlanner.dc.html). */
 function PlannerEntityFilters({
   value,
   onChange,
@@ -94,22 +110,16 @@ function PlannerEntityFilters({
     <div className="space-y-1.5" data-testid="planner-entity-filters">
       <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="sr-only" htmlFor="planner-filter-status">
-          Status
-        </label>
-        <select
-          id="planner-filter-status"
-          data-testid="planner-filter-status"
-          className="h-7 rounded-md border border-[#DDE1E7] bg-white px-3 text-xs font-semibold text-[#111827]"
-          value={value.status}
-          onChange={(e) => onChange({ ...value, status: e.target.value as PlannerEntityFilterState["status"] })}
-        >
-          <option value="">All statuses</option>
-          <option value="in-use">In Use</option>
-          <option value="available">Available</option>
-          <option value="reserved">Reserved</option>
-          <option value="in-shop">In Shop</option>
-        </select>
+        <div className="min-w-[180px]" data-testid="planner-filter-status">
+          <MultiSelectDropdown
+            label="Status"
+            options={PLANNER_STATUS_OPTIONS}
+            selected={value.status}
+            onChange={(next) => onChange({ ...value, status: next as PlannerEntityStatus[] })}
+            allLabel="All statuses"
+            data-testid="planner-filter-status-multiselect"
+          />
+        </div>
         <div className="min-w-[180px] flex-1" data-testid="planner-filter-driver">
           <EntityPicker
             kind="driver"
@@ -130,15 +140,9 @@ function PlannerFilterChips() {
   const { range, setRange, hiddenWeekdays, setHiddenWeekdays, entityFilters, setEntityFilters } = usePlannerRange();
   const hiddenLabels = WEEKDAY_TOGGLES.filter((d) => hiddenWeekdays.includes(d.index)).map((d) => d.label);
   const statusLabel =
-    entityFilters.status === "in-use"
-      ? "In Use"
-      : entityFilters.status === "available"
-        ? "Available"
-        : entityFilters.status === "reserved"
-          ? "Reserved"
-          : entityFilters.status === "in-shop"
-            ? "In Shop"
-            : null;
+    entityFilters.status.length === 0
+      ? null
+      : entityFilters.status.map((s) => PLANNER_STATUS_LABEL[s]).join(" · ");
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-xs" data-testid="planner-filter-chips">
       <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-range">
@@ -159,7 +163,7 @@ function PlannerFilterChips() {
             type="button"
             aria-label="Clear status filter"
             className="text-gray-500 hover:text-gray-900"
-            onClick={() => setEntityFilters({ ...entityFilters, status: "" })}
+            onClick={() => setEntityFilters({ ...entityFilters, status: [] })}
           >
             ×
           </button>
