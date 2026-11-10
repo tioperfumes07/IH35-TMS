@@ -3,9 +3,22 @@ import { useMemo, useState } from "react";
 import type { CatalogColumnConfig, CatalogRow, CatalogSortConfig } from "../../hooks/useCatalogQuery";
 import { Button } from "../Button";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
-import { SelectCombobox } from "../Combobox";
+import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
 
 const SELECTION_CAP = 200;
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+] as const;
+
+/** U12: 0/2+ → all, single Active/Inactive → client filter. Undefined is_active counts active. */
+function matchesStatus(row: CatalogRow, selected: string[]): boolean {
+  if (!selected.length || selected.length === 2) return true;
+  if (selected[0] === "true") return row.is_active !== false;
+  if (selected[0] === "false") return row.is_active === false;
+  return true;
+}
 
 type Props = {
   catalogName: string;
@@ -46,7 +59,8 @@ export function CatalogTable({
   onRestore,
 }: Props) {
   // Free-text search: ParityTable toolbar owns it (LST-F3480) — no page-local filterBar search.
-  const [statusFilter, setStatusFilter] = useState<"true" | "false" | "all">("true");
+  // U12: Status MultiSelect; showInactive checkbox stays synced (voided-toggle guard) without double-filter.
+  const [status, setStatus] = useState<string[]>(["true"]);
   const [showInactive, setShowInactive] = useState(false);
   const [sortKey, setSortKey] = useState(defaultSort.column);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSort.dir);
@@ -54,14 +68,10 @@ export function CatalogTable({
   // Remount clears ParityTable internal selection after bulk archive/restore (no controlled API).
   const [tableResetKey, setTableResetKey] = useState(0);
 
-  const filteredRows = useMemo(() => {
-    return rows.filter((row) => {
-      if (statusFilter === "true" && row.is_active === false) return false;
-      if (statusFilter === "false" && row.is_active !== false) return false;
-      if (!showInactive && row.is_active === false) return false;
-      return true;
-    });
-  }, [rows, statusFilter, showInactive]);
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesStatus(row, status)),
+    [rows, status],
+  );
 
   const parityColumns = useMemo((): Array<ParityColumn<CatalogRow>> => {
     return columns.map((column) => ({
@@ -124,20 +134,30 @@ export function CatalogTable({
         maxSelectable={SELECTION_CAP}
         filterBar={
           <div className="grid gap-2 md:grid-cols-3">
-            <SelectCombobox
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "true" | "false" | "all")}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-1"
-            >
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-              <option value="all">All</option>
-            </SelectCombobox>
+            <div className="text-xs font-semibold text-[#4B5563] md:col-span-1" data-testid="catalog-table-status-filter">
+              <span className="block">Status</span>
+              <div className="mt-1">
+                <MultiSelectDropdown
+                  label="Status"
+                  options={[...STATUS_FILTER_OPTIONS]}
+                  selected={status}
+                  onChange={(next) => {
+                    setStatus(next);
+                    setShowInactive(!next.length || next.length === 2 || next[0] === "false");
+                  }}
+                  allLabel="All statuses"
+                  data-testid="catalog-table-status-multiselect"
+                />
+              </div>
+            </div>
             <label className="flex items-center gap-1 text-xs text-gray-600 md:col-span-1">
               <input
                 type="checkbox"
                 checked={showInactive}
-                onChange={(e) => setShowInactive(e.target.checked)}
+                onChange={(e) => {
+                  setShowInactive(e.target.checked);
+                  setStatus(e.target.checked ? ["true", "false"] : ["true"]);
+                }}
                 className="h-3.5 w-3.5 rounded-sm border-gray-300"
               />
               Show inactive

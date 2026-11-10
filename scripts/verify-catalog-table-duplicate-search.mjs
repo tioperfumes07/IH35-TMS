@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * LST-F3480 — CatalogTable must not mount page-local search in filterBar;
- * ParityTable toolbar owns free-text search. Status SelectCombobox stays.
+ * ParityTable toolbar owns free-text search. U12: Status MultiSelectDropdown (not SelectCombobox).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,9 @@ function assert(cond, msg) {
 
 export function checkPage(src) {
   assert(src.includes("ParityTable"), "CatalogTable: must use ParityTable");
-  assert(src.includes("SelectCombobox"), "CatalogTable: must keep status SelectCombobox");
+  // U12: status filter is MultiSelectDropdown; SelectCombobox was the Active/Inactive single select.
+  assert(src.includes("MultiSelectDropdown"), "CatalogTable: must keep status MultiSelectDropdown");
+  assert(!src.includes("SelectCombobox"), "CatalogTable: must not regress status to SelectCombobox");
   assert(
     !/placeholder=\{`Search/.test(src) && !/placeholder=["']Search /.test(src),
     "CatalogTable: must not mount page-local Search input in filterBar",

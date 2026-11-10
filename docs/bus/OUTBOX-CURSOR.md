@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~7:55 PM CT) — U12 CatalogTable status MultiSelect
+- **PRIOR:** #28616 Accounting lists U12 SURFACE-BREACH Cascade.
+- **THIS:** CatalogTable Active/Inactive SelectCombobox → MultiSelectDropdown (matchesStatus; showInactive synced, no double-filter). Retarget verify-catalog-table-duplicate-search. Covers GenericCatalog + States + DispatchFlagColors.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
 ## OUTBOX (11-03-2026 ~9:05 PM CT) — U12 Accounting lists MultiSelect (SURFACE-BREACH Cascade)
 - **PRIOR:** #28611 Maint Parts + OEM Parts U12.
 - **THIS:** SURFACE-BREACH-AUTHORIZED: Cascade archived — AccountingCatalog + DetailTypes + VoidCancel + OverrideReasons + PostingTemplates status → MultiSelectDropdown (apiStatus/matchesStatus). verify-filter-surfaces VoidCancel retarget.
