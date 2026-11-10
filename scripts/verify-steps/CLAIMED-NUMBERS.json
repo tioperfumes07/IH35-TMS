@@ -17684,5 +17684,10 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-fill-records-idempotent (ACCT-F11107: fuel.relay_fill_records skips already-recorded voided-duplicate lines)"
   },
-  "total_claimed": 1104
+  "total_claimed": 1105,
+  "20069": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-post-signed-settlement-as-signed (ACCT-F11141: the Settlement Creator posts a signed settlement exactly as signed, superseding open P-trips and wrong-numbered settlements)"
+  }
 }
