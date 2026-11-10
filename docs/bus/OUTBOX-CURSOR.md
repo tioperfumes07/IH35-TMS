@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~9:25 PM CT) — ROUND 8.4 TruckServiceMap on Vehicle Profile
+- **PRIOR:** #28710 Accounting AP Aging design fill.
+- **THIS:** Truck service map (TruckProfile.dc.html) on /fleet/units/:id — SERVICE MAP chrome, OK/DUE SOON/DEFECT/NO RECORD legend, silhouette hotspots, New work order. Systems from live PM/WO/faults/DOT only (no board sample tread/miles). Census pins route labels.
+- **NEXT:** ShopBays graphic deepen; Accounting/Banking screenshots; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:10 PM CT) — ROUND 8.4 Accounting AP Aging design fill + census deepen
 - **PRIOR:** #28708 Maintenance/Customers/Vendors/Insurance/Legal/Safety hub pins.
 - **THIS:** Accounts Payable Aging — add design Aging filter (All/Current/1–30/…); en-dash bucket labels per accounts-payable-render.html + design-parity-contract. Census pins /accounting (aging cols + close marks), /accounting/unexpected, /accounting/accounts-payable. failing_routes stays 0.
@@ -187,9 +192,4 @@
 - **PRIOR:** #28575 #241 DONE-LIVE.
 - **THIS:** Archived fat Cursor inbox/outbox under docs/bus/archive/*-pre-diet.md; hot OUTBOX 162≤200, INBOX 12≤40 (standing law kept). Other seats' bus files still over cap (not Cursor-owned).
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:05 PM CT) — #241 DONE-LIVE (Codex batch94)
-- **PRIOR:** #28574 ENG-34 match exempt.
-- **THIS:** PENDING/ROUND #241 → DONE-LIVE — Codex live USMCA 17:14CT Class/Debit 4px gap both viewports after #28557 reload.
-- **NEXT:** more live DONE-LIVE; no match/Dreamline.
 

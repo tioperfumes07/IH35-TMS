@@ -48,7 +48,8 @@ const DESIGN_BY_PREFIX = [
   ["/safety", "v3:Safety-DriverFiles.dc.html + approved:06-safety.png"],
   ["/compliance", "approved:06-safety.png (app-wide + compliance)"],
   ["/drivers", "v3:DriverProfile.dc.html + approved:07-drivers.png + board:driver-customers-vendors"],
-  ["/fleet", "board:maintenance (fleet table) + approved:02-maintenance.png"],
+  ["/fleet/units", "v3:maintenance-vehicle-graphics/TruckProfile.dc.html + approved:07-drivers.png"],
+  ["/fleet", "board:maintenance (fleet table) + approved:02-maintenance.png + v3:maintenance-vehicle-graphics/Main.dc.html"],
   ["/insurance", "v3:Insurance.dc.html"],
   ["/reports", "v3:Reports*.dc.html + approved:10-reports.png"],
   ["/lists", "approved:09-lists-catalogs.png"],
@@ -259,6 +260,20 @@ const HUB_DESIGN_LABELS = [
       "DOT medical on file",
       "Open fines",
       "Driver qualification matrix",
+    ],
+  },
+  {
+    route: "/fleet/units/:id",
+    files: [
+      "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+      "apps/frontend/src/pages/fleet/components/TruckServiceMap.tsx",
+    ],
+    labels: [
+      "SERVICE MAP · SELECT A SYSTEM",
+      "New work order",
+      "DUE SOON",
+      "NO RECORD",
+      "Annual DOT · tractor",
     ],
   },
 ];

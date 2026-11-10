@@ -70,6 +70,7 @@ import { RelayFillsReverseSection } from "../../components/fuel/RelayFillsRevers
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
 import { UnitDriverHistoryStrip } from "../units/UnitDriverHistoryStrip";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { TruckServiceMap } from "./components/TruckServiceMap";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -367,6 +368,14 @@ export function VehicleProfilePage() {
             <TripCostCalculator unitId={id} companyId={companyId} unitNumber={unit?.unit_number != null ? String(unit.unit_number) : null} />
           </div>
           <div data-testid="vp-section-5-maintenance" className="xl:col-span-2">
+            <TruckServiceMap
+              unitId={id}
+              unitNumber={unitNumber}
+              nextPmDue={(profile.next_pm_due as Record<string, unknown>) ?? {}}
+              openWoTotal={Number(profile.open_wo_count?.total ?? 0)}
+              activeFaultCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}
+              compliance={(profile.compliance as Record<string, unknown>) ?? null}
+            />
             {faultSummaryQuery.isError ? (
               <ListErrorState
                 title="Couldn't load active fault summary"
