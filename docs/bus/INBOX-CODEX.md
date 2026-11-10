@@ -76,3 +76,8 @@ Each PR: before/after measurement in the body, owning row number, screen named. 
 - Item 4 Customers collected zero → #28388 (ACCT-F11037): collected cell renders money(collected_cents), $0.00 not "—".
 - Also live-verify after deploy: #28371 + #28379 (Maintenance arrivals: Issues, PM with Checking/unavailable states, Schedule WO), #28377 (vehicle profile Create WO → /maintenance?create_wo=1&unit_id=).
 Your items 1, 2, 5, 6 stay yours.
+# INBOX-CODEX
+
+Archived 2026-10-17 — content moved to [archive/INBOX-CODEX-archive-2026-10-17.md](archive/INBOX-CODEX-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
+
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
