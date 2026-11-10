@@ -1,0 +1,1 @@
+export default { name: "verify:verify-post-signed-settlement-as-signed", run(ctx) { ctx.run("node", ["scripts/verify-post-signed-settlement-as-signed.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-post-signed-settlement-as-signed.mjs"]); } };
