@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildTruckServiceMapSystems } from "./TruckServiceMap";
 
 describe("buildTruckServiceMapSystems", () => {
-  it("emits NO RECORD PM clock when no schedules exist", () => {
+  it("emits NO RECORD Engine · PM clock when no schedules exist", () => {
     const systems = buildTruckServiceMapSystems({
       unitId: "u1",
       nextPmDue: {},
@@ -10,7 +10,7 @@ describe("buildTruckServiceMapSystems", () => {
       activeFaultCount: 0,
       compliance: null,
     });
-    expect(systems[0]?.name).toBe("PM clock");
+    expect(systems[0]?.name).toBe("Engine · PM clock");
     expect(systems[0]?.state).toBe("none");
     expect(systems.some((s) => s.name === "Annual DOT · tractor")).toBe(true);
   });
@@ -25,14 +25,15 @@ describe("buildTruckServiceMapSystems", () => {
       },
       openWoTotal: 2,
       activeFaultCount: 1,
-      compliance: { dot_inspection: { next_due: "2026-12-01" } },
+      compliance: { annual_inspection_expires_on: "2026-12-01" },
     });
     const byName = Object.fromEntries(systems.map((s) => [s.name, s]));
-    expect(byName["PM · engine pm a"]?.state).toBe("ok");
-    expect(byName["PM · oil"]?.state).toBe("soon");
-    expect(byName["PM · brakes"]?.state).toBe("defect");
-    expect(byName["Open defects"]?.state).toBe("defect");
-    expect(byName["Open defects"]?.detail).toContain("2 open work orders");
+    expect(byName["Engine · engine pm a"]?.state).toBe("ok");
+    expect(byName["oil"]?.state).toBe("soon");
+    expect(byName["brakes"]?.state).toBe("defect");
+    expect(byName["Open work orders"]?.state).toBe("soon");
+    expect(byName["Open work orders"]?.detail).toContain("2 open WO");
+    expect(byName["Active faults"]?.state).toBe("defect");
     expect(byName["Annual DOT · tractor"]?.state).toBe("ok");
     expect(systems.every((s) => !/11\/32|tread/i.test(s.detail))).toBe(true);
   });

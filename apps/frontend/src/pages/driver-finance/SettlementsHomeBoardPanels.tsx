@@ -160,23 +160,29 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               <svg
                 width="100%"
                 height={160}
-                viewBox={`0 0 ${weekBuckets.length * 48} 160`}
+                viewBox={`0 0 ${weekBuckets.length * 48 + 56} 160`}
                 preserveAspectRatio="none"
                 role="img"
                 aria-label="Net driver pay by week"
                 data-testid="settlements-home-week-chart"
               >
-                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-                  const y = 12 + (1 - t) * 110;
+                {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
+                  const y = 12 + (1 - frac) * 110;
+                  const amount = weekChartMax * frac;
                   return (
-                    <line key={t} x1={0} x2={weekBuckets.length * 48} y1={y} y2={y} stroke={V3.chartGrid} strokeWidth={1} />
+                    <g key={`axis-${frac}`}>
+                      <line x1={56} x2={weekBuckets.length * 48 + 56} y1={y} y2={y} stroke={V3.chartGrid} strokeWidth={1} />
+                      <text x={52} y={y + 3} textAnchor="end" style={{ fontSize: 11, fill: V3.muted, fontFamily: V3.font }}>
+                        {formatSettlementsUsd(amount)}
+                      </text>
+                    </g>
                   );
                 })}
                 {weekBuckets.map((w, i) => {
                   const value =
                     weekChartGrain === "net" ? w.net : weekChartGrain === "gross" ? w.gross : w.deductions;
                   const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
-                  const x = i * 48 + 12;
+                  const x = i * 48 + 68;
                   const y = 122 - h;
                   const isSelected = thisWeekBucket?.weekStartIso === w.weekStartIso;
                   return (
@@ -204,7 +210,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                           }
                         }}
                       />
-                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
+                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 11, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
                         {w.label}
                       </text>
                     </g>
@@ -272,7 +278,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   >
                     <span>{row.label}</span>
                     <span style={{ textAlign: "center", color: has ? V3.ink : V3.muted }}>{has ? bucket.drivers.size : "—"}</span>
-                    <span style={{ textAlign: "right", color: has ? V3.ink : V3.muted }}>
+                    <span style={{ textAlign: "right", color: has ? V3.ink : V3.muted, whiteSpace: "nowrap" }}>
                       {has ? formatSettlementsUsd(bucket.amount) : "—"}
                     </span>
                   </div>
@@ -378,7 +384,16 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                       <EntityLink kind="driver" id={s.driver_id} label={entityLabel(s.driver_full_name || "Driver", s.driver_id, "Driver")} />
                     </span>
                     <span style={{ textAlign: "left", display: "inline-flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                      <span>{settlementsWeekLoadsLabel(s)}</span>
+                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
+                        {(s.load_links ?? []).length > 0
+                          ? (s.load_links ?? []).map((l, idx) => (
+                              <span key={l.id} className="inline-flex items-center gap-1">
+                                {idx > 0 ? <span aria-hidden>·</span> : null}
+                                <EntityLink kind="load" id={l.id} label={l.label || "Load"} />
+                              </span>
+                            ))
+                          : settlementsWeekLoadsLabel(s)}
+                      </span>
                       {s.load_links?.[0]?.id ? (
                         <SettlementRefCell loadId={s.load_links[0].id} operatingCompanyId={companyId} />
                       ) : (

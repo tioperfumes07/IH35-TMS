@@ -18,7 +18,7 @@ import { formatMoneyCents } from "../../lib/formatMoney";
 import { formatQuantityTable } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
-import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
+import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { FuelBoardSection } from "./FuelBoardSection";
 
@@ -277,7 +277,7 @@ export function FuelHomePage() {
         headerRight={
           <V3Segmented
             value={period}
-            options={FUEL_BOARD_PERIOD_OPTIONS}
+            options={fuelBoardPeriodOptions()}
             onChange={setPeriod}
             testId="fuel-home-diesel-period"
           />

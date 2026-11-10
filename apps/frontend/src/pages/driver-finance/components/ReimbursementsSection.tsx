@@ -134,7 +134,7 @@ export function ReimbursementsSection({ lines, isOpen, operatingCompanyId }: Pro
           </Button>
       }
     >
-      <ParityTable<Line>
+      <ParityTable<Line> appearance="board"
         columns={COLUMNS}
         rows={lines}
         rowKey={(line) => line.id}

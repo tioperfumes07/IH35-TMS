@@ -2394,6 +2394,15 @@ function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult, sour
  * "historical_backfill" -> load 13619 created, exact exception row filed
  * (event_class=dispatch.historical_backfill_gate_exception, gate=zero_dollar_charge_lines_at_dispatch).
  */
+/** ACCT-F11108 part 3 — the earliest and latest scheduled stop instant of a load being booked, or null when any is undated. */
+export function historicalStopWindow(stops: Array<{ scheduled_arrival_at?: string | null }> | null | undefined): { starts_on: string; ends_on: string } | null {
+  const at = (stops ?? []).map((st) => st.scheduled_arrival_at ?? null);
+  if (!at.length || at.some((x) => !x)) return null;
+  const ms = at.map((x) => new Date(x as string).getTime());
+  if (ms.some((x) => Number.isNaN(x))) return null;
+  return { starts_on: new Date(Math.min(...ms)).toISOString(), ends_on: new Date(Math.max(...ms)).toISOString() };
+}
+
 export async function createLoadWithFullSideEffects(
   client: DbClient,
   input: BookLoadInput,
@@ -3511,6 +3520,9 @@ export async function createLoadWithFullSideEffects(
         same_tour_next_leg: nextLegTour
           ? { tour_id: nextLegTour, pickup_at: firstPickup?.appointment_start_at ?? firstPickup?.scheduled_arrival_at ?? null }
           : null,
+        // ACCT-F11108 part 3 — a load that already ran conflicts only with an in-motion load whose stop dates overlap its own
+        // (the trigger mdata.refuse_overlapping_unit_assignment's rule); a live_feed booking keeps the strict in-motion check.
+        historical_window: source === "historical_backfill" ? historicalStopWindow(input.stops) : null,
       });
     }
 

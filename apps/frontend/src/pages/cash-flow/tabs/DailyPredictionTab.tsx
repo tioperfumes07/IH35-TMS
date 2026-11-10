@@ -381,14 +381,14 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         }}
       >
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>OPENING CASH</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>OPENING CASH</div>
           <div className="n" style={{ fontSize: 18, fontWeight: 700, color: V3.ink }}>
             {isLoading ? "—" : opening === null ? "—" : formatCents(opening)}
           </div>
         </div>
         <span style={{ color: V3.mutedSoft }}>+</span>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>INCOME − EXPENSES</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>INCOME − EXPENSES</div>
           <div
             className="n"
             style={{
@@ -402,7 +402,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
         <span style={{ color: V3.mutedSoft }}>=</span>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>PROJECTED CLOSING</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>PROJECTED CLOSING</div>
           <div
             className="n"
             style={{
@@ -479,7 +479,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   >
                     {isLoading ? "—" : formatCompactNet(entry.net_cents)}
                   </span>
-                  <span style={{ fontSize: 10, opacity: 0.75 }}>net</span>
+                  <span style={{ fontSize: 11, opacity: 0.75 }}>net</span>
                 </button>
               );
             })}

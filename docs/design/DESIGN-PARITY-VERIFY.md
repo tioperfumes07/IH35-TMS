@@ -21,6 +21,24 @@ The live overview reports 39 units and displays 25 on the current page. Populati
 
 Following the actual In Shop link opens `/maintenance/fleet-table?status=in-shop`, with four open bays. However Fleet Table has `aria-current="page"` and In Shop has no current marker; breadcrumb also says Fleet Table. Approved board identifies In Shop. Root cause for active-tab mismatch: shared `mostSpecificActiveTo` compared pathname against links containing query strings, so query-specific tabs could never match. Codex repair passes pathname plus search, preferring matching query constraints over the same bare path. Three new rendered tests fail on old code; 18 navigation tests pass on repaired code. Breadcrumb remains separately OPEN. No sample work orders created to fill empty bays. Private screenshot: `~/Downloads/codex-round8-5-design-parity/Maintenance-InShop-live.jpg`. Post-deploy visual verification pending; not DONE-LIVE.
 
+**M5 active-tab portion VERIFIED LIVE 2026-11-09 ~20:51 CT:** #28726 / `30fa65871deeba05ab86e0d28b95da26b015b376`. In Shop now current=page, Fleet Table current=null; four bays render. Private after screenshot `Maintenance-InShop-active-fixed-live.jpg`. Breadcrumb still Fleet Table: not closed. No claim of entire In Shop board parity.
+
+### Fuel / Settlements / Factoring continuation — 2026-11-09 ~20:52–20:55 CT
+
+All measurements below are CSS 1440×900. Private files: `Fuel-live.jpg`, `Settlements-live.jpg`, `Factoring-live.jpg` in the existing Downloads evidence folder. Reference values/population counts are not fixtures to insert. No production mutation performed.
+
+| ID | Board target | Measured live gap | Target for Cursor |
+|---|---|---|---|
+| F1 | Fuel truck graphic + make/model identity | Six-column plain table, no truck illustration/model row | FuelHome and FuelDieselByTruckPanel: reuse real unit graphic/identity; no fabricated make/model |
+| F2 | Fuel spend bar plus separate dollar column | Spend only a numeric cell; proportional spend bar absent | Restore board bar using the same aggregate values, keep real dollar amount readable |
+| F3 | Fuel selected month agrees with displayed period | Selected label Oct while KPI period says Nov 1–9 | fuelBoardPeriod.ts: static Oct/Sep labels, range is current/previous month; make labels truthful without changing accounting |
+| T1 | Settlements compact one-line module strip | Measured menubar 59.35px, labels wrap; right-side tabs overflow first view | Shared navigation compact overflow while preserving all tabs |
+| T2 | Settlements chart has monetary Y-axis | SVG has 11 week labels, no monetary-axis labels | SettlementsHomeBoardPanels.tsx chart axis and geometry |
+| T3 | Every settlement load resolves through EntityLink | Closed toggle shows 14 driver links, 0 links to /dispatch/loads/ | Weekly row load identities need real load-id links; preserve driver links |
+| FA1 | Factoring KPI strip precedes purchase/terms panels | Account-summary starts with Invoice Status; approved board begins at y1479, chart/terms y1569 | FactoringHome.tsx:1570/1998: render approved summary first, preserve invoice report below/in its reachable section |
+
+Wiring observed: Settlements Closed toggle changes empty open list to 14 records; this is not proof of all money or semantic correctness. Factoring Account summary navigation opens `/factoring/account-summary`; board exists but is displaced by the earlier report. Shared header after latest reload measures 41.99px (previously103.21); width/overflow and all other shell elements not yet accepted. No entire board certified exact.
+
 Reference: owner's `11-09-2026-IH35-ALL-PAGE-DESIGNS` export, approved V3 renders and `.dc.html`, and `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-Design-Parity-Verify-All-Boards.md`. Exclude old LoadWizard, V2 and PREVIOUS boards. Keep legitimate additive functionality; do not delete columns or data to imitate a screenshot.
 
 Browser: authenticated USMCA, Chrome, measured `innerWidth=1440`, `innerHeight=900`. Browser zoom was 80%; a requested 1440×900 override initially produced 1800×1125 CSS pixels. Corrected using a 1152×720 override and verified actual CSS dimensions before grading. Screenshots may have a different physical pixel scale; raw pixel differences are NOT yet normalized or scored. Banking/Accounting inspected after the new-version Reload. Private screenshots are under `~/Downloads/codex-round8-5-design-parity/`; do not commit production personal/financial data.

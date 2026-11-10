@@ -11,6 +11,8 @@
 // RULE 4 — delta only: Faro Inv # already on a live purchase line is already_present, checked before any draft.
 // RULE 5 — match by PO only: the invoice-number path is blanked before enrichFaroPreviewLines.
 // RULE 6 — a date posts whole and only when the engine's net equals Faro's Net Adv for the date (faro_wire_tie_out).
+// RULE 7 (part 3, measured 2026-11-09: preview "would_post" 10-15, commit held it feed_gate_blocked) — the preview runs the
+//          SAME feed gate inside a rolled-back scope (GatePreviewRollback); it is never skipped in preview.
 import fs from "node:fs";
 
 const SERVICE = "apps/backend/src/factoring/faro-purchase-report-seed.service.ts";
@@ -47,6 +49,9 @@ export function audit(files) {
   }
   if (!/if \(engineNet !== faroNet\)/.test(svc) || !/faro_wire_tie_out/.test(svc)) out.push("RULE 6: the wire tie-out to Faro's Net Adv is gone");
   if (!/faro_date_incomplete/.test(svc)) out.push("RULE 6: a date with an unpostable line is no longer held whole");
+  if (!/throw new GatePreviewRollback\(await feedGate\(client\)\);/.test(svc) || /: null;\s*\n\s*const red = gate/.test(svc)) {
+    out.push("RULE 7: the preview no longer runs the feed gate (inside a rolled-back scope)");
+  }
   return out;
 }
 
@@ -84,6 +89,7 @@ if (process.argv.includes("--selftest")) {
     ["inv # matched", plant(SERVICE, '({ ...l, invoice_number: "" })', "({ ...l })")],
     ["no wire tie-out", plant(SERVICE, "if (engineNet !== faroNet) {", "if (false) {")],
     ["date split", plant(SERVICE, "faro_date_incomplete", "faro_date_partial_ok")],
+    ["preview skips the feed gate", plant(SERVICE, "throw new GatePreviewRollback(await feedGate(client));", "throw new GatePreviewRollback([]);")],
   ];
   let caught = 0;
   for (const [name, files] of cases) {

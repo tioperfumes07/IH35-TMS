@@ -21,7 +21,8 @@ if (!fs.existsSync(posterPath)) {
   // (accounting.expense_category_account_map), a second source: its DEF row drifted back to 5000 on 2026-09-23 and its
   // reefer row was always 5000, so poster-posted DEF / reefer landed in Fuel & Diesel while their documents said
   // 5010 / 5015 (6 DEF purchases, $170.63, live 2026-10-04).
-  if (!/from "\.\/fuel-item-account\.js"/.test(source) || !/resolveFuelItem\(\s*client[^,]*,\s*input\.operating_company_id,\s*POSTING_KIND_FUEL_TYPE\[fuelKind\]/.test(source)) {
+  // ACCT-F11127 (#28722) routes the kind through resolveKindItem(kind); the resolver call is the rule, not the variable name.
+  if (!/from "\.\/fuel-item-account\.js"/.test(source) || !/resolveFuelItem\(\s*client[^,]*,\s*input\.operating_company_id,\s*POSTING_KIND_FUEL_TYPE\[\w+\]/.test(source)) {
     failures.push("fuel posting must resolve its cost account via resolveFuelItem(client, oc, POSTING_KIND_FUEL_TYPE[fuelKind]) from ./fuel-item-account.js");
   }
   if (/resolveAccountForCategory|expense-category-map\/resolver/.test(source)) {
