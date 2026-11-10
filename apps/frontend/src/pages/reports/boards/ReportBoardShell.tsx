@@ -8,7 +8,6 @@ import { NavLink } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { downloadXlsx } from "../../../components/parity/useParityServerView";
 import { V3 } from "../../../design/v3-tokens";
-import { ReportsSubNav } from "../ReportsSubNav";
 import { REPORT_BOARDS, type ReportBoardId } from "./reportBoardCatalog";
 
 export type ReportBoardXlsx = { filename: string; header: string[]; body: Array<Array<string | number>> };
@@ -33,7 +32,7 @@ export function ReportBoardShell({
   };
   return (
     <div className="space-y-3" data-testid={`${id}-board`} data-report-board={id}>
-      <ReportsSubNav />
+      {/* R1 — title before navy strip; board five-tab strip is the only reports nav (no second ReportsSubNav). */}
       <PageHeader
         title={entry.label}
         subtitle={subtitle}
@@ -59,16 +58,23 @@ export function ReportBoardShell({
           </div>
         }
       />
-      <nav aria-label="Reports" className="flex flex-wrap gap-1 print:hidden" data-testid="report-board-tabs">
+      <nav
+        aria-label="Reports"
+        className="flex flex-wrap gap-0 print:hidden"
+        data-testid="report-board-tabs"
+        style={{ background: V3.shell, borderRadius: 2, padding: "0 4px" }}
+      >
         {REPORT_BOARDS.map((b) => (
           <NavLink
             key={b.id}
             to={b.href}
-            className="rounded-sm px-3 py-1 text-xs font-semibold"
+            className="px-3 py-2 text-xs font-semibold"
             style={({ isActive }) => ({
-              background: isActive ? V3.shell : V3.surface,
-              color: isActive ? "#FFFFFF" : V3.ink,
-              border: `1px solid ${V3.border}`,
+              color: "#FFFFFF",
+              opacity: isActive ? 1 : 0.85,
+              borderBottom: isActive ? "2px solid #fff" : "2px solid transparent",
+              background: isActive ? "rgba(255,255,255,0.16)" : "transparent",
+              textDecoration: "none",
             })}
           >
             {b.tab}

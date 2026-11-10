@@ -76,6 +76,7 @@ type GroupRow = {
   loads: number;
   revenue: number;
   miles: number;
+  emptyMiles: number;
   driverPay: number;
   fuel: number;
   margin: number;
@@ -155,6 +156,7 @@ function buildGroups(rows: LoadsReportRow[], by: GroupBy, field: "pickup" | "del
       loads: list.length,
       revenue: sumBy(list, (r) => r.revenue_cents),
       miles: sumBy(list, (r) => r.miles_practical),
+      emptyMiles: sumBy(list, (r) => r.miles_deadhead),
       driverPay: sumBy(list, (r) => r.driver_pay_cents),
       fuel: sumBy(list, (r) => r.fuel_cents),
       margin: sumBy(list, (r) => r.margin_cents),
@@ -226,10 +228,13 @@ export function LoadsReportBoard() {
   const totals = useMemo(() => {
     const revenue = sumBy(rows, (r) => r.revenue_cents);
     const driverPay = sumBy(rows, (r) => r.driver_pay_cents);
+    const miles = sumBy(rows, (r) => r.miles_practical);
+    const emptyMiles = sumBy(rows, (r) => r.miles_deadhead);
     return {
       loads: rows.length,
       revenue,
-      miles: sumBy(rows, (r) => r.miles_practical),
+      miles,
+      emptyMiles,
       driverPay,
       fuel: sumBy(rows, (r) => r.fuel_cents),
       margin: sumBy(rows, (r) => r.margin_cents),
@@ -237,6 +242,13 @@ export function LoadsReportBoard() {
       trucks: new Set(rows.map((r) => r.unit_id).filter(Boolean)).size,
     };
   }, [rows]);
+
+  /** R3 — revenue-by-week chart from the same filtered rows (engine data, not mock). */
+  const revenueByWeek = useMemo(() => {
+    const byWeek = buildGroups(rows, "week", applied.dateField).slice().reverse();
+    const max = Math.max(1, ...byWeek.map((g) => g.revenue));
+    return { weeks: byWeek, max };
+  }, [rows, applied.dateField]);
 
   const groups = useMemo(() => buildGroups(rows, by === "load" ? "week" : by, applied.dateField), [rows, by, applied.dateField]);
   const detailRows = useMemo(() => {
@@ -281,6 +293,16 @@ export function LoadsReportBoard() {
       },
       { key: "revenue", label: "Revenue", sortable: true, sortValue: (g) => g.revenue, cellClass: "text-right", className: "text-right", render: (g) => money(g.revenue) },
       { key: "miles", label: "Loaded mi", sortable: true, sortValue: (g) => g.miles, cellClass: "text-right", className: "text-right", render: (g) => formatNumber(g.miles) },
+      { key: "emptyMiles", label: "Empty mi", sortable: true, sortValue: (g) => g.emptyMiles, cellClass: "text-right", className: "text-right", render: (g) => formatNumber(g.emptyMiles) },
+      {
+        key: "emptyPct",
+        label: "Empty %",
+        sortable: true,
+        sortValue: (g) => pct(g.emptyMiles, g.miles + g.emptyMiles) ?? 0,
+        cellClass: "text-right",
+        className: "text-right",
+        render: (g) => pctLabel(pct(g.emptyMiles, g.miles + g.emptyMiles)),
+      },
       { key: "rpm", label: "$/loaded mi", sortable: true, sortValue: (g) => (g.miles ? g.revenue / g.miles : 0), cellClass: "text-right", className: "text-right", render: (g) => perMile(g.revenue, g.miles) },
       { key: "driverPay", label: "Driver pay", sortable: true, sortValue: (g) => g.driverPay, cellClass: "text-right", className: "text-right", render: (g) => money(g.driverPay) },
       { key: "payPct", label: "Pay % rev", sortable: true, sortValue: (g) => pct(g.driverPay, g.revenue) ?? 0, cellClass: "text-right", className: "text-right", render: (g) => pctLabel(pct(g.driverPay, g.revenue)) },
@@ -324,6 +346,16 @@ export function LoadsReportBoard() {
       { key: "pickup_date", label: "Pickup", sortable: true, render: (r) => mmmDd(r.pickup_date) || "—" },
       { key: "delivery_date", label: "Delivery", sortable: true, render: (r) => mmmDd(r.delivery_date) || "—" },
       { key: "miles_practical", label: "Loaded mi", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.miles_practical == null ? "—" : formatNumber(r.miles_practical)) },
+      { key: "miles_deadhead", label: "Empty mi", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.miles_deadhead == null ? "—" : formatNumber(r.miles_deadhead)) },
+      {
+        key: "empty_pct",
+        label: "Empty %",
+        sortable: true,
+        sortValue: (r) => pct(r.miles_deadhead ?? 0, (r.miles_practical ?? 0) + (r.miles_deadhead ?? 0)) ?? 0,
+        cellClass: "text-right",
+        className: "text-right",
+        render: (r) => pctLabel(pct(r.miles_deadhead ?? 0, (r.miles_practical ?? 0) + (r.miles_deadhead ?? 0))),
+      },
       { key: "revenue_cents", label: "Revenue", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.revenue_cents) },
       { key: "driver_pay_cents", label: "Driver pay", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.driver_pay_cents) },
       { key: "fuel_cents", label: "Fuel", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.fuel_cents) },
@@ -516,8 +548,42 @@ export function LoadsReportBoard() {
             value={query.data ? money(totals.driverPay) : "…"}
             sub={`${pctLabel(pct(totals.driverPay, totals.revenue))} of revenue`}
           />
+          <V3KpiTile
+            testId="loads-report-kpi-empty-miles"
+            label="Empty miles"
+            value={query.data ? formatNumber(totals.emptyMiles) : "…"}
+            sub={
+              query.data
+                ? `${pctLabel(pct(totals.emptyMiles, totals.miles + totals.emptyMiles))} of all miles`
+                : undefined
+            }
+          />
+          {/* Additive vs board: Fuel/Margin stay; Empty miles is the board sixth KPI. */}
           <V3KpiTile testId="loads-report-kpi-margin" label="Margin" value={query.data ? money(totals.margin) : "…"} sub={`fuel ${money(totals.fuel)}`} />
         </ReportKpiGrid>
+
+        <section className="rounded-sm border border-[#DDE1E7] bg-white p-3" data-testid="loads-report-revenue-by-week">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <h3 className="text-xs font-bold text-[#111827]">Revenue by week</h3>
+            <span className="text-[11px] text-[#5B6576]">same filtered loads · {applied.dateField} date</span>
+          </div>
+          {revenueByWeek.weeks.length === 0 ? (
+            <p className="text-xs text-[#5B6576]">No weekly revenue in range.</p>
+          ) : (
+            <div className="flex h-28 items-end gap-1" role="img" aria-label="Revenue by week chart">
+              {revenueByWeek.weeks.map((g) => (
+                <div key={g.key} className="flex min-w-0 flex-1 flex-col items-center gap-1" title={`${g.label}: ${money(g.revenue)}`}>
+                  <div
+                    className="w-full rounded-sm bg-[#13233F]"
+                    style={{ height: `${Math.max(4, Math.round((g.revenue / revenueByWeek.max) * 100))}%` }}
+                    data-testid={`loads-report-week-bar-${g.key}`}
+                  />
+                  <span className="truncate text-[10px] text-[#5B6576]">{g.label.replace("Week of ", "")}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {drill ? (
           <div className="flex items-center gap-2 text-xs text-[#5B6576]">
@@ -566,6 +632,8 @@ export function LoadsReportBoard() {
               loads: String(totals.loads),
               revenue: money(totals.revenue),
               miles: formatNumber(totals.miles),
+              emptyMiles: formatNumber(totals.emptyMiles),
+              emptyPct: pctLabel(pct(totals.emptyMiles, totals.miles + totals.emptyMiles)),
               rpm: perMile(totals.revenue, totals.miles),
               driverPay: money(totals.driverPay),
               payPct: pctLabel(pct(totals.driverPay, totals.revenue)),
@@ -578,8 +646,9 @@ export function LoadsReportBoard() {
         )}
 
         <ReportMeasuredNote>
-          Empty (deadhead) miles are not on the loads report service yet, so the board shows loaded miles only. Each
-          group opens its loads; each load, customer, driver, truck, invoice, advance and settlement opens its record.
+          Empty miles are mdata.loads.miles_deadhead summed over the same filtered rows as Loaded miles and Revenue.
+          Fuel and Margin stay as additive columns. Each group opens its loads; each load, customer, driver, truck,
+          invoice, advance and settlement opens its record.
         </ReportMeasuredNote>
       </div>
     </ReportBoardShell>

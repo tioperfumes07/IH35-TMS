@@ -1,10 +1,10 @@
 {
-  "healthzSha": "d36e11d",
-  "generated_at": "2026-11-10T02:41:38.874Z",
+  "healthzSha": "602abba",
+  "generated_at": "2026-11-10T04:31:22.710Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "d36e11d",
+    "deployedSha": "602abba",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28723,
-      "title": "FINDING: UI-F11126 Codex Maintenance parity and Cursor handoff",
+      "number": 28765,
+      "title": "FINDING: UI-F11125 R3 empty-miles engine + D6 Load history board",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28723",
-      "sha": "d36e11d51e",
-      "committedAtIso": "2026-11-09T20:36:13-06:00"
+      "mergedAtCt": "11/09/2026, 10:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28765",
+      "sha": "490971951a",
+      "committedAtIso": "2026-11-09T22:30:29-06:00"
     },
     {
-      "number": 28724,
-      "title": "BUS: ROUND 8.6 all coders fast 4-minute weekend merge law",
+      "number": 28764,
+      "title": "FINDING: UI-F11125 CF2–CF6 + V1/V2 + SF2 + R1 board engines",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28724",
-      "sha": "1638121113",
-      "committedAtIso": "2026-11-09T20:36:10-06:00"
+      "mergedAtCt": "11/09/2026, 10:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28764",
+      "sha": "602abba7d5",
+      "committedAtIso": "2026-11-09T22:23:40-06:00"
     },
     {
-      "number": 28722,
-      "title": "FIX: Relay lumper / CAT scales codes post as load expenses from the Relay wallet through the one fill poster, queued by the Relay ingest (ACCT-F11127)",
+      "number": 28763,
+      "title": "FIX: fuel.relay_fill_records skips already-recorded voided-duplicate fills; engine status re-measured",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28722",
-      "sha": "d931410ed3",
-      "committedAtIso": "2026-11-09T20:32:26-06:00"
+      "mergedAtCt": "11/09/2026, 10:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28763",
+      "sha": "a316ce0b6f",
+      "committedAtIso": "2026-11-09T22:19:43-06:00"
     },
     {
-      "number": 28721,
-      "title": "FINDING: UI-F11125 Codex Round 8.5 independent design differences",
+      "number": 28762,
+      "title": "FIX: guard verify-relay-deposits-posted (known-card relay_deposit rows posted within 24h)",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28721",
-      "sha": "f271e02190",
-      "committedAtIso": "2026-11-09T20:32:06-06:00"
+      "mergedAtCt": "11/09/2026, 10:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28762",
+      "sha": "ec231b764c",
+      "committedAtIso": "2026-11-09T22:15:14-06:00"
     },
     {
-      "number": 28720,
-      "title": "ROUND 8.4/8.5: Accounting hub board grid + Inter page titles",
+      "number": 28761,
+      "title": "FIX: owner import buttons for load history and Faro purchase report",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28720",
-      "sha": "c034e06140",
-      "committedAtIso": "2026-11-09T20:30:38-06:00"
+      "mergedAtCt": "11/09/2026, 10:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28761",
+      "sha": "4f9dd052ff",
+      "committedAtIso": "2026-11-09T22:12:04-06:00"
     },
     {
-      "number": 28719,
-      "title": "BUS: Lead engine status — 32 QBO engines OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync",
+      "number": 28760,
+      "title": "BUS: ROUND 8.9 all coders — owner order: complete all engine builds now, bus is the channel, tiered model, 4-minute merge",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28719",
-      "sha": "c9233da0b7",
-      "committedAtIso": "2026-11-09T20:28:53-06:00"
+      "mergedAtCt": "11/09/2026, 10:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28760",
+      "sha": "dfc12b8984",
+      "committedAtIso": "2026-11-09T22:09:10-06:00"
     },
     {
-      "number": 28717,
-      "title": "CC-2-443.329 ENG-48/49/51 register DONE-LIVE; ENG-50 live-red annotated; freeze step 20017",
+      "number": 28759,
+      "title": "FINDING: UI-F11125 D5 test + CF1 Related + C1/SF1 chrome",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28717",
-      "sha": "07cdbb3148",
-      "committedAtIso": "2026-11-09T20:28:47-06:00"
+      "mergedAtCt": "11/09/2026, 10:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28759",
+      "sha": "772728f06e",
+      "committedAtIso": "2026-11-09T22:01:09-06:00"
     },
     {
-      "number": 28718,
-      "title": "ROUND 8.4/8.5: Insurance Landing board-identical vs Insurance.dc.html",
+      "number": 28758,
+      "title": "BUS: CC-1 ROUND 8.7 post signed settlements 5853-5872 + CC-2 ROUND 8.8 reefer reclass and 99149999",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28718",
-      "sha": "b550cdf0be",
-      "committedAtIso": "2026-11-09T20:28:20-06:00"
+      "mergedAtCt": "11/09/2026, 09:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28758",
+      "sha": "ef77cd4c23",
+      "committedAtIso": "2026-11-09T21:59:10-06:00"
     },
     {
-      "number": 28716,
-      "title": "ROUND 8.4: deepen Fuel, Factoring, and Dispatch design-label pins",
+      "number": 28757,
+      "title": "FINDING: UI-F11125 D5 Load History SQL + Legal L1–L3 + census OVERHEAD DOOR",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28716",
-      "sha": "fe88c56385",
-      "committedAtIso": "2026-11-09T20:22:18-06:00"
+      "mergedAtCt": "11/09/2026, 09:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28757",
+      "sha": "bf8f5311f9",
+      "committedAtIso": "2026-11-09T21:57:46-06:00"
     },
     {
-      "number": 28715,
-      "title": "ROUND 8.4: deepen Banking + Reports hub design-label pins",
+      "number": 28756,
+      "title": "FIX: main red — verify:guard-wired: verify-complete-design-build-law was an orphan; wire it (step 20057) and fix its F3 pin (LST-F11133)",
       "state": "merged",
-      "mergedAtCt": "11/09/2026, 08:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28715",
-      "sha": "c1f6c8c351",
-      "committedAtIso": "2026-11-09T20:21:03-06:00"
+      "mergedAtCt": "11/09/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28756",
+      "sha": "85d9f067aa",
+      "committedAtIso": "2026-11-09T21:55:55-06:00"
     }
   ]
 }

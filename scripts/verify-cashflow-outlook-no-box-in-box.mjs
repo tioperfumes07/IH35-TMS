@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * verify-cashflow-outlook-no-box-in-box.mjs
- * Cash Flow 7-Day Outlook strip must use a single outer section frame with flat divide-x day cells
- * (ORPH-004 / AUD-F016) — no nested rounded-lg tiles or ring borders inside the bordered card.
+ * Cash Flow Projected outlook must match CashFlow-Projected.dc.html (ROUND 8.5 CF3):
+ * seven SEPARATE day tiles with gaps — not a joined strip, not nested rounded-lg/ring chrome.
  *
- * --selftest exercises pass + nested-tile failure fixtures.
+ * --selftest exercises pass + nested-tile / joined-strip failure fixtures.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx";
 const LABEL = "verify-cashflow-outlook-no-box-in-box";
 const NESTED_TILE_RE = /className="[^"]*rounded-lg[^"]*"/g;
-const OUTLOOK_MARKER = "7-Day Outlook";
+const OUTLOOK_MARKER = 'data-testid="cash-flow-projected-outlook"';
 
 function stripComments(src) {
   return src
@@ -29,72 +29,79 @@ export function outlookSection(src) {
   const body = stripComments(src);
   const marker = body.indexOf(OUTLOOK_MARKER);
   if (marker < 0) return "";
-  const sectionStart = body.lastIndexOf("<section", marker);
+  // Prefer the element that carries the test id (div or section).
+  const openDiv = body.lastIndexOf("<div", marker);
+  const openSection = body.lastIndexOf("<section", marker);
+  const sectionStart = Math.max(openDiv, openSection);
   if (sectionStart < 0) return body.slice(marker);
+  const tag = openDiv > openSection ? "div" : "section";
   const tail = body.slice(sectionStart);
-  const end = tail.indexOf("</section>");
-  return end >= 0 ? tail.slice(0, end + "</section>".length) : tail;
+  // Rough close: next sibling block at same indent is hard; take a bounded window.
+  const endTag = `</${tag}>`;
+  // Find matching close after a reasonable span of the outlook grid.
+  let depth = 0;
+  let i = 0;
+  const openRe = new RegExp(`<${tag}\\b`, "g");
+  const closeRe = new RegExp(endTag, "g");
+  // Simple scan
+  const tokens = [];
+  const re = new RegExp(`</?${tag}\\b[^>]*>`, "g");
+  let m;
+  while ((m = re.exec(tail)) && tokens.length < 40) {
+    tokens.push({ at: m.index, close: m[0].startsWith("</") });
+    if (m[0].startsWith("</")) {
+      depth--;
+      if (depth === 0) return tail.slice(0, m.index + m[0].length);
+    } else {
+      depth++;
+    }
+  }
+  return tail.slice(0, 2500);
 }
 
-/** @param {string} section 7-Day Outlook JSX slice */
+/** @param {string} section Projected outlook JSX slice */
 export function collectProblems(section) {
   const problems = [];
   if (!section.includes(OUTLOOK_MARKER)) {
-    problems.push(`${TARGET}: missing 7-Day Outlook strip`);
+    problems.push(`${TARGET}: missing cash-flow-projected-outlook (CF3 seven-day tiles)`);
     return problems;
   }
-  // Outer frame: legacy gray Tailwind OR V3 token inline style (443.280 board — tokens only).
-  const legacyFrame = /<section\b[^>]*className="overflow-hidden rounded-lg border border-gray-200 bg-white"/.test(
-    section,
-  );
-  const v3Frame =
-    /<section\b[^>]*style=\{\{/.test(section) &&
-    /overflow:\s*"hidden"/.test(section) &&
-    /V3\.border/.test(section) &&
-    /V3\.surface/.test(section);
-  if (!legacyFrame && !v3Frame) {
-    problems.push(`${TARGET}: 7-Day Outlook root must be a single overflow-hidden section frame`);
+  // CF3 board: seven-column grid with gap (separate tiles), not a joined divide-x strip.
+  const separateTiles =
+    /gridTemplateColumns:\s*"repeat\(7/.test(section) &&
+    (/gap:\s*6\b/.test(section) || /gap:\s*6px/.test(section) || /gap:\s*"6px"/.test(section));
+  if (!separateTiles) {
+    problems.push(`${TARGET}: CF3 outlook must be repeat(7) grid with gap:6 separate day tiles`);
+  }
+  if (/7-Day Outlook/.test(section)) {
+    problems.push(`${TARGET}: CF3 board has no extra "7-Day Outlook" heading above the tiles`);
   }
   const nestedRounded = section.match(NESTED_TILE_RE) ?? [];
-  const innerNested = nestedRounded.filter(
-    (m) => !m.includes("overflow-hidden rounded-lg border border-gray-200 bg-white"),
-  );
-  if (innerNested.length > 0) {
+  if (nestedRounded.length > 0) {
     problems.push(
-      `${TARGET}: 7-Day Outlook nests ${innerNested.length} rounded-lg tile(s) — use flat divide-x cells only`,
+      `${TARGET}: outlook nests ${nestedRounded.length} rounded-lg tile(s) — board uses square 2px tiles, no box-in-box`,
     );
   }
   if (/ring-2 ring-\[#1f2a44\]/.test(section)) {
-    problems.push(`${TARGET}: 7-Day Outlook must not use ring borders on day cells (box-in-box chrome)`);
+    problems.push(`${TARGET}: outlook must not use ring borders on day cells (box-in-box chrome)`);
   }
-  // Flat day cells: legacy divide-x OR V3 borderLeft separators (no gap-1 tiles).
-  const flatDivide =
-    /divide-x divide-gray-100/.test(section) ||
-    (/gridTemplateColumns:\s*"repeat\(7/.test(section) && /borderLeft/.test(section));
-  if (!flatDivide) {
-    problems.push(`${TARGET}: 7-Day Outlook must flatten day cells with divide-x rows`);
-  }
-  if (/grid grid-cols-7 gap-1/.test(section)) {
-    problems.push(`${TARGET}: 7-Day Outlook must not use gap-1 nested tiles (box-in-box chrome)`);
+  if (/divide-x divide-gray-100/.test(section)) {
+    problems.push(`${TARGET}: CF3 forbids joined divide-x strip — use separate gapped tiles`);
   }
   return problems;
 }
 
 function selftest() {
-  const good = `
-    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
-        <p>7-Day Outlook</p>
-      </div>
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[420px] grid-cols-7 divide-x divide-gray-100">
-          <button className="flex flex-col items-center py-2 transition-colors hover:bg-gray-50">Mon</button>
-        </div>
-      </div>
-    </section>`;
+  const goodBoard = `
+    <div
+      style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}
+      data-testid="cash-flow-projected-outlook"
+    >
+      <button style={{ border: \`1px solid \${V3.border}\`, borderRadius: 2 }}>Mon</button>
+    </div>`;
 
-  const goodV3 = `
-    <section style={{ overflow: "hidden", border: \`1px solid \${V3.border}\`, background: V3.surface }}>
+  const badJoinedHeading = `
+    <section style={{ overflow: "hidden", border: \`1px solid \${V3.border}\`, background: V3.surface }} data-testid="cash-flow-projected-outlook">
       <p>7-Day Outlook</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
         <button style={{ borderLeft: \`1px solid \${V3.borderSoft}\` }}>Mon</button>
@@ -102,17 +109,16 @@ function selftest() {
     </section>`;
 
   const badNested = `
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <p>7-Day Outlook</p>
-      <div className="grid grid-cols-7 gap-1 min-w-[420px]">
-        <button className="flex flex-col items-center rounded-lg py-2 ring-2 ring-[#1f2a44]">Mon</button>
+    <div data-testid="cash-flow-projected-outlook" className="rounded-lg border">
+      <div className="grid grid-cols-7 gap-1">
+        <button className="rounded-lg ring-2 ring-[#1f2a44]">Mon</button>
       </div>
     </div>`;
 
   const cases = [
-    { name: "flat divide-x cells → 0 errors", section: good, want: 0 },
-    { name: "V3 token frame + borderLeft → 0 errors", section: goodV3, want: 0 },
-    { name: "nested rounded-lg + ring tiles → fail", section: badNested, wantMin: 1 },
+    { name: "CF3 separate gap:6 tiles → 0 errors", section: goodBoard, want: 0 },
+    { name: "joined strip + heading → fail", section: badJoinedHeading, wantMin: 1 },
+    { name: "nested rounded-lg + ring → fail", section: badNested, wantMin: 1 },
   ];
   let failed = 0;
   for (const c of cases) {
@@ -146,7 +152,7 @@ function main() {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — 7-Day Outlook uses flat section + divide-x cells (ORPH-004)`);
+  console.log(`[${LABEL}] OK — CF3 Projected outlook uses separate gapped day tiles (board-identical)`);
 }
 
 main();
