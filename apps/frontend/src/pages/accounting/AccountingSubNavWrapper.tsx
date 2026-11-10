@@ -118,7 +118,7 @@ export function AccountingSubNavWrapper({
             <div data-testid="accounting-breadcrumb">
               <Breadcrumb items={breadcrumb} />
             </div>
-            <h1 className="text-page-title font-semibold text-gray-900">{title}</h1>
+            <h1 className="text-page-title text-gray-900" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>{title}</h1>
             {subtitle ? <p className="text-xs text-gray-600">{subtitle}</p> : null}
           </div>
         </div>

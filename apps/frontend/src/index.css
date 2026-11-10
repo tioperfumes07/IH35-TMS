@@ -152,8 +152,11 @@ body {
    display size. Body text remains Tailwind text-xs (12px); section/table headers
    use the locked 11px contract. A named utility avoids hundreds of arbitrary-value
    classes while keeping the owner-approved 22px size explicit and reusable. */
+/* ROUND 8.4/8.5 — approved V3 boards set page titles in Inter 700, never Source Serif. */
 .text-page-title {
   font-size: 22px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
 }
 
 /* Column/section headers — GLOBAL-TYPE-SIZE-BASELINE.md 11px/700/UPPERCASE/#4B5563.
