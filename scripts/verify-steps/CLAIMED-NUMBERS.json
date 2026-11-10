@@ -17584,5 +17584,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-09",
     "purpose": "verify-pending-bank-lines-never-counted"
+  },
+  "19981": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-fuel-receipt-reversal-never-registers"
   }
 }
