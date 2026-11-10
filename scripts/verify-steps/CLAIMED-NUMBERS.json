@@ -17629,5 +17629,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
     "purpose": "verify-engines-run-live-companies-only (ACCT-F11123)"
+  },
+  "20017": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-fill-records-provider-match (ACCT-F11125)"
   }
 }
