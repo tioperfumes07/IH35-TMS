@@ -51,6 +51,8 @@ export type LoadsReportRow = {
   miles_practical: number | null;
   miles_shortest: number | null;
   miles_driven_actual: number | null;
+  /** Empty / deadhead miles on the load (mdata.loads.miles_deadhead) — R3 board. */
+  miles_deadhead: number | null;
   revenue_cents: number;
   driver_pay_cents: number;
   fuel_cents: number;
@@ -70,6 +72,9 @@ export type LoadsReportTotals = {
   driver_pay_cents: number;
   fuel_cents: number;
   margin_cents: number;
+  /** Sum of miles_deadhead over the filtered set (R3 Empty miles KPI). */
+  empty_miles: number;
+  loaded_miles: number;
 };
 
 export type LoadsReportPayload = {
@@ -257,6 +262,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
         l.miles_practical::text AS miles_practical,
         l.miles_shortest::text AS miles_shortest,
         l.miles_driven_actual::text AS miles_driven_actual,
+        l.miles_deadhead::text AS miles_deadhead,
         inv.invoice_id,
         inv.invoice_number,
         COALESCE(fbl.factoring_advance_id, inv.factoring_advance_id) AS factoring_advance_id,
@@ -306,6 +312,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
     miles_practical: nullableNum(row.miles_practical),
     miles_shortest: nullableNum(row.miles_shortest),
     miles_driven_actual: nullableNum(row.miles_driven_actual),
+    miles_deadhead: nullableNum(row.miles_deadhead),
     revenue_cents: num(row.lc_revenue_cents),
     driver_pay_cents: num(row.lc_driver_pay_cents),
     fuel_cents: num(row.lc_fuel_cents),
@@ -326,9 +333,11 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
       acc.driver_pay_cents += row.driver_pay_cents;
       acc.fuel_cents += row.fuel_cents;
       acc.margin_cents += row.margin_cents;
+      acc.empty_miles += row.miles_deadhead ?? 0;
+      acc.loaded_miles += row.miles_practical ?? 0;
       return acc;
     },
-    { load_count: 0, revenue_cents: 0, driver_pay_cents: 0, fuel_cents: 0, margin_cents: 0 }
+    { load_count: 0, revenue_cents: 0, driver_pay_cents: 0, fuel_cents: 0, margin_cents: 0, empty_miles: 0, loaded_miles: 0 }
   );
 
   return {
