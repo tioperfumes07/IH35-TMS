@@ -1562,6 +1562,180 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </BoardSection>
       ) : null}
 
+      {show("account_summary") ? (
+        (() => {
+          const latestMonth = latestMonthlyFeeSummary;
+          return (
+            <div className="space-y-3">
+              {companyId ? (
+                <FactoringHomeBoard
+                  companyId={companyId}
+                  onEditTerms={
+                    activeFactor
+                      ? () => {
+                          setProfileEditForm(factorToProfileForm(activeFactor));
+                          setProfileEditOpen(true);
+                        }
+                      : undefined
+                  }
+                />
+              ) : null}
+              {companyId && !activeFactor ? (
+                <BoardSection title="Active factor" testId="factoring-home-no-factor">
+                  <div className="px-3.5 py-3 text-xs text-gray-600">
+                    No factor configured. Activate a factor to manage its profile.
+                  </div>
+                </BoardSection>
+              ) : null}
+              <div data-testid="factoring-account-summary">
+              {summaryQuery.isError ? (
+                <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+              ) : (
+                <BoardSection
+                  title="Account Summary"
+                  testId="factoring-account-summary"
+                  headerRight={<AccountSummaryInfoPopover />}
+                >
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 px-3.5 py-2 sm:grid-cols-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Beginning Balance</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Ending Balance (AR)</span>
+                      {summaryMoneyOrDash({
+                        isLoading: summaryQuery.isLoading,
+                        isError: summaryQuery.isError,
+                        value: summary?.outstanding_liability_balance,
+                        testId: "factoring-account-summary-ending-balance",
+                      })}
+                      <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Payments to You *</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-to-you" />
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Debtor Receipts</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-debtor-receipts" />
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Payments from You</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-from-you" />
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
+                      {summaryMoneyOrDash({
+                        isLoading: factoringKpiQuery.isLoading,
+                        isError: factoringKpiQuery.isError,
+                        value: engineReserve ? engineReserve.total / 100 : undefined,
+                        testId: "factoring-account-summary-reserve-balance",
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
+                    <div className="text-xs font-medium text-gray-900">
+                      Fees Paid{latestMonth ? ` — ${fmtDate(latestMonth.statement_month)} (most recent posted month)` : ""}
+                    </div>
+                    <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Discount Fee</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-discount" />
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Schedule Fee</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-schedule" />
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Wire Fee</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-wire" />
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Total Fees (all types combined)</span>
+                        {summaryMoneyOrDash({
+                          isLoading: feesQuery.isLoading,
+                          isError: feesQuery.isError,
+                          value: latestMonth?.factor_fee_total,
+                          testId: "factoring-account-summary-fees-total",
+                          emphasis: true,
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
+                      {summaryMoneyOrDash({
+                        isLoading: feesQuery.isLoading,
+                        isError: feesQuery.isError,
+                        value: latestMonth?.chargeback_total,
+                        testId: "factoring-account-summary-adjustments",
+                        emphasis: true,
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Total Change in NFE</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-nfe-change" />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 px-3.5 pb-2 pt-2">
+                    <div className="overflow-x-auto">
+                      <ParityTable
+                        title="Beginning and ending — balance sheet items"
+                        columns={[
+                          { key: "label", label: "Item" },
+                          {
+                            key: "beginning",
+                            label: "Beginning",
+                            render: (row: { label: string; testId: string }) => (
+                              <NotApplicable reason="no_source" data-testid={`factoring-account-summary-${row.testId}-beginning`} />
+                            ),
+                          },
+                          {
+                            key: "ending",
+                            label: "Ending",
+                            render: (row: { label: string; ending: unknown; endingReason: NaReason; testId: string }) =>
+                              row.ending == null ? (
+                                <NotApplicable reason={row.endingReason} data-testid={`factoring-account-summary-${row.testId}-ending`} />
+                              ) : (
+                                <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
+                                  {fmtCurrency(row.ending)}
+                                </span>
+                              ),
+                          },
+                        ]}
+                        rows={[
+                          {
+                            label: "AR Balance",
+                            ending: summaryQuery.isError || summaryQuery.isLoading ? null : summary?.outstanding_liability_balance,
+                            endingReason: "not_loaded" as NaReason,
+                            testId: "ar-balance",
+                          },
+                          // Escrow/Cash: this system tracks one combined reserve balance with no
+                          // Escrow/Cash type split — the concept itself doesn't apply here.
+                          { label: "Escrow Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "escrow-reserve" },
+                          { label: "Cash Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "cash-reserve" },
+                          // Loan/Savings/Funds on Hold/NFE: no backing field exists in this schema yet.
+                          { label: "Loan", ending: null, endingReason: "no_source" as NaReason, testId: "loan" },
+                          { label: "Savings", ending: null, endingReason: "no_source" as NaReason, testId: "savings" },
+                          { label: "Funds on Hold", ending: null, endingReason: "no_source" as NaReason, testId: "funds-on-hold" },
+                          { label: "NFE", ending: null, endingReason: "no_source" as NaReason, testId: "nfe" },
+                        ]}
+                        rowKey={(row) => row.testId}
+                      />
+                    </div>
+                  </div>
+                </BoardSection>
+              )}
+              </div>
+            </div>
+          );
+        })()
+      ) : null}
+
       {/* Invoice Status Report — all non-void invoices with their factoring_status, joined to
           factoring_advances for advance/reserve/fee amounts. New backend endpoint
           GET /api/v1/factoring/invoice-status. Live-verified 2026-09-10: 64 non-void invoices
@@ -1993,173 +2167,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           </BoardSection>
         </div>
       ) : null}
-
-      {/* ROUND 443.280 / docs/design/v3/Factoring — Account summary tab IS the Home board
-          (KPI strip → Each purchase → Terms → Measured). FAC-09a Faro account-lines table stays
-          mounted below for Rule 07 (not board chrome). */}
-      {show("account_summary") ? (
-        (() => {
-          const latestMonth = latestMonthlyFeeSummary;
-          return (
-            <div className="space-y-3">
-              {companyId ? (
-                <FactoringHomeBoard
-                  companyId={companyId}
-                  onEditTerms={
-                    activeFactor
-                      ? () => {
-                          setProfileEditForm(factorToProfileForm(activeFactor));
-                          setProfileEditOpen(true);
-                        }
-                      : undefined
-                  }
-                />
-              ) : null}
-              {companyId && !activeFactor ? (
-                <BoardSection title="Active factor" testId="factoring-home-no-factor">
-                  <div className="px-3.5 py-3 text-xs text-gray-600">
-                    No factor configured. Activate a factor to manage its profile.
-                  </div>
-                </BoardSection>
-              ) : null}
-              <div data-testid="factoring-account-summary">
-              {summaryQuery.isError ? (
-                <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
-              ) : (
-                <BoardSection
-                  title="Account Summary"
-                  testId="factoring-account-summary"
-                  headerRight={<AccountSummaryInfoPopover />}
-                >
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 px-3.5 py-2 sm:grid-cols-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Beginning Balance</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Ending Balance (AR)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: summaryQuery.isLoading,
-                        isError: summaryQuery.isError,
-                        value: summary?.outstanding_liability_balance,
-                        testId: "factoring-account-summary-ending-balance",
-                      })}
-                      <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Payments to You *</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-to-you" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Debtor Receipts</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-debtor-receipts" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Payments from You</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-from-you" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: factoringKpiQuery.isLoading,
-                        isError: factoringKpiQuery.isError,
-                        value: engineReserve ? engineReserve.total / 100 : undefined,
-                        testId: "factoring-account-summary-reserve-balance",
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
-                    <div className="text-xs font-medium text-gray-900">
-                      Fees Paid{latestMonth ? ` — ${fmtDate(latestMonth.statement_month)} (most recent posted month)` : ""}
-                    </div>
-                    <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Discount Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-discount" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Schedule Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-schedule" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Wire Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-wire" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Total Fees (all types combined)</span>
-                        {summaryMoneyOrDash({
-                          isLoading: feesQuery.isLoading,
-                          isError: feesQuery.isError,
-                          value: latestMonth?.factor_fee_total,
-                          testId: "factoring-account-summary-fees-total",
-                          emphasis: true,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: feesQuery.isLoading,
-                        isError: feesQuery.isError,
-                        value: latestMonth?.chargeback_total,
-                        testId: "factoring-account-summary-adjustments",
-                        emphasis: true,
-                      })}
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Total Change in NFE</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-nfe-change" />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pb-2 pt-2">
-                    <div className="overflow-x-auto">
-                      <ParityTable
-                        title="Beginning and ending — balance sheet items"
-                        columns={[
-                          { key: "label", label: "Item" },
-                          {
-                            key: "beginning",
-                            label: "Beginning",
-                            render: (row: { label: string; testId: string }) => (
-                              <NotApplicable reason="no_source" data-testid={`factoring-account-summary-${row.testId}-beginning`} />
-                            ),
-                          },
-                          {
-                            key: "ending",
-                            label: "Ending",
-                            render: (row: { label: string; ending: unknown; endingReason: NaReason; testId: string }) =>
-                              row.ending == null ? (
-                                <NotApplicable reason={row.endingReason} data-testid={`factoring-account-summary-${row.testId}-ending`} />
-                              ) : (
-                                <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
-                                  {fmtCurrency(row.ending)}
-                                </span>
-                              ),
-                          },
-                        ]}
-                        rows={[
-                          {
-                            label: "AR Balance",
-                            ending: summaryQuery.isError || summaryQuery.isLoading ? null : summary?.outstanding_liability_balance,
-                            endingReason: "not_loaded" as NaReason,
-                            testId: "ar-balance",
-                          },
-                          // Escrow/Cash: this system tracks one combined reserve balance with no
-                          // Escrow/Cash type split — the concept itself doesn't apply here.
-                          { label: "Escrow Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "escrow-reserve" },
-                          { label: "Cash Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "cash-reserve" },
-                          // Loan/Savings/Funds on Hold/NFE: no backing field exists in this schema yet.
-                          { label: "Loan", ending: null, endingReason: "no_source" as NaReason, testId: "loan" },
-                          { label: "Savings", ending: null, endingReason: "no_source" as NaReason, testId: "savings" },
-                          { label: "Funds on Hold", ending: null, endingReason: "no_source" as NaReason, testId: "funds-on-hold" },
-                          { label: "NFE", ending: null, endingReason: "no_source" as NaReason, testId: "nfe" },
-                        ]}
-                        rowKey={(row) => row.testId}
+            rowKey={(row) => row.testId}
                       />
                     </div>
                   </div>

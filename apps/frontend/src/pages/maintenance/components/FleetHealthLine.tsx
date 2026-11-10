@@ -46,7 +46,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     return <span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${statusTones[row.state]}`} />{labels[row.state]}</span>;
   };
   const columns: ParityColumn<FleetHealthRow>[] = [
-    { key: "unit_number", label: "Unit", render: (row) => <div className="flex min-w-0 flex-col items-start gap-1"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><FleetTruck row={row} /><div className="break-words text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ")}</div></div> },
+    { key: "unit_number", label: "Unit", minWidth: 260, render: (row) => <div className="flex min-w-0 items-center gap-2"><FleetTruck row={row} /><div className="min-w-0"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><div className="truncate text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ") || "—"}</div></div></div> },
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Number(row.odometer_mi).toLocaleString("en-US")} mi`} /> },
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM", render: (row) => row.pm_schedule_id
@@ -55,10 +55,26 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
     { key: "state", label: "Status", sortable: true, sortValue: (row) => row.state, render: (row) => statusCell(row) },
   ];
-  const rows = (health.data?.units ?? []).filter((row) => filter === "all" || (filter === "soon" && ["soon", "overdue"].includes(row.state)) || row.state === filter);
+  const rows = (health.data?.units ?? []).filter((row) => {
+      if (filter === "all") return true;
+      if (filter === "moving") return row.speed_mph != null && Number(row.speed_mph) > 3;
+      if (filter === "soon") return ["soon", "overdue"].includes(row.state);
+      return row.state === filter;
+    });
   return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line" footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
-    <div className="flex flex-wrap items-center justify-end gap-2 px-3 py-2">{[["all", health.data ? `All ${health.data.kpi.total}` : "All"], ["soon", "PM soon"], ["none", "No clock"]].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className="rounded-sm border border-slate-200 px-2 py-1 text-xs aria-pressed:bg-slate-100">{label}</button>)}<Link className="text-xs" to="/maintenance/fleet-table">View all →</Link></div>
+    <div className="flex flex-wrap items-center justify-end gap-2 px-3 py-2" data-testid="fleet-health-filters">{(
+      [
+        ["all", health.data ? `All ${health.data.kpi.total}` : "All"],
+        ["moving", "Moving"],
+        ["soon", "PM soon"],
+        ["none", "No clock"],
+      ] as const
+    ).map(([value, label]) => (
+      <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className="rounded-sm border border-slate-200 px-2 py-1 text-xs aria-pressed:bg-slate-100">
+        {label}
+      </button>
+    ))}<Link className="text-xs" to="/maintenance/fleet-table">View all →</Link></div>
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
-      : <ParityTable rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." />}
+      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="board" rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." hidePager initialPageSize={50} /></div>}
   </V3Panel>;
 }

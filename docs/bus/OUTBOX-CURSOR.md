@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:05 PM CT) — Codex ROUND 8.5 priority findings F1–F3 / T2–T3 / FA1 / M1–M4
+- **PRIOR:** #28737 ShopBays SVG re-ship + Settlements board tables.
+- **THIS:** F3 fuel period labels = live month names; F1/F2 diesel unit graphic + spend bar; T2 Settlements chart money Y-axis; T3 week-of load EntityLinks; FA1 Factoring account-summary board before Invoice Status; M1 Moving filter (speed>3); M2 horizontal unit+truck; M3/M4 board table + 420px scroll overview.
+- **NEXT:** remaining mapped boards; Codex re-verify. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:45 PM CT) — ShopBays floor SVG re-ship + Settlements board tables (all subtabs)
 - **PRIOR:** #28735 title claimed ShopBays SVG but tip lacked ShopBayFloorSvg; TruckProfile #28733 OK.
 - **THIS:** Re-ship ShopBayFloorSvg + InShopBoard mount; Settlements module ParityTables appearance=board across all subtabs; home chart 11px + money nowrap; CashFlow DailyPrediction labels 11px; anti-drift locks TruckProfile+ShopBays.
