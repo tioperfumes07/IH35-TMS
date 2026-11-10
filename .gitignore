@@ -37,3 +37,4 @@ wt-*/
 .r330-staged/
 .gate-step-map.json
 /dist
+.tmp-usmca-inventory.json
