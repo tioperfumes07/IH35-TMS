@@ -48,6 +48,8 @@ export const V3_KPI = {
   labelPx: 10,
   valuePx: 18,
   subPx: 11,
+  /** OWNER DESIGN LAW 2026-10-02 rule 6 — KPI tiles 78px across, never bars down. */
+  heightPx: 78,
 } as const;
 
 export const V3_TABLE = {

@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:25 PM CT) — ROUND 8.4 V3KpiTile 78px (design law #6)
+- **PRIOR:** #28700 census static floor 0.
+- **THIS:** V3_KPI.heightPx=78; V3KpiTile minHeight/height locked. OUTBOX diet ≤200. Accounting/Banking hubs already match v3 section/KPI labels — next deepen element coverage.
+- **NEXT:** Accounting/Banking element-complete builds + screenshots; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:15 PM CT) — ROUND 8.4 census floor → 0 static fails
 - **PRIOR:** #28697 design-parity census.
 - **THIS:** Retune census (no false coming-soon/testid; ParityTable gear defaults; print hidePager exempt). emptyText — on Documents + 4 catalog lists. Baseline failing_routes 48→0.
@@ -188,16 +193,3 @@
 - **THIS:** ROUND #29/#241 → MERGED-UNVERIFIED; PENDING #241 cites #28557 + Lead min-w-0.
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
 
-## OUTBOX (11-03-2026 ~5:40 PM CT) — tip #27 after #28566
-- **PRIOR:** #28566 CreateMultipleBills + VendorBillCreate need-company.
-- **THIS:** PENDING/ROUND tip #27 MERGED-UNVERIFIED (~69 surfaces).
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:35 PM CT) — #27 CreateMultipleBills + VendorBillCreate need-company
-- **PRIOR:** #28564 ENG-34 live-fails wire.
-- **THIS:** CreateMultipleBillsPage + VendorBillCreatePage BoardSection need-company early return; fill-shell plants (~69). SURFACE-BREACH CC-1 for ROUND 7.30 #27. Reclassify/match/LoadCosts still skipped.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-
-## ARCHIVE
-Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` + `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-post-28584-diet.md` (bus-diet OUTBOX≤200).
