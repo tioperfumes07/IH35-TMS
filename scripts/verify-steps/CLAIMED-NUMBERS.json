@@ -15635,6 +15635,21 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-relay-reefer-over-tank-is-diesel (ACCT-F11107)"
   },
+  "20025": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relationship-scorer-scan-once-per-candidate (ACCT-F11126; renumbered from duplicate 20021)"
+  },
+  "20029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100)"
+  },
+  "20033": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-fill-records-provider-match (renumbered from duplicate 20017)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
