@@ -1,0 +1,1 @@
+export default { name: "verify:verify-void-block-counts-line-level-liveness", run(ctx) { ctx.run("node", ["scripts/verify-void-block-counts-line-level-liveness.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-void-block-counts-line-level-liveness.mjs"]); } };

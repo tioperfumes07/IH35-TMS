@@ -8,6 +8,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 const CRON_NAME = "accounting.depreciation_autopost";
 const CRON_EXPRESSION = "15 6 1 * *";
@@ -39,7 +40,7 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
       ORDER BY id
     `
   );
-  return result.rows.map((row) => row.operating_company_id);
+  return filterLiveEngineCompanies(result.rows.map((row) => row.operating_company_id));
 }
 
 /**

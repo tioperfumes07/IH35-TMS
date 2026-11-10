@@ -8,7 +8,7 @@ vi.mock("./_helpers/tenant-context-guard.js", () => ({
 import { runCollectionsSyncCronTick } from "./collections-sync.cron.js";
 
 describe("collections-sync cron", () => {
-  it("iterates active companies and syncs each tenant exactly once", async () => {
+  it("iterates the live company only and syncs it exactly once (ACCT-F11123)", async () => {
     const setConfigCalls: string[] = [];
     const syncCalls: string[] = [];
     const client = {
@@ -16,7 +16,7 @@ describe("collections-sync cron", () => {
         if (sql.includes("FROM org.companies")) {
           return {
             rows: [
-              { operating_company_id: "11111111-1111-1111-1111-111111111111" },
+              { operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" },
               { operating_company_id: "22222222-2222-2222-2222-222222222222" },
             ],
           };
@@ -37,14 +37,9 @@ describe("collections-sync cron", () => {
       },
     });
 
-    expect(setConfigCalls).toEqual([
-      "11111111-1111-1111-1111-111111111111",
-      "22222222-2222-2222-2222-222222222222",
-    ]);
-    expect(syncCalls).toEqual([
-      "11111111-1111-1111-1111-111111111111",
-      "22222222-2222-2222-2222-222222222222",
-    ]);
+    // ACCT-F11123: the other active company (a frozen entity) is never synced.
+    expect(setConfigCalls).toEqual(["5c854333-6ea5-4faa-af31-67cb272fef80"]);
+    expect(syncCalls).toEqual(["5c854333-6ea5-4faa-af31-67cb272fef80"]);
   });
 
   it("is idempotent on repeat runs", async () => {
@@ -52,7 +47,7 @@ describe("collections-sync cron", () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes("FROM org.companies")) {
-          return { rows: [{ operating_company_id: "11111111-1111-1111-1111-111111111111" }] };
+          return { rows: [{ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" }] };
         }
         return { rows: [] };
       }),
@@ -73,8 +68,8 @@ describe("collections-sync cron", () => {
     });
 
     expect(syncCalls).toEqual([
-      "11111111-1111-1111-1111-111111111111",
-      "11111111-1111-1111-1111-111111111111",
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
     ]);
   });
 
@@ -83,7 +78,7 @@ describe("collections-sync cron", () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes("FROM org.companies")) {
-          return { rows: [{ operating_company_id: "11111111-1111-1111-1111-111111111111" }] };
+          return { rows: [{ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" }] };
         }
         return { rows: [] };
       }),
@@ -95,7 +90,7 @@ describe("collections-sync cron", () => {
     });
 
     expect(assertTenantContextMock).toHaveBeenCalledWith(
-      "11111111-1111-1111-1111-111111111111",
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
       "accounting.collections_sync_cron"
     );
   });

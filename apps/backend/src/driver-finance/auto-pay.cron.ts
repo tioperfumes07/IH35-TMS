@@ -5,6 +5,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { queuePayment } from "./settlement-payment.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 export const DRIVER_SETTLEMENT_AUTO_PAY_JOB = "driver_finance.settlement_auto_pay_cron";
 
@@ -54,7 +55,7 @@ async function listActiveOperatingCompanyIds() {
         ORDER BY id
       `
     );
-    return res.rows.map((row) => row.id);
+    return filterLiveEngineCompanies(res.rows.map((row) => row.id));
   });
 }
 

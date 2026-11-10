@@ -4,6 +4,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { syncCollectionTasks } from "../accounting/collections.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 const CRON_NAME = "accounting.collections_sync_cron";
@@ -24,7 +25,7 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
       ORDER BY id
     `
   );
-  return res.rows.map((row) => row.operating_company_id);
+  return filterLiveEngineCompanies(res.rows.map((row) => row.operating_company_id));
 }
 
 export async function runCollectionsSyncCronTick(deps?: {
