@@ -1,10 +1,13 @@
 /**
- * ROUND 8.4 / UI-F11125 — Truck service map (docs/design/v3/maintenance-vehicle-graphics/TruckProfile.dc.html).
- * Chrome + legend match the board. System cards bind to live PM / WO / fault / compliance only —
- * never the board's illustrative tread depths or sample mile windows.
+ * ROUND 8.4 / UI-F11125 — Truck service map board-identical rebuild.
+ * Board: docs/design/v3/maintenance-vehicle-graphics/TruckProfile.dc.html
+ * Geometry: 990×520 top-down/side SVG, Barlow chrome chips (ODOMETER · NOW · Driver · Load),
+ * numbered system cards. Live engines only — never board sample tread/miles.
  */
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { truckProfileBoardSvgHtml } from "./truckProfileBoardSvg";
 
 export type TruckServiceMapState = "ok" | "soon" | "defect" | "none";
 
@@ -37,6 +40,23 @@ const STATE_DOT: Record<TruckServiceMapState, string> = {
   none: "bg-slate-400",
 };
 
+const CHIP_LABEL: CSSProperties = {
+  fontFamily: "'Barlow Semi Condensed', Inter, ui-sans-serif, system-ui, sans-serif",
+  fontWeight: 700,
+  fontSize: 11,
+  letterSpacing: "0.12em",
+  color: "#5B6B7E",
+  textTransform: "uppercase",
+};
+
+const CHIP_VALUE: CSSProperties = {
+  fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+  fontWeight: 600,
+  fontSize: 22,
+  color: "#14213D",
+  lineHeight: 1.15,
+};
+
 function pmState(milesRemaining: number | null): TruckServiceMapState {
   if (milesRemaining == null || Number.isNaN(milesRemaining)) return "none";
   if (milesRemaining < 0) return "defect";
@@ -47,6 +67,16 @@ function pmState(milesRemaining: number | null): TruckServiceMapState {
 function formatMiles(n: number | null | undefined): string {
   if (n == null || Number.isNaN(Number(n))) return "—";
   return `${Math.abs(Number(n)).toLocaleString("en-US")} mi`;
+}
+
+function formatOdometer(n: number | null | undefined): string {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  return Number(n).toLocaleString("en-US");
+}
+
+function dash(v: unknown): string {
+  if (v == null || v === "") return "—";
+  return String(v);
 }
 
 /** Build service-map systems from the unit profile aggregate — live engines only. */
@@ -64,7 +94,7 @@ export function buildTruckServiceMapSystems(input: {
   if (pmEntries.length === 0) {
     systems.push({
       n: n++,
-      name: "PM clock",
+      name: "Engine · PM clock",
       detail: "No PM schedule on file for this unit",
       state: "none",
       href: `/maintenance/pm-schedule?unit_id=${encodeURIComponent(input.unitId)}&create=1`,
@@ -78,99 +108,85 @@ export function buildTruckServiceMapSystems(input: {
           : Number(row.miles_remaining);
       const label = key.replace(/_/g, " ");
       const last = row.last_done_odometer == null ? "—" : formatMiles(Number(row.last_done_odometer));
-      const remain =
-        miles == null
-          ? "Miles remaining —"
-          : miles < 0
-            ? `${formatMiles(miles)} overdue`
-            : `${formatMiles(miles)} to go`;
+      const rem = miles == null ? "—" : formatMiles(miles);
       systems.push({
         n: n++,
-        name: `PM · ${label}`,
-        detail: `${remain} · last at ${last}`,
+        name: /engine|pm/i.test(label) ? `Engine · ${label}` : label,
+        detail: `Remaining ${rem} · last @ ${last}`,
         state: pmState(miles),
         href: `/maintenance/pm-schedule?unit_id=${encodeURIComponent(input.unitId)}`,
       });
     }
   }
 
-  if (input.openWoTotal > 0 || input.activeFaultCount > 0) {
-    const parts: string[] = [];
-    if (input.openWoTotal > 0) parts.push(`${input.openWoTotal} open work order${input.openWoTotal === 1 ? "" : "s"}`);
-    if (input.activeFaultCount > 0) {
-      parts.push(`${input.activeFaultCount} active fault${input.activeFaultCount === 1 ? "" : "s"}`);
-    }
-    systems.push({
-      n: n++,
-      name: "Open defects",
-      detail: parts.join(" · "),
-      state: "defect",
-      href: `/maintenance/work-orders?unit_id=${encodeURIComponent(input.unitId)}`,
-    });
-  }
+  systems.push({
+    n: n++,
+    name: "Open work orders",
+    detail:
+      input.openWoTotal > 0
+        ? `${input.openWoTotal} open WO${input.openWoTotal === 1 ? "" : "s"}`
+        : "No open work orders",
+    state: input.openWoTotal > 0 ? "soon" : "ok",
+    href: `/maintenance/work-orders?unit_id=${encodeURIComponent(input.unitId)}`,
+  });
 
-  const dot = (input.compliance?.dot_inspection ?? null) as Record<string, unknown> | null;
-  const nextDue = dot?.next_due == null || dot.next_due === "" ? null : String(dot.next_due);
+  systems.push({
+    n: n++,
+    name: "Active faults",
+    detail:
+      input.activeFaultCount > 0
+        ? `${input.activeFaultCount} active fault code${input.activeFaultCount === 1 ? "" : "s"}`
+        : "No active fault codes",
+    state: input.activeFaultCount > 0 ? "defect" : "ok",
+    href: `/fleet/units/${encodeURIComponent(input.unitId)}#faults`,
+  });
+
+  const comp = input.compliance ?? {};
+  const annual =
+    (comp.annual_inspection_expires_on as string | null | undefined) ??
+    (comp.dot_expires_on as string | null | undefined) ??
+    null;
   systems.push({
     n: n++,
     name: "Annual DOT · tractor",
-    detail: nextDue ? `Next due ${nextDue}` : "No DOT inspection date on file",
-    state: nextDue ? "ok" : "none",
-    href: `/fleet/units/${encodeURIComponent(input.unitId)}#asset-compliance`,
+    detail: annual ? `Valid through ${annual}` : "No inspection date on file",
+    state: annual ? "ok" : "none",
+    href: `/compliance?unit_id=${encodeURIComponent(input.unitId)}`,
   });
 
   return systems;
 }
 
-function TruckSideSilhouette({ systems }: { systems: TruckServiceMapSystem[] }) {
-  // Numbered hotspots along a simple side-view tractor silhouette (design: "side view with numbered service points").
-  const slots = [
-    { x: 42, y: 38 },
-    { x: 78, y: 28 },
-    { x: 118, y: 36 },
-    { x: 158, y: 30 },
-    { x: 198, y: 40 },
-    { x: 238, y: 34 },
-    { x: 268, y: 48 },
-    { x: 288, y: 62 },
-  ];
+function HeaderChip({
+  label,
+  value,
+  valueStyle,
+  testId,
+}: {
+  label: string;
+  value: string;
+  valueStyle?: CSSProperties;
+  testId?: string;
+}) {
   return (
-    <svg
-      viewBox="0 0 320 110"
-      className="h-28 w-full max-w-md text-slate-700"
-      role="img"
-      aria-label="Unit side view with numbered service points"
-      data-testid="truck-service-map-silhouette"
+    <div
+      data-testid={testId}
+      style={{
+        background: "#FFFFFF",
+        borderRadius: 12,
+        padding: "10px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        boxShadow: "0 1px 0 #D5DCE5",
+        minWidth: 0,
+      }}
     >
-      <rect x="8" y="48" width="170" height="36" rx="8" fill="currentColor" opacity="0.85" />
-      <rect x="150" y="36" width="120" height="48" rx="6" fill="currentColor" opacity="0.7" />
-      <rect x="20" y="40" width="48" height="22" rx="4" fill="#94a3b8" />
-      <circle cx="48" cy="92" r="14" fill="#0f172a" />
-      <circle cx="48" cy="92" r="6" fill="#cbd5e1" />
-      <circle cx="120" cy="92" r="14" fill="#0f172a" />
-      <circle cx="120" cy="92" r="6" fill="#cbd5e1" />
-      <circle cx="220" cy="92" r="14" fill="#0f172a" />
-      <circle cx="220" cy="92" r="6" fill="#cbd5e1" />
-      <circle cx="260" cy="92" r="14" fill="#0f172a" />
-      <circle cx="260" cy="92" r="6" fill="#cbd5e1" />
-      {systems.slice(0, slots.length).map((sys, i) => {
-        const slot = slots[i]!;
-        return (
-          <g key={sys.n}>
-            <circle cx={slot.x} cy={slot.y} r="10" className="fill-white stroke-slate-800" strokeWidth="1.5" />
-            <text
-              x={slot.x}
-              y={slot.y + 3.5}
-              textAnchor="middle"
-              className="fill-slate-900"
-              style={{ fontSize: 10, fontWeight: 700 }}
-            >
-              {sys.n}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+      <span style={CHIP_LABEL}>{label}</span>
+      <span style={{ ...CHIP_VALUE, ...valueStyle, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -181,6 +197,11 @@ export function TruckServiceMap(props: {
   openWoTotal: number;
   activeFaultCount: number;
   compliance?: Record<string, unknown> | null;
+  /** Live Samsara / position aggregate (board ODOMETER · NOW chips). */
+  samsara?: Record<string, unknown> | null;
+  latestPosition?: Record<string, unknown> | null;
+  currentDriver?: Record<string, unknown> | null;
+  currentLoad?: Record<string, unknown> | null;
 }) {
   const systems = buildTruckServiceMapSystems({
     unitId: props.unitId,
@@ -190,9 +211,71 @@ export function TruckServiceMap(props: {
     compliance: props.compliance,
   });
 
+  const parsed = (props.samsara?.raw_payload_parsed as Record<string, unknown> | undefined) ?? {};
+  const odometerRaw =
+    parsed.odometer_miles ??
+    props.latestPosition?.odometer_mi ??
+    props.latestPosition?.book_odometer_mi ??
+    null;
+  const odometer =
+    odometerRaw == null || odometerRaw === "" ? null : Number(odometerRaw);
+
+  const speed = props.latestPosition?.speed_mph != null ? Number(props.latestPosition.speed_mph) : null;
+  const engineState = props.latestPosition?.engine_state != null ? String(props.latestPosition.engine_state) : "";
+  const placeBits = [
+    props.latestPosition?.reverse_geocode != null ? String(props.latestPosition.reverse_geocode) : "",
+    props.latestPosition?.city != null ? String(props.latestPosition.city) : "",
+    props.latestPosition?.state != null ? String(props.latestPosition.state) : "",
+  ].filter(Boolean);
+  const place = placeBits[0] || (props.latestPosition?.lat != null && props.latestPosition?.lng != null
+    ? `${props.latestPosition.lat}, ${props.latestPosition.lng}`
+    : "");
+  let nowLabel = "—";
+  if (place || engineState || speed != null) {
+    const motion =
+      speed != null && speed > 3
+        ? "Rolling"
+        : /on|idle|moving/i.test(engineState)
+          ? engineState
+          : speed != null
+            ? "Stopped"
+            : "—";
+    nowLabel = place ? `${motion} · ${place}` : motion;
+  }
+
+  const driverName = dash(props.currentDriver?.name);
+  const loadNumber = dash(props.currentLoad?.load_number);
+
+  const svgHtml = truckProfileBoardSvgHtml(props.unitId);
+
   return (
     <BoardSection title="SERVICE MAP · SELECT A SYSTEM" testId="truck-service-map">
-      <div className="space-y-3 px-3 py-3" data-testid="truck-service-map-body">
+      <div className="space-y-3 px-3 py-3" data-testid="truck-service-map-body" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
+        {/* Board header chips — TruckProfile.dc.html */}
+        <div
+          className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
+          data-testid="truck-service-map-header-chips"
+        >
+          <HeaderChip
+            label="Odometer · Samsara"
+            value={formatOdometer(odometer)}
+            testId="truck-service-map-odometer"
+          />
+          <HeaderChip
+            label="Now"
+            value={nowLabel}
+            valueStyle={{
+              fontFamily: "Barlow, Inter, ui-sans-serif, system-ui, sans-serif",
+              fontWeight: 700,
+              fontSize: 18,
+              color: nowLabel === "—" ? "#5B6B7E" : "#1F8A4C",
+            }}
+            testId="truck-service-map-now"
+          />
+          <HeaderChip label="Driver" value={driverName} testId="truck-service-map-driver" />
+          <HeaderChip label="Load" value={loadNumber === "—" ? "—" : String(loadNumber)} testId="truck-service-map-load" />
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-[#64748B]" data-testid="truck-service-map-legend">
             <span className="mr-2 inline-flex items-center gap-1">
@@ -217,14 +300,13 @@ export function TruckServiceMap(props: {
           </Link>
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 rounded-sm border border-[#E8EDF2] bg-[#F6F9FB] p-3">
-            <div className="mb-1 text-xs font-semibold text-[#0F1B2D]">{props.unitNumber}</div>
-            <TruckSideSilhouette systems={systems} />
-            <p className="mt-1 text-xs text-[#64748B]">
-              Live PM, work orders, faults and DOT dates. Missing readings stay as —, never board samples.
-            </p>
-          </div>
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
+          <div
+            className="min-w-0 flex-[1.4] overflow-hidden rounded-sm border border-[#E8EDF2] bg-[#F6F9FB]"
+            data-testid="truck-service-map-board-svg"
+            // Board SVG is static illustration; numbered cards to the right carry live state.
+            dangerouslySetInnerHTML={{ __html: svgHtml }}
+          />
 
           <ul className="min-w-0 flex-1 space-y-2" data-testid="truck-service-map-systems">
             {systems.map((sys) => {
@@ -258,14 +340,16 @@ export function TruckServiceMap(props: {
           </ul>
         </div>
 
-        <div className="text-xs text-[#64748B]">
+        <p className="text-xs text-[#64748B]">
+          System states and service history bind to live PM / WO / fault / compliance for {props.unitNumber}. Missing
+          readings stay as —, never board samples.{" "}
           <Link
             to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(props.unitId)}`}
             className="font-semibold text-[#14314F] underline"
           >
-            Open {props.unitNumber} PM schedules →
+            Open PM schedules →
           </Link>
-        </div>
+        </p>
       </div>
     </BoardSection>
   );

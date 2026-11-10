@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~9:05 PM CT) — TruckProfile board-identical rebuild (990×520 SVG + live chips)
+- **PRIOR:** #28730 permanent complete-design law + Codex batch-1 locks.
+- **THIS:** TruckServiceMap rebuilt to TruckProfile.dc.html — board SVG viewBox 0 0 990 520, Barlow header chips (Odometer/Now/Driver/Load) wired to live Samsara/position/driver/load, numbered system cards from PM/WO/fault/compliance. No board sample tread/miles.
+- **NEXT:** ShopBays depth + next Codex ROUND 8.5 fail batch; all tabs/subtabs same concepts. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:40 PM CT) — PERMANENT complete-design law + ROUND 8.5 Codex finding fixes
 - **READ FIRST EVERY DESIGN TURN:** `docs/design/00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md` + Codex findings `docs/bus/lead/11-09-2026-CODEX-ROUND-8.5-CURSOR-FIRST-VISUAL-FINDINGS.md` + `docs/design/DESIGN-PARITY-VERIFY.md` + `docs/design/DESIGN-BOARD-ROUTE-MAP.md`.
 - **PERMANENT ANTI-DRIFT:** `scripts/verify-complete-design-build-law.mjs` wired into design-parity census (20018). Census/label/chrome-only is NOT design-done. Same board concepts for ALL tabs/subtabs.
