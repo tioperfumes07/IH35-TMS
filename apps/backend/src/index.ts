@@ -330,6 +330,7 @@ import { registerDriverHeroRoutes } from "./drivers/driver-hero.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
+import { registerFaroPurchaseReportSeedRoutes } from "./factoring/faro-purchase-report-seed.routes.js";
 import { registerSubmissionQueueRoutes } from "./factoring/submission-queue.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
@@ -1300,6 +1301,7 @@ async function main() {
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
   await registerFaroCsvImportRoutes(app);
+  await registerFaroPurchaseReportSeedRoutes(app);
   // CORRECTION (same-session, ROUND27.1-STEP5.5 revert): registerFactorReconciliationRoutes is
   // ALREADY autoload-mounted (default fp) by registerAccountingRoutes()'s @fastify/autoload over
   // this directory, via factor-reconciliation.routes.ts (name
