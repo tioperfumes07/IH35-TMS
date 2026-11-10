@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V3 Fuel Assignment Popup</title>
+<style>
+:root{--shell:#1F2A44;--ink:#0F1219;--muted:#6B7280;--label:#4B5563;--border:#E5E7EB;--panel:#F7F8FA;--page:#EEF0F3;--ok:#166534;--okbg:#ECFDF3;--warn:#92400E;--warnbg:#FFFBEB;--link:#1D4ED8}
+*{box-sizing:border-box}body{margin:0;background:var(--page);font:13px/1.4 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+.wrap{display:flex;gap:32px;padding:28px;align-items:flex-start;flex-wrap:wrap}
+.note{width:360px;font-size:12px;color:var(--label)}
+.note h2{font-size:13px;margin:0 0 8px;color:var(--ink)}.note table{width:100%;border-collapse:collapse;margin:6px 0 14px}.note td{border-bottom:1px solid var(--border);padding:4px 2px}
+.modal{width:720px;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 12px 32px rgba(15,18,25,.18)}
+.mh{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border)}
+.mh b{font-size:14px}.mh span{color:var(--muted);font-size:12px}.x{font-size:18px;color:var(--muted)}
+.mb{padding:12px 16px;display:grid;gap:12px;max-height:85vh;overflow:auto}
+.sec{border:1px solid var(--border);border-radius:4px}
+.sh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--label);background:var(--panel);padding:6px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.sh em{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}.f{padding:8px 10px;border-right:1px solid var(--border)}.f:last-child{border-right:0}
+.l{font-size:11px;color:var(--muted)}.v{font-size:13px;font-weight:600}.s{font-size:11px;color:var(--muted)}
+table.t{width:100%;border-collapse:collapse;font-size:12px}table.t th{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--label);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)}
+table.t td{padding:7px 10px;border-bottom:1px solid var(--border)}table.t tr:last-child td{border-bottom:0}.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px}.ok{background:var(--okbg);color:var(--ok)}.wn{background:var(--warnbg);color:var(--warn)}
+a{color:var(--link);text-decoration:none}
+.prop{padding:10px;display:flex;gap:16px;align-items:center}.prop .v{font-size:14px}
+.acts{display:flex;gap:8px;padding:0 10px 10px}
+.btn{height:32px;padding:0 12px;border:1px solid var(--border);background:#fff;border-radius:4px;font:600 12px Inter,system-ui;color:var(--ink)}
+.btn.p{background:var(--shell);color:#fff;border-color:var(--shell)}.btn.sel{border-color:var(--shell);box-shadow:inset 0 0 0 1px var(--shell)}
+.chg{display:flex;gap:10px;padding:10px;align-items:flex-end}.fld .l{margin-bottom:3px}
+.in{height:32px;border:1px solid var(--border);border-radius:4px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink);background:#fff}
+.w160{width:160px}.w200{width:200px}.w260{width:260px}.caret{color:var(--muted);font-size:10px}
+.mf{height:52px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.mf .s{max-width:380px}
+details{font-size:12px}summary{cursor:pointer;padding:6px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--label);background:var(--panel)}
+details p{margin:0;padding:8px 10px;color:var(--label)}
+</style></head><body>
+<div class="wrap">
+<div class="modal" data-board="fuel-assignment-popup">
+  <div class="mh"><div><b>Fuel assignment</b> <span>· confirm truck &amp; load</span></div><span class="x">×</span></div>
+  <div class="mb">
+    <div class="sec"><div class="sh">Fill <em>Dreamline · Relay</em></div>
+      <div class="grid">
+        <div class="f"><div class="l">Fill time (Central)</div><div class="v">10/19/2026 3:32 PM</div></div>
+        <div class="f"><div class="l">Station</div><div class="v">Love's #237</div><div class="s">Tallulah, LA</div></div>
+        <div class="f"><div class="l">Gallons · amount</div><div class="v">167.002 gal</div><div class="s">$933.60</div></div>
+        <div class="f"><div class="l">Card truck · driver</div><div class="v">T173</div><div class="s">Ruben Pedro Perez Garcia</div></div>
+      </div></div>
+
+    <div class="sec"><div class="sh">Evidence — trucks at the station <em>Samsara GPS · odometer</em></div>
+      <table class="t"><thead><tr><th>Truck</th><th>Driver</th><th class="num">From station</th><th>At station</th><th class="num">Odometer at fill</th><th>Load at fill</th><th></th></tr></thead>
+      <tbody><tr><td><a href="#">T173</a></td><td>Ruben Pedro Perez Garcia</td><td class="num">[mi]</td><td>Parked 3:09 – 4:05 PM</td><td class="num">438,489.5 mi</td><td><a href="#">13689</a> · running</td><td><span class="pill ok">At pump</span></td></tr></tbody></table></div>
+
+    <div class="sec"><div class="sh">Proposed <em>engine</em></div>
+      <div class="prop"><div><div class="l">Truck</div><div class="v">T173</div></div><div><div class="l">Load</div><div class="v"><a href="#">13689</a></div></div><div><div class="l">Why</div><div class="s">Card truck was parked at this station during the fill; 13689 was running.</div></div></div>
+      <div class="acts"><button class="btn sel">Confirm proposed</button><button class="btn">Choose another truck &amp; load</button><button class="btn">Keep on card truck</button></div></div>
+
+    <div class="sec"><div class="sh">Change <em>only when not confirming</em></div>
+      <div class="chg">
+        <div class="fld"><div class="l">Truck</div><div class="in w160">T173 <span class="caret">▾</span></div></div>
+        <div class="fld"><div class="l">Load</div><div class="in w200">13689 · Laredo → … <span class="caret">▾</span></div></div>
+        <div class="fld"><div class="l">Reason</div><div class="in w260">Select a reason <span class="caret">▾</span></div></div>
+      </div>
+      <p class="s" style="margin:0 10px 10px">Reason list = Override reasons catalog (443.294). Owner / accountant: no reason — Confirm only. No typing.</p></div>
+
+    <details><summary>Engine notes</summary><p>owner_ruling 10-22 9:39 AM CT (LEAD 443.233 c) · resolver v2: parked-hold between breadcrumbs 3:09 and 3:59 PM.</p></details>
+  </div>
+  <div class="mf"><div class="s">Confirmed by you · audit row written · the fill, its receipt and its discount move together.</div><div style="display:flex;gap:8px"><button class="btn">Cancel</button><button class="btn p">Confirm</button></div></div>
+</div>
+
+<div class="note">
+<h2>Popup standard — every popup in the app</h2>
+<table>
+<tr><td>Small</td><td>480 px</td><td>confirm, one field</td></tr>
+<tr><td>Medium</td><td>720 px</td><td>review + decide (this one)</td></tr>
+<tr><td>Large</td><td>960 px</td><td>forms, 2 columns</td></tr>
+<tr><td>Extra large</td><td>1,280 px</td><td>bill / check / invoice</td></tr>
+</table>
+<table>
+<tr><td>Height</td><td>fits content; body scrolls past 85% of screen</td></tr>
+<tr><td>Header</td><td>44 px · title 14 px semibold · × right</td></tr>
+<tr><td>Section header</td><td>11 px uppercase bold, gray band, source on the right</td></tr>
+<tr><td>Label / value</td><td>11 px gray / 13 px</td></tr>
+<tr><td>Inputs</td><td>32 px tall; width by type: truck 160 · load 200 · date 140 · money 140 · reason 260</td></tr>
+<tr><td>Footer</td><td>52 px · note left · Cancel + primary right</td></tr>
+<tr><td>Notes / memos</td><td>own collapsed section, never mixed into data</td></tr>
+<tr><td>Reasons</td><td>dropdown from the catalog; never a text box</td></tr>
+</table>
+<p>No popup defaults to 85% of the screen any more: a popup that names no size is Medium.</p>
+</div>
+</div>
+</body></html>

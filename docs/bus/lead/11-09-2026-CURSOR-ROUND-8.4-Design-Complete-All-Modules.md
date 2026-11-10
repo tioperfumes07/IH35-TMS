@@ -27,6 +27,12 @@ MEASURED (main 11-09):
 - Design references cover 4 board sets, 81 v3 designs, 13 approved screens and 12 contract surfaces.
 - verify-ui-design-system-ratchet passes. It only ratchets; it does not prove parity.
 
+COMPLETE, NOT SURFACE (owner 11-09 19:56 CT, verbatim: "it must not be surface level, it must be complete design builds, not half built"):
+- A screen counts as DONE only when EVERY element in its design is built and working: every tab, subtab, column, filter, KPI tile, button, modal, drawer and form field, wired to its live engine (nav → API → Neon), with Save/Close, empty "—" states and print/export where the design shows them.
+- Restyling an existing screen without building the missing parts is NOT done. A placeholder, "coming soon", a dead button or a hardcoded number = FAIL.
+- The census scores each route on FULL element coverage against its design file (elements in the design vs elements built and wired), not just the app-wide CSS rules.
+- Design sources added 11-09 to docs/design/v3 from the owner's Downloads (the design agent's files): Dispatch-LoadHistory, Modal-FuelAssignment (+png), Reports-CompanySettlements, Reports-Customers, Reports-DriverSettlements, Reports-Loads, Reports-Vendors. v3 now has 89 files.
+
 DO:
 1. CENSUS FIRST (PR 1). Write scripts/verify-design-parity-census.mjs.
    - For every route in the manifest, record its module, tab and subtab; the design source that governs it (board, v3 file, approved screen, or "app-wide rules only"); and pass/fail on each app-wide rule, read statically from the page/components.
