@@ -2005,7 +2005,7 @@ export function ParityTable<T>({
                       className={`inline-flex h-full w-full items-center gap-1 ${
                         /\btext-right\b/.test(column.className ?? "")
                           ? "justify-end"
-                          : /\btext-left\b/.test(column.className ?? "")
+                          : /\btext-left\b/.test(column.className ?? "") || board
                             ? "justify-start"
                             : "justify-center"
                       }`}

@@ -426,66 +426,52 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {/* 7-Day Outlook — flat section + divide-x (ORPH-004). Selected cell uses shell navy. V3 tokens only. */}
-      <section
-        style={{
-          overflow: "hidden",
-          borderRadius: 2,
-          border: `1px solid ${V3.border}`,
-          background: V3.surface,
-          fontFamily: V3.font,
-        }}
+      {/* CF3 — board: seven separate day tiles with gaps (not a joined strip + extra heading). */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6, minWidth: 0 }}
         data-testid="cash-flow-projected-outlook"
       >
-        <div style={{ borderBottom: `1px solid ${V3.borderSoft}`, background: V3.headerBg, padding: "8px 14px" }}>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: V3.muted, margin: 0 }}>
-            7-Day Outlook
-          </p>
-        </div>
-        <div style={{ overflowX: "auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", minWidth: 420 }}>
-            {sevenDays.map((entry, i) => {
-              const isSelected = entry.date === date;
-              const isToday = entry.date === todayIso();
-              const pos = entry.net_cents >= 0;
-              return (
-                <button
-                  key={entry.date}
-                  type="button"
-                  onClick={() => setDate(entry.date)}
-                  title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: "8px 4px",
-                    border: "none",
-                    borderLeft: i === 0 ? "none" : `1px solid ${V3.borderSoft}`,
-                    cursor: "pointer",
-                    background: isSelected ? V3.shell : isToday ? V3.headerBg : V3.surface,
-                    color: isSelected ? V3.onShell : V3.ink,
-                    fontFamily: V3.font,
-                  }}
-                >
-                  <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{fmtChipDate(entry.date)}</span>
-                  <span
-                    className="n"
-                    style={{
-                      marginTop: 2,
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: isSelected ? V3.onShell : entry.net_cents === 0 ? V3.mutedSoft : pos ? V3.ink : V3.red,
-                    }}
-                  >
-                    {isLoading ? "—" : formatCompactNet(entry.net_cents)}
-                  </span>
-                  <span style={{ fontSize: 11, opacity: 0.75 }}>net</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        {sevenDays.map((entry) => {
+          const isSelected = entry.date === date;
+          const isToday = entry.date === todayIso();
+          const pos = entry.net_cents >= 0;
+          return (
+            <button
+              key={entry.date}
+              type="button"
+              onClick={() => setDate(entry.date)}
+              title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                alignItems: "flex-start",
+                padding: "8px 10px",
+                border: `1px solid ${V3.border}`,
+                borderRadius: 2,
+                cursor: "pointer",
+                background: isSelected ? V3.shell : isToday ? V3.headerBg : V3.surface,
+                color: isSelected ? V3.onShell : V3.ink,
+                fontFamily: V3.font,
+                minWidth: 0,
+              }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, whiteSpace: "nowrap" }}>{fmtChipDate(entry.date)}</span>
+              <span
+                className="n"
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: isSelected ? V3.onShell : entry.net_cents === 0 ? V3.mutedSoft : pos ? V3.ink : V3.red,
+                }}
+              >
+                {isLoading ? "—" : formatCompactNet(entry.net_cents)}
+              </span>
+              <span style={{ fontSize: 11, opacity: 0.75 }}>net</span>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* Income */}

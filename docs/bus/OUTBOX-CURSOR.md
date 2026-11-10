@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:10 PM CT) — CF2–CF6 + V1/V2 + SF2 + R1 board chrome
+- **PRIOR:** #28759 D5 test + CF1 Related-above-tabs + C1/SF1 chrome.
+- **THIS:** CF2 Net/Ending matrix cells are semantic buttons. CF3 Projected seven separate day tiles (gap, no joined strip heading). CF4 AVP chart left margin for money axis. CF6 Manual empty panels keep column headers + six expense priority groups; Measured label unduplicated. V1 compact Pays through table; V2 Suggested category off overview (detail via View all). SF2 qualification status dots + left-align; ParityTable board headers justify-start. R1 Reports title before navy; ReportBoardShell drops second ReportsSubNav, navy five-tab strip.
+- **NEXT:** R2–R6 / DP1–DP4 / D1–D4 / D6 / T5–T6 residual. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~11:15 PM CT) — D5 test pin + CF1 Related-above-tabs + C1/SF1 chrome
 - **PRIOR:** #28757 D5 Load History lcr totals + Legal L1-L3 + census OVERHEAD DOOR.
 - **THIS:** loads-history-row78 test expects SUM(lcr.revenue_cents). CF1 Related links above Cash Flow tab strip. C1/V PartyHomeHeader empty crumb (StructuralBreadcrumb owns it). SF1 Driver Files compact header; SF2 qualification ParityTable appearance=board.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~7:40 PM CT) — U12 Settlement Disputes status MultiSelect
 - **PRIOR:** #28594 U12 register tip.
 - **THIS:** SettlementDisputesTab status SelectCombobox → MultiSelectDropdown; API still open|all with client narrow for other statuses.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:30 PM CT) — U12 Fuel Fraud Alerts status MultiSelect
-- **PRIOR:** #28592 Cascade U12 handoff tip.
-- **THIS:** FraudAlertsListPage status pills → MultiSelectDropdown (default open; drilled scope empty=all; 0/1 API, 2+ client filter).
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

@@ -17,7 +17,7 @@ import { V3KpiTile, V3Panel, V3Segmented } from "../v3";
 import { EntityLink } from "../shared/EntityLink";
 import { formatCompanyName } from "../../lib/formatCompanyName";
 import { ListErrorState } from "../ListErrorState";
-import { SuggestedCategory, type SuggestedCategoryData } from "../vendors/SuggestedCategory";
+import type { SuggestedCategoryData } from "../vendors/SuggestedCategory";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { MeasuredNote, NumLink, PartyHomeHeader, PartyTable, SpendBar, day, int, outlineButton, usd, type PartyCol } from "./partyBoardKit";
 
@@ -66,7 +66,6 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
       return params;
     }, { replace: true });
   const exportRef = useRef<() => void>(() => undefined);
-  const noExport = useRef<() => void>(() => undefined);
   const q = useQuery({
     queryKey: ["party-board", "vendors", props.operatingCompanyId, "ytd"],
     queryFn: () => apiRequest<VendorBoard>(`/api/v1/mdata/boards/vendors?operating_company_id=${props.operatingCompanyId}&range=ytd`),
@@ -97,10 +96,10 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
   const from = b?.range_from ?? "";
   const pct = (cents: number) => (catTotal > 0 ? (cents / catTotal) * 100 : 0);
 
+  // V2 — board overview omits Suggested category (300px expander); keep it on vendor detail via View all.
   const cols: Array<PartyCol<VendorRow>> = [
     { key: "name", label: "Vendor", sort: (r) => r.name, cell: (r) => r.name },
     { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
-    { key: "suggested", label: "Suggested category", width: 300, sortable: false, sort: (r) => r.suggested_category?.label ?? "", cell: (r) => (r.txns ? <SuggestedCategory vendorId={r.id} suggestion={r.suggested_category ?? null} compact /> : <span>—</span>) },
     {
       key: "txns", label: "Transactions", num: true, width: 100, sort: (r) => r.txns,
       cell: (r) => (r.txns ? <NumLink to={`/vendors/${r.id}`}>{int(r.txns)}</NumLink> : <span>—</span>),
@@ -180,10 +179,55 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
               })}
             </div>
           </V3Panel>
+          {/* V1 — compact Pays through (board table, no ParityTable chrome) so vendor overview sits closer. */}
           <V3Panel title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
-            <PartyTable<PaysRow> storageKey="party-board-vendors-pays-table" testId="party-board-pays-table" cols={paysCols} rows={paysRows} exportRef={noExport}
-              exportName="pays-through.csv" emptyText="No payments in range."
-              renderFirst={(r) => (r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : <span>{r.account_name}</span>)} />
+            <div style={{ overflowX: "auto" }} data-testid="party-board-pays-table">
+              <table className="w-full text-right tabular-nums" style={{ borderCollapse: "collapse", fontFamily: V3.font }}>
+                <thead>
+                  <tr>
+                    {paysCols.map((c) => (
+                      <th
+                        key={c.key}
+                        className={c.num ? "text-right tabular-nums" : "text-left"}
+                        style={{
+                          font: "600 11px Inter",
+                          color: V3.muted,
+                          padding: "7px 12px",
+                          borderBottom: `1px solid ${V3.border}`,
+                          background: V3.headerBg,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {c.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paysRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={paysCols.length} className="text-left" style={{ padding: "10px 12px", fontSize: 12, color: V3.muted }}>
+                        No payments in range.
+                      </td>
+                    </tr>
+                  ) : (
+                    paysRows.map((r) => (
+                      <tr key={r.id}>
+                        <td className="text-left" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12, whiteSpace: "nowrap" }}>
+                          {r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : r.account_name}
+                        </td>
+                        <td className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
+                          {int(r.vendors)}
+                        </td>
+                        <td className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
+                          <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>{usd(r.spend_cents)}</NumLink>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </V3Panel>
         </div>
 

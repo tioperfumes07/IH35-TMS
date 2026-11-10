@@ -124,18 +124,23 @@ function expenseGroupLabel(key: (typeof V3_EXPENSE_GROUPS)[number], index: numbe
   return `${index + 1} · ${titles[key]}`;
 }
 
-function groupExpenseEntries(entries: ForecastEntry[]): { key: (typeof V3_EXPENSE_GROUPS)[number]; label: string; rows: ForecastEntry[] }[] {
+function groupExpenseEntries(
+  entries: ForecastEntry[],
+  opts?: { keepEmpty?: boolean },
+): { key: (typeof V3_EXPENSE_GROUPS)[number]; label: string; rows: ForecastEntry[] }[] {
   const buckets = new Map<(typeof V3_EXPENSE_GROUPS)[number], ForecastEntry[]>();
   for (const key of V3_EXPENSE_GROUPS) buckets.set(key, []);
   for (const e of entries) {
     const key = expenseGroupKey(e);
     buckets.get(key)!.push(e);
   }
-  return V3_EXPENSE_GROUPS.map((key, index) => ({
+  const groups = V3_EXPENSE_GROUPS.map((key, index) => ({
     key,
     label: expenseGroupLabel(key, index),
     rows: buckets.get(key) ?? [],
-  })).filter((g) => g.rows.length > 0);
+  }));
+  // CF6 — empty expense panel still shows the six priority headings from the board.
+  return opts?.keepEmpty ? groups : groups.filter((g) => g.rows.length > 0);
 }
 
 const thStyle: CSSProperties = {
@@ -172,7 +177,8 @@ function ProjectionPanel({
   const [error, setError] = useState<string | null>(null);
   const accentColor = direction === "income" ? V3.ink : V3.red;
   const columns = MDP_COLUMNS[direction];
-  const expenseGroups = direction === "expense" ? groupExpenseEntries(entries) : null;
+  // CF6 — always keep the six priority groups (including empty) so blank panels retain board structure.
+  const expenseGroups = direction === "expense" ? groupExpenseEntries(entries, { keepEmpty: true }) : null;
   // LEAD 443.264.4: the panel total drills to exactly this panel's rows for the projection date.
   const panelDrill = { target: "cash_flow_manual", date: projectionDate, direction } as const;
 
@@ -307,11 +313,8 @@ function ProjectionPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto" data-mdp-panel-list={direction}>
-      {entries.length === 0 ? (
-        <div className="px-3 py-4 text-center text-xs" style={{ color: V3.mutedSoft }}>No {direction} lines yet.</div>
-      ) : (
         <div>
-          {/* Column headers (per-direction). */}
+          {/* CF6 — column headers always present, including empty panels. */}
           <div className="flex items-center gap-2 px-3 py-1.5" style={{ ...thStyle, background: V3.headerBg, borderBottom: `1px solid ${V3.border}` }}>
             {columns.map((c) => (
               <span key={c.key} className={`${c.w} shrink-0 truncate`}>{c.label}</span>
@@ -337,10 +340,20 @@ function ProjectionPanel({
                     </span>
                     <span className="w-16 shrink-0" />
                   </div>
-                  {group.rows.map(renderRow)}
+                  {group.rows.length === 0 ? (
+                    <div className="px-3 py-1.5 text-xs" style={{ color: V3.mutedSoft, borderBottom: `1px solid ${V3.borderSoft}` }}>
+                      No lines in this group yet.
+                    </div>
+                  ) : (
+                    group.rows.map(renderRow)
+                  )}
                 </div>
               ))
-            : entries.map(renderRow)}
+            : entries.length === 0
+              ? (
+                <div className="px-3 py-4 text-xs" style={{ color: V3.mutedSoft }}>No {direction} lines yet.</div>
+              )
+              : entries.map(renderRow)}
           {/* DEFECT 1 — explicit summed Total footer (recomputes live with the rows). */}
           <div
             className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold"
@@ -353,7 +366,6 @@ function ProjectionPanel({
             <span className="w-16 shrink-0" />
           </div>
         </div>
-      )}
       </div>
 
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
@@ -812,12 +824,12 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         />
       </div>
 
+      {/* CF6 — single Measured label (BoardSection title); do not duplicate the bold in-body word. */}
       <BoardSection title="Measured" testId="cash-flow-mdp-v3-measured">
         <div
           className="flex items-start gap-2 px-3.5 py-2 text-xs"
           style={{ borderLeft: `3px solid ${V3.amber}`, color: V3.ink }}
         >
-          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
           <span>
             Each manual line is audited (who · when · reason) and links to its customer, vendor, driver, unit, invoice or
             bill. Projection only — nothing posts to the books.
