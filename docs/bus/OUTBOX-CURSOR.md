@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:15 PM CT) — U12 Legal contracts Template + Signer MultiSelect
+- **PRIOR:** #28690 Users Role U12.
+- **THIS:** LegalContractInstancesPage Template + Signer type SelectCombobox → MultiSelectDropdown (empty=all; includes filter). Status already MultiSelect.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:05 PM CT) — U12 Users Role MultiSelect
 - **PRIOR:** #28688 CatalogTable U12.
 - **THIS:** Users Role SelectCombobox → MultiSelectDropdown (URL role comma-joined; roleFilter.includes). Retarget verify-users-root-staged-filters.
