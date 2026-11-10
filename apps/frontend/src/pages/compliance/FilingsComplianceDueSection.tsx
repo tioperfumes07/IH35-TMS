@@ -169,7 +169,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
         ))}
       </div>
 
-      <ParityTable<FilingItem>
+      <ParityTable<FilingItem> appearance="board"
         title="Compliance filings — due"
         columns={filingColumns}
         rows={filteredRows}
