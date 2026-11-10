@@ -117,6 +117,14 @@ describe("scheduleTest", () => {
     }
   });
 
+  it("ACCT-F11120: gives $1 one type — the INSERT…SELECT list casts it to uuid like its WHERE (42P08 on prod 10-01)", async () => {
+    const client = mockClient([{ uuid: "t", result: "pending", test_type: "random", test_kind: "drug" }]);
+    await scheduleTest(client, "co-1", "drv-1", "random", "drug");
+    const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(callSql).toMatch(/SELECT \$1::uuid, d\.id/);
+    expect(callSql).not.toMatch(/SELECT \$1, d\.id/);
+  });
+
   it("throws if DB returns no row", async () => {
     const client = mockClient([]);
     await expect(scheduleTest(client, "co-1", "drv-1", "random", "drug")).rejects.toThrow(

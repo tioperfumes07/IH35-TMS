@@ -87,6 +87,12 @@ describe("computeDrawCounts", () => {
 // ─── bulkEnrollActiveDrivers ──────────────────────────────────────────────────
 
 describe("bulkEnrollActiveDrivers", () => {
+  it("ACCT-F11120: casts $1 to uuid in the INSERT…SELECT list (text column vs $1::uuid filter = 42P08)", async () => {
+    const client = { query: vi.fn().mockResolvedValue({ rows: [] }) } as unknown as import("pg").PoolClient;
+    await bulkEnrollActiveDrivers(client, "co-1", "Acme Consortium");
+    const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(callSql).toMatch(/SELECT \$1::uuid, d\.id, \$2/);
+  });
   it("returns the count and uuids of newly enrolled drivers", async () => {
     const client = {
       query: vi.fn().mockResolvedValue({

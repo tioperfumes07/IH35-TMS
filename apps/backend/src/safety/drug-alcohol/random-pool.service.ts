@@ -132,7 +132,8 @@ export async function bulkEnrollActiveDrivers(
     `
       INSERT INTO safety.da_program_enrollments
         (operating_company_id, driver_uuid, consortium_name, enrolled_at, is_active)
-      SELECT $1, d.id, $2, CURRENT_DATE, true
+      -- ACCT-F11120: operating_company_id is TEXT on this table; a bare $1 conflicted with $1::uuid below (42P08).
+      SELECT $1::uuid, d.id, $2, CURRENT_DATE, true
       FROM mdata.drivers d
       WHERE d.operating_company_id = $1::uuid
         AND d.status = 'Active'
