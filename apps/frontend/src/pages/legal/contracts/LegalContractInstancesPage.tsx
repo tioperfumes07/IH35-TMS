@@ -15,7 +15,6 @@ import { LeaseToOwnCreatorModal } from "./LeaseToOwnCreatorModal";
 import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
-import { SelectCombobox } from "../../../components/Combobox";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -27,6 +26,14 @@ import { statusOptions } from "../../../lib/statusListParams";
 import "../../../design/ih35-design-tokens.css";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { formatQuantityTable } from "../../../lib/money";
+
+const SIGNER_TYPE_FILTER_OPTIONS = [
+  { value: "driver", label: "Driver" },
+  { value: "employee", label: "Employee" },
+  { value: "customer", label: "Customer" },
+  { value: "vendor", label: "Vendor" },
+  { value: "other", label: "Other" },
+] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
   employment: "Employment",
@@ -78,14 +85,27 @@ export function LegalContractInstancesPage() {
   const signerTypeParam = searchParams.get("signer_type") as LegalContractSummary["signer_type"] | null;
   const signerEntityIdParam = searchParams.get("signer_entity_id") ?? undefined;
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [templateFilter, setTemplateFilter] = useState("");
-  const [signerTypeFilter, setSignerTypeFilter] = useState("all");
+  // U12: Template + Signer type MultiSelect (empty = all).
+  const [templateFilter, setTemplateFilter] = useState<string[]>([]);
+  const [signerTypeFilter, setSignerTypeFilter] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const staged = useStagedListFilters({
     applied: { statusFilter, templateFilter, signerTypeFilter, dateFrom, dateTo },
-    empty: { statusFilter: [] as string[], templateFilter: "", signerTypeFilter: "all", dateFrom: "", dateTo: "" },
-    onApply: (next) => { setStatusFilter(next.statusFilter); setTemplateFilter(next.templateFilter); setSignerTypeFilter(next.signerTypeFilter); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
+    empty: {
+      statusFilter: [] as string[],
+      templateFilter: [] as string[],
+      signerTypeFilter: [] as string[],
+      dateFrom: "",
+      dateTo: "",
+    },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setTemplateFilter(next.templateFilter);
+      setSignerTypeFilter(next.signerTypeFilter);
+      setDateFrom(next.dateFrom);
+      setDateTo(next.dateTo);
+    },
   });
   const linkedContractId = searchParams.get("contract_id");
   const [activeDetailId, setActiveDetailId] = useState<string | null>(linkedContractId);
@@ -129,8 +149,8 @@ export function LegalContractInstancesPage() {
   const rows = useMemo(() => listQuery.data?.contracts ?? [], [listQuery.data?.contracts]);
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
-      if (templateFilter && row.template_code !== templateFilter) return false;
-      if (signerTypeFilter !== "all" && row.signer_type !== signerTypeFilter) return false;
+      if (templateFilter.length && !templateFilter.includes(row.template_code)) return false;
+      if (signerTypeFilter.length && !signerTypeFilter.includes(row.signer_type)) return false;
       if (dateFrom) {
         const fromMs = new Date(`${dateFrom}T00:00:00`).getTime();
         if (new Date(row.created_at).getTime() < fromMs) return false;
@@ -157,8 +177,11 @@ export function LegalContractInstancesPage() {
   }, [filteredRows]);
 
   const templateOptions = useMemo(
-    () => Array.from(new Set(rows.map((row) => row.template_code))).sort(),
-    [rows]
+    () =>
+      Array.from(new Set(rows.map((row) => row.template_code)))
+        .sort()
+        .map((code) => ({ value: code, label: code })),
+    [rows],
   );
 
   const refresh = async () => {
@@ -414,8 +437,8 @@ export function LegalContractInstancesPage() {
                 <CollapsedListFilters
                   activeFilterCount={
                     (statusFilter.length ? 1 : 0) +
-                    (templateFilter ? 1 : 0) +
-                    (signerTypeFilter !== "all" ? 1 : 0) +
+                    (templateFilter.length ? 1 : 0) +
+                    (signerTypeFilter.length ? 1 : 0) +
                     (dateFrom ? 1 : 0) +
                     (dateTo ? 1 : 0)
                   }
@@ -441,30 +464,22 @@ export function LegalContractInstancesPage() {
                       allLabel="All statuses"
                       data-testid="legal-contracts-status-filter"
                     />
-                    <SelectCombobox
-                      value={staged.draft.templateFilter}
-                      onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
-                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-                    >
-                      <option value="">All templates</option>
-                      {templateOptions.map((code) => (
-                        <option key={code} value={code}>
-                          {code}
-                        </option>
-                      ))}
-                    </SelectCombobox>
-                    <SelectCombobox
-                      value={staged.draft.signerTypeFilter}
-                      onChange={(event) => staged.setDraft({ ...staged.draft, signerTypeFilter: event.target.value })}
-                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-                    >
-                      <option value="all">All signer types</option>
-                      <option value="driver">Driver</option>
-                      <option value="employee">Employee</option>
-                      <option value="customer">Customer</option>
-                      <option value="vendor">Vendor</option>
-                      <option value="other">Other</option>
-                    </SelectCombobox>
+                    <MultiSelectDropdown
+                      label="Template"
+                      options={templateOptions}
+                      selected={staged.draft.templateFilter}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, templateFilter: next })}
+                      allLabel="All templates"
+                      data-testid="legal-contracts-template-filter"
+                    />
+                    <MultiSelectDropdown
+                      label="Signer type"
+                      options={[...SIGNER_TYPE_FILTER_OPTIONS]}
+                      selected={staged.draft.signerTypeFilter}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, signerTypeFilter: next })}
+                      allLabel="All signer types"
+                      data-testid="legal-contracts-signer-type-filter"
+                    />
                     <div className="grid grid-cols-2 gap-2">
                       <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
                       <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
