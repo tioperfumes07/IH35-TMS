@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~9:55 PM CT) — ROUND 8.4 Fuel/Factoring/Dispatch census deepen
+- **PRIOR:** #28715 Banking+Reports hub deepen.
+- **THIS:** Census deepens Fuel (Diesel by truck cols), Factoring (purchase/terms panels), Dispatch Load history KPIs + Planner nav labels. failing_routes stays 0.
+- **NEXT:** Accounting tab screenshots; remaining element fills; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:45 PM CT) — ROUND 8.4 Banking+Reports hub label deepen
 - **PRIOR:** #28714 ShopBays chrome.
 - **THIS:** Census deepens Banking (Accounts / Reconciliation drift / Latest lines / Feed) + Reports hub (Available reports / Accounting & financial / Trial balance …). Fix Reports board title amp entity. failing_routes stays 0.
@@ -187,9 +192,4 @@
 - **PRIOR:** #28579 cash-basis wire.
 - **THIS:** PENDING/ROUND #57/#159 → DONE-LIVE — Codex batch96 17:20CT selected-week caption + week identity CLOSED after #28561. Non-CT browser not claimed.
 - **NEXT:** U12 residuals / more live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:25 PM CT) — ENG-34 wire cash-basis pair 19877/19879
-- **PRIOR:** #28578 batch70 static 19871/73/75.
-- **THIS:** verify-steps 19877 (cash-basis-pl-from-transactions) + 19879 (cash-basis-drill-answers); removed from .guard-exempt. LIVE leftovers stay exempt.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
 

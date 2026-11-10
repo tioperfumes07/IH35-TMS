@@ -157,7 +157,18 @@ const HUB_DESIGN_LABELS = [
       "apps/frontend/src/pages/fuel/FuelHome.tsx",
       "apps/frontend/src/pages/fuel/components/FuelBoardKpiStrip.tsx",
     ],
-    labels: ["Diesel spend", "Gallons", "Avg $/gal", "Fills without a load", "Open questions", "Diesel by truck"],
+    labels: [
+      "Diesel spend",
+      "Gallons",
+      "Avg $/gal",
+      "Fills without a load",
+      "Open questions",
+      "Diesel by truck",
+      "Unit",
+      "Spend",
+      "Fills",
+      "Loads",
+    ],
   },
   {
     route: "/factoring",
@@ -165,7 +176,15 @@ const HUB_DESIGN_LABELS = [
       "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx",
       "apps/frontend/src/pages/factoring/FactoringHome.tsx",
     ],
-    labels: ["Outstanding liability", "Advanced MTD", "Repurchase deadline", "Chargebacks", "True cost"],
+    labels: [
+      "Outstanding liability",
+      "Advanced MTD",
+      "Repurchase deadline",
+      "Chargebacks",
+      "True cost",
+      "Each purchase — net to bank vs kept by Faro",
+      "Terms on file",
+    ],
   },
   {
     route: "/driver-finance/settlements",
@@ -319,6 +338,23 @@ const HUB_DESIGN_LABELS = [
       "Settlement summary",
       "Customer profitability",
     ],
+  },
+  {
+    route: "/dispatch/load-history",
+    files: ["apps/frontend/src/pages/dispatch/LoadHistoryBoardPage.tsx"],
+    labels: [
+      "Loads",
+      "Revenue (rate)",
+      "Loaded miles",
+      "Empty miles",
+      "Rate per loaded mile",
+      "Delivered, not invoiced",
+    ],
+  },
+  {
+    route: "/dispatch/planners/truck",
+    files: ["apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx"],
+    labels: ["Driver Planner", "Truck Planner", "Loads Planner"],
   },
 ];
 
