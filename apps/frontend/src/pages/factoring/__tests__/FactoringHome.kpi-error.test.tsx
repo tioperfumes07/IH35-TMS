@@ -25,10 +25,10 @@ vi.mock("../../../auth/useAuth", () => ({
   useAuth: () => ({ user: { role: "Owner" } }),
 }));
 
-function wrap(ui: React.ReactElement) {
+function wrap(ui: React.ReactElement, path = "/") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <QueryClientProvider client={qc}>
         <ToastProvider>{ui}</ToastProvider>
       </QueryClientProvider>
@@ -74,6 +74,24 @@ function stubHappyPathApis() {
 }
 
 describe("FactoringHomePage KPI row (FACT-S01 / 443.267 board 4)", () => {
+  it("honors an explicitly embedded purchase report without mounting the home board", async () => {
+    stubHappyPathApis();
+    vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({ active_factor_name: null } as never);
+    vi.spyOn(factoringPurchasesApi, "listFactoringPurchaseLines").mockResolvedValue({ lines: [] } as never);
+    wrap(<FactoringHomePage initialTab="purchase_report" />);
+    expect(await screen.findByTestId("factoring-purchase-report")).toBeTruthy();
+    expect(screen.queryByTestId("factoring-home-kpi-row")).toBeNull();
+  });
+
+  it("keeps a canonical purchase-report URL authoritative over the default home board", async () => {
+    stubHappyPathApis();
+    vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({ active_factor_name: null } as never);
+    vi.spyOn(factoringPurchasesApi, "listFactoringPurchaseLines").mockResolvedValue({ lines: [] } as never);
+    wrap(<FactoringHomePage />, "/factoring/purchase-report");
+    expect(await screen.findByTestId("factoring-purchase-report")).toBeTruthy();
+    expect(screen.queryByTestId("factoring-home-kpi-row")).toBeNull();
+  });
+
   it("renders the board KPI strip from a successful summary fetch", async () => {
     stubHappyPathApis();
     vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({

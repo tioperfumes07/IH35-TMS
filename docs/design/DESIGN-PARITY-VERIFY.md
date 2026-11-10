@@ -96,10 +96,13 @@ Read-only USMCA at measured CSS viewport 1440×900. Private screenshots remain u
 | R3 | Reports-Loads | Empty miles KPI; Empty mi / Empty % columns; revenue-by-week chart | Empty-mile KPI replaced by Margin; both empty-mile columns absent; no revenue chart heading or chart in loaded view. Preserve Fuel/Margin additions, do not substitute fabricated empty miles |
 | R4 | Reports-Loads / Reports-DriverSettlements | Fully readable values and names | Loads 15 clipped table cells; Driver report 27 clipped cells among 25 rendered rows. Driver report all 13 column names/order match reference |
 | R5 | Reports-Customers | Date range controls, Loads/Avg per load and advanced-Faro amount | Only YTD/Last 12 months/All time presets; Invoices/Avg per invoice replace load metrics; customer-count tile replaces advanced amount; Factored column is factor label rather than amount. Requires canonical data, not relabeling invoice counts as loads |
+| R6 | Reports-Vendors | Explicit dates, Truck filter, Card payables tile | Only YTD/Last 12 months/All time presets; Truck absent; 1099-count tile replaces Card payables. Nine columns/25 rendered rows, zero clipped cells; preserve Pays through and transaction links |
 
 Functional proof: Cash Flow Monthly changes 13 weekly columns to four months. Projected shows all six priority categories and customer/load links. Actual vs Projected loaded chart/four KPIs/eight rows. Loads Month changes 15 weekly rows to five monthly groups. Company report loaded 12 columns (added Number preserved), 25 rendered rows, zero clipped cells; exhaustive group/drill checks pending. Customer report loaded 10 columns, 25 rendered rows, zero clipped cells. No Save, Pull, Create, Roll over or financial submission used. No numerical ledger correctness inferred from these UI observations.
 
 Fuel F3 code merged #28740 at 373dd9fdc026410cfebd55f55077562b6c7b66e6. Final workspace TypeScript build and Fuel tests 14/14 passed; affected guard comparison has zero regressions. Both concurrent TSX repairs independently landed on main (#28743/#28745). Repaired deployed labels remain UNVERIFIED, not an accepted Fuel board.
+
+M5 navigation recheck after hard reload, 21:26 CT: breadcrumb now `Maintenance›In Shop`; only In Shop has `aria-current=page`; all four open bay articles loaded. Navigation defect CLOSED-LIVE, not full In Shop/ShopBays acceptance. Private screenshot Maintenance-InShop-breadcrumb-fixed-live.jpg. Maintenance Home Moving filter is now present; movement population/behavior still needs separate proof.
 
 ### Customers / Vendors / Legal continuation — 2026-11-09 ~21:00–21:05 CT
 
