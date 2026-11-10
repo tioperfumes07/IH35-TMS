@@ -1152,7 +1152,8 @@
     "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs",
     "verify:driver-net-pay-clearing-balance-zero": "node scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
     "verify:settlement-posted-withholdings-equal-deductions-total": "node scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs",
-    "verify:settlement-deduction-lines-have-deduction-rows": "node scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs"
+    "verify:settlement-deduction-lines-have-deduction-rows": "node scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs",
+    "verify:stops-geocoded": "node --env-file=.env scripts/verify-stops-geocoded.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1160.0",

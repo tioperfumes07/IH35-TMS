@@ -15,12 +15,14 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatMoneyCents } from "../../lib/formatMoney";
-import { formatQuantityTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdRateTable } from "../../lib/money";
+import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 import { entityLabel } from "../../lib/entity-label";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { FuelBoardSection } from "./FuelBoardSection";
+import { FleetTruck } from "../maintenance/components/FleetHealthLine";
 
 type FraudSummary = {
   open_critical: number;
@@ -160,28 +162,53 @@ export function FuelHomePage() {
     return rows.filter((r) => r.unit_number.toLowerCase().includes(q));
   }, [dieselQuery.data?.rows, search]);
 
+  // F1/F2 — same Unit graphic + Spend bar engines as FuelDieselByTruckPanel (board-identical home).
   const dieselColumns = useMemo<ParityColumn<DieselBoardRow>[]>(
     () => [
       {
         key: "unit_number",
         label: "Unit",
         sortable: true,
+        minWidth: 220,
         sortValue: (r) => r.unit_number,
-        render: (r) =>
-          r.unit_id ? (
-            <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} />
-          ) : (
-            r.unit_number || "—"
-          ),
+        render: (r) => (
+          <div className="flex min-w-0 items-center gap-2">
+            <FleetTruck row={{ state: "ok", body_style: "aero" }} />
+            <div className="min-w-0">
+              {r.unit_id ? (
+                <EntityLink
+                  kind="unit"
+                  id={r.unit_id}
+                  label={entityLabel(r.unit_number, r.unit_id, "Unit")}
+                  className="font-semibold text-[#1F2A44]"
+                />
+              ) : (
+                <span className="font-semibold">{r.unit_number || "—"}</span>
+              )}
+            </div>
+          </div>
+        ),
       },
       {
         key: "spend_cents",
         label: "Spend",
         sortable: true,
-        className: "text-right",
-        cellClass: "text-right tabular-nums",
+        kind: "money",
+        minWidth: 160,
+        className: QBO_MONEY_CELL_CLASS,
         sortValue: (r) => r.spend_cents,
-        render: (r) => formatMoneyCents(r.spend_cents),
+        render: (r) => {
+          const max = Math.max(1, ...dieselRows.map((x) => x.spend_cents));
+          const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
+          return (
+            <div className="flex min-w-0 items-center gap-2" data-testid="fuel-home-diesel-spend-bar">
+              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
+                <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+            </div>
+          );
+        },
       },
       {
         key: "gallons",
@@ -198,9 +225,8 @@ export function FuelHomePage() {
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
-        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : 0),
-        render: (r) =>
-          r.gallons > 0 ? formatMoneyCents(Math.round(r.spend_cents / r.gallons)) : "—",
+        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
+        render: (r) => (r.gallons > 0 ? formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3) : "—"),
       },
       {
         key: "fill_count",
@@ -221,7 +247,7 @@ export function FuelHomePage() {
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [],
+    [dieselRows],
   );
 
   if (!companyId) {
@@ -293,6 +319,7 @@ export function FuelHomePage() {
           </div>
         ) : (
           <ParityTable<DieselBoardRow>
+            appearance="board"
             title="Diesel by truck"
             columns={dieselColumns}
             rows={dieselRows}

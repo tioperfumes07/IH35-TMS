@@ -206,7 +206,7 @@ export function FaroImportPage() {
           title={`Preview — ${formatQuantityTable(preview.line_count, 0)} line${preview.line_count === 1 ? "" : "s"}`}
           testId="faro-import-preview-board"
         >
-          <ParityTable
+          <ParityTable appearance="board"
             columns={PREVIEW_COLUMNS}
             rows={previewRows}
             rowKey={(row) => row.invoice_number}

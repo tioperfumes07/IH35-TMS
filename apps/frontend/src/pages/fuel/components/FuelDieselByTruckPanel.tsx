@@ -107,7 +107,7 @@ export function FuelDieselByTruckPanel({
           const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
           return (
             <div className="flex min-w-0 items-center gap-2" data-testid="fuel-diesel-spend-bar">
-              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-slate-100" aria-hidden>
+              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
                 <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
               <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
