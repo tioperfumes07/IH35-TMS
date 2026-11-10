@@ -72,4 +72,15 @@ describe("structuralBreadcrumb (ROUND 367.9)", () => {
     expect(inModuleBackHref("/banking/reconciliation", "/home")).toBe("/banking");
     expect(inModuleBackHref("/customers/abc", "/customers")).toBe("/customers");
   });
+
+  it("ROUND 8.5 M5 — In Shop breadcrumb when fleet-table?status=in-shop", () => {
+    expect(structuralCrumbsForPath("/maintenance/fleet-table", "?status=in-shop")?.map((c) => c.label)).toEqual([
+      "Maintenance",
+      "In Shop",
+    ]);
+    expect(structuralCrumbsForPath("/maintenance/fleet-table")?.map((c) => c.label)).toEqual([
+      "Maintenance",
+      "Fleet Table",
+    ]);
+  });
 });

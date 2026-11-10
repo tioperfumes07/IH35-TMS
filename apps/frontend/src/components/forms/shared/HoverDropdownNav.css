@@ -55,6 +55,10 @@
   cursor: pointer;
   text-decoration: none;
   box-sizing: border-box;
+  /* ROUND 8.5 T1 — Settlements (and siblings) measured 59px when long labels
+     wrapped inside a tab; board strip is one compact line. Keep every tab. */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hover-dropdown-nav a[role="menuitem"].active,

@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~10:40 PM CT) — T1 nav nowrap + M5 In Shop breadcrumb + FuelDiesel compile fix
+- **PRIOR:** #28742 claimed In Shop breadcrumb + board tables; tip lacked breadcrumb source; #28739 broke FuelDieselByTruckPanel ParityTable generic (`appearance="board"<DieselRow>`).
+- **THIS:** T1 HoverDropdownNav menuitem white-space:nowrap + flex-shrink:0 (Settlements one-line strip); structuralCrumbsForPath(pathname, search) labels In Shop for fleet-table?status=in-shop; StructuralBreadcrumb passes search; FuelDiesel ParityTable&lt;DieselRow&gt; appearance=board restored; Maintenance home Arrivals/Risk tables appearance=board; anti-drift law locks T1/M1–M5/F1–F3.
+- **NEXT:** remaining mapped boards board-identical; Codex re-verify. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~10:05 PM CT) — Codex ROUND 8.5 priority findings F1–F3 / T2–T3 / FA1 / M1–M4
 - **PRIOR:** #28737 ShopBays SVG re-ship + Settlements board tables.
 - **THIS:** F3 fuel period labels = live month names; F1/F2 diesel unit graphic + spend bar; T2 Settlements chart money Y-axis; T3 week-of load EntityLinks; FA1 Factoring account-summary board before Invoice Status; M1 Moving filter (speed>3); M2 horizontal unit+truck; M3/M4 board table + 420px scroll overview.
