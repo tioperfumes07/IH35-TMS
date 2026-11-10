@@ -277,7 +277,8 @@ export async function signedToCreatorDraft(
   const truck = s.stops[0]?.truck ?? "";
   const unit = (await client.query<{ id: string }>(
     `SELECT u.id::text FROM mdata.units u
-      WHERE u.unit_number = $2 AND COALESCE(u.is_sample_data, false) IS NOT TRUE
+      WHERE u.unit_number = $2 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        AND COALESCE(u.is_sample_data, false) IS NOT TRUE
       ORDER BY (SELECT count(*) FROM mdata.loads l WHERE l.assigned_unit_id = u.id AND l.operating_company_id = $1::uuid) DESC LIMIT 1`,
     [co, truck],
   )).rows[0];
@@ -603,7 +604,7 @@ export async function findAlreadyAsSigned(
   const live = (await client.query<{ id: string; display_id: string; driver_id: string; net_cents: string; loads: string[] | null }>(
     `SELECT s.id::text, s.display_id, s.driver_id::text, round(s.net_pay * 100)::text AS net_cents,
             (SELECT array_agg(DISTINCT l.load_number ORDER BY l.load_number) FROM driver_finance.settlement_lines sl
-               JOIN mdata.loads l ON l.id = sl.load_id WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL) AS loads
+               JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = s.operating_company_id WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL) AS loads
        FROM driver_finance.driver_settlements s
       WHERE s.operating_company_id = $1::uuid AND s.source_document_ref = $2 AND ${notVoided("s")} AND s.status <> 'cancelled'`,
     [co, id.settlement_no],
@@ -664,7 +665,7 @@ export async function supersedeForSignedSettlement(
     `SELECT s.id::text, s.display_id, s.source_document_ref AS ref, s.status::text,
             (s.posted_at IS NOT NULL OR EXISTS (SELECT 1 FROM driver_finance.payrun_gl_runs g WHERE g.settlement_id = s.id AND g.status = 'posted')) AS posted,
             array_agg(DISTINCT l.load_number) FILTER (WHERE l.load_number = ANY($2::text[])) AS load_numbers,
-            (SELECT array_agg(DISTINCT l2.load_number) FROM driver_finance.settlement_lines sl2 JOIN mdata.loads l2 ON l2.id = sl2.load_id
+            (SELECT array_agg(DISTINCT l2.load_number) FROM driver_finance.settlement_lines sl2 JOIN mdata.loads l2 ON l2.id = sl2.load_id AND l2.operating_company_id = s.operating_company_id
               WHERE sl2.settlement_id = s.id AND sl2.voided_at IS NULL AND sl2.is_active) AS all_loads
        FROM driver_finance.driver_settlements s
        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = s.id AND sl.voided_at IS NULL AND sl.is_active
@@ -730,7 +731,7 @@ export async function supersedeForSignedSettlement(
   await client.query(
     `UPDATE mdata.loads l SET presettlement_link_id = NULL, updated_at = now()
       WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND l.presettlement_link_id IS NOT NULL
-        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND (s.voided_at IS NOT NULL OR s.status = 'cancelled'))`,
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id AND (s.voided_at IS NOT NULL OR s.status = 'cancelled'))`,
     [co, signedLoads],
   );
 
