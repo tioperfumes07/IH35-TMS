@@ -92,6 +92,14 @@ function readHiddenWeekdays(): number[] {
   }
 }
 
+/** D3 — board entity filters (STATUS · DRIVER · UNIT · CUSTOMER). Status/driver wired first; unit/customer stay additive later. */
+export type PlannerEntityFilterState = {
+  status: "" | "in-use" | "available" | "reserved" | "in-shop";
+  driverId: string;
+};
+
+export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = { status: "", driverId: "" };
+
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));
   const rangeLength = useMemo(() => {
@@ -120,6 +128,17 @@ export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLA
       /* private mode — the toggle still applies for this session */
     }
   };
+  const [entityFilters, setEntityFilters] = useState<PlannerEntityFilterState>(EMPTY_PLANNER_ENTITY_FILTERS);
   const days = useMemo(() => visiblePlannerDays(range, hiddenWeekdays), [range, hiddenWeekdays]);
-  return { windowDays, setWindowDays, setRange, range, days, hiddenWeekdays, setHiddenWeekdays };
+  return {
+    windowDays,
+    setWindowDays,
+    setRange,
+    range,
+    days,
+    hiddenWeekdays,
+    setHiddenWeekdays,
+    entityFilters,
+    setEntityFilters,
+  };
 }
