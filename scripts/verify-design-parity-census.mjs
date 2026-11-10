@@ -110,6 +110,33 @@ const HUB_DESIGN_LABELS = [
     ],
     labels: ["Outstanding liability", "Advanced MTD", "Repurchase deadline", "Chargebacks", "True cost"],
   },
+  {
+    route: "/driver-finance/settlements",
+    files: ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx"],
+    labels: [
+      "Total unpaid",
+      "This period",
+      "Driver pay (period)",
+      "Drivers w/ debt",
+      "YTD settlements",
+      "Open driver bills",
+    ],
+  },
+  {
+    route: "/cash-flow",
+    files: [
+      "apps/frontend/src/pages/cash-flow/tabs/CashFlowHomeTab.tsx",
+      "apps/frontend/src/pages/cash-flow/tabs/CashFlowKpiStrip.tsx",
+    ],
+    labels: [
+      "Opening cash",
+      "Income due today",
+      "Expenses due today",
+      "Next 4 weeks in",
+      "Weekly run-rate",
+      "Lowest balance",
+    ],
+  },
 ];
 
 function read(p) {

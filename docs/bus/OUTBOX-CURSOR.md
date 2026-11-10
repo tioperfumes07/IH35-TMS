@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:45 PM CT) — ROUND 8.4 Settlements + CashFlow hub label pins
+- **PRIOR:** #28703 Accounting/Banking/Fuel/Factoring hub pins.
+- **THIS:** Census pins Settlements (driver-finance) + CashFlow Home KPI labels from v3. failing_routes stays 0.
+- **NEXT:** element-complete screenshots / remaining modules; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:35 PM CT) — ROUND 8.4 census hub design-label pins
 - **PRIOR:** #28701 V3KpiTile 78px.
 - **THIS:** Census pins Accounting/Banking/Fuel/Factoring hub KPI+section labels from v3 .dc.html + V3_KPI.heightPx lock. failing_routes stays 0.
@@ -186,10 +191,5 @@
 ## OUTBOX (11-03-2026 ~5:55 PM CT) — ENG-34 wire rows-250-255
 - **PRIOR:** #28571 System need-company.
 - **THIS:** verify-steps 19869 wires verify-rows-250-255. ENG-34 orphans → match residual only.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:50 PM CT) — System EngineStatus + SystemModule need-company
-- **PRIOR:** #28570 tip #29/#241.
-- **THIS:** EngineStatusBoardPage + SystemModulePage BoardSection need-company; fill-shell plants.
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
 
