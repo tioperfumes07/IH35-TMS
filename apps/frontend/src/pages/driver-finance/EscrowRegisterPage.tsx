@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useTranslation } from "react-i18next";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
@@ -92,6 +93,7 @@ function labelType(raw: string | null): string {
 }
 
 export function EscrowRegisterPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { driverId = "" } = useParams<{ driverId: string }>();
@@ -368,7 +370,7 @@ export function EscrowRegisterPage() {
 
         {/* Record-naming law: the driver this register belongs to opens the driver record. */}
         <p className="text-xs text-[#4B5563]" data-testid="escrow-register-driver">
-          Driver: <EntityLink kind="driver" id={driverId} label={driverName} data-testid="escrow-register-driver-link" />
+          {t("drivers.driver_label")}: <EntityLink kind="driver" id={driverId} label={driverName} data-testid="escrow-register-driver-link" />
         </p>
 
         {/* ROUND 443.282 — Target from getDriverEscrowTarget; Release = last settlement + window. */}
