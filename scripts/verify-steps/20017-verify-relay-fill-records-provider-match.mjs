@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relay-fill-records-provider-match", run(ctx) { ctx.run("node", ["scripts/verify-relay-fill-records-provider-match.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relay-fill-records-provider-match.mjs"]); } };

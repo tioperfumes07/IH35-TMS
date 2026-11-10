@@ -99,14 +99,25 @@ export function relayFillRowsFromLines(
       `Relay transaction ${fill.transaction_id}: its product lines sum to ${sum} cents but Relay paid ${amounts.fuelPaidCents} — the record is never written from a different amount.`,
     );
   }
-  const seen = new Set<string>();
+  // ACCT-F11125 — one row per product per ticket. Relay sometimes splits ONE product into two lines at the SAME unit price
+  // (measured: txn_8LZfDKWFvFv1oD DEF 9.613 gal $38.44 + 0.112 gal $0.45, both 400¢/gal = Relay paid $38.89). Those are one
+  // purchase of one product: one row, gallons and amount summed, keyed on its first line. Two lines of a product at
+  // DIFFERENT prices are still refused by name — which one the pump sold is not ours to guess.
+  const merged: RelayFillRowPlan[] = [];
+  const ppuOf = new Map(product.map((l) => [l.id, l.discounted_price_per_unit_cents == null ? null : Math.round(Number(l.discounted_price_per_unit_cents))]));
   for (const p of plans) {
-    if (seen.has(p.fuel_type)) {
+    const prior = merged.find((m) => m.fuel_type === p.fuel_type);
+    if (!prior) { merged.push({ ...p }); continue; }
+    const a = ppuOf.get(prior.line_id) ?? null;
+    const b = ppuOf.get(p.line_id) ?? null;
+    if (a == null || b == null || a !== b || prior.gallons == null || p.gallons == null) {
       throw new RelayFillFuelRowsError("relay_fill_product_repeated", `Relay transaction ${fill.transaction_id} carries two ${p.fuel_type} lines — one row per product per ticket; resolve the fill first.`);
     }
-    seen.add(p.fuel_type);
+    prior.total_cents += p.total_cents;
+    prior.gallons = Math.round((prior.gallons + p.gallons) * 1000) / 1000;
+    prior.fee_cents += p.fee_cents;
   }
-  return plans;
+  return merged;
 }
 
 /** Read the fill, its live lines and Relay's paid / fee by the one paid rule, and plan its rows. */

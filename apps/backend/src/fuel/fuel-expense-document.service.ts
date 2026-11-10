@@ -855,8 +855,23 @@ export async function recordRelayFillAtReceipt(
       [input.load_id, input.operating_company_id],
     )).rows[0]?.u ?? null;
   }
+  // ACCT-F11125 — what Relay itself matched (its provider truck / provider driver), read once. Measured 11-10: txn_2gAW9V27xqzpYB
+  // was refused "no driver" although Relay matched Vicente Santos (matched_driver_id), because this path passed the
+  // provider match as null. A provider match counts only for a truck / driver of THIS company.
+  const relayMatch = (await client.query<{ at: string | null; unit_id: string | null; driver_id: string | null }>(
+    `SELECT r.relay_created_at::text AS at,
+            (SELECT u.id::text FROM mdata.units u
+              WHERE u.id = r.matched_unit_id
+                AND (u.owner_company_id = r.operating_company_id OR u.currently_leased_to_company_id = r.operating_company_id)) AS unit_id,
+            (SELECT d.id::text FROM mdata.drivers d
+              WHERE d.id = r.matched_driver_id AND d.operating_company_id = r.operating_company_id) AS driver_id
+       FROM integrations.relay_fuel_transactions r
+      WHERE r.id = $1::uuid AND r.operating_company_id = $2::uuid`,
+    [input.relay_fill_id, input.operating_company_id],
+  )).rows[0] ?? null;
+  if (!unitId) unitId = relayMatch?.unit_id ?? null;
   if (!unitId) {
-    const reason = "relay_fill_unit_unknown: no truck on the document, from Relay, or on its load (TIER1: a fill carries its truck)";
+    const reason = "relay_fill_unit_unknown: no truck on the document, on its load, or matched by Relay to a truck of this company (TIER1: a fill carries its truck)";
     await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
       operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
     }, "warning", "ENG-65");
@@ -864,13 +879,10 @@ export async function recordRelayFillAtReceipt(
   }
   let driverId = input.driver_id;
   if (!driverId) {
-    const at = (await client.query<{ at: string | null }>(
-      `SELECT relay_created_at::text AS at FROM integrations.relay_fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-      [input.relay_fill_id, input.operating_company_id],
-    )).rows[0]?.at ?? null;
+    const at = relayMatch?.at ?? null;
     if (at) {
       driverId = (await resolveFillDriverAtTime(client as never, {
-        operatingCompanyId: input.operating_company_id, matchedDriverId: null, unitId, at, loadId: input.load_id,
+        operatingCompanyId: input.operating_company_id, matchedDriverId: relayMatch?.driver_id ?? null, unitId, at, loadId: input.load_id,
       }))?.driver_id ?? null;
     }
   }
