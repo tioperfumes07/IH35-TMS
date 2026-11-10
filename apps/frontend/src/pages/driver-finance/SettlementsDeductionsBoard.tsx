@@ -281,7 +281,6 @@ export function SettlementsDeductionsBoard() {
         key: "created_at",
         label: "Started",
         sortable: true,
-        defaultHidden: true,
         sortValue: (r) => r.created_at ?? "",
         render: (r) => (r.created_at ? formatDateUS(r.created_at) : "—"),
       },

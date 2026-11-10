@@ -9,7 +9,7 @@ import { recordRelayFillAtReceipt } from "../fuel-expense-document.service.js";
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FILL = "11111111-1111-4111-8111-111111111111";
 
-function db(opts: { live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number }) {
+function db(opts: { live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number; otherRail?: Array<{ fuel_transaction_id: string; card: string | null }> }) {
   const calls: string[] = [];
   const inserts: unknown[][] = [];
   const audits: unknown[][] = [];
@@ -18,6 +18,7 @@ function db(opts: { live?: Array<{ id: string; fuel_type: string }>; relayAt?: s
       calls.push(sql.trim().slice(0, 40));
       if (/^SAVEPOINT|^RELEASE|^ROLLBACK TO/.test(sql.trim())) return { rows: [] };
       if (/audit\.append_event/.test(sql)) { audits.push(values); return { rows: [] }; }
+      if (/\/\* cross_rail_rows \*\//.test(sql)) return { rows: opts.otherRail ?? [] };
       if (/FROM fuel\.fuel_transactions\s+WHERE operating_company_id = \$1::uuid AND relay_fuel_transaction_id = \$2::uuid AND voided_at IS NULL AND archived_at IS NULL/.test(sql)) return { rows: opts.live ?? [] };
       if (/SELECT transaction_id, relay_created_at::text, location_city AS city/.test(sql)) return { rows: [{ transaction_id: "txn_A", relay_created_at: opts.relayAt === undefined ? "2026-09-03T20:15:00+00" : opts.relayAt, city: "Natalia", state: "TX" }] };
       if (/SELECT relay_created_at::text AS at FROM integrations\.relay_fuel_transactions/.test(sql)) return { rows: [{ at: opts.relayAt ?? "2026-09-03T20:15:00+00" }] };
@@ -48,6 +49,20 @@ describe("ENG-65 ensureRelayFillFuelRecords", () => {
     expect(v[8]).toBe(500); // total_cost dollars from the line
     expect(v[10]).toBe("2026-09-03T20:15:00+00"); // relay_created_at
     expect(v[11]).toBe("txn_A");
+  });
+  it("ACCT-F11105: refuses by name, writing nothing, when another rail already records the purchase (any truck)", async () => {
+    const d = db({ otherRail: [{ fuel_transaction_id: "dream-1", card: "DREAMLINE" }] });
+    await expect(ensureRelayFillFuelRecords(d.client as never, { operatingCompanyId: CO, relayFillId: FILL, loadId: "L", driverId: "d", unitId: "u", actorUserId: "a", notes: "n" }))
+      .rejects.toMatchObject({ code: "relay_fill_recorded_on_other_rail" });
+    expect(d.inserts).toEqual([]);
+  });
+  it("ACCT-F11105: the cross-rail test is asked before any write", async () => {
+    const d = db({});
+    await ensureRelayFillFuelRecords(d.client as never, { operatingCompanyId: CO, relayFillId: FILL, loadId: "L", driverId: "d", unitId: "u", actorUserId: "a", notes: "n" });
+    const asked = d.calls.findIndex((c) => c.startsWith("/* cross_rail_rows */"));
+    const wrote = d.calls.findIndex((c) => c.startsWith("INSERT INTO fuel.fuel_transactions"));
+    expect(asked).toBeGreaterThanOrEqual(0);
+    expect(asked).toBeLessThan(wrote);
   });
   it("never stamps a guessed moment", async () => {
     const d = db({ relayAt: null });

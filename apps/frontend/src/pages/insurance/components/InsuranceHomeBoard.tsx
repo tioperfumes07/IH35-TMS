@@ -104,7 +104,6 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     key: "expiry_date",
     label: "Expires",
     sortable: true,
-    defaultHidden: true,
     sortValue: (row) => row.expiry_date ?? "",
     render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) || "—" : "—"),
   },

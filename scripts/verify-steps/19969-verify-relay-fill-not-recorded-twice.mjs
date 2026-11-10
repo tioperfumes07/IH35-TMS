@@ -1,0 +1,1 @@
+export default { name: "verify:verify-relay-fill-not-recorded-twice", run(ctx) { ctx.run("node", ["scripts/verify-relay-fill-not-recorded-twice.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-relay-fill-not-recorded-twice.mjs"]); } };

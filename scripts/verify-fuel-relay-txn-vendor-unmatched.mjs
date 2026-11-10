@@ -27,6 +27,17 @@
 //                                            forces a human to confirm and retire the ratchet,
 //                                            not silently keep pointing at zero debt)
 //
+// ACCT-F11105 (2026-11-04) — what counts. Old rule -> new rule -> why:
+//   OLD: every USMCA row whose transaction_reference LIKE 'txn_%' counted, whatever it was tied to.
+//   NEW: a 'txn_%' row counts unless it is CANONICAL: a vendor is set, it is tied to a LIVE Relay fill
+//        (integrations.relay_fuel_transactions, voided_at IS NULL AND is_active) and its reference IS that fill's own
+//        transaction_id. Everything this guard was written for still counts — vendor NULL (the 75), a raw token on a row
+//        no live fill carries (the bridge rows), a token that names a different fill, a token whose fill was voided.
+//   WHY: ENG-65 (#28457, LEAD 11-03) records a Relay fill no settlement printed at receipt, through the one Relay writer,
+//        with the Relay vendor and the Relay transaction id as its reference — Relay prints no other ticket number; the
+//        Settlement Creator re-stamps the printed number when a settlement adopts the fill. The first ENG-65 sweep
+//        (2026-11-04 12:00Z) wrote 59 such rows ($15,371.65, 45 fills): each is vendor-matched and tied to its own live
+//        fill, i.e. not the un-canonicalized debt this guard measures. No baseline blesses them; the target stays 0.
 // FAILS CLOSED (never silently skips) when DATABASE_URL is not set — ROUND 29.9-B owner ruling:
 // "a live money guard that cannot connect is a FAIL, never a pass." Uses the shared
 // requireLiveDbOrExit() helper, not a hand-rolled skip branch (see scripts/lib/require-live-db.mjs
@@ -46,6 +57,16 @@ export const REQUIRES_LIVE_DB = "scalar ceiling ratchet against fuel.fuel_transa
 const LABEL = "verify-fuel-relay-txn-vendor-unmatched";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const BASELINE_PATH = path.join(process.cwd(), "scripts/verify-fuel-relay-txn-vendor-unmatched.baseline.json");
+
+/**
+ * ACCT-F11105 — a 'txn_%' row is canonical (not debt) only when vendor-matched AND tied to a live Relay fill whose own
+ * transaction_id is the row's reference. Pure; the live query reads the same four facts.
+ * @param {{transaction_reference:string, vendor_id:string|null, fill_transaction_id:string|null, fill_live:boolean|null}} r
+ */
+export function isCanonicalRelayReference(r) {
+  return Boolean(r.vendor_id) && Boolean(r.fill_live) && r.fill_transaction_id != null &&
+    String(r.transaction_reference) === String(r.fill_transaction_id);
+}
 
 function loadBaseline() {
   if (!fs.existsSync(BASELINE_PATH)) return null;
@@ -119,15 +140,20 @@ async function live() {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
-    const res = await client.query(
-      `SELECT id::text AS id, transaction_reference, vendor_id, archived_at
-         FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1::uuid
-          AND transaction_reference LIKE 'txn_%'`,
+    const all = await client.query(
+      `SELECT ft.id::text AS id, ft.transaction_reference, ft.vendor_id::text AS vendor_id, ft.archived_at,
+              rf.transaction_id AS fill_transaction_id, (rf.voided_at IS NULL AND rf.is_active) AS fill_live
+         FROM fuel.fuel_transactions ft
+         LEFT JOIN integrations.relay_fuel_transactions rf
+           ON rf.id = ft.relay_fuel_transaction_id AND rf.operating_company_id = ft.operating_company_id
+        WHERE ft.operating_company_id = $1::uuid
+          AND ft.transaction_reference LIKE 'txn_%'`,
       [USMCA_COMPANY_ID]
     );
     await client.query("COMMIT");
 
+    const res = { rows: all.rows.filter((r) => !isCanonicalRelayReference(r)) };
+    console.log(`${LABEL}: ${all.rows.length} 'txn_%' row(s); ${all.rows.length - res.rows.length} canonical (vendor set, tied to its own live Relay fill by its transaction id); ${res.rows.length} counted`);
     const liveCount = res.rows.length;
     const baseline = loadBaseline();
     const verdict = evaluateRatchet(liveCount, baseline);
@@ -169,6 +195,21 @@ function selftest() {
     } else {
       console.error(`${LABEL}: SELFTEST FAIL — case "${c.name}" expected ok=${c.wantOk}, got ok=${verdict.ok} (${verdict.message})`);
     }
+  }
+  // ACCT-F11105 — the canonical-reference predicate: only a vendor-matched row tied to its OWN live fill is excluded.
+  const C = (o) => ({ transaction_reference: "txn_A", vendor_id: "v", fill_transaction_id: "txn_A", fill_live: true, ...o });
+  const canon = [
+    ["ENG-65 shape (vendor, own live fill) is canonical", C(), true],
+    ["vendor NULL counts (the original 75)", C({ vendor_id: null }), false],
+    ["no Relay fill tied counts (bridge row)", C({ fill_transaction_id: null, fill_live: null }), false],
+    ["a token naming a different fill counts", C({ fill_transaction_id: "txn_B" }), false],
+    ["a token whose fill is voided counts", C({ fill_live: false }), false],
+  ];
+  for (const [name, row, want] of canon) {
+    const got = isCanonicalRelayReference(row);
+    if (got === want) caught++;
+    else console.error(`${LABEL}: SELFTEST FAIL — "${name}" expected ${want}, got ${got}`);
+    cases.push({ name });
   }
   if (caught !== cases.length) {
     console.error(`${LABEL}: SELFTEST FAILED ${caught}/${cases.length} planted case(s) matched expected verdict.`);

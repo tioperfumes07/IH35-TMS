@@ -187,6 +187,4 @@ if (fails.length) {
   console.error(`${LABEL}: FAIL\n  - ${fails.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(
-  `${LABEL}: PASS — Reclassify/Batch/Escrow BoardSection + Factoring profile FORM_INPUT`,
-);
+console.log(`${LABEL}: PASS — Reclassify/Batch/Escrow BoardSection + Factoring profile FORM_INPUT`,);
