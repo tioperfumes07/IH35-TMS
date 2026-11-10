@@ -356,7 +356,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
       const account_label =
         [alert.institution_name, ownName].filter(Boolean).join(" · ") ||
         (alert.account_mask ? `••${alert.account_mask}` : "") ||
-        `Bank account ${String(alert.bank_account_id).slice(0, 8)}`;
+        entityLabel(null, alert.bank_account_id, "Bank account");
       return {
         ...alert,
         account_label,

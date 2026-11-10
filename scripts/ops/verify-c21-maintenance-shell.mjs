@@ -77,11 +77,11 @@ assertIncludes(
   "D31 Active WOs source type multi-selector",
 );
 
-// 443.99 (same ROUND 441.22 / #25952 change): the vehicle ActionBar links the canonical creator route with the unit
-// prefilled (old anchor: the /maintenance?create_wo=1&unit_id= redirect URL). Still fails if the link loses the unit.
+// D24 / LST-F11034 (#28377): the vehicle ActionBar links the canonical Create WO MODAL deep link on Maintenance Home with
+// the unit prefilled (/maintenance/work-orders/new only redirects there). Still fails if the link loses the unit.
 assertIncludes(
   "apps/frontend/src/components/vehicle-profile/ActionBar.tsx",
-  ["/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}"],
+  ["/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}"],
   "Vehicle ActionBar deep-links to the Create WO modal route with the unit prefilled",
 );
 

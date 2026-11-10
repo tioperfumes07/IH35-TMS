@@ -17,7 +17,7 @@ export function UnitHeaderPhoto(props: { unitId: string; operatingCompanyId: str
     queryFn: () => apiRequest<UnitPhotosResponse>(`/api/v1/mdata/units/${props.unitId}/photos?operating_company_id=${props.operatingCompanyId}`),
     retry: false,
   });
-  const primary = q.data?.photos.find((p) => p.is_primary && p.signed_url) ?? q.data?.photos.find((p) => p.signed_url) ?? null;
+  const primary = q.data?.photos?.find((p) => p.is_primary && p.signed_url) ?? q.data?.photos?.find((p) => p.signed_url) ?? null;
   const src = primary?.signed_url ?? q.data?.derived?.signed_url ?? null;
   if (!src) return null;
   const label = primary?.caption ?? q.data?.derived?.original_filename ?? "Unit photo";

@@ -136,6 +136,26 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!wizard.includes('"Override & dispatch"') || !wizard.includes('"Book + dispatch"')) {
     errors.push("Footer must switch Override & dispatch → Book + dispatch when remaining blockers hit 0 (WIZ-38)");
   }
+  // D1 — board left A–E section rail (center layout). Side panel keeps workflows without stacking a second form.
+  if (!/data-testid="book-load-section-rail"/.test(wizard) || !/BOOK_LOAD_SECTION_RAIL/.test(wizard)) {
+    errors.push("D1: Book Load center layout must mount the A–E section rail (book-load-section-rail)");
+  }
+  for (const id of ["book-load-section-a", "book-load-section-b", "book-load-section-c", "book-load-section-d", "book-load-documents"]) {
+    if (!wizard.includes(`data-testid="${id}"`)) {
+      errors.push(`D1: missing section anchor data-testid="${id}" for rail jump`);
+    }
+  }
+  // D2 — four charge amounts side by side (not a vertical four-row table).
+  if (!/data-testid="book-load-charges-grid"/.test(wizard) || !/grid-cols-2[^"]*sm:grid-cols-4/.test(wizard)) {
+    errors.push("D2: charges must render as a four-column board grid (book-load-charges-grid)");
+  }
+  if (/<td className="px-2 py-1\.5">Linehaul<\/td>/.test(wizard)) {
+    errors.push("D2: legacy vertical Linehaul charge table row must not remain as the overview");
+  }
+  // Spec residual — dialog semantics for center/side Book Load panel (Codex: zero role=dialog).
+  if (!/role="dialog"/.test(wizard) || !/aria-modal="true"/.test(wizard) || !/book-load-dialog-title/.test(wizard)) {
+    errors.push("Book Load panel must expose role=dialog aria-modal labelled by book-load-dialog-title");
+  }
   return errors;
 }
 
@@ -173,6 +193,9 @@ if (process.argv.includes("--selftest")) {
     [lib, editor.replace("accessorial-amounts-column-total", "accessorial-subtotal-only"), wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow.replace("h-7 w-full max-w-[11rem] text-xs", "h-8 w-full text-sm"), moneyInput, numberInput],
     [lib, editor, wizard, equipment + '\n// mutation: {...register("driver_pay_rate_per_mile")}', timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace('data-testid="book-load-section-rail"', 'data-testid="book-load-section-rail-REMOVED"').replace("BOOK_LOAD_SECTION_RAIL", "BOOK_LOAD_SECTION_RAIL_REMOVED"), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace('data-testid="book-load-charges-grid"', 'data-testid="book-load-charges-REMOVED"'), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace('role="dialog"', 'role="region"').replace('aria-modal="true"', 'aria-modal="false"'), equipment, timeWindow, moneyInput, numberInput],
   ];
   let caught = 0;
   for (const [index, args] of mutations.entries()) {

@@ -21,8 +21,23 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** Shrink-only. Was {2d48d11e} (5816 / load 13595, $169.65) — voided on prod 2026-10-11 through the Ask B route. */
 export const KNOWN_STRAY = new Set([]);
 
-export function staticProblems(src) {
+/**
+ * sweepA (2026-11-10) — #28605 (ACCT-F11065) added voidStrayPracticalBasisDriverBill to the same file, repeating the
+ * same refusals. File-wide regexes then let the second function satisfy RULE 1 for the first: every plant on
+ * voidStraySalariedDriverBill passed. RULE 1 is about voidStraySalariedDriverBill, so its checks read THAT function's body
+ * only. The no-DELETE check stays file-wide (no function in this file may DELETE a driver bill).
+ */
+export function salariedVoidBody(src) {
+  const at = src.indexOf("export async function voidStraySalariedDriverBill(");
+  if (at < 0) return "";
+  const next = src.slice(at + 1).search(/\n(?:export |\/\*\*)/);
+  return next < 0 ? src.slice(at) : src.slice(at, at + 1 + next);
+}
+
+export function staticProblems(fileSrc) {
   const p = [];
+  const src = salariedVoidBody(fileSrc);
+  if (!src) p.push("RULE 1 voidStraySalariedDriverBill is missing");
   if (!/reason\.length < 20/.test(src)) p.push("RULE 1 a reason shorter than 20 chars is not refused");
   if (!/bill\.status !== "open"/.test(src)) p.push("RULE 1 a non-open bill is not refused");
   if (!/bill\.settled_in_settlement_id\) throw/.test(src)) p.push("RULE 1 a settled bill is not refused");
@@ -31,7 +46,7 @@ export function staticProblems(src) {
   if (!/Number\(links\.gl_bills\) > 0\) throw/.test(src)) p.push("RULE 1 a bill on an A/P-chain run is not refused");
   if (!/Number\(links\.postings\) > 0\) throw/.test(src)) p.push("RULE 1 a bill with journal postings is not refused");
   if (!/stampDriverBillVoidedInClientTx\(/.test(src)) p.push("RULE 1 the bill is not voided (void-not-delete) — must delegate to stampDriverBillVoidedInClientTx, not roll its own void SQL");
-  if (/DELETE FROM driver_finance\.driver_bills/i.test(src)) p.push("RULE 1 the path DELETEs a driver bill");
+  if (/DELETE FROM driver_finance\.driver_bills/i.test(fileSrc)) p.push("RULE 1 the path DELETEs a driver bill");
   if (!/driver_finance\.driver_bill\.voided_stray_salaried/.test(src)) p.push("RULE 1 the void is not audited");
   return p;
 }
@@ -51,6 +66,9 @@ function selftest() {
     (s) => s.replace("stampDriverBillVoidedInClientTx(", "rawSqlVoidBill("),
     (s) => s + "\n// DELETE FROM driver_finance.driver_bills WHERE id = $1",
     (s) => s.replace("reason.length < 20", "reason.length < 1"),
+    // sweepA — the void audit dropped from the salaried path only (the practical-basis path has its own event).
+    (s) => s.replace('"driver_finance.driver_bill.voided_stray_salaried"', '"x"'),
+    (s) => s.replace("Number(links.lines) > 0) throw", "Number(links.lines) > 99) throw"),
   ];
   for (const f of plants) {
     const pl = f(good);

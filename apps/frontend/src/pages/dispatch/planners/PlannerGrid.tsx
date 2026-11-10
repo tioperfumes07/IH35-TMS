@@ -496,7 +496,8 @@ export function PlannerGrid({
                   gridTemplateColumns: frozenGridTemplate(hasSecondaryColumn, hasUnitColumn, hasStatusColumn, hasActionColumn, widths),
                 }}
               >
-                <span style={{ gridColumn: `1 / span ${1 + Number(rows.some((r) => r.secondary !== undefined)) + Number(rows.some((r) => r.unit !== undefined))}` }}>
+                {/* D4 — board shows Unit and Driver as separate column headers (not Unit spanning both). */}
+                <span role="columnheader" aria-label={frozenLabel}>
                   {nameSortable ? (
                     <button
                       type="button"
@@ -512,8 +513,18 @@ export function PlannerGrid({
                     frozenLabel
                   )}
                 </span>
+                {hasSecondaryColumn ? (
+                  <span role="columnheader" data-testid="planner-grid-header-secondary">
+                    {shownColumns.find((c) => c.key === "secondary")?.header ?? "Driver"}
+                  </span>
+                ) : null}
+                {hasUnitColumn ? (
+                  <span role="columnheader" data-testid="planner-grid-header-unit">
+                    {shownColumns.find((c) => c.key === "unit")?.header ?? "Unit"}
+                  </span>
+                ) : null}
                 {hasStatusColumn ? (
-                  <span className="pg-frz-status">
+                  <span className="pg-frz-status" role="columnheader">
                     {statusSortable ? (
                       <button
                         type="button"
@@ -530,7 +541,7 @@ export function PlannerGrid({
                     )}
                   </span>
                 ) : null}
-                {hasActionColumn ? <span className="pg-frz-action">{actionLabel ?? "Action"}</span> : null}
+                {hasActionColumn ? <span className="pg-frz-action" role="columnheader">{actionLabel ?? "Action"}</span> : null}
               </div>
               {bands.map((b) => (
                 <div

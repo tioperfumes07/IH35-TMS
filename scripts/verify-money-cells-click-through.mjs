@@ -29,7 +29,10 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  */
 const SHRINK_ONLY_BASELINE = 0; // 2026-10-06 ROUND 433.2 batch 5: 23 -> 0. Every money cell opens its record / exact list, or is a MoneyCell { none } with a listed reason. Any new raw money cell fails.
 /** MoneyCell { none: reason } declarations on main (listed at run time). Unwired + declared may never grow. */
-const DECLARED_NO_DRILL = 34; // 2026-10-22 CC-1 443.210R: +1 WEX import plan preview cell (ImportFuelTransactionsModal.tsx) — no record yet until import runs
+// 2026-11-10 LST-F11139 (owner adopted Lead's recommendation 2026-11-10): 34 -> 35, one preview provable from the code
+// (a MoneyCell { none } reason is shown on hover): OwnerImportModal.tsx (#28761) plan row — the modal runs run(file, commit=false)
+// and says "nothing is written until Post"; no record exists yet. (The BookLoadModalV4 read-outs stay with Cursor — #28796.)
+const DECLARED_NO_DRILL = 35; // 2026-10-22 CC-1 443.210R: +1 WEX import plan preview cell (ImportFuelTransactionsModal.tsx) — no record yet until import runs
 
 function stripComments(src) {
   return String(src ?? "")
@@ -137,7 +140,8 @@ function moneyCellHits(src) {
       // the forward window means it is this cell's child, not a sibling's.
       // A <MoneyCell> inside the cell carries its own drill, validated and counted by scanMoneyCells (wired or a declared
       // reason) — counting the wrapper here too would count one figure twice.
-      clickThrough: /EntityLink|AmountLink|<MoneyCell\b|<Link\b[^>]*\bto=/.test(window),
+      // NumLink (components/boards/partyBoardKit) is a <Link to> wrapper, so <NumLink to=…> is the same drill.
+      clickThrough: /EntityLink|AmountLink|<MoneyCell\b|<Link\b[^>]*\bto=|<NumLink\b[^>]*\bto=/.test(window),
     });
   }
   return hits;
@@ -255,6 +259,8 @@ function selftest() {
     ["a MoneyInput is a field", `<MoneyInput className="text-right tabular-nums" valueDollars={v} />`, 0],
     ["a declared quantity is not money", `<td data-quantity className="text-right tabular-nums">{p.total}</td>`, 0],
     ["a <MoneyCell> inside the cell is accounted by the MoneyCell scan", `<td className="text-right tabular-nums"><MoneyCell cents={x} drill={{ none: "a footer that sums the rows above" }} /></td>`, 0],
+    ["a <NumLink to> inside the cell is a drill (a Link wrapper)", `<td className="text-right tabular-nums"><NumLink to={to}>{usd(x)}</NumLink></td>`, 0],
+    ["a <NumLink> with no to is not a drill", `<td className="text-right tabular-nums"><NumLink>{usd(x)}</NumLink></td>`, 1],
     ["a <Link to> inside the cell is a drill", `<dd className="text-right tabular-nums"><Link to={to}>{money(x)}</Link></dd>`, 0],
     ["data-quantity on a SIBLING does not exempt this cell", `<td data-quantity className="x">{n}</td><td className="text-right tabular-nums">{money(x)}</td>`, 1],
   ];

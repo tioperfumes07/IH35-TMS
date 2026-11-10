@@ -87,9 +87,12 @@ function selftest() {
   }
 
   // Offender A: reintroduce the dashboard/kpis fake-empty catch.
+  // sweepA (2026-11-10) — #27714/#27721 changed the tail after the kpis query (`if (res.rows[0]) return { ...,
+  // recovered_this_period }`), so the old anchor on `return res.rows[0] ?? null` matched nothing. The plant now anchors on
+  // the dashboard kpis view query itself, whatever follows it.
   const offenderA = src.replace(
-    "            LIMIT 1\n          `,\n          [companyId]\n        );\n      return res.rows[0] ?? null;",
-    "            LIMIT 1\n          `,\n          [companyId]\n        )\n        .catch(() => ({ rows: [] }));\n      return res.rows[0] ?? null;"
+    /(FROM views\.cash_advances_dashboard_kpis k[\s\S]{0,200}?\[companyId\]\n\s*\))(;)/,
+    "$1\n        .catch(() => ({ rows: [] }))$2"
   );
   if (offenderA === src) {
     console.error("FAIL(selftest): offender A mutation did not change the file — pattern out of sync");

@@ -62,6 +62,13 @@ const LINKER_CALL_RE = /linkLoadToPresettlementAfterAssignmentInClientTx\(|linkL
 // to that settlement directly — the same column the linker writes — instead of minting a second open pre-settlement
 // for a load it is settling in the same transaction. That direct join counts; an assignment with neither still fails.
 const DIRECT_SETTLEMENT_JOIN_RE = /UPDATE\s+mdata\.loads\s+SET\s+presettlement_link_id\s*=\s*\$/;
+// LST-F11153: POST /settlement-creator/post-as-signed (#28788) reassigns the signed document's loads to its driver and then,
+// in the SAME transaction, posts through postSettlementCreatorInClientTx, which joins every draft load to the settlement
+// (the direct join above, in settlement-creator.service.ts). A caller of the Creator's posting engine counts as linked
+// ONLY while the Creator itself still carries that direct join — runStatic checks the callee, so a Creator that stops
+// linking turns every caller red with it.
+const CREATOR_POST_CALL_RE = /postSettlementCreatorInClientTx\(/;
+const CREATOR_REL = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 
 function listTsFiles(dir, out = []) {
   let entries;
@@ -79,20 +86,27 @@ function listTsFiles(dir, out = []) {
   return out;
 }
 
-export function auditFile(relPath, src) {
+export function auditFile(relPath, src, opts = { creatorJoins: true }) {
   if (!WRITE_SITE_RE.test(src)) return null; // not a write site at all -- nothing to check
   if (LINKER_CALL_RE.test(src) || DIRECT_SETTLEMENT_JOIN_RE.test(src)) return { relPath, status: "linked" };
+  if (opts.creatorJoins && CREATOR_POST_CALL_RE.test(src)) return { relPath, status: "linked", via: "settlement Creator posting engine" };
   if (ALLOWLIST[relPath]) return { relPath, status: "allowlisted", reason: ALLOWLIST[relPath] };
   return { relPath, status: "FAIL" };
 }
 
 export function runStatic(root = process.cwd()) {
   const files = listTsFiles(path.join(root, ROOT_REL));
+  let creatorJoins = false;
+  try {
+    creatorJoins = DIRECT_SETTLEMENT_JOIN_RE.test(fs.readFileSync(path.join(root, CREATOR_REL), "utf8"));
+  } catch {
+    creatorJoins = false;
+  }
   const results = [];
   for (const full of files) {
     const rel = path.relative(root, full).split(path.sep).join("/");
     const src = fs.readFileSync(full, "utf8");
-    const r = auditFile(rel, src);
+    const r = auditFile(rel, src, { creatorJoins });
     if (r) results.push(r);
   }
   return results;
@@ -144,7 +158,18 @@ if (process.argv.includes("--selftest")) {
     throw new Error("SELFTEST FAIL: the allow-listed seed file was not recognized as allowlisted");
   }
 
-  console.log("verify-presettlement-autolink-all-paths: SELFTEST PASS (7/7)");
+  const creatorCaller = `
+    await client.query(\`UPDATE mdata.loads l SET assigned_primary_driver_id = $3::uuid WHERE l.id = $1\`, []);
+    const result = await postSettlementCreatorInClientTx(client, actor, draft, {});
+  `;
+  if (auditFile("apps/backend/src/x/g.ts", creatorCaller, { creatorJoins: true })?.status !== "linked") {
+    throw new Error("SELFTEST FAIL: a caller of the Creator posting engine (which joins the loads) was not recognized as linked");
+  }
+  if (auditFile("apps/backend/src/x/h.ts", creatorCaller, { creatorJoins: false })?.status !== "FAIL") {
+    throw new Error("SELFTEST FAIL: a Creator caller passed even though the Creator no longer joins its loads");
+  }
+
+  console.log("verify-presettlement-autolink-all-paths: SELFTEST PASS (9/9)");
   process.exit(0);
 }
 

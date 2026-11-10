@@ -27,12 +27,16 @@ export function findDefects(action, page) {
   if (!/VOID_STRAY_PRACTICAL_ROLES/.test(g) || !/"Owner", "Administrator", "Accountant"/.test(action)) out.push("gate: Owner/Administrator/Accountant role missing");
   if (!/if \(!canVoidStrayPractical\(bill, role\)\) return null/.test(action)) out.push("the component renders without the gate");
   if (!/VOID_STRAY_PRACTICAL_MIN_REASON = 20/.test(action)) out.push("minimum reason is not 20");
-  if (!/disabled=\{!reasonIsValid\(reason\)\}/.test(action)) out.push("confirm is not disabled for a short reason");
-  if (!/useState\(""\)/.test(action)) out.push("reason is prefilled");
-  if (!/onError:[^\n]*setServerError\(userFacingApiError/.test(action) || !/\{serverError \?/.test(action)) out.push("the server error is not shown in the modal");
+  // 443.348: the reason is the shared catalog dialog (VoidReasonModal), never an inline textarea; its confirm is
+  // disabled until the composed reason reaches minLength, and a server refusal is rethrown so the dialog shows it.
+  if (!/<VoidReasonModal\b/.test(action) || !/import \{ VoidReasonModal \}/.test(action)) out.push("the reason does not come from VoidReasonModal");
+  if (!/minLength=\{VOID_STRAY_PRACTICAL_MIN_REASON\}/.test(action)) out.push("VoidReasonModal is not given the 20-char minimum");
+  if (/<textarea\b|<input\b/.test(action)) out.push("inline reason input (must route through VoidReasonModal)");
+  if (/<Modal\b/.test(action)) out.push("hand-built <Modal> (must use VoidReasonModal, size sm)");
+  if (!/onSubmit=\{async \(reason\) =>/.test(action) || !/mutateAsync\(reason\)/.test(action)) out.push("the dialog submit does not call the void mutation with the picked reason");
+  if (!/catch \(error\)[\s\S]{0,200}throw new Error\(userFacingApiError\(error/.test(action)) out.push("the server error is not rethrown into the dialog");
   if (!/invalidateQueries/.test(action)) out.push("queries are not invalidated on success");
   if (!/pushToast\(/.test(action)) out.push("no toast on success");
-  if (!/<Modal /.test(action)) out.push("not using the shared Modal");
   if (!/<VoidStrayPracticalBillAction/.test(page)) out.push("the driver bill detail page does not render the action");
   return out;
 }
@@ -49,9 +53,10 @@ if (process.argv.includes("--selftest")) {
     ["role dropped", [action.replace('"Owner", "Administrator", "Accountant"', '"Owner", "Administrator"'), page]],
     ["ungated render", [action.replace("if (!canVoidStrayPractical(bill, role)) return null", ""), page]],
     ["reason min 5", [action.replace("MIN_REASON = 20", "MIN_REASON = 5"), page]],
-    ["confirm not disabled", [action.replace("disabled={!reasonIsValid(reason)}", ""), page]],
-    ["prefilled reason", [action.replace('useState("")', 'useState("x")'), page]],
-    ["server error swallowed", [action.replace("{serverError ?", "{false ?"), page]],
+    ["inline reason textarea", [action.replace("<VoidReasonModal", "<textarea /><VoidReasonModal"), page]],
+    ["hand-built Modal", [action.replace("<VoidReasonModal", "<Modal /><VoidReasonModal"), page]],
+    ["min length dropped", [action.replace("minLength={VOID_STRAY_PRACTICAL_MIN_REASON}", ""), page]],
+    ["server error swallowed", [action.replace("throw new Error(userFacingApiError(error", "void (userFacingApiError(error"), page]],
     ["no invalidate", [action.replace(/invalidateQueries/g, "noop"), page]],
     ["no toast", [action.replace("pushToast(", "noop("), page]],
     ["page does not render action", [action, page.replace("<VoidStrayPracticalBillAction", "<span")]],

@@ -83,6 +83,12 @@ if(process.argv.includes('--selftest')){
  assert.equal(moneyLiteral('AND s.reversed_at IS NULL'),true);
  assert.equal(moneyLiteral("AND s.status NOT IN ('void','voided')"),true);
  assert.equal(moneyLiteral('${liveSettlement("s")}'),false);
+ // sweepA (2026-11-10) — the exact inline shapes #28418/#28410/#28605/#28657 added; each is debt, the helper is not.
+ assert.equal(moneyLiteral("AND db.status NOT IN ('void', 'voided')"),true);
+ assert.equal(moneyLiteral("WHERE db.voided_at IS NULL"),true);
+ assert.equal(moneyLiteral("AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settled,"),true);
+ assert.equal(moneyLiteral('AND ${liveDriverBill("db")}'),false);
+ assert.equal(moneyLiteral('AND ${notVoided("s")} AND ${statusNotCancelled("s")}) AS settled,'),false);
  assert.equal(growth({x:1},{x:1}).length,0);
  assert.equal(growth({x:2},{x:1}).length,1);
  assert.equal(growth({y:1},{x:1}).length,1);

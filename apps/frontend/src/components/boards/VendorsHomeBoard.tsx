@@ -182,13 +182,13 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
           {/* V1 — compact Pays through (board table, no ParityTable chrome) so vendor overview sits closer. */}
           <V3Panel title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
             <div style={{ overflowX: "auto" }} data-testid="party-board-pays-table">
-              <table className="w-full text-right tabular-nums" style={{ borderCollapse: "collapse", fontFamily: V3.font }}>
+              <table className="w-full" style={{ borderCollapse: "collapse", fontFamily: V3.font }}>
                 <thead>
                   <tr>
                     {paysCols.map((c) => (
                       <th
                         key={c.key}
-                        className={c.num ? "text-right tabular-nums" : "text-left"}
+                        className={c.num ? "text-right" : "text-left"}
                         style={{
                           font: "600 11px Inter",
                           color: V3.muted,
@@ -216,7 +216,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
                         <td className="text-left" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12, whiteSpace: "nowrap" }}>
                           {r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : r.account_name}
                         </td>
-                        <td className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
+                        <td data-quantity className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>
                           {int(r.vendors)}
                         </td>
                         <td className="text-right tabular-nums" style={{ padding: "7px 12px", borderBottom: `1px solid ${V3.borderSoft}`, fontSize: 12 }}>

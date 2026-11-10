@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { canonicalBookedOrCancelledNotVoidedLoadClause } from "../dispatch/canonical-active-load-set.js";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
@@ -81,7 +82,7 @@ export type LoadsHistoryRow = LoadsReportRow & { miles_deadhead: number | null }
 export function loadsHistoryScopeSql(includeCancelled: boolean): string[] {
   if (!includeCancelled) return [...LOADS_REPORT_SCOPE_SQL];
   return LOADS_REPORT_SCOPE_SQL.map((clause) =>
-    clause.startsWith("l.status::text NOT IN") ? `l.status::text NOT IN ('draft', 'voided')` : clause
+    clause.startsWith("l.status::text NOT IN") ? canonicalBookedOrCancelledNotVoidedLoadClause("l") : clause
   );
 }
 
