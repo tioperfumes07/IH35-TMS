@@ -1,4 +1,4 @@
-<!-- heartbeat 2026-10-11T00:20Z Claude Lead -->
+<!-- heartbeat 2026-11-09T01:09Z CC-3 heartbeat-refresh session-sync -->
 # NOW — CURSOR — ROUND 443.29 PART B (2026-10-10 7:20 PM CT) — READ FIRST
 
 **READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — the block headed ROUND 443.29, PART B — CURSOR.**
