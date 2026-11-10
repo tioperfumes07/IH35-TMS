@@ -1,4 +1,4 @@
-<!-- heartbeat 2026-10-10T20:15Z Claude Lead -->
+<!-- heartbeat 2026-11-09T01:09Z CC-3 heartbeat-refresh session-sync -->
 # NOW — CC-2 — ROUND 443.10 (2026-10-10) — READ FIRST
 
 **READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute the block headed CC-2 (ROUND 443.10, deadline 22:30 UTC). CC-3 is blocked on it.**

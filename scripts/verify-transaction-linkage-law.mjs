@@ -125,6 +125,7 @@ export const TABLE_REGISTRY = {
   "accounting.depreciation_schedule_rows": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2, reason: "per-asset depreciation, join through the fixed asset" },
   "accounting.escrow_accounts": { status: "OUT_OF_SCOPE", reason: "driver financial instrument, not a truck/trip expense" },
   "accounting.escrow_postings": { status: "OUT_OF_SCOPE", reason: "driver financial instrument" },
+  "accounting.escrow_posting_loads": { status: "OUT_OF_SCOPE", reason: "load attribution junction for escrow_postings (driver financial instrument); not itself a truck/trip expense origin — the escrow posting and its GL carry the money" },
   "accounting.expense_category_account_map": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "accounting.expense_lines": { status: "MIXED_BY_CATEGORY", reason: "the primary expense line table -- see classifyExpenseLineCategory()" },
   "accounting.expenses": { status: "OUT_OF_SCOPE", reason: "expense header; linkage enforced at the expense_lines level (has its own unit/driver/load columns that carry the real classification)" },
@@ -614,15 +615,16 @@ async function main() {
     {
       const { rows } = await client.query(
         `SELECT count(*)::int AS n FROM fuel.fuel_transactions
-         WHERE operating_company_id = $1 AND voided_at IS NULL AND (unit_id IS NULL OR driver_id IS NULL OR load_id IS NULL)`,
+         WHERE operating_company_id = $1 AND voided_at IS NULL AND (unit_id IS NULL OR driver_id IS NULL OR load_id IS NULL)
+           AND load_required IS NOT FALSE`,
         [USMCA_OPERATING_COMPANY_ID]
       );
       const n = rows[0].n;
       const baselineN = baseline["fuel.fuel_transactions"]?.max_allowed ?? 0;
       if (n > baselineN) {
-        failures.push(`fuel.fuel_transactions (USMCA): ${n} live non-voided rows missing unit_id/driver_id/load_id (TIER1, no exceptions) -- exceeds baseline ceiling of ${baselineN}`);
+        failures.push(`fuel.fuel_transactions (USMCA): ${n} live non-voided rows missing unit_id/driver_id/load_id (TIER1, excluding load_required=false exemptions) -- exceeds baseline ceiling of ${baselineN}`);
       } else {
-        infoLines.push(`[OK] fuel.fuel_transactions (USMCA): ${n} rows missing a TIER1 link (baseline ceiling ${baselineN})`);
+        infoLines.push(`[OK] fuel.fuel_transactions (USMCA): ${n} rows missing a TIER1 link (baseline ceiling ${baselineN}; load_required=false rows excluded)`);
       }
       // 443.119 / 443.122: frozen entities are not read, even for informational output.
     }

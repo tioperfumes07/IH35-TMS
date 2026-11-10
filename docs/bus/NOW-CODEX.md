@@ -1,4 +1,4 @@
-<!-- heartbeat 2026-10-12T22:40Z Cursor lead — 443.139 tip unblock; bus 48h arm -->
+<!-- heartbeat 2026-11-09T01:09Z CC-3 heartbeat-refresh session-sync -->
 # NOW — CODEX — P0 OVERRIDE 2026-10-04
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**
