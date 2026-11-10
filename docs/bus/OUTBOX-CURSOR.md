@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:05 PM CT) — U12 Users Role MultiSelect
+- **PRIOR:** #28688 CatalogTable U12.
+- **THIS:** Users Role SelectCombobox → MultiSelectDropdown (URL role comma-joined; roleFilter.includes). Retarget verify-users-root-staged-filters.
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~7:55 PM CT) — U12 CatalogTable status MultiSelect
 - **PRIOR:** #28616 Accounting lists U12 SURFACE-BREACH Cascade.
 - **THIS:** CatalogTable Active/Inactive SelectCombobox → MultiSelectDropdown (matchesStatus; showInactive synced, no double-filter). Retarget verify-catalog-table-duplicate-search. Covers GenericCatalog + States + DispatchFlagColors.
