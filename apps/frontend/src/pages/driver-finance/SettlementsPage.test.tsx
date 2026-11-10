@@ -9,6 +9,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../../components/Toast";
 import { SettlementsPage } from "./SettlementsPage";
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -22,7 +23,9 @@ vi.mock("../../api/driverFinance", () => ({
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={["/settlements"]}>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/settlements"]}>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -101,7 +101,8 @@
     "title": "Dispatch"
   },
   "drivers": {
-    "title": "Drivers"
+    "title": "Drivers",
+    "driver_label": "Driver"
   },
   "maintenance": {
     "title": "Maintenance",

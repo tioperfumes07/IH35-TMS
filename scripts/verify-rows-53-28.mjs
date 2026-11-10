@@ -227,7 +227,7 @@ function selftest() {
   }
   const plants = [
     ["Frequently run stacked below the board", "board", (s) => s.replace(/(\n\s*<\/div>\n\s*\);\n\}\n\nfunction SimpleCategoryPanel)/, "\n      <V3Panel title=\"Frequently run\"><FrequentlyRunTable rows={[]} onRun={runFrequentReport} /></V3Panel>$1")],
-    ["Management panel layered back", "board", (s) => s.replace('title="Accounting &amp; financial"', 'title="Management reports"')],
+    ["Management panel layered back", "board", (s) => s.replace(/title="Accounting (?:&amp;|&) financial"/, 'title="Management reports"')],
     ["catalog row back to a button", "board", (s) => s.replace("<CatalogLink href={reportCatalogHref(reportKey, basis)} testId={`reports-acct-link-${reportKey}`}>", '<button type="button" onClick={() => openReport(reportKey)}>').replace("{label}\n        </CatalogLink>", "{label}\n        </button>")],
     ["Link anchor removed", "board", (s) => s.replace("<Link to={href}", "<a")],
     ["report boards dropped from catalog", "board", (s) => s.replace("...REPORT_BOARDS.map(", "...[].map(")],

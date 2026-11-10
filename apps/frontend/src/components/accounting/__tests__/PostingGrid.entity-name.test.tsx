@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
@@ -34,9 +35,11 @@ describe("PostingGrid Entity column (D068)", () => {
       row(6, { entity_uuid: null }),
     ];
     render(
-      <MemoryRouter>
-        <PostingGrid postings={rows} storageKey="test.posting-grid.d068" />
-      </MemoryRouter>,
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <PostingGrid postings={rows} storageKey="test.posting-grid.d068" />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
     const text = screen.getByTestId("posting-grid").textContent ?? "";
     expect(text).not.toMatch(UUID_RE);
