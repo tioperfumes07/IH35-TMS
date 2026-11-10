@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:35 PM CT) — ROUND 8.4 census hub design-label pins
+- **PRIOR:** #28701 V3KpiTile 78px.
+- **THIS:** Census pins Accounting/Banking/Fuel/Factoring hub KPI+section labels from v3 .dc.html + V3_KPI.heightPx lock. failing_routes stays 0.
+- **NEXT:** Settlements/CashFlow hub label pins + element-complete builds; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:25 PM CT) — ROUND 8.4 V3KpiTile 78px (design law #6)
 - **PRIOR:** #28700 census static floor 0.
 - **THIS:** V3_KPI.heightPx=78; V3KpiTile minHeight/height locked. OUTBOX diet ≤200. Accounting/Banking hubs already match v3 section/KPI labels — next deepen element coverage.
@@ -186,10 +191,5 @@
 ## OUTBOX (11-03-2026 ~5:50 PM CT) — System EngineStatus + SystemModule need-company
 - **PRIOR:** #28570 tip #29/#241.
 - **THIS:** EngineStatusBoardPage + SystemModulePage BoardSection need-company; fill-shell plants.
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~5:45 PM CT) — tip #29/#241 ROUND sync
-- **PRIOR:** #28568 tip #27.
-- **THIS:** ROUND #29/#241 → MERGED-UNVERIFIED; PENDING #241 cites #28557 + Lead min-w-0.
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
 

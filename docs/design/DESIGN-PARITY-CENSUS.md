@@ -1,6 +1,6 @@
 # DESIGN-PARITY-CENSUS
 
-Generated: 2026-11-10T02:02:17.927Z
+Generated: 2026-11-10T02:05:11.411Z
 Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · boards (banking, driver-customers-vendors, maintenance, settlements) · approved-screens (13).
 
 ## Totals
@@ -23,7 +23,9 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | status_select_not_multiselect | 0 |
 | missing_em_dash_empty | 0 |
 | parity_table_without_export_or_gear | 0 |
+| missing_design_labels | 0 |
 | unresolved_page | 219 |
+| v3_kpi_height_unlocked | 0 |
 
 ## Per module
 

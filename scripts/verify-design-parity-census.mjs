@@ -69,7 +69,47 @@ const APP_WIDE_RULES = [
   "status_select_not_multiselect",
   "missing_em_dash_empty",
   "parity_table_without_export_or_gear",
+  "missing_design_labels",
   "unresolved_page",
+  "v3_kpi_height_unlocked",
+];
+
+/**
+ * Hub routes: every design KPI/section label must appear in the governing page (or sibling board) source.
+ * ROUND 8.4 complete-build floor — labels from docs/design/v3/*.dc.html.
+ */
+const HUB_DESIGN_LABELS = [
+  {
+    route: "/accounting",
+    files: [
+      "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    ],
+    labels: ["Open bills", "MTD expenses", "Open invoices", "Overdue A/R", "Unmatched", "QBO sync", "Receivables aging", "Cash pulse", "Settlements open"],
+  },
+  {
+    route: "/banking",
+    files: [
+      "apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx",
+      "apps/frontend/src/pages/banking/BankingHome.tsx",
+    ],
+    labels: ["Money in", "Money out", "Lines to review", "Drift alerts"],
+  },
+  {
+    route: "/fuel",
+    files: [
+      "apps/frontend/src/pages/fuel/FuelHome.tsx",
+      "apps/frontend/src/pages/fuel/components/FuelBoardKpiStrip.tsx",
+    ],
+    labels: ["Diesel spend", "Gallons", "Avg $/gal", "Fills without a load", "Open questions", "Diesel by truck"],
+  },
+  {
+    route: "/factoring",
+    files: [
+      "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx",
+      "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    ],
+    labels: ["Outstanding liability", "Advanced MTD", "Repurchase deadline", "Chargebacks", "True cost"],
+  },
 ];
 
 function read(p) {
@@ -236,6 +276,26 @@ function scorePage(fileRel, src) {
   return { fails, routeFail: fails.length > 0 };
 }
 
+function scoreHubLabels(route, readFile) {
+  const hub = HUB_DESIGN_LABELS.find((h) => h.route === route);
+  if (!hub) return [];
+  const blob = hub.files.map((f) => {
+    const abs = path.join(ROOT, f);
+    return fs.existsSync(abs) ? readFile(abs) : "";
+  }).join("\n");
+  const missing = hub.labels.filter((label) => !blob.includes(label));
+  return missing.length ? [`missing_design_labels:${missing.join("|")}`] : [];
+}
+
+function scoreV3KpiHeight(readFile) {
+  const tile = readFile(path.join(ROOT, "apps/frontend/src/components/v3/V3KpiTile.tsx"));
+  const tokens = readFile(path.join(ROOT, "apps/frontend/src/design/v3-tokens.ts"));
+  if (!/heightPx:\s*78/.test(tokens) || !/minHeight:\s*V3_KPI\.heightPx/.test(tile)) {
+    return ["v3_kpi_height_unlocked"];
+  }
+  return [];
+}
+
 function inventoryDesignFiles() {
   const v3 = fs.existsSync(V3_DIR)
     ? fs.readdirSync(V3_DIR).filter((f) => f.endsWith(".dc.html")).sort()
@@ -259,6 +319,10 @@ export function runCensus({ writeCensus = false } = {}) {
   let failingRoutes = 0;
   const failRuleCounts = Object.fromEntries(APP_WIDE_RULES.map((r) => [r, 0]));
   const byModule = new Map();
+  const readFile = (abs) => (fs.existsSync(abs) ? read(abs) : "");
+
+  // App-wide V3 KPI height pin (one synthetic hit on /home if unlocked).
+  const kpiHeightFails = scoreV3KpiHeight(readFile);
 
   for (const route of routes) {
     const mod = moduleOf(route);
@@ -276,9 +340,18 @@ export function runCensus({ writeCensus = false } = {}) {
       }
     }
     const scored = scorePage(pageRel, src);
-    const fails = scored.fails;
-    if (scored.routeFail) failingRoutes += 1;
-    for (const f of fails) if (f in failRuleCounts) failRuleCounts[f] += 1;
+    const fails = [...scored.fails];
+    // Hub design-label coverage (exact route match only).
+    for (const f of scoreHubLabels(route, readFile)) fails.push(f);
+    if (route === "/home" && kpiHeightFails.length) fails.push(...kpiHeightFails);
+    const routeFail =
+      scored.routeFail ||
+      fails.some((f) => f.startsWith("missing_design_labels") || f === "v3_kpi_height_unlocked");
+    if (routeFail) failingRoutes += 1;
+    for (const f of fails) {
+      const key = f.startsWith("missing_design_labels") ? "missing_design_labels" : f;
+      if (key in failRuleCounts) failRuleCounts[key] += 1;
+    }
 
     const row = {
       route,
@@ -287,7 +360,7 @@ export function runCensus({ writeCensus = false } = {}) {
       design,
       page: pageRel || "—",
       fails,
-      pass: !scored.routeFail,
+      pass: !routeFail,
       unresolved: fails.includes("unresolved_page"),
     };
     rows.push(row);
@@ -295,7 +368,7 @@ export function runCensus({ writeCensus = false } = {}) {
     if (!byModule.has(mod)) byModule.set(mod, { total: 0, failing: 0, unresolved: 0, routes: [] });
     const bucket = byModule.get(mod);
     bucket.total += 1;
-    if (scored.routeFail) bucket.failing += 1;
+    if (routeFail) bucket.failing += 1;
     if (row.unresolved) bucket.unresolved += 1;
     bucket.routes.push(row);
   }
