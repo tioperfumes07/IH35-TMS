@@ -78,7 +78,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
         Check a truck in
       </Link>
     </header>
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#64748B]" data-testid="in-shop-overhead-door">
+    <p className="text-section-header font-semibold uppercase tracking-wide text-[#64748B]" data-testid="in-shop-overhead-door">
       OVERHEAD DOOR
     </p>
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="in-shop-bays">
