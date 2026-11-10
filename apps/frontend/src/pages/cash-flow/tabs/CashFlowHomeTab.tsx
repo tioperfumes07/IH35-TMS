@@ -464,12 +464,19 @@ function Cell({
   unit,
   grey,
   onClick,
+  bold,
+  tone,
+  "data-testid": testId,
 }: {
   cents: number;
   ofTotal: number;
   unit: TableUnit;
   grey?: boolean;
   onClick?: () => void;
+  bold?: boolean;
+  /** CF2 — Net/Ending use signed color but must stay semantic buttons like other matrix cells. */
+  tone?: boolean;
+  "data-testid"?: string;
 }) {
   let text: string;
   if (unit === "pct") {
@@ -477,6 +484,7 @@ function Cell({
   } else {
     text = formatMatrixMoney(cents);
   }
+  const toneColor = cents < 0 ? V3.red : cents > 0 ? V3.green : V3.ink;
   const style: CSSProperties = {
     textAlign: "right",
     padding: "7px 12px",
@@ -485,7 +493,8 @@ function Cell({
     whiteSpace: "nowrap",
     fontVariantNumeric: "tabular-nums",
     fontFamily: V3.font,
-    color: grey ? V3.mutedSoft : V3.ink,
+    fontWeight: bold || tone ? 700 : 400,
+    color: grey ? V3.mutedSoft : tone ? toneColor : V3.ink,
     cursor: onClick ? "pointer" : undefined,
     background: "transparent",
     border: "none",
@@ -493,14 +502,18 @@ function Cell({
   };
   if (onClick) {
     return (
-      <td style={{ padding: 0, borderBottom: `1px solid ${V3.borderSoft}` }}>
+      <td style={{ padding: 0, borderBottom: `1px solid ${V3.borderSoft}` }} data-testid={testId}>
         <button type="button" onClick={onClick} style={style} title="Open rolling ledger">
           {text}
         </button>
       </td>
     );
   }
-  return <td style={style}>{text}</td>;
+  return (
+    <td style={style} data-testid={testId}>
+      {text}
+    </td>
+  );
 }
 
 /** Matrix row → Rolling Ledger filter provenance (TYPE_OPTIONS values + kind). */
@@ -627,30 +640,6 @@ function ThirteenWeekTable({
       {columns.map((w) => {
         const cents = pick(w);
         const cellKey = "weekStart" in w ? w.weekStart : w.monthStart;
-        if (opts?.tone) {
-          const color = cents < 0 ? V3.red : cents > 0 ? V3.green : V3.ink;
-          return (
-            <td
-              key={cellKey}
-              style={{
-                textAlign: "right",
-                padding: "7px 12px",
-                borderBottom: `1px solid ${V3.borderSoft}`,
-                fontSize: 12,
-                whiteSpace: "nowrap",
-                fontVariantNumeric: "tabular-nums",
-                fontFamily: V3.font,
-                fontWeight: 700,
-                color,
-                cursor: "pointer",
-              }}
-              onClick={() => openCell(rowKey, w)}
-              data-testid={`cash-flow-home-matrix-${rowKey}-${cellKey}`}
-            >
-              {unit === "pct" ? (cents === 0 ? "—" : `${formatQuantityTable((Math.abs(cents) / totalIncome) * 100, 0)}%`) : formatMatrixMoney(cents)}
-            </td>
-          );
-        }
         return (
           <Cell
             key={cellKey}
@@ -658,7 +647,10 @@ function ThirteenWeekTable({
             ofTotal={opts?.of ?? totalIncome}
             unit={unit}
             grey={opts?.grey?.(w)}
+            bold={opts?.bold}
+            tone={opts?.tone}
             onClick={() => openCell(rowKey, w)}
+            data-testid={`cash-flow-home-matrix-${rowKey}-${cellKey}`}
           />
         );
       })}

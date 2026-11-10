@@ -438,7 +438,8 @@ export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { poi
 
   const W = 1100;
   const H = 280;
-  const left = 56;
+  // CF4 — money-axis labels were clipping at x≈73–76; leave room for full currency text.
+  const left = 96;
   const right = 1080;
   const top = 20;
   const bottom = 240;
