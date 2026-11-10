@@ -48,7 +48,8 @@ export function collectFailures({ dataTableExists, settlements, preSettlements, 
   }
   if (!/function buildOpenDriverBillColumns\([^)]*\): ParityColumn<OpenDriverBill>\[\]/.test(settlements) ||
       !/const columns = useMemo\(\(\) => buildOpenDriverBillColumns\(/.test(settlements) ||
-      !/<ParityTable\s+storageKey="[^"]+"\s+columns=\{columns\}/.test(settlements)) {
+      // ROUND 8.5 board tables (#28737) put appearance="board" before storageKey; match the attributes, not their order.
+      !/<ParityTable\b[^>]*?\bstorageKey="[^"]+"[^>]*?\bcolumns=\{columns\}/.test(settlements)) {
     failures.push("SettlementsPage must build the Open Driver Bills ParityTable columns (buildOpenDriverBillColumns) and render them");
   }
   if (!preSettlements.includes('from "../parity/ParityTable"') || !preSettlements.includes("preSettlementColumns")) {
@@ -90,7 +91,7 @@ const SOURCES = {
 if (process.argv.includes("--selftest")) {
   const plants = [
     ["open driver bills columns removed", { settlements: SOURCES.settlements.replaceAll("buildOpenDriverBillColumns", "REMOVED_COLUMNS") }],
-    ["open driver bills table not rendering the columns", { settlements: SOURCES.settlements.replace(/(<ParityTable\s+storageKey="[^"]+"\s+)columns=\{columns\}/, "$1columns={[]}") }],
+    ["open driver bills table not rendering the columns", { settlements: SOURCES.settlements.replace(/(<ParityTable\b[^>]*?\bstorageKey="settlements-open-driver-bills"[^>]*?)columns=\{columns\}/, "$1columns={[]}") }],
     ["pre-settlement Settlement/Tour column dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Settlement/Tour"', 'label: "Ref"').replace('key: "number"', 'key: "ref"') }],
     ["pre-settlement period end dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Period End"', 'label: "End"').replace('key: "period_end"', 'key: "end"') }],
     ["pre-settlement amount no longer a money cell", { preSettlements: SOURCES.preSettlements.replace('label: "Amount"', 'label: "X"').replace(/(key:\s*"amount",[\s\S]{0,300}?)<MoneyCell/, "$1<span") }],
