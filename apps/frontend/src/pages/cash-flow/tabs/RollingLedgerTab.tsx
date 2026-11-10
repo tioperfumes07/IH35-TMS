@@ -935,6 +935,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "party",
       label: "Party",
       sortable: true,
+      className: "whitespace-nowrap text-left",
+      cellClass: "whitespace-nowrap text-left",
       render: (row) => {
         if (row.customer_id) {
           return <EntityLink kind="customer" id={row.customer_id} label={ledgerPartyLabel({ ...row, counterparty: row.customer_name || row.counterparty })} onClick={(e) => e.stopPropagation()} />;
@@ -1009,8 +1011,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     {
       key: "amount_cents",
       label: "Amount",
-      className: "text-right",
-      cellClass: "text-right font-mono font-medium",
+      className: "whitespace-nowrap text-right",
+      cellClass: "whitespace-nowrap text-right font-mono font-medium",
       kind: "money",
       render: (row) =>
         row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents),
@@ -1022,6 +1024,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "payee",
       label: "Payee",
       sortable: true,
+      className: "whitespace-nowrap text-left",
+      cellClass: "whitespace-nowrap text-left",
       render: (row) => {
         if (isBoardEmptyRow(row)) {
           return <span style={{ color: V3.slate }}>{row.counterparty}</span>;
@@ -1076,8 +1080,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     {
       key: "amount_cents",
       label: "Amount",
-      className: "text-right",
-      cellClass: "text-right font-mono font-medium",
+      className: "whitespace-nowrap text-right",
+      cellClass: "whitespace-nowrap text-right font-mono font-medium",
       kind: "money",
       render: (row) => (isBoardEmptyRow(row) ? null : row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)),
     },
@@ -1144,8 +1148,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     {
       key: "amount_cents",
       label: "Amount",
-      className: "text-right",
-      cellClass: "text-right font-mono font-medium",
+      className: "whitespace-nowrap text-right",
+      cellClass: "whitespace-nowrap text-right font-mono font-medium",
       kind: "money",
       render: (row) => formatCents(row.amount_cents),
     },
@@ -1462,7 +1466,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-income-panel"
               >
-                <ParityTable
+                <ParityTable appearance="board"
                   rows={incomeRows}
                   columns={incomeColumns}
                   rowKey={rowKeyOf}
@@ -1496,7 +1500,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-expense-panel"
               >
-                <ParityTable
+                <ParityTable appearance="board"
                   rows={expenseRowsForTable}
                   columns={expenseColumns}
                   rowKey={rowKeyOf}
@@ -1519,7 +1523,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 }}
                 testId="rolling-ledger-carried-income-panel"
               >
-                <ParityTable
+                <ParityTable appearance="board"
                   rows={incomeCarriedAgg}
                   columns={carriedColumns}
                   rowKey={(r) => r.key}
@@ -1540,7 +1544,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 }}
                 testId="rolling-ledger-carried-expense-panel"
               >
-                <ParityTable
+                <ParityTable appearance="board"
                   rows={expenseCarriedAgg}
                   columns={carriedColumns}
                   rowKey={(r) => r.key}
@@ -1568,7 +1572,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             footer="Click a day → both sides above switch to that day."
             testId="rolling-ledger-day-grid-panel"
           >
-            <ParityTable
+            <ParityTable appearance="board"
               rows={dayGridRows}
               columns={dayGridColumns}
               rowKey={(day) => day.date}

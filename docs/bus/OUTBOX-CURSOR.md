@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:35 PM CT) — CF5 Rolling Ledger board tables anti-clip
+- **PRIOR:** #28804 Book Load dialog semantics.
+- **THIS:** RollingLedger ParityTables appearance=board; Party/Payee/Amount whitespace-nowrap so carried income/expense party+money stay readable. Engines unchanged. R4–R6 Cascade.
+- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:30 PM CT) — Book Load dialog semantics (role=dialog)
 - **PRIOR:** #28803 Load History money/name nowrap.
 - **THIS:** BookLoadModalV4 panel role=dialog aria-modal labelled by book-load-dialog-title (center+side). D1/D2 engines retained. R4–R6 Cascade.
@@ -188,10 +193,5 @@
 - **PRIOR:** #28608 Drivers Reference U12.
 - **THIS:** LocationsListPage Geocoded/Geofence/Source + MaintenanceServicesCatalog Applies-to → MultiSelectDropdown. Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:40 PM CT) — U12 Drivers Reference catalog archive MultiSelect
-- **PRIOR:** #28606 Compliance filings Program U12.
-- **THIS:** DriversReferenceCatalogPage Active/Archived → MultiSelectDropdown (archiveMode). Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Locations/Maint services filters / Accounting Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
