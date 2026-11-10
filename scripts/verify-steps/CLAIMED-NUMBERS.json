@@ -17704,5 +17704,20 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1106
+  "total_claimed": 1106,
+  "20085": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-engine-availability"
+  },
+  "20097": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-offers-email-controls"
+  },
+  "20109": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-load-board-posting"
+  }
 }
