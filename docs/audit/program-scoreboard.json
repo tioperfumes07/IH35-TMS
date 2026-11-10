@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c4b7ab4",
-  "generated_at": "2026-11-10T12:28:27.612Z",
+  "healthzSha": "a388e94",
+  "generated_at": "2026-11-10T14:24:24.058Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c4b7ab4",
+    "deployedSha": "a388e94",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28792,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 06:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28792",
+      "sha": "a388e943ea",
+      "committedAtIso": "2026-11-10T12:29:17Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 06:28 AM CT",
+      "url": "",
+      "sha": "384f152452",
+      "committedAtIso": "2026-11-10T12:28:27Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "",
       "sha": "16956fe1db",
       "committedAtIso": "2026-11-10T06:32:02Z"
-    },
-    {
-      "number": 28776,
-      "title": "FINDING: LST-F11139 bus ROUND 8.9b — main chain red register: 55 guards fail on main, owners assigned",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28776",
-      "sha": "2ff9050e26",
-      "committedAtIso": "2026-11-10T00:04:35-06:00"
-    },
-    {
-      "number": 28775,
-      "title": "FIX: main red — step 312 EDI transaction log guard selftest fixture never updated by #28591 (LST-F11138)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28775",
-      "sha": "9235b87887",
-      "committedAtIso": "2026-11-10T00:00:32-06:00"
     }
   ]
 }
