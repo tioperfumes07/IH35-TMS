@@ -21,6 +21,19 @@
   min-width: 0;
 }
 
+/* COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 A1 — board-viewport-single-row:
+   At ≥1280 CSS px (board grade includes 1440×900) the Accounting (and sibling) menubar
+   is one compact row with horizontal overflow, matching approved boards. Below that
+   width, wrap remains so every tab stays reachable (U2). */
+@media (min-width: 1280px) {
+  .hover-dropdown-nav {
+    overflow-x: auto;
+  }
+  .hover-dropdown-nav ul[role="menubar"] {
+    flex-wrap: nowrap;
+  }
+}
+
 .nav-item-with-dropdown {
   position: relative;
 }

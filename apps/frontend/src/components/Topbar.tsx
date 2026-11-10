@@ -216,7 +216,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             <Menu className="h-4 w-4" />
           </button>
         ) : null}
-        <div className="flex min-w-0 flex-wrap items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
+        <div className="flex min-w-0 flex-nowrap items-center gap-2 font-medium uppercase" style={{ fontSize: 12, color: colors.sidebarTextActive }}>
           {t("common.app_name", "IH 35 Dispatch")}
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
           {office && legalNameChip ? (
@@ -231,7 +231,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </div>
 
       <DriftAlertPopup />
-      <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
+      <div className="flex min-w-0 flex-nowrap items-center justify-center gap-2 overflow-hidden">
         <TopStatusBar
           qboAvailable={qboAvailable}
           qboVis={qboVis}
@@ -253,7 +253,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
       {/* Same reason as the left column: without min-w-0 this item cannot shrink and the action
           buttons collide with the centre status bar at narrow widths. */}
-      <div className="relative flex min-w-0 flex-wrap items-center justify-end gap-2 text-xs text-gray-700">
+      <div className="relative flex min-w-0 flex-nowrap items-center justify-end gap-2 overflow-hidden text-xs text-gray-700">
         {office ? (
           <div ref={createMenuRef} className="relative">
             <button

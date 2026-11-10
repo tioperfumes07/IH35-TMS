@@ -14,6 +14,7 @@
  *   node scripts/verify-design-parity-census.mjs --lower
  *   node scripts/verify-design-parity-census.mjs --selftest
  */
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -740,6 +741,14 @@ function selftest() {
   if (!unresolved.fails.includes("unresolved_page") || unresolved.routeFail) {
     throw new Error("selftest unresolved must not route-fail");
   }
+  const lawSelf = spawnSync(
+    process.execPath,
+    [path.join(ROOT, "scripts/verify-complete-design-build-law.mjs"), "--selftest"],
+    { cwd: ROOT, encoding: "utf8" },
+  );
+  if ((lawSelf.status ?? 1) !== 0) {
+    throw new Error(`complete-design-build-law selftest failed: ${lawSelf.stdout}${lawSelf.stderr}`);
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 
@@ -784,6 +793,19 @@ function main() {
   if (!fs.existsSync(CENSUS_MD)) {
     console.error(`${LABEL} FAIL — missing ${path.relative(ROOT, CENSUS_MD)}`);
     process.exit(1);
+  }
+
+  // Permanent anti-drift: complete-design law + ROUND 8.5 source locks (never census-only DONE).
+  const law = spawnSync(
+    process.execPath,
+    [path.join(ROOT, "scripts/verify-complete-design-build-law.mjs")],
+    { cwd: ROOT, encoding: "utf8" },
+  );
+  const lawOut = `${law.stdout ?? ""}${law.stderr ?? ""}`.trim();
+  if (lawOut) console.log(lawOut);
+  if ((law.status ?? 1) !== 0) {
+    console.error(`${LABEL} FAIL — complete-design-build-law red (surface/census-only is not design-done)`);
+    process.exit(law.status ?? 1);
   }
 
   console.log(

@@ -1,7 +1,7 @@
 /**
  * ROUND 443.267 / 443.280 board 3 — Banking Home (board-faithful, not shell).
  * Board: docs/design/v3/Banking.png (+ Banking.dc.html)
- * Sections (order): KPI strip → Accounts | Reconciliation drift (1fr 1fr) → Pending → Latest lines.
+ * Sections (order): KPI strip → Accounts | Reconciliation drift (1fr 1fr) → Latest lines → Pending (scroll).
  * ACCT-F11100 (QuickBooks parity): Money in / Money out are CLEARED lines only; pending bank-feed lines are
  * listed in their own Pending section with a count and total and are never added into the tiles.
  * Engines: getMoneyMap · getBankingTiles · getDriftAlerts · getPlaidCompanyTransactions.
@@ -455,6 +455,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         label: "Bank",
         kind: "money",
         sortable: true,
+        minWidth: 120,
         sortValue: (row) => row.bank_cents,
         cellClass: "text-right",
         render: (row) => (
@@ -469,6 +470,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         label: "Book",
         kind: "money",
         sortable: true,
+        minWidth: 120,
         sortValue: (row) => row.book_cents,
         cellClass: "text-right",
         render: (row) => (
@@ -483,6 +485,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         label: "Diff",
         kind: "money",
         sortable: true,
+        minWidth: 120,
         sortValue: (row) => row.diff_cents,
         cellClass: "text-right",
         render: (row) => (
@@ -703,6 +706,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         >
           <ParityTable<AccountBoardRow>
             embedded
+            appearance="board"
             rows={accountRows}
             rowKey={(row) => row.id}
             columns={accountColumns}
@@ -747,6 +751,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         >
           <ParityTable<DriftBoardRow>
             embedded
+            appearance="board"
             rows={driftRows}
             rowKey={(row) => row.id}
             columns={driftColumns}
@@ -763,33 +768,8 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         </BoardSection>
       </div>
 
-      <BoardSection
-        title={`Pending · ${pendingSummary.count}`}
-        headerRight={
-          <span style={{ fontSize: 11, color: V3.ink, fontFamily: V3.font }} data-testid="banking-home-pending-total">
-            {`out ${formatUsdCents(pendingSummary.outCents)} · in ${formatUsdCents(pendingSummary.inCents)}`}
-          </span>
-        }
-        footer="Pending bank-feed lines are not counted in Money in / Money out. When the bank posts a line, the posted line replaces it."
-        testId="banking-home-board-pending"
-      >
-        <ParityTable<MoneyMapPendingLine>
-          embedded
-          rows={pendingLines}
-          rowKey={(row) => row.bank_transaction_id}
-          columns={pendingColumns}
-          loading={moneyMapQuery.isPending}
-          emptyText="No pending bank lines."
-          storageKey="banking-home-pending"
-          tableTestId="banking-home-pending-table"
-          rowTestId={() => "banking-home-pending-row"}
-          suppressToolbarSearch
-          suppressToolbarRange
-          hidePager
-          initialPageSize={50}
-        />
-      </BoardSection>
-
+      {/* ROUND 8.5 B2 — board order: Accounts | Drift → Latest lines immediately below.
+          Pending stays fully reachable (all rows) in a bounded scroll region after Latest. */}
       <BoardSection
         title="Latest lines"
         onViewAll={() => navigate(BANKING_TAB_PATH.transactions)}
@@ -798,6 +778,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
       >
         <ParityTable<PlaidBankTransaction>
           embedded
+          appearance="board"
           rows={latest}
           rowKey={(row) => row.id}
           columns={latestColumns}
@@ -811,6 +792,36 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           hidePager
           initialPageSize={10}
         />
+      </BoardSection>
+
+      <BoardSection
+        title={`Pending · ${pendingSummary.count}`}
+        headerRight={
+          <span style={{ fontSize: 11, color: V3.ink, fontFamily: V3.font }} data-testid="banking-home-pending-total">
+            {`out ${formatUsdCents(pendingSummary.outCents)} · in ${formatUsdCents(pendingSummary.inCents)}`}
+          </span>
+        }
+        footer="Pending bank-feed lines are not counted in Money in / Money out. When the bank posts a line, the posted line replaces it."
+        testId="banking-home-board-pending"
+      >
+        <div style={{ maxHeight: 280, overflowY: "auto" }} data-testid="banking-home-pending-scroll">
+          <ParityTable<MoneyMapPendingLine>
+            embedded
+            appearance="board"
+            rows={pendingLines}
+            rowKey={(row) => row.bank_transaction_id}
+            columns={pendingColumns}
+            loading={moneyMapQuery.isPending}
+            emptyText="No pending bank lines."
+            storageKey="banking-home-pending"
+            tableTestId="banking-home-pending-table"
+            rowTestId={() => "banking-home-pending-row"}
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            initialPageSize={50}
+          />
+        </div>
       </BoardSection>
     </div>
   );
