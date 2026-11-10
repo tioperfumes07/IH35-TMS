@@ -2656,9 +2656,10 @@ export function BookLoadModalV4({
                         discarded entry (443.101, verify-form-field-roundtrip). */}
 
                   {/* D2 — board four charge amounts side by side (Linehaul | Fuel | Accessorial | Total).
-                      AccessorialEditor + per-stop extras stay below as additive workflow (not stacked legacy). */}
+                      AccessorialEditor + per-stop extras stay below as additive workflow (not stacked legacy).
+                      No outer rounded+border frame — nested-box law (QBO flat inside the dialog). */}
                   <div
-                    className="rounded-md border border-[#ECEEF2] px-3 py-1"
+                    className="px-0 py-1"
                     data-testid="book-load-charges-grid"
                   >
                     <div className="grid grid-cols-2 items-end gap-2.5 py-1.5 sm:grid-cols-4">
