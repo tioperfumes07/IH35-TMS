@@ -125,6 +125,10 @@ Static October/September captions were applied to dynamic current/previous month
 
 ### Dispatch continuation — 2026-11-09 21:35 CT
 
+**D5 BLOCKING, canonical Load History:** `/dispatch/load-history` loads its header/filter/table structure, then HTTP500 `missing FROM-clause entry for table "lc"`. The table simultaneously says no matching loads and totals zero; these are not measured zero populations. Root source: `apps/backend/src/reports/loads-history.service.ts:314-317` totals refer to `lc.lc_revenue_cents` and siblings while its join at line328 produces alias `lcr`, with unprefixed fields (`load-cost-rollup.sql.ts:100,112-119`). Owning backend seat must fix this read query with an execution-level SQL regression; no ledger changes required. Private evidence Dispatch-LoadHistory-sql-error-live.jpg. All row/drill/aggregate acceptance remains UNVERIFIED until query succeeds.
+
+**D6 navigation divergence:** Dispatch's top `Loads history` button opens `/dispatch?board_scope=history&view=list&date_mode=delivery...` (legacy live-load table, 50 of51 rows in observed date range). Its `Load history` menu opens `/dispatch/load-history`, the dedicated approved board. Preserve existing views but make the canonical history destination unambiguous. Do not score the legacy table as the approved board.
+
 Read-only USMCA, CSS viewport 1440×900. This is a partial element comparison, not board acceptance. Screenshots are private in Downloads/codex-round8-5-design-parity.
 
 | ID | Board | Reference | Live observation / repair |
